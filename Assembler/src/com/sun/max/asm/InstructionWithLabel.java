@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=08ef1ab9-34cc-4c6a-836f-9aecbd61dd4b*/
+package com.sun.max.asm;
+
+/**
+ * An assembler instruction that references some address with a {@linkplain Label label}.
+ * 
+ * @author Bernd Mathiske
+ */
+public abstract class InstructionWithLabel extends MutableAssembledObject {
+
+    private final Label _label;
+
+    protected InstructionWithLabel(Assembler assembler, int startPosition, int endPosition, Label label) {
+        super(assembler, startPosition, endPosition);
+        _label = label;
+    }
+
+    protected Label label() {
+        return _label;
+    }
+
+    public final Type type() {
+        return Type.CODE;
+    }
+}

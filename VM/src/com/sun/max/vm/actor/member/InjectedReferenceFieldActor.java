@@ -1,0 +1,192 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=1ca5ea99-a5da-4b5c-9f73-3640c4f622ac*/
+package com.sun.max.vm.actor.member;
+
+import java.lang.reflect.*;
+
+import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
+
+/**
+ * Definition of reference fields injected into JDK classes.
+ *
+ * @author Bernd Mathiske
+ * @author Doug Simon
+ */
+public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implements InjectedFieldActor<ReferenceValue> {
+
+    public TypeDescriptor holderTypeDescriptor() {
+        return _holder;
+    }
+
+    public ReferenceValue readInjectedValue(Reference reference) {
+        throw ProgramError.unexpected(this + " cannot be read while prototyping");
+    }
+
+    private final TypeDescriptor _holder;
+
+    /**
+     * Creates an actor for an injected long field.
+     * 
+     * @param holder
+     *                the class into which the field is injected
+     * @param fieldType
+     *                the type of the field (the name of the field is derived from this value)
+     */
+    @PROTOTYPE_ONLY
+    public InjectedReferenceFieldActor(Class holder, Class<T> fieldType) {
+        super(SymbolTable.makeSymbol("_$injected$" + fieldType.getSimpleName()),
+              JavaTypeDescriptor.forJavaClass(fieldType),
+              ACC_SYNTHETIC + ACC_PRIVATE + INJECTED);
+        _holder = JavaTypeDescriptor.forJavaClass(holder);
+        Static.registerInjectedFieldActor(this);
+    }
+
+    /**
+     * Reads the value of the field, casting it to the field's declared type.
+     * To write the value of the field, use {@link #writeObject(Object, Object)}.
+     */
+    @INLINE
+    public final T read(Object object) {
+        final Class<T> type = null;
+        return UnsafeLoophole.cast(type, readObject(object));
+    }
+
+    /**
+     * A field of type {@link ClassActor} injected into {@link Class}.
+     */
+    public static final InjectedReferenceFieldActor<ClassActor> Class_classActor = createClass_classActor();
+
+    private static InjectedReferenceFieldActor<ClassActor> createClass_classActor() {
+        if (MaxineVM.isPrototyping()) {
+            return new InjectedReferenceFieldActor<ClassActor>(Class.class, ClassActor.class) {
+                @Override
+                public ReferenceValue readInjectedValue(Reference reference) {
+                    final Class javaClass = (Class) reference.toJava();
+                    return ReferenceValue.from(ClassActor.fromJava(javaClass));
+                }
+            };
+        }
+        return Class_classActor;
+    }
+
+    /**
+     * A field of type {@link ClassRegistry} injected into {@link ClassLoader}.
+     */
+    public static final InjectedReferenceFieldActor<ClassRegistry> ClassLoader_classRegistry = createClassLoader_classRegistry();
+
+    private static InjectedReferenceFieldActor<ClassRegistry> createClassLoader_classRegistry() {
+        if (MaxineVM.isPrototyping()) {
+            return new InjectedReferenceFieldActor<ClassRegistry>(ClassLoader.class, ClassRegistry.class) {
+                @Override
+                public ReferenceValue readInjectedValue(Reference reference) {
+                    assert reference.toJava() instanceof ClassLoader;
+                    return ReferenceValue.from(ClassRegistry.vmClassRegistry());
+                }
+            };
+        }
+        return ClassLoader_classRegistry;
+    }
+
+    /**
+     * A field of type {@link VmThread} injected into {@link Thread}.
+     */
+    public static final InjectedReferenceFieldActor<VmThread> Thread_vmThread = createThread_vmThread();
+
+    private static InjectedReferenceFieldActor<VmThread> createThread_vmThread() {
+        if (MaxineVM.isPrototyping()) {
+            return new InjectedReferenceFieldActor<VmThread>(Thread.class, VmThread.class) {
+                @Override
+                public ReferenceValue readInjectedValue(Reference reference) {
+                    assert reference.toJava() instanceof Thread;
+                    return ReferenceValue.from(VmThread.main());
+                }
+            };
+        }
+        return Thread_vmThread;
+    }
+
+    /**
+     * A field of type {@link FieldActor} injected into {@link Field}.
+     */
+    public static final InjectedReferenceFieldActor<FieldActor> Field_fieldActor = createField_fieldActor();
+
+    private static InjectedReferenceFieldActor<FieldActor> createField_fieldActor() {
+        if (MaxineVM.isPrototyping()) {
+            return new InjectedReferenceFieldActor<FieldActor>(Field.class, FieldActor.class) {
+                @Override
+                public ReferenceValue readInjectedValue(Reference reference) {
+                    final Object object = reference.toJava();
+                    assert object instanceof Field;
+                    return ReferenceValue.from(FieldActor.fromJava((Field) object));
+                }
+            };
+        }
+        return Field_fieldActor;
+    }
+
+    /**
+     * A field of type {@link MethodActor} injected into {@link Method}.
+     */
+    public static final InjectedReferenceFieldActor<MethodActor> Method_methodActor = createMethod_methodActor();
+
+    private static InjectedReferenceFieldActor<MethodActor> createMethod_methodActor() {
+        if (MaxineVM.isPrototyping()) {
+            return new InjectedReferenceFieldActor<MethodActor>(Method.class, MethodActor.class) {
+                @Override
+                public ReferenceValue readInjectedValue(Reference reference) {
+                    final Object object = reference.toJava();
+                    assert object instanceof Method;
+                    return ReferenceValue.from(MethodActor.fromJava((Method) object));
+                }
+            };
+        }
+        return Method_methodActor;
+    }
+
+    /**
+     * A field of type {@link MethodActor} injected into {@link Constructor}.
+     */
+    public static final InjectedReferenceFieldActor<MethodActor> Constructor_methodActor = createConstructor_methodActor();
+
+    private static InjectedReferenceFieldActor<MethodActor> createConstructor_methodActor() {
+        if (MaxineVM.isPrototyping()) {
+            return new InjectedReferenceFieldActor<MethodActor>(Constructor.class, MethodActor.class) {
+                @Override
+                public ReferenceValue readInjectedValue(Reference reference) {
+                    final Object object = reference.toJava();
+                    assert object instanceof Constructor;
+                    return ReferenceValue.from(MethodActor.fromJavaConstructor((Constructor) object));
+                }
+            };
+        }
+        return Constructor_methodActor;
+    }
+}

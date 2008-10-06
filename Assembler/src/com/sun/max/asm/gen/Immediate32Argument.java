@@ -1,0 +1,82 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=df3f8f27-7005-432b-9206-e402c1837c35*/
+package com.sun.max.asm.gen;
+
+import com.sun.max.lang.*;
+
+/**
+ * @author Bernd Mathiske
+ */
+public class Immediate32Argument extends ImmediateArgument {
+
+    private int _value;
+
+    public Immediate32Argument(int value) {
+        _value = value;
+    }
+
+    @Override
+    public WordWidth width() {
+        return WordWidth.BITS_32;
+    }
+
+    public int value() {
+        return _value;
+    }
+
+    public long asLong() {
+        return value();
+    }
+
+    public String externalValue() {
+        return "0x" + Integer.toHexString(_value);
+    }
+
+    public String disassembledValue() {
+        return "0x" + String.format("%X", _value);
+    }
+
+    @Override
+    public String signedExternalValue() {
+        return Integer.toString(_value);
+    }
+
+    @Override
+    public Object boxedJavaValue() {
+        return new Integer(_value);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof Immediate32Argument) {
+            final Immediate32Argument argument = (Immediate32Argument) other;
+            return _value == argument._value;
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return _value;
+    }
+
+}
