@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=47a26585-e415-438c-84bc-8a7b75dbb351*/
+package com.sun.max.tele.grip;
+
+import com.sun.max.unsafe.*;
+
+/**
+ * Canonicalized constant tele grip, for locations known not to change under GC.
+ * 
+ * @author Bernd Mathiske
+ */
+public class CanonicalConstantTeleGrip extends ConstantTeleGrip {
+
+    CanonicalConstantTeleGrip(TeleGripScheme teleGripScheme, Address raw) {
+        super(teleGripScheme, raw);
+    }
+
+    @Override
+    public void finalize() throws Throwable {
+        teleGripScheme().finalizeCanonicalConstantTeleGrip(this);
+        super.finalize();
+    }
+}

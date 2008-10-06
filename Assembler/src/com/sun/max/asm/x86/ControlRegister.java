@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=40671b05-b668-4c9d-a86a-f0db76bf5099*/
+package com.sun.max.asm.x86;
+
+import com.sun.max.asm.*;
+import com.sun.max.util.*;
+
+/**
+ * @author Bernd Mathiske
+ */
+public enum ControlRegister implements EnumerableArgument<ControlRegister> {
+
+    CR0(0), CR2(2), CR3(3);
+
+    private final int _number;
+
+    private ControlRegister(int number) {
+        _number = number;
+    }
+
+    public int value() {
+        return _number;
+    }
+
+    public long asLong() {
+        return value();
+    }
+
+    public String externalValue() {
+        return "%" + name().toLowerCase();
+    }
+
+    public String disassembledValue() {
+        return name().toLowerCase();
+    }
+
+    public Enumerator<ControlRegister> enumerator() {
+        return ENUMERATOR;
+    }
+
+    public ControlRegister exampleValue() {
+        return CR0;
+    }
+
+    public static final Enumerator<ControlRegister> ENUMERATOR = new Enumerator<ControlRegister>(ControlRegister.class);
+
+}
