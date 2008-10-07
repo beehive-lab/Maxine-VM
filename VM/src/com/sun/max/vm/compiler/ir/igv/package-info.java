@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d3c8a0d2-7d20-4902-bb4c-6e653dc02c3c*/
 /**
  * IR graphs are visualized by transmitting them to the Ideal Graph Visualizer
  * @see GraphIrObserver

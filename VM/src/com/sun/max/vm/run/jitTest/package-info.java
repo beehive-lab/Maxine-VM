@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a6bb2c0f-03b1-4e76-9702-b37e8a67c248*/
 /**
  * A run scheme that runs tests for the JIT without loading a Java application.
  *

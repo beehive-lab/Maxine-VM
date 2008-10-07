@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=585bc8e9-e9e9-4be5-a9d1-b995faf6b4f6*/
 /**
  * Internal data structures of the VM that represent Java-tangible entities
  * such as classes/types, interfaces, fields, methods, etc.

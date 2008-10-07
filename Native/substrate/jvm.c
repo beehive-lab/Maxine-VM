@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d6bddb4d-e680-4459-a1d8-89f31f1deb07*/
 /**
  * This file implements the parts of HotSpot's "JVM" interface
  * that the native libraries of the JDK require to have something to call back into.

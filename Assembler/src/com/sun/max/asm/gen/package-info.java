@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d3798235-d7e7-414c-bfe6-07e2835f39f2*/
 /**
  * The core of the assembly generator framework:
  * abstract representations of assembly instructions,

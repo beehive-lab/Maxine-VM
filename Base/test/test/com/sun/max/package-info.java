@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=1e5f6c0c-d801-4a5d-a9ad-6de86b59ab1b*/
 /**
  * JUnit tests for Sun Labs' Maxine project software
  * 

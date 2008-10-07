@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8a764a53-4dba-4f8d-b154-d9b28103d14a*/
 
 /**
  * This file implements JNI functions that take a variable number of arguments. These

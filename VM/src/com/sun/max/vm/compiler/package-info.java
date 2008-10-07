@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ba1c9cad-7ba9-4671-9534-877276c74605*/
 /**
  * The compiler framework of the MaxineVM VM.
  * It contains several alternative "layered" compilers

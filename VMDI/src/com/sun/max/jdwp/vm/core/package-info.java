@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=6684b3bc-04db-4629-a060-bb17763f5ba5*/
 /**
  *
  * This package defines the core classes of the JDWP+ interface to the VM.

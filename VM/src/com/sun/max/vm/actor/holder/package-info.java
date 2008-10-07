@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=21869edb-c3da-48bc-81b4-7a28ec4bf71a*/
 /**
  * Internal representations of Java "classes": tuple classes, interfaces, primitive classes, array classes, etc.
  * 

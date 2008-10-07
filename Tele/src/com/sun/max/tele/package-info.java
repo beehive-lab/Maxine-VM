@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b741a792-6830-43af-a810-920ae5652182*/
 /**
  * Classes that model state in the tele VM.
  * These classes are in transition from the Inspector to an eventual separate project

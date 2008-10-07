@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=0137f2af-d65a-4b1e-855f-ac20629dd383*/
 /**
  * IA32 instruction assembly template instruction format specifications and construction
  * 

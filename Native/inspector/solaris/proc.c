@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=6855bf9d-eca0-4316-b207-f12a7776154c*/
 /**
  * Implementation of libproc function hooks for tracing calls to said functions.
  *

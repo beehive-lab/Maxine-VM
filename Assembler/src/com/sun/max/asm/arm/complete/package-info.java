@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f328d403-40cf-40b8-bbb3-8afeeac100dc*/
 /**
  * A complete ARM 32-bit assembly system according to ARM Architecture Reference Manual, Second Edition.
  * <p>

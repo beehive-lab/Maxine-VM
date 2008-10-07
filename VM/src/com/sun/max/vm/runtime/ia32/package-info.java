@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ab06f9e0-2c31-43e0-bed1-a7860d0a98c6*/
 /**
  * IA32-specific safepoint manipulations.
  * 

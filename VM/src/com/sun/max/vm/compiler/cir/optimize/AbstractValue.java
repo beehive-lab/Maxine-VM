@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=5c672f02-0b1e-49ae-9eca-110d61af9068*/
 package com.sun.max.vm.compiler.cir.optimize;
 
 public abstract class AbstractValue<T extends AbstractValue<T>> {

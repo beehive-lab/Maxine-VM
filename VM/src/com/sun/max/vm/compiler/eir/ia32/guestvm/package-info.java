@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a0081ac0-a78b-4b88-b283-bdc37403ebab*/
 /**
  * ABI specifications for GuestVM on IA32.
  *

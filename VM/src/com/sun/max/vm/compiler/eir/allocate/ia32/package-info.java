@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=59fb0c80-6b55-4d0a-b297-8b00472cf492*/
 /**
  * Register allocation specialization for IA32.
  *

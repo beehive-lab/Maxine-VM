@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=6f40c84b-5a94-43d4-b1cf-d65017b42e7f*/
 /**
  * Flavors of CirVariable, differentiated for the purpose
  * of facilitating human consumption of CIR listings
