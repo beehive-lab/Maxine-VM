@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=00f5a545-7b24-4499-8728-839551320c16*/
 /**
  * Object heap management, including garbage collection
  * 

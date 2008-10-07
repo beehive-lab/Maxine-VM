@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=cc6fc9b8-9f0a-49bc-9ad0-83760360483f*/
 package util;
 
 public class GCLinkedListTest {

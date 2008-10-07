@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=34b3ff5d-db16-4e2e-b536-5d3d3c26474f*/
 package com.sun.max.vm;
 
 public enum BuildLevel {

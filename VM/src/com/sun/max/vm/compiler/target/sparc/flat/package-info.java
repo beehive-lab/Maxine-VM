@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8ccca094-74cf-43ec-8ffe-7001b3c8273f*/
 /**
  * SPARC ABIs that do not use register windows for Java methods.
  * The native/C ABIs still do use register windows, though.

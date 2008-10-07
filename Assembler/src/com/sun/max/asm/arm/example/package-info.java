@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a9073786-7c8a-4a65-a04a-0cb0603d5168*/
 /**
  * This package presents an example of how to generate an assembler for a subset of the instructions in an ISA
  * specification. This example is in the context of the ARM ISA specification but the mechanism can be just as easily

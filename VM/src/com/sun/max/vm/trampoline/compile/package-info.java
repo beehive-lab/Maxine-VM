@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=75c0fc81-8f9b-43ed-baf1-1c62beb85624*/
 /**
  * Full-recompilation based dynamic trampolines.
  * @author Laurent Daynes

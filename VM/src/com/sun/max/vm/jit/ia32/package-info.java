@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=92eb9661-da7f-413f-8b47-18a628a2f507*/
 /**
  * Fast template-based JIT (Just-In-Time compiler) for IA32.
  * 

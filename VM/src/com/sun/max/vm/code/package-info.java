@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d735567f-1cd7-4469-ada9-ea3fa6a730a8*/
 /**
  * This package implements code management for target code, including code regions
  * that allocate and deallocate space for generated code.

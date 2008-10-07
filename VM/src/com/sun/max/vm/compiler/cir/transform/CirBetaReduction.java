@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=3b0118de-6440-46c5-8590-9b75bbe89e43*/
 package com.sun.max.vm.compiler.cir.transform;
 
 import static com.sun.max.collect.SequenceBag.MapType.*;

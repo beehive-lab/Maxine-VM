@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=be264cc9-144e-4bdd-8221-10c8e0977081*/
 /**
  * Support for reference maps of stack frames in terms of the operand stack and local variables array manipulated by the
  * bytecode of a method.

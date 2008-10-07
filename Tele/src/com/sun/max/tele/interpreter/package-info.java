@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=1e83795d-909f-4465-ac7e-bc027603064b*/
 /**
  * An interpreter for running queries on remote objects in the tele VM.
  *

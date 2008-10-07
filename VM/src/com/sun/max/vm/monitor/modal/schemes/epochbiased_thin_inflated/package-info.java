@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=0901470d-b6ff-40a5-aea4-6ad472699cd5*/
 /**
  * A modal monitor scheme that transitions between epoch-based bulk-rebiasable locks, thin locks and inflated monitors
  */

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a2c1bfec-694f-4290-bba1-77b5caf17f2d*/
 /**
  * Trampolines.
  *

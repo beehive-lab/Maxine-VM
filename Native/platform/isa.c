@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a193079a-57f9-4f85-8ca2-1b34aaea5b43*/
 #include "isa.h"
 
 void isa_decanonicalizeSignalIntegerRegisters(isa_OsSignalCanonicalIntegerRegisters canonicalIntegerRegisters, isa_OsSignalIntegerRegisters osSignalIntegerRegisters) {

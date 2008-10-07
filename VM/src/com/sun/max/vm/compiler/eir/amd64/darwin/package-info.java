@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b680f363-3a50-4179-9429-3217580420d4*/
 /**
  * ABI specifications for Darwin on AMD64.
  *

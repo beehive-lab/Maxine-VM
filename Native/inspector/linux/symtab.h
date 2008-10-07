@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=059e882d-8ab7-46ff-b07f-2b238eef478e*/
 #ifdef USE_PRAGMA_IDENT_HDR
 #pragma ident "@(#)symtab.h	1.8 05/11/18 15:16:58 VM"
 #endif

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=870c2028-2a8d-4eaa-8d71-8abd871dd212*/
 /**
  * Risc disassembler
  * 

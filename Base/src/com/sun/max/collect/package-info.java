@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f21509ce-5067-4d03-a711-ef499b35c011*/
 /**
  * More conservative collection classes than in java.util:
  * Instead of relying on dynamic checks, we make more use of static interfaces to narrow down the available set of operations

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=4f6ff1a7-3ce3-4a3e-a1b3-79c0505fc87d*/
 /**
  * A mockup heap only used for testing before bootstrapping
  * 

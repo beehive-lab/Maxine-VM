@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=6ddb4626-e502-4849-9d8b-cc404046fcda*/
 /**
  * Tuple field access.
  * 

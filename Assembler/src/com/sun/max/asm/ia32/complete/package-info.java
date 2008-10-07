@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=08f6ad15-57d7-465c-a81e-dab60a5eafff*/
 /**
  * An assembly system for (almost all of) the IA32 instruction set.
  * Our own restriction here: the default address and operand size is ALWAYS 32 bits.

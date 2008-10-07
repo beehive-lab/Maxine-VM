@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e9341751-8069-4d1c-81ce-34fd2f456ac9*/
 /**
  * Declaration of the compiler-independent interface of "builtin" primitive operations
  * for which the respective compiler generates machine code.

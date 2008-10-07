@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e222bbb6-4e36-42aa-a78c-f2503bfb9aa3*/
 /**
  * CIR builtins.
  * These are wrappers around plain builtins so we can specialize folding, strength reduction etc.

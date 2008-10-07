@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b9b66f55-8853-488f-ad1f-5b28ad658105*/
 /**
  * This package provides a simplifying API (a facade) over the object layout and reference
  * mechanisms that allow reading and writing fields, array elements, and hybrids using

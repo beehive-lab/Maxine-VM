@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=226c4d1f-da09-4405-9760-acc3d6f6ea93*/
 /**
  * Boxed versions of the extra "primitive types" declared in com.sun.max.unsafe.
  * These boxed implementations are used on any non-MaxineVM VM,
