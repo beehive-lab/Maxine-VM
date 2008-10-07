@@ -1,0 +1,123 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=0fc48583-ac4c-493a-8e52-52ef14f3003d*/
+
+package com.sun.max.jdwp.data;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * Stream class for reading JDWP values. It has a child input stream to which the actual reads are delegated.
+ *
+ * @author Thomas Wuerthinger
+ */
+public class JDWPInputStream {
+
+    private DataInputStream _dataInputStream;
+    private CommandHandler<IncomingData, OutgoingData> _commandHandler;
+    private IncomingData _incomingData;
+
+    public JDWPInputStream(InputStream inputStream, CommandHandler<IncomingData, OutgoingData> handler, IncomingData incomingData) {
+        _dataInputStream = new DataInputStream(inputStream);
+        _commandHandler = handler;
+        _incomingData = incomingData;
+    }
+
+    public boolean readBoolean() throws IOException {
+        return _dataInputStream.readBoolean();
+    }
+
+    public byte readByte() throws IOException {
+        return _dataInputStream.readByte();
+    }
+
+    public int readInt() throws IOException {
+        return _dataInputStream.readInt();
+    }
+
+    public long readLong() throws IOException {
+        return _dataInputStream.readLong();
+    }
+
+    public InputStream getInputStream() {
+        return _dataInputStream;
+    }
+
+    /**
+     * Reads a string according to JDWP syntax.
+     * @return the string read from the JDWP stream
+     * @throws IOException this exception is thrown, when there was a problem reading the raw bytes
+     */
+    public String readString() throws IOException {
+
+        final int length = _dataInputStream.readInt();
+
+        final byte[] data = new byte[length];
+        _dataInputStream.read(data);
+
+        final String s = new String(data);
+        return s;
+    }
+
+    public JDWPLocation readLocation() throws IOException {
+        return new JDWPLocation(_dataInputStream);
+    }
+
+    /**
+     * Reads a object identifier with a preceding tag (see {@link com.sun.max.jdwp.constants.Tag}).
+     * @return the read object identifier
+     * @throws IOException
+     */
+    public ID.ObjectID readTaggedObjectReference() throws IOException {
+
+        // Read over tag, this information is currently not used.
+        _dataInputStream.readByte();
+
+        return ID.read(_dataInputStream, ID.ObjectID.class);
+    }
+
+    public JDWPValue readValue() throws IOException {
+        return new JDWPValue(_dataInputStream);
+    }
+
+    /**
+     * Reads a JDWPValue that is not preceded with a tag (see {@link com.sun.max.jdwp.constants.Tag}). The registered command handler
+     * is used to resolve this information based on the semantics of the command.
+     *
+     * @return the read JDWPValue object
+     * @throws IOException this exception is thrown, when there was a problem reading the raw bytes of the value
+     * @throws JDWPException this exception is thrown, when the command handler had a problem resolving the tag
+     */
+    public JDWPValue readUntaggedValue() throws IOException, JDWPException {
+        return new JDWPValue(_dataInputStream, _commandHandler.helpAtDecodingUntaggedValue(_incomingData));
+    }
+
+    /**
+     * Reads a list of values from the stream. This function is not yet implemented, because it is currently not needed in the protocol.
+     * @return a list of values read from the stream
+     * @throws IOException this exception is thrown, when there was a problem reading the raw bytes of the value
+     * @throws JDWPException this exception is thrown, when the command handler had a problem resolving tags
+     */
+    public List<? extends JDWPValue> readArrayRegion() throws IOException, JDWPException {
+        throw new JDWPNotImplementedException();
+    }
+}

@@ -1,0 +1,192 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=82e1ea7e-82dd-409a-b23c-c61fec926118*/
+package com.sun.max.vm.jdk;
+
+import java.security.*;
+
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
+
+/**
+ * Implements substitutions necessary for {@link java.lang.ClassLoader java.lang.ClassLoader}.
+ *
+ */
+@METHOD_SUBSTITUTIONS(ClassLoader.class)
+final class JDK_java_lang_ClassLoader {
+
+    private JDK_java_lang_ClassLoader() {
+    }
+
+    /**
+     * Cast this {@code JDK_java_lang_ClassLoader} instance to a {@code java.lang.ClassLoader}
+     * instance.
+     * @return a view of this object as a class loader
+     */
+    @INLINE
+    private ClassLoader thisClassLoader() {
+        return UnsafeLoophole.cast(this);
+    }
+
+    /**
+     * Registers native methods associated with this class using the JNI mechanisms. This implementation
+     * has no native methods, thus this method does nothing.
+     */
+    @SUBSTITUTE
+    private static void registerNatives() {
+    }
+
+    /**
+     * Creates a class from a classfile represented as a byte array.
+     *
+     * @see java.lang.ClassLoader#defineClass0(String, byte[], int, int, ProtectionDomain)
+     *
+     * @param name the name of the class
+     * @param bytes a representation of the classfile
+     * @param offset offset into the array at which the classfile begins
+     * @param length the length of the classfile
+     * @param protectionDomain the protection domain in which to create the class
+     * @return a new {@code Class} instance representing the class
+     */
+    @SUBSTITUTE
+    private Class defineClass0(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain) {
+        return ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, null).toJava();
+    }
+
+    /**
+     * Creates a class from a classfile represented as a byte array with the specified source.
+     *
+     * @see java.lang.ClassLoader#defineClass1(String, byte[], int, int, ProtectionDomain)
+     *
+     * @param name the name of the class
+     * @param bytes a representation of the classfile
+     * @param offset offset into the array at which the classfile begins
+     * @param length the length of the classfile
+     * @param protectionDomain the protection domain in which to create the class
+     * @param source
+     * @return a new {@code Class} instance representing the class
+     */
+    @SUBSTITUTE
+    private Class defineClass1(String name, byte[] bytes, int offset, int length, ProtectionDomain protectionDomain, String source) {
+        final ClassActor classActor = ClassfileReader.defineClassActor(name, thisClassLoader(), bytes, offset, length, protectionDomain, source);
+        return classActor.toJava();
+    }
+
+    /**
+     * Creates a class from a classfile represented as a {@code ByteBuffer} with the specified source.
+     *
+     * @see java.lang.ClassLoader#defineClass2(String, java.nio.ByteBuffer, int, int, ProtectionDomain)
+     *
+     * @param name the name of the class
+     * @param byteBuffer the buffer containing the bytes of the classfile
+     * @param offset offset into the array at which the classfile begins
+     * @param length the length of the classfile
+     * @param protectionDomain the protection domain in which to create the class
+     * @param source
+     * @return a new {@code Class} instance representing the class
+     */
+    @SUBSTITUTE
+    private Class defineClass2(String name, java.nio.ByteBuffer byteBuffer, int offset, int length, ProtectionDomain protectionDomain, String source) {
+        return defineClass1(name, byteBuffer.array(), offset, length, protectionDomain, source);
+    }
+
+    /**
+     * Resolves a class, initializing it if necessary.
+     * @see java.lang.ClassLoader#resolveClass0(Class)
+     * @param javaClass the class which to resolve and initialize
+     */
+    @SUBSTITUTE
+    private void resolveClass0(Class javaClass) {
+        ClassActor.fromJava(javaClass).makeInitialized();
+    }
+
+    /**
+     * Finds a class necessary for bootstrapping (typically a JDK or internal VM class).
+     * @see java.lang.ClassLoader#findBootstrapClass(String)
+     * @param name the name of the class to find
+     * @return the class which is found
+     * @throws ClassNotFoundException if the class was not found
+     */
+    @SUBSTITUTE
+    private Class findBootstrapClass(String name) throws ClassNotFoundException {
+        // TODO: this only works for the JavaRunScheme, not the NewJavaRunScheme, which should use a different class loader here.
+        // Solution: route this call through the scheme.
+        return VmClassLoader.VM_CLASS_LOADER.findBootstrapClass(name);
+    }
+
+    /**
+     * Find a class that has already been loaded.
+     * @param name the name of the class
+     * @return a reference to the class, if it exists; null otherwise
+     */
+    @SUBSTITUTE
+    private Class findLoadedClass0(String name) {
+        TypeDescriptor descriptor;
+        try {
+            descriptor = JavaTypeDescriptor.parseMangledArrayOrUnmangledClassName(name);
+        } catch (ClassFormatError e) {
+            return null;
+        }
+        final ClassActor classActor =  ClassRegistry.get(thisClassLoader(), descriptor);
+        if (classActor == null) {
+            return null;
+        }
+        return classActor.toJava();
+    }
+
+    /**
+     * java.lang.AssertionStatusDirectives is package private.
+     * This is a parallel class with exactly the same fields:
+     */
+    private static final class Fake_AssertionStatusDirectives {
+        String[] _classes;
+        boolean[] _classEnabled;
+        String[] _packages;
+        boolean[] _packageEnabled;
+        boolean _deflt;
+    }
+
+    /**
+     * Retrieves the assertion status directives for this class loader.
+     * @return the assertion status directives object
+     */
+    @SUBSTITUTE
+    private static Object retrieveDirectives() {
+        final Fake_AssertionStatusDirectives assertionStatusDirectives = new Fake_AssertionStatusDirectives();
+        //TODO: obtain proper values for these from command line arguments:
+        assertionStatusDirectives._classes = new String[0];
+        assertionStatusDirectives._classEnabled = new boolean[0];
+        assertionStatusDirectives._packages = new String[0];
+        assertionStatusDirectives._packageEnabled = new boolean[0];
+        assertionStatusDirectives._deflt = false;
+
+        // Replace the result object's class reference with the type the JDK expects:
+        final ClassActor classActor = ClassRegistry.vmClassRegistry().get(JavaTypeDescriptor.getDescriptorForJavaString("java.lang.AssertionStatusDirectives"));
+        assert classActor != null;
+        Layout.writeHubReference(Reference.fromJava(assertionStatusDirectives), Reference.fromJava(classActor));
+        return assertionStatusDirectives;
+    }
+}

@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=510fb7b1-9b31-47e8-8fc6-5e75a42fce87*/
+
+package com.sun.max.jdwp.generate;
+
+import java.io.*;
+
+/**
+ * @author JDK7: jdk/make/tools/src/build/tools/jdwpgen
+ * @author Thomas Wuerthinger
+ */
+public abstract class AbstractSimpleTypeNode extends AbstractTypeNode {
+
+    @Override
+    void constrain(Context ctx) {
+        _context = ctx;
+        nameNode().constrain(ctx);
+        if (_components.size() != 0) {
+            error("Extraneous content: " + _components.get(0));
+        }
+    }
+
+    @Override
+    public void genJavaWrite(PrintWriter writer, int depth, String writeLabel) {
+        indent(writer, depth);
+        writer.println("ps.write(" + writeLabel + ");");
+    }
+
+    @Override
+    public void genJavaToString(PrintWriter writer, int depth, String writeLabel) {
+        indent(writer, depth);
+        writer.println("stringBuilder.append(\"" + writeLabel + "=\" + " + writeLabel + ");");
+    }
+}

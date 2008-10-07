@@ -1,0 +1,117 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=fe4352da-4186-416e-b4d5-0f26d901cdc7*/
+package com.sun.max.memory;
+
+import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
+import com.sun.max.vm.compiler.builtin.*;
+
+/**
+ * A memory instruction ordering barrier.
+ *
+ * The memory access relationships offered here
+ * map directly to SPARC 'membar' instruction operands.
+ *
+ * On other systems, an instruction that enforces at least
+ * as strong ordering as the selected one will be emitted.
+ * For example, on IA32/AMD64:
+ *
+ *     LOAD_LOAD     -> LFENCE
+ *     STORE_STORE   -> SFENCE
+ *     anything else -> MFENCE
+ *
+ * Note that the code generator may omit emitting memory barriers
+ * that are implied by the target memory model.
+ *
+ * @see MemoryModel
+ *
+ * @author Bernd Mathiske
+ */
+public enum MemoryBarrier implements PoolObject {
+
+    /**
+     * All loads before subsequent loads will be serialized.
+     */
+    LOAD_LOAD,
+
+    /**
+     * All loads before subsequent stores will be serialized.
+     */
+    LOAD_STORE,
+
+    /**
+     * All stores before subsequent loads will be serialized.
+     */
+    STORE_LOAD,
+
+    /**
+     * All stores before subsequent stores will be serialized.
+     */
+    STORE_STORE;
+
+    public static final Pool<MemoryBarrier> VALUE_POOL = new ArrayPool<MemoryBarrier>(values());
+
+    @Override
+    public int serial() {
+        return ordinal();
+    }
+
+    @BUILTIN(builtinClass = SpecialBuiltin.BarMemory.class)
+    private static void barMemory(PoolSet<MemoryBarrier> relations) {
+    }
+
+    private static final PoolSet<MemoryBarrier> _loadLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_LOAD);
+
+    @INLINE
+    public static void loadLoad() {
+        barMemory(_loadLoad);
+    }
+
+    private static final PoolSet<MemoryBarrier> _loadStore = PoolSet.of(VALUE_POOL, MemoryBarrier.LOAD_STORE);
+
+    @INLINE
+    public static void loadStore() {
+        barMemory(_loadStore);
+    }
+
+    private static final PoolSet<MemoryBarrier> _storeLoad = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_LOAD);
+
+    @INLINE
+    public static void storeLoad() {
+        barMemory(_storeLoad);
+    }
+
+    private static final PoolSet<MemoryBarrier> _storeStore = PoolSet.of(VALUE_POOL, MemoryBarrier.STORE_STORE);
+
+    @INLINE
+    public static void storeStore() {
+        barMemory(_storeStore);
+    }
+
+    private static final PoolSet<MemoryBarrier> _all = PoolSet.allOf(VALUE_POOL);
+
+    @INLINE
+    public static void all() {
+        barMemory(_all);
+    }
+
+}

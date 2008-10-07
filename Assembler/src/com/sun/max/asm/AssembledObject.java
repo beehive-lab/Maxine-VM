@@ -1,0 +1,52 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=251e26d1-1935-465b-9612-9ae6a13c6689*/
+package com.sun.max.asm;
+
+
+
+/**
+ * An object representing some inline data or an instruction emitted by an assembler.
+ * 
+ * @author Doug Simon
+ */
+public abstract class AssembledObject implements AssemblyObject {
+
+    private final int _position;
+    private final int _size;
+
+    protected AssembledObject(int startPosition, int endPosition) {
+        _position = startPosition;
+        _size = endPosition - startPosition;
+    }
+
+    public int startPosition() {
+        return _position;
+    }
+
+    public int endPosition() {
+        return _position + _size;
+    }
+
+    public int size() {
+        return _size;
+    }
+}

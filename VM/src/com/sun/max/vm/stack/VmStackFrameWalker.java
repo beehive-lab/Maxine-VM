@@ -1,0 +1,108 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=920b9a19-329a-4f7a-a751-63b870f6eaab*/
+package com.sun.max.vm.stack;
+
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
+
+/**
+ * @author Doug Simon
+ */
+public final class VmStackFrameWalker extends StackFrameWalker {
+
+    private Pointer _vmThreadLocals;
+
+    private boolean _dumpingFatalStackTrace;
+
+    public VmStackFrameWalker(Pointer vmThreadLocals) {
+        super(VMConfiguration.hostOrTarget().compilerScheme());
+        _vmThreadLocals = vmThreadLocals;
+    }
+
+    @Override
+    public boolean isThreadInNative() {
+        return !_vmThreadLocals.isZero() && !VmThreadLocal.LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(_vmThreadLocals).isZero();
+    }
+
+    public void setVmThreadLocals(Pointer vmThreadLocals) {
+        assert _vmThreadLocals.isZero();
+        _vmThreadLocals = vmThreadLocals;
+    }
+
+    @Override
+    public TargetMethod targetMethodFor(Pointer instructionPointer) {
+        return Code.codePointerToTargetMethod(instructionPointer);
+    }
+
+    @Override
+    protected RuntimeStub runtimeStubFor(Pointer instructionPointer) {
+        return Code.codePointerToRuntimeStub(instructionPointer);
+    }
+
+    @Override
+    public byte readByte(Address address, int offset) {
+        return address.asPointer().readByte(offset);
+    }
+
+    @Override
+    public Word readWord(Address address, int offset) {
+        return address.asPointer().readWord(offset);
+    }
+
+    @Override
+    public int readInt(Address address, int offset) {
+        return address.asPointer().readInt(offset);
+    }
+
+    @Override
+    public Word readWord(VmThreadLocal local) {
+        return local.getVariableWord(_vmThreadLocals);
+    }
+
+    @Override
+    public boolean trapHandlerHasRecordedTrapFrame() {
+        return !TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.getVariableWord(_vmThreadLocals).isZero();
+    }
+
+    public boolean isDumpingFatalStackTrace() {
+        return _dumpingFatalStackTrace;
+    }
+
+    public void setIsDumpingFatalStackTrace(boolean flag) {
+        _dumpingFatalStackTrace = flag;
+    }
+
+    @Override
+    public Word readFramelessCallAddressRegister(TargetABI targetABI) {
+        return VMRegister.getCallAddressRegister();
+    }
+
+    @Override
+    public void useABI(TargetABI targetABI) {
+    }
+}

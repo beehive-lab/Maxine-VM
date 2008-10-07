@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=6d31990a-85c4-4275-8bbe-0afe7cac9af5*/
+// Checkstyle: stop
+package test.hotpath;
+/*
+ * @Harness: java
+ * @Runs: 1000 = 2019980;
+ */
+public class HP_field03 {
+    public static byte _b;
+    public static char _c;
+    public static short _s;
+    public static int _i;
+    public static long _l;
+    public static float _f;
+    public static double _d;
+
+    public static int test(int count) {
+        for (int i = 0; i <= count; i++) {
+            _b += i;
+            _c += i;
+            _s += i;
+            _i += i;
+            _l += i;
+            _f += i;
+            _d += i;
+        }
+        return (int) (_b + _c + _s + _i + _l + _f + _d);
+    }
+}
