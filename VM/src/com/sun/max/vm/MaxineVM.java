@@ -21,6 +21,7 @@
 /*VCSID=529a8b91-1c88-4ef3-aaee-bfdd3198226c*/
 package com.sun.max.vm;
 
+
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
