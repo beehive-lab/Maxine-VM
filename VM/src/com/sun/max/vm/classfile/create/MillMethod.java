@@ -1,0 +1,50 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=d8209d20-8eeb-4f7a-8ae4-e0df4d6c7ee5*/
+package com.sun.max.vm.classfile.create;
+
+import com.sun.max.vm.type.*;
+
+/**
+ * @author Bernd Mathiske
+ */
+class MillMethod {
+
+    final int _modifiers;
+    final int _nameIndex;
+    final int _descriptorIndex;
+    final MillCode _code;
+    final MillClassConstant[] _exceptions;
+    final int _numberOfBytes;
+    final MillMethod _next;
+
+    MillMethod(MillClass millClass, int modifiers, String name, SignatureDescriptor signatureDescriptor, MillCode code, MillClassConstant[] exceptions) {
+        this._modifiers = modifiers;
+        this._nameIndex = millClass.makeUtf8Constant(name)._index;
+        this._descriptorIndex = millClass.makeUtf8Constant(signatureDescriptor.toString())._index;
+        this._code = code;
+        this._exceptions = exceptions;
+        this._numberOfBytes = 8 + 14 + code.nBytes() + 4 + ((exceptions.length > 0) ? 8 + (2 * exceptions.length) : 0);
+        this._next = millClass._methodList;
+        millClass._methodList = this;
+    }
+
+}

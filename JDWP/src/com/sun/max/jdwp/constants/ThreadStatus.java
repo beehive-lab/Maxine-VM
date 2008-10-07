@@ -1,0 +1,36 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * 
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ * 
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ * 
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ * 
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=a7ca3ad4-b57c-4efb-a311-e1cffccb79e9*/
+
+// WARNING: Generated file, do not modify!
+
+// To use the original JDWP specification as a basis, some styleguides have to be turned off
+// Checkstyle: stop field name check
+
+package com.sun.max.jdwp.constants;
+
+public final class ThreadStatus {
+    public static final int ZOMBIE = 0;
+    public static final int RUNNING = 1;
+    public static final int SLEEPING = 2;
+    public static final int MONITOR = 3;
+    public static final int WAIT = 4;
+}
