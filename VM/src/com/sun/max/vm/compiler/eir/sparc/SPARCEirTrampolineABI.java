@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=d63a70d7-333f-43aa-863a-177f46884911*/
+package com.sun.max.vm.compiler.eir.sparc;
+
+import com.sun.max.collect.*;
+import com.sun.max.vm.*;
+
+/**
+ * Trampolines callee-save and restore all parameter registers.
+ *
+ * @author Bernd Mathiske
+ * @author Laurent Daynes
+ */
+public class SPARCEirTrampolineABI extends SPARCEirJavaABI {
+
+    public SPARCEirTrampolineABI(VMConfiguration vmConfiguration) {
+        super(vmConfiguration);
+        // Remove from the set of caller saved registers all output registers as well.
+        // These are already empty as a register window is allocated in the trampoline frame.
+        final PoolSet<SPARCEirRegister> callerSavedRegister = callerSavedRegisters();
+        for (SPARCEirRegister register : _integerOutRegisters) {
+            callerSavedRegister.remove(register);
+        }
+    }
+
+}

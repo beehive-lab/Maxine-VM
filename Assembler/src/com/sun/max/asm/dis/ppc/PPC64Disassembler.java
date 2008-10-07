@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=d1f423ec-4981-41bd-be8f-0ab5e0ef0586*/
+package com.sun.max.asm.dis.ppc;
+
+import com.sun.max.asm.*;
+import com.sun.max.asm.gen.*;
+import com.sun.max.asm.gen.risc.ppc.*;
+import com.sun.max.asm.ppc.complete.*;
+import com.sun.max.collect.*;
+import com.sun.max.lang.*;
+
+/**
+ * 
+ *
+ * @author Bernd Mathiske
+ */
+public class PPC64Disassembler extends PPCDisassembler<PPC64DisassembledInstruction> {
+
+    private final long _startAddress;
+
+    public PPC64Disassembler(long startAddress) {
+        super(PPCAssembly.ASSEMBLY, WordWidth.BITS_64);
+        _startAddress = startAddress;
+    }
+
+    @Override
+    public Class<PPC64DisassembledInstruction> disassembledInstructionType() {
+        return PPC64DisassembledInstruction.class;
+    }
+
+    @Override
+    protected PPC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
+        return new PPC64DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+    }
+
+    @Override
+    protected PPC64DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
+        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
+        for (byte b : bytes) {
+            arguments.append(new Immediate8Argument(b));
+        }
+        return new PPC64DisassembledInstruction(_startAddress, position, bytes, PPCAssembly.ASSEMBLY.inlineByteTemplate(), arguments);
+    }
+
+    @Override
+    protected Assembler createAssembler(int position) {
+        return new PPC64Assembler(_startAddress + position);
+    }
+
+}

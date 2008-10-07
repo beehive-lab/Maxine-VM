@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=7cff0395-46d3-4db6-9dbb-4a5c58c21d41*/
+#ifndef __condition_h__
+#define __condition_h__ 1
+
+#include "mutex.h"
+
+#if (os_DARWIN || os_LINUX)
+#   include <pthread.h>
+#   include <errno.h>
+    typedef pthread_cond_t condition_Struct;
+#elif os_SOLARIS
+#   include <thread.h>
+#   include <errno.h>
+    typedef cond_t condition_Struct;
+#elif os_GUESTVMXEN
+#   include "guestvmXen.h"
+    typedef guestvmXen_condition_t condition_Struct;
+#endif
+
+typedef condition_Struct *Condition;
+    
+extern void condition_initialize(Condition condition);
+extern void condition_destroy(Condition condition);
+extern int condition_wait(Condition condition, Mutex mutex);
+extern Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
+extern int condition_notify(Condition condition);
+extern int condition_notifyAll(Condition condition);
+
+#endif /*__condition_h__*/

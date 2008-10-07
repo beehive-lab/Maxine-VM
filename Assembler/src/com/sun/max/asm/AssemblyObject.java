@@ -1,0 +1,61 @@
+/*
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ *
+ * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+ * that is described in this document. In particular, and without limitation, these intellectual property
+ * rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+ * more additional patents or pending patent applications in the U.S. and in other countries.
+ *
+ * U.S. Government Rights - Commercial software. Government users are subject to the Sun
+ * Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+ * supplements.
+ *
+ * Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+ * registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+ * are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+ * U.S. and other countries.
+ *
+ * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+ * Company, Ltd.
+ */
+/*VCSID=bcce47b0-74bc-45de-af32-5419860af1f3*/
+package com.sun.max.asm;
+
+/**
+ * Describes an object in an assembled instruction stream. The object has a {@linkplain #startPosition() start} and
+ * {@linkplain #endPosition() end} position in the stream.
+ * 
+ * @author Bernd Mathiske
+ */
+public interface AssemblyObject {
+
+    /**
+     * Enumerated type for categorizing assembled objects as either code or data.
+     */
+    enum Type {
+        /**
+         * Denotes that an assembled object is code.
+         */
+        CODE,
+
+        /**
+         * Denotes that an assembled object is data.
+         */
+        DATA;
+    }
+
+    /**
+     * Gets the position of this instruction's first byte.
+     */
+    int startPosition();
+
+    /**
+     * Gets the position one byte past of this instruction's last byte.
+     */
+    int endPosition();
+
+    /**
+     * Gets an object denoting whether this assembled object is code or data.
+     */
+    Type type();
+}
