@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=4313d50a-f656-47c8-ad1a-e30eb0c3d894*/
 /**
  * Load and mmap the binary boot image of the VM.
  *

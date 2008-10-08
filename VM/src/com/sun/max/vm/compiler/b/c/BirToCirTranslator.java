@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=1d49edcd-5d6b-4300-863d-7090562ba7fc*/
 package com.sun.max.vm.compiler.b.c;
 
 import static com.sun.max.vm.compiler.cir.CirTraceObserver.Transformation.*;
@@ -50,21 +49,17 @@ public class BirToCirTranslator extends CirGenerator {
 
         BlockTranslator.run(methodTranslation);
         CirClosure cirClosure = methodTranslation.cirClosure();
+        notifyBeforeTransformation(cirMethod, cirClosure, INITIAL_CIR_CREATION);
         notifyAfterTransformation(cirMethod, cirClosure, INITIAL_CIR_CREATION);
-
-
-
 
         notifyBeforeTransformation(cirMethod, cirClosure, HCIR_FREE_VARIABLE_CAPTURING);
         FreeVariableCapturing freeVariableCapturing = new FreeVariableCapturing(methodTranslation);
         freeVariableCapturing.run();
         notifyAfterTransformation(cirMethod, cirClosure, HCIR_FREE_VARIABLE_CAPTURING);
 
-
         notifyBeforeTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
         CirAlphaConversion.apply(methodTranslation.variableFactory(), cirClosure);
         notifyAfterTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
-
 
         notifyBeforeTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
         freeVariableCapturing.pruneJavaLocals();

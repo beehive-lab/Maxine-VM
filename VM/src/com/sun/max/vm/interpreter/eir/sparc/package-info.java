@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=5812b4a5-16fb-4e50-916c-14afa219c042*/
 /**
  * @author Bernd Mathiske
  */

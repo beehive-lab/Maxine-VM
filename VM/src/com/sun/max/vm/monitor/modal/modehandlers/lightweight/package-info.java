@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d4c45bdc-df74-497c-8f13-79c880d17dd1*/
 /**
  * Lightweight locking mode handlers for ModalMonitorScheme
  */

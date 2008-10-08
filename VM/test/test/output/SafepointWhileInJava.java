@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=99efabe4-b3c9-4c66-b3c7-0acc599466ae*/
 package test.output;
 
 public class SafepointWhileInJava {

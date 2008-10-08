@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a39426b7-b141-464d-9578-850c42482b5b*/
 /**
  * PowerPC instruction set assembler template descriptions
  * 

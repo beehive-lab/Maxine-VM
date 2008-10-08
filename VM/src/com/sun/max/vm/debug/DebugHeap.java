@@ -18,12 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8cfa0326-f638-405d-bdfc-e512d823ca06*/
 package com.sun.max.vm.debug;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.*;
 
 public final class DebugHeap {
 
@@ -34,7 +36,7 @@ public final class DebugHeap {
 
     public static final long LONG_OBJECT_TAG = 0xcccccccceeeeeeeeL;
 
-    public static final int INT_OBJECT_TAG = 0xeeeeeeee;
+    public static final int INT_OBJECT_TAG = 0xcccceeee;
 
     public static boolean isValidCellTag(Word word) {
         if (Word.width() == WordWidth.BITS_64) {
@@ -45,17 +47,31 @@ public final class DebugHeap {
         return word.asAddress().toInt() == INT_OBJECT_TAG;
     }
 
-    public static boolean hasValidCellTag(Pointer cell) {
-        return isValidCellTag(cell.readWord(-1));
+    @INLINE
+    public static void writeCellTag(Pointer cell) {
+        if (VMConfiguration.hostOrTarget().debugging()) {
+            if (Word.width() == WordWidth.BITS_64) {
+                cell.setLong(-1, DebugHeap.LONG_OBJECT_TAG);
+            } else {
+                cell.setInt(-1, DebugHeap.INT_OBJECT_TAG);
+            }
+        }
     }
 
     @INLINE
-    public static void writeCellTag(Pointer cell, WordWidth wordWidth) {
-        if (wordWidth == WordWidth.BITS_64) {
-            cell.setLong(-1, DebugHeap.LONG_OBJECT_TAG);
-        } else {
-            cell.setInt(-1, DebugHeap.INT_OBJECT_TAG);
+    public static Pointer checkDebugCellTag(RuntimeMemoryRegion from, Pointer cell) {
+        if (VMConfiguration.hostOrTarget().debugging()) {
+            if (!isValidCellTag(cell.getWord(0))) {
+                Debug.print("Invalid object tag @ ");
+                Debug.print(cell);
+                Debug.print("(start + ");
+                Debug.print(cell.minus(from.start()).asOffset().toInt());
+                Debug.println(")");
+                FatalError.unexpected("INVALID CELL TAG");
+            }
+            return cell.plusWords(1);
         }
+        return cell;
     }
 
 }

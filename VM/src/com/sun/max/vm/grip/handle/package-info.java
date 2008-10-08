@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e5b4a83f-faf2-4f84-bbf3-0ebed3eea417*/
 /**
  * Representing object references by "handles", indirect pointers
  * 

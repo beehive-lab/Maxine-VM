@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f16056e3-bc42-4cfa-9b97-af2c2602dd63*/
 /**
  * Swing based visualization of CIR graphs.
  * 

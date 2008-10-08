@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=805b4e94-ce4e-482d-a86d-3ec3ab3bd4d6*/
 /**
  * Bit fields in assembler syllables.
  * 

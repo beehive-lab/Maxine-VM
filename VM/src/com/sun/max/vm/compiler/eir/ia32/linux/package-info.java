@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=9f977e44-811d-46ed-b59d-3e3a9262c45e*/
 /**
  * ABI specifications for Linux on IA32.
  *

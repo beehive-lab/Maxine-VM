@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=7babc3a4-af1b-4ac8-a1c4-28a190af124a*/
 #ifndef __mutex_h__
 #define __mutex_h__ 1
 

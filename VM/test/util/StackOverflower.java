@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=934e7a34-04fd-478f-aef3-42b476e79134*/
 package util;
 
 public class StackOverflower {

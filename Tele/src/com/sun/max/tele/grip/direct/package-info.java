@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b6fdf7fc-6ef4-48c5-b5fb-399d51e5beb9*/
 /**
  * Direct grips.
  * 

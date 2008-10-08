@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e487726b-de0a-46ba-830e-ee8c78b9165f*/
 /**
  * ABI specifications for Solaris on SPARC.
  *

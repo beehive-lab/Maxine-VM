@@ -3,7 +3,7 @@
     <local-check-config name="Maxine Checks" location="checkstyle/maxine_checks.xml" type="project" description="">
         <additional-data name="protect-config-file" value="false"/>
     </local-check-config>
-    <fileset name="all" enabled="true" check-config-name="Maxine Checks" local="false">
+    <fileset name="all" enabled="true" check-config-name="Maxine Checks" local="true">
         <file-match-pattern match-pattern="." include-pattern="true"/>
     </fileset>
     <filter name="NonSrcDirs" enabled="true"/>

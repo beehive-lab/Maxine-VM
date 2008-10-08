@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=6cc97371-8175-48cb-a1c5-3f933a703716*/
 /**
  * Transformation of bytecode to encode features such as exception dispatching, JNI stubs, synchronized methods that may
  * otherwise be performed by runtime routines.

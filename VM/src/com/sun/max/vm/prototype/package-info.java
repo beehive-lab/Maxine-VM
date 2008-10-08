@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=793ce55a-164f-4be6-b1ae-752040efbc2b*/
 /**
  * A "prototype" is a representation of the entirety of our VM before bootstrap,
  * in some other format than the eventual fully bootstrapped executable.

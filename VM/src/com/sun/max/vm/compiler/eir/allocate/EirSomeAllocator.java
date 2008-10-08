@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f85a7ccd-6b33-4c11-93fd-b6c4423ee948*/
 package com.sun.max.vm.compiler.eir.allocate;
 
 import java.util.*;
@@ -590,6 +589,9 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         allocateConstants();
         _constantAllocationTimer.stop();
 
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.INTERFERENCE_GRAPH);
+        methodGeneration().notifyBeforeTransformation(methodGeneration().eirBlocks(), Transformation.VARIABLE_SPLITTING);
+
         _variableSplittingTimer.start();
         splitVariables();
         _variableSplittingTimer.stop();
@@ -605,6 +607,8 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
             }
         }
         _resettingTimer.stop();
+
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.LIVE_RANGES);
         _resetting2Timer.start();
         for (EirVariable variable : methodGeneration().variables()) {
             variable.resetInterferingVariables(emptyVariableSet);

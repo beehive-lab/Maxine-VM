@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=864a39cc-36a4-45cb-94ee-4d53f81ef8af*/
 package com.sun.max.jdwp.vm.proxy;
 
 import com.sun.max.jdwp.vm.core.*;
@@ -31,12 +30,13 @@ import com.sun.max.jdwp.vm.core.*;
  */
 public interface ReferenceTypeProvider extends ObjectProvider {
 
-	public final class ClassStatus {
-	    public static final int VERIFIED = 1;
-	    public static final int PREPARED = 2;
-	    public static final int INITIALIZED = 4;
-	    public static final int ERROR = 8;
-	}
+    public final class ClassStatus {
+
+        public static final int VERIFIED = 1;
+        public static final int PREPARED = 2;
+        public static final int INITIALIZED = 4;
+        public static final int ERROR = 8;
+    }
 
     @ConstantReturnValue
     VMValue.Type getType();

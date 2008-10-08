@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=0c0913f2-09ef-4d06-bafe-629d9bab24f2*/
 /**
  * ABI specifications for Darwin on IA32.
  *

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=001f5de8-ad3c-4c36-8fc8-0335465b6db9*/
 #ifdef USE_PRAGMA_IDENT_SRC
 #pragma ident "@(#)symtab.c	1.11 05/11/18 15:16:58 VM"
 #endif

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=c2fd5205-e812-4d35-af52-9985d6cfa925*/
 /**
  * Package root of the ISA specific assemblers used by the VM.
  * 

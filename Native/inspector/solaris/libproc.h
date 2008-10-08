@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=53c0af24-22d6-4930-b33d-75d68bf95f76*/
 
 /*
  * Interfaces available from the process control library, libproc.

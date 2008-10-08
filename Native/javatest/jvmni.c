@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f2514637-aaf0-41b7-a6b7-3c0144ed20e6*/
 /**
  * JNI test code for the JVM_* native interface.
  * This JNI code supports unit testing of the JVM interface through the JavaTester.

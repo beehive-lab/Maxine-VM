@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=6bb6852a-ec11-4e17-b4d8-f12d783639f0*/
 
 /**
  * Data structures and algorithms that involve thread synchronization.

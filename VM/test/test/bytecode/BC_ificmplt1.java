@@ -1,4 +1,3 @@
-/*VCSID=a8118b2d-eee9-4df0-ac68-6a892081c2aa*/
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=748e83dc-16bd-4e25-a67c-99954dcba454*/
 /**
  * A reference scheme for remote access to tele VM state that does not call any barriers.
  * This is the default for remote access,  no matter what reference scheme is configured in the tele boot image.

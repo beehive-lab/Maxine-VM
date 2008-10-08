@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e11e4e99-ee48-43f1-b08e-059907dca332*/
 /**
  * A reference scheme a la Brooks:
  * Each object header contains an extra object reference.
