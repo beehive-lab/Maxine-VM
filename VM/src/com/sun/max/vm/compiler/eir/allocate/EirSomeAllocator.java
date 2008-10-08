@@ -589,6 +589,9 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         allocateConstants();
         _constantAllocationTimer.stop();
 
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.INTERFERENCE_GRAPH);
+        methodGeneration().notifyBeforeTransformation(methodGeneration().eirBlocks(), Transformation.VARIABLE_SPLITTING);
+
         _variableSplittingTimer.start();
         splitVariables();
         _variableSplittingTimer.stop();
@@ -604,6 +607,8 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
             }
         }
         _resettingTimer.stop();
+
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.LIVE_RANGES);
         _resetting2Timer.start();
         for (EirVariable variable : methodGeneration().variables()) {
             variable.resetInterferingVariables(emptyVariableSet);

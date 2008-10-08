@@ -32,7 +32,7 @@ import com.sun.max.vm.thread.*;
 /**
  * @author Christos Kotselidis
  */
-public class ParallelCopyActionImpl implements Copy {
+public class ParallelCopyActionImpl implements Action {
 
     private static Verify _verifyAction = new VerifyActionImpl();
 
@@ -57,9 +57,7 @@ public class ParallelCopyActionImpl implements Copy {
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = VMConfiguration.hostOrTarget().heapScheme().gcAllocate(to, size);
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                DebugHeap.writeCellTag(toCell, Word.width());
-            }
+            DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);

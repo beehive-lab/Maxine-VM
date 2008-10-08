@@ -326,6 +326,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
     public void translateMethod() {
         // do the translation
+        notifyBeforeTransformation(eirBlocks(), Transformation.INITIAL_EIR_CREATION);
         translateDirBlocks();
         notifyAfterTransformation(eirBlocks(), Transformation.INITIAL_EIR_CREATION);
 
@@ -334,6 +335,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         createAllocator(this).run();
         _registerAllocationTimer.stop();
 
+        notifyBeforeTransformation(eirBlocks(), Transformation.BLOCK_LAYOUT);
         rearrangeBlocks();
         notifyAfterTransformation(eirBlocks(), Transformation.BLOCK_LAYOUT);
     }

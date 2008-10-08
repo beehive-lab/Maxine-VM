@@ -226,8 +226,11 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
             variable.resetLiveRange();
             variable.resetInterferingVariables(emptyVariableSet);
         }
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.VERIFY_LIVE_RANGES);
         determineLiveRanges();
         methodGeneration().notifyAfterTransformation(methodGeneration().variables(), Transformation.VERIFY_LIVE_RANGES);
+
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.VERIFY_INTERFERENCE_GRAPH);
         determineInterferences(variables);
         methodGeneration().notifyAfterTransformation(methodGeneration().variables(), Transformation.VERIFY_INTERFERENCE_GRAPH);
 

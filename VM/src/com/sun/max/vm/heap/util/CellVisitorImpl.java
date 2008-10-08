@@ -43,17 +43,7 @@ public class CellVisitorImpl implements CellVisitor {
     public static void linearVisitAllCells(CellVisitor cellVisitor, Action action, RuntimeMemoryRegion source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = source.start().asPointer();
         while (cell.lessThan(source.getAllocationMark())) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                cell = cell.plusWords(1);
-                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Debug.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Debug.print(cell);
-                    Debug.print("(start + ");
-                    Debug.print(cell.minus(from.start()).asOffset().toInt());
-                    Debug.println(")");
-                    System.exit(1);
-                }
-            }
+            cell = DebugHeap.checkDebugCellTag(from, cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
         }
     }
@@ -62,17 +52,7 @@ public class CellVisitorImpl implements CellVisitor {
         Pointer cell = tlab.start().asPointer();
         final Pointer initialEnd = tlab.end().asPointer();
         while (cell.lessThan(tlab.getAllocationMark()) && cell.lessThan(initialEnd)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                cell = cell.plusWords(1);
-                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Debug.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Debug.print(cell);
-                    Debug.print("(start + ");
-                    Debug.print(cell.minus(from.start()).asOffset().toInt());
-                    Debug.println(")");
-                    System.exit(1);
-                }
-            }
+            cell = DebugHeap.checkDebugCellTag(from, cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
         }
     }
@@ -80,17 +60,7 @@ public class CellVisitorImpl implements CellVisitor {
     public static void linearVisitAllCellsTLAB(CellVisitor cellVisitor, Action action, Pointer tlabStart, Pointer tlabEnd, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = tlabStart;
         while (cell.lessThan(tlabEnd)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                cell = cell.plusWords(1);
-                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Debug.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Debug.print(cell);
-                    Debug.print("(start + ");
-                    Debug.print(cell.minus(from.start()).asOffset().toInt());
-                    Debug.println(")");
-                    System.exit(1);
-                }
-            }
+            cell = DebugHeap.checkDebugCellTag(from, cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
         }
     }
@@ -100,17 +70,7 @@ public class CellVisitorImpl implements CellVisitor {
         VmThread thread = VmThread.current();
         TLAB currentTLAB = thread.getTLAB();
         while (cell.lessThan(currentTLAB.getAllocationMark())) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                cell = cell.plusWords(1);
-                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Debug.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Debug.print(cell);
-                    Debug.print("(start + ");
-                    Debug.print(cell.minus(from.start()).asOffset().toInt());
-                    Debug.println(")");
-                    System.exit(1);
-                }
-            }
+            cell = DebugHeap.checkDebugCellTag(from, cell);
             cell = cellVisitor.visitCell(cell, action, from, to);
             thread = VmThread.current();
             currentTLAB = thread.getTLAB();

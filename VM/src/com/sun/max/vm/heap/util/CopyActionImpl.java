@@ -33,7 +33,7 @@ import com.sun.max.vm.runtime.*;
  * @author Christos Kotselidis
  */
 
-public class CopyActionImpl implements Copy {
+public class CopyActionImpl implements Action {
 
     private static Verify _verifyAction = new VerifyActionImpl();
 
@@ -61,9 +61,7 @@ public class CopyActionImpl implements Copy {
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme._outOfMemoryError;
             }
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                DebugHeap.writeCellTag(toCell, Word.width());
-            }
+            DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);

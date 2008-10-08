@@ -49,21 +49,17 @@ public class BirToCirTranslator extends CirGenerator {
 
         BlockTranslator.run(methodTranslation);
         CirClosure cirClosure = methodTranslation.cirClosure();
+        notifyBeforeTransformation(cirMethod, cirClosure, INITIAL_CIR_CREATION);
         notifyAfterTransformation(cirMethod, cirClosure, INITIAL_CIR_CREATION);
-
-
-
 
         notifyBeforeTransformation(cirMethod, cirClosure, HCIR_FREE_VARIABLE_CAPTURING);
         FreeVariableCapturing freeVariableCapturing = new FreeVariableCapturing(methodTranslation);
         freeVariableCapturing.run();
         notifyAfterTransformation(cirMethod, cirClosure, HCIR_FREE_VARIABLE_CAPTURING);
 
-
         notifyBeforeTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
         CirAlphaConversion.apply(methodTranslation.variableFactory(), cirClosure);
         notifyAfterTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
-
 
         notifyBeforeTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
         freeVariableCapturing.pruneJavaLocals();
