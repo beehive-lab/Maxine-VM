@@ -20,53 +20,16 @@
  */
 package util;
 
-public class GCLinkedListTest {
 
+/**
+ * Executes the equivalent of HelloWorld with a GC between two calls.
+ *
+ * @author Ben L. Titzer
+ */
+public final class GCTest1 {
     public static void main(String[] args) {
-        final Node1 start = new Node1("0");
-        Node1 previous = start;
-        for (int i = 0; i < Integer.MAX_VALUE; i++) {
-            final Node1 temp = new Node1(String.valueOf(i));
-            previous.setNext(temp);
-            previous = temp;
-            System.out.println("Iteration: " + i);
-
-           //GCLinkedListTest.printList(start);
-        }
-
+        System.out.println(GCTest1.class.getSimpleName() + " started.");
+        System.gc();
+        System.out.println(GCTest1.class.getSimpleName() + " done.");
     }
-
-    public static void printList(Node1 start) {
-        Node1 temp = start;
-        while (temp.getNext() != null) {
-            System.out.print(temp.getId() + ", ");
-            temp = temp.getNext();
-        }
-    }
-
-}
-
-class Node1 {
-
-    String _id;
-    Node1 _next = null;
-    long[] _array;
-
-    Node1(String id) {
-        _id = id;
-        _array = new long[500];
-    }
-
-    public String getId() {
-        return _id;
-    }
-
-    public void setNext(Node1 next) {
-        _next = next;
-    }
-
-    public Node1 getNext() {
-        return _next;
-    }
-
 }

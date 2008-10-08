@@ -18,35 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
 
-/**
- * small test case for mantis bug 6: recompilation segmentation fault.
- * @author Yi Guo
- */
-public class RctBug_Mantis6 {
-    static class S {
+package test.output;
 
-        public int _x = 12;
 
-        public int b() {
-            try {
-                throw new Exception("abc");
-            } catch (Exception e) {
-                return _x;
-            }
-        }
-    }
+public class Recursion {
+
+    private int _recursionLevel;
 
     public static void main(String[] args) {
-        System.out.println("starting...");
-        final S f = new S();
-        String s = "";
-        /* 10000 iterations to trigger recompilation of f.b() if enabled.*/
-        for (int i = 0; i < 10000; i++) {
-            s += f.b();
-        }
-        System.out.println(s.length());
-        System.out.println("done!");
+        new Recursion().recurse();
     }
+
+    private void recurse() {
+        if (_recursionLevel++ > 10) {
+            return;
+        }
+        System.out.println("recursion: " + _recursionLevel);
+        recurse();
+    }
+
 }

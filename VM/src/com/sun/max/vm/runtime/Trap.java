@@ -76,7 +76,6 @@ public final class Trap {
     }
 
     static {
-        new CriticalNativeMethod(VirtualMemory.class, "unprotectPage");
         new CriticalNativeMethod(MaxineVM.class, "native_exit");
         new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
         new CriticalNativeMethod(MaxineVM.class, "native_stack_trap_exit");
