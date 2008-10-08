@@ -36,7 +36,6 @@ import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.memory.VirtualMemory;
 
 /**
  * This class handles operating systems traps that can arise from implicit null pointer checks,
