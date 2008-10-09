@@ -1,0 +1,9 @@
+JVM design decisions
+--------------------
+
+Machine code does not move at runtime.
+To show up in a different location,
+it gets erased and regenerated from scratch.
+
+All machine code instructions are within 32-bit offsets from each other.
+
