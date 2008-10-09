@@ -109,6 +109,7 @@ extern void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIn
 extern void sparc_canonicalizeSignalIntegerRegisters(sparc_OsSignalIntegerRegisters os, sparc_OsSignalCanonicalIntegerRegisters c);
 
 extern void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters osTeleIntegerRegisters, sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
+extern void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
 
 typedef struct sparc_CanonicalFloatingPointRegisters {
 #ifdef	__sparcv9
