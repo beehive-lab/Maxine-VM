@@ -36,7 +36,6 @@ class AbstractSerializableObject implements SerializableObject {
 
     private static final Logger LOGGER = Logger.getLogger(AbstractSerializableObject.class.getName());
 
-    @Override
     public byte[] getSerializedData() {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream oos = null;
