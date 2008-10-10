@@ -86,12 +86,12 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
 
     @INLINE
     public final BiasedLockWord64 asBiasedTo(int lockwordThreadID) {
-        return BiasedLockWord64.as(asAnonBiased().asAddress().or(Address.fromInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
+        return BiasedLockWord64.as(asAnonBiased().asAddress().or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
     }
 
     @INLINE
     public final BiasedLockWord64 asBiasedTo(int lockwordThreadID, BiasedLockEpoch epoch) {
-        return BiasedLockWord64.as(asAnonBiased().asAddress().or(epoch.asAddress()).or(Address.fromInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
+        return BiasedLockWord64.as(asAnonBiased().asAddress().or(epoch.asAddress()).or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
     }
 
     @INLINE

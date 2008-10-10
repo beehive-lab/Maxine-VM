@@ -44,7 +44,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
 
     @INLINE
     private Address hashCodeToMisc(int hashCode) {
-        return Address.fromInt(hashCode);
+        return Address.fromUnsignedInt(hashCode);
     }
 
     @INLINE
@@ -119,7 +119,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
     }
 
     public Word createMisc(Object object) {
-        return Address.fromInt(createHashCode(object));
+        return Address.fromUnsignedInt(createHashCode(object));
     }
 
     @Override
