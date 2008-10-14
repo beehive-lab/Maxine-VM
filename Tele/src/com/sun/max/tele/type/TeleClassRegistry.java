@@ -72,6 +72,7 @@ public class TeleClassRegistry extends TeleVMHolder {
 
     private static final Logger LOGGER = Logger.getLogger(TeleClassRegistry.class.getName());
     
+    private static final int TRACE_VALUE = 2;
     
     // TODO (mlvdv)  Generalize to map either  (TypeDescriptor, ClassLoader) -> ClassActor Reference *or*  TypeDescriptor -> ClassActor Reference*
     private final Map<TypeDescriptor, Reference> _typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
@@ -93,7 +94,7 @@ public class TeleClassRegistry extends TeleVMHolder {
 		final String typeDescriptorString = teleVM().getString(stringReference);
 		final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
 		_typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);		
-		Trace.line(2, "TeleClassRegistry: adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
+		Trace.line(TRACE_VALUE, "TeleClassRegistry: adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
 	}
 
     /**
@@ -179,7 +180,7 @@ public class TeleClassRegistry extends TeleVMHolder {
     		addToRegistry(classActorReference);
     		index++;
     	}
-    	Trace.line(1, "TeleClassRegistry refreshed: static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount));   
+    	Trace.line(TRACE_VALUE, "TeleClassRegistry refreshed: static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount));   
     	_dynamicallyLoadedClassCount = remoteLoadedClassCount;
     }
     
