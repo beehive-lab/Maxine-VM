@@ -20,23 +20,50 @@
  */
 package com.sun.max.tele.type;
 
-import java.util.*;
-import java.util.logging.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
-import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.interpreter.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.tele.value.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.jdwp.vm.proxy.InterfaceProvider;
+import com.sun.max.jdwp.vm.proxy.MethodProvider;
+import com.sun.max.jdwp.vm.proxy.ReferenceTypeProvider;
+import com.sun.max.lang.Function;
+import com.sun.max.program.ProgramError;
+import com.sun.max.program.Trace;
+import com.sun.max.tele.TeleError;
+import com.sun.max.tele.TeleVM;
+import com.sun.max.tele.TeleVMHolder;
+import com.sun.max.tele.interpreter.InspectorInterpreter;
+import com.sun.max.tele.object.TeleClassActor;
+import com.sun.max.tele.object.TeleInterfaceActor;
+import com.sun.max.tele.object.TeleMethodActor;
+import com.sun.max.tele.object.TeleObject;
+import com.sun.max.tele.value.TeleReferenceValue;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.ClassID;
+import com.sun.max.vm.actor.holder.InterfaceActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.type.ClassRegistry;
+import com.sun.max.vm.type.JavaTypeDescriptor;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.max.vm.value.IntValue;
 
 /**
+ * A registry of classes known to be loaded in the {@link TeleVM}.
+ * The registry is initialized with all classes pre-loaded into the boot image.
+ * Dynamically loaded classes are discovered and added by 
+ * inspection during each {@link #refresh()}.
+ * 
+ * The registry is constructed using information obtained by low level
+ * data reading, avoiding the overhead of creating a {@link TeleClassActor},
+ * which overhead includes loading the class.
+ * 
  * @author Bernd Mathiske
  * @author Athul Acharya
  * @author Michael Van De Vanter
@@ -44,77 +71,49 @@ import com.sun.max.vm.value.*;
 public class TeleClassRegistry extends TeleVMHolder {
 
     private static final Logger LOGGER = Logger.getLogger(TeleClassRegistry.class.getName());
-
-    // TODO (mlvdv) rework this as a subclass of TeleObject
-
+    
+    
+    // TODO (mlvdv)  Generalize to map either  (TypeDescriptor, ClassLoader) -> ClassActor Reference *or*  TypeDescriptor -> ClassActor Reference*
     private final Map<TypeDescriptor, Reference> _typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
 
+    // ClassID of a {@link ClassActor} in the {@link TeleVM} -> reference to the ClassActor
     private final Map<Integer, Reference> _idToClassActorReference = new HashMap<Integer, Reference>();
 
-    /**
-     * @param id  Class ID of a {@link ClassActor} in the target VM.
-     * @return Surrogate for the {@link ClassActor} in the target VM, null if not known.
-     */
-    public TeleClassActor findTeleClassActorByID(int id) {
-        final Reference classActorReference = _idToClassActorReference.get(id);
-        if (classActorReference != null && !classActorReference.isZero()) {
-            return (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
-        }
-        return null;
-    }
-
-    private final Map<Integer, ClassActor> _idToClassActor = new HashMap<Integer, ClassActor>();
-
-    /**
-     * @param id Target id of a {@link ClassActor} in the target VM.
-     * @return  Local {@link ClassActor} equivalent to the one in the target VM, null if not known.
-     */
-    private ClassActor findClassActorByID(int id) {
-        ClassActor classActor = _idToClassActor.get(id);
-        if (classActor == null) {
-            final Reference classActorReference = _idToClassActorReference.get(id);
-            if (classActorReference != null) {
-                classActor = teleVM().makeClassActor(classActorReference);
-                _idToClassActor.put(id, classActor);
-            }
-        }
-        return classActor;
-    }
-
-    private static ThreadLocal<Boolean> _usingTeleClassIDs = new ThreadLocal<Boolean>() {
-        @Override
-        protected synchronized Boolean initialValue() {
-            return false;
-        }
-    };
-
-    private final ClassID.Mapping _classIDMapping = new ClassID.Mapping() {
-        public ClassActor idToClassActor(int id) {
-            if (_usingTeleClassIDs.get()) {
-                return findClassActorByID(id);
-            }
-            return null;
-        }
-    };
+	/**
+	 * Adds an entry to the registry.
+	 * 
+	 * @param classActorReference a {@link ClassActor} for a class loaded in the {@link TeleVM}
+	 * @throws ClassFormatError
+	 */
+	private void addToRegistry(final Reference classActorReference) throws ClassFormatError {
+		final int id = teleVM().fields().ClassActor_id.readInt(classActorReference);
+		_idToClassActorReference.put(id, classActorReference);
+		final Reference typeDescriptorReference = teleVM().fields().ClassActor_typeDescriptor.readReference(classActorReference);
+		final Reference stringReference = teleVM().fields().Descriptor_string.readReference(typeDescriptorReference);
+		final String typeDescriptorString = teleVM().getString(stringReference);
+		final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
+		_typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);		
+		Trace.line(2, "TeleClassRegistry: adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
+	}
 
     /**
-     * While the runnable executes, class actor IDs refer to the tele VM, not the Inspector VM.
-     * This can be employed to reuse code that manipulates MemberIDs and HolderIDs.
-     * Such code would otherwise not work, because class actor IDs in the Inspector differ from those in the tele VM.
+     * The number of classes loaded in the boot image for the {@link TeleVM}.
      */
-    public static <Result_Type> Result_Type usingTeleClassIDs(Function<Result_Type> function) {
-        final boolean oldValue = _usingTeleClassIDs.get();
-        _usingTeleClassIDs.set(true);
-        try {
-            final Result_Type result = function.call();
-            return result;
-        } catch (Exception exception) {
-            throw ProgramError.unexpected(exception);
-        } finally {
-            _usingTeleClassIDs.set(oldValue);
-        }
-    }
+    private final int _preLoadedClassCount;
+    
+    /**
+     * The number of classes dynamically loaded in the {@link TeleVM} that are known so far.
+     */
+    private int _dynamicallyLoadedClassCount = 0;
+    
 
+    /**
+     * Create a registry that contains summary information about all classes known to have been
+     * loaded into the {@link TeleVM}, initialized at registry creation with classes pre-loaded
+     * into the boot image and supplemented with dynamically loaded classes with each
+     * call to {@link #refresh()}.
+     * @param teleVM
+     */
     public TeleClassRegistry(TeleVM teleVM) {
         super(teleVM);
         Trace.begin(1, "creating TeleClassRegistry");
@@ -150,15 +149,8 @@ public class TeleClassRegistry extends TeleVMHolder {
                 for (int i = 0; i < length; i++) {
                     Reference entryReference = teleVM().getReference(tableReference, i);
                     while (!entryReference.isZero()) {
-                        // Use low level field reading to defer the overhead of creating TeleObjects and loading additional classes.
                         final Reference classActorReference = teleVM().fields().ChainedHashMapping$DefaultEntry_value.readReference(entryReference);
-                        final int id = teleVM().fields().ClassActor_id.readInt(classActorReference);
-                        _idToClassActorReference.put(id, classActorReference);
-                        final Reference typeDescriptorReference = teleVM().fields().ClassActor_typeDescriptor.readReference(classActorReference);
-                        final Reference stringReference = teleVM().fields().Descriptor_string.readReference(typeDescriptorReference);
-                        final String typeDescriptorString = teleVM().getString(stringReference);
-                        final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
-                        _typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);
+                        addToRegistry(classActorReference);
                         count++;
                         entryReference = teleVM().fields().ChainedHashMapping$DefaultEntry_next.readReference(entryReference);
                     }
@@ -168,14 +160,46 @@ public class TeleClassRegistry extends TeleVMHolder {
         } catch (Throwable throwable) {
             throw new TeleError("could not build inspector type registry", throwable);
         }
-        Trace.end(1, "creating TeleClassRegistry (" + count + " entries)");
+        _preLoadedClassCount = count;
+        Trace.end(1, "creating TeleClassRegistry (" + _preLoadedClassCount + " pre-loaded entries)");
     }
 
     /**
-     * @param typeDescriptor A local {@link TypeDescriptor} object.
-     * @return Surrogate for the equivalent {@link ClassActor} in the target VM.
+     * Adds information to the registry about any newly loaded classes in the {@link TeleVM}.
      */
-    public TeleClassActor findTeleClassActor(TypeDescriptor typeDescriptor) {
+    public void refresh() {	
+    	final Reference teleClassInfoStaticTupleReference = teleVM().fields().TeleClassInfo_classActorCount.staticTupleReference(teleVM());
+		final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActorCount.fieldActor().offset());    	
+    	final int remoteLoadedClassCount = teleVM().teleProcess().dataAccess().readInt(loadedClassCountPointer);    	
+    	final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActors.fieldActor().offset());
+    	final Reference loadedClassActorsArrayReference = teleVM().wordToReference(teleVM().teleProcess().dataAccess().readWord(loadedClassActorsPointer));    
+    	int index = _dynamicallyLoadedClassCount;
+    	while (index < remoteLoadedClassCount) {    		
+    		final Reference classActorReference = teleVM().getElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, index).asReference();
+    		addToRegistry(classActorReference);
+    		index++;
+    	}
+    	Trace.line(1, "TeleClassRegistry refreshed: static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount));   
+    	_dynamicallyLoadedClassCount = remoteLoadedClassCount;
+    }
+    
+    /**
+     * @param id  Class ID of a {@link ClassActor} in the {@link TeleVM}.
+     * @return surrogate for the {@link ClassActor} in the {@link TeleVM}, null if not known.
+     */
+    public TeleClassActor findTeleClassActorByID(int id) {
+        final Reference classActorReference = _idToClassActorReference.get(id);
+        if (classActorReference != null && !classActorReference.isZero()) {
+            return (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+        }
+        return null;
+    }
+
+   /**
+     * @param typeDescriptor A local {@link TypeDescriptor}.
+     * @return surrogate for the equivalent {@link ClassActor} in the {@link TeleVM}, null if not known.
+     */
+    public TeleClassActor findTeleClassActorByType(TypeDescriptor typeDescriptor) {
         final Reference classActorReference = _typeDescriptorToClassActorReference.get(typeDescriptor);
         if (classActorReference == null) {
             // Class hasn't been loaded yet by the inspectee.
@@ -186,9 +210,9 @@ public class TeleClassRegistry extends TeleVMHolder {
 
     /**
      * @param javaClass   A local {@link Class} object.
-     * @return surrogate for the equivalent {@link ClassActor} in the target VM.
+     * @return surrogate for the equivalent {@link ClassActor} in the {@link TeleVM}, null if not known.
      */
-    public TeleClassActor findTeleClassActor(Class javaClass) {
+    public TeleClassActor findTeleClassActorByClass(Class javaClass) {
         final Reference classActorReference = _typeDescriptorToClassActorReference.get(JavaTypeDescriptor.forJavaClass(javaClass));
         if (classActorReference == null) {
             // Class hasn't been loaded yet by the inspectee.
@@ -198,32 +222,106 @@ public class TeleClassRegistry extends TeleVMHolder {
     }
 
     /**
-     * @return A local {@link TypeDescriptor} for each class known to the registry.
+     * @return  {@link TypeDescriptor}s for all classes loaded in the {@link TeleVM}.
      */
     public Set<TypeDescriptor> typeDescriptors() {
         return Collections.unmodifiableSet(_typeDescriptorToClassActorReference.keySet());
     }
-
+    
+    /**
+     * @return surrogates for all {@link ClassActor}s loaded in the {@link TeleVM}.
+     */
+    public ReferenceTypeProvider[] teleClassActors() {
+    	final ReferenceTypeProvider[] result = new ReferenceTypeProvider[_idToClassActorReference.size()];
+    	int index = 0;
+    	for (Reference classActorReference : _idToClassActorReference.values()) {
+    		result[index++] = (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+    	}
+    	return result;
+    }
+    
+    // TODO (JDWP)
     public ReferenceTypeProvider findTeleClassActor(ClassActor classActor) {
-        return findTeleClassActor(classActor.typeDescriptor());
+        return findTeleClassActorByType(classActor.typeDescriptor());
     }
 
+    // TODO (JDWP)
     public InterfaceProvider findTeleInterfaceActor(InterfaceActor interfaceActor) {
-        return (TeleInterfaceActor) findTeleClassActor(interfaceActor.typeDescriptor());
+        return (TeleInterfaceActor) findTeleClassActorByType(interfaceActor.typeDescriptor());
     }
 
+    // TODO (JDWP)
     public MethodProvider findTeleMethodActor(MethodActor methodActor) {
-        final TeleClassActor teleClassActor = findTeleClassActor(methodActor.holder().typeDescriptor());
-        if (teleClassActor != null) {
-            for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                if (teleMethodActor.methodActor().equals(methodActor)) {
-                    return teleMethodActor;
-                }
-            }
-        }
-
-
+    	final TeleClassActor teleClassActor = findTeleClassActorByType(methodActor.holder().typeDescriptor());
+    	if (teleClassActor != null) {
+    		for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
+    			if (teleMethodActor.methodActor().equals(methodActor)) {
+    				return teleMethodActor;
+    			}
+    		}
+    	}
+    	
         LOGGER.warning("Could not find tele method for method actor: " + methodActor.name().toString() + ", holder=" + methodActor.holder().name().toString());
         return null;
     }
+    
+    
+    
+    
+    /**
+     * ClassID Mapping
+     */
+    private final Map<Integer, ClassActor> _idToClassActor = new HashMap<Integer, ClassActor>();
+
+    /**
+     * @param id Target id of a {@link ClassActor} in the target VM.
+     * @return  Local {@link ClassActor} equivalent to the one in the target VM, null if not known.
+     */
+    private ClassActor findClassActorByID(int id) {
+        ClassActor classActor = _idToClassActor.get(id);
+        if (classActor == null) {
+            final Reference classActorReference = _idToClassActorReference.get(id);
+            if (classActorReference != null) {
+                classActor = teleVM().makeClassActor(classActorReference);
+                _idToClassActor.put(id, classActor);
+            }
+        }
+        return classActor;
+    }
+
+    
+    private static ThreadLocal<Boolean> _usingTeleClassIDs = new ThreadLocal<Boolean>() {
+        @Override
+        protected synchronized Boolean initialValue() {
+            return false;
+        }
+    };
+
+    private final ClassID.Mapping _classIDMapping = new ClassID.Mapping() {
+        public ClassActor idToClassActor(int id) {
+            if (_usingTeleClassIDs.get()) {
+                return findClassActorByID(id);
+            }
+            return null;
+        }
+    };
+
+    /**
+     * While the runnable executes, class actor IDs refer to the tele VM, not the Inspector VM.
+     * This can be employed to reuse code that manipulates MemberIDs and HolderIDs.
+     * Such code would otherwise not work, because class actor IDs in the Inspector differ from those in the tele VM.
+     */
+    public static <Result_Type> Result_Type usingTeleClassIDs(Function<Result_Type> function) {
+        final boolean oldValue = _usingTeleClassIDs.get();
+        _usingTeleClassIDs.set(true);
+        try {
+            final Result_Type result = function.call();
+            return result;
+        } catch (Exception exception) {
+            throw ProgramError.unexpected(exception);
+        } finally {
+            _usingTeleClassIDs.set(oldValue);
+        }
+    }
+ 
 }

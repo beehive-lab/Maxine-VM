@@ -60,7 +60,7 @@ public class BeltwaySSCollector implements Runnable {
             _beltwayHeapScheme.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getFromSpace().start(), beltwayHeapSchemeBSS.getFromSpace().getAllocationMark(), BeltManager.getApplicationHeap());
         }
 
-        TeleHeap.beforeGarbageCollection();
+        TeleHeapInfo.beforeGarbageCollection();
         VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
         if (Heap.verbose()) {
@@ -110,7 +110,7 @@ public class BeltwaySSCollector implements Runnable {
 
         VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
         beltwayHeapSchemeBSS.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getToSpace().start(), beltwayHeapSchemeBSS.getToSpace().getAllocationMark(), BeltManager.getApplicationHeap());
-        TeleHeap.afterGarbageCollection();
+        TeleHeapInfo.afterGarbageCollection();
 
         // Swap semi-spaces. From--> To and To-->From
         beltwayHeapSchemeBSS.getBeltManager().swapBelts(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());

@@ -62,7 +62,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             _sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize()));
             CardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
-            TeleHeap.registerMemoryRegions(getToSpace(), getFromSpace());
+            TeleHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             _collectorThread = new StopTheWorldDaemon("GC", _beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {

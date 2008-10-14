@@ -42,7 +42,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     @Override
     protected TeleObject convertSelectedItem(Object listItem) {
         final String name = (String) listItem;
-        return teleVM().teleClassRegistry().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
+        return teleVM().teleClassRegistry().findTeleClassActorByType(JavaTypeDescriptor.getDescriptorForJavaString(name));
     }
 
     /**

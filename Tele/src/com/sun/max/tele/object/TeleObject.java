@@ -566,7 +566,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
      */
     public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActor(javaClass);
+        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActorByClass(javaClass);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
 
         Trace.begin(COPY_TRACE_VALUE, "Copying static fields of " + javaClass + "from VM");
