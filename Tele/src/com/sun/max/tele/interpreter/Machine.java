@@ -248,7 +248,7 @@ public final class Machine {
             final Kind kind = fieldRef.type(constantPool).toKind();
             final FieldActor fieldActor = holder.findStaticFieldActor(fieldName);
 
-            final TeleClassActor teleClassActor = _teleVM.teleClassRegistry().findTeleClassActor(holderTypeDescriptor);
+            final TeleClassActor teleClassActor = _teleVM.teleClassRegistry().findTeleClassActorByType(holderTypeDescriptor);
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 

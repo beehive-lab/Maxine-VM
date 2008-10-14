@@ -18,31 +18,47 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.field;
+package com.sun.max.vm.tele;
 
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.actor.holder.*;
+
 
 /**
- * @author Bernd Mathiske
- * @author Doug Simon
+ * Makes critical state information about dynamically loaded classes
+ * remotely inspectable.
+ * Active only when VM is being inspected.
+ *
+ * CAUTION:  When active, this implementation hold references to
+ * all dynamically loaded {@link ClassActor}s, and thus prevents class unloading.
+ *
+ * @author Michael Van De Vanter
  */
-public class TeleStaticFieldAccess extends TeleFieldAccess {
+public final class TeleClassInfo {
 
-    protected TeleStaticFieldAccess(Class holder, String name, Kind kind) {
-        super(holder, name, kind);
-        ProgramError.check(fieldActor().isStatic());
+    private TeleClassInfo() {
     }
+
+    @INSPECTED
+    private static ClassActor[] _classActors;
+
+    @INSPECTED
+    private static int _classActorCount = 0;
 
     /**
-     * Gets a reference to the static tuple holding the value of this field.
+     * Adds to the inspectable record of dynamically loaded classes.
      */
-    public Reference staticTupleReference(TeleVM teleVM) {
-        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActorByType(fieldActor().holder().typeDescriptor());
-        final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
-        return teleStaticTuple.reference();
+    public static void registerClassLoaded(ClassActor classActor) {
+        if (MaxineMessenger.isVmInspected()) {
+            if (_classActors == null) {
+                _classActors = new ClassActor[100];
+            }
+            if (_classActorCount == _classActors.length) {
+                _classActors = Arrays.extend(_classActors, _classActorCount * 2);
+            }
+            _classActors[_classActorCount++] = classActor;
+        }
     }
+
 }

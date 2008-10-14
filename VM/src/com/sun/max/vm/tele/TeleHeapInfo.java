@@ -25,13 +25,15 @@ import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 
 /**
- * Remote support regarding the object heap.
+ * Makes critical state information about the object heap
+ * remotely inspectable.
+ * Active only when VM is being inspected.
  *
  * @author Bernd Mathiske
  */
-public final class TeleHeap {
+public final class TeleHeapInfo {
 
-    private TeleHeap() {
+    private TeleHeapInfo() {
     }
 
     @INSPECTED
@@ -61,10 +63,16 @@ public final class TeleHeap {
     @INSPECTED
     private static long _collectionEpoch;
 
+    /**
+     * For remote inspection:  records that a GC has begun.
+     */
     public static void beforeGarbageCollection() {
         _collectionEpoch++;
     }
 
+    /**
+     * For remote inspection:  records that a GC has concluded.
+     */
     public static void afterGarbageCollection() {
         _rootEpoch = _collectionEpoch;
     }
