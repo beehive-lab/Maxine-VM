@@ -36,6 +36,6 @@ public class StringCoding_Scale {
     private static int scale(int len, float expansionFactor) {
         // We need to perform double, not float, arithmetic; otherwise
         // we lose low order bits when len is larger than 2**24.
-        return (int)(len * (double)expansionFactor);
+        return (int)(len * (double) expansionFactor);
     }
 }

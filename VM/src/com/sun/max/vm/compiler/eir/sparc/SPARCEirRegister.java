@@ -349,11 +349,6 @@ public abstract class SPARCEirRegister extends EirRegister {
         public boolean isDoublePrecision() {
             return true;
         }
-
-        @Override
-        public FloatingPoint overlappingSinglePrecision() {
-            return null;
-        }
     }
 }
 
