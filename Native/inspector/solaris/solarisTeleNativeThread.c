@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 #include "proc.h"
-
+#include "debug.h"
 #include "isa.h"
 #include "jni.h"
 #include "os.h"

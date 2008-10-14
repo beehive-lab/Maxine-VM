@@ -47,15 +47,17 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
      * @author Laurent Daynes
      */
     private enum SparcFloatingPointRegister implements Enumerable<SparcFloatingPointRegister> {
-        F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30,
-        F32, F34, F36, F38, F40, F42, F44, F46, F48, F50, F52, F54, F56, F58, F60, F62;
+        F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15, F16;
 
         public int value() {
             return ordinal();
         }
+        
         @Override
         public String toString() {
-            return "F" + (ordinal() << 1);
+        	final int o = ordinal();
+        	final int regNum = o > 32 ? 32 + ((o-32) << 1) : o;
+            return "F" + regNum;
         }
 
         static final Enumerator<SparcFloatingPointRegister>  ENUMERATOR = new Enumerator<SparcFloatingPointRegister>(SparcFloatingPointRegister.class);
