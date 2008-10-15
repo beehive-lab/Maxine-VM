@@ -18,15 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+<<<<<<< local
 /*VCSID=bade66b5-af5c-4565-a940-475c24e12bc7*/
+=======
+>>>>>>> other
 package com.sun.max.vm.heap.util;
 
+<<<<<<< local
+=======
+import com.sun.max.memory.*;
+>>>>>>> other
 import com.sun.max.unsafe.*;
 
 /**
  * @author Bernd Mathiske
  */
+<<<<<<< local
 public interface PointerIndexVisitor {
+=======
+public interface PointerIndexVisitor extends Visitor{
+>>>>>>> other
 
     /**
      * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address
@@ -35,5 +46,9 @@ public interface PointerIndexVisitor {
      * @param pointer
      * @param wordIndex
      */
+<<<<<<< local
     void visitPointerIndex(Pointer pointer, int wordIndex);
+=======
+    void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+>>>>>>> other
 }

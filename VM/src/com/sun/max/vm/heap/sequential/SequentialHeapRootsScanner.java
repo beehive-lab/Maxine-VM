@@ -1,7 +1,13 @@
 <<<<<<< local
+<<<<<<< local
 /*VCSID=34e0a288-6514-4950-984a-23b8dee9ae1f
 =======
+=======
+>>>>>>> other
 /*
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
  * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
@@ -25,8 +31,14 @@
 package com.sun.max.vm.heap.sequential;
 
 <<<<<<< local
+<<<<<<< local
 =======
+=======
+>>>>>>> other
 import com.sun.max.memory.*;
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -43,31 +55,52 @@ public class SequentialHeapRootsScanner {
 
     private PointerIndexVisitor _pointerIndexVisitor;
 <<<<<<< local
+<<<<<<< local
 =======
+=======
+>>>>>>> other
     private RuntimeMemoryRegion _fromSpace;
     private RuntimeMemoryRegion _toSpace;
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
     private HeapScheme _heapScheme;
 
 <<<<<<< local
+<<<<<<< local
     public SequentialHeapRootsScanner(HeapScheme heapScheme, PointerIndexVisitor pointerIndexVisitor) {
 =======
+=======
+>>>>>>> other
     public SequentialHeapRootsScanner() {
     }
 
     public void setHeapScheme(HeapScheme heapScheme) {
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
         _heapScheme = heapScheme;
 <<<<<<< local
+<<<<<<< local
 =======
+=======
+>>>>>>> other
     }
 
     public void setPointerIndexVisitor(PointerIndexVisitor pointerIndexVisitor) {
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
         _pointerIndexVisitor = pointerIndexVisitor;
     }
 <<<<<<< local
+<<<<<<< local
 =======
+=======
+>>>>>>> other
 
     public void setFromSpace(RuntimeMemoryRegion fromSpace) {
         _fromSpace = fromSpace;
@@ -77,15 +110,24 @@ public class SequentialHeapRootsScanner {
         _toSpace = toSpace;
     }
 
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 
     private final Pointer.Procedure _vmThreadLocalsScanner = new Pointer.Procedure() {
 
         public void run(Pointer localSpace) {
 <<<<<<< local
+<<<<<<< local
             VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor);
 =======
+=======
+>>>>>>> other
             VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor, _fromSpace, _toSpace);
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
         }
     };
@@ -101,9 +143,15 @@ public class SequentialHeapRootsScanner {
     public void run() {
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, _vmThreadLocalsScanner);
 <<<<<<< local
+<<<<<<< local
         VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor);
 =======
+=======
+>>>>>>> other
         VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor, _fromSpace, _toSpace);
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
     }
 

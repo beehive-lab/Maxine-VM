@@ -19,14 +19,23 @@
  * Company, Ltd.
  */
 <<<<<<< local
+<<<<<<< local
 /*VCSID=11ed2cd7-5626-4884-8f0a-301a24091d51*/
+=======
+>>>>>>> other
 =======
 >>>>>>> other
 package com.sun.max.vm.heap.util;
 
 <<<<<<< local
+<<<<<<< local
 =======
+=======
+>>>>>>> other
 import com.sun.max.memory.*;
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 import com.sun.max.unsafe.*;
 
@@ -35,9 +44,15 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  */
 <<<<<<< local
+<<<<<<< local
 public interface CellVisitor {
 =======
+=======
+>>>>>>> other
 public interface CellVisitor extends Visitor{
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 
     /**
@@ -45,8 +60,14 @@ public interface CellVisitor extends Visitor{
      * @return the adjacent next cell
      */
 <<<<<<< local
+<<<<<<< local
     Pointer visitCell(Pointer cell);
 =======
+=======
+>>>>>>> other
     Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 }

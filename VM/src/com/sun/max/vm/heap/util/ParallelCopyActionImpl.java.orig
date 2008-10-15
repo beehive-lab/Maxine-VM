@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=848807d7-4952-4a03-8bc9-2cfe7e6ec757*/
 package com.sun.max.vm.heap.util;
 
 import com.sun.max.memory.*;
@@ -34,7 +33,7 @@ import com.sun.max.vm.thread.*;
 /**
  * @author Christos Kotselidis
  */
-public class ParallelCopyActionImpl implements Copy {
+public class ParallelCopyActionImpl implements Action {
 
     private static Verify _verifyAction = new VerifyActionImpl();
 
@@ -58,10 +57,15 @@ public class ParallelCopyActionImpl implements Copy {
             final Grip forwardGripValue = Layout.readForwardGripValue(fromOrigin);
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
+<<<<<<< local
             final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
             if (VMConfiguration.hostOrTarget().debugging()) {
                 DebugHeap.writeCellTag(toCell, Word.width());
             }
+=======
+            final Pointer toCell = VMConfiguration.hostOrTarget().heapScheme().gcAllocate(to, size);
+            DebugHeap.writeCellTag(toCell);
+>>>>>>> other
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);

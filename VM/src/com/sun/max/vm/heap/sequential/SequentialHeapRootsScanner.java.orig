@@ -1,4 +1,8 @@
+<<<<<<< local
 /*VCSID=34e0a288-6514-4950-984a-23b8dee9ae1f
+=======
+/*
+>>>>>>> other
  * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
@@ -20,6 +24,10 @@
  */
 package com.sun.max.vm.heap.sequential;
 
+<<<<<<< local
+=======
+import com.sun.max.memory.*;
+>>>>>>> other
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
@@ -34,17 +42,51 @@ import com.sun.max.vm.thread.*;
 public class SequentialHeapRootsScanner {
 
     private PointerIndexVisitor _pointerIndexVisitor;
+<<<<<<< local
+=======
+    private RuntimeMemoryRegion _fromSpace;
+    private RuntimeMemoryRegion _toSpace;
+>>>>>>> other
     private HeapScheme _heapScheme;
 
+<<<<<<< local
     public SequentialHeapRootsScanner(HeapScheme heapScheme, PointerIndexVisitor pointerIndexVisitor) {
+=======
+    public SequentialHeapRootsScanner() {
+    }
+
+    public void setHeapScheme(HeapScheme heapScheme) {
+>>>>>>> other
         _heapScheme = heapScheme;
+<<<<<<< local
+=======
+    }
+
+    public void setPointerIndexVisitor(PointerIndexVisitor pointerIndexVisitor) {
+>>>>>>> other
         _pointerIndexVisitor = pointerIndexVisitor;
     }
+<<<<<<< local
+=======
+
+    public void setFromSpace(RuntimeMemoryRegion fromSpace) {
+        _fromSpace = fromSpace;
+    }
+
+    public void setToSpace(RuntimeMemoryRegion toSpace) {
+        _toSpace = toSpace;
+    }
+
+>>>>>>> other
 
     private final Pointer.Procedure _vmThreadLocalsScanner = new Pointer.Procedure() {
 
         public void run(Pointer localSpace) {
+<<<<<<< local
             VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor);
+=======
+            VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor, _fromSpace, _toSpace);
+>>>>>>> other
         }
     };
 
@@ -58,7 +100,11 @@ public class SequentialHeapRootsScanner {
      */
     public void run() {
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, _vmThreadLocalsScanner);
+<<<<<<< local
         VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor);
+=======
+        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor, _fromSpace, _toSpace);
+>>>>>>> other
     }
 
 }

@@ -21,8 +21,11 @@
 package util;
 
 <<<<<<< local
+<<<<<<< local
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+=======
+>>>>>>> other
 =======
 >>>>>>> other
 
@@ -64,9 +67,12 @@ public final class GCTest6 {
 
     public static void main(String[] args) {
 <<<<<<< local
+<<<<<<< local
         System.out.println("BEGIN " + GarbageTest.class.getSimpleName());
         while (VMConfiguration.hostOrTarget().heapScheme().numberOfGarbageTurnovers() < 5) {
 =======
+=======
+>>>>>>> other
         System.out.println(GCTest6.class.getSimpleName() + " starting...");
         int max = 25;
         if (args.length > 0) {
@@ -74,13 +80,22 @@ public final class GCTest6 {
         }
         for (int i = 0; i < max; i++) {
             System.out.println("Creating garbage: " + i + "...");
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
             createGarbage();
         }
 <<<<<<< local
+<<<<<<< local
         System.out.println("END " + GarbageTest.class.getSimpleName());
 =======
+=======
+>>>>>>> other
         System.out.println(GCTest6.class.getSimpleName() + " done.");
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
     }
 }

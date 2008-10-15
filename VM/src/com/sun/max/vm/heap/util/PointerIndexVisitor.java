@@ -19,14 +19,23 @@
  * Company, Ltd.
  */
 <<<<<<< local
+<<<<<<< local
 /*VCSID=bade66b5-af5c-4565-a940-475c24e12bc7*/
+=======
+>>>>>>> other
 =======
 >>>>>>> other
 package com.sun.max.vm.heap.util;
 
 <<<<<<< local
+<<<<<<< local
 =======
+=======
+>>>>>>> other
 import com.sun.max.memory.*;
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 import com.sun.max.unsafe.*;
 
@@ -34,9 +43,15 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  */
 <<<<<<< local
+<<<<<<< local
 public interface PointerIndexVisitor {
 =======
+=======
+>>>>>>> other
 public interface PointerIndexVisitor extends Visitor{
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 
     /**
@@ -47,8 +62,14 @@ public interface PointerIndexVisitor extends Visitor{
      * @param wordIndex
      */
 <<<<<<< local
+<<<<<<< local
     void visitPointerIndex(Pointer pointer, int wordIndex);
 =======
+=======
+>>>>>>> other
     void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+<<<<<<< local
+>>>>>>> other
+=======
 >>>>>>> other
 }
