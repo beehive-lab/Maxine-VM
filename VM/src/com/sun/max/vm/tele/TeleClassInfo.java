@@ -18,38 +18,47 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.vm.tele;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.actor.holder.*;
 
-import java.util.*;
-
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.thread.*;
 
 /**
- * The values of the {@linkplain VmThreadLocal thread local variables} for a {@linkplain TeleNativeThread thread}.
+ * Makes critical state information about dynamically loaded classes
+ * remotely inspectable.
+ * Active only when VM is being inspected.
  *
- * @author Doug Simon
+ * CAUTION:  When active, this implementation hold references to
+ * all dynamically loaded {@link ClassActor}s, and thus prevents class unloading.
+ *
+ * @author Michael Van De Vanter
  */
-public class TeleThreadLocalValues extends EnumMap<VmThreadLocal, Long> {
+public final class TeleClassInfo {
 
-    public TeleThreadLocalValues() {
-        super(VmThreadLocal.class);
-        final Long zero = Long.valueOf(0L);
-        for (VmThreadLocal threadLocalVariable : VmThreadLocal.VALUES) {
-            put(threadLocalVariable, zero);
+    private TeleClassInfo() {
+    }
+
+    @INSPECTED
+    private static ClassActor[] _classActors;
+
+    @INSPECTED
+    private static int _classActorCount = 0;
+
+    /**
+     * Adds to the inspectable record of dynamically loaded classes.
+     */
+    public static void registerClassLoaded(ClassActor classActor) {
+        if (MaxineMessenger.isVmInspected()) {
+            if (_classActors == null) {
+                _classActors = new ClassActor[100];
+            }
+            if (_classActorCount == _classActors.length) {
+                _classActors = Arrays.extend(_classActors, _classActorCount * 2);
+            }
+            _classActors[_classActorCount++] = classActor;
         }
     }
 
-    /**
-     * Gets the value of a given thread local variable as a word.
-     */
-    public Word getWord(VmThreadLocal threadLocalVariable) {
-        return Address.fromLong(get(threadLocalVariable));
-    }
-
-    public boolean isInJavaCode() {
-        return get(LAST_JAVA_CALLER_INSTRUCTION_POINTER) == 0 && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C) == 0;
-    }
 }

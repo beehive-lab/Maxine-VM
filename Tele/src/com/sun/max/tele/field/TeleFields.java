@@ -141,10 +141,12 @@ public class TeleFields extends TeleVMHolder {
     public final TeleInstanceReferenceFieldAccess TargetMethod_referenceLiterals = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_referenceLiterals", Object[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_scalarLiteralBytes = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_scalarLiteralBytes", byte[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_stopPositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_stopPositions", int[].class);
-    public final TeleStaticLongFieldAccess TeleHeap_collectionEpoch = new TeleStaticLongFieldAccess(TeleHeap.class, "_collectionEpoch");
-    public final TeleStaticReferenceFieldAccess TeleHeap_memoryRegions = new TeleStaticReferenceFieldAccess(TeleHeap.class, "_memoryRegions", MemoryRegion[].class);
-    public final TeleStaticLongFieldAccess TeleHeap_rootEpoch = new TeleStaticLongFieldAccess(TeleHeap.class, "_rootEpoch");
-    public final TeleStaticReferenceFieldAccess TeleHeap_roots = new TeleStaticReferenceFieldAccess(TeleHeap.class, "_roots", Object[].class);
+    public final TeleStaticIntFieldAccess TeleClassInfo_classActorCount = new TeleStaticIntFieldAccess(TeleClassInfo.class, "_classActorCount");
+    public final TeleStaticReferenceFieldAccess TeleClassInfo_classActors = new TeleStaticReferenceFieldAccess(TeleClassInfo.class, "_classActors", ClassActor[].class);
+    public final TeleStaticLongFieldAccess TeleHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "_collectionEpoch");
+    public final TeleStaticReferenceFieldAccess TeleHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "_memoryRegions", MemoryRegion[].class);
+    public final TeleStaticLongFieldAccess TeleHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "_rootEpoch");
+    public final TeleStaticReferenceFieldAccess TeleHeapInfo_roots = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "_roots", Object[].class);
     public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "_level");
     public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "_threshold");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "_constantPool", ConstantPool.class);

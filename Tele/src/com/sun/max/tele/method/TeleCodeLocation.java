@@ -139,7 +139,7 @@ public class TeleCodeLocation extends TeleVMHolder {
             // so that we can talk about bytecodes.
             // Look first in the class registry
             final TypeDescriptor holderTypeDescriptor = key().holder();
-            final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActor(holderTypeDescriptor);
+            final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByType(holderTypeDescriptor);
             if (teleClassActor != null) {
                 // find a matching method
                 final String methodKeyString = _key.signature().toJavaString(true, true);

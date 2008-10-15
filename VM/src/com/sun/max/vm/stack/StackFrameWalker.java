@@ -149,25 +149,6 @@ public abstract class StackFrameWalker {
                 if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, purpose, context)) {
                     return;
                 }
-
-                final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
-                if (lastJavaCalleeMethodActor.isCFunction()) {
-                    if (purpose == INSPECTING && targetMethodFor(_instructionPointer) == null && runtimeStubFor(_instructionPointer) == null) {
-                        // Native code frame
-                        final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                        if (!stackFrameVisitor.visitFrame(new NativeStackFrame(_calleeStackFrame, _instructionPointer, _framePointer, _stackPointer))) {
-                            return;
-                        }
-                    }
-                    if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
-                        if (isRunMethod(lastJavaCalleeMethodActor)) {
-                            return;
-                        }
-                        FatalError.check(purpose == INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
-                        return;
-                    }
-                    lastJavaCallee = null;
-                }
             } else {
                 final RuntimeStub stub = runtimeStubFor(_instructionPointer);
                 if (stub != null && (!inNative || purpose == INSPECTING)) {
@@ -199,10 +180,6 @@ public abstract class StackFrameWalker {
                             final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
                             if (lastJavaCalleeMethodActor.isCFunction()) {
                                 if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
-                                    if (lastJavaCalleeMethodActor.equals(MaxineVM_run) || lastJavaCalleeMethodActor.equals(VmThread_run)) {
-                                        return;
-                                    }
-                                    FatalError.check(purpose == INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
                                     return;
                                 }
                             } else {
@@ -233,7 +210,7 @@ public abstract class StackFrameWalker {
      * @param lastJavaCallee
      * @param lastJavaCalleeStackPointer
      * @param lastJavaCalleeFramePointer
-     * @return
+     * @return true if the stack walker was advanced to the caller of the method annotated with {@link C_FUNCTION}, false otherwise
      */
     private boolean advanceCFunctionFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
@@ -266,9 +243,14 @@ public abstract class StackFrameWalker {
                 advance(readPointer(TRAP_INSTRUCTION_POINTER),
                         readPointer(TRAP_STACK_POINTER),
                         readPointer(TRAP_FRAME_POINTER));
+                return true;
             }
-            return true;
+            return false;
         }
+        if (!isRunMethod(lastJavaCalleeMethodActor)) {
+            FatalError.check(purpose == INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
+        }
+
         return false;
     }
 
@@ -550,7 +532,20 @@ public abstract class StackFrameWalker {
 
     public abstract Word readFramelessCallAddressRegister(TargetABI targetABI);
 
+    /**
+     * Reads the value of a given VM thread local from the safepoints-enabled thread locals.
+     *
+     * @param local the VM thread local to read
+     * @return the value (as a word) of {@code local} in the safepoints-enabled thread locals
+     */
     public abstract Word readWord(VmThreadLocal local);
+
+    /**
+     * Reads the value of a given VM thread local from the safepoints-enabled thread locals.
+     *
+     * @param local the VM thread local to read
+     * @return the value (as a pointer) of {@code local} in the safepoints-enabled thread locals
+     */
     public Pointer readPointer(VmThreadLocal local) {
         return readWord(local).asPointer();
     }

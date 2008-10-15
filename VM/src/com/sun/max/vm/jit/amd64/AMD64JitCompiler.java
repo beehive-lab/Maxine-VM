@@ -332,7 +332,9 @@ public class AMD64JitCompiler extends JitCompiler {
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                walkFrameForReferenceMapPreparing(stackFrameWalker, targetMethod, context, framePointerState);
+                if (!walkFrameForReferenceMapPreparing(stackFrameWalker, targetMethod, context, framePointerState)) {
+                    return false;
+                }
                 break;
             }
             case EXCEPTION_HANDLING: {
@@ -361,9 +363,9 @@ public class AMD64JitCompiler extends JitCompiler {
         return stackFrameVisitor.visitFrame(stackFrame);
     }
 
-    private void walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+    private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
         final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
-        targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase);
+        return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase);
     }
 
     private void walkFrameForExceptionHandling(StackFrameWalker stackFrameWalker, boolean isTopFrame, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {

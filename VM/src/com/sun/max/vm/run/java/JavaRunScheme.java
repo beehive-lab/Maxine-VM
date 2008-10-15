@@ -232,6 +232,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         }
 
         MaxineVM.writeInitialVMParams();
+
     }
 
 
