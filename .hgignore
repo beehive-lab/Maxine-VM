@@ -1,0 +1,27 @@
+# use glob syntax
+syntax: glob
+
+TEST-*
+*.class
+*.log
+log*.txt
+manifest*
+^core
+*.swp
+.#*
+.metadata
+
+# switch to regexp syntax
+syntax: regexp
+^TEST-.*
+^manifest.*
+^[^/]*\.log
+^[^/]*\.jar
+^[^/]*/bin/
+^[^/]*/build/
+^[^/]*/generated/
+^[^/]*/dist/
+^[^/]*/nbproject/private
+^[^/]*/trace.*
+^trace.*
+^dist/
