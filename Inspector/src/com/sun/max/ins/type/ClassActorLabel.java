@@ -114,7 +114,7 @@ public final class ClassActorLabel extends InspectorLabel {
      */
     private TeleClassActor getTeleClassActorOrNull() {
         if (_teleClassActor == null) {
-            _teleClassActor = teleVM().teleClassRegistry().findTeleClassActor(_typeDescriptor);
+            _teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByType(_typeDescriptor);
         }
         return _teleClassActor;
     }

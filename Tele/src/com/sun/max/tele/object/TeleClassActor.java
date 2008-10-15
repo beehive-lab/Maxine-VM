@@ -58,8 +58,6 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         return _classActor;
     }
 
-
-
     private boolean _initialized = false;
 
     // Fields are final; cache them.
