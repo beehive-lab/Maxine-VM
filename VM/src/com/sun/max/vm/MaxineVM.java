@@ -42,7 +42,7 @@ import com.sun.max.vm.thread.*;
 
 public final class MaxineVM {
 
-    private static final String _VERSION = "0.1.2-alpha";
+    private static final String _VERSION = "0.1.3-alpha";
 
     public static String version() {
         return _VERSION;
