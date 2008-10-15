@@ -10,6 +10,7 @@ manifest*
 *.swp
 .#*
 .metadata
+*.orig
 
 # switch to regexp syntax
 syntax: regexp
