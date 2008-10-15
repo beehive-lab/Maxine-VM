@@ -52,7 +52,7 @@ public final class VmThreadMap {
      * Adds the specified thread locals to this thread map and initializes several of its
      * important values (such as its ID and VM thread reference).
      *
-     * Note that this method does not perform synchronization the thread map, because it must
+     * Note that this method does not perform synchronization on the thread map, because it must
      * only be executed in a newly created thread while the creating thread holds the lock on
      * this thread map.
      *
@@ -101,10 +101,11 @@ public final class VmThreadMap {
 
     /**
      * Add the main thread to this thread map.
+     *
      * @param vmThread the vmThread representing the main thread
      */
     public void addMainVmThread(VmThread vmThread) {
-        vmThread.setID(_idMap.acquire(vmThread));
+        vmThread.setThreadMapID(_idMap.acquire(vmThread));
     }
 
     // Helper routines to manipulate the linked list of vm thread locals
@@ -281,7 +282,7 @@ public final class VmThreadMap {
         }
 
         synchronized int acquire(VmThread vmThread) {
-            FatalError.check(vmThread.id() == 0, "VMThread already has an ID");
+            FatalError.check(vmThread.threadMapID() == 0, "VmThread already has an ID");
             final int length = _freeList.length;
             if (_nextID >= length) {
                 // grow the free list and initialize the new part
@@ -301,7 +302,7 @@ public final class VmThreadMap {
             final int id = _nextID;
             _nextID = _freeList[_nextID];
             _vmThreads[id] = vmThread;
-            vmThread.setID(id);
+            vmThread.setThreadMapID(id);
             return id;
         }
 

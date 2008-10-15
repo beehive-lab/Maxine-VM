@@ -379,8 +379,8 @@ public final class Debug {
             lockDisabledSafepoints = lock();
         }
         stream.print(vmThread.getName());
-        stream.print("[id=");
-        stream.print(vmThread.id());
+        stream.print("[serial=");
+        stream.print(vmThread.serial());
         stream.print("]", withNewline);
         if (!MaxineVM.isPrototyping()) {
             unlock(lockDisabledSafepoints);
