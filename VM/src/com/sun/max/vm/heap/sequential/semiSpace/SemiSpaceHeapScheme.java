@@ -134,7 +134,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             verifyHeap();
 
             ++_numberOfGarbageCollectionInvocations;
-            TeleHeap.beforeGarbageCollection();
+            TeleHeapInfo.beforeGarbageCollection();
 
             if (Heap.verbose()) {
                 Debug.out.print("--Before GC--   size: ");
@@ -204,7 +204,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
 
             verifyHeap();
 
-            TeleHeap.afterGarbageCollection();
+            TeleHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
                 Debug.out.println("GC done");
@@ -248,7 +248,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
 
             // From now on we can allocate
 
-            TeleHeap.registerMemoryRegions(_toSpace, _fromSpace);
+            TeleHeapInfo.registerMemoryRegions(_toSpace, _fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             _collectorThread = new StopTheWorldDaemon("GC", _collect);
         }
@@ -326,7 +326,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = gcAllocate(size);
             if (VMConfiguration.hostOrTarget().debugging()) {
-                DebugHeap.writeCellTag(toCell, Word.width());
+                DebugHeap.writeCellTag(toCell);
             }
 
             if (Heap.traceGC()) {

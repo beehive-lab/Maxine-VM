@@ -18,52 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-<<<<<<< local
-<<<<<<< local
 /*VCSID=8ef40a37-6a9b-45d0-b4c0-2a9ea2597045*/
-=======
->>>>>>> other
-=======
->>>>>>> other
 package com.sun.max.vm.heap.util;
-
-<<<<<<< local
-<<<<<<< local
-=======
-=======
->>>>>>> other
-import com.sun.max.memory.*;
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
 import com.sun.max.unsafe.*;
 
 /**
  * @author Bernd Mathiske
  */
-<<<<<<< local
-<<<<<<< local
 public interface PointerOffsetVisitor {
-=======
-=======
->>>>>>> other
-public interface PointerOffsetVisitor extends Visitor{
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
-
-<<<<<<< local
-<<<<<<< local
-=======
-=======
->>>>>>> other
-    void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
     void visitPointerOffset(Pointer pointer, int offset);
-
 }

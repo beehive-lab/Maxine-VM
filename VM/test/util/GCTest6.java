@@ -20,14 +20,7 @@
  */
 package util;
 
-<<<<<<< local
-<<<<<<< local
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
-=======
->>>>>>> other
-=======
->>>>>>> other
 
 /**
  * Fills the heap with garbage, runs until GC has been triggered a few times.
@@ -66,36 +59,17 @@ public final class GCTest6 {
     }
 
     public static void main(String[] args) {
-<<<<<<< local
-<<<<<<< local
-        System.out.println("BEGIN " + GarbageTest.class.getSimpleName());
         while (VMConfiguration.hostOrTarget().heapScheme().numberOfGarbageTurnovers() < 5) {
-=======
-=======
->>>>>>> other
-        System.out.println(GCTest6.class.getSimpleName() + " starting...");
-        int max = 25;
-        if (args.length > 0) {
-            max = Integer.parseInt(args[0]);
+            System.out.println(GCTest6.class.getSimpleName() + " starting...");
+            int max = 25;
+            if (args.length > 0) {
+                max = Integer.parseInt(args[0]);
+            }
+            for (int i = 0; i < max; i++) {
+                System.out.println("Creating garbage: " + i + "...");
+                createGarbage();
+            }
+            System.out.println(GCTest6.class.getSimpleName() + " done.");
         }
-        for (int i = 0; i < max; i++) {
-            System.out.println("Creating garbage: " + i + "...");
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
-            createGarbage();
-        }
-<<<<<<< local
-<<<<<<< local
-        System.out.println("END " + GarbageTest.class.getSimpleName());
-=======
-=======
->>>>>>> other
-        System.out.println(GCTest6.class.getSimpleName() + " done.");
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
     }
 }

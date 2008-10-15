@@ -57,21 +57,10 @@ public class ParallelCopyActionImpl implements Action {
             final Grip forwardGripValue = Layout.readForwardGripValue(fromOrigin);
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
-<<<<<<< local
-<<<<<<< local
             final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
             if (VMConfiguration.hostOrTarget().debugging()) {
-                DebugHeap.writeCellTag(toCell, Word.width());
+                DebugHeap.writeCellTag(toCell);
             }
-=======
-=======
->>>>>>> other
-            final Pointer toCell = VMConfiguration.hostOrTarget().heapScheme().gcAllocate(to, size);
-            DebugHeap.writeCellTag(toCell);
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);

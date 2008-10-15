@@ -543,21 +543,14 @@ public enum VmThreadLocal {
      * This assumes that prepareStackReferenceMap() has been run for the same stack and that no mutator execution
      * affecting this stack has occurred in between.
      */
-<<<<<<< local
     public static void scanReferences(Pointer vmThreadLocals, BeltWayPointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
-=======
-    public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
         final Pointer lastJavaCallerStackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
         final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
         final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
         final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
-        if (!(vmThread.javaThread() instanceof StopTheWorldDaemon) &&  lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
+        if (!(vmThread.javaThread() instanceof StopTheWorldDaemon) && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
             final DebugPrintStream err = Debug.err;
             err.print("The stack for thread \"");
             Debug.printVmThread(err, vmThread, false);
