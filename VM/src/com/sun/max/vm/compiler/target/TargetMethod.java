@@ -1036,8 +1036,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return numberOfDirectCalls() + numberOfIndirectCalls() + numberOfSafepoints() + index;
     }
 
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-        stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer);
+    /**
+     *
+     * @param stackReferenceMapPreparer
+     * @param instructionPointer
+     * @param stackPointer
+     * @param framePointer
+     * @return
+     */
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer);
     }
 
 

@@ -628,8 +628,8 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     }
 
     @Override
-    public void initializePrimordialCardTable(Pointer primordialLocalSpace, Pointer auxiliarySpace) {
-        VmThreadLocal.ADJUSTED_CARDTABLE_BASE.setConstantWord(primordialLocalSpace, CardRegion.adjustedCardTableBase(auxiliarySpace));
+    public void initializePrimordialCardTable(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
+        VmThreadLocal.ADJUSTED_CARDTABLE_BASE.setConstantWord(primordialVmThreadLocals, CardRegion.adjustedCardTableBase(auxiliarySpace));
     }
 
     private Size cardTableSize(Size coveredRegionSize) {
