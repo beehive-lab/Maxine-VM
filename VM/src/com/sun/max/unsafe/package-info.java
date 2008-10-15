@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8452b2f7-599c-4330-80b7-938c241ef069*/
 /**
  * "Unsafe" operations that transgress the safety guarantees of the core Java language specification:
  * direct memory access, unchecked type casts, unchecked member access, etc.

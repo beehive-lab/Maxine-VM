@@ -18,14 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a07fe5ab-18c6-474e-b2d0-1c780196dfa1*/
 package com.sun.max.ins.gui;
 
 import java.awt.*;
 
 /**
  * Standard choices and policies for layout.
- * 
+ *
  * @author Michael Van De Vanter
  */
 public class BasicInspectorGeometry implements InspectorGeometry {
@@ -33,7 +32,7 @@ public class BasicInspectorGeometry implements InspectorGeometry {
     // Main Inspection frame
     private static final Point _inspectionFrameDefaultLocation = new Point(100, 100);
     private static final Dimension _inspectionFrameMinSize = new Dimension(100, 100);
-    private static final Dimension _inspectionFramePrefSize = new Dimension(1400, 1040);
+    private static final Dimension _inspectionFramePrefSize = new Dimension(1625, 1040);
 
     public Point inspectorFrameDefaultLocation() {
         return _inspectionFrameDefaultLocation;
@@ -88,13 +87,23 @@ public class BasicInspectorGeometry implements InspectorGeometry {
 
     // Breakpoint Inspector frame
     private static final Point _breakpointsFrameDefaultLocation = new Point(1095, 0);
-    private static final Dimension _breakpointsFramePrefSize = new Dimension(300, 250);
+    private static final Dimension _breakpointsFramePrefSize = new Dimension(500, 250);
 
     public Point breakpointsFrameDefaultLocation() {
         return _breakpointsFrameDefaultLocation;
     }
     public Dimension breakpointsFramePrefSize() {
         return _breakpointsFramePrefSize;
+    }
+
+    // Thread Locals Inspection (container) frame
+    private static final Point _threadLocalsFrameDefaultLocation = new Point(1095, 280);
+    private static final Dimension _threadLocalsFramePrefSize = new Dimension(500, 750);
+    public Point threadLocalsFrameDefaultLocation() {
+        return _threadLocalsFrameDefaultLocation;
+    }
+    public Dimension threadLocalsFramePrefSize() {
+        return _threadLocalsFramePrefSize;
     }
 
     // Java Source Inspector frame

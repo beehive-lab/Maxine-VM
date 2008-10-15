@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=49396783-01d4-4663-bdc7-17ed50bb2e64*/
 package com.sun.max.vm.compiler.eir.allocate.sparc;
 
 import java.util.*;
@@ -101,6 +100,19 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
             }
         }
         return null;
+    }
+
+    @Override
+    protected void removeInterferingRegisters(EirVariable variable, PoolSet<SPARCEirRegister> availableRegisters) {
+        final SPARCEirRegister register = (SPARCEirRegister) variable.location();
+        availableRegisters.remove(register);
+        if (variable.kind() == Kind.DOUBLE) {
+            final SPARCEirRegister.FloatingPoint fpRegister = (SPARCEirRegister.FloatingPoint) register;
+            final SPARCEirRegister.FloatingPoint overlappingRegister = fpRegister.overlappingSinglePrecision();
+            if (overlappingRegister != null) {
+                availableRegisters.remove(overlappingRegister);
+            }
+        }
     }
 
     @Override

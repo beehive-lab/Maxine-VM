@@ -18,30 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=982f6ba7-6e3e-4688-ae04-f1639eced0e0*/
+/*VCSID=bade66b5-af5c-4565-a940-475c24e12bc7*/
+package com.sun.max.vm.heap.util;
 
-package util;
+import com.sun.max.unsafe.*;
 
+/**
+ * @author Bernd Mathiske
+ */
+public interface PointerIndexVisitor {
 
-public class Asynchrony {
-
-    private int _recursionLevel;
-
-    public static void main(String[] args) {
-        new Asynchrony().recurse();
-        final int constant = 1;
-        int count = 0;
-        while (constant == 1) {
-            count++;
-            count--;
-        }
-    }
-
-    private void recurse() {
-        if (_recursionLevel++ > 10) {
-            return;
-        }
-        recurse();
-    }
-
+    /**
+     * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address
+     * computed by {@code pointer.plus(wordIndex * Word.size())}.
+     *
+     * @param pointer
+     * @param wordIndex
+     */
+    void visitPointerIndex(Pointer pointer, int wordIndex);
 }

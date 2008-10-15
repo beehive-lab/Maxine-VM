@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=565c3f94-1858-468b-a12e-35223e16426f*/
 package com.sun.max.ins.gui;
 
 import java.awt.*;
@@ -248,7 +247,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
      */
     public enum CodeKind {
         TARGET_CODE("Target Code", true),
-        BYTECODES("Bytecodes", true),
+        BYTECODES("Bytecodes", false),
         JAVA_SOURCE("Java Source", false);
 
         private final String _label;

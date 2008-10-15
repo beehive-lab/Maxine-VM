@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e6982264-8fac-4a54-9c9b-7cb120b72011*/
 package com.sun.max.ins.debug;
 
 import java.awt.*;
@@ -210,15 +209,15 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
 
-        final JPanel form = new JPanel(new SpringLayout());
-        form.setOpaque(true);
-        form.setBackground(style().defaultBackgroundColor());
-        form.add(new TextLabel(_inspection, "start: "));
-        form.add(new DataLabel.AddressAsHex(_inspection, _teleNativeThread.stack().start()));
-        form.add(new TextLabel(_inspection, "size: "));
-        form.add(new DataLabel.IntAsDecimal(_inspection, _teleNativeThread.stack().size().toInt()));
-        SpringUtilities.makeCompactGrid(form, 2);
-        panel.add(form, BorderLayout.NORTH);
+        final JPanel header = new JPanel(new SpringLayout());
+        header.setOpaque(true);
+        header.setBackground(style().defaultBackgroundColor());
+        header.add(new TextLabel(_inspection, "start: "));
+        header.add(new DataLabel.AddressAsHex(_inspection, _teleNativeThread.stack().start()));
+        header.add(new TextLabel(_inspection, "size: "));
+        header.add(new DataLabel.IntAsDecimal(_inspection, _teleNativeThread.stack().size().toInt()));
+        SpringUtilities.makeCompactGrid(header, 2);
+        panel.add(header, BorderLayout.NORTH);
 
         _list.setSelectionInterval(1, 0);
         _list.setVisibleRowCount(10);

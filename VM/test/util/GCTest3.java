@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a6ae033c-e2fc-451a-9bcb-f896cd09e05c*/
 package util;
 
 import java.util.*;
@@ -84,7 +83,7 @@ class Node2 {
     }
 }
 
-public class GCBench1 {
+public class GCTest3 {
 
     public static final int kStretchTreeDepth = 18; // about 16Mb
     public static final int kLongLivedTreeDepth = 16; // about 4Mb
@@ -181,7 +180,7 @@ public class GCBench1 {
         Node2 tempTree;
         int i = 0;
         System.out.println("Garbage Collector Test");
-        while (i < 100) {
+        while (i < 40) {
             System.out.println(" Stretching memory with a binary tree of depth " + kStretchTreeDepth);
 
             // Stretch the memory space quickly
@@ -195,5 +194,6 @@ public class GCBench1 {
             longLivedTrees.add(longLivedTree);
             i++;
         }
+        System.out.println(GCTest3.class.getSimpleName() + " done.");
     }
 } // class JavaGC

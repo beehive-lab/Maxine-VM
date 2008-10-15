@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d80a3396-f99b-4cea-9a0d-6fda793e4413*/
 package com.sun.max.tele.method;
 
 import com.sun.max.collect.*;
@@ -140,7 +139,7 @@ public class TeleCodeLocation extends TeleVMHolder {
             // so that we can talk about bytecodes.
             // Look first in the class registry
             final TypeDescriptor holderTypeDescriptor = key().holder();
-            final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActor(holderTypeDescriptor);
+            final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByType(holderTypeDescriptor);
             if (teleClassActor != null) {
                 // find a matching method
                 final String methodKeyString = _key.signature().toJavaString(true, true);

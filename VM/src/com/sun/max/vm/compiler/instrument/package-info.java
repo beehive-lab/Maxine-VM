@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=26b7ed86-250d-47ff-b160-b10dbe294b21*/
 /**
  * This package implements utilties for instrumenting compiled code. This includes recompilation triggers,
  * location counters, branch counters, etc.

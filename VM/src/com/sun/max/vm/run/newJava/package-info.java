@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b7216f63-9adc-4400-a9e7-9ebf0363d947*/
 /**
  * A run scheme that boots all of the JDK's classes as a separate copy in a new boot class loader.
  *

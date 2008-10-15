@@ -18,11 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d5beecca-efad-41e9-8b85-f9695e1c1cac*/
-package com.sun.max.vm.heap.util;
+package util;
+
 
 /**
- * @author Christos Kotselidis
+ * Executes the equivalent of HelloWorld with a GC between two calls.
+ *
+ * @author Ben L. Titzer
  */
-public interface Copy extends Action {
+public final class GCTest1 {
+    public static void main(String[] args) {
+        System.out.println(GCTest1.class.getSimpleName() + " started.");
+        System.gc();
+        System.out.println(GCTest1.class.getSimpleName() + " done.");
+    }
 }

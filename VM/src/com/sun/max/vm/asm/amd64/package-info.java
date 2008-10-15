@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8e61c214-3525-48e7-a60c-8e4f88011d14*/
 /**
  * Defines the subset of an AMD64 assembler used by the VM.
  * 

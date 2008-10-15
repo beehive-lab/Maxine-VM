@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ae6bc827-79c9-4f14-beb7-7b81382710c9*/
 package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
@@ -59,12 +58,12 @@ public abstract class Address extends Word {
     public static Address fromUnsignedInt(int value) {
         if (Word.isBoxed()) {
             final long longValue = value;
-            final long n = longValue & 0xffffffff;
+            final long n = longValue & 0xffffffffL;
             return new BoxedAddress(n);
         }
         if (Word.width() == WordWidth.BITS_64) {
             final long longValue = value;
-            final long n = longValue & 0xffffffff;
+            final long n = longValue & 0xffffffffL;
             return UnsafeLoophole.longToWord(Address.class, n);
         }
         return UnsafeLoophole.intToWord(Address.class, value);

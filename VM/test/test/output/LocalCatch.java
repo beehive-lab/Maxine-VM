@@ -1,4 +1,4 @@
-/*VCSID=6042267f-d5a6-4541-b123-8c88aabb723e
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
@@ -18,34 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.heap.util;
+package test.output;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.grip.*;
+/**
+ * small test case for mantis bug 6: recompilation segmentation fault.
+ * @author Yi Guo
+ */
+public class LocalCatch {
+    static class S {
 
-public class PointerOffsetVisitorImpl implements PointerOffsetVisitor {
+        public int _x = 12;
 
-    private Action _actionImpl;
-
-    public PointerOffsetVisitorImpl() {
-    }
-
-    public PointerOffsetVisitorImpl(Action actionImpl) {
-        _actionImpl = actionImpl;
-    }
-
-    public void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final Grip oldGrip = pointer.readGrip(offset);
-        final Grip newGrip = _actionImpl.doAction(oldGrip, from, to);
-        if (newGrip != null) {
-            if (newGrip != oldGrip) {
-                pointer.writeGrip(offset, newGrip);
+        public int b() {
+            try {
+                throw new Exception("abc");
+            } catch (Exception e) {
+                return _x;
             }
         }
     }
 
-    public void visitPointerOffset(Pointer pointer, int offset) {
+    public static void main(String[] args) {
+        System.out.println("starting...");
+        final S f = new S();
+        String s = "";
+        /* 10000 iterations to trigger recompilation of f.b() if enabled.*/
+        for (int i = 0; i < 10000; i++) {
+            s += f.b();
+        }
+        System.out.println(s.length());
+        System.out.println("done!");
     }
-
 }

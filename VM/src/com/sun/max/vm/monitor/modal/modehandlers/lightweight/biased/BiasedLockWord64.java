@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=594bd447-06e2-41bc-9ee2-6c81bc8d681f*/
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
 import com.sun.max.annotate.*;
@@ -87,12 +86,12 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
 
     @INLINE
     public final BiasedLockWord64 asBiasedTo(int lockwordThreadID) {
-        return BiasedLockWord64.as(asAnonBiased().asAddress().or(Address.fromInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
+        return BiasedLockWord64.as(asAnonBiased().asAddress().or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
     }
 
     @INLINE
     public final BiasedLockWord64 asBiasedTo(int lockwordThreadID, BiasedLockEpoch epoch) {
-        return BiasedLockWord64.as(asAnonBiased().asAddress().or(epoch.asAddress()).or(Address.fromInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
+        return BiasedLockWord64.as(asAnonBiased().asAddress().or(epoch.asAddress()).or(Address.fromUnsignedInt(lockwordThreadID).shiftedLeft(THREADID_SHIFT)));
     }
 
     @INLINE

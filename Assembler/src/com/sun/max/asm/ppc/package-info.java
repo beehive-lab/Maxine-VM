@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a38ec30c-dd08-46da-993d-768fe8e62d1c*/
 /**
  * Base package for implementing a {@linkplain com.sun.max.asm.ppp.complete.Package complete} or partial PowerPC instruction set assembly system.
  *

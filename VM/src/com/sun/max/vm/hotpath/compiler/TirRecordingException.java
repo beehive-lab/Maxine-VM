@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=095d5f97-0427-4d83-bbbc-b66c8acc254e*/
 package com.sun.max.vm.hotpath.compiler;
 
 public class TirRecordingException extends RuntimeException {

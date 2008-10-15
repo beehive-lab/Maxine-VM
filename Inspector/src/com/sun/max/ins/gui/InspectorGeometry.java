@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=90faccd4-3636-4f13-b892-beac15134977*/
 package com.sun.max.ins.gui;
 
 import java.awt.*;
@@ -48,7 +47,11 @@ public interface InspectorGeometry {
     Point stacksFrameDefaultLocation();
     Dimension stacksFramePrefSize();
 
-   // Methods Inspection (container) frame
+    // Thread locals Inspection (container) frame
+    Dimension threadLocalsFramePrefSize();
+    Point threadLocalsFrameDefaultLocation();
+
+    // Methods Inspection (container) frame
     Point methodsFrameDefaultLocation();
     Dimension methodsFramePrefSize();
 

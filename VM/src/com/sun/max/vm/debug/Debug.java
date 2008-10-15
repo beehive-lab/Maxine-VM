@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=1d31a04c-89b8-42fb-9c91-5d23b0080fe5*/
 package com.sun.max.vm.debug;
 
 import java.io.*;
@@ -380,8 +379,8 @@ public final class Debug {
             lockDisabledSafepoints = lock();
         }
         stream.print(vmThread.getName());
-        stream.print("[id=");
-        stream.print(vmThread.id());
+        stream.print("[serial=");
+        stream.print(vmThread.serial());
         stream.print("]", withNewline);
         if (!MaxineVM.isPrototyping()) {
             unlock(lockDisabledSafepoints);

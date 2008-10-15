@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f40556b3-da23-41da-8cc2-51ba9eb7cfab*/
 /**
  * A complete implementation of the SPARC assembly system according to this book:
  * <a href="http://www.sparc.com/standards/SPARCV9.pdf">The SPARC Architecture Manual - Version 9</a>,

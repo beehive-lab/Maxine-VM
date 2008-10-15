@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=3330eeac-7870-4b00-b657-f3bd17ff9db9*/
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
 import com.sun.max.annotate.*;
@@ -55,7 +54,7 @@ public abstract class BiasedLockEpoch extends Word {
             return MIN;
         }
         int epoch = toIntInternal();
-        return BiasedLockEpoch.as(Address.fromInt(epoch++).shiftedLeft(BiasedLockWord64.EPOCH_SHIFT));
+        return BiasedLockEpoch.as(Address.fromUnsignedInt(epoch++).shiftedLeft(BiasedLockWord64.EPOCH_SHIFT));
     }
 
     @INLINE

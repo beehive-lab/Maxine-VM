@@ -18,13 +18,11 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=5f4d8e8d-bc44-4d0d-83ce-e32d13b2a5db*/
 package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.layout.*;
@@ -44,10 +42,7 @@ public class Cell {
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantArray(Pointer cell, Size size, DynamicHub hub, int length) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            DebugHeap.writeCellTag(cell, Word.width());
-        }
-
+        DebugHeap.writeCellTag(cell);
         Memory.clear(cell, size);
         final Pointer origin = Layout.arrayCellToOrigin(cell);
         Layout.writeArrayLength(origin, length);
@@ -71,9 +66,7 @@ public class Cell {
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static Object plantTuple(Pointer cell, Hub hub) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            DebugHeap.writeCellTag(cell, Word.width());
-        }
+        DebugHeap.writeCellTag(cell);
         Memory.clear(cell, hub.tupleSize());
         final Pointer origin = Layout.tupleCellToOrigin(cell);
         Layout.writeHubReference(origin, Reference.fromJava(hub));
@@ -87,9 +80,7 @@ public class Cell {
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static <Hybrid_Type extends Hybrid> Hybrid_Type plantHybrid(Pointer cell, Size size, DynamicHub hub) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            DebugHeap.writeCellTag(cell, Word.width());
-        }
+        DebugHeap.writeCellTag(cell);
         Memory.clear(cell, size);
         final Pointer origin = Layout.hybridCellToOrigin(cell);
         Layout.writeHubReference(origin, Reference.fromJava(hub));
@@ -105,9 +96,7 @@ public class Cell {
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static <Hybrid_Type extends Hybrid> Hybrid_Type plantExpandedHybrid(Pointer cell, Size size, Hybrid_Type hybrid, int length) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            DebugHeap.writeCellTag(cell, Word.width());
-        }
+        DebugHeap.writeCellTag(cell);
         final Pointer oldOrigin = Reference.fromJava(hybrid).toOrigin();
         final Pointer oldCell = Layout.hybridOriginToCell(oldOrigin);
         final Size oldSize = Layout.hybridLayout().getArraySize(hybrid.length());
@@ -125,9 +114,7 @@ public class Cell {
      */
     @NO_SAFEPOINTS("avoid inconsistent object contents")
     public static <Object_Type> Object_Type plantClone(Pointer cell, Size size, Object_Type object) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            DebugHeap.writeCellTag(cell, Word.width());
-        }
+        DebugHeap.writeCellTag(cell);
         Memory.copyBytes(Layout.originToCell(Reference.fromJava(object).toOrigin()), cell, size);
         final Pointer origin = Layout.cellToOrigin(cell);
         Layout.writeMisc(origin, Word.zero());

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b9ec1698-a490-4115-9c68-e1b2971c2cce*/
 package com.sun.max.vm.stack;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
@@ -76,12 +75,16 @@ import com.sun.max.vm.type.SignatureDescriptor.*;
  * was carefully crafted to comply with this requirement.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
+ * @author Ben L. Titzer
  */
 public final class StackReferenceMapPreparer {
 
-    public StackReferenceMapPreparer() {
+    public StackReferenceMapPreparer(VmThread owner) {
+        _owner = owner;
     }
 
+    private final VmThread _owner;
     private Pointer _triggeredVmThreadLocals;
     private Pointer _enabledVmThreadLocals;
     private Pointer _disabledVmThreadLocals;
@@ -109,6 +112,9 @@ public final class StackReferenceMapPreparer {
         LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
 
         final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
+        if (this != VmThread.current().stackReferenceMapPreparer()) {
+            FatalError.unexpected("Cannot use stack reference map preparer of another thread");
+        }
 
         // clear the reference map covering the stack contents and the vm thread locals
         clearReferenceMapRange(vmThreadLocals, stackPointer, highestSlot);
@@ -127,12 +133,51 @@ public final class StackReferenceMapPreparer {
             out.println(stackPointer);
             out.print("  Lowest slot: ");
             out.println(_lowestStackSlot);
+            out.print("  Current thread is ");
+            Debug.printVmThread(out, VmThread.current(), true);
         }
 
         // prepare references for each of the vm thread locals copies
         prepareVmThreadLocalsReferenceMap(_enabledVmThreadLocals);
         prepareVmThreadLocalsReferenceMap(_disabledVmThreadLocals);
         prepareVmThreadLocalsReferenceMap(_triggeredVmThreadLocals);
+
+        // walk the stack and prepare references for each stack frame
+        final StackFrameWalker stackFrameWalker = vmThread.stackFrameWalker();
+        stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+
+        if (Heap.traceGC()) {
+            Debug.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    public void completeStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
+
+        // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
+        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
+
+        final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
+
+        // clear the reference map covering the as-yet-unprepared stack contents
+        clearReferenceMapRange(vmThreadLocals, stackPointer, highestSlot);
+
+        boolean lockDisabledSafepoints = false;
+        if (Heap.traceGC()) {
+            lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map preparation
+            final DebugPrintStream out = Debug.out;
+            out.print("Completing preparation of stack reference map for thread ");
+            Debug.printVmThread(out, vmThread, false);
+            out.println(":");
+            out.print("  Highest slot: ");
+            out.println(highestSlot);
+            out.print("  Lowest active slot: ");
+            out.println(stackPointer);
+            out.print("  Lowest slot: ");
+            out.println(_lowestStackSlot);
+            out.print("  Current thread is ");
+            Debug.printVmThread(out, VmThread.current(), true);
+        }
 
         // walk the stack and prepare references for each stack frame
         final StackFrameWalker stackFrameWalker = vmThread.stackFrameWalker();
@@ -576,7 +621,17 @@ public final class StackReferenceMapPreparer {
 
     private final TrampolineFrameForOptimizedCallerReferenceMapPreparer _trampolineFrameForOptimizedCallerReferenceMapPreparer = new TrampolineFrameForOptimizedCallerReferenceMapPreparer();
 
-    public void prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    /**
+     * Prepares the part of the reference map corresponding to a single stack frame of a VM thread.
+     *
+     * @param targetMethod the method being executed in the frame
+     * @param instructionPointer the current execution point in {@code targetMethod}
+     * @param stackPointer the stack pointer of the frame
+     * @param framePointer the stack pointer of the frame
+     * @return false to communicate to the enclosing stack walker that this is the last frame to be walked; true if the
+     *         stack walker should continue to the next frame
+     */
+    public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         if (targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
             // Since trampolines are reused for different callees with different parameter signatures,
             // they do not carry enough reference map information for incoming parameters.
@@ -614,6 +669,7 @@ public final class StackReferenceMapPreparer {
             }
             prepareFrameReferenceMap(targetMethod, stopIndex, framePointer);
         }
+        return true;
     }
 
     /**

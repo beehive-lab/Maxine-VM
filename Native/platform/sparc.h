@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=73f6ade2-73f0-46b1-bd09-49c2e76c9f67*/
 /**
  * @author Bernd Mathiske
  * @author Laurent Daynes
@@ -110,6 +109,7 @@ extern void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIn
 extern void sparc_canonicalizeSignalIntegerRegisters(sparc_OsSignalIntegerRegisters os, sparc_OsSignalCanonicalIntegerRegisters c);
 
 extern void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters osTeleIntegerRegisters, sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
+extern void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
 
 typedef struct sparc_CanonicalFloatingPointRegisters {
 #ifdef	__sparcv9

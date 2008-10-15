@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=9bf743b2-abc0-48f3-852f-43f91c94c948*/
 package com.sun.max.vm.monitor.ignore;
 
 import com.sun.max.annotate.*;
@@ -45,7 +44,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
 
     @INLINE
     private Address hashCodeToMisc(int hashCode) {
-        return Address.fromInt(hashCode);
+        return Address.fromUnsignedInt(hashCode);
     }
 
     @INLINE
@@ -120,7 +119,7 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
     }
 
     public Word createMisc(Object object) {
-        return Address.fromInt(createHashCode(object));
+        return Address.fromUnsignedInt(createHashCode(object));
     }
 
     @Override

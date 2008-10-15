@@ -1,4 +1,3 @@
-/*VCSID=ded9966e-a3be-4bcb-807e-9b7c170629fa*/
 package test.interactive;
 
 /**

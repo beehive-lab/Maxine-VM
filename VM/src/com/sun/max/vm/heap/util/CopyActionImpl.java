@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a2f7d70f-55be-43b2-a30e-b89cddd6a993*/
 package com.sun.max.vm.heap.util;
 
 import com.sun.max.memory.*;
@@ -34,7 +33,7 @@ import com.sun.max.vm.runtime.*;
  * @author Christos Kotselidis
  */
 
-public class CopyActionImpl implements Copy {
+public class CopyActionImpl implements Action {
 
     private static Verify _verifyAction = new VerifyActionImpl();
 
@@ -62,9 +61,7 @@ public class CopyActionImpl implements Copy {
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme._outOfMemoryError;
             }
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                DebugHeap.writeCellTag(toCell, Word.width());
-            }
+            DebugHeap.writeCellTag(toCell);
             Memory.copyBytes(fromCell, toCell, size);
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Grip toGrip = Grip.fromOrigin(toOrigin);

@@ -18,23 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e0634106-1e20-4de8-9283-fc71e7c7bf0e*/
-package util;
+/*VCSID=8ef40a37-6a9b-45d0-b4c0-2a9ea2597045*/
+package com.sun.max.vm.heap.util;
 
+import com.sun.max.unsafe.*;
 
-public class StaticInitializers {
+/**
+ * @author Bernd Mathiske
+ */
+public interface PointerOffsetVisitor {
 
-    private static String _staticString1 = "string 1";
-    private static String _staticString2;
-
-    static {
-        _staticString2 = "string 2";
-    }
-
-    public static void main(String[] args) {
-        System.out.println("StaticInitializersTest");
-        System.out.println(_staticString1);
-        System.out.println(_staticString2);
-    }
+    void visitPointerOffset(Pointer pointer, int offset);
 
 }

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=5bbc9ca1-8d94-4829-9767-462dd8a55104*/
 package com.sun.max.lang;
 
 import java.lang.reflect.*;
@@ -128,10 +127,8 @@ public final class Classes {
      * Extends the functionality of {@link Class#getConstructor(Class...)} to find a constructor whose formal parameter
      * types are assignable from the types of a list of arguments.
      *
-     * @param javaClass
-     *                the class to search in
-     * @param arguments
-     *                the list of arguments that will be passed to the constructor
+     * @param javaClass the class to search in
+     * @param arguments the list of arguments that will be passed to the constructor
      * @return the first constructor in {@link Class#getConstructors() javaClass.getConstructors()} that will accept
      *         {@code arguments} or null if no such constructor exists
      */
@@ -155,14 +152,11 @@ public final class Classes {
      * Extends the functionality of {@link Class#getMethod(String, Class...)} to find a method whose formal parameter
      * types are assignable from the types of a list of arguments.
      *
-     * @param javaClass
-     *                the class to search in
-     * @param name
-     *                the name of the method to search for
-     * @param arguments
-     *                the list of arguments that will be passed to the constructor
-     * @return the first method in {@link Class#getMethods() javaClass.getMethods()} that will accept
-     *         {@code arguments} or null if no such method exists
+     * @param javaClass the class to search in
+     * @param name the name of the method to search for
+     * @param arguments the list of arguments that will be passed to the constructor
+     * @return the first method in {@link Class#getMethods() javaClass.getMethods()} that will accept {@code arguments}
+     *         or null if no such method exists
      */
     public static Method findMethod(Class<?> javaClass, String name, Object... arguments) {
     nextMethod:
@@ -181,15 +175,12 @@ public final class Classes {
     }
 
     /**
-     * Extends the functionality of {@link Class#getDeclaredMethod(String, Class...)} to find a method whose formal parameter
-     * types are assignable from the types of a list of arguments.
+     * Extends the functionality of {@link Class#getDeclaredMethod(String, Class...)} to find a method whose formal
+     * parameter types are assignable from the types of a list of arguments.
      *
-     * @param javaClass
-     *                the class to search in
-     * @param name
-     *                the name of the method to search for
-     * @param arguments
-     *                the list of arguments that will be passed to the constructor
+     * @param javaClass the class to search in
+     * @param name the name of the method to search for
+     * @param arguments the list of arguments that will be passed to the constructor
      * @return the first method in {@link Class#getDeclaredMethods() javaClass.getDeclaredMethods()} that will accept
      *         {@code arguments} or null if no such method exists
      */
@@ -255,11 +246,10 @@ public final class Classes {
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
      *
-     * @param clazz
-     *                the class for which the simple name is being requested
-     * @param withEnclosingClass
-     *                specifies if the returned name should be qualified with the name(s) of the enclosing class/classes
-     *                of {@code clazz} (if any). This option is ignored if {@code clazz} denotes an anonymous or local class.
+     * @param clazz the class for which the simple name is being requested
+     * @param withEnclosingClass specifies if the returned name should be qualified with the name(s) of the enclosing
+     *            class/classes of {@code clazz} (if any). This option is ignored if {@code clazz} denotes an anonymous
+     *            or local class.
      * @return
      */
     public static String getSimpleName(Class<?> clazz, boolean withEnclosingClass) {

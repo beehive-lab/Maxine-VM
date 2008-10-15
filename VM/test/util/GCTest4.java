@@ -18,23 +18,38 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=cc6fc9b8-9f0a-49bc-9ad0-83760360483f*/
 package util;
 
-public class GCLinkedListTest {
+public class GCTest4 {
 
     public static void main(String[] args) {
+        for (int i = 0; i < 100; i++) {
+            System.out.println("Iteration " + i + "...");
+            createList();
+        }
+        System.out.println(GCTest4.class.getSimpleName() + " done.");
+    }
+
+    private static void createList() {
+        // build a list of length 1000
         final Node1 start = new Node1("0");
         Node1 previous = start;
-        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+        final int length = 10000;
+        for (int i = 0; i < length; i++) {
             final Node1 temp = new Node1(String.valueOf(i));
             previous.setNext(temp);
             previous = temp;
-            System.out.println("Iteration: " + i);
-
-           //GCLinkedListTest.printList(start);
         }
 
+        // verify the contents of the list
+        int len = 0;
+        Node1 node = start;
+        while (node != null) {
+            assert node._id.equals(String.valueOf(len));
+            node = node._next;
+            len++;
+        }
+        assert len == length + 1;
     }
 
     public static void printList(Node1 start) {

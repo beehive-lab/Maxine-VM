@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=d6f8a9b7-8625-449d-8bc3-6bcad0055c92*/
 package com.sun.max.ins.method;
 
 import javax.swing.*;

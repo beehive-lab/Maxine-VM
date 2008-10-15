@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f90c4e5a-a687-426b-ab71-a67dd69614d9*/
 /**
  * Run schemes for the VM.
  * The main Java thread executes the 'run()' method from the selected scheme.

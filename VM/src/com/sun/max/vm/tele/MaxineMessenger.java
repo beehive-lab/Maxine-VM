@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ef59a4b9-6353-4d75-8bf9-d4a915c5db65*/
 package com.sun.max.vm.tele;
 
 import java.io.*;
@@ -61,7 +60,7 @@ public final class MaxineMessenger {
      * Otherwise it remains zero and there is no messenger traffic.
      */
     @INSPECTED
-    private static Pointer _info;
+    private static Pointer _info = Pointer.zero();
 
     public static boolean isVmInspected() {
         return !_info.isZero();

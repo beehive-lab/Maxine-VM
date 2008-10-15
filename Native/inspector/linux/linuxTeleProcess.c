@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=3c8cf64b-7d9a-478f-bd4b-1b4a80c5af88*/
 #include <malloc.h>
 #include <signal.h>
 #include <string.h>

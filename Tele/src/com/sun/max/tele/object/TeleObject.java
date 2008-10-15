@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=317dde61-dd5b-4552-83ed-e7976d8d619c*/
 package com.sun.max.tele.object;
 
 import java.lang.reflect.*;
@@ -567,7 +566,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
      */
     public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActor(javaClass);
+        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActorByClass(javaClass);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
 
         Trace.begin(COPY_TRACE_VALUE, "Copying static fields of " + javaClass + "from VM");

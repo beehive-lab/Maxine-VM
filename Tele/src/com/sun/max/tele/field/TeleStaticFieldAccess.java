@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=c5cfd4e4-5655-40e7-a89f-00a9d56ef234*/
 package com.sun.max.tele.field;
 
 import com.sun.max.program.*;
@@ -42,7 +41,7 @@ public class TeleStaticFieldAccess extends TeleFieldAccess {
      * Gets a reference to the static tuple holding the value of this field.
      */
     public Reference staticTupleReference(TeleVM teleVM) {
-        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActor(fieldActor().holder().typeDescriptor());
+        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActorByType(fieldActor().holder().typeDescriptor());
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
         return teleStaticTuple.reference();
     }

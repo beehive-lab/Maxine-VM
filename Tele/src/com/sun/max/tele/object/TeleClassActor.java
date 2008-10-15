@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=eecad982-d320-4c52-bef5-b8c79b13954a*/
 package com.sun.max.tele.object;
 
 import java.util.*;
@@ -58,8 +57,6 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         }
         return _classActor;
     }
-
-
 
     private boolean _initialized = false;
 

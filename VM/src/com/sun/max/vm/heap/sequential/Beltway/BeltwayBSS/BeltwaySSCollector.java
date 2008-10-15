@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=7f4c511a-2785-420c-81aa-11a05254795a*/
 package com.sun.max.vm.heap.sequential.Beltway.BeltwayBSS;
 
 import com.sun.max.vm.*;
@@ -61,7 +60,7 @@ public class BeltwaySSCollector implements Runnable {
             _beltwayHeapScheme.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getFromSpace().start(), beltwayHeapSchemeBSS.getFromSpace().getAllocationMark(), BeltManager.getApplicationHeap());
         }
 
-        TeleHeap.beforeGarbageCollection();
+        TeleHeapInfo.beforeGarbageCollection();
         VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
         if (Heap.verbose()) {
@@ -111,7 +110,7 @@ public class BeltwaySSCollector implements Runnable {
 
         VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
         beltwayHeapSchemeBSS.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getToSpace().start(), beltwayHeapSchemeBSS.getToSpace().getAllocationMark(), BeltManager.getApplicationHeap());
-        TeleHeap.afterGarbageCollection();
+        TeleHeapInfo.afterGarbageCollection();
 
         // Swap semi-spaces. From--> To and To-->From
         beltwayHeapSchemeBSS.getBeltManager().swapBelts(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());

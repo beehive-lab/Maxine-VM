@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e420bbad-2d52-4093-be11-3d67c6c74133*/
 /**
  * This package contains utility classes for profiling code, such as counters,
  * alarms, etc.

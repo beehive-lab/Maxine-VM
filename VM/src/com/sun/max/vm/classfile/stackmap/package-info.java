@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=10d5335a-8131-4376-bb1b-9eeded0921d9*/
 
 /**
  * Classes for reading in and assembling Stack maps from the class file.  These are later expanded into

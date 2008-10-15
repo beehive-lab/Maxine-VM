@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=59286cf8-740b-4a3b-ba49-8ffeeceb71ff*/
 package test.com.sun.max.vm;
 
 import java.io.*;
@@ -54,7 +53,7 @@ public class MaxineTester {
                     "timing out and killing it.");
     private static final Option<Integer> _javaTesterConcurrency = _options.newIntegerOption("java-tester-concurrency", 1,
                     "Specifies the number of Java tester tests to run in parallel.");
-    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 126,
+    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 40,
                     "Specifies the number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
     private static final Option<Boolean> _echoOutput = _options.newBooleanOption("echo-output", false,
@@ -75,8 +74,15 @@ public class MaxineTester {
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
-        util.GCBench.class,
-        util.GCBench1.class
+        test.output.FloatNanTest.class,
+        test.output.StaticInitializers.class,
+        test.output.LocalCatch.class,
+        util.GCTest1.class,
+        util.GCTest2.class,
+        util.GCTest3.class,
+        util.GCTest4.class,
+        util.GCTest5.class,
+        util.GCTest6.class
     };
 
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {

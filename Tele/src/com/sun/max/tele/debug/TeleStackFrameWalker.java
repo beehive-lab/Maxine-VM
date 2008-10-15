@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=829da7a4-a838-463f-ad4c-903bfde21e3e*/
 package com.sun.max.tele.debug;
 
 import com.sun.max.collect.*;
@@ -40,11 +39,11 @@ import com.sun.max.vm.thread.*;
 public final class TeleStackFrameWalker extends StackFrameWalker {
 
     private final TeleVM _teleVM;
-    private final TeleThreadLocalValues _teleThreadLocalValues;
+    private final TeleVMThreadLocalValues _teleEnabledVmThreadLocalValues;
     private final TeleNativeThread _teleNativeThread;
     private final DataAccess _dataAccess;
 
-    private final Pointer _instructionPointer;
+    private final Pointer _cpuInstructionPointer;
     private final Pointer _cpuStackPointer;
     private final Pointer _cpuFramePointer;
 
@@ -52,9 +51,9 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         super(teleVM.compilerScheme());
         _teleVM = teleVM;
         _teleNativeThread = teleNativeThread;
-        _teleThreadLocalValues = teleNativeThread.stack().threadLocalValues();
+        _teleEnabledVmThreadLocalValues = teleNativeThread.stack().enabledVmThreadLocalValues();
         _dataAccess = teleVM.teleProcess().dataAccess();
-        _instructionPointer = teleNativeThread.instructionPointer();
+        _cpuInstructionPointer = teleNativeThread.instructionPointer();
         _cpuStackPointer = teleNativeThread.stackPointer();
         _cpuFramePointer = teleNativeThread.framePointer();
     }
@@ -97,7 +96,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     public Sequence<StackFrame> frames() {
         final AppendableSequence<StackFrame> frames = new LinkSequence<StackFrame>();
         try {
-            frames(frames, _instructionPointer, _cpuStackPointer, _cpuFramePointer);
+            frames(frames, _cpuInstructionPointer, _cpuStackPointer, _cpuFramePointer);
         } catch (Throwable e) {
             final StackFrame parentFrame = frames.isEmpty() ? null : frames.last();
             frames.append(new ErrorStackFrame(parentFrame, this, e.toString()));
@@ -107,7 +106,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public boolean isThreadInNative() {
-        return _teleThreadLocalValues != null && !_teleThreadLocalValues.isInJavaCode();
+        return _teleEnabledVmThreadLocalValues.isValid() && !_teleEnabledVmThreadLocalValues.isInJavaCode();
     }
 
     @Override
@@ -144,12 +143,12 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public Word readWord(VmThreadLocal local) {
-        return _teleThreadLocalValues.getWord(local);
+        return _teleEnabledVmThreadLocalValues.getWord(local);
     }
 
     @Override
     public boolean trapHandlerHasRecordedTrapFrame() {
-        return _teleThreadLocalValues != null && !_teleThreadLocalValues.getWord(VmThreadLocal.TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME).isZero();
+        return _teleEnabledVmThreadLocalValues.isValid() && !_teleEnabledVmThreadLocalValues.getWord(VmThreadLocal.TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME).isZero();
     }
 
     @Override
@@ -161,6 +160,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     public void useABI(TargetABI targetABI) {
         final Pointer abiStackPointer = _teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_STACK_POINTER, targetABI);
         final Pointer abiFramePointer = _teleNativeThread.integerRegisters().get(VMRegister.Role.ABI_FRAME_POINTER, targetABI);
-        advance(_instructionPointer, abiStackPointer, abiFramePointer);
+        advance(_cpuInstructionPointer, abiStackPointer, abiFramePointer);
     }
 }

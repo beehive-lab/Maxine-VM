@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=9151c079-2a3e-496f-a9be-9112198d4d39*/
 package com.sun.max.tele.grip;
 
 import java.util.*;
@@ -45,14 +44,16 @@ public final class TeleRoots {
         _wordArrayLayout = _teleVM.layoutScheme().wordArrayLayout();
     }
 
+    // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the {@link TeleVM}, assuming that the 
+    // static tuple of the class will not be relocated because it is in the boot image.
     private Pointer _teleRootsPointer = Pointer.zero();
 
-    private final Address[] _cachedRoots = new Address[TeleHeap.MAX_NUMBER_OF_ROOTS];
+    private final Address[] _cachedRoots = new Address[TeleHeapInfo.MAX_NUMBER_OF_ROOTS];
     private final BitSet _usedIndices = new BitSet();
 
     private RemoteTeleGrip teleRoots() {
         if (_teleRootsPointer.isZero()) {
-            _teleRootsPointer = _teleVM.fields().TeleHeap_roots.staticTupleReference(_teleVM).toOrigin().plus(_teleVM.fields().TeleHeap_roots.fieldActor().offset());
+            _teleRootsPointer = _teleVM.fields().TeleHeapInfo_roots.staticTupleReference(_teleVM).toOrigin().plus(_teleVM.fields().TeleHeapInfo_roots.fieldActor().offset());
         }
         return _teleGripScheme.createTemporaryRemoteTeleGrip(_teleVM.teleProcess().dataAccess().readWord(_teleRootsPointer).asAddress());
     }

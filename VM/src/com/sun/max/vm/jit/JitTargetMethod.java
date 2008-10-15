@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=a487a794-8a2c-442f-a27c-d6d2ff1ed70b*/
 package com.sun.max.vm.jit;
 
 import com.sun.max.annotate.*;
@@ -378,9 +377,9 @@ public abstract class JitTargetMethod extends TargetMethod {
     private JitReferenceMapEditor _referenceMapEditor;
 
     @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         finalizeReferenceMaps();
-        stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer.plus(_frameReferenceMapOffset));
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer.plus(_frameReferenceMapOffset));
     }
 
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {

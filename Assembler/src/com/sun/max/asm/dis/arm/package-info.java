@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f9650ca3-626b-4747-a316-a71c28aa0e12*/
 /**
  * An ARM disassembler.
  * 

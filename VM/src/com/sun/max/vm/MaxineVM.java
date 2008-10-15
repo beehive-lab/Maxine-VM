@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=529a8b91-1c88-4ef3-aaee-bfdd3198226c*/
 package com.sun.max.vm;
 
 
@@ -362,7 +361,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer vmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, int argc, Pointer argv) {
+    private static int run(Pointer primordialVmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -371,12 +370,12 @@ public final class MaxineVM {
         MaxineVM._auxiliarySpace = auxiliarySpace;
         MaxineVM._auxiliarySpaceSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion().size()).unsignedShiftedRight(CardRegion.CARD_SHIFT).toInt();
 
-        Safepoint.initializePrimordial(vmThreadLocals);
+        Safepoint.initializePrimordial(primordialVmThreadLocals);
 
-        Heap.initializePrimordialBarriers(vmThreadLocals, auxiliarySpace);
+        Heap.initializePrimordialBarriers(primordialVmThreadLocals, auxiliarySpace);
 
         // As of here we can write values:
-        _primordialVmThreadLocals = vmThreadLocals;
+        _primordialVmThreadLocals = primordialVmThreadLocals;
 
         // This must be called first as subsequent actions depend on it to resolve the native symbols
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym);

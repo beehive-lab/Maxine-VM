@@ -1,4 +1,4 @@
-/*VCSID=e4daf0e1-9234-4735-a018-20e29d78ba6f
+/*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product

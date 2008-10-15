@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=c570def6-8e13-437d-8b3d-0157439a7815*/
 
 /**
  * Maxine inspector.

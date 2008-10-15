@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=036369bd-e57c-4a84-9a64-b8d999dc2baa*/
 /**
  * Sequential GC as opposed to parallel.
  * 
