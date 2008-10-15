@@ -30,10 +30,10 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -136,7 +136,7 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
         return 0L;
     }
 
-    public long numberOfGarbageCollectionTurnoverCycles() {
+    public long numberOfGarbageTurnovers() {
         return 0L;
     }
 
@@ -163,68 +163,39 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
     }
 
     @Override
-    public void writeBarrier(Grip grip) {
-        // TODO Auto-generated method stub
-
+    public void writeBarrier(Reference reference) {
     }
 
-    @Override
-    public Pointer allocate(Size size) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
     public Pointer gcAllocate(RuntimeMemoryRegion region, Size size) {
-        // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
     public Pointer gcBumpAllocate(RuntimeMemoryRegion region, Size size) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-    @Override
-    public CellVisitor getVisitor() {
-        // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
-    public PointerIndexVisitor getPointerIndexGripUpdater() {
-        // TODO Auto-generated method stub
+    public BeltWayCellVisitor getVisitor() {
         return null;
     }
 
-    @Override
-    public PointerOffsetVisitor getPointerOffsetGripUpdater() {
-        // TODO Auto-generated method stub
+    public BeltWayPointerIndexVisitor getPointerIndexGripUpdater() {
         return null;
     }
 
-    @Override
-    public Pointer allocate(RuntimeMemoryRegion space, Size size) {
-        // TODO Auto-generated method stub
+    public BeltWayPointerOffsetVisitor getPointerOffsetGripUpdater() {
         return null;
     }
 
-    @Override
-    public PointerIndexVisitor getPointerIndexGripVerifier() {
-        // TODO Auto-generated method stub
+    public BeltWayPointerIndexVisitor getPointerIndexGripVerifier() {
         return null;
     }
 
-    @Override
-    public PointerOffsetVisitor getPointerOffsetGripVerifier() {
-        // TODO Auto-generated method stub
+    public BeltWayPointerOffsetVisitor getPointerOffsetGripVerifier() {
         return null;
     }
-
 
     @Override
     public Address adjustedCardTableAddress() {
-        // TODO Auto-generated method stub
         return null;
     }
 

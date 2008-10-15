@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.sequential.Beltway.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -57,7 +58,7 @@ public class ParallelCopyActionImpl implements Copy {
             final Grip forwardGripValue = Layout.readForwardGripValue(fromOrigin);
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
-            final Pointer toCell = VMConfiguration.hostOrTarget().heapScheme().gcAllocate(to, size);
+            final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
             if (VMConfiguration.hostOrTarget().debugging()) {
                 DebugHeap.writeCellTag(toCell, Word.width());
             }

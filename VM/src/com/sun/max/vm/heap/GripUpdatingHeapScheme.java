@@ -32,7 +32,7 @@ public abstract class GripUpdatingHeapScheme extends AbstractVMScheme implements
 
     protected static Action _copyAction;
     protected static Action _verifyAction = new VerifyActionImpl();
-    protected static CellVisitor _visitor = new CellVisitorImpl();
+    protected static BeltWayCellVisitor _visitor = new CellVisitorImpl();
 
     static {
         if (BeltwayConfiguration._parallelScavenging) {
@@ -42,17 +42,17 @@ public abstract class GripUpdatingHeapScheme extends AbstractVMScheme implements
         }
     }
 
-    private static PointerOffsetVisitor _pointerOffsetGripVerifier = new PointerOffsetVisitorImpl(_verifyAction);
-    private static PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitorImpl(_verifyAction);
+    private static BeltWayPointerOffsetVisitor _pointerOffsetGripVerifier = new PointerOffsetVisitorImpl(_verifyAction);
+    private static BeltWayPointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitorImpl(_verifyAction);
 
-    private static PointerOffsetVisitor _pointerOffsetGripUpdater = new PointerOffsetVisitorImpl(_copyAction);
-    private static PointerIndexVisitor _pointerIndexGripUpdater = new PointerIndexVisitorImpl(_copyAction);
+    private static BeltWayPointerOffsetVisitor _pointerOffsetGripUpdater = new PointerOffsetVisitorImpl(_copyAction);
+    private static BeltWayPointerIndexVisitor _pointerIndexGripUpdater = new PointerIndexVisitorImpl(_copyAction);
 
     protected GripUpdatingHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
-    public CellVisitor getVisitor() {
+    public BeltWayCellVisitor getVisitor() {
         return _visitor;
     }
 
@@ -60,19 +60,19 @@ public abstract class GripUpdatingHeapScheme extends AbstractVMScheme implements
         return _copyAction;
     }
 
-    public PointerOffsetVisitor getPointerOffsetGripVerifier() {
+    public BeltWayPointerOffsetVisitor getPointerOffsetGripVerifier() {
         return _pointerOffsetGripVerifier;
     }
 
-    public PointerIndexVisitor getPointerIndexGripVerifier() {
+    public BeltWayPointerIndexVisitor getPointerIndexGripVerifier() {
         return _pointerIndexGripVerifier;
     }
 
-    public PointerIndexVisitor getPointerIndexGripUpdater() {
+    public BeltWayPointerIndexVisitor getPointerIndexGripUpdater() {
         return _pointerIndexGripUpdater;
     }
 
-    public PointerOffsetVisitor getPointerOffsetGripUpdater() {
+    public BeltWayPointerOffsetVisitor getPointerOffsetGripUpdater() {
         return _pointerOffsetGripUpdater;
     }
 

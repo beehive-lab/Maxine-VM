@@ -18,23 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=bade66b5-af5c-4565-a940-475c24e12bc7*/
+/*VCSID=11ed2cd7-5626-4884-8f0a-301a24091d51*/
 package com.sun.max.vm.heap.util;
 
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
- * @author Bernd Mathiske
+ *
  */
-public interface PointerIndexVisitor extends Visitor{
+public interface BeltWayCellVisitor extends Visitor{
 
     /**
-     * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address
-     * computed by {@code pointer.plus(wordIndex * Word.size())}.
-     *
-     * @param pointer
-     * @param wordIndex
+     * @param cell the cell to be visited
+     * @return the adjacent next cell
      */
-    void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
 }

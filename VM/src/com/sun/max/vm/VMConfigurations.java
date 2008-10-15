@@ -76,12 +76,12 @@ public final class VMConfigurations {
         return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
     }
 
-    private static VMPackage defaultGCPackage() {
-        return new com.sun.max.vm.heap.sequential.Beltway.BeltwayBSS.Package();
+    private static VMPackage defaultHeapPackage() {
+        return new com.sun.max.vm.heap.sequential.semiSpace.Package();
     }
 
     private static VMPackage defaultReferenceScheme() {
-        return new com.sun.max.vm.reference.card.Package();
+        return new com.sun.max.vm.reference.heap.Package();
     }
 
     /**
@@ -95,26 +95,26 @@ public final class VMConfigurations {
     public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform) {
 
         return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), new com.sun.max.vm.layout.ohm.Package(),
-                        defaultGCPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), defaultJitCompilerPackage(platform),
+                        defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), defaultJitCompilerPackage(platform),
                         new com.sun.max.vm.trampoline.template.Package(), defaultTargetABIsPackage(platform), new com.sun.max.vm.run.gcTest.Package());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform) {
 
         return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), new com.sun.max.vm.layout.ohm.Package(),
-                        defaultGCPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), null, new com.sun.max.vm.trampoline.template.Package(),
+                        defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), null, new com.sun.max.vm.trampoline.template.Package(),
                         defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform, VMPackage compilerPackage) {
         return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), new com.sun.max.vm.layout.ohm.Package(),
-                        defaultGCPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), compilerPackage, null, new com.sun.max.vm.trampoline.template.Package(),
+                        defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), compilerPackage, null, new com.sun.max.vm.trampoline.template.Package(),
                         defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());
     }
 
     public static VMConfiguration createPrototype(BuildLevel buildLevel, Platform platform) {
         return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.prototype.Package(), new com.sun.max.vm.reference.prototype.Package(), new com.sun.max.vm.layout.ohm.Package(),
-                        defaultGCPackage(), new com.sun.max.vm.monitor.prototype.Package(), new com.sun.max.vm.compiler.prototype.Package(), null, new com.sun.max.vm.trampoline.template.Package(),
+                        defaultHeapPackage(), new com.sun.max.vm.monitor.prototype.Package(), new com.sun.max.vm.compiler.prototype.Package(), null, new com.sun.max.vm.trampoline.template.Package(),
                         defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());
     }
 }

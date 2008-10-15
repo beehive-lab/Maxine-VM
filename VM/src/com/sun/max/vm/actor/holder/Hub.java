@@ -308,7 +308,7 @@ public abstract class Hub extends Hybrid {
         return getWord(iTableIndex).equals(Address.fromInt(serial));
     }
 
-    public final void visitReferenceOffsets(Pointer origin, PointerOffsetVisitor offsetVisitor) {
+    public final void visitReferenceOffsets(Pointer origin, BeltWayPointerOffsetVisitor offsetVisitor) {
         TupleReferenceMap.visitOriginOffsets(this, origin, offsetVisitor, null, null);
     }
 

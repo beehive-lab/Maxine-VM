@@ -228,15 +228,27 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     }
 
     /**
+     * TODO: clean this up.
+     */
+    void visitCells(Visitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+        CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, Code.bootCodeRegion(), from, to);
+        for (CodeRegion codeRegion : _runtimeCodeRegions) {
+            if (codeRegion != null) {
+                CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, codeRegion, from, to);
+            }
+        }
+    }
+
+    /**
      * Visit the cells in all the code regions in this code manager.
      *
      * @param cellVisitor the visitor to call back for each cell in each region
      */
-    void visitCells(Visitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCells((CellVisitor) cellVisitor, action, Code.bootCodeRegion(), from, to);
+    void visitCells(CellVisitor cellVisitor) {
+        Code.bootCodeRegion().visitCells(cellVisitor);
         for (CodeRegion codeRegion : _runtimeCodeRegions) {
             if (codeRegion != null) {
-                CellVisitorImpl.linearVisitAllCells((CellVisitor) cellVisitor, action, codeRegion, from, to);
+                codeRegion.visitCells(cellVisitor);
             }
         }
     }

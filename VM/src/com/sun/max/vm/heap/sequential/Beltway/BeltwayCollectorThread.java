@@ -163,7 +163,7 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            CellVisitorImpl.linearVisitAllCellsTLAB(VMConfiguration.hostOrTarget().heapScheme().getVisitor(), VMConfiguration.hostOrTarget().heapScheme().getAction(), startScavengingAddress,
+            CellVisitorImpl.linearVisitAllCellsTLAB(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), startScavengingAddress,
                             endScavengingAddress, from, to);
             startScavengingAddress = _beltwayHeapScheme.getNextAvailableGCTask(searchIndex, stopSearchIndex);
         }
@@ -182,7 +182,7 @@ public class BeltwayCollectorThread extends Thread {
             //Debug.println(endScavengingAddress);
             //Debug.unlock();
 
-            CellVisitorImpl.linearVisitTLAB(_currentTLAB, VMConfiguration.hostOrTarget().heapScheme().getVisitor(), VMConfiguration.hostOrTarget().heapScheme().getAction(), from, to);
+            CellVisitorImpl.linearVisitTLAB(_currentTLAB, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getVisitor(), ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getAction(), from, to);
             final TLAB newTLAB = VmThread.current().getTLAB();
             if (!newTLAB.start().equals(_currentTLAB.start())) {
                 _currentTLAB = newTLAB;

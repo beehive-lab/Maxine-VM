@@ -145,9 +145,14 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
 
     @Override
     @INLINE
-    public final void scanReferences(PointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public final void scanReferences(BeltWayPointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         // We don't refer to any Java objects through pointers
     }
 
+    @Override
+    @INLINE
+    public final void scanReferences(PointerIndexVisitor pointerIndexVisitor) {
+        // We don't refer to any Java objects through pointers
+    }
 
 }
