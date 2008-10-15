@@ -18,58 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-<<<<<<< local
-<<<<<<< local
-/*VCSID=bade66b5-af5c-4565-a940-475c24e12bc7*/
-=======
->>>>>>> other
-=======
->>>>>>> other
-package com.sun.max.vm.heap.util;
+/*VCSID=4598c6e8-b5b4-472a-bd62-1e735e6a0fc6*/
+package com.sun.max.vm.heap.sequential;
 
-<<<<<<< local
-<<<<<<< local
-=======
-=======
->>>>>>> other
-import com.sun.max.memory.*;
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
-import com.sun.max.unsafe.*;
 
 /**
- * @author Bernd Mathiske
+ * A generic sequential collector class.
+ *
+ * @author Christos Kotselidis
  */
-<<<<<<< local
-<<<<<<< local
-public interface PointerIndexVisitor {
-=======
-=======
->>>>>>> other
-public interface PointerIndexVisitor extends Visitor{
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
 
-    /**
-     * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address
-     * computed by {@code pointer.plus(wordIndex * Word.size())}.
-     *
-     * @param pointer
-     * @param wordIndex
-     */
-<<<<<<< local
-<<<<<<< local
-    void visitPointerIndex(Pointer pointer, int wordIndex);
-=======
-=======
->>>>>>> other
-    void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
-<<<<<<< local
->>>>>>> other
-=======
->>>>>>> other
+public interface Collector extends Runnable {
 }

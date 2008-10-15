@@ -22,6 +22,7 @@ package com.sun.max.vm.heap.sequential.semiSpace;
 
 import com.sun.max.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 
 /**
  * @see MaxPackage
@@ -30,7 +31,7 @@ import com.sun.max.vm.*;
  */
 public class Package extends VMPackage {
     public Package() {
-      // registerScheme(HeapScheme.class, SemiSpaceHeapScheme.class);
+        registerScheme(HeapScheme.class, SemiSpaceHeapScheme.class);
     }
 
     @Override

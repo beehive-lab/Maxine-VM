@@ -19,57 +19,34 @@
  * Company, Ltd.
  */
 <<<<<<< local
-<<<<<<< local
-/*VCSID=bade66b5-af5c-4565-a940-475c24e12bc7*/
-=======
->>>>>>> other
+/*VCSID=11ed2cd7-5626-4884-8f0a-301a24091d51*/
 =======
 >>>>>>> other
 package com.sun.max.vm.heap.util;
 
 <<<<<<< local
-<<<<<<< local
 =======
-=======
->>>>>>> other
 import com.sun.max.memory.*;
-<<<<<<< local
->>>>>>> other
-=======
 >>>>>>> other
 import com.sun.max.unsafe.*;
 
 /**
+ *
  * @author Bernd Mathiske
  */
 <<<<<<< local
-<<<<<<< local
-public interface PointerIndexVisitor {
+public interface CellVisitor {
 =======
-=======
->>>>>>> other
-public interface PointerIndexVisitor extends Visitor{
-<<<<<<< local
->>>>>>> other
-=======
+public interface CellVisitor extends Visitor{
 >>>>>>> other
 
     /**
-     * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address
-     * computed by {@code pointer.plus(wordIndex * Word.size())}.
-     *
-     * @param pointer
-     * @param wordIndex
+     * @param cell the cell to be visited
+     * @return the adjacent next cell
      */
 <<<<<<< local
-<<<<<<< local
-    void visitPointerIndex(Pointer pointer, int wordIndex);
+    Pointer visitCell(Pointer cell);
 =======
-=======
->>>>>>> other
-    void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
-<<<<<<< local
->>>>>>> other
-=======
+    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
 >>>>>>> other
 }

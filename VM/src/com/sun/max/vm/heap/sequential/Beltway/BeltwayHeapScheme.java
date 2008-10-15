@@ -28,7 +28,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.profile.*;
 import com.sun.max.vm.heap.sequential.*;
@@ -43,7 +42,7 @@ import com.sun.max.vm.thread.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapScheme {
+public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapScheme, Allocator {
 
     public static final CardRegion _cardRegion = new CardRegion();
     public static final SideTable _sideTable = new SideTable();
@@ -52,7 +51,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     public static final HeapVerifier _heapVerifier = new HeapVerifier();
     // public static final HeapProfiler _heapProfiler = new HeapProfiler();
 
-    private static final SequentialHeapRootsScanner _heapRootsScanner = new SequentialHeapRootsScanner();
+    private static final BeltwaySequentialHeapRootsScanner _heapRootsScanner = new BeltwaySequentialHeapRootsScanner();
     public static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError();
 
     protected static BeltwayConfiguration _beltwayConfiguration = new BeltwayConfiguration();
@@ -109,13 +108,13 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     }
 
     @INLINE
-    public final SequentialHeapRootsScanner getRootScannerVerifier() {
+    public final BeltwaySequentialHeapRootsScanner getRootScannerVerifier() {
         _heapRootsScanner.setPointerIndexVisitor(getPointerIndexGripVerifier());
         return _heapRootsScanner;
     }
 
     @INLINE
-    public final SequentialHeapRootsScanner getRootScannerUpdater() {
+    public final BeltwaySequentialHeapRootsScanner getRootScannerUpdater() {
         _heapRootsScanner.setPointerIndexVisitor(getPointerIndexGripUpdater());
         return _heapRootsScanner;
     }
@@ -164,7 +163,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     }
 
     public void scanBootHeap(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        Heap.bootHeapRegion().visitCells(VMConfiguration.hostOrTarget().heapScheme().getVisitor(), _copyAction, from, to);
+        Heap.bootHeapRegion().beltWayVisitCells(getVisitor(), _copyAction, from, to);
     }
 
     public void printCardTable() {
@@ -206,7 +205,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
                 final Pointer gcTLABStart = getGCTLABStartFromAddress(heapStartAddress);
                 if (!gcTLABStart.isZero()) {
                     final Pointer gcTLABEnd = getGCTLABEndFromStart(gcTLABStart);
-                    CellVisitorImpl.linearVisitAllCellsTLAB(VMConfiguration.hostOrTarget().heapScheme().getVisitor(), _copyAction, gcTLABStart, gcTLABEnd, from, to);
+                    CellVisitorImpl.linearVisitAllCellsTLAB(getVisitor(), _copyAction, gcTLABStart, gcTLABEnd, from, to);
                     SideTable.markScavengeSideTable(gcTLABStart);
                 }
             }
@@ -233,15 +232,15 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     }
 
     public final void linearScanRegion(RuntimeMemoryRegion origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCells(VMConfiguration.hostOrTarget().heapScheme().getVisitor(), _copyAction, origin, from, to);
+        CellVisitorImpl.linearVisitAllCells(getVisitor(), _copyAction, origin, from, to);
     }
 
     public final void linearScanRegionBelt(Belt origin, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCellsBelt(VMConfiguration.hostOrTarget().heapScheme().getVisitor(), _copyAction, origin, from, to);
+        CellVisitorImpl.linearVisitAllCellsBelt(getVisitor(), _copyAction, origin, from, to);
     }
 
     public void scanCode(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        Code.visitCells(VMConfiguration.hostOrTarget().heapScheme().getVisitor(), _copyAction, from, to);
+        Code.visitCells(getVisitor(), _copyAction, from, to);
     }
 
     @INLINE
@@ -526,7 +525,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     @Override
     public Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
-        final Pointer cell = VMConfiguration.hostOrTarget().heapScheme().allocate(size);
+        final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
 
@@ -538,7 +537,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     @NO_SAFEPOINTS("TODO")
     @Override
     public Object createTuple(Hub hub) {
-        final Pointer cell = VMConfiguration.hostOrTarget().heapScheme().allocate(hub.tupleSize());
+        final Pointer cell = allocate(hub.tupleSize());
         return Cell.plantTuple(cell, hub);
     }
 
@@ -546,7 +545,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     @NO_SAFEPOINTS("TODO")
     public <Hybrid_Type extends Hybrid> Hybrid_Type createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize();
-        final Pointer cell = VMConfiguration.hostOrTarget().heapScheme().allocate(size);
+        final Pointer cell = allocate(size);
         @JavacSyntax("type checker not able to infer type here")
         final Class<Hybrid_Type> type = null;
         return UnsafeLoophole.cast(type, Cell.plantHybrid(cell, size, hub));
@@ -557,7 +556,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     @Override
     public <Hybrid_Type extends Hybrid> Hybrid_Type expandHybrid(Hybrid_Type hybrid, int length) {
         final Size newSize = Layout.hybridLayout().getArraySize(length);
-        final Pointer newCell = VMConfiguration.hostOrTarget().heapScheme().allocate(newSize);
+        final Pointer newCell = allocate(newSize);
         return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);
     }
 
@@ -566,7 +565,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     @Override
     public Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
-        final Pointer cell = VMConfiguration.hostOrTarget().heapScheme().allocate(size);
+        final Pointer cell = allocate(size);
         return Cell.plantClone(cell, size, object);
     }
 
@@ -612,7 +611,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
 
     @INLINE
     @Override
-    public void writeBarrier(Grip grip) {
+    public void writeBarrier(Reference reference) {
 
     }
 
@@ -720,4 +719,9 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
             _scavengerTLABs[i] = new TLAB();
         }
     }
+
+    public long numberOfGarbageTurnovers() {
+        return 0;
+    }
+
 }
