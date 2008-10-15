@@ -23,28 +23,16 @@ package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.grip.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
-public interface HeapScheme extends VMScheme, Allocator {
-
-    Pointer allocate(Size size);
+public interface HeapScheme extends VMScheme {
 
     boolean collect(Size size);
-
-    Pointer gcBumpAllocate(RuntimeMemoryRegion region, Size size);
-
-    Pointer gcAllocate(RuntimeMemoryRegion region, Size size);
-
-    CellVisitor getVisitor();
-
-    Action getAction();
 
     boolean isGcThread(VmThread vmThread);
 
@@ -57,14 +45,6 @@ public interface HeapScheme extends VMScheme, Allocator {
      * install card table address.
      */
     void initializeVmThread(VmThread vmThread);
-
-    PointerOffsetVisitor getPointerOffsetGripUpdater();
-
-    PointerIndexVisitor getPointerIndexGripUpdater();
-
-    PointerOffsetVisitor getPointerOffsetGripVerifier();
-
-    PointerIndexVisitor getPointerIndexGripVerifier();
 
     /**
      * Allocate a new array object and fill in its header and initial data.
@@ -152,11 +132,12 @@ public interface HeapScheme extends VMScheme, Allocator {
 
     void runFinalization();
 
+    long numberOfGarbageTurnovers();
+
     @INLINE
-    void writeBarrier(Grip grip);
+    void writeBarrier(Reference reference);
 
     void scanRegion(Address start, Address end);
 
     Address adjustedCardTableAddress();
-
 }

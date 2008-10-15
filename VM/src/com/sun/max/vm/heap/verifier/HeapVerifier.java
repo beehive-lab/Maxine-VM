@@ -27,6 +27,7 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.*;
+import com.sun.max.vm.heap.sequential.Beltway.*;
 import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
@@ -43,7 +44,7 @@ public class HeapVerifier {
 
     private static Belt _belt;
 
-    private static SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner();
+    private static BeltwaySequentialHeapRootsScanner _heapRootsVerifier = new BeltwaySequentialHeapRootsScanner();
     private static Verify _cellVerifier = new VerifyActionImpl();
 
     public HeapVerifier() {
@@ -53,10 +54,10 @@ public class HeapVerifier {
     public void initialize(HeapScheme heapScheme) {
         _heapScheme = heapScheme;
         _heapRootsVerifier.setHeapScheme(_heapScheme);
-        _heapRootsVerifier.setPointerIndexVisitor(VMConfiguration.hostOrTarget().heapScheme().getPointerIndexGripVerifier());
+        _heapRootsVerifier.setPointerIndexVisitor(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getPointerIndexGripVerifier());
     }
 
-    public SequentialHeapRootsScanner getRootsVerifier() {
+    public BeltwaySequentialHeapRootsScanner getRootsVerifier() {
         return _heapRootsVerifier;
     }
 
@@ -85,11 +86,11 @@ public class HeapVerifier {
             _cellVerifier.checkHub(hub);
             final SpecificLayout specificLayout = hub.specificLayout();
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, VMConfiguration.hostOrTarget().heapScheme().getPointerOffsetGripVerifier(), _belt, _belt);
+                TupleReferenceMap.visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getPointerOffsetGripVerifier(), _belt, _belt);
                 cell = cell.plus(hub.tupleSize());
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, VMConfiguration.hostOrTarget().heapScheme().getPointerOffsetGripVerifier(), _belt, _belt);
+                    TupleReferenceMap.visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getPointerOffsetGripVerifier(), _belt, _belt);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {

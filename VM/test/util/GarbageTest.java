@@ -22,6 +22,7 @@
 package util;
 
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 
 /**
  * Fills the heap with garbage, runs until GC has been triggered a few times.
@@ -64,9 +65,9 @@ public final class GarbageTest {
 
     public static void main(String[] args) {
         System.out.println("BEGIN " + GarbageTest.class.getSimpleName());
-        // while (VMConfiguration.hostOrTarget().heapScheme().numberOfGarbageCollectionTurnoverCycles() < 5) {
-        // createGarbage();
-        // }
+        while (VMConfiguration.hostOrTarget().heapScheme().numberOfGarbageTurnovers() < 5) {
+            createGarbage();
+        }
         System.out.println("END " + GarbageTest.class.getSimpleName());
     }
 }

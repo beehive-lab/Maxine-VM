@@ -8,8 +8,8 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.sun.max.ins.MaxineInspector"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -d -a=&quot;-verbose:gc -classpath ${workspace_loc}/MaxineVM/bin util.HelloWorldGC&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-trace=1 -d -a=&quot;-verbose:gc -classpath ${workspace_loc:VM}/bin util.GarbageTest&quot;"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Inspector"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-d64 -ea"/>
-<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:MaxineVM}"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:VM}"/>
 </launchConfiguration>

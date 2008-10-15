@@ -32,21 +32,21 @@ import com.sun.max.vm.thread.*;
  *
  * @author Bernd Mathiske
  */
-public class SequentialHeapRootsScanner {
+public class BeltwaySequentialHeapRootsScanner {
 
-    private PointerIndexVisitor _pointerIndexVisitor;
+    private BeltWayPointerIndexVisitor _pointerIndexVisitor;
     private RuntimeMemoryRegion _fromSpace;
     private RuntimeMemoryRegion _toSpace;
     private HeapScheme _heapScheme;
 
-    public SequentialHeapRootsScanner() {
+    public BeltwaySequentialHeapRootsScanner() {
     }
 
     public void setHeapScheme(HeapScheme heapScheme) {
         _heapScheme = heapScheme;
     }
 
-    public void setPointerIndexVisitor(PointerIndexVisitor pointerIndexVisitor) {
+    public void setPointerIndexVisitor(BeltWayPointerIndexVisitor pointerIndexVisitor) {
         _pointerIndexVisitor = pointerIndexVisitor;
     }
 

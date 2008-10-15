@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
 /**
  * @author Bernd Mathiske
  */
-public interface PointerOffsetVisitor extends Visitor{
+public interface BeltWayPointerOffsetVisitor extends Visitor{
 
     void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
     void visitPointerOffset(Pointer pointer, int offset);

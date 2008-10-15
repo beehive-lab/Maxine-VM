@@ -124,7 +124,11 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
     }
 
     @Override
-    public void scanReferences(PointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public void scanReferences(BeltWayPointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    }
+
+    @Override
+    public void scanReferences(PointerIndexVisitor pointerIndexVisitor) {
     }
 
     @Override

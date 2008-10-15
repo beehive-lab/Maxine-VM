@@ -440,7 +440,7 @@ public class Belt extends RuntimeMemoryRegion implements Allocator, Visitor {
 
     @INLINE
     public void visitCells(Visitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCells((CellVisitor) cellVisitor, action, this, from, to);
+        CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, this, from, to);
     }
 
 }

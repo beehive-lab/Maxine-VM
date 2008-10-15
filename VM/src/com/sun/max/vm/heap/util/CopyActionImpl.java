@@ -58,7 +58,7 @@ public class CopyActionImpl implements Copy {
             }
             final Pointer fromCell = Layout.originToCell(fromOrigin);
             final Size size = Layout.size(fromOrigin);
-            final Pointer toCell = VMConfiguration.hostOrTarget().heapScheme().gcAllocate(to, size);
+            final Pointer toCell = ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).gcAllocate(to, size);
             if (toCell.isZero()) {
                 throw BeltwayHeapScheme._outOfMemoryError;
             }

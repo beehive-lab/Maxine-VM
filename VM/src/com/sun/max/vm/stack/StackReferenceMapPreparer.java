@@ -649,7 +649,7 @@ public final class StackReferenceMapPreparer {
      * @param fromSpace TODO
      * @param toSpace TODO
      */
-    public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, PointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
+    public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, BeltWayPointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
         checkValidReferenceMapRange(vmThreadLocals, lowestSlot, highestSlot);
         final Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
@@ -669,6 +669,44 @@ public final class StackReferenceMapPreparer {
                             out.println();
                         }
                         wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex, fromSpace, toSpace);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Scan references in the stack in the specified interval [lowestSlot, highestSlot]. Note that this method
+     * always inspects complete reference map bytes, and thus assumes that bits corresponding to these extra roundoff
+     * slots at the beginning and end of the interval are zero.
+     *
+     * @param vmThreadLocals a pointer to the VM thread locals corresponding to the stack to scan
+     * @param lowestSlot the address of the lowest slot to scan
+     * @param highestSlot the address of the highest slot to scan
+     * @param wordPointerIndexVisitor the visitor to apply to each slot that is a reference
+     * @param fromSpace TODO
+     * @param toSpace TODO
+     */
+    public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, PointerIndexVisitor wordPointerIndexVisitor) {
+        checkValidReferenceMapRange(vmThreadLocals, lowestSlot, highestSlot);
+        final Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
+        final int maxByteIndex = referenceMapByteIndex(lowestStackSlot, highestSlot.plus((Bytes.WIDTH - 1) * Word.size()));
+
+        for (int byteIndex = referenceMapByteIndex(lowestStackSlot, lowestSlot); byteIndex < maxByteIndex; byteIndex++) {
+            final int mapByte = referenceMap.getByte(byteIndex);
+            if (mapByte != 0) {
+                final int slotIndex = byteIndex * Bytes.WIDTH;
+                final Pointer slot = lowestStackSlot.plus(slotIndex * Word.size());
+                for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
+                    if (((mapByte >>> bitIndex) & 1) != 0) {
+                        if (Heap.traceGC()) {
+                            final DebugPrintStream out = Debug.out;
+                            out.print("    Slot: ");
+                            printSlot(out, slotIndex + bitIndex, vmThreadLocals, Pointer.zero());
+                            out.println();
+                        }
+                        wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex);
                     }
                 }
             }
