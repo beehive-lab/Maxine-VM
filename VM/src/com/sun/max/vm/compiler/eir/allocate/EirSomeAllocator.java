@@ -302,7 +302,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
 
     /**
      * Allocates a free register from the specified register pool to the specified variable.
-     * Architectures that alias registers depending on the width of data may have to override this methods.
+     * Architectures that alias registers depending on the width of data may have to override this method.
      *
      * @param variable
      * @param registers
@@ -318,15 +318,27 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
         return registers.removeOne();
     }
 
+    /**
+     * Remove register(s) allocated to an interfering variable from the specified set of available registers.
+     * Architectures that alias registers depending on the width of data may have to override this method
+     * to remove more than one registers off the set.
+     *
+     * @param interfering variable
+     * @param available registers
+     */
+    protected void removeInterferingRegisters(EirVariable variable, PoolSet<EirRegister_Type> availableRegisters) {
+        @JavacSyntax("type checker weakness")
+        final Class<EirRegister_Type> type = null;
+        final EirRegister_Type register = StaticLoophole.cast(type, variable.location());
+        availableRegisters.remove(register);
+    }
+
     private void allocateVariable(EirVariable variable, PoolSet<EirRegister_Type> registers) {
         final PoolSet<EirRegister_Type> availableRegisters = registers.clone();
         final BitSet stackSlots = new BitSet();
         for (EirVariable v : variable.interferingVariables()) {
             if (v.location() instanceof EirRegister) {
-                @JavacSyntax("type checker weakness")
-                final Class<EirRegister_Type> type = null;
-                final EirRegister_Type register = StaticLoophole.cast(type, v.location());
-                availableRegisters.remove(register);
+                removeInterferingRegisters(v, availableRegisters);
             } else if (v.location() instanceof EirStackSlot) {
                 final EirStackSlot stackSlot = (EirStackSlot) v.location();
                 final int stackSlotIndex = stackSlot.offset() / methodGeneration().abi().stackSlotSize();
