@@ -721,18 +721,25 @@ public final class BreakpointsInspector extends UniqueInspector {
         TargetBreakpointData(TeleTargetBreakpoint teleTargetBreakpoint) {
             _teleTargetBreakpoint = teleTargetBreakpoint;
             final Address address = teleTargetBreakpoint.address();
-            if (TeleNativeTargetRoutine.get(teleVM(), address) != null) {
-                _shortName = "0x" + address.toHexString();
-                _longName = "native code at 0x" + address.toHexString();
-                _codeStart = address;
-                _location = 0;
+            final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
+            if (teleTargetMethod != null) {
+                _shortName = inspection().nameDisplay().shortName(teleTargetMethod, address);
+                _longName = inspection().nameDisplay().longName(teleTargetMethod, address);
+                _codeStart = teleTargetMethod.codeStart();
+                _location = address.minus(_codeStart.asAddress()).toInt();
             } else {
-                final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
-                if (teleTargetMethod != null) {
-                    _shortName = inspection().nameDisplay().shortName(teleTargetMethod, address);
-                    _longName = inspection().nameDisplay().longName(teleTargetMethod, address);
-                    _codeStart = teleTargetMethod.codeStart();
-                    _location = address.minus(_codeStart.asAddress()).toInt();
+                final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(teleVM(), address);
+                if (teleRuntimeStub != null) {
+                    _codeStart = teleRuntimeStub.runtimeStub().start();
+                    _shortName = "runtime stub[0x" + _codeStart + "]";
+                    _longName = _shortName;
+                    _location = address.minus(_codeStart).toInt();
+                } else {
+                    // Must be an address in native code
+                    _shortName = "0x" + address.toHexString();
+                    _longName = "native code at 0x" + address.toHexString();
+                    _codeStart = address;
+                    _location = 0;
                 }
             }
         }

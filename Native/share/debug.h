@@ -72,11 +72,11 @@ extern void debug_print_double(int fd, double d);
 #endif
 
 #define DEBUG_LOADER 0
-#define DEBUG_TRAP 1
-#define DEBUG_TRAP_REGISTERS 1
-#define DEBUG_MONITOR 1
+#define DEBUG_TRAP 0
+#define DEBUG_TRAP_REGISTERS 0
+#define DEBUG_MONITOR 0
 #define DEBUG_LINKER 0
 #define DEBUG_JVMNI 0
-#define DEBUG_THREADS 1
+#define DEBUG_THREADS 0
 
 #endif /*__debug_h__*/
