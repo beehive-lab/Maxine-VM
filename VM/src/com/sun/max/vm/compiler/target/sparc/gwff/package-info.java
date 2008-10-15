@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=376031c4-3c45-46f4-9def-aace246aba1f*/
 /**
  * SPARC ABIs using register windows for GPRs and a flat file for FPRs
  * ("GWFF" :== Gpr - Windows, Fpr - Flat).

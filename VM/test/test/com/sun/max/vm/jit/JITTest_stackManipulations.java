@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=72995c9b-6837-491d-a7c8-90737d94a510*/
 package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.compiler.*;
@@ -33,7 +32,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.template.source.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Playing with Stack manipulation routines for a template generator that can be used either by a simpe JIT or an interpreter.
@@ -185,11 +183,20 @@ public class JITTest_stackManipulations extends CompilerTestCase<TargetMethod> {
         removeSlots(1);
         pokeInt2(0, value1 * value2);
     }
-
+/*
     public void test_imul() {
         compileMethod("imul1", SignatureDescriptor.create(void.class));
 
         compileMethod("imul2", SignatureDescriptor.create(void.class));
+    }*/
+
+    public long getHashcCode1(int h, int s) {
+        return  Address.fromUnsignedInt(h).shiftedLeft(s).toLong();
+    }
+
+    public void test_h1() {
+        final TargetMethod method1 = compileMethod(JITTest_stackManipulations.class, "getHashcCode1");
+        disassemble(method1);
     }
 /*
     public void test_stack() {

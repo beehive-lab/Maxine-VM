@@ -18,39 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=c9ceefab-5556-451c-abbd-966b6f4ad487*/
-package com.sun.max.tele.debug;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
+package test.output;
 
-import java.util.*;
 
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.thread.*;
+public class Recursion {
 
-/**
- * The values of the {@linkplain VmThreadLocal thread local variables} for a {@linkplain TeleNativeThread thread}.
- *
- * @author Doug Simon
- */
-public class TeleThreadLocalValues extends EnumMap<VmThreadLocal, Long> {
+    private int _recursionLevel;
 
-    public TeleThreadLocalValues() {
-        super(VmThreadLocal.class);
-        final Long zero = Long.valueOf(0L);
-        for (VmThreadLocal threadLocalVariable : VmThreadLocal.VALUES) {
-            put(threadLocalVariable, zero);
+    public static void main(String[] args) {
+        new Recursion().recurse();
+    }
+
+    private void recurse() {
+        if (_recursionLevel++ > 10) {
+            return;
         }
+        System.out.println("recursion: " + _recursionLevel);
+        recurse();
     }
 
-    /**
-     * Gets the value of a given thread local variable as a word.
-     */
-    public Word getWord(VmThreadLocal threadLocalVariable) {
-        return Address.fromLong(get(threadLocalVariable));
-    }
-
-    public boolean isInJavaCode() {
-        return get(LAST_JAVA_CALLER_INSTRUCTION_POINTER) == 0 && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C) == 0;
-    }
 }

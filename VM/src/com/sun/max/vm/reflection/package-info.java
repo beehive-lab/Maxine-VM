@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ee1e4a80-d8a6-4497-a8bf-aff1762be397*/
 /**
  * Classes for generating method and constructor invocation stubs.
  * 

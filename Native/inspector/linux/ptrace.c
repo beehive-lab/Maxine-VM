@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e45f691d-ab9b-40c2-afdf-7744401d6459*/
 /**
  * Making calls to 'ptrace()' available via JNI.
  * This way, request constants (e.g. PTRACE_CONT) do not need to be replicated in Java and maintained there.

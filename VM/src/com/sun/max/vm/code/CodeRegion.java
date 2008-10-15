@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=553cdaa8-2548-42bc-8631-6117ec62ee2a*/
 package com.sun.max.vm.code;
 
 import com.sun.max.annotate.*;
@@ -116,9 +115,7 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
             // allocation failed.
             return false;
         }
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            DebugHeap.writeCellTag(cell, Word.width());
-        }
+        DebugHeap.writeCellTag(cell);
         Cell.plantArray(cell, byteArrayHub, size);
         stub.setStart(cell.plus(byteArrayLayout.getElementOffsetInCell(0)));
         _sortedMemoryRegions.add(stub);

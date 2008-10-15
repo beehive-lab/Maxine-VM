@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=43250f3b-cdd0-4092-9010-13597ba4d93f*/
 package com.sun.max.ins;
 
 import java.awt.*;
@@ -1033,7 +1032,7 @@ public class Inspection extends JFrame {
      */
     public void quit() {
         try {
-            settings().save();
+            settings().quit();
             teleVM().teleProcess().controller().terminate();
         } catch (Throwable throwable) {
             ProgramWarning.message("error during shutdown - but we quit anyway: " + throwable);

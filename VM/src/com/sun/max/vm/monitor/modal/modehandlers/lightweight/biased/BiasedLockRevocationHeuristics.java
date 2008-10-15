@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=603b2415-02af-4f5a-ac70-e36dd14cc191*/
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
 import com.sun.max.unsafe.*;
@@ -75,7 +74,7 @@ public class BiasedLockRevocationHeuristics {
 
     private int revocationCountAtomicInc() {
         while (true) {
-            final Address revocationCount = Address.fromInt(_revocationCount);
+            final Address revocationCount = Address.fromUnsignedInt(_revocationCount);
             final Address newRevocationCount = revocationCount.plus(1);
             if (Reference.fromJava(this).compareAndSwapWord(_revocationCountFieldActor.offset(), revocationCount, newRevocationCount).equals(revocationCount)) {
                 return newRevocationCount.toInt();

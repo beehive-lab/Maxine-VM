@@ -18,38 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=5d3d6db4-ac1a-4771-9106-e39c40698161*/
-package util;
+/*VCSID=11ed2cd7-5626-4884-8f0a-301a24091d51*/
+package com.sun.max.vm.heap.util;
+
+import com.sun.max.unsafe.*;
 
 /**
  *
- * @author Christos Kotselidis
+ * @author Bernd Mathiske
  */
-public class HelloWorld1 {
+public interface CellVisitor {
 
-    public static void main(String[] args) {
-        System.out.println("HelloWorld");
-        for (long i = 0; i < Long.MAX_VALUE; i++) {
-            final BigObject oj = new BigObject(i);
-            System.out.println("HelloWorld " + oj.getID());
-
-        }
-    }
-
-}
-
-class BigObject {
-
-    long[] _array;
-    long _id;
-
-    BigObject(long id) {
-        _id = id;
-        _array = new long[500];
-
-    }
-
-    public long getID() {
-        return _id;
-    }
+    /**
+     * @param cell the cell to be visited
+     * @return the adjacent next cell
+     */
+    Pointer visitCell(Pointer cell);
 }

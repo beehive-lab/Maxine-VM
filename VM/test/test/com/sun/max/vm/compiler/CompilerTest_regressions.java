@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f00a72cd-fe8c-4e37-9e44-bff7c6805af8*/
 package test.com.sun.max.vm.compiler;
 
 import java.io.*;
@@ -44,7 +43,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.trampoline.template.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 import com.sun.max.vm.verifier.*;
@@ -76,8 +74,15 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         return previous;
     }
 
+    // Copy of java.lang.StringCode.scale
+    public static int scale(int len, float expansionFactor) {
+        // We need to perform double, not float, arithmetic; otherwise
+        // we lose low order bits when len is larger than 2**24.
+        return (int) (len * (double) expansionFactor);
+    }
+
     public void test_sparcRegression() {
-        compileMethod(TemplateBasedVTableTrampoline.class, "templateBasedVTableTrampoline");
+        compileMethod("scale", SignatureDescriptor.create(int.class, int.class, float.class));
     }
 
     /**

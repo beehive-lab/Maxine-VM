@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=c4cf291a-4567-4dba-ad0d-96442285cd12*/
 /**
  * This package implements a Header-Origin-Mixed (HOM) object layout.
  * <p>

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=5a61d42b-cba4-4b59-91e9-27590ed21310*/
 /**
  * A BCDEtarget compiler scheme for IA32.
  * 

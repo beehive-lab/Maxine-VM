@@ -18,12 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b75d1886-0391-4ab3-af7d-3acfe9c84c32*/
 /*
  * @author Bernd Mathiske
  * @author Laurent Daynes
  */
 #include "sparc.h"
+#include <debug.h>
 
 void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIntegerRegisters c, sparc_OsSignalIntegerRegisters os) {
 #if os_SOLARIS
@@ -64,6 +64,23 @@ void sparc_canonicalizeSignalFloatingPointRegisters(sparc_OsSignalFloatingPointR
   }
 #else
   c_unimplemented();
+#endif
+}
+
+void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters c) {
+#if os_SOLARIS
+  // See procfs_isa.h
+  static char registerNames[] = "GOLI";
+  int r = R_G0;
+  Word *p = &c->g0;
+  while (r <= R_I7) {
+    char rn = registerNames[r / 8]; 
+    for (int i = 0; i < 8; i++, r++) {
+   	 debug_println("%%%c%d = 0x%016lx [%ld]", rn, i, p[r], p[r]);
+	 }
+  }
+#else
+#error Unimplemented
 #endif
 }
 

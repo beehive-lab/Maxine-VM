@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=30c01e45-5ac9-41e0-8cb4-6000d826f4e6*/
 /**
  * @author Bernd Mathiske
  */
@@ -73,11 +72,11 @@ extern void debug_print_double(int fd, double d);
 #endif
 
 #define DEBUG_LOADER 0
-#define DEBUG_TRAP 1
-#define DEBUG_TRAP_REGISTERS 1
-#define DEBUG_MONITOR 1
+#define DEBUG_TRAP 0
+#define DEBUG_TRAP_REGISTERS 0
+#define DEBUG_MONITOR 0
 #define DEBUG_LINKER 0
 #define DEBUG_JVMNI 0
-#define DEBUG_THREADS 1
+#define DEBUG_THREADS 0
 
 #endif /*__debug_h__*/

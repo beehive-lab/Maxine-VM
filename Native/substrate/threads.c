@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ae2a4453-8247-466f-83ca-533f149f1ea8*/
 /**
  * @author Bernd Mathiske
  */
@@ -267,7 +266,7 @@ void thread_initSegments(NativeThreadLocals *nativeThreadLocals) {
     current += getPageSize();
 
 #if DEBUG_THREADS
-  int id = nativeThreadLocals->id;
+    int id = nativeThreadLocals->id;
     debug_println("thread %3d: stackBase = %p", id, nativeThreadLocals->stackBase);
     debug_println("thread %3d: stackSize = %d", id, nativeThreadLocals->stackSize);
     debug_println("thread %3d: triggeredVmThreadLocals = %p", id, nativeThreadLocals->triggeredVmThreadLocals);

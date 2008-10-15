@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=dd0f56df-ea67-4741-85a1-64d166b6575e*/
 /**
  * Package containing the implementation of the Trace Based Compiler.
  * @author Michael Bebenita

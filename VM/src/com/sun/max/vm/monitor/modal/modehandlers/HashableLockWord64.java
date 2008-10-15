@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=835f38b0-4543-4915-b65c-ec8cde15bb68*/
 package com.sun.max.vm.monitor.modal.modehandlers;
 
 import com.sun.max.annotate.*;
@@ -64,6 +63,6 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
 
     @INLINE
     public final HashableLockWord64 setHashcode(int hashcode) {
-        return HashableLockWord64.as(asAddress().or(Address.fromInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
+        return HashableLockWord64.as(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
     }
 }

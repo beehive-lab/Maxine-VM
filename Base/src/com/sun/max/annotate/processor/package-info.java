@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=72a00bda-3c5e-4a02-979e-5fa10c2e25ac*/
 /**
  * Defines processors for (some of) the annotations defined in the MaxineBase project.
  */

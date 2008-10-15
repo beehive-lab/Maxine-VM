@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=81a9a68d-3e82-4d24-bcef-d039b8d23615*/
 package com.sun.max.ins.type;
 
 import java.awt.event.*;
@@ -115,7 +114,7 @@ public final class ClassActorLabel extends InspectorLabel {
      */
     private TeleClassActor getTeleClassActorOrNull() {
         if (_teleClassActor == null) {
-            _teleClassActor = teleVM().teleClassRegistry().findTeleClassActor(_typeDescriptor);
+            _teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByType(_typeDescriptor);
         }
         return _teleClassActor;
     }

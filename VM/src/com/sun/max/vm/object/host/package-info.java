@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=12e8e533-ea78-4d13-816b-4535d6173723*/
 /**
  * This package provides classes and routines that implement basic functionality
  * using the underlying host VM's functionality, e.g. through reflective access. This

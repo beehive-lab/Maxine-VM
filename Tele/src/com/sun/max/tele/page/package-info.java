@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=9aeedf1d-813a-42ee-b2b2-099935196643*/
 /**
  * Page-based memory buffer for reads and writes to tele process memory.
  * 

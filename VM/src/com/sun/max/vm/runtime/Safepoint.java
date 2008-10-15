@@ -18,13 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=0292d18e-653d-4e7a-bf69-f30a6d22df24*/
 package com.sun.max.vm.runtime;
 
 import java.lang.reflect.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -38,6 +38,34 @@ import com.sun.max.vm.thread.*;
  * @author Bernd Mathiske
  */
 public abstract class Safepoint {
+
+    public enum State implements PoolObject {
+        ENABLED(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS),
+        DISABLED(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS),
+        TRIGGERED(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS);
+
+        private final VmThreadLocal _key;
+
+        State(VmThreadLocal key) {
+            _key = key;
+        }
+
+        /**
+         * Gets the address of VM thread locals storage area corresponding to this safepoint state.
+         *
+         * @param vmThreadLocals a pointer to any one of the thread locals storage areas
+         */
+        public Pointer vmThreadLocalsArea(Pointer vmThreadLocals) {
+            return _key.getConstantWord(vmThreadLocals).asPointer();
+        }
+
+        @Override
+        public int serial() {
+            return ordinal();
+        }
+
+        public static final IndexedSequence<State> VALUES = new ArraySequence<State>(values());
+    }
 
     public static Safepoint create(VMConfiguration vmConfiguration) {
         try {
@@ -117,12 +145,12 @@ public abstract class Safepoint {
         }
     }
 
-    public static void initializePrimordial(Pointer vmThreadLocals) {
-        vmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), vmThreadLocals);
-        vmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), vmThreadLocals);
-        vmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), vmThreadLocals);
-        vmThreadLocals.setWord(VmThreadLocal.SAFEPOINT_LATCH.index(), vmThreadLocals);
-        Safepoint.setLatchRegister(vmThreadLocals);
+    public static void initializePrimordial(Pointer primordialVmThreadLocals) {
+        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINT_LATCH.index(), primordialVmThreadLocals);
+        Safepoint.setLatchRegister(primordialVmThreadLocals);
     }
 
     @INLINE
@@ -191,6 +219,8 @@ public abstract class Safepoint {
      */
     public abstract SafepointStub createSafepointStub(CriticalMethod safepointEntry, Venue venue);
 
+    private final int _latchRegisterIndex = latchRegister().value();
+
     public static Address trapHandler(Pointer vmThreadLocals) {
         final Address epoch = VmThreadLocal.SAFEPOINT_EPOCH.getVariableWord().asAddress().plus(1);
         VmThreadLocal.SAFEPOINT_EPOCH.setVariableWord(epoch);
@@ -200,8 +230,9 @@ public abstract class Safepoint {
             VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Venue.JAVA));
 
             // Reenable safepoints when the stub will have returned:
-            vmThreadLocals.setWord(VmThreadLocal.REGISTERS.index() + VMConfiguration.hostOrTarget().safepoint().latchRegister().value(),
-                               VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
+            final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+            final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+            enabledVmThreadLocals.setWord(VmThreadLocal.REGISTERS.index() + safepoint._latchRegisterIndex, enabledVmThreadLocals);
 
             return VmThreadLocal.SAFEPOINT_JAVA_STUB.getConstantWord(vmThreadLocals).asAddress();
         }

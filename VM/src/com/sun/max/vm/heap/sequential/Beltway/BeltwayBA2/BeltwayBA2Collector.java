@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ba2a71e5-0d0f-4823-a0e6-af5f4ad03188*/
 package com.sun.max.vm.heap.sequential.Beltway.BeltwayBA2;
 
 import com.sun.max.unsafe.*;
@@ -69,7 +68,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 Debug.println("Verify Mature Space: ");
             }
             beltwayHeapSchemeBA2.getVerifier().verifyHeap(beltwayHeapSchemeBA2.getMatureSpace().start(), beltwayHeapSchemeBA2.getMatureSpace().getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeap.beforeGarbageCollection();
+            TeleHeapInfo.beforeGarbageCollection();
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -236,7 +235,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 if (Heap.verbose()) {
                     Debug.println("Reset Nursery Space Allocation Mark");
                 }
-                TeleHeap.afterGarbageCollection();
+                TeleHeapInfo.afterGarbageCollection();
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
 
@@ -299,7 +298,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             }
 
             beltwayHeapSchemeBA2.getVerifier().verifyHeap(beltwayHeapSchemeBA2.getNurserySpace().start(), beltwayHeapSchemeBA2.getNurserySpace().getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeap.beforeGarbageCollection();
+            TeleHeapInfo.beforeGarbageCollection();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
             if (Heap.verbose()) {
@@ -373,7 +372,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             }
 
             beltwayHeapSchemeBA2.getVerifier().verifyHeap(beltwayHeapSchemeBA2.getMatureSpace().start(), beltwayHeapSchemeBA2.getMatureSpace().getAllocationMark(), BeltManager.getApplicationHeap());
-            TeleHeap.afterGarbageCollection();
+            TeleHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
                 Debug.print("Nursery Space Start: ");

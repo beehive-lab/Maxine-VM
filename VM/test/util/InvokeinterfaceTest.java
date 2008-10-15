@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=f1c24b4e-6587-44c4-9bbc-d67d5ef9ed99*/
 package util;
 
 public class InvokeinterfaceTest {

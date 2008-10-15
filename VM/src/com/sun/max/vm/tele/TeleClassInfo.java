@@ -18,18 +18,47 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=9f66ebe1-8693-49c7-ad2a-5138ad59f5bd*/
-package util;
+package com.sun.max.vm.tele;
+
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.actor.holder.*;
 
 
 /**
- * Duh with GC.
- * @author Ben L. Titzer
+ * Makes critical state information about dynamically loaded classes
+ * remotely inspectable.
+ * Active only when VM is being inspected.
+ *
+ * CAUTION:  When active, this implementation hold references to
+ * all dynamically loaded {@link ClassActor}s, and thus prevents class unloading.
+ *
+ * @author Michael Van De Vanter
  */
-public class HelloWorldGC {
-    public static void main(String[] args) {
-        System.out.println("Hello World!");
-        System.gc();
-        System.out.println("Hello World!");
+public final class TeleClassInfo {
+
+    private TeleClassInfo() {
     }
+
+    @INSPECTED
+    private static ClassActor[] _classActors;
+
+    @INSPECTED
+    private static int _classActorCount = 0;
+
+    /**
+     * Adds to the inspectable record of dynamically loaded classes.
+     */
+    public static void registerClassLoaded(ClassActor classActor) {
+        if (MaxineMessenger.isVmInspected()) {
+            if (_classActors == null) {
+                _classActors = new ClassActor[100];
+            }
+            if (_classActorCount == _classActors.length) {
+                _classActors = Arrays.extend(_classActors, _classActorCount * 2);
+            }
+            _classActors[_classActorCount++] = classActor;
+        }
+    }
+
 }

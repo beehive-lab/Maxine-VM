@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=b9e15674-c7b0-4b72-9b5e-033beabd8216*/
 package com.sun.max.vm.compiler.eir.allocate;
 
 import com.sun.max.collect.*;
@@ -227,8 +226,11 @@ public abstract class EirAllocator<EirRegister_Type extends EirRegister> {
             variable.resetLiveRange();
             variable.resetInterferingVariables(emptyVariableSet);
         }
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.VERIFY_LIVE_RANGES);
         determineLiveRanges();
         methodGeneration().notifyAfterTransformation(methodGeneration().variables(), Transformation.VERIFY_LIVE_RANGES);
+
+        methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.VERIFY_INTERFERENCE_GRAPH);
         determineInterferences(variables);
         methodGeneration().notifyAfterTransformation(methodGeneration().variables(), Transformation.VERIFY_INTERFERENCE_GRAPH);
 

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=152be129-f9e2-4d51-a976-a9cf9149582b*/
 package com.sun.max.ins;
 
 import java.io.*;
@@ -111,7 +110,7 @@ public class FileCommands {
         }
         final String className = arg.substring(0, index);
         final String methodSignature = arg.substring(index + 1);
-        final TeleClassActor teleClassActor = inspection.teleVM().teleClassRegistry().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(className));
+        final TeleClassActor teleClassActor = inspection.teleVM().teleClassRegistry().findTeleClassActorByType(JavaTypeDescriptor.getDescriptorForJavaString(className));
         if (teleClassActor == null) {
             throw new CommandException("failed to find class: " + className + " (not qualified or misspelled?)");
         }

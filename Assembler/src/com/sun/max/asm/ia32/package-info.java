@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=fb98ca65-8055-410c-a353-a6eb16a21b66*/
 /**
  * Base package for implementing a an assembler for the IA32 instruction set.
  * 

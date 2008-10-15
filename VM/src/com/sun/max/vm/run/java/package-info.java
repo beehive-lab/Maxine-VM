@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=e39d8d5b-86c8-45b3-bd6c-978ce5e7f7d5*/
 /**
  * The Java run scheme package that initializes the virtual machine and JDK,
  * loads a user-specified main class, and invokes its main method. This class

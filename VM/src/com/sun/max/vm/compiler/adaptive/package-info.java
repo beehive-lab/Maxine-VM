@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=4792b6f3-bacc-4fe5-8c4c-481983dd8075*/
 /**
  * This package implements the {@code AdaptiveCompilationScheme}, a runtime compilation
  * manager that determines the policies and thresholds for dynamic, feedback-driven compilation,

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=0f2c34f9-ba87-4c9e-b015-027a500efc3a*/
 /**
  * Common features of assemblers for any of the x86 instruction sets.
  * 

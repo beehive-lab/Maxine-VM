@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=041fc837-d5dc-499c-a93f-28ce6aca43c8*/
 package com.sun.max.vm.compiler.b.c.d.e.ia32.target;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
@@ -170,7 +169,10 @@ public final class BcdeTargetIA32Compiler extends BcdeIA32Compiler implements Ta
         }
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer); // frame pointer == stack pointer
+                // frame pointer == stack pointer
+                if (!targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer)) {
+                    return false;
+                }
                 break;
             }
             case EXCEPTION_HANDLING: {

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=c4637476-475b-4b3d-a066-761bbab5024b*/
 package com.sun.max.tele.debug;
 
 import static com.sun.max.tele.debug.TeleNativeThread.ThreadState.*;
@@ -230,9 +229,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private void refreshStack() {
         _stack.refresh(this);
-        final Map<VmThreadLocal, Long> threadLocalValues = _stack.threadLocalValues();
-        if (threadLocalValues != null) {
-            final Long threadLocalValue = threadLocalValues.get(VmThreadLocal.VM_THREAD);
+        final TeleVMThreadLocalValues enableVmThreadLocalValues = _stack.enabledVmThreadLocalValues();
+        if (enableVmThreadLocalValues.isValid()) {
+            final Long threadLocalValue = enableVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
             final Reference vmThreadReference = _teleProcess.teleVM().wordToReference(Address.fromLong(threadLocalValue));
             _teleVmThread = (TeleVmThread) TeleObject.make(_teleProcess.teleVM(), vmThreadReference);
         } else {
@@ -441,7 +440,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     public final boolean isJava() {
-        return _stack.threadLocalValues() != null;
+        return _stack.enabledVmThreadLocalValues().isValid();
     }
 
     /**

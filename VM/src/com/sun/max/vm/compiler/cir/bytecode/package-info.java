@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=44298ccb-ebe2-4dc6-aa14-defacc8c6345*/
 /**
  * Bytecode format for storing CIR graphs in a more compact form.
  * 

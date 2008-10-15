@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=c31472d5-c868-4649-90c7-cd0f08dd3076*/
 /**
  * AMD64 stack frame manipulation.
  * 

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=4d8166c9-92ff-4a15-accf-d15f1347a40e*/
 /**
  * Template generator for fast JIT and interpreter generation.
  * Not part of the VM image.

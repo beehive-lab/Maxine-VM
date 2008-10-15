@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=010c15da-93cb-49a5-9e5a-e6bb6e0cd5c1*/
 /**
  * Bit ranges in 32 bit instructions.
  * 

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=81270660-0fe7-4f7d-890b-99f6e6c99b5d*/
 /**
  * A run scheme that allows the boot image to be extended with classes external to the VM.
  */

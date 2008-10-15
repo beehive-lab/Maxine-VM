@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8f414883-0ff7-4a0c-b2e9-1a3a0614f490*/
 /**
  * Base package for implementing a {@linkplain com.sun.max.asm.amd64.complete.Package complete} or partial assembly system for AMD 64 processors in "64-bit mode".
  * 

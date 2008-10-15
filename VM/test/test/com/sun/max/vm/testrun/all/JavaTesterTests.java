@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=90b8d27e-f7a8-49dd-8d8b-a90a48d54a77*/
 package test.com.sun.max.vm.testrun.all;
 
 
@@ -56,7 +55,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) ==
+        // test(2) == 
             runString = "test(2)";
             if (!"".equals(test.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -228,7 +227,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") ==
+        // test("") == 
             runString = "test(\"\")";
             if (!"".equals(test.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -7342,7 +7341,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-
     static void test_except_Catch_StackOverflowError_01() {
         JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_01");
         String runString = null;
@@ -11184,6 +11182,34 @@ public class JavaTesterTests {
         // test(0) == true
             runString = "test(0)";
             if (true != test.lang.Object_wait03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_lang_StringCoding_Scale() {
+        JavaTesterRunScheme.begin("test.lang.StringCoding_Scale");
+        String runString = null;
+        try {
+        // test(2) == 2
+            runString = "test(2)";
+            if (2 != test.lang.StringCoding_Scale.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.lang.StringCoding_Scale.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.lang.StringCoding_Scale.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

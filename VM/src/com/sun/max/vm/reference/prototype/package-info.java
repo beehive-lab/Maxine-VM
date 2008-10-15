@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=4a6aa48b-de7b-429d-be2d-80e1117fc04c*/
 /**
  * A mockup reference scheme used for unit testing before bootstrapping.
  * 

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ef0b080c-c833-473c-8bc8-a93c39a367b5*/
 package com.sun.max.vm.compiler.b.c.d.e.amd64.target;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
@@ -241,7 +240,10 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer); // frame pointer == stack pointer
+                // frame pointer == stack pointer
+                if (!targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer)) {
+                    return false;
+                }
                 break;
             }
             case EXCEPTION_HANDLING: {

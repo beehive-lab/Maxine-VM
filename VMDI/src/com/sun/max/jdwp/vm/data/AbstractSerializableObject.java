@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=ca735417-8c40-4a5c-b392-72c2f250add0*/
 package com.sun.max.jdwp.vm.data;
 
 import java.io.*;
@@ -37,7 +36,6 @@ class AbstractSerializableObject implements SerializableObject {
 
     private static final Logger LOGGER = Logger.getLogger(AbstractSerializableObject.class.getName());
 
-    @Override
     public byte[] getSerializedData() {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
         ObjectOutputStream oos = null;

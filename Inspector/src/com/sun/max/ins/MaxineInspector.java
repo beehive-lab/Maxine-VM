@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=1a4b59db-57a7-4326-990b-2807b4e10053*/
 package com.sun.max.ins;
 
 import java.awt.event.*;
@@ -200,6 +199,7 @@ public final class MaxineInspector {
                     }
                     ThreadsInspector.make(_inspection);
                     RegistersInspector.make(_inspection);
+                    VmThreadLocalsInspector.make(_inspection);
                     StackInspector.make(_inspection, _inspection.focus().thread());
                     BreakpointsInspector.make(_inspection);
                     MethodInspector.Manager.make(_inspection);

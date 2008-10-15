@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=6f36140b-4a63-4dff-9aad-821ffc344f0c*/
 package com.sun.max.vm.compiler.cir;
 
 public abstract class CirOperator extends CirProcedure  {

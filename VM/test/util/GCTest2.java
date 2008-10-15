@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=8123b2a1-082a-483d-933a-b0b6ff251d7d*/
 package util;
 
 // This is adapted from a benchmark written by John Ellis and Pete Kovac
@@ -81,7 +80,7 @@ class Node {
     }
 }
 
-public class GCBench {
+public class GCTest2 {
 
     public static final int kStretchTreeDepth = 18; // about 16Mb
     public static final int kLongLivedTreeDepth = 16; // about 4Mb
@@ -206,6 +205,6 @@ public class GCBench {
         // and array
         // to keep them from being optimized away
 
-        System.out.println("Completed");
+        System.out.println(GCTest2.class.getSimpleName() + " done.");
     }
 } // class JavaGC

@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=9f576d1d-0857-4057-8f78-8d4c99bec416*/
 package com.sun.max.vm.compiler.target;
 
 import java.io.*;
@@ -1037,8 +1036,16 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return numberOfDirectCalls() + numberOfIndirectCalls() + numberOfSafepoints() + index;
     }
 
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-        stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer);
+    /**
+     *
+     * @param stackReferenceMapPreparer
+     * @param instructionPointer
+     * @param stackPointer
+     * @param framePointer
+     * @return
+     */
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer);
     }
 
 

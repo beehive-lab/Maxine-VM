@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=3b5143bd-631d-4d04-bdb0-0af27bd256e2*/
 /**
  * Unit tests for PPC assembly
  * 

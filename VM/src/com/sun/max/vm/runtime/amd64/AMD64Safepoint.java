@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=4e0187e1-fb3d-4fcb-8611-6d3ec62905ac*/
 package com.sun.max.vm.runtime.amd64;
 
 import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
@@ -55,24 +54,24 @@ public final class AMD64Safepoint extends Safepoint {
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    private static final AMD64GeneralRegister64 _LATCH_REGISTER = R14;
+    private static final AMD64GeneralRegister64 LATCH_REGISTER = R14;
 
     @INLINE(override = true)
     @Override
     public AMD64GeneralRegister64 latchRegister() {
-        return _LATCH_REGISTER;
+        return LATCH_REGISTER;
     }
 
     @Override
     public int latchRegisterIndex() {
-        return _LATCH_REGISTER.value();
+        return LATCH_REGISTER.value();
     }
 
     @Override
     protected byte[] createCode() {
         final AMD64Assembler asm = new AMD64Assembler(0L);
         try {
-            asm.mov(_LATCH_REGISTER, _LATCH_REGISTER.indirect());
+            asm.mov(LATCH_REGISTER, LATCH_REGISTER.indirect());
             return asm.toByteArray();
         } catch (AssemblyException assemblyException) {
             throw ProgramError.unexpected("could not assemble safepoint code");

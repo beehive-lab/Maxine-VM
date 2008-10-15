@@ -18,7 +18,6 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/*VCSID=467b952d-e67d-4b99-82da-3f20e6d68ebe*/
 package com.sun.max.vm.heap.sequential.Beltway.BeltwayGenerational;
 
 import com.sun.max.annotate.*;
@@ -63,7 +62,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             _sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize()));
             CardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
-            TeleHeap.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
+            TeleHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             _collectorThread = new StopTheWorldDaemon("GC", _beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
