@@ -266,7 +266,7 @@ void thread_initSegments(NativeThreadLocals *nativeThreadLocals) {
     current += getPageSize();
 
 #if DEBUG_THREADS
-  int id = nativeThreadLocals->id;
+    int id = nativeThreadLocals->id;
     debug_println("thread %3d: stackBase = %p", id, nativeThreadLocals->stackBase);
     debug_println("thread %3d: stackSize = %d", id, nativeThreadLocals->stackSize);
     debug_println("thread %3d: triggeredVmThreadLocals = %p", id, nativeThreadLocals->triggeredVmThreadLocals);

@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
@@ -53,7 +55,9 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         }
 
         synchronized (VmThreadMap.ACTIVE) {
-            // this is ok even though the GC does not get to scan this frame, because the object involved is in the boot image
+            // Synchronizing on VmThreadMap.ACTIVE causes this thread to block
+            // as the GC daemon has taken the lock and won't release it until
+            // GC is complete.
         }
 
         Safepoint.enable();
@@ -126,7 +130,17 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                 // so we will take care of that for it now:
                 VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
             } else {
-                // Threads that hit a safepoint in Java code have prepared their stack maps themselves.
+                // Threads that hit a safepoint in Java code have prepared *most* of their stack reference map themselves.
+                // The part of the stack between suspendCurrentThread() and the JNI stub that enters into the
+                // native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. Do it now:
+                final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+                if (instructionPointer.isZero()) {
+                    FatalError.unexpected("A mutator thread in Java at safepoint should be stopped in native monitor code");
+                }
+                final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
+                final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
+                final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals));
+                vmThread.stackReferenceMapPreparer().completeStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
             }
         }
     };

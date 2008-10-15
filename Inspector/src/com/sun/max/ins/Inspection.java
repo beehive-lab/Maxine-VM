@@ -1032,7 +1032,7 @@ public class Inspection extends JFrame {
      */
     public void quit() {
         try {
-            settings().save();
+            settings().quit();
             teleVM().teleProcess().controller().terminate();
         } catch (Throwable throwable) {
             ProgramWarning.message("error during shutdown - but we quit anyway: " + throwable);

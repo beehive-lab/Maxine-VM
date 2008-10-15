@@ -38,7 +38,7 @@ import com.sun.max.tele.*;
  */
 public class InspectionSettings {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     private String tracePrefix() {
         return "[Inspector] ";
@@ -174,6 +174,7 @@ public class InspectionSettings {
         final int randomID = get(_bootimageClient, "id", OptionTypes.INT_TYPE, 0);
         _bootImageChanged = version != teleVM.bootImage().header()._version || randomID != teleVM.bootImage().header()._randomID;
         _bootimageClient.saveSettings(new SaveSettingsEvent(_bootimageClient, _properties));
+        _saver = new Saver();
     }
 
     public void addSaveSettingsListener(final SaveSettingsListener saveSettingsListener) {
@@ -252,6 +253,41 @@ public class InspectionSettings {
         }
     }
 
+    private boolean _needsSaving;
+
+    /**
+     * A helper task that is run in a separate thread for writing the persistent settings to a file.
+     * Performing this task asynchronously means that a number of changes can be batched to the
+     * file.
+     */
+    private class Saver implements Runnable {
+        @Override
+        public void run() {
+            while (!_done) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                }
+                if (!_done && _needsSaving) {
+                    doSave();
+                    _needsSaving = false;
+                }
+            }
+        }
+
+        boolean _done;
+        void quit() {
+            _done = true;
+            doSave();
+        }
+
+        Saver() {
+            new Thread(this, "SettingsSaver").start();
+        }
+    }
+
+    private final Saver _saver;
+
     /**
      * Determines if there is a setting in this object named by a given key.
      */
@@ -260,10 +296,23 @@ public class InspectionSettings {
         return _properties.containsKey(clientKey);
     }
 
+    public synchronized void quit() {
+        _saver.quit();
+    }
+
+    /**
+     * Indicates that the persistent settings represented by this object have changed
+     * and should be saved to a {@linkplain #settingsFile() file}. The actual writing
+     * to the file happens asynchronously.
+     */
+    public void save() {
+        _needsSaving = true;
+    }
+
     /**
      * Writes the persistent settings represented by this object to a {@linkplain #settingsFile() file}.
      */
-    public synchronized void save() {
+    private synchronized void doSave() {
         final Properties newProperties = new SortedProperties();
         Trace.line(TRACE_VALUE, tracePrefix() + "saving settings");
         for (SaveSettingsListener saveSettingsListener : _clients.values()) {
