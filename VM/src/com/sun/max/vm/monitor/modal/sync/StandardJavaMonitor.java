@@ -45,7 +45,7 @@ class StandardJavaMonitor extends AbstractJavaMonitor {
         if (owner == null) {
             throw new IllegalMonitorStateException();
         }
-        throw new IllegalMonitorStateException("Monitor owned by thread \"" + owner.getName() + "\" [id=" + owner.id() + "]");
+        throw new IllegalMonitorStateException("Monitor owned by thread \"" + owner.getName() + "\" [serial=" + owner.serial() + "]");
     }
 
     @Override

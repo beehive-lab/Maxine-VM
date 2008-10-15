@@ -57,9 +57,8 @@ import com.sun.max.vm.type.*;
  * this TLS area is obtained by reading the {@link #SAFEPOINTS_TRIGGERED_THREAD_LOCALS} variable from any TLS area.</dd>
  * </dl>
  *
- * The memory for the three TLS areas is located on the stack. The first two (safepoints-enabled and
- * safepoints-disabled) are explicitly allocated by the native code that starts a thread (see the function
- * 'thread_runJava' in Native/substrate/threads.c) by calling 'alloca'.
+ * The memory for the three TLS areas is located on the stack as described in the thread stack layout
+ * diagram {@linkplain VmThread here}.
  *
  * All thread local variables occupy one word, except the {@linkplain #REGISTERS last}.
  */
@@ -120,8 +119,7 @@ public enum VmThreadLocal {
     LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C(Kind.WORD),
 
     /**
-     *
-     * Holds the biased card table address card table writes are usually done using *(cardTableBase + reference-heap a.
+     * Holds the biased card table address. Card table writes are usually done using *(cardTableBase + reference-heap a.
      */
     ADJUSTED_CARDTABLE_BASE(Kind.WORD), TAG(Kind.WORD), SAFEPOINT_VENUE(Kind.REFERENCE), SAFEPOINT_NATIVE_STUB(Kind.WORD), SAFEPOINT_JAVA_STUB(Kind.WORD),
 
@@ -253,11 +251,11 @@ public enum VmThreadLocal {
         }
         int registerNameIndex = REGISTERS.index();
         for (int i = 0; i < NUMBER_OF_INTEGER_REGISTERS; ++i) {
-            names[registerNameIndex] = "INTEGER_REGISTER" + i;
+            names[registerNameIndex] = "REG" + i;
             registerNameIndex++;
         }
         for (int i = 0; i < NUMBER_OF_FLOATING_POINT_REGISTERS; ++i) {
-            names[registerNameIndex] = "FLOATING_POINT_REGISTER" + i;
+            names[registerNameIndex] = "FP_REG" + i;
             registerNameIndex++;
         }
         ProgramError.check(names.length == registerNameIndex);
@@ -519,11 +517,10 @@ public enum VmThreadLocal {
 
     /**
      * The purpose of calling this below is to ensure that there is a stop position to be found near the current
-     * instruction pointer.
-     * {@link TargetMethod#prepareFrameReferenceMap(StackReferenceMapPreparer, Pointer, Pointer, Pointer)} relies on
-     * that to be the case. (A call constitutes a stop position and
-     *
-     * @NEVER_INLINE ensures that the compiler generates one.)
+     * instruction pointer. Stack reference map
+     * {@linkplain TargetMethod#prepareFrameReferenceMap(StackReferenceMapPreparer, Pointer, Pointer, Pointer)
+     * preparation} relies on that to be the case - a call constitutes a stop position and {@link NEVER_INLINE} ensures
+     * that the compiler generates one.
      */
     @NEVER_INLINE
     private static void fakeNearbyStopPosition() {
@@ -534,7 +531,7 @@ public enum VmThreadLocal {
      * from it.
      */
     @NEVER_INLINE
-    public static void prepareCurrentStackReferenceMap() {
+    static void prepareCurrentStackReferenceMap() {
         fakeNearbyStopPosition();
         VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(), VMRegister.getInstructionPointer(), VMRegister.getAbiStackPointer(),
                         VMRegister.getAbiFramePointer());
@@ -547,13 +544,26 @@ public enum VmThreadLocal {
      * affecting this stack has occurred in between.
      */
     public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
+        final Pointer lastJavaCallerStackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
         final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
         final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
+        final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
+        if (!(vmThread.javaThread() instanceof StopTheWorldDaemon) &&  lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
+            final DebugPrintStream err = Debug.err;
+            err.print("The stack for thread \"");
+            Debug.printVmThread(err, vmThread, false);
+            err.print("\" has slots between ");
+            err.print(lastJavaCallerStackPointer);
+            err.print(" and ");
+            err.print(lowestActiveSlot);
+            err.println(" are not covered by the reference map.");
+            FatalError.unexpected("Stack reference map does not cover all active slots");
+        }
+
         boolean lockDisabledSafepoints = false;
         if (Heap.traceGC()) {
-            final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
             lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map scanning
             final DebugPrintStream out = Debug.out;
             out.print("Scanning stack reference map for thread ");
