@@ -49,10 +49,9 @@ public class StackOverflower {
 
     public static void run() {
         final StackOverflower stackOverflower = new StackOverflower();
-        int n = stackOverflower.getNumberOfInvocations();
-        System.out.println("first overflow stackDepth: " + n);
-        n = stackOverflower.getNumberOfInvocations();
-        System.out.println("second overflow stackDepth: " + n);
+        for (int i = 0; i < 10; i++) {
+            System.out.println("stack overflow depth " + i + ": " + stackOverflower.getNumberOfInvocations());
+        }
     }
 
     public static void main(String[] argv) {

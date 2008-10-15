@@ -18,22 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package test.output;
 
+/**
+ * small test case for mantis bug 6: recompilation segmentation fault.
+ * @author Yi Guo
+ */
+public class LocalCatch {
+    static class S {
 
-public class StaticInitializers {
+        public int _x = 12;
 
-    private static String _staticString1 = "string 1";
-    private static String _staticString2;
-
-    static {
-        _staticString2 = "string 2";
+        public int b() {
+            try {
+                throw new Exception("abc");
+            } catch (Exception e) {
+                return _x;
+            }
+        }
     }
 
     public static void main(String[] args) {
-        System.out.println("StaticInitializersTest");
-        System.out.println(_staticString1);
-        System.out.println(_staticString2);
+        System.out.println("starting...");
+        final S f = new S();
+        String s = "";
+        /* 10000 iterations to trigger recompilation of f.b() if enabled.*/
+        for (int i = 0; i < 10000; i++) {
+            s += f.b();
+        }
+        System.out.println(s.length());
+        System.out.println("done!");
     }
-
 }

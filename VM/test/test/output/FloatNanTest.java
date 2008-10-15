@@ -18,14 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package test.output;
 
 import com.sun.max.vm.compiler.builtin.*;
 
 /**
  * @author Aziz Ghuloum
  */
-public class JckTestTemp {
+public class FloatNanTest {
 
     public static int run13() {
         final int j = 0x7fffffff;
@@ -104,10 +104,7 @@ public class JckTestTemp {
     }
 
     public static void isnantest(float x) {
-        System.out.printf("n=%f, nan=%d, ournan1=%d ournan2=%d\n", x,
-                        Float.isNaN(x) ? 1 : 0,
-                        ournan1(x) ? 1 : 0,
-                        ournan2(x) ? 1 : 0);
+        System.out.println("n=" + x + ", nan=" + (Float.isNaN(x) ? 1 : 0) + ", ournan1=" + (ournan1(x) ? 1 : 0) + " ournan2=" + (ournan2(x) ? 1 : 0));
     }
 
     public static void foo(double x) {
@@ -132,7 +129,6 @@ public class JckTestTemp {
     public static void main(String[] args) {
         System.out.println(run13());
         System.out.println(run14());
-        if (true) { return; }
         isnantest(Float.NaN);
         isnantest(0.0f);
         isnantest(0.75f);

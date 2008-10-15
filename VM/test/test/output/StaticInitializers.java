@@ -18,37 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package test.output;
 
-/**
- *
- * @author Christos Kotselidis
- */
-public class HelloWorld1 {
+
+public class StaticInitializers {
+
+    private static String _staticString1 = "string 1";
+    private static String _staticString2;
+
+    static {
+        _staticString2 = "string 2";
+    }
 
     public static void main(String[] args) {
-        System.out.println("HelloWorld");
-        for (long i = 0; i < Long.MAX_VALUE; i++) {
-            final BigObject oj = new BigObject(i);
-            System.out.println("HelloWorld " + oj.getID());
-
-        }
+        System.out.println("StaticInitializersTest");
+        System.out.println(_staticString1);
+        System.out.println(_staticString2);
     }
 
-}
-
-class BigObject {
-
-    long[] _array;
-    long _id;
-
-    BigObject(long id) {
-        _id = id;
-        _array = new long[500];
-
-    }
-
-    public long getID() {
-        return _id;
-    }
 }

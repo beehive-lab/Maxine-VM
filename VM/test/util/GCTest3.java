@@ -20,6 +20,8 @@
  */
 package util;
 
+import java.util.*;
+
 // This is adapted from a benchmark written by John Ellis and Pete Kovac
 // of Post Communications.
 // It was modified by Hans Boehm of Silicon Graphics.
@@ -65,22 +67,23 @@ package util;
 // - Results are sensitive to locking cost, but we dont
 // check for proper locking
 
-class Node {
-    Node _left;
-    Node _right;
+class Node2 {
+
+    Node2 _left;
+    Node2 _right;
     int _i;
     int _j;
 
-    Node(Node l, Node r) {
+    Node2(Node2 l, Node2 r) {
         _left = l;
         _right = r;
     }
 
-    Node() {
+    Node2() {
     }
 }
 
-public class GCBench {
+public class GCTest3 {
 
     public static final int kStretchTreeDepth = 18; // about 16Mb
     public static final int kLongLivedTreeDepth = 16; // about 4Mb
@@ -99,25 +102,25 @@ public class GCBench {
     }
 
 // Build tree top down, assigning to older objects.
-    static void populate(int iDepth, Node thisNode) {
+    static void populate(int iDepth, Node2 thisNode) {
         int depth = iDepth;
         if (depth <= 0) {
             return;
         }
 
         depth--;
-        thisNode._left = new Node();
-        thisNode._right = new Node();
+        thisNode._left = new Node2();
+        thisNode._right = new Node2();
         populate(depth, thisNode._left);
         populate(depth, thisNode._right);
     }
 
 // Build tree bottom-up
-    static Node makeTree(int iDepth) {
+    static Node2 makeTree(int iDepth) {
         if (iDepth <= 0) {
-            return new Node();
+            return new Node2();
         }
-        return new Node(makeTree(iDepth - 1), makeTree(iDepth - 1));
+        return new Node2(makeTree(iDepth - 1), makeTree(iDepth - 1));
 
     }
 
@@ -133,12 +136,12 @@ public class GCBench {
         long tStart;
         long tFinish;
         final int iNumIters = numIters(depth);
-        Node tempTree;
+        Node2 tempTree;
 
         System.out.println("Creating " + iNumIters + " trees of depth " + depth);
         tStart = System.currentTimeMillis();
         for (int i = 0; i < iNumIters; ++i) {
-            tempTree = new Node();
+            tempTree = new Node2();
             populate(depth, tempTree);
             tempTree = null;
         }
@@ -171,40 +174,26 @@ public class GCBench {
             _omitTimes = false;
         }
         // Node root;
-        Node longLivedTree;
+        final List<Node2> longLivedTrees = new ArrayList<Node2>();
+        Node2 longLivedTree;
         @SuppressWarnings("unused")
-        Node tempTree;
-
+        Node2 tempTree;
+        int i = 0;
         System.out.println("Garbage Collector Test");
-        System.out.println(" Stretching memory with a binary tree of depth " + kStretchTreeDepth);
+        while (i < 40) {
+            System.out.println(" Stretching memory with a binary tree of depth " + kStretchTreeDepth);
 
-        // Stretch the memory space quickly
-        tempTree = makeTree(kStretchTreeDepth);
-        tempTree = null;
+            // Stretch the memory space quickly
+            tempTree = makeTree(kStretchTreeDepth);
+            tempTree = null;
 
-        // Create a long lived object
-        System.out.println(" Creating a long-lived binary tree of depth " + kLongLivedTreeDepth);
-        longLivedTree = new Node();
-        populate(kLongLivedTreeDepth, longLivedTree);
-
-        // Create long-lived array, filling half of it
-        System.out.println(" Creating a long-lived array of " + kArraySize + " doubles");
-        final double[]  array = new double[kArraySize];
-        for (int i = 0; i < kArraySize / 2; ++i) {
-            array[i] = 1.0 / i;
+            // Create a long lived object
+            System.out.println(" Creating a long-lived binary tree of depth " + kLongLivedTreeDepth);
+            longLivedTree = new Node2();
+            populate(kLongLivedTreeDepth, longLivedTree);
+            longLivedTrees.add(longLivedTree);
+            i++;
         }
-
-        for (int d = kMinTreeDepth; d <= kMaxTreeDepth; d += 2) {
-            timeConstruction(d);
-        }
-
-        if (longLivedTree == null || array[1000] != 1.0 / 1000) {
-            System.out.println("Failed");
-        }
-        // fake reference to LongLivedTree
-        // and array
-        // to keep them from being optimized away
-
-        System.out.println("Completed");
+        System.out.println(GCTest3.class.getSimpleName() + " done.");
     }
 } // class JavaGC
