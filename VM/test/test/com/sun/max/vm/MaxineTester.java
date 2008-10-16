@@ -27,6 +27,8 @@ import java.util.concurrent.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.prototype.*;
@@ -48,6 +50,8 @@ public class MaxineTester {
     private static final Option<Integer> _imageBuildTimeOut = _options.newIntegerOption("image-build-timeout", 600,
                     "Specifies the number of seconds to wait for an image build to complete before " +
                     "timing out and killing it.");
+    private static final Option<String> _javaExecutable = _options.newStringOption("java-executable", "java",
+                    "Specifies the name of or full path to the Java VM executable to use. This must be a JDK 6 or greater VM.");
     private static final Option<Integer> _javaTesterTimeOut = _options.newIntegerOption("java-tester-timeout", 50,
                     "Specifies the number of seconds to wait for the in-target Java tester tests to complete before " +
                     "timing out and killing it.");
@@ -316,7 +320,7 @@ public class MaxineTester {
 
     private static int runJavaVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = "Executing " + mainClass.getName();
-        return exec(imageDir, appendArgs(new String[] {"java"}, args), outputFile, name, timeout);
+        return exec(imageDir, appendArgs(new String[] {_javaExecutable.getValue()}, args), outputFile, name, timeout);
     }
 
     public static boolean generateImage(File imageDir, String imageConfig) {
@@ -327,22 +331,30 @@ public class MaxineTester {
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final String[] imageArguments = appendArgs(new String[] {"-output-dir=" + imageDir, "-trace=1"}, generatorArguments);
         String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, imageArguments, new String[0]);
-        javaArgs = appendArgs(new String[] {"java"}, javaArgs);
+        javaArgs = appendArgs(new String[] {_javaExecutable.getValue(), "-Xss2m", "-Xms1G", "-Xmx2G"}, javaArgs);
         final File outputFile = getOutputFile(imageDir, "IMAGE_GENERATION_OUTPUT", imageConfig);
 
         final int exitValue = exec(null, javaArgs, outputFile, "Building " + imageDir.getName() + "/maxine.vm", _imageBuildTimeOut.getValue());
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
-            copyBinary(imageDir, System.mapLibraryName("jvm"));
-            copyBinary(imageDir, System.mapLibraryName("javatest"));
-            copyBinary(imageDir, System.mapLibraryName("prototype"));
-            copyBinary(imageDir, System.mapLibraryName("inspector"));
+            copyBinary(imageDir, mapLibraryName("jvm"));
+            copyBinary(imageDir, mapLibraryName("javatest"));
+            copyBinary(imageDir, mapLibraryName("prototype"));
+            copyBinary(imageDir, mapLibraryName("inspector"));
             return true;
         } else if (exitValue == PROCESS_TIMEOUT) {
             out().println("(image build timed out): " + new File(imageDir, BinaryImageGenerator.getDefaultBootImageFilePath().getName()));
         }
         return false;
+    }
+
+    private static String mapLibraryName(String name) {
+        final String libName = System.mapLibraryName(name);
+        if (OperatingSystem.current() == OperatingSystem.DARWIN && libName.endsWith(".jnilib")) {
+            return Strings.chopSuffix(libName, ".jnilib") + ".dylib";
+        }
+        return libName;
     }
 
     private static void copyBinary(File imageDir, String binary) {
