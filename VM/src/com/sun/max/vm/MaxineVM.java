@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.profile.*;
@@ -80,12 +79,6 @@ public final class MaxineVM {
          */
         RUNNING
     }
-
-    // pointer to the space passed in by native code to
-    // hold the primordial cardtable and the
-    public static Pointer _auxiliarySpace = null;
-    public static int _auxiliarySpaceSize = 0;
-
 
     private Phase _phase = Phase.PROTOTYPING;
     private final VMConfiguration _configuration;
@@ -321,8 +314,7 @@ public final class MaxineVM {
     }
 
     public static boolean isRunning() {
-        final Phase phase = host()._phase;
-        return phase == Phase.RUNNING;
+        return host().phase() == Phase.RUNNING;
     }
 
     private static int _exitCode = 0;
@@ -367,12 +359,9 @@ public final class MaxineVM {
         // Fix it manually:
         Heap.bootHeapRegion().setStart(bootHeapRegionStart);
 
-        MaxineVM._auxiliarySpace = auxiliarySpace;
-        MaxineVM._auxiliarySpaceSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion().size()).unsignedShiftedRight(CardRegion.CARD_SHIFT).toInt();
-
         Safepoint.initializePrimordial(primordialVmThreadLocals);
 
-        Heap.initializePrimordialBarriers(primordialVmThreadLocals, auxiliarySpace);
+        Heap.initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
 
         // As of here we can write values:
         _primordialVmThreadLocals = primordialVmThreadLocals;

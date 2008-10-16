@@ -126,8 +126,8 @@ public final class Heap {
         return VMConfiguration.hostOrTarget().heapScheme();
     }
 
-    public static void initializePrimordialBarriers(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-        heapScheme().initializePrimordialCardTable(primordialVmThreadLocals, auxiliarySpace);
+    public static void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
+        heapScheme().initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
     }
 
     public static void initializeVmThread(VmThread vmThread) {
