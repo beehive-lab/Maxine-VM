@@ -27,12 +27,12 @@ package com.sun.max.util;
  * <p>
  * An Enumerator can be called upon to provide the respective Enumerable matching a given value.
  * <p>
- * See <a href="http://www.ejournal.unam.mx/compuysistemas/vol07-02/CYS07205.pdf">this paper</a>
+ * See <a href="http://www.ejournal.unam.mx/cys/vol07-02/CYS07205.pdf">"Inheritance, Generics and Binary Methods in Java"</a>
  * for an explanation of how to interpret a recursive generic type.
  * <p>
- * 
+ *
  * @see Enumerator
- * 
+ *
  * @author Bernd Mathiske
  */
 public interface Enumerable<Enumerable_Type extends Enum<Enumerable_Type> & Enumerable<Enumerable_Type>> extends Symbol {
