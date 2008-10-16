@@ -27,7 +27,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Card marking reference scheme that uses a adjusted card table base address to mark cards.
@@ -350,28 +349,6 @@ public final class HeapReferenceScheme extends AbstractVMScheme implements Refer
     @INLINE
     public void setWord(Reference reference, int displacement, int index, Word value) {
         gripScheme().fromReference(reference).setWord(displacement, index, value);
-    }
-
-    @INLINE
-    private static Pointer cardTableBase() {
-        return VmThreadLocal.ADJUSTED_CARDTABLE_BASE.getConstantWord().asPointer();
-    }
-
-    @INLINE
-    public static Pointer referenceBuffer() {
-        return MaxineVM._auxiliarySpace.plus(MaxineVM._auxiliarySpaceSize).aligned();
-    }
-
-    public static long _referenceBufferIndex = 0;
-    public static final byte ZERO = 0;
-
-    public static void resetReferenceBufferIndex() {
-        _referenceBufferIndex = 0;
-    }
-
-    @INLINE
-    public static long getReferenceBufferIndex() {
-        return _referenceBufferIndex;
     }
 
     @INLINE

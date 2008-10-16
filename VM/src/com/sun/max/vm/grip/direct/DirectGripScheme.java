@@ -411,105 +411,69 @@ public final class DirectGripScheme extends AbstractVMScheme implements GripSche
         return toOrigin(grip).compareAndSwapInt(offset, suspectedValue, newValue);
     }
 
-    public static long _gripBufferIndex = 0;
-
-    @INLINE
-    public static Pointer getGripBuffer() {
-        return MaxineVM._auxiliarySpace.plus(MaxineVM._auxiliarySpaceSize).aligned();
-    }
-
-    @INLINE
-    public static void resetGripBufferIndex() {
-        _gripBufferIndex = 0;
-    }
-
-    @INLINE
-    public void writeToGripBuffer(Grip grip) {
-       // getGripBuffer().writeGrip(Offset.fromLong(_gripBufferIndex * 8), grip);
-        _gripBufferIndex++;
-    }
-
     @INLINE
     public void writeGrip(Grip grip, Offset offset, Grip value) {
-        //writeToGripBuffer(grip);
         toOrigin(grip).writeReference(offset, UnsafeLoophole.gripToReference(value));
     }
 
     @INLINE
     public Reference compareAndSwapReference(Grip grip, Offset offset, Reference suspectedValue, Reference newValue) {
-        //writeToGripBuffer(grip);
         return toOrigin(grip).compareAndSwapReference(offset, suspectedValue, newValue);
     }
 
     @INLINE
     public Reference compareAndSwapReference(Grip grip, int offset, Reference suspectedValue, Reference newValue) {
-        //writeToGripBuffer(grip);
         return toOrigin(grip).compareAndSwapReference(offset, suspectedValue, newValue);
     }
 
     @INLINE
     public Word compareAndSwapWord(Grip grip, Offset offset, Word suspectedValue, Word newValue) {
-        //writeToGripBuffer(grip);
         return toOrigin(grip).compareAndSwapWord(offset, suspectedValue, newValue);
     }
 
     @INLINE
     public Word compareAndSwapWord(Grip grip, int offset, Word suspectedValue, Word newValue) {
-        //writeToGripBuffer(grip);
         return toOrigin(grip).compareAndSwapWord(offset, suspectedValue, newValue);
     }
 
     @INLINE
     public void writeWord(Grip grip, Offset offset, Word value) {
-       // writeToGripBuffer(grip);
         toOrigin(grip).writeWord(offset, value);
     }
 
     @INLINE
     public void writeWord(Grip grip, int offset, Word value) {
-        //writeToGripBuffer(grip);
         toOrigin(grip).writeWord(offset, value);
     }
 
     @INLINE
     public void setWord(Grip grip, int displacement, int index, Word value) {
-        //writeToGripBuffer(grip);
         toOrigin(grip).setWord(displacement, index, value);
     }
 
     @INLINE
     public void writeGrip(Grip grip, int offset, Grip value) {
-        //writeToGripBuffer(grip);
         toOrigin(grip).writeReference(offset, UnsafeLoophole.gripToReference(value));
     }
 
     @INLINE
     public void setGrip(Grip grip, int displacement, int index, Grip value) {
-        //writeToGripBuffer(grip);
         toOrigin(grip).setReference(displacement, index, UnsafeLoophole.gripToReference(value));
     }
 
     @INLINE
     public void writeLong(Grip grip, Offset offset, long value) {
-       // writeToGripBuffer(grip);
         toOrigin(grip).writeLong(offset, value);
     }
 
     @INLINE
     public void writeLong(Grip grip, int offset, long value) {
-     //  writeToGripBuffer(grip);
         toOrigin(grip).writeLong(offset, value);
     }
 
     @INLINE
     public void setLong(Grip grip, int displacement, int index, long value) {
-    //    writeToGripBuffer(grip);
         toOrigin(grip).setLong(displacement, index, value);
-    }
-
-    @INLINE
-    public static long getGripBufferIndex() {
-        return _gripBufferIndex;
     }
 
 }

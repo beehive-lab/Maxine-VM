@@ -70,7 +70,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
         return 0;
     }
 
-    public void initializePrimordialCardTable(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
+    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
     }
 
     public void initializeVmThread(VmThread vmThread) {
@@ -698,18 +698,9 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
     public void finalize(MaxineVM.Phase phase) {
     }
 
-    @Override
-    public void scanRegion(Address start, Address end) {
-    }
-
     @INLINE
     @Override
     public void writeBarrier(Reference reference) {
-    }
-
-    @Override
-    public Address adjustedCardTableAddress() {
-        return null;
     }
 
 }

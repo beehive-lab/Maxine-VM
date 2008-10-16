@@ -95,7 +95,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     @NO_SAFEPOINTS("TODO")
     @Override
     public Pointer allocate(Size size) {
-        if (!(_phase == MaxineVM.Phase.RUNNING)) {
+        if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getNurserySpace(), size);
         }
         if (BeltwayConfiguration._useTLABS) {
@@ -105,8 +105,7 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     }
 
     @Override
-    @INLINE
-    public synchronized boolean collect(Size requestedFreeSpace) {
+    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         boolean result = false;
         if (minorCollect(requestedFreeSpace)) {
             result = true;

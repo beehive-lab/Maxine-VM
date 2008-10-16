@@ -31,13 +31,23 @@ import com.sun.max.vm.thread.*;
 
 public interface HeapScheme extends VMScheme {
 
-    boolean collect(Size size);
-
+    /**
+     * @return whether a thread belongs to the GC (or otherwise it belongs to the mutator)
+     */
     boolean isGcThread(VmThread vmThread);
 
+    /**
+     * Given the size of the boot image, calculate the size of the auxiliary space that the substrate is to allocate and pass to the target VM.
+     */
+    @PROTOTYPE_ONLY
     int auxiliarySpaceSize(int bootImageSize);
 
-    void initializePrimordialCardTable(Pointer primordialVmThreadLocals, Pointer auxiliarySpace);
+    /**
+     * Initialize the auxiliary space, which is provided by the substrate.
+     * This space can e.g. be used to support write barriers in the primordial phase,
+     * for instance by holding a primordial card table that covers the boot image.
+     */
+    void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace);
 
     /**
      * Perform thread-local initializations specific to the heap scheme when starting a new VM thread. For instance
@@ -56,10 +66,24 @@ public interface HeapScheme extends VMScheme {
      */
     Object createTuple(Hub hub);
 
+    /**
+     * Creates a hybrid object that is both a tuple and an array,
+     * but leaving out the array part beyond the tuple for now.
+     */
     <Hybrid_Type extends Hybrid> Hybrid_Type createHybrid(DynamicHub hub);
 
+    /**
+     * Expands the hybrid object to its full array length.
+     * The implementation may modify the original object and return it
+     * or it can create a new object that contains the same tuple values and return that.
+     */
     <Hybrid_Type extends Hybrid> Hybrid_Type expandHybrid(Hybrid_Type hybrid, int length);
 
+    /**
+     * Creates a shallow clone of an object.
+     * The identity hash value may differ.
+     * The new object is not locked.
+     */
     Object clone(Object object);
 
     /**
@@ -123,6 +147,9 @@ public interface HeapScheme extends VMScheme {
      */
     boolean isPinned(Object object);
 
+    /**
+     * Returns whether an address is anywhere in the heap.
+     */
     boolean contains(Address address);
 
     boolean collectGarbage(Size requestedFreeSpace);
@@ -131,12 +158,12 @@ public interface HeapScheme extends VMScheme {
 
     void runFinalization();
 
+    /**
+     * Returns a lower bound for how often exhaustive garbage removal has occurred so far.
+     * Conservatively always returning 0 is allowed, but not desirable.
+     */
     long numberOfGarbageTurnovers();
 
     @INLINE
     void writeBarrier(Reference reference);
-
-    void scanRegion(Address start, Address end);
-
-    Address adjustedCardTableAddress();
 }
