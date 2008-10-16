@@ -42,14 +42,13 @@ import com.sun.max.vm.thread.*;
  * @author Christos Kotselidis
  */
 
-public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapScheme, Allocator {
+public abstract class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapScheme, Allocator {
 
-    public static final CardRegion _cardRegion = new CardRegion();
+    protected final CardRegion _cardRegion = new CardRegion();
     public static final SideTable _sideTable = new SideTable();
     protected Address _adjustedCardTableAddress = Address.zero();
 
     public static final HeapVerifier _heapVerifier = new HeapVerifier();
-    // public static final HeapProfiler _heapProfiler = new HeapProfiler();
 
     private static final BeltwaySequentialHeapRootsScanner _heapRootsScanner = new BeltwaySequentialHeapRootsScanner();
     public static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError();
@@ -59,7 +58,6 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     protected static BeltwayCollector _beltCollector = new BeltwayCollector();
     protected static StopTheWorldDaemon _collectorThread;
 
-    protected static MaxineVM.Phase _phase;
     public static boolean _outOfMemory = false;
 
     public static BeltwayCollectorThread[] _gcThreads = new BeltwayCollectorThread[BeltwayConfiguration._numberOfGCThreads];
@@ -81,7 +79,6 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        _phase = phase;
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             _beltManager.createBelts();
         } else if (phase == MaxineVM.Phase.RUNNING) {
@@ -303,7 +300,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
             if (belt.getIndex() == (BeltwayConfiguration.getNumberOfBelts() - 1)) {
                 throw _outOfMemoryError;
             }
-            if (!(VMConfiguration.hostOrTarget().heapScheme().collect(size))) {
+            if (!collectGarbage(size)) {
                 throw _outOfMemoryError;
             }
             return allocateSlowPath(belt, size);
@@ -331,7 +328,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
 
                 if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
                     //Debug.println("Nursery is full, trigger GC");
-                    if (!VMConfiguration.hostOrTarget().heapScheme().collect(size)) {
+                    if (!collectGarbage(size)) {
                         throw _outOfMemoryError;
 
                     }
@@ -370,7 +367,7 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
                 }
                 if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
                     //Debug.println("Nursery is full, trigger GC");
-                    if (!collect(size) || BeltwayHeapScheme._outOfMemory) {
+                    if (!collectGarbage(size) || BeltwayHeapScheme._outOfMemory) {
                         throw _outOfMemoryError;
 
                     }
@@ -492,12 +489,6 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     }
 
     @INLINE
-    @Override
-    public synchronized boolean collect(Size size) {
-        return false;
-    }
-
-    @INLINE
     protected synchronized boolean minorCollect(Size size) {
 
         return false;
@@ -575,11 +566,6 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
     }
 
     @Override
-    public boolean collectGarbage(Size requestedFreeSpace) {
-        return VMConfiguration.hostOrTarget().heapScheme().collect(requestedFreeSpace);
-    }
-
-    @Override
     public Size reportFreeSpace() {
         return _beltManager.reportFreeSpace();
     }
@@ -611,23 +597,11 @@ public class BeltwayHeapScheme extends GripUpdatingHeapScheme implements HeapSch
 
     @INLINE
     @Override
-    public void writeBarrier(Reference reference) {
-
+    public final void writeBarrier(Reference reference) {
     }
 
     @Override
-    public void scanRegion(Address start, Address end) {
-
-    }
-
-    @Override
-    public Address adjustedCardTableAddress() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void initializePrimordialCardTable(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
+    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
         VmThreadLocal.ADJUSTED_CARDTABLE_BASE.setConstantWord(primordialVmThreadLocals, CardRegion.adjustedCardTableBase(auxiliarySpace));
     }
 

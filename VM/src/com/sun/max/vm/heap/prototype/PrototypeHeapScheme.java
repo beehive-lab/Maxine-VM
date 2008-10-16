@@ -59,7 +59,7 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
         return null;
     }
 
-    public void initializePrimordialCardTable(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
+    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
 
     }
 
@@ -156,12 +156,6 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
     }
 
     @Override
-    public void scanRegion(Address start, Address end) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public void writeBarrier(Reference reference) {
     }
 
@@ -190,11 +184,6 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
     }
 
     public BeltWayPointerOffsetVisitor getPointerOffsetGripVerifier() {
-        return null;
-    }
-
-    @Override
-    public Address adjustedCardTableAddress() {
         return null;
     }
 
