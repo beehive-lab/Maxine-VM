@@ -132,6 +132,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private Color _wordValidReferenceDataColor = new Color(0, 192, 0); //green
     private Color _wordUncheckedReferenceDataColor = new Color(64, 128, 64);
     private Color _wordInvalidReferenceDataColor = Color.red;
+    private Color _wordStackLocationDataColor = Color.magenta;
     private Color _invalidDataColor = Color.red;
     private Color _wordCallEntryPointColor = Color.blue;
     private Color _wordCallReturnPointColor = new Color(64, 64, 192);
@@ -157,7 +158,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return _nullDataColor;
     }
     @Override
-    public Color wordValidReferenceDataColor() {
+    public Color wordValidObjectReferenceDataColor() {
         return _wordValidReferenceDataColor;
     }
     @Override
@@ -165,12 +166,16 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return _wordUncheckedReferenceDataColor;
     }
     @Override
-    public Color wordInvalidReferenceDataColor() {
+    public Color wordInvalidObjectReferenceDataColor() {
         return _wordInvalidReferenceDataColor;
     }
     @Override
     public  Color wordInvalidDataColor() {
         return _invalidDataColor;
+    }
+    @Override
+    public Color wordStackLocationDataColor() {
+        return _wordStackLocationDataColor;
     }
     @Override
     public Color wordCallEntryPointColor() {
@@ -187,10 +192,6 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     @Override
     public Font wordAlternateTextFont() {
         return javaNameFont();
-    }
-    @Override
-    public Color wordAlternateTextColor() {
-        return defaultTextColor();
     }
     @Override
     public Color wordSelectedColor() {

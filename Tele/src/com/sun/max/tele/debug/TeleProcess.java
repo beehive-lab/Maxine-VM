@@ -611,6 +611,18 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     public final TeleNativeThread primordialThread() {
         return _primordialThread;
     }
+    
+    /**
+     * Gets the thread whose stack contains the memory location, null if none.
+     */
+    public final TeleNativeThread threadContaining(Address address) {
+    	for (TeleNativeThread thread : _threadMap.values()) {
+    		if (thread.stack().contains(address)) {
+    			return thread;
+    		}
+    	}
+    	return null;
+    }
 
     public final int pageSize() {
         return platform().pageSize();

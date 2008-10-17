@@ -26,6 +26,7 @@ import java.lang.reflect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -44,6 +45,9 @@ import com.sun.max.vm.value.*;
  * with multiple display modes and user interaction affordances.
  */
 public class WordValueLabel extends ValueLabel {
+
+    // TODO (mlvdv)  WordValueLabel is in serious need of refactoring into subclasses; enough with all the switch statements.
+    // but be careful about anchoring it too tightly to classes; the nature of word values can change with update!
 
     /**
      * The expected kind of word value. The visual
@@ -64,9 +68,11 @@ public class WordValueLabel extends ValueLabel {
     private enum ValueKind {
         WORD,
         NULL,
-        INVALID_REFERENCE, // something about this reference is decidedly broken
-        VALID_REFERENCE,
-        REFERENCE_TEXT,
+        INVALID_OBJECT_REFERENCE, // something about this reference is decidedly broken
+        OBJECT_REFERENCE,
+        OBJECT_REFERENCE_TEXT,
+        STACK_LOCATION,
+        STACK_LOCATION_TEXT,
         CALL_ENTRY_POINT,
         CALL_ENTRY_POINT_TEXT,
         CLASS_ACTOR_ID,
@@ -162,14 +168,19 @@ public class WordValueLabel extends ValueLabel {
                         final InspectorMenu menu = new InspectorMenu();
                         menu.add(new WordValueMenuItems(inspection(), value()));
                         switch (_valueKind) {
-                            case VALID_REFERENCE:
-                            case REFERENCE_TEXT: {
+                            case OBJECT_REFERENCE:
+                            case OBJECT_REFERENCE_TEXT: {
                                 final TeleObject teleObject = TeleObject.make(teleVM(), teleVM().wordToReference(value().toWord()));
                                 final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
                                 if (teleClassMethodActor != null) {
                                     // Add method-related menu items
                                     menu.add(new ClassMethodMenuItems(inspection(), teleClassMethodActor));
                                 }
+                                break;
+                            }
+                            case STACK_LOCATION:
+                            case STACK_LOCATION_TEXT: {
+                                // TODO (mlvdv)  special right-button menu items appropriate to a pointer into stack memory
                                 break;
                             }
                             default: {
@@ -192,11 +203,15 @@ public class WordValueLabel extends ValueLabel {
     /** Non-null if a code pointer. */
     private TeleTargetMethod _teleTargetMethod;
 
+    /** Non-null if a stack reference. */
+    private TeleNativeThread _teleNativeThread;
+
     @Override
     public void setValue(Value newValue) {
         _teleObject = null;
         _classActor = null;
         _teleTargetMethod = null;
+        _teleNativeThread = null;
 
         if (newValue == VoidValue.VOID) {
             _valueKind = ValueKind.INVALID;
@@ -228,7 +243,7 @@ public class WordValueLabel extends ValueLabel {
                         _valueKind = ValueKind.NULL;
                     }
                 } else if (teleVM().isValidReference(teleVM().wordToReference(newValue.toWord()))) {
-                    _valueKind = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? ValueKind.REFERENCE_TEXT : ValueKind.VALID_REFERENCE;
+                    _valueKind = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? ValueKind.OBJECT_REFERENCE_TEXT : ValueKind.OBJECT_REFERENCE;
                     final TeleReference reference = (TeleReference) teleVM().wordToReference(newValue.toWord());
 
                     try {
@@ -236,28 +251,36 @@ public class WordValueLabel extends ValueLabel {
                     } catch (Throwable throwable) {
                         // If we don't catch this the views will not be updated at all.
                         _teleObject = null;
-                        _valueKind = ValueKind.INVALID_REFERENCE;
+                        _valueKind = ValueKind.INVALID_OBJECT_REFERENCE;
                     }
-                } else if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
-                    _valueKind = ValueKind.INVALID_REFERENCE;
                 } else {
-                    _teleTargetMethod = TeleTargetMethod.make(teleVM(), newValue.toWord().asAddress());
-                    if (_teleTargetMethod != null) {
-                        final Address codeStart = _teleTargetMethod.codeStart();
-                        final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
-                        final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
-                        if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
-                            _valueKind = (_valueMode == ValueMode.CALL_ENTRY_POINT) ? ValueKind.CALL_ENTRY_POINT_TEXT : ValueKind.CALL_ENTRY_POINT;
+                    final Address address = newValue.asWord().asAddress();
+                    _teleNativeThread = teleVM().teleProcess().threadContaining(address);
+                    if (_teleNativeThread != null) {
+                        _valueKind = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;
+                    } else {
+                        if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
+                            _valueKind = ValueKind.INVALID_OBJECT_REFERENCE;
                         } else {
-                            _valueKind = (_valueMode == ValueMode.CALL_RETURN_POINT) ? ValueKind.CALL_RETURN_POINT : ValueKind.CALL_RETURN_POINT;
-                        }
-                    } else if (_valueMode == ValueMode.ITABLE_ENTRY) {
-                        final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(newValue.asWord().asAddress().toInt());
-                        if (teleClassActor != null) {
-                            _classActor = teleClassActor.classActor();
-                            _valueKind = ValueKind.CLASS_ACTOR;
-                        } else {
-                            _valueKind = ValueKind.CLASS_ACTOR_ID;
+                            _teleTargetMethod = TeleTargetMethod.make(teleVM(), newValue.toWord().asAddress());
+                            if (_teleTargetMethod != null) {
+                                final Address codeStart = _teleTargetMethod.codeStart();
+                                final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
+                                final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
+                                if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
+                                    _valueKind = (_valueMode == ValueMode.CALL_ENTRY_POINT) ? ValueKind.CALL_ENTRY_POINT_TEXT : ValueKind.CALL_ENTRY_POINT;
+                                } else {
+                                    _valueKind = (_valueMode == ValueMode.CALL_RETURN_POINT) ? ValueKind.CALL_RETURN_POINT : ValueKind.CALL_RETURN_POINT;
+                                }
+                            } else if (_valueMode == ValueMode.ITABLE_ENTRY) {
+                                final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(newValue.asWord().asAddress().toInt());
+                                if (teleClassActor != null) {
+                                    _classActor = teleClassActor.classActor();
+                                    _valueKind = ValueKind.CLASS_ACTOR;
+                                } else {
+                                    _valueKind = ValueKind.CLASS_ACTOR_ID;
+                                }
+                            }
                         }
                     }
                 }
@@ -268,7 +291,13 @@ public class WordValueLabel extends ValueLabel {
 
     private final int _maxStringLength = 40;
 
-    private boolean setAlternateReferenceText() {
+    /**
+     * Sets the text and tooltip text of this label to an alternate (non-numeric) presentation of a reference to a heap
+     * object in the {@link TeleVM}, if possible.
+     *
+     * @return whether an alternate textual presentation was set.
+     */
+    private boolean setAlternateObjectReferenceText() {
         if (_teleObject == null) {
             return false;
         }
@@ -495,11 +524,23 @@ public class WordValueLabel extends ValueLabel {
                 }
                 break;
             }
-            case REFERENCE_TEXT: {
+            case OBJECT_REFERENCE: {
+                setFont(style().wordDataFont());
+                setForeground(style().wordValidObjectReferenceDataColor());
+                setText(hexString);
+                final ClassActor classActor = _teleObject.classActorForType();
+                if (_valueMode == ValueMode.LITERAL_REFERENCE) {
+                    setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActor == null ? "unknown" : classActor.name().toString() + _toolTipSuffix));
+                } else if (classActor != null) {
+                    setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActor.name().toString()));
+                }
+                break;
+            }
+            case OBJECT_REFERENCE_TEXT: {
                 try {
-                    if (setAlternateReferenceText()) {
+                    if (setAlternateObjectReferenceText()) {
                         setFont(style().wordAlternateTextFont());
-                        setForeground(style().wordValidReferenceDataColor());
+                        setForeground(style().wordValidObjectReferenceDataColor());
                         if (_valueMode == ValueMode.LITERAL_REFERENCE) {
                             setToolTipText(getToolTipText() + _toolTipSuffix);
                         }
@@ -510,20 +551,28 @@ public class WordValueLabel extends ValueLabel {
                     System.out.println("WVL: setAlternateReferenceText error" + noClassDefFoundError);
                 }
                 System.out.println("WVL:  set AlternateReferenceText failed");
-                _valueKind = ValueKind.VALID_REFERENCE;
+                _valueKind = ValueKind.OBJECT_REFERENCE;
                 updateText();
                 break;
             }
-            case VALID_REFERENCE: {
+            case STACK_LOCATION: {
                 setFont(style().wordDataFont());
-                setForeground(style().wordValidReferenceDataColor());
+                setForeground(style().wordStackLocationDataColor());
                 setText(hexString);
-                final ClassActor classActor = _teleObject.classActorForType();
-                if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActor == null ? "unknown" : classActor.name().toString() + _toolTipSuffix));
-                } else if (classActor != null) {
-                    setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActor.name().toString()));
-                }
+                final String threadName = inspection().nameDisplay().longName(_teleNativeThread);
+                final int offset = value().asWord().asAddress().minus(_teleNativeThread.stack().start()).toInt();
+                final String hexOffsetString = offset >= 0 ? ("+0x" + Integer.toHexString(offset)) : "0x" + Integer.toHexString(offset);
+                setToolTipText("Stack:  thread=" + threadName + ", offset=" + hexOffsetString);
+                break;
+            }
+            case STACK_LOCATION_TEXT: {
+                setFont(style().wordAlternateTextFont());
+                setForeground(style().wordStackLocationDataColor());
+                final String threadName = inspection().nameDisplay().longName(_teleNativeThread);
+                final int offset = value().asWord().asAddress().minus(_teleNativeThread.stack().start()).toInt();
+                final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Integer.toString(offset);
+                setText(threadName + " " + decimalOffsetString);
+                setToolTipText("Stack:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
                 break;
             }
             case UNCHECKED_REFERENCE: {
@@ -537,9 +586,9 @@ public class WordValueLabel extends ValueLabel {
                 }
                 break;
             }
-            case INVALID_REFERENCE: {
+            case INVALID_OBJECT_REFERENCE: {
                 setFont(style().wordDataFont());
-                setForeground(style().wordInvalidReferenceDataColor());
+                setForeground(style().wordInvalidObjectReferenceDataColor());
                 setText(hexString);
                 if (_valueMode == ValueMode.LITERAL_REFERENCE) {
                     setToolTipText("<invalid>" + _toolTipSuffix);
@@ -619,14 +668,14 @@ public class WordValueLabel extends ValueLabel {
             }
             case FLOAT: {
                 setFont(style().wordAlternateTextFont());
-                setForeground(style().wordAlternateTextColor());
+                setForeground(style().wordDataColor());
                 setText(Float.toString(Float.intBitsToFloat((int) (value.toLong() & 0xffffffffL))));
                 setToolTipText("0x" + hexString);
                 break;
             }
             case DOUBLE: {
                 setFont(style().wordAlternateTextFont());
-                setForeground(style().wordAlternateTextColor());
+                setForeground(style().wordDataColor());
                 setText(Double.toString(Double.longBitsToDouble(value.toLong())));
                 setToolTipText("0x" + hexString);
                 break;
@@ -692,12 +741,20 @@ public class WordValueLabel extends ValueLabel {
             }
         }
         switch (alternateValueKind) {
-            case VALID_REFERENCE: {
-                alternateValueKind = ValueKind.REFERENCE_TEXT;
+            case OBJECT_REFERENCE: {
+                alternateValueKind = ValueKind.OBJECT_REFERENCE_TEXT;
                 break;
             }
-            case REFERENCE_TEXT: {
-                alternateValueKind = ValueKind.VALID_REFERENCE;
+            case OBJECT_REFERENCE_TEXT: {
+                alternateValueKind = ValueKind.OBJECT_REFERENCE;
+                break;
+            }
+            case STACK_LOCATION: {
+                alternateValueKind = ValueKind.STACK_LOCATION_TEXT;
+                break;
+            }
+            case STACK_LOCATION_TEXT: {
+                alternateValueKind = ValueKind.STACK_LOCATION;
                 break;
             }
             case CALL_ENTRY_POINT: {
@@ -747,16 +804,17 @@ public class WordValueLabel extends ValueLabel {
     private InspectorAction getInspectValueAction(Value value) {
         InspectorAction action = null;
         switch (_valueKind) {
-            case VALID_REFERENCE:
+            case OBJECT_REFERENCE:
             case UNCHECKED_REFERENCE:
-            case REFERENCE_TEXT: {
+            case OBJECT_REFERENCE_TEXT: {
                 final TeleObject teleObject = TeleObject.make(teleVM(), teleVM().wordToReference(value.toWord()));
                 action = inspection().inspectionMenus().getInspectObjectAction(teleObject);
                 break;
             }
-            case CALL_RETURN_POINT:
             case CALL_ENTRY_POINT:
             case CALL_ENTRY_POINT_TEXT:
+            case CALL_RETURN_POINT:
+            case CALL_RETURN_POINT_TEXT:
             case UNCHECKED_CALL_POINT: {
                 final Address address = value.toWord().asAddress();
                 action = new InspectorAction(inspection(), "View Code at address") {
@@ -775,7 +833,18 @@ public class WordValueLabel extends ValueLabel {
                 }
                 break;
             }
-            default: {
+            case STACK_LOCATION:
+            case STACK_LOCATION_TEXT:
+            case WORD:
+            case NULL:
+            case INVALID_OBJECT_REFERENCE:
+            case FLAGS:
+            case DECIMAL:
+            case FLOAT:
+            case  DOUBLE:
+            case UNCHECKED_WORD:
+            case INVALID: {
+                // no action
                 break;
             }
         }
@@ -787,22 +856,34 @@ public class WordValueLabel extends ValueLabel {
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
             switch (_valueKind) {
-                case INVALID_REFERENCE:
+                case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
-                case VALID_REFERENCE:
-                case REFERENCE_TEXT:
+                case OBJECT_REFERENCE:
+                case OBJECT_REFERENCE_TEXT:
+                case STACK_LOCATION:
+                case  STACK_LOCATION_TEXT:
                 case CALL_ENTRY_POINT:
                 case CALL_ENTRY_POINT_TEXT:
                 case CALL_RETURN_POINT:
+                case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
                     action = inspection().inspectionMenus().getInspectMemoryAction(address);
                     break;
                 }
-                // TODO (mlvdv)  how to determine if a valid pointer into thread/stack state?
-                default: {
-                    if (teleVM().heapOrCodeContains(address)) {
+                case WORD:
+                case NULL:
+                case CLASS_ACTOR_ID:
+                case CLASS_ACTOR:
+                case FLAGS:
+                case DECIMAL:
+                case FLOAT:
+                case DOUBLE:
+                case UNCHECKED_WORD:
+                case INVALID: {
+                    if (teleVM().heapOrCodeOrStackContains(address)) {
                         action = inspection().inspectionMenus().getInspectMemoryAction(address);
                     }
+                    break;
                 }
             }
         }
@@ -814,22 +895,34 @@ public class WordValueLabel extends ValueLabel {
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
             switch (_valueKind) {
-                case INVALID_REFERENCE:
+                case INVALID_OBJECT_REFERENCE:
                 case UNCHECKED_REFERENCE:
-                case VALID_REFERENCE:
-                case REFERENCE_TEXT:
+                case OBJECT_REFERENCE:
+                case OBJECT_REFERENCE_TEXT:
+                case STACK_LOCATION:
+                case  STACK_LOCATION_TEXT:
                 case CALL_ENTRY_POINT:
                 case CALL_ENTRY_POINT_TEXT:
                 case CALL_RETURN_POINT:
+                case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
                     action = inspection().inspectionMenus().getInspectMemoryWordsAction(address);
                     break;
                 }
-                // TODO (mlvdv)  how to determine if a valid pointer into thread/stack state?
-                default: {
-                    if (teleVM().heapOrCodeContains(address)) {
+                case WORD:
+                case NULL:
+                case CLASS_ACTOR_ID:
+                case CLASS_ACTOR:
+                case FLAGS:
+                case DECIMAL:
+                case FLOAT:
+                case DOUBLE:
+                case UNCHECKED_WORD:
+                case INVALID: {
+                    if (teleVM().heapOrCodeOrStackContains(address)) {
                         action = inspection().inspectionMenus().getInspectMemoryWordsAction(address);
                     }
+                    break;
                 }
             }
         }

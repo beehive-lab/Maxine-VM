@@ -484,7 +484,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                 _slotValues[slotIndex].refresh(epoch);
                 if (slot.referenceMapIndex() != -1) {
                     if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex())) {
-                        slotLabel.setForeground(style().wordValidReferenceDataColor());
+                        slotLabel.setForeground(style().wordValidObjectReferenceDataColor());
                     } else {
                         slotLabel.setForeground(style().textLabelColor());
                     }
