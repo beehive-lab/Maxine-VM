@@ -24,7 +24,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
 
-public class PointerOffsetVisitorImpl implements PointerOffsetVisitor {
+public class PointerOffsetVisitorImpl implements BeltWayPointerOffsetVisitor {
 
     private Action _actionImpl;
 

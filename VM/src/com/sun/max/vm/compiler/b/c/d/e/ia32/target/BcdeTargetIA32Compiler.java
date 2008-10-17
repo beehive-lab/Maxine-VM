@@ -169,7 +169,10 @@ public final class BcdeTargetIA32Compiler extends BcdeIA32Compiler implements Ta
         }
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
-                targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer); // frame pointer == stack pointer
+                // frame pointer == stack pointer
+                if (!targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer)) {
+                    return false;
+                }
                 break;
             }
             case EXCEPTION_HANDLING: {

@@ -75,12 +75,16 @@ import com.sun.max.vm.type.SignatureDescriptor.*;
  * was carefully crafted to comply with this requirement.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
+ * @author Ben L. Titzer
  */
 public final class StackReferenceMapPreparer {
 
-    public StackReferenceMapPreparer() {
+    public StackReferenceMapPreparer(VmThread owner) {
+        _owner = owner;
     }
 
+    private final VmThread _owner;
     private Pointer _triggeredVmThreadLocals;
     private Pointer _enabledVmThreadLocals;
     private Pointer _disabledVmThreadLocals;
@@ -108,6 +112,9 @@ public final class StackReferenceMapPreparer {
         LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
 
         final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
+        if (this != VmThread.current().stackReferenceMapPreparer()) {
+            FatalError.unexpected("Cannot use stack reference map preparer of another thread");
+        }
 
         // clear the reference map covering the stack contents and the vm thread locals
         clearReferenceMapRange(vmThreadLocals, stackPointer, highestSlot);
@@ -126,12 +133,51 @@ public final class StackReferenceMapPreparer {
             out.println(stackPointer);
             out.print("  Lowest slot: ");
             out.println(_lowestStackSlot);
+            out.print("  Current thread is ");
+            Debug.printVmThread(out, VmThread.current(), true);
         }
 
         // prepare references for each of the vm thread locals copies
         prepareVmThreadLocalsReferenceMap(_enabledVmThreadLocals);
         prepareVmThreadLocalsReferenceMap(_disabledVmThreadLocals);
         prepareVmThreadLocalsReferenceMap(_triggeredVmThreadLocals);
+
+        // walk the stack and prepare references for each stack frame
+        final StackFrameWalker stackFrameWalker = vmThread.stackFrameWalker();
+        stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+
+        if (Heap.traceGC()) {
+            Debug.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    public void completeStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
+
+        // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
+        LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
+
+        final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
+
+        // clear the reference map covering the as-yet-unprepared stack contents
+        clearReferenceMapRange(vmThreadLocals, stackPointer, highestSlot);
+
+        boolean lockDisabledSafepoints = false;
+        if (Heap.traceGC()) {
+            lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map preparation
+            final DebugPrintStream out = Debug.out;
+            out.print("Completing preparation of stack reference map for thread ");
+            Debug.printVmThread(out, vmThread, false);
+            out.println(":");
+            out.print("  Highest slot: ");
+            out.println(highestSlot);
+            out.print("  Lowest active slot: ");
+            out.println(stackPointer);
+            out.print("  Lowest slot: ");
+            out.println(_lowestStackSlot);
+            out.print("  Current thread is ");
+            Debug.printVmThread(out, VmThread.current(), true);
+        }
 
         // walk the stack and prepare references for each stack frame
         final StackFrameWalker stackFrameWalker = vmThread.stackFrameWalker();
@@ -575,7 +621,17 @@ public final class StackReferenceMapPreparer {
 
     private final TrampolineFrameForOptimizedCallerReferenceMapPreparer _trampolineFrameForOptimizedCallerReferenceMapPreparer = new TrampolineFrameForOptimizedCallerReferenceMapPreparer();
 
-    public void prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    /**
+     * Prepares the part of the reference map corresponding to a single stack frame of a VM thread.
+     *
+     * @param targetMethod the method being executed in the frame
+     * @param instructionPointer the current execution point in {@code targetMethod}
+     * @param stackPointer the stack pointer of the frame
+     * @param framePointer the stack pointer of the frame
+     * @return false to communicate to the enclosing stack walker that this is the last frame to be walked; true if the
+     *         stack walker should continue to the next frame
+     */
+    public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         if (targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
             // Since trampolines are reused for different callees with different parameter signatures,
             // they do not carry enough reference map information for incoming parameters.
@@ -613,6 +669,7 @@ public final class StackReferenceMapPreparer {
             }
             prepareFrameReferenceMap(targetMethod, stopIndex, framePointer);
         }
+        return true;
     }
 
     /**
@@ -648,7 +705,7 @@ public final class StackReferenceMapPreparer {
      * @param fromSpace TODO
      * @param toSpace TODO
      */
-    public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, PointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
+    public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, BeltWayPointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
         checkValidReferenceMapRange(vmThreadLocals, lowestSlot, highestSlot);
         final Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
@@ -668,6 +725,44 @@ public final class StackReferenceMapPreparer {
                             out.println();
                         }
                         wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex, fromSpace, toSpace);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Scan references in the stack in the specified interval [lowestSlot, highestSlot]. Note that this method
+     * always inspects complete reference map bytes, and thus assumes that bits corresponding to these extra roundoff
+     * slots at the beginning and end of the interval are zero.
+     *
+     * @param vmThreadLocals a pointer to the VM thread locals corresponding to the stack to scan
+     * @param lowestSlot the address of the lowest slot to scan
+     * @param highestSlot the address of the highest slot to scan
+     * @param wordPointerIndexVisitor the visitor to apply to each slot that is a reference
+     * @param fromSpace TODO
+     * @param toSpace TODO
+     */
+    public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, PointerIndexVisitor wordPointerIndexVisitor) {
+        checkValidReferenceMapRange(vmThreadLocals, lowestSlot, highestSlot);
+        final Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
+        final int maxByteIndex = referenceMapByteIndex(lowestStackSlot, highestSlot.plus((Bytes.WIDTH - 1) * Word.size()));
+
+        for (int byteIndex = referenceMapByteIndex(lowestStackSlot, lowestSlot); byteIndex < maxByteIndex; byteIndex++) {
+            final int mapByte = referenceMap.getByte(byteIndex);
+            if (mapByte != 0) {
+                final int slotIndex = byteIndex * Bytes.WIDTH;
+                final Pointer slot = lowestStackSlot.plus(slotIndex * Word.size());
+                for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
+                    if (((mapByte >>> bitIndex) & 1) != 0) {
+                        if (Heap.traceGC()) {
+                            final DebugPrintStream out = Debug.out;
+                            out.print("    Slot: ");
+                            printSlot(out, slotIndex + bitIndex, vmThreadLocals, Pointer.zero());
+                            out.println();
+                        }
+                        wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex);
                     }
                 }
             }

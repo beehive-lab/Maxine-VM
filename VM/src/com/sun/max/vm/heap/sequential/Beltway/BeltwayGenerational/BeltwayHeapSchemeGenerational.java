@@ -101,22 +101,18 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
      */
     @INLINE
-    @NO_SAFEPOINTS("TODO")
     @Override
     public Pointer allocate(Size size) {
-        if (!(_phase == MaxineVM.Phase.RUNNING)) {
+        if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getEdenSpace(), size);
         }
         if (BeltwayConfiguration._useTLABS) {
             return tlabAllocate(getEdenSpace(), size);
         }
-
         return heapAllocate(getEdenSpace(), size);
     }
 
-    @Override
-    @INLINE
-    public synchronized boolean collect(Size requestedFreeSpace) {
+    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         if (_outOfMemory) {
             return false;
         }

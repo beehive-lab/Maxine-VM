@@ -27,6 +27,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.sequential.Beltway.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.thread.*;
 
@@ -34,13 +35,13 @@ import com.sun.max.vm.thread.*;
  * @author Christos Kotselidis
  */
 
-public class CellVisitorImpl implements CellVisitor {
+public class CellVisitorImpl implements BeltWayCellVisitor {
 
     public CellVisitorImpl() {
 
     }
 
-    public static void linearVisitAllCells(CellVisitor cellVisitor, Action action, RuntimeMemoryRegion source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public static void linearVisitAllCells(BeltWayCellVisitor cellVisitor, Action action, RuntimeMemoryRegion source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = source.start().asPointer();
         while (cell.lessThan(source.getAllocationMark())) {
             cell = DebugHeap.checkDebugCellTag(from, cell);
@@ -48,7 +49,7 @@ public class CellVisitorImpl implements CellVisitor {
         }
     }
 
-    public static void linearVisitTLAB(TLAB tlab, CellVisitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public static void linearVisitTLAB(TLAB tlab, BeltWayCellVisitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = tlab.start().asPointer();
         final Pointer initialEnd = tlab.end().asPointer();
         while (cell.lessThan(tlab.getAllocationMark()) && cell.lessThan(initialEnd)) {
@@ -57,7 +58,7 @@ public class CellVisitorImpl implements CellVisitor {
         }
     }
 
-    public static void linearVisitAllCellsTLAB(CellVisitor cellVisitor, Action action, Pointer tlabStart, Pointer tlabEnd, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public static void linearVisitAllCellsTLAB(BeltWayCellVisitor cellVisitor, Action action, Pointer tlabStart, Pointer tlabEnd, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = tlabStart;
         while (cell.lessThan(tlabEnd)) {
             cell = DebugHeap.checkDebugCellTag(from, cell);
@@ -65,7 +66,7 @@ public class CellVisitorImpl implements CellVisitor {
         }
     }
 
-    public static void linearVisitAllCellsBelt(CellVisitor cellVisitor, Action action, Belt source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public static void linearVisitAllCellsBelt(BeltWayCellVisitor cellVisitor, Action action, Belt source, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         Pointer cell = source.start().asPointer();
         VmThread thread = VmThread.current();
         TLAB currentTLAB = thread.getTLAB();
@@ -92,11 +93,11 @@ public class CellVisitorImpl implements CellVisitor {
         final SpecificLayout specificLayout = hub.specificLayout();
 
         if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, VMConfiguration.hostOrTarget().heapScheme().getPointerOffsetGripUpdater(), from, to);
+            TupleReferenceMap.visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getPointerOffsetGripUpdater(), from, to);
             return cell.plus(hub.tupleSize());
         }
         if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, VMConfiguration.hostOrTarget().heapScheme().getPointerOffsetGripUpdater(), from, to);
+            TupleReferenceMap.visitOriginOffsets(hub, origin, ((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getPointerOffsetGripUpdater(), from, to);
         } else if (specificLayout.isReferenceArrayLayout()) {
             scanReferenceArray(action, origin, from, to);
         }

@@ -85,8 +85,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         return _beltManager.getBelt(1);
     }
 
-    @Override
-    public synchronized boolean collect(Size requestedFreeSpace) {
+    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         if (_outOfMemory) {
             return false;
         }
@@ -101,7 +100,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     @NO_SAFEPOINTS("TODO")
     @Override
     public Pointer allocate(Size size) {
-        if (!(_phase == MaxineVM.Phase.RUNNING)) {
+        if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getFromSpace(), size);
         }
         if (BeltwayConfiguration._useTLABS) {

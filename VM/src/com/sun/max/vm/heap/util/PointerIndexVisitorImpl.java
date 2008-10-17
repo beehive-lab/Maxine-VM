@@ -27,7 +27,7 @@ import com.sun.max.vm.grip.*;
 /**
  * @author Christos Kotselidis
  */
-public  class PointerIndexVisitorImpl implements PointerIndexVisitor {
+public  class PointerIndexVisitorImpl implements BeltWayPointerIndexVisitor {
 
     private   Action _actionImpl;
 

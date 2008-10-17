@@ -103,6 +103,19 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
     }
 
     @Override
+    protected void removeInterferingRegisters(EirVariable variable, PoolSet<SPARCEirRegister> availableRegisters) {
+        final SPARCEirRegister register = (SPARCEirRegister) variable.location();
+        availableRegisters.remove(register);
+        if (variable.kind() == Kind.DOUBLE) {
+            final SPARCEirRegister.FloatingPoint fpRegister = (SPARCEirRegister.FloatingPoint) register;
+            final SPARCEirRegister.FloatingPoint overlappingRegister = fpRegister.overlappingSinglePrecision();
+            if (overlappingRegister != null) {
+                availableRegisters.remove(overlappingRegister);
+            }
+        }
+    }
+
+    @Override
     protected EirLocationCategory decideConstantLocationCategory(Value value, EirOperand operand) {
         if (value.kind() != Kind.REFERENCE || value.isZero()) {
             final WordWidth width = value.signedEffectiveWidth();

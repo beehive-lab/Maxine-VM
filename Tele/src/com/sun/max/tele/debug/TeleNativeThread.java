@@ -229,9 +229,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private void refreshStack() {
         _stack.refresh(this);
-        final Map<VmThreadLocal, Long> threadLocalValues = _stack.threadLocalValues();
-        if (threadLocalValues != null) {
-            final Long threadLocalValue = threadLocalValues.get(VmThreadLocal.VM_THREAD);
+        final TeleVMThreadLocalValues enableVmThreadLocalValues = _stack.enabledVmThreadLocalValues();
+        if (enableVmThreadLocalValues.isValid()) {
+            final Long threadLocalValue = enableVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
             final Reference vmThreadReference = _teleProcess.teleVM().wordToReference(Address.fromLong(threadLocalValue));
             _teleVmThread = (TeleVmThread) TeleObject.make(_teleProcess.teleVM(), vmThreadReference);
         } else {
@@ -440,7 +440,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     public final boolean isJava() {
-        return _stack.threadLocalValues() != null;
+        return _stack.enabledVmThreadLocalValues().isValid();
     }
 
     /**

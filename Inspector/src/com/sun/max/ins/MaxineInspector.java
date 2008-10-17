@@ -199,6 +199,7 @@ public final class MaxineInspector {
                     }
                     ThreadsInspector.make(_inspection);
                     RegistersInspector.make(_inspection);
+                    VmThreadLocalsInspector.make(_inspection);
                     StackInspector.make(_inspection, _inspection.focus().thread());
                     BreakpointsInspector.make(_inspection);
                     MethodInspector.Manager.make(_inspection);

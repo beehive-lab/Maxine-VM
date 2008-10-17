@@ -47,19 +47,19 @@
 #define DARWIN_STACK_ALIGNMENT ((Address) 16)
 #define ENABLE_CARD_TABLE_VERIFICATION 0
 
-//Size of extra space that is allocated as part of auxiliary space passed to the primordial thread.
-//This space is used to record the address of all the reference fields that are written to. The recorded
-//references are checked against the card table for corresponding dirty cards.
-//Note : The 1 Gb space is just a guess-timate which can hold only 128 Mb of 64 bit references
+// Size of extra space that is allocated as part of auxiliary space passed to the primordial thread.
+// This space is used to record the address of all the reference fields that are written to. The recorded
+// references are checked against the card table for corresponding dirty cards.
+// Note : The 1 Gb space is just a guess-timate which can hold only 128 Mb of 64 bit references
 
 #if ENABLE_CARD_TABLE_VERIFICATION
-	#define REFERENCE_BUFFER_SIZE (1024*1024*1024)
+#define REFERENCE_BUFFER_SIZE (1024*1024*1024)
 #else
-	#define REFERENCE_BUFFER_SIZE (0)
+#define REFERENCE_BUFFER_SIZE (0)
 #endif
 
 #if os_DARWIN
-    static char *_executablePath;
+static char *_executablePath;
 #endif
 
 static void getExecutablePath(char *result) {
@@ -110,7 +110,6 @@ static void getImageFilePath(char *result) {
 #endif
 }
 
-
 static int loadImage(void) {
     char imageFilePath[MAX_PATH_LENGTH];
     getImageFilePath(imageFilePath);
@@ -119,32 +118,34 @@ static int loadImage(void) {
 
 static void *openDynamicLibrary(char *path) {
 #if DEBUG_LINKER
-	if (path == NULL) {
-		debug_println("openDynamicLibrary (null)");
-	} else {
-		debug_println("openDynamicLibrary %s (0x%016lX)", path, path);
-	}
+    if (path == NULL) {
+        debug_println("openDynamicLibrary (null)");
+    } else {
+        debug_println("openDynamicLibrary %s (0x%016lX)", path, path);
+    }
 #endif
-	void *result = dlopen(path, RTLD_LAZY);
+    void *result = dlopen(path, RTLD_LAZY);
 #if DEBUG_LINKER
-	if (path == NULL) {
-		debug_println("openDynamicLibrary (null) = 0x%016lX", result);
-	} else {
-		debug_println("openDynamicLibrary %s = 0x%016lX", path, result);
-	}
+    if (path == NULL) {
+        debug_println("openDynamicLibrary (null) = 0x%016lX", result);
+    } else {
+        debug_println("openDynamicLibrary %s = 0x%016lX", path, result);
+    }
 #endif
-	return result;
+    return result;
 }
 
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
-typedef jint (*VMRunMethod)(Address localSpace,
-							Address bootHeapRegionStart,
-                            Address auxiliarySpace,
-		                    void *openDynamicLibrary(char *),
-							void *dlsym(void *, const char *),
-                            int argc, char *argv[]);
+typedef jint (*VMRunMethod)(
+                Address primordialVmThreadLocals,
+                Address bootHeapRegionStart,
+                Address auxiliarySpace,
+                void *openDynamicLibrary(char *),
+                void *dlsym(void *, const char *),
+                int argc,
+                char *argv[]);
 
 int maxine(int argc, char *argv[], char *executablePath) {
     VMRunMethod method;
@@ -159,15 +160,15 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #if !os_GUESTVMXEN
     char *ldpath = getenv("LD_LIBRARY_PATH");
     if (ldpath == NULL) {
-      debug_println("LD_LIBRARY_PATH not set");
+        debug_println("LD_LIBRARY_PATH not set");
     } else {
-      debug_println("LD_LIBRARY_PATH=%s", ldpath);
+        debug_println("LD_LIBRARY_PATH=%s", ldpath);
     }
 #endif
     int i;
     debug_println("Maxine VM, argc %d, argv %lx", argc, argv);
     for (i = 0; i < argc; i++) {
-    	debug_println("arg[%d]: %lx, \"%s\"", i, argv[i], argv[i]);
+        debug_println("arg[%d]: %lx, \"%s\"", i, argv[i], argv[i]);
     }
 #endif
 
@@ -177,43 +178,39 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     threads_initialize();
 
-#if DEBUG_LOADER
-    debug_println("boot image loaded");
-#endif
-
     method = (VMRunMethod) (image_heap() + (Address) image_header()->vmRunMethodOffset);
 
-    // Allocate the normal and the disabled VM thread local space in one chunk:
-	Address vmThreadLocals = (Address) alloca(image_header()->vmThreadLocalsSize * 2);
-    memset((char *) vmThreadLocals, 0, image_header()->vmThreadLocalsSize * 2);
+    // Allocate the primordial VM thread locals:
+    Address primordialVmThreadLocals = (Address) alloca(image_header()->vmThreadLocalsSize + sizeof(Address));
 
-    // Align VM thread locals to Word boundary:
-    vmThreadLocals = wordAlign(vmThreadLocals);
+    // Align primordial VM thread locals to Word boundary:
+    primordialVmThreadLocals = wordAlign(primordialVmThreadLocals);
 
-#if DEBUG_LOADER
-    debug_println("approximate stack address %p, VM thread locals allocated at: %p", &exitCode, vmThreadLocals);
-#endif
-
-	Address auxiliarySpace = 0;
-	if (image_header()->auxiliarySpaceSize > 0) {
-		auxiliarySpace = (Address) malloc(image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
-		if (auxiliarySpace == 0){
-			debug_println("failed to allocate auxiliary space");
-		}
-		else {
-#if DEBUG_LOADER
-			debug_println("allocated %x bytes of auxiliary space at %16x\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
-#endif
-		}
-
-	}
-
-	memset(auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
+    // Initialize all primordial VM thread locals to 0/null:
+    memset((char *) primordialVmThreadLocals, 0, image_header()->vmThreadLocalsSize);
 
 #if DEBUG_LOADER
-    debug_println("entering Java by calling MaxineVM::run");
+    debug_println("primordial VM thread locals allocated at: %p", primordialVmThreadLocals);
 #endif
-    exitCode = (*method)(vmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
+
+    Address auxiliarySpace = 0;
+    Size auxiliarySpaceSize = image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE;
+    if (auxiliarySpaceSize) {
+        auxiliarySpace = (Address) malloc(image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
+        if (auxiliarySpace == 0) {
+            debug_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);
+        }
+#if DEBUG_LOADER
+        debug_println("allocated %lu bytes of auxiliary space at 0x%p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
+#endif
+        memset(auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
+    }
+
+#if DEBUG_LOADER
+    debug_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
+                    primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
+#endif
+    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
 
 #if DEBUG_LOADER
     debug_println("start method exited with code: %d", exitCode);
@@ -239,36 +236,36 @@ int maxine(int argc, char *argv[], char *executablePath) {
  */
 
 void *native_executablePath() {
-	static char result[MAX_PATH_LENGTH];
-	getExecutablePath(result);
-	return result;
+    static char result[MAX_PATH_LENGTH];
+    getExecutablePath(result);
+    return result;
 }
 
 void native_exit(jint code) {
-	exit(code);
+    exit(code);
 }
 
 void native_trap_exit(int code, void *address) {
-	debug_exit(code, "MaxineVM: Trap in native code at 0x%lx\n", address);
+    debug_exit(code, "MaxineVM: Trap in native code at 0x%lx\n", address);
 }
 
 void native_stack_trap_exit(int code, void *address) {
-	debug_exit(code, "MaxineVM: Native code hit the stack overflow guard page at 0x%lx\n", address);
+    debug_exit(code, "MaxineVM: Native code hit the stack overflow guard page at 0x%lx\n", address);
 }
 
 #if os_DARWIN
-    void *native_environment() {
-      void **environ = (void **)*_NSGetEnviron();
+void *native_environment() {
+    void **environ = (void **)*_NSGetEnviron();
 #if DEBUG_LOADER
-      int i = 0;
-      for (i = 0; environ[i] != NULL; i++)
-	debug_println("native_environment[%d]: %s", i, environ[i]);
+    int i = 0;
+    for (i = 0; environ[i] != NULL; i++)
+    debug_println("native_environment[%d]: %s", i, environ[i]);
 #endif
-      return (void *)environ;
-    }
+    return (void *)environ;
+}
 #else
-    extern char ** environ;
-    void *native_environment() {
-    	return environ;
-    }
+extern char ** environ;
+void *native_environment() {
+    return environ;
+}
 #endif

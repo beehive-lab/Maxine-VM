@@ -24,6 +24,7 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.util.*;
 
 public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements HeapRegion, Visitor {
@@ -88,7 +89,28 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
     }
 
 
-    public void visitCells(Visitor cellVisitor, Action action,  RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCells((CellVisitor) cellVisitor, action, this, from, to);
+    /**
+     * TODO: clean this up.
+     */
+    public void beltWayVisitCells(Visitor cellVisitor, Action action,  RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+        CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, this, from, to);
+    }
+
+    public void visitCells(CellVisitor cellVisitor) {
+        Pointer cell = start().asPointer();
+        while (cell.lessThan(_mark)) {
+            if (VMConfiguration.hostOrTarget().debugging()) {
+                cell = cell.plusWords(1);
+                if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
+                    Debug.print("CELL VISITOR ERROR: missing object tag @ ");
+                    Debug.print(cell);
+                    Debug.print("(start + ");
+                    Debug.print(cell.minus(start()).asOffset().toInt());
+                    Debug.println(")");
+                    System.exit(1);
+                }
+            }
+            cell = cellVisitor.visitCell(cell);
+        }
     }
 }

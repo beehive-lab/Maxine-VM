@@ -18,20 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+/*VCSID=11ed2cd7-5626-4884-8f0a-301a24091d51*/
 package com.sun.max.vm.heap.util;
-
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
 /**
  *
  * @author Bernd Mathiske
  */
-public interface CellVisitor extends Visitor{
+public interface CellVisitor {
 
     /**
      * @param cell the cell to be visited
      * @return the adjacent next cell
      */
-    Pointer visitCell(Pointer cell, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    Pointer visitCell(Pointer cell);
 }
