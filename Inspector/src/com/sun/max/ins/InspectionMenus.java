@@ -241,10 +241,10 @@ public final class InspectionMenus implements Prober {
         }
     }
 
-    public final class InspectClassByIdAction extends InspectorAction {
+    public final class InspectClassByHexIdAction extends InspectorAction {
 
-        InspectClassByIdAction() {
-            super(_inspection, "Inspect Class By ID...");
+        InspectClassByHexIdAction() {
+            super(_inspection, "Inspect Class By ID (Hex) ...");
         }
 
         @Override
@@ -253,6 +253,31 @@ public final class InspectionMenus implements Prober {
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 16);
+                    final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(serial);
+                    if (teleClassActor == null) {
+                        _inspection.errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
+                    } else {
+                        focus().setHeapObject(teleClassActor);
+                    }
+                } catch (NumberFormatException ex) {
+                    _inspection.errorMessage("Hex integer required");
+                }
+            }
+        }
+    }
+
+    public final class InspectClassByDecimalIdAction extends InspectorAction {
+
+        InspectClassByDecimalIdAction() {
+            super(_inspection, "Inspect Class By ID (decimal) ...");
+        }
+
+        @Override
+        protected void procedure() {
+            final String value = _inspection.questionMessage("ID (decimal): ");
+            if (value != null && !value.equals("")) {
+                try {
+                    final int serial = Integer.parseInt(value, 10);
                     final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(serial);
                     if (teleClassActor == null) {
                         _inspection.errorMessage("failed to find classActor for ID: " + serial);
@@ -269,7 +294,8 @@ public final class InspectionMenus implements Prober {
     private JMenu createClassMenu() {
         final JMenu menu = new JMenu("Class");
         menu.add(new InspectClassAction());
-        menu.add(new InspectClassByIdAction());
+        menu.add(new InspectClassByHexIdAction());
+        menu.add(new InspectClassByDecimalIdAction());
         return menu;
     }
 
