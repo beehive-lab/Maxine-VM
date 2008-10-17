@@ -302,7 +302,9 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             case REFERENCE_MAP_PREPARING: {
                 Problem.unimplemented();
                 // FIXME: this need to be revisited
-                targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer); // frame pointer == stack pointer
+                if (!targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer)) {
+                    return false;
+                }
                 break;
             }
             case EXCEPTION_HANDLING: {

@@ -74,7 +74,7 @@ public class BiasedLockRevocationHeuristics {
 
     private int revocationCountAtomicInc() {
         while (true) {
-            final Address revocationCount = Address.fromInt(_revocationCount);
+            final Address revocationCount = Address.fromUnsignedInt(_revocationCount);
             final Address newRevocationCount = revocationCount.plus(1);
             if (Reference.fromJava(this).compareAndSwapWord(_revocationCountFieldActor.offset(), revocationCount, newRevocationCount).equals(revocationCount)) {
                 return newRevocationCount.toInt();

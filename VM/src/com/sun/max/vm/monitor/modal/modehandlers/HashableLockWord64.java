@@ -63,6 +63,6 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
 
     @INLINE
     public final HashableLockWord64 setHashcode(int hashcode) {
-        return HashableLockWord64.as(asAddress().or(Address.fromInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
+        return HashableLockWord64.as(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
     }
 }

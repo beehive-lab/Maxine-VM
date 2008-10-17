@@ -58,12 +58,12 @@ public abstract class Address extends Word {
     public static Address fromUnsignedInt(int value) {
         if (Word.isBoxed()) {
             final long longValue = value;
-            final long n = longValue & 0xffffffff;
+            final long n = longValue & 0xffffffffL;
             return new BoxedAddress(n);
         }
         if (Word.width() == WordWidth.BITS_64) {
             final long longValue = value;
-            final long n = longValue & 0xffffffff;
+            final long n = longValue & 0xffffffffL;
             return UnsafeLoophole.longToWord(Address.class, n);
         }
         return UnsafeLoophole.intToWord(Address.class, value);

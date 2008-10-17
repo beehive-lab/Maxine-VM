@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.bytecode.refmaps.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.debug.Debug.*;
@@ -46,6 +47,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -116,7 +118,7 @@ public final class VmThread {
     private volatile Thread.State _state = Thread.State.NEW;
     private volatile boolean _interrupted = false;
     private Throwable _terminationCause;
-    private int _id;
+    private int _threadMapID;
 
     private  TLAB _tlab = new TLAB();
 
@@ -158,7 +160,7 @@ public final class VmThread {
         return new VmStackFrameWalker(vmThreadLocals());
     }
 
-    private final StackReferenceMapPreparer _stackReferenceMapPreparer = new StackReferenceMapPreparer();
+    private final StackReferenceMapPreparer _stackReferenceMapPreparer = new StackReferenceMapPreparer(this);
 
     public StackReferenceMapPreparer stackReferenceMapPreparer() {
         return _stackReferenceMapPreparer;
@@ -195,6 +197,11 @@ public final class VmThread {
     public void setTLAB(TLAB tlab) {
         _tlab = tlab;
     }
+
+    /**
+     * Gets the unique identifier for this thread. This identifier
+     * is unique for the lifetime of this thread.
+     */
     public long serial() {
         return _serial;
     }
@@ -212,12 +219,17 @@ public final class VmThread {
     }
 
     /**
-     * Gets the unique identifier assigned to this thread if it is active, -1 otherwise. An active thread is a thread
-     * that has been {@linkplain #start0() started} and not yet {@linkplain #beTerminated() terminated}. Only active
-     * threads have unique identifiers.
+     * Gets the identifier used to identify this thread in the {@linkplain VmThreadMap thread map}.
+     * A thread that has not been added to the thread map, will have an identifier of 0 and
+     * a thread that has been terminated and removed from the map will have an identifier
+     * of -1.
      */
-    public int id() {
-        return _id;
+    int threadMapID() {
+        return _threadMapID;
+    }
+
+    void setThreadMapID(int id) {
+        _threadMapID = id;
     }
 
     public String getName() {
@@ -293,7 +305,7 @@ public final class VmThread {
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset _state to RUNNABLE
         _nativeThread = Address.zero();
         _vmThreadLocals = Pointer.zero();
-        _id = -1;
+        _threadMapID = -1;
     }
 
     private void beTerminatedSafe() {
@@ -309,7 +321,7 @@ public final class VmThread {
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset _state to RUNNABLE
         _nativeThread = Address.zero();
         _vmThreadLocals = Pointer.zero();
-        _id = -1;
+        _threadMapID = -1;
     }
 
     protected void beTerminated() {
@@ -356,7 +368,7 @@ public final class VmThread {
         // link critical sleep method
         nonJniNativeSleep.link();
 
-        final Word nativeThread = nativeThreadCreate(_mainVMThread._id, requestedStackSize, Thread.NORM_PRIORITY);
+        final Word nativeThread = nativeThreadCreate(_mainVMThread._threadMapID, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
             FatalError.unexpected("Could not start main native thread.");
         } else {
@@ -415,46 +427,16 @@ public final class VmThread {
     public static final Address TAG = Address.fromLong(0xbabacafecabafebaL);
 
     private static void executeRunnable(VmThread vmThread) throws Throwable {
-        final Address serial = Address.fromLong(vmThread._serial);
         try {
             if (vmThread == _mainVMThread) {
-                if (traceThreads()) {
-                    final DebugPrintStream out = Debug.out;
-                    final boolean lockDisabledSafepoints = Debug.lock();
-                    out.print("VmThread.executeRunnable: mainBody RUN: ");
-                    out.println(serial);
-                    Debug.unlock(lockDisabledSafepoints);
-                }
                 VMConfiguration.hostOrTarget().runScheme().run();
-                if (traceThreads()) {
-                    final DebugPrintStream out = Debug.out;
-                    final boolean lockDisabledSafepoints = Debug.lock();
-                    out.print("VmThread.executeRunnable: mainBody DONE: ");
-                    out.println(serial);
-                    Debug.unlock(lockDisabledSafepoints);
-                }
             } else {
-                if (traceThreads()) {
-                    final DebugPrintStream out = Debug.out;
-                    final boolean lockDisabledSafepoints = Debug.lock();
-                    out.print("VmThread.executeRunnable: javaThread RUN: ");
-                    out.println(serial);
-                    Debug.unlock(lockDisabledSafepoints);
-                }
                 vmThread._javaThread.run();
-                if (traceThreads()) {
-                    final DebugPrintStream out = Debug.out;
-                    final boolean lockDisabledSafepoints = Debug.lock();
-                    out.print("VmThread.executeRunnable: javaThread DONE: ");
-                    out.println(serial);
-                    Debug.unlock(lockDisabledSafepoints);
-                }
             }
         } finally {
             // 'stop0()' support.
             if (vmThread._terminationCause != null) {
                 // We arrive here because an uncatchable non-Throwable object has been propagated as an exception.
-                //
                 throw vmThread._terminationCause;
             }
         }
@@ -535,29 +517,14 @@ public final class VmThread {
         // Enable safepoints:
         Safepoint.enable();
 
-        if (traceThreads()) {
-            final DebugPrintStream out = Debug.out;
-            final boolean lockDisabledSafepoints = Debug.lock();
-            out.println("VmThread:run initialization completed for thread");
-            out.print("VmThread:run adjusted card table address ");
-            out.println(ADJUSTED_CARDTABLE_BASE.getConstantWord());
-            Debug.unlock(lockDisabledSafepoints);
-        }
+        vmThread.traceThreadAfterInitialization(stackBase, enabledVmThreadLocals);
 
         try {
             executeRunnable(vmThread);
         } catch (Throwable throwable) {
-            if (traceThreads()) {
-                final DebugPrintStream out = Debug.out;
-                final boolean lockDisabledSafepoints = Debug.lock();
-                out.print("VmThread[id=");
-                out.print(id);
-                out.print(", name=\"");
-                out.print(vmThread._name);
-                out.print("] Uncaught exception of type ");
-                out.println(ObjectAccess.readClassActor(throwable).name());
-                Debug.unlock(lockDisabledSafepoints);
-            }
+
+            vmThread.traceThreadForUncaughtException(throwable);
+
             final Thread javaThread = vmThread.javaThread();
             // Uncaught exception should be passed by the VM to the uncaught exception handler defined for the thread.
             // Exception thrown by this one should be ignore by the VM.
@@ -572,13 +539,111 @@ public final class VmThread {
                 invokeShutdownHooks();
             }
             vmThread.beTerminated();
-            if (traceThreads()) {
-                final DebugPrintStream out = Debug.out;
-                final boolean lockDisabledSafepoints = Debug.lock();
-                out.print("VmThread terminated: ");
-                out.println(Address.fromLong(vmThread._serial));
-                Debug.unlock(lockDisabledSafepoints);
+
+            vmThread.traceThreadAfterTermination();
+        }
+    }
+
+    private void traceThreadAfterInitialization(Pointer stackBase, Pointer vmThreadLocals) {
+        if (traceThreads()) {
+            final Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+            final Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+            final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
+            final Pointer refMapArea = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
+            final Pointer stackYellowZone = _guardPage.asPointer();
+            final Pointer stackRedZone = stackYellowZone.minus(guardPageSize());
+            final Pointer stackEnd = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(enabledVmThreadLocals).asPointer();
+            final DebugPrintStream out = Debug.out;
+            final boolean lockDisabledSafepoints = Debug.lock();
+            out.print("Initialization completed for thread[serial=");
+            out.print(_serial);
+            out.print(", name=\"");
+            out.print(_name);
+            out.println("\"]:");
+            out.print("  Adjusted card table address: ");
+            out.println(ADJUSTED_CARDTABLE_BASE.getConstantWord());
+            out.println("  Stack layout:");
+            Address lastRegionStart = Address.zero();
+            final int stackSize = stackEnd.minus(stackBase).toInt();
+            final Pointer stackPointer = SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER);
+            final Pointer stackYellowZoneEnd = stackYellowZone.plus(guardPageSize());
+            lastRegionStart = traceStackRegion(out, "OS thread specific data and native frames", stackBase, stackPointer, stackEnd, lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion(out, "Frame of Java methods, native stubs and native functions", stackBase, stackYellowZoneEnd, stackPointer, lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion(out, "Stack overflow guard (yellow zone)", stackBase, stackYellowZone, stackYellowZoneEnd, lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion(out, "Stack overflow guard (red zone)", stackBase, stackRedZone, stackYellowZone, lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion(out, "Reference map area", stackBase, refMapArea, stackRedZone, lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion(out, "Thread locals (disabled)", stackBase, disabledVmThreadLocals, THREAD_LOCAL_STORAGE_SIZE.toInt(), lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion(out, "Thread locals (enabled)", stackBase, enabledVmThreadLocals, THREAD_LOCAL_STORAGE_SIZE.toInt(), lastRegionStart, stackSize);
+            lastRegionStart = traceStackRegion(out, "Thread locals (triggered)", stackBase, triggeredVmThreadLocals, THREAD_LOCAL_STORAGE_SIZE.toInt(), lastRegionStart, stackSize);
+            if (stackBase.lessThan(triggeredVmThreadLocals)) {
+                lastRegionStart = traceStackRegion(out, "Unmapped page", stackBase, stackBase, triggeredVmThreadLocals, lastRegionStart, stackSize);
             }
+            Debug.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    private static Address traceStackRegion(DebugPrintStream out, String label, Address base, Address start, Address end, Address lastRegionStart, int usedStackSize) {
+        return traceStackRegion(out, label, base, start, end.minus(start).toInt(), lastRegionStart, usedStackSize);
+    }
+
+    private static Address traceStackRegion(DebugPrintStream out, String label, Address base, Address start, int size, Address lastRegionStart, int usedStackSize) {
+        FatalError.check(lastRegionStart.isZero() || start.lessEqual(lastRegionStart), "Overlapping stack regions");
+        if (size > 0) {
+            final Address end = start.plus(size);
+            FatalError.check(lastRegionStart.isZero() || end.lessEqual(lastRegionStart), "Overlapping stack regions");
+            final int startOffset = start.minus(base).toInt();
+            final int endOffset = startOffset + size;
+            if (lastRegionStart.isZero() || !lastRegionStart.equals(end)) {
+                out.print("  +----- ");
+                out.print(end);
+                out.print("  [");
+                out.print(endOffset >= 0 ? "+" : "");
+                out.print(endOffset);
+                out.println("]");
+            }
+            out.println("  |");
+            out.print("  | ");
+            out.print(label);
+            out.print(" [");
+            out.print(size);
+            out.print(" bytes, ");
+            out.print(((float) size * 100) / usedStackSize);
+            out.println("%]");
+            out.println("  |");
+            out.print("  +----- ");
+            out.print(start);
+            out.print(" [");
+            out.print(startOffset >= 0 ? "+" : "");
+            out.print(startOffset);
+            out.println("]");
+        }
+        return start;
+    }
+
+    private void traceThreadForUncaughtException(Throwable throwable) {
+        if (traceThreads()) {
+            final DebugPrintStream out = Debug.out;
+            final boolean lockDisabledSafepoints = Debug.lock();
+            out.print("VmThread[serial=");
+            out.print(_serial);
+            out.print(", name=\"");
+            out.print(_name);
+            out.print("] Uncaught exception of type ");
+            out.println(ObjectAccess.readClassActor(throwable).name());
+            Debug.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    private void traceThreadAfterTermination() {
+        if (traceThreads()) {
+            final DebugPrintStream out = Debug.out;
+            final boolean lockDisabledSafepoints = Debug.lock();
+            out.print("Thread terminated [serial=");
+            out.print(_serial);
+            out.print(", name=\"");
+            out.print(_name);
+            out.println("\"]");
+            Debug.unlock(lockDisabledSafepoints);
         }
     }
 
@@ -828,7 +893,7 @@ public final class VmThread {
         return _guardPage.plus(guardPageSize());
     }
 
-    public int guardPageSize() {
+    public static int guardPageSize() {
         return VMConfiguration.target().platform().pageSize();
     }
 
@@ -854,9 +919,5 @@ public final class VmThread {
     public boolean hasSufficentStackToReprotectGuardPage(Pointer stackPointer) {
         final Pointer limit = stackPointer.minus(VmThread.MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING);
         return limit.greaterThan(guardPageEnd());
-    }
-
-    protected void setID(int id) {
-        _id = id;
     }
 }

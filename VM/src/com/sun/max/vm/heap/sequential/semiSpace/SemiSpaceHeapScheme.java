@@ -20,16 +20,48 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.profile.*;
+import com.sun.max.profile.Metrics.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.debug.*;
+import com.sun.max.vm.debug.Debug.*;
+import com.sun.max.vm.grip.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.sequential.*;
+import com.sun.max.vm.heap.util.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.tele.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
+
 
 /**
  * A simple semi-space scavenger heap, mainly for testing.
  *
+ * No, we do NOT share code with other implementations here,
+ * even if this means duplication of effort.
+ * This code base is supposed to remain stable,
+ * as a reliable fallback position.
+ * Refactoring of whatever other fancy memory management library
+ * is must not damage the functionality here.
+ *
  * @author Bernd Mathiske
  * @author Sunil Soman
  */
+public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
 
-public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme implements HeapScheme, CellVisitor {
-/*
+    public String name() {
+        return SemiSpaceHeapScheme.class.getSimpleName();
+    }
+
     public boolean isGcThread(VmThread vmThread) {
         return vmThread.javaThread() instanceof StopTheWorldDaemon;
     }
@@ -38,20 +70,44 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
         return 0;
     }
 
-    public void initializePrimordialCardTable(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
+    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
     }
 
     public void initializeVmThread(VmThread vmThread) {
     }
 
     private int _numberOfGarbageCollectionInvocations = 0;
-    private int _numberOfGarbageCollectionTurnoverCycles = 0;
+    private int _numberOfGarbageTurnovers = 0;
 
-    // Defines the _pointerIndexGripVerifier which will retrieves the Grips of pointer
-    // and the verify them.
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex));
+        }
+    };
+
+    private final PointerOffsetVisitor _pointerOffsetGripVerifier = new PointerOffsetVisitor() {
+        public void visitPointerOffset(Pointer pointer, int offset) {
+            verifyGripAtIndex(pointer, offset, pointer.readGrip(offset));
+        }
+    };
+
+    private final PointerIndexVisitor _pointerIndexGripUpdater = new PointerIndexVisitor() {
+        public void visitPointerIndex(Pointer pointer, int wordIndex) {
+            final Grip oldGrip = pointer.getGrip(wordIndex);
+            final Grip newGrip = mapGrip(oldGrip);
+            if (newGrip != oldGrip) {
+                pointer.setGrip(wordIndex, newGrip);
+            }
+        }
+    };
+
+    private final PointerOffsetVisitor _pointerOffsetGripUpdater = new PointerOffsetVisitor() {
+        public void visitPointerOffset(Pointer pointer, int offset) {
+            final Grip oldGrip = pointer.readGrip(offset);
+            final Grip newGrip = mapGrip(oldGrip);
+            if (newGrip != oldGrip) {
+                pointer.writeGrip(offset, newGrip);
+            }
         }
     };
 
@@ -59,7 +115,7 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
     // roots out of the threads' stacks. Here we create one of the actual scanning (_heapRootsScanner)
     // and one for the verification (_heapRootsVerifier)
     private final SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner(this, _pointerIndexGripVerifier);
-    private final SequentialHeapRootsScanner _heapRootsScanner = new SequentialHeapRootsScanner(this, pointerIndexGripUpdater());
+    private final SequentialHeapRootsScanner _heapRootsScanner = new SequentialHeapRootsScanner(this, _pointerIndexGripUpdater);
 
     // Create timing facilities.
     private final Timer _clearTimer = GlobalMetrics.newTimer("Clear", Clock.SYSTEM_MILLISECONDS);
@@ -72,14 +128,13 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
     // The heart of the collector.
     // Performs the actual Garbage Collection
     private final Runnable _collect = new Runnable() {
-
         public void run() {
             // Calls the beforeGarbageCollection() method of the plugged monitor Scheme.
             // Pre-verification of the heap.
             verifyHeap();
 
             ++_numberOfGarbageCollectionInvocations;
-            TeleHeap.beforeGarbageCollection();
+            TeleHeapInfo.beforeGarbageCollection();
 
             if (Heap.verbose()) {
                 Debug.out.print("--Before GC--   size: ");
@@ -143,18 +198,18 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
                 out.print("--After GC--   bytes copied: ");
                 out.print(_allocationMark.minus(_toSpace.start()).toInt());
                 out.println();
-                Debug.unlock();
+                Debug.unlock(lockDisabledSafepoints);
             }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
             verifyHeap();
 
-            TeleHeap.afterGarbageCollection();
+            TeleHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
                 Debug.out.println("GC done");
             }
-            _numberOfGarbageCollectionTurnoverCycles++;
+            _numberOfGarbageTurnovers++;
         }
     };
 
@@ -193,17 +248,22 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
 
             // From now on we can allocate
 
-            TeleHeap.registerMemoryRegions(_toSpace, _fromSpace);
+            TeleHeapInfo.registerMemoryRegions(_toSpace, _fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             _collectorThread = new StopTheWorldDaemon("GC", _collect);
-            // _heapVerifier = new HeapVerifier(this);
         }
     }
 
-    public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+    private final VMConfiguration _vmConfiguration;
+
+
+    public VMConfiguration vmConfiguration() {
+        return _vmConfiguration;
     }
 
+    public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
+        _vmConfiguration = vmConfiguration;
+    }
 
     private void swapSemiSpaces() {
         final Address oldFromSpaceStart = _fromSpace.start();
@@ -245,8 +305,7 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
         }
     }
 
-    @Override
-    public Grip mapGrip(Grip grip) {
+    private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!(grip.isZero() || _fromSpace.contains(fromOrigin) || _toSpace.contains(fromOrigin) || Heap.bootHeapRegion().contains(fromOrigin) || Code.contains(fromOrigin))) {
@@ -267,7 +326,7 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
             final Size size = Layout.size(fromOrigin);
             final Pointer toCell = gcAllocate(size);
             if (VMConfiguration.hostOrTarget().debugging()) {
-                DebugHeap.writeCellTag(toCell, Word.width());
+                DebugHeap.writeCellTag(toCell);
             }
 
             if (Heap.traceGC()) {
@@ -283,7 +342,7 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
                 out.print(" [");
                 out.print(size.toInt());
                 out.println(" bytes]");
-                Debug.unlock();
+                Debug.unlock(lockDisabledSafepoints);
             }
 
             Memory.copyBytes(fromCell, toCell, size);
@@ -321,11 +380,11 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
         final Hub hub = UnsafeLoophole.cast(newHubGrip.toJava());
         final SpecificLayout specificLayout = hub.specificLayout();
         if (specificLayout.isTupleLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater());
+            TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripUpdater);
             return cell.plus(hub.tupleSize());
         }
         if (specificLayout.isHybridLayout()) {
-            TupleReferenceMap.visitOriginOffsets(hub, origin, pointerOffsetGripUpdater());
+            TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripUpdater);
         } else if (specificLayout.isReferenceArrayLayout()) {
             scanReferenceArray(origin);
         }
@@ -466,7 +525,7 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
     }
 
     @INLINE
-    private Pointer allocate(Size size) {
+    public Pointer allocate(Size size) {
         Pointer cell;
         final Pointer oldAllocationMark = _allocationMark.asPointer();
         if (VMConfiguration.hostOrTarget().debugging()) {
@@ -525,15 +584,14 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
     }
 
     public void runFinalization() {
-        // TODO
     }
 
     public long numberOfGarbageCollectionInvocations() {
         return _numberOfGarbageCollectionInvocations;
     }
 
-    public long numberOfGarbageCollectionTurnoverCycles() {
-        return _numberOfGarbageCollectionTurnoverCycles;
+    public long numberOfGarbageTurnovers() {
+        return _numberOfGarbageTurnovers;
     }
 
     public <Object_Type> boolean flash(Object_Type object, com.sun.max.lang.Procedure<Object_Type> procedure) {
@@ -578,13 +636,6 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
         }
     }
 
-    private final PointerOffsetVisitor _verifyField = new PointerOffsetVisitor() {
-
-        public void visitPointerOffset(Pointer pointer, int offset) {
-            verifyGripAtIndex(pointer, offset, pointer.readGrip(offset));
-        }
-    };
-
     private void checkClassActor(ClassActor classActor) {
     }
 
@@ -624,11 +675,11 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
             final Hub hub = checkHub(origin);
             final SpecificLayout specificLayout = hub.specificLayout();
             if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, _verifyField);
+                TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);
                 cell = cell.plus(hub.tupleSize());
             } else {
                 if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, _verifyField);
+                    TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);
                 } else if (specificLayout.isReferenceArrayLayout()) {
                     final int length = Layout.readArrayLength(origin);
                     for (int index = 0; index < length; index++) {
@@ -644,18 +695,12 @@ public final class SemiSpaceHeapScheme{// extends GripUpdatingHeapScheme impleme
     }
 
     @Override
-    public void scanRegion(Address start, Address end) {
+    public void finalize(MaxineVM.Phase phase) {
     }
 
+    @INLINE
     @Override
-    public void writeBarrier(Grip grip) {
+    public void writeBarrier(Reference reference) {
     }
 
-
-    @Override
-    public Address adjustedCardTableAddress() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-  */
 }

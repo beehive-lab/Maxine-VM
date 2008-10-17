@@ -377,9 +377,9 @@ public abstract class JitTargetMethod extends TargetMethod {
     private JitReferenceMapEditor _referenceMapEditor;
 
     @Override
-    public void prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         finalizeReferenceMaps();
-        stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer.plus(_frameReferenceMapOffset));
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer.plus(_frameReferenceMapOffset));
     }
 
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {

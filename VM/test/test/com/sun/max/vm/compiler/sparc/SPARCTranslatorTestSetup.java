@@ -24,6 +24,8 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.dis.*;
+import com.sun.max.asm.dis.sparc.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
@@ -51,7 +53,7 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, platform(),
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.SPARC),
                                     new com.sun.max.vm.compiler.b.c.d.e.sparc.target.Package());
     }
 
@@ -65,5 +67,9 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
     public void chainedSetUp() {
         super.chainedSetUp();
         compilerScheme().compileSnippets();
+    }
+    @Override
+    public Disassembler disassemblerFor(TargetMethod targetMethod) {
+        return new SPARC64Disassembler(targetMethod.start().toLong());
     }
 }

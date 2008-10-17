@@ -191,9 +191,6 @@ public class BirToCirTranslator extends CirGenerator {
         final CirVariableFactory variableFactory = new CirVariableFactory();
         final CirClosure cirClosure = translateMethod(birMethod, cirMethod, variableFactory);
 
-
-
-
         if (compilerScheme().optimizing()) {
             CirInliningPolicy cirInliningPolicy = CirInliningPolicy.DYNAMIC;
             if (MaxineVM.isPrototyping() && !cirMethod.classMethodActor().isHiddenToReflection()) {

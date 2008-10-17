@@ -54,7 +54,7 @@ public abstract class BiasedLockEpoch extends Word {
             return MIN;
         }
         int epoch = toIntInternal();
-        return BiasedLockEpoch.as(Address.fromInt(epoch++).shiftedLeft(BiasedLockWord64.EPOCH_SHIFT));
+        return BiasedLockEpoch.as(Address.fromUnsignedInt(epoch++).shiftedLeft(BiasedLockWord64.EPOCH_SHIFT));
     }
 
     @INLINE

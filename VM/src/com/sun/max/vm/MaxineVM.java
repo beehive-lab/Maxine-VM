@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.profile.*;
@@ -42,7 +41,7 @@ import com.sun.max.vm.thread.*;
 
 public final class MaxineVM {
 
-    private static final String _VERSION = "0.1.2-alpha";
+    private static final String _VERSION = "0.1.3-alpha";
 
     public static String version() {
         return _VERSION;
@@ -80,12 +79,6 @@ public final class MaxineVM {
          */
         RUNNING
     }
-
-    // pointer to the space passed in by native code to
-    // hold the primordial cardtable and the
-    public static Pointer _auxiliarySpace = null;
-    public static int _auxiliarySpaceSize = 0;
-
 
     private Phase _phase = Phase.PROTOTYPING;
     private final VMConfiguration _configuration;
@@ -321,8 +314,7 @@ public final class MaxineVM {
     }
 
     public static boolean isRunning() {
-        final Phase phase = host()._phase;
-        return phase == Phase.RUNNING;
+        return host().phase() == Phase.RUNNING;
     }
 
     private static int _exitCode = 0;
@@ -361,21 +353,18 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer vmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, int argc, Pointer argv) {
+    private static int run(Pointer primordialVmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
         Heap.bootHeapRegion().setStart(bootHeapRegionStart);
 
-        MaxineVM._auxiliarySpace = auxiliarySpace;
-        MaxineVM._auxiliarySpaceSize = Heap.bootHeapRegion().size().plus(Code.bootCodeRegion().size()).unsignedShiftedRight(CardRegion.CARD_SHIFT).toInt();
+        Safepoint.initializePrimordial(primordialVmThreadLocals);
 
-        Safepoint.initializePrimordial(vmThreadLocals);
-
-        Heap.initializePrimordialBarriers(vmThreadLocals, auxiliarySpace);
+        Heap.initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
 
         // As of here we can write values:
-        _primordialVmThreadLocals = vmThreadLocals;
+        _primordialVmThreadLocals = primordialVmThreadLocals;
 
         // This must be called first as subsequent actions depend on it to resolve the native symbols
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym);

@@ -28,9 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.grip.direct.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.reference.card.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -153,8 +151,6 @@ public class CardRegion {
             Debug.println("CardRegion.clearAllCards: clearing the card table before use ");
         }
         clearCardRegion(_cardTableStart, _cardTableStart.plus(_cardTableSize));
-        CardReferenceScheme.resetReferenceBufferIndex();
-
     }
 
     // clears all cards from start to end , including end.
@@ -201,51 +197,6 @@ public class CardRegion {
         }
 
         Debug.println("CardRegion.dumpCardTable: done");
-    }
-
-    public static void dumpReferenceBuffer() {
-        final Pointer referenceBuffer = CardReferenceScheme.referenceBuffer();
-        long index = 0;
-        Debug.print("dumpReferenceBuffer: aux card table ends at ");
-        Debug.println(referenceBuffer);
-        final long numberOfReferenceWrites = CardReferenceScheme.getReferenceBufferIndex();
-
-        while (index < numberOfReferenceWrites) {
-            final long l = referenceBuffer.readLong(Offset.fromLong(index * 8));
-
-            if (Address.fromLong(l).lessThan(Heap.bootHeapRegion().start())) {
-                Debug.print("!-! Address lesser thatn boot heap begining");
-                Debug.print(Address.fromLong(l));
-            }
-            Debug.print(" ");
-            Debug.print(Address.fromLong(l));
-            index++;
-        }
-        Debug.println("dumpReferenceBuffer done");
-
-    }
-
-    public static void dumpGripBuffer() {
-
-        final Pointer gripBuffer = DirectGripScheme.getGripBuffer();
-        long index = 0;
-        Debug.print("dump grip buffer: grip buffer  ");
-        Debug.print(gripBuffer);
-        final long numberOfGripWrites = DirectGripScheme.getGripBufferIndex();
-
-        while (index < numberOfGripWrites) {
-            final long l = gripBuffer.readLong(Offset.fromLong(index * 8));
-
-            if (Address.fromLong(l).lessThan(Heap.bootHeapRegion().start())) {
-                Debug.print("!-! Address lesser thatn boot heap begining");
-                Debug.print(Address.fromLong(l));
-            }
-            Debug.print(" ");
-            Debug.print(Address.fromLong(l));
-            index++;
-        }
-        Debug.println("dumpGripBuffer done");
-
     }
 
     private boolean isCardMarked(Address addr) {
@@ -299,68 +250,6 @@ public class CardRegion {
             regularCardTable.writeByte(index, primordialCardTable.readByte(index));
         }
         VmThreadMap.ACTIVE.forAllVmThreads(null, _setLocals);
-    }
-
-
-
-    public void verifyCardTable() {
-        final Pointer referenceBuffer = CardReferenceScheme.referenceBuffer();
-        int index = 0;
-        final long numberOfReferenceWrites = CardReferenceScheme.getReferenceBufferIndex();
-        boolean failed = false;
-
-        if (Heap.verbose()) {
-            Debug.println("km Verifying cardtable...");
-            Debug.print("Heap starts at ");
-            Debug.print(Heap.bootHeapRegion().start());
-            Debug.print("card table starts at ");
-            Debug.print(cardTableBase());
-            Debug.print("km verifyCardTable: aux card table ends at ");
-            Debug.print(referenceBuffer);
-            Debug.println("Number of reference writes ");
-            Debug.print(numberOfReferenceWrites);
-            Debug.println();
-        }
-
-        while (index < numberOfReferenceWrites) {
-            final long l = referenceBuffer.readLong(index);
-            Debug.print("-");
-            final int cardIndex = getCardIndexFromHeapAddress(Address.fromLong(l));
-            Debug.print(index);
-            Debug.print("-");
-            Debug.print(cardIndex);
-            Debug.print("-");
-            Debug.print("");
-            Debug.print(Address.fromLong(l));
-
-            if (!isCardMarked(cardIndex)) {
-                failed = true;
-                Debug.print("km! Card table is not marked for address ");
-                Debug.print(Address.fromLong(l));
-                Debug.println("expected dirty card index");
-                Debug.print(cardIndex);
-                Debug.print("expected dirty card address");
-                Debug.print(getCardFromHeapAddress(Address.fromLong(l)));
-                Debug.println("reference index ");
-                Debug.print(index);
-                Debug.println();
-            }
-            index++;
-        }
-
-        if (Heap.verbose()) {
-            Debug.println("Test4");
-
-            dumpReferenceBuffer();
-            dumpCardTable();
-            if (failed) {
-                Debug.println("verifyCardTable: failed");
-            } else {
-                Debug.println("verifyCardTable: Done successfully");
-            }
-
-        }
-
     }
 
     public final Size cardTableSize() {
