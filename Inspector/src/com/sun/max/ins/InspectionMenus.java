@@ -673,7 +673,7 @@ public final class InspectionMenus implements Prober {
 
                     @Override
                     public boolean evaluate(TeleMethodActor teleMethodActor) {
-                        return teleMethodActor.hasBytecodes();
+                        return teleMethodActor.hasCodeAttribute();
                     }
                 };
                 final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(_inspection, teleClassActor, hasBytecodesPredicate, "View Bytecode for Method...", "Inspect");
