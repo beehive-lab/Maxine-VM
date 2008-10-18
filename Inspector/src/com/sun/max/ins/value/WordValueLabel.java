@@ -325,9 +325,8 @@ public class WordValueLabel extends ValueLabel {
         } else if (_teleObject instanceof TeleMethodActor) {
             final TeleMethodActor teleMethodActor = (TeleMethodActor) _teleObject;
             final MethodActor methodActor = teleMethodActor.methodActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), methodActor.name().toString() + "()"));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), methodActor.format("%r %n(%p)")));
-
+            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), methodActor.name().toString() + "()")  + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleMethodActor));
+            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), methodActor.format("%r %n(%p)"))  + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleMethodActor));
         } else if (_teleObject instanceof TeleFieldActor) {
             final TeleFieldActor teleFieldActor = (TeleFieldActor) _teleObject;
             final FieldActor fieldActor = teleFieldActor.fieldActor();

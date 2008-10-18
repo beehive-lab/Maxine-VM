@@ -56,11 +56,12 @@ import com.sun.max.vm.value.*;
  * <p>
  * The {@link INSPECTED} annotation is employed to denote fields that will be read remotely.
  * A field of the appropriate {@link TeleFieldAccess} subtype is generated into this file
- * by executing the {@link #main(String[])} method in this class (ensuring that the VM
+ * by executing the {@link #main(String[])} method in this class (ensuring that the{@link TeleVM}.
  * class path contains all the {@code com.sun.max} classes).
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public class TeleFields extends TeleVMHolder {
 
@@ -100,6 +101,7 @@ public class TeleFields extends TeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "_typeDescriptorToClassActor", GrowableMapping.class);
     public final TeleStaticReferenceFieldAccess Code_bootCodeRegion = new TeleStaticReferenceFieldAccess(Code.class, "_bootCodeRegion", CodeRegion.class);
     public final TeleInstanceReferenceFieldAccess CodeAttribute_code = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "_code", byte[].class);
+    public final TeleInstanceReferenceFieldAccess CodeAttribute_constantPool = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "_constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "_constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "_holder", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "_next", Entry.class);

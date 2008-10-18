@@ -29,7 +29,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 
 /**
- *  Canonical surrogate for an object of type {@link MethodActor} in the tele VM.
+ *  Canonical surrogate for an object of type {@link MethodActor} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  *
@@ -39,7 +39,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
     private MethodActor _methodActor;
 
     /**
-     * @return local {@link MethodActor} corresponding the the target VM's {@link MethodActor} for this method.
+     * @return local {@link MethodActor} corresponding the the {@link TeleVM}'s {@link MethodActor} for this method.
      */
     public MethodActor methodActor() {
         if (_methodActor == null) {
@@ -60,12 +60,40 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
     }
 
     /**
-     * @return Whether this method has bytecodes in the tele VM
+     * @return Whether this method has bytecodes in the {@link TeleVM}.
      */
-    public abstract boolean hasBytecodes();
+    public boolean hasCodeAttribute() {
+    	return getTeleCodeAttribute() != null;
+    }
 
+    /**
+     * @return The bytecodes associated with this method in the {@link TeleVM}.
+     * The {@link CodeAttribute} will not be the expected one from the classfile of the
+     * method's {@link ClassActor holder}, in the event that the method was substituted.
+     */
+    public abstract TeleCodeAttribute getTeleCodeAttribute();
 
-    @Override
+    /**
+	 * @return whether the method in the {@link TeleVM} had its {@link CodeAttribute}  substituted from another class.
+	 */
+	public boolean isSubstituted() {
+		return teleClassActorSubstitutedFrom() != null;
+	}
+
+	/**
+	 * Local surrogate for the {@link ClassActor} in the {@link TeleVM} from which a code substitution for this
+	 * method originated, null if the method has not been substituted.
+	 */
+	public TeleClassActor teleClassActorSubstitutedFrom() {
+		 TeleCodeAttribute teleCodeAttribute = getTeleCodeAttribute();
+		 if (teleCodeAttribute != null) {
+			 final TeleClassActor codeAttributeHolder = teleCodeAttribute.getTeleConstantPool().getTeleHolder();
+			 return codeAttributeHolder == getTeleHolder() ? null : codeAttributeHolder;
+		 }
+		 return null;
+	}
+
+	@Override
     public String maxineTerseRole() {
         return "MethodActor";
     }

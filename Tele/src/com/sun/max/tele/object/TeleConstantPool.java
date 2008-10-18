@@ -27,7 +27,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Inspector's canonical surrogate for an object of type {@link ConstantPool} in the tele VM.
+ * Canonical surrogate for an object of type {@link ConstantPool} in the {@link TeleVM} .
  *
  * @author Michael Van De Vanter
  */
@@ -53,7 +53,7 @@ public final class TeleConstantPool extends TeleTupleObject{
     }
     /**
      * @param index specifies an entry in this pool
-     * @return surrogate for the entry in the tele VM of this pool
+     * @return surrogate for the entry in the {@link TeleVM}  of this pool
      */
     public TelePoolConstant readTelePoolConstant(int index) {
         final Reference poolConstantReference = teleVM().getElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
@@ -61,7 +61,7 @@ public final class TeleConstantPool extends TeleTupleObject{
     }
 
     /**
-     * @return surrogate for the {@link ClassActor} object in the tele VM that includes this pool
+     * @return surrogate for the {@link ClassActor} object in the {@link TeleVM}  that includes this pool
      */
     public TeleClassActor getTeleHolder() {
         final Reference classActorReference = teleVM().fields().ConstantPool_holder.readReference(reference());
