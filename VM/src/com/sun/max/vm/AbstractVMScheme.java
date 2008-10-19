@@ -21,13 +21,16 @@
 package com.sun.max.vm;
 
 import com.sun.max.*;
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
 
 /**
  * @author Bernd Mathiske
  */
-public abstract class AbstractVMScheme extends AbstractScheme implements VMScheme {
+public abstract class AbstractVMScheme extends AbstractScheme {
 
     private final VMConfiguration _vmConfiguration;
+    private final Class<? extends VMScheme> _specification;
 
     public VMConfiguration vmConfiguration() {
         return _vmConfiguration;
@@ -35,6 +38,32 @@ public abstract class AbstractVMScheme extends AbstractScheme implements VMSchem
 
     protected AbstractVMScheme(VMConfiguration vmConfiguration) {
         _vmConfiguration = vmConfiguration;
+        Class<? extends VMScheme> specification = null;
+        Class<?> implementation = getClass();
+        ProgramError.check(VMScheme.class.isAssignableFrom(implementation), "Subclass of " + AbstractVMScheme.class + " must implement " + VMScheme.class + ": " + implementation);
+        final Class<Class<? extends VMScheme>> type = null;
+        Class<? extends VMScheme> last = StaticLoophole.cast(type, implementation);
+        while (!implementation.equals(AbstractVMScheme.class) && specification == null) {
+            for (Class<?> interfaceClass : implementation.getInterfaces()) {
+                if (!VMScheme.class.equals(interfaceClass) && VMScheme.class.isAssignableFrom(interfaceClass)) {
+                    specification = StaticLoophole.cast(type, interfaceClass);
+                    break;
+                }
+            }
+            implementation = implementation.getSuperclass();
+            if (!VMScheme.class.equals(implementation) && VMScheme.class.isAssignableFrom(implementation)) {
+                last = StaticLoophole.cast(type, implementation);
+            }
+        }
+        if (specification == null) {
+            specification = last;
+        }
+        ProgramError.check(specification != null, "Cannot find specification for scheme implemented by " + getClass());
+        _specification = specification;
+    }
+
+    public Class<? extends VMScheme> specification() {
+        return _specification;
     }
 
     public void initialize(MaxineVM.Phase phase) {

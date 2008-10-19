@@ -29,7 +29,7 @@ import com.sun.max.vm.actor.member.*;
  *
  * @author Bernd Mathiske
  */
-public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extends AbstractVMScheme {
+public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extends AbstractVMScheme implements VMScheme {
 
     private final EirABI<EirRegister_Type> _javaABI;
 

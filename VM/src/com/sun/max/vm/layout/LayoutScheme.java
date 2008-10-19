@@ -23,7 +23,7 @@ package com.sun.max.vm.layout;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 
-public abstract class LayoutScheme extends AbstractVMScheme {
+public abstract class LayoutScheme extends AbstractVMScheme implements VMScheme {
 
     private final GeneralLayout _generalLayout;
     private final TupleLayout _tupleLayout;

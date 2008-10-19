@@ -88,7 +88,7 @@ OUTPUT_DIR=${TEST_DIR}/${REL_OUTPUT_DIR}
 COMPILER_FILE=${OUTPUT_DIR}/COMPILER
 NATIVE_FILE=${OUTPUT_DIR}/NATIVE
 SUMMARY_FILE=${OUTPUT_DIR}/SUMMARY
-TIMESTAMP_FILE=${TEST_DIR}/runtests-timestamp
+LAST_CHANGESET_FILE=${TEST_DIR}/runtests-changeset
 LOCK_FILE=${TEST_DIR}/runtests.lock
 
 START_TIME=`date`
@@ -123,17 +123,17 @@ else
     hg clone ${SOURCE_HG_REPO} ${TEST_HG_REPO}
 fi
 
-# Find whether any .java, .c or .h file has changed in the workspace since the tests were last run.
-# We do this by comparing modification times of the .java/.c/.h files against the
-# mod time of the TIMESTAMP_FILE
-
-if [ -e ${TIMESTAMP_FILE} ] ;
+if [ -e ${LAST_CHANGESET_FILE} ] ;
 then
-    if [ -z `find ${TEST_HG_REPO} -name \*.java -o -name \*.[ch] -newer ${TIMESTAMP_FILE} | head -1` ] ;
-    then
+    LAST_CHANGESET=`cat ${LAST_CHANGESET_FILE}`
+    TIP_CHANGESET=`hg -R ${TEST_HG_REPO} tip --template '{node|short}'`
+    
+    if [ "x${LAST_CHANGESET}" = "x${TIP_CHANGESET}" ]; then
         echo "No changes from last test run"
         rm ${LOCK_FILE}
         exit
+    else
+        echo ${TIP_CHANGESET} >${LAST_CHANGESET_FILE}
     fi
 fi
 
@@ -284,7 +284,6 @@ if [ "x${URL}" != "x" ]; then
 fi
 
 cat ${SUMMARY_FILE}
-touch ${TIMESTAMP_FILE}
 
 # Send mail containing the summary only if both MAILTO and MAILFROM are set
 if [ "X${MAILTO}" != "X" ];

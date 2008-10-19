@@ -21,7 +21,7 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.Debug.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.thread.*;
 
@@ -169,19 +169,19 @@ final class SlowProxyAcquirableJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void dump(DebugPrintStream out) {
-        super.dump(out);
-        out.print(" mutex=");
-        out.print(_mutex.asPointer());
-        out.print(" blockingCondVar=");
-        out.print(_blockingVar.asPointer());
-        out.print(" waiters={");
+    public void dump() {
+        super.dump();
+        Debug.print(" mutex=");
+        Debug.print(_mutex.asPointer());
+        Debug.print(" blockingCondVar=");
+        Debug.print(_blockingVar.asPointer());
+        Debug.print(" waiters={");
         VmThread waiter = _waitingThreads;
         while (waiter != null) {
-            out.print(waiter.getName());
-            out.print(" ");
+            Debug.print(waiter.getName());
+            Debug.print(" ");
             waiter = waiter.nextWaitingThread();
         }
-        out.print("}");
+        Debug.print("}");
     }
 }

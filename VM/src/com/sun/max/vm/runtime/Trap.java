@@ -130,7 +130,7 @@ public final class Trap {
         TRAP_STACK_POINTER.setVariableWord(disabledVmThreadLocals, stackPointer);
         TRAP_FRAME_POINTER.setVariableWord(disabledVmThreadLocals, framePointer);
         if (!TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.getVariableWord(disabledVmThreadLocals).isZero()) {
-            Debug.err.println("TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME should be zero");
+            Debug.println("TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME should be zero");
         }
         TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.setVariableWord(disabledVmThreadLocals, Address.fromLong(1));
 
@@ -187,11 +187,11 @@ public final class Trap {
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
         if (targetMethod == null) {
             if (Code.codePointerToRuntimeStub(instructionPointer) != null) {
-                Debug.err.print("Seg fault in runtime stub at ");
-                Debug.err.println(instructionPointer);
+                Debug.print("Seg fault in runtime stub at ");
+                Debug.println(instructionPointer);
             } else {
-                Debug.err.print("Seg fault in native code at ");
-                Debug.err.println(instructionPointer);
+                Debug.print("Seg fault in native code at ");
+                Debug.println(instructionPointer);
             }
             return _vmHardExitStub.address();
         } else if (targetMethod instanceof JitTargetMethod) {

@@ -29,7 +29,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.debug.Debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.*;
@@ -56,11 +55,7 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  * @author Sunil Soman
  */
-public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
-
-    public String name() {
-        return SemiSpaceHeapScheme.class.getSimpleName();
-    }
+public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapScheme, CellVisitor {
 
     public boolean isGcThread(VmThread vmThread) {
         return vmThread.javaThread() instanceof StopTheWorldDaemon;
@@ -111,11 +106,11 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
         }
     };
 
-    // The Sequential Heap Root Scanner is actually the "thread crawlers" which will identify the
-    // roots out of the threads' stacks. Here we create one of the actual scanning (_heapRootsScanner)
+    // The Sequential Heap Root Scanner is actually the "thread crawler" which will identify the
+    // roots out of the threads' stacks. Here we create one for the actual scanning (_heapRootsScanner)
     // and one for the verification (_heapRootsVerifier)
-    private final SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner(this, _pointerIndexGripVerifier);
     private final SequentialHeapRootsScanner _heapRootsScanner = new SequentialHeapRootsScanner(this, _pointerIndexGripUpdater);
+    private final SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner(this, _pointerIndexGripVerifier);
 
     // Create timing facilities.
     private final Timer _clearTimer = GlobalMetrics.newTimer("Clear", Clock.SYSTEM_MILLISECONDS);
@@ -137,8 +132,8 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             TeleHeapInfo.beforeGarbageCollection();
 
             if (Heap.verbose()) {
-                Debug.out.print("--Before GC--   size: ");
-                Debug.out.println(_allocationMark.minus(_toSpace.start()).toInt());
+                Debug.print("--Before GC--   size: ");
+                Debug.println(_allocationMark.minus(_toSpace.start()).toInt());
             }
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
@@ -150,14 +145,14 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             _clearTimer.stop();
 
             if (Heap.traceGC()) {
-                Debug.out.println("Scanning roots...");
+                Debug.println("Scanning roots...");
             }
             _rootScanTimer.restart();
             _heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
             _rootScanTimer.stop();
 
             if (Heap.traceGC()) {
-                Debug.out.println("Scanning boot heap...");
+                Debug.println("Scanning boot heap...");
             }
             _bootHeapScanTimer.restart();
             scanBootHeap();
@@ -168,7 +163,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             _codeScanTimer.stop();
 
             if (Heap.traceGC()) {
-                Debug.out.println("Moving reachable...");
+                Debug.println("Moving reachable...");
             }
 
             _copyTimer.restart();
@@ -176,28 +171,27 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             _copyTimer.stop();
             _gcTimer.stop();
             if (Heap.traceGC()) {
-                final DebugPrintStream out = Debug.out;
                 final boolean lockDisabledSafepoints = Debug.lock();
-                out.print("clear & initialize: ");
-                out.print(_clearTimer.getMilliSeconds());
-                out.print("   root scan: ");
-                out.print(_rootScanTimer.getMilliSeconds());
-                out.print("   boot heap scan: ");
-                out.print(_bootHeapScanTimer.getMilliSeconds());
-                out.print("   code scan: ");
-                out.print(_codeScanTimer.getMilliSeconds());
-                out.print("   copy: ");
-                out.print(_copyTimer.getMilliSeconds());
-                out.println();
-                out.print("GC <");
-                out.print(_numberOfGarbageCollectionInvocations);
-                out.print("> ");
-                out.print(_gcTimer.getMilliSeconds());
-                out.println(" (ms)");
+                Debug.print("clear & initialize: ");
+                Debug.print(_clearTimer.getMilliSeconds());
+                Debug.print("   root scan: ");
+                Debug.print(_rootScanTimer.getMilliSeconds());
+                Debug.print("   boot heap scan: ");
+                Debug.print(_bootHeapScanTimer.getMilliSeconds());
+                Debug.print("   code scan: ");
+                Debug.print(_codeScanTimer.getMilliSeconds());
+                Debug.print("   copy: ");
+                Debug.print(_copyTimer.getMilliSeconds());
+                Debug.println();
+                Debug.print("GC <");
+                Debug.print(_numberOfGarbageCollectionInvocations);
+                Debug.print("> ");
+                Debug.print(_gcTimer.getMilliSeconds());
+                Debug.println(" (ms)");
 
-                out.print("--After GC--   bytes copied: ");
-                out.print(_allocationMark.minus(_toSpace.start()).toInt());
-                out.println();
+                Debug.print("--After GC--   bytes copied: ");
+                Debug.print(_allocationMark.minus(_toSpace.start()).toInt());
+                Debug.println();
                 Debug.unlock(lockDisabledSafepoints);
             }
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
@@ -207,7 +201,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             TeleHeapInfo.afterGarbageCollection();
 
             if (Heap.verbose()) {
-                Debug.out.println("GC done");
+                Debug.println("GC done");
             }
             _numberOfGarbageTurnovers++;
         }
@@ -234,11 +228,10 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             _toSpace.setStart(Memory.allocate(size));
 
             if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
-                final DebugPrintStream err = Debug.err;
-                err.print("Could not allocate object heap of size ");
-                err.print(size.toLong());
-                err.println();
-                err.println("This is only a very simple GC implementation that uses twice the specified amount");
+                Debug.print("Could not allocate object heap of size ");
+                Debug.print(size.toLong());
+                Debug.println();
+                Debug.println("This is only a very simple GC implementation that uses twice the specified amount");
             }
 
             _allocationMark = _toSpace.start();
@@ -254,15 +247,8 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
         }
     }
 
-    private final VMConfiguration _vmConfiguration;
-
-
-    public VMConfiguration vmConfiguration() {
-        return _vmConfiguration;
-    }
-
     public SemiSpaceHeapScheme(VMConfiguration vmConfiguration) {
-        _vmConfiguration = vmConfiguration;
+        super(vmConfiguration);
     }
 
     private void swapSemiSpaces() {
@@ -286,12 +272,11 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
     private void checkCellTag(Pointer cell) {
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                final DebugPrintStream err = Debug.err;
-                err.print("cell: ");
-                err.print(cell);
-                err.print("  origin: ");
-                err.print(Layout.cellToOrigin(cell));
-                err.println();
+                Debug.print("cell: ");
+                Debug.print(cell);
+                Debug.print("  origin: ");
+                Debug.print(Layout.cellToOrigin(cell));
+                Debug.println();
                 FatalError.unexpected("missing object tag");
             }
         }
@@ -309,10 +294,9 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
         final Pointer fromOrigin = grip.toOrigin();
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!(grip.isZero() || _fromSpace.contains(fromOrigin) || _toSpace.contains(fromOrigin) || Heap.bootHeapRegion().contains(fromOrigin) || Code.contains(fromOrigin))) {
-                final DebugPrintStream err = Debug.err;
-                err.print("invalid grip: ");
-                err.print(grip.toOrigin().asAddress());
-                err.println();
+                Debug.print("invalid grip: ");
+                Debug.print(grip.toOrigin().asAddress());
+                Debug.println();
                 FatalError.unexpected("invalid grip");
             }
             checkGripTag(grip);
@@ -330,18 +314,17 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             }
 
             if (Heap.traceGC()) {
-                final DebugPrintStream out = Debug.out;
                 final boolean lockDisabledSafepoints = Debug.lock();
                 final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
-                out.print("Forwarding ");
-                out.print(hub.classActor().name().string());
-                out.print(" from ");
-                out.print(fromCell);
-                out.print(" to ");
-                out.print(toCell);
-                out.print(" [");
-                out.print(size.toInt());
-                out.println(" bytes]");
+                Debug.print("Forwarding ");
+                Debug.print(hub.classActor().name().string());
+                Debug.print(" from ");
+                Debug.print(fromCell);
+                Debug.print(" to ");
+                Debug.print(toCell);
+                Debug.print(" [");
+                Debug.print(size.toInt());
+                Debug.println(" bytes]");
                 Debug.unlock(lockDisabledSafepoints);
             }
 
@@ -422,8 +405,8 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
         Memory.deallocate(_fromSpace.start());
         final Size size = Size.min(_fromSpace.size().times(2), Heap.maxSize());
         if (Heap.verbose()) {
-            Debug.out.print("New heap size: ");
-            Debug.out.println(size.toLong());
+            Debug.print("New heap size: ");
+            Debug.println(size.toLong());
         }
         _fromSpace.setSize(size);
         _fromSpace.setStart(Memory.allocate(size));
@@ -442,7 +425,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
     }
     private boolean grow() {
         if (Heap.verbose()) {
-            Debug.out.println("Trying to grow the heap...");
+            Debug.println("Trying to grow the heap...");
         }
         if (!reallocateAlternateSpace()) {
             return false;
@@ -465,7 +448,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             }
         }
         if (Heap.gcDisabled()) {
-            Debug.out.println("Out of memory and GC is disabled, exiting");
+            Debug.println("Out of memory and GC is disabled, exiting");
             MaxineVM.native_exit(1);
         }
         return false;
@@ -625,13 +608,13 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
         checkGripTag(grip);
         final Pointer origin = grip.toOrigin();
         if (!(_toSpace.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
-            Debug.err.print("invalid grip: ");
-            Debug.err.print(origin.asAddress());
-            Debug.err.print(" @ ");
-            Debug.err.print(address);
-            Debug.err.print(" + ");
-            Debug.err.print(index);
-            Debug.err.println();
+            Debug.print("invalid grip: ");
+            Debug.print(origin.asAddress());
+            Debug.print(" @ ");
+            Debug.print(address);
+            Debug.print(" + ");
+            Debug.print(index);
+            Debug.println();
             FatalError.unexpected("invalid grip");
         }
     }
@@ -662,7 +645,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
 
     private void verifyHeap() {
         if (Heap.traceGC()) {
-            Debug.out.println("Verifying heap...");
+            Debug.println("Verifying heap...");
         }
         _heapRootsVerifier.run();
         Pointer cell = _toSpace.start().asPointer();
@@ -690,7 +673,7 @@ public final class SemiSpaceHeapScheme implements HeapScheme, CellVisitor {
             }
         }
         if (Heap.traceGC()) {
-            Debug.out.println("done verifying heap");
+            Debug.println("done verifying heap");
         }
     }
 
