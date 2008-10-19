@@ -29,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.debug.Debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.jit.*;
@@ -551,30 +550,28 @@ public enum VmThreadLocal {
 
         final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
         if (!(vmThread.javaThread() instanceof StopTheWorldDaemon) && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
-            final DebugPrintStream err = Debug.err;
-            err.print("The stack for thread \"");
-            Debug.printVmThread(err, vmThread, false);
-            err.print("\" has slots between ");
-            err.print(lastJavaCallerStackPointer);
-            err.print(" and ");
-            err.print(lowestActiveSlot);
-            err.println(" are not covered by the reference map.");
+            Debug.print("The stack for thread \"");
+            Debug.printVmThread(vmThread, false);
+            Debug.print("\" has slots between ");
+            Debug.print(lastJavaCallerStackPointer);
+            Debug.print(" and ");
+            Debug.print(lowestActiveSlot);
+            Debug.println(" are not covered by the reference map.");
             FatalError.unexpected("Stack reference map does not cover all active slots");
         }
 
         boolean lockDisabledSafepoints = false;
         if (Heap.traceGC()) {
             lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map scanning
-            final DebugPrintStream out = Debug.out;
-            out.print("Scanning stack reference map for thread ");
-            Debug.printVmThread(out, vmThread, false);
-            out.println(":");
-            out.print("  Highest slot: ");
-            out.println(highestSlot);
-            out.print("  Lowest active slot: ");
-            out.println(lowestActiveSlot);
-            out.print("  Lowest slot: ");
-            out.println(lowestSlot);
+            Debug.print("Scanning stack reference map for thread ");
+            Debug.printVmThread(vmThread, false);
+            Debug.println(":");
+            Debug.print("  Highest slot: ");
+            Debug.println(highestSlot);
+            Debug.print("  Lowest active slot: ");
+            Debug.println(lowestActiveSlot);
+            Debug.print("  Lowest slot: ");
+            Debug.println(lowestSlot);
         }
 
         StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor, fromSpace, toSpace);
@@ -600,16 +597,15 @@ public enum VmThreadLocal {
         if (Heap.traceGC()) {
             final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
             lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map scanning
-            final DebugPrintStream out = Debug.out;
-            out.print("Scanning stack reference map for thread ");
-            Debug.printVmThread(out, vmThread, false);
-            out.println(":");
-            out.print("  Highest slot: ");
-            out.println(highestSlot);
-            out.print("  Lowest active slot: ");
-            out.println(lowestActiveSlot);
-            out.print("  Lowest slot: ");
-            out.println(lowestSlot);
+            Debug.print("Scanning stack reference map for thread ");
+            Debug.printVmThread(vmThread, false);
+            Debug.println(":");
+            Debug.print("  Highest slot: ");
+            Debug.println(highestSlot);
+            Debug.print("  Lowest active slot: ");
+            Debug.println(lowestActiveSlot);
+            Debug.print("  Lowest slot: ");
+            Debug.println(lowestSlot);
         }
 
         StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor);

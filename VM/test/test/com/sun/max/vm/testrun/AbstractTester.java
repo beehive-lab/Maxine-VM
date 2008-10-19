@@ -53,12 +53,12 @@ public abstract class AbstractTester extends JavaRunScheme {
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
 
     public static void reportPassed(int passed, int total) {
-        Debug.out.print('\n');
-        Debug.out.print(passed);
-        Debug.out.print(" of ");
-        Debug.out.print(total);
-        Debug.out.print(" passed.");
-        Debug.out.print('\n');
+        Debug.print('\n');
+        Debug.print(passed);
+        Debug.print(" of ");
+        Debug.print(total);
+        Debug.print(" passed.");
+        Debug.print('\n');
     }
 
     public static void end(String run, boolean result) {
@@ -71,7 +71,7 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (_verbose == 3) {
             if (!result) {
                 printRun(run);
-                Debug.out.println(" failed with incorrect result");
+                Debug.println(" failed with incorrect result");
             }
         }
         _testNum++;
@@ -83,61 +83,61 @@ public abstract class AbstractTester extends JavaRunScheme {
         }
         if (_verbose == 3) {
             printRun(run);
-            Debug.out.print(" failed with exception !");
-            Debug.out.println(t.getClass().getName());
+            Debug.print(" failed with exception !");
+            Debug.println(t.getClass().getName());
         }
         _testNum++;
     }
 
     private static void printRun(String run) {
-        Debug.out.print("\t");
+        Debug.print("\t");
         printTestNum();
         if (run != null) {
-            Debug.out.print(run);
+            Debug.print(run);
         }
     }
 
     public static void verbose(boolean passed, int finished, int total) {
-        Debug.out.print(passed ? '.' : 'X');
+        Debug.print(passed ? '.' : 'X');
         if (finished % 10 == 0) {
-            Debug.out.print(' ');
+            Debug.print(' ');
         }
         if (finished % 50 == 0) {
-            Debug.out.print(' ');
-            Debug.out.print(finished);
-            Debug.out.print(" of ");
-            Debug.out.print(total);
-            Debug.out.print('\n');
+            Debug.print(' ');
+            Debug.print(finished);
+            Debug.print(" of ");
+            Debug.print(total);
+            Debug.print('\n');
         } else if (finished == total) {
-            Debug.out.print('\n');
+            Debug.print('\n');
         }
     }
 
     public static void begin(String test) {
         if (_verbose == 3) {
             printTestNum();
-            Debug.out.print(test);
+            Debug.print(test);
             int i = test.length();
             while (i++ < 50) {
-                Debug.out.print(' ');
+                Debug.print(' ');
             }
-            Debug.out.print("  next -XX:test=");
-            Debug.out.print(_testNum + 1);
-            Debug.out.println("");
+            Debug.print("  next -XX:test=");
+            Debug.print(_testNum + 1);
+            Debug.println("");
         }
     }
 
     public static void printTestNum() {
         // print out the test number (aligned to the left)
-        Debug.out.print(_testNum);
-        Debug.out.print(':');
+        Debug.print(_testNum);
+        Debug.print(':');
         if (_testNum < 100) {
-            Debug.out.print(' ');
+            Debug.print(' ');
         }
         if (_testNum < 10) {
-            Debug.out.print(' ');
+            Debug.print(' ');
         }
-        Debug.out.print(' ');
+        Debug.print(' ');
     }
 
     public AbstractTester(VMConfiguration vmConfiguration) {

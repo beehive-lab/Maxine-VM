@@ -640,8 +640,8 @@ public final class JDK_java_lang_System {
         }
 
         // 3. set up basic Maxine configuration information
-        setIfAbsent(properties, "java.runtime.name", MaxineVM.name()); // TODO
-        setIfAbsent(properties, "java.runtime.version", MaxineVM.version()); // TODO
+        setIfAbsent(properties, "java.runtime.name", MaxineVM.name());
+        setIfAbsent(properties, "java.runtime.version", MaxineVM.version());
 
         setIfAbsent(properties, "java.vm.name", MaxineVM.name());
         setIfAbsent(properties, "java.vm.version", MaxineVM.version());

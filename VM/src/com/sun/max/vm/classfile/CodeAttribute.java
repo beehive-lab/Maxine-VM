@@ -29,7 +29,7 @@ import com.sun.max.vm.classfile.constant.*;
 
 /**
  * "Code" attributes in class files, see #4.7.3.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author David Liu

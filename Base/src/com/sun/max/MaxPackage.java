@@ -56,9 +56,9 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     /**
      * Gets an instance of the class named "Package" in a named package.
-     * 
-     * @param packageName
-     *                denotes the name of a package which may contain a subclass of {@link MaxPackage} named "Package"
+     *
+     * @param packageName denotes the name of a package which may contain a subclass of {@link MaxPackage} named
+     *            "Package"
      * @return an instance of the class name "Package" in {@code packageName}. If such a class does not exist or there
      *         was an error {@linkplain Class#newInstance() instantiating} it, then {@code null} is returned
      */
@@ -172,7 +172,7 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     /**
      * Gets the class within this package implementing a given scheme type (represented as an as abstract class or interface).
-     * 
+     *
      * @return the class directly within this package that implements {@code scheme} or null if no such class
      *         exists
      */
@@ -255,11 +255,9 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
 
     /**
      * Instantiates the scheme implementation class in this package implementing a given scheme type.
-     * 
-     * @param schemeType
-     *                the interface or abstract class defining a scheme type
-     * @param arguments
-     *                arguments passed to constructor of the scheme implementation class
+     *
+     * @param schemeType the interface or abstract class defining a scheme type
+     * @param arguments arguments passed to constructor of the scheme implementation class
      * @return a new instance of the scheme implementation class
      */
     public synchronized <Scheme_Type extends Scheme> Scheme_Type loadAndInstantiateScheme(Class<Scheme_Type> schemeType, Object... arguments) {

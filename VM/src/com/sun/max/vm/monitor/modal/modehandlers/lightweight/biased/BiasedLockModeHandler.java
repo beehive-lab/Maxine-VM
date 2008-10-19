@@ -27,7 +27,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.debug.Debug.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.*;
@@ -263,10 +262,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             // We can't have a wait queue, so move the lock to the next delegate mode and try to wait.
             // (We can revoke without suspending as the current thread owns the bias)
             if (Monitor.traceMonitors()) {
-                final DebugPrintStream out = Debug.out;
                 final boolean lockDisabledSafepoints = Debug.lock();
-                out.print("Nonsafepointed revoke for monitorWait: ");
-                out.println(object.getClass().getName());
+                Debug.print("Nonsafepointed revoke for monitorWait: ");
+                Debug.println(object.getClass().getName());
                 Debug.unlock(lockDisabledSafepoints);
             }
             lockWord = revokeWithoutSafepointing(object);
@@ -338,10 +336,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     // Note the revoking thread has no special priviledges, we simply revoke and then
                     // drop into the next locking mode's monitor enter code.
                     if (Monitor.traceMonitors()) {
-                        final DebugPrintStream out = Debug.out;
                         final boolean lockDisabledSafepoints = Debug.lock();
-                        out.print("Safepointed revoke for monitorEnter: ");
-                        out.println(object.getClass().getName());
+                        Debug.print("Safepointed revoke for monitorEnter: ");
+                        Debug.println(object.getClass().getName());
                         Debug.unlock(lockDisabledSafepoints);
                     }
                     final int vmThreadMapThreadID = decodeLockwordThreadID(biasedLockWord.getBiasOwnerID());
@@ -383,10 +380,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 } else {
                     // We have to revoke to set the hashcode...
                     if (Monitor.traceMonitors()) {
-                        final DebugPrintStream out = Debug.out;
                         final boolean lockDisabledSafepoints = Debug.lock();
-                        out.print("Safepointed revoke for hashcode: ");
-                        out.println(object.getClass().getName());
+                        Debug.print("Safepointed revoke for hashcode: ");
+                        Debug.println(object.getClass().getName());
                         Debug.unlock(lockDisabledSafepoints);
                     }
                     final int vmThreadMapThreadID = decodeLockwordThreadID(biasedLockWord.getBiasOwnerID());
@@ -441,10 +437,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                             getDelegate().cancelPreparedModalLockWord(newLockWord);
                         }
                         if (Monitor.traceMonitors()) {
-                            final DebugPrintStream out = Debug.out;
                             final boolean lockDisabledSafepoints = Debug.lock();
-                            out.print("New object bulk revocation: ");
-                            out.println(object.getClass().getName());
+                            Debug.print("New object bulk revocation: ");
+                            Debug.println(object.getClass().getName());
                             Debug.unlock(lockDisabledSafepoints);
                         }
                     } else if (biasedLockWord.getBiasOwnerID() == lockwordThreadID) {
@@ -472,10 +467,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 } else if (biasedLockWord.getBiasOwnerID() == lockwordThreadID && biasedLockWord.countOverflow()) {
                     // Overflow of the recursion count. The current thread owns the lock so we can revoke and delegate.
                     if (Monitor.traceMonitors()) {
-                        final DebugPrintStream out = Debug.out;
                         final boolean lockDisabledSafepoints = Debug.lock();
-                        out.print("Safepointed revoke for hashcode: ");
-                        out.println(object.getClass().getName());
+                        Debug.print("Safepointed revoke for hashcode: ");
+                        Debug.println(object.getClass().getName());
                         Debug.unlock(lockDisabledSafepoints);
                     }
                     currentLockWord = revokeWithoutSafepointing(object);
@@ -526,10 +520,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     final int vmThreadMapThreadID = decodeLockwordThreadID(biasedLockWord.getBiasOwnerID());
                     lockWord = revokeWithOwnerSafepointed(object, vmThreadMapThreadID, biasedLockWord);
                     if (Monitor.traceMonitors()) {
-                        final DebugPrintStream out = Debug.out;
                         final boolean lockDisabledSafepoints = Debug.lock();
-                        out.print("Safepointed revoke for hashcode: ");
-                        out.println(object.getClass().getName());
+                        Debug.print("Safepointed revoke for hashcode: ");
+                        Debug.println(object.getClass().getName());
                         Debug.unlock(lockDisabledSafepoints);
                     }
                 }
@@ -557,20 +550,18 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             switch (type) {
                 case SINGLE_OBJECT_REVOCATION:
                     if (Monitor.traceMonitors()) {
-                        final DebugPrintStream out = Debug.out;
                         final boolean lockDisabledSafepoints = Debug.lock();
-                        out.print("SINGLE_OBJECT_REVOCATION: ");
-                        out.println(object.getClass().getName());
+                        Debug.print("SINGLE_OBJECT_REVOCATION: ");
+                        Debug.println(object.getClass().getName());
                         Debug.unlock(lockDisabledSafepoints);
                     }
                     postRevokeLockWord = revokeWithOwnerSafepointed(object, decodeLockwordThreadID(lockWord.getBiasOwnerID()), lockWord);
                     break;
                 case BULK_REBIAS:
                     if (Monitor.traceMonitors()) {
-                        final DebugPrintStream out = Debug.out;
                         final boolean lockDisabledSafepoints = Debug.lock();
-                        out.print("BULK_REBIAS: ");
-                        out.println(object.getClass().getName());
+                        Debug.print("BULK_REBIAS: ");
+                        Debug.println(object.getClass().getName());
                         Debug.unlock(lockDisabledSafepoints);
                     }
                     postRevokeLockWord = revokeWithOwnerSafepointedAndBulkRebias(object);
@@ -578,10 +569,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     break;
                 case BULK_REVOCATION:
                     if (Monitor.traceMonitors()) {
-                        final DebugPrintStream out = Debug.out;
                         final boolean lockDisabledSafepoints = Debug.lock();
-                        out.print("BULK_REVOCATION: ");
-                        out.println(object.getClass().getName());
+                        Debug.print("BULK_REVOCATION: ");
+                        Debug.println(object.getClass().getName());
                         Debug.unlock(lockDisabledSafepoints);
                     }
                     postRevokeLockWord = revokeWithOwnerSafepointedAndBulkRevoke(object);
