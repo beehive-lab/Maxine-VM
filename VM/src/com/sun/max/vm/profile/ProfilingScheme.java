@@ -38,8 +38,7 @@ import com.sun.max.vm.debug.*;
  *
  * @author Yi Guo, Aziz Ghuloum
  **/
-public class ProfilingScheme implements VMScheme {
-    private VMConfiguration _vmConfiguration;
+public class ProfilingScheme extends AbstractVMScheme implements VMScheme {
     private static VMOption _isProfilingOption = new VMOption("-XX:Profile", "Collect and dump profiling info", Phase.STARTING);
     private static volatile boolean _isProfiling = false;
 
@@ -81,7 +80,7 @@ public class ProfilingScheme implements VMScheme {
     private static IntegerDistribution _targetcodeSizePerByteCodeDistribution = null;
 
     public ProfilingScheme(VMConfiguration configuration) {
-        _vmConfiguration = configuration;
+        super(configuration);
     }
 
     @Override
@@ -103,16 +102,6 @@ public class ProfilingScheme implements VMScheme {
                 _isProfiling = true;
             }
         }
-    }
-
-    @Override
-    public VMConfiguration vmConfiguration() {
-        return _vmConfiguration;
-    }
-
-    @Override
-    public String name() {
-        return "Profiling Scheme";
     }
 
     public static boolean isProfiling() {

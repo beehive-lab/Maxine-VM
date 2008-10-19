@@ -234,7 +234,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
  * Native support. These global natives can be called from Java to get some basic services
  * from the C language and environment.
  */
-
 void *native_executablePath() {
     static char result[MAX_PATH_LENGTH];
     getExecutablePath(result);

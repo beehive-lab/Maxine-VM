@@ -323,7 +323,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     }
 
     private static void traceCurrentThreadPrefix() {
-        Debug.out.print("[Thread \"");
-        Debug.out.print(VmThread.current().getName());
+        Debug.print("[Thread \"");
+        Debug.print(VmThread.current().getName());
     }
 }

@@ -91,7 +91,7 @@ public class NewJavaRunScheme extends AbstractVMScheme implements RunScheme {
         Debug.print("start currentTimeMillis: ");
         Debug.println(System.currentTimeMillis());
 
-        Trace.setStream(Debug.log);
+        Trace.setStream(Debug.out);
         Trace.on(VMOptions.traceLevel());
         Trace.line(VMOptions.traceLevel(), "trace level is " + VMOptions.traceLevel());
 
