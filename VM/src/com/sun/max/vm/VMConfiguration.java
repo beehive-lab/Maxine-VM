@@ -51,6 +51,8 @@ import com.sun.max.vm.trampoline.*;
  */
 public final class VMConfiguration {
 
+//    private final Map<Scheme, MaxPackage> SCHEMES
+
 
     private final BuildLevel _buildLevel;
 
@@ -284,6 +286,10 @@ public final class VMConfiguration {
 
     private AppendableIndexedSequence<VMScheme> _vmSchemes = new ArrayListSequence<VMScheme>();
 
+    public Sequence<VMScheme> vmSchemes() {
+        return _vmSchemes;
+    }
+
     public synchronized <VMScheme_Type extends VMScheme> VMScheme_Type loadAndInstantiateScheme(MaxPackage p, Class<VMScheme_Type> vmSchemeType, Object... arguments) {
         if (p == null) {
             ProgramError.unexpected("Package not found for scheme: " + vmSchemeType.getSimpleName());
@@ -358,19 +364,12 @@ public final class VMConfiguration {
     }
 
     public void print(PrintWriter writer) {
-        writer.println("build level: " + _buildLevel);
-        writer.println("platform: " + _platform);
-        writer.println("grip package: " + _gripPackage.name());
-        writer.println("reference package: " + _referencePackage.name());
-        writer.println("layout package: " + _layoutPackage.name());
-        writer.println("heap package: " + _heapPackage.name());
-        writer.println("monitor package: " + _monitorPackage.name());
-        writer.println("compiler package: " + _compilerPackage.name());
-        if (_jitPackage != null) {
-            writer.println("jit package: " + _jitPackage.name());
+        writer.println("build level: " + buildLevel());
+        writer.println("platform: " + platform());
+        for (VMScheme vmScheme : vmSchemes()) {
+            final String specification = vmScheme.specification().getSimpleName();
+            writer.println(specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getPackage().getName());
         }
-        writer.println("run scheme: " + _runPackage.name());
-        writer.println("trampoline package: " + _trampolinePackage.name());
     }
 
     @FOLD

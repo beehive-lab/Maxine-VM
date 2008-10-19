@@ -37,7 +37,8 @@ public interface HeapScheme extends VMScheme {
     boolean isGcThread(VmThread vmThread);
 
     /**
-     * Given the size of the boot image, calculate the size of the auxiliary space that the substrate is to allocate and pass to the target VM.
+     * Given the size of the boot image, calculates the size of the auxiliary space that the substrate is to allocate
+     * and pass to the target VM.
      */
     @PROTOTYPE_ONLY
     int auxiliarySpaceSize(int bootImageSize);

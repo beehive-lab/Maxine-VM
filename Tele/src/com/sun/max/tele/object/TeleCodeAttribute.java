@@ -20,44 +20,38 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.tele.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.tele.TeleVM;
+import com.sun.max.vm.reference.Reference;
 
 /**
- * Canonical surrogate for a {@link InterfaceMethodActor} in the {@link TeleVM}.
- *
+ * Canonical surrogate for an object of type {@link CodeAttribute} in the {@link TeleVM}.
+ * 
  * @author Michael Van De Vanter
+ *
  */
-public final class TeleInterfaceMethodActor extends TeleMethodActor {
+public class TeleCodeAttribute extends TeleTupleObject {
 
     // Keep construction minimal for both performance and synchronization.
-    protected TeleInterfaceMethodActor(TeleVM teleVM, Reference interfaceMethodActorReference) {
-        super(teleVM, interfaceMethodActorReference);
+    protected TeleCodeAttribute(TeleVM teleVM, Reference codeAttributeReference) {
+        super(teleVM, codeAttributeReference);
     }
-
+    
     /**
-     * @return A local {@link InterfaceMethodActor} corresponding the the {@link TeleVM}'s {@link InterfaceMethodActor} for the method.
+     * Reads the Java bytecodes from the {@link TeleVM}.
      */
-    public InterfaceMethodActor interfaceMethodActor() {
-        return (InterfaceMethodActor) methodActor();
+    public final byte[] readBytecodes() {
+        final Reference byteArrayReference = teleVM().fields().CodeAttribute_code.readReference(reference());
+        final TeleArrayObject teleByteArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), byteArrayReference);
+        return (byte[]) teleByteArrayObject.shallowCopy();
     }
-
-    @Override
-    public TeleCodeAttribute getTeleCodeAttribute() {
-        return null;
+    
+    /**
+     * Gets the local surrogate for the {@link ConstantPool} associated with this code in the {@link TeleVM}.
+     */
+    public final TeleConstantPool getTeleConstantPool() {
+    	final Reference constantPoolReference = teleVM().fields().CodeAttribute_constantPool.readReference(reference());
+    	return (TeleConstantPool) TeleObject.make(teleVM(), constantPoolReference);
     }
-
-
-    @Override
-    public String maxineRole() {
-        return "InterfaceMethodActor";
-    }
-
-
-    @Override
-    public TargetMethodAccess[] getTargetMethods() {
-        return new TargetMethodAccess[0];
-    }
+    
+    
 }

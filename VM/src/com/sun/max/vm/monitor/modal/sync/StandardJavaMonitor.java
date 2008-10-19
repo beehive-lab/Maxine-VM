@@ -22,7 +22,6 @@ package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.debug.Debug.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.runtime.*;
@@ -52,25 +51,23 @@ class StandardJavaMonitor extends AbstractJavaMonitor {
     public void monitorEnter() {
         final VmThread currentThread = VmThread.current();
         if (Monitor.traceMonitors()) {
-            final DebugPrintStream out = Debug.out;
             final boolean lockDisabledSafepoints = Debug.lock();
-            out.print("Acquiring monitor for ");
-            out.print(currentThread.getName());
-            out.print(" [");
-            dump(out);
-            out.println("]");
+            Debug.print("Acquiring monitor for ");
+            Debug.print(currentThread.getName());
+            Debug.print(" [");
+            dump();
+            Debug.println("]");
             Debug.unlock(lockDisabledSafepoints);
         }
         if (_ownerThread == currentThread) {
             _recursionCount++;
             if (Monitor.traceMonitors()) {
-                final DebugPrintStream out = Debug.out;
                 final boolean lockDisabledSafepoints = Debug.lock();
-                out.print("Acquired monitor for ");
-                out.print(currentThread.getName());
-                out.print(" [");
-                dump(out);
-                out.println("]");
+                Debug.print("Acquired monitor for ");
+                Debug.print(currentThread.getName());
+                Debug.print(" [");
+                dump();
+                Debug.println("]");
                 Debug.unlock(lockDisabledSafepoints);
             }
             return;
@@ -82,13 +79,12 @@ class StandardJavaMonitor extends AbstractJavaMonitor {
         _ownerThread = currentThread;
         _recursionCount = 1;
         if (Monitor.traceMonitors()) {
-            final DebugPrintStream out = Debug.out;
             final boolean lockDisabledSafepoints = Debug.lock();
-            out.print("Acquired monitor for ");
-            out.print(currentThread.getName());
-            out.print(" [");
-            dump(out);
-            out.println("]");
+            Debug.print("Acquired monitor for ");
+            Debug.print(currentThread.getName());
+            Debug.print(" [");
+            dump();
+            Debug.println("]");
             Debug.unlock(lockDisabledSafepoints);
         }
     }
@@ -97,13 +93,12 @@ class StandardJavaMonitor extends AbstractJavaMonitor {
     public void monitorExit() {
         final VmThread currentThread = VmThread.current();
         if (Monitor.traceMonitors()) {
-            final DebugPrintStream out = Debug.out;
             final boolean lockDisabledSafepoints = Debug.lock();
-            out.print("Releasing monitor for ");
-            out.print(currentThread.getName());
-            out.print(" [");
-            dump(out);
-            out.println("]");
+            Debug.print("Releasing monitor for ");
+            Debug.print(currentThread.getName());
+            Debug.print(" [");
+            dump();
+            Debug.println("]");
             Debug.unlock(lockDisabledSafepoints);
         }
         if (_ownerThread != currentThread) {
@@ -114,13 +109,12 @@ class StandardJavaMonitor extends AbstractJavaMonitor {
             _ownerThread = null;
             _mutex.unlock();
             if (Monitor.traceMonitors()) {
-                final DebugPrintStream out = Debug.out;
                 final boolean lockDisabledSafepoints = Debug.lock();
-                out.print("Released monitor for ");
-                out.print(currentThread.getName());
-                out.print(" [");
-                dump(out);
-                out.println("]");
+                Debug.print("Released monitor for ");
+                Debug.print(currentThread.getName());
+                Debug.print(" [");
+                dump();
+                Debug.println("]");
                 Debug.unlock(lockDisabledSafepoints);
             }
         }
@@ -202,18 +196,18 @@ class StandardJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void dump(DebugPrintStream out) {
-        super.dump(out);
-        out.print(" mutex=");
-        out.print(_mutex.asPointer());
-        out.print(" waiters={");
+    public void dump() {
+        super.dump();
+        Debug.print(" mutex=");
+        Debug.print(_mutex.asPointer());
+        Debug.print(" waiters={");
         VmThread waiter = _waitingThreads;
         while (waiter != null) {
-            out.print(waiter.getName());
-            out.print(" ");
+            Debug.print(waiter.getName());
+            Debug.print(" ");
             waiter = waiter.nextWaitingThread();
         }
-        out.print("}");
+        Debug.print("}");
     }
 
     static class VMThreadMapJavaMonitor extends StandardJavaMonitor {
@@ -254,8 +248,8 @@ class StandardJavaMonitor extends AbstractJavaMonitor {
         }
 
         private void heapSchemeDeadlock() throws FatalError {
-            Debug.err.println("WARNING : GC thread is going for the HeapScheme lock. Trying to allocate?");
-            Debug.err.println("WARNING : Eliding HeapScheme lock for GC thread and attempting stack trace...");
+            Debug.println("WARNING : GC thread is going for the HeapScheme lock. Trying to allocate?");
+            Debug.println("WARNING : Eliding HeapScheme lock for GC thread and attempting stack trace...");
             DebugBreak.here();
             _elideForDeadlockStackTrace = true;
             throw FatalError.unexpected("GC thread is attempting to allocate. Attempting stack trace.");

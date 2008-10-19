@@ -683,8 +683,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             } else if (tableValue instanceof Integer) {
                 // BytecodePrinter returns index of a constant pool entry, when that's the operand
                 final int index = ((Integer) tableValue).intValue();
-                final TeleConstantPool teleConstantPool = teleClassMethodActor().getTeleHolder().getTeleConstantPool();
-                renderer =  PoolConstantLabel.make(inspection(), index, teleConstantPool, _operandDisplayMode);
+                renderer =  PoolConstantLabel.make(inspection(), index, teleConstantPool(), _operandDisplayMode);
                 setFont(style().bytecodeOperandFont());
             } else {
                 ProgramError.unexpected("unrecognized table value at row=" + row + ", col=" + col);

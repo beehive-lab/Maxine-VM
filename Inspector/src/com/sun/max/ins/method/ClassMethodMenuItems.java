@@ -67,7 +67,18 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
     private final InspectClassMethodActorAction _inspectClassMethodActorAction;
 
+    private final class InspectSubstitutionSourceClassActorAction extends InspectorAction {
+        private InspectSubstitutionSourceClassActorAction() {
+            super(inspection(), "Inspect Method Substitution Source");
+        }
 
+        @Override
+        public void procedure() {
+            inspection().focus().setHeapObject(_teleClassMethodActor.teleClassActorSubstitutedFrom());
+        }
+    }
+
+    private final InspectSubstitutionSourceClassActorAction _inspectSubstitutionSourceClassActorAction;
 
     private final class ViewJavaSourceAction extends InspectorAction {
         private ViewJavaSourceAction() {
@@ -158,11 +169,12 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
     public ClassMethodMenuItems(Inspection inspection, TeleClassMethodActor teleClassMethodActor) {
         _inspection = inspection;
         _teleClassMethodActor = teleClassMethodActor;
-        _inspectClassMethodActorAction = new InspectClassMethodActorAction();
         _viewJavaSourceAction = new ViewJavaSourceAction();
         _viewBytecodeAction = new ViewBytecodeAction();
         _bytecodeBreakOnEntryAction = new BytecodeBreakOnEntryAction();
         _invokeMethodAction = new InvokeMethodAction();
+        _inspectClassMethodActorAction = new InspectClassMethodActorAction();
+        _inspectSubstitutionSourceClassActorAction = new InspectSubstitutionSourceClassActorAction();
         refresh(teleVM().teleProcess().epoch());
     }
 
@@ -177,6 +189,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         menu.addSeparator();
         menu.add(_inspectClassMethodActorAction);
+        menu.add(_inspectSubstitutionSourceClassActorAction);
         menu.add(_inspectCompilationsMenu);
     }
 
@@ -186,11 +199,12 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
     public void refresh(long epoch) {
         _teleClassMethodActor.refreshView();
-        _inspectClassMethodActorAction.setEnabled(_teleClassMethodActor != null);
-        _bytecodeBreakOnEntryAction.setEnabled(_teleClassMethodActor != null && _teleClassMethodActor.hasBytecodes());
-        _viewBytecodeAction.setEnabled(_teleClassMethodActor != null && _teleClassMethodActor.hasBytecodes());
+        final boolean hasCodeAttribute =  _teleClassMethodActor.hasCodeAttribute();
         final File javaSourceFile = teleVM().findJavaSourceFile(_teleClassMethodActor.getTeleHolder().classActor());
         _viewJavaSourceAction.setEnabled(javaSourceFile != null);
+        _viewBytecodeAction.setEnabled(hasCodeAttribute);
+        _bytecodeBreakOnEntryAction.setEnabled(hasCodeAttribute);
+        _inspectSubstitutionSourceClassActorAction.setEnabled(_teleClassMethodActor.isSubstituted());
         if (_inspectCompilationsMenu.length() < _teleClassMethodActor.numberOfCompilations()) {
             for (int index = _inspectCompilationsMenu.length(); index < _teleClassMethodActor.numberOfCompilations(); index++) {
                 final TeleTargetMethod teleTargetMethod = _teleClassMethodActor.getJavaTargetMethod(index);

@@ -268,6 +268,10 @@ public abstract class TeleVM implements VMAccess {
 
     private MemoryRegion[] _heapRegions;
 
+    /**
+     * @param address  a memory location in the {@link TeleVM}.
+     * @return whether the location is in the dynamic heap regions of the VM, excluding the boot heap.
+     */
     public boolean dynamicHeapContains(Address address) {
         if (_heapRegions != null) {
             for (MemoryRegion heapRegion : _heapRegions) {
@@ -279,6 +283,10 @@ public abstract class TeleVM implements VMAccess {
         return false;
     }
 
+    /**
+     * @param address  a memory location in the {@link TeleVM}.
+     * @return whether the location is in the heap regions of the VM, either boot or dynamic.
+     */
     private boolean heapContains(Address address) {
         if (_updatingMemoryRegions) {
             return true;
@@ -291,6 +299,10 @@ public abstract class TeleVM implements VMAccess {
 
     private MemoryRegion[] _codeRegions;
 
+    /**
+     * @param address  a memory location in the {@link TeleVM}.
+     * @return whether the location is in the code regions of the VM.
+     */
     public boolean codeContains(Address address) {
         if (_updatingMemoryRegions) {
             return true;
@@ -308,8 +320,20 @@ public abstract class TeleVM implements VMAccess {
         return false;
     }
 
+    /**
+     * @param address a memory location in the {@link TeleVM}.
+     * @return whether the location is either in the object heap or in the code regions of the VM.
+     */
     public boolean heapOrCodeContains(Address address) {
         return !address.isZero() && (heapContains(address) || codeContains(address));
+    }
+    
+    /**
+     * @param address a memory location in the {@link TeleVM}.
+     * @return whether the location is either in the object heap, the code regions, or a stack region of the VM.
+     */
+    public boolean heapOrCodeOrStackContains(Address address) {
+        return !address.isZero() && (heapContains(address) || codeContains(address) || teleProcess().threadContaining(address) != null);
     }
 
     private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
@@ -321,7 +345,7 @@ public abstract class TeleVM implements VMAccess {
     }
 
     /**
-     * Determines if a given pointer is a valid object origin in the {@link TeleVM}.
+     * Determines if a given pointer is a valid heap object origin in the {@link TeleVM}.
      */
     public boolean isValidOrigin(Pointer origin) {
         if (origin.isZero()) {
