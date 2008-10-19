@@ -31,20 +31,8 @@
 #include "mutex.h"
 #include "threads.h"
 
-/* Set to true to multicast all debug output to stdout as well as the relevant log file. */
 #if !os_GUESTVMXEN
-static Boolean printToStdout = false;
-static FILE *logFile = NULL;
-#endif
-
-#if PROTOTYPE
-#   define LOG_FILE_NAME    "logPrototype.txt"
-#elif SUBSTRATE
-#   define LOG_FILE_NAME    "logSubstrate.txt"
-#elif INSPECTOR
-#   define LOG_FILE_NAME    "logInspector.txt"
-#else
-#   define LOG_FILE_NAME    "log.txt"
+static FILE *fileStream = NULL;
 #endif
 
 void debug_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
@@ -75,87 +63,87 @@ void debug_unlock(void) {
 	}
 }
 
-FILE *getfstream(int fd) {
-	if (fd == STDOUT) {
-	   return stdout;
-	}
-	if (fd == STDERR) {
-	   return stderr;
-	}
-#if os_GUESTVMXEN
-	return NULL;
-#else
-	if (fd == LOGFILE) {
-		if (logFile == NULL) {
-			logFile = fopen(LOG_FILE_NAME, "w");
-			/* Set the log file stream to flush whenever a newline character is encountered */
-			setlinebuf(logFile);
-		}
-		return logFile;
-	}
-	FILE *file = fdopen(fd, "a");
-    setlinebuf(file);
-	return file;
-#endif
-}
+#if !os_GUESTVMXEN
+FILE *getFileStream() {
+    if (fileStream == NULL) {
+        char *path = getenv("MAXVM_OUTPUT_FILE");
+        if (path == NULL) {
+            path = "stdout";
+        }
+        if (strncmp(path, "stdout\0", 7) == 0) {
+            fileStream = stdout;
+            /* Set the file stream to flush whenever a newline character is encountered */
+            setlinebuf(fileStream);
+        } else if (strncmp(path, "stderr\0", 7) == 0) {
+            fileStream = stderr;
+        } else {
+            fileStream = fopen(path, "w");
+            if (fileStream == NULL) {
+                fprintf(stderr, "Could not open file for VM output stream: %s\n", path);
+                exit(1);
+            }
+            /* Set the file stream to flush whenever a newline character is encountered */
+            setlinebuf(fileStream);
+        }
 
-void debug_print_format(int fd, char *format, ...) {
+    }
+    return fileStream;
+}
+#endif
+
+void debug_print_format(char *format, ...) {
 #if !os_GUESTVMXEN
     va_list ap;
     va_start(ap, format);
-    vfprintf(getfstream(fd), format, ap);
+    vfprintf(getFileStream(), format, ap);
     va_end(ap);
-
-    if (printToStdout && fd != STDOUT) {
-#endif
-        va_list ap;
-        va_start(ap, format);
-        vprintf(format, ap);
-        va_end(ap);
-#if !os_GUESTVMXEN
-    }
+#else
+    va_list ap;
+    va_start(ap, format);
+    vprintf(format, ap);
+    va_end(ap);
 #endif
 }
 
-void debug_print_int(int fd, int val) {
-    debug_print_format(fd, "%d", val);
+void debug_print_int(int val) {
+    debug_print_format("%d", val);
 }
 
-void debug_print_boolean(int fd, char val) {
+void debug_print_boolean(char val) {
 	if (val == 0) {
-	    debug_print_format(fd, "false");
+	    debug_print_format("false");
     } else {
-        debug_print_format(fd, "true");
+        debug_print_format("true");
     }
 }
 
-void debug_print_char(int fd, int val) {
-	debug_print_format(fd, "%c", val);
+void debug_print_char(int val) {
+	debug_print_format("%c", val);
 }
 
-void debug_print_long(int fd, jlong val) {
-	debug_print_format(fd, "%ld", val);
+void debug_print_long(jlong val) {
+	debug_print_format("%ld", val);
 }
 
-void debug_print_buffer(int fd, char *buffer) {
-	debug_print_format(fd, "%s", buffer);
+void debug_print_buffer(char *buffer) {
+	debug_print_format("%s", buffer);
 }
 
-void debug_print_word(int fd, Address address) {
-    debug_print_format(fd, ADDRESS_FORMAT, address);
+void debug_print_word(Address address) {
+    debug_print_format(ADDRESS_FORMAT, address);
 }
 
-void debug_print_newline(int fd) {
-    debug_print_format(fd, NEWLINE_STRING);
+void debug_print_newline() {
+    debug_print_format(NEWLINE_STRING);
 }
 
-void debug_print_float(int fd, float f) {
+void debug_print_float(float f) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
-	debug_print_format(fd, "%f", f);
+	debug_print_format("%f", f);
 }
 
-void debug_print_double(int fd, double d) {
+void debug_print_double(double d) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
-	debug_print_format(fd, "%lf", d);
+	debug_print_format("%lf", d);
 
 }

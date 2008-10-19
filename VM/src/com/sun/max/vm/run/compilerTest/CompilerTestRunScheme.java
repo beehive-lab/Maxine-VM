@@ -122,7 +122,7 @@ public class CompilerTestRunScheme extends JavaRunScheme {
             a();
             Debug.println("testException2: fail");
         } catch (Throwable e) {
-            e.printStackTrace(Debug.log);
+            e.printStackTrace(Debug.out);
             Debug.println("testException2: pass");
         }
     }

@@ -1205,9 +1205,9 @@ public class ClassfileReader {
         try {
             if (VerboseVMOption.verboseClassLoading()) {
                 if (source != null) {
-                    Debug.out.println("[Loading " + name + " from " + source + "]");
+                    Debug.println("[Loading " + name + " from " + source + "]");
                 } else {
-                    Debug.out.println("[Loading " + name + " from " + _classLoader.getClass().getName() + "]");
+                    Debug.println("[Loading " + name + " from " + _classLoader.getClass().getName() + "]");
                 }
             }
             enterContext(new Object() {
@@ -1220,9 +1220,9 @@ public class ClassfileReader {
 
             if (VerboseVMOption.verboseClassLoading()) {
                 if (source != null) {
-                    Debug.out.println("[Loaded " + name + " from " + source + "]");
+                    Debug.println("[Loaded " + name + " from " + source + "]");
                 } else {
-                    Debug.out.println("[Loaded " + name + " from " + _classLoader.getClass().getName() + "]");
+                    Debug.println("[Loaded " + name + " from " + _classLoader.getClass().getName() + "]");
                 }
             }
 

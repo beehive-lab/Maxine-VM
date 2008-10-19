@@ -27,18 +27,23 @@ import com.sun.max.*;
  */
 public interface VMScheme extends Scheme {
 
+    /**
+     * Gets the class embodying the specification of the scheme implemented by this object.
+     */
+    Class<? extends VMScheme> specification();
+
     VMConfiguration vmConfiguration();
 
     /**
      * Performs any scheme specific actions when entering a given VM phase.
-     * 
+     *
      * @param phase the VM phase that has just been entered
      */
     void initialize(MaxineVM.Phase phase);
 
     /**
      * Performs any scheme specific actions when leaving a given VM phase.
-     * 
+     *
      * @param phase the VM phase about to be completed
      */
     void finalize(MaxineVM.Phase phase);
