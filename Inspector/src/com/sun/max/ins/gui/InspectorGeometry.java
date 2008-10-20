@@ -47,7 +47,11 @@ public interface InspectorGeometry {
     Point stacksFrameDefaultLocation();
     Dimension stacksFramePrefSize();
 
-   // Methods Inspection (container) frame
+    // Thread locals Inspection (container) frame
+    Dimension threadLocalsFramePrefSize();
+    Point threadLocalsFrameDefaultLocation();
+
+    // Methods Inspection (container) frame
     Point methodsFrameDefaultLocation();
     Dimension methodsFramePrefSize();
 

@@ -351,52 +351,22 @@ public final class CardReferenceScheme extends AbstractVMScheme implements Refer
     }
 
     @INLINE
-    public static Pointer referenceBuffer() {
-        return MaxineVM._auxiliarySpace.plus(MaxineVM._auxiliarySpaceSize).aligned();
-    }
-
-    public static long _referenceBufferIndex = 0;
-    public static final byte ZERO = 0;
-
-    public static void resetReferenceBufferIndex() {
-        _referenceBufferIndex = 0;
-    }
-
-    @INLINE
-    public static long getReferenceBufferIndex() {
-        return _referenceBufferIndex;
-    }
-
-    @INLINE
     public void performWriteBarrier(Reference reference) {
-        if (VMConfiguration.hostOrTarget().buildLevel() == BuildLevel.DEBUG) {
-            // referenceBuffer().writeGrip(Offset.fromLong(_referenceBufferIndex * 8), reference.toGrip());
-            // _referenceBufferIndex++;
-        }
-        cardTableBase().writeByte(reference.toOrigin().unsignedShiftedRight(CardRegion.getAddressShiftLength()).asOffset(), ZERO);
+        cardTableBase().writeByte(reference.toOrigin().unsignedShiftedRight(CardRegion.getAddressShiftLength()).asOffset(), (byte) 0);
     }
 
-    /**
-     *
-     */
     @INLINE
     public void writeReference(Reference reference, Offset offset, Reference value) {
         performWriteBarrier(reference);
         gripScheme().fromReference(reference).writeGrip(offset, value.toGrip());
     }
 
-    /**
-     *
-     */
     @INLINE
     public void writeReference(Reference reference, int offset, Reference value) {
         performWriteBarrier(reference);
         gripScheme().fromReference(reference).writeGrip(offset, value.toGrip());
     }
 
-    /**
-     *
-     */
     @INLINE
     public void setReference(Reference reference, int displacement, int index, Reference value) {
         performWriteBarrier(reference);
@@ -423,18 +393,12 @@ public final class CardReferenceScheme extends AbstractVMScheme implements Refer
         return gripScheme().fromReference(reference).compareAndSwapWord(offset, suspectedValue, newValue);
     }
 
-    /**
-     *
-     */
     @INLINE
     public Reference compareAndSwapReference(Reference reference, Offset offset, Reference suspectedValue, Reference newValue) {
         performWriteBarrier(reference);
         return gripScheme().fromReference(reference).compareAndSwapReference(offset, suspectedValue, newValue);
     }
 
-    /**
-     *
-     */
     @INLINE
     public Reference compareAndSwapReference(Reference reference, int offset, Reference suspectedValue, Reference newValue) {
         performWriteBarrier(reference);

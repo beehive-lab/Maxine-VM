@@ -171,12 +171,19 @@ public final class Code {
     }
 
     /**
+     * TODO: clean this up.
+     */
+    public static void visitCells(BeltWayCellVisitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+        _codeManager.visitCells(cellVisitor, action, from, to);
+    }
+
+    /**
      * Visits each cell that is managed by the code manager.
      *
      * @param cellVisitor the cell visitor to call back for each cell
      */
-    public static void visitCells(CellVisitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        _codeManager.visitCells(cellVisitor, action, from, to);
+    public static void visitCells(CellVisitor cellVisitor) {
+        _codeManager.visitCells(cellVisitor);
     }
 
     public static Size getCodeSize() {

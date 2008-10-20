@@ -76,7 +76,12 @@ public interface MonitorScheme extends VMScheme {
     /**
      *  GC support for MonitorSchemes which hold native pointers to java objects.
      */
-    void scanReferences(PointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    void scanReferences(PointerIndexVisitor pointerIndexVisitor);
+
+    /**
+     *  TODO: clean this up.
+     */
+    void scanReferences(BeltWayPointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
 
     /**
      *  Notification that we are at a global safe-point, pre-collection.

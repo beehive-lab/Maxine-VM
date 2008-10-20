@@ -18,54 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.tele;
+package com.sun.max.vm.heap.util;
 
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
 
 /**
- * Remote support regarding the object heap.
- *
  * @author Bernd Mathiske
  */
-public final class TeleHeap {
+public interface BeltWayPointerOffsetVisitor extends Visitor{
 
-    private TeleHeap() {
-    }
+    void visitPointerOffset(Pointer pointer, int offset, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
+    void visitPointerOffset(Pointer pointer, int offset);
 
-    @INSPECTED
-    private static MemoryRegion[] _memoryRegions;
-
-    public static void registerMemoryRegions(MemoryRegion... memoryRegions) {
-        if (MaxineMessenger.isVmInspected()) {
-            if (_roots == null) {
-                _roots = new Object[MAX_NUMBER_OF_ROOTS];
-            }
-            final MemoryRegion[] result = new MemoryRegion[memoryRegions.length];
-            for (int i = 0; i < memoryRegions.length; i++) {
-                result[i] = new FixedMemoryRegion(memoryRegions[i]);
-            }
-            _memoryRegions = result;
-        }
-    }
-
-    public static final int MAX_NUMBER_OF_ROOTS = Ints.M / 8;
-
-    @INSPECTED
-    private static Object[] _roots = new Object[MAX_NUMBER_OF_ROOTS];
-
-    @INSPECTED
-    private static long _rootEpoch;
-
-    @INSPECTED
-    private static long _collectionEpoch;
-
-    public static void beforeGarbageCollection() {
-        _collectionEpoch++;
-    }
-
-    public static void afterGarbageCollection() {
-        _rootEpoch = _collectionEpoch;
-    }
 }

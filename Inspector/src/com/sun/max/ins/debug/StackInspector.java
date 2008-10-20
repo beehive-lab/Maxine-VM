@@ -154,6 +154,11 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                     if (teleTargetMethod != null) {
                         name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                         toolTip = inspection().nameDisplay().longName(teleTargetMethod, address);
+                        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+                        if (teleClassMethodActor.isSubstituted()) {
+                            name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                            toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                        }
                     } else {
                         final MethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
                         name = classMethodActor.format("%h.%n");
@@ -209,15 +214,15 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         final JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
 
-        final JPanel form = new JPanel(new SpringLayout());
-        form.setOpaque(true);
-        form.setBackground(style().defaultBackgroundColor());
-        form.add(new TextLabel(_inspection, "start: "));
-        form.add(new DataLabel.AddressAsHex(_inspection, _teleNativeThread.stack().start()));
-        form.add(new TextLabel(_inspection, "size: "));
-        form.add(new DataLabel.IntAsDecimal(_inspection, _teleNativeThread.stack().size().toInt()));
-        SpringUtilities.makeCompactGrid(form, 2);
-        panel.add(form, BorderLayout.NORTH);
+        final JPanel header = new JPanel(new SpringLayout());
+        header.setOpaque(true);
+        header.setBackground(style().defaultBackgroundColor());
+        header.add(new TextLabel(_inspection, "start: "));
+        header.add(new DataLabel.AddressAsHex(_inspection, _teleNativeThread.stack().start()));
+        header.add(new TextLabel(_inspection, "size: "));
+        header.add(new DataLabel.IntAsDecimal(_inspection, _teleNativeThread.stack().size().toInt()));
+        SpringUtilities.makeCompactGrid(header, 2);
+        panel.add(header, BorderLayout.NORTH);
 
         _list.setSelectionInterval(1, 0);
         _list.setVisibleRowCount(10);
@@ -484,7 +489,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                 _slotValues[slotIndex].refresh(epoch);
                 if (slot.referenceMapIndex() != -1) {
                     if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex())) {
-                        slotLabel.setForeground(style().wordValidReferenceDataColor());
+                        slotLabel.setForeground(style().wordValidObjectReferenceDataColor());
                     } else {
                         slotLabel.setForeground(style().textLabelColor());
                     }

@@ -70,7 +70,7 @@ public class TupleReferenceMap {
         }
     }
 
-    public static void visitOriginOffsets(Hub hub, Pointer origin, PointerOffsetVisitor offsetVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
+    public static void visitOriginOffsets(Hub hub, Pointer origin, BeltWayPointerOffsetVisitor offsetVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         final int n = hub.referenceMapStartIndex() + hub.referenceMapLength();
         for (int i = hub.referenceMapStartIndex(); i < n; i++) {
             final int offset = hub.getInt(i);

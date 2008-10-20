@@ -18,38 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.vm.heap.util;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
-import java.util.*;
-
+import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.thread.*;
 
 /**
- * The values of the {@linkplain VmThreadLocal thread local variables} for a {@linkplain TeleNativeThread thread}.
- *
- * @author Doug Simon
+ * @author Bernd Mathiske
  */
-public class TeleThreadLocalValues extends EnumMap<VmThreadLocal, Long> {
-
-    public TeleThreadLocalValues() {
-        super(VmThreadLocal.class);
-        final Long zero = Long.valueOf(0L);
-        for (VmThreadLocal threadLocalVariable : VmThreadLocal.VALUES) {
-            put(threadLocalVariable, zero);
-        }
-    }
+public interface BeltWayPointerIndexVisitor extends Visitor{
 
     /**
-     * Gets the value of a given thread local variable as a word.
+     * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address
+     * computed by {@code pointer.plus(wordIndex * Word.size())}.
+     *
+     * @param pointer
+     * @param wordIndex
      */
-    public Word getWord(VmThreadLocal threadLocalVariable) {
-        return Address.fromLong(get(threadLocalVariable));
-    }
-
-    public boolean isInJavaCode() {
-        return get(LAST_JAVA_CALLER_INSTRUCTION_POINTER) == 0 && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C) == 0;
-    }
+    void visitPointerIndex(Pointer pointer, int wordIndex, RuntimeMemoryRegion from, RuntimeMemoryRegion to);
 }

@@ -93,7 +93,7 @@ public class JavaMethodInspector extends MethodInspector {
         // enable choice if target code is present, even though this Inspector is not bound to a TargetMethod
         _codeKindEnabled.put(CodeKind.TARGET_CODE, teleTargetMethod != null || teleClassMethodActor.hasTargetMethod());
         // enable if bytecodes present
-        _codeKindEnabled.put(CodeKind.BYTECODES, _teleClassMethodActor.hasBytecodes());
+        _codeKindEnabled.put(CodeKind.BYTECODES, _teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
         _codeKindEnabled.put(CodeKind.JAVA_SOURCE, false);
 
@@ -134,15 +134,28 @@ public class JavaMethodInspector extends MethodInspector {
     @Override
     public String getTitle() {
         final ClassMethodActor classMethodActor = _teleClassMethodActor.classMethodActor();
-        return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
+        final StringBuilder sb = new StringBuilder(50);
+        sb.append(classMethodActor.holder().simpleName());
+        sb.append(".");
+        sb.append(classMethodActor.name().toString());
+        sb.append(inspection().nameDisplay().methodCompilationID(_teleTargetMethod));
+        sb.append(inspection().nameDisplay().methodSubstitutionShortAnnotation(_teleClassMethodActor));
+        return sb.toString();
+        //return classMethodActor.holder().simpleName() + "." + classMethodActor.name().toString() + inspection().nameDisplay().methodCompilationID(_teleTargetMethod);
     }
 
     @Override
     public String getToolTip() {
+        String result;
         if (_teleTargetMethod != null) {
-            return inspection().nameDisplay().shortName(_teleTargetMethod, ReturnTypeSpecification.AS_PREFIX);
+            result =  inspection().nameDisplay().shortName(_teleTargetMethod, ReturnTypeSpecification.AS_PREFIX);
+        } else {
+            result = inspection().nameDisplay().shortName(_teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
         }
-        return inspection().nameDisplay().shortName(_teleClassMethodActor, ReturnTypeSpecification.AS_PREFIX);
+        if (_teleClassMethodActor.isSubstituted()) {
+            result = result + inspection().nameDisplay().methodSubstitutionLongAnnotation(_teleClassMethodActor);
+        }
+        return result;
     }
 
     /** Is it possible to display this source kind: code kind exists and the viewer is implemented. */

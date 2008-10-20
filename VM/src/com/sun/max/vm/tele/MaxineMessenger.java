@@ -60,7 +60,7 @@ public final class MaxineMessenger {
      * Otherwise it remains zero and there is no messenger traffic.
      */
     @INSPECTED
-    private static Pointer _info;
+    private static Pointer _info = Pointer.zero();
 
     public static boolean isVmInspected() {
         return !_info.isZero();

@@ -134,6 +134,20 @@ public final class InspectorNameDisplay extends InspectionHolder {
     }
 
     /**
+     * E.g. an asterisk when a method has been substituted.
+     */
+    public String methodSubstitutionShortAnnotation(TeleMethodActor teleMethodActor) {
+        return teleMethodActor.isSubstituted() ? " *" : "";
+    }
+
+    /**
+     * E.g. an asterisk when a method has been substituted.
+     */
+    public String methodSubstitutionLongAnnotation(TeleMethodActor teleMethodActor) {
+        return teleMethodActor.isSubstituted() ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
+    }
+
+    /**
      * E.g. "Element.foo()[0]"
      */
     public String veryShortName(TeleTargetMethod teleTargetMethod) {

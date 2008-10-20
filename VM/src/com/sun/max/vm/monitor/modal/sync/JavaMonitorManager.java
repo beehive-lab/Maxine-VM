@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.debug.Debug.*;
 import com.sun.max.vm.heap.sequential.Beltway.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
@@ -115,16 +114,15 @@ public class JavaMonitorManager {
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
             if (Monitor.traceMonitors() && _allStickyQty > 0) {
-                final DebugPrintStream out = Debug.out;
                 final boolean lockDisabledSafepoints = Debug.lock();
-                out.println("Sticky monitors:");
+                Debug.println("Sticky monitors:");
                 for (int i = 0; i < _allStickyQty; i++) {
                     final ManagedMonitor monitor = _allSticky[i];
-                    out.print("  ");
-                    out.print(i);
-                    out.print(": ");
-                    monitor.dump(out);
-                    out.println();
+                    Debug.print("  ");
+                    Debug.print(i);
+                    Debug.print(": ");
+                    monitor.dump();
+                    Debug.println();
                 }
                 Debug.unlock(lockDisabledSafepoints);
             }
@@ -219,11 +217,10 @@ public class JavaMonitorManager {
         }
         monitor.setBoundObject(object);
         if (Monitor.traceMonitors()) {
-            final DebugPrintStream out = Debug.out;
             final boolean lockDisabledSafepoints = Debug.lock();
-            out.print("Bound monitor: ");
-            monitor.dump(out);
-            out.println();
+            Debug.print("Bound monitor: ");
+            monitor.dump();
+            Debug.println();
             Debug.unlock(lockDisabledSafepoints);
         }
         return monitor;
@@ -385,7 +382,7 @@ public class JavaMonitorManager {
 
         void setNext(ManagedMonitor monitor);
 
-        void dump(DebugPrintStream out);
+        void dump();
     }
 
 }

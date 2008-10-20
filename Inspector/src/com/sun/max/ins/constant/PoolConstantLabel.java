@@ -308,7 +308,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             if (_teleClassMethodActor == null) {
                 setForeground(style().javaUnresolvedNameColor());
             } else {
-                if (_teleClassMethodActor.hasBytecodes()) {
+                if (_teleClassMethodActor.hasCodeAttribute()) {
                     setForeground(style().bytecodeMethodEntryColor());
                 } else {
                     setForeground(style().bytecodeColor());
@@ -329,7 +329,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         @Override
         protected void handleLeftButtonEvent() {
             checkResolved();
-            if (_teleClassMethodActor != null && _teleClassMethodActor.hasBytecodes()) {
+            if (_teleClassMethodActor != null && _teleClassMethodActor.hasCodeAttribute()) {
                 final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), _teleClassMethodActor, 0);
                 inspection().focus().setCodeLocation(teleCodeLocation, false);
             }

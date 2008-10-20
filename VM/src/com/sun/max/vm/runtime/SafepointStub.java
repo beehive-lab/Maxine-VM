@@ -52,15 +52,22 @@ public class SafepointStub extends RuntimeStub {
     }
     @Override
     public boolean walkFrame(StackFrameWalker stackFrameWalker, boolean isTopFrame, Purpose purpose, Object context) {
-        FatalError.check(purpose == Purpose.INSPECTING, "Cannot walk stack unwind stub unless inspecting");
-        final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-        final StackFrame stackFrame = new RuntimeStubStackFrame(stackFrameWalker.calleeStackFrame(), this,
-                        stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
+        if (purpose == Purpose.INSPECTING) {
+            final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
+            final StackFrame stackFrame = new RuntimeStubStackFrame(stackFrameWalker.calleeStackFrame(), this,
+                            stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), stackFrameWalker.framePointer());
 
-        if (!stackFrameVisitor.visitFrame(stackFrame)) {
+            if (!stackFrameVisitor.visitFrame(stackFrame)) {
+                return false;
+            }
+        }
+        if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
+            // This walk is being done to 'complete' (see StackFrameWalker.complete(...)) the reference map for
+            // a thread that was stopped by a safe while executing Java code. The reference map for the frames
+            // above the frame of the safepoint stub has already been completed so there's no need to visit
+            // these frames again.
             return false;
         }
-
         stackFrameWalker.advanceToTrapFrame();
         return true;
     }

@@ -58,11 +58,14 @@ public final class VMOptions {
 
     private static final VMIntOption _traceLevelOption = new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.", MaxineVM.Phase.PRISTINE);
 
+    private static final VMOption _printConfiguration = new VMOption("-XX:PrintConfiguration", "Shows VM configuration details and exits.", MaxineVM.Phase.STARTING);
+    private static final VMOption _showConfiguration = new VMOption("-XX:ShowConfiguration", "Shows VM configuration details and continues.", MaxineVM.Phase.STARTING);
+
     private static Pointer _argv;
     private static int _argc;
     private static int _argumentStart;
 
-    private static boolean _haveError;
+    private static boolean _earlyVMExitRequested;
 
     private static String[] _mainClassArguments;
     private static String _mainClassName;
@@ -71,13 +74,13 @@ public final class VMOptions {
     }
 
     public static void printHelpForOption(String prefix, String value, String help) {
-        Debug.err.print("    ");
-        Debug.err.print(prefix);
-        Debug.err.print(value);
-        Debug.err.print(" ");
+        Debug.print("    ");
+        Debug.print(prefix);
+        Debug.print(value);
+        Debug.print(" ");
         int column = 5 + prefix.length() + value.length();
         for (; column < HELP_INDENT; column++) {
-            Debug.err.print(' ');
+            Debug.print(' ');
         }
         if (help != null) {
             // reformat the help text by wrapping the lines after column 72.
@@ -85,18 +88,18 @@ public final class VMOptions {
             for (int j = 0; j < help.length(); j++) {
                 final char ch = help.charAt(j);
                 if (column > 72 && (ch == ' ' || ch == '\t')) {
-                    Debug.err.println();
+                    Debug.println();
                     for (int k = 0; k < HELP_INDENT; k++) {
-                        Debug.err.print(' ');
+                        Debug.print(' ');
                     }
                     column = HELP_INDENT;
                 } else {
-                    Debug.err.print(ch);
+                    Debug.print(ch);
                     column++;
                 }
             }
         }
-        Debug.err.println();
+        Debug.println();
     }
 
     @PROTOTYPE_ONLY
@@ -136,41 +139,46 @@ public final class VMOptions {
 
     private static void printOptions(String label, Category category) {
         if (label != null) {
-            Debug.err.println();
-            Debug.err.println(label);
+            Debug.println();
+            Debug.println(label);
         }
         printOptions(_pristinePhaseOptions, label, category);
         printOptions(_startingPhaseOptions, label, category);
     }
 
     public static void printUsage() {
-        Debug.err.println("Usage: maxvm [-options] [class | -jar jarfile]  [args...]");
-        Debug.err.println("where options include:");
+        Debug.println("Usage: maxvm [-options] [class | -jar jarfile]  [args...]");
+        Debug.println("where options include:");
 
         printOptions(null, Category.STANDARD);
         printOptions("Non-standard options:", Category.NON_STANDARD);
         printOptions("Maxine options:", Category.IMPLEMENTATION_SPECIFIC);
     }
 
-    public static boolean haveError() {
-        return _haveError;
+    /**
+     * Determines if the VM should terminate. This will be true if there was an error while parsing the VM options.
+     * It may also be true if the semantics of some VM option is to print some diagnostic info and then
+     * exit the VM.
+     */
+    public static boolean earlyVMExitRequested() {
+        return _earlyVMExitRequested;
     }
 
     protected static void error(String errorMessage) {
-        _haveError = true;
-        Debug.err.print("VM program argument parsing error: ");
-        Debug.err.println(errorMessage);
+        _earlyVMExitRequested = true;
+        Debug.print("VM program argument parsing error: ");
+        Debug.println(errorMessage);
         printUsage();
         MaxineVM.setExitCode(1);
     }
 
     protected static void error(VMOption option) {
-        _haveError = true;
-        Debug.err.print("Error while parsing ");
-        Debug.err.print(option.toString());
-        Debug.err.print(": ");
+        _earlyVMExitRequested = true;
+        Debug.print("Error while parsing ");
+        Debug.print(option.toString());
+        Debug.print(": ");
         option.printErrorMessage();
-        Debug.err.println();
+        Debug.println();
         printUsage();
         MaxineVM.setExitCode(1);
     }
@@ -290,7 +298,7 @@ public final class VMOptions {
     }
 
     private static boolean checkOptionsForErrors(AppendableIndexedSequence<VMOption> options) {
-        if (_haveError) {
+        if (_earlyVMExitRequested) {
             return false;
         }
         for (int i = 0; i < options.length(); i++) {
@@ -329,7 +337,23 @@ public final class VMOptions {
         } catch (Utf8Exception utf8Exception) {
             error("UTF8 problem");
         }
-        return checkOptionsForErrors(_startingPhaseOptions);
+        final boolean noErrorFound = checkOptionsForErrors(_startingPhaseOptions);
+        if (noErrorFound) {
+            if (_printConfiguration.isPresent() || _showConfiguration.isPresent()) {
+                final VMConfiguration vm = VMConfiguration.target();
+                Debug.println("VM Configuration:");
+                Debug.println("  Build level: " + vm.buildLevel());
+                Debug.println("  Platform: " + vm.platform());
+                for (VMScheme vmScheme : vm.vmSchemes()) {
+                    final String specification = vmScheme.specification().getSimpleName();
+                    Debug.println("  " + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
+                }
+                if (_printConfiguration.isPresent()) {
+                    _earlyVMExitRequested = true;
+                }
+            }
+        }
+        return noErrorFound;
     }
 
     public static void parseSystemProperties(Properties properties) {
