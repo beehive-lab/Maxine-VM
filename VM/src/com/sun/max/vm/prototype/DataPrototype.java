@@ -846,7 +846,7 @@ public final class DataPrototype extends Prototype {
     /**
      * A visitor that sets the relocation flag for the origin of all objects.
      */
-    private final PointerOffsetVisitor _originOffsetVisitor = new PointerOffsetVisitorImpl() {
+    private final PointerOffsetVisitor _originOffsetVisitor = new PointerOffsetVisitor() {
         @Override
         public void visitPointerOffset(Pointer origin, int offset) {
             setRelocationFlag(origin.plus(offset));

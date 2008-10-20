@@ -58,9 +58,12 @@ import com.sun.max.vm.value.*;
  */
 public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
-    private static final VMOption _versionOption = new VMOption("-version", "report version information", MaxineVM.Phase.STARTING);
+    private static final VMOption _versionOption = new VMOption(
+        "-version", "print product version and exit", MaxineVM.Phase.STARTING);
+    private static final VMOption _showVersionOption = new VMOption(
+        "-showversion", "print product version and continue", MaxineVM.Phase.STARTING);
     private static final VMOption _D64Option = new VMOption("-d64",
-                    "Selects the 64-bit data model if available. Currently ignored.", MaxineVM.Phase.PRISTINE);
+        "Selects the 64-bit data model if available. Currently ignored.", MaxineVM.Phase.PRISTINE);
 
     private static final boolean LOOKUP_MAIN_USING_ACTOR = false;
 
@@ -166,7 +169,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
 
-                Trace.setStream(Debug.log);
+                Trace.setStream(Debug.out);
                 Trace.on(VMOptions.traceLevel());
 
                 try {
@@ -232,6 +235,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         }
 
         MaxineVM.writeInitialVMParams();
+
     }
 
 
@@ -245,12 +249,15 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         boolean error = true;
         try {
             initializeBasicFeatures();
-            if (VMOptions.haveError()) {
+            if (VMOptions.earlyVMExitRequested()) {
                 return;
             }
             if (_versionOption.isPresent()) {
                 sun.misc.Version.print();
                 return;
+            }
+            if (_showVersionOption.isPresent()) {
+                sun.misc.Version.print();
             }
 
             if (!VMOptions.parseMain()) {
@@ -276,8 +283,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         } catch (IOException ioException) {
             System.err.println("error reading jar file: " + ioException);
         } catch (ProgramError programError) {
-            Debug.err.print("ProgramError: ");
-            Debug.err.println(programError.getMessage());
+            Debug.print("ProgramError: ");
+            Debug.println(programError.getMessage());
         } finally {
             if (error) {
                 MaxineVM.setExitCode(1);

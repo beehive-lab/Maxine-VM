@@ -41,6 +41,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -1204,9 +1205,9 @@ public class ClassfileReader {
         try {
             if (VerboseVMOption.verboseClassLoading()) {
                 if (source != null) {
-                    Debug.out.println("[Loading " + name + " from " + source + "]");
+                    Debug.println("[Loading " + name + " from " + source + "]");
                 } else {
-                    Debug.out.println("[Loading " + name + " from " + _classLoader.getClass().getName() + "]");
+                    Debug.println("[Loading " + name + " from " + _classLoader.getClass().getName() + "]");
                 }
             }
             enterContext(new Object() {
@@ -1219,11 +1220,14 @@ public class ClassfileReader {
 
             if (VerboseVMOption.verboseClassLoading()) {
                 if (source != null) {
-                    Debug.out.println("[Loaded " + name + " from " + source + "]");
+                    Debug.println("[Loaded " + name + " from " + source + "]");
                 } else {
-                    Debug.out.println("[Loaded " + name + " from " + _classLoader.getClass().getName() + "]");
+                    Debug.println("[Loaded " + name + " from " + _classLoader.getClass().getName() + "]");
                 }
             }
+
+            TeleClassInfo.registerClassLoaded(classActor);
+
             return classActor;
         } finally {
             exitContext();

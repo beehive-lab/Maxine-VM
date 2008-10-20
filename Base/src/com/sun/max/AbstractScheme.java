@@ -24,7 +24,7 @@ package com.sun.max;
 /**
  * @author Bernd Mathiske
  */
-public abstract class AbstractScheme implements Scheme {
+public abstract class AbstractScheme {
 
     protected final String _name;
 

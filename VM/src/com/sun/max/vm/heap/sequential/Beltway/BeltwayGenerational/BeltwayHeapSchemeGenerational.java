@@ -62,7 +62,7 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
             _sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize()));
             CardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
-            TeleHeap.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
+            TeleHeapInfo.registerMemoryRegions(getEdenSpace(), getToSpace(), getMatureSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             _collectorThread = new StopTheWorldDaemon("GC", _beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
@@ -101,22 +101,18 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
      * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
      */
     @INLINE
-    @NO_SAFEPOINTS("TODO")
     @Override
     public Pointer allocate(Size size) {
-        if (!(_phase == MaxineVM.Phase.RUNNING)) {
+        if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getEdenSpace(), size);
         }
         if (BeltwayConfiguration._useTLABS) {
             return tlabAllocate(getEdenSpace(), size);
         }
-
         return heapAllocate(getEdenSpace(), size);
     }
 
-    @Override
-    @INLINE
-    public synchronized boolean collect(Size requestedFreeSpace) {
+    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         if (_outOfMemory) {
             return false;
         }

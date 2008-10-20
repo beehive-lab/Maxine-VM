@@ -37,20 +37,16 @@ extern void debug_lock(void);
 
 extern void debug_unlock(void);
 
-#define STDOUT 1
-#define STDERR 2
-#define LOGFILE -1
-
-extern void debug_print_int(int fd, int val);
-extern void debug_print_boolean(int fd, char val);
-extern void debug_print_char(int fd, int val);
-extern void debug_print_long(int fd, jlong val);
-extern void debug_print_word(int fd, Address val);
-extern void debug_print_buffer(int fd, char *buffer);
-extern void debug_print_format(int fd, char *format, ...);
-extern void debug_print_newline(int fd);
-extern void debug_print_float(int fd, float f);
-extern void debug_print_double(int fd, double d);
+extern void debug_print_int(int val);
+extern void debug_print_boolean(char val);
+extern void debug_print_char(int val);
+extern void debug_print_long(jlong val);
+extern void debug_print_word(Address val);
+extern void debug_print_buffer(char *buffer);
+extern void debug_print_format(char *format, ...);
+extern void debug_print_newline();
+extern void debug_print_float(float f);
+extern void debug_print_double(double d);
 
 #if os_WINDOWS
 #define NEWLINE_STRING "\r\n"
@@ -58,10 +54,10 @@ extern void debug_print_double(int fd, double d);
 #define NEWLINE_STRING "\n"
 #endif
 
-#define debug_print(format, ...) debug_print_format(LOGFILE, format, ##__VA_ARGS__)
-#define debug_println(format, ...) debug_print_format(LOGFILE, format NEWLINE_STRING, ##__VA_ARGS__)
+#define debug_print(format, ...) debug_print_format(format, ##__VA_ARGS__)
+#define debug_println(format, ...) debug_print_format(format NEWLINE_STRING, ##__VA_ARGS__)
 #define debug_exit(code, format, ...) do {\
-    debug_print_format(STDERR, format NEWLINE_STRING, ##__VA_ARGS__); \
+    debug_print_format(format NEWLINE_STRING, ##__VA_ARGS__); \
     exit(code); \
 } while(0)
 
@@ -72,11 +68,11 @@ extern void debug_print_double(int fd, double d);
 #endif
 
 #define DEBUG_LOADER 0
-#define DEBUG_TRAP 1
-#define DEBUG_TRAP_REGISTERS 1
-#define DEBUG_MONITOR 1
+#define DEBUG_TRAP 0
+#define DEBUG_TRAP_REGISTERS 0
+#define DEBUG_MONITOR 0
 #define DEBUG_LINKER 0
 #define DEBUG_JVMNI 0
-#define DEBUG_THREADS 1
+#define DEBUG_THREADS 0
 
 #endif /*__debug_h__*/

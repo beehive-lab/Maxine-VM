@@ -268,6 +268,10 @@ public abstract class TeleVM implements VMAccess {
 
     private MemoryRegion[] _heapRegions;
 
+    /**
+     * @param address  a memory location in the {@link TeleVM}.
+     * @return whether the location is in the dynamic heap regions of the VM, excluding the boot heap.
+     */
     public boolean dynamicHeapContains(Address address) {
         if (_heapRegions != null) {
             for (MemoryRegion heapRegion : _heapRegions) {
@@ -279,6 +283,10 @@ public abstract class TeleVM implements VMAccess {
         return false;
     }
 
+    /**
+     * @param address  a memory location in the {@link TeleVM}.
+     * @return whether the location is in the heap regions of the VM, either boot or dynamic.
+     */
     private boolean heapContains(Address address) {
         if (_updatingMemoryRegions) {
             return true;
@@ -291,6 +299,10 @@ public abstract class TeleVM implements VMAccess {
 
     private MemoryRegion[] _codeRegions;
 
+    /**
+     * @param address  a memory location in the {@link TeleVM}.
+     * @return whether the location is in the code regions of the VM.
+     */
     public boolean codeContains(Address address) {
         if (_updatingMemoryRegions) {
             return true;
@@ -308,11 +320,21 @@ public abstract class TeleVM implements VMAccess {
         return false;
     }
 
+    /**
+     * @param address a memory location in the {@link TeleVM}.
+     * @return whether the location is either in the object heap or in the code regions of the VM.
+     */
     public boolean heapOrCodeContains(Address address) {
         return !address.isZero() && (heapContains(address) || codeContains(address));
     }
-
-    private boolean _isClassRegistryInitialized;
+    
+    /**
+     * @param address a memory location in the {@link TeleVM}.
+     * @return whether the location is either in the object heap, the code regions, or a stack region of the VM.
+     */
+    public boolean heapOrCodeOrStackContains(Address address) {
+        return !address.isZero() && (heapContains(address) || codeContains(address) || teleProcess().threadContaining(address) != null);
+    }
 
     private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
         return gripScheme().createTemporaryRemoteTeleGrip(rawGrip.asAddress());
@@ -323,7 +345,7 @@ public abstract class TeleVM implements VMAccess {
     }
 
     /**
-     * Determines if a given pointer is a valid object origin in the {@link TeleVM}.
+     * Determines if a given pointer is a valid heap object origin in the {@link TeleVM}.
      */
     public boolean isValidOrigin(Pointer origin) {
         if (origin.isZero()) {
@@ -351,24 +373,21 @@ public abstract class TeleVM implements VMAccess {
             }
         }
 
-        if (_isClassRegistryInitialized) {
-            // Keep following hub pointers until the same hub is traversed twice or an address outside of heap or code
-            // region(s) is encountered.
-            Word hubWord = layoutScheme().generalLayout().readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
-            for (int i = 0; i < 3; i++) { // longest expected chain: staticTuple -> staticHub -> dynamicHub -> dynamicHub
-                final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);
-                if (!heapOrCodeContains(hubGrip.toOrigin())) {
-                    return false;
-                }
-                final Word nextHubWord = layoutScheme().generalLayout().readHubReferenceAsWord(hubGrip);
-                if (nextHubWord.equals(hubWord)) {
-                    return true;
-                }
-                hubWord = nextHubWord;
-            }
-            return false;
+        // Keep following hub pointers until the same hub is traversed twice or an address outside of heap or code
+        // region(s) is encountered.
+        Word hubWord = layoutScheme().generalLayout().readHubReferenceAsWord(temporaryRemoteTeleGripFromOrigin(origin));
+        for (int i = 0; i < 3; i++) { // longest expected chain: staticTuple -> staticHub -> dynamicHub -> dynamicHub
+        	final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);
+        	if (!heapOrCodeContains(hubGrip.toOrigin())) {
+        		return false;
+        	}
+        	final Word nextHubWord = layoutScheme().generalLayout().readHubReferenceAsWord(hubGrip);
+        	if (nextHubWord.equals(hubWord)) {
+        		return true;
+        	}
+        	hubWord = nextHubWord;
         }
-        return true;
+        return false;      
     }
 
     public boolean isValidGrip(Grip grip) {
@@ -564,10 +583,14 @@ public abstract class TeleVM implements VMAccess {
 
     private TeleClassRegistry _teleClassRegistry;
 
+    /**
+     * @return a registry that identifies all classes known to have been loaded
+     * in the {@link TeleVM}, loaded with key data that doesn't require
+     * loading the class here until needed.
+     */
     public synchronized TeleClassRegistry teleClassRegistry() {
         if (_teleClassRegistry == null) {
             _teleClassRegistry = new TeleClassRegistry(this);
-            _isClassRegistryInitialized = true;
         }
         return _teleClassRegistry;
     }
@@ -582,8 +605,8 @@ public abstract class TeleVM implements VMAccess {
     }
 
     /**
-     * @return an ordered set of {@link TypeDescriptor}s for classes that were in the
-     * {@link TeleVM}'s ClassRegistry at startup, plus classes found on the class path.
+     * @return an ordered set of {@link TypeDescriptor}s for classes loaded in the
+     * {@link TeleVM}, plus classes found on the class path.
      */
     public synchronized Iterable<TypeDescriptor> loadableTypeDescriptors() {
         final SortedSet<TypeDescriptor> typeDescriptors = new TreeSet<TypeDescriptor>();
@@ -700,8 +723,8 @@ public abstract class TeleVM implements VMAccess {
      * Refreshes the values that describe {@link TeleVM} state such as the current GC epoch.
      */
     private void refreshReferences() {
-        final long teleRootEpoch = fields().TeleHeap_rootEpoch.readLong(this);
-        final long teleCollectionEpoch = fields().TeleHeap_collectionEpoch.readLong(this);
+        final long teleRootEpoch = fields().TeleHeapInfo_rootEpoch.readLong(this);
+        final long teleCollectionEpoch = fields().TeleHeapInfo_collectionEpoch.readLong(this);
         if (teleCollectionEpoch != teleRootEpoch) {
             assert teleCollectionEpoch != _inspectorCollectionEpoch;
             _areTeleRootsValid = false;
@@ -729,6 +752,7 @@ public abstract class TeleVM implements VMAccess {
         refreshReferences();
         if (_areTeleRootsValid) {
             refreshMemoryRegions();
+            teleClassRegistry().refresh();
         }
     }
 
@@ -799,12 +823,8 @@ public abstract class TeleVM implements VMAccess {
     }
 
     @Override
-    public ReferenceTypeProvider[] getAllReferenceTypes() {
-        final AppendableSequence<ReferenceTypeProvider> result = new LinkSequence<ReferenceTypeProvider>();
-        for (TypeDescriptor td : teleClassRegistry().typeDescriptors()) {
-            result.append(teleClassRegistry().findTeleClassActor(td));
-        }
-        return Sequence.Static.toArray(result, ReferenceTypeProvider.class);
+    public ReferenceTypeProvider[] getAllReferenceTypes() {       
+        return teleClassRegistry().teleClassActors();
     }
 
     @Override
@@ -826,7 +846,7 @@ public abstract class TeleVM implements VMAccess {
         final AppendableSequence<ReferenceTypeProvider> result = new LinkSequence<ReferenceTypeProvider>();
         for (TypeDescriptor td : teleClassRegistry().typeDescriptors()) {
             if (td.toString().equals(signature)) {
-                final TeleClassActor tca = teleClassRegistry().findTeleClassActor(td);
+                final TeleClassActor tca = teleClassRegistry().findTeleClassActorByType(td);
 
                 // Do not include array types, there should always be faked in order to be able to call newInstance on them. Arrays that are created this way then do
                 // not really live within the VM, but on the JDWP server side.
@@ -1248,7 +1268,7 @@ public abstract class TeleVM implements VMAccess {
 
         // Always fake the Object class, otherwise try to find a class in the Maxine VM that matches the signature.
         if (!klass.equals(Object.class)) {
-            referenceTypeProvider = this.teleClassRegistry().findTeleClassActor(klass);
+            referenceTypeProvider = this.teleClassRegistry().findTeleClassActorByClass(klass);
         }
 
         // If no class was found within the Maxine VM, create a faked reference type object.

@@ -123,16 +123,19 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
     public Color wordNullDataColor() {
         return hexDataColor();
     }
-    public Color wordValidReferenceDataColor() {
+    public Color wordValidObjectReferenceDataColor() {
         return hexDataColor();
     }
     public Color wordUncheckedReferenceDataColor() {
         return hexDataColor();
     }
-    public Color wordInvalidReferenceDataColor() {
+    public Color wordInvalidObjectReferenceDataColor() {
         return hexDataColor();
     }
     public  Color wordInvalidDataColor() {
+        return hexDataColor();
+    }
+    public Color wordStackLocationDataColor() {
         return hexDataColor();
     }
     public Color wordCallEntryPointColor() {
@@ -146,9 +149,6 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
     }
     public Font wordAlternateTextFont() {
         return defaultFont();
-    }
-    public Color wordAlternateTextColor() {
-        return defaultTextColor();
     }
     public Color wordSelectedColor() {
         return defaultTextColor();

@@ -128,13 +128,13 @@ public abstract class StackFrameWalker {
                 // Java frame
                 if (lastJavaCallee != null) {
                     if (lastJavaCallee.classMethodActor().isCFunction()) {
-                        Debug.err.print("Caller of VM entry point (@C_FUNCTION method) \"");
-                        Debug.err.print(lastJavaCallee.name());
-                        Debug.err.print("\" is not native code: ");
-                        Debug.err.print(targetMethod.name());
-                        Debug.err.print(targetMethod.classMethodActor().descriptor().string());
-                        Debug.err.print(" in ");
-                        Debug.err.println(targetMethod.classMethodActor().holder().name().string());
+                        Debug.print("Caller of VM entry point (@C_FUNCTION method) \"");
+                        Debug.print(lastJavaCallee.name());
+                        Debug.print("\" is not native code: ");
+                        Debug.print(targetMethod.name());
+                        Debug.print(targetMethod.classMethodActor().descriptor().string());
+                        Debug.print(" in ");
+                        Debug.println(targetMethod.classMethodActor().holder().name().string());
                         FatalError.unexpected("Caller of a VM entry point (@C_FUNCTION method) must be native code");
                     }
                 }
@@ -148,25 +148,6 @@ public abstract class StackFrameWalker {
 
                 if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, purpose, context)) {
                     return;
-                }
-
-                final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
-                if (lastJavaCalleeMethodActor.isCFunction()) {
-                    if (purpose == INSPECTING && targetMethodFor(_instructionPointer) == null && runtimeStubFor(_instructionPointer) == null) {
-                        // Native code frame
-                        final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
-                        if (!stackFrameVisitor.visitFrame(new NativeStackFrame(_calleeStackFrame, _instructionPointer, _framePointer, _stackPointer))) {
-                            return;
-                        }
-                    }
-                    if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
-                        if (isRunMethod(lastJavaCalleeMethodActor)) {
-                            return;
-                        }
-                        FatalError.check(purpose == INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
-                        return;
-                    }
-                    lastJavaCallee = null;
                 }
             } else {
                 final RuntimeStub stub = runtimeStubFor(_instructionPointer);
@@ -199,18 +180,14 @@ public abstract class StackFrameWalker {
                             final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
                             if (lastJavaCalleeMethodActor.isCFunction()) {
                                 if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
-                                    if (lastJavaCalleeMethodActor.equals(MaxineVM_run) || lastJavaCalleeMethodActor.equals(VmThread_run)) {
-                                        return;
-                                    }
-                                    FatalError.check(purpose == INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
                                     return;
                                 }
                             } else {
-                                Debug.err.print("Native code called/entered a Java method not annotated with @C_FUNCTION: ");
-                                Debug.err.print(lastJavaCalleeMethodActor.name().string());
-                                Debug.err.print(lastJavaCalleeMethodActor.descriptor().string());
-                                Debug.err.print(" in ");
-                                Debug.err.println(lastJavaCalleeMethodActor.holder().name().string());
+                                Debug.print("Native code called/entered a Java method not annotated with @C_FUNCTION: ");
+                                Debug.print(lastJavaCalleeMethodActor.name().string());
+                                Debug.print(lastJavaCalleeMethodActor.descriptor().string());
+                                Debug.print(" in ");
+                                Debug.println(lastJavaCalleeMethodActor.holder().name().string());
                                 FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap handler or a Java trap stub");
                             }
                         }
@@ -233,7 +210,7 @@ public abstract class StackFrameWalker {
      * @param lastJavaCallee
      * @param lastJavaCalleeStackPointer
      * @param lastJavaCalleeFramePointer
-     * @return
+     * @return true if the stack walker was advanced to the caller of the method annotated with {@link C_FUNCTION}, false otherwise
      */
     private boolean advanceCFunctionFrame(Purpose purpose, TargetMethod lastJavaCallee, Pointer lastJavaCalleeStackPointer, Pointer lastJavaCalleeFramePointer, Object context) {
         final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
@@ -266,9 +243,14 @@ public abstract class StackFrameWalker {
                 advance(readPointer(TRAP_INSTRUCTION_POINTER),
                         readPointer(TRAP_STACK_POINTER),
                         readPointer(TRAP_FRAME_POINTER));
+                return true;
             }
-            return true;
+            return false;
         }
+        if (!isRunMethod(lastJavaCalleeMethodActor)) {
+            FatalError.check(purpose == INSPECTING, "Could not unwind stack past Java method annotated with @C_FUNCTION");
+        }
+
         return false;
     }
 
@@ -314,8 +296,8 @@ public abstract class StackFrameWalker {
 
 
         if (!_stackPointer.isZero()) {
-            Debug.err.print("Stack walker already in use for ");
-            Debug.err.println(_purpose.name());
+            Debug.print("Stack walker already in use for ");
+            Debug.println(_purpose.name());
             _stackPointer = Pointer.zero();
             _purpose = null;
             FatalError.unexpected("Stack walker already in use");
@@ -550,7 +532,20 @@ public abstract class StackFrameWalker {
 
     public abstract Word readFramelessCallAddressRegister(TargetABI targetABI);
 
+    /**
+     * Reads the value of a given VM thread local from the safepoints-enabled thread locals.
+     *
+     * @param local the VM thread local to read
+     * @return the value (as a word) of {@code local} in the safepoints-enabled thread locals
+     */
     public abstract Word readWord(VmThreadLocal local);
+
+    /**
+     * Reads the value of a given VM thread local from the safepoints-enabled thread locals.
+     *
+     * @param local the VM thread local to read
+     * @return the value (as a pointer) of {@code local} in the safepoints-enabled thread locals
+     */
     public Pointer readPointer(VmThreadLocal local) {
         return readWord(local).asPointer();
     }

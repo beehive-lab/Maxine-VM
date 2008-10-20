@@ -26,7 +26,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a {@link InterfaceMethodActor} in the tele VM.
+ * Canonical surrogate for a {@link InterfaceMethodActor} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -38,15 +38,15 @@ public final class TeleInterfaceMethodActor extends TeleMethodActor {
     }
 
     /**
-     * @return A local {@link InterfaceMethodActor} corresponding the the target VM's {@link InterfaceMethodActor} for the method.
+     * @return A local {@link InterfaceMethodActor} corresponding the the {@link TeleVM}'s {@link InterfaceMethodActor} for the method.
      */
     public InterfaceMethodActor interfaceMethodActor() {
         return (InterfaceMethodActor) methodActor();
     }
 
     @Override
-    public boolean hasBytecodes() {
-        return false;
+    public TeleCodeAttribute getTeleCodeAttribute() {
+        return null;
     }
 
 

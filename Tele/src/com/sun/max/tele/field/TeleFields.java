@@ -56,11 +56,12 @@ import com.sun.max.vm.value.*;
  * <p>
  * The {@link INSPECTED} annotation is employed to denote fields that will be read remotely.
  * A field of the appropriate {@link TeleFieldAccess} subtype is generated into this file
- * by executing the {@link #main(String[])} method in this class (ensuring that the VM
+ * by executing the {@link #main(String[])} method in this class (ensuring that the{@link TeleVM}.
  * class path contains all the {@code com.sun.max} classes).
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public class TeleFields extends TeleVMHolder {
 
@@ -100,6 +101,7 @@ public class TeleFields extends TeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ClassRegistry_typeDescriptorToClassActor = new TeleInstanceReferenceFieldAccess(ClassRegistry.class, "_typeDescriptorToClassActor", GrowableMapping.class);
     public final TeleStaticReferenceFieldAccess Code_bootCodeRegion = new TeleStaticReferenceFieldAccess(Code.class, "_bootCodeRegion", CodeRegion.class);
     public final TeleInstanceReferenceFieldAccess CodeAttribute_code = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "_code", byte[].class);
+    public final TeleInstanceReferenceFieldAccess CodeAttribute_constantPool = new TeleInstanceReferenceFieldAccess(CodeAttribute.class, "_constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_constants = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "_constants", PoolConstant[].class);
     public final TeleInstanceReferenceFieldAccess ConstantPool_holder = new TeleInstanceReferenceFieldAccess(ConstantPool.class, "_holder", ClassActor.class);
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "_next", Entry.class);
@@ -141,10 +143,12 @@ public class TeleFields extends TeleVMHolder {
     public final TeleInstanceReferenceFieldAccess TargetMethod_referenceLiterals = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_referenceLiterals", Object[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_scalarLiteralBytes = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_scalarLiteralBytes", byte[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_stopPositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_stopPositions", int[].class);
-    public final TeleStaticLongFieldAccess TeleHeap_collectionEpoch = new TeleStaticLongFieldAccess(TeleHeap.class, "_collectionEpoch");
-    public final TeleStaticReferenceFieldAccess TeleHeap_memoryRegions = new TeleStaticReferenceFieldAccess(TeleHeap.class, "_memoryRegions", MemoryRegion[].class);
-    public final TeleStaticLongFieldAccess TeleHeap_rootEpoch = new TeleStaticLongFieldAccess(TeleHeap.class, "_rootEpoch");
-    public final TeleStaticReferenceFieldAccess TeleHeap_roots = new TeleStaticReferenceFieldAccess(TeleHeap.class, "_roots", Object[].class);
+    public final TeleStaticIntFieldAccess TeleClassInfo_classActorCount = new TeleStaticIntFieldAccess(TeleClassInfo.class, "_classActorCount");
+    public final TeleStaticReferenceFieldAccess TeleClassInfo_classActors = new TeleStaticReferenceFieldAccess(TeleClassInfo.class, "_classActors", ClassActor[].class);
+    public final TeleStaticLongFieldAccess TeleHeapInfo_collectionEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "_collectionEpoch");
+    public final TeleStaticReferenceFieldAccess TeleHeapInfo_memoryRegions = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "_memoryRegions", MemoryRegion[].class);
+    public final TeleStaticLongFieldAccess TeleHeapInfo_rootEpoch = new TeleStaticLongFieldAccess(TeleHeapInfo.class, "_rootEpoch");
+    public final TeleStaticReferenceFieldAccess TeleHeapInfo_roots = new TeleStaticReferenceFieldAccess(TeleHeapInfo.class, "_roots", Object[].class);
     public final TeleStaticIntFieldAccess Trace_level = new TeleStaticIntFieldAccess(Trace.class, "_level");
     public final TeleStaticLongFieldAccess Trace_threshold = new TeleStaticLongFieldAccess(Trace.class, "_threshold");
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "_constantPool", ConstantPool.class);

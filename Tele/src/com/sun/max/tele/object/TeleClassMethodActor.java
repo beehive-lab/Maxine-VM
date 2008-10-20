@@ -72,15 +72,17 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     }
 
     @Override
-    public boolean hasBytecodes() {
+    public TeleCodeAttribute getTeleCodeAttribute() {
         final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
-        return !codeAttributeReference.isZero();
+        return (TeleCodeAttribute) TeleObject.make(teleVM(), codeAttributeReference);
     }
-
+    
     /**
      * @return  Java bytecodes for the {@link ClassMethod}, copied from the {@link TeleVM}.
      */
-    public byte[] readBytecodes() {
+    @Deprecated
+    public final byte[] readBytecodes() {
+    	// TODO (mlvdv) obsolete.
         final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
         if (codeAttributeReference.isZero()) {
             return null;

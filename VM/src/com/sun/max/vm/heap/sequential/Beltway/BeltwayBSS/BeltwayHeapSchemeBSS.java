@@ -62,7 +62,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
             _sideTable.initialize(Heap.bootHeapRegion().start(), coveredRegionSize, Heap.bootHeapRegion().start().plus(coveredRegionSize).plus(_cardRegion.cardTableSize()).roundedUpBy(
                             Platform.target().pageSize()));
             CardRegion.switchToRegularCardTable(_cardRegion.cardTableBase().asPointer());
-            TeleHeap.registerMemoryRegions(getToSpace(), getFromSpace());
+            TeleHeapInfo.registerMemoryRegions(getToSpace(), getFromSpace());
         } else if (phase == MaxineVM.Phase.STARTING) {
             _collectorThread = new StopTheWorldDaemon("GC", _beltCollector);
         } else if (phase == MaxineVM.Phase.RUNNING) {
@@ -85,8 +85,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
         return _beltManager.getBelt(1);
     }
 
-    @Override
-    public synchronized boolean collect(Size requestedFreeSpace) {
+    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         if (_outOfMemory) {
             return false;
         }
@@ -101,7 +100,7 @@ public class BeltwayHeapSchemeBSS extends BeltwayHeapScheme {
     @NO_SAFEPOINTS("TODO")
     @Override
     public Pointer allocate(Size size) {
-        if (!(_phase == MaxineVM.Phase.RUNNING)) {
+        if (!MaxineVM.isRunning()) {
             return bumpAllocateSlowPath(getFromSpace(), size);
         }
         if (BeltwayConfiguration._useTLABS) {

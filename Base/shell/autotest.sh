@@ -17,12 +17,9 @@
 # TEST_DIR:
 #    The directory in which the tests will be run and results written to.
 #    Default: `pwd`
-# WORKSPACE:
-#    The path to the directory containing MaxineBase, MaxineAssembler, MaxineVM and MaxineNative.
-#    If this directory also contains Codemgr_wsdata then it is assumed to be a Teamware workspace and
-#    a bringover is performed. Otherwise, it's assumed to be a CVS workspace and a CVS update is done
-#    instead. 
-#    Default: ${TEST_DIR}/workspace
+# SOURCE_HG_REPO:
+#    The HG repository to pull from.
+#    Default: /proj/maxwell/hg/maxine
 # TIMEOUT:
 #    The number of seconds a single Autotest is run before being killed.
 #    Default: 600
@@ -32,9 +29,6 @@
 # CONSOLE_LOG_FILE:
 #    If the tests are run, then the verbose output of this script (i.e. set -x) is copied to this file
 #    just before the script exits
-#    Default: <not set>
-# NO_UPDATE:
-#    Any non-empty value will prevent the workspace being updated with respect to the CVS/Teamware repository
 #    Default: <not set>
 # URL:
 #    The URL prefix of where the results will be available.
@@ -46,8 +40,10 @@ test "X${JUNIT_CLASSES}" != "X" || { echo "JUNIT_CLASSES must be set"; exit; }
 
 # Undefined optional variables are set to defaults
 test "X${TEST_DIR}" != "X" || TEST_DIR=`pwd`
-test "X${WORKSPACE}" != "X" || WORKSPACE=${TEST_DIR}/workspace
 test "X${TIMEOUT}" != "X" || TIMEOUT=600
+test "X${SOURCE_HG_REPO}" != "X" || SOURCE_HG_REPO="/proj/maxwell/hg/maxine"
+
+TEST_HG_REPO=${TEST_DIR}/workspace
 
 # Verbose execution
 set -x
@@ -56,15 +52,14 @@ set -x
 # reflect any dependencies between the projects (i.e. if x depends on y, then y must
 # precede x in the list).
 PROJECTS=( \
-    MaxineBase:src,test,shell   \
-    MaxineAssembler:src,test    \
-    MaxineVM:src,test           \
-    MaxineProvider:src          \
-    MaxineTele:src              \
-    MaxineJDWP:src              \
-    MaxineJDWPLauncher:src      \
-    MaxineInspector:src,test    \
-    MaxineVCS:src,test          \
+    Base:src,test,shell   \
+    Assembler:src,test    \
+    VM:src,test           \
+    VMDI:src              \
+    Tele:src              \
+    JDWP:src              \
+    TeleJDWP:src          \
+    Inspector:src,test    \
 )
 
 JDK_TOOLS=${JAVA_HOME}/lib/tools.jar
@@ -74,11 +69,7 @@ CLASSPATH=${CLASSPATH}:${JUNIT_CLASSES}
 
 for PROJECT in ${PROJECTS[@]}; do
     NAME=`echo $PROJECT | sed 's/:.*//g'`
-    if [ ! -d ${WORKSPACE}/${NAME} ]; then
-        echo "Missing ${NAME} directory in ${WORKSPACE}"
-        exit
-    fi
-    CLASSPATH=${CLASSPATH}:${WORKSPACE}/${NAME}/bin
+    CLASSPATH=${CLASSPATH}:${TEST_HG_REPO}/${NAME}/bin
 done
 CLASSPATH=${CLASSPATH}:/net/maxwell/export/proj/maxwell/software/JCK-runtime-6/classes
 
@@ -97,7 +88,7 @@ OUTPUT_DIR=${TEST_DIR}/${REL_OUTPUT_DIR}
 COMPILER_FILE=${OUTPUT_DIR}/COMPILER
 NATIVE_FILE=${OUTPUT_DIR}/NATIVE
 SUMMARY_FILE=${OUTPUT_DIR}/SUMMARY
-TIMESTAMP_FILE=${TEST_DIR}/runtests-timestamp
+LAST_CHANGESET_FILE=${TEST_DIR}/runtests-changeset
 LOCK_FILE=${TEST_DIR}/runtests.lock
 
 START_TIME=`date`
@@ -119,32 +110,30 @@ touch ${LOCK_FILE}
 
 renice +19 $$
 
-if [ "x${NO_UPDATE}" = "x" ]; then
-    # Update to get recent changes
-    if [ -d ${WORKSPACE}/Codemgr_wsdata ];
-    then
-        (cd ${WORKSPACE} ; bringover . )
-    else
-        # Assume it's a CVS workspace
-        for dir in `ls -d ${WORKSPACE}/*`; do
-            if [ -f ${dir}/CVS/Root ]; then
-                (cd ${dir} ; cvs -q update -d -P . )
-            fi
-        done
+if [ -d ${TEST_HG_REPO} ];
+then
+    if [ ! -d ${TEST_HG_REPO}/.hg ]; then
+        echo "${TEST_HG_REPO} does not look a Mercurial repository - missing .hg subdirectory"
+        exit
     fi
+    # HG repo exists: pull to get recent changes
+    (cd ${TEST_HG_REPO} ; hg pull -u )
+else
+    # HG repo does not exist: clone to create it
+    hg clone ${SOURCE_HG_REPO} ${TEST_HG_REPO}
 fi
 
-# Find whether any .java file has changed in the workspace since the tests were last run.
-# We do this by comparing modification times of the .java files against the
-# mod time of the TIMESTAMP_FILE
-
-if [ -e ${TIMESTAMP_FILE} ] ;
+if [ -e ${LAST_CHANGESET_FILE} ] ;
 then
-    if [ -z `find ${WORKSPACE} -name \*.java -newer ${TIMESTAMP_FILE} | head -1` ] ;
-    then
+    LAST_CHANGESET=`cat ${LAST_CHANGESET_FILE}`
+    TIP_CHANGESET=`hg -R ${TEST_HG_REPO} tip --template '{node|short}'`
+    
+    if [ "x${LAST_CHANGESET}" = "x${TIP_CHANGESET}" ]; then
         echo "No changes from last test run"
         rm ${LOCK_FILE}
         exit
+    else
+        echo ${TIP_CHANGESET} >${LAST_CHANGESET_FILE}
     fi
 fi
 
@@ -162,19 +151,19 @@ rm -f ${SUMMARY_FILE}
 rm -f ${NATIVE_FILE}
 echo -e "This is ${OUTPUT_DIR}" >${SUMMARY_FILE}
 echo -e "JAVA_HOME=${JAVA_HOME}" >>${SUMMARY_FILE}
-echo -e "WORKSPACE=${WORKSPACE}" >>${SUMMARY_FILE}
+echo -e "WORKSPACE=${TEST_HG_REPO}" >>${SUMMARY_FILE}
 
 COMPILATION_RESULT=0
 if [ "x$SKIP_JAVAC" = "x" ]; then
 
     for PROJECT in ${PROJECTS[@]}; do
         NAME=`echo $PROJECT | sed 's/:.*//g'`
-        rm -rf ${WORKSPACE}/${NAME}/bin
-        mkdir ${WORKSPACE}/${NAME}/bin
+        rm -rf ${TEST_HG_REPO}/${NAME}/bin
+        mkdir ${TEST_HG_REPO}/${NAME}/bin
         
         SRC_DIRS=`echo $PROJECT | sed 's/.*://g' | tr ',' ' '`
         for SRC_DIR in ${SRC_DIRS} ; do
-            ( cd ${WORKSPACE}/${NAME}/${SRC_DIR}
+            ( cd ${TEST_HG_REPO}/${NAME}/${SRC_DIR}
               pwd >> ${COMPILER_FILE}
               ${JAVAC} `find . -name *.java | grep -v SCCS` >>${COMPILER_FILE} 2>&1 );
             RESULT=$?
@@ -194,7 +183,7 @@ fi
 
 # build native:
 if [ $COMPILATION_RESULT -eq 0 ]; then
-( cd ${WORKSPACE}/MaxineNative
+( cd ${TEST_HG_REPO}/Native
   ${MAKE} clean >>${NATIVE_FILE} 2>&1 
   ${MAKE} >>${NATIVE_FILE} 2>&1 )
 fi
@@ -222,10 +211,10 @@ else
         for PROJECT in ${PROJECTS[@]}; do
         (
             NAME=`echo $PROJECT | sed 's/:.*//g'`
-            if [ ! -d ${WORKSPACE}/${NAME}/test ]; then
+            if [ ! -d ${TEST_HG_REPO}/${NAME}/test ]; then
                 continue;
             fi
-            cd ${WORKSPACE}/${NAME}/test;
+            cd ${TEST_HG_REPO}/${NAME}/test;
             for t in `find . -name AutoTest.java | sort` ; do
                 JAVA_TEST=`echo $t | sed s!\^./!! | sed s!/!.!g | sed s/.java$//`
                 
@@ -295,7 +284,6 @@ if [ "x${URL}" != "x" ]; then
 fi
 
 cat ${SUMMARY_FILE}
-touch ${TIMESTAMP_FILE}
 
 # Send mail containing the summary only if both MAILTO and MAILFROM are set
 if [ "X${MAILTO}" != "X" ];

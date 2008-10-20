@@ -92,13 +92,16 @@ public interface InspectorStyle {
     Color wordNullDataColor();
 
     /** special foreground color for displaying a word that is a valid reference. */
-    Color wordValidReferenceDataColor();
+    Color wordValidObjectReferenceDataColor();
 
     /** special foreground color for displaying a word that is an unchecked reference. */
     Color wordUncheckedReferenceDataColor();
 
-    /** special foreground color for displaying a word that is an invalid reference. */
-    Color wordInvalidReferenceDataColor();
+    /** special foreground color for displaying a word that is an invalid heap object reference. */
+    Color wordInvalidObjectReferenceDataColor();
+
+    /** special foreground color for displaying a word that points into a stack. */
+    Color wordStackLocationDataColor();
 
     /** special foreground color for displaying invalid word data. */
     Color wordInvalidDataColor();
@@ -114,9 +117,6 @@ public interface InspectorStyle {
 
     /** font for displaying textual interpretation of word data. */
     Font wordAlternateTextFont();
-
-    /** default foreground color for displaying textual interpretation of word data. */
-    Color wordAlternateTextColor();
 
     /** foreground color for displaying a selected word (memory inspector). */
     Color wordSelectedColor();

@@ -130,7 +130,7 @@ public final class Trap {
         TRAP_STACK_POINTER.setVariableWord(disabledVmThreadLocals, stackPointer);
         TRAP_FRAME_POINTER.setVariableWord(disabledVmThreadLocals, framePointer);
         if (!TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.getVariableWord(disabledVmThreadLocals).isZero()) {
-            Debug.err.println("TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME should be zero");
+            Debug.println("TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME should be zero");
         }
         TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.setVariableWord(disabledVmThreadLocals, Address.fromLong(1));
 
@@ -157,11 +157,7 @@ public final class Trap {
         return stubInstructionPointer;
     }
 
-
     private static final int SAFEPOINT_LATCH_REGISTER_INDEX = VMConfiguration.hostOrTarget().safepoint().latchRegister().value();
-    private static final boolean ABI_FRAME_POINTER_NOT_CPU_FRAME_POINTER =
-        !VMConfiguration.hostOrTarget().targetABIsScheme().jitABI().framePointer().equals(VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI().framePointer());
-    private static final int ABI_FRAME_POINTER_INDEX =  VMConfiguration.hostOrTarget().targetABIsScheme().jitABI().framePointer().value();
 
     /**
      * This method is called by the native trap handler when a segmentation fault occurs. The native code gathers the
@@ -191,15 +187,15 @@ public final class Trap {
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
         if (targetMethod == null) {
             if (Code.codePointerToRuntimeStub(instructionPointer) != null) {
-                Debug.err.print("Seg fault in runtime stub at ");
-                Debug.err.println(instructionPointer);
+                Debug.print("Seg fault in runtime stub at ");
+                Debug.println(instructionPointer);
             } else {
-                Debug.err.print("Seg fault in native code at ");
-                Debug.err.println(instructionPointer);
+                Debug.print("Seg fault in native code at ");
+                Debug.println(instructionPointer);
             }
             return _vmHardExitStub.address();
         } else if (targetMethod instanceof JitTargetMethod) {
-            // We may have recorded the incorrect frame pointer if the JIT abi doesn't use the cpu frame pointer.
+            // We may have recorded the incorrect frame pointer if the JIT ABI doesn't use the CPU frame pointer.
             final Pointer abiFramePointer = ((JitTargetMethod) targetMethod).getFramePointer(stackPointer, framePointer, integerRegisters);
             TRAP_FRAME_POINTER.setVariableWord(disabledVmThreadLocals, abiFramePointer);
         }
@@ -213,7 +209,8 @@ public final class Trap {
         Address stub;
         if (isSafepointTriggered && VMConfiguration.hostOrTarget().safepoint().isAt(instructionPointer)) {
             // only handle a safepoint if BOTH the latch register has been signaled AND we are at a safepoint instruction.
-            saveRegisters(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer(), integerRegisters, floatingPointRegisters);
+            final Word enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals);
+            saveRegisters(enabledVmThreadLocals.asPointer(), integerRegisters, floatingPointRegisters);
             stub = Safepoint.trapHandler(disabledVmThreadLocals);
         } else if (inJava(disabledVmThreadLocals)) {
             stub = _nullPointerExceptionStub.address();
@@ -239,7 +236,7 @@ public final class Trap {
         if (!inJava(disabledVmThreadLocals)) {
             // stack fault occurred somewhere in native code.
             stub = _vmHardExitStub.address();
-        } else if (faultAddress.greaterEqual(redZone) && faultAddress.lessThan(redZone.plus(VmThread.current().guardPageSize()))) {
+        } else if (faultAddress.greaterEqual(redZone) && faultAddress.lessThan(redZone.plus(VmThread.guardPageSize()))) {
             // the red zone was reached.
             stub = _vmHardExitStub.address();
         } else {

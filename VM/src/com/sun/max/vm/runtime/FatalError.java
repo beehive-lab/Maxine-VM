@@ -41,13 +41,13 @@ public final class FatalError extends Error {
         }
 
         if (ExitingGuard._guard) {
-            Debug.err.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
+            Debug.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
             MaxineVM.native_exit(11);
         }
         ExitingGuard._guard = true;
 
         final boolean lockDisabledSafepoints = Debug.lock();
-        Debug.err.print("FATAL VM ERROR: ");
+        Debug.print("FATAL VM ERROR: ");
         Throw.stackDump(message, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         if (Throw._scanStackOnFatalError.isPresent()) {
             Throw.stackScan("stack scan", VMRegister.getCpuStackPointer(), VmThread.current().vmThreadLocals());

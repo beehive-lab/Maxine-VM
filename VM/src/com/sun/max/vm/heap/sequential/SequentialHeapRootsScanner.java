@@ -39,11 +39,9 @@ public class SequentialHeapRootsScanner {
     private RuntimeMemoryRegion _toSpace;
     private HeapScheme _heapScheme;
 
-    public SequentialHeapRootsScanner() {
-    }
-
-    public void setHeapScheme(HeapScheme heapScheme) {
+    public SequentialHeapRootsScanner(HeapScheme heapScheme, PointerIndexVisitor pointerIndexVisitor) {
         _heapScheme = heapScheme;
+        _pointerIndexVisitor = pointerIndexVisitor;
     }
 
     public void setPointerIndexVisitor(PointerIndexVisitor pointerIndexVisitor) {
@@ -58,11 +56,10 @@ public class SequentialHeapRootsScanner {
         _toSpace = toSpace;
     }
 
-
     private final Pointer.Procedure _vmThreadLocalsScanner = new Pointer.Procedure() {
 
         public void run(Pointer localSpace) {
-            VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor, _fromSpace, _toSpace);
+            VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor);
         }
     };
 
@@ -76,7 +73,7 @@ public class SequentialHeapRootsScanner {
      */
     public void run() {
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, _vmThreadLocalsScanner);
-        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor, _fromSpace, _toSpace);
+        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor);
     }
 
 }
