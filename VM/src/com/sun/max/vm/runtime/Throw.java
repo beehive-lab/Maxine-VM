@@ -23,6 +23,7 @@ package com.sun.max.vm.runtime;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -54,23 +55,35 @@ public final class Throw {
         }
         @Override
         public boolean visitFrame(StackFrame stackFrame) {
+            final boolean lockDisabledSafepoints = Debug.lock();
             // N.B. use "->" to make dumped stacks look slightly different than exception stacktraces.
-            Debug.err.print("        -> ");
+            Debug.print("        -> ");
             final TargetMethod targetMethod = stackFrame.targetMethod();
             if (targetMethod != null) {
                 if (!stackFrame.isAdapter()) {
-                    Debug.err.print(targetMethod.classMethodActor().format("%H.%n(%p)"));
+                    final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
+                    Debug.print(classMethodActor.holder().name());
+                    Debug.print(".");
+                    Debug.print(classMethodActor.name());
+                    Debug.print(classMethodActor.descriptor());
                 } else {
-                    Debug.err.print("<adapter>");
+                    Debug.print("<adapter>");
                 }
+                Debug.print(" [");
+                Debug.print(stackFrame.instructionPointer());
+                Debug.print("+");
+                Debug.print(stackFrame.instructionPointer().minus(targetMethod.codeStart()).toInt());
+                Debug.print("]");
             } else {
-                Debug.err.print("unknown:");
-                Debug.err.print(stackFrame.instructionPointer());
+                Debug.print("unknown:");
+                Debug.print(stackFrame.instructionPointer());
             }
-            Debug.err.println();
+            Debug.println();
             if (_maximum > 0 && _count-- < 0) {
+                Debug.unlock(lockDisabledSafepoints);
                 return false;
             }
+            Debug.unlock(lockDisabledSafepoints);
             return true;
         }
     }
@@ -125,7 +138,7 @@ public final class Throw {
         }
         final VmStackFrameWalker stackFrameWalker = VmThread.current().stackFrameWalker();
         if (stackFrameWalker.isInUse()) {
-            Debug.err.println("exception thrown while raising another exception");
+            Debug.println("exception thrown while raising another exception");
             if (!stackFrameWalker.isDumpingFatalStackTrace()) {
                 stackFrameWalker.reset();
                 stackFrameWalker.setIsDumpingFatalStackTrace(true);
@@ -136,8 +149,8 @@ public final class Throw {
         }
 
         if (_dumpStackOnThrowOption.isPresent()) {
-            throwable.printStackTrace(Debug.log);
-            Debug.err.println("Complete unfiltered stack trace:");
+            throwable.printStackTrace(Debug.out);
+            Debug.println("Complete unfiltered stack trace:");
             stackDumpWithException(throwable);
         }
         Safepoint.disable();
@@ -164,12 +177,12 @@ public final class Throw {
      */
     @NEVER_INLINE
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer) {
-        Debug.err.println(message);
+        Debug.println(message);
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, _stackFrameDumper);
     }
 
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer, int depth) {
-        Debug.err.println(message);
+        Debug.println(message);
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, new StackFrameDumper(depth));
     }
 
@@ -185,15 +198,15 @@ public final class Throw {
      * @param endPointer the pointer to the end of the stack
      */
     public static void stackScan(String message, final Pointer stackPointer, final Pointer endPointer) {
-        Debug.err.println(message);
+        Debug.println(message);
         Pointer pointer = stackPointer.aligned();
         while (pointer.lessThan(endPointer)) {
             final Address potentialCodePointer = pointer.getWord().asAddress();
             final TargetMethod targetMethod = Code.codePointerToTargetMethod(potentialCodePointer);
             if (targetMethod != null) {
-                Debug.err.print("        -> ");
-                Debug.err.print(targetMethod.classMethodActor().format("%H.%n(%p)"));
-                Debug.err.println();
+                Debug.print("        -> ");
+                Debug.print(targetMethod.classMethodActor().format("%H.%n(%p)"));
+                Debug.println();
             }
             pointer = pointer.plus(Word.size());
         }

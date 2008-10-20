@@ -92,14 +92,12 @@ public final class VMConfigurations {
      * @return the configuration object
      */
     public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform) {
-
         return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), new com.sun.max.vm.layout.ohm.Package(),
                         defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), defaultJitCompilerPackage(platform),
-                        new com.sun.max.vm.trampoline.template.Package(), defaultTargetABIsPackage(platform), new com.sun.max.vm.run.gcTest.Package());
+                        new com.sun.max.vm.trampoline.template.Package(), defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());
     }
 
     public static VMConfiguration createStandard(BuildLevel buildLevel, Platform platform) {
-
         return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), new com.sun.max.vm.layout.ohm.Package(),
                         defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), null, new com.sun.max.vm.trampoline.template.Package(),
                         defaultTargetABIsPackage(platform), new com.sun.max.vm.run.java.Package());

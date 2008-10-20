@@ -26,7 +26,7 @@ import com.sun.max.vm.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class TargetABIsScheme<IntegerRegister_Type extends Symbol, FloatingPointRegister_Type extends Symbol> extends AbstractVMScheme {
+public abstract class TargetABIsScheme<IntegerRegister_Type extends Symbol, FloatingPointRegister_Type extends Symbol> extends AbstractVMScheme implements VMScheme {
 
     public boolean usingRegisterWindows() {
         return false;

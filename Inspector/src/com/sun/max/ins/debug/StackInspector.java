@@ -154,6 +154,11 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                     if (teleTargetMethod != null) {
                         name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                         toolTip = inspection().nameDisplay().longName(teleTargetMethod, address);
+                        final TeleClassMethodActor teleClassMethodActor = teleTargetMethod.getTeleClassMethodActor();
+                        if (teleClassMethodActor.isSubstituted()) {
+                            name = name + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleClassMethodActor);
+                            toolTip = toolTip + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleClassMethodActor);
+                        }
                     } else {
                         final MethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
                         name = classMethodActor.format("%h.%n");
@@ -484,7 +489,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                 _slotValues[slotIndex].refresh(epoch);
                 if (slot.referenceMapIndex() != -1) {
                     if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex())) {
-                        slotLabel.setForeground(style().wordValidReferenceDataColor());
+                        slotLabel.setForeground(style().wordValidObjectReferenceDataColor());
                     } else {
                         slotLabel.setForeground(style().textLabelColor());
                     }

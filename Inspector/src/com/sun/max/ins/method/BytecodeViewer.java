@@ -86,6 +86,8 @@ public abstract class BytecodeViewer extends CodeViewer {
         return _teleConstantPool;
     }
 
+    private final ConstantPool _constantPool;
+
     /**
      * Disassembled target code instructions from the associated compilation of the method, null if none associated.
      */
@@ -115,14 +117,17 @@ public abstract class BytecodeViewer extends CodeViewer {
         super(inspection, parent);
         _teleClassMethodActor = teleClassMethodActor;
         _teleTargetMethod = teleTargetMethod;
-
         _methodActorKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
-        _teleConstantPool = teleClassMethodActor.getTeleHolder().getTeleConstantPool();
-        _methodBytes = teleClassMethodActor.readBytecodes();
+        final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
+        // In a substituted method, the constant pool for the bytecodes is the one from the origin of the substitution,
+        // not the current holder of the method.
+        _teleConstantPool = teleCodeAttribute.getTeleConstantPool();
+        _constantPool = _teleConstantPool.getTeleHolder().classActor().constantPool();
+        _methodBytes = teleCodeAttribute.readBytecodes();
         // ProgramWarning.check(Bytes.equals(_methodBytes, teleMethod.classMethodActor().codeAttribute().code()),
         // "inconsistent bytecode");
-        final byte[] classMethodActorBytes = teleClassMethodActor.classMethodActor().codeAttribute().code();
-        if (!Bytes.equals(_methodBytes, classMethodActorBytes)) {
+        final byte[] localMethodBytes = teleClassMethodActor.classMethodActor().codeAttribute().code();
+        if (!Bytes.equals(_methodBytes, localMethodBytes)) {
             // We're occasionally seeing a violation of the invariant that the bytecodes in the {@link TeleVM} for a particular
             // method aren't the same as those associated with the same method in the Inspector.  So far, the
             // difference shows up as some extra bytecodes at the end.
@@ -130,8 +135,8 @@ public abstract class BytecodeViewer extends CodeViewer {
             System.out.println("BytecodeViewer bytecode comparison failure for: " + teleClassMethodActor.classMethodActor().toString());
             System.out.println("  Bytecodes from VM(" + _methodBytes.length + " bytes) =");
             System.out.println(BytecodePrinter.toString(constantPool, new BytecodeBlock(_methodBytes)));
-            System.out.println("  Bytecodes loaded in Inspector: " + classMethodActorBytes.length + " bytes) =");
-            System.out.println(BytecodePrinter.toString(constantPool, new BytecodeBlock(classMethodActorBytes)));
+            System.out.println("  Bytecodes loaded locally: " + localMethodBytes.length + " bytes) =");
+            System.out.println(BytecodePrinter.toString(constantPool, new BytecodeBlock(localMethodBytes)));
             System.out.println();
         }
         buildView();
@@ -148,8 +153,6 @@ public abstract class BytecodeViewer extends CodeViewer {
                 _haveTargetCodeAddresses = true;
             }
         }
-
-        final ConstantPool constantPool = teleClassMethodActor().classMethodActor().holder().constantPool();
         _bytecodeInstructions = new ArrayListSequence<BytecodeInstruction>(10);
         int currentBytecodeOffset = 0;
         int bytecodeRow = 0;
@@ -158,7 +161,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         while (currentBytecodeOffset < _methodBytes.length) {
             final OutputStream stream = new NullOutputStream();
             try {
-                final InspectorBytecodePrinter bytecodePrinter = new InspectorBytecodePrinter(new PrintStream(stream), constantPool);
+                final InspectorBytecodePrinter bytecodePrinter = new InspectorBytecodePrinter(new PrintStream(stream), _constantPool);
                 final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
                 final int nextBytecodeOffset = bytecodeScanner.scanInstruction(_methodBytes, currentBytecodeOffset);
                 final byte[] instructionBytes = Bytes.getSection(_methodBytes, currentBytecodeOffset, nextBytecodeOffset);

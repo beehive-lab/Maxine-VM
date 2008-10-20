@@ -29,7 +29,7 @@ import com.sun.max.vm.classfile.constant.*;
 
 /**
  * "Code" attributes in class files, see #4.7.3.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author David Liu
@@ -38,6 +38,7 @@ public final class CodeAttribute {
 
     public static final Sequence<ExceptionHandlerEntry> NO_EXCEPTION_HANDLER_TABLE = Sequence.Static.empty(ExceptionHandlerEntry.class);
 
+    @INSPECTED
     private final ConstantPool _constantPool;
     @INSPECTED
     private final byte[] _code;
