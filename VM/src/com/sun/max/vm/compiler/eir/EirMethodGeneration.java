@@ -70,7 +70,7 @@ public abstract class EirMethodGeneration {
         final int index = register.serial();
         if (_registerVariables[index] == null) {
             _registerVariables[index] = createEirVariable(register.kind());
-            //_registerVariables[index].fixLocation(register);
+            _registerVariables[index].fixLocation(register);
         }
         return _registerVariables[index];
     }
