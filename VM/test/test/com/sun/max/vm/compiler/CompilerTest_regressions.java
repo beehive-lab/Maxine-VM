@@ -74,12 +74,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         return previous;
     }
 
-    // Copy of java.lang.StringCode.scale
-    public static int scale(int len, float expansionFactor) {
-        // We need to perform double, not float, arithmetic; otherwise
-        // we lose low order bits when len is larger than 2**24.
-        return (int) (len * (double) expansionFactor);
-    }
 
     private static native void nativeMethod1();
 
@@ -91,6 +85,21 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
     }
 
     public void test_sparcRegression() {
+        compileMethod("nativeMethod1");
+    }
+
+    public void test_sparcRegression2() {
+        compileMethod("callerSaveMethod", SignatureDescriptor.create(float.class, float.class));
+    }
+
+    // Copy of java.lang.StringCode.scale
+    public static int scale(int len, float expansionFactor) {
+        // We need to perform double, not float, arithmetic; otherwise
+        // we lose low order bits when len is larger than 2**24.
+        return (int) (len * (double) expansionFactor);
+    }
+
+    public void test_StringCoding() {
         // compileMethod("callerSaveMethod", SignatureDescriptor.create(float.class, float.class));
         compileMethod("scale", SignatureDescriptor.create(int.class, int.class, float.class));
     }
