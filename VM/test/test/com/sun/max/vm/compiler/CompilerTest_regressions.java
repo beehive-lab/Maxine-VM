@@ -74,22 +74,24 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         return previous;
     }
 
+    static class CallingConventionTest {
+        @C_FUNCTION
+        private static native void nativeMethod1();
 
-    private static native void nativeMethod1();
-
-    public static float callerSaveMethod(float f2) {
-        final float f1 = 1.5f;
-        final float f3 = f2 * f1;
-        nativeMethod1();
-        return f3 / f1;
+        public static float callerSaveMethod(float f2) {
+            final float f1 = 1.5f;
+            final float f3 = f2 * f1;
+            nativeMethod1();
+            return f3 / f1;
+        }
     }
 
     public void test_sparcRegression() {
-        compileMethod("nativeMethod1");
+        compileMethod(CallingConventionTest.class, "nativeMethod1");
     }
 
     public void test_sparcRegression2() {
-        compileMethod("callerSaveMethod", SignatureDescriptor.create(float.class, float.class));
+        compileMethod(CallingConventionTest.class, "callerSaveMethod", SignatureDescriptor.create(float.class, float.class));
     }
 
     // Copy of java.lang.StringCode.scale

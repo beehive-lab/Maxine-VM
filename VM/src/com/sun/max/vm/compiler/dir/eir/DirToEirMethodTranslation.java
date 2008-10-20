@@ -175,7 +175,6 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
         final EirBlock prologueBlock = createEirBlock(IrBlock.Role.NORMAL);
         final EirPrologue prologue = createPrologue(prologueBlock);
-        prologue.addDefinition(safepointLatchVariable);
         prologueBlock.appendInstruction(prologue);
         for (int i = 0; i < _calleeSavedEirRegisters.length; i++) {
             prologueBlock.appendInstruction(createAssignment(prologueBlock, _calleeSavedEirRegisters[i].kind(), _calleeRepositoryEirVariables[i], _calleeSavedEirVariables[i]));
@@ -188,6 +187,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
             prologue.addDefinition(framePointerVariable());
             addEpilogueUse(framePointerVariable());
         }
+        prologue.addDefinition(safepointLatchVariable);
 
         createBodyEirBlocks();
 
