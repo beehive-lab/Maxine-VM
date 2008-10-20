@@ -41,14 +41,25 @@ public class SPARCEirCFunctionABI extends SPARCEirJavaABI {
         return _calleeSavedRegisters;
     }
 
+    private final PoolSet<SPARCEirRegister> _callerSavedRegisters;
+
+    @Override
+    public PoolSet<SPARCEirRegister> callerSavedRegisters() {
+        return _callerSavedRegisters;
+    }
+
     /**
      * Function annotated with C_FUNCTION falls currently in two categories: function used only by native code and that can only be called from native (i.e., C) code.
      * This is the case for "JNI" function.
      */
     public SPARCEirCFunctionABI(VMConfiguration vmConfiguration, boolean onlyCalledFromC) {
         super(vmConfiguration);
-        // Can't trust C code to preserve application global register.
         _calleeSavedRegisters = PoolSet.of(SPARCEirRegister.GeneralPurpose.pool(), SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        _callerSavedRegisters =  super.callerSavedRegisters();
+        if (!onlyCalledFromC) {
+            // Have to save the SAFEPOINT latch global register.
+            _callerSavedRegisters.add(SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
+        }
         // Native target ABI uses different entry point.
         final TargetABI<GPR, FPR> originalTargetABI = targetABI();
         initTargetABI(new TargetABI<GPR, FPR>(originalTargetABI, originalTargetABI.registerRoleAssignment(), onlyCalledFromC ? CallEntryPoint.C_ENTRY_POINT : CallEntryPoint.OPTIMIZED_ENTRY_POINT));

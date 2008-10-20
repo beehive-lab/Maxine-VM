@@ -70,7 +70,7 @@ public abstract class EirMethodGeneration {
         final int index = register.serial();
         if (_registerVariables[index] == null) {
             _registerVariables[index] = createEirVariable(register.kind());
-            _registerVariables[index].fixLocation(register);
+            //_registerVariables[index].fixLocation(register);
         }
         return _registerVariables[index];
     }
@@ -269,6 +269,10 @@ public abstract class EirMethodGeneration {
         return integerRegisterRoleValue(VMRegister.Role.ABI_FRAME_POINTER);
     }
 
+    public EirValue safepointLatchVariable() {
+        return integerRegisterRoleValue(VMRegister.Role.SAFEPOINT_LATCH);
+    }
+
     public abstract EirCall createCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation,
                     EirValue function, EirValue[] arguments, EirLocation[] argumentLocations);
 
@@ -416,4 +420,5 @@ public abstract class EirMethodGeneration {
     public boolean isTemplate() {
         return _isTemplate;
     }
+
 }

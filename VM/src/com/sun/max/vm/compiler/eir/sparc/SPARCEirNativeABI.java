@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.eir.sparc;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 
 /**
  * The native ABI used by the Solaris OS.
@@ -29,9 +30,12 @@ import com.sun.max.vm.*;
  * @author Bernd Mathiske
  */
 public class SPARCEirNativeABI extends SPARCEirCFunctionABI {
+    private final PoolSet<SPARCEirRegister> _callerSavedRegisters;
 
     public SPARCEirNativeABI(VMConfiguration vmConfiguration) {
         super(vmConfiguration, false);
+        _callerSavedRegisters =  allocatableRegisters();
+        _callerSavedRegisters.add(SPARCEirRegister.GeneralPurpose.from(targetABI().registerRoleAssignment().integerRegisterActingAs(Role.SAFEPOINT_LATCH)));
     }
 
     @Override
@@ -47,7 +51,7 @@ public class SPARCEirNativeABI extends SPARCEirCFunctionABI {
         // whether mutator thread execution stays in native code or returns from it and then hits a hard safepoint.
         // The idea is that any allocatable register will be refilled from an upto-date stack slot
         // before any use after the safepoint.
-        return allocatableRegisters();
+        return _callerSavedRegisters;
     }
 
 }

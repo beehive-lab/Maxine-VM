@@ -32,6 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
+import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.sparc.SPARCEirTargetEmitter.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -534,6 +535,11 @@ public interface SPARCEirInstruction {
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                         EirMethodGeneration methodGeneration) {
             super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, methodGeneration);
+            final SPARCEirABI sparcAbi = (SPARCEirABI) abi;
+            if (sparcAbi.callerSavedRegisters().contains(sparcAbi.safepointLatchRegister()) &&
+                            ((DirToSPARCEirMethodTranslation) methodGeneration).callerMustSaveLatchRegister()) {
+                methodGeneration.addEpilogueUse(methodGeneration.makeRegisterVariable(sparcAbi.safepointLatchRegister()));
+            }
         }
 
         @Override

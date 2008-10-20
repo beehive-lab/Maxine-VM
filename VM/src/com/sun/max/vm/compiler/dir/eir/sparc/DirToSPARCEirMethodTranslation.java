@@ -122,4 +122,19 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
         return new SPARCEirSafepoint(eirBlock);
     }
 
+    /**
+     * A boolean value indicating that at least one call use an ABI that requires the caller to save the latch register.
+     */
+    private boolean _callerMustSaveLatchRegister;
+
+    /**
+     * Set a flag indicating that a call that uses an ABI that requires the caller to save the latch register is being made.
+     *
+     * @return a boolean indicating whether this is the first time for the method being compiled.
+     */
+    public boolean callerMustSaveLatchRegister() {
+        final boolean firstTime = !_callerMustSaveLatchRegister;
+        _callerMustSaveLatchRegister = true;
+        return firstTime;
+    }
 }
