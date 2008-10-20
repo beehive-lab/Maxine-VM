@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.thread;
 
+import java.lang.reflect.*;
+
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -95,7 +97,7 @@ import com.sun.max.vm.stack.*;
  * @author Doug Simon
  * @author Ben L. Titzer
  */
-public final class VmThread {
+public class VmThread {
 
     /**
      * The amount of stack required to {@linkplain #reprotectGuardPage(Throwable) reset} the
@@ -140,7 +142,7 @@ public final class VmThread {
     private final long _serial;
 
     @CONSTANT
-    private Word _nativeThread = Word.zero();
+    protected Word _nativeThread = Word.zero();
 
     private final VmStackFrameWalker _stackFrameWalker = new VmStackFrameWalker(Pointer.zero());
 
@@ -239,12 +241,12 @@ public final class VmThread {
     private JavaMonitor _protectedMonitor;
 
     @INLINE
-    public JavaMonitor protectedMonitor() {
+    public final JavaMonitor protectedMonitor() {
         return _protectedMonitor;
     }
 
     @INLINE
-    public void setProtectedMonitor(JavaMonitor protectedMonitor) {
+    public final void setProtectedMonitor(JavaMonitor protectedMonitor) {
         _protectedMonitor = protectedMonitor;
     }
 
@@ -252,24 +254,24 @@ public final class VmThread {
     private ConditionVariable _waitingCondition;
 
     @INLINE
-    public ConditionVariable waitingCondition() {
+    public final ConditionVariable waitingCondition() {
         return _waitingCondition;
     }
 
     @INLINE
-    public void setWaitingCondition(ConditionVariable waitingCondition) {
+    public final void setWaitingCondition(ConditionVariable waitingCondition) {
         _waitingCondition = waitingCondition;
     }
 
     private VmThread _nextWaitingThread;
 
     @INLINE
-    public VmThread nextWaitingThread() {
+    public final VmThread nextWaitingThread() {
         return _nextWaitingThread;
     }
 
     @INLINE
-    public void setNextWaitingThread(VmThread nextWaitingThread) {
+    public final void setNextWaitingThread(VmThread nextWaitingThread) {
         _nextWaitingThread = nextWaitingThread;
     }
 
@@ -339,7 +341,8 @@ public final class VmThread {
      */
     @PROTOTYPE_ONLY
     private static VmThread createMain() {
-        final VmThread vmThread = new VmThread(HostObjectAccess.mainThread());
+        final Thread thread = HostObjectAccess.mainThread();
+        final VmThread vmThread = VmThreadFactory.create(thread);
         VmThreadMap.ACTIVE.addMainVmThread(vmThread);
         return vmThread;
     }
@@ -686,7 +689,7 @@ public final class VmThread {
      * ATTENTION: only call this when there is no race with thread termination!
      */
     @INLINE
-    public boolean isInNative() {
+    public final boolean isInNative() {
         MemoryBarrier.storeLoad();
         return !_vmThreadLocals.isZero() && LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(_vmThreadLocals).isZero();
     }
@@ -707,7 +710,7 @@ public final class VmThread {
     }
 
     @INLINE
-    public Pointer vmThreadLocals() {
+    public final Pointer vmThreadLocals() {
         return _vmThreadLocals;
     }
 
@@ -837,8 +840,15 @@ public final class VmThread {
 
     private static native boolean nativeSleep(long numberOfMilliSeconds);
 
+    /*
+     * use protected member method so that GuestVM's SchedThread is able to implement its own sleep method
+     */
+    protected boolean sleep0(long numberOfMilliSeconds) {
+        return VmThread.nativeSleep(numberOfMilliSeconds);
+    }
+
     public static void sleep(long millis) throws InterruptedException {
-        boolean interrupted = nativeSleep(millis);
+        boolean interrupted = current().sleep0(millis);
         if (interrupted) {
             interrupted = false;
             throw new InterruptedException();
