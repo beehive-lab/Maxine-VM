@@ -54,7 +54,7 @@ public class HeapVerifier {
     public void initialize(HeapScheme heapScheme) {
         _heapScheme = heapScheme;
         _heapRootsVerifier.setHeapScheme(_heapScheme);
-        _heapRootsVerifier.setPointerIndexVisitor(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getPointerIndexGripVerifier());
+        _heapRootsVerifier.setBeltwayPointerIndexVisitor(((BeltwayHeapScheme) VMConfiguration.hostOrTarget().heapScheme()).getPointerIndexGripVerifier());
     }
 
     public BeltwaySequentialHeapRootsScanner getRootsVerifier() {

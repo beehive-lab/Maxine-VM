@@ -675,79 +675,63 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     }
 
     static {
-        if (MaxineVM.isPrototyping()) {
-            /*
-             * Initialization of the target ABI
-             * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
-             */
-            final Class<TargetABI<GPR, FPR>> type = null;
-            _targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
-            _cpuFramePointer = _targetABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
-            _safepointTemplate = VMConfiguration.target().safepoint().code();
-            assert _safepointTemplate.length == SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
-            final Endianness endianness = VMConfiguration.target().platform().processorKind().dataModel().endianness();
-            final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind().dataModel().wordWidth());
-            asm.nop();
-            _nopTemplate = toByteArrayAndReset(asm);
+        /*
+         * Initialization of the target ABI
+         * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
+         */
+        final Class<TargetABI<GPR, FPR>> type = null;
+        _targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
+        _cpuFramePointer = _targetABI.registerRoleAssignment().integerRegisterActingAs(Role.CPU_FRAME_POINTER);
+        _safepointTemplate = VMConfiguration.target().safepoint().code();
+        assert _safepointTemplate.length == SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
+        final Endianness endianness = VMConfiguration.target().platform().processorKind().dataModel().endianness();
+        final SPARCAssembler asm =  SPARCAssembler.createAssembler(VMConfiguration.target().platform().processorKind().dataModel().wordWidth());
+        asm.nop();
+        _nopTemplate = toByteArrayAndReset(asm);
 
-            // Table switch templates creation.
-            Label branchToDefaultTarget = new Label();
-            _tableSwitchTemplates[0] = buildTableSwitchTemplate(asm, branchToDefaultTarget, false);
-            _offsetToTableSwitchBranchToDefaultTarget = toPosition(branchToDefaultTarget);
-            branchToDefaultTarget = new Label();
-            _tableSwitchTemplates[1] = buildTableSwitchTemplate(asm, branchToDefaultTarget, true);
-            assert _offsetToTableSwitchBranchToDefaultTarget == toPosition(branchToDefaultTarget) - SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
+        // Table switch templates creation.
+        Label branchToDefaultTarget = new Label();
+        _tableSwitchTemplates[0] = buildTableSwitchTemplate(asm, branchToDefaultTarget, false);
+        _offsetToTableSwitchBranchToDefaultTarget = toPosition(branchToDefaultTarget);
+        branchToDefaultTarget = new Label();
+        _tableSwitchTemplates[1] = buildTableSwitchTemplate(asm, branchToDefaultTarget, true);
+        assert _offsetToTableSwitchBranchToDefaultTarget == toPosition(branchToDefaultTarget) - SPARCStackFrameLayout.SPARC_INSTRUCTION_WIDTH;
 
-            // Lookup switch template creation
-            branchToDefaultTarget = new Label();
-            _lookupSwitchTemplate = buildLookupSwitchTemplate(asm, branchToDefaultTarget);
-            _offsetToLookupSwitchBranchToDefaultTarget =  toPosition(branchToDefaultTarget);
+        // Lookup switch template creation
+        branchToDefaultTarget = new Label();
+        _lookupSwitchTemplate = buildLookupSwitchTemplate(asm, branchToDefaultTarget);
+        _offsetToLookupSwitchBranchToDefaultTarget =  toPosition(branchToDefaultTarget);
 
-            // Conditional branch template creation
-            asm.be(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
-            _branchTemplates.put(EQ, toByteArrayAndReset(asm));
-            asm.bge(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
-            _branchTemplates.put(GE, toByteArrayAndReset(asm));
-            asm.ble(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
-            _branchTemplates.put(LE, toByteArrayAndReset(asm));
-            asm.bg(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
-            _branchTemplates.put(GT, toByteArrayAndReset(asm));
-            asm.bl(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
-            _branchTemplates.put(LT, toByteArrayAndReset(asm));
-            asm.bne(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
-            _branchTemplates.put(NE, toByteArrayAndReset(asm));
-            asm.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
-            _branchTemplates.put(NONE, toByteArrayAndReset(asm));
+        // Conditional branch template creation
+        asm.be(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
+        _branchTemplates.put(EQ, toByteArrayAndReset(asm));
+        asm.bge(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
+        _branchTemplates.put(GE, toByteArrayAndReset(asm));
+        asm.ble(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
+        _branchTemplates.put(LE, toByteArrayAndReset(asm));
+        asm.bg(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
+        _branchTemplates.put(GT, toByteArrayAndReset(asm));
+        asm.bl(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
+        _branchTemplates.put(LT, toByteArrayAndReset(asm));
+        asm.bne(AnnulBit.A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
+        _branchTemplates.put(NE, toByteArrayAndReset(asm));
+        asm.ba(AnnulBit.NO_A, BranchPredictionBit.PT, ICCOperand.ICC, 0);
+        _branchTemplates.put(NONE, toByteArrayAndReset(asm));
 
-            try {
-                final ByteArrayInputStream bin = new ByteArrayInputStream(_tableSwitchTemplates[0]);
-                bin.skip(_offsetToTableSwitchBranchToDefaultTarget);
-                _tableSwitchBranchToDefaultTargetTemplate = endianness.readInt(bin);
+        try {
+            final ByteArrayInputStream bin = new ByteArrayInputStream(_tableSwitchTemplates[0]);
+            bin.skip(_offsetToTableSwitchBranchToDefaultTarget);
+            _tableSwitchBranchToDefaultTargetTemplate = endianness.readInt(bin);
 
-                for (BranchCondition branchCondition : BranchCondition.values()) {
-                    _branchTemplateInstruction[branchCondition.ordinal()] = endianness.readInt(new ByteArrayInputStream(_branchTemplates.get(branchCondition)));
-                }
-                _lookupSwitchBranchToDefaultTargetTemplate = _branchTemplateInstruction[NONE.ordinal()];
-
-                asm.jmpl(GPR.O7, 8, GPR.G0);
-                RET_TEMPLATE = endianness.readInt(new ByteArrayInputStream(toByteArrayAndReset(asm)));
-            } catch (IOException e) {
-                throw new ExceptionInInitializerError(e);
+            for (BranchCondition branchCondition : BranchCondition.values()) {
+                _branchTemplateInstruction[branchCondition.ordinal()] = endianness.readInt(new ByteArrayInputStream(_branchTemplates.get(branchCondition)));
             }
+            _lookupSwitchBranchToDefaultTargetTemplate = _branchTemplateInstruction[NONE.ordinal()];
 
-        } else {
-            // This class initializer should never be run after boot image construction.
-            ProgramError.unexpected();
-            _targetABI = null;
-            _cpuFramePointer = null;
-            _safepointTemplate = null;
-            _nopTemplate = null;
-            _offsetToTableSwitchBranchToDefaultTarget = 0;
-            _tableSwitchBranchToDefaultTargetTemplate = 0;
-            _lookupSwitchTemplate = null;
-            _offsetToLookupSwitchBranchToDefaultTarget = 0;
-            _lookupSwitchBranchToDefaultTargetTemplate = 0;
-            RET_TEMPLATE = 0;
+            asm.jmpl(GPR.O7, 8, GPR.G0);
+            RET_TEMPLATE = endianness.readInt(new ByteArrayInputStream(toByteArrayAndReset(asm)));
+        } catch (IOException e) {
+            throw new ExceptionInInitializerError(e);
         }
     }
 }
