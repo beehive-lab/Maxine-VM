@@ -25,6 +25,7 @@ import java.io.*;
 import javax.swing.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.memory.VirtualMemory;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -32,6 +33,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
 
 public class GuestVMXenTeleDomain extends TeleProcess {
@@ -93,7 +95,12 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, String name, int state, long stackBase, long stackSize) {
         GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idToThread(threadId);
         if (thread == null) {
-            thread = new GuestVMXenNativeThread(this, threadId, name, stackBase, stackSize);
+        	/* Need to align and skip over the guard page at the base of the stack.
+        	 * N.B. "base" is low address (i.e., actually the end of the stack!).
+        	 */
+        	final long stackBottom = VirtualMemory.pageAlign(Address.fromLong(stackBase)).plus(VMConfiguration.hostOrTarget().platform().pageSize()).toLong();
+        	final long adjStackSize = stackSize - (stackBottom - stackBase);
+            thread = new GuestVMXenNativeThread(this, threadId, name, stackBottom, adjStackSize);
         } else {
             thread.setMarked(false);
         }
