@@ -20,13 +20,15 @@
  */
 package com.sun.max.vm.jdk;
 
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.INLINE;
 import com.sun.max.annotate.METHOD_SUBSTITUTIONS;
 import com.sun.max.annotate.SUBSTITUTE;
 import com.sun.max.unsafe.UnsafeLoophole;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Thread_vmThread;
 import com.sun.max.vm.monitor.Monitor;
-import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.*;
 
 /**
  * Method substitutions for {@link java.lang.Thread java.lang.Thread}.
@@ -81,7 +83,7 @@ final class JDK_java_lang_Thread {
         // Our own additions:
         if (VmThread.fromJava(thread) == null) {
             // Aha, we must have gotten here during the constructor, otherwise the injected field would have been set already
-            final VmThread vmThread = new VmThread(thread);
+            final VmThread vmThread = VmThreadFactory.create(thread);
             Thread_vmThread.writeObject(thread, vmThread);
         }
     }

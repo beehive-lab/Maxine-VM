@@ -22,7 +22,11 @@
  * @author Bernd Mathiske
  */
 
+#include "virtualMemory.h"
+#include "debug.h"
+
 #if defined(GUESTVMXEN)
+#include <guestvmXen.h>
 /* No mmap function on GuestVM (yet)*/
 #else
 #include <stdlib.h>
@@ -31,11 +35,7 @@
 #include <sys/mman.h>
 
 #include "jni.h"
-#include "debug.h"
 #include "unistd.h"
-
-#include "virtualMemory.h"
-
 
 /* There seems to be a problem binding these identifiers in RedHat's include files, so we fake them: */
 #if os_LINUX
@@ -97,15 +97,6 @@ Java_com_sun_max_memory_VirtualMemory_nativeAllocateIn31BitSpace(JNIEnv *env, jc
 #endif
 }
 
-jboolean virtualMemory_allocateAtFixedAddress(Address address, Size size) {
-#if os_SOLARIS || os_DARWIN
-  return (jboolean) ((Address) mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0) == address);
-#else
-    c_unimplemented();
-    return false;
-#endif
-}
-
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_memory_VirtualMemory_nativeAllocateAtFixedAddress(JNIEnv *env, jclass c, Address address, Size size) {
     return virtualMemory_allocateAtFixedAddress(address, size);
@@ -130,7 +121,16 @@ Java_com_sun_max_memory_VirtualMemory_nativeRelease(JNIEnv *env, jclass c, Addre
 }
 
 
+#endif // GUESTVMXEN
+
+jboolean virtualMemory_allocateAtFixedAddress(Address address, Size size) {
+#if os_SOLARIS || os_DARWIN
+  return (jboolean) ((Address) mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0) == address);
+#else
+    c_unimplemented();
+    return false;
 #endif
+}
 
 void protectPage(Address pageAddress) {
     debug_ASSERT(pageAlign(pageAddress) == pageAddress);
