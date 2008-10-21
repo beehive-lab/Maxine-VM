@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.collect.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -91,11 +90,6 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
         _callerSavedOperands = new EirOperand[callerSavedRegisters.length];
         for (int i = 0; i < callerSavedRegisters.length; i++) {
             final EirRegister register = callerSavedRegisters[i];
-            if (register ==  abi.integerRegisterActingAs(VMRegister.Role.SAFEPOINT_LATCH)) {
-                _callerSavedOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, register.category().asSet());
-                _callerSavedOperands[i].setEirValue(methodGeneration.safepointLatchVariable());
-                continue;
-            }
             if (register != resultLocation) {
                 _callerSavedOperands[i] = new EirOperand(this, EirOperand.Effect.DEFINITION, register.category().asSet());
                 _callerSavedOperands[i].setRequiredLocation(register);
