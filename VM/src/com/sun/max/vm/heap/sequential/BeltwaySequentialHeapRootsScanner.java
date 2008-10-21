@@ -34,7 +34,7 @@ import com.sun.max.vm.thread.*;
  */
 public class BeltwaySequentialHeapRootsScanner {
 
-    private BeltWayPointerIndexVisitor _pointerIndexVisitor;
+    private BeltWayPointerIndexVisitor _beltwayPointerIndexVisitor;
     private RuntimeMemoryRegion _fromSpace;
     private RuntimeMemoryRegion _toSpace;
     private HeapScheme _heapScheme;
@@ -46,8 +46,8 @@ public class BeltwaySequentialHeapRootsScanner {
         _heapScheme = heapScheme;
     }
 
-    public void setPointerIndexVisitor(BeltWayPointerIndexVisitor pointerIndexVisitor) {
-        _pointerIndexVisitor = pointerIndexVisitor;
+    public void setBeltwayPointerIndexVisitor(BeltWayPointerIndexVisitor pointerIndexVisitor) {
+        _beltwayPointerIndexVisitor = pointerIndexVisitor;
     }
 
     public void setFromSpace(RuntimeMemoryRegion fromSpace) {
@@ -58,11 +58,16 @@ public class BeltwaySequentialHeapRootsScanner {
         _toSpace = toSpace;
     }
 
+    final PointerIndexVisitor _pointerIndexVisitor = new PointerIndexVisitor() {
+        public void visitPointerIndex(Pointer pointer, int wordIndex) {
+            _beltwayPointerIndexVisitor.visitPointerIndex(pointer, wordIndex, _fromSpace, _toSpace);
+        }
+    };
 
     private final Pointer.Procedure _vmThreadLocalsScanner = new Pointer.Procedure() {
 
         public void run(Pointer localSpace) {
-            VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor, _fromSpace, _toSpace);
+            VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor);
         }
     };
 
@@ -76,7 +81,7 @@ public class BeltwaySequentialHeapRootsScanner {
      */
     public void run() {
         VmThreadMap.ACTIVE.forAllVmThreadLocals(null, _vmThreadLocalsScanner);
-        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_pointerIndexVisitor, _fromSpace, _toSpace);
+        VMConfiguration.hostOrTarget().monitorScheme().scanReferences(_beltwayPointerIndexVisitor, _fromSpace, _toSpace);
     }
 
 }

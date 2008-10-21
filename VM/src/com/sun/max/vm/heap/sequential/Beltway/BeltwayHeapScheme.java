@@ -106,13 +106,13 @@ public abstract class BeltwayHeapScheme extends GripUpdatingHeapScheme implement
 
     @INLINE
     public final BeltwaySequentialHeapRootsScanner getRootScannerVerifier() {
-        _heapRootsScanner.setPointerIndexVisitor(getPointerIndexGripVerifier());
+        _heapRootsScanner.setBeltwayPointerIndexVisitor(getPointerIndexGripVerifier());
         return _heapRootsScanner;
     }
 
     @INLINE
     public final BeltwaySequentialHeapRootsScanner getRootScannerUpdater() {
-        _heapRootsScanner.setPointerIndexVisitor(getPointerIndexGripUpdater());
+        _heapRootsScanner.setBeltwayPointerIndexVisitor(getPointerIndexGripUpdater());
         return _heapRootsScanner;
     }
 

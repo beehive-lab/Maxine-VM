@@ -20,12 +20,13 @@
  */
 package com.sun.max.vm.jit.amd64;
 
+import static com.sun.max.asm.x86.Scale.*;
+import static com.sun.max.vm.bytecode.BranchCondition.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.amd64.*;
-
-import static com.sun.max.asm.x86.Scale.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -33,8 +34,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.bytecode.*;
-
-import static com.sun.max.vm.bytecode.BranchCondition.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.b.c.d.e.amd64.target.*;
 import com.sun.max.vm.compiler.eir.*;
@@ -43,7 +42,6 @@ import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
 import com.sun.max.vm.template.*;
@@ -157,8 +155,6 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
      */
     private static final BranchConditionMap<byte[]> _rel32BranchTemplates = new BranchConditionMap<byte[]>();
 
-    private static final BranchConditionMap<byte[]> _safepointAtBackwardBranchTemplates = new BranchConditionMap<byte[]>();
-
     /**
      * Table of templates for tableswitch bytecode. There is one template for each byte of an alignment requirement for the
      * jump table (e.g., if the requirement is 4-bytes aligned, there are 4 templates, one for offsets 0, 1, 2 and 3).
@@ -263,7 +259,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 // Note that the safepoint takes place once the stack frame is in the same state as that of the target bytecode.
                 // The reference maps of the target should be used when at this safepoint.
                 final int stopPosition = _codeBuffer.currentPosition();
-                _codeBuffer.emit(_safepointAtBackwardBranchTemplates.get(branchCondition));
+                _codeBuffer.emit(VMConfiguration.hostOrTarget().safepoint().code());
                 emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition));
             }
             // Compute relative offset.
@@ -471,93 +467,64 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
     }
 
     static {
-        if (MaxineVM.isPrototyping()) {
-            /*
-             * Initialization of the target ABI
-             * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
-             */
-            final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
-            _targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
-            // Initialization of the few hand-crafted templates
-            final AMD64GeneralRegister64 safepointLatchReg1 = _targetABI.registerRoleAssignment().integerRegisterActingAs(VMRegister.Role.SAFEPOINT_LATCH);
-            final byte rel8 = 0;
-            final int rel32 = 0;
-            // First, emit all the templates with a single assembler, recording their offset in the code buffer
+        /*
+         * Initialization of the target ABI
+         * FIXME: some redundancies with EirABI constructor... Need to figure out how to better factor this out.
+         */
+        final Class<TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>> type = null;
+        _targetABI = StaticLoophole.cast(type, VMConfiguration.target().targetABIsScheme().jitABI());
+        // Initialization of the few hand-crafted templates
+        final byte rel8 = 0;
+        final int rel32 = 0;
+        // First, emit all the templates with a single assembler, recording their offset in the code buffer
 
-            final AMD64Assembler asm = new AMD64Assembler();
+        final AMD64Assembler asm = new AMD64Assembler();
 
-            asm.jmp(rel8);
-            _rel8BranchTemplates.put(NONE, toByteArrayAndReset(asm));
-            asm.jmp(rel32);
-            _rel32BranchTemplates.put(NONE, toByteArrayAndReset(asm));
-            asm.mov(safepointLatchReg1, safepointLatchReg1.indirect());
-            _safepointAtBackwardBranchTemplates.put(NONE, toByteArrayAndReset(asm));
+        asm.jmp(rel8);
+        _rel8BranchTemplates.put(NONE, toByteArrayAndReset(asm));
+        asm.jmp(rel32);
+        _rel32BranchTemplates.put(NONE, toByteArrayAndReset(asm));
 
+        asm.jz(rel8);
+        _rel8BranchTemplates.put(EQ, toByteArrayAndReset(asm));
+        asm.jz(rel32);
+        _rel32BranchTemplates.put(EQ, toByteArrayAndReset(asm));
 
-            asm.jz(rel8);
-            _rel8BranchTemplates.put(EQ, toByteArrayAndReset(asm));
-            asm.jz(rel32);
-            _rel32BranchTemplates.put(EQ, toByteArrayAndReset(asm));
-            asm.cmove(safepointLatchReg1, safepointLatchReg1.indirect());
-            _safepointAtBackwardBranchTemplates.put(EQ, toByteArrayAndReset(asm));
+        asm.jnz(rel8);
+        _rel8BranchTemplates.put(NE, toByteArrayAndReset(asm));
+        asm.jnz(rel32);
+        _rel32BranchTemplates.put(NE, toByteArrayAndReset(asm));
 
-            asm.jnz(rel8);
-            _rel8BranchTemplates.put(NE, toByteArrayAndReset(asm));
-            asm.jnz(rel32);
-            _rel32BranchTemplates.put(NE, toByteArrayAndReset(asm));
-            asm.cmovne(safepointLatchReg1, safepointLatchReg1.indirect());
-            _safepointAtBackwardBranchTemplates.put(NE, toByteArrayAndReset(asm));
+        asm.jl(rel8);
+        _rel8BranchTemplates.put(LT, toByteArrayAndReset(asm));
+        asm.jl(rel32);
+        _rel32BranchTemplates.put(LT, toByteArrayAndReset(asm));
 
-            asm.jl(rel8);
-            _rel8BranchTemplates.put(LT, toByteArrayAndReset(asm));
-            asm.jl(rel32);
-            _rel32BranchTemplates.put(LT, toByteArrayAndReset(asm));
-            asm.cmovl(safepointLatchReg1, safepointLatchReg1.indirect());
-            _safepointAtBackwardBranchTemplates.put(LT, toByteArrayAndReset(asm));
+        asm.jnl(rel8);
+        _rel8BranchTemplates.put(GE, toByteArrayAndReset(asm));
+        asm.jnl(rel32);
+        _rel32BranchTemplates.put(GE, toByteArrayAndReset(asm));
 
-            asm.jnl(rel8);
-            _rel8BranchTemplates.put(GE, toByteArrayAndReset(asm));
-            asm.jnl(rel32);
-            _rel32BranchTemplates.put(GE, toByteArrayAndReset(asm));
-            asm.cmovge(safepointLatchReg1, safepointLatchReg1.indirect());
-            _safepointAtBackwardBranchTemplates.put(GE, toByteArrayAndReset(asm));
+        asm.jnle(rel8);
+        _rel8BranchTemplates.put(GT, toByteArrayAndReset(asm));
+        asm.jnle(rel32);
+        _rel32BranchTemplates.put(GT, toByteArrayAndReset(asm));
 
-            asm.jnle(rel8);
-            _rel8BranchTemplates.put(GT, toByteArrayAndReset(asm));
-            asm.jnle(rel32);
-            _rel32BranchTemplates.put(GT, toByteArrayAndReset(asm));
-            asm.cmovg(safepointLatchReg1, safepointLatchReg1.indirect());
-            _safepointAtBackwardBranchTemplates.put(GT, toByteArrayAndReset(asm));
+        asm.jle(rel8);
+        _rel8BranchTemplates.put(LE, toByteArrayAndReset(asm));
+        asm.jle(rel32);
+        _rel32BranchTemplates.put(LE, toByteArrayAndReset(asm));
 
-            asm.jle(rel8);
-            _rel8BranchTemplates.put(LE, toByteArrayAndReset(asm));
-            asm.jle(rel32);
-            _rel32BranchTemplates.put(LE, toByteArrayAndReset(asm));
-            asm.cmovle(safepointLatchReg1, safepointLatchReg1.indirect());
-            _safepointAtBackwardBranchTemplates.put(LE, toByteArrayAndReset(asm));
-
-            for (BranchCondition branchCondition : BranchCondition.VALUES) {
-                assert _rel8BranchTemplates.get(branchCondition) != null;
-                assert _rel32BranchTemplates.get(branchCondition) != null;
-                assert _safepointAtBackwardBranchTemplates.get(branchCondition) != null;
-            }
-
-            // Templates for tableswitch
-            buildTableSwitchTemplate(asm);
-
-            // Template for lookupswitch
-            buildLookupSwitchTemplate(asm);
-        } else {
-            // This class initializer should never be run after boot image construction.
-            ProgramError.unexpected();
-            _targetABI = null;
-            _lookupSwitchTemplate = null;
-            _tableswitchHighMatchModifier = null;
-            _tableswitchIndexAdjustModifier = null;
-            _tableswitchBranchToDefaultTargetModifier = null;
-            _lookupswitchMaxIndexModifier = null;
-            _lookupswitchBranchToDefaultTargetModifier = null;
+        for (BranchCondition branchCondition : BranchCondition.VALUES) {
+            assert _rel8BranchTemplates.get(branchCondition) != null;
+            assert _rel32BranchTemplates.get(branchCondition) != null;
         }
+
+        // Templates for tableswitch
+        buildTableSwitchTemplate(asm);
+
+        // Template for lookupswitch
+        buildLookupSwitchTemplate(asm);
     }
 
     @PROTOTYPE_ONLY

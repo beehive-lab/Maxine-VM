@@ -74,7 +74,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     }
 
 #if DEBUG_THREADS
-    debug_println("thread_create: id = %d, stack size = %ld", stackSize, id);
+    debug_println("thread_create: id = %d, stack size = %ld", id, stackSize);
 #endif
 
     /* create the native thread locals and allocate stack if necessary */
@@ -268,7 +268,9 @@ void thread_initSegments(NativeThreadLocals *nativeThreadLocals) {
 #if DEBUG_THREADS
     int id = nativeThreadLocals->id;
     debug_println("thread %3d: stackBase = %p", id, nativeThreadLocals->stackBase);
+    debug_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(nativeThreadLocals->stackBase));
     debug_println("thread %3d: stackSize = %d", id, nativeThreadLocals->stackSize);
+    debug_println("thread %3d: stackBottom = %p", id, stackBottom);
     debug_println("thread %3d: triggeredVmThreadLocals = %p", id, nativeThreadLocals->triggeredVmThreadLocals);
     debug_println("thread %3d: enabledVmThreadLocals   = %p", id, nativeThreadLocals->enabledVmThreadLocals);
     debug_println("thread %3d: disabledVmThreadLocals  = %p", id, nativeThreadLocals->disabledVmThreadLocals);

@@ -23,7 +23,6 @@ package com.sun.max.vm.thread;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -542,7 +541,7 @@ public enum VmThreadLocal {
      * This assumes that prepareStackReferenceMap() has been run for the same stack and that no mutator execution
      * affecting this stack has occurred in between.
      */
-    public static void scanReferences(Pointer vmThreadLocals, BeltWayPointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
+    public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
         final Pointer lastJavaCallerStackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
         final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
         final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
@@ -562,40 +561,6 @@ public enum VmThreadLocal {
 
         boolean lockDisabledSafepoints = false;
         if (Heap.traceGC()) {
-            lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map scanning
-            Debug.print("Scanning stack reference map for thread ");
-            Debug.printVmThread(vmThread, false);
-            Debug.println(":");
-            Debug.print("  Highest slot: ");
-            Debug.println(highestSlot);
-            Debug.print("  Lowest active slot: ");
-            Debug.println(lowestActiveSlot);
-            Debug.print("  Lowest slot: ");
-            Debug.println(lowestSlot);
-        }
-
-        StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor, fromSpace, toSpace);
-        StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestActiveSlot, highestSlot, wordPointerIndexVisitor, fromSpace, toSpace);
-
-        if (Heap.traceGC()) {
-            Debug.unlock(lockDisabledSafepoints);
-        }
-    }
-
-    /**
-     * Scan all references on the stack, including the VM thread locals, including stored register values.
-     *
-     * This assumes that prepareStackReferenceMap() has been run for the same stack and that no mutator execution
-     * affecting this stack has occurred in between.
-     */
-    public static void scanReferences(Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
-        final Pointer lowestActiveSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
-        final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-        final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-
-        boolean lockDisabledSafepoints = false;
-        if (Heap.traceGC()) {
-            final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
             lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map scanning
             Debug.print("Scanning stack reference map for thread ");
             Debug.printVmThread(vmThread, false);
