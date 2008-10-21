@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.thread;
 
-import java.lang.reflect.*;
-
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
