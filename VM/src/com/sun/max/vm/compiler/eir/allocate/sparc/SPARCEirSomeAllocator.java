@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
@@ -64,6 +65,10 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         _allocatableIntegerRegisters = PoolSet.allOf(SPARCEirRegister.pool());
         _allocatableIntegerRegisters.and(SPARCEirRegister.GeneralPurpose.poolSet());
         _allocatableIntegerRegisters.and(abi.allocatableRegisters());
+        if (((DirToSPARCEirMethodTranslation) methodGeneration).saveSafetpoinLatchInLocal()) {
+            // Reserve L5
+            _allocatableIntegerRegisters.remove(DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL);
+        }
 
         _allocatableFloatingPointRegisters = PoolSet.allOf(SPARCEirRegister.pool());
         _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.poolSet());

@@ -531,14 +531,25 @@ public interface SPARCEirInstruction {
      *  Moving the register windows is the callee's decision. See EirPrologue and return instructions.
      */
     public static class CALL extends EirCall<EirInstructionVisitor, SPARCEirTargetEmitter> implements SPARCEirInstruction  {
+        final SPARCEirRegister.GeneralPurpose _savedSafepointLatch;
+        final SPARCEirRegister.GeneralPurpose _safepointLatch;
+
+        public SPARCEirRegister.GeneralPurpose savedSafepointLatch() {
+            return _savedSafepointLatch;
+        }
+
         public CALL(EirBlock block, EirABI abi, EirValue result, EirLocation resultLocation,
                         EirValue function, EirValue[] arguments, EirLocation[] argumentLocations,
                         EirMethodGeneration methodGeneration) {
             super(block, abi, result, resultLocation, function, M_G_L_S, arguments, argumentLocations, methodGeneration);
             final SPARCEirABI sparcAbi = (SPARCEirABI) abi;
-            if (sparcAbi.callerSavedRegisters().contains(sparcAbi.safepointLatchRegister()) &&
-                            ((DirToSPARCEirMethodTranslation) methodGeneration).callerMustSaveLatchRegister()) {
-                methodGeneration.addEpilogueUse(methodGeneration.makeRegisterVariable(sparcAbi.safepointLatchRegister()));
+            _safepointLatch = (SPARCEirRegister.GeneralPurpose) sparcAbi.safepointLatchRegister();
+            final DirToSPARCEirMethodTranslation sparcMethodGeneration = (DirToSPARCEirMethodTranslation) methodGeneration;
+            if (sparcAbi.callerSavedRegisters().contains(_safepointLatch) && sparcMethodGeneration.callerMustSaveLatchRegister()) {
+                _savedSafepointLatch = DirToSPARCEirMethodTranslation.SAVED_SAFEPOINT_LATCH_LOCAL;
+                sparcMethodGeneration.needsSavingSafepointLatchInLocal();
+            } else {
+                _savedSafepointLatch = null;
             }
         }
 
@@ -563,8 +574,17 @@ public interface SPARCEirInstruction {
                     break;
                 }
             }
-            // TODO: fill delay slot.
-            emitter.assembler().nop();
+            // This is a workaround to a problem with the current register allocator which makes it very hard to reload a spilled - preallocated caller save
+            // register (the only occurrence of which is the safepoint latch) into its preallocated location.
+            if (_savedSafepointLatch != null) {
+                // Save safepoint latch in delay slot
+                emitter.assembler().mov(_safepointLatch.as(), _savedSafepointLatch.as());
+                // Restore it on return
+                emitter.assembler().mov(_savedSafepointLatch.as(), _safepointLatch.as());
+            } else {
+                // TODO: fill delay slot.
+                emitter.assembler().nop();
+            }
         }
     }
 
