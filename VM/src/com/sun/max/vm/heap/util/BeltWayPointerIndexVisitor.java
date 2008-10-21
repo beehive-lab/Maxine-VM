@@ -26,7 +26,7 @@ import com.sun.max.unsafe.*;
 /**
  * @author Bernd Mathiske
  */
-public interface BeltWayPointerIndexVisitor extends Visitor{
+public interface BeltWayPointerIndexVisitor extends Visitor {
 
     /**
      * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address

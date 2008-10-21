@@ -124,17 +124,17 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     // Performs the actual Garbage Collection
     private final Runnable _collect = new Runnable() {
         public void run() {
+            if (Heap.verbose()) {
+                Debug.print("--Before GC--   size: ");
+                Debug.println(_allocationMark.minus(_toSpace.start()).toInt());
+            }
+
             // Calls the beforeGarbageCollection() method of the plugged monitor Scheme.
             // Pre-verification of the heap.
             verifyHeap();
 
             ++_numberOfGarbageCollectionInvocations;
             TeleHeapInfo.beforeGarbageCollection();
-
-            if (Heap.verbose()) {
-                Debug.print("--Before GC--   size: ");
-                Debug.println(_allocationMark.minus(_toSpace.start()).toInt());
-            }
 
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
@@ -170,6 +170,13 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             moveReachableObjects();
             _copyTimer.stop();
             _gcTimer.stop();
+
+            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+
+            verifyHeap();
+
+            TeleHeapInfo.afterGarbageCollection();
+
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Debug.lock();
                 Debug.print("clear & initialize: ");
@@ -194,12 +201,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                 Debug.println();
                 Debug.unlock(lockDisabledSafepoints);
             }
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-
-            verifyHeap();
-
-            TeleHeapInfo.afterGarbageCollection();
-
             if (Heap.verbose()) {
                 Debug.println("GC done");
             }
@@ -353,7 +354,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     public Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell); // Returns the pointer of the first object of the semispace.
         // Doesn't matter what kind of object it is. Where does this
-        // pointer points now? Concerning the nature of the object?
+        // pointer point now? Concerning the nature of the object?
         final Grip oldHubGrip = Layout.readHubGrip(origin); // Reads the hub-Grip of the previously retrieved object.
         // Grips are used for GC purpose.
         final Grip newHubGrip = mapGrip(oldHubGrip);

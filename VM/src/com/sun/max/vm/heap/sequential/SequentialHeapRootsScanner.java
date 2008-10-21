@@ -58,8 +58,8 @@ public class SequentialHeapRootsScanner {
 
     private final Pointer.Procedure _vmThreadLocalsScanner = new Pointer.Procedure() {
 
-        public void run(Pointer localSpace) {
-            VmThreadLocal.scanReferences(localSpace, _pointerIndexVisitor);
+        public void run(Pointer vmThreadLocals) {
+            VmThreadLocal.scanReferences(vmThreadLocals, _pointerIndexVisitor);
         }
     };
 

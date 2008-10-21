@@ -26,8 +26,11 @@ public class SafepointWhileInJava {
         int _iterations;
         public void run() {
             System.out.println("Spinner: spinning...");
+            final Object[] localRefs = new Object[1];
             while (!_done) {
-                new Throwable();
+                for (int i = 0; i != localRefs.length; ++i) {
+                    localRefs[i] = System.out;
+                }
                 ++_iterations;
             }
             System.out.println("Spinner: stopped!");
@@ -46,9 +49,11 @@ public class SafepointWhileInJava {
         }
 
         // GC while 'spinner' is spinning in Java code
-        System.out.println("GC start");
-        System.gc();
-        System.out.println("GC stop");
+        for (int i = 0; i < 5; ++i) {
+            System.out.println("GC start");
+            System.gc();
+            System.out.println("GC stop");
+        }
 
         // Stop 'spinner'
         spinner._done = true;

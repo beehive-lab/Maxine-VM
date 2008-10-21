@@ -131,4 +131,7 @@ public final class VirtualMemory {
      */
     @C_FUNCTION
     public static native void unprotectPage(Address pageAddress);
+
+    @C_FUNCTION
+    public static native Address pageAlign(Address address);
 }

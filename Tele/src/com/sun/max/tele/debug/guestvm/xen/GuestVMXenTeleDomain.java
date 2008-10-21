@@ -32,6 +32,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
 
 public class GuestVMXenTeleDomain extends TeleProcess {
@@ -93,7 +94,13 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, String name, int state, long stackBase, long stackSize) {
         GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idToThread(threadId);
         if (thread == null) {
-            thread = new GuestVMXenNativeThread(this, threadId, name, stackBase, stackSize);
+        	/* Need to align and skip over the guard page at the base of the stack.
+        	 * N.B. "base" is low address (i.e., actually the end of the stack!).
+        	 */
+        	final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
+        	final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
+        	final long adjStackSize = stackSize - (stackBottom - stackBase);
+            thread = new GuestVMXenNativeThread(this, threadId, name, stackBottom, adjStackSize);
         } else {
             thread.setMarked(false);
         }
@@ -101,6 +108,12 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         assert state >= 0 && state < ThreadState.VALUES.length();
         thread.setState(ThreadState.VALUES.get(state));
         threads.append(thread);
+    }
+
+    private static long pageAlign(long address, int pageSize) {
+        long alignment = pageSize - 1;
+        return ((long)(address + alignment) & ~alignment);
+
     }
 
     @Override

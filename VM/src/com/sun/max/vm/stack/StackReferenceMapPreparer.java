@@ -25,7 +25,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -692,7 +691,7 @@ public final class StackReferenceMapPreparer {
     }
 
     /**
-     * Clear a range of bits in the reference map. That is the reference map bits at indices in the inclusive range
+     * Clear a range of bits in the reference map. The reference map bits at indices in the inclusive range
      * {@code [lowestSlotIndex .. highestSlotIndex]} are zeroed. No other bits in the reference map are modified.
      *
      * @param vmThreadLocals a pointer to the VM thread locals corresponding to the stack to scan
@@ -703,64 +702,30 @@ public final class StackReferenceMapPreparer {
         checkValidReferenceMapRange(vmThreadLocals, lowestSlot, highestSlot);
         final Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-        final int highestByteIndex = referenceMapByteIndex(lowestStackSlot, highestSlot);
+        final int highestRefMapByteIndex = referenceMapByteIndex(lowestStackSlot, highestSlot);
+        final int lowestRefMapByteIndex = referenceMapByteIndex(lowestStackSlot, lowestSlot);
 
-        // Handle the lowest reference map byte separately as it may contains bits
-        // for slot addresses lower than 'lowestSlot'. These bits must be preserved:
-        final int lowestByteIndex = referenceMapByteIndex(lowestStackSlot, lowestSlot);
+        // Handle the lowest and highest reference map bytes separately as they may contain bits
+        // for slot addresses lower than 'lowestSlot' and higher than 'highestSlot' respectively.
+        // These bits must be preserved.
         final int lowestBitIndex = referenceMapBitIndex(lowestStackSlot, lowestSlot);
-        byte lowestByte = referenceMap.readByte(lowestByteIndex);
-        int mask = (1 << (lowestBitIndex % Bytes.WIDTH)) - 1;
-        lowestByte = (byte) (lowestByte & mask);
-        referenceMap.writeByte(lowestByteIndex, lowestByte);
-
-        int byteIndex = lowestByteIndex + 1;
-        for (; byteIndex < highestByteIndex; byteIndex++) {
-            referenceMap.writeByte(byteIndex, (byte) 0);
-        }
-
-        // Handle the highest reference map byte separately as it may contains bits
-        // for slot addresses higher than 'highestSlot'. These bits must be preserved:
         final int highestBitIndex = referenceMapBitIndex(lowestStackSlot, highestSlot);
-        byte highestByte = referenceMap.readByte(highestByteIndex);
-        mask = ~((1 << ((highestBitIndex + 1) % Bytes.WIDTH)) - 1);
-        highestByte = (byte) (highestByte & mask);
-        referenceMap.writeByte(highestByteIndex, highestByte);
-    }
+        final int lowestRefMapBytePreservedBits = (1 << (lowestBitIndex % Bytes.WIDTH)) - 1;
+        final int highestRefMapBytePreservedBits = ~((1 << ((highestBitIndex + 1) % Bytes.WIDTH)) - 1);
+        if (lowestRefMapByteIndex == highestRefMapByteIndex) {
+            final byte singleRefMapByte = referenceMap.readByte(lowestRefMapByteIndex);
+            final int singleRefMapBytePreservedBits = lowestRefMapBytePreservedBits | highestRefMapBytePreservedBits;
+            referenceMap.writeByte(lowestRefMapByteIndex, (byte) (singleRefMapByte & singleRefMapBytePreservedBits));
+        } else {
+            byte lowestRefMapByte = referenceMap.readByte(lowestRefMapByteIndex);
+            byte highestRefMapByte = referenceMap.readByte(highestRefMapByteIndex);
+            lowestRefMapByte = (byte) (lowestRefMapByte & lowestRefMapBytePreservedBits);
+            highestRefMapByte = (byte) (highestRefMapByte & highestRefMapBytePreservedBits);
+            referenceMap.writeByte(lowestRefMapByteIndex, lowestRefMapByte);
+            referenceMap.writeByte(highestRefMapByteIndex, highestRefMapByte);
 
-    /**
-     * Scan references in the stack in the specified interval [lowestSlot, highestSlot]. Note that this method
-     * always inspects complete reference map bytes, and thus assumes that bits corresponding to these extra roundoff
-     * slots at the beginning and end of the interval are zero.
-     *
-     * @param vmThreadLocals a pointer to the VM thread locals corresponding to the stack to scan
-     * @param lowestSlot the address of the lowest slot to scan
-     * @param highestSlot the address of the highest slot to scan
-     * @param wordPointerIndexVisitor the visitor to apply to each slot that is a reference
-     * @param fromSpace TODO
-     * @param toSpace TODO
-     */
-    public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, BeltWayPointerIndexVisitor wordPointerIndexVisitor, RuntimeMemoryRegion fromSpace, RuntimeMemoryRegion toSpace) {
-        checkValidReferenceMapRange(vmThreadLocals, lowestSlot, highestSlot);
-        final Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-        final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-        final int maxByteIndex = referenceMapByteIndex(lowestStackSlot, highestSlot.plus((Bytes.WIDTH - 1) * Word.size()));
-
-        for (int byteIndex = referenceMapByteIndex(lowestStackSlot, lowestSlot); byteIndex < maxByteIndex; byteIndex++) {
-            final int mapByte = referenceMap.getByte(byteIndex);
-            if (mapByte != 0) {
-                final int slotIndex = byteIndex * Bytes.WIDTH;
-                final Pointer slot = lowestStackSlot.plus(slotIndex * Word.size());
-                for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
-                    if (((mapByte >>> bitIndex) & 1) != 0) {
-                        if (Heap.traceGC()) {
-                            Debug.print("    Slot: ");
-                            printSlot(slotIndex + bitIndex, vmThreadLocals, Pointer.zero());
-                            Debug.println();
-                        }
-                        wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex, fromSpace, toSpace);
-                    }
-                }
+            for (int refMapByteIndex = lowestRefMapByteIndex + 1; refMapByteIndex < highestRefMapByteIndex; refMapByteIndex++) {
+                referenceMap.writeByte(refMapByteIndex, (byte) 0);
             }
         }
     }
@@ -774,29 +739,43 @@ public final class StackReferenceMapPreparer {
      * @param lowestSlot the address of the lowest slot to scan
      * @param highestSlot the address of the highest slot to scan
      * @param wordPointerIndexVisitor the visitor to apply to each slot that is a reference
-     * @param fromSpace TODO
-     * @param toSpace TODO
      */
     public static void scanReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot, PointerIndexVisitor wordPointerIndexVisitor) {
         checkValidReferenceMapRange(vmThreadLocals, lowestSlot, highestSlot);
         final Pointer lowestStackSlot = VmThreadLocal.LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-        final int maxByteIndex = referenceMapByteIndex(lowestStackSlot, highestSlot.plus((Bytes.WIDTH - 1) * Word.size()));
+        final int highestRefMapByteIndex = referenceMapByteIndex(lowestStackSlot, highestSlot);
+        final int lowestRefMapByteIndex = referenceMapByteIndex(lowestStackSlot, lowestSlot);
 
-        for (int byteIndex = referenceMapByteIndex(lowestStackSlot, lowestSlot); byteIndex < maxByteIndex; byteIndex++) {
-            final int mapByte = referenceMap.getByte(byteIndex);
-            if (mapByte != 0) {
-                final int slotIndex = byteIndex * Bytes.WIDTH;
-                final Pointer slot = lowestStackSlot.plus(slotIndex * Word.size());
-                for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
-                    if (((mapByte >>> bitIndex) & 1) != 0) {
-                        if (Heap.traceGC()) {
-                            Debug.print("    Slot: ");
-                            printSlot(slotIndex + bitIndex, vmThreadLocals, Pointer.zero());
-                            Debug.println();
-                        }
-                        wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex);
+        // Handle the lowest reference map byte separately as it may contain bits
+        // for slot addresses lower than 'lowestSlot'. These bits must be ignored:
+        final int lowestBitIndex = referenceMapBitIndex(lowestStackSlot, lowestSlot);
+        final int highestBitIndex = referenceMapBitIndex(lowestStackSlot, highestSlot);
+        if (highestRefMapByteIndex == lowestRefMapByteIndex) {
+            scanReferenceMapByte(lowestRefMapByteIndex, lowestStackSlot, referenceMap, lowestBitIndex % Bytes.WIDTH, highestBitIndex % Bytes.WIDTH, vmThreadLocals, wordPointerIndexVisitor);
+        } else {
+            scanReferenceMapByte(lowestRefMapByteIndex, lowestStackSlot, referenceMap, lowestBitIndex % Bytes.WIDTH, Bytes.WIDTH, vmThreadLocals, wordPointerIndexVisitor);
+            scanReferenceMapByte(highestRefMapByteIndex, lowestStackSlot, referenceMap, 0, (highestBitIndex % Bytes.WIDTH) + 1, vmThreadLocals, wordPointerIndexVisitor);
+
+            for (int refMapByteIndex = lowestRefMapByteIndex + 1; refMapByteIndex < highestRefMapByteIndex; refMapByteIndex++) {
+                scanReferenceMapByte(refMapByteIndex, lowestStackSlot, referenceMap, 0, Bytes.WIDTH, vmThreadLocals, wordPointerIndexVisitor);
+            }
+        }
+    }
+
+    private static void scanReferenceMapByte(int refMapByteIndex, Pointer lowestStackSlot, Pointer referenceMap, int startBit, int endBit, Pointer vmThreadLocals, PointerIndexVisitor wordPointerIndexVisitor) {
+        final int refMapByte = referenceMap.getByte(refMapByteIndex);
+        if (refMapByte != 0) {
+            final int baseIndex = refMapByteIndex * Bytes.WIDTH;
+            final Pointer slot = lowestStackSlot.plus(baseIndex * Word.size());
+            for (int bitIndex = startBit; bitIndex < endBit; bitIndex++) {
+                if (((refMapByte >>> bitIndex) & 1) != 0) {
+                    if (Heap.traceGC()) {
+                        Debug.print("    Slot: ");
+                        printSlot(baseIndex + bitIndex, vmThreadLocals, Pointer.zero());
+                        Debug.println();
                     }
+                    wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex);
                 }
             }
         }
@@ -805,6 +784,11 @@ public final class StackReferenceMapPreparer {
     @INLINE
     private static int referenceMapByteIndex(final Pointer lowestStackSlot, Pointer slot) {
         return (slot.minus(lowestStackSlot).toInt() / Word.size()) / Bytes.WIDTH;
+    }
+
+    @INLINE
+    private static int referenceMapWordIndex(final Pointer lowestStackSlot, Pointer slot) {
+        return (slot.minus(lowestStackSlot).toInt() / Word.size()) / Word.numberOfBits();
     }
 
     @INLINE
@@ -825,5 +809,4 @@ public final class StackReferenceMapPreparer {
             FatalError.unexpected("invalid reference map range: lowest slot is less than lowest stack slot");
         }
     }
-
 }
