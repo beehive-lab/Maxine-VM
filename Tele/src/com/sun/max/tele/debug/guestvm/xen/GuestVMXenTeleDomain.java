@@ -25,7 +25,6 @@ import java.io.*;
 import javax.swing.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.VirtualMemory;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -110,7 +109,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         thread.setState(ThreadState.VALUES.get(state));
         threads.append(thread);
     }
-    
+
     private static long pageAlign(long address, int pageSize) {
         long alignment = pageSize - 1;
         return ((long)(address + alignment) & ~alignment);

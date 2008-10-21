@@ -20,14 +20,11 @@
  */
 package com.sun.max.vm.jdk;
 
-import java.lang.reflect.*;
+import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
-import com.sun.max.annotate.INLINE;
-import com.sun.max.annotate.METHOD_SUBSTITUTIONS;
-import com.sun.max.annotate.SUBSTITUTE;
-import com.sun.max.unsafe.UnsafeLoophole;
-import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Thread_vmThread;
-import com.sun.max.vm.monitor.Monitor;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.thread.*;
 
 /**
