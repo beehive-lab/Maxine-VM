@@ -150,6 +150,7 @@ public abstract class Actor {
     public static final Utf8Constant NO_GENERIC_SIGNATURE = null;
     public static final byte[] NO_RUNTIME_VISIBLE_ANNOTATION_BYTES = null;
 
+    @INSPECTED
     @CONSTANT
     private int _flags;
 

@@ -81,6 +81,7 @@ public class TeleFields extends TeleVMHolder {
     // VM fields:
 
     // START GENERATED CONTENT
+    public final TeleInstanceIntFieldAccess Actor_flags = new TeleInstanceIntFieldAccess(Actor.class, "_flags");
     public final TeleInstanceReferenceFieldAccess Actor_name = new TeleInstanceReferenceFieldAccess(Actor.class, "_name", Utf8Constant.class);
     public final TeleInstanceIntFieldAccess Builtin_serial = new TeleInstanceIntFieldAccess(Builtin.class, "_serial");
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping_table = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.class, "_table", Entry[].class);
