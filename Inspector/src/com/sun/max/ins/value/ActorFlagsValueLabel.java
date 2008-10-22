@@ -21,58 +21,52 @@
 package com.sun.max.ins.value;
 
 import com.sun.max.ins.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.value.*;
 
+
 /**
- * @author Michael Van De Vanter
+ * A textual display label associated with an integer that represents the value of
+ * the {@link Actor#_flags} field in instances of {@link Actor} in the {@link TeleVM}.
  *
- * A textual display label associated with a primitive value to be read from the {@link TeleVM}.
- */
-public class PrimitiveValueLabel extends ValueLabel {
+ * @see TeleActor
+ *
+ * @author Michael Van De Vanter
+  */
+public final class ActorFlagsValueLabel extends ValueLabel {
 
-    private final Kind _kind;
+    private final TeleActor _teleActor;
+    private String _flagsAsHex;
+    private String _flagsAsString;
 
-    public Kind kind() {
-        return _kind;
-    }
-
-    // TODO (mlvdv) this class is very hard to subclass because it does all its work
-    // in the constructor, which keeps subclasses from having access to their
-    // local state variables when the other methods get called.
-    public PrimitiveValueLabel(Inspection inspection, Kind kind) {
-        super(inspection, null);
-        _kind = kind;
+    public ActorFlagsValueLabel(Inspection inspection, TeleActor teleActor) {
+        super(inspection);
+        _teleActor = teleActor;
         initializeValue();
         redisplay();
     }
 
-    public PrimitiveValueLabel(Inspection inspection, Value value) {
-        super(inspection, value);
-        _kind = value.kind();
-        initializeValue();
-        redisplay();
+    @Override
+    protected Value fetchValue() {
+        final int flags = _teleActor.readFlags();
+        _flagsAsHex = "Flags: 0x" + Integer.toHexString(flags);
+        _flagsAsString = _teleActor.flagsAsString();
+        return IntValue.from(flags);
     }
 
+    @Override
+    protected void updateText() {
+        setText(_flagsAsHex);
+        setToolTipText(_flagsAsString);
+    }
+
+    @Override
     public void redisplay() {
         setFont(style().primitiveDataFont());
         setForeground(style().primitiveDataColor());
         setBackground(style().primitiveDataBackgroundColor());
         updateText();
-    }
-
-    @Override
-    public void updateText() {
-        assert value() != null;
-        if (_kind == Kind.CHAR) {
-            setText("'" + value().toString() + "'");
-            setToolTipText("Int: " + Integer.toString(value().toInt()) + ", 0x" + Integer.toHexString(value().toInt()));
-        } else if (_kind == Kind.INT) {
-            setText(value().toString());
-            setToolTipText("0x" + Integer.toHexString(value().toInt()));
-        } else {
-            setText(value().toString());
-        }
     }
 
 }

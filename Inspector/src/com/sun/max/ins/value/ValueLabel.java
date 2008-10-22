@@ -26,12 +26,14 @@ import com.sun.max.vm.value.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  *
- * A textual display label associated with a
- * value to be read from the {@link TeleVM}, presumed
- * mutable.
+ * A textual display label associated with a  {@link Value}  to be read
+ * from the {@link TeleVM}, presumed mutable.
  */
 public abstract class ValueLabel extends InspectorLabel {
+
+    // TODO (mlvdv) the flow of control in this class hierarchy is awkward and should be redesigned.
 
     // VM epoch when value last read.
     private long _epoch = -1;
@@ -40,6 +42,10 @@ public abstract class ValueLabel extends InspectorLabel {
 
     protected final Value value() {
         return _value;
+    }
+
+    protected ValueLabel(Inspection inspection) {
+        super(inspection);
     }
 
     protected ValueLabel(Inspection inspection, Value value) {

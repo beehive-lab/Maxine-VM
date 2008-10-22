@@ -444,12 +444,17 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                     }
                 };
             } else {
-                valueLabel = new PrimitiveValueLabel(inspection(), fieldActor.kind()) {
-                    @Override
-                    public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
-                    }
-                };
+                if (_teleObject instanceof TeleActor && fieldActor.name().toString().equals("_flags")) {
+                    final TeleActor teleActor = (TeleActor) _teleObject;
+                    valueLabel =  new ActorFlagsValueLabel(inspection(), teleActor);
+                } else {
+                    valueLabel = new PrimitiveValueLabel(inspection(), fieldActor.kind()) {
+                        @Override
+                        public Value fetchValue() {
+                            return _teleObject.readFieldValue(fieldActor);
+                        }
+                    };
+                }
             }
             valueLabels.append(valueLabel);
             fieldsPanel.add(valueLabel);                                                                                                                                     // Field value
