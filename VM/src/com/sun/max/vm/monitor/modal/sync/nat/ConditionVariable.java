@@ -38,10 +38,12 @@ public final class ConditionVariable {
 
     private static int _size;
 
-    private static CriticalNativeMethod _nativeConditionSize = new CriticalNativeMethod(ConditionVariable.class, "nativeConditionSize");
-    private static CriticalNativeMethod _nativeConditionInitialize = new CriticalNativeMethod(ConditionVariable.class, "nativeConditionInitialize");
-    private static CriticalNativeMethod _nativeConditionWait = new CriticalNativeMethod(ConditionVariable.class, "nativeConditionWait");
-    private static CriticalNativeMethod _nativeConditionNotify = new CriticalNativeMethod(ConditionVariable.class, "nativeConditionSize");
+    static {
+        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionSize");
+        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionInitialize");
+        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionWait");
+        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionSize");
+    }
 
     @C_FUNCTION
     private static native int nativeConditionSize();
@@ -55,13 +57,6 @@ public final class ConditionVariable {
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
 
     public static void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            _nativeConditionSize.link();
-            _nativeConditionInitialize.link();
-            _nativeConditionWait.link();
-            _nativeConditionNotify.link();
-            _size = nativeConditionSize();
-        }
     }
 
     public ConditionVariable() {

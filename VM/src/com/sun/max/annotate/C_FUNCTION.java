@@ -63,8 +63,7 @@ public @interface C_FUNCTION {
     boolean isSignalHandler() default false;
 
     /**
-     * Determines if this C function is a stub where a signal handler can return to.
-     * Used mostly as a marker by stack walking mechanisms to know where to obtain information about the next frame.
+     * Determines if this C function is the special trap stub that saves the CPU state and restores it.
      */
-    boolean isSignalHandlerStub() default false;
+    boolean isTrapStub() default false;
 }

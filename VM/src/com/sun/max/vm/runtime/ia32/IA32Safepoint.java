@@ -29,6 +29,7 @@ import com.sun.max.asm.ia32.complete.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -89,6 +90,27 @@ public final class IA32Safepoint extends Safepoint {
         } catch (AssemblyException assemblyException) {
             throw ProgramError.unexpected("could not assemble safepoint stub");
         }
+    }
+
+    @Override
+    public Pointer getInstructionPointer(Pointer registerState) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public Pointer getStackPointer(Pointer registerState, TargetMethod targetMethod) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public Pointer getFramePointer(Pointer registerState, TargetMethod targetMethod) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public Pointer getSafepointLatch(Pointer registerState) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public void setSafepointLatch(Pointer registerState, Pointer value) {
+        throw Problem.unimplemented();
     }
 
 }

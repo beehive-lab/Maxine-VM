@@ -225,7 +225,7 @@ public abstract class StackFrameWalker {
                     lastJavaCallerFramePointer);
             return true;
         }
-        if (lastJavaCalleeMethodActor.isSignalHandlerStub()) {
+        if (lastJavaCalleeMethodActor.isTrapStub()) {
             final Pointer instructionPointer = readPointer(TRAP_INSTRUCTION_POINTER);
             final Pointer stackPointer = readPointer(TRAP_STACK_POINTER);
             final Pointer framePointer = readPointer(TRAP_FRAME_POINTER);

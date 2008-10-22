@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -74,6 +75,7 @@ public abstract class Safepoint {
             final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
             return (Safepoint) constructor.newInstance(vmConfiguration);
         } catch (Exception exception) {
+            exception.printStackTrace();
             throw ProgramError.unexpected("could not create safepoint: " + exception);
         }
     }
@@ -134,15 +136,6 @@ public abstract class Safepoint {
     @INLINE
     public static void enable() {
         setLatchRegister(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer());
-    }
-
-    public static void without(Runnable runnable) {
-        try {
-            Safepoint.disable();
-            runnable.run();
-        } finally {
-            Safepoint.enable();
-        }
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {
@@ -244,4 +237,9 @@ public abstract class Safepoint {
         return VmThreadLocal.SAFEPOINT_NATIVE_STUB.getConstantWord(vmThreadLocals).asAddress();
     }
 
+    public abstract Pointer getInstructionPointer(Pointer registerState);
+    public abstract Pointer getStackPointer(Pointer registerState, TargetMethod targetMethod);
+    public abstract Pointer getFramePointer(Pointer registerState, TargetMethod targetMethod);
+    public abstract Pointer getSafepointLatch(Pointer registerState);
+    public abstract void setSafepointLatch(Pointer registerState, Pointer value);
 }

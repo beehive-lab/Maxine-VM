@@ -22,10 +22,7 @@ package com.sun.max.vm.runtime;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
@@ -35,7 +32,6 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
 
 /**
  * This class handles operating systems traps that can arise from implicit null pointer checks,
@@ -47,390 +43,186 @@ import com.sun.max.vm.type.*;
  * A small amount of native code supports this class by connecting to the OS-specific signal
  * handling mechanisms.
  *
- * @author Bernd Mathiske
  * @author Ben L. Titzer
- * @author Karthik Manivannan
  */
 public final class Trap {
-    private static VMOption _dumpStackOnSegfault =
-        new VMOption("-XX:DumpStackOnSegFault", "Reports a stack trace for every segmentation fault, regardless of the cause.", MaxineVM.Phase.PRISTINE);
+    // note that these constants must be agreed upon in C land.
+    public static final int MEMORY_FAULT = 0;
+    public static final int STACK_FAULT = 1;
+    public static final int ILLEGAL_INSTRUCTION = 2;
+    public static final int ARITHMETIC_EXCEPTION = 3;
+    public static final int ASYNC_INTERRUPT = 4;
 
-    private static final CriticalMethod _illegalInstructionHandler = lookup("handleIllegalInstruction");
-    private static final CriticalMethod _segmentationFaultHandler = lookup("handleSegmentationFault");
-    private static final CriticalMethod _stackFaultHandler = lookup("handleStackFault");
-    private static final CriticalMethod _divideByZeroHandler = lookup("handleDivideByZero");
-    private static final CriticalMethod _interruptHandler = lookup("handleInterrupt");
-    private static final CriticalMethod _busErrorHandler = lookup("handleBusError");
+    private static VMOption _dumpStackOnTrap =
+        new VMOption("-XX:DumpStackOnTrap", "Reports a stack trace for every trap, regardless of the cause.", MaxineVM.Phase.PRISTINE);
 
-    public static final CriticalMethod _nullPointerExceptionStub = lookup("nullPointerExceptionStub");
-    public static final CriticalMethod _divideByZeroExceptionStub = lookup("divideByZeroExceptionStub");
-    public static final CriticalMethod _vmHardExitStub = lookup("vmHardExitStub");
-    public static final CriticalMethod _vmHardExitWhenNativeCodeHitsGuardPageStub = lookup("vmHardExitWhenNativeCodeHitsGuardPageStub");
-    public static final CriticalMethod _stackOverflowErrorStub = lookup("stackOverflowErrorStub");
-    public static final CriticalMethod _deoptimizationStub = lookup("deoptimizationStub");
-
-    @PROTOTYPE_ONLY
-    private static CriticalMethod lookup(String methodName) {
-        return new CriticalMethod(Trap.class, methodName, CallEntryPoint.C_ENTRY_POINT);
-    }
-
-    static {
-        new CriticalNativeMethod(MaxineVM.class, "native_exit");
-        new CriticalNativeMethod(MaxineVM.class, "native_trap_exit");
-        new CriticalNativeMethod(MaxineVM.class, "native_stack_trap_exit");
-    }
+    private static final CriticalMethod _trapStub = new CriticalMethod(Trap.class, "trapStub", CallEntryPoint.C_ENTRY_POINT);
+    private static final CriticalMethod _nativeExit = new CriticalNativeMethod(MaxineVM.class, "native_exit");
 
     @PROTOTYPE_ONLY
     private Trap() {
     }
 
-    /**
-     * The signature that all {@linkplain C_FUNCTION#isSignalHandler() Java trap handlers} must match.
-     */
-    @PROTOTYPE_ONLY
-    private static final SignatureDescriptor javaTrapHandlerSignature = SignatureDescriptor.create(Word.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class);
-
-    static {
-        // Verifies that all Java trap handlers called from the C trap handler ('trapHandler' in trap.c) have the expected signature
-        for (Method method : Trap.class.getDeclaredMethods()) {
-            final C_FUNCTION annotation = method.getAnnotation(C_FUNCTION.class);
-            if (annotation != null) {
-                if (annotation.isSignalHandler()) {
-                    final SignatureDescriptor signature = SignatureDescriptor.fromJava(method);
-                    if (!javaTrapHandlerSignature.equals(signature)) {
-                        ProgramError.unexpected(String.format("Incorrect signature for Java trap handler: %s%n  expected: %s%n       got: %s", method, javaTrapHandlerSignature, signature));
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Records the information about the frame in which the trap occurred. This information is recorded in these thread local variables:
-     * {@link VmThreadLocal#TRAP_INSTRUCTION_POINTER}, {@link VmThreadLocal#TRAP_FRAME_POINTER} and {@link VmThreadLocal#TRAP_STACK_POINTER}.
-     *
-     * @param triggeredVmThreadLocals the safepoint latch pointer as determined by native code for the TRIGGERED state
-     * @param stackPointer the value of the stack pointer when the trap occurred
-     * @param framePointer the value of the frame pointer when the trap occurred
-     * @param instructionPointer the value of the instruction pointer when the trap occurred
-     * @param integerRegisters a pointer to a memory buffer containing the contents of the integer registers at the time
-     *            of the fault
-     * @return the safepoints-disabled VM thread locals
-     */
-    private static Pointer prepareVmThreadLocals(Pointer triggeredVmThreadLocals, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer, Pointer integerRegisters) {
-        if (!SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(triggeredVmThreadLocals).equals(triggeredVmThreadLocals)) {
-            // TODO: fail more gracefully
-            MaxineVM.native_exit(-22);
-        }
-        final Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(triggeredVmThreadLocals).asPointer();
-        Safepoint.setLatchRegister(disabledVmThreadLocals);
-        integerRegisters.setWord(SAFEPOINT_LATCH_REGISTER_INDEX, disabledVmThreadLocals);
-        // record the excepting point and return the vm thread locals pointer
-        TRAP_INSTRUCTION_POINTER.setVariableWord(disabledVmThreadLocals, instructionPointer);
-        TRAP_STACK_POINTER.setVariableWord(disabledVmThreadLocals, stackPointer);
-        TRAP_FRAME_POINTER.setVariableWord(disabledVmThreadLocals, framePointer);
-        if (!TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.getVariableWord(disabledVmThreadLocals).isZero()) {
-            Debug.println("TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME should be zero");
-        }
-        TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.setVariableWord(disabledVmThreadLocals, Address.fromLong(1));
-
-        return disabledVmThreadLocals;
-    }
-
-    /**
-     * Saves the CPU's register contents in a thread local space.
-     */
-    private static void saveRegisters(Pointer vmThreadLocals, Pointer integerRegisters, Pointer floatingPointRegisters) {
-        Pointer p = REGISTERS.pointer(vmThreadLocals);
-        for (int i = 0; i < NUMBER_OF_INTEGER_REGISTERS; i++) {
-            p.setWord(integerRegisters.getWord(i));
-            p = p.plusWords(1);
-        }
-        for (int i = 0; i < NUMBER_OF_FLOATING_POINT_REGISTERS; i++) {
-            p.setDouble(i, floatingPointRegisters.getDouble(i));
-        }
-    }
-
-    @NEVER_INLINE
-    private static Word leaveHandler(Word stubInstructionPointer, Pointer vmThreadLocals) {
-        TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.setVariableWord(vmThreadLocals, Address.zero());
-        return stubInstructionPointer;
-    }
-
-    private static final int SAFEPOINT_LATCH_REGISTER_INDEX = VMConfiguration.hostOrTarget().safepoint().latchRegister().value();
-
-    /**
-     * This method is called by the native trap handler when a segmentation fault occurs. The native code gathers the
-     * stack pointer, frame pointer, instruction pointer, and the set of integer and floating registers.
-     *
-     * @param triggeredVmThreadLocals the safepoint latch pointer as determined by native code for the TRIGGERED state
-     * @param stackPointer the stack pointer at the time of the fault
-     * @param framePointer the frame pointer at the time of the fault
-     * @param instructionPointer the instruction pointer at the time of the fault
-     * @param integerRegisters a pointer to a memory buffer containing the contents of the integer registers at the time
-     *            of the fault
-     * @param floatingPointRegisters a pointer to a memory buffer containing the contents of the floating point
-     *            registers at the time of the fault
-     * @param faultAddress
-     * @return the entry point of the stub to execute on return from the signal handler
-     */
-    @C_FUNCTION(isSignalHandler = true)
-    private static Word handleSegmentationFault(Pointer triggeredVmThreadLocals,
-                                                Pointer stackPointer,
-                                                Pointer framePointer,
-                                                Pointer instructionPointer,
-                                                Pointer integerRegisters,
-                                                Pointer floatingPointRegisters,
-                                                Pointer faultAddress) {
-        final Word safepointLatch = integerRegisters.getWord(SAFEPOINT_LATCH_REGISTER_INDEX);
-        final Pointer disabledVmThreadLocals = prepareVmThreadLocals(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, integerRegisters);
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        if (targetMethod == null) {
-            if (Code.codePointerToRuntimeStub(instructionPointer) != null) {
-                Debug.print("Seg fault in runtime stub at ");
-                Debug.println(instructionPointer);
-            } else {
-                Debug.print("Seg fault in native code at ");
-                Debug.println(instructionPointer);
-            }
-            return _vmHardExitStub.address();
-        } else if (targetMethod instanceof JitTargetMethod) {
-            // We may have recorded the incorrect frame pointer if the JIT ABI doesn't use the CPU frame pointer.
-            final Pointer abiFramePointer = ((JitTargetMethod) targetMethod).getFramePointer(stackPointer, framePointer, integerRegisters);
-            TRAP_FRAME_POINTER.setVariableWord(disabledVmThreadLocals, abiFramePointer);
-        }
-
-        final boolean isSafepointTriggered = safepointLatch.equals(triggeredVmThreadLocals);
-
-        if (_dumpStackOnSegfault.isPresent()) {
-            Throw.stackDump("Segmentation fault @ " + instructionPointer.toHexString() + " faulting address: " + faultAddress.toHexString(), instructionPointer, stackPointer, framePointer);
-        }
-
-        Address stub;
-        if (isSafepointTriggered && VMConfiguration.hostOrTarget().safepoint().isAt(instructionPointer)) {
-            // only handle a safepoint if BOTH the latch register has been signaled AND we are at a safepoint instruction.
-            final Word enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals);
-            saveRegisters(enabledVmThreadLocals.asPointer(), integerRegisters, floatingPointRegisters);
-            stub = Safepoint.trapHandler(disabledVmThreadLocals);
-        } else if (inJava(disabledVmThreadLocals)) {
-            stub = _nullPointerExceptionStub.address();
-        } else {
-            // segmentation fault happened in native code somewhere
-            stub = _vmHardExitStub.address();
-        }
-        return leaveHandler(stub, disabledVmThreadLocals);
-    }
-
-    @C_FUNCTION(isSignalHandler = true)
-    private static Word handleStackFault(Pointer triggeredVmThreadLocals,
-                    Pointer stackPointer,
-                    Pointer framePointer,
-                    Pointer instructionPointer,
-                    Pointer integerRegisters,
-                    Pointer floatingPointRegisters,
-                    Pointer faultAddress) {
-        final Pointer disabledVmThreadLocals = prepareVmThreadLocals(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, integerRegisters);
-
-        Address stub;
-        final Address redZone = Pointer.zero(); // TODO: find the correct red zone
-        if (!inJava(disabledVmThreadLocals)) {
-            // stack fault occurred somewhere in native code.
-            stub = _vmHardExitStub.address();
-        } else if (faultAddress.greaterEqual(redZone) && faultAddress.lessThan(redZone.plus(VmThread.guardPageSize()))) {
-            // the red zone was reached.
-            stub = _vmHardExitStub.address();
-        } else {
-            // Java code caused a stack overflow.
-            stub = _stackOverflowErrorStub.address();
-        }
-        return leaveHandler(stub, disabledVmThreadLocals);
-    }
-
-    @C_FUNCTION(isSignalHandler = true)
-    private static Word handleIllegalInstruction(Pointer triggeredVmThreadLocals,
-                                                 Pointer stackPointer,
-                                                 Pointer framePointer,
-                                                 Pointer instructionPointer,
-                                                 Pointer integerRegisters,
-                                                 Pointer floatingPointRegisters,
-                                                 Pointer faultAddress) {
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer vmThreadLocals = prepareVmThreadLocals(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, integerRegisters);
-        saveRegisters(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer(), integerRegisters, floatingPointRegisters);
-        if (targetMethod == null) {
-            // Illegal instruction in a native method, i.e. this is a bug:
-            return _vmHardExitStub.address();
-        } else if (targetMethod instanceof JitTargetMethod) {
-            // We may have recorded the incorrect frame pointer if the JIT abi doesn't use the cpu frame pointer.
-            final Pointer abiFramePointer = ((JitTargetMethod) targetMethod).getFramePointer(stackPointer, framePointer, integerRegisters);
-            TRAP_FRAME_POINTER.setVariableWord(vmThreadLocals, abiFramePointer);
-        }
-        final Deoptimizer.ReferenceOccurrences occurrences = Deoptimizer.determineReferenceOccurrences(targetMethod, instructionPointer);
-        switch (occurrences) {
-            case ERROR: {
-                return leaveHandler(_vmHardExitStub.address(), vmThreadLocals);
-            }
-            case NONE: {
-                break;
-            }
-            case RETURN: {
-                break;
-            }
-            case SAFEPOINT: {
-                DEOPTIMIZER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, instructionPointer);
-                break;
-            }
-        }
-        DEOPTIMIZER_REFERENCE_OCCURRENCES.setVariableReference(vmThreadLocals, Reference.fromJava(occurrences));
-        return leaveHandler(_deoptimizationStub.address(), vmThreadLocals);
-    }
-
-    @C_FUNCTION(isSignalHandler = true)
-    private static Word handleInterrupt(Pointer triggeredVmThreadLocals,
-                                        Pointer stackPointer,
-                                        Pointer framePointer,
-                                        Pointer instructionPointer,
-                                        Pointer integerRegisters,
-                                        Pointer floatingPointRegisters,
-                                        Pointer faultAddress) {
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer vmThreadLocals = prepareVmThreadLocals(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, integerRegisters);
-        if (targetMethod == null) {
-            return _vmHardExitStub.address();
-        } else if (targetMethod instanceof JitTargetMethod) {
-            // We may have recorded the incorrect frame pointer if the JIT abi doesn't use the cpu frame pointer.
-            final Pointer abiFramePointer = ((JitTargetMethod) targetMethod).getFramePointer(stackPointer, framePointer, integerRegisters);
-            TRAP_FRAME_POINTER.setVariableWord(vmThreadLocals, abiFramePointer);
-        }
-        return leaveHandler(_vmHardExitStub.address(), vmThreadLocals);
-    }
-
-    @C_FUNCTION(isSignalHandler = true)
-    private static Word handleDivideByZero(Pointer triggeredVmThreadLocals,
-                                           Pointer stackPointer,
-                                           Pointer framePointer,
-                                           Pointer instructionPointer,
-                                           Pointer integerRegisters,
-                                           Pointer floatingPointRegisters,
-                                           Pointer faultAddress) {
-        final Pointer vmThreadLocals = prepareVmThreadLocals(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, integerRegisters);
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        if (targetMethod == null) {
-            return _vmHardExitStub.address();
-        } else if (targetMethod instanceof JitTargetMethod) {
-            // We may have recorded the incorrect frame pointer if the JIT abi doesn't use the cpu frame pointer.
-            final Pointer abiFramePointer = ((JitTargetMethod) targetMethod).getFramePointer(stackPointer, framePointer, integerRegisters);
-            TRAP_FRAME_POINTER.setVariableWord(vmThreadLocals, abiFramePointer);
-        }
-        if (inJava(vmThreadLocals)) {
-            return leaveHandler(_divideByZeroExceptionStub.address(), vmThreadLocals);
-        }
-        return leaveHandler(_vmHardExitStub.address(), vmThreadLocals);
-    }
-
-    @C_FUNCTION(isSignalHandler = true)
-    private static Word handleBusError(Pointer triggeredVmThreadLocals,
-                                       Pointer stackPointer,
-                                       Pointer framePointer,
-                                       Pointer instructionPointer,
-                                       Pointer integerRegisters,
-                                       Pointer floatingPointRegisters,
-                                       Pointer faultAddress) {
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer vmThreadLocals = prepareVmThreadLocals(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, integerRegisters);
-
-        if (targetMethod == null) {
-            return _vmHardExitStub.address();
-        } else if (targetMethod instanceof JitTargetMethod) {
-            // We may have recorded the incorrect frame pointer if the JIT abi doesn't use the cpu frame pointer.
-            final Pointer abiFramePointer = ((JitTargetMethod) targetMethod).getFramePointer(stackPointer, framePointer, integerRegisters);
-            TRAP_FRAME_POINTER.setVariableWord(vmThreadLocals, abiFramePointer);
-        }
-        final Word stub = inJava(vmThreadLocals) ? _divideByZeroExceptionStub.address() : _vmHardExitStub.address();
-        return leaveHandler(stub, vmThreadLocals);
-    }
-
     @C_FUNCTION
-    private static native void native_setIllegalInstructionHandler(Word trapHandler);
-
-    @C_FUNCTION
-    private static native void native_setSegmentationFaultHandler(Word trapHandler);
-
-    @C_FUNCTION
-    private static native void native_setStackFaultHandler(Word trapHandler);
-
-    @C_FUNCTION
-    private static native void native_setBusErrorHandler(Word trapHandler);
-
-    @C_FUNCTION
-    private static native void native_setDivideByZeroHandler(Word trapHandler);
-
-    @C_FUNCTION
-    private static native void native_setInterruptHandler(Word trapHandler);
+    private static native void native_setJavaTrapStub(int signal, Word trapHandler);
 
     /**
      * Installs the trap handlers using the operating system's API.
      */
     public static void initialize() {
-        native_setIllegalInstructionHandler(_illegalInstructionHandler.address());
-        native_setSegmentationFaultHandler(_segmentationFaultHandler.address());
-        native_setStackFaultHandler(_stackFaultHandler.address());
-        native_setDivideByZeroHandler(_divideByZeroHandler.address());
-        native_setBusErrorHandler(_busErrorHandler.address());
-        native_setInterruptHandler(_interruptHandler.address());
+        final Address stubAddress = _trapStub.address();
+        native_setJavaTrapStub(MEMORY_FAULT, stubAddress);
+        native_setJavaTrapStub(STACK_FAULT, stubAddress);
+        native_setJavaTrapStub(ILLEGAL_INSTRUCTION, stubAddress);
+        native_setJavaTrapStub(ASYNC_INTERRUPT, stubAddress);
+        native_setJavaTrapStub(ARITHMETIC_EXCEPTION, stubAddress);
     }
 
-    @C_FUNCTION(isSignalHandlerStub = true)
-    private static void nullPointerExceptionStub() {
-        final Pointer instructionPointer = TRAP_INSTRUCTION_POINTER.getVariableWord().asPointer();
-        final Pointer stackPointer = TRAP_STACK_POINTER.getVariableWord().asPointer();
-        final Pointer framePointer = TRAP_FRAME_POINTER.getVariableWord().asPointer();
+    /**
+     * This method handles traps that occurred during execution. This method has a special ABI produced
+     * by the compiler that saves the entire register state onto the stack before beginning execution.
+     * When a trap occurs, the native trap handler (see the native code in <code>trap.c</code>) saves
+     * a small amount of state in the disabled thread locals for the thread (the trap number, the instruction
+     * pointer, and the fault address) and then returns to this stub. This trap stub saves all of the
+     * registers onto the stack which are available in the <code>registerState</code> pointer.
+     *
+     * @param trap the trap number that occurred
+     * @param registerState a pointer to the stack location where registers are stored
+     * @param faultAddress the faulting address that caused this trap (memory faults only)
+     */
+    @C_FUNCTION(isTrapStub = true)
+    private static void trapStub(int trap, Pointer registerState, Address faultAddress) {
+        if (trap == ASYNC_INTERRUPT) {
+            // do nothing for an asynchronous interrupt.
+            return;
+        }
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Pointer instructionPointer = safepoint.getInstructionPointer(registerState);
+        final Object origin = checkTrapOrigin(trap, registerState, faultAddress);
+        if (origin instanceof TargetMethod) {
+            final TargetMethod targetMethod = (TargetMethod) origin;
+            // the trap occurred in Java
+            final Pointer stackPointer = safepoint.getStackPointer(registerState, targetMethod);
+            final Pointer framePointer = safepoint.getFramePointer(registerState, targetMethod);
 
-        // allocating a new exception here (with TRAP_INSTRUCTION_POINTER set) will cause the stack trace to
-        // be filled in starting from the implicit exception point
-        final NullPointerException exception = new NullPointerException();
-        Throw.raise(exception, stackPointer, framePointer, instructionPointer);
+            switch (trap) {
+                case MEMORY_FAULT:
+                    handleMemoryFault(instructionPointer, stackPointer, framePointer, registerState, faultAddress);
+                    break;
+                case STACK_FAULT:
+                    // stack overflow
+                    final StackOverflowError error = new StackOverflowError();
+                    Throw.raise(error, stackPointer, framePointer, instructionPointer);
+                    break; // unreachable
+                case ILLEGAL_INSTRUCTION:
+                    // deoptimization
+                    VMConfiguration.hostOrTarget().compilerScheme().fakeCall(TRAP_INSTRUCTION_POINTER.getVariableWord().asAddress());
+                    Deoptimizer.deoptimizeTopFrame();
+                    break;
+                case ARITHMETIC_EXCEPTION:
+                    // integer divide by zero
+                    final ArithmeticException exception = new ArithmeticException();
+                    Throw.raise(exception, stackPointer, framePointer, instructionPointer);
+                    break; // unreachable
+            }
+        } else {
+            // the fault occurred in native code
+            Debug.out.print("Trap in native code (or runtime stub) @ ");
+            Debug.out.print(instructionPointer);
+            Debug.out.println(", exiting.");
+            FatalError.unexpected("Trap in native code");
+        }
     }
 
-    @C_FUNCTION(isSignalHandlerStub = true)
-    private static void vmHardExitStub() {
-        // TODO: attempt to report a stack trace (without recursion)
-        // In the meantime say something (but not risking another trap)
-        MaxineVM.native_trap_exit(MaxineVM.HARD_EXIT_CODE, TRAP_INSTRUCTION_POINTER.getVariableWord().asPointer());
+    /**
+     * Checks the origin of a trap by looking for a target method or runtime stub in the code regions. If found,
+     * this method will return a reference to the <code>TargetMethod</code> that produces the error. If a runtime
+     * stub produced the error, this method will return a reference to that runtime stub. Otherwise, this method
+     * returns <code>null</code>, indicating the fault occurred in native code.
+     *
+     * @param trap the trap number
+     * @param registerState the saved register state on the stack
+     * @param faultAddress the faulting address
+     * @return a reference to the <code>TargetMethod</code> containing the instruction pointer that caused the fault;
+     * <code>null</code> if neither a runtime stub nor a target method produced the fault
+     */
+    private static Object checkTrapOrigin(int trap, Pointer registerState, Address faultAddress) {
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Pointer instructionPointer = safepoint.getInstructionPointer(registerState);
+
+        if (_dumpStackOnTrap.isPresent()) {
+            Debug.print("Trap ");
+            Debug.print(trap);
+            Debug.print(" @ ");
+            Debug.print(instructionPointer);
+            Debug.print(", fault address: ");
+            Debug.print(faultAddress);
+            Throw.stackDump("MemoryFault", instructionPointer, VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+        }
+
+        // check to see if this fault originated in a target method
+        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
+        if (targetMethod != null) {
+            return targetMethod;
+        }
+
+        // check to see if this fault originated in a runtime stub
+        final RuntimeStub runtimeStub = Code.codePointerToRuntimeStub(instructionPointer);
+        if (runtimeStub != null) {
+            Debug.err.print("Fault ");
+            Debug.err.print(trap);
+            Debug.err.print(" in runtime stub @ ");
+            return runtimeStub;
+        }
+
+        // this fault occurred in native code
+        Debug.err.print("Fault ");
+        Debug.err.print(trap);
+        Debug.err.print(" in native code @ ");
+        Debug.err.println(instructionPointer);
+
+        return null;
     }
 
-    @C_FUNCTION(isSignalHandlerStub = true)
-    private static void vmHardExitWhenNativeCodeHitsGuardPageStub() {
-        // TODO: attempt to report a stack trace (without recursion)
-        // In the meantime say something (but not risking another trap)
-        MaxineVM.native_stack_trap_exit(MaxineVM.HARD_EXIT_CODE, TRAP_INSTRUCTION_POINTER.getVariableWord().asPointer());
-    }
+    /**
+     * Handle a memory fault for this thread. A memory fault can be caused by an implicit null pointer check,
+     * a segmentation fault, a safepoint being triggered, or an error in native code.
+     *
+     * @param instructionPointer the instruction pointer that caused the fault
+     * @param stackPointer the stack pointer at the time of the fault
+     * @param framePointer the frame pointer at the time of the fault
+     * @param registerState a pointer to the register state at the time of the fault
+     * @param faultAddress the address that caused the fault
+     */
+    private static void handleMemoryFault(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Pointer registerState, Address faultAddress) {
+        final Pointer disabledVmThreadLocals = VmThread.currentVmThreadLocals();
 
-    @C_FUNCTION(isSignalHandlerStub = true)
-    private static void divideByZeroExceptionStub() {
-        final Pointer instructionPointer = TRAP_INSTRUCTION_POINTER.getVariableWord().asPointer();
-        final Pointer stackPointer = TRAP_STACK_POINTER.getVariableWord().asPointer();
-        final Pointer framePointer = TRAP_FRAME_POINTER.getVariableWord().asPointer();
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Pointer triggeredVmThreadLocals = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
+        final Pointer safepointLatch = safepoint.getSafepointLatch(registerState);
 
-        // allocating a new exception here (with TRAP_INSTRUCTION_POINTER set) will cause the stack trace to
-        // be filled in starting from the implicit exception point
-        final ArithmeticException exception = new ArithmeticException();
-        Throw.raise(exception, stackPointer, framePointer, instructionPointer);
-    }
-
-    @C_FUNCTION(isSignalHandlerStub = true)
-    private static void stackOverflowErrorStub() {
-        final Pointer instructionPointer = TRAP_INSTRUCTION_POINTER.getVariableWord().asPointer();
-        final Pointer stackPointer = TRAP_STACK_POINTER.getVariableWord().asPointer();
-        final Pointer framePointer = TRAP_FRAME_POINTER.getVariableWord().asPointer();
-
-        final StackOverflowError error = new StackOverflowError();
-        Throw.raise(error, stackPointer, framePointer, instructionPointer);
-    }
-
-    @C_FUNCTION(isSignalHandlerStub = true)
-    private static void deoptimizationStub() {
-        VMConfiguration.hostOrTarget().compilerScheme().fakeCall(TRAP_INSTRUCTION_POINTER.getVariableWord().asAddress());
-        Deoptimizer.deoptimizeTopFrame();
+        // check to see if a safepoint has been triggered for this thread
+        if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
+            // a safepoint has been triggered for this thread. run the specified procedure
+            final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(triggeredVmThreadLocals);
+            final Runnable runnable = UnsafeLoophole.cast(reference.toJava());
+            if (runnable != null) {
+                // run the procedure and then set the vm thread local to null
+                runnable.run();
+                // the state of the safepoint latch was TRIGGERED when the trap happened. reset it back to ENABLED.
+                final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
+                safepoint.setSafepointLatch(registerState, enabledVmThreadLocals);
+                Safepoint.reset(enabledVmThreadLocals);
+                // reset the procedure to be null
+                VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(triggeredVmThreadLocals, null);
+            }
+        } else if (inJava(disabledVmThreadLocals)) {
+            // null pointer exception
+            final NullPointerException error = new NullPointerException();
+            Throw.raise(error, stackPointer, framePointer, instructionPointer);
+        } else {
+            // segmentation fault happened in native code somewhere, die.
+            MaxineVM.native_trap_exit(MaxineVM.HARD_EXIT_CODE, instructionPointer);
+        }
     }
 }
