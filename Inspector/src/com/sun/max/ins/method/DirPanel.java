@@ -65,7 +65,7 @@ public final class DirPanel extends InspectorPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
     }
 
     public void redisplay() {

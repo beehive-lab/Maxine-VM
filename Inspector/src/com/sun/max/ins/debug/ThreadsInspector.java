@@ -123,7 +123,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
         scrollPane.setPreferredSize(inspection().geometry().threadsFramePrefSize());
         frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
         frame().setContentPane(scrollPane);
-        refreshView(epoch);
+        refreshView(epoch, true);
     }
 
     private final class ThreadJTable extends JTable {
@@ -351,11 +351,11 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
     };
 
     @Override
-    public void refreshView(long epoch) {
+    public void refreshView(long epoch, boolean force) {
         final ThreadsTableModel threadsTableModel = (ThreadsTableModel) _table.getModel();
         threadsTableModel.fireTableDataChanged();
         updateThreadFocus(focus().thread());
-        super.refreshView(epoch);
+        super.refreshView(epoch, force);
     }
 
     @Override
@@ -381,7 +381,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
 
     public void viewConfigurationChanged(long epoch) {
         //  All view configurations are applied dynamically in this inspector.
-        refreshView(epoch);
+        refreshView(epoch, true);
     }
 
 }

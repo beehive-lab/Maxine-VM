@@ -130,13 +130,13 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 }
             }
         });
-        refresh(teleVM().teleProcess().epoch());
+        refresh(teleVM().teleProcess().epoch(), true);
     }
 
     protected abstract void updateText();
 
-    public void refresh(long epoch) {
-        if (epoch > _epoch) {
+    public void refresh(long epoch, boolean force) {
+        if (epoch > _epoch || force) {
             if (_telePoolConstant == null || !_telePoolConstant.isResolved()) {
                 _telePoolConstant = _teleConstantPool.readTelePoolConstant(_index);
                 updateText();

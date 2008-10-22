@@ -127,7 +127,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
     }
 
     @Override
-    public void refreshView(long epoch) {
+    public void refreshView(long epoch, boolean force) {
         if (isVisible()) {
             if (_threadSetNeedsUpdate) {
                 // Mark all inspectors for possible deletion if their thread is no longer active
@@ -152,7 +152,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
                 _threadSetNeedsUpdate = false;
             }
             updateThreadFocus(focus().thread());
-            super.refreshView(epoch);
+            super.refreshView(epoch, force);
         }
     }
 

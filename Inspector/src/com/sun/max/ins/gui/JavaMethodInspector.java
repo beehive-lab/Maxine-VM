@@ -300,20 +300,20 @@ public class JavaMethodInspector extends MethodInspector {
     };
 
     @Override
-    public void refreshView(long epoch) {
+    public void refreshView(long epoch, boolean force) {
         if (isVisible()) {
             _teleClassMethodActor.refreshView();
             if (_classMethodMenuItems != null) {
-                _classMethodMenuItems.refresh(epoch);
+                _classMethodMenuItems.refresh(epoch, force);
             }
             refreshMenu();
             for (CodeViewer codeViewer : _codeViewers.values()) {
-                codeViewer.refresh(epoch);
+                codeViewer.refresh(epoch, force);
             }
             if (_targetMethodMenuItems != null) {
-                _targetMethodMenuItems.refresh(epoch);
+                _targetMethodMenuItems.refresh(epoch, force);
             }
-            super.refreshView(epoch);
+            super.refreshView(epoch, force);
         }
     }
 

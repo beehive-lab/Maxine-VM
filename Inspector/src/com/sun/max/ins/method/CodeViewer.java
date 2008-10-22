@@ -42,6 +42,18 @@ import com.sun.max.vm.stack.*;
  *
  * @author Michael Van De Vanter
  */
+/**
+ * @author Michael Van De Vanter
+ *
+ */
+/**
+ * @author Michael Van De Vanter
+ *
+ */
+/**
+ * @author Michael Van De Vanter
+ *
+ */
 public abstract class CodeViewer extends InspectorPanel {
 
     private final MethodInspector _parent;
@@ -63,7 +75,8 @@ public abstract class CodeViewer extends InspectorPanel {
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
     public void updateThreadFocus(TeleNativeThread teleNativeThread) {
-        updateCaches();
+        final long epoch = teleVM().teleProcess().epoch();
+        updateCaches(epoch, false);
     }
 
     public CodeViewer(Inspection inspection, MethodInspector parent) {
@@ -122,8 +135,9 @@ public abstract class CodeViewer extends InspectorPanel {
         _toolBar.add(_viewCloseButton);
     }
 
-    public final void refresh(long epoch) {
-        updateCaches();
+    public final void refresh(long epoch, boolean force) {
+        updateCaches(epoch, force);
+        updateView(epoch, force);
         updateSize();
         invalidate();
         repaint();
@@ -195,10 +209,9 @@ public abstract class CodeViewer extends InspectorPanel {
     // The epoch at which the stack cache was last built.
     private long _processEpochForCache = -1;
 
-    private void updateCaches() {
+    private void updateCaches(long epoch, boolean force) {
         final TeleNativeThread teleNativeThread = inspection().focus().thread();
-        final long epoch = teleVM().teleProcess().epoch();
-        if (teleNativeThread != _threadForCache || epoch != _processEpochForCache) {
+        if (teleNativeThread != _threadForCache || epoch != _processEpochForCache || force) {
             updateStackCache();
             // Active rows depend on the stack cache.
             updateActiveRows();
@@ -206,6 +219,13 @@ public abstract class CodeViewer extends InspectorPanel {
             _processEpochForCache = epoch;
         }
     }
+
+
+    /**
+     * Updates any label in the view that are based on state in the {@link TeleVM}.
+     *
+     */
+    protected abstract void updateView(long epoch, boolean force);
 
     /**
      * Returns stack frame information, if any, associated with the row.

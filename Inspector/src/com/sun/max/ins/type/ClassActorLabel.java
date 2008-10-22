@@ -85,18 +85,18 @@ public final class ClassActorLabel extends InspectorLabel {
         redisplay();
     }
 
-    public void refresh(long epoch) {
-        if (epoch > _epoch) {
+    public void refresh(long epoch, boolean force) {
+        if (epoch > _epoch || force) {
             updateText();
+            _epoch = epoch;
         }
-        _epoch = epoch;
     }
 
     public void redisplay() {
         setFont(style().javaClassNameFont());
         setForeground(style().javaNameColor());
         setBackground(style().javaNameBackgroundColor());
-        refresh(teleVM().teleProcess().epoch());
+        refresh(teleVM().teleProcess().epoch(), true);
     }
 
     private TeleClassActor _teleClassActor;

@@ -233,7 +233,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    public synchronized void refreshView(long epoch) {
+    public synchronized void refreshView(long epoch, boolean force) {
         final DataAccess dataAccess = teleProcess().dataAccess();
         for (int i = 0; i < _numberOfWords; i++) {
             final Address address = _address.plus(i * _wordSize);
@@ -261,13 +261,13 @@ public final class MemoryWordInspector extends Inspector {
             }
         }
 
-        super.refreshView(epoch);
+        super.refreshView(epoch, force);
     }
 
     @Override
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
         // Revise any indications of registers pointing at inspected locations.
-        refreshView();
+        refreshView(true);
     }
 
     private JPanel _contentPane = new JPanel();
@@ -329,7 +329,7 @@ public final class MemoryWordInspector extends Inspector {
             lineAddress = lineAddress.plus(_wordSize);
         }
 
-        refreshView(epoch);
+        refreshView(epoch, true);
         SpringUtilities.makeCompactGrid(view, _numberOfWords, 3, 0, 0, 0, 0);
     }
 

@@ -439,7 +439,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         frame().menu().add(new InspectorAction(inspection(), "Refresh") {
             @Override
             public void procedure() {
-                refreshView();
+                refreshView(true);
                 Trace.line(TRACE_VALUE, "Refreshing method view: " + getTitle());
             }
         });
@@ -466,7 +466,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
 
     @Override
     public void breakpointSetChanged() {
-        refreshView();
+        refreshView(true);
     }
 
     public void close() {

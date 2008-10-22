@@ -86,13 +86,13 @@ public class VMThreadLocalsPanel extends InspectorPanel {
             ++index;
             offset += Word.size();
         }
-        refresh(teleVM().teleProcess().epoch());
+        refresh(teleVM().teleProcess().epoch(), true);
         SpringUtilities.makeCompactGrid(valuePanel, valuePanel.getComponentCount() / 2, 2, 0, 0, 5, 1);
 
         add(new JScrollPane(valuePanel), BorderLayout.CENTER);
     }
 
-    public final void refresh(long epoch) {
+    public final void refresh(long epoch, boolean force) {
         int index = 0;
         for (String name : VmThreadLocal.NAMES) {
             if (_values.isValid(name)) {

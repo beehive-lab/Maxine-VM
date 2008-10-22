@@ -119,20 +119,20 @@ public abstract class BytecodeViewer extends CodeViewer {
         _teleTargetMethod = teleTargetMethod;
         _methodActorKey = new MethodActorKey(teleClassMethodActor.classMethodActor());
         final TeleCodeAttribute teleCodeAttribute = teleClassMethodActor.getTeleCodeAttribute();
-        // In a substituted method, the constant pool for the bytecodes is the one from the origin of the substitution,
-        // not the current holder of the method.
+        // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
+        // constant pool for the bytecodes is the one from the origin of the substitution, not the current holder of the method.
         _teleConstantPool = teleCodeAttribute.getTeleConstantPool();
         _constantPool = _teleConstantPool.getTeleHolder().classActor().constantPool();
         _methodBytes = teleCodeAttribute.readBytecodes();
         // ProgramWarning.check(Bytes.equals(_methodBytes, teleMethod.classMethodActor().codeAttribute().code()),
         // "inconsistent bytecode");
-        final byte[] localMethodBytes = teleClassMethodActor.classMethodActor().codeAttribute().code();
+        final byte[] localMethodBytes = _teleClassMethodActor.classMethodActor().codeAttribute().code();
         if (!Bytes.equals(_methodBytes, localMethodBytes)) {
             // We're occasionally seeing a violation of the invariant that the bytecodes in the {@link TeleVM} for a particular
             // method aren't the same as those associated with the same method in the Inspector.  So far, the
             // difference shows up as some extra bytecodes at the end.
-            final ConstantPool constantPool = teleClassMethodActor.getTeleHolder().classActor().constantPool();
-            System.out.println("BytecodeViewer bytecode comparison failure for: " + teleClassMethodActor.classMethodActor().toString());
+            final ConstantPool constantPool = _teleClassMethodActor.getTeleHolder().classActor().constantPool();
+            System.out.println("BytecodeViewer bytecode comparison failure for: " + _teleClassMethodActor.classMethodActor().toString());
             System.out.println("  Bytecodes from VM(" + _methodBytes.length + " bytes) =");
             System.out.println(BytecodePrinter.toString(constantPool, new BytecodeBlock(_methodBytes)));
             System.out.println("  Bytecodes loaded locally: " + localMethodBytes.length + " bytes) =");

@@ -91,7 +91,7 @@ public final class TargetMethodMenuItems implements InspectorMenuItems {
         _inspectTargetMethodAction = new InspectTargetMethodAction();
         _viewTargetMethodCodeAction = new ViewTargetMethodCodeAction();
         _targetCodeBreakOnEntryAction = new TargetCodeBreakOnEntryAction();
-        refresh(_inspection.teleVM().teleProcess().epoch());
+        refresh(_inspection.teleVM().teleProcess().epoch(), true);
     }
 
     public void addTo(InspectorMenu menu) {
@@ -103,7 +103,7 @@ public final class TargetMethodMenuItems implements InspectorMenuItems {
         menu.add(_inspectTargetMethodAction);
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
     }
 
     public void redisplay() {

@@ -138,10 +138,10 @@ public final class InspectorMenu implements Prober {
         return _inspector.inspection();
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         if (_inspectorMenuItems != null) {
             for (InspectorMenuItems inspectorMenuItems : _inspectorMenuItems) {
-                inspectorMenuItems.refresh(epoch);
+                inspectorMenuItems.refresh(epoch, force);
             }
         }
     }

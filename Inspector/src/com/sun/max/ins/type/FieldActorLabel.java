@@ -40,7 +40,7 @@ public final class FieldActorLabel extends InspectorLabel {
         redisplay();
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         // local fieldActor state is assumed not to change.
     }
 
