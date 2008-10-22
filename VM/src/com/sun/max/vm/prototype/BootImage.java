@@ -149,6 +149,7 @@ public class BootImage {
         public final int _pageSize;
 
         public final int _vmThreadLocalsSize;
+        public final int _vmThreadLocalsTrapNumberOffset;
 
         public final int _vmRunMethodOffset;
         public final int _vmThreadRunMethodOffset;
@@ -184,38 +185,40 @@ public class BootImage {
 
         private Header(DataInputStream dataInputStream) throws IOException {
             super(dataInputStream.readInt() == 0 ? Endianness.LITTLE : Endianness.BIG);
-            _isBigEndian = endianness().ordinal();
+            final Endianness endian = endianness();
+            _isBigEndian = endian.ordinal();
 
-            _identification = endianness().readInt(dataInputStream);
-            _version = endianness().readInt(dataInputStream);
-            _randomID = endianness().readInt(dataInputStream);
+            _identification = endian.readInt(dataInputStream);
+            _version = endian.readInt(dataInputStream);
+            _randomID = endian.readInt(dataInputStream);
 
-            _wordSize = endianness().readInt(dataInputStream);
-            _alignmentSize = endianness().readInt(dataInputStream);
-            _relocationScheme = endianness().readInt(dataInputStream);
+            _wordSize = endian.readInt(dataInputStream);
+            _alignmentSize = endian.readInt(dataInputStream);
+            _relocationScheme = endian.readInt(dataInputStream);
 
-            _pageSize = endianness().readInt(dataInputStream);
+            _pageSize = endian.readInt(dataInputStream);
 
-            _vmThreadLocalsSize = endianness().readInt(dataInputStream);
+            _vmThreadLocalsSize = endian.readInt(dataInputStream);
+            _vmThreadLocalsTrapNumberOffset = endian.readInt(dataInputStream);
 
-            _vmRunMethodOffset = endianness().readInt(dataInputStream);
-            _vmThreadRunMethodOffset = endianness().readInt(dataInputStream);
-            _runSchemeRunMethodOffset = endianness().readInt(dataInputStream);
-            _classRegistryOffset = endianness().readInt(dataInputStream);
+            _vmRunMethodOffset = endian.readInt(dataInputStream);
+            _vmThreadRunMethodOffset = endian.readInt(dataInputStream);
+            _runSchemeRunMethodOffset = endian.readInt(dataInputStream);
+            _classRegistryOffset = endian.readInt(dataInputStream);
 
-            _stringInfoSize = endianness().readInt(dataInputStream);
-            _relocationDataSize = endianness().readInt(dataInputStream);
+            _stringInfoSize = endian.readInt(dataInputStream);
+            _relocationDataSize = endian.readInt(dataInputStream);
 
-            _bootHeapSize = endianness().readInt(dataInputStream);
-            _bootCodeSize = endianness().readInt(dataInputStream);
-            _codeCacheSize = endianness().readInt(dataInputStream);
+            _bootHeapSize = endian.readInt(dataInputStream);
+            _bootCodeSize = endian.readInt(dataInputStream);
+            _codeCacheSize = endian.readInt(dataInputStream);
 
-            _heapRegionsPointerOffset = endianness().readInt(dataInputStream);
-            _codeRegionsPointerOffset = endianness().readInt(dataInputStream);
+            _heapRegionsPointerOffset = endian.readInt(dataInputStream);
+            _codeRegionsPointerOffset = endian.readInt(dataInputStream);
 
-            _auxiliarySpaceSize = endianness().readInt(dataInputStream);
+            _auxiliarySpaceSize = endian.readInt(dataInputStream);
 
-            _messengerInfoOffset = endianness().readInt(dataInputStream);
+            _messengerInfoOffset = endian.readInt(dataInputStream);
         }
 
         private int staticFieldPointerOffset(DataPrototype dataPrototype, Class javaClass, String staticFieldName) {
@@ -236,6 +239,7 @@ public class BootImage {
             _relocationScheme = RelocationScheme.DEFAULT.ordinal();
             _pageSize = vmConfiguration.platform().pageSize();
             _vmThreadLocalsSize = VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.toInt();
+            _vmThreadLocalsTrapNumberOffset = VmThreadLocal.TRAP_NUMBER.offset();
             _vmRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(MaxineVM.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             _vmThreadRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(VmThread.class), CallEntryPoint.C_ENTRY_POINT).toInt();
             _runSchemeRunMethodOffset = Static.getCriticalEntryPoint(getRunMethodActor(vmConfiguration.runScheme().getClass()), CallEntryPoint.OPTIMIZED_ENTRY_POINT).toInt();

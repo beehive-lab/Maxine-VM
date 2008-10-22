@@ -102,7 +102,7 @@ public abstract class Prototype {
     /**
      * The name of the default prototype library.
      */
-    public static final String DEFAULT_LIBRARY_NAME = "prototype";
+    public static final String PROTOTYPE_LIBRARY_NAME = "prototype";
 
     /**
      * A status variable indicating whether modifications to the underlying "java.library.path" have been made.
@@ -177,7 +177,7 @@ public abstract class Prototype {
      * @return a new platform object that describes the host's platform
      */
     public static Platform createHostPlatform() {
-        loadLibrary(DEFAULT_LIBRARY_NAME);
+        loadLibrary(PROTOTYPE_LIBRARY_NAME);
 
         final InstructionSet instructionSet = InstructionSet.valueOf(System.getProperty(INSTRUCTION_SET_PROPERTY, nativeGetInstructionSet()));
         final WordWidth wordWidth = WordWidth.fromInt(Integer.getInteger(WORD_WIDTH_PROPERTY, nativeGetWordWidth()));

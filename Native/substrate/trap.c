@@ -37,6 +37,7 @@
 #include "jni.h"
 #include "os.h"
 #include "isa.h"
+#include "image.h"
 
 #if os_GUESTVMXEN
 #   include <guestvmXen.h>
@@ -45,32 +46,74 @@
     typedef siginfo_t SigInfo;
 #endif
 
-void setHandler(int signal, void *handler);
+#define MEMORY_FAULT 0
+#define STACK_FAULT 1
+#define ILLEGAL_INSTRUCTION 2
+#define ARITHMETIC_EXCEPTION 3
+#define ASYNC_INTERRUPT 4
+
+    static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext);
+    static void setHandler(int signal, void *handler);
+    
+    static Address _javaTrapStub;
 
 
-static isa_OsSignalIntegerRegisters getIntegerRegisters(UContext *ucontext) {
-#if os_SOLARIS || os_LINUX
-    return (isa_OsSignalIntegerRegisters) &ucontext->uc_mcontext.gregs;
-#elif os_GUESTVMXEN
-    return ucontext;
-#elif os_DARWIN
-    return (isa_OsSignalIntegerRegisters) &ucontext->uc_mcontext->__ss;
-#else
-#   error Unimplemented
-#endif
-}
+    int faultNumber(int signal) {
+    	switch (signal) {
+    	case SIGSEGV:
+    	case SIGBUS:
+    		return MEMORY_FAULT;
+    	case SIGILL:
+    		return ILLEGAL_INSTRUCTION;
+    	case SIGFPE:
+    		return ARITHMETIC_EXCEPTION;
+    	case SIGUSR1:
+    		return ASYNC_INTERRUPT;
+    	}
+    	return signal;
+    }
 
-static isa_OsSignalFloatingPointRegisters getFloatingPointRegisters(UContext *ucontext) {
-#if os_SOLARIS || os_LINUX
-    return (isa_OsSignalFloatingPointRegisters) &ucontext->uc_mcontext.fpregs;
-#elif os_GUESTVMXEN
-    return ucontext;
-#elif os_DARWIN
-    return (isa_OsSignalFloatingPointRegisters) &ucontext->uc_mcontext->__fs;
-#else
-#error Unimplemented
-#endif
-}
+    void native_setJavaTrapStub(int fault, Address handler) {
+    	switch (fault) {
+    	case STACK_FAULT:
+    	case MEMORY_FAULT:
+    	    setHandler(SIGSEGV, globalSignalHandler);
+    	    setHandler(SIGBUS, globalSignalHandler);
+    		break;
+    	case ILLEGAL_INSTRUCTION:
+    	    setHandler(SIGILL, globalSignalHandler);
+    		break;
+    	case ARITHMETIC_EXCEPTION:
+    	    setHandler(SIGFPE, globalSignalHandler);
+    		break;
+    	case ASYNC_INTERRUPT:
+    		sigignore(SIGUSR1);
+    	    /* setHandler(SIGUSR1, globalSignalHandler);*/
+    		break;
+    	}
+    	_javaTrapStub = handler;
+    }
+
+    void setHandler(int signal, void *handler) {
+    #if os_GUESTVMXEN
+    	register_fault_handler(signal, (fault_handler_t)handler);
+    #else
+
+    	struct sigaction newSigaction;
+    	struct sigaction oldSigaction;
+
+    	memset((char *) &newSigaction, 0, sizeof(newSigaction));
+    	sigemptyset(&newSigaction.sa_mask);
+    	newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+    	newSigaction.sa_sigaction = handler;
+    	newSigaction.sa_handler = handler;
+
+        if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
+        	debug_exit(1, "sigaction failed");
+        }
+    #endif
+    }
+
 
 static Address getStackPointer(UContext *ucontext) {
 #if os_SOLARIS
@@ -182,21 +225,6 @@ static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #endif
 }
 
-typedef Address (*JavaTrapHandler)(Address safepointLatch,
-								   Address stackPointer,
-                                   Address framePointer,
-                                   Address instructionPointer,
-                                   isa_CanonicalIntegerRegisters integerRegisters,
-                                   isa_CanonicalFloatingPointRegisters floatingPointRegisters,
-                                   Address faultAddress);
-
-static JavaTrapHandler _segmentationFaultHandler;
-static JavaTrapHandler _stackFaultHandler;
-static JavaTrapHandler _divideByZeroHandler;
-static JavaTrapHandler _illegalInstructionHandler;
-static JavaTrapHandler _interruptHandler;
-static JavaTrapHandler _busErrorHandler;
-
 #if DEBUG_TRAP
 char *signalName(int signal) {
 	switch (signal) {
@@ -215,133 +243,59 @@ static int isInGuardZone(Address address, Address zoneBegin) {
 	return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * getPageSize());
 }
 
-static void trapHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
+static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
 #if DEBUG_TRAP
 	debug_println("SIGNAL: %0d", signal);
 #endif
-	isa_OsSignalCanonicalIntegerRegistersStruct integerRegisters;
-	isa_CanonicalFloatingPointRegistersStruct floatingPointRegisters;
-	Address instructionPointer = getInstructionPointer(ucontext);
-	Address stackPointer = getStackPointer(ucontext);
-	Address framePointer = getFramePointer(ucontext);
-	Address faultAddress = getFaultAddress(signalInfo, ucontext);
 	NativeThreadLocals *nativeThreadLocals = (NativeThreadLocals *) thread_getSpecific(nativeThreadLocalsKey);
     if (nativeThreadLocals == 0) {
         debug_exit(-22, "could not find native thread locals in trap handler");
     }
 
-    Address triggeredVmThreadLocals = nativeThreadLocals->triggeredVmThreadLocals;
+    Address disabledVmThreadLocals = nativeThreadLocals->disabledVmThreadLocals;
 
-    if (triggeredVmThreadLocals == 0) {
-        debug_exit(-22, "could not find triggered VM thread locals in trap handler");
+    if (disabledVmThreadLocals == 0) {
+        debug_exit(-21, "could not find disabled VM thread locals in trap handler");
     }
 
-    isa_canonicalizeSignalIntegerRegisters(getIntegerRegisters(ucontext), &integerRegisters);
-    isa_canonicalizeSignalFloatingPointRegisters(getFloatingPointRegisters(ucontext), &floatingPointRegisters);
+    int trapNum = faultNumber(signal);
+	Word *stackPointer = (Word *)getStackPointer(ucontext);
+
+    if (isInGuardZone(stackPointer, nativeThreadLocals->stackYellowZone)) { 
+    	/* if the stack pointer is in the yellow zone, assume this is a stack fault */
+        debug_println("SIGSEGV: (stack fault in yellow zone)");
+    	unprotectPage(nativeThreadLocals->stackYellowZone);
+    	trapNum = STACK_FAULT;
+    } else if (isInGuardZone(stackPointer, nativeThreadLocals->stackRedZone)) { 
+    	/* if the stack pointer is in the red zone, (we shouldn't be alive) */
+        debug_println("SIGSEGV: (stack fault in red zone)");
+        debug_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
+    } else if (stackPointer == 0) {
+    	/* if the stack pointer is zero, (we shouldn't be alive) */
+        debug_println("SIGSEGV: (stack pointer is zero)");
+        debug_exit(-19, "SIGSEGV: (stack pointer is zero)");
+    }
+
+    /* save the trap information in the disabled vm thread locals */
+    Address *trapInfo = disabledVmThreadLocals + image_header()->vmThreadLocalsTrapNumberOffset;
+    trapInfo[0] = trapNum;
+    trapInfo[1] = getInstructionPointer(ucontext);
+    trapInfo[2] = getFaultAddress(signalInfo, ucontext);
+    trapInfo[3] = *stackPointer;
 
 #if DEBUG_TRAP
     char *sigName = signalName(signal);
     if (sigName != NULL) {
-        debug_println("thread %d: %s @ %p, sp = %p, fault = %p", nativeThreadLocals->id, sigName, instructionPointer, stackPointer, faultAddress);
-    }
-#if DEBUG_TRAP_REGISTERS
-    debug_println("Integer registers:");
-    isa_printCanonicalIntegerRegisters(&integerRegisters);
-#endif
-#endif
-
-    if (signal == SIGSEGV || signal == SIGBUS) {
-        if (isInGuardZone(stackPointer, nativeThreadLocals->stackYellowZone)) { 
-            debug_println("SIGSEGV: (stack fault in yellow zone)");
-        	unprotectPage(nativeThreadLocals->stackYellowZone);
-        	instructionPointer = (*_stackFaultHandler)(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, &integerRegisters, &floatingPointRegisters, faultAddress);
-        } else if (isInGuardZone(stackPointer, nativeThreadLocals->stackRedZone)) { 
-            debug_println("SIGSEGV: (stack fault in red zone)");
-        	unprotectPage(nativeThreadLocals->stackRedZone);
-        	instructionPointer = (*_stackFaultHandler)(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, &integerRegisters, &floatingPointRegisters, faultAddress);
-        } else {
-        	instructionPointer = (*_segmentationFaultHandler)(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, &integerRegisters, &floatingPointRegisters, faultAddress);
-        }
-    } else if (signal == SIGFPE) {
-	instructionPointer = (*_divideByZeroHandler)(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, &integerRegisters, &floatingPointRegisters, faultAddress);
-    } else if (signal == SIGILL) {
-        instructionPointer = (*_illegalInstructionHandler)(triggeredVmThreadLocals, stackPointer, framePointer, instructionPointer, &integerRegisters, &floatingPointRegisters, faultAddress);
-    } else if (signal == SIGUSR1) {
-    	/* TODO: why does handling this signal not work? */
-    }
-
-#if DEBUG_TRAP
-    debug_println("SIGNAL: returning to stub 0x%0lx\n", instructionPointer);
-#endif
-    setInstructionPointer(ucontext, instructionPointer);
-}
-
-void native_setBusErrorHandler(JavaTrapHandler javaTrapHandler){
-#if DEBUG_TRAP
-    debug_println("set SIGBUS: 0x%0lx", javaTrapHandler);
-#endif
-    _busErrorHandler = javaTrapHandler;
-    setHandler(SIGBUS, trapHandler);
-}
-
-void native_setSegmentationFaultHandler(JavaTrapHandler javaTrapHandler) {
-#if DEBUG_TRAP
-    debug_println("set SIGSEGV: 0x%0lx", javaTrapHandler);
-#endif
-	_segmentationFaultHandler = javaTrapHandler;
-    setHandler(SIGSEGV, trapHandler);
-}
-
-void native_setStackFaultHandler(JavaTrapHandler javaTrapHandler) {
-#if DEBUG_TRAP
-    debug_println("set STACKHDLR: 0x%0lx", javaTrapHandler);
-#endif
-	_stackFaultHandler = javaTrapHandler;
-    setHandler(SIGSEGV, trapHandler);
-}
-
-void native_setDivideByZeroHandler(JavaTrapHandler javaTrapHandler) {
-#if DEBUG_TRAP
-    debug_println("set SIGFPE: 0x%0lx", javaTrapHandler);
-#endif
-	_divideByZeroHandler = javaTrapHandler;
-    setHandler(SIGFPE, trapHandler);
-}
-
-void native_setIllegalInstructionHandler(JavaTrapHandler javaTrapHandler) {
-#if DEBUG_TRAP
-    debug_println("set SIGILL: 0x%0lx", javaTrapHandler);
-#endif
-	_illegalInstructionHandler = javaTrapHandler;
-    setHandler(SIGILL, trapHandler);
-}
-
-void native_setInterruptHandler(JavaTrapHandler javaTrapHandler) {
-#if DEBUG_TRAP
-    debug_println("set SIGUSR1: 0x%0lx", javaTrapHandler);
-#endif
-	_interruptHandler = javaTrapHandler;
-#if !os_GUESTVMXEN
-    setHandler(SIGUSR1, trapHandler);
-#endif
-}
-
-void setHandler(int signal, void *handler) {
-#if os_GUESTVMXEN
-	register_fault_handler(signal, (fault_handler_t)handler);
-#else
-
-	struct sigaction newSigaction;
-	struct sigaction oldSigaction;
-
-	memset((char *) &newSigaction, 0, sizeof(newSigaction));
-	sigemptyset(&newSigaction.sa_mask);
-	newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
-	newSigaction.sa_sigaction = handler;
-	newSigaction.sa_handler = handler;
-
-    if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
-    	debug_exit(1, "sigaction failed");
+        debug_println("thread %d: %s @ %p, sp = %p, fault = %p", nativeThreadLocals->id, sigName, trapInfo[1], stackPointer, trapInfo[2]);
     }
 #endif
+
+    /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
+    *stackPointer = disabledVmThreadLocals;
+    
+#if DEBUG_TRAP
+    debug_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
+#endif
+    setInstructionPointer(ucontext, _javaTrapStub);
 }
+

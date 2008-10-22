@@ -26,8 +26,6 @@ import com.sun.max.lang.*;
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.Beltway.*;
 import com.sun.max.vm.reference.*;
@@ -40,42 +38,34 @@ import com.sun.max.vm.runtime.*;
  * implement stop-the-world GC.
  *
  * @author Bernd Mathiske
+ * @author Ben L. Titzer
  */
 public class StopTheWorldDaemon extends BlockingServerDaemon {
 
-    private static void suspendCurrentThread() {
-        Safepoint.disable();
-        final Pointer vmThreadLocals = Safepoint.getLatchRegister();
+    private static Runnable _suspendProcedure = new Runnable() {
+        @Override
+        public void run() {
+            // note that this procedure always runs with safepoints disabled
+            final Pointer vmThreadLocals = Safepoint.getLatchRegister();
 
-        if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.JAVA) {
-            // TODO: only do this at GC safepoints, not others
-            VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
-        } else {
-            // GC may already be ongoing
+            if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.JAVA) {
+                VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
+            } else {
+                // GC may already be ongoing
+            }
+
+            synchronized (VmThreadMap.ACTIVE) {
+                // this is ok even though the GC does not get to scan this frame, because the object involved is in the boot image
+            }
+            VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
         }
-
-        synchronized (VmThreadMap.ACTIVE) {
-            // Synchronizing on VmThreadMap.ACTIVE causes this thread to block
-            // as the GC daemon has taken the lock and won't release it until
-            // GC is complete.
-        }
-
-        Safepoint.enable();
-        VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
-    }
-
-    private static final CriticalMethod _suspend = new CriticalMethod(StopTheWorldDaemon.class, "suspendCurrentThread", CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-
-    private Pointer _safepointNativeStubEntryPoint;
-
-    private Pointer _safepointJavaStubEntryPoint;
+    };
 
     private Runnable _procedure = null;
 
     public StopTheWorldDaemon(String name, Runnable procedure) {
         super(name);
         _procedure = procedure;
-        // _currentTLAB = BeltwayHeapScheme._scavengerTLABs[BeltwayConfiguration._numberOfGCThreads];
 
     }
 
@@ -90,9 +80,6 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         } catch (InterruptedException interruptedException) {
         }
 
-        _safepointNativeStubEntryPoint = VMConfiguration.hostOrTarget().safepoint().createSafepointStub(_suspend, Safepoint.Venue.NATIVE).start().asPointer();
-        _safepointJavaStubEntryPoint = VMConfiguration.hostOrTarget().safepoint().createSafepointStub(_suspend, Safepoint.Venue.JAVA).start().asPointer();
-
         super.start();
     }
 
@@ -103,7 +90,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                 // Thread is still starting up.
                 // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
             } else {
-                Safepoint.trigger(vmThreadLocals, _safepointNativeStubEntryPoint, _safepointJavaStubEntryPoint);
+                VmThread.current(vmThreadLocals).runProcedure(_suspendProcedure);
             }
         }
     };
