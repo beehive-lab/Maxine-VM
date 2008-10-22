@@ -83,7 +83,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
             final Inspector selectedInspector = getSelected();
             if (selectedInspector != null) {
                 // Inspector may not have been getting refreshed while not visible.
-                selectedInspector.refreshView();
+                selectedInspector.refreshView(true);
             }
         }
     };

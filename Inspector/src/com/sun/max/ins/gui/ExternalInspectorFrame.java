@@ -56,8 +56,8 @@ public final class ExternalInspectorFrame extends JFrame implements InspectorFra
         return _inspector.inspection();
     }
 
-    public synchronized void refresh(long epoch) {
-        menu().refresh(epoch);
+    public synchronized void refresh(long epoch, boolean force) {
+        menu().refresh(epoch, force);
     }
 
     public void redisplay() {

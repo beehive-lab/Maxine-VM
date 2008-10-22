@@ -60,8 +60,8 @@ public final class HubLabel extends InspectorLabel {
         redisplay();
     }
 
-    public void refresh(long epoch) {
-        if (epoch > _epoch) {
+    public void refresh(long epoch, boolean force) {
+        if (epoch > _epoch || force) {
             updateText();
             _epoch = epoch;
         }

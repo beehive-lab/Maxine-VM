@@ -145,7 +145,7 @@ public final class InspectionMenus implements Prober {
 
         @Override
         protected void procedure() {
-            _inspection.refreshAll();
+            _inspection.refreshAll(true);
         }
     }
 
@@ -1852,7 +1852,7 @@ public final class InspectionMenus implements Prober {
         focus().addListener(_focusListener);
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         updateMenuItems();
     }
 

@@ -95,7 +95,7 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
 
         frame().getContentPane().add(new JScrollPane(contentPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
         redisplay();
-        refreshView(epoch);
+        refreshView(epoch, true);
     }
 
     private void redisplay() {
@@ -125,11 +125,11 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
     }
 
     @Override
-    public void refreshView(long epoch) {
-        _integerRegisterPanel.refresh(epoch);
-        _stateRegisterPanel.refresh(epoch);
-        _floatingPointRegisterPanel.refresh(epoch);
-        super.refreshView(epoch);
+    public void refreshView(long epoch, boolean force) {
+        _integerRegisterPanel.refresh(epoch, force);
+        _stateRegisterPanel.refresh(epoch, force);
+        _floatingPointRegisterPanel.refresh(epoch, force);
+        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {

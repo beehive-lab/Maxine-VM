@@ -513,7 +513,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     private long _epoch;
 
     /**
-     * Gets the current epoch.
+     * Gets the current epoch: the number of discrete execution steps of the process since it was created.
      * @return the current epoch
      */
     public long epoch() {

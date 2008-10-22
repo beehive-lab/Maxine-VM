@@ -383,7 +383,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     protected abstract Sequence<ValueLabel> valueLabels();
 
     @Override
-    public synchronized void refreshView(long epoch) {
+    public synchronized void refreshView(long epoch, boolean force) {
         final Pointer newOrigin = _teleObject.getCurrentOrigin();
         if (!newOrigin.equals(_currentObjectOrigin)) {
             // The object has been relocated in memory
@@ -391,13 +391,13 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             reconstructView();
         } else {
             if (_objectHeaderInspector != null) {
-                _objectHeaderInspector.refresh(epoch);
+                _objectHeaderInspector.refresh(epoch, force);
             }
             for (ValueLabel valueLabel : valueLabels()) {
-                valueLabel.refresh(epoch);
+                valueLabel.refresh(epoch, force);
             }
         }
-        super.refreshView(epoch);
+        super.refreshView(epoch, force);
     }
 
 

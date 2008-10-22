@@ -102,8 +102,8 @@ public abstract class LocationLabel extends InspectorLabel {
         }
     }
 
-    public final void refresh(long epoch) {
-        if (epoch > _epoch) {
+    public final void refresh(long epoch, boolean force) {
+        if (epoch > _epoch || force) {
             updateText();
             _epoch = epoch;
         }

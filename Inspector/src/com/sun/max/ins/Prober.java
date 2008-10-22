@@ -35,11 +35,12 @@ public interface Prober {
     Inspection inspection();
 
     /**
-     * Brings prober/view up to date with the state of the tele VM.
+     * Brings prober/view up to date with the state of the {@link TeleVM}.
      *
      * @param epoch current execution age of the tele process.
+     * @param force suspend caching behavior; read state unconditionally.
      */
-    void refresh(long epoch);
+    void refresh(long epoch, boolean force);
 
     /**
      * Revise the display to account for any changes in view configuration or style information; does not imply a state change in the {@link TeleVM}.

@@ -143,8 +143,8 @@ class ObjectHeaderInspector extends InspectorPanel {
         SpringUtilities.makeCompactGrid(this, getComponentCount() / columns, columns, 0, 0, 10, 2);
     }
 
-    public void refresh(long epoch) {
-        _miscValueLabel.refresh(epoch);
+    public void refresh(long epoch, boolean force) {
+        _miscValueLabel.refresh(epoch, force);
     }
 
     public void redisplay() {

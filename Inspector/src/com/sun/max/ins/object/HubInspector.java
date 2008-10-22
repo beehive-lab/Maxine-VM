@@ -130,10 +130,10 @@ public class HubInspector extends ObjectInspector<HubInspector> {
     }
 
     @Override
-    public void refreshView(long epoch) {
-        super.refreshView(epoch);
+    public void refreshView(long epoch, boolean force) {
+        super.refreshView(epoch, force);
         if (_classMethodInspectorMenuItems != null) {
-            _classMethodInspectorMenuItems.refresh(epoch);
+            _classMethodInspectorMenuItems.refresh(epoch, force);
         }
     }
 

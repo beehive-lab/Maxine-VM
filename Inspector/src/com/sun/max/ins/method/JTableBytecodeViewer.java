@@ -493,7 +493,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                         removeColumn(_columns[col]);
                     }
                     setColumnSizes();
-                    refresh(teleVM().teleProcess().epoch());
+                    refresh(teleVM().teleProcess().epoch(), true);
                 }
             };
             createColumn(ColumnKind.TAG, new TagRenderer());
@@ -741,6 +741,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             setValue((byte[]) value);
             return this;
         }
+    }
+
+    @Override
+    protected void updateView(long epoch, boolean force) {
+        // No labels that need updating; operand labels are recreated when displayed.
     }
 
     public void redisplay() {

@@ -261,7 +261,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         panel.add(_splitPane, BorderLayout.CENTER);
 
         frame().setContentPane(panel);
-        refreshView(epoch);
+        refreshView(epoch, true);
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -273,11 +273,8 @@ public class StackInspector extends UniqueInspector<StackInspector> {
     }
 
     @Override
-    public void refreshView(long epoch) {
-        if (!isVisible()) {
-            return;
-        }
-        if (_stateChanged) {
+    public void refreshView(long epoch, boolean force) {
+        if ((isVisible() && _stateChanged) || force) {
             // It is worth checking if we are in the same method and the frame is the same, which case
             // the state has not really changed, which can be a significant optimization for deep stacks
             final Sequence<StackFrame> frames = _teleNativeThread.frames();
@@ -333,7 +330,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         /**
          * Reads any state from the {@link TeleVM} that might change.
          */
-        public void refresh(long epoch) {
+        public void refresh(long epoch, boolean force) {
         }
     }
 
@@ -359,7 +356,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         }
 
         @Override
-        public void refresh(long epoch) {
+        public void refresh(long epoch, boolean force) {
         }
     }
 
@@ -450,11 +447,11 @@ public class StackInspector extends UniqueInspector<StackInspector> {
             _showSlotAddresses.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    refresh(teleProcess().epoch());
+                    refresh(teleProcess().epoch(), true);
                 }
             });
 
-            refresh(teleProcess().epoch());
+            refresh(teleProcess().epoch(), true);
 
             add(header, BorderLayout.NORTH);
             final JScrollPane slotsScrollPane = new JScrollPane(slotsPanel);
@@ -463,7 +460,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         }
 
         @Override
-        public void refresh(long epoch) {
+        public void refresh(long epoch, boolean force) {
             final Pointer instructionPointer = _stackFrame.instructionPointer();
             _instructionPointerLabel.setValue(new WordValue(instructionPointer));
             Pointer instructionPointerForStopPosition = instructionPointer;
@@ -486,7 +483,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                 final Slot slot = _slots.slot(slotIndex);
                 final TextLabel slotLabel = _slotLabels[slotIndex];
                 updateSlotLabel(slot, slotLabel);
-                _slotValues[slotIndex].refresh(epoch);
+                _slotValues[slotIndex].refresh(epoch, force);
                 if (slot.referenceMapIndex() != -1) {
                     if (referenceMap != null && referenceMap.isSet(slot.referenceMapIndex())) {
                         slotLabel.setForeground(style().wordValidObjectReferenceDataColor());
@@ -591,7 +588,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                 } else if (stackFrame instanceof TruncatedStackFrame) {
                     _maxFramesDisplay += DEFAULT_MAX_FRAMES_DISPLAY;
                     _stateChanged = true;
-                    refreshView();
+                    refreshView(true);
                 } else {
                     newRightComponent = _nativeFrame;
                 }

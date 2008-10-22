@@ -99,7 +99,7 @@ public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocal
         contentPane.add(tabbedPane);
 
         frame().getContentPane().add(contentPane);
-        refreshView(epoch);
+        refreshView(epoch, true);
     }
 
     @Override
@@ -112,11 +112,11 @@ public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocal
     }
 
     @Override
-    public void refreshView(long epoch) {
-        _enabledThreadLocals.refresh(epoch);
-        _disabledThreadLocals.refresh(epoch);
-        _triggeredThreadLocals.refresh(epoch);
-        super.refreshView(epoch);
+    public void refreshView(long epoch, boolean force) {
+        _enabledThreadLocals.refresh(epoch, force);
+        _disabledThreadLocals.refresh(epoch, force);
+        _triggeredThreadLocals.refresh(epoch, force);
+        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {

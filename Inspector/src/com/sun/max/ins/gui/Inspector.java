@@ -206,15 +206,26 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
         }
     }
 
-    public synchronized void refreshView(long epoch) {
-        _frame.refresh(epoch);
+    /**
+     * Reads, re-reads, and updates any state caches if needed from the {@link TeleVM}.
+     *
+     * @param epoch the execution epoch of the {@link TeleVM}, {@see TeleProcess#epoch()}.
+     * @param force suspend caching behavior; read state unconditionally.
+     */
+    public synchronized void refreshView(long epoch, boolean force) {
+        _frame.refresh(epoch, force);
         updateSize();
         _frame.invalidate();
         _frame.repaint();
     }
 
-    protected final synchronized void refreshView() {
-        refreshView(teleProcess().epoch());
+    /**
+     * Reads, re-reads, and updates any state caches if needed from the {@link TeleVM}.
+     *
+     * @param force suspend caching behavior; read state unconditionally.
+     */
+    protected final synchronized void refreshView(boolean force) {
+        refreshView(teleProcess().epoch(), force);
     }
 
     /**
@@ -228,8 +239,8 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
         updateSize();
     }
 
-    public void vmStateChanged(long epoch) {
-        refreshView(epoch);
+    public void vmStateChanged(long epoch, boolean force) {
+        refreshView(epoch, force);
     }
 
     public void threadSetChanged(long epoch) {
@@ -359,7 +370,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
         @Override
         public void procedure() {
             Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
-            refreshView();
+            refreshView(true);
         }
     }
 

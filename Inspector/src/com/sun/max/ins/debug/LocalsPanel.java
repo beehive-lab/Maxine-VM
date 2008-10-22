@@ -47,7 +47,7 @@ public final class LocalsPanel extends InspectorPanel {
         _numArguments = classMethodActor.numberOfParameterLocals();
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         // No data that can change
     }
 

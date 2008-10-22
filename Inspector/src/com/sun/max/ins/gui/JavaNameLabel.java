@@ -39,7 +39,7 @@ public final class JavaNameLabel extends InspectorLabel {
         setToolTipText(toolTipText);
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         // Name doesn't change.
     }
 

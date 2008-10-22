@@ -114,7 +114,7 @@ public final class BreakpointsInspector extends UniqueInspector {
         frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
         frame().setContentPane(scrollPane);
         frame().add(new BreakpointMenuItems());
-        refreshView(epoch);
+        refreshView(epoch, true);
     }
 
     private final class BreakpointMenuItems implements InspectorMenuItems {
@@ -135,7 +135,7 @@ public final class BreakpointsInspector extends UniqueInspector {
             return BreakpointsInspector.this.inspection();
         }
 
-        public void refresh(long epoch) {
+        public void refresh(long epoch, boolean force) {
         }
 
         public void redisplay() {
@@ -434,7 +434,7 @@ public final class BreakpointsInspector extends UniqueInspector {
     };
 
     @Override
-    public void refreshView(long epoch) {
+    public void refreshView(long epoch, boolean force) {
         // Check for current and added breakpoints
         // Initially assume all deleted
         for (BreakpointData breakpointData : _model) {
@@ -476,17 +476,17 @@ public final class BreakpointsInspector extends UniqueInspector {
         final BreakpointTableModel breakpointTableModel = (BreakpointTableModel) _table.getModel();
         breakpointTableModel.fireTableDataChanged();
         updateSelectedBreakpoint(focus().breakpoint());
-        super.refreshView(epoch);
+        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {
         //  All view configurations are applied dynamically in this inspector.
-        refreshView(epoch);
+        refreshView(epoch, true);
     }
 
     @Override
     public void breakpointSetChanged() {
-        refreshView();
+        refreshView(true);
     }
 
     @Override

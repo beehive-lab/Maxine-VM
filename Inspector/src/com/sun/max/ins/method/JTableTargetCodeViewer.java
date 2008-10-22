@@ -295,7 +295,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         scrollPane.setBackground(style().defaultBackgroundColor());
         add(scrollPane, BorderLayout.CENTER);
 
-        refresh(epoch);
+        refresh(epoch, true);
     }
 
     @Override
@@ -422,7 +422,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                         removeColumn(_columns[col]);
                     }
                     setColumnSizes();
-                    refresh(teleVM().teleProcess().epoch());
+                    refresh(teleVM().teleProcess().epoch(), true);
                 }
             };
 
@@ -680,14 +680,27 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class OperandsRenderer implements TableCellRenderer {
+    private final class OperandsRenderer implements TableCellRenderer, Prober {
         private WordValueLabel[] _wordValueLabels = new WordValueLabel[instructions().length()];
         private TargetCodeLabel _targetCodeLabel = new TargetCodeLabel(_inspection, "");
         private LiteralRenderer _literalRenderer = getLiteralRenderer(_inspection);
         private String[] _calleeNames = new String[instructions().length()];
         private String[] _calleeSignatures = new String[instructions().length()];
 
-        private void redisplay() {
+        public void refresh(long epoch, boolean force) {
+            for (WordValueLabel wordValueLabel : _wordValueLabels) {
+                if (wordValueLabel != null) {
+                    wordValueLabel.refresh(epoch, force);
+                }
+            }
+        }
+
+        public Inspection inspection() {
+            return _inspection;
+        }
+
+        @Override
+        public void redisplay() {
             for (WordValueLabel wordValueLabel : _wordValueLabels) {
                 if (wordValueLabel != null) {
                     wordValueLabel.redisplay();
@@ -696,7 +709,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             _targetCodeLabel.redisplay();
         }
 
-        OperandsRenderer() {
+        public OperandsRenderer() {
             for (int row = 0; row < instructions().length(); ++row) {
                 final TargetCodeInstruction targetCodeInstruction = targetCodeInstructionAt(row);
 
@@ -798,6 +811,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setValue((byte[]) value);
             return this;
         }
+    }
+
+    @Override
+    protected void updateView(long epoch, boolean force) {
+        _operandsRenderer.refresh(epoch, force);
     }
 
     public void redisplay() {

@@ -64,8 +64,8 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
         return _inspector.inspection();
     }
 
-    public synchronized void refresh(long epoch) {
-        menu().refresh(epoch);
+    public synchronized void refresh(long epoch, boolean force) {
+        menu().refresh(epoch, force);
     }
 
     public void redisplay() {

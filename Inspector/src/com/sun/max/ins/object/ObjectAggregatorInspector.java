@@ -88,11 +88,11 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
     private WordValueLabel[] _referenceLabels;
 
     @Override
-    public synchronized void refreshView(long epoch) {
+    public synchronized void refreshView(long epoch, boolean force) {
         for (WordValueLabel wordValueLabel : _referenceLabels) {
-            wordValueLabel.refresh(epoch);
+            wordValueLabel.refresh(epoch, force);
         }
-        super.refreshView(epoch);
+        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {
