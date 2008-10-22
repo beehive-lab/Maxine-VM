@@ -127,7 +127,8 @@ public abstract class StackFrameWalker {
             if (targetMethod != null && (!inNative || purpose == INSPECTING)) {
                 // Java frame
                 if (lastJavaCallee != null) {
-                    if (lastJavaCallee.classMethodActor().isCFunction()) {
+                    final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
+                    if (classMethodActor.isCFunction() && !classMethodActor.isSignalHandlerStub()) {
                         Debug.print("Caller of VM entry point (@C_FUNCTION method) \"");
                         Debug.print(lastJavaCallee.name());
                         Debug.print("\" is not native code: ");
