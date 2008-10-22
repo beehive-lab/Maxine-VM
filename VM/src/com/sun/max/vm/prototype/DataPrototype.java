@@ -51,8 +51,8 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Builds the data prototype from the graph prototype, determining the boot image addresses of objects
- * and copying their representation into a byte buffer.
+ * Builds the data prototype from the graph prototype, determining the boot image addresses of objects and copying their
+ * representation into a byte buffer.
  *
  * @author Bernd Mathiske
  */
@@ -105,8 +105,7 @@ public final class DataPrototype extends Prototype {
      *
      * @param object the object to associate with the specified cell
      * @param cell the cell
-     * @return {@code true} if the object does not already have an address and the
-     * new address was successfully assigned
+     * @return {@code true} if the object does not already have an address and the new address was successfully assigned
      */
     private boolean assignCell(Object object, Address cell) {
         if (object == null) {
@@ -181,9 +180,9 @@ public final class DataPrototype extends Prototype {
     private Address _nonZeroBootHeapStart;
 
     /**
-     * Allocate one object that is not referenced and sits at the bottom of the boot image heap.
-     * Thus we avoid having reference pointers with offset zero relative to the heap.
-     * These would be confused with the value 'null' by the relocator in the substrate.
+     * Allocate one object that is not referenced and sits at the bottom of the boot image heap. Thus we avoid having
+     * reference pointers with offset zero relative to the heap. These would be confused with the value 'null' by the
+     * relocator in the substrate.
      */
     private void preventNullConfusion() {
         final Object object = new Object();
@@ -193,8 +192,8 @@ public final class DataPrototype extends Prototype {
     }
 
     /**
-     * Allocates a special object that fills the remaining space in the current page,
-     * so that the next allocation in the region will be page-aligned.
+     * Allocates a special object that fills the remaining space in the current page, so that the next allocation in the
+     * region will be page-aligned.
      *
      * @param region the region in which to create the page alignment object
      * @return the object allocated
@@ -344,8 +343,7 @@ public final class DataPrototype extends Prototype {
          * Attempts to find a cell for the specified object.
          *
          * @param object the object for which to find the cell
-         * @return a cell for the specified object, if one exists; an unexpected program error
-         * if one does not
+         * @return a cell for the specified object, if one exists; an unexpected program error if one does not
          */
         Address cellFor(Object object) {
             final Address cell = objectToCell(object);
@@ -371,8 +369,7 @@ public final class DataPrototype extends Prototype {
     }
 
     /**
-     * This class implements a memory region visitor that writes all objects into
-     * a byte array.
+     * This class implements a memory region visitor that writes all objects into a byte array.
      */
     class ByteArrayMemoryRegionWriter extends MemoryRegionVisitor {
 
@@ -457,9 +454,7 @@ public final class DataPrototype extends Prototype {
         private void write(Value value, int offsetInCell) {
             final byte[] valueBytes;
             if (value.kind() == Kind.REFERENCE) {
-                valueBytes = (value.asObject() == null) ?
-                                _nullGripBytes :
-                                _gripScheme.createPrototypeGrip(cellFor(value.asObject()));
+                valueBytes = (value.asObject() == null) ? _nullGripBytes : _gripScheme.createPrototypeGrip(cellFor(value.asObject()));
             } else {
                 valueBytes = value.toBytes(_dataModel);
             }
@@ -698,10 +693,12 @@ public final class DataPrototype extends Prototype {
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
         for (int n = 0; n < objects.length(); n += BATCH) {
-            final MemoryRegionVisitor m = memoryRegionVisitor.clone(); // prevent 'setOffset()' below from causing a sharing conflict
+            final MemoryRegionVisitor m = memoryRegionVisitor.clone(); // prevent 'setOffset()' below from causing a
+                                                                        // sharing conflict
             final Address regionStart = m.region().start();
             final int start = n;
             completionService.submit(new Callable<Integer>() {
+
                 @Override
                 public Integer call() throws Exception {
                     int numberOfBytes = 0;
@@ -717,8 +714,7 @@ public final class DataPrototype extends Prototype {
 
                         final int offset = objectToCell(object).minus(regionStart).toInt();
                         final int expectedOffset = previousOffset + previousSize;
-                        assert previousObject == null || expectedOffset <= offset :
-                            "expected offset: 0x" + Integer.toHexString(expectedOffset) + ", actual offset: 0x" + Integer.toHexString(offset);
+                        assert previousObject == null || expectedOffset <= offset : "expected offset: 0x" + Integer.toHexString(expectedOffset) + ", actual offset: 0x" + Integer.toHexString(offset);
 
                         if (_debugging) {
                             m.setOffset(offset - tagBytes.length, null);
@@ -752,8 +748,8 @@ public final class DataPrototype extends Prototype {
     }
 
     /**
-     * Adjusts all pointers to objects in the code region by a given delta. Pointers from both heap and
-     * code objects are scanned.
+     * Adjusts all pointers to objects in the code region by a given delta. Pointers from both heap and code objects are
+     * scanned.
      *
      * @param delta the value to add to all pointers/references
      */
@@ -832,8 +828,8 @@ public final class DataPrototype extends Prototype {
     }
 
     /**
-     * Sets the relocation flag for the specified address, indicating that the contents of
-     * the address need to be relocated.
+     * Sets the relocation flag for the specified address, indicating that the contents of the address need to be
+     * relocated.
      *
      * @param address the address which contains a value to be relocated
      */
@@ -847,6 +843,7 @@ public final class DataPrototype extends Prototype {
      * A visitor that sets the relocation flag for the origin of all objects.
      */
     private final PointerOffsetVisitor _originOffsetVisitor = new PointerOffsetVisitorImpl() {
+
         @Override
         public void visitPointerOffset(Pointer origin, int offset) {
             setRelocationFlag(origin.plus(offset));
@@ -894,6 +891,7 @@ public final class DataPrototype extends Prototype {
         for (int n = 0; n < objects.length(); n += BATCH) {
             final int start = n;
             completionService.submit(new Callable<Integer>() {
+
                 @Override
                 public Integer call() throws Exception {
                     int numberOfRelocation = 0;
@@ -921,8 +919,7 @@ public final class DataPrototype extends Prototype {
     }
 
     /**
-     * Assigns relocation flags for all method dispatch tables.
-     * TODO: generalize to any kind of hybrid?
+     * Assigns relocation flags for all method dispatch tables. TODO: generalize to any kind of hybrid?
      */
     private void assignMethodDispatchTableRelocationFlags() {
         Trace.begin(1, "assignMethodDispatchTableRelocationFlags");
@@ -1004,8 +1001,7 @@ public final class DataPrototype extends Prototype {
      * Create and build a new data prototype from the specifeid graph prototype.
      *
      * @param graphPrototype the graph prototype for which to build the data prototype
-     * @param mapFile a file to which to write map information; if {@code null}, no
-     * map information will be written
+     * @param mapFile a file to which to write map information; if {@code null}, no map information will be written
      */
     public DataPrototype(GraphPrototype graphPrototype, File mapFile) {
         super(graphPrototype.vmConfiguration());
@@ -1037,7 +1033,11 @@ public final class DataPrototype extends Prototype {
         final int bootCodeRegionSize = Code.bootCodeRegion().size().toInt();
         ProgramWarning.check(numberOfBytes <= bootCodeRegionSize, "numberOfBytes > bootCodeRegionSize");
 
-        _relocationFlagBytes = new byte[((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment) / 8]; // one bit per alignment unit
+        _relocationFlagBytes = new byte[((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment) / 8]; // one
+                                                                                                                                // bit
+                                                                                                                                // per
+                                                                                                                                // alignment
+                                                                                                                                // unit
         assignRelocationFlags();
 
         if (mapFile != null) {

@@ -29,6 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.asm.amd64.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -36,6 +37,12 @@ import com.sun.max.vm.thread.*;
  * @author Bernd Mathiske
  */
 public final class AMD64Safepoint extends Safepoint {
+
+    /**
+     * ATTENTION: must be callee-saved by all C ABIs in use.
+     */
+    public static final AMD64GeneralRegister64 _LATCH_REGISTER = R14;
+    public static final int REGISTER_SAVE_SIZE = Word.size() * (AMD64GeneralRegister64.values().length + (2 * AMD64XMMRegister.values().length));
 
     public AMD64Safepoint(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -51,10 +58,6 @@ public final class AMD64Safepoint extends Safepoint {
         return 16;
     }
 
-    /**
-     * ATTENTION: must be callee-saved by all C ABIs in use.
-     */
-    private static final AMD64GeneralRegister64 _LATCH_REGISTER = R14;
 
     @INLINE(override = true)
     @Override
@@ -99,4 +102,26 @@ public final class AMD64Safepoint extends Safepoint {
         }
     }
 
+    @Override
+    public Pointer getInstructionPointer(Pointer registerState) {
+        return registerState.readWord(AMD64Safepoint.REGISTER_SAVE_SIZE).asPointer();
+    }
+    @Override
+    public Pointer getStackPointer(Pointer registerState, TargetMethod targetMethod) {
+        // TODO: get the frame pointer register from the ABI
+        return registerState.plus(REGISTER_SAVE_SIZE + Word.size());
+    }
+    @Override
+    public Pointer getFramePointer(Pointer registerState, TargetMethod targetMethod) {
+        // TODO: get the frame pointer register from the ABI
+        return registerState.readWord(AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+    }
+    @Override
+    public Pointer getSafepointLatch(Pointer registerState) {
+        return registerState.readWord(_LATCH_REGISTER.value() * Word.size()).asPointer();
+    }
+    @Override
+    public void setSafepointLatch(Pointer registerState, Pointer value) {
+        registerState.writeWord(_LATCH_REGISTER.value() * Word.size(), value);
+    }
 }

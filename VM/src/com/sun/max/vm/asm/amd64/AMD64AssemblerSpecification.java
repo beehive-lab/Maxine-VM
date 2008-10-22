@@ -36,7 +36,7 @@ import com.sun.max.ide.*;
  * <li>Run {@link Generator}.</li>
  * <li>Refresh/recompile the MaxineVM sources.</li>
  * </ol>
- * 
+ *
  * @author Doug Simon
  */
 @PROTOTYPE_ONLY
@@ -331,6 +331,7 @@ interface AMD64AssemblerSpecification {
     void movdq(AMD64XMMRegister register, AMD64GeneralRegister64 scratchRegister);
     void movdq(byte disp8, AMD64IndirectRegister64 destination, AMD64XMMRegister source);
     void movdq(int disp32, AMD64IndirectRegister64 destination, AMD64XMMRegister source);
+    void movdq(AMD64XMMRegister destination, int disp32, AMD64IndirectRegister64 source);
     void movl(AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale, int imm32);
     void movl(AMD64GeneralRegister32 scratch, int floatToInt);
     void movl(AMD64IndirectRegister64 destination, int imm32);
@@ -3590,7 +3591,6 @@ interface AMD64AssemblerSpecification {
 //    void movdq(AMD64XMMRegister destination, byte disp8, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void movdq(AMD64XMMRegister destination, byte disp8, AMD64IndirectRegister64 source);
 //    void movdq(AMD64XMMRegister destination, int disp32, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
-//    void movdq(AMD64XMMRegister destination, int disp32, AMD64IndirectRegister64 source);
 //    void movdq(MMXRegister destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void movdq(MMXRegister destination, AMD64GeneralRegister64 source);
 //    void movdq(MMXRegister destination, AMD64IndirectRegister64 source);

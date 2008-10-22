@@ -93,7 +93,7 @@ final class JDK_java_lang_Throwable {
             if (targetMethod == null) {
                 // native frame
                 continue;
-            } else if (targetMethod.classMethodActor().isSignalHandlerStub()) {
+            } else if (targetMethod.classMethodActor().isTrapStub()) {
                 // Reset the stack trace. We want the trace to start from the actual exception throw.
                 result.clear();
                 atImplicitExceptionThrow = true;

@@ -100,7 +100,7 @@ public abstract class Actor {
     public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
                                                    0x00010000;
     public static final int NO_SAFEPOINTS =        0x00004000;
-    public static final int SIGNAL_STUB =          0x00008000;
+    public static final int TRAP_STUB =          0x00008000;
     public static final int SIGNAL_HANDLER =       0x00002000;
 
     /**
@@ -338,8 +338,8 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isSignalStub(int flags) {
-        return (flags & SIGNAL_STUB) != 0;
+    public static boolean isTrapStub(int flags) {
+        return (flags & TRAP_STUB) != 0;
     }
 
     @INLINE

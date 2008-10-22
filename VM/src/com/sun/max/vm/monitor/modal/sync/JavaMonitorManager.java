@@ -84,7 +84,6 @@ public class JavaMonitorManager {
 
     public static void initialize(MaxineVM.Phase phase) {
         Mutex.initialize(phase);
-        ConditionVariable.initialize(phase);
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());

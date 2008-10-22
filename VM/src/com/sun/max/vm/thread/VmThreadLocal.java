@@ -88,6 +88,12 @@ public enum VmThreadLocal {
     SAFEPOINTS_TRIGGERED_THREAD_LOCALS(Kind.WORD),
 
     SAFEPOINT_EPOCH(Kind.WORD),
+
+    /**
+     * The procedure to run when a safepoint has been triggered.
+     */
+    SAFEPOINT_PROCEDURE(Kind.REFERENCE),
+
     ID(Kind.WORD),
     VM_THREAD(Kind.REFERENCE),
     NATIVE_THREAD(Kind.WORD),
@@ -126,11 +132,26 @@ public enum VmThreadLocal {
     ADJUSTED_CARDTABLE_BASE(Kind.WORD), TAG(Kind.WORD), SAFEPOINT_VENUE(Kind.REFERENCE), SAFEPOINT_NATIVE_STUB(Kind.WORD), SAFEPOINT_JAVA_STUB(Kind.WORD),
 
     /**
+     * The number of the trap (i.e. signal) that occurred.
+     */
+    TRAP_NUMBER(Kind.WORD),
+
+    /**
      * The value of the instruction pointer when the last trap occurred.
      *
      * @see #IN_TRAP_STUB_AFTER_RECORDING_TRAP_FRAME
      */
     TRAP_INSTRUCTION_POINTER(Kind.WORD),
+
+    /**
+     * The fault address causing the trap.
+     */
+    TRAP_FAULT_ADDRESS(Kind.WORD),
+
+    /**
+     * The value on the top of the stack that was overwritten by the native trap handler.
+     */
+    TRAP_TOP_OF_STACK(Kind.WORD),
 
     /**
      * The value of the stack pointer when the last trap occurred.

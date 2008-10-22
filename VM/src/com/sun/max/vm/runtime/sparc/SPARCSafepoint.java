@@ -32,6 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.util.Predicate;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -170,4 +171,24 @@ public final class SPARCSafepoint extends Safepoint {
         }
     }
 
+    @Override
+    public Pointer getInstructionPointer(Pointer registerState) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public Pointer getStackPointer(Pointer registerState, TargetMethod targetMethod) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public Pointer getFramePointer(Pointer registerState, TargetMethod targetMethod) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public Pointer getSafepointLatch(Pointer registerState) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public void setSafepointLatch(Pointer registerState, Pointer value) {
+        throw Problem.unimplemented();
+    }
 }

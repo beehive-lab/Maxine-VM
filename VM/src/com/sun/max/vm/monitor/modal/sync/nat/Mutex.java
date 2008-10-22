@@ -24,8 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -40,16 +38,12 @@ public final class Mutex {
 
     private static int _size;
 
-    private static final CriticalNativeMethod _nativeMutexSize = new CriticalNativeMethod(Mutex.class, "nativeMutexSize");
-    private static final CriticalNativeMethod _nativeMutexInitialize = new CriticalNativeMethod(Mutex.class, "nativeMutexInitialize");
-    private static final CriticalNativeMethod _nativeMutexLock = new CriticalNativeMethod(Mutex.class, "nativeMutexLock");
-    private static final CriticalNativeMethod _nativeMutexUnlock = new CriticalNativeMethod(Mutex.class, "nativeMutexUnlock");
-
-    private static String _nativeLockSymbol;
-    private static final Utf8Constant _nativeMutexSizeName = SymbolTable.makeSymbol("nativeMutexSize");
-    private static final Utf8Constant _nativeMutexInitializeName = SymbolTable.makeSymbol("nativeMutexInitialize");
-    private static final Utf8Constant _nativeMutexLockName = SymbolTable.makeSymbol("nativeMutexLock");
-    private static final Utf8Constant _nativeMutexUnlockName = SymbolTable.makeSymbol("nativeMutexUnlock");
+    static {
+        new CriticalNativeMethod(Mutex.class, "nativeMutexSize");
+        new CriticalNativeMethod(Mutex.class, "nativeMutexInitialize");
+        new CriticalNativeMethod(Mutex.class, "nativeMutexLock");
+        new CriticalNativeMethod(Mutex.class, "nativeMutexUnlock");
+    }
 
     @C_FUNCTION
     private static native int nativeMutexSize();
@@ -63,13 +57,7 @@ public final class Mutex {
     private static native boolean nativeMutexLock(Pointer mutex);
 
     public static void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PROTOTYPING) {
-            _nativeLockSymbol = Mangle.mangleMethod(Mutex.class, _nativeMutexLockName.toString());
-        } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            _nativeMutexSize.link();
-            _nativeMutexInitialize.link();
-            _nativeMutexLock.link();
-            _nativeMutexUnlock.link();
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
             _size = nativeMutexSize();
         }
     }

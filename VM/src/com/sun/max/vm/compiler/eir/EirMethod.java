@@ -111,7 +111,7 @@ public class EirMethod extends AbstractIrMethod {
     /**
      * @see #frameSize()
      */
-    protected void setFrameSize(int numberOfBytes) {
+    public void setFrameSize(int numberOfBytes) {
         _frameSize = numberOfBytes;
 
         if (_frameSize < Word.size()) {

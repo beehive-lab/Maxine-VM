@@ -184,7 +184,6 @@ public final class MaxineVM {
     }
 
     private static ThreadLocal<MaxineVM> _hostOrTarget = new ThreadLocal<MaxineVM>() {
-
         @Override
         protected synchronized MaxineVM initialValue() {
             return host();
@@ -381,7 +380,7 @@ public final class MaxineVM {
         DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym);
 
         // Link the critical native methods:
-        CriticalNativeMethod.initialize();
+        CriticalNativeMethod.linkAll();
 
         // Initialize the trap system:
         Trap.initialize();
@@ -456,9 +455,6 @@ public final class MaxineVM {
 
     @C_FUNCTION
     public static native void native_trap_exit(int code, Address address);
-
-    @C_FUNCTION
-    public static native void native_stack_trap_exit(int code, Address address);
 
     @C_FUNCTION
     public static native void native_writeMaxMemory(long maxMem);
