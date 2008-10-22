@@ -71,9 +71,9 @@ public final class EirInspector extends IrInspector<EirInspector> {
     }
 
     @Override
-    public void refreshView(long epoch) {
-        super.refreshView(epoch);
-        _classMethodInspectorMenuItems.refresh(epoch);
+    public void refreshView(long epoch, boolean force) {
+        super.refreshView(epoch, force);
+        _classMethodInspectorMenuItems.refresh(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {

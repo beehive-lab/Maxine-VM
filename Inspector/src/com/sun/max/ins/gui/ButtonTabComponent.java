@@ -77,7 +77,7 @@ public class ButtonTabComponent extends InspectorPanel {
         setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         // No remote data that needs reading.
     }
 

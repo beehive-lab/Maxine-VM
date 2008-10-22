@@ -85,7 +85,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
             return MethodInspectorContainer.this.inspection();
         }
 
-        public void refresh(long epoch) {
+        public void refresh(long epoch, boolean force) {
         }
 
         public void redisplay() {

@@ -205,7 +205,7 @@ public final class MaxineInspector {
                     MethodInspector.Manager.make(_inspection);
                     ObjectInspector.Manager.make(_inspection);
                     _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM, _inspection.focus().thread().instructionPointer()), false);
-                    _inspection.refreshAll();
+                    _inspection.refreshAll(false);
                 } catch (Throwable throwable) {
                     System.err.println("Error during initialization");
                     throwable.printStackTrace();
@@ -219,7 +219,7 @@ public final class MaxineInspector {
                 }
                 MethodInspector.Manager.make(_inspection);
                 ObjectInspector.Manager.make(_inspection);
-                _inspection.refreshAll();
+                _inspection.refreshAll(false);
             }
             Trace.end(1, "Inspector ready");
 

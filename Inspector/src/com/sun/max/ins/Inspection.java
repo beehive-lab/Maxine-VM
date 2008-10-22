@@ -64,7 +64,7 @@ public class Inspection extends JFrame {
     private final TeleVM _teleVM;
 
     /**
-     * @return the VM being inspected
+     * @return the Maxine VM being inspected
      */
     public TeleVM teleVM() {
         return _teleVM;
@@ -717,7 +717,7 @@ public class Inspection extends JFrame {
                 informationMessage("The maxvm Process has terminated", "Process Terminated");
                 break;
         }
-        _inspectionMenus.refresh(epoch);
+        _inspectionMenus.refresh(epoch, true);
     }
 
     /**
@@ -772,7 +772,7 @@ public class Inspection extends JFrame {
     void initialize() throws IOException {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
-        _inspectionMenus.refresh(teleProcess().epoch());
+        _inspectionMenus.refresh(teleProcess().epoch(), true);
         //Listen for process state changes
         _teleProcess.addStateListener(new ProcessStateListener());
         // Listen for changes in breakpoints
@@ -851,16 +851,31 @@ public class Inspection extends JFrame {
 
     }
 
+    /**
+     * Notification service for changes to state in the {@link TeleVM}.
+     *
+     * Many of the notifications include the current "epoch" of the
+     * underlying process ({@see TeleProcess#epoch()}), which can
+     * be used by listeners to decide whether to update caches or
+     * not.
+     *
+     * @author Michael Van De Vanter
+     */
     public interface InspectionListener {
 
         /**
-         * Notifies that VM state has potentially changed and should be revisited.
+         * Notifies that  {@link TeleVM} state has potentially changed and should be revisited.
+         *
+         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
+         * @param force suspend caching behavior; reload state unconditionally.
          */
-        void vmStateChanged(long epoch);
+        void vmStateChanged(long epoch, boolean force);
 
         /**
          * Notifies that the set of threads in the {@link TeleVM} has changed; listeners can assume
          * that the set hasn't changed unless this notification is received.
+         *
+         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
          */
         void threadSetChanged(long epoch);
 
@@ -877,6 +892,8 @@ public class Inspection extends JFrame {
         /**
          * Notifies that an important aspect of view style/parameters/configuration have changed,
          * and that views should be reconstructed if needed (view state change only).
+         *
+         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
          */
         void viewConfigurationChanged(long epoch);
 
@@ -907,17 +924,23 @@ public class Inspection extends JFrame {
 
     /**
      * Update all views by reading from {@link TeleVM} state as needed.
+     *
+     * @param force suspend caching behavior; reload state unconditionally.
      */
-    public synchronized void refreshAll() {
+    public synchronized void refreshAll(boolean force) {
         final long epoch = teleProcess().epoch();
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : _inspectionListeners.clone()) {
             Trace.line(TRACE_VALUE, tracePrefix() + "refreshView: " + listener);
-            listener.vmStateChanged(epoch);
+            listener.vmStateChanged(epoch, force);
         }
-        _inspectionMenus.refresh(epoch);
+        _inspectionMenus.refresh(epoch, force);
     }
 
+    /**
+     * Updates all views, assuming that display and style parameters
+     * may have changed; forces state reload from the {@link TeleVM}.
+     */
     public synchronized void updateViewConfiguration() {
         final long epoch = teleProcess().epoch();
         for (InspectionListener listener : _inspectionListeners) {
@@ -956,7 +979,7 @@ public class Inspection extends JFrame {
             }
         }
         try {
-            refreshAll();
+            refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
             boolean atBreakpoint = false;
             for (TeleNativeThread teleNativeThread : teleVM().allThreads()) {

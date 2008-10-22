@@ -38,7 +38,7 @@ public final class TextLabel extends InspectorLabel {
         this(inspection, Integer.toString(n));
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         // no remote data to refresh.
     }
 

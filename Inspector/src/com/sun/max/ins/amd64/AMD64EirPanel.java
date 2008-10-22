@@ -48,7 +48,7 @@ public final class AMD64EirPanel extends EirPanel<EirMethod> {
         return eirMethod().name() + "(" + Arrays.toString(eirMethod().parameterLocations(), ", ") + ") -> " + eirMethod().resultLocation();
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
     }
 
     public void redisplay() {

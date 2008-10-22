@@ -175,7 +175,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         _invokeMethodAction = new InvokeMethodAction();
         _inspectClassMethodActorAction = new InspectClassMethodActorAction();
         _inspectSubstitutionSourceClassActorAction = new InspectSubstitutionSourceClassActorAction();
-        refresh(teleVM().teleProcess().epoch());
+        refresh(teleVM().teleProcess().epoch(), true);
     }
 
     public void addTo(InspectorMenu menu) {
@@ -197,7 +197,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         return _inspection.teleVM();
     }
 
-    public void refresh(long epoch) {
+    public void refresh(long epoch, boolean force) {
         _teleClassMethodActor.refreshView();
         final boolean hasCodeAttribute =  _teleClassMethodActor.hasCodeAttribute();
         final File javaSourceFile = teleVM().findJavaSourceFile(_teleClassMethodActor.getTeleHolder().classActor());

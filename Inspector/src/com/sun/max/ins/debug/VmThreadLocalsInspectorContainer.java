@@ -128,9 +128,9 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
     }
 
     @Override
-    public void refreshView(long epoch) {
+    public void refreshView(long epoch, boolean force) {
         if (isVisible()) {
-            if (_threadSetNeedsUpdate) {
+            if (_threadSetNeedsUpdate || force) {
                 // Mark all inspectors for possible deletion if their thread is no longer active
                 for (VmThreadLocalsInspector threadLocalsInspector : this) {
                     threadLocalsInspector.setMarked(true);
@@ -153,7 +153,7 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
                 _threadSetNeedsUpdate = false;
             }
             updateThreadFocus(focus().thread());
-            super.refreshView(epoch);
+            super.refreshView(epoch, force);
         }
     }
 

@@ -62,7 +62,7 @@ public class BytecodeMnemonicLabel extends InspectorLabel {
 
     }
 
-    public final void refresh(long epoch) {
+    public final void refresh(long epoch, boolean force) {
         // no remote data to refresh
     }
 

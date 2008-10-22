@@ -39,7 +39,7 @@ public class PlainLabel extends InspectorLabel {
         redisplay();
     }
 
-    public final void refresh(long epoch) {
+    public final void refresh(long epoch, boolean force) {
         // No remote data to refresh
     }
 

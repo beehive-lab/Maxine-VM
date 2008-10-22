@@ -77,9 +77,9 @@ public class NativeMethodInspector extends MethodInspector {
     }
 
     @Override
-    public void refreshView(long epoch) {
+    public void refreshView(long epoch, boolean force) {
         if (isVisible()) {
-            _targetCodeViewer.refresh(epoch);
+            _targetCodeViewer.refresh(epoch, force);
         }
     }
 

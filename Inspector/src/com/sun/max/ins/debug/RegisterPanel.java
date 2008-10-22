@@ -74,7 +74,7 @@ public abstract class RegisterPanel extends InspectorPanel {
             _registerInspectors[index] = wordValueLabel;
             _oldValues[index] = Address.zero();
         }
-        refresh(teleVM().teleProcess().epoch());
+        refresh(teleVM().teleProcess().epoch(), true);
         SpringUtilities.makeCompactGrid(this, getComponentCount() / 2, 2, 0, 0, 5, 1);
     }
 
@@ -94,7 +94,7 @@ public abstract class RegisterPanel extends InspectorPanel {
         return new StateRegisterPanel(inspection, registers);
     }
 
-    public final void refresh(long epoch) {
+    public final void refresh(long epoch, boolean force) {
         for (Symbol register : _registers.symbolizer()) {
             final int index = register.value();
             final Address newValue = _registers.get(register);

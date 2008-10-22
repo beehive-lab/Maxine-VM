@@ -56,7 +56,7 @@ public final class JavaSourceInspector  extends FileInspector {
         scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         frame().setContentPane(scrollPane);
-        refreshView(epoch);
+        refreshView(epoch, true);
         frame().moveToMiddle();
     }
 

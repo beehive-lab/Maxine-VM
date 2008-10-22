@@ -1026,7 +1026,7 @@ public class WordValueLabel extends ValueLabel {
             return WordValueLabel.this.inspection();
         }
 
-        public void refresh(long epoch) {
+        public void refresh(long epoch, boolean force) {
         }
 
         public void redisplay() {
