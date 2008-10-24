@@ -81,10 +81,10 @@ public abstract class Deoptimizer {
             final Word safepointEpoch = VmThreadLocal.SAFEPOINT_EPOCH.getVariableWord();
 
             final Deoptimization deoptimization = _deoptimizer.createDeoptimization();
-            new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VmThreadLocal.TRAP_INSTRUCTION_POINTER.getVariableWord().asPointer(),
-                                                                            VmThreadLocal.TRAP_STACK_POINTER.getVariableWord().asPointer(),
-                                                                            VmThreadLocal.TRAP_FRAME_POINTER.getVariableWord().asPointer(),
-                                                                            deoptimization);
+            // TODO: where to start the stack walk?
+            final Pointer stackPointer = Pointer.zero();
+            final Pointer framePointer = Pointer.zero();
+            new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, stackPointer, framePointer, deoptimization);
 
             final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer);
             final TargetJavaFrameDescriptor targetJavaFrameDescriptor = targetMethod.getJavaFrameDescriptor(stopIndex);

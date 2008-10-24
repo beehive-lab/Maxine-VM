@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
@@ -81,11 +79,6 @@ public final class VmStackFrameWalker extends StackFrameWalker {
     @Override
     public Word readWord(VmThreadLocal local) {
         return local.getVariableWord(_vmThreadLocals);
-    }
-
-    @Override
-    public boolean trapHandlerHasRecordedTrapFrame() {
-        return !TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME.getVariableWord(_vmThreadLocals).isZero();
     }
 
     public boolean isDumpingFatalStackTrace() {

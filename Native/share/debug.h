@@ -74,5 +74,6 @@ extern void debug_print_double(double d);
 #define DEBUG_LINKER 0
 #define DEBUG_JVMNI 0
 #define DEBUG_THREADS 0
+#define DEBUG_INSPECTOR_NATIVE 0
 
 #endif /*__debug_h__*/

@@ -47,6 +47,7 @@ typedef struct image_Header {
     jint pageSize;           /* multiple of 1024 */
 
     jint vmThreadLocalsSize;
+    jint vmThreadLocalsTrapNumberOffset;
 
     jint vmRunMethodOffset;
     jint vmThreadRunMethodOffset;

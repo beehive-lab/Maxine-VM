@@ -8237,6 +8237,28 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_lang_Bridge_method01() {
+        JavaTesterRunScheme.begin("test.lang.Bridge_method01");
+        String runString = null;
+        try {
+        // test(0) == 1
+            runString = "test(0)";
+            if (1 != test.lang.Bridge_method01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.lang.Bridge_method01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_lang_Class_Literal01() {
         JavaTesterRunScheme.begin("test.lang.Class_Literal01");
         String runString = null;
@@ -10838,6 +10860,28 @@ public class JavaTesterTests {
         // test(9223372036854775807) == false
             runString = "test(9223372036854775807)";
             if (false != test.lang.Long_lessEqual03.test(9223372036854775807L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_lang_Math_pow() {
+        JavaTesterRunScheme.begin("test.lang.Math_pow");
+        String runString = null;
+        try {
+        // test(2.0) == 4.0
+            runString = "test(2.0)";
+            if (4.0 != test.lang.Math_pow.test(2.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.1) == 8.574187700290345
+            runString = "test(3.1)";
+            if (8.574187700290345 != test.lang.Math_pow.test(3.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

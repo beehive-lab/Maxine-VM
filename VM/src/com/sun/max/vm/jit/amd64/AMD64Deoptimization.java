@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.jit.amd64;
 
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -34,7 +32,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -129,8 +126,7 @@ public final class AMD64Deoptimization extends Deoptimization {
     }
 
     private double getFloatingPointRegisterValue(int index) {
-        final Pointer locals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(VmThread.currentVmThreadLocals()).asPointer();
-        return REGISTERS.pointer(locals).plusWords(NUMBER_OF_INTEGER_REGISTERS).getDouble(index);
+        throw Problem.unimplemented();
     }
 
     public void visit(TargetLocation.FloatingPointRegister floatingPointRegister) {
@@ -138,8 +134,7 @@ public final class AMD64Deoptimization extends Deoptimization {
     }
 
     private Word getIntegerRegisterValue(int index) {
-        final Pointer locals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(VmThread.currentVmThreadLocals()).asPointer();
-        return REGISTERS.pointer(locals).getWord(index);
+        throw Problem.unimplemented();
     }
 
     public void visit(TargetLocation.IntegerRegister integerRegister) {

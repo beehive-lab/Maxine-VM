@@ -181,12 +181,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                     final RuntimeStubStackFrame runtimeStubStackFrame = (RuntimeStubStackFrame) stackFrame;
                     final RuntimeStub runtimeStub = runtimeStubStackFrame.stub();
                     name = runtimeStub.name();
-                    if (runtimeStub instanceof SafepointStub) {
-                        final SafepointStub safepointStub = (SafepointStub) runtimeStub;
-                        toolTip = "Safepoint stub for " + safepointStub.callee().format("%r %H.%n(%p)");
-                    } else {
-                        toolTip = name;
-                    }
+                    toolTip = name;
                 } else {
                     ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                     name = "nativeMethod:0x" + stackFrame.instructionPointer().toHexString();

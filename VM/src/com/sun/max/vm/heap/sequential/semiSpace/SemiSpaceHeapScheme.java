@@ -435,7 +435,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         return reallocateAlternateSpace();
     }
 
-    public synchronized boolean collect(Size requestedFreeSpace) {
+    public synchronized boolean collectGarbage(Size requestedFreeSpace) {
         if (_outOfMemory) {
             return false;
         }
@@ -453,10 +453,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             MaxineVM.native_exit(1);
         }
         return false;
-    }
-
-    public boolean collectGarbage(Size requestedFreeSpace) {
-        return collect(requestedFreeSpace);
     }
 
     public Size reportFreeSpace() {
@@ -493,7 +489,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             }
             end = cell.plus(size);
             if (end.greaterThan(_top)) {
-                if (!collect(size)) {
+                if (!collectGarbage(size)) {
                     throw _outOfMemoryError;
                 }
                 oldAllocationMark = _allocationMark.asPointer();

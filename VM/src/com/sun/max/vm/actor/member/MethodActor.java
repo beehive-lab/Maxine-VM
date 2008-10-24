@@ -99,12 +99,9 @@ public abstract class MethodActor extends MemberActor {
         return isCFunction(flags());
     }
 
-    public final boolean isSignalHandlerStub() {
-        return isSignalStub(flags());
-    }
-
-    public final boolean isSignalHandler() {
-        return isSignalHandler(flags());
+    @INLINE
+    public final boolean isTrapStub() {
+        return isTrapStub(flags());
     }
 
     @INLINE
