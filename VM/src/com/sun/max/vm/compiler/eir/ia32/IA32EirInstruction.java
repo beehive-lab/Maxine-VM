@@ -39,7 +39,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * Holds most IA32 EIR instruction definitions in alphabetical order.
- * 
+ *
  * The EIR instructions not listed here are either synthetic (IA32EirPrologue)
  * or generalized and thus relatively complex (IA32EirLoad, AND64EirStore).
  *
@@ -1682,7 +1682,7 @@ public interface IA32EirInstruction {
 
         /**
          * Creates an instruction that assigns the address of a stack slot to the destination register.
-         * 
+         *
          * @param destination
          *                the register in which the address is saved
          * @param source
@@ -2731,6 +2731,7 @@ public interface IA32EirInstruction {
                     }
                 }
             }
+            emitter.inlineDataRecorder().add(new InlineDataDescriptor.JumpTable32(jumpTable, minMatchValue(), maxMatchValue()));
         }
 
         private void translateLookupBinarySearch(IA32EirTargetEmitter emitter, int bottomIndex, int topIndex) {

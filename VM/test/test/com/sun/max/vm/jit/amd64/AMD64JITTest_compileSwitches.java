@@ -26,20 +26,21 @@ import test.com.sun.max.vm.jit.*;
 
 /**
  * Runs unit test JITTest_compileTableSwitch for AMD64.
- * @see JITTest_compileTableSwitch
+ *
+ * @see JITTest_compileSwitches
  * @author Laurent Daynes
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class AMD64JITTest_compileTableSwitch extends JITTest_compileTableSwitch {
+public class AMD64JITTest_compileSwitches extends JITTest_compileSwitches {
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(AMD64JITTest_compileTableSwitch.suite());
+        junit.textui.TestRunner.run(AMD64JITTest_compileSwitches.suite());
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AMD64JITTest_compileTableSwitch.class.getSimpleName());
+        final TestSuite suite = new TestSuite(AMD64JITTest_compileSwitches.class.getSimpleName());
         // $JUnit-BEGIN$
-        suite.addTestSuite(AMD64JITTest_compileTableSwitch.class);
+        suite.addTestSuite(AMD64JITTest_compileSwitches.class);
         // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }

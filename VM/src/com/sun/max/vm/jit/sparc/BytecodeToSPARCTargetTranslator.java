@@ -320,7 +320,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             _codeBuffer.emitCodeFrom(_asm);
             _codeBuffer.emit(_lookupSwitchTemplate);
 
-            _inlineDataRecorder.record(_codeBuffer.currentPosition(), sizeOfInlinedTable);
+            _inlineDataRecorder.add(new InlineDataDescriptor.ByteData(_codeBuffer.currentPosition(), sizeOfInlinedTable));
             _codeBuffer.reserve(sizeOfInlinedTable);
 
             final int[] matches = new int[numberOfCases];
@@ -442,9 +442,10 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             _codeBuffer.emitCodeFrom(_asm);
             _codeBuffer.emit(_tableSwitchTemplates[templateIndex]);
 
-            final int sizeOfInlinedTable = numberOfCases * WordWidth.BITS_32.numberOfBytes();
-            _inlineDataRecorder.record(_codeBuffer.currentPosition(), sizeOfInlinedTable);
-            _codeBuffer.reserve(sizeOfInlinedTable);
+            final InlineDataDescriptor.JumpTable32 jumpTable32 = new InlineDataDescriptor.JumpTable32(_codeBuffer.currentPosition(), lowMatch, highMatch);
+            _inlineDataRecorder.add(jumpTable32);
+            assert jumpTable32.size() == numberOfCases * WordWidth.BITS_32.numberOfBytes();
+            _codeBuffer.reserve(jumpTable32.size());
 
             // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will be written.
             final BytecodeScanner scanner = getBytecodeScanner();

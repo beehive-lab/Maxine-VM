@@ -21,6 +21,8 @@
 package test.com.sun.max.vm.compiler;
 
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
 
 /**
  * Translates almost all of the packages in the project to test the translator.
@@ -42,7 +44,8 @@ public abstract class CompilerTest_max<Method_Type extends IrMethod> extends Com
     }
 
     public void test_1() {
-        compileMethod(Class.class, "getName");
+        final TargetMethod targetMethod = (TargetMethod) compileMethod(JDK_java_lang_System.class, "arrayCopyForward");
+        this.traceBundleAndDisassemble(targetMethod);
     }
 
     public void test_basePackages() {

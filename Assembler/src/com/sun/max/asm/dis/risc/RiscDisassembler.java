@@ -27,14 +27,14 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
+import com.sun.max.asm.gen.risc.bitRange.*;
 import com.sun.max.asm.gen.risc.field.*;
 import com.sun.max.collect.*;
-import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -59,7 +59,7 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
     /**
      * Extract the value for each operand of a template from an encoded instruction whose opcode
      * matches that of the template.
-     * 
+     *
      * @param instruction  the encoded instruction
      * @return the decoded arguments for each operand or null if at least one operand has
      *         an invalid value in the encoded instruction
@@ -120,7 +120,9 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         }
         if (result.isEmpty()) {
             if (INLINE_INVALID_INSTRUCTIONS_AS_BYTES) {
-                final DisassembledInstruction_Type disassembledInstruction = createDisassembledInlineBytesInstruction(_currentPosition, instructionBytes);
+                stream.reset();
+                final InlineData inlineData = new InlineData(_currentPosition, instructionBytes);
+                final DisassembledInstruction_Type disassembledInstruction = createDisassembledInlineDataInstructions(inlineData).iterator().next();
                 result.append(disassembledInstruction);
             } else {
                 throw new AssemblyException("instruction could not be disassembled: " + Bytes.toHexLiteral(endianness().toBytes(instruction)));
@@ -134,15 +136,15 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
     public IndexedSequence<DisassembledInstruction_Type> scan(BufferedInputStream stream) throws IOException, AssemblyException {
         final AppendableIndexedSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>();
         try {
-            final SeekableByteArrayOutputStream decodedDataBuffer = new SeekableByteArrayOutputStream();
             while (true) {
                 if (inlineDataDecoder() != null) {
-                    int decodedDataSize;
-                    while ((decodedDataSize = inlineDataDecoder().decodeData(_currentPosition, stream, decodedDataBuffer)) != 0) {
-                        final DisassembledInstruction_Type inlineBytesInstruction = createDisassembledInlineBytesInstruction(_currentPosition, decodedDataBuffer.toByteArray());
-                        _currentPosition += decodedDataSize;
-                        result.append(inlineBytesInstruction);
-                        decodedDataBuffer.reset();
+                    InlineData inlineData;
+                    while ((inlineData = inlineDataDecoder().decode(_currentPosition, stream)) != null) {
+                        final IterableWithLength<DisassembledInstruction_Type> instructions = createDisassembledInlineDataInstructions(inlineData);
+                        for (DisassembledInstruction_Type instruction : instructions) {
+                            result.append(instruction);
+                        }
+                        _currentPosition += inlineData.size();
                     }
                 }
 
@@ -164,6 +166,71 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         } catch (IOException ioException) {
             return result;
         }
+    }
+
+    protected abstract Template_Type createInlineDataTemplate(InstructionDescription instructionDescription);
+
+    private final ImmediateOperandField[] _byteFields = {createByteField(0), createByteField(1), createByteField(2), createByteField(3)};
+
+    private ImmediateOperandField createByteField(int index) {
+        if (assembly().bitRangeEndianness() == BitRangeOrder.ASCENDING) {
+            final int firstBit = index * Bytes.WIDTH;
+            final int lastBit = firstBit + 7;
+            return ImmediateOperandField.createAscending(firstBit, lastBit);
+        }
+        final int lastBit = index * Bytes.WIDTH;
+        final int firstBit = lastBit + 7;
+        return ImmediateOperandField.createDescending(firstBit, lastBit);
+    }
+
+    @Override
+    protected IterableWithLength<DisassembledInstruction_Type> createDisassembledInlineDataInstructions(InlineData inlineData) {
+        final InlineDataDescriptor descriptor = inlineData.descriptor();
+        switch (descriptor.tag()) {
+            case BYTE_DATA: {
+                // Create the template:
+                int bytesRemaining = inlineData.size();
+
+                final AppendableSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>();
+                final ByteArrayInputStream dataStream = new ByteArrayInputStream(inlineData.data());
+                do {
+                    final int size = bytesRemaining > 4 ? 4 : bytesRemaining;
+                    final int fillerBytes = 4 - size;
+                    final Object[] specifications = new Object[1 + size + (fillerBytes == 0 ? 0 : 1)];
+                    final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>(size);
+                    specifications[0] = size == 1 ? ".BYTE" : ".BYTES";
+                    for (int i = 0; i < size; i++) {
+                        specifications[i + 1] = _byteFields[i];
+                        arguments.append(new Immediate8Argument((byte) dataStream.read()));
+                    }
+                    if (fillerBytes > 0) {
+                        if (assembly().bitRangeEndianness() == BitRangeOrder.ASCENDING) {
+                            specifications[specifications.length - 1] = ConstantField.createAscending(size * Bytes.WIDTH, 31).constant(0);
+                        } else {
+                            specifications[specifications.length - 1] = ConstantField.createDescending(31, size * Bytes.WIDTH).constant(0);
+                        }
+                    }
+
+                    final RiscInstructionDescription instructionDescription = new RiscInstructionDescription(new ArraySequence<Object>(specifications));
+                    final Template_Type template = createInlineDataTemplate(instructionDescription);
+                    RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(template, instructionDescription);
+
+                    // Now create the disassembled instruction:
+                    final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(descriptor.startPosition(), inlineData.data(), template, arguments);
+                    result.append(disassembledInstruction);
+
+                    bytesRemaining -= size;
+                } while (bytesRemaining > 0);
+                return result;
+            }
+            case JUMP_TABLE32: {
+                throw Problem.unimplemented();
+            }
+            case LOOKUP_TABLE32: {
+                throw Problem.unimplemented();
+            }
+        }
+        throw ProgramError.unknownCase(descriptor.tag().toString());
     }
 
 }

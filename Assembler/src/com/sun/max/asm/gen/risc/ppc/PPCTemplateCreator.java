@@ -24,7 +24,7 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -37,12 +37,5 @@ public class PPCTemplateCreator extends RiscTemplateCreator<PPCTemplate> {
     @Override
     protected PPCTemplate createTemplate(InstructionDescription instructionDescription) {
         return new PPCTemplate(instructionDescription);
-    }
-
-    @Override
-    protected PPCTemplate createInlineByteTemplate() {
-        final PPCTemplate template = new PPCTemplate(new RawInstructions(this).createInlineBytesInstructionDescription());
-        RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(template, template.instructionDescription());
-        return template;
     }
 }

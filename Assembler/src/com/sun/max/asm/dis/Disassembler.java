@@ -37,6 +37,7 @@ import com.sun.max.program.*;
  *
  * @author Bernd Mathiske
  * @author Greg Wright
+ * @author Doug Simon
  */
 public abstract class Disassembler<Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> {
 
@@ -78,11 +79,30 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
         return _inlineDataDecoder;
     }
 
+    /**
+     * Gets the type of the disassembled instructions returned by this disassembler.
+     */
     public abstract Class<DisassembledInstruction_Type> disassembledInstructionType();
 
+    /**
+     * Creates a disassembled instruction based on a given sequence of bytes, a template and a set of arguments. The
+     * caller has performed the necessary decoding of the bytes to derive the template and arguments.
+     *
+     * @param position the position an instruction stream from which the bytes were read
+     * @param bytes the bytes of an instruction
+     * @param template the template that corresponds to the instruction encoded in {@code bytes}
+     * @param arguments the arguments of the instruction encoded in {@code bytes}
+     * @return a disassembled instruction representing the result of decoding {@code bytes} into an instruction
+     */
     protected abstract DisassembledInstruction_Type createDisassembledInstruction(int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments);
 
-    protected abstract  DisassembledInstruction_Type createDisassembledInlineBytesInstruction(int currentPosition, byte[] bytes);
+    /**
+     * Creates one or more disassembled instructions representing some given inline data.
+     *
+     * @param inlineData some inline data decoded by this disassembler's {@linkplain #inlineDataDecoder() inline data decoder}
+     * @return a sequence of disassembled instructions representing {@code inlineData}
+     */
+    protected abstract  IterableWithLength<DisassembledInstruction_Type> createDisassembledInlineDataInstructions(InlineData inlineData);
 
     protected abstract Assembler createAssembler(int position);
 
@@ -102,6 +122,23 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
      * for each instruction in an instruction stream.
      */
     public abstract IndexedSequence<DisassembledInstruction_Type> scan(BufferedInputStream stream) throws IOException, AssemblyException;
+
+    protected final void scanInlineData(BufferedInputStream stream, AppendableIndexedSequence<DisassembledInstruction_Type> instructions) throws IOException {
+        if (inlineDataDecoder() != null) {
+            InlineData inlineData;
+            while ((inlineData = inlineDataDecoder().decode(_currentPosition, stream)) != null) {
+                _currentPosition += processInlineData(instructions, inlineData);
+            }
+        }
+    }
+
+    protected int processInlineData(AppendableIndexedSequence<DisassembledInstruction_Type> instructions, InlineData inlineData) {
+        final IterableWithLength<DisassembledInstruction_Type> inlineDataInstructions = createDisassembledInlineDataInstructions(inlineData);
+        for (DisassembledInstruction_Type instruction : inlineDataInstructions) {
+            instructions.append(instruction);
+        }
+        return inlineData.size();
+    }
 
     private int findTargetInstructionIndex(int position, IndexedSequence<DisassembledInstruction_Type> disassembledInstructions) {
         if (position >= 0 && position <= disassembledInstructions.last().startPosition()) {
@@ -140,7 +177,7 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
 
     /**
      * Assigns serial numbers to these labels.
-     * 
+     *
      * @return the length (i.e. number of characters) of the longest {@linkplain DisassembledLabel#name() label name}
      */
     public int updateLabels(Sequence<DisassembledLabel> labels, IndexedSequence<DisassembledInstruction_Type> disassembledInstructions) {
@@ -250,11 +287,9 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
      * {@code offset} to either the {@linkplain DisassembledInstruction#startPosition() start} or
      * {@linkplain DisassembledInstruction#endPosition() end} position of the given instruction depending on the
      * {@linkplain InstructionSet#relativeAddressing() relative addressing mode} of the current ISA.
-     * 
-     * @param disassembledInstruction
-     *                a disassembled instruction
-     * @param offset
-     *                an offset denoting a target code position relative to {@code disassembledInstruction}
+     *
+     * @param disassembledInstruction a disassembled instruction
+     * @param offset an offset denoting a target code position relative to {@code disassembledInstruction}
      * @return the target code position given by adding {@code offset} to {@code disassembledInstruction} position
      */
     public long getPositionFromInstructionRelativeOffset(DisassembledInstruction_Type disassembledInstruction, long offset) {

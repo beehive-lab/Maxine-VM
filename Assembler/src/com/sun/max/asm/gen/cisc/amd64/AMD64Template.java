@@ -35,7 +35,7 @@ import com.sun.max.program.*;
  */
 public class AMD64Template extends X86Template {
 
-    AMD64Template(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context) {
+    public AMD64Template(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context) {
         super(instructionDescription, serial, instructionFamily, context);
     }
 

@@ -18,27 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.dis;
+package test.com.sun.max.vm.jit.sparc;
 
-import java.io.*;
+import junit.framework.*;
+import test.com.sun.max.vm.jit.*;
+
 
 /**
- * An {@code InlineDataDecoder} knows which positions in an instruction stream being disassembled contains inline data.
- *
- * @author Doug Simon
+ * Runs unit test JITTest_compileTableSwitch for SPARC.
+ * @see JITTest_compileSwitches
+ * @author Laurent Daynes
  */
-public interface InlineDataDecoder {
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public class SPARCJITTest_compileSwitches extends JITTest_compileSwitches {
 
-    /**
-     * Decodes the data (if any) from the current read position of a given stream.
-     * 
-     * @param currentPosition
-     *                the stream's current read position with respect to the start of the stream
-     * @param stream
-     *                the instruction stream being disassembled
-     * @param decodedDataBuffer
-     *                if non-null, then the decoded bytes will also be written to this buffer
-     * @return the number of bytes of data decoded from the stream
-     */
-    int decodeData(int currentPosition, BufferedInputStream stream, OutputStream decodedDataBuffer) throws IOException;
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(SPARCJITTest_compileSwitches.suite());
+    }
+
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(SPARCJITTest_compileSwitches.class.getSimpleName());
+        // $JUnit-BEGIN$
+        suite.addTestSuite(SPARCJITTest_compileSwitches.class);
+        // $JUnit-END$
+        return new SPARCJITTestSetup(suite);
+    }
 }

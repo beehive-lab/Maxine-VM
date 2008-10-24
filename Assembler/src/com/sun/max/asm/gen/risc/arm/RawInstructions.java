@@ -30,12 +30,11 @@ import java.lang.reflect.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.arm.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
 /**
  * Definitions of ARM instructions.
- * 
+ *
  * @author Sumeet Panchal
  */
 
@@ -57,13 +56,7 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
         generateCoprocessor();
     }
 
-    public RiscInstructionDescription createInlineBytesInstructionDescription() {
-        return createInstructionDescription(new ArraySequence<Object>(new Object[]{".byte", _byte3, ", ", _byte2, ", ", _byte1, ", ", _byte0}));
-    }
-
     private void generateCoprocessor() {
-        // TODO Auto-generated method stub
-
     }
 
     private void generateExceptionGenerating() {
@@ -161,7 +154,7 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
 
     /**
      * Generates instruction descriptions for all 11 addressing modes of data processing instructions.
-     * 
+     *
      * @param mnemonic
      *            assembly instruction mnemonic
      * @param s
@@ -299,7 +292,7 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
 
     /**
      * Encodes the given 32 bit immediate value as an 8 bit immediate value and a 4 bit rotate value.
-     * 
+     *
      * @param term
      *            the 32 bit immediate value
      */

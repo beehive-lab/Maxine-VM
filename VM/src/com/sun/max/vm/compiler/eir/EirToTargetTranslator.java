@@ -291,7 +291,7 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
                         scalarLiteralBytes,
                         referenceLiteralObjects,
                         code,
-                        emitter.inlineDataPositions(),
+                        emitter.inlineDataRecorder().encodedDescriptors(),
                         eirMethod.frameSize(),
                         frameReferenceMapSize,
                         eirMethod.abi().targetABI(),

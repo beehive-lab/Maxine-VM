@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.complete.*;
 import com.sun.max.asm.dis.x86.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.amd64.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.collect.*;
@@ -44,7 +43,6 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
     public AMD64Disassembler(long startAddress) {
         super(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
         _startAddress = startAddress;
-        _instructionScanners.add(new AMD64SwitchDisassembler(this));
     }
 
     @Override
@@ -63,6 +61,11 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
     }
 
     @Override
+    protected AMD64Template createInlineDataTemplate(Object[] specification) {
+        return new AMD64Template(new X86InstructionDescription(new ArraySequence<Object>(specification)), 0, null, null);
+    }
+
+    @Override
     protected Assembler createAssembler(int position) {
         return new AMD64Assembler(_startAddress + position);
     }
@@ -72,14 +75,5 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
     @Override
     protected Map<X86InstructionHeader, AppendableSequence<AMD64Template>> headerToTemplates() {
         return _headerToTemplates;
-    }
-
-    @Override
-    protected AMD64DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new AMD64DisassembledInstruction(_startAddress, position, bytes, AMD64Assembly.ASSEMBLY.inlineByteTemplate(), arguments);
     }
 }

@@ -68,21 +68,21 @@ public final class TeleDisassembler {
         thread.start();
     }
 
-    public static IndexedSequence<TargetCodeInstruction> create(TeleVM teleVM, Address codeStart, byte[] code, int[] inlineDataPositions) {
+    public static IndexedSequence<TargetCodeInstruction> create(TeleVM teleVM, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
         final Class<? extends Template> type = null;
-        return pacifyJavacCreate(teleVM, codeStart, code, inlineDataPositions, type);
+        return pacifyJavacCreate(teleVM, codeStart, code, encodedInlineDataDescriptors, type);
     }
 
     @JavacSyntax("javac type checker is broken: needs value parameter that binds Template_Type, otherwise infers nonsense and misses matching types")
     private static <Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> IndexedSequence<TargetCodeInstruction> pacifyJavacCreate(
-              TeleVM teleVM, Address codeStart, byte[] code, int[] inlineDataPositions, Class<Template_Type> pacifyBrokenJavac) {
+              TeleVM teleVM, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors, Class<Template_Type> pacifyBrokenJavac) {
         final Class<Disassembler<Template_Type, DisassembledInstruction_Type>> type = null;
         final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = StaticLoophole.cast(type, createDisassembler(teleVM, codeStart));
 
         final Class<LoadLiteralParser<Template_Type, DisassembledInstruction_Type>> type2 = null;
         final LoadLiteralParser<Template_Type, DisassembledInstruction_Type> literalParser = StaticLoophole.cast(type2, createLiteralParser(teleVM, disassembler, codeStart, code));
 
-        return create(codeStart, code, inlineDataPositions, disassembler.assembly().templateType(), disassembler.disassembledInstructionType(), disassembler, literalParser);
+        return create(codeStart, code, encodedInlineDataDescriptors, disassembler.assembly().templateType(), disassembler.disassembledInstructionType(), disassembler, literalParser);
     }
 
     private static Disassembler createDisassembler(final TeleVM teleVM, Address startAddress) {
@@ -315,7 +315,7 @@ public final class TeleDisassembler {
     private static <Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> IndexedSequence<TargetCodeInstruction> create(
                     Address codeStart,
                     byte[] code,
-                    int[] inlineDataPositions,
+                    byte[] encodedInlineDataDescriptors,
                     Class<Template_Type> templateType,
                     Class<DisassembledInstruction_Type> disassembledInstructionType,
                     Disassembler rawDisassembler,
@@ -323,20 +323,26 @@ public final class TeleDisassembler {
 
         final Class<Disassembler<Template_Type, DisassembledInstruction_Type>> type = null;
         final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = StaticLoophole.cast(type, rawDisassembler);
-        final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
-        final AppendableIndexedSequence<DisassembledInstruction_Type> disassembledInstructions = new ArrayListSequence<DisassembledInstruction_Type>();
+        IndexedSequence<DisassembledInstruction_Type> disassembledInstructions;
 
-
-        if (inlineDataPositions != null) {
-            disassembler.setInlineDataDecoder(new InlineDataManager(inlineDataPositions));
+        if (encodedInlineDataDescriptors != null) {
+            disassembler.setInlineDataDecoder(new InlineDataDecoder(encodedInlineDataDescriptors));
         }
 
         try {
-            while (bufferedInputStream.available() > 0) {
-                disassembledInstructions.append(disassembler.scanOneInstruction(bufferedInputStream).first());
-            }
+            disassembledInstructions = disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code)));
         } catch (Throwable throwable) {
-            System.err.println("could not disassemble any further: " + throwable);
+            ProgramWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead [error: " + throwable + "]");
+            final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
+            final AppendableIndexedSequence<DisassembledInstruction_Type> instructions = new ArrayListSequence<DisassembledInstruction_Type>();
+            try {
+            	while (bufferedInputStream.available() > 0) {
+            		instructions.append(disassembler.scanOneInstruction(bufferedInputStream).first());
+            	}
+            } catch (Throwable t) {
+                ProgramWarning.message("Only partially disassembled given code stream [error: " + t + "]");
+            }
+            disassembledInstructions = instructions;
         }
 
         final IndexedSequence<DisassembledLabel> labelMap = disassembler.createLabelMap(disassembledInstructions);

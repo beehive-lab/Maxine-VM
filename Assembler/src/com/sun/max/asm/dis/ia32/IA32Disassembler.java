@@ -24,8 +24,8 @@ import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.x86.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.ia32.*;
+import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -62,12 +62,8 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
     }
 
     @Override
-    protected IA32DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new IA32DisassembledInstruction(_startAddress, position, bytes, IA32Assembly.ASSEMBLY.inlineByteTemplate(), arguments);
+    protected IA32Template createInlineDataTemplate(Object[] specification) {
+        return new IA32Template(new X86InstructionDescription(new ArraySequence<Object>(specification)), 0, null, null);
     }
 
     @Override

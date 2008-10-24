@@ -29,7 +29,7 @@ import com.sun.max.collect.*;
 
 /**
  * A field that contains an immediate value.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Dave Ungar
@@ -59,6 +59,11 @@ public class ImmediateOperandField extends OperandField<ImmediateArgument> imple
         super(bitRange);
     }
 
+    public static ImmediateOperandField create(BitRangeOrder order, int... bits) {
+        final BitRange bitRange = BitRange.create(bits, order);
+        return new ImmediateOperandField(bitRange);
+    }
+
     public static ImmediateOperandField createDescending(int firstBitIndex, int lastBitIndex) {
         return new ImmediateOperandField(new DescendingBitRange(firstBitIndex, lastBitIndex));
     }
@@ -68,8 +73,7 @@ public class ImmediateOperandField extends OperandField<ImmediateArgument> imple
     }
 
     public static ImmediateOperandField createAscending(int... bits) {
-        final BitRange bitRange = BitRange.create(bits, BitRangeOrder.ASCENDING);
-        return new ImmediateOperandField(bitRange);
+        return create(BitRangeOrder.ASCENDING, bits);
     }
 
     @Override

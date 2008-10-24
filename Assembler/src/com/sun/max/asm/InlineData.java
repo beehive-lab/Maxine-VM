@@ -18,18 +18,45 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.dis.x86;
+package com.sun.max.asm;
 
-import java.io.*;
-
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.cisc.x86.*;
+import com.sun.max.asm.InlineDataDescriptor.*;
 
 /**
- * @author David Liu
+ * A binding of an {@linkplain InlineDataDescriptor inline data descriptor} to some bytes decoded
+ * from the instruction stream with which the descriptor is associated.
+ *
+ * @author Doug Simon
  */
-public interface X86DisassembledInstructionScanner<Template_Type extends X86Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> {
-    void disassemblyStarted();
-    DisassembledInstruction_Type overrideDisassembly(int currentPosition, BufferedInputStream stream) throws IOException;
-    void instructionDisassembled(DisassembledInstruction_Type disassembledInstruction);
+public class InlineData {
+
+    private final InlineDataDescriptor _descriptor;
+    private final byte[] _data;
+
+    /**
+     * Creates an object to represent some otherwise unstructured.
+     * @param position
+     * @param data
+     */
+    public InlineData(int position, byte[] data) {
+        this(new ByteData(position, data.length), data);
+    }
+
+    public InlineData(InlineDataDescriptor descriptor, byte[] data) {
+        assert descriptor.size() == data.length;
+        _descriptor = descriptor;
+        _data = data;
+    }
+
+    public InlineDataDescriptor descriptor() {
+        return _descriptor;
+    }
+
+    public byte[] data() {
+        return _data;
+    }
+
+    public int size() {
+        return _data.length;
+    }
 }

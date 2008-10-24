@@ -161,7 +161,6 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
                         codeGenerator.codeBuffer(),
                         optimizedCallerAdapterFrameCodeSize,
                         codeGenerator.adapterReturnPosition(),
-                        null, // inlineDataPositions, TODO
                         codeGenerator.targetABI());
 
         if (MaxineVM.isPrototyping()) {
