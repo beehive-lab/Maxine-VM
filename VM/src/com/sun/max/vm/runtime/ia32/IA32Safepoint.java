@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.runtime.ia32;
 
-import static com.sun.max.asm.ia32.IA32GeneralRegister32.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.ia32.*;
@@ -31,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * @author Bernd Mathiske
@@ -71,24 +68,6 @@ public final class IA32Safepoint extends Safepoint {
             return asm.toByteArray();
         } catch (AssemblyException assemblyException) {
             throw ProgramError.unexpected("could not assemble safepoint code");
-        }
-    }
-
-    @Override
-    public SafepointStub createSafepointStub(CriticalMethod entryPoint, Venue venue) {
-        final IA32Assembler asm = new IA32Assembler(0);
-        try {
-            asm.mov(EAX, entryPoint.address().toInt());
-            asm.call(EAX.indirect());
-            if (venue == Venue.JAVA) {
-                for (IA32GeneralRegister32 register : IA32GeneralRegister32.ENUMERATOR) {
-                    asm.mov(register, VmThreadLocal.REGISTERS.index() + register.value(), latchRegister().indirect());
-                }
-            }
-            asm.jmp(VmThreadLocal.LAST_JAVA_CALLER_INSTRUCTION_POINTER.index() * Word.size(), latchRegister().indirect());
-            return new SafepointStub(asm.toByteArray(), entryPoint.classMethodActor());
-        } catch (AssemblyException assemblyException) {
-            throw ProgramError.unexpected("could not assemble safepoint stub");
         }
     }
 

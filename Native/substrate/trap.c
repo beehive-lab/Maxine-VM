@@ -87,8 +87,7 @@
     	    setHandler(SIGFPE, globalSignalHandler);
     		break;
     	case ASYNC_INTERRUPT:
-    		sigignore(SIGUSR1);
-    	    /* setHandler(SIGUSR1, globalSignalHandler);*/
+    	    setHandler(SIGUSR1, globalSignalHandler);
     		break;
     	}
     	_javaTrapStub = handler;
@@ -263,16 +262,13 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
     if (isInGuardZone(stackPointer, nativeThreadLocals->stackYellowZone)) { 
     	/* if the stack pointer is in the yellow zone, assume this is a stack fault */
-        debug_println("SIGSEGV: (stack fault in yellow zone)");
-    	unprotectPage(nativeThreadLocals->stackYellowZone);
+        unprotectPage(nativeThreadLocals->stackYellowZone);
     	trapNum = STACK_FAULT;
     } else if (isInGuardZone(stackPointer, nativeThreadLocals->stackRedZone)) { 
     	/* if the stack pointer is in the red zone, (we shouldn't be alive) */
-        debug_println("SIGSEGV: (stack fault in red zone)");
         debug_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
     } else if (stackPointer == 0) {
     	/* if the stack pointer is zero, (we shouldn't be alive) */
-        debug_println("SIGSEGV: (stack pointer is zero)");
         debug_exit(-19, "SIGSEGV: (stack pointer is zero)");
     }
 
@@ -286,7 +282,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 #if DEBUG_TRAP
     char *sigName = signalName(signal);
     if (sigName != NULL) {
-        debug_println("thread %d: %s @ %p, sp = %p, fault = %p", nativeThreadLocals->id, sigName, trapInfo[1], stackPointer, trapInfo[2]);
+        debug_println("thread %d: %s (trapInfo @ %p)", nativeThreadLocals->id, sigName, trapInfo);
+        debug_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
+        debug_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
+        debug_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
+        debug_println("trapInfo[3] (stack top value)     = %p", trapInfo[3]);
     }
 #endif
 

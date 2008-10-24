@@ -75,11 +75,18 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         final AMD64GeneralRegister64 latchRegister = AMD64Safepoint._LATCH_REGISTER;
         final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
         // expand the frame size for this method to allow for the saved register state
-        final int frameSize = originalFrameSize + AMD64Safepoint.REGISTER_SAVE_SIZE;
-        final int endOfFrame = frameSize + Word.size();
+        final int frameSize = originalFrameSize + AMD64Safepoint.REGISTER_SAVE_SIZE_WITHOUT_RIP;
+        final int endOfFrame = originalFrameSize + AMD64Safepoint.REGISTER_SAVE_SIZE_WITH_RIP;
         eirMethod.setFrameSize(frameSize);
-        // now allocate the frame for this method (plus one word for the return address)
-        asm.subq(framePointer, endOfFrame);
+
+        // the very first instruction must save the flags.
+        // we save them twice and overwrite one copy with the trap instruction address.
+        asm.pushfq();
+        asm.pushfq();
+
+        // now allocate the frame for this method
+        asm.subq(framePointer, endOfFrame - (2 * Word.size()));
+
         // save all the general purpose registers
         int offset = originalFrameSize;
         for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
@@ -92,14 +99,17 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
             asm.movdq(offset, framePointer.indirect(), register);
             offset += 2 * Word.size();
         }
+
         // load the safepoint latch (which the C code overwrote the top of stack with)
         asm.mov(latchRegister, endOfFrame, framePointer.indirect());
+
         // restore the top of stack
         asm.mov(scratchRegister, VmThreadLocal.TRAP_TOP_OF_STACK.offset(), latchRegister.indirect());
         asm.mov(endOfFrame, framePointer.indirect(), scratchRegister);
+
         // write the return address pointer at the end of the frame
         asm.mov(scratchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), latchRegister.indirect());
-        asm.mov(endOfFrame - Word.size(), framePointer.indirect(), scratchRegister);
+        asm.mov(frameSize, framePointer.indirect(), scratchRegister);
 
         // now load the trap parameter information into registers from the vm thread locals
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();

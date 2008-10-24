@@ -42,14 +42,14 @@ import com.sun.max.vm.runtime.*;
  */
 public class StopTheWorldDaemon extends BlockingServerDaemon {
 
-    private static Runnable _suspendProcedure = new Runnable() {
+    private static Safepoint.Procedure _suspendProcedure = new Safepoint.Procedure() {
         @Override
-        public void run() {
+        public void run(Pointer registerState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
 
             if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.JAVA) {
-                VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
+                VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, registerState);
             } else {
                 // GC may already be ongoing
             }
@@ -90,7 +90,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                 // Thread is still starting up.
                 // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
             } else {
-                VmThread.current(vmThreadLocals).runProcedure(_suspendProcedure);
+                Safepoint.runProcedure(VmThread.current(vmThreadLocals), _suspendProcedure);
             }
         }
     };
@@ -98,8 +98,8 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
     private final Pointer.Procedure _resetSafepoint = new Pointer.Procedure() {
 
         public void run(Pointer vmThreadLocals) {
+            Safepoint.cancelProcedure(VmThread.current(vmThreadLocals), _suspendProcedure);
             Safepoint.reset(vmThreadLocals);
-
         }
     };
 

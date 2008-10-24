@@ -103,9 +103,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         return decodeLockwordThreadID(biasedLockWord.getBiasOwnerID());
     }
 
-    private static Runnable _safePointProcedure = new Runnable() {
+    private static Safepoint.Procedure _safePointProcedure = new Safepoint.Procedure() {
         @Override
-        public void run() {
+        public void run(Pointer registerState) {
             // Suspended bias-owner threads wait here while a revoker thread performs the revocation.
             synchronized (VmThreadMap.ACTIVE) {
             }
@@ -143,7 +143,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 ProgramError.unexpected("Attempted to revoke bias for still initializing thread.");
             }
             // Trigger safepoint for bias owner
-            biasOwnerThread.runProcedure(_safePointProcedure);
+            Safepoint.runProcedure(biasOwnerThread, _safePointProcedure);
             // Wait until bias owner is not mutating
             while (biasOwnerThread.isInNative()) {
                 try {
@@ -598,7 +598,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     // Thread is still starting up.
                     // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
                 } else {
-                    VmThread.current(vmThreadLocals).runProcedure(_safePointProcedure);
+                    Safepoint.runProcedure(VmThread.current(vmThreadLocals), _safePointProcedure);
                 }
             }
         };

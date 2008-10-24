@@ -27,6 +27,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -268,36 +269,29 @@ public final class StackReferenceMapPreparer {
     }
 
     /**
-     * Prepares the reference map with respect to the registers.
+     * Prepares a reference map for the entire stack of a VM thread including all of the VM thread locals (which include
+     * saved register values iff at a Java safepoint) while the GC has not changed anything yet.
      *
-     * @param instructionPointer the instruction address at which the thread is suspended
-     * @param whichVmThreadLocals specifies which thread local storage area is holding the register values for which the
-     *            reference map is to be prepared
-     * @param vmThreadLocals a pointer to one of the thread locals from which the value of {@code whichVmThreadLocals}
-     *            should be retrieved
+     * Later on, the GC can quickly scan the prepared stack reference map without allocation and without using any
+     * object references (other than the ones subject to root scanning).
+     *
+     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      */
-    private void prepareRegisterReferenceMap(Pointer instructionPointer, VmThreadLocal whichVmThreadLocals, Pointer vmThreadLocals) {
-        FatalError.check(whichVmThreadLocals != SAFEPOINTS_TRIGGERED_THREAD_LOCALS, "Registers should not be saved in safepoints-triggered VM thread locals");
-        final int vmThreadLocalsSlotIndex = referenceMapBitIndex(whichVmThreadLocals.getConstantWord(vmThreadLocals).asPointer());
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        if (targetMethod != null) {
-            tracePrepareReferenceMap(targetMethod, -1);
-            final int safepointIndex = targetMethod.findSafepointIndex(instructionPointer);
-            assert safepointIndex >= 0;
-
-            // The register reference maps come after all the frame reference maps in _referenceMaps.
-            int byteIndex = targetMethod.frameReferenceMapsSize() + (targetMethod.registerReferenceMapSize() * safepointIndex);
-
-            final int registersSlotIndex = vmThreadLocalsSlotIndex + REGISTERS.ordinal();
-            for (int i = 0; i < targetMethod.registerReferenceMapSize(); i++) {
-                final byte referenceMapByte = targetMethod.referenceMaps()[byteIndex];
-                traceReferenceMapByteBefore(byteIndex, referenceMapByte, "Register");
-                final int baseSlotIndex = registersSlotIndex + i;
-                _referenceMap.setBits(baseSlotIndex, referenceMapByte);
-                traceReferenceMapByteAfter(Pointer.zero(), baseSlotIndex, referenceMapByte);
-                byteIndex++;
-            }
+    public void prepareStackReferenceMap(Pointer vmThreadLocals) {
+        final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        if (instructionPointer.isZero()) {
+            FatalError.unexpected("Thread is not stopped");
+/*            instructionPointer = TRAP_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
+            final Pointer stackPointer = TRAP_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
+            final Pointer framePointer = TRAP_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
+            prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+*/
         }
+
+        // the GC is calling this on behalf of a thread in native code
+        final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
+        prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
     }
 
     /**
@@ -309,42 +303,40 @@ public final class StackReferenceMapPreparer {
      *
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      */
-    public void prepareStackReferenceMap(Pointer vmThreadLocals) {
-        Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
-        if (instructionPointer.isZero()) {
-            // we are at a safepoint in Java code
-            instructionPointer = TRAP_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            final Pointer stackPointer = TRAP_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            final Pointer framePointer = TRAP_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
-            prepareRegisterReferenceMap(instructionPointer, SAFEPOINTS_ENABLED_THREAD_LOCALS, vmThreadLocals);
-        } else {
-            // the GC is calling this on behalf of a thread in native code
-            final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
-        }
-        final Deoptimizer.ReferenceOccurrences occurrences = (Deoptimizer.ReferenceOccurrences)
-            DEOPTIMIZER_REFERENCE_OCCURRENCES.getVariableReference(vmThreadLocals).toJava();
-        if (occurrences != null) {
-            switch (occurrences) {
-                case ERROR: {
-                    ProgramError.unexpected();
-                    break;
-                }
-                case NONE: {
-                    break;
-                }
-                case RETURN: {
-                    final int disabledVmThreadLocalsSlotIndex = referenceMapBitIndex(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer());
-                    _referenceMap.setBit(disabledVmThreadLocalsSlotIndex + REGISTERS.ordinal() + Deoptimizer.referenceReturnRegisterIndex());
-                    break;
-                }
-                case SAFEPOINT: {
-                    final Pointer deoptimizationInstructionPointer = DEOPTIMIZER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
-                    prepareRegisterReferenceMap(deoptimizationInstructionPointer, SAFEPOINTS_DISABLED_THREAD_LOCALS, vmThreadLocals);
-                    break;
-                }
+    public void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer registerState) {
+        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+        final Pointer instructionPointer = safepoint.getInstructionPointer(registerState);
+        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
+        final Pointer stackPointer = safepoint.getStackPointer(registerState, targetMethod);
+        final Pointer framePointer = safepoint.getFramePointer(registerState, targetMethod);
+        prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+    }
+
+    /**
+     * Prepares the reference map for a portion of memory that contains saved register state corresponding
+     * to a safepoint triggered at a particular instruction. This method fetches the reference map information
+     * for the specified method and then copies it over the reference map for this portion of memory.
+     * @param registerState a pointer to the register state
+     * @param instructionPointer the instruction pointer at the safepoint trap
+     */
+    public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer) {
+        final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
+        if (targetMethod != null) {
+            tracePrepareReferenceMap(targetMethod, -1);
+            final int safepointIndex = targetMethod.findSafepointIndex(instructionPointer);
+            assert safepointIndex >= 0;
+
+            // The register reference maps come after all the frame reference maps in _referenceMaps.
+            int byteIndex = targetMethod.frameReferenceMapsSize() + (targetMethod.registerReferenceMapSize() * safepointIndex);
+
+            final int registersSlotIndex = referenceMapBitIndex(registerState);
+            for (int i = 0; i < targetMethod.registerReferenceMapSize(); i++) {
+                final byte referenceMapByte = targetMethod.referenceMaps()[byteIndex];
+                traceReferenceMapByteBefore(byteIndex, referenceMapByte, "Register");
+                final int baseSlotIndex = registersSlotIndex + (i * Bytes.WIDTH);
+                _referenceMap.setBits(baseSlotIndex, referenceMapByte);
+                traceReferenceMapByteAfter(Pointer.zero(), baseSlotIndex, referenceMapByte);
+                byteIndex++;
             }
         }
     }

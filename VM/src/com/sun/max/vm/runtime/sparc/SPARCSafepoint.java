@@ -34,7 +34,6 @@ import com.sun.max.util.Predicate;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * @author Bernd Mathiske
@@ -112,8 +111,8 @@ public final class SPARCSafepoint extends Safepoint {
         }
     });
 
-    private SafepointStub create64BitPostSignalStub(CriticalMethod entryPoint, Venue venue) throws AssemblyException {
-        final SPARC64Assembler asm = new SPARC64Assembler(0);
+    private RuntimeStub create64BitPostSignalStub(CriticalMethod entryPoint, Venue venue) throws AssemblyException {
+/*        final SPARC64Assembler asm = new SPARC64Assembler(0);
         final long address = entryPoint.address().toLong();
         if (Longs.numberOfEffectiveSignedBits(address) > WordWidth.BITS_32.numberOfBits()) {
             asm.setx(address, L1, L0);
@@ -136,10 +135,13 @@ public final class SPARCSafepoint extends Safepoint {
         asm.jmp(latchRegister(), VmThreadLocal.TRAP_INSTRUCTION_POINTER.index() * Word.size());
         asm.nop();
         return new SafepointStub(asm.toByteArray(), entryPoint.classMethodActor());
+*/
+        // TODO: post signal stubs are no longer necessary. Instead, generate a special prologue in EIR.
+        throw Problem.unimplemented();
     }
 
-    private SafepointStub create32BitPostSignalStub(CriticalMethod entryPoint, Venue venue) throws AssemblyException {
-        final SPARC32Assembler asm = new SPARC32Assembler(0);
+    private RuntimeStub create32BitPostSignalStub(CriticalMethod entryPoint, Venue venue) throws AssemblyException {
+/*        final SPARC32Assembler asm = new SPARC32Assembler(0);
         final int address = entryPoint.address().toInt();
         asm.sethi(asm.hi(address), L0);
         asm.jmpl(L0, asm.lo(address), O7);
@@ -157,18 +159,9 @@ public final class SPARCSafepoint extends Safepoint {
         asm.jmp(latchRegister(), VmThreadLocal.TRAP_INSTRUCTION_POINTER.index() * Word.size());
         asm.nop();
         return new SafepointStub(asm.toByteArray(), entryPoint.classMethodActor());
-    }
-
-    @Override
-    public SafepointStub createSafepointStub(CriticalMethod entryPoint, Venue venue) {
-        try {
-            if (_is32Bit) {
-                return create32BitPostSignalStub(entryPoint, venue);
-            }
-            return create64BitPostSignalStub(entryPoint, venue);
-        } catch (AssemblyException assemblyException) {
-            throw ProgramError.unexpected("could not assemble safepoint stub");
-        }
+*/
+        // TODO: post signal stubs are no longer necessary. Instead, generate a special prologue in EIR.
+        throw Problem.unimplemented();
     }
 
     @Override
