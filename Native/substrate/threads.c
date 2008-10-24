@@ -375,8 +375,7 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
 
     if (value == -1) {
         int error = errno;
-        if (error != EINTR) {
-            //TODO: handle this. Either throw and exception or retry.
+        if (error != EINTR && error != 0) {
             debug_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec);
         }
     }

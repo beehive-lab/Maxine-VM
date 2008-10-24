@@ -258,6 +258,9 @@ public final class HackJDK {
         f("java.lang.ref.Reference", "pending"),
         f("java.lang.ref.Reference", "lock"),
 
+        f(Thread.class, "threadLocals"),
+        f(Thread.class, "inheritableThreadLocals"),
+
         f(VM.class, "booted"),
         f(VM.class, "finalRefCount"),
         f(VM.class, "peakFinalRefCount")

@@ -769,15 +769,10 @@ public class ClassfileReader {
                                 ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
                                 flags |= C_FUNCTION;
                                 for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
-                                    if (nameElementPair.name().equals("isSignalHandlerStub")) {
+                                    if (nameElementPair.name().equals("isTrapStub")) {
                                         final AnnotationInfo.ValueElement valueElement = (AnnotationInfo.ValueElement) nameElementPair.element();
                                         if (valueElement.value().toBoolean()) {
-                                            flags |= SIGNAL_STUB;
-                                        }
-                                    } else if (nameElementPair.name().equals("isSignalHandler")) {
-                                        final AnnotationInfo.ValueElement valueElement = (AnnotationInfo.ValueElement) nameElementPair.element();
-                                        if (valueElement.value().toBoolean()) {
-                                            flags |= SIGNAL_HANDLER;
+                                            flags |= TRAP_STUB;
                                         }
                                     }
                                 }

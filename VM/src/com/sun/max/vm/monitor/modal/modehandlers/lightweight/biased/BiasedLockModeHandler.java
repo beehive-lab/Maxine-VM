@@ -25,7 +25,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
@@ -64,11 +63,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
     // owner, or do we assume that it is by implication of block-structured locking?
     private static final boolean ASSUME_PERFECT_ENTRY_AND_EXIT_PAIRS = false;
 
-    @CONSTANT_WHEN_NOT_ZERO
-    protected Pointer _safepointNativeStubEntryPoint;
-    @CONSTANT_WHEN_NOT_ZERO
-    protected Pointer _safepointJavaStubEntryPoint;
-
     public static MonitorSchemeEntry asFastPath(boolean useBulkRevocation, ModeDelegate delegate) {
         if (useBulkRevocation) {
             return new BiasedLockModeHandler.FastPathWithEpoch(delegate);
@@ -80,33 +74,25 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         super(delegate);
     }
 
-    private CriticalMethod _safepointGate = new CriticalMethod(BiasedLockModeHandler.class, "safepointGate", CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-
-    @C_FUNCTION(isSignalHandlerStub = true)
+    @C_FUNCTION
     private static void safepointInNativeStub() {
         FatalError.unexpected("code for safepointInNativeStub() is assembled");
     }
 
-    @C_FUNCTION(isSignalHandlerStub = true)
+    @C_FUNCTION
     private static void safepointInJavaStub() {
         FatalError.unexpected("code for safepointInNativeStub() is assembled");
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.STARTING) {
-            // STARTING is the earliest phase we can fully initialize bias locking as we need heap access for
-            // the dynamically generated safepoint handlers.
-            _safepointNativeStubEntryPoint = VMConfiguration.hostOrTarget().safepoint().createSafepointStub(_safepointGate, Safepoint.Venue.NATIVE).start().asPointer();
-            _safepointJavaStubEntryPoint = VMConfiguration.hostOrTarget().safepoint().createSafepointStub(_safepointGate, Safepoint.Venue.JAVA).start().asPointer();
-            // A revoker thread may call Thread.sleep() during revocation, so we bootstrap
-            // its native linkage here. Specifically, the native linkage requires allocations, so we must make sure
-            // that the calling thread holds the bias on CreateTupleOrHybrid.SNIPPET. otherwise we get a recursive dep.
+/*        if (phase == MaxineVM.Phase.STARTING) {
             try {
                 Thread.sleep(1);
             } catch (InterruptedException interruptedException) {
             }
         }
+*/
     }
 
     // Inspector support
@@ -117,16 +103,15 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         return decodeLockwordThreadID(biasedLockWord.getBiasOwnerID());
     }
 
-    /**
-     * Suspended bias-owner threads wait here while a revoker thread performs the revocation.
-     */
-    private static void safepointGate() {
-        Safepoint.disable();
-        synchronized (VmThreadMap.ACTIVE) {
+    private static Safepoint.Procedure _safePointProcedure = new Safepoint.Procedure() {
+        @Override
+        public void run(Pointer registerState) {
+            // Suspended bias-owner threads wait here while a revoker thread performs the revocation.
+            synchronized (VmThreadMap.ACTIVE) {
+            }
+            VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(Reference.fromJava(Safepoint.Venue.NATIVE));
         }
-        Safepoint.enable();
-        VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(Reference.fromJava(Safepoint.Venue.NATIVE));
-    }
+    };
 
     protected ModalLockWord64 revokeBias(Object object) {
         final ModalLockWord64 lockWord = ModalLockWord64.as(ObjectAccess.readMisc(object));
@@ -158,7 +143,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 ProgramError.unexpected("Attempted to revoke bias for still initializing thread.");
             }
             // Trigger safepoint for bias owner
-            Safepoint.trigger(vmThreadLocals, _safepointNativeStubEntryPoint, _safepointJavaStubEntryPoint);
+            Safepoint.runProcedure(biasOwnerThread, _safePointProcedure);
             // Wait until bias owner is not mutating
             while (biasOwnerThread.isInNative()) {
                 try {
@@ -607,13 +592,13 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             return postRevokeLockWord;
         }
 
-        private final Pointer.Procedure _triggerSafepoint =  new Pointer.Procedure(){
+        private final Pointer.Procedure _triggerSafepoint =  new Pointer.Procedure() {
             public void run(Pointer vmThreadLocals) {
                 if (vmThreadLocals.isZero()) {
                     // Thread is still starting up.
                     // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
                 } else {
-                    Safepoint.trigger(vmThreadLocals, _safepointNativeStubEntryPoint, _safepointJavaStubEntryPoint);
+                    Safepoint.runProcedure(VmThread.current(vmThreadLocals), _safePointProcedure);
                 }
             }
         };

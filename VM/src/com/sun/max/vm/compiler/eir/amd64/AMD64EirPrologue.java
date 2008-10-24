@@ -22,10 +22,20 @@ package com.sun.max.vm.compiler.eir.amd64;
 
 import java.util.*;
 
+import com.sun.max.asm.amd64.*;
+import com.sun.max.collect.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.thread.*;
 
 /**
+ * Emit the prologue for a method.
  * @author Bernd Mathiske
+ * @author Ben L. Titzer
  */
 public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisitor, AMD64EirTargetEmitter> implements AMD64EirInstruction {
 
@@ -41,15 +51,75 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
     @Override
     public void emit(AMD64EirTargetEmitter emitter) {
         if (!eirMethod().isTemplate()) {
-            final int frameSize = eirMethod().frameSize();
-            if (frameSize != 0) {
-                emitter.assembler().subq(emitter.framePointer(), frameSize);
-            }
-            if (STACK_BANGING) {
-                // emit a read of the stack 1 page down to trigger a stack overflow earlier
-                emitter.assembler().mov(emitter.scratchRegister(), -2 * emitter.abi().vmConfiguration().platform().pageSize(), emitter.stackPointer().indirect());
+            final AMD64Assembler asm = emitter.assembler();
+            final AMD64GeneralRegister64 framePointer = emitter.framePointer();
+            final int originalFrameSize = eirMethod().frameSize();
+            if (eirMethod().classMethodActor().isTrapStub()) {
+                //emit a special prologue that saves all the registers
+                emitSignalHandlerStubPrologue(eirMethod(), asm, framePointer, originalFrameSize);
+            } else {
+                // emit a regular prologue
+                final int frameSize = originalFrameSize;
+                if (frameSize != 0) {
+                    asm.subq(framePointer, frameSize);
+                }
+                if (STACK_BANGING) {
+                    // emit a read of the stack 2 pages down to trigger a stack overflow earlier
+                    asm.mov(emitter.scratchRegister(), -2 * emitter.abi().vmConfiguration().platform().pageSize(), emitter.stackPointer().indirect());
+                }
             }
         }
+    }
+
+    public static void emitSignalHandlerStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
+        final AMD64GeneralRegister64 latchRegister = AMD64Safepoint._LATCH_REGISTER;
+        final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
+        // expand the frame size for this method to allow for the saved register state
+        final int frameSize = originalFrameSize + AMD64Safepoint.REGISTER_SAVE_SIZE_WITHOUT_RIP;
+        final int endOfFrame = originalFrameSize + AMD64Safepoint.REGISTER_SAVE_SIZE_WITH_RIP;
+        eirMethod.setFrameSize(frameSize);
+
+        // the very first instruction must save the flags.
+        // we save them twice and overwrite one copy with the trap instruction address.
+        asm.pushfq();
+        asm.pushfq();
+
+        // now allocate the frame for this method
+        asm.subq(framePointer, endOfFrame - (2 * Word.size()));
+
+        // save all the general purpose registers
+        int offset = originalFrameSize;
+        for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
+            // all registers are the same as when the trap occurred (except the frame pointer)
+            asm.mov(offset, framePointer.indirect(), register);
+            offset += Word.size();
+        }
+        // save all the floating point registers
+        for (AMD64XMMRegister register : AMD64XMMRegister.ENUMERATOR) {
+            asm.movdq(offset, framePointer.indirect(), register);
+            offset += 2 * Word.size();
+        }
+
+        // load the safepoint latch (which the C code overwrote the top of stack with)
+        asm.mov(latchRegister, endOfFrame, framePointer.indirect());
+
+        // restore the top of stack
+        asm.mov(scratchRegister, VmThreadLocal.TRAP_TOP_OF_STACK.offset(), latchRegister.indirect());
+        asm.mov(endOfFrame, framePointer.indirect(), scratchRegister);
+
+        // write the return address pointer at the end of the frame
+        asm.mov(scratchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), latchRegister.indirect());
+        asm.mov(frameSize, framePointer.indirect(), scratchRegister);
+
+        // now load the trap parameter information into registers from the vm thread locals
+        final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
+        final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
+        // load the trap number into the first parameter register
+        asm.mov((AMD64GeneralRegister64) parameterRegisters.get(0), VmThreadLocal.TRAP_NUMBER.offset(), latchRegister.indirect());
+        // load the registers pointer into the second parameter register
+        asm.lea((AMD64GeneralRegister64) parameterRegisters.get(1), originalFrameSize, framePointer.indirect());
+        // load the fault address into the third parameter register
+        asm.mov((AMD64GeneralRegister64) parameterRegisters.get(2), VmThreadLocal.TRAP_FAULT_ADDRESS.offset(), latchRegister.indirect());
     }
 
     @Override

@@ -365,8 +365,6 @@ public class VmThread {
      */
     public static void createAndRunMainThread() {
         final Size requestedStackSize = _stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize();
-        // link critical sleep method
-        nonJniNativeSleep.link();
 
         final Word nativeThread = nativeThreadCreate(_mainVMThread._threadMapID, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
@@ -456,7 +454,7 @@ public class VmThread {
      * @param disabledVmThreadLocals the address of the VM thread locals in effect when safepoints are
      *            {@linkplain Safepoint#disable() disabled} for this thread
      * @param triggeredVmThreadLocals the address of the VM thread locals in effect when safepoints are
-     *            {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered} for this thread
+     *            {@linkplain Safepoint#trigger(Pointer) triggered} for this thread
      */
     @C_FUNCTION
     private static void run(int id, Address nativeThread,
