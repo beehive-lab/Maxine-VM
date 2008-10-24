@@ -281,18 +281,24 @@ public final class StackReferenceMapPreparer {
         final int vmThreadLocalsSlotIndex = referenceMapBitIndex(whichVmThreadLocals.getConstantWord(vmThreadLocals).asPointer());
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
         if (targetMethod != null) {
-            tracePrepareReferenceMap(targetMethod, -1);
+            tracePrepareReferenceMap(targetMethod, targetMethod.findClosestStopIndex(instructionPointer), "registers");
             final int safepointIndex = targetMethod.findSafepointIndex(instructionPointer);
-            assert safepointIndex >= 0;
+            if (safepointIndex < 0) {
+                Debug.print("Could not find safepoint index for instruction at position ");
+                Debug.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                Debug.print(" in ");
+                Debug.printMethodActor(targetMethod.classMethodActor(), true);
+                FatalError.unexpected("Could not find safepoint index");
+            }
 
             // The register reference maps come after all the frame reference maps in _referenceMaps.
             int byteIndex = targetMethod.frameReferenceMapsSize() + (targetMethod.registerReferenceMapSize() * safepointIndex);
 
-            final int registersSlotIndex = vmThreadLocalsSlotIndex + REGISTERS.ordinal();
+            final int registersSlotIndex = vmThreadLocalsSlotIndex + REGISTERS.index();
             for (int i = 0; i < targetMethod.registerReferenceMapSize(); i++) {
                 final byte referenceMapByte = targetMethod.referenceMaps()[byteIndex];
                 traceReferenceMapByteBefore(byteIndex, referenceMapByte, "Register");
-                final int baseSlotIndex = registersSlotIndex + i;
+                final int baseSlotIndex = registersSlotIndex + (i * Bytes.WIDTH);
                 _referenceMap.setBits(baseSlotIndex, referenceMapByte);
                 traceReferenceMapByteAfter(Pointer.zero(), baseSlotIndex, referenceMapByte);
                 byteIndex++;
@@ -374,7 +380,7 @@ public final class StackReferenceMapPreparer {
     }
 
     private void prepareFrameReferenceMap(TargetMethod targetMethod, int stopIndex, Pointer framePointer) {
-        tracePrepareReferenceMap(targetMethod, stopIndex);
+        tracePrepareReferenceMap(targetMethod, stopIndex, "frame");
         int frameSlotIndex = referenceMapBitIndex(framePointer);
         int byteIndex = stopIndex * targetMethod.frameReferenceMapSize();
         for (int i = 0; i < targetMethod.frameReferenceMapSize(); i++) {
@@ -387,16 +393,16 @@ public final class StackReferenceMapPreparer {
         }
     }
 
-    private void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex) {
+    private void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, String label) {
         if (Heap.traceGC()) {
             Debug.print("  Preparing reference map for ");
-            Debug.print(stopIndex == -1 ? "registers" : "frame");
+            Debug.print(label);
             Debug.print(" of ");
-            Debug.printMethodActor(targetMethod.classMethodActor(), true);
-            if (stopIndex >= 0) {
-                Debug.print("    Stop index: ");
-                Debug.println(stopIndex);
-            }
+            Debug.printMethodActor(targetMethod.classMethodActor(), false);
+            Debug.print(" +");
+            Debug.println(targetMethod.stopPosition(stopIndex));
+            Debug.print("    Stop index: ");
+            Debug.println(stopIndex);
         }
     }
 
@@ -664,7 +670,7 @@ public final class StackReferenceMapPreparer {
         } else {
             final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer);
             if (stopIndex < 0) {
-                throw ProgramError.unexpected("prepareFrameReferenceMap() could not find stop position in target method");
+                throw FatalError.unexpected("Could not find stop position in target method");
             }
 
             if (_trampolineTargetMethod != null) {
