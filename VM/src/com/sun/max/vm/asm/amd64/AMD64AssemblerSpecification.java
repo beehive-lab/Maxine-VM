@@ -455,7 +455,9 @@ interface AMD64AssemblerSpecification {
     void orq(int disp32, AMD64IndirectRegister64 destination, byte imm8);
     void orq(int disp32, AMD64IndirectRegister64 destination, int imm32);
     void pop(AMD64GeneralRegister64 register);
+    void popfq();
     void push(AMD64GeneralRegister64 register);
+    void pushfq();
     void ret();
     void ret(short imm16);
     void rip_add(AMD64GeneralRegister32 destination, int rel32);
@@ -4476,7 +4478,6 @@ interface AMD64AssemblerSpecification {
 //    void pop(int disp32, AMD64IndirectRegister64 destination);
 //    void pop_FS();
 //    void pop_GS();
-//    void popfq();
 //    void popfw();
 //    void por(AMD64XMMRegister destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void por(AMD64XMMRegister destination, AMD64IndirectRegister64 source);
@@ -4921,7 +4922,6 @@ interface AMD64AssemblerSpecification {
 //    void push(short imm16);
 //    void push_FS();
 //    void push_GS();
-//    void pushfq();
 //    void pushfw();
 //    void pxor(AMD64XMMRegister destination, AMD64BaseRegister64 base, AMD64IndexRegister64 index, Scale scale);
 //    void pxor(AMD64XMMRegister destination, AMD64IndirectRegister64 source);

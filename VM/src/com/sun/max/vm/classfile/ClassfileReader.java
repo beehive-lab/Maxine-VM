@@ -774,11 +774,6 @@ public class ClassfileReader {
                                         if (valueElement.value().toBoolean()) {
                                             flags |= TRAP_STUB;
                                         }
-                                    } else if (nameElementPair.name().equals("isSignalHandler")) {
-                                        final AnnotationInfo.ValueElement valueElement = (AnnotationInfo.ValueElement) nameElementPair.element();
-                                        if (valueElement.value().toBoolean()) {
-                                            flags |= SIGNAL_HANDLER;
-                                        }
                                     }
                                 }
                             } else if (annotationTypeDescriptor.equals(forJavaClass(NO_SAFEPOINTS.class))) {

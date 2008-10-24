@@ -147,11 +147,6 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
 
     @Override
-    public boolean trapHandlerHasRecordedTrapFrame() {
-        return _teleEnabledVmThreadLocalValues.isValid() && !_teleEnabledVmThreadLocalValues.getWord(VmThreadLocal.TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME).isZero();
-    }
-
-    @Override
     public Word readFramelessCallAddressRegister(TargetABI targetABI) {
         return _teleNativeThread.integerRegisters().get(Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS, targetABI);
     }

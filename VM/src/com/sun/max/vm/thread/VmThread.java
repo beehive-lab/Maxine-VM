@@ -454,7 +454,7 @@ public class VmThread {
      * @param disabledVmThreadLocals the address of the VM thread locals in effect when safepoints are
      *            {@linkplain Safepoint#disable() disabled} for this thread
      * @param triggeredVmThreadLocals the address of the VM thread locals in effect when safepoints are
-     *            {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered} for this thread
+     *            {@linkplain Safepoint#trigger(Pointer) triggered} for this thread
      */
     @C_FUNCTION
     private static void run(int id, Address nativeThread,
@@ -921,31 +921,5 @@ public class VmThread {
     public boolean hasSufficentStackToReprotectGuardPage(Pointer stackPointer) {
         final Pointer limit = stackPointer.minus(VmThread.MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING);
         return limit.greaterThan(guardPageEnd());
-    }
-
-    /**
-     * Run a given procedure on the thread corresponding to this <code>VmThread</code> instance,
-     * when that thread is at a safepoint and safepoints are disabled.
-     * This method allows the VM to stop a thread at a safepoint and then run the specified procedure (e.g. garbage collection
-     * or biased monitor revocation). Note that this method returns when the procedure is successfully
-     * queued to be run on that thread, but the procedure may not actually have run yet. Note also that this method will spin
-     * if that thread is already executing or is scheduled to execute another procedure.
-     *
-     * @param runnable the procedure to run on this thread
-     */
-    public void runProcedure(Runnable runnable) {
-        final Pointer vmThreadLocals = _vmThreadLocals;
-        while (true) {
-            // spin until the SAFEPOINT_PROCEDURE field is null
-            synchronized (this) {
-                final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(vmThreadLocals);
-                final Runnable other = UnsafeLoophole.cast(reference.toJava());
-                if (other == null) {
-                    VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(vmThreadLocals, Reference.fromJava(runnable));
-                    Safepoint.trigger(vmThreadLocals, Word.zero(), Word.zero());
-                    return;
-                }
-            }
-        }
     }
 }

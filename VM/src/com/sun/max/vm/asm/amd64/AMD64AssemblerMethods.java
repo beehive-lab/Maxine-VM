@@ -4324,10 +4324,19 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
     }
 
     /**
+     * Pseudo-external assembler syntax: {@code popfq  }
+     * Example disassembly syntax: {@code popfq   }
+     */
+    // Template#: 476, Serial#: 2471
+    public void popfq() {
+        assemble0040((byte) 0x9D);
+    }
+
+    /**
      * Pseudo-external assembler syntax: {@code push  }<i>register</i>
      * Example disassembly syntax: {@code push      rax}
      */
-    // Template#: 476, Serial#: 289
+    // Template#: 477, Serial#: 289
     public void push(AMD64GeneralRegister64 register) {
         assemble0208((byte) 0x50, register);
     }
@@ -4336,7 +4345,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code push  }<i>imm32</i>
      * Example disassembly syntax: {@code push      0x12345678}
      */
-    // Template#: 477, Serial#: 2275
+    // Template#: 478, Serial#: 2275
     public void push(int imm32) {
         assemble0019((byte) 0x68, imm32);
     }
@@ -4345,16 +4354,25 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code push  }<i>rel32</i>
      * Example disassembly syntax: {@code push      [L1: +305419896]}
      */
-    // Template#: 478, Serial#: 3057
+    // Template#: 479, Serial#: 3057
     public void rip_push(int rel32) {
         assemble0038((byte) 0xFF, (byte) 0x06, rel32);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code pushfq  }
+     * Example disassembly syntax: {@code pushfq  }
+     */
+    // Template#: 480, Serial#: 2469
+    public void pushfq() {
+        assemble0040((byte) 0x9C);
     }
 
     /**
      * Pseudo-external assembler syntax: {@code ret  }
      * Example disassembly syntax: {@code ret     }
      */
-    // Template#: 479, Serial#: 1171
+    // Template#: 481, Serial#: 1171
     public void ret() {
         assemble0040((byte) 0xC3);
     }
@@ -4363,7 +4381,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code ret  }<i>imm16</i>
      * Example disassembly syntax: {@code ret       0x1234}
      */
-    // Template#: 480, Serial#: 1170
+    // Template#: 482, Serial#: 1170
     public void ret(short imm16) {
         assemble0209((byte) 0xC2, imm16);
     }
@@ -4372,7 +4390,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarl      [rbx + 18], 0x1}
      */
-    // Template#: 481, Serial#: 1311
+    // Template#: 483, Serial#: 1311
     public void sarl___1(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0035((byte) 0xD1, (byte) 0x07, disp8, destination);
     }
@@ -4381,7 +4399,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarq      [rbx + 18], 0x1}
      */
-    // Template#: 482, Serial#: 1374
+    // Template#: 484, Serial#: 1374
     public void sarq___1(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0103((byte) 0xD1, (byte) 0x07, disp8, destination);
     }
@@ -4390,7 +4408,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarl      [rbx + 18], cl}
      */
-    // Template#: 483, Serial#: 1563
+    // Template#: 485, Serial#: 1563
     public void sarl___CL(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0035((byte) 0xD3, (byte) 0x07, disp8, destination);
     }
@@ -4399,7 +4417,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarq      [rbx + 18], cl}
      */
-    // Template#: 484, Serial#: 1626
+    // Template#: 486, Serial#: 1626
     public void sarq___CL(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0103((byte) 0xD3, (byte) 0x07, disp8, destination);
     }
@@ -4408,7 +4426,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code sarl      [rbx + 18], 0x12}
      */
-    // Template#: 485, Serial#: 1021
+    // Template#: 487, Serial#: 1021
     public void sarl(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0001((byte) 0xC1, (byte) 0x07, disp8, destination, imm8);
     }
@@ -4417,7 +4435,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code sarq      [rbx + 18], 0x12}
      */
-    // Template#: 486, Serial#: 1084
+    // Template#: 488, Serial#: 1084
     public void sarq(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0002((byte) 0xC1, (byte) 0x07, disp8, destination, imm8);
     }
@@ -4426,7 +4444,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>destination</i>
      * Example disassembly syntax: {@code sarl      eax, 0x1}
      */
-    // Template#: 487, Serial#: 1333
+    // Template#: 489, Serial#: 1333
     public void sarl___1(AMD64GeneralRegister32 destination) {
         assemble0107((byte) 0xD1, (byte) 0x07, destination);
     }
@@ -4435,7 +4453,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>destination</i>
      * Example disassembly syntax: {@code sarl      eax, cl}
      */
-    // Template#: 488, Serial#: 1585
+    // Template#: 490, Serial#: 1585
     public void sarl___CL(AMD64GeneralRegister32 destination) {
         assemble0107((byte) 0xD3, (byte) 0x07, destination);
     }
@@ -4444,7 +4462,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code sarl      eax, 0x12}
      */
-    // Template#: 489, Serial#: 1043
+    // Template#: 491, Serial#: 1043
     public void sarl(AMD64GeneralRegister32 destination, byte imm8) {
         assemble0007((byte) 0xC1, (byte) 0x07, destination, imm8);
     }
@@ -4453,7 +4471,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>destination</i>
      * Example disassembly syntax: {@code sarq      rax, 0x1}
      */
-    // Template#: 490, Serial#: 1396
+    // Template#: 492, Serial#: 1396
     public void sarq___1(AMD64GeneralRegister64 destination) {
         assemble0102((byte) 0xD1, (byte) 0x07, destination);
     }
@@ -4462,7 +4480,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>destination</i>
      * Example disassembly syntax: {@code sarq      rax, cl}
      */
-    // Template#: 491, Serial#: 1648
+    // Template#: 493, Serial#: 1648
     public void sarq___CL(AMD64GeneralRegister64 destination) {
         assemble0102((byte) 0xD3, (byte) 0x07, destination);
     }
@@ -4471,7 +4489,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code sarq      rax, 0x12}
      */
-    // Template#: 492, Serial#: 1106
+    // Template#: 494, Serial#: 1106
     public void sarq(AMD64GeneralRegister64 destination, byte imm8) {
         assemble0013((byte) 0xC1, (byte) 0x07, destination, imm8);
     }
@@ -4480,7 +4498,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarl      [rbx + 305419896], 0x1}
      */
-    // Template#: 493, Serial#: 1325
+    // Template#: 495, Serial#: 1325
     public void sarl___1(int disp32, AMD64IndirectRegister64 destination) {
         assemble0039((byte) 0xD1, (byte) 0x07, disp32, destination);
     }
@@ -4489,7 +4507,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarq      [rbx + 305419896], 0x1}
      */
-    // Template#: 494, Serial#: 1388
+    // Template#: 496, Serial#: 1388
     public void sarq___1(int disp32, AMD64IndirectRegister64 destination) {
         assemble0105((byte) 0xD1, (byte) 0x07, disp32, destination);
     }
@@ -4498,7 +4516,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarl      [rbx + 305419896], cl}
      */
-    // Template#: 495, Serial#: 1577
+    // Template#: 497, Serial#: 1577
     public void sarl___CL(int disp32, AMD64IndirectRegister64 destination) {
         assemble0039((byte) 0xD3, (byte) 0x07, disp32, destination);
     }
@@ -4507,7 +4525,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code sarq      [rbx + 305419896], cl}
      */
-    // Template#: 496, Serial#: 1640
+    // Template#: 498, Serial#: 1640
     public void sarq___CL(int disp32, AMD64IndirectRegister64 destination) {
         assemble0105((byte) 0xD3, (byte) 0x07, disp32, destination);
     }
@@ -4516,7 +4534,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarl  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code sarl      [rbx + 305419896], 0x12}
      */
-    // Template#: 497, Serial#: 1035
+    // Template#: 499, Serial#: 1035
     public void sarl(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0021((byte) 0xC1, (byte) 0x07, disp32, destination, imm8);
     }
@@ -4525,7 +4543,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sarq  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code sarq      [rbx + 305419896], 0x12}
      */
-    // Template#: 498, Serial#: 1098
+    // Template#: 500, Serial#: 1098
     public void sarq(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0022((byte) 0xC1, (byte) 0x07, disp32, destination, imm8);
     }
@@ -4534,7 +4552,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setb  }<i>destination</i>
      * Example disassembly syntax: {@code setb      al}
      */
-    // Template#: 499, Serial#: 4088
+    // Template#: 501, Serial#: 4088
     public void setb(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x92, destination);
     }
@@ -4543,7 +4561,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setbe  }<i>destination</i>
      * Example disassembly syntax: {@code setbe     al}
      */
-    // Template#: 500, Serial#: 4124
+    // Template#: 502, Serial#: 4124
     public void setbe(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x96, destination);
     }
@@ -4552,7 +4570,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setl  }<i>destination</i>
      * Example disassembly syntax: {@code setl      al}
      */
-    // Template#: 501, Serial#: 5945
+    // Template#: 503, Serial#: 5945
     public void setl(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x9C, destination);
     }
@@ -4561,7 +4579,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setnb  }<i>destination</i>
      * Example disassembly syntax: {@code setnb     al}
      */
-    // Template#: 502, Serial#: 4097
+    // Template#: 504, Serial#: 4097
     public void setnb(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x93, destination);
     }
@@ -4570,7 +4588,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setnbe  }<i>destination</i>
      * Example disassembly syntax: {@code setnbe    al}
      */
-    // Template#: 503, Serial#: 4133
+    // Template#: 505, Serial#: 4133
     public void setnbe(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x97, destination);
     }
@@ -4579,7 +4597,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setnl  }<i>destination</i>
      * Example disassembly syntax: {@code setnl     al}
      */
-    // Template#: 504, Serial#: 5954
+    // Template#: 506, Serial#: 5954
     public void setnl(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x9D, destination);
     }
@@ -4588,7 +4606,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setnle  }<i>destination</i>
      * Example disassembly syntax: {@code setnle    al}
      */
-    // Template#: 505, Serial#: 5972
+    // Template#: 507, Serial#: 5972
     public void setnle(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x9F, destination);
     }
@@ -4597,7 +4615,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setnp  }<i>destination</i>
      * Example disassembly syntax: {@code setnp     al}
      */
-    // Template#: 506, Serial#: 5936
+    // Template#: 508, Serial#: 5936
     public void setnp(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x9B, destination);
     }
@@ -4606,7 +4624,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code setp  }<i>destination</i>
      * Example disassembly syntax: {@code setp      al}
      */
-    // Template#: 507, Serial#: 5927
+    // Template#: 509, Serial#: 5927
     public void setp(AMD64GeneralRegister8 destination) {
         assemble0210((byte) 0x9A, destination);
     }
@@ -4615,7 +4633,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sfence  }
      * Example disassembly syntax: {@code sfence  }
      */
-    // Template#: 508, Serial#: 6099
+    // Template#: 510, Serial#: 6099
     public void sfence() {
         assemble0118((byte) 0xAE, (byte) 0x07);
     }
@@ -4624,7 +4642,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shll      [rbx + 18], 0x1}
      */
-    // Template#: 509, Serial#: 1307
+    // Template#: 511, Serial#: 1307
     public void shll___1(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0035((byte) 0xD1, (byte) 0x04, disp8, destination);
     }
@@ -4633,7 +4651,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shlq      [rbx + 18], 0x1}
      */
-    // Template#: 510, Serial#: 1370
+    // Template#: 512, Serial#: 1370
     public void shlq___1(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0103((byte) 0xD1, (byte) 0x04, disp8, destination);
     }
@@ -4642,7 +4660,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shll      [rbx + 18], cl}
      */
-    // Template#: 511, Serial#: 1559
+    // Template#: 513, Serial#: 1559
     public void shll___CL(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0035((byte) 0xD3, (byte) 0x04, disp8, destination);
     }
@@ -4651,7 +4669,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shlq      [rbx + 18], cl}
      */
-    // Template#: 512, Serial#: 1622
+    // Template#: 514, Serial#: 1622
     public void shlq___CL(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0103((byte) 0xD3, (byte) 0x04, disp8, destination);
     }
@@ -4660,7 +4678,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shll      [rbx + 18], 0x12}
      */
-    // Template#: 513, Serial#: 1017
+    // Template#: 515, Serial#: 1017
     public void shll(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0001((byte) 0xC1, (byte) 0x04, disp8, destination, imm8);
     }
@@ -4669,7 +4687,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shlq      [rbx + 18], 0x12}
      */
-    // Template#: 514, Serial#: 1080
+    // Template#: 516, Serial#: 1080
     public void shlq(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0002((byte) 0xC1, (byte) 0x04, disp8, destination, imm8);
     }
@@ -4678,7 +4696,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>destination</i>
      * Example disassembly syntax: {@code shll      eax, 0x1}
      */
-    // Template#: 515, Serial#: 1331
+    // Template#: 517, Serial#: 1331
     public void shll___1(AMD64GeneralRegister32 destination) {
         assemble0107((byte) 0xD1, (byte) 0x04, destination);
     }
@@ -4687,7 +4705,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>destination</i>
      * Example disassembly syntax: {@code shll      eax, cl}
      */
-    // Template#: 516, Serial#: 1583
+    // Template#: 518, Serial#: 1583
     public void shll___CL(AMD64GeneralRegister32 destination) {
         assemble0107((byte) 0xD3, (byte) 0x04, destination);
     }
@@ -4696,7 +4714,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shll      eax, 0x12}
      */
-    // Template#: 517, Serial#: 1041
+    // Template#: 519, Serial#: 1041
     public void shll(AMD64GeneralRegister32 destination, byte imm8) {
         assemble0007((byte) 0xC1, (byte) 0x04, destination, imm8);
     }
@@ -4705,7 +4723,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>destination</i>
      * Example disassembly syntax: {@code shlq      rax, 0x1}
      */
-    // Template#: 518, Serial#: 1394
+    // Template#: 520, Serial#: 1394
     public void shlq___1(AMD64GeneralRegister64 destination) {
         assemble0102((byte) 0xD1, (byte) 0x04, destination);
     }
@@ -4714,7 +4732,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>destination</i>
      * Example disassembly syntax: {@code shlq      rax, cl}
      */
-    // Template#: 519, Serial#: 1646
+    // Template#: 521, Serial#: 1646
     public void shlq___CL(AMD64GeneralRegister64 destination) {
         assemble0102((byte) 0xD3, (byte) 0x04, destination);
     }
@@ -4723,7 +4741,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shlq      rax, 0x12}
      */
-    // Template#: 520, Serial#: 1104
+    // Template#: 522, Serial#: 1104
     public void shlq(AMD64GeneralRegister64 destination, byte imm8) {
         assemble0013((byte) 0xC1, (byte) 0x04, destination, imm8);
     }
@@ -4732,7 +4750,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shll      [rbx + 305419896], 0x1}
      */
-    // Template#: 521, Serial#: 1321
+    // Template#: 523, Serial#: 1321
     public void shll___1(int disp32, AMD64IndirectRegister64 destination) {
         assemble0039((byte) 0xD1, (byte) 0x04, disp32, destination);
     }
@@ -4741,7 +4759,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shlq      [rbx + 305419896], 0x1}
      */
-    // Template#: 522, Serial#: 1384
+    // Template#: 524, Serial#: 1384
     public void shlq___1(int disp32, AMD64IndirectRegister64 destination) {
         assemble0105((byte) 0xD1, (byte) 0x04, disp32, destination);
     }
@@ -4750,7 +4768,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shll      [rbx + 305419896], cl}
      */
-    // Template#: 523, Serial#: 1573
+    // Template#: 525, Serial#: 1573
     public void shll___CL(int disp32, AMD64IndirectRegister64 destination) {
         assemble0039((byte) 0xD3, (byte) 0x04, disp32, destination);
     }
@@ -4759,7 +4777,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shlq      [rbx + 305419896], cl}
      */
-    // Template#: 524, Serial#: 1636
+    // Template#: 526, Serial#: 1636
     public void shlq___CL(int disp32, AMD64IndirectRegister64 destination) {
         assemble0105((byte) 0xD3, (byte) 0x04, disp32, destination);
     }
@@ -4768,7 +4786,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shll  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shll      [rbx + 305419896], 0x12}
      */
-    // Template#: 525, Serial#: 1031
+    // Template#: 527, Serial#: 1031
     public void shll(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0021((byte) 0xC1, (byte) 0x04, disp32, destination, imm8);
     }
@@ -4777,7 +4795,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shlq  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shlq      [rbx + 305419896], 0x12}
      */
-    // Template#: 526, Serial#: 1094
+    // Template#: 528, Serial#: 1094
     public void shlq(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0022((byte) 0xC1, (byte) 0x04, disp32, destination, imm8);
     }
@@ -4786,7 +4804,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrl      [rbx + 18], 0x1}
      */
-    // Template#: 527, Serial#: 1309
+    // Template#: 529, Serial#: 1309
     public void shrl___1(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0035((byte) 0xD1, (byte) 0x05, disp8, destination);
     }
@@ -4795,7 +4813,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrq      [rbx + 18], 0x1}
      */
-    // Template#: 528, Serial#: 1372
+    // Template#: 530, Serial#: 1372
     public void shrq___1(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0103((byte) 0xD1, (byte) 0x05, disp8, destination);
     }
@@ -4804,7 +4822,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrl      [rbx + 18], cl}
      */
-    // Template#: 529, Serial#: 1561
+    // Template#: 531, Serial#: 1561
     public void shrl___CL(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0035((byte) 0xD3, (byte) 0x05, disp8, destination);
     }
@@ -4813,7 +4831,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>disp8</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrq      [rbx + 18], cl}
      */
-    // Template#: 530, Serial#: 1624
+    // Template#: 532, Serial#: 1624
     public void shrq___CL(byte disp8, AMD64IndirectRegister64 destination) {
         assemble0103((byte) 0xD3, (byte) 0x05, disp8, destination);
     }
@@ -4822,7 +4840,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shrl      [rbx + 18], 0x12}
      */
-    // Template#: 531, Serial#: 1019
+    // Template#: 533, Serial#: 1019
     public void shrl(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0001((byte) 0xC1, (byte) 0x05, disp8, destination, imm8);
     }
@@ -4831,7 +4849,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shrq      [rbx + 18], 0x12}
      */
-    // Template#: 532, Serial#: 1082
+    // Template#: 534, Serial#: 1082
     public void shrq(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0002((byte) 0xC1, (byte) 0x05, disp8, destination, imm8);
     }
@@ -4840,7 +4858,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>destination</i>
      * Example disassembly syntax: {@code shrl      eax, 0x1}
      */
-    // Template#: 533, Serial#: 1332
+    // Template#: 535, Serial#: 1332
     public void shrl___1(AMD64GeneralRegister32 destination) {
         assemble0107((byte) 0xD1, (byte) 0x05, destination);
     }
@@ -4849,7 +4867,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>destination</i>
      * Example disassembly syntax: {@code shrl      eax, cl}
      */
-    // Template#: 534, Serial#: 1584
+    // Template#: 536, Serial#: 1584
     public void shrl___CL(AMD64GeneralRegister32 destination) {
         assemble0107((byte) 0xD3, (byte) 0x05, destination);
     }
@@ -4858,7 +4876,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shrl      eax, 0x12}
      */
-    // Template#: 535, Serial#: 1042
+    // Template#: 537, Serial#: 1042
     public void shrl(AMD64GeneralRegister32 destination, byte imm8) {
         assemble0007((byte) 0xC1, (byte) 0x05, destination, imm8);
     }
@@ -4867,7 +4885,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>destination</i>
      * Example disassembly syntax: {@code shrq      rax, 0x1}
      */
-    // Template#: 536, Serial#: 1395
+    // Template#: 538, Serial#: 1395
     public void shrq___1(AMD64GeneralRegister64 destination) {
         assemble0102((byte) 0xD1, (byte) 0x05, destination);
     }
@@ -4876,7 +4894,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>destination</i>
      * Example disassembly syntax: {@code shrq      rax, cl}
      */
-    // Template#: 537, Serial#: 1647
+    // Template#: 539, Serial#: 1647
     public void shrq___CL(AMD64GeneralRegister64 destination) {
         assemble0102((byte) 0xD3, (byte) 0x05, destination);
     }
@@ -4885,7 +4903,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shrq      rax, 0x12}
      */
-    // Template#: 538, Serial#: 1105
+    // Template#: 540, Serial#: 1105
     public void shrq(AMD64GeneralRegister64 destination, byte imm8) {
         assemble0013((byte) 0xC1, (byte) 0x05, destination, imm8);
     }
@@ -4894,7 +4912,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrl      [rbx + 305419896], 0x1}
      */
-    // Template#: 539, Serial#: 1323
+    // Template#: 541, Serial#: 1323
     public void shrl___1(int disp32, AMD64IndirectRegister64 destination) {
         assemble0039((byte) 0xD1, (byte) 0x05, disp32, destination);
     }
@@ -4903,7 +4921,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrq      [rbx + 305419896], 0x1}
      */
-    // Template#: 540, Serial#: 1386
+    // Template#: 542, Serial#: 1386
     public void shrq___1(int disp32, AMD64IndirectRegister64 destination) {
         assemble0105((byte) 0xD1, (byte) 0x05, disp32, destination);
     }
@@ -4912,7 +4930,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrl      [rbx + 305419896], cl}
      */
-    // Template#: 541, Serial#: 1575
+    // Template#: 543, Serial#: 1575
     public void shrl___CL(int disp32, AMD64IndirectRegister64 destination) {
         assemble0039((byte) 0xD3, (byte) 0x05, disp32, destination);
     }
@@ -4921,7 +4939,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>disp32</i>, <i>destination</i>
      * Example disassembly syntax: {@code shrq      [rbx + 305419896], cl}
      */
-    // Template#: 542, Serial#: 1638
+    // Template#: 544, Serial#: 1638
     public void shrq___CL(int disp32, AMD64IndirectRegister64 destination) {
         assemble0105((byte) 0xD3, (byte) 0x05, disp32, destination);
     }
@@ -4930,7 +4948,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrl  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shrl      [rbx + 305419896], 0x12}
      */
-    // Template#: 543, Serial#: 1033
+    // Template#: 545, Serial#: 1033
     public void shrl(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0021((byte) 0xC1, (byte) 0x05, disp32, destination, imm8);
     }
@@ -4939,7 +4957,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code shrq  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code shrq      [rbx + 305419896], 0x12}
      */
-    // Template#: 544, Serial#: 1096
+    // Template#: 546, Serial#: 1096
     public void shrq(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0022((byte) 0xC1, (byte) 0x05, disp32, destination, imm8);
     }
@@ -4948,7 +4966,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subl  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code subl      [rbx + 18], 0x12}
      */
-    // Template#: 545, Serial#: 651
+    // Template#: 547, Serial#: 651
     public void subl(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0001((byte) 0x83, (byte) 0x05, disp8, destination, imm8);
     }
@@ -4957,7 +4975,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subq  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code subq      [rbx + 18], 0x12}
      */
-    // Template#: 546, Serial#: 723
+    // Template#: 548, Serial#: 723
     public void subq(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0002((byte) 0x83, (byte) 0x05, disp8, destination, imm8);
     }
@@ -4966,7 +4984,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>disp8</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       [rbx + 18], eax}
      */
-    // Template#: 547, Serial#: 2140
+    // Template#: 549, Serial#: 2140
     public void sub(byte disp8, AMD64IndirectRegister64 destination, AMD64GeneralRegister32 source) {
         assemble0003((byte) 0x29, disp8, destination, source);
     }
@@ -4975,7 +4993,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>disp8</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       [rbx + 18], rax}
      */
-    // Template#: 548, Serial#: 2149
+    // Template#: 550, Serial#: 2149
     public void sub(byte disp8, AMD64IndirectRegister64 destination, AMD64GeneralRegister64 source) {
         assemble0004((byte) 0x29, disp8, destination, source);
     }
@@ -4984,7 +5002,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subl  }<i>disp8</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code subl      [rbx + 18], 0x12345678}
      */
-    // Template#: 549, Serial#: 435
+    // Template#: 551, Serial#: 435
     public void subl(byte disp8, AMD64IndirectRegister64 destination, int imm32) {
         assemble0005((byte) 0x81, (byte) 0x05, disp8, destination, imm32);
     }
@@ -4993,7 +5011,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subq  }<i>disp8</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code subq      [rbx + 18], 0x12345678}
      */
-    // Template#: 550, Serial#: 507
+    // Template#: 552, Serial#: 507
     public void subq(byte disp8, AMD64IndirectRegister64 destination, int imm32) {
         assemble0006((byte) 0x81, (byte) 0x05, disp8, destination, imm32);
     }
@@ -5002,7 +5020,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subl  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code subl      eax, 0x12}
      */
-    // Template#: 551, Serial#: 678
+    // Template#: 553, Serial#: 678
     public void subl(AMD64GeneralRegister32 destination, byte imm8) {
         assemble0007((byte) 0x83, (byte) 0x05, destination, imm8);
     }
@@ -5011,7 +5029,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>disp8</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       eax, [rbx + 18]}
      */
-    // Template#: 552, Serial#: 2175
+    // Template#: 554, Serial#: 2175
     public void sub(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source) {
         assemble0008((byte) 0x2B, destination, disp8, source);
     }
@@ -5020,7 +5038,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       eax, eax}
      */
-    // Template#: 553, Serial#: 2144
+    // Template#: 555, Serial#: 2144
     public void sub(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source) {
         assemble0009((byte) 0x29, destination, source);
     }
@@ -5029,7 +5047,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subl  }<i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code subl      eax, 0x12345678}
      */
-    // Template#: 554, Serial#: 462
+    // Template#: 556, Serial#: 462
     public void subl(AMD64GeneralRegister32 destination, int imm32) {
         assemble0011((byte) 0x81, (byte) 0x05, destination, imm32);
     }
@@ -5038,7 +5056,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>rel32</i>
      * Example disassembly syntax: {@code sub       eax, [L1: +305419896]}
      */
-    // Template#: 555, Serial#: 2174
+    // Template#: 557, Serial#: 2174
     public void rip_sub(AMD64GeneralRegister32 destination, int rel32) {
         assemble0010((byte) 0x2B, destination, rel32);
     }
@@ -5047,7 +5065,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>disp32</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       eax, [rbx + 305419896]}
      */
-    // Template#: 556, Serial#: 2177
+    // Template#: 558, Serial#: 2177
     public void sub(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source) {
         assemble0012((byte) 0x2B, destination, disp32, source);
     }
@@ -5056,7 +5074,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subq  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code subq      rax, 0x12}
      */
-    // Template#: 557, Serial#: 750
+    // Template#: 559, Serial#: 750
     public void subq(AMD64GeneralRegister64 destination, byte imm8) {
         assemble0013((byte) 0x83, (byte) 0x05, destination, imm8);
     }
@@ -5065,7 +5083,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>disp8</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       rax, [rbx + 18]}
      */
-    // Template#: 558, Serial#: 2183
+    // Template#: 560, Serial#: 2183
     public void sub(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source) {
         assemble0014((byte) 0x2B, destination, disp8, source);
     }
@@ -5074,7 +5092,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       rax, rax}
      */
-    // Template#: 559, Serial#: 2153
+    // Template#: 561, Serial#: 2153
     public void sub(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source) {
         assemble0015((byte) 0x29, destination, source);
     }
@@ -5083,7 +5101,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subq  }<i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code subq      rax, 0x12345678}
      */
-    // Template#: 560, Serial#: 534
+    // Template#: 562, Serial#: 534
     public void subq(AMD64GeneralRegister64 destination, int imm32) {
         assemble0017((byte) 0x81, (byte) 0x05, destination, imm32);
     }
@@ -5092,7 +5110,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>rel32</i>
      * Example disassembly syntax: {@code sub       rax, [L1: +305419896]}
      */
-    // Template#: 561, Serial#: 2182
+    // Template#: 563, Serial#: 2182
     public void rip_sub(AMD64GeneralRegister64 destination, int rel32) {
         assemble0016((byte) 0x2B, destination, rel32);
     }
@@ -5101,7 +5119,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>destination</i>, <i>disp32</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       rax, [rbx + 305419896]}
      */
-    // Template#: 562, Serial#: 2185
+    // Template#: 564, Serial#: 2185
     public void sub(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source) {
         assemble0018((byte) 0x2B, destination, disp32, source);
     }
@@ -5110,7 +5128,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>imm32</i>
      * Example disassembly syntax: {@code sub       eax, 0x12345678}
      */
-    // Template#: 563, Serial#: 2196
+    // Template#: 565, Serial#: 2196
     public void sub_EAX(int imm32) {
         assemble0019((byte) 0x2D, imm32);
     }
@@ -5119,7 +5137,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>imm32</i>
      * Example disassembly syntax: {@code sub       rax, 0x12345678}
      */
-    // Template#: 564, Serial#: 2197
+    // Template#: 566, Serial#: 2197
     public void sub_RAX(int imm32) {
         assemble0020((byte) 0x2D, imm32);
     }
@@ -5128,7 +5146,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subl  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code subl      [rbx + 305419896], 0x12}
      */
-    // Template#: 565, Serial#: 667
+    // Template#: 567, Serial#: 667
     public void subl(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0021((byte) 0x83, (byte) 0x05, disp32, destination, imm8);
     }
@@ -5137,7 +5155,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subq  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code subq      [rbx + 305419896], 0x12}
      */
-    // Template#: 566, Serial#: 739
+    // Template#: 568, Serial#: 739
     public void subq(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0022((byte) 0x83, (byte) 0x05, disp32, destination, imm8);
     }
@@ -5146,7 +5164,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>disp32</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       [rbx + 305419896], eax}
      */
-    // Template#: 567, Serial#: 2142
+    // Template#: 569, Serial#: 2142
     public void sub(int disp32, AMD64IndirectRegister64 destination, AMD64GeneralRegister32 source) {
         assemble0023((byte) 0x29, disp32, destination, source);
     }
@@ -5155,7 +5173,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code sub  }<i>disp32</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code sub       [rbx + 305419896], rax}
      */
-    // Template#: 568, Serial#: 2151
+    // Template#: 570, Serial#: 2151
     public void sub(int disp32, AMD64IndirectRegister64 destination, AMD64GeneralRegister64 source) {
         assemble0024((byte) 0x29, disp32, destination, source);
     }
@@ -5164,7 +5182,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subl  }<i>disp32</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code subl      [rbx + 305419896], 0x12345678}
      */
-    // Template#: 569, Serial#: 451
+    // Template#: 571, Serial#: 451
     public void subl(int disp32, AMD64IndirectRegister64 destination, int imm32) {
         assemble0025((byte) 0x81, (byte) 0x05, disp32, destination, imm32);
     }
@@ -5173,7 +5191,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subq  }<i>disp32</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code subq      [rbx + 305419896], 0x12345678}
      */
-    // Template#: 570, Serial#: 523
+    // Template#: 572, Serial#: 523
     public void subq(int disp32, AMD64IndirectRegister64 destination, int imm32) {
         assemble0026((byte) 0x81, (byte) 0x05, disp32, destination, imm32);
     }
@@ -5182,7 +5200,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subsd  }<i>destination</i>, <i>disp8</i>, <i>source</i>
      * Example disassembly syntax: {@code subsd     xmm0, [rbx + 18]}
      */
-    // Template#: 571, Serial#: 5532
+    // Template#: 573, Serial#: 5532
     public void subsd(AMD64XMMRegister destination, byte disp8, AMD64IndirectRegister64 source) {
         assemble0027((byte) 0x5C, destination, disp8, source);
     }
@@ -5191,7 +5209,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subsd  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code subsd     xmm0, xmm0}
      */
-    // Template#: 572, Serial#: 5536
+    // Template#: 574, Serial#: 5536
     public void subsd(AMD64XMMRegister destination, AMD64XMMRegister source) {
         assemble0028((byte) 0x5C, destination, source);
     }
@@ -5200,7 +5218,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subsd  }<i>destination</i>, <i>rel32</i>
      * Example disassembly syntax: {@code subsd     xmm0, [L1: +305419896]}
      */
-    // Template#: 573, Serial#: 5531
+    // Template#: 575, Serial#: 5531
     public void rip_subsd(AMD64XMMRegister destination, int rel32) {
         assemble0029((byte) 0x5C, destination, rel32);
     }
@@ -5209,7 +5227,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subsd  }<i>destination</i>, <i>disp32</i>, <i>source</i>
      * Example disassembly syntax: {@code subsd     xmm0, [rbx + 305419896]}
      */
-    // Template#: 574, Serial#: 5534
+    // Template#: 576, Serial#: 5534
     public void subsd(AMD64XMMRegister destination, int disp32, AMD64IndirectRegister64 source) {
         assemble0030((byte) 0x5C, destination, disp32, source);
     }
@@ -5218,7 +5236,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subss  }<i>destination</i>, <i>disp8</i>, <i>source</i>
      * Example disassembly syntax: {@code subss     xmm0, [rbx + 18]}
      */
-    // Template#: 575, Serial#: 5604
+    // Template#: 577, Serial#: 5604
     public void subss(AMD64XMMRegister destination, byte disp8, AMD64IndirectRegister64 source) {
         assemble0031((byte) 0x5C, destination, disp8, source);
     }
@@ -5227,7 +5245,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subss  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code subss     xmm0, xmm0}
      */
-    // Template#: 576, Serial#: 5608
+    // Template#: 578, Serial#: 5608
     public void subss(AMD64XMMRegister destination, AMD64XMMRegister source) {
         assemble0032((byte) 0x5C, destination, source);
     }
@@ -5236,7 +5254,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subss  }<i>destination</i>, <i>rel32</i>
      * Example disassembly syntax: {@code subss     xmm0, [L1: +305419896]}
      */
-    // Template#: 577, Serial#: 5603
+    // Template#: 579, Serial#: 5603
     public void rip_subss(AMD64XMMRegister destination, int rel32) {
         assemble0033((byte) 0x5C, destination, rel32);
     }
@@ -5245,7 +5263,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code subss  }<i>destination</i>, <i>disp32</i>, <i>source</i>
      * Example disassembly syntax: {@code subss     xmm0, [rbx + 305419896]}
      */
-    // Template#: 578, Serial#: 5606
+    // Template#: 580, Serial#: 5606
     public void subss(AMD64XMMRegister destination, int disp32, AMD64IndirectRegister64 source) {
         assemble0034((byte) 0x5C, destination, disp32, source);
     }
@@ -5254,7 +5272,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xchg  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xchg      rax, rax}
      */
-    // Template#: 579, Serial#: 887
+    // Template#: 581, Serial#: 887
     public void xchg(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source) {
         assemble0015((byte) 0x87, destination, source);
     }
@@ -5263,7 +5281,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorl  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code xorl      [rbx + 18], 0x12}
      */
-    // Template#: 580, Serial#: 653
+    // Template#: 582, Serial#: 653
     public void xorl(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0001((byte) 0x83, (byte) 0x06, disp8, destination, imm8);
     }
@@ -5272,7 +5290,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorq  }<i>disp8</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code xorq      [rbx + 18], 0x12}
      */
-    // Template#: 581, Serial#: 725
+    // Template#: 583, Serial#: 725
     public void xorq(byte disp8, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0002((byte) 0x83, (byte) 0x06, disp8, destination, imm8);
     }
@@ -5281,7 +5299,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>disp8</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       [rbx + 18], eax}
      */
-    // Template#: 582, Serial#: 230
+    // Template#: 584, Serial#: 230
     public void xor(byte disp8, AMD64IndirectRegister64 destination, AMD64GeneralRegister32 source) {
         assemble0003((byte) 0x31, disp8, destination, source);
     }
@@ -5290,7 +5308,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>disp8</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       [rbx + 18], rax}
      */
-    // Template#: 583, Serial#: 239
+    // Template#: 585, Serial#: 239
     public void xor(byte disp8, AMD64IndirectRegister64 destination, AMD64GeneralRegister64 source) {
         assemble0004((byte) 0x31, disp8, destination, source);
     }
@@ -5299,7 +5317,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorl  }<i>disp8</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code xorl      [rbx + 18], 0x12345678}
      */
-    // Template#: 584, Serial#: 437
+    // Template#: 586, Serial#: 437
     public void xorl(byte disp8, AMD64IndirectRegister64 destination, int imm32) {
         assemble0005((byte) 0x81, (byte) 0x06, disp8, destination, imm32);
     }
@@ -5308,7 +5326,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorq  }<i>disp8</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code xorq      [rbx + 18], 0x12345678}
      */
-    // Template#: 585, Serial#: 509
+    // Template#: 587, Serial#: 509
     public void xorq(byte disp8, AMD64IndirectRegister64 destination, int imm32) {
         assemble0006((byte) 0x81, (byte) 0x06, disp8, destination, imm32);
     }
@@ -5317,7 +5335,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorl  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code xorl      eax, 0x12}
      */
-    // Template#: 586, Serial#: 679
+    // Template#: 588, Serial#: 679
     public void xorl(AMD64GeneralRegister32 destination, byte imm8) {
         assemble0007((byte) 0x83, (byte) 0x06, destination, imm8);
     }
@@ -5326,7 +5344,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>disp8</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       eax, [rbx + 18]}
      */
-    // Template#: 587, Serial#: 265
+    // Template#: 589, Serial#: 265
     public void xor(AMD64GeneralRegister32 destination, byte disp8, AMD64IndirectRegister64 source) {
         assemble0008((byte) 0x33, destination, disp8, source);
     }
@@ -5335,7 +5353,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       eax, eax}
      */
-    // Template#: 588, Serial#: 234
+    // Template#: 590, Serial#: 234
     public void xor(AMD64GeneralRegister32 destination, AMD64GeneralRegister32 source) {
         assemble0009((byte) 0x31, destination, source);
     }
@@ -5344,7 +5362,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>rel32</i>
      * Example disassembly syntax: {@code xor       eax, [L1: +305419896]}
      */
-    // Template#: 589, Serial#: 264
+    // Template#: 591, Serial#: 264
     public void rip_xor(AMD64GeneralRegister32 destination, int rel32) {
         assemble0010((byte) 0x33, destination, rel32);
     }
@@ -5353,7 +5371,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorl  }<i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code xorl      eax, 0x12345678}
      */
-    // Template#: 590, Serial#: 463
+    // Template#: 592, Serial#: 463
     public void xorl(AMD64GeneralRegister32 destination, int imm32) {
         assemble0011((byte) 0x81, (byte) 0x06, destination, imm32);
     }
@@ -5362,7 +5380,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>disp32</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       eax, [rbx + 305419896]}
      */
-    // Template#: 591, Serial#: 267
+    // Template#: 593, Serial#: 267
     public void xor(AMD64GeneralRegister32 destination, int disp32, AMD64IndirectRegister64 source) {
         assemble0012((byte) 0x33, destination, disp32, source);
     }
@@ -5371,7 +5389,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorq  }<i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code xorq      rax, 0x12}
      */
-    // Template#: 592, Serial#: 751
+    // Template#: 594, Serial#: 751
     public void xorq(AMD64GeneralRegister64 destination, byte imm8) {
         assemble0013((byte) 0x83, (byte) 0x06, destination, imm8);
     }
@@ -5380,7 +5398,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>disp8</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       rax, [rbx + 18]}
      */
-    // Template#: 593, Serial#: 273
+    // Template#: 595, Serial#: 273
     public void xor(AMD64GeneralRegister64 destination, byte disp8, AMD64IndirectRegister64 source) {
         assemble0014((byte) 0x33, destination, disp8, source);
     }
@@ -5389,7 +5407,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       rax, rax}
      */
-    // Template#: 594, Serial#: 243
+    // Template#: 596, Serial#: 243
     public void xor(AMD64GeneralRegister64 destination, AMD64GeneralRegister64 source) {
         assemble0015((byte) 0x31, destination, source);
     }
@@ -5398,7 +5416,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>rel32</i>
      * Example disassembly syntax: {@code xor       rax, [L1: +305419896]}
      */
-    // Template#: 595, Serial#: 272
+    // Template#: 597, Serial#: 272
     public void rip_xor(AMD64GeneralRegister64 destination, int rel32) {
         assemble0016((byte) 0x33, destination, rel32);
     }
@@ -5407,7 +5425,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorq  }<i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code xorq      rax, 0x12345678}
      */
-    // Template#: 596, Serial#: 535
+    // Template#: 598, Serial#: 535
     public void xorq(AMD64GeneralRegister64 destination, int imm32) {
         assemble0017((byte) 0x81, (byte) 0x06, destination, imm32);
     }
@@ -5416,7 +5434,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>destination</i>, <i>disp32</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       rax, [rbx + 305419896]}
      */
-    // Template#: 597, Serial#: 275
+    // Template#: 599, Serial#: 275
     public void xor(AMD64GeneralRegister64 destination, int disp32, AMD64IndirectRegister64 source) {
         assemble0018((byte) 0x33, destination, disp32, source);
     }
@@ -5425,7 +5443,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>imm32</i>
      * Example disassembly syntax: {@code xor       eax, 0x12345678}
      */
-    // Template#: 598, Serial#: 286
+    // Template#: 600, Serial#: 286
     public void xor_EAX(int imm32) {
         assemble0019((byte) 0x35, imm32);
     }
@@ -5434,7 +5452,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>imm32</i>
      * Example disassembly syntax: {@code xor       rax, 0x12345678}
      */
-    // Template#: 599, Serial#: 287
+    // Template#: 601, Serial#: 287
     public void xor_RAX(int imm32) {
         assemble0020((byte) 0x35, imm32);
     }
@@ -5443,7 +5461,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorl  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code xorl      [rbx + 305419896], 0x12}
      */
-    // Template#: 600, Serial#: 669
+    // Template#: 602, Serial#: 669
     public void xorl(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0021((byte) 0x83, (byte) 0x06, disp32, destination, imm8);
     }
@@ -5452,7 +5470,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorq  }<i>disp32</i>, <i>destination</i>, <i>imm8</i>
      * Example disassembly syntax: {@code xorq      [rbx + 305419896], 0x12}
      */
-    // Template#: 601, Serial#: 741
+    // Template#: 603, Serial#: 741
     public void xorq(int disp32, AMD64IndirectRegister64 destination, byte imm8) {
         assemble0022((byte) 0x83, (byte) 0x06, disp32, destination, imm8);
     }
@@ -5461,7 +5479,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>disp32</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       [rbx + 305419896], eax}
      */
-    // Template#: 602, Serial#: 232
+    // Template#: 604, Serial#: 232
     public void xor(int disp32, AMD64IndirectRegister64 destination, AMD64GeneralRegister32 source) {
         assemble0023((byte) 0x31, disp32, destination, source);
     }
@@ -5470,7 +5488,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xor  }<i>disp32</i>, <i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xor       [rbx + 305419896], rax}
      */
-    // Template#: 603, Serial#: 241
+    // Template#: 605, Serial#: 241
     public void xor(int disp32, AMD64IndirectRegister64 destination, AMD64GeneralRegister64 source) {
         assemble0024((byte) 0x31, disp32, destination, source);
     }
@@ -5479,7 +5497,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorl  }<i>disp32</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code xorl      [rbx + 305419896], 0x12345678}
      */
-    // Template#: 604, Serial#: 453
+    // Template#: 606, Serial#: 453
     public void xorl(int disp32, AMD64IndirectRegister64 destination, int imm32) {
         assemble0025((byte) 0x81, (byte) 0x06, disp32, destination, imm32);
     }
@@ -5488,7 +5506,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorq  }<i>disp32</i>, <i>destination</i>, <i>imm32</i>
      * Example disassembly syntax: {@code xorq      [rbx + 305419896], 0x12345678}
      */
-    // Template#: 605, Serial#: 525
+    // Template#: 607, Serial#: 525
     public void xorq(int disp32, AMD64IndirectRegister64 destination, int imm32) {
         assemble0026((byte) 0x81, (byte) 0x06, disp32, destination, imm32);
     }
@@ -5497,7 +5515,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorpd  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xorpd     xmm0, xmm0}
      */
-    // Template#: 606, Serial#: 3764
+    // Template#: 608, Serial#: 3764
     public void xorpd(AMD64XMMRegister destination, AMD64XMMRegister source) {
         assemble0068((byte) 0x57, destination, source);
     }
@@ -5506,7 +5524,7 @@ public class AMD64AssemblerMethods extends AbstractAMD64Assembler {
      * Pseudo-external assembler syntax: {@code xorps  }<i>destination</i>, <i>source</i>
      * Example disassembly syntax: {@code xorps     xmm0, xmm0}
      */
-    // Template#: 607, Serial#: 3718
+    // Template#: 609, Serial#: 3718
     public void xorps(AMD64XMMRegister destination, AMD64XMMRegister source) {
         assemble0072((byte) 0x57, destination, source);
     }

@@ -74,7 +74,8 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
                 }
             } else if (eirMethod().classMethodActor().isTrapStub()) {
                 // we need to restore the entire register state from the stack before returning.
-                emitSignalHandlerStubEpilogue(asm, framePointer, emitter.frameSize() - AMD64Safepoint.REGISTER_SAVE_SIZE);
+                emitSignalHandlerStubEpilogue(asm, framePointer, eirMethod().frameSize());
+                return;
             }
             if (frameSize != 0) {
                 asm.addq(framePointer, frameSize);
@@ -82,8 +83,9 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
         }
     }
 
-    private void emitSignalHandlerStubEpilogue(final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
+    private void emitSignalHandlerStubEpilogue(final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int frameSize) {
         // restore all the general purpose registers
+        final int originalFrameSize = frameSize - AMD64Safepoint.REGISTER_SAVE_SIZE_WITHOUT_RIP;
         int offset = originalFrameSize;
         for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
             // all registers are the same as when the trap occurred (except the frame pointer)
@@ -95,6 +97,9 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
             asm.movdq(register, offset, framePointer.indirect());
             offset += 2 * Word.size();
         }
+        // now pop the flags register off the stack before returning
+        asm.addq(framePointer, frameSize - Word.size());
+        asm.popfq();
     }
 
     @Override

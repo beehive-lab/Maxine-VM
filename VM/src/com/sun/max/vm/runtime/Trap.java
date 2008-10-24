@@ -169,17 +169,17 @@ public final class Trap {
         // check to see if this fault originated in a runtime stub
         final RuntimeStub runtimeStub = Code.codePointerToRuntimeStub(instructionPointer);
         if (runtimeStub != null) {
-            Debug.err.print("Fault ");
-            Debug.err.print(trap);
-            Debug.err.print(" in runtime stub @ ");
+            Debug.print("Fault ");
+            Debug.print(trap);
+            Debug.print(" in runtime stub @ ");
             return runtimeStub;
         }
 
         // this fault occurred in native code
-        Debug.err.print("Fault ");
-        Debug.err.print(trap);
-        Debug.err.print(" in native code @ ");
-        Debug.err.println(instructionPointer);
+        Debug.print("Fault ");
+        Debug.print(trap);
+        Debug.print(" in native code @ ");
+        Debug.println(instructionPointer);
 
         return null;
     }
@@ -205,10 +205,10 @@ public final class Trap {
         if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread. run the specified procedure
             final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(triggeredVmThreadLocals);
-            final Runnable runnable = UnsafeLoophole.cast(reference.toJava());
+            final Safepoint.Procedure runnable = UnsafeLoophole.cast(reference.toJava());
             if (runnable != null) {
                 // run the procedure and then set the vm thread local to null
-                runnable.run();
+                runnable.run(registerState);
                 // the state of the safepoint latch was TRIGGERED when the trap happened. reset it back to ENABLED.
                 final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
                 safepoint.setSafepointLatch(registerState, enabledVmThreadLocals);
