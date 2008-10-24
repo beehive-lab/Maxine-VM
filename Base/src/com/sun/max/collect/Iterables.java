@@ -53,6 +53,10 @@ public final class Iterables {
     }
 
     public static <Element_Type> Collection<Element_Type> toCollection(final IterableWithLength<Element_Type> iterableWithLength) {
+        if (iterableWithLength instanceof Collection) {
+            final Class<Collection<Element_Type>> type = null;
+            return StaticLoophole.cast(type, iterableWithLength);
+        }
         return new AbstractCollection<Element_Type>() {
             @Override
             public Iterator<Element_Type> iterator() {
@@ -67,6 +71,10 @@ public final class Iterables {
     }
 
     public static <Element_Type> IterableWithLength<Element_Type> toIterableWithLength(final Collection<Element_Type> collection) {
+        if (collection instanceof IterableWithLength) {
+            final Class<IterableWithLength<Element_Type>> type = null;
+            return StaticLoophole.cast(type, collection);
+        }
         return new IterableWithLength<Element_Type>() {
             public Iterator<Element_Type> iterator() {
                 return collection.iterator();

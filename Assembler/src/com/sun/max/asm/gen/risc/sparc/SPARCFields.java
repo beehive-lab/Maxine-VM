@@ -28,7 +28,7 @@ import com.sun.max.lang.*;
 
 /**
  * The fields used in defining the SPARC instruction templates.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Dave Ungar
@@ -162,11 +162,6 @@ public final class SPARCFields {
     }
 
     public static final IgnoredOperandField _const22 = IgnoredOperandField.createDescendingIgnored(21, 0);
-
-    public static final ImmediateOperandField _byte3 = ImmediateOperandField.createDescending(31, 24);
-    public static final ImmediateOperandField _byte2 = ImmediateOperandField.createDescending(23, 16);
-    public static final ImmediateOperandField _byte1 = ImmediateOperandField.createDescending(15, 8);
-    public static final ImmediateOperandField _byte0 = ImmediateOperandField.createDescending(7, 0);
 
     public static final ImmediateOperandField _fcn = ImmediateOperandField.createDescending(29, 25);
 

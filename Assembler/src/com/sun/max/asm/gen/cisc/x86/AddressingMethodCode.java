@@ -21,8 +21,8 @@
 package com.sun.max.asm.gen.cisc.x86;
 
 /**
- * Addressing methods for operands. Refer to "Appendix A.1 Opcode-Syntax Notation"
- * 
+ * Addressing methods for operands. Refer to "Appendix A.1 Opcode-Syntax Notation".
+ *
  * @author Bernd Mathiske
  */
 public enum AddressingMethodCode  {

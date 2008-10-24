@@ -30,8 +30,8 @@ import com.sun.max.vm.*;
 
 /**
  * Operations for sequentially scanning data items in a class file. Any IO exceptions that occur during scanning
- * are converted to {@link ClassFormatError}s. 
- * 
+ * are converted to {@link ClassFormatError}s.
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -226,7 +226,7 @@ public class ClassfileStream {
             _position = _position.plus(2 + utflen);
             return value;
         } catch (Utf8Exception e) {
-            throw classFormatError("Invalid UTF-8 encoded string");
+            throw classFormatError("Invalid UTF-8 encoded string", e);
         } catch (EOFException eofException) {
             throw eofError();
         } catch (IOException ioException) {

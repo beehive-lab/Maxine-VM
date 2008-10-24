@@ -22,11 +22,12 @@ package com.sun.max.asm.dis.ppc;
 
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.risc.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.ppc.*;
 import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -37,4 +38,8 @@ public abstract class PPCDisassembler<DisassembledInstruction_Type extends Disas
         super(assembly, addressWidth, Endianness.BIG);
     }
 
+    @Override
+    protected PPCTemplate createInlineDataTemplate(InstructionDescription instructionDescription) {
+        return new PPCTemplate(instructionDescription);
+    }
 }

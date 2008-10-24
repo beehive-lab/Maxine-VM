@@ -20,10 +20,14 @@
  */
 package com.sun.max.asm.dis.x86;
 
+import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
+import static com.sun.max.util.HexByte.*;
+
 import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
@@ -36,14 +40,14 @@ import com.sun.max.util.*;
 
 /**
  * A disassembler for x86 instructions.
- * 
+ *
  * @see Disassembler
  * @see X86DisassembledInstruction
  *
  * @author Bernd Mathiske
  * @author David Liu
  */
-public abstract class X86Disassembler<Template_Type extends X86Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>>
+public abstract class X86Disassembler<Template_Type extends X86Template, DisassembledInstruction_Type extends X86DisassembledInstruction<Template_Type>>
                           extends Disassembler<Template_Type, DisassembledInstruction_Type> {
 
     protected X86Disassembler(Assembly<Template_Type> assembly, WordWidth addressWidth) {
@@ -313,8 +317,12 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
         }
         if (INLINE_INVALID_INSTRUCTIONS_AS_BYTES) {
             stream.reset();
-            final DisassembledInstruction_Type disassembledInstruction = createDisassembledInlineBytesInstruction(_currentPosition, new byte[]{(byte) stream.read()});
-            _currentPosition++;
+            final int size = 1;
+            final byte[] data = new byte[size];
+            Streams.readFully(stream, data);
+            final InlineData inlineData = new InlineData(_currentPosition, data);
+            final DisassembledInstruction_Type disassembledInstruction = createDisassembledInlineDataInstructions(inlineData).iterator().next();
+            _currentPosition += size;
             return disassembledInstruction;
         }
         throw new AssemblyException("unknown instruction");
@@ -326,76 +334,53 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
     @Override
     public IndexedSequence<DisassembledInstruction_Type> scanOneInstruction(BufferedInputStream stream) throws IOException, AssemblyException {
         final AppendableIndexedSequence<DisassembledInstruction_Type> disassembledInstructions = new ArrayListSequence<DisassembledInstruction_Type>();
-
-        if (!_scanStarted) {
-            notifyScanStarted();
-            _scanStarted = true;
-        }
-
         stream.mark(MORE_THAN_ANY_INSTRUCTION_LENGTH);
-        final DisassembledInstruction_Type overrideDisassembledInstruction = notifyOverrideDisassembly(_currentPosition, stream);
-        if (overrideDisassembledInstruction != null) {
-            _currentPosition = overrideDisassembledInstruction.endPosition();
-            disassembledInstructions.append(overrideDisassembledInstruction);
-        } else {
-            final X86InstructionHeader header = scanInstructionHeader(stream);
-            if (header == null) {
-                throw new AssemblyException("unknown instruction");
-            }
-            disassembledInstructions.append(scanInstruction(stream, header));
+        final X86InstructionHeader header = scanInstructionHeader(stream);
+        if (header == null) {
+            throw new AssemblyException("unknown instruction");
         }
-        notifyInstructionDisassembled(disassembledInstructions.first());
-        _scanStarted = false;
+        disassembledInstructions.append(scanInstruction(stream, header));
         return disassembledInstructions;
     }
 
     @Override
     public IndexedSequence<DisassembledInstruction_Type> scan(BufferedInputStream stream) throws IOException, AssemblyException {
-        final SortedSet<Integer> knownGoodCodeLocations = new TreeSet<Integer>();
+        final SortedSet<Integer> knownGoodCodePositions = new TreeSet<Integer>();
         final AppendableIndexedSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>();
         boolean processingKnownValidCode = true;
 
-        final SeekableByteArrayOutputStream decodedDataBuffer = new SeekableByteArrayOutputStream();
-
-        notifyScanStarted();
         while (true) {
-            while (knownGoodCodeLocations.size() > 0 && knownGoodCodeLocations.first().intValue() < _currentPosition) {
-                knownGoodCodeLocations.remove(knownGoodCodeLocations.first());
+            while (knownGoodCodePositions.size() > 0 && knownGoodCodePositions.first().intValue() < _currentPosition) {
+                knownGoodCodePositions.remove(knownGoodCodePositions.first());
             }
 
-            if (inlineDataDecoder() != null) {
-                int decodedDataSize;
-                while ((decodedDataSize = inlineDataDecoder().decodeData(_currentPosition, stream, decodedDataBuffer)) != 0) {
-                    final DisassembledInstruction_Type inlineBytesInstruction = createDisassembledInlineBytesInstruction(_currentPosition, decodedDataBuffer.toByteArray());
-                    decodedDataBuffer.reset();
-                    _currentPosition += decodedDataSize;
-                    result.append(inlineBytesInstruction);
-                }
-            }
+            scanInlineData(stream, result);
 
             stream.mark(MORE_THAN_ANY_INSTRUCTION_LENGTH);
-            DisassembledInstruction_Type disassembledInstruction = notifyOverrideDisassembly(_currentPosition, stream);
-            if (disassembledInstruction != null) {
-                _currentPosition = disassembledInstruction.endPosition();
-            } else {
-                final X86InstructionHeader header = scanInstructionHeader(stream);
-                if (header == null) {
-                    return result;
-                }
-                disassembledInstruction = scanInstruction(stream, header);
-            }
-            notifyInstructionDisassembled(disassembledInstruction);
 
-            if (knownGoodCodeLocations.size() > 0) {
-                if (knownGoodCodeLocations.first().intValue() > disassembledInstruction.startPosition() && knownGoodCodeLocations.first().intValue() < disassembledInstruction.endPosition()) {
+            final X86InstructionHeader header = scanInstructionHeader(stream);
+            if (header == null) {
+                return result;
+            }
+            final DisassembledInstruction_Type disassembledInstruction = scanInstruction(stream, header);
+
+            if (knownGoodCodePositions.size() > 0) {
+                final int firstKnownGoodCodePosition = knownGoodCodePositions.first().intValue();
+                final int startPosition = disassembledInstruction.startPosition();
+                if (firstKnownGoodCodePosition > startPosition && firstKnownGoodCodePosition < disassembledInstruction.endPosition()) {
                     // there is a known valid code location in the middle of this instruction - assume that it is an invalid instruction
                     stream.reset();
-                    _currentPosition = disassembledInstruction.startPosition();
-                    disassembledInstruction = createDisassembledInlineBytesInstruction(_currentPosition, new byte[]{(byte) stream.read()});
-                    _currentPosition++;
+                    final int size = firstKnownGoodCodePosition - startPosition;
+                    final byte[] data = new byte[size];
+                    Streams.readFully(stream, data);
+                    final InlineData inlineData = new InlineData(startPosition, data);
+                    _currentPosition += processInlineData(result, inlineData);
                     processingKnownValidCode = true;
-                } else if (knownGoodCodeLocations.first().intValue() == disassembledInstruction.startPosition()) {
-                    processingKnownValidCode = true;
+                } else {
+                    result.append(disassembledInstruction);
+                    if (firstKnownGoodCodePosition == startPosition) {
+                        processingKnownValidCode = true;
+                    }
                 }
             } else {
                 if (processingKnownValidCode && isRelativeJumpForward(disassembledInstruction)) {
@@ -406,65 +391,12 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                         assert disassembledInstruction.arguments().first() instanceof Immediate8Argument;
                         jumpOffset = ((Immediate8Argument) disassembledInstruction.arguments().first()).value();
                     }
-                    final int codeLocation = disassembledInstruction.endPosition() + jumpOffset;
-                    knownGoodCodeLocations.add(codeLocation);
+                    final int targetPosition = disassembledInstruction.endPosition() + jumpOffset;
+                    knownGoodCodePositions.add(targetPosition);
                     processingKnownValidCode = false;
                 }
+                result.append(disassembledInstruction);
             }
-            result.append(disassembledInstruction);
-        }
-    }
-
-    public IndexedSequence<DisassembledInstruction_Type> scan0(BufferedInputStream stream) throws IOException, AssemblyException {
-        final SortedSet<Integer> knownGoodCodeLocations = new TreeSet<Integer>();
-        final AppendableIndexedSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>();
-        boolean processingKnownValidCode = true;
-
-        notifyScanStarted();
-        while (true) {
-            while (knownGoodCodeLocations.size() > 0 && knownGoodCodeLocations.first().intValue() < _currentPosition) {
-                knownGoodCodeLocations.remove(knownGoodCodeLocations.first());
-            }
-
-            stream.mark(MORE_THAN_ANY_INSTRUCTION_LENGTH);
-            DisassembledInstruction_Type disassembledInstruction = notifyOverrideDisassembly(_currentPosition, stream);
-            if (disassembledInstruction != null) {
-                _currentPosition = disassembledInstruction.endPosition();
-            } else {
-                final X86InstructionHeader header = scanInstructionHeader(stream);
-                if (header == null) {
-                    return result;
-                }
-                disassembledInstruction = scanInstruction(stream, header);
-            }
-            notifyInstructionDisassembled(disassembledInstruction);
-
-            if (knownGoodCodeLocations.size() > 0) {
-                if (knownGoodCodeLocations.first().intValue() > disassembledInstruction.startPosition() && knownGoodCodeLocations.first().intValue() < disassembledInstruction.endPosition()) {
-                    // there is a known valid code location in the middle of this instruction - assume that it is an invalid instruction
-                    stream.reset();
-                    _currentPosition = disassembledInstruction.startPosition();
-                    disassembledInstruction = createDisassembledInlineBytesInstruction(_currentPosition, new byte[]{(byte) stream.read()});
-                    _currentPosition++;
-                    processingKnownValidCode = true;
-                } else if (knownGoodCodeLocations.first().intValue() == disassembledInstruction.startPosition()) {
-                    processingKnownValidCode = true;
-                }
-            } else {
-                if (processingKnownValidCode && isRelativeJumpForward(disassembledInstruction)) {
-                    int jumpOffset;
-                    if (disassembledInstruction.arguments().first() instanceof Immediate32Argument) {
-                        jumpOffset = ((Immediate32Argument) disassembledInstruction.arguments().first()).value();
-                    } else {
-                        assert disassembledInstruction.arguments().first() instanceof Immediate8Argument;
-                        jumpOffset = ((Immediate8Argument) disassembledInstruction.arguments().first()).value();
-                    }
-                    final int codeLocation = disassembledInstruction.endPosition() + jumpOffset;
-                    knownGoodCodeLocations.add(codeLocation);
-                    processingKnownValidCode = false;
-                }
-            }
-            result.append(disassembledInstruction);
         }
     }
 
@@ -477,29 +409,92 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
             ((Immediate8Argument) instruction.arguments().first()).value() >= 0)); // forward in the code stream
     }
 
-    private boolean _scanStarted = false;
+    protected abstract Template_Type createInlineDataTemplate(Object[] specification);
 
-    protected List<X86DisassembledInstructionScanner<Template_Type, DisassembledInstruction_Type>> _instructionScanners = new ArrayList<X86DisassembledInstructionScanner<Template_Type, DisassembledInstruction_Type>>();
+    @Override
+    protected IterableWithLength<DisassembledInstruction_Type> createDisassembledInlineDataInstructions(InlineData inlineData) {
+        final InlineDataDescriptor descriptor = inlineData.descriptor();
+        switch (descriptor.tag()) {
+            case BYTE_DATA: {
+                // Create the template:
+                final int size = inlineData.size();
+                final Object[] specification = {_00, size == 1 ? ".BYTE" : ".BYTES" + size, Ib};
+                final Template_Type template = createInlineDataTemplate(specification);
+                X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, template.instructionDescription());
 
-    private void notifyScanStarted() {
-        for (X86DisassembledInstructionScanner<Template_Type, DisassembledInstruction_Type> scanner : _instructionScanners) {
-            scanner.disassemblyStarted();
-        }
-    }
+                // Now create the disassembled instruction:
+                final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
+                for (byte dataByte : inlineData.data()) {
+                    arguments.append(new Immediate8Argument(dataByte));
+                }
+                final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(descriptor.startPosition(), inlineData.data(), template, arguments);
+                return Iterables.toIterableWithLength(Collections.singleton(disassembledInstruction));
+            }
+            case JUMP_TABLE32: {
+                // Create the template:
+                final Object[] specification = new Object[] {_00, ".SWITCH_CASE32", Iw, Jv};
+                final X86TemplateContext context = new X86TemplateContext();
+                context.setOperandSizeAttribute(WordWidth.BITS_32);
+                final Template_Type template = createInlineDataTemplate(specification);
+                X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, template.instructionDescription().setDefaultOperandSize(WordWidth.BITS_32));
 
-    private DisassembledInstruction_Type notifyOverrideDisassembly(int currentPosition, BufferedInputStream stream) throws IOException {
-        for (X86DisassembledInstructionScanner<Template_Type, DisassembledInstruction_Type> scanner : _instructionScanners) {
-            final DisassembledInstruction_Type override = scanner.overrideDisassembly(currentPosition, stream);
-            if (override != null) {
-                return override;
+                // Now create the disassembled instruction:
+                final JumpTable32 jumpTable32 = (JumpTable32) descriptor;
+                final AppendableSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>(jumpTable32.numberOfEntries());
+                int caseValue = jumpTable32.low();
+                final InputStream stream = new ByteArrayInputStream(inlineData.data());
+                int casePosition = descriptor.startPosition();
+                for (int i = 0; i < jumpTable32.numberOfEntries(); i++) {
+                    try {
+                        final int caseOffset = Endianness.LITTLE.readInt(stream);
+                        final byte[] caseOffsetBytes = Endianness.LITTLE.toBytes(caseOffset);
+                        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
+                        arguments.append(new Immediate32Argument(caseValue));
+                        arguments.append(new Immediate32Argument(descriptor.startPosition() + caseOffset - casePosition - 4));
+                        final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(casePosition, caseOffsetBytes, template, arguments);
+                        result.append(disassembledInstruction);
+                        casePosition += 4;
+                        caseValue++;
+                    } catch (IOException ioException) {
+                        throw ProgramError.unexpected(ioException);
+                    }
+                }
+                assert casePosition == descriptor.endPosition();
+                return result;
+            }
+            case LOOKUP_TABLE32: {
+                // Create the template:
+                final Object[] specification = new Object[] {_00, ".LOOKUP_CASE32", Iw, Jv};
+                final X86TemplateContext context = new X86TemplateContext();
+                context.setOperandSizeAttribute(WordWidth.BITS_32);
+                final Template_Type template = createInlineDataTemplate(specification);
+                X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, template.instructionDescription().setDefaultOperandSize(WordWidth.BITS_32));
+
+                // Now create the disassembled instruction:
+                final LookupTable32 lookupTable32 = (LookupTable32) descriptor;
+                final AppendableSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>(lookupTable32.numberOfEntries());
+                final InputStream stream = new ByteArrayInputStream(inlineData.data());
+                int casePosition = descriptor.startPosition();
+                for (int i = 0; i < lookupTable32.numberOfEntries(); i++) {
+                    try {
+                        final int caseValue = Endianness.LITTLE.readInt(stream);
+                        final int caseOffset = Endianness.LITTLE.readInt(stream);
+                        final byte[] caseOffsetBytes = Endianness.LITTLE.toBytes(caseOffset);
+                        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
+                        arguments.append(new Immediate32Argument(caseValue));
+                        arguments.append(new Immediate32Argument(descriptor.startPosition() + caseOffset - casePosition - 8));
+                        final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(casePosition, caseOffsetBytes, template, arguments);
+                        result.append(disassembledInstruction);
+                        casePosition += 8;
+                    } catch (IOException ioException) {
+                        throw ProgramError.unexpected(ioException);
+                    }
+                }
+                assert casePosition == descriptor.endPosition();
+                return result;
             }
         }
-        return null;
-    }
-
-    private void notifyInstructionDisassembled(DisassembledInstruction_Type disassembledInstruction) {
-        for (X86DisassembledInstructionScanner<Template_Type, DisassembledInstruction_Type> scanner : _instructionScanners) {
-            scanner.instructionDisassembled(disassembledInstruction);
-        }
+        throw ProgramError.unknownCase(descriptor.tag().toString());
     }
 }
+

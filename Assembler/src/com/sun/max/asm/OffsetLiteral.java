@@ -22,14 +22,14 @@ package com.sun.max.asm;
 
 /**
  * Represents an offset between two positions (represented by given labels) in the assembled code.
- * 
+ *
  * @author Doug Simon
  */
 public class OffsetLiteral extends MutableAssembledObject {
 
     /**
      * Creates an offset between two positions (represented by given labels) in the assembled code.
-     * 
+     *
      * @param base the label whose position marks the base of the offset
      * @param target the label whose position marks the target of the offset
      */
@@ -46,7 +46,7 @@ public class OffsetLiteral extends MutableAssembledObject {
     @Override
     protected final void assemble() throws AssemblyException {
         final Assembler assembler = assembler();
-        final long offset = _target.position() - _base.position();
+        final long offset = offset();
         // select the correct assembler function to emit the offset.
         // The assembler knows the endianness to use
         switch(size()) {
@@ -65,6 +65,10 @@ public class OffsetLiteral extends MutableAssembledObject {
             default:
                 throw new AssemblyException("Invalid size for offset literal");
         }
+    }
+
+    public final long offset() throws AssemblyException {
+        return _target.position() - _base.position();
     }
 
     public final Type type() {

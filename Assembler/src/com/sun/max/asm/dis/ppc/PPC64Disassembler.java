@@ -21,14 +21,13 @@
 package com.sun.max.asm.dis.ppc;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.ppc.*;
 import com.sun.max.asm.ppc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -49,15 +48,6 @@ public class PPC64Disassembler extends PPCDisassembler<PPC64DisassembledInstruct
     @Override
     protected PPC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
         return new PPC64DisassembledInstruction(_startAddress, position, bytes, template, arguments);
-    }
-
-    @Override
-    protected PPC64DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new PPC64DisassembledInstruction(_startAddress, position, bytes, PPCAssembly.ASSEMBLY.inlineByteTemplate(), arguments);
     }
 
     @Override

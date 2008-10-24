@@ -75,7 +75,7 @@ public abstract class Assembler {
     /**
      * A facility for including output during assembly that may not necessarily be decoded interpreted as
      * {@linkplain Type#CODE code}.
-     * 
+     *
      * @author David Liu
      * @author Doug Simon
      */
@@ -83,7 +83,7 @@ public abstract class Assembler {
         /**
          * Inserts as many {@linkplain #padByte() pad byte} as necessary to ensure that the next assembled object starts
          * at an address aligned by a given number.
-         * 
+         *
          * @param alignment
          *                the next assembled object is guaranteed to start at the next highest address starting at the
          *                current address that is divisible by this value. Note that this computed address will be the
@@ -153,10 +153,10 @@ public abstract class Assembler {
          * Inlines the absolute address of a position (represented by a given label) in the assembled code.
          * The absolute address is calculated as {@code baseAddress() + label.position()}. The size
          * of the inlined address is determined by {@link Assembler#wordWidth()}.
-         * 
+         *
          * @param label the label whose absolute address is to be inlined
          */
-        public void inlineAddress(Label label) {
+        public AddressLiteral inlineAddress(Label label) {
             final int startPosition = currentPosition();
             // Emit placeholder bytes
             final WordWidth width = wordWidth();
@@ -165,22 +165,24 @@ public abstract class Assembler {
             }
             final AddressLiteral addressLiteral = new AddressLiteral(Assembler.this, startPosition, currentPosition(), label);
             assert addressLiteral.size() == width.numberOfBytes();
+            return addressLiteral;
         }
 
         /**
          * Inlines the offset between two positions (represented by given labels) in the assembled code.
-         * 
+         *
          * @param base the label whose position marks the base of the offset
          * @param target the label whose position marks the target of the offset
          * @param width the fixed size to be used for the offset
          */
-        public void inlineOffset(Label target, Label base, WordWidth width) {
+        public OffsetLiteral inlineOffset(Label target, Label base, WordWidth width) {
             final int startPosition = currentPosition();
             for (int i = 0; i < width.numberOfBytes(); i++) {
                 emitByte((byte) 0);
             }
             final OffsetLiteral offsetLiteral = new OffsetLiteral(Assembler.this, startPosition, currentPosition(), target, base);
             assert offsetLiteral.size() == width.numberOfBytes();
+            return offsetLiteral;
         }
     }
 
@@ -234,10 +236,10 @@ public abstract class Assembler {
      * Binds a given label to the current position in the assembler's instruction stream. The assembler may update the
      * label's position if any emitted instructions change lengths, so that this label keeps addressing the same logical
      * position.
-     * 
+     *
      * @param label
      *                the label that is to be bound to the current position
-     * 
+     *
      * @see Label#fix32
      */
     public final void bindLabel(Label label) {
@@ -371,7 +373,7 @@ public abstract class Assembler {
             int initialOffset = 0;
             for (AssembledObject assembledObject : _assembledObjects) {
                 if (inlineDataRecorder != null && assembledObject.type() == Type.DATA) {
-                    inlineDataRecorder.record(bytesWritten, assembledObject.size());
+                    inlineDataRecorder.add(new InlineDataDescriptor.ByteData(bytesWritten, assembledObject.size()));
                 }
 
                 if (assembledObject instanceof MutableAssembledObject) {
@@ -419,7 +421,7 @@ public abstract class Assembler {
 
     /**
      * Emits padding to the instruction stream in the form of NOP instructions.
-     * 
+     *
      * @param numberOfBytes
      * @throws AssemblyException if exactly {@code numberOfBytes} cannot be emitted as a sequence of one or more valid NOP instructions
      */
@@ -427,7 +429,7 @@ public abstract class Assembler {
 
     /**
      * Writes the object code assembled so far to a given output stream.
-     * 
+     *
      * @return the number of bytes written {@code outputStream}
      * @throws AssemblyException
      *             if there any problem with binding labels to addresses
@@ -469,7 +471,7 @@ public abstract class Assembler {
 
     /**
      * Returns the object code assembled so far in a byte array.
-     * 
+     *
      * @throws AssemblyException
      *             if there any problem with binding labels to addresses
      */

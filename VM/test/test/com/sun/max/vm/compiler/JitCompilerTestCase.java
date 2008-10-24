@@ -82,7 +82,13 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
 
     @Override
     protected Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return jitTestSetup().disassemblerFor(targetMethod);
+        final Disassembler disassembler = jitTestSetup().disassemblerFor(targetMethod);
+        final byte[] encodedInlineDataDescriptors = targetMethod.encodedInlineDataDescriptors();
+        if (encodedInlineDataDescriptors != null) {
+            final InlineDataDecoder inlineDataDecoder = new InlineDataDecoder(encodedInlineDataDescriptors);
+            disassembler.setInlineDataDecoder(inlineDataDecoder);
+        }
+        return disassembler;
     }
 
     /**

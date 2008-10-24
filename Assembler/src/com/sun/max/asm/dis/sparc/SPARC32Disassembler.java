@@ -21,14 +21,13 @@
 package com.sun.max.asm.dis.sparc;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -52,17 +51,7 @@ public class SPARC32Disassembler extends SPARCDisassembler<SPARC32DisassembledIn
     }
 
     @Override
-    protected SPARC32DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new SPARC32DisassembledInstruction(_startAddress, position, bytes, SPARCAssembly.ASSEMBLY.inlineByteTemplate(), arguments);
-    }
-
-    @Override
     protected Assembler createAssembler(int position) {
         return new SPARC32Assembler(_startAddress + position);
     }
-
 }

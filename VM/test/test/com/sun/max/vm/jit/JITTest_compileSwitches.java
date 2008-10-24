@@ -33,12 +33,43 @@ import com.sun.max.vm.type.*;
  *
  * @author Laurent Daynes
  */
-public class JITTest_compileTableSwitch extends JitCompilerTestCase {
+public class JITTest_compileSwitches extends JitCompilerTestCase {
     int _i0;
     int _i1;
     int _i2;
     int _i3;
     int _i;
+
+    public static int perform_lookupswitch(int a) {
+        int b = a;
+        switch (b) {
+            case 'X':
+                b = 10;
+                break;
+            case -1:
+                b = 20;
+                break;
+            default:
+                b = 30;
+        }
+        return b;
+    }
+
+    public void test_lookupswitch() {
+        final TargetMethod method = compileMethod("perform_lookupswitch", SignatureDescriptor.create(int.class, int.class));
+        new BytecodeConfirmation(method.classMethodActor()) {
+            @Override
+            protected void lookupswitch(int defaultOffset, int numberOfCases) {
+                getBytecodeScanner().skipBytes(numberOfCases * 8);
+                confirmPresence();
+            }
+        };
+    }
+
+    @Override
+    protected Class[] templateSources() {
+        return new Class[]{InstrumentedBytecodeSource.class, UnoptimizedBytecodeTemplateSource.class, ResolvedFieldAccessTemplateSource.class};
+    }
 
     public void perform_tableswitch(int i) {
         switch(i) {
@@ -70,11 +101,4 @@ public class JITTest_compileTableSwitch extends JitCompilerTestCase {
             }
         };
     }
-
-    @Override
-    protected Class[] templateSources() {
-        return new Class[]{InstrumentedBytecodeSource.class, UnoptimizedBytecodeTemplateSource.class, ResolvedFieldAccessTemplateSource.class};
-    }
-
-
 }

@@ -57,12 +57,15 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         junit.textui.TestRunner.run(InliningAndAlignmentTest.class);
     }
 
-    private void disassemble(SPARCDisassembler disassembler, byte[] bytes) throws IOException, AssemblyException {
+    private void disassemble(SPARCDisassembler disassembler, byte[] bytes, InlineDataDecoder inlineDataDecoder) throws IOException, AssemblyException {
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(bytes));
+        if (inlineDataDecoder != null) {
+            disassembler.setInlineDataDecoder(inlineDataDecoder);
+        }
         disassembler.scanAndPrint(stream, System.out);
     }
 
-    private byte[] assembleInlineData(SPARCAssembler asm, long startAddress, int pointerSize) throws IOException, AssemblyException {
+    private byte[] assembleInlineData(SPARCAssembler asm, long startAddress, int pointerSize, InlineDataRecorder recorder) throws IOException, AssemblyException {
         final Directives dir = asm.directives();
         final Label label1 = new Label();
 
@@ -111,7 +114,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         asm.nop();
 
         // retrieve the byte stream output of the assembler and confirm that the inlined data is in the expected format, and are aligned correctly
-        final byte[] asmBytes = asm.toByteArray();
+        final byte[] asmBytes = asm.toByteArray(recorder);
 
         assertTrue(ByteUtils.checkBytes(ByteUtils.toByteArray(byteValue), asmBytes, inlinedByte.position()));
         assertEquals(1, inlinedShort.position() - inlinedByte.position());
@@ -143,8 +146,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         final int startAddress = 0x12345678;
         final SPARC32Assembler assembler = new SPARC32Assembler(startAddress);
         final SPARC32Disassembler disassembler = new SPARC32Disassembler(startAddress);
-        final byte[] bytes = assembleInlineData(assembler, startAddress, 4);
-        disassemble(disassembler, bytes);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleInlineData(assembler, startAddress, 4, recorder);
+        disassemble(disassembler, bytes, InlineDataDecoder.createFrom(recorder));
         System.out.println();
     }
 
@@ -153,12 +157,13 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         final long startAddress = 0x1234567812340000L;
         final SPARC64Assembler assembler = new SPARC64Assembler(startAddress);
         final SPARC64Disassembler disassembler = new SPARC64Disassembler(startAddress);
-        final byte[] bytes = assembleInlineData(assembler, startAddress, 8);
-        disassemble(disassembler, bytes);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleInlineData(assembler, startAddress, 8, recorder);
+        disassemble(disassembler, bytes, InlineDataDecoder.createFrom(recorder));
         System.out.println();
     }
 
-    private byte[] assembleAlignmentPadding(SPARCAssembler asm, long startAddress) throws IOException, AssemblyException {
+    private byte[] assembleAlignmentPadding(SPARCAssembler asm, long startAddress, InlineDataRecorder recorder) throws IOException, AssemblyException {
         // test memory alignment directives from 1 byte to 16 bytes
         final Directives dir = asm.directives();
 
@@ -245,7 +250,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         asm.nop();
 
         // check the memory alignment (and that the memory locations were unaligned before the alignment directives)
-        final byte[] asmCode = asm.toByteArray();
+        final byte[] asmCode = asm.toByteArray(recorder);
 
         assertEquals(1, (startAddress + unalignedLabel2.position()) % 2);
         assertEquals(0, (startAddress + alignedLabel2.position()) % 2);
@@ -275,8 +280,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         final int startAddress = 0x12345678;
         final SPARC32Assembler assembler = new SPARC32Assembler(startAddress);
         final SPARC32Disassembler disassembler = new SPARC32Disassembler(startAddress);
-        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress);
-        disassemble(disassembler, bytes);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress, recorder);
+        disassemble(disassembler, bytes, InlineDataDecoder.createFrom(recorder));
         System.out.println();
     }
 
@@ -285,8 +291,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         final long startAddress = 0x1234567812345678L;
         final SPARC64Assembler assembler = new SPARC64Assembler(startAddress);
         final SPARC64Disassembler disassembler = new SPARC64Disassembler(startAddress);
-        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress);
-        disassemble(disassembler, bytes);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress, recorder);
+        disassemble(disassembler, bytes, InlineDataDecoder.createFrom(recorder));
         System.out.println();
     }
 }

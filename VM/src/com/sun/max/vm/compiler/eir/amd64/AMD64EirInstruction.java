@@ -3668,10 +3668,6 @@ public interface AMD64EirInstruction {
             JMP.emit(emitter, defaultTarget());
         }
 
-        /**
-         * ATTENTION: If you change the generated assembly instructions for the table switch,
-         *            then you MUST also update the {@link com.sun.max.asm.dis.amd64.AMD64SwitchDisassembler}!
-         */
         private void assembleTableSwitch(AMD64EirTargetEmitter emitter) {
             final Directives directives = emitter.assembler().directives();
             final EirOperand[] matches = matches();
@@ -3702,6 +3698,7 @@ public interface AMD64EirInstruction {
 
             directives.align(WordWidth.BITS_32.numberOfBytes());
             emitter.assembler().bindLabel(jumpTable);
+
             for (int i = 0; i < matches.length; i++) {
                 directives.inlineOffset(targetLabels[i], jumpTable, WordWidth.BITS_32);
                 if (i + 1 < matches.length) {
@@ -3713,6 +3710,8 @@ public interface AMD64EirInstruction {
                     }
                 }
             }
+
+            emitter.inlineDataRecorder().add(new InlineDataDescriptor.JumpTable32(jumpTable, minMatchValue(), maxMatchValue()));
         }
 
         private void translateLookupBinarySearch(AMD64EirTargetEmitter emitter, int bottomIndex, int topIndex) {

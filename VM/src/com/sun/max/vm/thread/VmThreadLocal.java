@@ -22,7 +22,6 @@ package com.sun.max.vm.thread;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -238,9 +237,8 @@ public enum VmThreadLocal {
     static {
         NUMBER_OF_INTEGER_REGISTERS = VMConfiguration.target().safepoint().numberOfIntegerRegisters();
         NUMBER_OF_FLOATING_POINT_REGISTERS = VMConfiguration.target().safepoint().numberOfFloatingPointRegisters();
-        THREAD_LOCAL_STORAGE_SIZE = Size.fromInt((REGISTERS.index() + NUMBER_OF_INTEGER_REGISTERS) * Word.size() +
-                            NUMBER_OF_FLOATING_POINT_REGISTERS * Doubles.SIZE);
-        ProgramError.check(REGISTERS.ordinal() == values().length - 1);
+        THREAD_LOCAL_STORAGE_SIZE = Size.fromInt((REGISTERS.index() + NUMBER_OF_INTEGER_REGISTERS + NUMBER_OF_FLOATING_POINT_REGISTERS) * Word.size());
+        ProgramError.check(REGISTERS.index() == values().length - 1);
         ProgramError.check(THREAD_LOCAL_STORAGE_SIZE.aligned().equals(THREAD_LOCAL_STORAGE_SIZE), "THREAD_LOCAL_STORAGE_SIZE is not word-aligned");
 
         final String[] names = new String[THREAD_LOCAL_STORAGE_SIZE.toInt() / Word.size()];

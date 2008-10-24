@@ -36,7 +36,7 @@ import com.sun.max.lang.*;
 
 /**
  * The fields used in defining ARM instruction templates.
- * 
+ *
  * @author Sumeet Panchal
  */
 
@@ -48,10 +48,6 @@ public final class ARMFields {
     public static final SymbolicOperandField<ConditionCode> _cond = SymbolicOperandField.createDescending("cond", ConditionCode.SYMBOLIZER, 31, 28);
     public static final SymbolicOperandField<SBit> _s = SymbolicOperandField.createDescending(SBit.SYMBOLIZER, 20, 20);
 
-    public static final ImmediateOperandField _byte0 = ImmediateOperandField.createDescending(31, 24);
-    public static final ImmediateOperandField _byte1 = ImmediateOperandField.createDescending(23, 16);
-    public static final ImmediateOperandField _byte2 = ImmediateOperandField.createDescending(15, 8);
-    public static final ImmediateOperandField _byte3 = ImmediateOperandField.createDescending(7, 0);
     public static final ImmediateOperandField _bits_27_26 = ImmediateOperandField.createDescending(27, 26);
     public static final ImmediateOperandField _i = ImmediateOperandField.createDescending(25, 25);
     public static final ImmediateOperandField _opcode = ImmediateOperandField.createDescending(24, 21);

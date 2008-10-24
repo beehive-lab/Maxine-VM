@@ -42,15 +42,6 @@ public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembl
     }
 
     @Override
-    protected ARMDisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new ARMDisassembledInstruction(_startAddress, position, bytes, ARMAssembly.ASSEMBLY.inlineByteTemplate(), arguments);
-    }
-
-    @Override
     protected Assembler createAssembler(int position) {
         return new ARMAssembler(_startAddress + position);
     }
@@ -63,5 +54,10 @@ public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembl
     @Override
     protected ARMDisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, ARMTemplate template, IndexedSequence<Argument> arguments) {
         return new ARMDisassembledInstruction(_startAddress, position, bytes, template, arguments);
+    }
+
+    @Override
+    protected ARMTemplate createInlineDataTemplate(InstructionDescription instructionDescription) {
+        return new ARMTemplate(instructionDescription);
     }
 }
