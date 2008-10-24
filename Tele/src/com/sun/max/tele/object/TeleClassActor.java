@@ -35,7 +35,7 @@ import com.sun.max.vm.type.*;
 
 
 /**
- * Canonical surrogate for a  {@link ClassActor} in the Target VM.
+ * Canonical surrogate for a  {@link ClassActor} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -48,7 +48,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     private ClassActor _classActor;
 
     /**
-     * @return Local {@link ClassActor} corresponding the the target VM's {@link ClassActor}.
+     * @return Local {@link ClassActor} corresponding the {@link ClassActor} in the {@link TeleVM}.
      */
     public ClassActor classActor() {
         if (_classActor == null) {
@@ -81,9 +81,9 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogate for the {@link ClassLoader} in the tele VM for this class in the tele VM.
+     * @return surrogate for the {@link ClassLoader} in the {@link TeleVM} for this class in the VM.
      * There is no local counterpart for these; all local surrogate objects are created by one
-     * ClassLoader
+     * ClassLoader.
      */
     public TeleClassLoader getTeleClassLoader() {
         initialize();
@@ -91,7 +91,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return the serial ID of the {@link ClassActor} in the tele VM.
+     * @return the serial ID of the {@link ClassActor} in the {@link TeleVM}.
      */
     public int getId() {
         initialize();
@@ -99,7 +99,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogate for the {@link TypeDescriptor} in the teleVM for this class in the tele VM.
+     * @return surrogate for the {@link TypeDescriptor} in the{@link TeleVM} for this class in the VM.
      */
     public TeleTypeDescriptor getTeleTypeDescriptor() {
         initialize();
@@ -122,7 +122,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogate for the static tuple of the {@link ClassActor} in the target VM.
+     * @return surrogate for the static tuple of the {@link ClassActor} in the {@link TeleVM}.
      */
     public TeleStaticTuple getTeleStaticTuple() {
         final Reference staticTupleReference = teleVM().fields().ClassActor_staticTuple.readReference(reference());
@@ -130,7 +130,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogate for the {@link ClassActor} in the tele VM for the type of the components of
+     * @return surrogate for the {@link ClassActor} in the {@link TeleVM} for the type of the components of
      * this array type, null if not an array type
      */
     public TeleClassActor getTeleComponentClassActor() {
@@ -139,7 +139,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return Reference to the constants in the target VM's constant pool for the class, null if an array type
+     * @return Reference to the constants in the {@link TeleVM}'s constant pool for the class, null if an array type
      */
     public TeleConstantPool getTeleConstantPool() {
         if (classActor().isTupleClassActor()) {
@@ -163,7 +163,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogates for the local (not inherited) static {@link FieldActor}s associated with the class in the tele VM.
+     * @return surrogates for the local (not inherited) static {@link FieldActor}s associated with the class in the {@link TeleVM}.
      */
     public Sequence<TeleFieldActor> getTeleStaticFieldActors() {
         return readTeleStaticFieldActors();
@@ -182,14 +182,14 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogates for the local (not inherited) instance {@link FieldActor}s associated with the class in the tele VM.
+     * @return surrogates for the local (not inherited) instance {@link FieldActor}s associated with the class in the {@link TeleVM}.
      */
     public Sequence<TeleFieldActor> getTeleInstanceFieldActors() {
         return readTeleInstanceFieldActors();
     }
 
     /**
-     * @return surrogates for the local (not inherited) {@link FieldActor}s associated with the class in the tele VM: both static and instance fields.
+     * @return surrogates for the local (not inherited) {@link FieldActor}s associated with the class in the {@link TeleVM}: both static and instance fields.
      */
     public Sequence<TeleFieldActor> getTeleFieldActors() {
         final AppendableSequence<TeleFieldActor> teleFieldActors = new LinkSequence<TeleFieldActor>();
@@ -211,7 +211,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogates for the local (not inherited) {@link InterfaceMethodActor}s associated with the class in the tele VM.
+     * @return surrogates for the local (not inherited) {@link InterfaceMethodActor}s associated with the class in the {@link TeleVM}.
      */
     public Sequence<TeleInterfaceMethodActor> getTeleInterfaceMethodActors() {
         return readTeleInterfaceMethodActors();
@@ -230,7 +230,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogates for the local (not inherited) {@link StaticMethodActor}s associated with the class in the tele VM.
+     * @return surrogates for the local (not inherited) {@link StaticMethodActor}s associated with the class in the {@link TeleVM}.
      */
     public Sequence<TeleStaticMethodActor> getTeleStaticMethodActors() {
         return readTeleStaticMethodActors();
@@ -249,14 +249,14 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogates for the local (not inherited) {@link VirtualMethodActor}s associated with the class in the tele VM.
+     * @return surrogates for the local (not inherited) {@link VirtualMethodActor}s associated with the class in the {@link TeleVM}.
      */
     public Sequence<TeleVirtualMethodActor> getTeleVirtualMethodActors() {
         return readTeleVirtualMethodActors();
     }
 
     /**
-     * @return surrogates for the local (not inherited) {@link ClassMethodActor}s associated with the class in the tele VM: both static and virtual methods.
+     * @return surrogates for the local (not inherited) {@link ClassMethodActor}s associated with the class in the {@link TeleVM}: both static and virtual methods.
      */
     public Sequence<TeleClassMethodActor> getTeleClassMethodActors() {
         final AppendableSequence<TeleClassMethodActor> teleClassMethodActors = new LinkSequence<TeleClassMethodActor>();
@@ -266,7 +266,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     /**
-     * @return surrogates for all of the the local (not inherited) {@link MethodActor}s associated with the class in the tele VM:  static, virtual, and interface methods.
+     * @return surrogates for all of the the local (not inherited) {@link MethodActor}s associated with the class in the {@link TeleVM}:  static, virtual, and interface methods.
      */
     public Sequence<TeleMethodActor> getTeleMethodActors() {
         final AppendableSequence<TeleMethodActor> teleMethodActors = new LinkSequence<TeleMethodActor>();

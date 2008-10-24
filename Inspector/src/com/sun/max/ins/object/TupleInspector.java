@@ -27,8 +27,8 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 
 /**
@@ -96,34 +96,5 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
         }
     }
 
-    @Override
-    public String getTitle() {
-        final String addressPrefix = teleObject().getCurrentOrigin().toHexString();
-        final ClassActor classActor = teleObject().classActorForType();
-        String name = null;
-        String role = teleObject().maxineTerseRole();
-        if (teleObject() instanceof TeleClassActor) {
-            final TeleClassActor teleClassActor = (TeleClassActor) teleObject();
-            name = teleClassActor.classActor().qualifiedName();
-        } else if (teleObject() instanceof TeleMethodActor) {
-            final TeleMethodActor teleMethodActor = (TeleMethodActor) teleObject();
-            name = teleMethodActor.methodActor().name().toString() + "()";
-        } else if (teleObject() instanceof TeleFieldActor) {
-            final TeleFieldActor teleFieldActor = (TeleFieldActor) teleObject();
-            name = teleFieldActor.fieldActor().name().toString();
-        } else if (teleObject() instanceof TeleConstantPool) {
-            final TeleConstantPool teleConstantPool = (TeleConstantPool) teleObject();
-            name = teleConstantPool.getTeleHolder().classActor().simpleName();
-        } else if (teleObject() instanceof TeleStaticTuple) {
-            name = classActor.qualifiedName();
-        } else if (teleObject() instanceof TeleClass) {
-            final TeleClass teleClass = (TeleClass) teleObject();
-            name = teleClass.toJava().getName();
-        } else {
-            name = classActor.simpleName();
-            role = null;
-        }
-        return inspection().nameDisplay().longName(addressPrefix, teleObject(), role, name);
-    }
 
 }

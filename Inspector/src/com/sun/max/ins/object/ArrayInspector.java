@@ -80,11 +80,4 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
         reconstructView();
     }
 
-    @Override
-    public String getTitle() {
-        final String name = _arrayClassActor.simpleName();
-        final int length = _teleArrayObject.getLength();
-        return inspection().nameDisplay().longName(teleObject().getCurrentOrigin().toHexString(), teleObject(), null, name.substring(0, name.length() - 1) + length + "]");
-    }
-
 }

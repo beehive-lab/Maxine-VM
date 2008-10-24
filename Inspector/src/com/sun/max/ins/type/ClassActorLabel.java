@@ -108,7 +108,7 @@ public final class ClassActorLabel extends InspectorLabel {
     }
 
     /**
-     * Fetches local surrogate for the {@link ClassActor} in the tele VM associated with this label,
+     * Fetches local surrogate for the {@link ClassActor} in the {@link TeleVM} associated with this label,
      * or set it to null if the class is not loaded in the inspected virtual machine.
      * @return a tele class actor, or null if the class is not loaded.
      */
@@ -126,14 +126,13 @@ public final class ClassActorLabel extends InspectorLabel {
         }
         final Class javaType = _typeDescriptor.toJava(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
         final TeleClassActor teleClassActor = getTeleClassActorOrNull();
-        String prefix = null;
-        if (teleClassActor == null) {
-            prefix = "<unloaded>";
-            setForeground(style().javaUnresolvedNameColor());
-        }
         setText(javaType.getSimpleName());
-        setToolTipText(inspection().nameDisplay().longName(prefix, teleClassActor, "ClassActor", javaType.getName()));
-        if (getTeleClassActorOrNull() != null) {
+
+        if (teleClassActor == null) {
+            setForeground(style().javaUnresolvedNameColor());
+            setToolTipText("<unloaded>" +  javaType.getName());
+        } else {
+            setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
             addMouseListener(_inspectorMouseClickAdapter);
         }
     }

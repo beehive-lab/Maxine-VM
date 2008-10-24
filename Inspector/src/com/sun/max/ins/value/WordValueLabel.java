@@ -21,7 +21,6 @@
 package com.sun.max.ins.value;
 
 import java.awt.event.*;
-import java.lang.reflect.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -32,8 +31,6 @@ import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.value.*;
 
@@ -198,7 +195,7 @@ public class WordValueLabel extends ValueLabel {
     private TeleObject _teleObject;
 
     /** Non-null if a Class ID. */
-    private ClassActor _classActor;
+    private TeleClassActor _teleClassActor;
 
     /** Non-null if a code pointer. */
     private TeleTargetMethod _teleTargetMethod;
@@ -209,7 +206,7 @@ public class WordValueLabel extends ValueLabel {
     @Override
     public void setValue(Value newValue) {
         _teleObject = null;
-        _classActor = null;
+        _teleClassActor = null;
         _teleTargetMethod = null;
         _teleNativeThread = null;
 
@@ -257,7 +254,7 @@ public class WordValueLabel extends ValueLabel {
                     final Address address = newValue.asWord().asAddress();
                     _teleNativeThread = teleVM().teleProcess().threadContaining(address);
                     if (_teleNativeThread != null) {
-                        _valueKind = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;
+                        _valueKind = _valueMode == ValueMode.REFERENCE ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;
                     } else {
                         if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
                             _valueKind = ValueKind.INVALID_OBJECT_REFERENCE;
@@ -275,7 +272,7 @@ public class WordValueLabel extends ValueLabel {
                             } else if (_valueMode == ValueMode.ITABLE_ENTRY) {
                                 final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(newValue.asWord().asAddress().toInt());
                                 if (teleClassActor != null) {
-                                    _classActor = teleClassActor.classActor();
+                                    _teleClassActor = teleClassActor;
                                     _valueKind = ValueKind.CLASS_ACTOR;
                                 } else {
                                     _valueKind = ValueKind.CLASS_ACTOR_ID;
@@ -289,187 +286,6 @@ public class WordValueLabel extends ValueLabel {
         super.setValue(newValue);
     }
 
-    private final int _maxStringLength = 40;
-
-    /**
-     * Sets the text and tooltip text of this label to an alternate (non-numeric) presentation of a reference to a heap
-     * object in the {@link TeleVM}, if possible.
-     *
-     * @return whether an alternate textual presentation was set.
-     */
-    private boolean setAlternateObjectReferenceText() {
-        if (_teleObject == null) {
-            return false;
-        }
-
-        if (_teleObject instanceof TeleStaticTuple) {
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), classActorForType.simpleName()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), classActorForType.qualifiedName()));
-
-        } else if (_teleObject instanceof TeleArrayObject) {
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            final String name = classActorForType.simpleName();
-            final TeleArrayObject teleArrayObject = (TeleArrayObject) _teleObject;
-            final int length = teleArrayObject.getLength();
-            setText(inspection().nameDisplay().longName(null, _teleObject, null, name.substring(0, name.length() - 1) + length + "]"));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActorForType.name().toString()));
-
-        } else if (_teleObject instanceof TeleHub) {
-            final TeleHub teleHub = (TeleHub) _teleObject;
-            final Class javaType = teleHub.hub().classActor().toJava();
-            setText(inspection().nameDisplay().longName(null, teleHub, teleHub.maxineTerseRole(), javaType.getSimpleName()));
-            if (!(javaType.isPrimitive() || Word.class.isAssignableFrom(javaType))) {
-                setToolTipText(inspection().nameDisplay().longName(null, teleHub, teleHub.maxineRole(), javaType.getName()));
-            }
-        } else if (_teleObject instanceof TeleMethodActor) {
-            final TeleMethodActor teleMethodActor = (TeleMethodActor) _teleObject;
-            final MethodActor methodActor = teleMethodActor.methodActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), methodActor.name().toString() + "()")  + inspection().nameDisplay().methodSubstitutionShortAnnotation(teleMethodActor));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), methodActor.format("%r %n(%p)"))  + inspection().nameDisplay().methodSubstitutionLongAnnotation(teleMethodActor));
-        } else if (_teleObject instanceof TeleFieldActor) {
-            final TeleFieldActor teleFieldActor = (TeleFieldActor) _teleObject;
-            final FieldActor fieldActor = teleFieldActor.fieldActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), fieldActor.name().toString()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), fieldActor.format("%t %n")));
-
-        } else if (_teleObject instanceof TeleClassActor) {
-            final TeleClassActor teleClassActor = (TeleClassActor) _teleObject;
-            final ClassActor classActor = teleClassActor.classActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject,  _teleObject.maxineTerseRole(), classActor.toJava().getSimpleName()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), classActor.name().toString()));
-
-        } else if (_teleObject instanceof TeleString) {
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            final TeleString teleString = (TeleString) _teleObject;
-            final String s = teleString.getString();
-            if (s.length() > _maxStringLength) {
-                setText(inspection().nameDisplay().longName(null, _teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"..."));
-            } else {
-                setText(inspection().nameDisplay().longName(null, _teleObject, null, "\"" + s + "\""));
-            }
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, classActorForType.qualifiedName(), "\"" + s + "\""));
-            if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                setToolTipText(String.class.getName());
-            }
-
-        } else if (_teleObject instanceof TeleUtf8Constant) {
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) _teleObject;
-            final String s = teleUtf8Constant.getString();
-            if (s.length() > _maxStringLength) {
-                setText(inspection().nameDisplay().longName(null, _teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"..."));
-            } else {
-                setText(inspection().nameDisplay().longName(null, _teleObject, null, "\"" + s + "\""));
-            }
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, classActorForType.qualifiedName(), "\"" + s + "\""));
-            if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                setToolTipText(String.class.getName());
-            }
-
-        } else if (_teleObject instanceof TeleStringConstant) {
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            final TeleStringConstant teleStringConstant = (TeleStringConstant) _teleObject;
-            final String s = teleStringConstant.getString();
-            if (s.length() > _maxStringLength) {
-                setText(inspection().nameDisplay().longName(null, _teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"..."));
-            } else {
-                setText(inspection().nameDisplay().longName(null, _teleObject, null, "\"" + s + "\""));
-            }
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, classActorForType.qualifiedName(), "\"" + s + "\""));
-            if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                setToolTipText(String.class.getName());
-            }
-
-        } else if  (_teleObject instanceof TeleClass) {
-            final TeleClass teleClass = (TeleClass) _teleObject;
-            final Class mirrorJavaClass = teleClass.toJava();
-            setText(inspection().nameDisplay().longName(null, _teleObject,  _teleObject.maxineTerseRole(), mirrorJavaClass.getSimpleName() + ".class"));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), mirrorJavaClass.getName() + ".class"));
-
-        } else if (_teleObject instanceof TeleConstructor) {
-            final TeleConstructor teleConstructor = (TeleConstructor) _teleObject;
-            final Constructor mirrorJavaConstructor = teleConstructor.toJava();
-            if (mirrorJavaConstructor != null) {
-                setText(inspection().nameDisplay().longName(null, _teleObject,  _teleObject.maxineTerseRole(), mirrorJavaConstructor.getName() + "()"));
-                setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), mirrorJavaConstructor.toString()));
-            }
-
-        } else if (_teleObject instanceof TeleField) {
-            final TeleField teleField = (TeleField) _teleObject;
-            final Field mirrorJavaField = teleField.toJava();
-            if (mirrorJavaField != null) {
-                setText(inspection().nameDisplay().longName(null, _teleObject,  _teleObject.maxineTerseRole(), mirrorJavaField.getName()));
-                setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), mirrorJavaField.toString()));
-            }
-
-        } else if (_teleObject instanceof TeleMethod) {
-            final TeleMethod teleMethod = (TeleMethod) _teleObject;
-            final Method mirrorJavaMethod = teleMethod.toJava();
-            if (mirrorJavaMethod != null) {
-                setText(inspection().nameDisplay().longName(null, _teleObject,  _teleObject.maxineTerseRole(), mirrorJavaMethod.getName() + "()"));
-                setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), mirrorJavaMethod.toString()));
-            }
-
-        } else if (_teleObject instanceof TeleEnum) {
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            final TeleEnum teleEnum = (TeleEnum) _teleObject;
-            final String name = teleEnum.toJava().name();
-            setText(inspection().nameDisplay().longName(null, _teleObject, null, classActorForType.toJava().getSimpleName() + "." + name));
-            final int ordinal = teleEnum.toJava().ordinal();
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActorForType.qualifiedName() + "." + name + " ordinal=" + ordinal));
-
-        } else if (_teleObject instanceof TeleConstantPool) {
-            final TeleConstantPool teleConstantPool = (TeleConstantPool) _teleObject;
-            final ClassActor classActor = teleConstantPool.getTeleHolder().classActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), classActor.toJava().getSimpleName()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), classActor.name().toString()));
-
-        } else if (_teleObject instanceof TeleClassConstant.Resolved) {
-            final TeleClassConstant.Resolved teleResolvedClassConstant = (TeleClassConstant.Resolved) _teleObject;
-            final TeleClassActor teleClassActor = teleResolvedClassConstant.getTeleClassActor();
-            final ClassActor classActor = teleClassActor.classActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject,  _teleObject.maxineTerseRole(), classActor.toJava().getSimpleName()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), classActor.name().toString()));
-
-        } else if (_teleObject instanceof TeleFieldRefConstant.Resolved) {
-            final TeleFieldRefConstant.Resolved teleResolvedFieldRefConstant = (TeleFieldRefConstant.Resolved) _teleObject;
-            final TeleFieldActor teleFieldActor = teleResolvedFieldRefConstant.getTeleFieldActor();
-            final FieldActor fieldActor = teleFieldActor.fieldActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), fieldActor.name().toString()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), fieldActor.format("%T %n")));
-
-        } else if (_teleObject instanceof TeleClassMethodRefConstant.Resolved) {
-            final TeleClassMethodRefConstant.Resolved teleResolvedClassMethodRefConstant = (TeleClassMethodRefConstant.Resolved) _teleObject;
-            final TeleClassMethodActor teleClassMethodActor = teleResolvedClassMethodRefConstant.getTeleClassMethodActor();
-            final MethodActor methodActor = teleClassMethodActor.methodActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), methodActor.name().toString()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), methodActor.format("%r %n(%p)")));
-
-        } else if (_teleObject instanceof TeleInterfaceMethodRefConstant.Resolved) {
-            final TeleInterfaceMethodRefConstant.Resolved teleResolvedInterfaceMethodRefConstant = (TeleInterfaceMethodRefConstant.Resolved) _teleObject;
-            final TeleInterfaceMethodActor teleInterfaceMethodActor = teleResolvedInterfaceMethodRefConstant.getTeleInterfaceMethodActor();
-            final MethodActor methodActor = teleInterfaceMethodActor.methodActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), methodActor.name().toString()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), methodActor.format("%r %n(%p)")));
-
-        } else if (_teleObject instanceof TelePoolConstant) {
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            setText(inspection().nameDisplay().longName(null, _teleObject, null, classActorForType.simpleName()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, "PoolConstant: " + classActorForType.qualifiedName()));
-        } else {
-            // All the rest are tuples without specific surrogates
-            final ClassActor classActorForType = _teleObject.classActorForType();
-            if (classActorForType != null) {
-                // Instance of an object about which we have nothing special to say
-                setText(inspection().nameDisplay().longName(null, _teleObject, null, classActorForType.simpleName()));
-                setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActorForType.name().toString()));
-            } else {
-                return false;
-            }
-        }
-        return true;
-    }
 
     public void redisplay() {
         setValue(value());
@@ -527,17 +343,19 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordValidObjectReferenceDataColor());
                 setText(hexString);
-                final ClassActor classActor = _teleObject.classActorForType();
                 if (_valueMode == ValueMode.LITERAL_REFERENCE) {
-                    setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActor == null ? "unknown" : classActor.name().toString() + _toolTipSuffix));
-                } else if (classActor != null) {
-                    setToolTipText(inspection().nameDisplay().longName(null, _teleObject, null, classActor.name().toString()));
+                    setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleObject) + _toolTipSuffix);
+                } else {
+                    setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleObject));
                 }
                 break;
             }
             case OBJECT_REFERENCE_TEXT: {
                 try {
-                    if (setAlternateObjectReferenceText()) {
+                    final String labelText = inspection().nameDisplay().referenceLabelText(_teleObject);
+                    if (labelText != null) {
+                        setText(labelText);
+                        setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleObject));
                         setFont(style().wordAlternateTextFont());
                         setForeground(style().wordValidObjectReferenceDataColor());
                         if (_valueMode == ValueMode.LITERAL_REFERENCE) {
@@ -612,18 +430,18 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(style().wordDataColor());
                 setText(Integer.toString(value.asWord().asAddress().toInt()));
-                if (_classActor != null) {
-                    setToolTipText(inspection().nameDisplay().longName(null, null, "Class", _classActor.name().toString()));
+                if (_teleClassActor != null) {
+                    setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleClassActor));
                 } else {
-                    setToolTipText(inspection().nameDisplay().longName(null, null, "Class", "???"));
+                    setToolTipText("Class{???}");
                 }
                 break;
             }
             case CLASS_ACTOR: {
                 setFont(style().javaClassNameFont());
                 setForeground(style().javaNameColor());
-                setText(_classActor.simpleName());
-                setToolTipText(inspection().nameDisplay().longName(null, null, "Class", _classActor.name().toString()));
+                setText(_teleClassActor.classActor().simpleName());
+                setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleClassActor));
                 break;
             }
             case CALL_RETURN_POINT: {
@@ -655,7 +473,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordFlagsFont());
                 setForeground(style().wordDataColor());
                 setText(TeleStateRegisters.flagsToString(teleVM(), value.toLong()));
-                setToolTipText(inspection().nameDisplay().longName(null, null, "Flags", "0x" + hexString));
+                setToolTipText("Flags 0x" + hexString);
                 break;
             }
             case DECIMAL: {
@@ -765,7 +583,7 @@ public class WordValueLabel extends ValueLabel {
                 break;
             }
             case CLASS_ACTOR_ID: {
-                if (_classActor != null) {
+                if (_teleClassActor != null) {
                     alternateValueKind = ValueKind.CLASS_ACTOR;
                 }
                 break;
@@ -1032,4 +850,6 @@ public class WordValueLabel extends ValueLabel {
         public void redisplay() {
         }
     }
+
+
 }

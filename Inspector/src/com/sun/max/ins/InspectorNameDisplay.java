@@ -20,6 +20,9 @@
  */
 package com.sun.max.ins;
 
+import java.lang.reflect.*;
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -27,6 +30,7 @@ import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 
@@ -41,6 +45,29 @@ public final class InspectorNameDisplay extends InspectionHolder {
 
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);
+
+        _referenceRenderers.put(TeleArrayObject.class, new ArrayReferenceRenderer());
+        _referenceRenderers.put(TeleHub.class, new HubReferenceRenderer());
+        _referenceRenderers.put(TeleTupleObject.class, new TupleObjectReferenceRenderer());
+        _referenceRenderers.put(TeleStaticTuple.class, new StaticTupleReferenceRenderer());
+        _referenceRenderers.put(TeleMethodActor.class, new MethodActorReferenceRenderer());
+        _referenceRenderers.put(TeleFieldActor.class, new FieldActorReferenceRenderer());
+        _referenceRenderers.put(TeleClassActor.class, new ClassActorReferenceRenderer());
+        _referenceRenderers.put(TeleString.class, new StringReferenceRenderer());
+        _referenceRenderers.put(TeleUtf8Constant.class, new Utf8ConstantReferenceRenderer());
+        _referenceRenderers.put(TeleStringConstant.class, new StringConstantReferenceRenderer());
+        _referenceRenderers.put(TeleClass.class, new ClassReferenceRenderer());
+        _referenceRenderers.put(TeleConstructor.class, new ConstructorReferenceRenderer());
+        _referenceRenderers.put(TeleField.class, new FieldReferenceRenderer());
+        _referenceRenderers.put(TeleMethod.class, new MethodReferenceRenderer());
+        _referenceRenderers.put(TeleEnum.class, new EnumReferenceRenderer());
+        _referenceRenderers.put(TeleConstantPool.class, new ConstantPoolReferenceRenderer());
+        _referenceRenderers.put(TeleClassConstant.Resolved.class, new ClassConstantResolvedReferenceRenderer());
+        _referenceRenderers.put(TeleFieldRefConstant.Resolved.class, new FieldRefConstantResolvedReferenceRenderer());
+        _referenceRenderers.put(TeleClassMethodRefConstant.Resolved.class, new ClassMethodRefConstantResolvedReferenceRenderer());
+        _referenceRenderers.put(TeleInterfaceMethodRefConstant.Resolved.class, new InterfaceMethodRefConstantResolvedReferenceRenderer());
+        _referenceRenderers.put(TelePoolConstant.class, new PoolConstantReferenceRenderer());
+        _referenceRenderers.put(TeleVmThread.class, new VmThreadReferenceRenderer());
     }
 
     /**
@@ -65,7 +92,7 @@ public final class InspectorNameDisplay extends InspectionHolder {
     }
 
     /**
-     * A standardized way to identify a heap object in the tele VM.
+     * Support for a standardized way to identify a heap object in the tele VM.
      *
      * @param prefix an optional string to precede everything else
      * @param teleObject an optional surrogate for the tele object being named, null if local
@@ -73,7 +100,7 @@ public final class InspectorNameDisplay extends InspectionHolder {
      * @param type a name to describe the object, type name in simple cases
      * @return human readable string identifying an object in a standard format
      */
-    public String longName(String prefix, TeleObject teleObject, String role, String type) {
+    private String objectReference(String prefix, TeleObject teleObject, String role, String type) {
         final StringBuilder name = new StringBuilder(32);
         if (prefix != null) {
             name.append(prefix);
@@ -96,6 +123,20 @@ public final class InspectorNameDisplay extends InspectionHolder {
     }
 
     /**
+     * @return human readable string identifying a VM thread in a standard format.
+     */
+    public String shortName(TeleVmThread teleVmThread) {
+        return teleVmThread.name();
+    }
+
+    /**
+     * @return human readable string identifying a VM thread in a standard format.
+     */
+    public String longName(TeleVmThread teleVmThread) {
+        return shortName(teleVmThread) + " [" + teleVmThread.teleNativeThread().id() + "]";
+    }
+
+    /**
      * @return human readable string identifying a thread in a standard format.
      */
     public String shortName(TeleNativeThread teleNativeThread) {
@@ -104,8 +145,9 @@ public final class InspectorNameDisplay extends InspectionHolder {
         }
         if (teleNativeThread == teleNativeThread.teleProcess().primordialThread()) {
             return "primordial";
-        } else if (teleNativeThread.teleVmThread() != null) {
-            return teleNativeThread.teleVmThread().name();
+        }
+        if (teleNativeThread.teleVmThread() != null) {
+            return shortName(teleNativeThread.teleVmThread());
         }
         return "native unnamed";
     }
@@ -116,6 +158,9 @@ public final class InspectorNameDisplay extends InspectionHolder {
     public String longName(TeleNativeThread teleNativeThread) {
         if (teleNativeThread == null) {
             return "null";
+        }
+        if (teleNativeThread.teleVmThread() != null) {
+            return longName(teleNativeThread.teleVmThread());
         }
         return shortName(teleNativeThread) + " [" + teleNativeThread.id() + "]";
     }
@@ -288,4 +333,445 @@ public final class InspectorNameDisplay extends InspectionHolder {
         }
         return name.toString();
     }
+
+    /**
+     * Renderer for a textual label reference pointing at heap objects in the {@link TeleVM}.
+     */
+    private static interface ReferenceRenderer {
+
+        /**
+         * @return a short string suitable for a text label display of the object reference.
+         */
+        String referenceLabelText(TeleObject teleObject);
+
+        /**
+         * @return a longer string suitable for a tooltip display over the object reference.
+         */
+        String referenceToolTipText(TeleObject teleObject);
+    }
+
+    /**
+     * Renderers for specific classes of objects in the heap in the {@teleVM}.
+     * The most specific class that matches a particular {@link TeleObject} will
+     * be used, in an emulation of virtual method dispatch.  All heap objects are
+     * implemented as tuples, hubs. or arrays, so there should always be at least
+     * a generic match for every type.
+     */
+    private final Map<Class, ReferenceRenderer> _referenceRenderers = new HashMap<Class, ReferenceRenderer>();
+
+    /**
+     * @return a short textual presentation of a reference to a heap object in the {@link TeleVM}, if possible, null if not.
+     */
+    public String referenceLabelText(TeleObject teleObject) {
+        if (teleObject != null) {
+            Class teleObjectClass = teleObject.getClass();
+            while (teleObjectClass != null) {
+                final ReferenceRenderer objectReferenceRenderer = _referenceRenderers.get(teleObjectClass);
+                if (objectReferenceRenderer != null) {
+                    return objectReferenceRenderer.referenceLabelText(teleObject);
+                }
+                teleObjectClass = teleObjectClass.getSuperclass();
+            }
+            ProgramError.unexpected("InspectorNameDisplay failed to find render for teleObject = " + teleObject);
+        }
+        return null;
+    }
+
+    /**
+     * @return a long textual presentation of a reference to a heap object in the {@link TeleVM}, if possible, null if not.
+     */
+    public String referenceToolTipText(TeleObject teleObject) {
+        if (teleObject != null) {
+            Class teleObjectClass = teleObject.getClass();
+            while (teleObjectClass != null) {
+                final ReferenceRenderer objectReferenceRenderer = _referenceRenderers.get(teleObjectClass);
+                if (objectReferenceRenderer != null) {
+                    return objectReferenceRenderer.referenceToolTipText(teleObject);
+                }
+                teleObjectClass = teleObjectClass.getSuperclass();
+            }
+            ProgramError.unexpected("InspectorNameDisplay failed to find render for teleObject = " + teleObject);
+        }
+        return null;
+    }
+
+    /**
+     * Textual renderer for references to arrays.
+     */
+    private class ArrayReferenceRenderer implements ReferenceRenderer{
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
+            final ClassActor classActorForType = teleArrayObject.classActorForType();
+            final String name = classActorForType.simpleName();
+            final int length = teleArrayObject.getLength();
+            return objectReference(null, teleArrayObject, null, name.substring(0, name.length() - 1) + length + "]");
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
+            final ClassActor classActorForType = teleArrayObject.classActorForType();
+            final String name = classActorForType.name().toString();
+            final int length = teleArrayObject.getLength();
+            return objectReference(null, teleArrayObject, null, name.substring(0, name.length() - 1) + length + "]");
+        }
+    }
+
+    /**
+     * Textual renderer for references to static and dynamic hubs.
+     */
+    private class HubReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleHub teleHub = (TeleHub) teleObject;
+            final Class javaType = teleHub.hub().classActor().toJava();
+            return objectReference(null, teleHub, teleHub.maxineTerseRole(), javaType.getSimpleName());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleHub teleHub = (TeleHub) teleObject;
+            final Class javaType = teleHub.hub().classActor().toJava();
+            if (!(javaType.isPrimitive() || Word.class.isAssignableFrom(javaType))) {
+                return objectReference(null, teleHub, teleHub.maxineRole(), javaType.getName());
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Textual renderer for references to ordinary objects, represented as tuples, for which there is no more specific renderer registered.
+     */
+    private class TupleObjectReferenceRenderer implements ReferenceRenderer{
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject;
+            final ClassActor classActorForType = teleTupleObject.classActorForType();
+            if (classActorForType != null) {
+                return objectReference(null, teleTupleObject, null, classActorForType.simpleName());
+            }
+            return null;
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject;
+            final ClassActor classActorForType = teleTupleObject.classActorForType();
+            if (classActorForType != null) {
+                return objectReference(null, teleTupleObject, null, classActorForType.name().toString());
+            }
+            return null;
+        }
+    }
+
+    private class StaticTupleReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleStaticTuple teleStaticTuple = (TeleStaticTuple) teleObject;
+            final ClassActor classActorForType = teleStaticTuple.classActorForType();
+            return objectReference(null, teleStaticTuple, teleStaticTuple.maxineTerseRole(), classActorForType.simpleName());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleStaticTuple teleStaticTuple = (TeleStaticTuple) teleObject;
+            final ClassActor classActorForType = teleStaticTuple.classActorForType();
+            return objectReference(null, teleStaticTuple, teleStaticTuple.maxineRole(), classActorForType.qualifiedName());
+        }
+    }
+
+    private class MethodActorReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleMethodActor teleMethodActor = (TeleMethodActor) teleObject;
+            final MethodActor methodActor = teleMethodActor.methodActor();
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name().toString() + "()")  + methodSubstitutionShortAnnotation(teleMethodActor);
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleMethodActor teleMethodActor = (TeleMethodActor) teleObject;
+            final MethodActor methodActor = teleMethodActor.methodActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), methodActor.format("%r %n(%p)"))  + methodSubstitutionLongAnnotation(teleMethodActor);
+        }
+    }
+
+    private class FieldActorReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleFieldActor teleFieldActor = (TeleFieldActor) teleObject;
+            final FieldActor fieldActor = teleFieldActor.fieldActor();
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), fieldActor.name().toString());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleFieldActor teleFieldActor = (TeleFieldActor) teleObject;
+            final FieldActor fieldActor = teleFieldActor.fieldActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), fieldActor.format("%t %n"));
+        }
+    }
+
+    private class ClassActorReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleClassActor teleClassActor = (TeleClassActor) teleObject;
+            final ClassActor classActor = teleClassActor.classActor();
+            return objectReference(null, teleObject,  teleObject.maxineTerseRole(), classActor.toJava().getSimpleName());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleClassActor teleClassActor = (TeleClassActor) teleObject;
+            final ClassActor classActor = teleClassActor.classActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name().toString());
+        }
+    }
+
+    private static final int _maxStringLength = 40;
+
+    private class StringReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleString teleString = (TeleString) teleObject;
+            final String s = teleString.getString();
+            if (s.length() > _maxStringLength) {
+                return objectReference(null, teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"...");
+            }
+            return objectReference(null, teleObject, null, "\"" + s + "\"");
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleString teleString = (TeleString) teleObject;
+            final ClassActor classActorForType = teleString.classActorForType();
+            final String s = teleString.getString();
+            return objectReference(null, teleObject, classActorForType.qualifiedName(), "\"" + s + "\"");
+        }
+    }
+
+    private class Utf8ConstantReferenceRenderer implements ReferenceRenderer{
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
+            final String s = teleUtf8Constant.getString();
+            if (s.length() > _maxStringLength) {
+                return objectReference(null, teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"...");
+            }
+            return objectReference(null, teleObject, null, "\"" + s + "\"");
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
+            final ClassActor classActorForType = teleUtf8Constant.classActorForType();
+            final String s = teleUtf8Constant.getString();
+            return objectReference(null, teleObject, classActorForType.qualifiedName(), "\"" + s + "\"");
+        }
+    }
+
+    private class StringConstantReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject;
+            final String s = teleStringConstant.getString();
+            if (s.length() > _maxStringLength) {
+                return objectReference(null, teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"...");
+            }
+            return objectReference(null, teleObject, null, "\"" + s + "\"");
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject;
+            final ClassActor classActorForType = teleStringConstant.classActorForType();
+            final String s = teleStringConstant.getString();
+            return objectReference(null, teleObject, classActorForType.qualifiedName(), "\"" + s + "\"");
+        }
+    }
+
+    private class ClassReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleClass teleClass = (TeleClass) teleObject;
+            final Class mirrorJavaClass = teleClass.toJava();
+            return objectReference(null, teleObject,  teleObject.maxineTerseRole(), mirrorJavaClass.getSimpleName() + ".class");
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleClass teleClass = (TeleClass) teleObject;
+            final Class mirrorJavaClass = teleClass.toJava();
+            return objectReference(null, teleObject, teleObject.maxineRole(), mirrorJavaClass.getName() + ".class");
+        }
+    }
+
+    private class ConstructorReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleConstructor teleConstructor = (TeleConstructor) teleObject;
+            final Constructor mirrorJavaConstructor = teleConstructor.toJava();
+            if (mirrorJavaConstructor != null) {
+                return objectReference(null, teleObject,  teleObject.maxineTerseRole(), mirrorJavaConstructor.getName() + "()");
+            }
+            return null;
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleConstructor teleConstructor = (TeleConstructor) teleObject;
+            final Constructor mirrorJavaConstructor = teleConstructor.toJava();
+            if (mirrorJavaConstructor != null) {
+                return objectReference(null, teleObject, teleObject.maxineRole(), mirrorJavaConstructor.toString());
+            }
+            return null;
+        }
+    }
+
+    private class FieldReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleField teleField = (TeleField) teleObject;
+            final Field mirrorJavaField = teleField.toJava();
+            if (mirrorJavaField != null) {
+                return objectReference(null, teleObject,  teleObject.maxineTerseRole(), mirrorJavaField.getName());
+            }
+            return null;
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleField teleField = (TeleField) teleObject;
+            final Field mirrorJavaField = teleField.toJava();
+            if (mirrorJavaField != null) {
+                return objectReference(null, teleObject, teleObject.maxineRole(), mirrorJavaField.toString());
+            }
+            return null;
+        }
+    }
+
+    private class MethodReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleMethod teleMethod = (TeleMethod) teleObject;
+            final Method mirrorJavaMethod = teleMethod.toJava();
+            if (mirrorJavaMethod != null) {
+                return objectReference(null, teleObject, teleObject.maxineTerseRole(), mirrorJavaMethod.getName() + "()");
+            }
+            return null;
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleMethod teleMethod = (TeleMethod) teleObject;
+            final Method mirrorJavaMethod = teleMethod.toJava();
+            if (mirrorJavaMethod != null) {
+                return objectReference(null, teleObject, teleObject.maxineRole(), mirrorJavaMethod.toString());
+            }
+            return null;
+        }
+    }
+
+    private class EnumReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleEnum teleEnum = (TeleEnum) teleObject;
+            final ClassActor classActorForType = teleEnum.classActorForType();
+            final String name = teleEnum.toJava().name();
+            return objectReference(null, teleObject, null, classActorForType.toJava().getSimpleName() + "." + name);
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleEnum teleEnum = (TeleEnum) teleObject;
+            final ClassActor classActorForType = teleEnum.classActorForType();
+            final String name = teleEnum.toJava().name();
+            final int ordinal = teleEnum.toJava().ordinal();
+            return objectReference(null, teleObject, null, classActorForType.qualifiedName() + "." + name + " ordinal=" + ordinal);
+        }
+    }
+
+    private class ConstantPoolReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleConstantPool teleConstantPool = (TeleConstantPool) teleObject;
+            final ClassActor classActor = teleConstantPool.getTeleHolder().classActor();
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), classActor.toJava().getSimpleName());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleConstantPool teleConstantPool = (TeleConstantPool) teleObject;
+            final ClassActor classActor = teleConstantPool.getTeleHolder().classActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name().toString());
+        }
+    }
+
+    private class ClassConstantResolvedReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleClassConstant.Resolved teleClassConstantResolved = (TeleClassConstant.Resolved) teleObject;
+            final ClassActor classActor = teleClassConstantResolved.getTeleClassActor().classActor();
+            return objectReference(null, teleObject,  teleObject.maxineTerseRole(), classActor.toJava().getSimpleName());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleClassConstant.Resolved teleClassConstantResolved = (TeleClassConstant.Resolved) teleObject;
+            final ClassActor classActor = teleClassConstantResolved.getTeleClassActor().classActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), classActor.name().toString());
+        }
+    }
+
+    private class FieldRefConstantResolvedReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleFieldRefConstant.Resolved teleFieldRefConstantResolved = (TeleFieldRefConstant.Resolved) teleObject;
+            final FieldActor fieldActor = teleFieldRefConstantResolved.getTeleFieldActor().fieldActor();
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), fieldActor.name().toString());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleFieldRefConstant.Resolved teleFieldRefConstantResolved = (TeleFieldRefConstant.Resolved) teleObject;
+            final FieldActor fieldActor = teleFieldRefConstantResolved.getTeleFieldActor().fieldActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), fieldActor.format("%T %n"));
+        }
+    }
+
+    private class ClassMethodRefConstantResolvedReferenceRenderer implements ReferenceRenderer{
+
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleClassMethodRefConstant.Resolved teleClassMethodRefConstantResolved = (TeleClassMethodRefConstant.Resolved) teleObject;
+            final MethodActor methodActor = teleClassMethodRefConstantResolved.getTeleClassMethodActor().methodActor();
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name().toString());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleClassMethodRefConstant.Resolved teleClassMethodRefConstantResolved = (TeleClassMethodRefConstant.Resolved) teleObject;
+            final MethodActor methodActor = teleClassMethodRefConstantResolved.getTeleClassMethodActor().methodActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), methodActor.format("%r %n(%p)"));
+        }
+    }
+
+    private class InterfaceMethodRefConstantResolvedReferenceRenderer implements ReferenceRenderer{
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleInterfaceMethodRefConstant.Resolved teleInterfaceMethodRefConstantResolved = (TeleInterfaceMethodRefConstant.Resolved) teleObject;
+            final MethodActor methodActor = teleInterfaceMethodRefConstantResolved.getTeleInterfaceMethodActor().methodActor();
+            return objectReference(null, teleObject, teleObject.maxineTerseRole(), methodActor.name().toString());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleInterfaceMethodRefConstant.Resolved teleInterfaceMethodRefConstantResolved = (TeleInterfaceMethodRefConstant.Resolved) teleObject;
+            final MethodActor methodActor = teleInterfaceMethodRefConstantResolved.getTeleInterfaceMethodActor().methodActor();
+            return objectReference(null, teleObject, teleObject.maxineRole(), methodActor.format("%r %n(%p)"));
+        }
+    }
+
+    private class PoolConstantReferenceRenderer implements ReferenceRenderer{
+        public String referenceLabelText(TeleObject teleObject) {
+            final TelePoolConstant telePoolConstant = (TelePoolConstant) teleObject;
+            final ClassActor classActorForType = telePoolConstant.classActorForType();
+            return objectReference(null, teleObject, null, classActorForType.simpleName());
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TelePoolConstant telePoolConstant = (TelePoolConstant) teleObject;
+            final ClassActor classActorForType = telePoolConstant.classActorForType();
+            return objectReference(null, teleObject, null, "PoolConstant: " + classActorForType.qualifiedName());
+        }
+    }
+
+    private class VmThreadReferenceRenderer implements ReferenceRenderer{
+        public String referenceLabelText(TeleObject teleObject) {
+            final TeleVmThread teleVmThread = (TeleVmThread) teleObject;
+            return objectReference(null, teleObject, teleVmThread.classActorForType().simpleName(), longName(teleVmThread));
+        }
+
+        public String referenceToolTipText(TeleObject teleObject) {
+            final TeleVmThread teleVmThread = (TeleVmThread) teleObject;
+            return objectReference(null, teleObject, teleVmThread.classActorForType().simpleName(), longName(teleVmThread));
+        }
+    }
+
 }

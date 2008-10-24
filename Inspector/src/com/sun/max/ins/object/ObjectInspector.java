@@ -37,6 +37,7 @@ import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -314,6 +315,11 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             panel.add(_objectHeaderInspector, BorderLayout.NORTH);
         }
         frame().setContentPane(panel);
+    }
+
+    @Override
+    public final String getTitle() {
+        return _teleObject.getCurrentOrigin().toHexString() + inspection().nameDisplay().referenceLabelText(_teleObject);
     }
 
     @Override
