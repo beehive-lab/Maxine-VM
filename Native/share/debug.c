@@ -66,7 +66,7 @@ void debug_unlock(void) {
 #if !os_GUESTVMXEN
 FILE *getFileStream() {
     if (fileStream == NULL) {
-        char *path = getenv("MAXVM_OUTPUT_FILE");
+        char *path = getenv("MAXINE_LOG_FILE");
         if (path == NULL) {
             path = "stdout";
         }
