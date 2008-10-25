@@ -29,6 +29,7 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
+import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
@@ -320,8 +321,9 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             _codeBuffer.emitCodeFrom(_asm);
             _codeBuffer.emit(_lookupSwitchTemplate);
 
-            _inlineDataRecorder.add(new InlineDataDescriptor.ByteData(_codeBuffer.currentPosition(), sizeOfInlinedTable));
-            _codeBuffer.reserve(sizeOfInlinedTable);
+            final LookupTable32 lookupTable32 = new LookupTable32(_codeBuffer.currentPosition(), numberOfCases);
+            _inlineDataRecorder.add(lookupTable32);
+            _codeBuffer.reserve(lookupTable32.size());
 
             final int[] matches = new int[numberOfCases];
             final int[] targetBytecodePositions = new int[numberOfCases];

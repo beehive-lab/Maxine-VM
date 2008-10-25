@@ -186,22 +186,4 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
         final int firstBit = lastBit + 7;
         return ImmediateOperandField.createDescending(firstBit, lastBit);
     }
-
-    @Override
-    protected IterableWithLength<DisassembledData> createDisassembledDataObjects(InlineData inlineData) {
-        final InlineDataDescriptor descriptor = inlineData.descriptor();
-        switch (descriptor.tag()) {
-            case BYTE_DATA: {
-                throw Problem.unimplemented();
-            }
-            case JUMP_TABLE32: {
-                throw Problem.unimplemented();
-            }
-            case LOOKUP_TABLE32: {
-                throw Problem.unimplemented();
-            }
-        }
-        throw ProgramError.unknownCase(descriptor.tag().toString());
-    }
-
 }

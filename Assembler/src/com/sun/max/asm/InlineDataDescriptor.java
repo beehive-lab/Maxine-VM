@@ -40,18 +40,29 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
      * Constants for the supported types of inline data.
      */
     public enum Tag {
+        /**
+         * @see ByteData
+         */
         BYTE_DATA {
             @Override
             public InlineDataDescriptor decode(DataInputStream dataInputStream) throws IOException {
                 return new ByteData(dataInputStream);
             }
         },
+
+        /**
+         * @see JumpTable32
+         */
         JUMP_TABLE32 {
             @Override
             public InlineDataDescriptor decode(DataInputStream dataInputStream) throws IOException {
                 return new JumpTable32(dataInputStream);
             }
         },
+
+        /**
+         * @see LookupTable32
+         */
         LOOKUP_TABLE32 {
             @Override
             public InlineDataDescriptor decode(DataInputStream dataInputStream) throws IOException {
@@ -184,7 +195,7 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
     /**
      * Describes a table of 32 bit offsets. This type of table is usually used when translating a construct for
      * transferring control to a number of code locations based on a key value from a dense value set (e.g. the {@code
-     * tableswitch} JVM instruction).
+     * tableswitch} JVM instruction). The offset in each table entry is relative to the address of the table.
      *
      * The table is indexed by the contiguous range of integers from {@linkplain #low low} to {@linkplain #high high}
      * inclusive. The number of entries is given by the expression {@code high() - low() + 1}.
@@ -265,9 +276,12 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
     }
 
     /**
-     * Describes a table of 32-bit value and offset pairs. This type of table is usually used when translating a
-     * language level construct for transferring control to a number of code locations based on a key value from a
-     * sparse value set (e.g. the {@code lookupswitch} JVM instruction).
+     * Describes a table of 32-bit value and offset pairs. The offset in each table entry is relative to the address of
+     * the table.
+     *
+     * This type of table is usually used when translating a language level construct for transferring control to a
+     * number of code locations based on a key value from a sparse value set (e.g. the {@code lookupswitch} JVM
+     * instruction).
      */
     public static final class LookupTable32 extends InlineDataDescriptor {
         private final Label _tablePosition;

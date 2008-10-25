@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.asm.sparc;
 
+import static com.sun.max.asm.sparc.GPR.*;
+
 import java.io.*;
 
 import junit.framework.*;
@@ -28,8 +30,10 @@ import test.com.sun.max.asm.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.dis.sparc.*;
+import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.ide.*;
+import com.sun.max.lang.*;
 
 /**
  * @author David Liu
@@ -292,5 +296,118 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         final SPARC64Disassembler disassembler = new SPARC64Disassembler(startAddress, InlineDataDecoder.createFrom(recorder));
         disassemble(disassembler, bytes, InlineDataDecoder.createFrom(recorder));
         System.out.println();
+    }
+
+    private byte[] assembleSwitchTable(SPARCAssembler asm, int[] matches, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
+        final Directives directives = asm.directives();
+
+        final Label[] matchTargets = new Label[matches.length];
+        final Label end = new Label();
+        final Label table = new Label();
+        for (int i = 0; i < matches.length; i++) {
+            matchTargets[i] = new Label();
+        }
+        final int min = Ints.min(matches);
+        final int max = Ints.max(matches);
+        final int numElements = max - min + 1;
+
+        final GPR tagRegister = L0;
+        final GPR scratchRegister = L1;
+        final GPR indexRegister = L3;
+        final GPR tableRegister = L1;
+
+        final int imm = min;
+        if (imm != 0) {
+            if (isSimm13(imm)) {
+                asm.sub(tagRegister, imm, tagRegister);
+            } else {
+                asm.setsw(imm, scratchRegister);
+                asm.sub(tagRegister, scratchRegister, tagRegister);
+            }
+        }
+        if (isSimm13(numElements)) {
+            asm.cmp(tagRegister, numElements);
+        } else {
+            asm.setuw(numElements, scratchRegister);
+            asm.cmp(tagRegister, scratchRegister);
+        }
+        final Label here = new Label();
+        asm.bindLabel(here);
+        asm.rd(StateRegister.PC, tableRegister);
+        // Branch on unsigned greater than or equal.
+        asm.bcc(AnnulBit.NO_A, end);
+        // complete loading of the jump table in the delay slot, regardless of whether we're taking the branch.
+        asm.addcc(tableRegister, here, table, tableRegister);
+        asm.sll(tagRegister, 2, indexRegister);
+        asm.ldsw(tableRegister, indexRegister, O7);
+        asm.jmp(tableRegister, O7);
+        asm.nop(); // delay slot
+        asm.bindLabel(table);
+        for (int i = 0; i < matches.length; i++) {
+            directives.inlineOffset(matchTargets[i], table, WordWidth.BITS_32);
+            if (i + 1 < matches.length) {
+                // jump to the default target for any "missing" entries
+                final int currentMatch = matches[i];
+                final int nextMatch = matches[i + 1];
+                for (int j = currentMatch + 1; j < nextMatch; j++) {
+                    directives.inlineOffset(end, table, WordWidth.BITS_32);
+                }
+            }
+        }
+        inlineDataRecorder.add(new InlineDataDescriptor.JumpTable32(table, min, max));
+
+        for (int i = 0; i < matches.length; ++i) {
+            asm.bindLabel(matchTargets[i]);
+            final int match = matches[i];
+            if (isSimm13(match)) {
+                asm.sub(tagRegister, match, tagRegister);
+            } else {
+                asm.setsw(match, scratchRegister);
+                asm.sub(tagRegister, scratchRegister, tagRegister);
+            }
+            asm.ba(end);
+        }
+        asm.bindLabel(end);
+        asm.nop();
+
+        return asm.toByteArray(inlineDataRecorder);
+    }
+
+    private boolean isSimm13(final int imm) {
+        return Ints.numberOfEffectiveSignedBits(imm) <= 13;
+    }
+
+    private static int[][] _switchTableInputs = {
+        new int[] {0, 1, 3, 4, 6, 7},
+        new int[] {3, 4, 6, 7, 10},
+        new int[] {-4, -2, 7, 10, 6}
+    };
+
+    public void test_switchTable32() throws IOException, AssemblyException {
+        for (int[] matches : _switchTableInputs) {
+            System.out.println("--- testSwitchTable32:{" + Ints.toString(matches, ", ") + "} ---");
+            final int startAddress = 0x12345678;
+            final SPARC32Assembler assembler = new SPARC32Assembler(startAddress);
+            final InlineDataRecorder recorder = new InlineDataRecorder();
+
+            final byte[] bytes = assembleSwitchTable(assembler, matches, recorder);
+            final SPARC32Disassembler disassembler = new SPARC32Disassembler(startAddress, InlineDataDecoder.createFrom(recorder));
+            disassemble(disassembler, bytes, InlineDataDecoder.createFrom(recorder));
+            System.out.println();
+        }
+    }
+
+    public void test_switchTable64() throws IOException, AssemblyException {
+        for (int[] matches : _switchTableInputs) {
+            System.out.println("--- testSwitchTable64:{" + Ints.toString(matches, ", ") + "} ---");
+            final long startAddress = 0x1234567812340000L;
+            final SPARCAssembler assembler = new SPARC64Assembler(startAddress);
+            final InlineDataRecorder recorder = new InlineDataRecorder();
+
+            final byte[] bytes = assembleSwitchTable(assembler, matches, recorder);
+            final SPARCDisassembler disassembler = new SPARC64Disassembler(startAddress, InlineDataDecoder.createFrom(recorder));
+            disassemble(disassembler, bytes, InlineDataDecoder.createFrom(recorder));
+            System.out.println();
+        }
     }
 }
