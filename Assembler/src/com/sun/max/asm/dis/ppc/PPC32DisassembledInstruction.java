@@ -22,33 +22,17 @@ package com.sun.max.asm.dis.ppc;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.ppc.*;
 import com.sun.max.collect.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
-public class PPC32DisassembledInstruction extends PPCDisassembledInstruction implements Address32Instruction {
+public class PPC32DisassembledInstruction extends PPCDisassembledInstruction {
 
-    private final Address32Instruction.Mixin _addressInstruction;
-
-    public PPC32DisassembledInstruction(int startAddress, int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
-        _addressInstruction = new Address32Instruction.Mixin(this, startAddress);
-    }
-
-    public int address() {
-        return _addressInstruction.address();
-    }
-
-    public String addressString() {
-        return _addressInstruction.addressString();
-    }
-
-    public int addressToPosition(ImmediateArgument argument) {
-        return _addressInstruction.addressToPosition(argument);
+    public PPC32DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 }

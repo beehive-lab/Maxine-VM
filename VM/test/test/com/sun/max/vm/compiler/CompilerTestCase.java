@@ -738,13 +738,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
      * @return a disassembler for the ISA specific code in {@code targetMethod} or null if no such disassembler is available
      */
     protected Disassembler disassemblerFor(TargetMethod targetMethod) {
-        final Disassembler disassembler = compilerTestSetup().disassemblerFor(targetMethod);
-        final byte[] encodedInlineDataDescriptors = targetMethod.encodedInlineDataDescriptors();
-        if (encodedInlineDataDescriptors != null) {
-            final InlineDataDecoder inlineDataDecoder = new InlineDataDecoder(encodedInlineDataDescriptors);
-            disassembler.setInlineDataDecoder(inlineDataDecoder);
-        }
-        return disassembler;
+        return compilerTestSetup().disassemblerFor(targetMethod);
     }
 
     /**

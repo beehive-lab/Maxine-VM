@@ -57,7 +57,7 @@ public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<PPCTempl
     @Override
     protected String generateExampleInstruction(PPCTemplate template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
         final byte[] bytes = {};
-        final PPCDisassembledInstruction dis = new PPC64DisassembledInstruction(0, 0, bytes, template, arguments);
+        final PPCDisassembledInstruction dis = new PPC64DisassembledInstruction(new PPC64Disassembler(0, null), 0, bytes, template, arguments);
         return dis.toString(labels);
     }
 }

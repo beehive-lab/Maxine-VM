@@ -20,21 +20,30 @@
  */
 package com.sun.max.asm.dis;
 
+import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
+import com.sun.max.collect.*;
 
 /**
- * Delegation interface (for lack of multiple class inheritance in the Java(TM) Programming Language).
+ * Extends the abstraction of an object in an assembled instruction stream with extra
+ * properties that are only relevant for an object decoded from an instruction stream.
  *
- * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public interface AddressInstruction {
+public interface DisassembledObject extends AssemblyObject {
 
     /**
-     * Gets the position of this instruction's first byte.
+     * Gets the position of the instruction or inline data addressed (either relatively or absolutely) by this object.
+     * The returned position is relative to position 0 of the instruction stream from which this object was decoded.
+     *
+     * @return null if this object does not address an instruction or inline data
      */
-    int startPosition();
+    ImmediateArgument targetPosition();
 
-    String addressString();
+    String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
 
-    int addressToPosition(ImmediateArgument argument);
+    /**
+     * Gets the raw bytes of this object.
+     */
+    byte[] bytes();
 }

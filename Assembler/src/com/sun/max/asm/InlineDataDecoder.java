@@ -42,6 +42,20 @@ public class InlineDataDecoder {
     protected final Map<Integer, InlineDataDescriptor> _positionToDescriptorMap;
 
     /**
+     * Creates a decoder from an encoded sequence of inline data descriptors.
+     *
+     * @param encodedDescriptors a sequence of descriptors encoded in a byte array whose format complies with that used
+     *            by {@link InlineDataRecorder#encodedDescriptors()}. This value can be null.
+     * @return null if {@code encodedDescriptors} is null
+     */
+    public static InlineDataDecoder createFrom(byte[] encodedDescriptors) {
+        if (encodedDescriptors != null) {
+            return new InlineDataDecoder(encodedDescriptors);
+        }
+        return null;
+    }
+
+    /**
      * Creates a decoder based on the descriptors in a given recorder.
      *
      * @param inlineDataRecorder

@@ -20,43 +20,49 @@
  */
 package com.sun.max.asm.dis;
 
-import com.sun.max.asm.gen.*;
+import com.sun.max.collect.*;
 
 /**
- * Mixin delegation style (for lack of multiple class inheritance in the Java(TM) Programming Language).
  *
- * @author Bernd Mathiske
+ *
+ * @author Doug Simon
  */
-public interface Address32Instruction extends AddressInstruction {
+public abstract class DisassembledData implements DisassembledObject {
 
-    int address();
+    private final int _startPosition;
+    private final byte[] _bytes;
 
-    public static class Mixin implements Address32Instruction {
-
-        private final int _startAddress;
-        private final DisassembledInstruction _disassembledInstruction;
-
-        public Mixin(DisassembledInstruction disassembledInstruction, int startAddress) {
-            _startAddress = startAddress;
-            _disassembledInstruction = disassembledInstruction;
-        }
-
-        public int address() {
-            return _startAddress + startPosition();
-        }
-
-        public int startPosition() {
-            return _disassembledInstruction.startPosition();
-        }
-
-        public String addressString() {
-            return String.format("0x%08X", address());
-        }
-
-        public int addressToPosition(ImmediateArgument argument) {
-            final int argumentAddress = (int) argument.asLong();
-            return argumentAddress - _startAddress;
-        }
+    public DisassembledData(int startPosition, byte[] bytes) {
+        _startPosition = startPosition;
+        _bytes = bytes;
     }
 
+    public int startPosition() {
+        return _startPosition;
+    }
+
+    public int endPosition() {
+        return _startPosition + _bytes.length;
+    }
+
+    public byte[] bytes() {
+        return _bytes.clone();
+    }
+
+    public Type type() {
+        return Type.DATA;
+    }
+
+    public abstract String prefix();
+
+    public abstract String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
+
+    public String operandsToString(Sequence<DisassembledLabel> labels) {
+        return toString(labels, null);
+    }
+
+    @Override
+    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
+        return prefix() + " " + operandsToString(labels, globalLabelMapper);
+    }
 }

@@ -20,6 +20,8 @@
  */
 package com.sun.max.asm.dis;
 
+import com.sun.max.collect.*;
+
 /**
  * A label deduced from one or more disassembled instructions.
  *
@@ -58,5 +60,14 @@ public class DisassembledLabel {
 
     public int position() {
         return _position;
+    }
+
+    public static DisassembledLabel positionToLabel(int position, Sequence<DisassembledLabel> labels) {
+        for (DisassembledLabel label : labels) {
+            if (label.position() == position) {
+                return label;
+            }
+        }
+        return null;
     }
 }

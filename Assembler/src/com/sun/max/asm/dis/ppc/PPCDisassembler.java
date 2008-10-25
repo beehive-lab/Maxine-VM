@@ -20,6 +20,7 @@
  */
 package com.sun.max.asm.dis.ppc;
 
+import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.risc.*;
 import com.sun.max.asm.gen.*;
@@ -34,8 +35,8 @@ import com.sun.max.lang.*;
 public abstract class PPCDisassembler<DisassembledInstruction_Type extends DisassembledInstruction<PPCTemplate>>
         extends RiscDisassembler<PPCTemplate, DisassembledInstruction_Type> {
 
-    protected PPCDisassembler(PPCAssembly assembly, WordWidth addressWidth) {
-        super(assembly, addressWidth, Endianness.BIG);
+    protected PPCDisassembler(PPCAssembly assembly, WordWidth addressWidth, InlineDataDecoder inlineDataDecoder) {
+        super(assembly, addressWidth, Endianness.BIG, inlineDataDecoder);
     }
 
     @Override

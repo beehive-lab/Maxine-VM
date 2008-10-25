@@ -32,7 +32,7 @@ import com.sun.max.program.*;
 
 /**
  * Run this program to generate the AMD64RawAssembler and AMD64LabelAssembler classes.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template> {
@@ -245,7 +245,7 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
     @Override
     protected String generateExampleInstruction(AMD64Template template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
         final byte[] bytes = {};
-        final AMD64DisassembledInstruction instruction = new AMD64DisassembledInstruction(0, 0, bytes, template, arguments);
+        final AMD64DisassembledInstruction instruction = new AMD64DisassembledInstruction(new AMD64Disassembler(0, null), 0, bytes, template, arguments);
         return instruction.toString(labels);
     }
 }

@@ -31,6 +31,7 @@ import java.io.*;
 import junit.framework.*;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.dis.ia32.*;
 import com.sun.max.asm.ia32.*;
 import com.sun.max.asm.ia32.complete.*;
@@ -150,8 +151,8 @@ public class InternalTest extends MaxTestCase {
         return asm.toByteArray();
     }
 
-    private void disassemble(int startAddress, byte[] bytes) throws IOException, AssemblyException {
-        final IA32Disassembler disassembler = new IA32Disassembler(startAddress);
+    private void disassemble(int startAddress, byte[] bytes, InlineDataDecoder inlineDataDecoder) throws IOException, AssemblyException {
+        final IA32Disassembler disassembler = new IA32Disassembler(startAddress, inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(bytes));
         disassembler.scanAndPrint(stream, System.out);
     }
@@ -159,10 +160,10 @@ public class InternalTest extends MaxTestCase {
     public void test() throws IOException, AssemblyException {
         final int startAddress = 0x12358;
         final byte[] bytes = assemble(startAddress);
-        disassemble(startAddress, bytes);
+        disassemble(startAddress, bytes, null);
     }
 
-    private byte[] assembleSwitchTable(int startAddress) throws IOException, AssemblyException {
+    private byte[] assembleSwitchTable(int startAddress, InlineDataRecorder recorder) throws IOException, AssemblyException {
         final IA32Assembler asm = new IA32Assembler(startAddress);
         final Label skip = new Label();
         final Label table = new Label();
@@ -178,7 +179,7 @@ public class InternalTest extends MaxTestCase {
             case 3: ecx = 0xFFFFFFFF; break;
          }
 
-         * 
+         *
          */
         asm.mov(ESI, 1);
         asm.m_jmp(table, ESI_INDEX, SCALE_4);
@@ -186,6 +187,8 @@ public class InternalTest extends MaxTestCase {
 
         asm.directives().align(4);
         asm.bindLabel(table);
+
+        recorder.add(new JumpTable32(table, 1, 3));
         asm.directives().inlineAddress(case1);
         asm.directives().inlineAddress(case2);
         asm.directives().inlineAddress(case3);
@@ -212,7 +215,8 @@ public class InternalTest extends MaxTestCase {
     public void testSwitchTable() throws IOException, AssemblyException {
         System.out.println("--- testSwitchTable: ---");
         final int startAddress = 0x12345678;
-        final byte[] bytes = assembleSwitchTable(startAddress);
-        disassemble(startAddress, bytes);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleSwitchTable(startAddress, recorder);
+        disassemble(startAddress, bytes, InlineDataDecoder.createFrom(recorder));
     }
 }

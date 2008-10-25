@@ -61,10 +61,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
     }
 
     private void disassemble(long startAddress, byte[] bytes, InlineDataDecoder inlineDataDecoder) throws IOException, AssemblyException {
-        final AMD64Disassembler disassembler = new AMD64Disassembler(startAddress);
-        if (inlineDataDecoder != null) {
-            disassembler.setInlineDataDecoder(inlineDataDecoder);
-        }
+        final AMD64Disassembler disassembler = new AMD64Disassembler(startAddress, inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(bytes));
         disassembler.scanAndPrint(stream, System.out);
     }

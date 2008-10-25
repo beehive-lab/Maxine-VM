@@ -27,7 +27,7 @@ import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -53,7 +53,7 @@ public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<SPARCT
     @Override
     protected String generateExampleInstruction(SPARCTemplate template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
         final byte[] bytes = {};
-        final SPARCDisassembledInstruction dis = new SPARC64DisassembledInstruction(0, 0, bytes, template, arguments);
+        final SPARCDisassembledInstruction dis = new SPARC64DisassembledInstruction(new SPARC64Disassembler(0, null), 0, bytes, template, arguments);
         return dis.toString(labels);
     }
 }

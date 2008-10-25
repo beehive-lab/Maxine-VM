@@ -35,9 +35,14 @@ public class PPC32Disassembler extends PPCDisassembler<PPC32DisassembledInstruct
 
     private final int _startAddress;
 
-    public PPC32Disassembler(int startAddress) {
-        super(PPCAssembly.ASSEMBLY, WordWidth.BITS_32);
+    public PPC32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(PPCAssembly.ASSEMBLY, WordWidth.BITS_32, inlineDataDecoder);
         _startAddress = startAddress;
+    }
+
+    @Override
+    protected long startAddress() {
+        return _startAddress;
     }
 
     @Override
@@ -47,7 +52,7 @@ public class PPC32Disassembler extends PPCDisassembler<PPC32DisassembledInstruct
 
     @Override
     protected PPC32DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
-        return new PPC32DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new PPC32DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override

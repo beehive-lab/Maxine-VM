@@ -20,6 +20,7 @@
  */
 package com.sun.max.asm.dis.sparc;
 
+import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.risc.*;
 import com.sun.max.asm.gen.*;
@@ -34,8 +35,8 @@ import com.sun.max.lang.*;
 public abstract class SPARCDisassembler<DisassembledInstruction_Type extends DisassembledInstruction<SPARCTemplate>>
         extends RiscDisassembler<SPARCTemplate, DisassembledInstruction_Type> {
 
-    protected SPARCDisassembler(SPARCAssembly assembly, WordWidth addressWidth) {
-        super(assembly, addressWidth, Endianness.BIG);
+    protected SPARCDisassembler(SPARCAssembly assembly, WordWidth addressWidth, InlineDataDecoder inlineDataDecoder) {
+        super(assembly, addressWidth, Endianness.BIG, inlineDataDecoder);
     }
 
     @Override

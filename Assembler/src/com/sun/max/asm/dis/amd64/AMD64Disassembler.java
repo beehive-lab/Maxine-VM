@@ -40,9 +40,14 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
 
     private final long _startAddress;
 
-    public AMD64Disassembler(long startAddress) {
-        super(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
+    public AMD64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64, inlineDataDecoder);
         _startAddress = startAddress;
+    }
+
+    @Override
+    protected long startAddress() {
+        return _startAddress;
     }
 
     @Override
@@ -57,7 +62,7 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
 
     @Override
     protected AMD64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, AMD64Template template, IndexedSequence<Argument> arguments) {
-        return new AMD64DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new AMD64DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override

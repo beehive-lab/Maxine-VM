@@ -23,6 +23,7 @@ package com.sun.max.asm.dis;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 
 /**
  * A assembly instruction in internal format, combined with the bytes that it was disassembled from.
@@ -32,14 +33,17 @@ import com.sun.max.collect.*;
  * @author Bernd Mathiske
  * @author Greg Wright
  */
-public abstract class DisassembledInstruction<Template_Type extends Template> implements AssemblyObject, AddressInstruction {
+public abstract class DisassembledInstruction<Template_Type extends Template> implements DisassembledObject {
 
+    private final Disassembler<Template_Type, DisassembledInstruction<Template_Type>> _disassembler;
     private final int _startPosition;
     private final byte[] _bytes;
     private final Template_Type _template;
     private final IndexedSequence<Argument> _arguments;
 
-    protected DisassembledInstruction(int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+    protected DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+        final Class<Disassembler<Template_Type, DisassembledInstruction<Template_Type>>> type = null;
+        _disassembler = StaticLoophole.cast(type, disassembler);
         _startPosition = position;
         _bytes = bytes;
         _template = template;
@@ -81,27 +85,18 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return result;
     }
 
-    protected static DisassembledLabel instructionPositionToLabel(int instructionPosition, Sequence<DisassembledLabel> labels) {
-        for (DisassembledLabel label : labels) {
-            if (label.position() == instructionPosition) {
-                return label;
-            }
-        }
-        return null;
-    }
-
     protected DisassembledLabel offsetArgumentToLabel(ImmediateArgument argument, Sequence<DisassembledLabel> labels) {
         final int argumentOffset = (int) argument.asLong();
         final int targetPosition = argumentOffset + positionForRelativeAddressing();
-        return instructionPositionToLabel(targetPosition, labels);
+        return DisassembledLabel.positionToLabel(targetPosition, labels);
     }
 
     protected DisassembledLabel addressArgumentToLabel(ImmediateArgument argument, Sequence<DisassembledLabel> labels) {
-        final long targetOffset = addressToPosition(argument);
+        final long targetOffset = argument.asLong() - _disassembler.startAddress();
         if (targetOffset < 0) {
             return null;
         }
-        return instructionPositionToLabel((int) targetOffset, labels);
+        return DisassembledLabel.positionToLabel((int) targetOffset, labels);
     }
 
     public abstract String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
@@ -118,10 +113,31 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return operandsToString(labels, null);
     }
 
-    public abstract int positionForRelativeAddressing();
+    /**
+     * Gets the position in this instruction to which an offset argument of this instruction is relative.
+     *
+     * @return either {@linkplain #startPosition() start} or {@linkplain #endPosition() end} or some other position derived
+     *         from one of these values
+     */
+    protected abstract int positionForRelativeAddressing();
 
-    /*
-     * Return the byte array encoding this instruction.
+    @Override
+    public ImmediateArgument targetPosition() {
+        final Template_Type template = template();
+        final int parameterIndex = template.labelParameterIndex();
+        if (parameterIndex >= 0) {
+            final ImmediateArgument immediateArgument = (ImmediateArgument) arguments().get(parameterIndex);
+            final Parameter parameter = template.parameters().get(parameterIndex);
+            final int targetPosition = (parameter instanceof OffsetParameter) ?
+                            (int) immediateArgument.asLong() + positionForRelativeAddressing() :
+                            (int) (immediateArgument.asLong() - _disassembler.startAddress());
+            return new Immediate32Argument(targetPosition);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the byte array encoding this instruction.
      */
     protected byte[] rawInstruction() {
         return _bytes;

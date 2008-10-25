@@ -31,8 +31,8 @@ import com.sun.max.collect.*;
  */
 public abstract class SPARCDisassembledInstruction extends RiscDisassembledInstruction<SPARCTemplate> {
 
-    SPARCDisassembledInstruction(int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
+    SPARCDisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 
     @Override

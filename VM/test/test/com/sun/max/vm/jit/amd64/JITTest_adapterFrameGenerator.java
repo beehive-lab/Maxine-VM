@@ -71,7 +71,7 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
         adapterFrameGenerator.emitEpilogue(assembler);
         final byte[] code = assembler.toByteArray();
         assert methodEntryPoint.position() % 8 == 0;
-        final AMD64Disassembler disassembler = new AMD64Disassembler(0L);
+        final AMD64Disassembler disassembler = new AMD64Disassembler(0L, null);
         final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
 
         try {

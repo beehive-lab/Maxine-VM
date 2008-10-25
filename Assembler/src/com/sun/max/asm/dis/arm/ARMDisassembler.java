@@ -36,9 +36,14 @@ public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembl
 
     private final int _startAddress;
 
-    public ARMDisassembler(int startAddress) {
-        super(ARMAssembly.ASSEMBLY, WordWidth.BITS_32, Endianness.BIG);
+    public ARMDisassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(ARMAssembly.ASSEMBLY, WordWidth.BITS_32, Endianness.BIG, inlineDataDecoder);
         _startAddress = startAddress;
+    }
+
+    @Override
+    protected long startAddress() {
+        return _startAddress;
     }
 
     @Override
@@ -53,7 +58,7 @@ public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembl
 
     @Override
     protected ARMDisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, ARMTemplate template, IndexedSequence<Argument> arguments) {
-        return new ARMDisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new ARMDisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override

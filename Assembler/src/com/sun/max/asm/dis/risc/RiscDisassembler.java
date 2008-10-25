@@ -44,8 +44,8 @@ import com.sun.max.program.*;
 public abstract class RiscDisassembler<Template_Type extends RiscTemplate, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>>
     extends Disassembler<Template_Type, DisassembledInstruction_Type> {
 
-    protected RiscDisassembler(Assembly<Template_Type> assembly, WordWidth addressWidth, Endianness endianness) {
-        super(assembly, addressWidth, endianness);
+    protected RiscDisassembler(Assembly<Template_Type> assembly, WordWidth addressWidth, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
+        super(assembly, addressWidth, endianness, inlineDataDecoder);
     }
 
     @Override
@@ -87,9 +87,9 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
     }
 
     @Override
-    public Sequence<DisassembledInstruction_Type> scanOneInstruction(BufferedInputStream stream) throws IOException, AssemblyException {
+    public Sequence<DisassembledObject> scanOneInstruction(BufferedInputStream stream) throws IOException, AssemblyException {
         final int instruction = endianness().readInt(stream);
-        final AppendableSequence<DisassembledInstruction_Type> result = new LinkSequence<DisassembledInstruction_Type>();
+        final AppendableSequence<DisassembledObject> result = new LinkSequence<DisassembledObject>();
         final byte[] instructionBytes = endianness().toBytes(instruction);
         for (SpecificityGroup<Template_Type> specificityGroup : assembly().specificityGroups()) {
             for (OpcodeMaskGroup<Template_Type> opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
@@ -122,8 +122,8 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
             if (INLINE_INVALID_INSTRUCTIONS_AS_BYTES) {
                 stream.reset();
                 final InlineData inlineData = new InlineData(_currentPosition, instructionBytes);
-                final DisassembledInstruction_Type disassembledInstruction = createDisassembledInlineDataInstructions(inlineData).iterator().next();
-                result.append(disassembledInstruction);
+                final DisassembledData disassembledData = createDisassembledDataObjects(inlineData).iterator().next();
+                result.append(disassembledData);
             } else {
                 throw new AssemblyException("instruction could not be disassembled: " + Bytes.toHexLiteral(endianness().toBytes(instruction)));
             }
@@ -133,34 +133,38 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
     }
 
     @Override
-    public IndexedSequence<DisassembledInstruction_Type> scan(BufferedInputStream stream) throws IOException, AssemblyException {
-        final AppendableIndexedSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>();
+    public IndexedSequence<DisassembledObject> scan(BufferedInputStream stream) throws IOException, AssemblyException {
+        final AppendableIndexedSequence<DisassembledObject> result = new ArrayListSequence<DisassembledObject>();
         try {
             while (true) {
                 if (inlineDataDecoder() != null) {
                     InlineData inlineData;
                     while ((inlineData = inlineDataDecoder().decode(_currentPosition, stream)) != null) {
-                        final IterableWithLength<DisassembledInstruction_Type> instructions = createDisassembledInlineDataInstructions(inlineData);
-                        for (DisassembledInstruction_Type instruction : instructions) {
-                            result.append(instruction);
+                        final IterableWithLength<DisassembledData> dataObjects = createDisassembledDataObjects(inlineData);
+                        for (DisassembledData dataObject : dataObjects) {
+                            result.append(dataObject);
                         }
                         _currentPosition += inlineData.size();
                     }
                 }
 
-                final Sequence<DisassembledInstruction_Type> disassembledInstructions = scanOneInstruction(stream);
+                final Sequence<DisassembledObject> disassembledObjects = scanOneInstruction(stream);
                 boolean foundSyntheticDisassembledInstruction = false;
                 if (abstractionPreference() == AbstractionPreference.SYNTHETIC) {
-                    for (DisassembledInstruction_Type disassembledInstruction : disassembledInstructions) {
-                        if (disassembledInstruction.template().instructionDescription().isSynthetic()) {
-                            result.append(disassembledInstruction);
-                            foundSyntheticDisassembledInstruction = true;
-                            break;
+                    for (DisassembledObject disassembledObject : disassembledObjects) {
+                        if (disassembledObject instanceof DisassembledInstruction) {
+                            final Class<DisassembledInstruction_Type> type = null;
+                            final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(type, disassembledObject);
+                            if (disassembledInstruction.template().instructionDescription().isSynthetic()) {
+                                result.append(disassembledInstruction);
+                                foundSyntheticDisassembledInstruction = true;
+                                break;
+                            }
                         }
                     }
                 }
                 if (!foundSyntheticDisassembledInstruction) {
-                    result.append(disassembledInstructions.first());
+                    result.append(disassembledObjects.first());
                 }
             }
         } catch (IOException ioException) {
@@ -184,44 +188,11 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
     }
 
     @Override
-    protected IterableWithLength<DisassembledInstruction_Type> createDisassembledInlineDataInstructions(InlineData inlineData) {
+    protected IterableWithLength<DisassembledData> createDisassembledDataObjects(InlineData inlineData) {
         final InlineDataDescriptor descriptor = inlineData.descriptor();
         switch (descriptor.tag()) {
             case BYTE_DATA: {
-                // Create the template:
-                int bytesRemaining = inlineData.size();
-
-                final AppendableSequence<DisassembledInstruction_Type> result = new ArrayListSequence<DisassembledInstruction_Type>();
-                final ByteArrayInputStream dataStream = new ByteArrayInputStream(inlineData.data());
-                do {
-                    final int size = bytesRemaining > 4 ? 4 : bytesRemaining;
-                    final int fillerBytes = 4 - size;
-                    final Object[] specifications = new Object[1 + size + (fillerBytes == 0 ? 0 : 1)];
-                    final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>(size);
-                    specifications[0] = size == 1 ? ".BYTE" : ".BYTES";
-                    for (int i = 0; i < size; i++) {
-                        specifications[i + 1] = _byteFields[i];
-                        arguments.append(new Immediate8Argument((byte) dataStream.read()));
-                    }
-                    if (fillerBytes > 0) {
-                        if (assembly().bitRangeEndianness() == BitRangeOrder.ASCENDING) {
-                            specifications[specifications.length - 1] = ConstantField.createAscending(size * Bytes.WIDTH, 31).constant(0);
-                        } else {
-                            specifications[specifications.length - 1] = ConstantField.createDescending(31, size * Bytes.WIDTH).constant(0);
-                        }
-                    }
-
-                    final RiscInstructionDescription instructionDescription = new RiscInstructionDescription(new ArraySequence<Object>(specifications));
-                    final Template_Type template = createInlineDataTemplate(instructionDescription);
-                    RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(template, instructionDescription);
-
-                    // Now create the disassembled instruction:
-                    final DisassembledInstruction_Type disassembledInstruction = createDisassembledInstruction(descriptor.startPosition(), inlineData.data(), template, arguments);
-                    result.append(disassembledInstruction);
-
-                    bytesRemaining -= size;
-                } while (bytesRemaining > 0);
-                return result;
+                throw Problem.unimplemented();
             }
             case JUMP_TABLE32: {
                 throw Problem.unimplemented();

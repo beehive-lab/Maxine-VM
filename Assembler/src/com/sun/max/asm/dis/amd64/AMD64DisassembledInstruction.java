@@ -23,32 +23,15 @@ package com.sun.max.asm.dis.amd64;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.x86.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.amd64.*;
 import com.sun.max.collect.*;
 
 /**
  * @author Bernd Mathiske
  */
-public class AMD64DisassembledInstruction extends X86DisassembledInstruction<AMD64Template> implements Address64Instruction {
+public class AMD64DisassembledInstruction extends X86DisassembledInstruction<AMD64Template> {
 
-    private final Address64Instruction.Mixin _addressInstruction;
-
-    public AMD64DisassembledInstruction(long startAddress, int position, byte[] bytes, AMD64Template template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
-        _addressInstruction = new Address64Instruction.Mixin(this, startAddress);
+    public AMD64DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, AMD64Template template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
-
-    public long address() {
-        return _addressInstruction.address();
-    }
-
-    public String addressString() {
-        return _addressInstruction.addressString();
-    }
-
-    public int addressToPosition(ImmediateArgument argument) {
-        return _addressInstruction.addressToPosition(argument);
-    }
-
 }
