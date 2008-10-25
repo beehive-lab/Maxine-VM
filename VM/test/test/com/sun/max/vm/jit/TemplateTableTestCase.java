@@ -276,13 +276,7 @@ public abstract class TemplateTableTestCase extends CompilerTestCase<TargetMetho
 
     @Override
     protected Disassembler disassemblerFor(TargetMethod targetMethod) {
-        final Disassembler disassembler = jitTestSetup().disassemblerFor(targetMethod);
-        final byte[] encodedInlineDataDescriptors = targetMethod.encodedInlineDataDescriptors();
-        if (encodedInlineDataDescriptors != null) {
-            final InlineDataDecoder inlineDataDecoder = new InlineDataDecoder(encodedInlineDataDescriptors);
-            disassembler.setInlineDataDecoder(inlineDataDecoder);
-        }
-        return disassembler;
+        return jitTestSetup().disassemblerFor(targetMethod);
     }
 
     @Override

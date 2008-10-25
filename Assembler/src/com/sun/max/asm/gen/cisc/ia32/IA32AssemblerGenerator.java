@@ -31,7 +31,7 @@ import com.sun.max.lang.*;
 
 /**
  * Run this program to generate the IA32RawAssembler and IA32LabelAssembler classes.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> {
@@ -92,7 +92,7 @@ public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> 
     @Override
     protected String generateExampleInstruction(IA32Template template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
         final byte[] bytes = {};
-        final IA32DisassembledInstruction dis = new IA32DisassembledInstruction(0, 0, bytes, template, arguments);
+        final IA32DisassembledInstruction dis = new IA32DisassembledInstruction(new IA32Disassembler(0, null), 0, bytes, template, arguments);
         return dis.toString(labels);
     }
 }

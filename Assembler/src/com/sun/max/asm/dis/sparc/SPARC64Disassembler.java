@@ -35,8 +35,8 @@ public class SPARC64Disassembler extends SPARCDisassembler<SPARC64DisassembledIn
 
     private final long _startAddress;
 
-    public SPARC64Disassembler(long startAddress) {
-        super(SPARCAssembly.ASSEMBLY, WordWidth.BITS_64);
+    public SPARC64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(SPARCAssembly.ASSEMBLY, WordWidth.BITS_64, inlineDataDecoder);
         _startAddress = startAddress;
     }
 
@@ -47,11 +47,16 @@ public class SPARC64Disassembler extends SPARCDisassembler<SPARC64DisassembledIn
 
     @Override
     protected SPARC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
-        return new SPARC64DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new SPARC64DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override
     protected Assembler createAssembler(int position) {
         return new SPARC64Assembler(_startAddress + position);
+    }
+
+    @Override
+    protected long startAddress() {
+        return _startAddress;
     }
 }

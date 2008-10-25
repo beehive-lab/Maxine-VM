@@ -41,9 +41,14 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
 
     private final int _startAddress;
 
-    public IA32Disassembler(int startAddress) {
-        super(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
+    public IA32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(IA32Assembly.ASSEMBLY, WordWidth.BITS_32, inlineDataDecoder);
         _startAddress = startAddress;
+    }
+
+    @Override
+    protected long startAddress() {
+        return _startAddress;
     }
 
     @Override
@@ -58,7 +63,7 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
 
     @Override
     protected IA32DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, IA32Template template, IndexedSequence<Argument> arguments) {
-        return new IA32DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new IA32DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override

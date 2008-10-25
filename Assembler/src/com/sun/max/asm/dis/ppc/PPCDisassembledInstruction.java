@@ -31,8 +31,8 @@ import com.sun.max.collect.*;
  */
 public abstract class PPCDisassembledInstruction extends RiscDisassembledInstruction<PPCTemplate> {
 
-    PPCDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
+    PPCDisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 
     @Override

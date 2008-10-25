@@ -70,7 +70,7 @@ public class InternalTest extends MaxTestCase {
     public void test32() throws IOException, AssemblyException {
         final int startAddress = 0x12340000;
         final ARMAssembler assembler = new ARMAssembler(startAddress);
-        final ARMDisassembler disassembler = new ARMDisassembler(startAddress);
+        final ARMDisassembler disassembler = new ARMDisassembler(startAddress, null);
         final byte[] bytes = assemble(assembler);
         disassemble(disassembler, bytes);
         System.out.println();

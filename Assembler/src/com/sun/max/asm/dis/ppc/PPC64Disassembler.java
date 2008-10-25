@@ -35,9 +35,14 @@ public class PPC64Disassembler extends PPCDisassembler<PPC64DisassembledInstruct
 
     private final long _startAddress;
 
-    public PPC64Disassembler(long startAddress) {
-        super(PPCAssembly.ASSEMBLY, WordWidth.BITS_64);
+    public PPC64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(PPCAssembly.ASSEMBLY, WordWidth.BITS_64, inlineDataDecoder);
         _startAddress = startAddress;
+    }
+
+    @Override
+    protected long startAddress() {
+        return _startAddress;
     }
 
     @Override
@@ -47,7 +52,7 @@ public class PPC64Disassembler extends PPCDisassembler<PPC64DisassembledInstruct
 
     @Override
     protected PPC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
-        return new PPC64DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new PPC64DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override

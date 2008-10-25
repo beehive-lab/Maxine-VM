@@ -61,7 +61,7 @@ public final class TeleDisassembler {
             @Override
             public void run() {
                 Trace.begin(1, "initializing disassembler");
-                createDisassembler(teleVM, Address.zero());
+                createDisassembler(teleVM, Address.zero(), null);
                 Trace.end(1, "initializing disassembler");
             }
         };
@@ -77,34 +77,34 @@ public final class TeleDisassembler {
     private static <Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> IndexedSequence<TargetCodeInstruction> pacifyJavacCreate(
               TeleVM teleVM, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors, Class<Template_Type> pacifyBrokenJavac) {
         final Class<Disassembler<Template_Type, DisassembledInstruction_Type>> type = null;
-        final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = StaticLoophole.cast(type, createDisassembler(teleVM, codeStart));
+        final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = StaticLoophole.cast(type, createDisassembler(teleVM, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors)));
 
         final Class<LoadLiteralParser<Template_Type, DisassembledInstruction_Type>> type2 = null;
         final LoadLiteralParser<Template_Type, DisassembledInstruction_Type> literalParser = StaticLoophole.cast(type2, createLiteralParser(teleVM, disassembler, codeStart, code));
 
-        return create(codeStart, code, encodedInlineDataDescriptors, disassembler.assembly().templateType(), disassembler.disassembledInstructionType(), disassembler, literalParser);
+        return create(codeStart, code, disassembler.assembly().templateType(), disassembler.disassembledInstructionType(), disassembler, literalParser);
     }
 
-    private static Disassembler createDisassembler(final TeleVM teleVM, Address startAddress) {
+    private static Disassembler createDisassembler(final TeleVM teleVM, Address startAddress, InlineDataDecoder inlineDataDecoder) {
         final ProcessorKind processorKind = teleVM.vmConfiguration().platform().processorKind();
         switch (processorKind.instructionSet()) {
             case ARM:
                 Problem.unimplemented();
                 return null;
             case AMD64:
-                return new AMD64Disassembler(startAddress.toLong());
+                return new AMD64Disassembler(startAddress.toLong(), inlineDataDecoder);
             case IA32:
-                return new IA32Disassembler(startAddress.toInt());
+                return new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case PPC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new PPC64Disassembler(startAddress.toLong());
+                    return new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
-                return new PPC32Disassembler(startAddress.toInt());
+                return new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case SPARC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new SPARC64Disassembler(startAddress.toLong());
+                    return new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
-                return new SPARC32Disassembler(startAddress.toInt());
+                return new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
         }
         ProgramError.unknownCase();
         return null;
@@ -315,7 +315,6 @@ public final class TeleDisassembler {
     private static <Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> IndexedSequence<TargetCodeInstruction> create(
                     Address codeStart,
                     byte[] code,
-                    byte[] encodedInlineDataDescriptors,
                     Class<Template_Type> templateType,
                     Class<DisassembledInstruction_Type> disassembledInstructionType,
                     Disassembler rawDisassembler,
@@ -323,62 +322,83 @@ public final class TeleDisassembler {
 
         final Class<Disassembler<Template_Type, DisassembledInstruction_Type>> type = null;
         final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = StaticLoophole.cast(type, rawDisassembler);
-        IndexedSequence<DisassembledInstruction_Type> disassembledInstructions;
-
-        if (encodedInlineDataDescriptors != null) {
-            disassembler.setInlineDataDecoder(new InlineDataDecoder(encodedInlineDataDescriptors));
-        }
+        IndexedSequence<DisassembledObject> disassembledObjects;
 
         try {
-            disassembledInstructions = disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code)));
+            disassembledObjects = disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code)));
         } catch (Throwable throwable) {
             ProgramWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead [error: " + throwable + "]");
             final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
-            final AppendableIndexedSequence<DisassembledInstruction_Type> instructions = new ArrayListSequence<DisassembledInstruction_Type>();
+            final AppendableIndexedSequence<DisassembledObject> objects = new ArrayListSequence<DisassembledObject>();
             try {
             	while (bufferedInputStream.available() > 0) {
-            		instructions.append(disassembler.scanOneInstruction(bufferedInputStream).first());
+            		objects.append(disassembler.scanOneInstruction(bufferedInputStream).first());
             	}
             } catch (Throwable t) {
                 ProgramWarning.message("Only partially disassembled given code stream [error: " + t + "]");
             }
-            disassembledInstructions = instructions;
+            disassembledObjects = objects;
         }
 
-        final IndexedSequence<DisassembledLabel> labelMap = disassembler.createLabelMap(disassembledInstructions);
+        final IndexedSequence<DisassembledLabel> labelMap = disassembler.createLabelMap(disassembledObjects);
         final Sequence<DisassembledLabel> labels = Sequence.Static.filterNonNull(labelMap);
-        disassembler.updateLabels(labels, disassembledInstructions);
-        final AppendableIndexedSequence<TargetCodeInstruction> targetCodeInstructions = new ArrayListSequence<TargetCodeInstruction>(disassembledInstructions.length());
+        disassembler.updateLabels(labels, disassembledObjects);
+        final AppendableIndexedSequence<TargetCodeInstruction> targetCodeInstructions = new ArrayListSequence<TargetCodeInstruction>(disassembledObjects.length());
 
         int index = 0;
-        for (DisassembledInstruction_Type disassembledInstruction : disassembledInstructions) {
-            final DisassembledLabel label = labelMap.get(index);
-            final String operandsText = disassembledInstruction.operandsToString(labels);
-            final Address targetAddress;
-            final Address literalSourceAddress;
-            if (disassembledInstruction.arguments().length() == 1 && disassembledInstruction.arguments().first() instanceof ImmediateArgument &&
-                    (operandsText.contains("+") || operandsText.contains("-"))) {
-                final ImmediateArgument immediateArgument = (ImmediateArgument) disassembledInstruction.arguments().first();
-                targetAddress = codeStart.plus(Offset.fromLong(disassembler.getPositionFromInstructionRelativeOffset(disassembledInstruction, immediateArgument.asLong())));
-                literalSourceAddress = null;
-            } else if (literalParser.loadsLiteralData(disassembledInstruction)) {
-                literalSourceAddress = literalParser.literalAddress(disassembledInstruction);
-                targetAddress = null;
-            } else {
-                targetAddress = null;
-                literalSourceAddress = null;
-            }
-            final TargetCodeInstruction targetCodeInstruction = new TargetCodeInstruction(
-                            disassembledInstruction.externalName(),
-                            codeStart.plus(disassembledInstruction.startPosition()),
-                            disassembledInstruction.startPosition(),
-                            label == null ? null : label.name(),
-                            disassembledInstruction.bytes(),
-                            operandsText,
-                            targetAddress,
-                            literalSourceAddress);
-            targetCodeInstructions.append(targetCodeInstruction);
-            ++index;
+        for (DisassembledObject disassembledObject : disassembledObjects) {
+        	final DisassembledLabel label = labelMap.get(index);
+        	final TargetCodeInstruction targetCodeInstruction;
+        	if (disassembledObject instanceof DisassembledInstruction) {
+        		final Class<DisassembledInstruction_Type> castType = null;
+        		final DisassembledInstruction_Type disassembleInstruction = StaticLoophole.cast(castType, disassembledObject);
+
+        		final String operandsText = disassembleInstruction.operandsToString(labels);
+        		final Address targetAddress;
+        		final Address literalSourceAddress;
+        		if (disassembleInstruction.arguments().length() == 1 && disassembleInstruction.arguments().first() instanceof ImmediateArgument &&
+        				(operandsText.contains("+") || operandsText.contains("-"))) {
+        			final ImmediateArgument immediateArgument = (ImmediateArgument) disassembleInstruction.arguments().first();
+        			targetAddress = codeStart.plus(Offset.fromLong(disassembler.getPositionFromInstructionRelativeOffset(disassembleInstruction, immediateArgument.asLong())));
+        			literalSourceAddress = null;
+        		} else if (literalParser.loadsLiteralData(disassembleInstruction)) {
+        			literalSourceAddress = literalParser.literalAddress(disassembleInstruction);
+        			targetAddress = null;
+        		} else {
+        			targetAddress = null;
+        			literalSourceAddress = null;
+        		}
+        		targetCodeInstruction = new TargetCodeInstruction(
+        				disassembleInstruction.externalName(),
+        				codeStart.plus(disassembleInstruction.startPosition()),
+        				disassembleInstruction.startPosition(),
+        				label == null ? null : label.name(),
+        						disassembleInstruction.bytes(),
+        						operandsText,
+        						targetAddress,
+        						literalSourceAddress);
+        	} else {
+        		final DisassembledData disassembledData = (DisassembledData) disassembledObject;
+        		final String operandsText = disassembledData.operandsToString(labels);
+        		final ImmediateArgument targetPosition = disassembledData.targetPosition();
+        		final Address targetAddress;
+        		if (targetPosition != null) {
+        			targetAddress = codeStart.plus(Offset.fromLong(targetPosition.asLong()));
+        		} else {
+        			targetAddress = null;
+        		}
+
+        		targetCodeInstruction = new TargetCodeInstruction(disassembledData.prefix(),
+        				codeStart.plus(disassembledObject.startPosition()),
+        				disassembledObject.startPosition(),
+        				label == null ? null : label.name(),
+        						disassembledObject.bytes(),
+        						operandsText,
+        						targetAddress,
+        						null);
+        	}
+    		targetCodeInstructions.append(targetCodeInstruction);
+    		++index;
         }
         return targetCodeInstructions;
     }

@@ -35,7 +35,7 @@ import com.sun.max.vm.compiler.target.*;
 /**
  * Test whether the internal Snippets get translated at all.
  * This test is subsumed by each of the other translator tests.
- * 
+ *
  * @author Bernd Mathiske
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
@@ -61,7 +61,7 @@ public class AMD64TranslatorTest_snippets extends CompilerTestCase {
             Trace.line(1, "snippet " + snippet.name() + ":");
             final TargetMethod targetMethod = (TargetMethod) compilerTestSetup().translate(snippet.classMethodActor());
             targetMethod.traceBundle(IndentWriter.traceStreamWriter());
-            disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong());
+            disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
             final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
             disassembler.scanAndPrint(stream, Trace.stream());
         }

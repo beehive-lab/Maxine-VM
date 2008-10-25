@@ -30,7 +30,7 @@ import com.sun.max.collect.*;
 
 /**
  * The program entry point for the ARM assembler generator.
- * 
+ *
  * @author Sumeet Panchal
  */
 
@@ -58,7 +58,7 @@ public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<ARMTempl
     @Override
     protected String generateExampleInstruction(ARMTemplate template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
         final byte[] bytes = {};
-        final ARMDisassembledInstruction dis = new ARMDisassembledInstruction(0, 0, bytes, template, arguments);
+        final ARMDisassembledInstruction dis = new ARMDisassembledInstruction(new ARMDisassembler(0, null), 0, bytes, template, arguments);
         return dis.toString(labels);
     }
 
