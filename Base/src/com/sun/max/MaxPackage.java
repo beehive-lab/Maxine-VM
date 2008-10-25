@@ -126,7 +126,9 @@ public abstract class MaxPackage implements Comparable<MaxPackage> {
         for (String suffix : suffices) {
             name += "." + suffix;
         }
-        return fromName(name);
+        final MaxPackage subPackage = fromName(name);
+        ProgramError.check(subPackage != null, "Could not find sub-package of " + this + " named " + name);
+        return subPackage;
     }
 
     public boolean isSubPackageOf(MaxPackage superPackage) {

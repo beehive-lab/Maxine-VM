@@ -44,8 +44,11 @@ public abstract class CompilerTest_max<Method_Type extends IrMethod> extends Com
     }
 
     public void test_1() {
-        final TargetMethod targetMethod = (TargetMethod) compileMethod(JDK_java_lang_System.class, "arrayCopyForward");
-        this.traceBundleAndDisassemble(targetMethod);
+        final Method_Type method = compileMethod(JDK_java_lang_System.class, "arrayCopyForward");
+        if (method instanceof TargetMethod) {
+            final TargetMethod targetMethod = (TargetMethod) method;
+            traceBundleAndDisassemble(targetMethod);
+        }
     }
 
     public void test_basePackages() {

@@ -24,7 +24,6 @@ import java.io.*;
 import java.util.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.gen.*;
@@ -411,86 +410,4 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
     }
 
     protected abstract Template_Type createInlineDataTemplate(Object[] specification);
-
-    @Override
-    protected IterableWithLength<DisassembledData> createDisassembledDataObjects(final InlineData inlineData) {
-        final InlineDataDescriptor descriptor = inlineData.descriptor();
-        switch (descriptor.tag()) {
-            case BYTE_DATA: {
-                final int size = inlineData.size();
-                final DisassembledData disassembledData = new DisassembledData(descriptor.startPosition(), inlineData.data()) {
-                    public ImmediateArgument targetPosition() {
-                        return null;
-                    }
-
-                    @Override
-                    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-                        final byte[] data = inlineData.data();
-                        return Bytes.toHexString(data, " ");
-                    }
-
-                    @Override
-                    public String prefix() {
-                        return size == 1 ? ".byte" : ".bytes" + size;
-                    }
-                };
-                return Iterables.toIterableWithLength(Collections.singleton(disassembledData));
-            }
-            case JUMP_TABLE32: {
-                final JumpTable32 jumpTable32 = (JumpTable32) descriptor;
-                final AppendableSequence<DisassembledData> result = new ArrayListSequence<DisassembledData>(jumpTable32.numberOfEntries());
-
-                int caseValue = jumpTable32.low();
-                final InputStream stream = new ByteArrayInputStream(inlineData.data());
-                final int jumpTable = descriptor.startPosition();
-                int casePosition = jumpTable;
-                for (int i = 0; i < jumpTable32.numberOfEntries(); i++) {
-                    try {
-                        final int caseOffset = Endianness.LITTLE.readInt(stream);
-                        final byte[] caseOffsetBytes = Endianness.LITTLE.toBytes(caseOffset);
-
-                        final String prefix = ".switch_case " + Integer.toHexString(caseValue);
-                        final int targetPosition = jumpTable + caseOffset;
-                        final ImmediateArgument targetPositionArgument = new Immediate32Argument(targetPosition);
-                        final DisassembledData disassembledData = new DisassembledData(casePosition, caseOffsetBytes) {
-
-                            @Override
-                            public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-                                final DisassembledLabel label = DisassembledLabel.positionToLabel(targetPosition, labels);
-                                String s = "";
-                                if (label != null) {
-                                    s += label.name() + ": ";
-                                }
-                                if (caseOffset >= 0) {
-                                    s += "+";
-                                }
-                                return s + caseOffset;
-                            }
-
-                            @Override
-                            public String prefix() {
-                                return prefix;
-                            }
-
-                            @Override
-                            public ImmediateArgument targetPosition() {
-                                return targetPositionArgument;
-                            }
-                        };
-                        result.append(disassembledData);
-                        casePosition += 4;
-                        caseValue++;
-                    } catch (IOException ioException) {
-                        throw ProgramError.unexpected(ioException);
-                    }
-                }
-                assert casePosition == descriptor.endPosition();
-                return result;
-            }
-            case LOOKUP_TABLE32: {
-                return Sequence.Static.empty(DisassembledData.class);
-            }
-        }
-        throw ProgramError.unknownCase(descriptor.tag().toString());
-    }
 }

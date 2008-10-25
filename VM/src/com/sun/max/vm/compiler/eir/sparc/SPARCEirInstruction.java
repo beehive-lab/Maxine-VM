@@ -2356,6 +2356,7 @@ public interface SPARCEirInstruction {
                     }
                 }
             }
+            emitter.inlineDataRecorder().add(new InlineDataDescriptor.JumpTable32(jumpTable, minMatchValue(), maxMatchValue()));
         }
 
         private void translateLookupBinarySearch(SPARCEirTargetEmitter emitter, int bottomIndex, int topIndex) {

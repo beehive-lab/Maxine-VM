@@ -21,6 +21,7 @@
 package test.com.sun.max.asm.ia32;
 
 import static com.sun.max.asm.ia32.IA32GeneralRegister32.*;
+import static com.sun.max.asm.ia32.IA32BaseRegister32.*;
 import static com.sun.max.asm.ia32.IA32IndexRegister32.*;
 import static com.sun.max.asm.x86.Scale.*;
 
@@ -34,6 +35,7 @@ import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.dis.ia32.*;
 import com.sun.max.asm.ia32.complete.*;
 import com.sun.max.ide.*;
+import com.sun.max.lang.*;
 
 /**
  * @author David Liu
@@ -355,54 +357,80 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(recorder));
     }
 
-    private byte[] assembleSwitchTable(int startAddress, InlineDataRecorder recorder) throws IOException, AssemblyException {
+    /**
+     * Assembles a switch table:
+     *
+     *  switch (rsi) {
+     *      case match0: rcx = match0; break;
+     *      ...
+     *      case matchN: rcx = matchN; break;
+     *  }
+     */
+    private byte[] assembleSwitchTable(int startAddress, int[] matches, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
         final IA32Assembler asm = new IA32Assembler(startAddress);
-        final Label skip = new Label();
+        final Directives directives = asm.directives();
+
+        final Label end = new Label();
         final Label table = new Label();
-        final Label case1 = new Label();
-        final Label case2 = new Label();
-        final Label case3 = new Label();
+        final Label[] matchTargets = new Label[matches.length];
+        for (int i = 0; i < matches.length; i++) {
+            matchTargets[i] = new Label();
+        }
 
-        /*
-             switch (rsi) {
-                 case 0: rcx = 0xDEADBEEFDEADBEEFL; break;
-                 case 1: rcx = 0xCAFEBABECAFEBABEL; break;
-                 case 2: rcx = 0xFFFFFFFFFFFFFFFFL; break;
-             }
-         */
-        asm.mov(ESI, 1);
-        asm.m_jmp(table, ESI_INDEX, SCALE_4);
+        final int min = Ints.min(matches);
+        final int max = Ints.max(matches);
+
+        if (min != 0) {
+            asm.subl(ESI, min);
+        }
+        final int numElements = max - min + 1;
+        asm.cmpl(ESI, numElements);
+        asm.jnb(end);
+        asm.m_lea(EBX, table);
+        asm.movsxw(ESI, EBX_BASE, ESI_INDEX, SCALE_4);
+        asm.add(EBX, ESI);
+        asm.jmp(EBX);
         asm.nop();
 
-        asm.directives().align(4);
+        directives.align(4);
         asm.bindLabel(table);
-        asm.directives().inlineAddress(case1);
-        asm.directives().inlineAddress(case2);
-        asm.directives().inlineAddress(case3);
 
-        asm.directives().align(4);
-        asm.bindLabel(case1);
-        asm.mov(ECX, 0xDEADBEEF);
-        asm.jmp(skip);
-
-        asm.bindLabel(case2);
-        asm.mov(ECX, 0xCAFEBABE);
-        asm.jmp(skip);
-
-        asm.bindLabel(case3);
-        asm.mov(ECX, 0xFFFFFFFF);
-        asm.jmp(skip);
-
-        asm.bindLabel(skip);
+        for (int i = 0; i < matches.length; i++) {
+            directives.inlineOffset(matchTargets[i], table, WordWidth.BITS_32);
+            if (i + 1 < matches.length) {
+                // jump to 'end' for any "missing" entries
+                final int currentMatch = matches[i];
+                final int nextMatch = matches[i + 1];
+                for (int j = currentMatch + 1; j < nextMatch; j++) {
+                    directives.inlineOffset(end, table, WordWidth.BITS_32);
+                }
+            }
+        }
+        inlineDataRecorder.add(new InlineDataDescriptor.JumpTable32(table, min, max));
+        for (int i = 0; i < matches.length; i++) {
+            directives.align(4);
+            asm.bindLabel(matchTargets[i]);
+            asm.mov(ECX, matches[i]);
+            asm.jmp(end);
+        }
+        asm.bindLabel(end);
         asm.nop();
 
-        return asm.toByteArray(recorder);
+        return asm.toByteArray(inlineDataRecorder);
     }
 
-    public void testSwitchTable() throws IOException, AssemblyException {
-        System.out.println("--- testSwitchTable: ---");
-        final InlineDataRecorder recorder = new InlineDataRecorder();
-        final byte[] bytes = assembleSwitchTable(_startAddress, recorder);
-        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(recorder));
+    public void test_switchTable() throws IOException, AssemblyException {
+        final int[][] inputs = {
+            new int[] {0, 1, 3, 4, 6, 7},
+            new int[] {3, 4, 6, 7, 10},
+            new int[] {-4, -2, 7, 10, 6}
+        };
+        for (int[] matches : inputs) {
+            System.out.println("--- testSwitchTable:{" + Ints.toString(matches, ", ") + "} ---");
+            final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
+            final byte[] bytes = assembleSwitchTable(_startAddress, matches, inlineDataRecorder);
+            disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
+        }
     }
+
 }

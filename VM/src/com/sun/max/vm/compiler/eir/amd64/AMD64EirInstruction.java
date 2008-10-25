@@ -3691,7 +3691,7 @@ public interface AMD64EirInstruction {
             final AMD64EirRegister.General tableEirRegister = (AMD64EirRegister.General) emitter.abi().getScratchRegister(Kind.LONG);
             final AMD64GeneralRegister64 tableRegister = tableEirRegister.as64();
             emitter.assembler().rip_lea(tableRegister, jumpTable);
-            emitter.assembler().movsxd(AMD64GeneralRegister64.from(indexRegister), tableRegister.base(), indexRegister.index(), SCALE_4);
+            emitter.assembler().movsxd(indexRegister, tableRegister.base(), indexRegister.index(), SCALE_4);
             final AMD64GeneralRegister64 targetAddressRegister = tableRegister;
             emitter.assembler().add(targetAddressRegister, indexRegister);
             emitter.assembler().jmp(targetAddressRegister);

@@ -373,7 +373,7 @@ public abstract class Assembler {
             int initialOffset = 0;
             for (AssembledObject assembledObject : _assembledObjects) {
                 if (inlineDataRecorder != null && assembledObject.type() == Type.DATA) {
-                    inlineDataRecorder.add(new InlineDataDescriptor.ByteData(bytesWritten, assembledObject.size()));
+                    inlineDataRecorder.add(new InlineDataDescriptor.ByteData(assembledObject.startPosition(), assembledObject.size()));
                 }
 
                 if (assembledObject instanceof MutableAssembledObject) {
