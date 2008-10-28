@@ -20,21 +20,43 @@
  */
 package com.sun.max.asm.dis;
 
-import com.sun.max.collect.*;
+import com.sun.max.asm.gen.*;
 
 /**
- *
+ * Encapsulation of some inline data decoded from an instruction stream.
  *
  * @author Doug Simon
  */
 public abstract class DisassembledData implements DisassembledObject {
 
+    private final ImmediateArgument _startAddress;
     private final int _startPosition;
     private final byte[] _bytes;
+    private final String _mnemonic;
+    private final ImmediateArgument _targetAddress;
 
-    public DisassembledData(int startPosition, byte[] bytes) {
+    /**
+     * Creates an object encapsulating some inline data that starts at a given position.
+     *
+     * @param startAddress the absolute address at which the inline data starts
+     * @param startPosition the instruction stream relative position at which the inline data starts
+     * @param mnemonic an assembler directive like name for the data
+     * @param bytes the raw bytes of the inline data
+     */
+    public DisassembledData(ImmediateArgument startAddress, int startPosition, String mnemonic, byte[] bytes, ImmediateArgument targetAddress) {
+        _startAddress = startAddress;
         _startPosition = startPosition;
+        _mnemonic = mnemonic;
         _bytes = bytes;
+        _targetAddress = targetAddress;
+    }
+
+    public ImmediateArgument startAddress() {
+        return _startAddress;
+    }
+
+    public ImmediateArgument endAddress() {
+        return startAddress().plus(startPosition());
     }
 
     public int startPosition() {
@@ -53,16 +75,18 @@ public abstract class DisassembledData implements DisassembledObject {
         return Type.DATA;
     }
 
-    public abstract String prefix();
-
-    public abstract String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
-
-    public String operandsToString(Sequence<DisassembledLabel> labels) {
-        return toString(labels, null);
+    public ImmediateArgument targetAddress() {
+        return _targetAddress;
     }
 
+    public String mnemonic() {
+        return _mnemonic;
+    }
+
+    public abstract String operandsToString(AddressMapper addressMapper);
+
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        return prefix() + " " + operandsToString(labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        return mnemonic() + " " + operandsToString(addressMapper);
     }
 }

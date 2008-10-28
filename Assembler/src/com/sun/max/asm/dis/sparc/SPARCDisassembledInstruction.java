@@ -36,20 +36,20 @@ public abstract class SPARCDisassembledInstruction extends RiscDisassembledInstr
     }
 
     @Override
-    public String externalName() {
-        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startPosition(), null, null);
+    public String mnemonic() {
+        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();
     }
 
     @Override
-    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String operandsToString(AddressMapper addressMapper) {
+        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.operands();
     }
 
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();
     }
 

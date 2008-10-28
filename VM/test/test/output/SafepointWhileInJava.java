@@ -26,14 +26,20 @@ public class SafepointWhileInJava {
         int _iterations;
         public void run() {
             System.out.println("Spinner: spinning...");
-            final Object[] localRefs = new Object[1];
+            final Object[] localRefs = new Object[1000];
+            for (int i = 0; i < 1000; ++i) {
+                frameWithReferences(localRefs);
+            }
             while (!_done) {
-                for (int i = 0; i != localRefs.length; ++i) {
-                    localRefs[i] = System.out;
-                }
+                frameWithReferences(localRefs);
                 ++_iterations;
             }
-            System.out.println("Spinner: stopped!");
+            System.out.println("Spinner: stopped! [iterations: " + _iterations + ", done: " + _done + "]");
+        }
+        private void frameWithReferences(final Object[] localRefs) {
+            for (int i = 0; i != localRefs.length; ++i) {
+                localRefs[i] = System.out;
+            }
         }
     }
 
@@ -44,15 +50,15 @@ public class SafepointWhileInJava {
         spinnerThread.start();
 
         // Poll 'spinner' until it starts spinning
-        while (spinner._iterations == 0) {
+        while (spinner._iterations < 1000) {
             Thread.sleep(1);
         }
 
         // GC while 'spinner' is spinning in Java code
         for (int i = 0; i < 5; ++i) {
-            System.out.println("GC start");
+            System.out.println("GC start, spinner._done = " + spinner._done);
             System.gc();
-            System.out.println("GC stop");
+            System.out.println("GC stop, spinner._done = " + spinner._done);
         }
 
         // Stop 'spinner'

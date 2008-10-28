@@ -184,7 +184,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Gets the absolute path to the source file that will updated to include the generated assembler methods.
-     * 
+     *
      * @param className
      *                the name of the Java class that contains the generated assembler methods
      */
@@ -211,14 +211,14 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Prints the source code for the raw assembler method for to a given template.
-     * 
+     *
      * @return the number of source code lines printed
      */
     protected abstract int printMethod(IndentWriter writer, Template_Type template);
 
     /**
      * Prints the source code for support methods that are used by the methods printed by {@link #printMethod(IndentWriter, Template)}.
-     * 
+     *
      * @return the number of subroutines printed
      */
     protected int printSubroutines(IndentWriter writer) {
@@ -227,7 +227,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Gets the set of packages that must be imported for the generated code to compile successfully.
-     * 
+     *
      * @param className
      *                the name of the Java class that contains the assembler methods generated from {@code templates}
      * @param templates
@@ -287,7 +287,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     /**
      * Allows subclasses to print ISA specific details for a template. For example, RISC synthetic instructions
      * print what raw instruction they are derived from.
-     * 
+     *
      * @param extraLinks
      *                a sequence to which extra javadoc links should be appended
      */
@@ -296,7 +296,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Writes the Javadoc comment for an assembler method.
-     * 
+     *
      * @param template the template from which the assembler method is generated
      */
     protected void printMethodJavadoc(IndentWriter writer, Template_Type template, boolean forLabelAssemblerMethod) {
@@ -307,8 +307,11 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         final boolean printExampleInstruction = true;
         if (printExampleInstruction) {
+            if (template.serial() == 264) {
+                System.console();
+            }
             final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-            final AppendableIndexedSequence<DisassembledLabel> labels = new ArrayListSequence<DisassembledLabel>();
+            final AddressMapper addressMapper = new AddressMapper();
             int parameterIndex = 0;
             for (Parameter p : template.parameters()) {
                 final Argument exampleArg = p.getExampleArgument();
@@ -318,15 +321,12 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                     break;
                 }
                 if (template.labelParameterIndex() == parameterIndex) {
-                    final DisassembledLabel label = new DisassembledLabel(0);
-                    label.setSerial(1);
-                    label.bind((int) exampleArg.asLong());
-                    labels.append(label);
+                    addressMapper.add((ImmediateArgument) exampleArg, "L1");
                 }
                 parameterIndex++;
             }
             if (arguments.length() == template.parameters().length()) {
-                final String exampleInstruction = generateExampleInstruction(template, arguments, labels);
+                final String exampleInstruction = generateExampleInstruction(template, arguments, addressMapper);
                 writer.println(" * Example disassembly syntax: {@code " + exampleInstruction + "}");
             }
         }
@@ -359,7 +359,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         writer.println(" */");
     }
 
-    protected abstract String generateExampleInstruction(Template_Type template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels);
+    protected abstract String generateExampleInstruction(Template_Type template, IndexedSequence<Argument> arguments, AddressMapper addressMapper);
 
     private String externalParameters(Sequence< ? extends Parameter> parameters) {
         final StringBuilder sb = new StringBuilder();
@@ -451,7 +451,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Gets the parameters for a template.
-     * 
+     *
      * @param forLabelAssemblerMethod
      *                if true and template contains a label parameter, then this parameter is represented as a
      *                {@link LabelParameter} object in the returned sequence
@@ -475,7 +475,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Prints an assembler method for a template that refers to an address via a {@linkplain Label label}.
-     * 
+     *
      * @param writer
      *                the writer to which code will be printed
      * @param labelTemplate
@@ -515,7 +515,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
          * generated by a call to {@link AssemblerGenerator#printLabelMethodHelper}.
          * <p>
          * The default implementation generates a call to the raw assembler method generated for {@code template}
-         * 
+         *
          * @param writer
          * @param template
          */
@@ -547,7 +547,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Prints the code that emits the place holder bytes for a label instruction before a value has been bound to the label.
-     * 
+     *
      * @param writer
      * @param template
      * @param placeholderInstructionSize
@@ -588,7 +588,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
     /**
      * Handles most of the work of {@link #printLabelMethod(IndentWriter, Template, String)}.
-     * 
+     *
      * @param writer
      *                the writer to which code will be printed
      * @param template

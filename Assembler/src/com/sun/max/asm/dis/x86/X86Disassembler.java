@@ -46,8 +46,8 @@ import com.sun.max.util.*;
 public abstract class X86Disassembler<Template_Type extends X86Template, DisassembledInstruction_Type extends X86DisassembledInstruction<Template_Type>>
                           extends Disassembler<Template_Type, DisassembledInstruction_Type> {
 
-    protected X86Disassembler(Assembly<Template_Type> assembly, WordWidth addressWidth, InlineDataDecoder inlineDataDecoder) {
-        super(assembly, addressWidth, Endianness.LITTLE, inlineDataDecoder);
+    protected X86Disassembler(ImmediateArgument startAddress, Assembly<Template_Type> assembly, InlineDataDecoder inlineDataDecoder) {
+        super(startAddress, assembly, Endianness.LITTLE, inlineDataDecoder);
     }
 
     protected abstract boolean isRexPrefix(HexByte opcode);
@@ -328,7 +328,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
     private static final boolean INLINE_INVALID_INSTRUCTIONS_AS_BYTES = true;
 
     @Override
-    public IndexedSequence<DisassembledObject> scanOneInstruction(BufferedInputStream stream) throws IOException, AssemblyException {
+    public IndexedSequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException {
         final AppendableIndexedSequence<DisassembledObject> disassembledObjects = new ArrayListSequence<DisassembledObject>();
         stream.mark(MORE_THAN_ANY_INSTRUCTION_LENGTH);
         final X86InstructionHeader header = scanInstructionHeader(stream);
@@ -340,7 +340,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
     }
 
     @Override
-    public IndexedSequence<DisassembledObject> scan(BufferedInputStream stream) throws IOException, AssemblyException {
+    public IndexedSequence<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException {
         final SortedSet<Integer> knownGoodCodePositions = new TreeSet<Integer>();
         final AppendableIndexedSequence<DisassembledObject> result = new ArrayListSequence<DisassembledObject>();
         boolean processingKnownValidCode = true;
@@ -370,7 +370,7 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
                     final byte[] data = new byte[size];
                     Streams.readFully(stream, data);
                     final InlineData inlineData = new InlineData(startPosition, data);
-                    _currentPosition += processInlineData(result, inlineData);
+                    _currentPosition += addDisassembledDataObjects(result, inlineData);
                     processingKnownValidCode = true;
                 } else {
                     result.append(disassembledObject);

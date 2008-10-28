@@ -21,10 +21,10 @@
 package com.sun.max.asm.dis.sparc;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 
 /**
  *
@@ -33,11 +33,8 @@ import com.sun.max.lang.*;
  */
 public class SPARC32Disassembler extends SPARCDisassembler<SPARC32DisassembledInstruction> {
 
-    private final int _startAddress;
-
     public SPARC32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
-        super(SPARCAssembly.ASSEMBLY, WordWidth.BITS_32, inlineDataDecoder);
-        _startAddress = startAddress;
+        super(new Immediate32Argument(startAddress), SPARCAssembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
@@ -52,11 +49,6 @@ public class SPARC32Disassembler extends SPARCDisassembler<SPARC32DisassembledIn
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new SPARC32Assembler(_startAddress + position);
-    }
-
-    @Override
-    protected long startAddress() {
-        return _startAddress;
+        return new SPARC32Assembler((int) startAddress().asLong() + position);
     }
 }

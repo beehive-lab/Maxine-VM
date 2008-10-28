@@ -117,14 +117,19 @@ public final class TeleDisassembler {
             _disassembler = disassembler;
             _literalBase = literalBase;
         }
+
         /**
-         * Return a boolean indicating whether the specified disassembled instruction is an instruction that loads a literal value.
+         * Gets a boolean indicating whether the specified disassembled instruction is an instruction that loads a
+         * literal value.
+         *
          * @param disassembledInstruction the disassembled instruction
          * @return true if the instruction loads a literal value, false otherwise.
          */
         abstract boolean loadsLiteralData(DisassembledInstruction_Type disassembledInstruction);
+
         /**
-         * Return the address of the literal value loaded by an instruction.
+         * Gets the address of the literal value loaded by an instruction.
+         *
          * @param codeStart start of the code that contains the instruction that loads the literal value
          * @param disassembledInstruction the disassembled form of the instruction
          * @return the address where the literal value is stored
@@ -332,7 +337,7 @@ public final class TeleDisassembler {
             final AppendableIndexedSequence<DisassembledObject> objects = new ArrayListSequence<DisassembledObject>();
             try {
             	while (bufferedInputStream.available() > 0) {
-            		objects.append(disassembler.scanOneInstruction(bufferedInputStream).first());
+            		objects.append(disassembler.scanOne(bufferedInputStream).first());
             	}
             } catch (Throwable t) {
                 ProgramWarning.message("Only partially disassembled given code stream [error: " + t + "]");
@@ -340,20 +345,16 @@ public final class TeleDisassembler {
             disassembledObjects = objects;
         }
 
-        final IndexedSequence<DisassembledLabel> labelMap = disassembler.createLabelMap(disassembledObjects);
-        final Sequence<DisassembledLabel> labels = Sequence.Static.filterNonNull(labelMap);
-        disassembler.updateLabels(labels, disassembledObjects);
         final AppendableIndexedSequence<TargetCodeInstruction> targetCodeInstructions = new ArrayListSequence<TargetCodeInstruction>(disassembledObjects.length());
 
-        int index = 0;
         for (DisassembledObject disassembledObject : disassembledObjects) {
-        	final DisassembledLabel label = labelMap.get(index);
+        	final DisassembledLabel label = disassembler.addressMapper().labelAt(disassembledObject);
         	final TargetCodeInstruction targetCodeInstruction;
         	if (disassembledObject instanceof DisassembledInstruction) {
         		final Class<DisassembledInstruction_Type> castType = null;
         		final DisassembledInstruction_Type disassembleInstruction = StaticLoophole.cast(castType, disassembledObject);
 
-        		final String operandsText = disassembleInstruction.operandsToString(labels);
+        		final String operandsText = disassembleInstruction.operandsToString(null);
         		final Address targetAddress;
         		final Address literalSourceAddress;
         		if (disassembleInstruction.arguments().length() == 1 && disassembleInstruction.arguments().first() instanceof ImmediateArgument &&
@@ -369,7 +370,7 @@ public final class TeleDisassembler {
         			literalSourceAddress = null;
         		}
         		targetCodeInstruction = new TargetCodeInstruction(
-        				disassembleInstruction.externalName(),
+        				disassembleInstruction.mnemonic(),
         				codeStart.plus(disassembleInstruction.startPosition()),
         				disassembleInstruction.startPosition(),
         				label == null ? null : label.name(),
@@ -379,8 +380,8 @@ public final class TeleDisassembler {
         						literalSourceAddress);
         	} else {
         		final DisassembledData disassembledData = (DisassembledData) disassembledObject;
-        		final String operandsText = disassembledData.operandsToString(labels);
-        		final ImmediateArgument targetPosition = disassembledData.targetPosition();
+        		final String operandsText = disassembledData.operandsToString(null);
+        		final ImmediateArgument targetPosition = disassembledData.targetAddress();
         		final Address targetAddress;
         		if (targetPosition != null) {
         			targetAddress = codeStart.plus(Offset.fromLong(targetPosition.asLong()));
@@ -388,7 +389,7 @@ public final class TeleDisassembler {
         			targetAddress = null;
         		}
 
-        		targetCodeInstruction = new TargetCodeInstruction(disassembledData.prefix(),
+        		targetCodeInstruction = new TargetCodeInstruction(disassembledData.mnemonic(),
         				codeStart.plus(disassembledObject.startPosition()),
         				disassembledObject.startPosition(),
         				label == null ? null : label.name(),
@@ -398,7 +399,6 @@ public final class TeleDisassembler {
         						null);
         	}
     		targetCodeInstructions.append(targetCodeInstruction);
-    		++index;
         }
         return targetCodeInstructions;
     }

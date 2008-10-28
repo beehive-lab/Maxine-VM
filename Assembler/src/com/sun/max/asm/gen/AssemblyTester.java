@@ -532,7 +532,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = createTestDisassembler();
         disassembler.setAbstractionPreference(template.instructionDescription().isSynthetic() ? Disassembler.AbstractionPreference.SYNTHETIC : Disassembler.AbstractionPreference.RAW);
         disassembler.setExpectedNumberOfArguments(argumentList.length());
-        final Sequence<DisassembledObject> disassembledObjects = disassembler.scanOneInstruction(disassemblyStream);
+        final Sequence<DisassembledObject> disassembledObjects = disassembler.scanOne(disassemblyStream);
 
         boolean matchFound = false;
         for (DisassembledObject disassembledObject : disassembledObjects) {

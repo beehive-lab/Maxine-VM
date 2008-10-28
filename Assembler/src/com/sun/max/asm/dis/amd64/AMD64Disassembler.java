@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.complete.*;
 import com.sun.max.asm.dis.x86.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.amd64.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.collect.*;
@@ -38,16 +39,8 @@ import com.sun.max.util.*;
  */
 public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64DisassembledInstruction> {
 
-    private final long _startAddress;
-
     public AMD64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
-        super(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64, inlineDataDecoder);
-        _startAddress = startAddress;
-    }
-
-    @Override
-    protected long startAddress() {
-        return _startAddress;
+        super(new Immediate64Argument(startAddress), AMD64Assembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
@@ -72,7 +65,7 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new AMD64Assembler(_startAddress + position);
+        return new AMD64Assembler(startAddress().asLong() + position);
     }
 
     private static Map<X86InstructionHeader, AppendableSequence<AMD64Template>> _headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);

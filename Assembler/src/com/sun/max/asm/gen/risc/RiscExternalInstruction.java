@@ -55,32 +55,21 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
 
     protected final RiscTemplate _template;
     protected final Queue<Argument> _arguments;
-    protected final int _position;
-    protected final Sequence<DisassembledLabel> _labels;
-    protected final GlobalLabelMapper _globalLabelMapper;
+    protected final ImmediateArgument _address;
+    protected final AddressMapper _addressMapper;
 
     public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments) {
         _template = template;
         _arguments = new MutableQueue<Argument>(arguments);
-        _position = -1;
-        _labels = Sequence.Static.empty(DisassembledLabel.class);
-        _globalLabelMapper = null;
+        _address = null;
+        _addressMapper = null;
     }
 
-    public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments, int position, Sequence<DisassembledLabel> labels) {
+    public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
         _template = template;
         _arguments = new MutableQueue<Argument>(arguments);
-        _position = position;
-        _labels = labels;
-        _globalLabelMapper = null;
-    }
-
-    public RiscExternalInstruction(RiscTemplate template, Sequence<Argument> arguments, int position, Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        _template = template;
-        _arguments = new MutableQueue<Argument>(arguments);
-        _position = position;
-        _labels = labels;
-        _globalLabelMapper = globalLabelMapper;
+        _address = address;
+        _addressMapper = addressMapper;
     }
 
     private String _nameString;
@@ -128,20 +117,11 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
 
     private void printBranchDisplacement(ImmediateArgument immediateArgument) {
         final int delta = (int) immediateArgument.asLong();
-        if (_position > 0) {
-            final int targetPosition = _position + delta;
-            String globalName = null;
-            if (_globalLabelMapper != null) {
-                globalName = _globalLabelMapper.map(targetPosition);
-            }
-            if (globalName != null) {
-                print(globalName + ": ");
-            } else {
-                for (DisassembledLabel label : _labels) {
-                    if (label.position() == targetPosition) {
-                        print(label.name() + ": ");
-                    }
-                }
+        if (_address != null && _address.asLong() > 0) {
+            final ImmediateArgument targetAddress = _address.plus(delta);
+            final DisassembledLabel label = _addressMapper.labelAt(targetAddress);
+            if (label != null) {
+                print(label.name() + ": ");
             }
         } else {
             if (!isAbsoluteBranch()) {

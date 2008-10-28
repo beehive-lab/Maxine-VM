@@ -56,10 +56,10 @@ public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<ARMTempl
     }
 
     @Override
-    protected String generateExampleInstruction(ARMTemplate template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
+    protected String generateExampleInstruction(ARMTemplate template, IndexedSequence<Argument> arguments, AddressMapper addressMapper) {
         final byte[] bytes = {};
         final ARMDisassembledInstruction dis = new ARMDisassembledInstruction(new ARMDisassembler(0, null), 0, bytes, template, arguments);
-        return dis.toString(labels);
+        return dis.toString(addressMapper);
     }
 
 }

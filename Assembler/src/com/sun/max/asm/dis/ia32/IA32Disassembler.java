@@ -24,6 +24,7 @@ import java.util.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.x86.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.ia32.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.complete.*;
@@ -39,16 +40,8 @@ import com.sun.max.util.*;
  */
 public class IA32Disassembler extends X86Disassembler<IA32Template, IA32DisassembledInstruction> {
 
-    private final int _startAddress;
-
     public IA32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
-        super(IA32Assembly.ASSEMBLY, WordWidth.BITS_32, inlineDataDecoder);
-        _startAddress = startAddress;
-    }
-
-    @Override
-    protected long startAddress() {
-        return _startAddress;
+        super(new Immediate32Argument(startAddress), IA32Assembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
@@ -73,7 +66,7 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new IA32Assembler(_startAddress + position);
+        return new IA32Assembler((int) startAddress().asLong() + position);
     }
 
     private static Map<X86InstructionHeader, AppendableSequence<IA32Template>> _headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);

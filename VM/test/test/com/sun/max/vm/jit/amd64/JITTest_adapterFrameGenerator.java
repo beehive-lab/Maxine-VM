@@ -76,7 +76,7 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
 
         try {
             while (bufferedInputStream.available() > 0) {
-                disassembler.print(Trace.stream(), disassembler.scanOneInstruction(bufferedInputStream));
+                disassembler.print(Trace.stream(), disassembler.scanOne(bufferedInputStream));
             }
         } catch (Throwable throwable) {
             System.err.println("could not disassemble any further: " + throwable);

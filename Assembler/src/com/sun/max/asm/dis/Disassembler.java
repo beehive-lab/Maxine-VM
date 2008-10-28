@@ -40,13 +40,13 @@ import com.sun.max.program.*;
  */
 public abstract class Disassembler<Template_Type extends Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> {
 
+    private final ImmediateArgument _startAddress;
     private final Assembly<Template_Type> _assembly;
-    private final WordWidth _addressWidth;
     private final Endianness _endianness;
 
-    protected Disassembler(Assembly<Template_Type> assembly, WordWidth addressWidth, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
+    protected Disassembler(ImmediateArgument startAddress, Assembly<Template_Type> assembly, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
+        _startAddress = startAddress;
         _assembly = assembly;
-        _addressWidth = addressWidth;
         _endianness = endianness;
         _inlineDataDecoder = inlineDataDecoder;
     }
@@ -56,7 +56,7 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
     }
 
     public WordWidth addressWidth() {
-        return _addressWidth;
+        return _startAddress.width();
     }
 
     public Endianness endianness() {
@@ -67,6 +67,12 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
 
     public void setCurrentPosition(int position) {
         _currentPosition = position;
+    }
+
+    private final AddressMapper _addressMapper = new AddressMapper();
+
+    public AddressMapper addressMapper() {
+        return _addressMapper;
     }
 
     private final InlineDataDecoder _inlineDataDecoder;
@@ -100,23 +106,17 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
      */
     protected IterableWithLength<DisassembledData> createDisassembledDataObjects(final InlineData inlineData) {
         final InlineDataDescriptor descriptor = inlineData.descriptor();
+        final int startPosition = descriptor.startPosition();
         switch (descriptor.tag()) {
             case BYTE_DATA: {
                 final int size = inlineData.size();
-                final DisassembledData disassembledData = new DisassembledData(descriptor.startPosition(), inlineData.data()) {
-                    public ImmediateArgument targetPosition() {
-                        return null;
-                    }
-
+                final String mnemonic = size == 1 ? ".byte" : ".bytes" + size;
+                final ImmediateArgument address = startAddress().plus(startPosition);
+                final DisassembledData disassembledData = new DisassembledData(address, startPosition, mnemonic, inlineData.data(), null) {
                     @Override
-                    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
+                    public String operandsToString(AddressMapper addressMapper) {
                         final byte[] data = inlineData.data();
                         return Bytes.toHexString(data, " ");
-                    }
-
-                    @Override
-                    public String prefix() {
-                        return size == 1 ? ".byte" : ".bytes" + size;
                     }
                 };
                 return Iterables.toIterableWithLength(Collections.singleton(disassembledData));
@@ -127,7 +127,7 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
 
                 int caseValue = jumpTable32.low();
                 final InputStream stream = new ByteArrayInputStream(inlineData.data());
-                final int jumpTable = descriptor.startPosition();
+                final int jumpTable = startPosition;
                 int casePosition = jumpTable;
                 for (int i = 0; i < jumpTable32.numberOfEntries(); i++) {
                     try {
@@ -135,15 +135,16 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                         final int caseOffset = endianness.readInt(stream);
                         final byte[] caseOffsetBytes = endianness.toBytes(caseOffset);
 
-                        final String prefix = ".case " + caseValue + ":   ";
                         final int targetPosition = jumpTable + caseOffset;
-                        final ImmediateArgument targetPositionArgument = new Immediate32Argument(targetPosition);
-                        final DisassembledData disassembledData = new DisassembledData(casePosition, caseOffsetBytes) {
+                        final ImmediateArgument targetAddress = startAddress().plus(targetPosition);
+                        final String caseValueOperand = caseValue + ":  ";
 
+                        final ImmediateArgument caseAddress = startAddress().plus(casePosition);
+                        final DisassembledData disassembledData = new DisassembledData(caseAddress, casePosition, ".case", caseOffsetBytes, targetAddress) {
                             @Override
-                            public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-                                final DisassembledLabel label = DisassembledLabel.positionToLabel(targetPosition, labels);
-                                String s = "";
+                            public String operandsToString(AddressMapper addressMapper) {
+                                final DisassembledLabel label = addressMapper.labelAt(targetAddress);
+                                String s = caseValueOperand;
                                 if (label != null) {
                                     s += label.name() + ": ";
                                 }
@@ -151,16 +152,6 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                                     s += "+";
                                 }
                                 return s + caseOffset;
-                            }
-
-                            @Override
-                            public String prefix() {
-                                return prefix;
-                            }
-
-                            @Override
-                            public ImmediateArgument targetPosition() {
-                                return targetPositionArgument;
                             }
                         };
                         result.append(disassembledData);
@@ -178,7 +169,7 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                 final AppendableSequence<DisassembledData> result = new ArrayListSequence<DisassembledData>(lookupTable32.numberOfEntries());
 
                 final InputStream stream = new ByteArrayInputStream(inlineData.data());
-                final int lookupTable = descriptor.startPosition();
+                final int lookupTable = startPosition;
                 int casePosition = lookupTable;
                 for (int i = 0; i < lookupTable32.numberOfEntries(); i++) {
                     try {
@@ -190,15 +181,15 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                         endianness.toBytes(caseValue, caseBytes, 0);
                         endianness.toBytes(caseOffset, caseBytes, 4);
 
-                        final String prefix = ".case " + caseValue + ":   ";
                         final int targetPosition = lookupTable + caseOffset;
-                        final ImmediateArgument targetPositionArgument = new Immediate32Argument(targetPosition);
-                        final DisassembledData disassembledData = new DisassembledData(casePosition, caseBytes) {
+                        final ImmediateArgument caseAddress = startAddress().plus(casePosition);
+                        final ImmediateArgument targetAddress = startAddress().plus(targetPosition);
 
+                        final DisassembledData disassembledData = new DisassembledData(caseAddress, casePosition, ".case ", caseBytes, targetAddress) {
                             @Override
-                            public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-                                final DisassembledLabel label = DisassembledLabel.positionToLabel(targetPosition, labels);
-                                String s = "";
+                            public String operandsToString(AddressMapper addressMapper) {
+                                final DisassembledLabel label = addressMapper.labelAt(targetAddress);
+                                String s = caseValue + ":   ";
                                 if (label != null) {
                                     s += label.name() + ": ";
                                 }
@@ -206,16 +197,6 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                                     s += "+";
                                 }
                                 return s + caseOffset;
-                            }
-
-                            @Override
-                            public String prefix() {
-                                return prefix;
-                            }
-
-                            @Override
-                            public ImmediateArgument targetPosition() {
-                                return targetPositionArgument;
                             }
                         };
                         result.append(disassembledData);
@@ -231,6 +212,9 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
         throw ProgramError.unknownCase(descriptor.tag().toString());
     }
 
+    /**
+     * Creates an assembler that will start assembling at {@code this.startAddress() + position}.
+     */
     protected abstract Assembler createAssembler(int position);
 
     /**
@@ -238,81 +222,54 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
      * <p>
      * @return the disassembled forms that match the first encoded instruction in {@code stream}
      */
-    public abstract Sequence<DisassembledObject> scanOneInstruction(BufferedInputStream stream) throws IOException, AssemblyException;
+    public final Sequence<DisassembledObject> scanOne(BufferedInputStream stream) throws IOException, AssemblyException {
+        final Sequence<DisassembledObject> disassembledObjects = scanOne0(stream);
+        if (!disassembledObjects.isEmpty()) {
+            _addressMapper.add(disassembledObjects.first());
+        }
+        return disassembledObjects;
+    }
 
     /**
-     * Scans an instruction stream and disassembles the encoded instructions. If an encoded instruction has
+     * Does the actual scanning for {@link #scanOne(BufferedInputStream)}.
+     */
+    protected abstract Sequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException;
+
+    /**
+     * Scans an instruction stream and disassembles the encoded objects. If an encoded instruction has
      * more than one matching disassembled form, an arbitrary choice of one of the disassembled forms is
      * appended to the returned sequence.
      * <p>
-     * The {@link #scanOneInstruction} method can be used to obtain all the disassembled forms
+     * The {@link #scanOne} method can be used to obtain all the disassembled forms
      * for each instruction in an instruction stream.
      */
-    public abstract IndexedSequence<DisassembledObject> scan(BufferedInputStream stream) throws IOException, AssemblyException;
+    public final IndexedSequence<DisassembledObject> scan(BufferedInputStream stream) throws IOException, AssemblyException {
+        final IndexedSequence<DisassembledObject> disassembledObjects = scan0(stream);
+        _addressMapper.add(disassembledObjects);
+        return disassembledObjects;
+
+    }
+
+    /**
+     * Does the actual scanning for {@link #scan(BufferedInputStream)}.
+     */
+    public abstract IndexedSequence<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException;
 
     protected final void scanInlineData(BufferedInputStream stream, AppendableIndexedSequence<DisassembledObject> disassembledObjects) throws IOException {
         if (inlineDataDecoder() != null) {
             InlineData inlineData;
             while ((inlineData = inlineDataDecoder().decode(_currentPosition, stream)) != null) {
-                _currentPosition += processInlineData(disassembledObjects, inlineData);
+                _currentPosition += addDisassembledDataObjects(disassembledObjects, inlineData);
             }
         }
     }
 
-    protected int processInlineData(AppendableIndexedSequence<DisassembledObject> disassembledObjects, InlineData inlineData) {
+    protected int addDisassembledDataObjects(AppendableIndexedSequence<DisassembledObject> disassembledObjects, InlineData inlineData) {
         final IterableWithLength<DisassembledData> dataObjects = createDisassembledDataObjects(inlineData);
         for (DisassembledData dataObject : dataObjects) {
             disassembledObjects.append(dataObject);
         }
         return inlineData.size();
-    }
-
-    private int findTargetIndex(int position, IndexedSequence<DisassembledObject> disassembledObjects) {
-        if (position >= 0 && position <= disassembledObjects.last().startPosition()) {
-            for (int i = 0; i < disassembledObjects.length(); i++) {
-                if (disassembledObjects.get(i).startPosition() == position) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * A label map is a sequence of labels that matches a sequence of disassembled instructions,
-     * containing either a label or null at the index of each instruction.
-     */
-    public IndexedSequence<DisassembledLabel> createLabelMap(IndexedSequence<DisassembledObject> disassembledObjects) {
-        final MutableSequence<DisassembledLabel> labels = new ArraySequence<DisassembledLabel>(disassembledObjects.length());
-        for (DisassembledObject disassembledObject : disassembledObjects) {
-            final ImmediateArgument targetPosition = disassembledObject.targetPosition();
-            if (targetPosition != null) {
-                final int targetObjectIndex = findTargetIndex((int) targetPosition.asLong(), disassembledObjects);
-                if (targetObjectIndex >= 0 && labels.get(targetObjectIndex) == null) {
-                    labels.set(targetObjectIndex, new DisassembledLabel(targetObjectIndex));
-                }
-            }
-        }
-        return labels;
-    }
-
-    /**
-     * Assigns serial numbers to these labels.
-     *
-     * @return the length (i.e. number of characters) of the longest {@linkplain DisassembledLabel#name() label name}
-     */
-    public int updateLabels(Sequence<DisassembledLabel> labels, IndexedSequence<DisassembledObject> disassembledObjects) {
-        int result = 0;
-        int serial = 1;
-        for (DisassembledLabel label : labels) {
-            label.setSerial(serial);
-            serial++;
-            label.bind(disassembledObjects.get(label.instructionIndex()).startPosition());
-            if (label.name().length() > result) {
-                result = label.name().length();
-            }
-        }
-        return result;
     }
 
     private static final String SPACE = "   ";
@@ -339,55 +296,53 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
     }
 
     public String addressString(DisassembledObject disassembledObject) {
-        final long address = startAddress() + disassembledObject.startPosition();
         final String format = "0x%0" + addressWidth().numberOfBytes() + "X";
-        return String.format(format, address);
+        return String.format(format, disassembledObject.startAddress().asLong());
     }
 
     /**
      * The start address of the instruction stream decoded by this disassembler.
      */
-    protected abstract long startAddress();
+    protected final ImmediateArgument startAddress() {
+        return _startAddress;
+    }
 
-    public void print(OutputStream outputStream, IndexedSequence<DisassembledObject> disassembledObjects, GlobalLabelMapper globalLabelMapper) throws IOException {
+    /**
+     * Prints a disassembly for a given sequence of disassembled objects.
+     *
+     * @param outputStream the stream to which the disassembly wil be printed
+     * @param disassembledObjects the disassembled objects to be printed
+     * @param addressMapper an object that can provide symbol names/label for (global) addresses
+     */
+    public void print(OutputStream outputStream, Sequence<DisassembledObject> disassembledObjects) throws IOException {
         final PrintStream stream = outputStream instanceof PrintStream ? (PrintStream) outputStream : new PrintStream(outputStream);
         final int nOffsetChars = Integer.toString(disassembledObjects.last().startPosition()).length();
-        final IndexedSequence<DisassembledLabel> labelMap = createLabelMap(disassembledObjects);
-        final Sequence<DisassembledLabel> labels = Sequence.Static.filterNonNull(labelMap);
-        final int nLabelChars = updateLabels(labels, disassembledObjects);
+        final int nLabelChars = _addressMapper.maximumLabelNameLength();
         if (_isHeadingEnabled) {
             printHeading(stream, nOffsetChars, nLabelChars);
         }
-        for (int i = 0; i < disassembledObjects.length(); i++) {
-            final DisassembledObject disassembledObject = disassembledObjects.get(i);
+        for (DisassembledObject disassembledObject : disassembledObjects) {
             stream.print(addressString(disassembledObject));
             stream.print(SPACE);
             stream.printf("%0" + nOffsetChars + "d", disassembledObject.startPosition());
             stream.print(SPACE);
-            if (labelMap.get(i) != null) {
-                stream.print(Strings.padLengthWithSpaces(labelMap.get(i).name(), nLabelChars) + ":");
+            final DisassembledLabel label = _addressMapper.labelAt(disassembledObject.startAddress());
+            if (label != null) {
+                stream.print(Strings.padLengthWithSpaces(label.name(), nLabelChars) + ":");
             } else {
                 stream.print(Strings.spaces(nLabelChars) + " ");
             }
             stream.print(SPACE);
-            stream.print(Strings.padLengthWithSpaces(disassembledObject.toString(labels, globalLabelMapper), NUMBER_OF_INSTRUCTION_CHARS));
+            stream.print(Strings.padLengthWithSpaces(disassembledObject.toString(_addressMapper), NUMBER_OF_INSTRUCTION_CHARS));
             stream.print(SPACE);
             stream.print(DisassembledInstruction.toHexString(disassembledObject.bytes()));
             stream.println();
         }
     }
 
-    public void print(OutputStream outputStream, IndexedSequence<DisassembledObject> disassembledObjects) throws IOException {
-        print(outputStream, disassembledObjects, null);
-    }
-
-    public void scanAndPrint(BufferedInputStream bufferedInputStream, OutputStream outputStream, GlobalLabelMapper globalLabelMapper) throws IOException, AssemblyException {
-        final IndexedSequence<DisassembledObject> disassembledObjects = scan(bufferedInputStream);
-        print(outputStream, disassembledObjects, globalLabelMapper);
-    }
-
     public void scanAndPrint(BufferedInputStream bufferedInputStream, OutputStream outputStream) throws IOException, AssemblyException {
-        scanAndPrint(bufferedInputStream, outputStream, null);
+        final IndexedSequence<DisassembledObject> disassembledObjects = scan(bufferedInputStream);
+        print(outputStream, disassembledObjects);
     }
 
     public enum AbstractionPreference {
