@@ -37,13 +37,16 @@ public final class AutoTest {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(MethodAnnotationsTest.class);
         suite.addTestSuite(test.com.sun.max.asm.sparc.InternalTest.class);
         suite.addTestSuite(test.com.sun.max.asm.ia32.InternalTest.class);
         suite.addTestSuite(test.com.sun.max.asm.amd64.InternalTest.class);
         suite.addTestSuite(test.com.sun.max.asm.ppc.InternalTest.class);
-        //$JUnit-END$
+
+        suite.addTestSuite(test.com.sun.max.asm.sparc.InliningAndAlignmentTest.class);
+        suite.addTestSuite(test.com.sun.max.asm.ia32.InliningAndAlignmentTest.class);
+        suite.addTestSuite(test.com.sun.max.asm.amd64.InliningAndAlignmentTest.class);
+        suite.addTestSuite(test.com.sun.max.asm.ppc.InliningAndAlignmentTest.class);
         return suite;
     }
 }

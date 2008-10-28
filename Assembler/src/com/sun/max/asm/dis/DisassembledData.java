@@ -23,7 +23,7 @@ package com.sun.max.asm.dis;
 import com.sun.max.asm.gen.*;
 
 /**
- * Encapsulation of some inline data decoded from an instruction stream.
+ * Boxes inline data decoded from an instruction stream.
  *
  * @author Doug Simon
  */
@@ -85,8 +85,10 @@ public abstract class DisassembledData implements DisassembledObject {
 
     public abstract String operandsToString(AddressMapper addressMapper);
 
-    @Override
     public String toString(AddressMapper addressMapper) {
         return mnemonic() + " " + operandsToString(addressMapper);
     }
+
+    @Override
+    public abstract String toString();
 }

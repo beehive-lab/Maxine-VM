@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.asm.gen.*;
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
 
 /**
  * A facility for mapping addresses to {@linkplain DisassembledLabel labels} and {@linkplain DisassembledObject
@@ -81,7 +80,7 @@ public class AddressMapper {
 
     /**
      * Adds a mapping for the addresses {@linkplain DisassembledObject#targetAddress() targeted} by a given sequence of
-     * disassembled objects. If none of {@code disassembledObjects} target another object, then no update is made to
+     * disassembled objects. If none of {@code disassembledObjects} target other objects, then no update is made to
      * this mapping.
      *
      * @param disassembledObjects the disassembled objects to consider
@@ -89,10 +88,7 @@ public class AddressMapper {
     public void add(Sequence<DisassembledObject> disassembledObjects) {
         for (DisassembledObject disassembledObject : disassembledObjects) {
             final ImmediateArgument address = disassembledObject.startAddress();
-            final DisassembledObject oldObject = _objectMap.put(address, disassembledObject);
-            if (oldObject != null) {
-                ProgramWarning.message("Overriding disassembled object previously located at " + address.disassembledValue());
-            }
+            _objectMap.put(address, disassembledObject);
         }
         for (DisassembledObject disassembledObject : disassembledObjects) {
             final ImmediateArgument targetAddress = disassembledObject.targetAddress();
@@ -111,6 +107,9 @@ public class AddressMapper {
         }
     }
 
+    /**
+     * Computes the maximum length of any label name in this mapping.
+     */
     public int maximumLabelNameLength() {
         int max = 0;
         for (DisassembledLabel label : _labelMap.values()) {

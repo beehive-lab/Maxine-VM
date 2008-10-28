@@ -22,6 +22,7 @@ package com.sun.max.asm.gen.cisc.amd64;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
+import com.sun.max.asm.amd64.complete.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.asm.gen.cisc.x86.*;
@@ -243,9 +244,10 @@ public class AMD64AssemblerGenerator extends X86AssemblerGenerator<AMD64Template
     }
 
     @Override
-    protected String generateExampleInstruction(AMD64Template template, IndexedSequence<Argument> arguments, AddressMapper addressMapper) {
-        final byte[] bytes = {};
-        final AMD64DisassembledInstruction instruction = new AMD64DisassembledInstruction(new AMD64Disassembler(0, null), 0, bytes, template, arguments);
-        return instruction.toString(addressMapper);
+    protected DisassembledInstruction generateExampleInstruction(AMD64Template template, IndexedSequence<Argument> arguments) throws AssemblyException {
+        final AMD64Assembler assembler = new AMD64Assembler(0);
+        assembly().assemble(assembler, template, arguments);
+        final byte[] bytes = assembler.toByteArray();
+        return new AMD64DisassembledInstruction(new AMD64Disassembler(0, null), 0, bytes, template, arguments);
     }
 }

@@ -22,6 +22,7 @@
 package com.sun.max.asm.gen.risc.arm;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.arm.complete.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.arm.*;
 import com.sun.max.asm.gen.risc.*;
@@ -56,10 +57,11 @@ public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<ARMTempl
     }
 
     @Override
-    protected String generateExampleInstruction(ARMTemplate template, IndexedSequence<Argument> arguments, AddressMapper addressMapper) {
-        final byte[] bytes = {};
-        final ARMDisassembledInstruction dis = new ARMDisassembledInstruction(new ARMDisassembler(0, null), 0, bytes, template, arguments);
-        return dis.toString(addressMapper);
+    protected DisassembledInstruction generateExampleInstruction(ARMTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+        final ARMAssembler assembler = new ARMAssembler(0);
+        assembly().assemble(assembler, template, arguments);
+        final byte[] bytes = assembler.toByteArray();
+        return new ARMDisassembledInstruction(new ARMDisassembler(0, null), 0, bytes, template, arguments);
     }
 
 }

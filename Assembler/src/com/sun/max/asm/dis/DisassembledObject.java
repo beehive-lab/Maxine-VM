@@ -58,8 +58,7 @@ public interface DisassembledObject extends AssemblyObject {
      * Gets a string representation of this object. The recommended format is one resembling that of a native
      * disassembler for the platform corresponding to the ISA.
      *
-     * @param addressMapper
-     * @return
+     * @param addressMapper object used to map addresses to {@linkplain DisassembledLabel labels}. This value may be null.
      */
     String toString(AddressMapper addressMapper);
 
