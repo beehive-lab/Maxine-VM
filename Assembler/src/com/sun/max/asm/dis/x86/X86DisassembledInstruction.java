@@ -136,7 +136,7 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         return "-" + space + s.substring(1);
     }
 
-    private String getOperand(Queue<X86Operand> operands, Queue<Argument> arguments, Sequence<DisassembledLabel> labels) {
+    private String getOperand(Queue<X86Operand> operands, Queue<Argument> arguments, AddressMapper addressMapper) {
         final X86Operand operand = operands.remove();
         if (operand instanceof ImplicitOperand) {
             final ImplicitOperand implicitOperand = (ImplicitOperand) operand;
@@ -168,7 +168,7 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         }
         if (parameter instanceof X86AddressParameter) {
             String address = argument.disassembledValue();
-            final DisassembledLabel label = addressArgumentToLabel((ImmediateArgument) argument, labels);
+            final DisassembledLabel label = addressMapper.labelAt((ImmediateArgument) argument);
             if (label != null) {
                 address = label.name() + ": " + address;
             }
@@ -183,7 +183,8 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         }
         if (parameter instanceof X86OffsetParameter) {
             String offset = addition(argument, "");
-            final DisassembledLabel label = offsetArgumentToLabel((ImmediateArgument) argument, labels);
+            final ImmediateArgument targetAddress = addressForRelativeAddressing().plus((ImmediateArgument) argument);
+            final DisassembledLabel label =  addressMapper.labelAt(targetAddress);
             if (label != null) {
                 offset = label.name() + ": " + offset;
             }
@@ -199,35 +200,34 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
     }
 
     @Override
-    public String externalName() {
+    public String mnemonic() {
         return template().externalName();
     }
 
     @Override
-    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
+    public String operandsToString(AddressMapper addressMapper) {
         final Queue<X86Operand> operandQueue = new MutableQueue<X86Operand>(template().operands());
         final Queue<Argument> argumentQueue = new MutableQueue<Argument>(arguments());
         String result = "";
         String separator = "";
         while (!operandQueue.isEmpty()) {
-            result += separator + getOperand(operandQueue, argumentQueue, labels);
+            result += separator + getOperand(operandQueue, argumentQueue, addressMapper);
             separator = ", ";
         }
         return result;
     }
 
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        String s = operandsToString(labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        String s = operandsToString(addressMapper);
         if (s.length() > 0) {
             s = "  " + s;
         }
-        return Strings.padLengthWithSpaces(externalName(), 8) + s;
+        return Strings.padLengthWithSpaces(mnemonic(), 8) + s;
     }
 
     @Override
-    public int positionForRelativeAddressing() {
-        return endPosition();
+    public ImmediateArgument addressForRelativeAddressing() {
+        return endAddress();
     }
-
 }

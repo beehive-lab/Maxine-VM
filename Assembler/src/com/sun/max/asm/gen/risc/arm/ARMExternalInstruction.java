@@ -19,12 +19,13 @@
  * Company, Ltd.
  */
 /**
- * 
+ *
  */
 package com.sun.max.asm.gen.risc.arm;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
@@ -40,12 +41,8 @@ public class ARMExternalInstruction extends RiscExternalInstruction {
         super(template, arguments);
     }
 
-    public ARMExternalInstruction(ARMTemplate template, Sequence<Argument> arguments, int position, Sequence<DisassembledLabel> labels) {
-        super(template, arguments, position, labels);
-    }
-
-    public ARMExternalInstruction(ARMTemplate template, Sequence<Argument> arguments, int position, Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        super(template, arguments, position, labels, globalLabelMapper);
+    public ARMExternalInstruction(ARMTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
+        super(template, arguments, address, addressMapper);
     }
 
     @Override

@@ -42,12 +42,21 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
     private final IndexedSequence<Argument> _arguments;
 
     protected DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+        assert bytes.length != 0;
         final Class<Disassembler<Template_Type, DisassembledInstruction<Template_Type>>> type = null;
         _disassembler = StaticLoophole.cast(type, disassembler);
         _startPosition = position;
         _bytes = bytes;
         _template = template;
         _arguments = arguments;
+    }
+
+    public ImmediateArgument startAddress() {
+        return _disassembler.startAddress().plus(_startPosition);
+    }
+
+    public ImmediateArgument endAddress() {
+        return _disassembler.startAddress().plus(endPosition());
     }
 
     public int startPosition() {
@@ -85,53 +94,26 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return result;
     }
 
-    protected DisassembledLabel offsetArgumentToLabel(ImmediateArgument argument, Sequence<DisassembledLabel> labels) {
-        final int argumentOffset = (int) argument.asLong();
-        final int targetPosition = argumentOffset + positionForRelativeAddressing();
-        return DisassembledLabel.positionToLabel(targetPosition, labels);
-    }
+    public abstract String toString(AddressMapper addressMapper);
 
-    protected DisassembledLabel addressArgumentToLabel(ImmediateArgument argument, Sequence<DisassembledLabel> labels) {
-        final long targetOffset = argument.asLong() - _disassembler.startAddress();
-        if (targetOffset < 0) {
-            return null;
-        }
-        return DisassembledLabel.positionToLabel((int) targetOffset, labels);
-    }
-
-    public abstract String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
-
-    public String toString(Sequence<DisassembledLabel> labels) {
-        return toString(labels, null);
-    }
-
-    public abstract String externalName();
-
-    public abstract String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
-
-    public String operandsToString(Sequence<DisassembledLabel> labels) {
-        return operandsToString(labels, null);
-    }
+    public abstract String operandsToString(AddressMapper addressMapper);
 
     /**
-     * Gets the position in this instruction to which an offset argument of this instruction is relative.
-     *
-     * @return either {@linkplain #startPosition() start} or {@linkplain #endPosition() end} or some other position derived
-     *         from one of these values
+     * Gets the address to which an offset argument of this instruction is relative.
      */
-    protected abstract int positionForRelativeAddressing();
+    protected abstract ImmediateArgument addressForRelativeAddressing();
 
     @Override
-    public ImmediateArgument targetPosition() {
+    public ImmediateArgument targetAddress() {
         final Template_Type template = template();
         final int parameterIndex = template.labelParameterIndex();
         if (parameterIndex >= 0) {
             final ImmediateArgument immediateArgument = (ImmediateArgument) arguments().get(parameterIndex);
             final Parameter parameter = template.parameters().get(parameterIndex);
-            final int targetPosition = (parameter instanceof OffsetParameter) ?
-                            (int) immediateArgument.asLong() + positionForRelativeAddressing() :
-                            (int) (immediateArgument.asLong() - _disassembler.startAddress());
-            return new Immediate32Argument(targetPosition);
+            if (parameter instanceof OffsetParameter) {
+                return immediateArgument.plus(addressForRelativeAddressing());
+            }
+            return immediateArgument;
         }
         return null;
     }
@@ -142,5 +124,4 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
     protected byte[] rawInstruction() {
         return _bytes;
     }
-
 }

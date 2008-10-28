@@ -44,8 +44,8 @@ import com.sun.max.program.*;
 public abstract class RiscDisassembler<Template_Type extends RiscTemplate, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>>
     extends Disassembler<Template_Type, DisassembledInstruction_Type> {
 
-    protected RiscDisassembler(Assembly<Template_Type> assembly, WordWidth addressWidth, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
-        super(assembly, addressWidth, endianness, inlineDataDecoder);
+    protected RiscDisassembler(ImmediateArgument startAddress, Assembly<Template_Type> assembly, Endianness endianness, InlineDataDecoder inlineDataDecoder) {
+        super(startAddress, assembly, endianness, inlineDataDecoder);
     }
 
     @Override
@@ -87,7 +87,7 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
     }
 
     @Override
-    public Sequence<DisassembledObject> scanOneInstruction(BufferedInputStream stream) throws IOException, AssemblyException {
+    public Sequence<DisassembledObject> scanOne0(BufferedInputStream stream) throws IOException, AssemblyException {
         final int instruction = endianness().readInt(stream);
         final AppendableSequence<DisassembledObject> result = new LinkSequence<DisassembledObject>();
         final byte[] instructionBytes = endianness().toBytes(instruction);
@@ -133,22 +133,14 @@ public abstract class RiscDisassembler<Template_Type extends RiscTemplate, Disas
     }
 
     @Override
-    public IndexedSequence<DisassembledObject> scan(BufferedInputStream stream) throws IOException, AssemblyException {
+    public IndexedSequence<DisassembledObject> scan0(BufferedInputStream stream) throws IOException, AssemblyException {
         final AppendableIndexedSequence<DisassembledObject> result = new ArrayListSequence<DisassembledObject>();
         try {
             while (true) {
-                if (inlineDataDecoder() != null) {
-                    InlineData inlineData;
-                    while ((inlineData = inlineDataDecoder().decode(_currentPosition, stream)) != null) {
-                        final IterableWithLength<DisassembledData> dataObjects = createDisassembledDataObjects(inlineData);
-                        for (DisassembledData dataObject : dataObjects) {
-                            result.append(dataObject);
-                        }
-                        _currentPosition += inlineData.size();
-                    }
-                }
 
-                final Sequence<DisassembledObject> disassembledObjects = scanOneInstruction(stream);
+                scanInlineData(stream, result);
+
+                final Sequence<DisassembledObject> disassembledObjects = scanOne(stream);
                 boolean foundSyntheticDisassembledInstruction = false;
                 if (abstractionPreference() == AbstractionPreference.SYNTHETIC) {
                     for (DisassembledObject disassembledObject : disassembledObjects) {

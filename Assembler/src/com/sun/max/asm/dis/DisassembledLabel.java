@@ -20,54 +20,45 @@
  */
 package com.sun.max.asm.dis;
 
-import com.sun.max.collect.*;
+import com.sun.max.asm.gen.*;
+
 
 /**
- * A label deduced from one or more disassembled instructions.
+ * A label for an absolute address.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public class DisassembledLabel {
 
-    private final int _instructionIndex;
+    private final DisassembledObject _disassembledObject;
+    private final ImmediateArgument _address;
 
-    public DisassembledLabel(int instructionIndex) {
-        super();
-        _instructionIndex = instructionIndex;
+    public DisassembledLabel(Object addressOrDisassembledObject, String name) {
+        if (addressOrDisassembledObject instanceof ImmediateArgument) {
+            _address = (ImmediateArgument) addressOrDisassembledObject;
+            _disassembledObject = null;
+        } else {
+            _address = null;
+            _disassembledObject = (DisassembledObject) addressOrDisassembledObject;
+        }
+        _name = name;
     }
 
-    public int instructionIndex() {
-        return _instructionIndex;
-    }
-
-    public static final String PREFIX = "L";
-
-    private int _serial = -1;
-
-    public void setSerial(int index) {
-        _serial = index;
-    }
+    private final String _name;
 
     public String name() {
-        return PREFIX + _serial;
+        return _name;
     }
 
-    private int _position = -1;
-
-    public void bind(int position) {
-        _position = position;
+    /**
+     * Gets the disassembled object (if any) denoted by this label.
+     */
+    public DisassembledObject target() {
+        return _disassembledObject;
     }
 
-    public int position() {
-        return _position;
-    }
-
-    public static DisassembledLabel positionToLabel(int position, Sequence<DisassembledLabel> labels) {
-        for (DisassembledLabel label : labels) {
-            if (label.position() == position) {
-                return label;
-            }
-        }
-        return null;
+    public ImmediateArgument address() {
+        return _disassembledObject != null ? _disassembledObject.startAddress() : _address;
     }
 }

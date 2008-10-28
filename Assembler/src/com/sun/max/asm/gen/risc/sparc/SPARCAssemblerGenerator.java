@@ -51,9 +51,9 @@ public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<SPARCT
     }
 
     @Override
-    protected String generateExampleInstruction(SPARCTemplate template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
+    protected String generateExampleInstruction(SPARCTemplate template, IndexedSequence<Argument> arguments, AddressMapper addressMapper) {
         final byte[] bytes = {};
         final SPARCDisassembledInstruction dis = new SPARC64DisassembledInstruction(new SPARC64Disassembler(0, null), 0, bytes, template, arguments);
-        return dis.toString(labels);
+        return dis.toString(addressMapper);
     }
 }

@@ -35,8 +35,8 @@ import com.sun.max.lang.*;
 public abstract class SPARCDisassembler<DisassembledInstruction_Type extends DisassembledInstruction<SPARCTemplate>>
         extends RiscDisassembler<SPARCTemplate, DisassembledInstruction_Type> {
 
-    protected SPARCDisassembler(SPARCAssembly assembly, WordWidth addressWidth, InlineDataDecoder inlineDataDecoder) {
-        super(assembly, addressWidth, Endianness.BIG, inlineDataDecoder);
+    protected SPARCDisassembler(ImmediateArgument startAddress, SPARCAssembly assembly, InlineDataDecoder inlineDataDecoder) {
+        super(startAddress, assembly, Endianness.BIG, inlineDataDecoder);
     }
 
     @Override

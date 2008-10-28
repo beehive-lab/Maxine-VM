@@ -22,7 +22,6 @@ package com.sun.max.asm.dis;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
-import com.sun.max.collect.*;
 
 /**
  * Extends the abstraction of an object in an assembled instruction stream with extra
@@ -33,14 +32,36 @@ import com.sun.max.collect.*;
 public interface DisassembledObject extends AssemblyObject {
 
     /**
-     * Gets the position of the instruction or inline data addressed (either relatively or absolutely) by this object.
-     * The returned position is relative to position 0 of the instruction stream from which this object was decoded.
+     * Gets a name for this object. If this is a disassembled instruction, it will be an assembler mnemonic. For
+     * disassembled inline data, it will resemble an assembler directive.
+     */
+    String mnemonic();
+
+    /**
+     * Gets the address of the instruction or inline data addressed (either relatively or absolutely) by this object.
      *
      * @return null if this object does not address an instruction or inline data
      */
-    ImmediateArgument targetPosition();
+    ImmediateArgument targetAddress();
 
-    String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
+    /**
+     * Gets the absolute address of this disassembled object's first byte.
+     */
+    ImmediateArgument startAddress();
+
+    /**
+     * Gets the absolute address of this disassembled object's first byte.
+     */
+    ImmediateArgument endAddress();
+
+    /**
+     * Gets a string representation of this object. The recommended format is one resembling that of a native
+     * disassembler for the platform corresponding to the ISA.
+     *
+     * @param addressMapper
+     * @return
+     */
+    String toString(AddressMapper addressMapper);
 
     /**
      * Gets the raw bytes of this object.

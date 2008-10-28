@@ -34,21 +34,13 @@ import com.sun.max.lang.*;
  */
 public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembledInstruction>{
 
-    private final int _startAddress;
-
     public ARMDisassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
-        super(ARMAssembly.ASSEMBLY, WordWidth.BITS_32, Endianness.BIG, inlineDataDecoder);
-        _startAddress = startAddress;
-    }
-
-    @Override
-    protected long startAddress() {
-        return _startAddress;
+        super(new Immediate32Argument(startAddress), ARMAssembly.ASSEMBLY, Endianness.BIG, inlineDataDecoder);
     }
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new ARMAssembler(_startAddress + position);
+        return new ARMAssembler((int) startAddress().asLong() + position);
     }
 
     @Override

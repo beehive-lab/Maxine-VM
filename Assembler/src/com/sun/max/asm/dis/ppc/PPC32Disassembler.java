@@ -21,10 +21,10 @@
 package com.sun.max.asm.dis.ppc;
 
 import com.sun.max.asm.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.ppc.*;
 import com.sun.max.asm.ppc.complete.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 
 /**
  *
@@ -33,16 +33,8 @@ import com.sun.max.lang.*;
  */
 public class PPC32Disassembler extends PPCDisassembler<PPC32DisassembledInstruction> {
 
-    private final int _startAddress;
-
     public PPC32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
-        super(PPCAssembly.ASSEMBLY, WordWidth.BITS_32, inlineDataDecoder);
-        _startAddress = startAddress;
-    }
-
-    @Override
-    protected long startAddress() {
-        return _startAddress;
+        super(new Immediate32Argument(startAddress), PPCAssembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
@@ -57,6 +49,6 @@ public class PPC32Disassembler extends PPCDisassembler<PPC32DisassembledInstruct
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new PPC32Assembler(_startAddress + position);
+        return new PPC32Assembler((int) startAddress().asLong() + position);
     }
 }

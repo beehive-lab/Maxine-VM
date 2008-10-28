@@ -95,7 +95,8 @@ void debug_print_format(char *format, ...) {
 #if !os_GUESTVMXEN
     va_list ap;
     va_start(ap, format);
-    vfprintf(getFileStream(), format, ap);
+    FILE* out = getFileStream();
+    vfprintf(out, format, ap);
     va_end(ap);
 #else
     va_list ap;

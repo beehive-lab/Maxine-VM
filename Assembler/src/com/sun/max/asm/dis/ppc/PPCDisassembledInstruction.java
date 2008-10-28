@@ -36,20 +36,20 @@ public abstract class PPCDisassembledInstruction extends RiscDisassembledInstruc
     }
 
     @Override
-    public String externalName() {
-        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startPosition(), null, null);
+    public String mnemonic() {
+        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();
     }
 
     @Override
-    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String operandsToString(AddressMapper addressMapper) {
+        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.operands();
     }
 
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();
     }
 

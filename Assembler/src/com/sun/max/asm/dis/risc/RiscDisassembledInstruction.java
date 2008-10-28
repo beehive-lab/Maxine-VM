@@ -22,6 +22,7 @@ package com.sun.max.asm.dis.risc;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
@@ -38,7 +39,7 @@ public abstract class RiscDisassembledInstruction<Template_Type extends RiscTemp
     }
 
     @Override
-    public int positionForRelativeAddressing() {
-        return startPosition();
+    public ImmediateArgument addressForRelativeAddressing() {
+        return startAddress();
     }
 }

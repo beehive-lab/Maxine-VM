@@ -90,9 +90,9 @@ public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> 
     }
 
     @Override
-    protected String generateExampleInstruction(IA32Template template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
+    protected String generateExampleInstruction(IA32Template template, IndexedSequence<Argument> arguments, AddressMapper addressMapper) {
         final byte[] bytes = {};
         final IA32DisassembledInstruction dis = new IA32DisassembledInstruction(new IA32Disassembler(0, null), 0, bytes, template, arguments);
-        return dis.toString(labels);
+        return dis.toString(addressMapper);
     }
 }

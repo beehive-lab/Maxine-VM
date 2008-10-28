@@ -35,8 +35,8 @@ import com.sun.max.lang.*;
 public abstract class PPCDisassembler<DisassembledInstruction_Type extends DisassembledInstruction<PPCTemplate>>
         extends RiscDisassembler<PPCTemplate, DisassembledInstruction_Type> {
 
-    protected PPCDisassembler(PPCAssembly assembly, WordWidth addressWidth, InlineDataDecoder inlineDataDecoder) {
-        super(assembly, addressWidth, Endianness.BIG, inlineDataDecoder);
+    protected PPCDisassembler(ImmediateArgument startAddress, PPCAssembly assembly, InlineDataDecoder inlineDataDecoder) {
+        super(startAddress, assembly, Endianness.BIG, inlineDataDecoder);
     }
 
     @Override
