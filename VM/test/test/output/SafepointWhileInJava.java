@@ -34,7 +34,6 @@ public class SafepointWhileInJava {
                 frameWithReferences(localRefs);
                 ++_iterations;
             }
-            System.out.println("Spinner: stopped! [iterations: " + _iterations + ", done: " + _done + "]");
         }
         private void frameWithReferences(final Object[] localRefs) {
             for (int i = 0; i != localRefs.length; ++i) {

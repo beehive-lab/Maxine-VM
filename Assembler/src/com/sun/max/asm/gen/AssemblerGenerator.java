@@ -185,8 +185,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     /**
      * Gets the absolute path to the source file that will updated to include the generated assembler methods.
      *
-     * @param className
-     *                the name of the Java class that contains the generated assembler methods
+     * @param className the name of the Java class that contains the generated assembler methods
      */
     private File getSourceFileFor(String className) {
         return new File(_outputDirectory.getValue(), className.replace('.', File.separatorChar) + ".java").getAbsoluteFile();
@@ -228,10 +227,8 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     /**
      * Gets the set of packages that must be imported for the generated code to compile successfully.
      *
-     * @param className
-     *                the name of the Java class that contains the assembler methods generated from {@code templates}
-     * @param templates
-     *                the list of templates for which code is being generated
+     * @param className the name of the Java class that contains the assembler methods generated from {@code templates}
+     * @param templates the list of templates for which code is being generated
      * @return a set of packages sorted by name
      */
     public Set<MaxPackage> getImportPackages(String className, Iterable<Template_Type> templates) {
@@ -307,7 +304,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         final boolean printExampleInstruction = true;
         if (printExampleInstruction) {
-            if (template.serial() == 264) {
+            if (template.serial() == 2399) {
                 System.console();
             }
             final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
@@ -320,14 +317,21 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
                 } else {
                     break;
                 }
-                if (template.labelParameterIndex() == parameterIndex) {
-                    addressMapper.add((ImmediateArgument) exampleArg, "L1");
-                }
                 parameterIndex++;
             }
             if (arguments.length() == template.parameters().length()) {
-                final String exampleInstruction = generateExampleInstruction(template, arguments, addressMapper);
-                writer.println(" * Example disassembly syntax: {@code " + exampleInstruction + "}");
+                try {
+                    final DisassembledInstruction instruction = generateExampleInstruction(template, arguments);
+                    final ImmediateArgument targetAddress = instruction.targetAddress();
+
+                    if (targetAddress != null) {
+                        addressMapper.add(targetAddress, "L1");
+                    }
+                    final String exampleInstruction = instruction.toString(addressMapper);
+                    writer.println(" * Example disassembly syntax: {@code " + exampleInstruction + "}");
+                } catch (AssemblyException e) {
+                    ProgramWarning.message("Error generating example instrutcion: " + e);
+                }
             }
         }
 
@@ -359,7 +363,7 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
         writer.println(" */");
     }
 
-    protected abstract String generateExampleInstruction(Template_Type template, IndexedSequence<Argument> arguments, AddressMapper addressMapper);
+    protected abstract DisassembledInstruction generateExampleInstruction(Template_Type template, IndexedSequence<Argument> arguments) throws AssemblyException;
 
     private String externalParameters(Sequence< ? extends Parameter> parameters) {
         final StringBuilder sb = new StringBuilder();
@@ -476,12 +480,10 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     /**
      * Prints an assembler method for a template that refers to an address via a {@linkplain Label label}.
      *
-     * @param writer
-     *                the writer to which code will be printed
-     * @param labelTemplate
-     *                a template that has a label parameter (i.e. its {@linkplain Template#labelParameterIndex() label parameter index} is not -1)
-     * @param assemblerClassName
-     *                the name of the class enclosing the assembler method declaration
+     * @param writer the writer to which code will be printed
+     * @param labelTemplate a template that has a label parameter (i.e. its {@linkplain Template#labelParameterIndex()
+     *            label parameter index} is not -1)
+     * @param assemblerClassName the name of the class enclosing the assembler method declaration
      */
     protected abstract void printLabelMethod(IndentWriter writer, Template_Type labelTemplate, String assemblerClassName);
 
@@ -546,14 +548,14 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     }
 
     /**
-     * Prints the code that emits the place holder bytes for a label instruction before a value has been bound to the label.
+     * Prints the code that emits the place holder bytes for a label instruction before a value has been bound to the
+     * label.
      *
      * @param writer
      * @param template
-     * @param placeholderInstructionSize
-     *                the number of place holder bytes written to the instruction stream before the label's value has
-     *                been determined. If this value is -1, then the size depends on the arguments to the method and
-     *                so a call to the raw assembler method is made to determine the size.
+     * @param placeholderInstructionSize the number of place holder bytes written to the instruction stream before the
+     *            label's value has been determined. If this value is -1, then the size depends on the arguments to the
+     *            method and so a call to the raw assembler method is made to determine the size.
      * @return an expression denoting the number of place holder bytes emitted
      */
     private String printPlaceholderBytes(IndentWriter writer, Template_Type template, int placeholderInstructionSize) {
@@ -589,22 +591,17 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
     /**
      * Handles most of the work of {@link #printLabelMethod(IndentWriter, Template, String)}.
      *
-     * @param writer
-     *                the writer to which code will be printed
-     * @param template
-     *                a template that has a label parameter (i.e. its
-     *                {@linkplain Template#labelParameterIndex() label parameter index} is not -1)
-     * @param parameters
-     *                the parameters of the template with the label parameter represented as a {@link LabelParameter}
-     *                object
-     * @param placeholderInstructionSize
-     *                the number of place holder bytes written to the instruction stream before the label's value has
-     *                been determined. If this value is -1, then the size depends on the arguments to the method and
-     *                so a call to the raw assembler method is made to determine the size.
-     * @param assemblerClassName
-     *                the name of the class in which the assembler methods will be declared
-     * @param labelInstructionSubclassGenerator
-     *                the object that writes the body of the {@link MutableAssembledObject#assemble} method in a generated label method helper class
+     * @param writer the writer to which code will be printed
+     * @param template a template that has a label parameter (i.e. its {@linkplain Template#labelParameterIndex() label
+     *            parameter index} is not -1)
+     * @param parameters the parameters of the template with the label parameter represented as a {@link LabelParameter}
+     *            object
+     * @param placeholderInstructionSize the number of place holder bytes written to the instruction stream before the
+     *            label's value has been determined. If this value is -1, then the size depends on the arguments to the
+     *            method and so a call to the raw assembler method is made to determine the size.
+     * @param assemblerClassName the name of the class in which the assembler methods will be declared
+     * @param labelInstructionSubclassGenerator the object that writes the body of the
+     *            {@link MutableAssembledObject#assemble} method in a generated label method helper class
      */
     protected final void printLabelMethodHelper(IndentWriter writer,
                     Template_Type template,

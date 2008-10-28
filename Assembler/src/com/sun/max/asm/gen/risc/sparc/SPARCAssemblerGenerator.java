@@ -24,6 +24,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.sparc.*;
 import com.sun.max.asm.gen.risc.*;
+import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
 
 /**
@@ -51,9 +52,10 @@ public final class SPARCAssemblerGenerator extends RiscAssemblerGenerator<SPARCT
     }
 
     @Override
-    protected String generateExampleInstruction(SPARCTemplate template, IndexedSequence<Argument> arguments, AddressMapper addressMapper) {
-        final byte[] bytes = {};
-        final SPARCDisassembledInstruction dis = new SPARC64DisassembledInstruction(new SPARC64Disassembler(0, null), 0, bytes, template, arguments);
-        return dis.toString(addressMapper);
+    protected DisassembledInstruction generateExampleInstruction(SPARCTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+        final SPARCAssembler assembler = new SPARC64Assembler(0);
+        assembly().assemble(assembler, template, arguments);
+        final byte[] bytes = assembler.toByteArray();
+        return new SPARC64DisassembledInstruction(new SPARC64Disassembler(0, null), 0, bytes, template, arguments);
     }
 }

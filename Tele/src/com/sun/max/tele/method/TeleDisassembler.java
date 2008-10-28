@@ -155,7 +155,7 @@ public final class TeleDisassembler {
         @Override
         Address literalAddress(AMD64DisassembledInstruction disassembledInstruction) {
             final ImmediateArgument immediateArgument = (ImmediateArgument) disassembledInstruction.arguments().get(1);
-            return _literalBase.plus(Offset.fromLong(_disassembler.getPositionFromInstructionRelativeOffset(disassembledInstruction, immediateArgument.asLong())));
+            return Address.fromLong(disassembledInstruction.addressForRelativeAddressing().plus(immediateArgument).asLong());
         }
     }
 
@@ -352,39 +352,38 @@ public final class TeleDisassembler {
         	final TargetCodeInstruction targetCodeInstruction;
         	if (disassembledObject instanceof DisassembledInstruction) {
         		final Class<DisassembledInstruction_Type> castType = null;
-        		final DisassembledInstruction_Type disassembleInstruction = StaticLoophole.cast(castType, disassembledObject);
+        		final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(castType, disassembledObject);
 
-        		final String operandsText = disassembleInstruction.operandsToString(null);
+        		final String operandsText = disassembledInstruction.operandsToString(disassembler.addressMapper());
         		final Address targetAddress;
         		final Address literalSourceAddress;
-        		if (disassembleInstruction.arguments().length() == 1 && disassembleInstruction.arguments().first() instanceof ImmediateArgument &&
+        		if (disassembledInstruction.arguments().length() == 1 && disassembledInstruction.arguments().first() instanceof ImmediateArgument &&
         				(operandsText.contains("+") || operandsText.contains("-"))) {
-        			final ImmediateArgument immediateArgument = (ImmediateArgument) disassembleInstruction.arguments().first();
-        			targetAddress = codeStart.plus(Offset.fromLong(disassembler.getPositionFromInstructionRelativeOffset(disassembleInstruction, immediateArgument.asLong())));
+        			targetAddress = Address.fromLong(disassembledInstruction.targetAddress().asLong());
         			literalSourceAddress = null;
-        		} else if (literalParser.loadsLiteralData(disassembleInstruction)) {
-        			literalSourceAddress = literalParser.literalAddress(disassembleInstruction);
+        		} else if (literalParser.loadsLiteralData(disassembledInstruction)) {
+        			literalSourceAddress = literalParser.literalAddress(disassembledInstruction);
         			targetAddress = null;
         		} else {
         			targetAddress = null;
         			literalSourceAddress = null;
         		}
         		targetCodeInstruction = new TargetCodeInstruction(
-        				disassembleInstruction.mnemonic(),
-        				codeStart.plus(disassembleInstruction.startPosition()),
-        				disassembleInstruction.startPosition(),
+        				disassembledInstruction.mnemonic(),
+        				codeStart.plus(disassembledInstruction.startPosition()),
+        				disassembledInstruction.startPosition(),
         				label == null ? null : label.name(),
-        						disassembleInstruction.bytes(),
+        						disassembledInstruction.bytes(),
         						operandsText,
         						targetAddress,
         						literalSourceAddress);
         	} else {
         		final DisassembledData disassembledData = (DisassembledData) disassembledObject;
-        		final String operandsText = disassembledData.operandsToString(null);
-        		final ImmediateArgument targetPosition = disassembledData.targetAddress();
+        		final String operandsText = disassembledData.operandsToString(disassembler.addressMapper());
+        		final ImmediateArgument dataTargetAddress = disassembledData.targetAddress();
         		final Address targetAddress;
-        		if (targetPosition != null) {
-        			targetAddress = codeStart.plus(Offset.fromLong(targetPosition.asLong()));
+        		if (dataTargetAddress != null) {
+        			targetAddress = Address.fromLong(dataTargetAddress.asLong());
         		} else {
         			targetAddress = null;
         		}

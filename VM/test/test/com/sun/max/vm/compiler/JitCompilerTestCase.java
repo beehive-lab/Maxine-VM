@@ -162,6 +162,10 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
             }
             final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
+            // Scan the code stream first without printing to fill out it label map:
+            disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(targetCode)));
+
+            // Now re-scan and print the code stream in bytecode blocks:
             final CodeAttribute codeAttribute = targetMethod.classMethodActor().codeAttribute();
             final ConstantPool constantPool = codeAttribute.constantPool();
             for (CodeTranslation codeTranslation : codeTranslations) {

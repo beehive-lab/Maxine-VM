@@ -94,6 +94,11 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return result;
     }
 
+    @Override
+    public String toString() {
+        return toString(_disassembler.addressMapper());
+    }
+
     public abstract String toString(AddressMapper addressMapper);
 
     public abstract String operandsToString(AddressMapper addressMapper);
@@ -111,7 +116,7 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
             final ImmediateArgument immediateArgument = (ImmediateArgument) arguments().get(parameterIndex);
             final Parameter parameter = template.parameters().get(parameterIndex);
             if (parameter instanceof OffsetParameter) {
-                return immediateArgument.plus(addressForRelativeAddressing());
+                return addressForRelativeAddressing().plus(immediateArgument);
             }
             return immediateArgument;
         }

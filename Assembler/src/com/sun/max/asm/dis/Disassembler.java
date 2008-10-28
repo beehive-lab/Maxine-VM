@@ -118,6 +118,10 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                         final byte[] data = inlineData.data();
                         return Bytes.toHexString(data, " ");
                     }
+                    @Override
+                    public String toString() {
+                        return toString(addressMapper());
+                    }
                 };
                 return Iterables.toIterableWithLength(Collections.singleton(disassembledData));
             }
@@ -137,14 +141,14 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
 
                         final int targetPosition = jumpTable + caseOffset;
                         final ImmediateArgument targetAddress = startAddress().plus(targetPosition);
-                        final String caseValueOperand = caseValue + ":  ";
+                        final String caseValueOperand = String.valueOf(caseValue);
 
                         final ImmediateArgument caseAddress = startAddress().plus(casePosition);
                         final DisassembledData disassembledData = new DisassembledData(caseAddress, casePosition, ".case", caseOffsetBytes, targetAddress) {
                             @Override
                             public String operandsToString(AddressMapper addressMapper) {
                                 final DisassembledLabel label = addressMapper.labelAt(targetAddress);
-                                String s = caseValueOperand;
+                                String s = caseValueOperand + ", ";
                                 if (label != null) {
                                     s += label.name() + ": ";
                                 }
@@ -152,6 +156,10 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                                     s += "+";
                                 }
                                 return s + caseOffset;
+                            }
+                            @Override
+                            public String toString() {
+                                return toString(addressMapper());
                             }
                         };
                         result.append(disassembledData);
@@ -185,11 +193,11 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                         final ImmediateArgument caseAddress = startAddress().plus(casePosition);
                         final ImmediateArgument targetAddress = startAddress().plus(targetPosition);
 
-                        final DisassembledData disassembledData = new DisassembledData(caseAddress, casePosition, ".case ", caseBytes, targetAddress) {
+                        final DisassembledData disassembledData = new DisassembledData(caseAddress, casePosition, ".case", caseBytes, targetAddress) {
                             @Override
                             public String operandsToString(AddressMapper addressMapper) {
                                 final DisassembledLabel label = addressMapper.labelAt(targetAddress);
-                                String s = caseValue + ":   ";
+                                String s = caseValue + ", ";
                                 if (label != null) {
                                     s += label.name() + ": ";
                                 }
@@ -197,6 +205,10 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                                     s += "+";
                                 }
                                 return s + caseOffset;
+                            }
+                            @Override
+                            public String toString() {
+                                return toString(addressMapper());
                             }
                         };
                         result.append(disassembledData);
@@ -367,26 +379,5 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
 
     public void setExpectedNumberOfArguments(int expectedNumberOfArguments) {
         _expectedNumberOfArguments = expectedNumberOfArguments;
-    }
-
-    /**
-     * Gets the target code position denoted by an offset and a given instruction. The position is obtained by adding
-     * {@code offset} to either the {@linkplain DisassembledInstruction#startPosition() start} or
-     * {@linkplain DisassembledInstruction#endPosition() end} position of the given instruction depending on the
-     * {@linkplain InstructionSet#relativeAddressing() relative addressing mode} of the current ISA.
-     *
-     * @param disassembledInstruction a disassembled instruction
-     * @param offset an offset denoting a target code position relative to {@code disassembledInstruction}
-     * @return the target code position given by adding {@code offset} to {@code disassembledInstruction} position
-     */
-    public long getPositionFromInstructionRelativeOffset(DisassembledInstruction_Type disassembledInstruction, long offset) {
-        switch (assembly().instructionSet().relativeAddressing()) {
-            case FROM_INSTRUCTION_START:
-                return disassembledInstruction.startPosition() + offset;
-            case FROM_INSTRUCTION_END:
-                return disassembledInstruction.endPosition() + offset;
-        }
-        ProgramError.unknownCase();
-        return 0;
     }
 }
