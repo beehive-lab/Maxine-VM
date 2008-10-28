@@ -38,11 +38,6 @@ public class PPC32Disassembler extends PPCDisassembler<PPC32DisassembledInstruct
     }
 
     @Override
-    public Class<PPC32DisassembledInstruction> disassembledInstructionType() {
-        return PPC32DisassembledInstruction.class;
-    }
-
-    @Override
     protected PPC32DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
         return new PPC32DisassembledInstruction(this, position, bytes, template, arguments);
     }

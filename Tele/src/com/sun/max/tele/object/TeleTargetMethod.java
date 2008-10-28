@@ -205,7 +205,7 @@ public abstract class TeleTargetMethod extends TeleTupleObject implements TeleTa
             final TeleArrayObject teleEncodedInlineDataDescriptors = (TeleArrayObject) TeleObject.make(teleVM(), encodedInlineDataDescriptorsReference);
             final byte[] encodedInlineDataDescriptors = teleEncodedInlineDataDescriptors == null ? null : (byte[]) teleEncodedInlineDataDescriptors.shallowCopy();
 
-            _instructions = TeleDisassembler.create(teleVM(), codeStart(), code, encodedInlineDataDescriptors);
+            _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, encodedInlineDataDescriptors);
         }
         return _instructions;
     }

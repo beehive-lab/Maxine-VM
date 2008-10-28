@@ -82,11 +82,6 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
     }
 
     /**
-     * Gets the type of the disassembled instructions returned by this disassembler.
-     */
-    public abstract Class<DisassembledInstruction_Type> disassembledInstructionType();
-
-    /**
      * Creates a disassembled instruction based on a given sequence of bytes, a template and a set of arguments. The
      * caller has performed the necessary decoding of the bytes to derive the template and arguments.
      *

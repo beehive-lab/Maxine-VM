@@ -44,11 +44,6 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
     }
 
     @Override
-    public Class<AMD64DisassembledInstruction> disassembledInstructionType() {
-        return AMD64DisassembledInstruction.class;
-    }
-
-    @Override
     protected boolean isRexPrefix(HexByte opcode) {
         return X86Opcode.isRexPrefix(opcode);
     }

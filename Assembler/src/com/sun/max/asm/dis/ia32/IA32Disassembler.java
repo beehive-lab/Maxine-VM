@@ -50,11 +50,6 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
     }
 
     @Override
-    public Class<IA32DisassembledInstruction> disassembledInstructionType() {
-        return IA32DisassembledInstruction.class;
-    }
-
-    @Override
     protected IA32DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, IA32Template template, IndexedSequence<Argument> arguments) {
         return new IA32DisassembledInstruction(this, position, bytes, template, arguments);
     }

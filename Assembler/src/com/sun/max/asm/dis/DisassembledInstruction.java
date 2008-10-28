@@ -23,7 +23,6 @@ package com.sun.max.asm.dis;
 import com.sun.max.asm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 
 /**
  * A assembly instruction in internal format, combined with the bytes that it was disassembled from.
@@ -35,7 +34,7 @@ import com.sun.max.lang.*;
  */
 public abstract class DisassembledInstruction<Template_Type extends Template> implements DisassembledObject {
 
-    private final Disassembler<Template_Type, DisassembledInstruction<Template_Type>> _disassembler;
+    private final Disassembler _disassembler;
     private final int _startPosition;
     private final byte[] _bytes;
     private final Template_Type _template;
@@ -43,8 +42,7 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
 
     protected DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
         assert bytes.length != 0;
-        final Class<Disassembler<Template_Type, DisassembledInstruction<Template_Type>>> type = null;
-        _disassembler = StaticLoophole.cast(type, disassembler);
+        _disassembler = disassembler;
         _startPosition = position;
         _bytes = bytes;
         _template = template;
@@ -106,7 +104,7 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
     /**
      * Gets the address to which an offset argument of this instruction is relative.
      */
-    protected abstract ImmediateArgument addressForRelativeAddressing();
+    public abstract ImmediateArgument addressForRelativeAddressing();
 
     @Override
     public ImmediateArgument targetAddress() {
