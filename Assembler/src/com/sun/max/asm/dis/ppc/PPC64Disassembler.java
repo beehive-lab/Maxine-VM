@@ -38,11 +38,6 @@ public class PPC64Disassembler extends PPCDisassembler<PPC64DisassembledInstruct
     }
 
     @Override
-    public Class<PPC64DisassembledInstruction> disassembledInstructionType() {
-        return PPC64DisassembledInstruction.class;
-    }
-
-    @Override
     protected PPC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
         return new PPC64DisassembledInstruction(this, position, bytes, template, arguments);
     }

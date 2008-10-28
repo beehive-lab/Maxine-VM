@@ -44,11 +44,6 @@ public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembl
     }
 
     @Override
-    public Class<ARMDisassembledInstruction> disassembledInstructionType() {
-        return ARMDisassembledInstruction.class;
-    }
-
-    @Override
     protected ARMDisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, ARMTemplate template, IndexedSequence<Argument> arguments) {
         return new ARMDisassembledInstruction(this, position, bytes, template, arguments);
     }

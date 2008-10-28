@@ -38,11 +38,6 @@ public class SPARC64Disassembler extends SPARCDisassembler<SPARC64DisassembledIn
     }
 
     @Override
-    public Class<SPARC64DisassembledInstruction> disassembledInstructionType() {
-        return SPARC64DisassembledInstruction.class;
-    }
-
-    @Override
     protected SPARC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
         return new SPARC64DisassembledInstruction(this, position, bytes, template, arguments);
     }
