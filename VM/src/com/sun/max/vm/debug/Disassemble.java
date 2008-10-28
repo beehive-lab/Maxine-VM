@@ -46,24 +46,24 @@ public final class Disassemble {
     }
 
     @PROTOTYPE_ONLY
-    private static Disassembler createDisassembler(ProcessorKind processorKind, Address startAddress) {
+    private static Disassembler createDisassembler(ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
         switch (processorKind.instructionSet()) {
             case ARM:
-                return new ARMDisassembler(startAddress.toInt());
+                return new ARMDisassembler(startAddress.toInt(), inlineDataDecoder);
             case AMD64:
-                return new AMD64Disassembler(startAddress.toLong());
+                return new AMD64Disassembler(startAddress.toLong(), inlineDataDecoder);
             case IA32:
-                return new IA32Disassembler(startAddress.toInt());
+                return new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case PPC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new PPC64Disassembler(startAddress.toLong());
+                    return new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
-                return new PPC32Disassembler(startAddress.toInt());
+                return new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case SPARC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new SPARC64Disassembler(startAddress.toLong());
+                    return new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
-                return new SPARC32Disassembler(startAddress.toInt());
+                return new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
         }
         ProgramError.unknownCase();
         return null;
@@ -72,7 +72,7 @@ public final class Disassemble {
     @PROTOTYPE_ONLY
     public static void targetMethod(TargetMethod targetMethod) {
         final ProcessorKind processorKind = targetMethod.compilerScheme().vmConfiguration().platform().processorKind();
-        final Disassembler disassembler = createDisassembler(processorKind, targetMethod.codeStart());
+        final Disassembler disassembler = createDisassembler(processorKind, targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
         try {
             disassembler.scanAndPrint(stream, System.out);

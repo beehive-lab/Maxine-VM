@@ -51,7 +51,7 @@ public class IA32AssemblyTester extends X86AssemblyTester<IA32Template, IA32Disa
 
     @Override
     protected IA32Disassembler createTestDisassembler() {
-        return new IA32Disassembler(0);
+        return new IA32Disassembler(0, null);
     }
 
     @Override

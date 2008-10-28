@@ -22,23 +22,24 @@ package com.sun.max.asm.dis.risc;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  * @author Greg Wright
  */
 public abstract class RiscDisassembledInstruction<Template_Type extends RiscTemplate> extends DisassembledInstruction<Template_Type> {
 
-    protected RiscDisassembledInstruction(int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
+    protected RiscDisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 
     @Override
-    public int positionForRelativeAddressing() {
-        return startPosition();
+    public ImmediateArgument addressForRelativeAddressing() {
+        return startAddress();
     }
 }

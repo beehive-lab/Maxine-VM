@@ -26,9 +26,7 @@ import static com.sun.max.asm.gen.risc.ppc.PPCFields.*;
 import java.lang.reflect.*;
 
 import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.risc.*;
 import com.sun.max.asm.ppc.*;
-import com.sun.max.collect.*;
 
 /**
  * The definitions of the raw (i.e. non-synthetic) PowerPC instructions.
@@ -464,9 +462,5 @@ public final class RawInstructions extends PPCInstructionDescriptionCreator {
     private void generateMemoryBarrier() {
         define("sync", opcd(31), _res_6_10, _res_11_15, _res_16_20, xo_21_30(598), _res_31);
         define("eieio", opcd(31), _res_6_10, _res_11_15, _res_16_20, xo_21_30(854), _res_31);
-    }
-
-    public RiscInstructionDescription createInlineBytesInstructionDescription() {
-        return createInstructionDescription(new ArraySequence<Object>(new Object[]{".byte", _byte3, ", ", _byte2, ", ", _byte1, ", ", _byte0}));
     }
 }

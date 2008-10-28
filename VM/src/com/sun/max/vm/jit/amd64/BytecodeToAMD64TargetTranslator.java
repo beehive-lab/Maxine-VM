@@ -26,6 +26,7 @@ import static com.sun.max.vm.bytecode.BranchCondition.*;
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
+import com.sun.max.asm.InlineDataDescriptor.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -308,9 +309,10 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 _tableswitchHighMatchModifier.fix(tableSwitchTemplate, 0, effectiveHighMatch);
             }
             _codeBuffer.emit(tableSwitchTemplate);
-            final int sizeOfInlinedTable = numberOfCases * WordWidth.BITS_32.numberOfBytes();
-            _inlineDataRecorder.record(_codeBuffer.currentPosition(), sizeOfInlinedTable);
-            _codeBuffer.reserve(sizeOfInlinedTable);
+
+            final JumpTable32 jumpTable32 = new JumpTable32(_codeBuffer.currentPosition(), lowMatch, highMatch);
+            _inlineDataRecorder.add(jumpTable32);
+            _codeBuffer.reserve(jumpTable32.size());
 
             // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will be written.
             final BytecodeScanner scanner = getBytecodeScanner();
@@ -339,12 +341,12 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             // This avoids having to deal with relocation.
             _asm.reset();
             final Directives directives = _asm.directives();
-            final int jumpTableAddress =  templateTargetCodePosition + _tableSwitchTemplates[tableSwitch._templateIndex].length;
+            final int jumpTablePosition =  templateTargetCodePosition + _tableSwitchTemplates[tableSwitch._templateIndex].length;
             for (int targetBytecodePosition : tableSwitch._targetBytecodePositions) {
-                final int targetTargetCodeOffset = bytecodeToTargetCodePosition(targetBytecodePosition) - jumpTableAddress;
+                final int targetTargetCodeOffset = bytecodeToTargetCodePosition(targetBytecodePosition) - jumpTablePosition;
                 directives.inlineInt(targetTargetCodeOffset);
             }
-            _codeBuffer.fix(jumpTableAddress, _asm);
+            _codeBuffer.fix(jumpTablePosition, _asm);
         } catch (AssemblyException assemblyException) {
             throw new TranslationException(assemblyException);
         }
@@ -356,7 +358,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             final int defaultTargetBytecodePosition = opcodePosition + defaultTargetOffset;
             if (numberOfCases == 0) {
                 // Skip completely if default target is next instruction.
-                // lookup switch are aligned on 4 bytes and have a minimum of 12 bytes.
+                // Lookup switches are aligned on 4 bytes and have a minimum of 12 bytes.
                 final int nextBytecodePosition = (opcodePosition & 3) + 12;
                 if (defaultTargetBytecodePosition > nextBytecodePosition) {
                     emitBranch(NONE, opcodePosition, defaultTargetBytecodePosition);
@@ -368,9 +370,11 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             final int lastMatchIndex = (numberOfCases - 1) * 2;
             _lookupswitchMaxIndexModifier.fix(lookupSwitchTemplate, lastMatchIndex);
             _codeBuffer.emit(lookupSwitchTemplate);
-            final int sizeOfInlinedTable = numberOfCases * 2 * Ints.SIZE;
-            _inlineDataRecorder.record(_codeBuffer.currentPosition(), sizeOfInlinedTable);
-            _codeBuffer.reserve(sizeOfInlinedTable);
+
+            final LookupTable32 lookupTable32 = new LookupTable32(_codeBuffer.currentPosition(), numberOfCases);
+            _inlineDataRecorder.add(lookupTable32);
+            _codeBuffer.reserve(lookupTable32.size());
+
             final int[] matches = new int[numberOfCases];
             final int[] targetBytecodePositions = new int[numberOfCases];
             final BytecodeScanner scanner = getBytecodeScanner();

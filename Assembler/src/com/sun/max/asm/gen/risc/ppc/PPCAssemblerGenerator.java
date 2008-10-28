@@ -25,6 +25,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.ppc.*;
 import com.sun.max.asm.gen.risc.*;
+import com.sun.max.asm.ppc.complete.*;
 import com.sun.max.collect.*;
 
 /**
@@ -55,9 +56,10 @@ public final class PPCAssemblerGenerator extends RiscAssemblerGenerator<PPCTempl
     }
 
     @Override
-    protected String generateExampleInstruction(PPCTemplate template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
-        final byte[] bytes = {};
-        final PPCDisassembledInstruction dis = new PPC64DisassembledInstruction(0, 0, bytes, template, arguments);
-        return dis.toString(labels);
+    protected DisassembledInstruction generateExampleInstruction(PPCTemplate template, IndexedSequence<Argument> arguments) throws AssemblyException {
+        final PPCAssembler assembler = new PPC32Assembler(0);
+        assembly().assemble(assembler, template, arguments);
+        final byte[] bytes = assembler.toByteArray();
+        return new PPC32DisassembledInstruction(new PPC32Disassembler(0, null), 0, bytes, template, arguments);
     }
 }

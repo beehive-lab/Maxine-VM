@@ -22,33 +22,17 @@ package com.sun.max.asm.dis.sparc;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.sparc.*;
 import com.sun.max.collect.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
-public class SPARC32DisassembledInstruction extends SPARCDisassembledInstruction implements Address32Instruction {
+public class SPARC32DisassembledInstruction extends SPARCDisassembledInstruction {
 
-    private final Address32Instruction.Mixin _addressInstruction;
-
-    SPARC32DisassembledInstruction(int startAddress, int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
-        _addressInstruction = new Address32Instruction.Mixin(this, startAddress);
-    }
-
-    public int address() {
-        return _addressInstruction.address();
-    }
-
-    public String addressString() {
-        return _addressInstruction.addressString();
-    }
-
-    public int addressToPosition(ImmediateArgument argument) {
-        return _addressInstruction.addressToPosition(argument);
+    SPARC32DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 }

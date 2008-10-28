@@ -97,10 +97,10 @@ public final class Debug {
      *
      * This output stream writes to the native standard output stream by default. It can be redirected
      * to write to the native standard error stream or a file instead by setting the value of the
-     * environment variable (<b>not</b> system property) named {@code MAXVM_OUTPUT_FILE}.
+     * environment variable (<b>not</b> system property) named {@code MAXINE_LOG_FILE}.
      * If set, the value of this environment variable is interpreted as a file path to which VM
      * output will be written. The special values {@code "stdout"} and {@code "stderr"} are
-     * interpreted to mean the native standard output and standard error streams respectively.
+     * interpreted to mean the native standard output and error streams respectively.
      */
     public static final OutputStream os = new DebugOutputStream();
 
@@ -274,7 +274,7 @@ public final class Debug {
         private static final OutputStream _prototypeOutputStream;
         static {
             // Use the same environment variable as used by the native code - see Native/share/debug.c
-            String path = System.getenv("MAXVM_OUTPUT_FILE");
+            String path = System.getenv("MAXINE_LOG_FILE");
             if (path == null) {
                 path = "stdout";
             }

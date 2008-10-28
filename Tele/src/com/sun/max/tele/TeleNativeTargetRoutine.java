@@ -110,7 +110,7 @@ public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleT
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (_instructions == null) {
             final byte[] code = teleVM().teleProcess().dataAccess().readFully(codeStart(), codeSize().toInt());
-            _instructions = TeleDisassembler.create(teleVM(), codeStart(), code, null);
+            _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, null);
         }
         return _instructions;
     }

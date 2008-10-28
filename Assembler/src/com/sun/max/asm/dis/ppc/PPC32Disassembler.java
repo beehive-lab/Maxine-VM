@@ -25,44 +25,25 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.ppc.*;
 import com.sun.max.asm.ppc.complete.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
 public class PPC32Disassembler extends PPCDisassembler<PPC32DisassembledInstruction> {
 
-    private final int _startAddress;
-
-    public PPC32Disassembler(int startAddress) {
-        super(PPCAssembly.ASSEMBLY, WordWidth.BITS_32);
-        _startAddress = startAddress;
-    }
-
-    @Override
-    public Class<PPC32DisassembledInstruction> disassembledInstructionType() {
-        return PPC32DisassembledInstruction.class;
+    public PPC32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(new Immediate32Argument(startAddress), PPCAssembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
     protected PPC32DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
-        return new PPC32DisassembledInstruction(_startAddress, position, bytes, template, arguments);
-    }
-
-    @Override
-    protected PPC32DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new PPC32DisassembledInstruction(_startAddress, position, bytes, PPCAssembly.ASSEMBLY.inlineByteTemplate(), arguments);
+        return new PPC32DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new PPC32Assembler(_startAddress + position);
+        return new PPC32Assembler((int) startAddress().asLong() + position);
     }
-
 }

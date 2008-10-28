@@ -150,10 +150,11 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<Target
     }
 
     public void test_arrayCopyBackward() throws ClassNotFoundException, IOException, AssemblyException {
-        AMD64Disassembler disassembler = new AMD64Disassembler(0L);
         final TargetMethod targetMethod = compilerTestSetup().translate(getClassMethodActor("arrayCopyBackward", SignatureDescriptor.create(int.class, int.class)));
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         targetMethod.traceBundle(IndentWriter.traceStreamWriter());
-        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong());
+        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
         Trace.line(1, "test_arrayCopyBackward:");
         disassembler.scanAndPrint(stream, Trace.stream());
@@ -252,20 +253,22 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<Target
     }
 
     public void test_tableswitch_1() throws IOException, AssemblyException {
-        AMD64Disassembler disassembler = new AMD64Disassembler(0L);
         final TargetMethod targetMethod = compilerTestSetup().translate(getClassMethodActor("perform_tableswitch_1", SignatureDescriptor.create(int.class, int.class)));
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         targetMethod.traceBundle(IndentWriter.traceStreamWriter());
-        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong());
+        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
         Trace.line(1, "test_tableswitch_1:");
         disassembler.scanAndPrint(stream, Trace.stream());
     }
 
     public void test_lookupswitch_1() throws IOException, AssemblyException {
-        AMD64Disassembler disassembler = new AMD64Disassembler(0L);
         final TargetMethod targetMethod = compilerTestSetup().translate(getClassMethodActor("perform_lookupswitch_1", SignatureDescriptor.create(int.class, int.class)));
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         targetMethod.traceBundle(IndentWriter.traceStreamWriter());
-        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong());
+        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
         Trace.line(1, "test_lookupswitch_1:");
         disassembler.scanAndPrint(stream, Trace.stream());
@@ -287,8 +290,9 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<Target
     }
 
     public void test_lookupswitch_3() throws IOException, AssemblyException {
-        AMD64Disassembler disassembler = new AMD64Disassembler(0L);
         final TargetMethod targetMethod = compileMethod("perform_lookupswitch_3");
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        AMD64Disassembler disassembler = new AMD64Disassembler(0L, inlineDataDecoder);
         new BytecodeConfirmation(targetMethod.classMethodActor()) {
 
             @Override
@@ -298,7 +302,7 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<Target
             }
         };
         targetMethod.traceBundle(IndentWriter.traceStreamWriter());
-        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong());
+        disassembler = new AMD64Disassembler(targetMethod.codeStart().toLong(), inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
         Trace.line(1, "perform_lookupswitch_3:");
         disassembler.scanAndPrint(stream, Trace.stream());

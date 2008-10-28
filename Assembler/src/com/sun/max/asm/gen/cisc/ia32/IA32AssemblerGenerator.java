@@ -25,13 +25,14 @@ import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.ia32.*;
 import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.*;
+import com.sun.max.asm.ia32.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 
 /**
  * Run this program to generate the IA32RawAssembler and IA32LabelAssembler classes.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> {
@@ -90,9 +91,10 @@ public class IA32AssemblerGenerator extends X86AssemblerGenerator<IA32Template> 
     }
 
     @Override
-    protected String generateExampleInstruction(IA32Template template, IndexedSequence<Argument> arguments, IndexedSequence<DisassembledLabel> labels) {
-        final byte[] bytes = {};
-        final IA32DisassembledInstruction dis = new IA32DisassembledInstruction(0, 0, bytes, template, arguments);
-        return dis.toString(labels);
+    protected DisassembledInstruction generateExampleInstruction(IA32Template template, IndexedSequence<Argument> arguments) throws AssemblyException {
+        final IA32Assembler assembler = new IA32Assembler(0);
+        assembly().assemble(assembler, template, arguments);
+        final byte[] bytes = assembler.toByteArray();
+        return new IA32DisassembledInstruction(new IA32Disassembler(0, null), 0, bytes, template, arguments);
     }
 }

@@ -26,13 +26,13 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
 public final class RiscInstructionDescription extends InstructionDescription {
 
-    RiscInstructionDescription(MutableSequence<Object> specifications) {
+    public RiscInstructionDescription(MutableSequence<Object> specifications) {
         super(specifications);
 
         int bits = 0;

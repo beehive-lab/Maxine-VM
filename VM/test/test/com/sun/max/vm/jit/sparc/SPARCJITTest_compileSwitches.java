@@ -18,18 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.dis.x86;
+package test.com.sun.max.vm.jit.sparc;
 
-import java.io.*;
+import junit.framework.*;
+import test.com.sun.max.vm.jit.*;
 
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.cisc.x86.*;
 
 /**
- * @author David Liu
+ * Runs unit test JITTest_compileTableSwitch for SPARC.
+ * @see JITTest_compileSwitches
+ * @author Laurent Daynes
  */
-public interface X86DisassembledInstructionScanner<Template_Type extends X86Template, DisassembledInstruction_Type extends DisassembledInstruction<Template_Type>> {
-    void disassemblyStarted();
-    DisassembledInstruction_Type overrideDisassembly(int currentPosition, BufferedInputStream stream) throws IOException;
-    void instructionDisassembled(DisassembledInstruction_Type disassembledInstruction);
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public class SPARCJITTest_compileSwitches extends JITTest_compileSwitches {
+
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(SPARCJITTest_compileSwitches.suite());
+    }
+
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(SPARCJITTest_compileSwitches.class.getSimpleName());
+        // $JUnit-BEGIN$
+        suite.addTestSuite(SPARCJITTest_compileSwitches.class);
+        // $JUnit-END$
+        return new SPARCJITTestSetup(suite);
+    }
 }

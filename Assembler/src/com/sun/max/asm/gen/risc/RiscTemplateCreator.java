@@ -31,7 +31,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -47,8 +47,6 @@ public abstract class RiscTemplateCreator<Template_Type extends RiscTemplate> {
     }
 
     protected abstract Template_Type createTemplate(InstructionDescription instructionDescription);
-
-    protected abstract Template_Type createInlineByteTemplate();
 
     public Sequence<Template_Type> createOptionTemplates(Sequence<Template_Type> templates, OptionField optionField) {
         final Class<Template_Type> templateType = null;

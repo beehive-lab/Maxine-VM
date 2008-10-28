@@ -29,7 +29,7 @@ import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -46,7 +46,7 @@ public class SPARC32AssemblyTester extends SPARCAssemblyTester<SPARC32Disassembl
 
     @Override
     protected SPARC32Disassembler createTestDisassembler() {
-        return new SPARC32Disassembler(0);
+        return new SPARC32Disassembler(0, null);
     }
 
 }

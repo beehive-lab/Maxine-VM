@@ -31,25 +31,25 @@ import com.sun.max.collect.*;
  */
 public abstract class PPCDisassembledInstruction extends RiscDisassembledInstruction<PPCTemplate> {
 
-    PPCDisassembledInstruction(int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
+    PPCDisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, PPCTemplate template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 
     @Override
-    public String externalName() {
-        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startPosition(), null, null);
+    public String mnemonic() {
+        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();
     }
 
     @Override
-    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String operandsToString(AddressMapper addressMapper) {
+        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.operands();
     }
 
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        final PPCExternalInstruction instruction = new PPCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();
     }
 
