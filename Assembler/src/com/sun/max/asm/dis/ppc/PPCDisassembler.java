@@ -20,21 +20,27 @@
  */
 package com.sun.max.asm.dis.ppc;
 
+import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.risc.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.ppc.*;
 import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
 public abstract class PPCDisassembler<DisassembledInstruction_Type extends DisassembledInstruction<PPCTemplate>>
         extends RiscDisassembler<PPCTemplate, DisassembledInstruction_Type> {
 
-    protected PPCDisassembler(PPCAssembly assembly, WordWidth addressWidth) {
-        super(assembly, addressWidth, Endianness.BIG);
+    protected PPCDisassembler(ImmediateArgument startAddress, PPCAssembly assembly, InlineDataDecoder inlineDataDecoder) {
+        super(startAddress, assembly, Endianness.BIG, inlineDataDecoder);
     }
 
+    @Override
+    protected PPCTemplate createInlineDataTemplate(InstructionDescription instructionDescription) {
+        return new PPCTemplate(instructionDescription);
+    }
 }

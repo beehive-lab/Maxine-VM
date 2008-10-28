@@ -247,7 +247,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
      */
     public enum CodeKind {
         TARGET_CODE("Target Code", true),
-        BYTECODES("Bytecodes", true),
+        BYTECODES("Bytecodes", false),
         JAVA_SOURCE("Java Source", false);
 
         private final String _label;

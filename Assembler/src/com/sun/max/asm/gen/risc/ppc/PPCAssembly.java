@@ -53,7 +53,7 @@ public final class PPCAssembly extends RiscAssembly<PPCTemplate> {
     /**
      * The existence of this method documents a bug in the Apple version of GNU 'as' where bit 11
      * in an mtcrf instruction is encoded as 1 but specified as 0 in the architecture manual.
-     * 
+     *
      * This will have to be a non-constant method should another non-broken external assembler
      * be used for testing.
      */
@@ -72,12 +72,6 @@ public final class PPCAssembly extends RiscAssembly<PPCTemplate> {
         creator.createTemplates(new RawInstructions(creator));
         creator.createTemplates(new SyntheticInstructions(creator));
         return creator.templates();
-    }
-
-    @Override
-    protected PPCTemplate createInlineByteTemplate() {
-        final PPCTemplateCreator creator = new PPCTemplateCreator();
-        return creator.createInlineByteTemplate();
     }
 
     public static final PPCAssembly ASSEMBLY = new PPCAssembly();

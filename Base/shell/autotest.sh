@@ -88,7 +88,7 @@ OUTPUT_DIR=${TEST_DIR}/${REL_OUTPUT_DIR}
 COMPILER_FILE=${OUTPUT_DIR}/COMPILER
 NATIVE_FILE=${OUTPUT_DIR}/NATIVE
 SUMMARY_FILE=${OUTPUT_DIR}/SUMMARY
-LAST_CHANGESET_FILE=${TEST_DIR}/runtests-changeset
+TESTED_CHANGESETS=${TEST_DIR}/tested-changesets
 LOCK_FILE=${TEST_DIR}/runtests.lock
 
 START_TIME=`date`
@@ -117,15 +117,15 @@ then
         exit
     fi
     # HG repo exists: pull to get recent changes
-    (cd ${TEST_HG_REPO} ; hg pull -u )
+    (cd ${TEST_HG_REPO} ; hg pull ; hg update -C )
 else
     # HG repo does not exist: clone to create it
     hg clone ${SOURCE_HG_REPO} ${TEST_HG_REPO}
 fi
 
-if [ -e ${LAST_CHANGESET_FILE} ] ;
+if [ -e ${TESTED_CHANGESETS} ] ;
 then
-    LAST_CHANGESET=`cat ${LAST_CHANGESET_FILE}`
+    LAST_CHANGESET=`tail -1 ${TESTED_CHANGESETS} | cut -d ' ' -f 1`
     TIP_CHANGESET=`hg -R ${TEST_HG_REPO} tip --template '{node|short}'`
     
     if [ "x${LAST_CHANGESET}" = "x${TIP_CHANGESET}" ]; then
@@ -133,7 +133,7 @@ then
         rm ${LOCK_FILE}
         exit
     else
-        echo ${TIP_CHANGESET} >${LAST_CHANGESET_FILE}
+        echo "${TIP_CHANGESET} ${REL_OUTPUT_DIR}" >>${TESTED_CHANGESETS}
     fi
 fi
 

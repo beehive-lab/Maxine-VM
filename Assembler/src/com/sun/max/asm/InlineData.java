@@ -18,29 +18,45 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jit.amd64;
+package com.sun.max.asm;
 
-import junit.framework.*;
-import test.com.sun.max.vm.jit.*;
-
+import com.sun.max.asm.InlineDataDescriptor.*;
 
 /**
- * Runs unit test JITTest_compileTableSwitch for AMD64.
- * @see JITTest_compileTableSwitch
- * @author Laurent Daynes
+ * A binding of an {@linkplain InlineDataDescriptor inline data descriptor} to some bytes decoded
+ * from the instruction stream with which the descriptor is associated.
+ *
+ * @author Doug Simon
  */
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public class AMD64JITTest_compileTableSwitch extends JITTest_compileTableSwitch {
+public class InlineData {
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AMD64JITTest_compileTableSwitch.suite());
+    private final InlineDataDescriptor _descriptor;
+    private final byte[] _data;
+
+    /**
+     * Creates an object to represent some otherwise unstructured.
+     * @param position
+     * @param data
+     */
+    public InlineData(int position, byte[] data) {
+        this(new ByteData(position, data.length), data);
     }
 
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(AMD64JITTest_compileTableSwitch.class.getSimpleName());
-        // $JUnit-BEGIN$
-        suite.addTestSuite(AMD64JITTest_compileTableSwitch.class);
-        // $JUnit-END$
-        return new AMD64JITTestSetup(suite);
+    public InlineData(InlineDataDescriptor descriptor, byte[] data) {
+        assert descriptor.size() == data.length;
+        _descriptor = descriptor;
+        _data = data;
+    }
+
+    public InlineDataDescriptor descriptor() {
+        return _descriptor;
+    }
+
+    public byte[] data() {
+        return _data;
+    }
+
+    public int size() {
+        return _data.length;
     }
 }

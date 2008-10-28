@@ -21,25 +21,90 @@
 package com.sun.max.asm.gen.cisc.x86;
 
 /**
+ * Refer to "Appendix A.1 Opcode-Syntax Notation".
+ *
  * @author Bernd Mathiske
  */
 public enum OperandTypeCode {
 
+    /**
+     * Two 16-bit or 32-bit memory operands, depending on the effective operand size. Used in the BOUND instruction.
+     */
     a,
+
+    /**
+     * A byte, irrespective of the effective operand size.
+     */
     b,
+
+    /**
+     * A doubleword (32 bits), irrespective of the effective operand size.
+     */
     d,
+
+    /**
+     * A double-quadword (128 bits), irrespective of the effective operand size.
+     */
     dq,
+
+    /**
+     * ???
+     */
     d_q,
+
+    /**
+     * A 32-bit or 48-bit far pointer, depending on the effective operand size.
+     */
     p,
+
+    /**
+     * A 128-bit double-precision floating-point vector operand (packed double).
+     */
     pd,
+
+    /**
+     * A 128-bit single-precision floating-point vector operand (packed single).
+     */
     ps,
+
+    /**
+     * A quadword, irrespective of the effective operand size.
+     */
     q,
+
+    /**
+     * A 6-byte or 10-byte pseudo-descriptor.
+     */
     s,
+
+    /**
+     * A scalar double-precision floating-point operand (scalar double).
+     */
     sd,
+
+    /**
+     * A scalar single-precision floating-point operand (scalar single).
+     */
     ss,
+
+    /**
+     * A word, doubleword, or quadword, depending on the effective operand size.
+     */
     v,
+
+    /**
+     * A word, irrespective of the effective operand size.
+     */
     w,
-    y, // we made this one up: a double word if operand size 32, a quad word if 64, undefined if 16
+
+    /**
+     * A double word if operand size 32, a quad word if 64, undefined if 16.
+     */
+    y,
+
+    /**
+     * A word if the effective operand size is 16 bits, or a doubleword if the effective operand size is 32 or 64 bits.
+     */
     z;
 
 }

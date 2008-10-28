@@ -42,12 +42,5 @@ public final class IA32Assembly extends X86Assembly<IA32Template> {
         return creator.templates();
     }
 
-    @Override
-    protected IA32Template createInlineByteTemplate() {
-        final IA32TemplateCreator creator = new IA32TemplateCreator();
-        return creator.createInlineBytesTemplate();
-    }
-
     public static final IA32Assembly ASSEMBLY = new IA32Assembly();
-
 }

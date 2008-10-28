@@ -55,7 +55,7 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
 
     @Override
     public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return new AMD64Disassembler(targetMethod.start().toLong());
+        return new AMD64Disassembler(targetMethod.start().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 
     @Override

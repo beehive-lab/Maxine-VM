@@ -11,6 +11,7 @@ manifest*
 .#*
 .metadata
 *.orig
+.DS_Store
 
 # switch to regexp syntax
 syntax: regexp

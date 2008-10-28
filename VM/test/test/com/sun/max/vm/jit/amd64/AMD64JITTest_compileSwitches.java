@@ -18,45 +18,30 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.asm.dis;
+package test.com.sun.max.vm.jit.amd64;
 
-import com.sun.max.asm.gen.*;
+import junit.framework.*;
+import test.com.sun.max.vm.jit.*;
+
 
 /**
- * Mixin delegation style (for lack of multiple class inheritance in the Java(TM) Programming Language).
+ * Runs unit test JITTest_compileTableSwitch for AMD64.
  *
- * @author Bernd Mathiske
+ * @see JITTest_compileSwitches
+ * @author Laurent Daynes
  */
-public interface Address32Instruction extends AddressInstruction {
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public class AMD64JITTest_compileSwitches extends JITTest_compileSwitches {
 
-    int address();
-
-    public static class Mixin implements Address32Instruction {
-
-        private final int _startAddress;
-        private final DisassembledInstruction _disassembledInstruction;
-
-        public Mixin(DisassembledInstruction disassembledInstruction, int startAddress) {
-            _startAddress = startAddress;
-            _disassembledInstruction = disassembledInstruction;
-        }
-
-        public int address() {
-            return _startAddress + startPosition();
-        }
-
-        public int startPosition() {
-            return _disassembledInstruction.startPosition();
-        }
-
-        public String addressString() {
-            return String.format("0x%08X", address());
-        }
-
-        public int addressToPosition(ImmediateArgument argument) {
-            final int argumentAddress = (int) argument.asLong();
-            return argumentAddress - _startAddress;
-        }
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(AMD64JITTest_compileSwitches.suite());
     }
 
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(AMD64JITTest_compileSwitches.class.getSimpleName());
+        // $JUnit-BEGIN$
+        suite.addTestSuite(AMD64JITTest_compileSwitches.class);
+        // $JUnit-END$
+        return new AMD64JITTestSetup(suite);
+    }
 }

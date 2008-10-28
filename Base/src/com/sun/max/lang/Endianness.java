@@ -138,28 +138,28 @@ public enum Endianness {
         }
 
         @Override
-        public void toBytes(short value, byte[] result) {
+        public void toBytes(short value, byte[] result, int offset) {
             short v = value;
             for (int i = 0; i < Shorts.SIZE && i < result.length; i++) {
-                result[i] = (byte) (v & 0xff);
+                result[i + offset] = (byte) (v & 0xff);
                 v >>= 8;
             }
         }
 
         @Override
-        public void toBytes(int value, byte[] result) {
+        public void toBytes(int value, byte[] result, int offset) {
             int v = value;
             for (int i = 0; i < Ints.SIZE && i < result.length; i++) {
-                result[i] = (byte) (v & 0xff);
+                result[i + offset] = (byte) (v & 0xff);
                 v >>= 8;
             }
         }
 
         @Override
-        public void toBytes(long value, byte[] result) {
+        public void toBytes(long value, byte[] result, int offset) {
             long v = value;
             for (int i = 0; i < Longs.SIZE && i < result.length; i++) {
-                result[i] = (byte) (v & 0xff);
+                result[i + offset] = (byte) (v & 0xff);
                 v >>= 8;
             }
         }
@@ -265,28 +265,31 @@ public enum Endianness {
         }
 
         @Override
-        public void toBytes(short value, byte[] result) {
+        public void toBytes(short value, byte[] result, int offset) {
             short v = value;
+            int toIndex = offset + Shorts.SIZE - 1;
             for (int i = 1; i <= Shorts.SIZE && i <= result.length; i++) {
-                result[result.length - i] = (byte) (v & 0xff);
+                result[toIndex--] = (byte) (v & 0xff);
                 v >>= 8;
             }
         }
 
         @Override
-        public void toBytes(int value, byte[] result) {
+        public void toBytes(int value, byte[] result, int offset) {
             int v = value;
+            int toIndex = offset + Ints.SIZE - 1;
             for (int i = 1; i <= Ints.SIZE && i <= result.length; i++) {
-                result[result.length - i] = (byte) (v & 0xff);
+                result[toIndex--] = (byte) (v & 0xff);
                 v >>= 8;
             }
         }
 
         @Override
-        public void toBytes(long value, byte[] result) {
+        public void toBytes(long value, byte[] result, int offset) {
             long v = value;
+            int toIndex = offset + Longs.SIZE - 1;
             for (int i = 1; i <= Longs.SIZE && i <= result.length; i++) {
-                result[result.length - i] = (byte) (v & 0xff);
+                result[toIndex--] = (byte) (v & 0xff);
                 v >>= 8;
             }
         }
@@ -335,17 +338,17 @@ public enum Endianness {
 
     public abstract byte[] toBytes(long value);
 
-    public void toBytes(byte value, byte[] result) {
+    public void toBytes(byte value, byte[] result, int offset) {
         if (result.length > 0) {
             result[0] = value;
         }
     }
 
-    public abstract void toBytes(short value, byte[] result);
+    public abstract void toBytes(short value, byte[] result, int offset);
 
-    public abstract void toBytes(int value, byte[] result);
+    public abstract void toBytes(int value, byte[] result, int offset);
 
-    public abstract void toBytes(long value, byte[] result);
+    public abstract void toBytes(long value, byte[] result, int offset);
 
     public abstract int offsetWithinWord(WordWidth wordWith, WordWidth dataWidth);
 }

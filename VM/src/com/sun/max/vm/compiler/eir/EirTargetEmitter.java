@@ -25,7 +25,6 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.target.*;
@@ -276,34 +275,10 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         return true;
     }
 
-    VariableSequence<Integer> _inlineDataPositions;
-    private final InlineDataRecorder _inlineDataRecorder = new InlineDataRecorder() {
-        @Override
-        public void record(int startPosition, int size) {
-            if (size != 0) {
-                if (_inlineDataPositions == null) {
-                    _inlineDataPositions = new ArrayListSequence<Integer>();
-                } else {
-                    final int lastEndPosition = _inlineDataPositions.last();
-                    assert lastEndPosition <= startPosition;
-                }
-                _inlineDataPositions.append(startPosition);
-                _inlineDataPositions.append(startPosition + size);
-            }
-        }
-    };
+    private final InlineDataRecorder _inlineDataRecorder = new InlineDataRecorder();
 
-    public int[] inlineDataPositions() {
-        if (_inlineDataPositions == null) {
-            return null;
-        }
-        final int[] inlineDataPositions = new int[_inlineDataPositions.length()];
-        int i = 0;
-        for (Integer position : _inlineDataPositions) {
-            inlineDataPositions[i++] = position;
-        }
-        Metrics.accumulate("InlineDataPositions", inlineDataPositions.length);
-        return inlineDataPositions;
+    public InlineDataRecorder inlineDataRecorder() {
+        return _inlineDataRecorder;
     }
 
     public byte[] toByteArray() throws AssemblyException {

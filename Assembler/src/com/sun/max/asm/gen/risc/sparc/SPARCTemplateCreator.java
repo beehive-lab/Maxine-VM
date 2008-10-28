@@ -24,7 +24,7 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -37,12 +37,5 @@ public class SPARCTemplateCreator extends RiscTemplateCreator<SPARCTemplate> {
     @Override
     protected SPARCTemplate createTemplate(InstructionDescription instructionDescription) {
         return new SPARCTemplate(instructionDescription);
-    }
-
-    @Override
-    protected SPARCTemplate createInlineByteTemplate() {
-        final SPARCTemplate template = new SPARCTemplate(new InlineDataCreator(this).createInlineBytesInstructionDescription());
-        RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(template, template.instructionDescription());
-        return template;
     }
 }
