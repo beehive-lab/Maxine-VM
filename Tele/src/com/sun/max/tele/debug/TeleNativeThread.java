@@ -246,10 +246,15 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private void refreshBreakpoint() {
         final Factory breakpointFactory = teleProcess().targetBreakpointFactory();
-        breakpointFactory.registerBreakpointSetByVM(this);
+        TeleTargetBreakpoint breakpoint = null;
+        try {
+            breakpointFactory.registerBreakpointSetByVM(this);
 
-        final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
-        final TeleTargetBreakpoint breakpoint = breakpointFactory.getBreakpointAt(breakpointAddress);
+            final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
+            breakpoint = breakpointFactory.getBreakpointAt(breakpointAddress);
+        } catch (DataIOError dataIOError) {
+        	// This is a catch for problems getting accurate state for threads that are not at breakpoints
+        }
         if (breakpoint != null) {
             _state = BREAKPOINT;
             _breakpoint = breakpoint;
