@@ -97,10 +97,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         return f3 / f1 + f4;
     }
 
-/*    public void test_sparcFloatCallConvention() {
-        compileMethod("computeFloat1");
-    }
-*/
     public void test_sparcRegression() {
         compileMethod(CallingConventionTest.class, "nativeMethod1");
     }

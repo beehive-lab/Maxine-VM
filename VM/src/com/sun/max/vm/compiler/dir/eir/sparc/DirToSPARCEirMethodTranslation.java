@@ -114,6 +114,11 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
     @Override
     public EirCall createCall(EirBlock eirBlock, EirABI abi, EirValue result, EirLocation resultLocation,
                               EirValue function, EirValue[] arguments, EirLocation[] argumentLocations) {
+        if (function instanceof EirConstant) {
+            final EirValue functionPointer = createEirVariable(Kind.WORD);
+            eirBlock.appendInstruction(createAssignment(eirBlock, Kind.WORD, functionPointer, function));
+            return new CALL(eirBlock, abi, result, resultLocation, functionPointer, arguments, argumentLocations, this);
+       }
         return new CALL(eirBlock, abi, result, resultLocation, function, arguments, argumentLocations, this);
     }
 
