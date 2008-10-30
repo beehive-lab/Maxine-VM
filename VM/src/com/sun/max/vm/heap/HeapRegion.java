@@ -23,7 +23,9 @@ package com.sun.max.vm.heap;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 
-
+/**
+ * @author Bernd Mathiske
+ */
 public interface HeapRegion extends MemoryRegion {
 
     Pointer allocateCell(Size size);

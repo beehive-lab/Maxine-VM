@@ -21,10 +21,9 @@
 package com.sun.max.vm.monitor.ignore;
 
 import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.heap.util.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
@@ -120,10 +119,6 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
 
     public Word createMisc(Object object) {
         return Address.fromUnsignedInt(createHashCode(object));
-    }
-
-    @Override
-    public void scanReferences(BeltWayPointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
     }
 
     @Override

@@ -27,7 +27,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -513,10 +512,12 @@ public enum VmThreadLocal {
      * from it.
      */
     @NEVER_INLINE
-    static void prepareCurrentStackReferenceMap() {
+    public static void prepareCurrentStackReferenceMap() {
         fakeNearbyStopPosition();
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(), VMRegister.getInstructionPointer(), VMRegister.getAbiStackPointer(),
-                        VMRegister.getAbiFramePointer());
+        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
+                                                                                VMRegister.getInstructionPointer(),
+                                                                                VMRegister.getAbiStackPointer(),
+                                                                                VMRegister.getAbiFramePointer());
     }
 
     /**
@@ -545,7 +546,7 @@ public enum VmThreadLocal {
 
         boolean lockDisabledSafepoints = false;
         if (Heap.traceGC()) {
-            lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map scanning
+            lockDisabledSafepoints = Debug.lock(); // Note: as a side effect, this lock serializes stack reference map scanning
             Debug.print("Scanning stack reference map for thread ");
             Debug.printVmThread(vmThread, false);
             Debug.println(":");

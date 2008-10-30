@@ -28,7 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.util.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -224,18 +224,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     synchronized TargetMethod[] methodKeyToTargetMethods(MethodKey methodKey) {
         return _methodKeyToTargetMethods.get(methodKey);
-    }
-
-    /**
-     * TODO: clean this up.
-     */
-    void visitCells(Visitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, Code.bootCodeRegion(), from, to);
-        for (CodeRegion codeRegion : _runtimeCodeRegions) {
-            if (codeRegion != null) {
-                CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, codeRegion, from, to);
-            }
-        }
     }
 
     /**

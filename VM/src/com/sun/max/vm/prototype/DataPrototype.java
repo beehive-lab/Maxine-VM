@@ -43,7 +43,6 @@ import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.SpecificLayout.*;
 import com.sun.max.vm.object.host.*;

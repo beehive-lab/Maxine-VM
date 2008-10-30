@@ -28,7 +28,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.util.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -168,13 +168,6 @@ public final class Code {
      */
     public static void discardTargetMethod(TargetMethod targetMethod) {
         // do nothing.
-    }
-
-    /**
-     * TODO: clean this up.
-     */
-    public static void visitCells(BeltWayCellVisitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        _codeManager.visitCells(cellVisitor, action, from, to);
     }
 
     /**
