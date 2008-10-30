@@ -32,7 +32,6 @@ import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -50,7 +49,7 @@ import com.sun.max.vm.type.*;
  * This code base is supposed to remain stable,
  * as a reliable fallback position.
  * Refactoring of whatever other fancy memory management library
- * is must not damage the functionality here.
+ * must not damage the functionality here.
  *
  * @author Bernd Mathiske
  * @author Sunil Soman
@@ -61,6 +60,10 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         return vmThread.javaThread() instanceof StopTheWorldDaemon;
     }
 
+    public int adjustedCardTableShift() {
+        return -1;
+    }
+
     public int auxiliarySpaceSize(int bootImageSize) {
         return 0;
     }
@@ -68,7 +71,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
     }
 
-    public void initializeVmThread(VmThread vmThread) {
+    public void initializeVmThread(Pointer vmThreadLocals) {
     }
 
     private int _numberOfGarbageCollectionInvocations = 0;

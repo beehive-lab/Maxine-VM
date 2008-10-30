@@ -27,7 +27,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
@@ -305,10 +304,6 @@ public abstract class Hub extends Hybrid {
         final int serial = classActor.id();
         final int iTableIndex = getITableIndex(serial);
         return getWord(iTableIndex).equals(Address.fromInt(serial));
-    }
-
-    public final void visitReferenceOffsets(Pointer origin, BeltWayPointerOffsetVisitor offsetVisitor) {
-        TupleReferenceMap.visitOriginOffsets(this, origin, offsetVisitor, null, null);
     }
 
     public abstract FieldActor findFieldActor(int offset);

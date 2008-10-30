@@ -37,6 +37,13 @@ public interface HeapScheme extends VMScheme {
     boolean isGcThread(VmThread vmThread);
 
     /**
+     * If the heap implementation uses an adjusted card table,
+     * report the number of bits to shift an object address with.
+     * Otherwise return -1;
+     */
+    int adjustedCardTableShift();
+
+    /**
      * Given the size of the boot image, calculates the size of the auxiliary space that the substrate is to allocate
      * and pass to the target VM.
      */
@@ -54,7 +61,7 @@ public interface HeapScheme extends VMScheme {
      * Perform thread-local initializations specific to the heap scheme when starting a new VM thread. For instance
      * install card table address.
      */
-    void initializeVmThread(VmThread vmThread);
+    void initializeVmThread(Pointer vmThreadLocals);
 
     /**
      * Allocate a new array object and fill in its header and initial data.

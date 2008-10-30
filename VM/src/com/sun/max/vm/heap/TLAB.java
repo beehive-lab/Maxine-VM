@@ -25,6 +25,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.beltway.*;
 
 /**
  * This class implements a thread local allocation buffer.
@@ -65,7 +66,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     public void initializeTLAB(Address newAddress) {
         setStart(newAddress);
-        setSize(HeapSchemeConfiguration.TLAB_SIZE);
+        setSize(BeltwayHeapSchemeConfiguration.TLAB_SIZE);
         _allocationMark = newAddress;
         if (VMConfiguration.hostOrTarget().debugging()) {
             _endAllocationMark = end().asPointer().minusWords(4);
@@ -234,5 +235,4 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     public Pointer compareAndSwapScavengePointer(Pointer suspectedValue, Pointer newValue) {
         return _scavengedPointer.compareAndSwapWord(suspectedValue, newValue).asPointer();
     }
-
 }

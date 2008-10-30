@@ -126,12 +126,16 @@ public final class Heap {
         return VMConfiguration.hostOrTarget().heapScheme();
     }
 
+    public static boolean isGcThread(VmThread vmThread) {
+        return heapScheme().isGcThread(vmThread);
+    }
+
     public static void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
         heapScheme().initializeAuxiliarySpace(primordialVmThreadLocals, auxiliarySpace);
     }
 
-    public static void initializeVmThread(VmThread vmThread) {
-        heapScheme().initializeVmThread(vmThread);
+    public static void initializeVmThread(Pointer vmThreadLocals) {
+        heapScheme().initializeVmThread(vmThreadLocals);
     }
 
     @INLINE
