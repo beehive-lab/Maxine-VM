@@ -147,7 +147,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
             _clearTimer.stop();
 
-            if (Heap.traceGC()) {
+            if (Heap.traceGCRootScanning()) {
                 Debug.println("Scanning roots...");
             }
             _rootScanTimer.restart();
