@@ -51,6 +51,16 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
         },
 
         /**
+         * @see Ascii
+         */
+        ASCII {
+            @Override
+            public InlineDataDescriptor decode(DataInputStream dataInputStream) throws IOException {
+                return new Ascii(dataInputStream);
+            }
+        },
+
+        /**
          * @see JumpTable32
          */
         JUMP_TABLE32 {
@@ -151,23 +161,28 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
     /**
      * Describes an unstructured sequence of non-code bytes in an instruction stream.
      */
-    public static final class ByteData extends InlineDataDescriptor {
-        private final int _startPosition;
+    public static class ByteData extends InlineDataDescriptor {
+        private final Label _startPosition;
         private final int _size;
 
-        public ByteData(int startPosition, int size) {
+        public ByteData(Label startPosition, int size) {
             _startPosition = startPosition;
             _size = size;
         }
 
+        public ByteData(int startPosition, int size) {
+            this(Label.createBoundLabel(startPosition), size);
+        }
+
         public ByteData(DataInputStream dataInputStream) throws IOException {
-            _startPosition = dataInputStream.readInt();
+            _startPosition = new Label();
+            _startPosition.bind(dataInputStream.readInt());
             _size = dataInputStream.readInt();
         }
 
         @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
-            dataOutputStream.writeInt(_startPosition);
+            dataOutputStream.writeInt(startPosition());
             dataOutputStream.writeInt(_size);
         }
 
@@ -178,7 +193,11 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
 
         @Override
         public int startPosition() {
-            return _startPosition;
+            try {
+                return _startPosition.position();
+            } catch (AssemblyException assemblyException) {
+                throw ProgramError.unexpected("Cannot get start position of " + getClass().getSimpleName() + " until labels have been fixed", assemblyException);
+            }
         }
 
         @Override
@@ -189,6 +208,26 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
         @Override
         public String toString() {
             return super.toString() + "[start=" + startPosition() + ", size=" + size() + "]";
+        }
+    }
+
+    public static class Ascii extends ByteData {
+
+        public Ascii(DataInputStream dataInputStream) throws IOException {
+            super(dataInputStream);
+        }
+
+        public Ascii(int startPosition, int size) {
+            super(startPosition, size);
+        }
+
+        public Ascii(Label startPosition, int size) {
+            super(startPosition, size);
+        }
+
+        @Override
+        public Tag tag() {
+            return Tag.ASCII;
         }
     }
 
@@ -224,13 +263,9 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
 
         @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
-            try {
-                dataOutputStream.writeInt(_tablePosition.position());
-                dataOutputStream.writeInt(_low);
-                dataOutputStream.writeInt(_high);
-            } catch (AssemblyException assemblyException) {
-                ProgramError.unexpected("Cannot write " + getClass().getSimpleName() + " until labels have been fixed", assemblyException);
-            }
+            dataOutputStream.writeInt(startPosition());
+            dataOutputStream.writeInt(_low);
+            dataOutputStream.writeInt(_high);
         }
 
         public int numberOfEntries() {
@@ -304,12 +339,8 @@ public abstract class InlineDataDescriptor implements Comparable<InlineDataDescr
 
         @Override
         public void writeBody(DataOutputStream dataOutputStream) throws IOException {
-            try {
-                dataOutputStream.writeInt(_tablePosition.position());
-                dataOutputStream.writeInt(_numberOfEntries);
-            } catch (AssemblyException assemblyException) {
-                ProgramError.unexpected("Cannot write " + getClass().getSimpleName() + " until labels have been fixed", assemblyException);
-            }
+            dataOutputStream.writeInt(startPosition());
+            dataOutputStream.writeInt(_numberOfEntries);
         }
 
         public int numberOfEntries() {
