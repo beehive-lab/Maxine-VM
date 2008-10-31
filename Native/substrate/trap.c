@@ -46,6 +46,10 @@
     typedef siginfo_t SigInfo;
 #endif
 
+/*
+ * Important: The values defined here must correspond to those of the same name
+ *             defined in the TrapNumber class in Trap.java.
+ */
 #define MEMORY_FAULT 0
 #define STACK_FAULT 1
 #define ILLEGAL_INSTRUCTION 2
@@ -54,7 +58,7 @@
 
     static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext);
     static void setHandler(int signal, void *handler);
-    
+
     static Address _javaTrapStub;
 
 
@@ -231,7 +235,7 @@ char *signalName(int signal) {
 	case SIGFPE: return "SIGFPE";
 	case SIGILL: return "SIGILL";
 	case SIGUSR1: return "SIGUSR1";
-	case SIGBUS: return "SIGBUS"; 
+	case SIGBUS: return "SIGBUS";
 	}
 	return NULL;
 }
@@ -260,11 +264,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     int trapNum = faultNumber(signal);
 	Word *stackPointer = (Word *)getStackPointer(ucontext);
 
-    if (isInGuardZone(stackPointer, nativeThreadLocals->stackYellowZone)) { 
+    if (isInGuardZone(stackPointer, nativeThreadLocals->stackYellowZone)) {
     	/* if the stack pointer is in the yellow zone, assume this is a stack fault */
         unprotectPage(nativeThreadLocals->stackYellowZone);
     	trapNum = STACK_FAULT;
-    } else if (isInGuardZone(stackPointer, nativeThreadLocals->stackRedZone)) { 
+    } else if (isInGuardZone(stackPointer, nativeThreadLocals->stackRedZone)) {
     	/* if the stack pointer is in the red zone, (we shouldn't be alive) */
         debug_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
     } else if (stackPointer == 0) {
@@ -292,7 +296,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
     /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
     *stackPointer = disabledVmThreadLocals;
-    
+
 #if DEBUG_TRAP
     debug_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
 #endif
