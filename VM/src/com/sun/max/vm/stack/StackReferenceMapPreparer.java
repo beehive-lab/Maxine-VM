@@ -37,7 +37,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -104,7 +103,7 @@ public final class StackReferenceMapPreparer {
         _triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         _referenceMap = STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
         _lowestStackSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
-        final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
+        final Pointer highestStackSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
         LOWEST_ACTIVE_STACK_SLOT_ADDRESS.setVariableWord(vmThreadLocals, stackPointer);
@@ -114,8 +113,8 @@ public final class StackReferenceMapPreparer {
             FatalError.unexpected("Cannot use stack reference map preparer of another thread");
         }
 
-        // clear the reference map covering the stack contents and the vm thread locals
-        clearReferenceMapRange(vmThreadLocals, stackPointer, highestSlot);
+        // clear the reference map covering the stack contents and the VM thread locals
+        clearReferenceMapRange(vmThreadLocals, stackPointer, highestStackSlot);
         clearReferenceMapRange(vmThreadLocals, _lowestStackSlot, vmThreadLocalsEnd(vmThreadLocals));
 
         boolean lockDisabledSafepoints = false;
@@ -125,7 +124,7 @@ public final class StackReferenceMapPreparer {
             Debug.printVmThread(vmThread, false);
             Debug.println(":");
             Debug.print("  Highest slot: ");
-            Debug.println(highestSlot);
+            Debug.println(highestStackSlot);
             Debug.print("  Lowest active slot: ");
             Debug.println(stackPointer);
             Debug.print("  Lowest slot: ");

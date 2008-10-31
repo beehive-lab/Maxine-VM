@@ -31,7 +31,7 @@ import com.sun.max.vm.thread.*;
  *
  * @author Simon Wilkinson
  */
-class StandardJavaMonitor extends AbstractJavaMonitor {
+public class StandardJavaMonitor extends AbstractJavaMonitor {
 
     protected final Mutex _mutex;
     private VmThread _waitingThreads;

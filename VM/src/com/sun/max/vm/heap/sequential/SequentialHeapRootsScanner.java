@@ -24,7 +24,6 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.thread.*;
 
 /**
