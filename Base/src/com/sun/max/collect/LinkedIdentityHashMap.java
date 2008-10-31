@@ -96,4 +96,9 @@ public class LinkedIdentityHashMap<Key_Type, Value_Type> extends IdentityHashMap
     public LinkedIdentityHashMap<Key_Type, Value_Type> clone() {
         return StaticLoophole.cast(super.clone());
     }
+
+    @Override
+    public Collection<Key_Type> toCollection() {
+        return keySet();
+    }
 }

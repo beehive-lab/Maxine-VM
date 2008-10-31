@@ -67,6 +67,8 @@ public interface Sequence<Element_Type> extends IterableWithLength<Element_Type>
      */
     Sequence<Element_Type> clone();
 
+    Collection<Element_Type> toCollection();
+
     public final class Static {
 
         private Static() {
