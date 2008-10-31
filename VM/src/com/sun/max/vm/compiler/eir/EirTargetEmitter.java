@@ -26,8 +26,10 @@ import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -261,14 +263,20 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     /**
      * Tests whether all call labels are still pointing at CALL instructions.
      */
-    private boolean areLabelsValid(byte[] code) throws AssemblyException {
+    private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
         for (Label label : _directCallLabels) {
             if (!_assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
+                if (MaxineVM.isPrototyping()) {
+                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(_inlineDataRecorder));
+                }
                 return false;
             }
         }
         for (Label label : _safepointLabels) {
             if (!_assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
+                if (MaxineVM.isPrototyping()) {
+                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(_inlineDataRecorder));
+                }
                 return false;
             }
         }
@@ -283,7 +291,7 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     public byte[] toByteArray() throws AssemblyException {
         final byte[] result = _assembler.toByteArray(_inlineDataRecorder);
-        assert areLabelsValid(result);
+        assert areLabelsValid(result, Address.fromLong(_assembler.baseAddress()));
         return result;
     }
 

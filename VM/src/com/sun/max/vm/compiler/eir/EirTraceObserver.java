@@ -131,9 +131,13 @@ public class EirTraceObserver extends IrTraceObserver {
                         return o1.serial() - o2.serial();
                     }
                 };
-                final Set<EirVariable> sortedSet = new TreeSet<EirVariable>(serialNumberComparator);
-                sortedSet.addAll(Iterables.toCollection(variable.interferingVariables()));
-                writer.println(variable + " interferes with: " + sortedSet);
+                if (variable.interferingVariables() == null) {
+                    writer.println(variable + " interferes with:");
+                } else {
+                    final Set<EirVariable> sortedSet = new TreeSet<EirVariable>(serialNumberComparator);
+                    sortedSet.addAll(Iterables.toCollection(variable.interferingVariables()));
+                    writer.println(variable + " interferes with: " + sortedSet);
+                }
             }
             writer.println();
         }

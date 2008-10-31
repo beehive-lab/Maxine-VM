@@ -226,6 +226,11 @@ public enum VmThreadLocal {
         ProgramError.check(TAG.ordinal() == values().length - 1);
         ProgramError.check(THREAD_LOCAL_STORAGE_SIZE.aligned().equals(THREAD_LOCAL_STORAGE_SIZE), "THREAD_LOCAL_STORAGE_SIZE is not word-aligned");
 
+        // The C code in trap.c relies on the following relationships:
+        ProgramError.check(TRAP_NUMBER.ordinal() + 1 == TRAP_INSTRUCTION_POINTER.ordinal());
+        ProgramError.check(TRAP_NUMBER.ordinal() + 2 == TRAP_FAULT_ADDRESS.ordinal());
+        ProgramError.check(TRAP_NUMBER.ordinal() + 3 == TRAP_TOP_OF_STACK.ordinal());
+
         final String[] names = new String[THREAD_LOCAL_STORAGE_SIZE.toInt() / Word.size()];
         for (VmThreadLocal vmThreadLocal : VALUES) {
             names[vmThreadLocal.index()] = vmThreadLocal.name();
@@ -490,10 +495,10 @@ public enum VmThreadLocal {
      * Prepares a reference map for the entire stack of a VM thread starting from a trap.
      *
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
-     * @param registerState a pointer to the register state for the trap
+     * @param trapState a pointer to the trap state
      */
-    public static void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer registerState) {
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(vmThreadLocals, registerState);
+    public static void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
+        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
     }
 
     /**

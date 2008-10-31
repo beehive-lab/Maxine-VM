@@ -36,6 +36,22 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
+ * The platform specific details of the mechanism by which a thread can be suspended via
+ * polling at prudently chosen execution points. The polling has the effect of causing
+ * a trap.
+ *
+ * The <i>trap state</i> of the thread is recorded at such a trap and is made available
+ * via these methods:
+ * <ul>
+ * <li>{@link #getInstructionPointer(Pointer)}</li>
+ * <li>{@link #getStackPointer(Pointer, TargetMethod)}</li>
+ * <li>{@link #getFramePointer(Pointer, TargetMethod)}</li>
+ * <li>{@link #getSafepointLatch(Pointer)}</li>
+ * <li>{@link #getRegisterState(Pointer)}</li>
+ * <li>{@link #getTrapNumber(Pointer)}</li>
+ * <li>{@link #setSafepointLatch(Pointer, Pointer)}</li>
+ * </ul>
+ *
  * @author Bernd Mathiske
  */
 public abstract class Safepoint {
@@ -93,19 +109,6 @@ public abstract class Safepoint {
     protected Safepoint(VMConfiguration vmConfiguration) {
         _vmConfiguration = vmConfiguration;
     }
-
-    /**
-     * Returns the number of integer registers that needs to be saved in {@linkplain VmThreadLocal VM thread locals} by
-     * safepoint traps. This may not match the total number of integer registers of the ISA, depending on operating
-     * system ABI.
-     *
-     * @return the number of integer registers that needs to be saved in VM thread locals by safepoint traps
-     */
-    public abstract int numberOfIntegerRegisters();
-
-    public abstract int numberOfFloatingPointRegisters();
-
-    public abstract int latchRegisterIndex();
 
     @INLINE
     public static Pointer getLatchRegister() {
@@ -203,7 +206,7 @@ public abstract class Safepoint {
     }
 
     /**
-     * Run a given procedure on the thread corresponding to the specified <code>VmThread</code> instance,
+     * Run a given procedure on the thread corresponding to the specified {@code VmThread} instance,
      * when that thread is at a safepoint and safepoints are disabled.
      * This method allows the VM to stop a thread at a safepoint and then run the specified procedure (e.g. garbage collection
      * or biased monitor revocation). Note that this method returns when the procedure is successfully
@@ -231,7 +234,8 @@ public abstract class Safepoint {
 
     /**
      * Cancel a procedure that may be outstanding for a thread. If the thread has not yet executed the procedure,
-     * then it will be cancelled (i.e. <code>SAFEPOINT_PROCEDURE</code> will be set to <code>null</code>).
+     * then it will be cancelled (i.e. {@link VmThreadLocal#SAFEPOINT_PROCEDURE} will be set to {@code null}).
+     *
      * @param vmThread the VMThread for which to cancel the procedure
      * @param procedure the procedure to cancel
      */
@@ -252,12 +256,20 @@ public abstract class Safepoint {
      * @author Ben L. Titzer
      */
     public interface Procedure {
-        void run(Pointer registerState);
+        void run(Pointer trapState);
     }
 
-    public abstract Pointer getInstructionPointer(Pointer registerState);
-    public abstract Pointer getStackPointer(Pointer registerState, TargetMethod targetMethod);
-    public abstract Pointer getFramePointer(Pointer registerState, TargetMethod targetMethod);
-    public abstract Pointer getSafepointLatch(Pointer registerState);
-    public abstract void setSafepointLatch(Pointer registerState, Pointer value);
+    /**
+     * Reads the value of the instruction pointer saved in a given trap state area.
+     *
+     * @param trapState the block of memory holding the trap state
+     * @return the value of the instruction pointer saved in {@code trapState}
+     */
+    public abstract Pointer getInstructionPointer(Pointer trapState);
+    public abstract Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod);
+    public abstract Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod);
+    public abstract Pointer getSafepointLatch(Pointer trapState);
+    public abstract void setSafepointLatch(Pointer trapState, Pointer value);
+    public abstract int getTrapNumber(Pointer trapState);
+    public abstract Pointer getRegisterState(Pointer trapState);
 }

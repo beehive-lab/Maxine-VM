@@ -105,7 +105,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     private static Safepoint.Procedure _safePointProcedure = new Safepoint.Procedure() {
         @Override
-        public void run(Pointer registerState) {
+        public void run(Pointer trapState) {
             // Suspended bias-owner threads wait here while a revoker thread performs the revocation.
             synchronized (VmThreadMap.ACTIVE) {
             }

@@ -244,15 +244,25 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
             case REFERENCE_MAP_PREPARING: {
                 // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
+                if (!stackFrameWalker.trapState().isZero()) {
+                    final Pointer trapState = stackFrameWalker.trapState();
+                    final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                    if (safepoint.getTrapNumber(trapState) == Trap.TrapNumber.STACK_FAULT) {
+                        // There's no need to deal with the any references in a frame that triggered a stack overflow.
+                        // The explicit stack banging code that causes a stack overflow trap is always in the
+                        // prologue which is guaranteed not to be in the scope of a local exception handler.
+                        // Thus, no GC roots need to be scanned in this frame.
+                        break;
+                    }
+                    preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), instructionPointer);
+                }
+
+                if (targetMethod.classMethodActor().isTrapStub()) {
+                    final Pointer trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
+                    stackFrameWalker.setTrapState(trapState);
+                }
                 if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, stackPointer)) {
                     return false;
-                }
-                if (targetMethod.classMethodActor().isTrapStub()) {
-                    // if this is a trap stub, then it contains a register context.
-                    // find it and pass it to the preparer so that it can be covered with the appropriate reference map
-                    final Pointer registerState = AMD64Safepoint.getRegisterStateFromRipPointer(ripPointer);
-                    final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
-                    preparer.prepareRegisterReferenceMap(registerState, callerInstructionPointer);
                 }
                 break;
             }
@@ -286,8 +296,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         final Pointer callerFramePointer;
         if (targetMethod.classMethodActor().isTrapStub()) {
             // framePointer is whatever was in the frame pointer register at the time of the trap
-            final Pointer registerState = AMD64Safepoint.getRegisterStateFromRipPointer(ripPointer);
-            callerFramePointer = stackFrameWalker.readWord(registerState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+            final Pointer trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
+            callerFramePointer = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
         } else {
             // framePointer == stackPointer for this scheme.
             callerFramePointer = callerStackPointer;

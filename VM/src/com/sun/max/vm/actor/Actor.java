@@ -100,7 +100,6 @@ public abstract class Actor {
     public static final int INLINE_AFTER_SNIPPETS_ARE_COMPILED =
                                                    0x00010000;
     public static final int NO_SAFEPOINTS =        0x00004000;
-    public static final int TRAP_STUB =          0x00008000;
 
     /**
      * Mask of the flags defined for classes in Table 4.1 of the JVM specification.
@@ -335,11 +334,6 @@ public abstract class Actor {
     @INLINE
     public static boolean isJniFunction(int flags) {
         return (flags & JNI_FUNCTION) != 0;
-    }
-
-    @INLINE
-    public static boolean isTrapStub(int flags) {
-        return (flags & TRAP_STUB) != 0;
     }
 
     @INLINE

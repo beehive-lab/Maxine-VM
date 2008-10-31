@@ -89,6 +89,7 @@ public abstract class StackFrameWalker {
     private Pointer _framePointer;
     private Pointer _instructionPointer;
     private StackFrame _calleeStackFrame;
+    private Pointer _trapState;
 
     private static final CriticalMethod MaxineVM_run = new CriticalMethod(MaxineVM.class, "run");
     private static final CriticalMethod VmThread_run = new CriticalMethod(VmThread.class, "run");
@@ -138,6 +139,9 @@ public abstract class StackFrameWalker {
                 if (!compilerScheme.walkFrame(this, isTopFrame, targetMethod, purpose, context)) {
                     return;
                 }
+                if (!targetMethod.classMethodActor().isTrapStub()) {
+                    _trapState = Pointer.zero();
+                }
             } else {
                 final RuntimeStub stub = runtimeStubFor(_instructionPointer);
                 if (stub != null && (!inNative || purpose == INSPECTING)) {
@@ -168,6 +172,13 @@ public abstract class StackFrameWalker {
 
                             final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
                             if (lastJavaCalleeMethodActor.isCFunction()) {
+                                if (lastJavaCalleeMethodActor.isTrapStub()) {
+                                    // This can only occur in the inspector and implies that execution is in the platform specific
+                                    // prologue of Trap.trapStub() before the point where the trap frame has been completed. In
+                                    // particular, the return instruction pointer slot has not been updated with the instruction
+                                    // pointer at which the fault occurred.
+                                    return;
+                                }
                                 if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
                                     return;
                                 }
@@ -177,7 +188,7 @@ public abstract class StackFrameWalker {
                                 Debug.print(lastJavaCalleeMethodActor.descriptor().string());
                                 Debug.print(" in ");
                                 Debug.println(lastJavaCalleeMethodActor.holder().name().string());
-                                FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap handler or a Java trap stub");
+                                FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub");
                             }
                         }
                     }
@@ -406,6 +417,26 @@ public abstract class StackFrameWalker {
     @INLINE
     public final Pointer instructionPointer() {
         return _instructionPointer;
+    }
+
+    /**
+     * Records the trap state when walking a trap frame. This information can be subsequently {@linkplain #trapState()
+     * accessed} when walking the frame in which the trap occurred.
+     *
+     * @param trapState the state pertinent to a trap
+     */
+    public void setTrapState(Pointer trapState) {
+        _trapState = trapState;
+    }
+
+    /**
+     * Gets the state stored in the trap frame just below the frame currently being walked (i.e. the frame in which the
+     * trap occurred).
+     *
+     * @return {@link Pointer#zero()} if the current frame is not a frame in which a trap occurred
+     */
+    public Pointer trapState() {
+        return _trapState;
     }
 
     /**

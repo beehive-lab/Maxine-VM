@@ -300,13 +300,14 @@ public final class StackReferenceMapPreparer {
      * object references (other than the ones subject to root scanning).
      *
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
+     * @param trapState the trap state
      */
-    public void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer registerState) {
+    public void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
-        final Pointer instructionPointer = safepoint.getInstructionPointer(registerState);
+        final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
-        final Pointer stackPointer = safepoint.getStackPointer(registerState, targetMethod);
-        final Pointer framePointer = safepoint.getFramePointer(registerState, targetMethod);
+        final Pointer stackPointer = safepoint.getStackPointer(trapState, targetMethod);
+        final Pointer framePointer = safepoint.getFramePointer(trapState, targetMethod);
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
     }
 
@@ -314,7 +315,8 @@ public final class StackReferenceMapPreparer {
      * Prepares the reference map for a portion of memory that contains saved register state corresponding
      * to a safepoint triggered at a particular instruction. This method fetches the reference map information
      * for the specified method and then copies it over the reference map for this portion of memory.
-     * @param registerState a pointer to the register state
+     *
+     * @param trapState a pointer to the saved register state
      * @param instructionPointer the instruction pointer at the safepoint trap
      */
     public void prepareRegisterReferenceMap(Pointer registerState, Pointer instructionPointer) {

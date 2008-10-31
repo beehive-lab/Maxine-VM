@@ -41,12 +41,12 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
 
     private static Safepoint.Procedure _suspendProcedure = new Safepoint.Procedure() {
         @Override
-        public void run(Pointer registerState) {
+        public void run(Pointer trapState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
 
             if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.JAVA) {
-                VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, registerState);
+                VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
             } else {
                 // GC may already be ongoing
             }

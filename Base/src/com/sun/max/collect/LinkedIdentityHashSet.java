@@ -128,4 +128,9 @@ public class LinkedIdentityHashSet<Element_Type> extends IdentityHashSet<Element
     public LinkedIdentityHashSet<Element_Type> clone() {
         return StaticLoophole.cast(super.clone());
     }
+
+    @Override
+    public Collection<Element_Type> toCollection() {
+        return _order;
+    }
 }
