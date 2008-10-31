@@ -120,6 +120,22 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
                 };
                 return Iterables.toIterableWithLength(Collections.singleton(disassembledData));
             }
+            case ASCII: {
+                final String mnemonic = ".ascii";
+                final ImmediateArgument address = startAddress().plus(startPosition);
+                final DisassembledData disassembledData = new DisassembledData(address, startPosition, mnemonic, inlineData.data(), null) {
+                    @Override
+                    public String operandsToString(AddressMapper addressMapper) {
+                        final byte[] asciiBytes = inlineData.data();
+                        return '"' + new String(asciiBytes) + '"';
+                    }
+                    @Override
+                    public String toString() {
+                        return toString(addressMapper());
+                    }
+                };
+                return Iterables.toIterableWithLength(Collections.singleton(disassembledData));
+            }
             case JUMP_TABLE32: {
                 final JumpTable32 jumpTable32 = (JumpTable32) descriptor;
                 final AppendableSequence<DisassembledData> result = new ArrayListSequence<DisassembledData>(jumpTable32.numberOfEntries());

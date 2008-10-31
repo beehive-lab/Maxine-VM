@@ -252,10 +252,24 @@ public abstract class Assembler {
 
     private int _potentialExpansionSize;
 
+    /**
+     * Adds the description of an instruction that is fixed in size.
+     *
+     * @param fixedSizeAssembledObject
+     */
     void addFixedSizeAssembledObject(AssembledObject fixedSizeAssembledObject) {
         _assembledObjects.append(fixedSizeAssembledObject);
+        if (fixedSizeAssembledObject instanceof MutableAssembledObject) {
+            _mutableAssembledObjects.append((MutableAssembledObject) fixedSizeAssembledObject);
+        }
     }
 
+    /**
+     * Adds the description of an instruction that can change in size, depending on where it is located in the
+     * instruction and/or where another object it addresses is located in the instruction stream.
+     *
+     * @param spanDependentInstruction
+     */
     void addSpanDependentInstruction(InstructionWithOffset spanDependentInstruction) {
         _assembledObjects.append(spanDependentInstruction);
         _mutableAssembledObjects.append(spanDependentInstruction);
@@ -301,53 +315,50 @@ public abstract class Assembler {
             return false;
         }
         final int oldSize = instruction.size();
+        final int oldEndPosition = instruction.endPosition();
         _stream.reset();
         instruction.assemble();
         final int newSize = _stream.toByteArray().length;
         instruction.setSize(newSize);
         final int delta = newSize - oldSize;
-        adjustMutableAssembledObjects(delta, instruction.startPosition());
+        adjustMutableAssembledObjects(delta, oldEndPosition, null);
         return true;
     }
 
     private boolean updateAlignmentPadding(AlignmentPadding alignmentPadding) throws AssemblyException {
         final int oldSize = alignmentPadding.size();
+        final int oldEndPosition = alignmentPadding.endPosition();
         alignmentPadding.updatePadding();
         final int newSize = alignmentPadding.size();
         if (oldSize != newSize) {
+            // Only if the padding expanded will subsequent objects in the stream need to be adjusted
             final int delta = newSize - oldSize;
-            // It is possible that the old size was zero because of a previous adjustment.
-            // This can cause a problem because there could be a label on the next instruction
-            // (which would then happen to be at the same offset) that needs to be adjusted, but
-            // ordinarily adjustVariableLengthInstructions only adjusts labels beyond startPosition. So we indicate
-            // this special case by the zeroLengthAdjust argument being -1. The classic case where this happens
-            // is the alignment before a table switch jump target sequence and the label at the start of that sequence..
-            adjustMutableAssembledObjects(delta, alignmentPadding.startPosition(), oldSize == 0 ? -1 : 0);
+            adjustMutableAssembledObjects(delta, oldEndPosition, alignmentPadding);
             return true;
         }
         return false;
     }
 
-    private void adjustMutableAssembledObjects(int delta, int startPosition) throws AssemblyException {
-        adjustMutableAssembledObjects(delta, startPosition, 0);
-    }
-
-    private void adjustMutableAssembledObjects(int delta, int startPosition, int zeroLengthAdjust) throws AssemblyException {
+    /**
+     * Adjusts the position of all the mutable objects that are currently at or after a given position.
+     *
+     * @param delta the amount by which the position of each mutable object is to be adjusted
+     * @param startPosition only mutable objects whose current {@linkplain AssembledObject#startPosition() start
+     *            position} is equal to or greater than this value are adjusted
+     * @param adjustedPadding the padding object whose adjustment caused the need for this call. If this call was made
+     *            for some other reason than having adjusted a padding object's size, then this value will be null. In this
+     *            value is not null, then its position will not be adjusted by this call.
+     */
+    private void adjustMutableAssembledObjects(int delta, int startPosition, AlignmentPadding adjustedPadding) throws AssemblyException {
         for (Label label : _boundLabels) {
-            // Normally we only adjust labels that are beyond startPosition. However,
-            // if zeroLengthAdjust == -1 we will adjust a label at startPosition;  this
-            // copes with an AlignmentPaddingInstruction that changes from zero length.
-            if (label.position() > startPosition + zeroLengthAdjust) {
+            if (label.position() >= startPosition) {
                 label.adjust(delta);
             }
         }
 
-        for (AssembledObject assembledObject : _assembledObjects) {
-            if (assembledObject instanceof MutableAssembledObject) {
-                final MutableAssembledObject mutableAssembledObject = (MutableAssembledObject) assembledObject;
-                if (mutableAssembledObject.startPosition() > startPosition) {
-                    mutableAssembledObject.adjust(delta);
-                }
+        for (MutableAssembledObject mutableAssembledObject : _mutableAssembledObjects) {
+            if (mutableAssembledObject != adjustedPadding && mutableAssembledObject.startPosition() >= startPosition) {
+                mutableAssembledObject.adjust(delta);
             }
         }
     }
