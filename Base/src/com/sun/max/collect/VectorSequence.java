@@ -24,7 +24,7 @@ import java.util.*;
 
 /**
  * An implementation of a {@link VariableSequence} based on {@link Vector} which is synchronized .
- * 
+ *
  * @author Bernd Mathiske
  */
 public class VectorSequence<Element_Type> extends Vector<Element_Type> implements VariableSequence<Element_Type> {
@@ -112,6 +112,11 @@ public class VectorSequence<Element_Type> extends Vector<Element_Type> implement
             to.append(mapFunction.map(element));
         }
         return to;
+    }
+
+    @Override
+    public Collection<Element_Type> toCollection() {
+        return this;
     }
 
     @Override

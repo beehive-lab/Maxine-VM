@@ -24,7 +24,7 @@ import java.util.*;
 
 /**
  * Unsynchronized sequence made by single-linked cells.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class LinkSequence<Element_Type> implements PrependableSequence<Element_Type>, AppendableSequence<Element_Type> {
@@ -154,6 +154,11 @@ public class LinkSequence<Element_Type> implements PrependableSequence<Element_T
             to.append(mapFunction.map(element));
         }
         return to;
+    }
+
+    @Override
+    public Collection<Element_Type> toCollection() {
+        return Iterables.toCollection(this);
     }
 
     @Override

@@ -127,6 +127,11 @@ public class Enumerator<Enumerable_Type extends Enum<Enumerable_Type> & Enumerab
         }
     }
 
+    @Override
+    public Collection<Enumerable_Type> toCollection() {
+        return java.util.Arrays.asList(_ordinalMap);
+    }
+
     /**
      * Gets the enumerable constant denoted by a given ordinal. Note that this differs from {@link #fromValue(int)} in
      * that the latter retrieves an enumerable constant matching a given {@linkplain Enumerable#value() value}. An
