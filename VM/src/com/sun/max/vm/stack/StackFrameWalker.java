@@ -168,6 +168,9 @@ public abstract class StackFrameWalker {
 
                             final ClassMethodActor lastJavaCalleeMethodActor = lastJavaCallee.classMethodActor();
                             if (lastJavaCalleeMethodActor.isCFunction()) {
+                                if (lastJavaCalleeMethodActor.isTrapStub()) {
+                                    return;
+                                }
                                 if (!advanceCFunctionFrame(purpose, lastJavaCallee, lastJavaCalleeStackPointer, lastJavaCalleeFramePointer, context)) {
                                     return;
                                 }
@@ -177,7 +180,7 @@ public abstract class StackFrameWalker {
                                 Debug.print(lastJavaCalleeMethodActor.descriptor().string());
                                 Debug.print(" in ");
                                 Debug.println(lastJavaCalleeMethodActor.holder().name().string());
-                                FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap handler or a Java trap stub");
+                                FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub");
                             }
                         }
                     }

@@ -39,25 +39,10 @@ public final class IA32Safepoint extends Safepoint {
         super(vmConfiguration);
     }
 
-    @Override
-    public int numberOfIntegerRegisters() {
-        return 4;
-    }
-
-    @Override
-    public int numberOfFloatingPointRegisters() {
-        return 16;
-    }
-
     @INLINE(override = true)
     @Override
     public IA32GeneralRegister32 latchRegister() {
         return null;
-    }
-
-    @Override
-    public int latchRegisterIndex() {
-        return latchRegister().value();
     }
 
     @Override
@@ -72,24 +57,31 @@ public final class IA32Safepoint extends Safepoint {
     }
 
     @Override
-    public Pointer getInstructionPointer(Pointer registerState) {
+    public Pointer getInstructionPointer(Pointer trapState) {
         throw Problem.unimplemented();
     }
     @Override
-    public Pointer getStackPointer(Pointer registerState, TargetMethod targetMethod) {
+    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
         throw Problem.unimplemented();
     }
     @Override
-    public Pointer getFramePointer(Pointer registerState, TargetMethod targetMethod) {
+    public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
         throw Problem.unimplemented();
     }
     @Override
-    public Pointer getSafepointLatch(Pointer registerState) {
+    public Pointer getSafepointLatch(Pointer trapState) {
         throw Problem.unimplemented();
     }
     @Override
-    public void setSafepointLatch(Pointer registerState, Pointer value) {
+    public void setSafepointLatch(Pointer trapState, Pointer value) {
         throw Problem.unimplemented();
     }
-
+    @Override
+    public Pointer getRegisterState(Pointer trapState) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public int getTrapNumber(Pointer trapState) {
+        throw Problem.unimplemented();
+    }
 }

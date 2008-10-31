@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
@@ -787,11 +788,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public final String traceToString() {
-        final CharArrayWriter charArrayWriter = new CharArrayWriter();
-        final IndentWriter writer = new IndentWriter(charArrayWriter);
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
         writer.println("target method: " + this);
         traceBundle(writer);
-        return charArrayWriter.toString();
+        if (MaxineVM.isPrototyping()) {
+            Disassemble.disassemble(byteArrayOutputStream, this);
+        }
+        return byteArrayOutputStream.toString();
     }
 
     public Class<? extends IrTraceObserver> irTraceObserverType() {
@@ -1083,6 +1087,4 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer);
     }
-
-
 }

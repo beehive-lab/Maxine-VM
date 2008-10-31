@@ -41,6 +41,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reflection.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -101,7 +102,7 @@ public abstract class MethodActor extends MemberActor {
 
     @INLINE
     public final boolean isTrapStub() {
-        return isTrapStub(flags());
+        return Trap.isTrapStub(this);
     }
 
     @INLINE

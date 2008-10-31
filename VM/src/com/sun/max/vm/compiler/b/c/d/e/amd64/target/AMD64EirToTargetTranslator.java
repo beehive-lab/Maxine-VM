@@ -49,10 +49,14 @@ public final class AMD64EirToTargetTranslator extends EirToTargetTranslator {
 
     @Override
     protected EirTargetEmitter createEirTargetEmitter(EirMethod eirMethod) {
-        final boolean requiresAdapter = (!(eirMethod.isTemplate() || eirMethod.abi().targetABI().callEntryPoint().equals(C_ENTRY_POINT))) && compilerScheme().vmConfiguration().jitScheme() != compilerScheme();
         AMD64AdapterFrameGenerator adapterFrameGenerator = null;
-        if (requiresAdapter) {
-            adapterFrameGenerator = AMD64AdapterFrameGenerator.jitToOptimizingCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi());
+        if (eirMethod.isTemplate() ||
+            eirMethod.abi().targetABI().callEntryPoint().equals(C_ENTRY_POINT)) {
+            // No adapter frames required for these methods
+        } else {
+            if (compilerScheme().vmConfiguration().jitScheme() != compilerScheme()) {
+                adapterFrameGenerator = AMD64AdapterFrameGenerator.jitToOptimizingCompilerAdapterFrameGenerator(eirMethod.classMethodActor(), eirMethod.abi());
+            }
         }
         return new AMD64EirTargetEmitter((AMD64EirABI) eirMethod.abi(), eirMethod.frameSize(), compilerScheme().vmConfiguration().safepoint(), adapterFrameGenerator);
     }

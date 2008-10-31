@@ -474,7 +474,9 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
                 targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(_methodState.classMethodActor(), compilationDirective));
                 if (VerboseVMOption.verboseCompilation()) {
-                    Debug.print(compiler.name() + ": Compiled  " + _methodState.classMethodActor().qualifiedName());
+                    Debug.print(compiler.name() + ": Compiled  " + _methodState.classMethodActor().qualifiedName() + " @ ");
+                    Debug.print(targetMethod.codeStart());
+                    Debug.print("{length=" + targetMethod.codeLength() + "}");
                     if (_compilationTimer != null) {
                         final long time = _compilationTimer.stop();
                         Debug.print(" (" + (time / 1000000) + " msecs)");

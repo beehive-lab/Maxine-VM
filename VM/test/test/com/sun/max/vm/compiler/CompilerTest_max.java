@@ -22,7 +22,7 @@ package test.com.sun.max.vm.compiler;
 
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Translates almost all of the packages in the project to test the translator.
@@ -44,7 +44,7 @@ public abstract class CompilerTest_max<Method_Type extends IrMethod> extends Com
     }
 
     public void test_1() {
-        final Method_Type method = compileMethod(JDK_java_lang_System.class, "arrayCopyForward");
+        final Method_Type method = compileMethod(Trap.class, "trapStub");
         if (method instanceof TargetMethod) {
             final TargetMethod targetMethod = (TargetMethod) method;
             traceBundleAndDisassemble(targetMethod);

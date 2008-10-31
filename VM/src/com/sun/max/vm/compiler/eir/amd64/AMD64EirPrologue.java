@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.eir.amd64;
 
 import java.util.*;
 
+import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
@@ -53,13 +54,12 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         if (!eirMethod().isTemplate()) {
             final AMD64Assembler asm = emitter.assembler();
             final AMD64GeneralRegister64 framePointer = emitter.framePointer();
-            final int originalFrameSize = eirMethod().frameSize();
             if (eirMethod().classMethodActor().isTrapStub()) {
-                //emit a special prologue that saves all the registers
-                emitSignalHandlerStubPrologue(eirMethod(), asm, framePointer, originalFrameSize);
+                // emit a special prologue that saves all the registers
+                emitTrapStubPrologue(eirMethod(), asm, emitter.inlineDataRecorder(), framePointer, eirMethod().frameSize());
             } else {
                 // emit a regular prologue
-                final int frameSize = originalFrameSize;
+                final int frameSize = eirMethod().frameSize();
                 if (frameSize != 0) {
                     asm.subq(framePointer, frameSize);
                 }
@@ -71,12 +71,12 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         }
     }
 
-    public static void emitSignalHandlerStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
-        final AMD64GeneralRegister64 latchRegister = AMD64Safepoint._LATCH_REGISTER;
+    public static void emitTrapStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, InlineDataRecorder inlineDataRecorder, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
+        final AMD64GeneralRegister64 latchRegister = AMD64Safepoint.LATCH_REGISTER;
         final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
         // expand the frame size for this method to allow for the saved register state
-        final int frameSize = originalFrameSize + AMD64Safepoint.REGISTER_SAVE_SIZE_WITHOUT_RIP;
-        final int endOfFrame = originalFrameSize + AMD64Safepoint.REGISTER_SAVE_SIZE_WITH_RIP;
+        final int frameSize = originalFrameSize + AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP;
+        final int endOfFrame = originalFrameSize + AMD64Safepoint.TRAP_STATE_SIZE_WITH_RIP;
         eirMethod.setFrameSize(frameSize);
 
         // the very first instruction must save the flags.
@@ -111,12 +111,16 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         asm.mov(scratchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), latchRegister.indirect());
         asm.mov(frameSize, framePointer.indirect(), scratchRegister);
 
+        // save the trap number
+        asm.mov(scratchRegister, VmThreadLocal.TRAP_NUMBER.offset(), latchRegister.indirect());
+        asm.mov(originalFrameSize + AMD64Safepoint.TRAP_NUMBER_OFFSET, framePointer.indirect(), scratchRegister);
+
         // now load the trap parameter information into registers from the vm thread locals
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
         final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
         // load the trap number into the first parameter register
         asm.mov((AMD64GeneralRegister64) parameterRegisters.get(0), VmThreadLocal.TRAP_NUMBER.offset(), latchRegister.indirect());
-        // load the registers pointer into the second parameter register
+        // load the register state pointer into the second parameter register
         asm.lea((AMD64GeneralRegister64) parameterRegisters.get(1), originalFrameSize, framePointer.indirect());
         // load the fault address into the third parameter register
         asm.mov((AMD64GeneralRegister64) parameterRegisters.get(2), VmThreadLocal.TRAP_FAULT_ADDRESS.offset(), latchRegister.indirect());
