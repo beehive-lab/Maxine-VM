@@ -346,7 +346,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
             header.add(new WordValueLabel(_inspection, ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer()));
             SpringUtilities.makeCompactGrid(header, 2);
 
-            add(new JScrollPane(header), BorderLayout.NORTH);
+            add(header, BorderLayout.NORTH);
             add(new JPanel(), BorderLayout.CENTER);
         }
 
