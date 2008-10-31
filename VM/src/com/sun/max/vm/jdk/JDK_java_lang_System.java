@@ -593,8 +593,26 @@ public final class JDK_java_lang_System {
     }
 
     // TODO: report the correct path separator from the target here
+    private static final String CLASSPATH_HELP_MESSAGE = "A list of paths to search for Java classes, separated by the : character.";
+
     @CONSTANT_WHEN_NOT_ZERO
-    private static VMStringOption _classpathOption = new VMStringOption("-classpath", true, null, "A list of paths to search for Java classes, separated by the : character.", MaxineVM.Phase.PRISTINE);
+    private static VMStringOption _classpathOption = new VMStringOption("-classpath", true, null, CLASSPATH_HELP_MESSAGE, MaxineVM.Phase.PRISTINE);
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static VMStringOption _cpOption = new VMStringOption("-cp", true, null, CLASSPATH_HELP_MESSAGE, MaxineVM.Phase.PRISTINE) {
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            return _classpathOption.parseValue(optionValue);
+        }
+        @Override
+        public boolean isPresent() {
+            return _classpathOption.isPresent();
+        }
+        @Override
+        public String getValue() {
+            return _classpathOption.getValue();
+        }
+    };
 
     @CONSTANT_WHEN_NOT_ZERO
     private static BootClasspathVMOption _bootClasspathOption = new BootClasspathVMOption(":", "set search path for bootstrap classes and resources.");
