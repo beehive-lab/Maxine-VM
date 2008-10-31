@@ -145,7 +145,6 @@ public final class Trap {
                 case STACK_FAULT:
                     // stack overflow
                     final StackOverflowError error = new StackOverflowError();
-
                     Throw.raise(error, stackPointer, framePointer, instructionPointer);
                     break; // unreachable
                 case ILLEGAL_INSTRUCTION:
@@ -191,7 +190,7 @@ public final class Trap {
             Debug.print(instructionPointer);
             Debug.print(", fault address: ");
             Debug.print(faultAddress);
-            Throw.stackDump("MemoryFault", instructionPointer, safepoint.getStackPointer(trapState, null), safepoint.getFramePointer(trapState, null));
+            Throw.stackDump("", instructionPointer, safepoint.getStackPointer(trapState, null), safepoint.getFramePointer(trapState, null));
         }
 
         // check to see if this fault originated in a target method
