@@ -87,6 +87,9 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
      * @return true if the size of this instruction's label was changed
      */
     boolean updateLabelSize() throws AssemblyException {
+        if (_validOffsetSizesMask == 0) {
+            return false;
+        }
         int offsetSize = WordWidth.signedEffective(offset()).numberOfBytes();
         if (offsetSize > _offsetSize) {
             final int maxLabelSize = Integer.highestOneBit(_validOffsetSizesMask);
