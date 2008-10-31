@@ -93,13 +93,33 @@ public final class Heap {
         return _traceGC;
     }
 
+    /**
+     * Determines if garbage collection root scanning should be traced at a level useful for debugging.
+     */
+    @INLINE
+    public static boolean traceGCRootScanning() {
+        return _traceGCRootScanning;
+    }
+
     private static boolean _traceGC;
+    private static boolean _traceGCRootScanning;
 
     private static final VMOption _traceGCOption = new VMOption("-XX:TraceGC", "Trace garbage collection activity for debugging purposes.", MaxineVM.Phase.STARTING) {
         @Override
-        public boolean parse(Pointer optionStart) {
-            _traceGC = true;
-            return super.parse(optionStart);
+        public boolean parseValue(Pointer optionValue) {
+            if (CString.equals(optionValue, "")) {
+                _traceGC = true;
+                _traceGCRootScanning = true;
+            } else if (CString.equals(optionValue, ":RootScanning")) {
+                _traceGCRootScanning = true;
+            } else {
+                return false;
+            }
+            return true;
+        }
+        @Override
+        public void printHelp() {
+            VMOptions.printHelpForOption("-XX:TraceGC[:RootScanning]", "", _help);
         }
     };
 
