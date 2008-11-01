@@ -244,8 +244,9 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
             case REFERENCE_MAP_PREPARING: {
                 // frame pointer == stack pointer
                 final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
-                if (!stackFrameWalker.trapState().isZero()) {
-                    final Pointer trapState = stackFrameWalker.trapState();
+                Pointer trapState = stackFrameWalker.trapState();
+                if (!trapState.isZero()) {
+                    FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
                     final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
                     if (safepoint.getTrapNumber(trapState) == Trap.TrapNumber.STACK_FAULT) {
                         // There's no need to deal with the any references in a frame that triggered a stack overflow.
@@ -254,12 +255,18 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         // Thus, no GC roots need to be scanned in this frame.
                         break;
                     }
-                    preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), instructionPointer);
-                }
-
-                if (targetMethod.classMethodActor().isTrapStub()) {
-                    final Pointer trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
-                    stackFrameWalker.setTrapState(trapState);
+                } else {
+                    if (targetMethod.classMethodActor().isTrapStub()) {
+                        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                        trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
+                        stackFrameWalker.setTrapState(trapState);
+                        if (safepoint.getTrapNumber(trapState) != Trap.TrapNumber.STACK_FAULT) {
+                            // Only scan with references in registers for a caller that did not trap due to stack overflow - see comment above.
+                            // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
+                            final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
+                            preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), callerInstructionPointer);
+                        }
+                    }
                 }
                 if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, stackPointer)) {
                     return false;
