@@ -91,6 +91,30 @@ function run_jtest() {
     eval $cmd
 }
 
+function describe_hw() {
+    echo "run the basic 'hello world' program on the Maxine VM"
+}
+
+function run_hw() {
+    ${MAXVM} -classpath ${MAXINE_HOME}/VM/bin $@ util.HelloWorld
+}
+
+function describe_otree() {
+    echo "print the causality spanning-tree of the object graph in the VM image"
+}
+
+function run_otree() {
+    java -Xmx1g -cp ${MAXINE_CLASSPATH} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+}
+
+function describe_mtree() {
+    echo "print the causality spanning-tree of the method graph in the VM image"
+}
+
+function run_mtree() {
+    java -Xmx1g -cp ${MAXINE_CLASSPATH} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+}
+
 function showCommands() {
     if [ "x$1" != "x" ]; then
         echo $1
