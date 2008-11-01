@@ -87,6 +87,7 @@ public final class StackReferenceMapPreparer {
     private Pointer _disabledVmThreadLocals;
     private Pointer _referenceMap;
     private Pointer _lowestStackSlot;
+    private boolean _completingReferenceMap;
 
     /**
      * Prepares a reference map for the entire stack of a VM thread
@@ -95,6 +96,10 @@ public final class StackReferenceMapPreparer {
      * Later on, the GC can quickly scan the prepared stack reference map
      * without allocation and without using any object references (other than the ones subject to root scanning).
      *
+     * @param vmThreadLocals
+     * @param instructionPointer
+     * @param stackPointer
+     * @param framePointer
      * @return the index of the lowest slot in the VM thread locals storage
      */
     public void prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
@@ -147,6 +152,20 @@ public final class StackReferenceMapPreparer {
         }
     }
 
+    /**
+     * Completes the stack reference map for a thread that was suspended by a safepoint while executing Java code. The
+     * reference map covering the frames between the frame in which the safepoint trap occurred and the and the JNI stub
+     * that enters into the native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. This method
+     * completes this part of the threads stack reference map.
+     *
+     * @param vmThreadLocals the VM thread locals for the thread whose stack reference map is to be completed
+     * @param instructionPointer the execution point in the JNI stub that called into native function on which the
+     *            thread is blocked. This value was read from {@link VmThreadLocal#LAST_JAVA_CALLER_INSTRUCTION_POINTER}.
+     * @param stackPointer the stack pointer for the JNI stub frame. This value was read from
+     *            {@link VmThreadLocal#LAST_JAVA_CALLER_STACK_POINTER}.
+     * @param framePointer the frame pointer for the JNI stub frame. This value was read from
+     *            {@link VmThreadLocal#LAST_JAVA_CALLER_FRAME_POINTER}.
+     */
     public void completeStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
 
@@ -180,7 +199,9 @@ public final class StackReferenceMapPreparer {
 
         // walk the stack and prepare references for each stack frame
         final StackFrameWalker stackFrameWalker = vmThread.stackFrameWalker();
+        _completingReferenceMap = true;
         stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
+        _completingReferenceMap = false;
 
         if (Heap.traceGCRootScanning()) {
             Debug.unlock(lockDisabledSafepoints);
@@ -267,11 +288,7 @@ public final class StackReferenceMapPreparer {
     }
 
     /**
-     * Prepares a reference map for the entire stack of a VM thread including all of the VM thread locals (which include
-     * saved register values iff at a Java safepoint) while the GC has not changed anything yet.
-     *
-     * Later on, the GC can quickly scan the prepared stack reference map without allocation and without using any
-     * object references (other than the ones subject to root scanning).
+     * Prepares a reference map for the entire stack of a VM thread executing or blocked in native code.
      *
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      */
@@ -279,25 +296,17 @@ public final class StackReferenceMapPreparer {
         final Pointer instructionPointer = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
         if (instructionPointer.isZero()) {
             FatalError.unexpected("Thread is not stopped");
-/*            instructionPointer = TRAP_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            final Pointer stackPointer = TRAP_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            final Pointer framePointer = TRAP_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-            prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
-*/
         }
 
-        // the GC is calling this on behalf of a thread in native code
         final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
         final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
         prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
     }
 
     /**
-     * Prepares a reference map for the entire stack of a VM thread including all of the VM thread locals (which include
-     * saved register values iff at a Java safepoint) while the GC has not changed anything yet.
-     *
-     * Later on, the GC can quickly scan the prepared stack reference map without allocation and without using any
-     * object references (other than the ones subject to root scanning).
+     * Prepares a reference map for the stack of a VM thread that was stopped by a safepoint. This method
+     * prepares the reference map for all the frames starting with the one in which the trap occurred and
+     * ending with the frame for {@link VmThread#run}.
      *
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      * @param trapState the trap state
@@ -684,6 +693,11 @@ public final class StackReferenceMapPreparer {
                 _trampolineFramePointer = Pointer.zero();
             }
             prepareFrameReferenceMap(targetMethod, stopIndex, framePointer);
+        }
+
+        // If the stack reference map is being completed, then the stack walk stops after the first trap stub
+        if (_completingReferenceMap && targetMethod.classMethodActor().isTrapStub()) {
+            return false;
         }
         return true;
     }

@@ -44,8 +44,8 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         public void run(Pointer trapState) {
             // note that this procedure always runs with safepoints disabled
             final Pointer vmThreadLocals = Safepoint.getLatchRegister();
-
-            if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.JAVA) {
+            if (VmThreadLocal.inJava(vmThreadLocals)) {
+                VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.JAVA));
                 VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
             } else {
                 // GC may already be ongoing

@@ -1,0 +1,152 @@
+#!/bin/bash
+#
+# A launcher for Maxine executables and tools. This launch simplifies the task
+# of running the Maxine VM and utilities by setting up the necessary class paths
+# and executable paths. The only requirement is for the user to have set the
+# environment variable MAXINE_HOME to point to the Maxine code base.
+#
+# To add a new lauchable command, write two functions named 'run_<command>' and
+# 'describe_<command>'. See the existing commands for examples. Once added, the
+# command can be launched as follows:
+#
+#   max <command> <arguments>
+#
+# In addition, the command and it's description will be listed when this script
+# is run without any arguments.
+#
+# Author: Doug Simon
+
+if [ "x$MAXINE_HOME" = "x" ]; then
+    echo "Must set MAXINE_HOME to the base directory of the Maxine code base"
+    exit 1
+fi
+
+if [ "x$MAXINE_OS" = "x" ]; then
+    OS=`uname -s`
+    case $OS in
+        Darwin*) MAXINE_OS=darwin ;;
+        Linux*)  MAXINE_OS=linux ;;
+        SunOS*)  MAXINE_OS=solaris ;;
+    esac
+    if [ "x$MAXINE_OS" = "x" ]; then
+        echo "Supported operating system could not be derived from $OS. Please set MAXINE_OS explicitly."
+        exit 1
+    fi
+fi
+
+MAXINE_CLASSPATH=${MAXINE_HOME}/Base/bin
+MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/Assembler/bin
+MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/VM/bin
+MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/Tele/bin
+MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/VMDI/bin
+MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/Inspector/bin
+MAXVM=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxvm
+
+function describe_vm() {
+    echo "launch the Maxine VM"
+}
+
+function run_vm() {
+    ARGS=$@
+    if [ "x`echo $ARGS | grep '\-XX:LogFile='`" != "x" ]; then
+        MAXINE_LOG_FILE=`echo $ARGS | sed 's/.*-XX:LogFile=\([^ ]*\).*/\1/g'`
+        export MAXINE_LOG_FILE
+        ARGS="`echo $ARGS | sed 's/\(.*\)-XX:LogFile=[^ ]*\(.*\)/\1 \2/g'`"
+    fi
+   cmd="${MAXVM} $ARGS"
+   #echo $cmd
+   eval $cmd
+}
+
+function describe_javap() {
+    echo "launch javap with a -classpath option denoting all the Maxine classes"
+}
+
+function run_javap() {
+    javap -private -verbose -classpath ${MAXINE_CLASSPATH}:${JCK_CLASSPATH} "$@"
+}
+
+function describe_dis() {
+    echo "preprocess class files with the Maxine VM and disassembles the result with javap"
+}
+
+function run_dis() {
+    TMP_DIR=/tmp/${USER}/generated.$$
+    mkdir -p ${TMP_DIR}
+    java -d64 -cp ${MAXINE_CLASSPATH} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
+    rm -rf ${TMP_DIR}
+}
+
+function describe_jtest() {
+    echo "run the Java Tester"
+}
+function run_jtest() {
+    MAIN_CLASS=test.com.sun.max.vm.compiler.JavaTester
+    if [ -z "`echo $@ | grep '\-\-'`" ]; then
+        echo "Usage: $0 <VM options> -- <Java Tester options>"
+        exit 1;
+    fi
+    cmd=`echo "${MAXVM} -classpath ${MAXINE_HOME}/Base/bin:${MAXINE_HOME}/VM/bin $@" | sed 's:--:'${MAIN_CLASS}:g`
+    #echo $cmd
+    eval $cmd
+}
+
+function describe_hw() {
+    echo "run the basic 'hello world' program on the Maxine VM"
+}
+
+function run_hw() {
+    ${MAXVM} -classpath ${MAXINE_HOME}/VM/bin $@ util.HelloWorld
+}
+
+function describe_otree() {
+    echo "print the causality spanning-tree of the object graph in the VM image"
+}
+
+function run_otree() {
+    java -Xmx1g -cp ${MAXINE_CLASSPATH} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+}
+
+function describe_mtree() {
+    echo "print the causality spanning-tree of the method graph in the VM image"
+}
+
+function run_mtree() {
+    java -Xmx1g -cp ${MAXINE_CLASSPATH} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+}
+
+function showCommands() {
+    if [ "x$1" != "x" ]; then
+        echo $1
+    fi
+    echo "Maxine Launcher"
+    echo
+    echo "available commands:"
+    for RUN_COMMAND in `declare -Ff | grep 'run_' | cut -d ' ' -f 3 | sort`; do
+        COMMAND="`echo $RUN_COMMAND | sed 's:run_::g'`"
+        DESCRIBE_COMMAND="`echo $RUN_COMMAND | sed 's:run_:describe_:g'`"
+        if [ "`type -t ${DESCRIBE_COMMAND}`" = "function" ]; then
+            echo -e " ${COMMAND}\t `eval ${DESCRIBE_COMMAND}`"
+        else
+            echo -e " ${COMMAND}\t [no description available]"
+        fi
+    done
+}
+
+if [ $# -eq 0 ]; then
+    showCommands ""
+    exit 0
+fi
+
+COMMAND=$1
+RUN_COMMAND="run_${COMMAND}"
+shift
+
+COMMAND_TYPE=`type -t ${RUN_COMMAND}`
+if [ "${COMMAND_TYPE}" != "function" ]; then
+    showCommands "max: unknown command '${COMMAND}'"
+    exit 255
+fi
+
+#echo $RUN_COMMAND "$@"
+eval $RUN_COMMAND "$@"
