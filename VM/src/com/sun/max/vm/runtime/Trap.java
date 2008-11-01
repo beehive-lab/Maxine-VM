@@ -169,17 +169,17 @@ public final class Trap {
 
     /**
      * Checks the origin of a trap by looking for a target method or runtime stub in the code regions. If found, this
-     * method will return a reference to the {@code TargetMethod} that produces the error. If a runtime stub produced
-     * the error, this method will return a reference to that runtime stub. Otherwise, this method returns {@code null},
-     * indicating the fault occurred in native code.
+     * method will return a reference to the {@code TargetMethod} that produced the trap. If a runtime stub produced
+     * the trap, this method will return a reference to that runtime stub. Otherwise, this method returns {@code null},
+     * indicating the trap occurred in native code.
      *
      * @param trap the trap number
      * @param trapState the trap state area on the stack
-     * @param faultAddress the faulting address
-     * @return a reference to the {@code TargetMethod} containing the instruction pointer that caused the fault; {@code
-     *         null} if neither a runtime stub nor a target method produced the fault
+     * @param trapInstructionPointer the instruction pointer where the trap occurred
+     * @return a reference to the {@code TargetMethod} containing the instruction pointer that caused the trap; {@code
+     *         null} if neither a runtime stub nor a target method produced the trap
      */
-    private static Object checkTrapOrigin(int trap, Pointer trapState, Address faultAddress) {
+    private static Object checkTrapOrigin(int trap, Pointer trapState, Address trapInstructionPointer) {
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
 
@@ -188,8 +188,8 @@ public final class Trap {
             Debug.print(trap);
             Debug.print(" @ ");
             Debug.print(instructionPointer);
-            Debug.print(", fault address: ");
-            Debug.print(faultAddress);
+            Debug.print(", trap instruction pointer: ");
+            Debug.print(trapInstructionPointer);
             Throw.stackDump("", instructionPointer, safepoint.getStackPointer(trapState, null), safepoint.getFramePointer(trapState, null));
         }
 
@@ -202,14 +202,14 @@ public final class Trap {
         // check to see if this fault originated in a runtime stub
         final RuntimeStub runtimeStub = Code.codePointerToRuntimeStub(instructionPointer);
         if (runtimeStub != null) {
-            Debug.print("Fault ");
+            Debug.print("Trap ");
             Debug.print(trap);
             Debug.print(" in runtime stub @ ");
             return runtimeStub;
         }
 
         // this fault occurred in native code
-        Debug.print("Fault ");
+        Debug.print("Trap ");
         Debug.print(trap);
         Debug.print(" in native code @ ");
         Debug.println(instructionPointer);

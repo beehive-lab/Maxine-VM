@@ -31,6 +31,12 @@
 #   include <unistd.h>
 #endif
 
+#if os_SOLARIS && isa_SPARC
+    /* Get STACK_BIAS definition for Solaris / SPARC */
+#   include <sys/stack.h>
+    typedef struct rwindow * RegisterWindow;
+#endif
+
 #include "threads.h"
 #include "virtualMemory.h"
 #include "debug.h"
@@ -48,7 +54,7 @@
 
 /*
  * Important: The values defined here must correspond to those of the same name
- *             defined in the TrapNumber class in Trap.java.
+ *            defined in the TrapNumber class in Trap.java.
  */
 #define MEMORY_FAULT 0
 #define STACK_FAULT 1
@@ -56,85 +62,40 @@
 #define ARITHMETIC_EXCEPTION 3
 #define ASYNC_INTERRUPT 4
 
-    static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext);
-    static void setHandler(int signal, void *handler);
-
-    static Address _javaTrapStub;
-
-
-    int faultNumber(int signal) {
-    	switch (signal) {
-    	case SIGSEGV:
-    	case SIGBUS:
-    		return MEMORY_FAULT;
-    	case SIGILL:
-    		return ILLEGAL_INSTRUCTION;
-    	case SIGFPE:
-    		return ARITHMETIC_EXCEPTION;
-    	case SIGUSR1:
-    		return ASYNC_INTERRUPT;
-    	}
-    	return signal;
+int getTrapNumber(int signal) {
+    switch (signal) {
+    case SIGSEGV:
+    case SIGBUS:
+        return MEMORY_FAULT;
+    case SIGILL:
+        return ILLEGAL_INSTRUCTION;
+    case SIGFPE:
+        return ARITHMETIC_EXCEPTION;
+    case SIGUSR1:
+        return ASYNC_INTERRUPT;
     }
+    return signal;
+}
 
-    void native_setJavaTrapStub(int fault, Address handler) {
-    	switch (fault) {
-    	case STACK_FAULT:
-    	case MEMORY_FAULT:
-    	    setHandler(SIGSEGV, globalSignalHandler);
-    	    setHandler(SIGBUS, globalSignalHandler);
-    		break;
-    	case ILLEGAL_INSTRUCTION:
-    	    setHandler(SIGILL, globalSignalHandler);
-    		break;
-    	case ARITHMETIC_EXCEPTION:
-    	    setHandler(SIGFPE, globalSignalHandler);
-    		break;
-    	case ASYNC_INTERRUPT:
-    	    setHandler(SIGUSR1, globalSignalHandler);
-    		break;
-    	}
-    	_javaTrapStub = handler;
-    }
+static Address _javaTrapStub;
 
-    void setHandler(int signal, void *handler) {
-    #if os_GUESTVMXEN
-    	register_fault_handler(signal, (fault_handler_t)handler);
-    #else
-
-    	struct sigaction newSigaction;
-    	struct sigaction oldSigaction;
-
-    	memset((char *) &newSigaction, 0, sizeof(newSigaction));
-    	sigemptyset(&newSigaction.sa_mask);
-    	newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
-    	newSigaction.sa_sigaction = handler;
-    	newSigaction.sa_handler = handler;
-
-        if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
-        	debug_exit(1, "sigaction failed");
-        }
-    #endif
-    }
-
-
-static Address getStackPointer(UContext *ucontext) {
-#if os_SOLARIS
-  return ucontext->uc_mcontext.gregs[REG_SP];
-#elif os_LINUX
-#   if isa_AMD64
-	    return ucontext->uc_mcontext.gregs[REG_RSP];
-#   elif isa_IA32
-	    return ucontext->uc_mcontext.gregs[REG_UESP];
-#   else
-#       error Unimplemented
-#   endif
-#elif os_DARWIN
-    return ucontext->uc_mcontext->__ss.__rsp;
-#elif os_GUESTVMXEN
-	    return ucontext->rsp;
+void setHandler(int signal, void *handler) {
+#if os_GUESTVMXEN
+    register_fault_handler(signal, (fault_handler_t)handler);
 #else
-#   error Unimplemented
+
+    struct sigaction newSigaction;
+    struct sigaction oldSigaction;
+
+    memset((char *) &newSigaction, 0, sizeof(newSigaction));
+    sigemptyset(&newSigaction.sa_mask);
+    newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+    newSigaction.sa_sigaction = handler;
+    newSigaction.sa_handler = handler;
+
+    if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
+        debug_exit(1, "sigaction failed");
+    }
 #endif
 }
 
@@ -150,17 +111,40 @@ static Address getInstructionPointer(UContext *ucontext) {
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
 #elif os_GUESTVMXEN
-	    return ucontext->rip;
+        return ucontext->rip;
 #else
 #   error Unimplemented
 #endif
 }
 
-#if os_SOLARIS && isa_SPARC
-    /* Get STACK_BIAS definition for Solaris / SPARC */
-#   include <sys/stack.h>
-    typedef struct rwindow * RegisterWindow;
+static void setInstructionPointer(UContext *ucontext, Address stub) {
+#if os_SOLARIS
+#   if isa_SPARC
+     /* Make the stub look like it is called by the method that caused the exception.
+      * Stubs create a frame on entry. To enable stack walking we need to make believe
+      * that a stub was properly called from the method that caused the exception.
+      * We set O7 to the current's PC before (O7 is temp and is not expected to survive
+      * any implicit exception.
+      */
+  /* ucontext->uc_mcontext.gregs[REG_O7] = ucontext->uc_mcontext.gregs[REG_PC];
+      ucontext->uc_mcontext.gregs[REG_O7] = 0; */
+    ucontext->uc_mcontext.gregs[REG_nPC] = (greg_t) (stub + 4);
+#   endif
+    ucontext->uc_mcontext.gregs[REG_PC] = (greg_t) stub;
+#elif os_DARWIN
+    ucontext->uc_mcontext->__ss.__rip = stub;
+#elif os_LINUX
+#   if isa_AMD64
+     ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
+#   elif isa_IA32
+     ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
+#   endif
+#elif os_GUESTVMXEN
+    ucontext->rip = (unsigned long) stub;
+#else
+#   error Unimplemented
 #endif
+}
 
 static Address getFramePointer(UContext *ucontext) {
 #if os_SOLARIS
@@ -170,51 +154,42 @@ static Address getFramePointer(UContext *ucontext) {
         Address fp = (Address) rwin->rw_fp;
         return fp;
 #   elif isa_AMD64 || isa_IA32
-	    return ucontext->uc_mcontext.gregs[REG_FP];
+        return ucontext->uc_mcontext.gregs[REG_FP];
 #   else
 #       error Unimplemented
 #   endif
 #elif os_LINUX
 #   if isa_AMD64
-	    return ucontext->uc_mcontext.gregs[REG_RBP];
+        return ucontext->uc_mcontext.gregs[REG_RBP];
 #   elif isa_IA32
-	    return ucontext->uc_mcontext.gregs[REG_EBP];
+        return ucontext->uc_mcontext.gregs[REG_EBP];
 #   else
 #       error Unimplemented
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rbp;
 #elif os_GUESTVMXEN
-	return ucontext->rbp;
+    return ucontext->rbp;
 #else
 #   error Unimplemented
 #endif
 }
 
-static void setInstructionPointer(UContext *ucontext, Address stub) {
+static Address getStackPointer(UContext *ucontext) {
 #if os_SOLARIS
-#   if isa_SPARC
-	 /* Make the stub look like it is called by the method that caused the exception.
-	  * Stubs create a frame on entry. To enable stack walking we need to make believe
-	  * that a stub was properly called from the method that caused the exception.
-	  * We set O7 to the current's PC before (O7 is temp and is not expected to survive
-	  * any implicit exception.
-	  */
-  /* ucontext->uc_mcontext.gregs[REG_O7] = ucontext->uc_mcontext.gregs[REG_PC];
-	  ucontext->uc_mcontext.gregs[REG_O7] = 0; */
-    ucontext->uc_mcontext.gregs[REG_nPC] = (greg_t) (stub + 4);
-#   endif
-    ucontext->uc_mcontext.gregs[REG_PC] = (greg_t) stub;
-#elif os_DARWIN
-    ucontext->uc_mcontext->__ss.__rip = stub;
+  return ucontext->uc_mcontext.gregs[REG_SP];
 #elif os_LINUX
 #   if isa_AMD64
-	 ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
+        return ucontext->uc_mcontext.gregs[REG_RSP];
 #   elif isa_IA32
-	 ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
+        return ucontext->uc_mcontext.gregs[REG_UESP];
+#   else
+#       error Unimplemented
 #   endif
+#elif os_DARWIN
+    return ucontext->uc_mcontext->__ss.__rsp;
 #elif os_GUESTVMXEN
-    ucontext->rip = (unsigned long) stub;
+        return ucontext->rsp;
 #else
 #   error Unimplemented
 #endif
@@ -222,63 +197,63 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 
 static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #if (os_DARWIN || os_SOLARIS || os_LINUX )
-	return (Address) sigInfo->si_addr;
+    return (Address) sigInfo->si_addr;
 #elif (os_GUESTVMXEN)
-	return (Address) sigInfo;
+    return (Address) sigInfo;
 #endif
 }
 
 #if DEBUG_TRAP
 char *signalName(int signal) {
-	switch (signal) {
-	case SIGSEGV: return "SIGSEGV";
-	case SIGFPE: return "SIGFPE";
-	case SIGILL: return "SIGILL";
-	case SIGUSR1: return "SIGUSR1";
-	case SIGBUS: return "SIGBUS";
-	}
-	return NULL;
+    switch (signal) {
+    case SIGSEGV: return "SIGSEGV";
+    case SIGFPE: return "SIGFPE";
+    case SIGILL: return "SIGILL";
+    case SIGUSR1: return "SIGUSR1";
+    case SIGBUS: return "SIGBUS";
+    }
+    return NULL;
 }
 #endif
 
 static int isInGuardZone(Address address, Address zoneBegin) {
-	/* return true if the address is in the zone, or is within N pages of the zone */
-	return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * getPageSize());
+    /* return true if the address is in the zone, or is within N pages of the zone */
+    return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * getPageSize());
 }
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
 #if DEBUG_TRAP
-	debug_println("SIGNAL: %0d", signal);
+    debug_println("SIGNAL: %0d", signal);
 #endif
-	NativeThreadLocals *nativeThreadLocals = (NativeThreadLocals *) thread_getSpecific(nativeThreadLocalsKey);
-    if (nativeThreadLocals == 0) {
+    thread_Specifics *threadSpecifics = (thread_Specifics *) thread_currentSpecifics();
+    if (threadSpecifics == 0) {
         debug_exit(-22, "could not find native thread locals in trap handler");
     }
 
-    Address disabledVmThreadLocals = nativeThreadLocals->disabledVmThreadLocals;
+    Address disabledVmThreadLocals = threadSpecifics->disabledVmThreadLocals;
 
     if (disabledVmThreadLocals == 0) {
         debug_exit(-21, "could not find disabled VM thread locals in trap handler");
     }
 
-    int trapNum = faultNumber(signal);
-	Word *stackPointer = (Word *)getStackPointer(ucontext);
+    int trapNumber = getTrapNumber(signal);
+    Word *stackPointer = (Word *)getStackPointer(ucontext);
 
-    if (isInGuardZone(stackPointer, nativeThreadLocals->stackYellowZone)) {
-    	/* if the stack pointer is in the yellow zone, assume this is a stack fault */
-        unprotectPage(nativeThreadLocals->stackYellowZone);
-    	trapNum = STACK_FAULT;
-    } else if (isInGuardZone(stackPointer, nativeThreadLocals->stackRedZone)) {
-    	/* if the stack pointer is in the red zone, (we shouldn't be alive) */
+    if (isInGuardZone(stackPointer, threadSpecifics->stackYellowZone)) {
+        /* if the stack pointer is in the yellow zone, assume this is a stack fault */
+        unprotectPage(threadSpecifics->stackYellowZone);
+        trapNumber = STACK_FAULT;
+    } else if (isInGuardZone(stackPointer, threadSpecifics->stackRedZone)) {
+        /* if the stack pointer is in the red zone, (we shouldn't be alive) */
         debug_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
     } else if (stackPointer == 0) {
-    	/* if the stack pointer is zero, (we shouldn't be alive) */
+        /* if the stack pointer is zero, (we shouldn't be alive) */
         debug_exit(-19, "SIGSEGV: (stack pointer is zero)");
     }
 
     /* save the trap information in the disabled vm thread locals */
     Address *trapInfo = disabledVmThreadLocals + image_header()->vmThreadLocalsTrapNumberOffset;
-    trapInfo[0] = trapNum;
+    trapInfo[0] = trapNumber;
     trapInfo[1] = getInstructionPointer(ucontext);
     trapInfo[2] = getFaultAddress(signalInfo, ucontext);
     trapInfo[3] = *stackPointer;
@@ -286,7 +261,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 #if DEBUG_TRAP
     char *sigName = signalName(signal);
     if (sigName != NULL) {
-        debug_println("thread %d: %s (trapInfo @ %p)", nativeThreadLocals->id, sigName, trapInfo);
+        debug_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
         debug_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
         debug_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
         debug_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
@@ -302,4 +277,25 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 #endif
     setInstructionPointer(ucontext, _javaTrapStub);
 }
+
+void native_setJavaTrapStub(int fault, Address handler) {
+    switch (fault) {
+    case STACK_FAULT:
+    case MEMORY_FAULT:
+        setHandler(SIGSEGV, globalSignalHandler);
+        setHandler(SIGBUS, globalSignalHandler);
+        break;
+    case ILLEGAL_INSTRUCTION:
+        setHandler(SIGILL, globalSignalHandler);
+        break;
+    case ARITHMETIC_EXCEPTION:
+        setHandler(SIGFPE, globalSignalHandler);
+        break;
+    case ASYNC_INTERRUPT:
+        setHandler(SIGUSR1, globalSignalHandler);
+        break;
+    }
+    _javaTrapStub = handler;
+}
+
 
