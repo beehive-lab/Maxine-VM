@@ -63,8 +63,8 @@ import com.sun.max.vm.runtime.*;
  * The fault address is stored in the RIP slot, making this frame appear as if the trap location
  * called the trap stub directly.
  *
- * @author Bernd Mathiske
  * @author Ben L. Titzer
+ * @author Bernd Mathiske
  */
 public final class AMD64Safepoint extends Safepoint {
 

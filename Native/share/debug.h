@@ -44,7 +44,7 @@ extern void debug_print_long(jlong val);
 extern void debug_print_word(Address val);
 extern void debug_print_buffer(char *buffer);
 extern void debug_print_format(char *format, ...);
-extern void debug_print_newline();
+extern void debug_print_newline(void);
 extern void debug_print_float(float f);
 extern void debug_print_double(double d);
 
