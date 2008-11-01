@@ -48,7 +48,7 @@ public final class AMD64Deoptimization extends Deoptimization {
     private int _currentCallSaveAreaPosition;
 
     @Override
-    protected void createJitFrame(TargetJavaFrameDescriptor javaFrameDescriptor, Deoptimizer.ReferenceOccurrences referenceOccurrences) {
+    protected void createJitFrame(TargetJavaFrameDescriptor javaFrameDescriptor, Deoptimizer.Situation situation) {
         final ClassMethodActor classMethodActor = javaFrameDescriptor.bytecodeLocation().classMethodActor();
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) VMConfiguration.target().jitScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
         final AMD64JitStackFrameLayout layout = (AMD64JitStackFrameLayout) jitTargetMethod.stackFrameLayout();
@@ -56,7 +56,7 @@ public final class AMD64Deoptimization extends Deoptimization {
         int numberOfStackSlots = javaFrameDescriptor.stackSlots().length;
         int numberOfDescribedStackSlots = numberOfStackSlots;
         Kind resultKind = Kind.VOID;
-        if (referenceOccurrences != Deoptimizer.ReferenceOccurrences.SAFEPOINT) {
+        if (situation != Deoptimizer.Situation.SAFEPOINT) {
             // We are working on the top frame just after a return from a call.
             // Not all of the Java state described by the frame descriptor applies.
             assert _currentCallSaveAreaPosition == 0;
