@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.max.vm.runtime.Trap.TrapNumber.*;
+import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.lang.reflect.*;
@@ -56,7 +56,7 @@ public final class Trap {
      *
      * The values defined here must correspond to those of the same name defined in Native/substrate/trap.c.
      */
-    public static final class TrapNumber {
+    public static final class Number {
         public static final int MEMORY_FAULT = 0;
         public static final int STACK_FAULT = 1;
         public static final int ILLEGAL_INSTRUCTION = 2;
@@ -89,7 +89,7 @@ public final class Trap {
         if (MaxineVM.isPrototyping()) {
             return !methodActor.isInitializer() && methodActor.toJava().equals(_trapStubMethod);
         }
-        return methodActor.equals(_trapStub.classMethodActor());
+        return methodActor == _trapStub.classMethodActor();
     }
 
     @PROTOTYPE_ONLY
@@ -97,18 +97,13 @@ public final class Trap {
     }
 
     @C_FUNCTION
-    private static native void native_setJavaTrapStub(int signal, Word trapHandler);
+    private static native void nativeInitialize(Word trapHandler);
 
     /**
      * Installs the trap handlers using the operating system's API.
      */
     public static void initialize() {
-        final Address stubAddress = _trapStub.address();
-        native_setJavaTrapStub(MEMORY_FAULT, stubAddress);
-        native_setJavaTrapStub(STACK_FAULT, stubAddress);
-        native_setJavaTrapStub(ILLEGAL_INSTRUCTION, stubAddress);
-        native_setJavaTrapStub(ASYNC_INTERRUPT, stubAddress);
-        native_setJavaTrapStub(ARITHMETIC_EXCEPTION, stubAddress);
+        nativeInitialize(_trapStub.address());
     }
 
     /**
@@ -119,26 +114,26 @@ public final class Trap {
      * This trap stub saves all of the registers onto the stack which are available in the {@code trapState}
      * pointer.
      *
-     * @param trap the trap number that occurred
+     * @param trapNumber the trap number that occurred
      * @param trapState a pointer to the stack location where trap state is stored
      * @param faultAddress the faulting address that caused this trap (memory faults only)
      */
     @C_FUNCTION
-    private static void trapStub(int trap, Pointer trapState, Address faultAddress) {
-        if (trap == ASYNC_INTERRUPT) {
+    private static void trapStub(int trapNumber, Pointer trapState, Address faultAddress) {
+        if (trapNumber == ASYNC_INTERRUPT) {
             // do nothing for an asynchronous interrupt.
             return;
         }
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
-        final Object origin = checkTrapOrigin(trap, trapState, faultAddress);
+        final Object origin = checkTrapOrigin(trapNumber, trapState, faultAddress);
         if (origin instanceof TargetMethod) {
             final TargetMethod targetMethod = (TargetMethod) origin;
             // the trap occurred in Java
             final Pointer stackPointer = safepoint.getStackPointer(trapState, targetMethod);
             final Pointer framePointer = safepoint.getFramePointer(trapState, targetMethod);
 
-            switch (trap) {
+            switch (trapNumber) {
                 case MEMORY_FAULT:
                     handleMemoryFault(instructionPointer, stackPointer, framePointer, trapState, faultAddress);
                     break;
