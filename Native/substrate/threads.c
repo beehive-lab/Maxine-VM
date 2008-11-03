@@ -76,7 +76,7 @@ void threads_initialize() {
 
 thread_Specifics *thread_currentSpecifics() {
 #   if os_DARWIN || os_LINUX
-        return (thread_Specifics) pthread_getspecific(_specificsKey);
+        return (thread_Specifics*) pthread_getspecific(_specificsKey);
 #   elif os_SOLARIS
         thread_Specifics *value;
         int result = thr_getspecific(_specificsKey, &value);
