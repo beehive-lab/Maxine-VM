@@ -278,24 +278,13 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     setInstructionPointer(ucontext, _javaTrapStub);
 }
 
-void native_setJavaTrapStub(int fault, Address handler) {
-    switch (fault) {
-    case STACK_FAULT:
-    case MEMORY_FAULT:
-        setHandler(SIGSEGV, globalSignalHandler);
-        setHandler(SIGBUS, globalSignalHandler);
-        break;
-    case ILLEGAL_INSTRUCTION:
-        setHandler(SIGILL, globalSignalHandler);
-        break;
-    case ARITHMETIC_EXCEPTION:
-        setHandler(SIGFPE, globalSignalHandler);
-        break;
-    case ASYNC_INTERRUPT:
-        setHandler(SIGUSR1, globalSignalHandler);
-        break;
-    }
-    _javaTrapStub = handler;
+void nativeInitialize(Address javaTrapStub) {
+    _javaTrapStub = javaTrapStub;
+    setHandler(SIGSEGV, globalSignalHandler);
+    setHandler(SIGBUS, globalSignalHandler);
+    setHandler(SIGILL, globalSignalHandler);
+    setHandler(SIGFPE, globalSignalHandler);
+    setHandler(SIGUSR1, globalSignalHandler);
 }
 
 
