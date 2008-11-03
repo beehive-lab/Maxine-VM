@@ -22,11 +22,10 @@ package com.sun.max.vm.monitor.modal.schemes;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.heap.util.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.*;
@@ -140,12 +139,6 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
     @INLINE
     public final void afterGarbageCollection() {
         _entryHandler.afterGarbageCollection();
-    }
-
-    @Override
-    @INLINE
-    public final void scanReferences(BeltWayPointerIndexVisitor pointerIndexVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        // We don't refer to any Java objects through pointers
     }
 
     @Override

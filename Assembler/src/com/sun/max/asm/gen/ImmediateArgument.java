@@ -22,12 +22,44 @@ package com.sun.max.asm.gen;
 
 import com.sun.max.asm.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 
 
 /**
  * @author Bernd Mathiske
  */
 public abstract class ImmediateArgument implements Argument {
+
+    public static ImmediateArgument create(long value, WordWidth width) {
+        switch (width) {
+            case BITS_8:
+                return new Immediate8Argument((byte) value);
+            case BITS_16:
+                return new Immediate16Argument((short) value);
+            case BITS_32:
+                return new Immediate32Argument((int) value);
+            case BITS_64:
+                return new Immediate64Argument(value);
+            default:
+                throw ProgramError.unknownCase();
+        }
+    }
+
+    public ImmediateArgument plus(ImmediateArgument addend) {
+        return create(asLong() + addend.asLong(), width());
+    }
+
+    public ImmediateArgument plus(long addend) {
+        return create(asLong() + addend, width());
+    }
+
+    public ImmediateArgument minus(ImmediateArgument addend) {
+        return create(asLong() - addend.asLong(), width());
+    }
+
+    public ImmediateArgument minus(long addend) {
+        return create(asLong() - addend, width());
+    }
 
     public abstract WordWidth width();
 

@@ -165,8 +165,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
         debug_println("LD_LIBRARY_PATH=%s", ldpath);
     }
 #endif
+    debug_println("Arguments: argc %d, argv %lx", argc, argv);
     int i;
-    debug_println("Maxine VM, argc %d, argv %lx", argc, argv);
     for (i = 0; i < argc; i++) {
         debug_println("arg[%d]: %lx, \"%s\"", i, argv[i], argv[i]);
     }

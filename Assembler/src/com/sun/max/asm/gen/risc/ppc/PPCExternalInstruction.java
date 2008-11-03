@@ -22,12 +22,13 @@ package com.sun.max.asm.gen.risc.ppc;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
+import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 import com.sun.max.collect.*;
 
 /**
  * Output of PowerPC instructions in external assembler format.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -37,12 +38,8 @@ public class PPCExternalInstruction extends RiscExternalInstruction {
         super(template, arguments);
     }
 
-    public PPCExternalInstruction(PPCTemplate template, Sequence<Argument> arguments, int position, Sequence<DisassembledLabel> labels) {
-        super(template, arguments, position, labels);
-    }
-
-    public PPCExternalInstruction(PPCTemplate template, Sequence<Argument> arguments, int position, Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        super(template, arguments, position, labels, globalLabelMapper);
+    public PPCExternalInstruction(PPCTemplate template, Sequence<Argument> arguments, ImmediateArgument address, AddressMapper addressMapper) {
+        super(template, arguments, address, addressMapper);
     }
 
     @Override

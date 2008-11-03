@@ -73,6 +73,10 @@ final class JDK_java_lang_Throwable {
         // and build the exception stack trace elements later. There is a field in the Throwable object
         // called "backtrace" to allow for some natively cached stuff for this purpose.
         final Throwable thisThrowable = thisThrowable();
+        if (thisThrowable instanceof OutOfMemoryError) {
+            // Don't record stack traces in situations where memory may be exhausted
+            return thisThrowable;
+        }
         final ClassActor throwableActor = ClassActor.fromJava(thisThrowable.getClass());
         // use the stack walker to collect the frames
         final StackFrameWalker stackFrameWalker = new VmStackFrameWalker(VmThread.current().vmThreadLocals());

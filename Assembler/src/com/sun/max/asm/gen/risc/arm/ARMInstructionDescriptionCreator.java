@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 /**
- * 
+ *
  */
 package com.sun.max.asm.gen.risc.arm;
 
@@ -32,7 +32,7 @@ import com.sun.max.asm.gen.risc.*;
  * @author Sumeet Panchal
  */
 
-public abstract class ARMInstructionDescriptionCreator extends RiscInstructionDescriptionCreator{
+public abstract class ARMInstructionDescriptionCreator extends RiscInstructionDescriptionCreator {
     protected ARMInstructionDescriptionCreator(ARMTemplateCreator templateCreator) {
         super(ARMAssembly.ASSEMBLY, templateCreator);
     }

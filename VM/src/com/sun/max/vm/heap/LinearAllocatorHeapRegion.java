@@ -25,9 +25,11 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.heap.util.*;
 
-public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements HeapRegion, Visitor {
+/**
+ * @author Bernd Mathiske
+ */
+public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements HeapRegion {
 
     public void setMark(Address mark) {
         _mark = mark.aligned();
@@ -86,14 +88,6 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
      */
     public void trim() {
         setSize(getAllocationMark().minus(start()).asSize());
-    }
-
-
-    /**
-     * TODO: clean this up.
-     */
-    public void beltWayVisitCells(Visitor cellVisitor, Action action,  RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, this, from, to);
     }
 
     public void visitCells(CellVisitor cellVisitor) {

@@ -31,25 +31,25 @@ import com.sun.max.collect.*;
  */
 public abstract class SPARCDisassembledInstruction extends RiscDisassembledInstruction<SPARCTemplate> {
 
-    SPARCDisassembledInstruction(int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
+    SPARCDisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 
     @Override
-    public String externalName() {
-        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startPosition(), null, null);
+    public String mnemonic() {
+        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();
     }
 
     @Override
-    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String operandsToString(AddressMapper addressMapper) {
+        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.operands();
     }
 
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        final SPARCExternalInstruction instruction = new SPARCExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();
     }
 

@@ -70,7 +70,7 @@ import com.sun.max.util.Timer.*;
  * illegal arguments without incurring a syntax or type error from javac. The majority of the remaining possibilities
  * for specifying illegal arguments lies in RISC assemblers' featuring immediate fields whose ranges of legal values is
  * not exactly described by a Java primitive type (e.g. int, short, char, etc).
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Dave Ungar
@@ -106,11 +106,11 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * Using an iterator means that each test case is generated as needed and does not
      * use up memory longer than necessary. This helps prevent out of memory errors
      * for templates where the number of test cases can be very large.
-     * 
+     *
      * It is important to note that the value returned by {@link #next()} is only valid
      * until {@code next()} is called again. That is, the same <code>Sequence<Argument></code>
      * object is returned by each call to {@code next()}, only its contents have changed.
-     * 
+     *
      * @author Doug Simon
      */
     class ArgumentListIterator implements Iterator<IndexedSequence<Argument>> {
@@ -129,7 +129,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
         /**
          * Creates an iterator over a set of test cases for a given template.
-         * 
+         *
          * @param template
          * @param legalCases
          *            if true, only legal test cases are returned by this iterator otherwise only illegal test cases are
@@ -183,7 +183,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
         /**
          * Advances this iterator to the next argument list.
-         * 
+         *
          * @return true if the iterator could advance
          */
         private boolean advance() {
@@ -201,7 +201,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
         /**
          * Advances the test argument iterator for parameter {@code i}.
-         * 
+         *
          * @return true if the iterator could advance
          */
         private boolean advanceArgumentFor(int i) {
@@ -214,7 +214,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
         /**
          * Advances this iterator to the next (potentially invalid) argument list.
-         * 
+         *
          * @return true if the iterator could advance
          */
         private boolean advance0() {
@@ -349,7 +349,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * {@link #assemblerCommand assembler command}. This is required as
      * some SSH installations only provide a very minimal environment
      * for remotely executed commands.
-     * 
+     *
      * @param path the absolute path to the directory containing the assembler executable (must not be null)
      */
     public void setRemoteAssemblerPath(String path) {
@@ -393,7 +393,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * Password:
      * [dsimon@remote:~]$ <b>{@literal cat id_dsa.pub >> .ssh/authorized_keys2}</b>
      * </code></pre></td></tr></table>
-     * 
+     *
      * @param remoteUserAndHost a {@code user@host} value denoting a machine that
      *        supports remote execution via SSH2 using public key authentication
      */
@@ -404,7 +404,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
     /**
      * Executes a command in a subprocess redirecting the standard streams of the
      * subprocess to/from the standard streams of the current process.
-     * 
+     *
      * @param command  the command line to execute
      */
     private void exec(String command) throws IOException, InterruptedException {
@@ -414,7 +414,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
     /**
      * Executes a command in a subprocess redirecting the standard streams of the
      * subprocess to/from the supplied streams.
-     * 
+     *
      * @param command  the command line to execute
      * @param out   the stream to which standard output will be directed
      * @param err   the stream to which standard error output will be directed
@@ -532,19 +532,23 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         final Disassembler<Template_Type, DisassembledInstruction_Type> disassembler = createTestDisassembler();
         disassembler.setAbstractionPreference(template.instructionDescription().isSynthetic() ? Disassembler.AbstractionPreference.SYNTHETIC : Disassembler.AbstractionPreference.RAW);
         disassembler.setExpectedNumberOfArguments(argumentList.length());
-        final Sequence<DisassembledInstruction_Type> disassembledInstructions = disassembler.scanOneInstruction(disassemblyStream);
+        final Sequence<DisassembledObject> disassembledObjects = disassembler.scanOne(disassemblyStream);
 
         boolean matchFound = false;
-        for (DisassembledInstruction_Type disassembledInstruction : disassembledInstructions) {
-            matchFound = matchFound ||
-                (disassembledInstruction.template().isEquivalentTo(template) &&
-                 equals(disassembledInstruction.arguments(), argumentList) &&
-                 Arrays.equals(disassembledInstruction.bytes(), internalResult));
+        for (DisassembledObject disassembledObject : disassembledObjects) {
+            if (disassembledObject instanceof DisassembledInstruction) {
+                final Class<DisassembledInstruction_Type> type = null;
+                final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(type, disassembledObject);
+                matchFound = matchFound ||
+                             (disassembledInstruction.template().isEquivalentTo(template) &&
+                                equals(disassembledInstruction.arguments(), argumentList) &&
+                                Arrays.equals(disassembledInstruction.bytes(), internalResult));
+            }
         }
 
         final int available = disassemblyStream.available();
         if (available != 0 || !matchFound) {
-            System.err.println("internal disassembler test failed - " + disassembledInstructions.length() + " false matches found: ");
+            System.err.println("internal disassembler test failed - " + disassembledObjects.length() + " false matches found: ");
             if (available != 0) {
                 System.err.print("extra bytes at end of disassembly stream:");
                 final int bytesToPrint = Math.min(available, 200);
@@ -558,16 +562,20 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
                 System.err.println();
             }
             int matchNumber = 1;
-            for (DisassembledInstruction_Type disassembledInstruction : disassembledInstructions) {
-                System.err.println();
-                System.err.println("False match number " + matchNumber + ":");
-                System.err.println("    assembled template: " + template);
-                System.err.println(" disassembled template: " + disassembledInstruction.template());
-                System.err.println("   assembled arguments: " + argumentList);
-                System.err.println("disassembled arguments: " + disassembledInstruction.arguments());
-                System.err.println("       assembled bytes: " + DisassembledInstruction.toHexString(internalResult));
-                System.err.println("    disassembled bytes: " + DisassembledInstruction.toHexString(disassembledInstruction.bytes()));
-                ++matchNumber;
+            for (DisassembledObject disassembledObject : disassembledObjects) {
+                if (disassembledObject instanceof DisassembledInstruction) {
+                    final Class<DisassembledInstruction_Type> type = null;
+                    final DisassembledInstruction_Type disassembledInstruction = StaticLoophole.cast(type, disassembledObject);
+                    System.err.println();
+                    System.err.println("False match number " + matchNumber + ":");
+                    System.err.println("    assembled template: " + template);
+                    System.err.println(" disassembled template: " + disassembledInstruction.template());
+                    System.err.println("   assembled arguments: " + argumentList);
+                    System.err.println("disassembled arguments: " + disassembledInstruction.arguments());
+                    System.err.println("       assembled bytes: " + DisassembledInstruction.toHexString(internalResult));
+                    System.err.println("    disassembled bytes: " + DisassembledInstruction.toHexString(disassembledInstruction.bytes()));
+                    ++matchNumber;
+                }
             }
             ProgramError.unexpected("mismatch between internal assembler and disassembler");
         }
@@ -702,7 +710,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
     /**
      * Sets the pattern that restricts which templates are tested.
-     * 
+     *
      * @param pattern if non-null, only templates whose {@link Template#internalName() name} contains
      *                {@code pattern} as a substring are tested
      */
@@ -712,7 +720,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
     /**
      * Tests a range of templates.
-     * 
+     *
      * @param startTemplateSerial
      *            the {@linkplain Template#serial() serial} number of the first template to test or -1 to start with the
      *            first template of the {@linkplain #assembly() assembly}.
@@ -805,7 +813,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
 
     /**
      * Creates external assembler source for testing a range of templates.
-     * 
+     *
      * @param startTemplateSerial
      *            the {@linkplain Template#serial() serial} number of the first template to test or -1 to start with the
      *            first template of the {@linkplain #assembly() assembly}.

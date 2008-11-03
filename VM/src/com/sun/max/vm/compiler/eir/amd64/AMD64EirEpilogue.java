@@ -74,7 +74,7 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
                 }
             } else if (eirMethod().classMethodActor().isTrapStub()) {
                 // we need to restore the entire register state from the stack before returning.
-                emitSignalHandlerStubEpilogue(asm, framePointer, eirMethod().frameSize());
+                emitTrapStubEpilogue(asm, framePointer, eirMethod().frameSize());
                 return;
             }
             if (frameSize != 0) {
@@ -83,10 +83,10 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
         }
     }
 
-    private void emitSignalHandlerStubEpilogue(final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int frameSize) {
-        // restore all the general purpose registers
-        final int originalFrameSize = frameSize - AMD64Safepoint.REGISTER_SAVE_SIZE_WITHOUT_RIP;
+    private void emitTrapStubEpilogue(final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int frameSize) {
+        final int originalFrameSize = frameSize - AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP;
         int offset = originalFrameSize;
+        // restore all the general purpose registers
         for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
             // all registers are the same as when the trap occurred (except the frame pointer)
             asm.mov(register, offset, framePointer.indirect());

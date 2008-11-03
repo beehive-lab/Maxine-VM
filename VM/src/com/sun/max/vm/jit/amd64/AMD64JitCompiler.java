@@ -364,6 +364,18 @@ public class AMD64JitCompiler extends JitCompiler {
     }
 
     private boolean walkFrameForReferenceMapPreparing(StackFrameWalker stackFrameWalker, TargetMethod targetMethod, Object context, FRAME_POINTER_STATE framePointerState) {
+        final Pointer trapState = stackFrameWalker.trapState();
+        if (!trapState.isZero()) {
+            FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
+            final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+            if (safepoint.getTrapNumber(trapState) == Trap.TrapNumber.STACK_FAULT) {
+                // There's no need to deal with the any references in a frame that triggered a stack overflow.
+                // The explicit stack banging code that causes a stack overflow trap is always in the
+                // prologue which is guaranteed not to be in the scope of a local exception handler.
+                // Thus, no GC roots need to be scanned in this frame.
+            }
+            return true;
+        }
         final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
         return targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, stackFrameWalker.instructionPointer(), stackFrameWalker.stackPointer(), localVariablesBase);
     }

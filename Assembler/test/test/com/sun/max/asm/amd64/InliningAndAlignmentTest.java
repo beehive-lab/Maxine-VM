@@ -33,9 +33,9 @@ import test.com.sun.max.asm.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.Assembler.*;
 import com.sun.max.asm.amd64.complete.*;
-import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.ide.*;
+import com.sun.max.lang.*;
 
 /**
  * @author David Liu
@@ -62,8 +62,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
     }
 
     private void disassemble(long startAddress, byte[] bytes, InlineDataDecoder inlineDataDecoder) throws IOException, AssemblyException {
-        final AMD64Disassembler disassembler = new AMD64Disassembler(startAddress);
-        disassembler.setInlineDataDecoder(inlineDataDecoder);
+        final AMD64Disassembler disassembler = new AMD64Disassembler(startAddress, inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(bytes));
         disassembler.scanAndPrint(stream, System.out);
     }
@@ -109,10 +108,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
 
     public void test_alignmentForExpiringCacheInit() throws IOException, AssemblyException {
         System.out.println("--- test_alignmentForExpiringCacheInit: ---");
-        final InlineDataManager inlineData = new InlineDataManager();
         final long startAddress = 0xfffffd7fbaadff18L;
         final byte[] bytes = assembleExpiringCacheInit(startAddress);
-        disassemble(startAddress, bytes, inlineData);
+        disassemble(startAddress, bytes, null);
     }
 
     private byte[] assembleInlinedData(final long startAddress, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
@@ -191,9 +189,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
 
     public void test_inlinedData() throws IOException, AssemblyException {
         System.out.println("--- test_inlinedData: ---");
-        final InlineDataManager inlineData = new InlineDataManager();
-        final byte[] bytes = assembleInlinedData(_startAddress, inlineData);
-        disassemble(_startAddress, bytes, inlineData);
+        final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
+        final byte[] bytes = assembleInlinedData(_startAddress, inlineDataRecorder);
+        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
     }
 
     private byte[] assembleAlignmentPadding(final long startAddress, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
@@ -295,9 +293,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
 
     public void test_alignmentPadding() throws IOException, AssemblyException {
         System.out.println("--- test_alignmentPadding: ---");
-        final InlineDataManager inlineData = new InlineDataManager();
-        final byte[] bytes = assembleAlignmentPadding(_startAddress, inlineData);
-        disassemble(_startAddress, bytes, inlineData);
+        final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
+        final byte[] bytes = assembleAlignmentPadding(_startAddress, inlineDataRecorder);
+        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
     }
 
     private byte[] assembleJumpAndAlignmentPadding(long startAddress, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
@@ -360,9 +358,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
 
     public void test_jumpAndAlignmentPadding() throws IOException, AssemblyException {
         System.out.println("--- test_jumpAndAlignmentPadding: ---");
-        final InlineDataManager inlineData = new InlineDataManager();
-        final byte[] bytes = assembleJumpAndAlignmentPadding(_startAddress, inlineData);
-        disassemble(_startAddress, bytes, inlineData);
+        final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
+        final byte[] bytes = assembleJumpAndAlignmentPadding(_startAddress, inlineDataRecorder);
+        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
     }
 
     private byte[] assembleInvalidInstructionDisassembly(long startAddress, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
@@ -395,63 +393,85 @@ public class InliningAndAlignmentTest extends MaxTestCase {
 
     public void test_invalidInstructionDisassembly() throws IOException, AssemblyException {
         System.out.println("--- test_invalidInstructionDisassembly: ---");
-        final InlineDataManager inlineData = new InlineDataManager();
-        final byte[] bytes = assembleInvalidInstructionDisassembly(_startAddress, inlineData);
-        disassemble(_startAddress, bytes, inlineData);
+        final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
+        final byte[] bytes = assembleInvalidInstructionDisassembly(_startAddress, inlineDataRecorder);
+        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
     }
 
-    private byte[] assembleSwitchTable(long startAddress, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
+    /**
+     * Assembles a switch table:
+     *
+     *  switch (rsi) {
+     *      case match0: rcx = match0; break;
+     *      ...
+     *      case matchN: rcx = matchN; break;
+     *  }
+     */
+    private byte[] assembleSwitchTable(long startAddress, int[] matches, InlineDataRecorder inlineDataRecorder) throws IOException, AssemblyException {
         final AMD64Assembler asm = new AMD64Assembler(startAddress);
-        final Label skip = new Label();
-        final Label table = new Label();
-        final Label case1 = new Label();
-        final Label case2 = new Label();
-        final Label case3 = new Label();
+        final Directives directives = asm.directives();
 
-        /*
-             switch (rsi) {
-                 case 0: rcx = 0xDEADBEEFDEADBEEFL; break;
-                 case 1: rcx = 0xCAFEBABECAFEBABEL; break;
-                 case 2: rcx = 0xFFFFFFFFFFFFFFFFL; break;
-             }
-         */
-        asm.mov(RSI, 1);
+        final Label end = new Label();
+        final Label table = new Label();
+        final Label[] matchTargets = new Label[matches.length];
+        for (int i = 0; i < matches.length; i++) {
+            matchTargets[i] = new Label();
+        }
+
+        final int min = Ints.min(matches);
+        final int max = Ints.max(matches);
+
+        if (min != 0) {
+            asm.subq(RSI, min);
+        }
+        final int numElements = max - min + 1;
+        asm.cmpq(RSI, numElements);
+        asm.jnb(end);
         asm.rip_lea(RBX, table);
         asm.movsxd(RSI, RBX_BASE, RSI_INDEX, SCALE_4);
         asm.add(RBX, RSI);
         asm.jmp(RBX);
         asm.nop();
 
-        asm.directives().align(4);
+        directives.align(4);
         asm.bindLabel(table);
-        asm.directives().inlineAddress(case1);
-        asm.directives().inlineAddress(case2);
-        asm.directives().inlineAddress(case3);
 
-        asm.directives().align(4);
-        asm.bindLabel(case1);
-        asm.mov(RCX, 0xDEADBEEFDEADBEEFL);
-        asm.jmp(skip);
-
-        asm.bindLabel(case2);
-        asm.mov(RCX, 0xCAFEBABECAFEBABEL);
-        asm.jmp(skip);
-
-        asm.bindLabel(case3);
-        asm.mov(RCX, 0xFFFFFFFFFFFFFFFFL);
-        asm.jmp(skip);
-
-        asm.bindLabel(skip);
+        for (int i = 0; i < matches.length; i++) {
+            directives.inlineOffset(matchTargets[i], table, WordWidth.BITS_32);
+            if (i + 1 < matches.length) {
+                // jump to 'end' for any "missing" entries
+                final int currentMatch = matches[i];
+                final int nextMatch = matches[i + 1];
+                for (int j = currentMatch + 1; j < nextMatch; j++) {
+                    directives.inlineOffset(end, table, WordWidth.BITS_32);
+                }
+            }
+        }
+        inlineDataRecorder.add(new InlineDataDescriptor.JumpTable32(table, min, max));
+        for (int i = 0; i < matches.length; i++) {
+            directives.align(4);
+            asm.bindLabel(matchTargets[i]);
+            asm.mov(RCX, matches[i]);
+            asm.jmp(end);
+        }
+        asm.bindLabel(end);
         asm.nop();
 
         return asm.toByteArray(inlineDataRecorder);
     }
 
     public void test_switchTable() throws IOException, AssemblyException {
-        System.out.println("--- testSwitchTable: ---");
-        final InlineDataManager inlineData = new InlineDataManager();
-        final byte[] bytes = assembleSwitchTable(_startAddress, inlineData);
-        disassemble(_startAddress, bytes, inlineData);
+        final int[][] inputs = {
+            new int[] {0, 1, 3, 4, 6, 7},
+            new int[] {3, 4, 6, 7, 10},
+            new int[] {-4, -2, 7, 10, 6}
+        };
+        for (int[] matches : inputs) {
+            System.out.println("--- testSwitchTable:{" + Ints.toString(matches, ", ") + "} ---");
+            final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
+            final byte[] bytes = assembleSwitchTable(_startAddress, matches, inlineDataRecorder);
+            disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
+        }
     }
 
     private void emitByte(AMD64Assembler asm) {
@@ -534,10 +554,10 @@ public class InliningAndAlignmentTest extends MaxTestCase {
 
     public void test_alignmentWithVariableLengthInstructions() throws IOException, AssemblyException {
         System.out.println("--- test_alignmentWithVariableLengthInstructions: ---");
-        final InlineDataManager inlineData = new InlineDataManager();
+        final InlineDataRecorder inlineDataRecorder = new InlineDataRecorder();
         assert _startAddress % 8 == 0;
-        final byte[] bytes = assembleAlignmentWithVariableLengthInstructions(_startAddress, inlineData);
-        disassemble(_startAddress, bytes, inlineData);
+        final byte[] bytes = assembleAlignmentWithVariableLengthInstructions(_startAddress, inlineDataRecorder);
+        disassemble(_startAddress, bytes, InlineDataDecoder.createFrom(inlineDataRecorder));
     }
 
 }

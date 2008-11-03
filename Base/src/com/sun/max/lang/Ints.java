@@ -180,4 +180,38 @@ public final class Ints {
     public static String toUnitsString(long number) {
         return Longs.toUnitsString(number);
     }
+
+    /**
+     * Computes the minimum value in an array of integers.
+     *
+     * @param ints the array of integers from which the minimum is computed. This array must have at least one element.
+     * @return the minimum value in {@code ints}
+     * @throws ArrayIndexOutOfBoundsException if {@code ints.length == 0}
+     */
+    public static int min(int[] ints) {
+        int min = ints[0];
+        for (int n : ints) {
+            if (n < min) {
+                min = n;
+            }
+        }
+        return min;
+    }
+
+    /**
+     * Computes the maximum value in an array of integers.
+     *
+     * @param ints the array of integers from which the maximum is computed. This array must have at least one element.
+     * @return the maximum value in {@code ints}
+     * @throws ArrayIndexOutOfBoundsException if {@code ints.length == 0}
+     */
+    public static int max(int[] ints) {
+        int max = ints[0];
+        for (int n : ints) {
+            if (n > max) {
+                max = n;
+            }
+        }
+        return max;
+    }
 }

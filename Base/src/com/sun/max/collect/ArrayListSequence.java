@@ -115,6 +115,11 @@ public class ArrayListSequence<Element_Type> extends ArrayList<Element_Type> imp
     }
 
     @Override
+    public Collection<Element_Type> toCollection() {
+        return this;
+    }
+
+    @Override
     public String toString() {
         return "<" + Sequence.Static.toString(this, null, ", ") + ">";
     }

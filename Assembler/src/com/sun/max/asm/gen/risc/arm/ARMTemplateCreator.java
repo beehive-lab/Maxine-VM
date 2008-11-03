@@ -26,10 +26,9 @@ import com.sun.max.asm.gen.risc.*;
 
 /**
  * ARM template creator.
- * 
+ *
  * @author Sumeet Panchal
  */
-
 public class ARMTemplateCreator extends RiscTemplateCreator<ARMTemplate> {
     ARMTemplateCreator() {
         super();
@@ -38,12 +37,5 @@ public class ARMTemplateCreator extends RiscTemplateCreator<ARMTemplate> {
     @Override
     protected ARMTemplate createTemplate(InstructionDescription instructionDescription) {
         return new ARMTemplate(instructionDescription);
-    }
-
-    @Override
-    protected ARMTemplate createInlineByteTemplate() {
-        final ARMTemplate template = new ARMTemplate(new RawInstructions(this).createInlineBytesInstructionDescription());
-        RiscInstructionDescriptionVisitor.Static.visitInstructionDescription(template, template.instructionDescription());
-        return template;
     }
 }

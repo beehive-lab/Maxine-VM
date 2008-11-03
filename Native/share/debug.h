@@ -44,7 +44,7 @@ extern void debug_print_long(jlong val);
 extern void debug_print_word(Address val);
 extern void debug_print_buffer(char *buffer);
 extern void debug_print_format(char *format, ...);
-extern void debug_print_newline();
+extern void debug_print_newline(void);
 extern void debug_print_float(float f);
 extern void debug_print_double(double d);
 
@@ -69,7 +69,6 @@ extern void debug_print_double(double d);
 
 #define DEBUG_LOADER 0
 #define DEBUG_TRAP 0
-#define DEBUG_TRAP_REGISTERS 0
 #define DEBUG_MONITOR 0
 #define DEBUG_LINKER 0
 #define DEBUG_JVMNI 0

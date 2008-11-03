@@ -24,53 +24,34 @@ package com.sun.max.asm.dis.arm;
 import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.risc.*;
-import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.arm.*;
 import com.sun.max.collect.*;
-
 
 /**
  *
  * @author Sumeet Panchal
  */
+public class ARMDisassembledInstruction extends RiscDisassembledInstruction<ARMTemplate> {
 
-public class ARMDisassembledInstruction extends RiscDisassembledInstruction<ARMTemplate> implements Address32Instruction {
-
-    private final Address32Instruction.Mixin _addressInstruction;
-
-    public ARMDisassembledInstruction(int startAddress, int position, byte[] bytes, ARMTemplate template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
-        _addressInstruction = new Address32Instruction.Mixin(this, startAddress);
+    public ARMDisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, ARMTemplate template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 
     @Override
-    public String externalName() {
-        final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startPosition(), null, null);
+    public String mnemonic() {
+        final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.name();
     }
 
     @Override
-    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String operandsToString(AddressMapper addressMapper) {
+        final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), null);
         return instruction.operands();
     }
 
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startPosition(), labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        final ARMExternalInstruction instruction = new ARMExternalInstruction(template(), arguments(), startAddress(), addressMapper);
         return instruction.toString();
     }
-
-    public int address() {
-        return _addressInstruction.address();
-    }
-
-    public String addressString() {
-        return _addressInstruction.addressString();
-    }
-
-    public int addressToPosition(ImmediateArgument argument) {
-        return _addressInstruction.addressToPosition(argument);
-    }
-
 }

@@ -197,15 +197,15 @@ public abstract class TeleTargetMethod extends TeleTupleObject implements TeleTa
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (_instructions == null) {
             initialize();
-            final Reference byteArrayReference = teleVM().fields().TargetMethod_code.readReference(reference());
-            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), byteArrayReference);
-            final byte[] code = teleByteArrayObject == null ? null : (byte[]) teleByteArrayObject.shallowCopy();
+            final Reference codeReference = teleVM().fields().TargetMethod_code.readReference(reference());
+            final TeleArrayObject teleCode = (TeleArrayObject) TeleObject.make(teleVM(), codeReference);
+            final byte[] code = teleCode == null ? null : (byte[]) teleCode.shallowCopy();
 
-            final Reference intArrayReference = teleVM().fields().TargetMethod_inlineDataPositions.readReference(reference());
-            final TeleArrayObject teleIntArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), intArrayReference);
-            final int[] inlineDataPositions = teleIntArrayObject == null ? null : (int[]) teleIntArrayObject.shallowCopy();
+            final Reference encodedInlineDataDescriptorsReference = teleVM().fields().TargetMethod_encodedInlineDataDescriptors.readReference(reference());
+            final TeleArrayObject teleEncodedInlineDataDescriptors = (TeleArrayObject) TeleObject.make(teleVM(), encodedInlineDataDescriptorsReference);
+            final byte[] encodedInlineDataDescriptors = teleEncodedInlineDataDescriptors == null ? null : (byte[]) teleEncodedInlineDataDescriptors.shallowCopy();
 
-            _instructions = TeleDisassembler.create(teleVM(), codeStart(), code, inlineDataPositions);
+            _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, encodedInlineDataDescriptors);
         }
         return _instructions;
     }

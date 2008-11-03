@@ -49,25 +49,6 @@ public final class SPARCSafepoint extends Safepoint {
     }
 
     /**
-     * Return the number of integer registers that need to be saved by safepoint traps.
-     * On Solaris / SPARC, we only need to save the %o and %g registers (excluding %g0), i.e., 15 registers.
-     * These are the only registers whose state is being stored in the ucontext data structure on Solaris / SPARC.
-     * The other integer registers (%i and %l) are already saved in the register window's saving area on the stack of the trapped context,
-     * and their location can be found using the stack pointer (%o6).
-     * However, because of the way the trap code is being written, we need to count %g0 so that the values of the GPR instances coincide with indices
-     * to the array of registers passed to the trap handlers.
-     */
-    @Override
-    public int numberOfIntegerRegisters() {
-        return 16;
-    }
-
-    @Override
-    public int numberOfFloatingPointRegisters() {
-        return 32;
-    }
-
-    /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
     private static final GPR _LATCH_REGISTER = G2;
@@ -76,11 +57,6 @@ public final class SPARCSafepoint extends Safepoint {
     @Override
     public GPR latchRegister() {
         return _LATCH_REGISTER;
-    }
-
-    @Override
-    public int latchRegisterIndex() {
-        return _LATCH_REGISTER.value();
     }
 
     private SPARCAssembler createAssembler() {
@@ -111,77 +87,32 @@ public final class SPARCSafepoint extends Safepoint {
         }
     });
 
-    private RuntimeStub create64BitPostSignalStub(CriticalMethod entryPoint, Venue venue) throws AssemblyException {
-/*        final SPARC64Assembler asm = new SPARC64Assembler(0);
-        final long address = entryPoint.address().toLong();
-        if (Longs.numberOfEffectiveSignedBits(address) > WordWidth.BITS_32.numberOfBits()) {
-            asm.setx(address, L1, L0);
-            asm.jmpl(L0, G0, O7);
-        } else {
-            asm.sethi(asm.hi(address), L0);
-            asm.jmpl(L0, asm.lo(address), O7);
-        }
-        asm.nop();
-        if (venue == Venue.JAVA) {
-            // Skip G0.
-            final int firstIndex = VmThreadLocal.REGISTERS.index() + 1;
-            for (GPR register : SIGNAL_INTEGER_REGISTER) {
-                final int offset = (firstIndex + register.value()) * Word.size();
-                assert Ints.numberOfEffectiveSignedBits(offset) <= 13;
-                asm.ldx(latchRegister(), offset, register);
-            }
-        }
-        // return to trapped instruction
-        asm.jmp(latchRegister(), VmThreadLocal.TRAP_INSTRUCTION_POINTER.index() * Word.size());
-        asm.nop();
-        return new SafepointStub(asm.toByteArray(), entryPoint.classMethodActor());
-*/
-        // TODO: post signal stubs are no longer necessary. Instead, generate a special prologue in EIR.
-        throw Problem.unimplemented();
-    }
-
-    private RuntimeStub create32BitPostSignalStub(CriticalMethod entryPoint, Venue venue) throws AssemblyException {
-/*        final SPARC32Assembler asm = new SPARC32Assembler(0);
-        final int address = entryPoint.address().toInt();
-        asm.sethi(asm.hi(address), L0);
-        asm.jmpl(L0, asm.lo(address), O7);
-        asm.nop();
-        if (venue == Venue.JAVA) {
-            // Skip G0.
-            final int firstIndex = VmThreadLocal.REGISTERS.index() + 1;
-            for (GPR register : SIGNAL_INTEGER_REGISTER) {
-                final int offset = (firstIndex + register.value()) * Word.size();
-                assert Ints.numberOfEffectiveSignedBits(offset) <= 13;
-                asm.ldsw(latchRegister(), offset, register);
-            }
-        }
-        // return to trapped instruction
-        asm.jmp(latchRegister(), VmThreadLocal.TRAP_INSTRUCTION_POINTER.index() * Word.size());
-        asm.nop();
-        return new SafepointStub(asm.toByteArray(), entryPoint.classMethodActor());
-*/
-        // TODO: post signal stubs are no longer necessary. Instead, generate a special prologue in EIR.
-        throw Problem.unimplemented();
-    }
-
     @Override
-    public Pointer getInstructionPointer(Pointer registerState) {
+    public Pointer getInstructionPointer(Pointer trapState) {
         throw Problem.unimplemented();
     }
     @Override
-    public Pointer getStackPointer(Pointer registerState, TargetMethod targetMethod) {
+    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
         throw Problem.unimplemented();
     }
     @Override
-    public Pointer getFramePointer(Pointer registerState, TargetMethod targetMethod) {
+    public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
         throw Problem.unimplemented();
     }
     @Override
-    public Pointer getSafepointLatch(Pointer registerState) {
+    public Pointer getSafepointLatch(Pointer trapState) {
         throw Problem.unimplemented();
     }
     @Override
-    public void setSafepointLatch(Pointer registerState, Pointer value) {
+    public void setSafepointLatch(Pointer trapState, Pointer value) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public Pointer getRegisterState(Pointer trapState) {
+        throw Problem.unimplemented();
+    }
+    @Override
+    public int getTrapNumber(Pointer trapState) {
         throw Problem.unimplemented();
     }
 }

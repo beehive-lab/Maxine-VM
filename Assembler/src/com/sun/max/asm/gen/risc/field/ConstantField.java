@@ -48,14 +48,16 @@ public class ConstantField extends RiscField {
         return new RiscConstant(this, value);
     }
 
+    public static ConstantField create(BitRangeOrder order, int... bits) {
+        return new ConstantField(BitRange.create(bits, order));
+    }
+
     public static ConstantField createAscending(int... bits) {
-        final BitRange bitRange = BitRange.create(bits, BitRangeOrder.ASCENDING);
-        return new ConstantField(bitRange);
+        return create(BitRangeOrder.ASCENDING, bits);
     }
 
     public static ConstantField createDescending(int... bits) {
-        final BitRange bitRange = BitRange.create(bits, BitRangeOrder.DESCENDING);
-        return new ConstantField(bitRange);
+        return create(BitRangeOrder.DESCENDING, bits);
     }
 
 }

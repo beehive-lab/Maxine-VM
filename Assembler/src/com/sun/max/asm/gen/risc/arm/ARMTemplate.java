@@ -24,15 +24,12 @@ package com.sun.max.asm.gen.risc.arm;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 
-
 /**
- * 
  *
  * @author Sumeet Panchal
  */
-
 public class ARMTemplate extends RiscTemplate {
-    ARMTemplate(InstructionDescription instructionDescription) {
+    public ARMTemplate(InstructionDescription instructionDescription) {
         super(instructionDescription);
     }
 }

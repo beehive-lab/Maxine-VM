@@ -45,9 +45,6 @@ import com.sun.max.vm.jni.*;
  * No parameter type or return type of VM entry or exit points may refer to object references - only primitive Java
  * values and 'Word' values are allowed.
  *
- * The  {@link #isInterruptHandler() element} prevents any use of safepoints or related machinery that depends on
- * a full Java thread state being available. It is used in the GuestVM port.
- *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Mick Jordan
@@ -56,9 +53,4 @@ import com.sun.max.vm.jni.*;
 @Target(ElementType.METHOD)
 public @interface C_FUNCTION {
     boolean isInterruptHandler() default false;
-
-    /**
-     * Determines if this C function is the special trap stub that saves the CPU state and restores it.
-     */
-    boolean isTrapStub() default false;
 }

@@ -21,11 +21,9 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -67,14 +65,6 @@ public class TupleReferenceMap {
         for (Integer offset : _offsets) {
             hub.setInt(index, offset);
             index++;
-        }
-    }
-
-    public static void visitOriginOffsets(Hub hub, Pointer origin, BeltWayPointerOffsetVisitor offsetVisitor, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        final int n = hub.referenceMapStartIndex() + hub.referenceMapLength();
-        for (int i = hub.referenceMapStartIndex(); i < n; i++) {
-            final int offset = hub.getInt(i);
-            offsetVisitor.visitPointerOffset(origin, offset, from, to);
         }
     }
 

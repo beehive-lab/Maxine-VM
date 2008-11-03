@@ -24,7 +24,7 @@ import com.sun.max.lang.*;
 
 /**
  * An instruction that addresses some data as an offset from itself.
- * 
+ *
  * @author Bernd Mathiske
  * @author Greg Wright
  * @author Doug Simon
@@ -41,20 +41,17 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
 
     /**
      * Creates an object representing an instruction that addresses some data as an offset from itself.
-     * 
-     * @param startPosition
-     *                the current position in the instruction stream of the instruction's first byte
-     * @param endPosition
-     *                the current position in the instruction stream one byte past the instruction's last byte
-     * @param label
-     *                a label representing the position referred to by this instruction
-     * @param validOffsetSizesMask
-     *                a mask of the offset sizes supported by a concrete instruction. This value must not be 0 and its
-     *                set of non-zero bits must be a subset of the non-zero bits of {@link #ALL_VALID_OFFSET_SIZES_MASK}.
-     *                The one-bit integer values (i.e. the powers of two) corresponding with each set bit in the mask
-     *                are the offset sizes for which there is an available concrete instruction. The concrete
-     *                instruction emitted once the label has been bound is the one with smallest offset size
-     *                that can represent the distance between the label's position and this instruction.
+     *
+     * @param startPosition the current position in the instruction stream of the instruction's first byte
+     * @param endPosition the current position in the instruction stream one byte past the instruction's last byte
+     * @param label a label representing the position referred to by this instruction
+     * @param validOffsetSizesMask a mask of the offset sizes supported by a concrete instruction. This value must not
+     *            be 0 and its set of non-zero bits must be a subset of the non-zero bits of
+     *            {@link #ALL_VALID_OFFSET_SIZES_MASK}. The one-bit integer values (i.e. the powers of two)
+     *            corresponding with each set bit in the mask are the offset sizes for which there is an available
+     *            concrete instruction. The concrete instruction emitted once the label has been bound is the one with
+     *            smallest offset size that can represent the distance between the label's position and this
+     *            instruction.
      */
     protected InstructionWithOffset(Assembler assembler, int startPosition, int endPosition, Label label, int validOffsetSizesMask) {
         super(assembler, startPosition, endPosition, label);
@@ -86,10 +83,13 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
 
     /**
      * Updates the size of this instruction's label based on the value bound to the label.
-     * 
+     *
      * @return true if the size of this instruction's label was changed
      */
     boolean updateLabelSize() throws AssemblyException {
+        if (_validOffsetSizesMask == 0) {
+            return false;
+        }
         int offsetSize = WordWidth.signedEffective(offset()).numberOfBytes();
         if (offsetSize > _offsetSize) {
             final int maxLabelSize = Integer.highestOneBit(_validOffsetSizesMask);

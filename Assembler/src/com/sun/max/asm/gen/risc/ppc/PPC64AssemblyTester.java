@@ -29,7 +29,7 @@ import com.sun.max.asm.ppc.complete.*;
 import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
@@ -46,7 +46,7 @@ public class PPC64AssemblyTester extends PPCAssemblyTester<PPC64DisassembledInst
 
     @Override
     protected PPC64Disassembler createTestDisassembler() {
-        return new PPC64Disassembler(0L);
+        return new PPC64Disassembler(0L, null);
     }
 
 }

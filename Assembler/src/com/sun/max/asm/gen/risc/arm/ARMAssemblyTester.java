@@ -73,7 +73,7 @@ public class ARMAssemblyTester extends RiscAssemblyTester<ARMTemplate, ARMDisass
 
     @Override
     protected ARMDisassembler createTestDisassembler() {
-        return new ARMDisassembler(0);
+        return new ARMDisassembler(0, null);
     }
 
 }

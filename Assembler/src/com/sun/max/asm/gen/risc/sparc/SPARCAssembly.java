@@ -69,11 +69,5 @@ public final class SPARCAssembly extends RiscAssembly<SPARCTemplate> {
         return creator.templates();
     }
 
-    @Override
-    protected SPARCTemplate createInlineByteTemplate() {
-        final SPARCTemplateCreator creator = new SPARCTemplateCreator();
-        return creator.createInlineByteTemplate();
-    }
-
     public static final SPARCAssembly ASSEMBLY = new SPARCAssembly();
 }

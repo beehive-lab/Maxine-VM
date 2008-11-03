@@ -39,17 +39,8 @@ import com.sun.max.util.*;
  */
 public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64DisassembledInstruction> {
 
-    private final long _startAddress;
-
-    public AMD64Disassembler(long startAddress) {
-        super(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
-        _startAddress = startAddress;
-        _instructionScanners.add(new AMD64SwitchDisassembler(this));
-    }
-
-    @Override
-    public Class<AMD64DisassembledInstruction> disassembledInstructionType() {
-        return AMD64DisassembledInstruction.class;
+    public AMD64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(new Immediate64Argument(startAddress), AMD64Assembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
@@ -59,12 +50,17 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
 
     @Override
     protected AMD64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, AMD64Template template, IndexedSequence<Argument> arguments) {
-        return new AMD64DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new AMD64DisassembledInstruction(this, position, bytes, template, arguments);
+    }
+
+    @Override
+    protected AMD64Template createInlineDataTemplate(Object[] specification) {
+        return new AMD64Template(new X86InstructionDescription(new ArraySequence<Object>(specification)), 0, null, null);
     }
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new AMD64Assembler(_startAddress + position);
+        return new AMD64Assembler(startAddress().asLong() + position);
     }
 
     private static Map<X86InstructionHeader, AppendableSequence<AMD64Template>> _headerToTemplates = X86InstructionHeader.createMapping(AMD64Assembly.ASSEMBLY, WordWidth.BITS_64);
@@ -72,14 +68,5 @@ public class AMD64Disassembler extends X86Disassembler<AMD64Template, AMD64Disas
     @Override
     protected Map<X86InstructionHeader, AppendableSequence<AMD64Template>> headerToTemplates() {
         return _headerToTemplates;
-    }
-
-    @Override
-    protected AMD64DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new AMD64DisassembledInstruction(_startAddress, position, bytes, AMD64Assembly.ASSEMBLY.inlineByteTemplate(), arguments);
     }
 }

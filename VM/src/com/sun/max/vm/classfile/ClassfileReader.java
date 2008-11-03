@@ -768,14 +768,6 @@ public class ClassfileReader {
                             } else if (annotationTypeDescriptor.equals(forJavaClass(C_FUNCTION.class))) {
                                 ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
                                 flags |= C_FUNCTION;
-                                for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
-                                    if (nameElementPair.name().equals("isTrapStub")) {
-                                        final AnnotationInfo.ValueElement valueElement = (AnnotationInfo.ValueElement) nameElementPair.element();
-                                        if (valueElement.value().toBoolean()) {
-                                            flags |= TRAP_STUB;
-                                        }
-                                    }
-                                }
                             } else if (annotationTypeDescriptor.equals(forJavaClass(NO_SAFEPOINTS.class))) {
                                 flags |= NO_SAFEPOINTS;
                             } else if (annotationTypeDescriptor.equals(forJavaClass(BUILTIN.class))) {
