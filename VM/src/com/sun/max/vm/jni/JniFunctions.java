@@ -1916,8 +1916,11 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
-        Problem.unimplemented();
-        return 0;
+        final int tag = JniHandles.tag(obj);
+        if (tag == JniHandles.Tag.STACK) {
+            return JniHandles.Tag.LOCAL;
+        }
+        return tag;
     }
 
 
