@@ -248,7 +248,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 if (!trapState.isZero()) {
                     FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
                     final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
-                    if (safepoint.getTrapNumber(trapState) == Trap.TrapNumber.STACK_FAULT) {
+                    if (safepoint.getTrapNumber(trapState) == Trap.Number.STACK_FAULT) {
                         // There's no need to deal with the any references in a frame that triggered a stack overflow.
                         // The explicit stack banging code that causes a stack overflow trap is always in the
                         // prologue which is guaranteed not to be in the scope of a local exception handler.

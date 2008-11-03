@@ -35,7 +35,7 @@ import com.sun.max.vm.runtime.*;
 /**
  * The safepoint implementation for AMD64 defines the safepoint code that is injected at safepoint sites,
  * as well as the {@linkplain #latchRegister() latch register}, and the layout and size of a trap state
- * area. A trap state area contains the {@linkplain Trap.TrapNumber trap number} and the values of the
+ * area. A trap state area contains the {@linkplain Trap.Number trap number} and the values of the
  * processor's registers when a trap occurs. A trap state area is embedded in each trap stub's frame as follows:
  *
  * <pre>
