@@ -252,7 +252,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     }
 
     /* save the trap information in the disabled vm thread locals */
-    Address *trapInfo = (Address*)disabledVmThreadLocals + image_header()->vmThreadLocalsTrapNumberOffset;
+    Address *trapInfo = (Address*) (disabledVmThreadLocals + image_header()->vmThreadLocalsTrapNumberOffset);
     trapInfo[0] = trapNumber;
     trapInfo[1] = getInstructionPointer(ucontext);
     trapInfo[2] = getFaultAddress(signalInfo, ucontext);
