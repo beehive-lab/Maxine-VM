@@ -260,7 +260,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
                         trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
                         stackFrameWalker.setTrapState(trapState);
-                        if (safepoint.getTrapNumber(trapState) != Trap.TrapNumber.STACK_FAULT) {
+                        if (safepoint.getTrapNumber(trapState) != Trap.Number.STACK_FAULT) {
                             // Only scan with references in registers for a caller that did not trap due to stack overflow - see comment above.
                             // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
                             final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
