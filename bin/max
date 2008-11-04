@@ -17,13 +17,61 @@
 #
 # Author: Doug Simon
 
-# Non-optional variables must be set
+verbose=false
+unknown_option=""
+show_help=false
+default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
+jvm_args="$default_jvm_args"
+while [ "${1:0:1}" = "-" ]; do
+    case $1 in
+        -v )
+            verbose=true
+            ;;
+        -d )
+            set -x
+            ;;
+        -h )
+            show_help=true
+            ;;
+        -java_home )
+            shift
+            JAVA_HOME=$1
+            ;;
+        -maxine_home )
+            shift
+            MAXINE_HOME=$1
+            ;;
+        -junit4 )
+            shift
+            JUNIT4_CP=$1
+            ;;
+        -jvm )
+            shift
+            jvm=$1
+            ;;
+        -jvm_args )
+            shift
+            jvm_args=$1
+            ;;
+        * )
+            unknown_option=$1
+            break
+            ;;
+    esac
+    shift
+done
+command=$1
+shift
+command_args="$@"
+
+
+# Ensure that the non-optional variables are set
 test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
 test -n "${MAXINE_HOME}" || { echo "MAXINE_HOME must be set to the base directory of the Maxine code base"; exit 1; }
 
 # Undefined optional variables are set to defaults
-test -n "${JAVA}" || JAVA="${JAVA_HOME}/bin/java -ea -Xss2m -Xms1G -Xmx2G"
-test -n "${JAVAC}" || JAVAC="${JAVA_HOME}/bin/javac -g -J-Xmx1024m -classpath ${CLASSPATH} -d ../bin"
+test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
+jvm="$jvm $jvm_args"
 
 if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
@@ -38,28 +86,158 @@ if [ -z "${MAXINE_OS}" ]; then
     fi
 fi
 
-MAXINE_CLASSPATH=${MAXINE_HOME}/Base/bin
-MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/Assembler/bin
-MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/VM/bin
-MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/Tele/bin
-MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/VMDI/bin
-MAXINE_CLASSPATH=${MAXINE_CLASSPATH}:${MAXINE_HOME}/Inspector/bin
-MAXVM=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxvm
+# The set of projects whose sources are to be compiled. The order of this list must
+# reflect any dependencies between the projects (i.e. if x depends on y, then y must
+# precede x in the list).
+projects=( \
+    Base:src,test,shell   \
+    Assembler:src,test    \
+    VM:src,test           \
+    VMDI:src              \
+    Tele:src              \
+    JDWP:src              \
+    TeleJDWP:src          \
+    Inspector:src,test    \
+)
+
+maxine_cp=${JAVA_HOME}/lib/tools.jar
+for project in ${projects[@]}; do
+    project_dir=${project/:*/}
+    maxine_cp=${maxine_cp}:${MAXINE_HOME}/${project_dir}/bin
+done
+
+maxine_vm=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxvm
+
+function describe_build() {
+    echo "compile the Maxine Java and C sources, linking the latter";
+}
+
+function describe_build() {
+    echo "compile the Maxine Java and C sources, linking the latter"
+}
+
+function run_build() {
+    javac=${JAVA_HOME}/bin/javac
+    make=gmake
+    show_build_help=false
+    native_only=false
+    exit_after_help=false
+	while [ "$1" != "" ]; do
+	    case $1 in
+	        -h )
+	            show_build_help=true
+	            ;;
+	        -native )
+	            native_only=true
+	            ;;
+	        -make )
+	            shift
+	            make=$1
+	            ;;
+	        -javac )
+	            shift
+	            javac=$1
+	            ;;
+	        -junit4 )
+	            shift
+	            JUNIT4_CP=$1
+	            ;;
+	        * )
+	            echo "unknown build option '$1'"
+	            show_build_help=true
+	            break
+	            ;;
+	    esac
+	    shift
+	done
+	
+	if $show_build_help ; then
+	    echo "Usage: build [-options]"
+	    echo
+	    echo "where options include:"
+	    echo " -make      path to GNU make executable (default: gmake)"
+	    echo " -java      path to Java source compiler (default: ${JAVA_HOME}/bin/javac"
+	    echo " -junit4    class path for Junit 4 classes"
+	    echo " -native    only compile the C sources"
+	    return
+	fi
+	
+    test -n "${JUNIT4_CP}" || { echo "JUNIT4_CP must specify a class path for Junit4 classes"; exit 1; }
+	maxine_cp=${maxine_cp}:/${JUNIT4_CP}
+
+    # Compile C sources
+    echo "Compiling C sources in ${MAXINE_HOME}/Native..."
+    ( cd ${MAXINE_HOME}/Native
+      $make clean
+      $make
+    )
+    if $native_only ; then
+        return;
+    fi
+        
+    # Compile Java sources
+    for project in ${projects[@]}; do
+        project_dir=${project/:*/}
+        rm -rf ${MAXINE_HOME}/${project_dir}/bin
+        mkdir ${MAXINE_HOME}/${project_dir}/bin
+
+		source_dirs_spec=${project/*:/}
+		source_dirs=${source_dirs_spec//,/ }        
+        for source_dir in ${source_dirs} ; do
+            ( cd ${MAXINE_HOME}/${project_dir}/${source_dir}
+              cmd="${javac} -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`"
+              echo "Compiling Java sources in ${MAXINE_HOME}/${project_dir}/${source_dir}..."
+			  if $verbose ; then
+			      echo $cmd
+			  fi
+              # The awk script filters out the warnings about using Sun proprietary API
+			  eval $cmd 2>&1 | awk 'BEGIN { c=-1} /is Sun proprietary API/ { c=2; } { if (c-- >= 0) next; print; }'
+            )
+            result=$?
+            if [ $result -ne 0 ]; then
+                exit $result
+            fi
+        done
+    done
+}
+
+function describe_image () {
+    echo "build a VM image"
+}
+
+function run_image() {
+    cmd="${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -build=DEBUG -run=java $@"
+    if $verbose ; then
+        echo $cmd
+    fi
+    eval $cmd
+}
 
 function describe_vm() {
     echo "launch the Maxine VM"
 }
 
 function run_vm() {
-    ARGS=$@
-    if [ -n "`echo $ARGS | grep '\-XX:LogFile='`" ]; then
-        MAXINE_LOG_FILE=`echo $ARGS | sed 's/.*-XX:LogFile=\([^ ]*\).*/\1/g'`
-        export MAXINE_LOG_FILE
-        ARGS="`echo $ARGS | sed 's/\(.*\)-XX:LogFile=[^ ]*\(.*\)/\1 \2/g'`"
+    vm_args=""
+	while [ "$1" != "" ]; do
+	    case $1 in
+	        -XXLogFile=*)
+	            MAXINE_LOG_FILE=${1/*=/}
+			    if $verbose ; then
+       				echo "MAXINE_LOG_FILE=$MAXINE_LOG_FILE"
+   				fi
+	            export MAXINE_LOG_FILE
+	            ;;
+	        *)
+	            vm_args="$vm_args $1"
+	            ;;
+        esac
+    done    
+    cmd="${maxine_vm} $vm_args"
+    if $verbose ; then
+        echo $cmd
     fi
-   cmd="${MAXVM} $ARGS"
-   #echo $cmd
-   eval $cmd
+    eval $cmd
 }
 
 function describe_javap() {
@@ -67,7 +245,11 @@ function describe_javap() {
 }
 
 function run_javap() {
-    ${JAVA_HOME}/bin/javap -private -verbose -classpath ${MAXINE_CLASSPATH}:${JCK_CLASSPATH} "$@"
+    cmd="${JAVA_HOME}/bin/javap -private -verbose -classpath ${maxine_cp}:${JCK_CLASSPATH} $@"
+    if $verbose ; then
+        echo $cmd
+    fi
+    eval $cmd
 }
 
 function describe_dis() {
@@ -77,7 +259,11 @@ function describe_dis() {
 function run_dis() {
     TMP_DIR=/tmp/${USER}/generated.$$
     mkdir -p ${TMP_DIR}
-    ${JAVA} -d64 -cp ${MAXINE_CLASSPATH} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
+    cmd="${jvm} -d64 -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap $@"
+    if $verbose ; then
+        echo $cmd
+    fi
+    eval $cmd
     rm -rf ${TMP_DIR}
 }
 
@@ -85,22 +271,39 @@ function describe_jtest() {
     echo "run the Java Tester"
 }
 function run_jtest() {
-    MAIN_CLASS=test.com.sun.max.vm.compiler.JavaTester
-    if [ -z "`echo $@ | grep '\-\-'`" ]; then
-        echo "Usage: $0 <VM options> -- <Java Tester options>"
-        exit 1;
+    vm_args=""
+    jtester_args=""
+	while [ "$1" != "" ]; do
+	    case $1 in
+	        -- )
+	            shift
+	            jtester_args="$@"
+	            break
+	            ;;
+	        -h )
+                echo "Usage: jtest <VM options> -- <Java Tester options>"
+                return
+	            ;;
+	        * )
+	            vm_args="$vmargs $1"
+	            ;;
+	    esac
+	    shift
+	done
+    cmd="${maxine_vm} -classpath ${MAXINE_HOME}/Base/bin:${MAXINE_HOME}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args"
+    if $verbose ; then
+        echo $cmd
     fi
-    cmd=`echo "${MAXVM} -classpath ${MAXINE_HOME}/Base/bin:${MAXINE_HOME}/VM/bin $@" | sed 's:--:'${MAIN_CLASS}:g`
-    #echo $cmd
     eval $cmd
 }
 
+
 function describe_hw() {
-    echo "run the basic 'hello world' program on the Maxine VM"
+    echo "run a basic 'hello world' program on the Maxine VM"
 }
 
 function run_hw() {
-    ${MAXVM} -classpath ${MAXINE_HOME}/VM/bin $@ util.HelloWorld
+    ${maxine_vm} -classpath ${MAXINE_HOME}/VM/bin $@ util.HelloWorld
 }
 
 function describe_otree() {
@@ -108,7 +311,7 @@ function describe_otree() {
 }
 
 function run_otree() {
-    ${JAVA} -cp ${MAXINE_CLASSPATH} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 function describe_mtree() {
@@ -116,7 +319,7 @@ function describe_mtree() {
 }
 
 function run_mtree() {
-    ${JAVA} -cp ${MAXINE_CLASSPATH} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 function describe_maxinetester() {
@@ -124,7 +327,7 @@ function describe_maxinetester() {
 }
 
 function run_maxinetester() {
-    ${JAVA} -cp ${MAXINE_CLASSPATH} test.com.sun.max.vm.MaxineTester "$@"
+    ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester "$@"
 }
 
 function showCommands() {
@@ -134,31 +337,52 @@ function showCommands() {
     echo "Maxine Launcher"
     echo
     echo "available commands:"
-    for RUN_COMMAND in `declare -Ff | grep 'run_' | cut -d ' ' -f 3 | sort`; do
-        COMMAND="`echo $RUN_COMMAND | sed 's:run_::g'`"
-        DESCRIBE_COMMAND="`echo $RUN_COMMAND | sed 's:run_:describe_:g'`"
-        if [ "`type -t ${DESCRIBE_COMMAND}`" = "function" ]; then
-            echo -e " ${COMMAND}\t `eval ${DESCRIBE_COMMAND}`"
+    for run_command in `declare -Ff | grep 'run_' | cut -d ' ' -f 3 | sort`; do
+        command="`echo $run_command | sed 's:run_::g'`"
+        describe_command="`echo $run_command | sed 's:run_:describe_:g'`"
+        if [ "`type -t ${describe_command}`" = "function" ]; then
+            echo -e " ${command}\t `eval ${describe_command}`"
         else
-            echo -e " ${COMMAND}\t [no description available]"
+            echo -e " ${command}\t [no description available]"
         fi
     done
+    echo
+    echo "global options:"
+    echo " -v           enable verbose output"
+    echo " -d           enable debug output"
+    echo " -h           show launcher help"
+    echo " -java_home   specifies JDK installation directory (must be JDK 6 or later)"
+    echo "                (default: value of the JAVA_HOME environment variable)"
+    echo " -jvm         specifies Java VM executable (default: bin/java in JDK)"
+    echo " -jvm_args    specifies Java VM arguments (default: ${default_jvm_args})"
+    echo " -maxine_home specifies base directory of Maxine code base"
+    echo "                (default: value of the MAXINE_HOME environment variable)"
+    echo " -junit4      specifies classpath for Junit 4 classes"
+    echo "                (default: value of the JUNIT4_CP environment variable)"
 }
 
-if [ $# -eq 0 ]; then
+if [ -n "${unknown_option}" ]; then
+    showCommands "max: unknown global option '${unknown_option}'"
+    exit 255
+fi
+
+if $show_help ; then
     showCommands ""
     exit 0
 fi
 
-COMMAND=$1
-RUN_COMMAND="run_${COMMAND}"
+if [ -z "${command}" ]; then
+    showCommands ""
+    exit 0
+fi
+
+run_command="run_${command}"
 shift
 
-COMMAND_TYPE=`type -t ${RUN_COMMAND}`
-if [ "${COMMAND_TYPE}" != "function" ]; then
-    showCommands "max: unknown command '${COMMAND}'"
+command_type=`type -t ${run_command}`
+if [ "${command_type}" != "function" ]; then
+    showCommands "max: unknown command '${command}'"
     exit 255
 fi
 
-#echo $RUN_COMMAND "$@"
-eval $RUN_COMMAND "$@"
+eval $run_command $command_args
