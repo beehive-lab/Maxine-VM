@@ -203,7 +203,7 @@ static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #endif
 }
 
-#if DEBUG_TRAP
+#if debug_TRAP
 char *signalName(int signal) {
     switch (signal) {
     case SIGSEGV: return "SIGSEGV";
@@ -222,7 +222,7 @@ static int isInGuardZone(Address address, Address zoneBegin) {
 }
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
-#if DEBUG_TRAP
+#if debug_TRAP
     debug_println("SIGNAL: %0d", signal);
 #endif
     thread_Specifics *threadSpecifics = (thread_Specifics *) thread_currentSpecifics();
@@ -258,7 +258,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     trapInfo[2] = getFaultAddress(signalInfo, ucontext);
     trapInfo[3] = (Address)*stackPointer;
 
-#if DEBUG_TRAP
+#if debug_TRAP
     char *sigName = signalName(signal);
     if (sigName != NULL) {
         debug_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
@@ -272,7 +272,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
     *stackPointer = (Word)disabledVmThreadLocals;
 
-#if DEBUG_TRAP
+#if debug_TRAP
     debug_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
 #endif
     setInstructionPointer(ucontext, _javaTrapStub);

@@ -98,7 +98,7 @@ static void readHeader(int fd) {
 	from = (jint *) &rawHeaderStruct;
 #else
 	from = (jint *) &maxvm_image_start;
-#if DEBUG_LOADER
+#if debug_LOADER
 	debug_println("image.readHeader @ 0x%x,", &maxvm_image_start);
 #endif
 #endif
@@ -147,7 +147,7 @@ static void readStringInfo(int fd) {
 #else
     _stringInfoData = ((char *) &maxvm_image_start + sizeof(struct image_Header));
 #endif
-#if DEBUG_LOADER
+#if debug_LOADER
 	 debug_println("image.readStringInfo @ 0x%x", _stringInfoData);
 #endif
 	p = (char **) _stringInfo;
@@ -173,7 +173,7 @@ static char *endiannessToString(jint isBigEndian) {
 }
 
 static void checkImage(void) {
-#if DEBUG_LOADER
+#if debug_LOADER
 	debug_println("image.checkImage");
 #endif
 	if ((_header->isBigEndian != 0) != word_BIG_ENDIAN) {
@@ -241,7 +241,7 @@ static void checkTrailer(int fd) {
       debug_exit(1, "could not read trailer");
     }
  #else
-#if DEBUG_LOADER
+#if debug_LOADER
    debug_println("image.checkTrailer offset: %d", trailerOffset);
 #endif
    trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_start) + trailerOffset);
@@ -283,7 +283,7 @@ Address image_code(void) {
 
 static void mapHeapAndCode(int fd) {
     int fileOffset = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize);
-#if DEBUG_LOADER
+#if debug_LOADER
     debug_println("image.mapHeapAndCode");
 #endif
 #if MEMORY_IMAGE
@@ -300,7 +300,7 @@ static void mapHeapAndCode(int fd) {
     if (_heap == 0) {
       debug_exit(4, "could not reserve boot image");
     }
-#if DEBUG_LOADER
+#if debug_LOADER
     debug_println("reserved 1 TB at %p", _heap);
     debug_println("reserved address space ends at %p", _heap + TERA_BYTE);
 #endif
@@ -318,7 +318,7 @@ static void mapHeapAndCode(int fd) {
 static void relocate(int fd) {
    off_t wantedFileOffset;
     Byte *relocationData;
-#if DEBUG_LOADER
+#if debug_LOADER
 	debug_println("image.relocate");
 #endif
 #if !MEMORY_IMAGE
@@ -366,7 +366,7 @@ int image_load(char *imageFileName) {
 	}
 	int fd = -1;
 #if !MEMORY_IMAGE
-#if DEBUG_LOADER
+#if debug_LOADER
 	 debug_println("reading image from %s", imageFileName);
 #endif
     fd = open(imageFileName, O_RDWR);
@@ -380,11 +380,11 @@ int image_load(char *imageFileName) {
     readStringInfo(fd);
     checkTrailer(fd);
 	mapHeapAndCode(fd);
-#if DEBUG_LOADER
+#if debug_LOADER
 	 debug_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
 #endif
     relocate(fd);
-#if DEBUG_LOADER
+#if debug_LOADER
 	 debug_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
 #endif
     return fd;
@@ -392,7 +392,7 @@ int image_load(char *imageFileName) {
 
 Address nativeGetEndOfCodeRegion(){
 	Address addr = _codeEnd + _header->codeCacheSize ;
-#if DEBUG_LOADER
+#if debug_LOADER
 	debug_println("nativeGetEndOfCodeRegion: end of boot region @ %p code cache size %ld code end  %p", addr, _header->codeCacheSize, _codeEnd);
 #endif
 	return addr;
