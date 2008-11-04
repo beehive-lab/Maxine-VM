@@ -128,13 +128,11 @@ function run_build() {
     show_build_help=false
     native_only=false
     exit_after_help=false
+    projects_to_build=""
 	while [ "$1" != "" ]; do
 	    case $1 in
 	        -h )
 	            show_build_help=true
-	            ;;
-	        -native )
-	            native_only=true
 	            ;;
 	        -make )
 	            shift
@@ -148,14 +146,23 @@ function run_build() {
 	            shift
 	            JUNIT4_CP=$1
 	            ;;
-	        * )
+	        -* )
 	            echo "unknown build option '$1'"
 	            show_build_help=true
 	            break
 	            ;;
+	        * )
+	            projects_to_build="$projects_to_build $1"
+	            ;;
 	    esac
 	    shift
 	done
+	if [ -z "$projects_to_build" ]; then
+        for project in ${projects[@]}; do
+            project_dir=${project/:*/}
+            projects_to_build="$projects_to_build $project_dir"
+        done
+    fi
 	
 	if $show_build_help ; then
 	    echo "Usage: build [-options]"
@@ -164,7 +171,6 @@ function run_build() {
 	    echo " -make      path to GNU make executable (default: gmake)"
 	    echo " -java      path to Java source compiler (default: ${JAVA_HOME}/bin/javac"
 	    echo " -junit4    class path for Junit 4 classes"
-	    echo " -native    only compile the C sources"
 	    return
 	fi
 	
@@ -172,19 +178,19 @@ function run_build() {
 	maxine_cp=${maxine_cp}:/${JUNIT4_CP}
 
     # Compile C sources
-    echo "Compiling C sources in ${MAXINE_HOME}/Native..."
-    ( cd ${MAXINE_HOME}/Native
-      $make
-    )
-    if $native_only ; then
-        return;
+    if [[ "$projects_to_build" == *Native* ]]; then
+        echo "Compiling C sources in ${MAXINE_HOME}/Native..."
+        ( cd ${MAXINE_HOME}/Native; $make; )
     fi
         
     # Compile Java sources
     for project in ${projects[@]}; do
         project_dir=${project/:*/}
-        rm -rf ${MAXINE_HOME}/${project_dir}/bin
-        mkdir ${MAXINE_HOME}/${project_dir}/bin
+        if [[ "$projects_to_build" != *${project_dir}* ]]; then
+            continue
+        fi
+        rm -rf ${MAXINE_HOME}/${project_dir}/bin/*
+        mkdir -p ${MAXINE_HOME}/${project_dir}/bin
 
 		source_dirs_spec=${project/*:/}
 		source_dirs=${source_dirs_spec//,/ }        
@@ -196,9 +202,10 @@ function run_build() {
 			      echo $cmd
 			  fi
 			  eval $cmd
-              echo "Copying non-Java source file resources..."
 			  for file in `find . -type f | grep -v '.java$'`; do
-			      cp $f ../bin/$f
+			      if [ -d ../bin/$(dirname $file) ]; then
+			         cp $file ../bin/$file
+			      fi
 			  done
             )
             result=$?
@@ -229,7 +236,7 @@ function run_vm() {
     vm_args=""
 	while [ "$1" != "" ]; do
 	    case $1 in
-	        -XXLogFile=*)
+	        -XX:LogFile=*)
 	            MAXINE_LOG_FILE=${1/*=/}
 			    if $verbose ; then
        				echo "MAXINE_LOG_FILE=$MAXINE_LOG_FILE"
@@ -240,6 +247,7 @@ function run_vm() {
 	            vm_args="$vm_args $1"
 	            ;;
         esac
+        shift
     done    
     cmd="${maxine_vm} $vm_args"
     if $verbose ; then
