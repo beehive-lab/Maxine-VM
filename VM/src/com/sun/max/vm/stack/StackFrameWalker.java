@@ -112,6 +112,7 @@ public abstract class StackFrameWalker {
 
         checkPurpose(purpose, context);
 
+        _trapState = Pointer.zero();
         _purpose = purpose;
         _instructionPointer = instructionPointer;
         _framePointer = framePointer;
@@ -371,6 +372,7 @@ public abstract class StackFrameWalker {
      */
     @INLINE
     public final void reset() {
+        _trapState = Pointer.zero();
         _stackPointer = Pointer.zero();
         _purpose = null;
     }
