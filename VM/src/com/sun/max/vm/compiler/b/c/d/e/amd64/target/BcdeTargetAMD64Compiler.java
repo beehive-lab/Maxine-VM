@@ -248,7 +248,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 if (!trapState.isZero()) {
                     FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
                     final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
-                    if (safepoint.getTrapNumber(trapState) == Trap.TrapNumber.STACK_FAULT) {
+                    if (safepoint.getTrapNumber(trapState) == Trap.Number.STACK_FAULT) {
                         // There's no need to deal with the any references in a frame that triggered a stack overflow.
                         // The explicit stack banging code that causes a stack overflow trap is always in the
                         // prologue which is guaranteed not to be in the scope of a local exception handler.
@@ -260,7 +260,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
                         trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
                         stackFrameWalker.setTrapState(trapState);
-                        if (safepoint.getTrapNumber(trapState) != Trap.TrapNumber.STACK_FAULT) {
+                        if (safepoint.getTrapNumber(trapState) != Trap.Number.STACK_FAULT) {
                             // Only scan with references in registers for a caller that did not trap due to stack overflow - see comment above.
                             // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
                             final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();

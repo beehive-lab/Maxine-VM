@@ -76,7 +76,7 @@ void threads_initialize() {
 
 thread_Specifics *thread_currentSpecifics() {
 #   if os_DARWIN || os_LINUX
-        return (thread_Specifics) pthread_getspecific(_specificsKey);
+        return (thread_Specifics*) pthread_getspecific(_specificsKey);
 #   elif os_SOLARIS
         thread_Specifics *value;
         int result = thr_getspecific(_specificsKey, &value);
@@ -85,7 +85,7 @@ thread_Specifics *thread_currentSpecifics() {
         }
         return value;
 #   elif os_GUESTVMXEN
-        return (thread_Specifics) guestvmXen_thread_getSpecific(_specificsKey);
+        return (thread_Specifics*) guestvmXen_thread_getSpecific(_specificsKey);
 #   else
 #       error Unimplemented
 #   endif
@@ -215,8 +215,8 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread_with_stack("java_thread",
 		thread_runJava,
-		threadSpecifics->stackBase,
-	        threadSpecifics->stackSize,
+		(void*) threadSpecifics->stackBase,
+	    threadSpecifics->stackSize,
 		priority,
 		threadSpecifics);
 #elif (os_LINUX || os_DARWIN)

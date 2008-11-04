@@ -51,10 +51,10 @@
     extern void guestvmXen_set_javaId(guestvmXen_Thread, int id);
 
 
-    typedef unsigned int guestvmXen_ThreadKey;
-    extern void* guestvmXen_thread_getSpecific(guestvmXen_ThreadKey key);
-    extern void guestvmXen_thread_setSpecific(guestvmXen_ThreadKey key, void *value);
-    extern int guestvmXen_thread_initializeThreadKey(guestvmXen_ThreadKey *key, void (*destructor)(void *));
+    typedef unsigned int guestvmXen_SpecificsKey;
+    extern void* guestvmXen_thread_getSpecific(guestvmXen_SpecificsKey key);
+    extern void guestvmXen_thread_setSpecific(guestvmXen_SpecificsKey key, void *value);
+    extern int guestvmXen_thread_initializeSpecificsKey(guestvmXen_SpecificsKey *key, void (*destructor)(void *));
     extern int guestvmXen_numProcessors(void);
 
     struct fault_regs {
