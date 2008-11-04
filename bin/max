@@ -4,9 +4,10 @@
 # of running the Maxine VM and utilities by setting up the necessary class paths
 # and executable paths. The only requirement is for the user to have set the
 # environment variable MAXINE_HOME to point to the Maxine code base and JAVA_HOME
-# to point to a JDK installation directory.
+# to point to a JDK installation directory. The '-java_home' and '-maxine_home'
+# global options can be used instead.
 #
-# To add a new lauchable command, write two functions named 'run_<command>' and
+# To add a new launchable command, write two functions named 'run_<command>' and
 # 'describe_<command>'. See the existing commands for examples. Once added, the
 # command can be launched as follows:
 #
@@ -64,7 +65,6 @@ command=$1
 shift
 command_args="$@"
 
-
 # Ensure that the non-optional variables are set
 test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
 test -n "${MAXINE_HOME}" || { echo "MAXINE_HOME must be set to the base directory of the Maxine code base"; exit 1; }
@@ -72,6 +72,12 @@ test -n "${MAXINE_HOME}" || { echo "MAXINE_HOME must be set to the base director
 # Undefined optional variables are set to defaults
 test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
 jvm="$jvm $jvm_args"
+
+java_version="`$jvm -version 2>&1 | head -1 | cut -d '"' -f2`"
+if [[ "$java_version" != 1.6* ]]; then
+    echo "JAVA_HOME does not denote a JDK 6 installation: $java_version"
+    exit 255
+fi 
 
 if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
@@ -168,7 +174,6 @@ function run_build() {
     # Compile C sources
     echo "Compiling C sources in ${MAXINE_HOME}/Native..."
     ( cd ${MAXINE_HOME}/Native
-      $make clean
       $make
     )
     if $native_only ; then
@@ -190,8 +195,11 @@ function run_build() {
 			  if $verbose ; then
 			      echo $cmd
 			  fi
-              # The awk script filters out the warnings about using Sun proprietary API
-			  eval $cmd 2>&1 | awk 'BEGIN { c=-1} /is Sun proprietary API/ { c=2; } { if (c-- >= 0) next; print; }'
+			  eval $cmd
+              echo "Copying non-Java source file resources..."
+			  for file in `find . -type f | grep -v '.java$'`; do
+			      cp $f ../bin/$f
+			  done
             )
             result=$?
             if [ $result -ne 0 ]; then
@@ -353,7 +361,7 @@ function showCommands() {
     echo " -h           show launcher help"
     echo " -java_home   specifies JDK installation directory (must be JDK 6 or later)"
     echo "                (default: value of the JAVA_HOME environment variable)"
-    echo " -jvm         specifies Java VM executable (default: bin/java in JDK)"
+    echo " -jvm         specifies Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -jvm_args    specifies Java VM arguments (default: ${default_jvm_args})"
     echo " -maxine_home specifies base directory of Maxine code base"
     echo "                (default: value of the MAXINE_HOME environment variable)"
