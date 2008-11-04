@@ -67,12 +67,12 @@ extern void debug_print_double(double d);
 #define ADDRESS_FORMAT "0x%08x"
 #endif
 
-#define DEBUG_LOADER 0
-#define DEBUG_TRAP 0
-#define DEBUG_MONITOR 0
-#define DEBUG_LINKER 0
-#define DEBUG_JVMNI 0
-#define DEBUG_THREADS 0
-#define DEBUG_INSPECTOR_NATIVE 0
+#define debug_LOADER 0
+#define debug_TRAP 0
+#define debug_MONITOR 0
+#define debug_LINKER 0
+#define debug_JVMNI 0
+#define debug_THREADS 0
+#define debug_INSPECTOR_NATIVE 0
 
 #endif /*__debug_h__*/

@@ -144,7 +144,7 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     threadSpecifics->stackYellowZone = current;
     current += getPageSize();
 
-#if DEBUG_THREADS
+#if debug_THREADS
     int id = threadSpecifics->id;
     debug_println("thread %3d: stackBase = %p", id, threadSpecifics->stackBase);
     debug_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(threadSpecifics->stackBase));
@@ -201,14 +201,14 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
         return (Thread) 0;
     }
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("thread_create: id = %d, stack size = %ld", id, stackSize);
 #endif
 
     /* create the native thread locals and allocate stack if necessary */
     thread_Specifics *threadSpecifics = thread_createSegments(id, stackSize);
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("thread_create: stack base %lx", threadSpecifics->stackBase);
 #endif
 
@@ -295,7 +295,7 @@ void thread_runJava(void *arg) {
     debug_ASSERT(threadSpecifics != NULL);
     thread_setSpecific(_specificsKey, threadSpecifics);
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("thread_runJava: BEGIN t=%lx", nativeThread);
 #endif
 
@@ -309,7 +309,7 @@ void thread_runJava(void *arg) {
 
     VMThreadRunMethod method = (VMThreadRunMethod) (image_heap() + (Address) image_header()->vmThreadRunMethodOffset);
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_print("thread_runJava: id=%d, t=%lx, calling method: ", threadSpecifics->id, nativeThread);
     void image_printAddress(Address address);
     image_printAddress((Address) method);
@@ -334,7 +334,7 @@ void thread_runJava(void *arg) {
     /* destroy thread locals, deallocate stack, restore guard pages */
     thread_destroySegments(threadSpecifics);
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("thread_runJava: END t=%lx", nativeThread);
 #endif
 }
@@ -353,14 +353,14 @@ Address nativeThreadCreate(jint id, Size stackSize, jint priority) {
  * @C_FUNCTION - called from Java
  */
 jboolean nativeJoin(Address thread) {
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("BEGIN nativeJoin: %lx", thread);
 #endif
     if (thread == 0L) {
         return false;
     }
     jboolean result = thread_join((Thread) thread) == 0;
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("END nativeJoin: %lx", thread);
 #endif
     return result;
@@ -444,7 +444,7 @@ long nativeGetDefaultThreadSignalStackSize() {
 
 void nativeSetupAlternateSignalStack(Address base, long size) {
 	debug_ASSERT(wordAlign(base) == base);
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("nativeSetupAlternateSignalStack: alternate stack at %lx, size %lx ", base, size);
 #endif
 #if os_DARWIN || os_LINUX || os_SOLARIS
