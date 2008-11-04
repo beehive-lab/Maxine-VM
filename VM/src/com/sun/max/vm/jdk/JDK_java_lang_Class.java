@@ -38,7 +38,7 @@ import com.sun.max.vm.type.*;
  * This implementation uses an injected field in the {@code Class} instance that
  * references the {@link ClassActor ClassActor}, which contains the Maxine representation
  * of a class.
- * 
+ *
  * Note that instances of {@code java.lang.Class} are created lazily as needed from
  * the internal {@code ClassActor} representation.
  */
@@ -69,6 +69,20 @@ final class JDK_java_lang_Class {
         if (classLoader == null) {
             classLoader = VmClassLoader.VM_CLASS_LOADER;
         }
+        if (name != null && name.charAt(0) == '[') {
+            // treat arrays specially.
+            TypeDescriptor descriptor;
+            try {
+                descriptor = JavaTypeDescriptor.parseMangledArrayOrUnmangledClassName(name);
+            } catch (ClassFormatError e) {
+                throw new ClassNotFoundException(name);
+            }
+            return descriptor.toJava(classLoader);
+        }
+        return resolveComponent(name, initialize, classLoader);
+    }
+
+    private static Class resolveComponent(String name, boolean initialize, ClassLoader classLoader) throws ClassNotFoundException {
         final Class javaClass = classLoader.loadClass(name);
         if (initialize) {
             ClassActor.fromJava(javaClass).makeInitialized();
@@ -262,7 +276,7 @@ final class JDK_java_lang_Class {
      * must be used to get the <b>nearest</b> enclosing class of a local or anonmyous class.
      * <p>
      * This comment from the {@link Class#getEnclosingClass()} helps explain:
-     * 
+     *
      * There are five kinds of classes (or interfaces):
      * a) Top level classes
      * b) Nested classes (static member classes)

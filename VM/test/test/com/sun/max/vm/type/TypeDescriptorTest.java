@@ -61,9 +61,9 @@ public class TypeDescriptorTest extends TestCase {
         assertTrue(forNameOk("java.lang.String"));
         assertTrue(forNameOk("C.B.A"));
         assertTrue(forNameOk("A12.B23.C00"));
-        assertTrue(forNameOk("[Ljava/lang/Object;"));
-        assertTrue(forNameOk("[LA12/lang/Object;"));
-        assertTrue(forNameOk("[Ljava/c34/Object;"));
+        assertTrue(forNameOk("[Ljava.lang.Object;"));
+        assertTrue(forNameOk("[LA12.lang.Object;"));
+        assertTrue(forNameOk("[Ljava.c34.Object;"));
         assertTrue(forNameOk("[I"));
         assertFalse(forNameOk("Ljava/lang/Object"));
         assertFalse(forNameOk("j/k"));
