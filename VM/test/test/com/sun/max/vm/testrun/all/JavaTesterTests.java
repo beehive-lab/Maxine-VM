@@ -8523,6 +8523,70 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_lang_Class_forName04() {
+        JavaTesterRunScheme.begin("test.lang.Class_forName04");
+        String runString = null;
+        try {
+        // test(0) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(0)";
+                test.lang.Class_forName04.test(0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(1) == class [Ljava.lang.String;
+            runString = "test(1)";
+            if (!"class [Ljava.lang.String;".equals(test.lang.Class_forName04.test(1))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(2)";
+                test.lang.Class_forName04.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == class [I
+            runString = "test(3)";
+            if (!"class [I".equals(test.lang.Class_forName04.test(3))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(4)";
+                test.lang.Class_forName04.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(5) == null
+            runString = "test(5)";
+            if (null != test.lang.Class_forName04.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_lang_Class_getComponentType01() {
         JavaTesterRunScheme.begin("test.lang.Class_getComponentType01");
         String runString = null;

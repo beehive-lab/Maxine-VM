@@ -8,7 +8,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="test.com.sun.max.vm.compiler.JavaTester"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-scenario=reflect,target test/fail/Catch_StackOverflowError_01.java test/fail/Catch_StackOverflowError_02.java"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-scenario=reflect,target test/fail"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="VM"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:VM}/test"/>
 </launchConfiguration>

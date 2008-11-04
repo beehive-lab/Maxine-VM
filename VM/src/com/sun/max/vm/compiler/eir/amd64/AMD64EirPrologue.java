@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.eir.amd64;
 
 import java.util.*;
 
-import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
@@ -56,7 +55,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
             final AMD64GeneralRegister64 framePointer = emitter.framePointer();
             if (eirMethod().classMethodActor().isTrapStub()) {
                 // emit a special prologue that saves all the registers
-                emitTrapStubPrologue(eirMethod(), asm, emitter.inlineDataRecorder(), framePointer, eirMethod().frameSize());
+                emitTrapStubPrologue(eirMethod(), asm, framePointer, eirMethod().frameSize());
             } else {
                 // emit a regular prologue
                 final int frameSize = eirMethod().frameSize();
@@ -71,7 +70,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         }
     }
 
-    public static void emitTrapStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, InlineDataRecorder inlineDataRecorder, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
+    public static void emitTrapStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
         final AMD64GeneralRegister64 latchRegister = AMD64Safepoint.LATCH_REGISTER;
         final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
         // expand the frame size for this method to allow for the saved register state
