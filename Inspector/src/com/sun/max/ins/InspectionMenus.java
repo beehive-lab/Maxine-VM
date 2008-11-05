@@ -32,7 +32,6 @@ import com.sun.max.ins.java.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.type.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -721,7 +720,7 @@ public final class InspectionMenus implements Prober {
         private final int _offset;
 
         public ViewBootImageMethodCodeAction(int offset, Class clazz, String name, Class... parameterTypes) {
-            super(_inspection, MethodActor.fromJava(Classes.getDeclaredMethod(clazz, name, parameterTypes)).format("%H.%n(%p)"));
+            super(_inspection, clazz.getName() + "." + name + SignatureDescriptor.fromJava(Void.TYPE, parameterTypes).toJavaString(false, false));
             _offset = offset;
         }
 

@@ -494,9 +494,8 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.jvmni.JVM_IsNaN01.class
     };
     @Override
-    public void run() {
+    public void runTests() {
         _testEnd = 452;
-        vmStartUp();
         _total = _testEnd - _testStart;
         _testNum = _testStart;
         while (_testNum < _testEnd) {
