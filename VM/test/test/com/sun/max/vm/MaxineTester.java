@@ -57,7 +57,7 @@ public class MaxineTester {
                     "timing out and killing it.");
     private static final Option<Integer> _javaTesterConcurrency = _options.newIntegerOption("java-tester-concurrency", 1,
                     "Specifies the number of Java tester tests to run in parallel.");
-    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 40,
+    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 50,
                     "Specifies the number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
     private static final Option<Boolean> _echoOutput = _options.newBooleanOption("echo-output", false,
@@ -81,6 +81,7 @@ public class MaxineTester {
         test.output.FloatNanTest.class,
         test.output.StaticInitializers.class,
         test.output.LocalCatch.class,
+        test.output.Printf.class,
         util.GCTest1.class,
         util.GCTest2.class,
         util.GCTest3.class,
@@ -245,7 +246,11 @@ public class MaxineTester {
         final int javaExitValue = runJavaVM(mainClass, args, imageDir, javaOutput, _javaRunTimeOut.getValue());
         final int maxineExitValue = runMaxineVM(mainClass, args, imageDir, maxvmOutput, _javaRunTimeOut.getValue());
         if (javaExitValue != maxineExitValue) {
-            out().println("(" + maxineExitValue + " != " + javaExitValue + ")");
+            if (maxineExitValue == PROCESS_TIMEOUT) {
+                out().println("(timed out)");
+            } else {
+                out().println("(" + maxineExitValue + " != " + javaExitValue + ")");
+            }
             out().println("  -> see: " + maxvmOutput.getAbsolutePath());
         } else if (compareFiles(javaOutput, maxvmOutput)) {
             out().println("OK");
@@ -465,31 +470,37 @@ public class MaxineTester {
         @Override
 
         public void run() {
-            try {
-                final long start = System.currentTimeMillis();
-                while (System.currentTimeMillis() - start < _timeoutMillis) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        // do nothing.
-                    }
-                    try {
-                        _exitValue = _process.exitValue();
-                        return;
-                    } catch (IllegalThreadStateException e) {
-                        _exitValue = PROCESS_TIMEOUT;
-                    }
+            final long start = System.currentTimeMillis();
+            while (System.currentTimeMillis() - start < _timeoutMillis) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    // do nothing.
                 }
-                synchronized (this) {
-                    // Timed out:
-                    _process.destroy();
-                    notifyAll();
+                try {
+                    _exitValue = _process.exitValue();
+                    _stdout.close();
+                    _stderr.close();
+                    _stdin.close();
+                    synchronized (this) {
+                        // Timed out:
+                        notifyAll();
+                    }
+                    return;
+                } catch (IllegalThreadStateException e) {
+                    // do nothing.
                 }
-            } finally {
-                _stdout.close();
-                _stderr.close();
-                _stdin.close();
             }
+            _exitValue = PROCESS_TIMEOUT;
+            _stdout.close();
+            _stderr.close();
+            _stdin.close();
+            synchronized (this) {
+                // Timed out:
+                _process.destroy();
+                notifyAll();
+            }
+            return;
         }
 
         public int exitValue() {

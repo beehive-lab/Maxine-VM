@@ -91,9 +91,6 @@ public class EnvBasedInitializedAnalysis extends EnvBasedDFA<InitializedDomain.S
      * different operations which are called with a receiver that's known
      * to be initialized (i.e., not null).
      *
-     * PS. what sort of an IDE dictionary does not know the spelling of
-     * the word initialized?
-     *
      * @author Aziz Ghuloum
      */
     public static class InitializedResult {
