@@ -50,7 +50,7 @@ void condition_destroy(Condition condition) {
 }
 
 int condition_wait(Condition condition, Mutex mutex) {
-#if DEBUG_MONITOR
+#if debug_MONITOR
   debug_println("condition_wait(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", condition, mutex);
 #endif
 #if (os_DARWIN || os_LINUX)
