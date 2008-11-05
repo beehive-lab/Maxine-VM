@@ -63,7 +63,7 @@ while [ "${1:0:1}" = "-" ]; do
 done
 command=$1
 shift
-command_args="$@"
+command_args=$@
 
 # Ensure that the non-optional variables are set
 test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
@@ -129,53 +129,54 @@ function run_build() {
     native_only=false
     exit_after_help=false
     projects_to_build=""
-	while [ "$1" != "" ]; do
-	    case $1 in
-	        -h )
-	            show_build_help=true
-	            ;;
-	        -make )
-	            shift
-	            make=$1
-	            ;;
-	        -javac )
-	            shift
-	            javac=$1
-	            ;;
-	        -junit4 )
-	            shift
-	            JUNIT4_CP=$1
-	            ;;
-	        -* )
-	            echo "unknown build option '$1'"
-	            show_build_help=true
-	            break
-	            ;;
-	        * )
-	            projects_to_build="$projects_to_build $1"
-	            ;;
-	    esac
-	    shift
-	done
-	if [ -z "$projects_to_build" ]; then
+    while [ "$1" != "" ]; do
+        case $1 in
+            -h )
+                show_build_help=true
+                ;;
+            -make )
+                shift
+                make=$1
+                ;;
+            -javac )
+                shift
+                javac=$1
+                ;;
+            -junit4 )
+                shift
+                JUNIT4_CP=$1
+                ;;
+            -* )
+                echo "unknown build option '$1'"
+                show_build_help=true
+                break
+                ;;
+            * )
+                projects_to_build="$projects_to_build $1"
+                ;;
+        esac
+        shift
+    done
+    if [ -z "$projects_to_build" ]; then
         for project in ${projects[@]}; do
             project_dir=${project/:*/}
             projects_to_build="$projects_to_build $project_dir"
         done
     fi
-	
-	if $show_build_help ; then
-	    echo "Usage: build [-options]"
-	    echo
-	    echo "where options include:"
-	    echo " -make      path to GNU make executable (default: gmake)"
-	    echo " -java      path to Java source compiler (default: ${JAVA_HOME}/bin/javac"
-	    echo " -junit4    class path for Junit 4 classes"
-	    return
-	fi
-	
+    
+    if $show_build_help ; then
+        echo "Usage: build [-options]"
+        echo
+        echo "where options include:"
+        echo " -h         show help message"
+        echo " -make      path to GNU make executable (default: gmake)"
+        echo " -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac"
+        echo " -junit4    class path for Junit 4 classes"
+        return
+    fi
+    
     test -n "${JUNIT4_CP}" || { echo "JUNIT4_CP must specify a class path for Junit4 classes"; exit 1; }
-	maxine_cp=${maxine_cp}:/${JUNIT4_CP}
+    maxine_cp=${maxine_cp}:/${JUNIT4_CP}
 
     # Compile C sources
     if [[ "$projects_to_build" == *Native* ]]; then
@@ -192,21 +193,23 @@ function run_build() {
         rm -rf ${MAXINE_HOME}/${project_dir}/bin/*
         mkdir -p ${MAXINE_HOME}/${project_dir}/bin
 
-		source_dirs_spec=${project/*:/}
-		source_dirs=${source_dirs_spec//,/ }        
+        source_dirs_spec=${project/*:/}
+        source_dirs=${source_dirs_spec//,/ }        
         for source_dir in ${source_dirs} ; do
             ( cd ${MAXINE_HOME}/${project_dir}/${source_dir}
-              cmd="${javac} -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`"
+              cmd="${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`"
               echo "Compiling Java sources in ${MAXINE_HOME}/${project_dir}/${source_dir}..."
-			  if $verbose ; then
-			      echo $cmd
-			  fi
-			  eval $cmd
-			  for file in `find . -type f | grep -v '.java$'`; do
-			      if [ -d ../bin/$(dirname $file) ]; then
-			         cp $file ../bin/$file
-			      fi
-			  done
+              if $verbose ; then
+                  echo $cmd
+              fi
+              eval $cmd
+              result=$?
+              for file in `find . -type f | grep -v '.java$'`; do
+                  if [ -d ../bin/$(dirname $file) ]; then
+                     cp $file ../bin/$file
+                  fi
+              done
+              return $result
             )
             result=$?
             if [ $result -ne 0 ]; then
@@ -234,18 +237,18 @@ function describe_vm() {
 
 function run_vm() {
     vm_args=""
-	while [ "$1" != "" ]; do
-	    case $1 in
-	        -XX:LogFile=*)
-	            MAXINE_LOG_FILE=${1/*=/}
-			    if $verbose ; then
-       				echo "MAXINE_LOG_FILE=$MAXINE_LOG_FILE"
-   				fi
-	            export MAXINE_LOG_FILE
-	            ;;
-	        *)
-	            vm_args="$vm_args $1"
-	            ;;
+    while [ "$1" != "" ]; do
+        case $1 in
+            -XX:LogFile=*)
+                MAXINE_LOG_FILE=${1/*=/}
+                if $verbose ; then
+                       echo "MAXINE_LOG_FILE=$MAXINE_LOG_FILE"
+                   fi
+                export MAXINE_LOG_FILE
+                ;;
+            *)
+                vm_args="$vm_args $1"
+                ;;
         esac
         shift
     done    
@@ -289,23 +292,23 @@ function describe_jtest() {
 function run_jtest() {
     vm_args=""
     jtester_args=""
-	while [ "$1" != "" ]; do
-	    case $1 in
-	        -- )
-	            shift
-	            jtester_args="$@"
-	            break
-	            ;;
-	        -h )
+    while [ "$1" != "" ]; do
+        case $1 in
+            -- )
+                shift
+                jtester_args="$@"
+                break
+                ;;
+            -h )
                 echo "Usage: jtest <VM options> -- <Java Tester options>"
                 return
-	            ;;
-	        * )
-	            vm_args="$vmargs $1"
-	            ;;
-	    esac
-	    shift
-	done
+                ;;
+            * )
+                vm_args="$vmargs $1"
+                ;;
+        esac
+        shift
+    done
     cmd="${maxine_vm} -classpath ${MAXINE_HOME}/Base/bin:${MAXINE_HOME}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args"
     if $verbose ; then
         echo $cmd
