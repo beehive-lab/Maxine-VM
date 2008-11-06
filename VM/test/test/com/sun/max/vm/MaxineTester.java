@@ -260,7 +260,7 @@ public class MaxineTester {
                 }
             }
             os.close();
-            if (exitCode != 0) {
+            if (exitCode == 0) {
                 failuresReportFile.delete();
             }
         } catch (IOException e) {
