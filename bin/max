@@ -211,13 +211,14 @@ function run_build() {
     # Compile C sources
     if [[ "$projects_to_build" == *Native* ]]; then
         echo "Compiling C sources in ${maxine_dir}/Native..."
-        ( cd ${maxine_dir}/Native;
-          if $clean ; then
-             run $make clean
-          fi
-          run $make;
-        )
+        pushd . 2>/dev/null
+        cd ${maxine_dir}/Native;
+        if $clean ; then
+           run $make clean
+        fi
+        run $make;
         result=$?
+        popd 2>/dev/null
         if [ $result -ne 0 ]; then
             exit $result
         fi
@@ -237,18 +238,18 @@ function run_build() {
         source_dirs_spec=${project/*:/}
         source_dirs=${source_dirs_spec//,/ }        
         for source_dir in ${source_dirs} ; do
-            ( cd ${maxine_dir}/${project_dir}/${source_dir}
-              echo "Compiling Java sources in ${maxine_dir}/${project_dir}/${source_dir}..."
-              run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`
-              result=$?
-              for file in `find . -type f | grep -v '.java$'`; do
-                  if [ -d ../bin/$(dirname $file) ]; then
-                     run cp $file ../bin/$file
-                  fi
-              done
-              return $result
-            )
+            pushd . 2>/dev/null
+            cd ${maxine_dir}/${project_dir}/${source_dir}
+            echo "Compiling Java sources in ${maxine_dir}/${project_dir}/${source_dir}..."
+            run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`
             result=$?
+            for file in `find . -type f | grep -v '.java$'`; do
+                if [ -d ../bin/$(dirname $file) ]; then
+                   run cp $file ../bin/$file
+                fi
+            done
+            result=$?
+            popd 2>/dev/null
             if [ $result -ne 0 ]; then
                 exit $result
             fi
