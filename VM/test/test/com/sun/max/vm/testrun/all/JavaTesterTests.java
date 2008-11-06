@@ -16137,6 +16137,22 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_jni_JNI_OverflowArguments() {
+        JavaTesterRunScheme.begin("test.jni.JNI_OverflowArguments");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.jni.JNI_OverflowArguments.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
 // END GENERATED TEST RUNS
 
 }
