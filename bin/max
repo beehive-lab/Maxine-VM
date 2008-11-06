@@ -3,13 +3,12 @@
 # A launcher for Maxine executables and tools. This launch simplifies the task
 # of running the Maxine VM and utilities by setting up the necessary class paths
 # and executable paths. The only requirement is for the user to have set the
-# environment variable MAXINE_HOME to point to the Maxine code base and JAVA_HOME
-# to point to a JDK installation directory. The '-java_home' and '-maxine_home'
-# global options can be used instead.
+# environment variable JAVA_HOME to point to a JDK installation directory.
+# The '-java_home' global option can be used instead.
 #
-# To add a new launchable command, write two functions named 'run_<command>' and
-# 'describe_<command>'. See the existing commands for examples. Once added, the
-# command can be launched as follows:
+# To add a new launchable command, write a functions named 'run_<command>' and
+# define a variable named '<command>_help'. See the existing commands for examples.
+# Once added, the command can be launched as follows:
 #
 #   max <command> <arguments>
 #
@@ -23,6 +22,7 @@ unknown_option=""
 show_help=false
 default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
 jvm_args="$default_jvm_args"
+maxine_dir=""
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -38,13 +38,9 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             JAVA_HOME=$1
             ;;
-        -maxine_home )
+        -maxine )
             shift
-            MAXINE_HOME=$1
-            ;;
-        -junit4 )
-            shift
-            JUNIT4_CP=$1
+            maxine_dir=$1
             ;;
         -jvm )
             shift
@@ -63,16 +59,35 @@ while [ "${1:0:1}" = "-" ]; do
 done
 command=$1
 shift
-command_args="$@"
+command_args=$@
 
 # Ensure that the non-optional variables are set
 test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
-test -n "${MAXINE_HOME}" || { echo "MAXINE_HOME must be set to the base directory of the Maxine code base"; exit 1; }
+
+if [ -z "${maxine_dir}" ]; then
+    # Resolve location of this script
+    me="${BASH_SOURCE[0]}"
+    while [ -h "$me" ]; do
+        me=`readlink -e "$me"`
+    done
+    pushd . >/dev/null
+    cd `dirname "${me}"`
+    cd ..
+    maxine_dir=`pwd`
+    popd >/dev/null
+fi
+
+# Sanity check: is ${maxine_dir}/bin/max an executable 
+if [ ! -x "${maxine_dir}/bin/max" ]; then
+    echo "Can't find Maxine code base at '${maxine_dir}': '${maxine_dir}/bin/max' does not exist or is not an executable"
+    exit 1
+fi
 
 # Undefined optional variables are set to defaults
 test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
 jvm="$jvm $jvm_args"
 
+# Ensure that a JDK 6 is being used
 java_version="`$jvm -version 2>&1 | head -1 | cut -d '"' -f2`"
 if [[ "$java_version" != 1.6* ]]; then
     echo "JAVA_HOME does not denote a JDK 6 installation: $java_version"
@@ -109,78 +124,105 @@ projects=( \
 maxine_cp=${JAVA_HOME}/lib/tools.jar
 for project in ${projects[@]}; do
     project_dir=${project/:*/}
-    maxine_cp=${maxine_cp}:${MAXINE_HOME}/${project_dir}/bin
+    maxine_cp=${maxine_cp}:${maxine_dir}/${project_dir}/bin
 done
 
-maxine_vm=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxvm
+maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
 
-function describe_build() {
-    echo "compile the Maxine Java and C sources, linking the latter";
+#=======================================
+# Utility for verbose execution
+#=======================================
+
+function run() {
+    if $verbose ; then
+        echo "$@"
+    fi
+    eval "$@"
 }
 
-function describe_build() {
-    echo "compile the Maxine Java and C sources, linking the latter"
-}
+#=======================================
+# 'build' command
+#=======================================
 
+build_help="compile the Maxine Java and C sources, linking the latter"
 function run_build() {
     javac=${JAVA_HOME}/bin/javac
     make=gmake
     show_build_help=false
     native_only=false
     exit_after_help=false
+    clean=false
     projects_to_build=""
-	while [ "$1" != "" ]; do
-	    case $1 in
-	        -h )
-	            show_build_help=true
-	            ;;
-	        -make )
-	            shift
-	            make=$1
-	            ;;
-	        -javac )
-	            shift
-	            javac=$1
-	            ;;
-	        -junit4 )
-	            shift
-	            JUNIT4_CP=$1
-	            ;;
-	        -* )
-	            echo "unknown build option '$1'"
-	            show_build_help=true
-	            break
-	            ;;
-	        * )
-	            projects_to_build="$projects_to_build $1"
-	            ;;
-	    esac
-	    shift
-	done
-	if [ -z "$projects_to_build" ]; then
+    while [ "$1" != "" ]; do
+        case $1 in
+            -h )
+                show_build_help=true
+                ;;
+            -make )
+                shift
+                make=$1
+                ;;
+            -javac )
+                shift
+                javac=$1
+                ;;
+            -clean )
+                clean=true
+                ;;
+            -junit4 )
+                shift
+                JUNIT4_CP=$1
+                ;;
+            -* )
+                echo "unknown build option '$1'"
+                show_build_help=true
+                break
+                ;;
+            * )
+                projects_to_build="$projects_to_build $1"
+                ;;
+        esac
+        shift
+    done
+    if [ -z "$projects_to_build" ]; then
         for project in ${projects[@]}; do
             project_dir=${project/:*/}
             projects_to_build="$projects_to_build $project_dir"
         done
+        projects_to_build="Native $projects_to_build"
     fi
-	
-	if $show_build_help ; then
-	    echo "Usage: build [-options]"
-	    echo
-	    echo "where options include:"
-	    echo " -make      path to GNU make executable (default: gmake)"
-	    echo " -java      path to Java source compiler (default: ${JAVA_HOME}/bin/javac"
-	    echo " -junit4    class path for Junit 4 classes"
-	    return
-	fi
-	
-    test -n "${JUNIT4_CP}" || { echo "JUNIT4_CP must specify a class path for Junit4 classes"; exit 1; }
-	maxine_cp=${maxine_cp}:/${JUNIT4_CP}
+    
+    if $show_build_help ; then
+        echo "Usage: build [-options] projects..."
+        echo
+        echo "where options include:"
+        echo " -h         show help message"
+        echo " -make      path to GNU make executable (default: gmake)"
+        echo " -clean     removes existing binaries and class files before building projects"
+        echo " -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac"
+        echo " -junit4    class path for Junit 4 classes (default: value ofJUNIT4_CP environment variable)"
+        echo
+        echo "If no projects are given, then all projects are built."
+        return
+    fi
+    
+    test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
+    maxine_cp=${maxine_cp}:/${JUNIT4_CP}
 
     # Compile C sources
     if [[ "$projects_to_build" == *Native* ]]; then
-        echo "Compiling C sources in ${MAXINE_HOME}/Native..."
-        ( cd ${MAXINE_HOME}/Native; $make; )
+        echo "Compiling C sources in ${maxine_dir}/Native..."
+        pushd . 2>/dev/null
+        cd ${maxine_dir}/Native;
+        if $clean ; then
+           run $make clean
+        fi
+        run $make;
+        result=$?
+        popd 2>/dev/null
+        if [ $result -ne 0 ]; then
+            exit $result
+        fi
     fi
         
     # Compile Java sources
@@ -189,26 +231,25 @@ function run_build() {
         if [[ "$projects_to_build" != *${project_dir}* ]]; then
             continue
         fi
-        rm -rf ${MAXINE_HOME}/${project_dir}/bin/*
-        mkdir -p ${MAXINE_HOME}/${project_dir}/bin
+        if $clean ; then
+            run rm -rf ${maxine_dir}/${project_dir}/bin
+        fi
+        run mkdir -p ${maxine_dir}/${project_dir}/bin
 
-		source_dirs_spec=${project/*:/}
-		source_dirs=${source_dirs_spec//,/ }        
+        source_dirs_spec=${project/*:/}
+        source_dirs=${source_dirs_spec//,/ }        
         for source_dir in ${source_dirs} ; do
-            ( cd ${MAXINE_HOME}/${project_dir}/${source_dir}
-              cmd="${javac} -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`"
-              echo "Compiling Java sources in ${MAXINE_HOME}/${project_dir}/${source_dir}..."
-			  if $verbose ; then
-			      echo $cmd
-			  fi
-			  eval $cmd
-			  for file in `find . -type f | grep -v '.java$'`; do
-			      if [ -d ../bin/$(dirname $file) ]; then
-			         cp $file ../bin/$file
-			      fi
-			  done
-            )
+            pushd . 2>/dev/null
+            cd ${maxine_dir}/${project_dir}/${source_dir}
+            echo "Compiling Java sources in ${maxine_dir}/${project_dir}/${source_dir}..."
+            run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`
             result=$?
+            for file in `find . -type f | grep -v '.java$'`; do
+                if [ -d ../bin/$(dirname $file) ]; then
+                   run cp $file ../bin/$file
+                fi
+            done
+            popd 2>/dev/null
             if [ $result -ne 0 ]; then
                 exit $result
             fi
@@ -216,135 +257,137 @@ function run_build() {
     done
 }
 
-function describe_image () {
-    echo "build a VM image"
-}
+#=======================================
+# 'image' command
+#=======================================
+
+image_help="build a VM image"
 
 function run_image() {
-    cmd="${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -build=DEBUG -run=java $@"
-    if $verbose ; then
-        echo $cmd
-    fi
-    eval $cmd
+    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -build=DEBUG -run=java $@
 }
 
-function describe_vm() {
-    echo "launch the Maxine VM"
-}
+#=======================================
+# 'vm' command
+#=======================================
+
+vm_help="launch the Maxine VM"
 
 function run_vm() {
     vm_args=""
-	while [ "$1" != "" ]; do
-	    case $1 in
-	        -XX:LogFile=*)
-	            MAXINE_LOG_FILE=${1/*=/}
-			    if $verbose ; then
-       				echo "MAXINE_LOG_FILE=$MAXINE_LOG_FILE"
-   				fi
-	            export MAXINE_LOG_FILE
-	            ;;
-	        *)
-	            vm_args="$vm_args $1"
-	            ;;
+    while [ "$1" != "" ]; do
+        case $1 in
+            -XX:LogFile=*)
+                MAXINE_LOG_FILE=${1/*=/}
+                if $verbose ; then
+                       echo "MAXINE_LOG_FILE=$MAXINE_LOG_FILE"
+                   fi
+                export MAXINE_LOG_FILE
+                ;;
+            *)
+                vm_args="$vm_args $1"
+                ;;
         esac
         shift
     done    
-    cmd="${maxine_vm} $vm_args"
-    if $verbose ; then
-        echo $cmd
-    fi
-    eval $cmd
+    run ${maxine_vm} $vm_args
 }
 
-function describe_javap() {
-    echo "launch javap with a -classpath option denoting all the Maxine classes"
-}
+#=======================================
+# 'javap' command
+#=======================================
+
+javap_help="launch javap with a -classpath option denoting all the Maxine classes"
 
 function run_javap() {
-    cmd="${JAVA_HOME}/bin/javap -private -verbose -classpath ${maxine_cp}:${JCK_CLASSPATH} $@"
-    if $verbose ; then
-        echo $cmd
-    fi
-    eval $cmd
+    run ${JAVA_HOME}/bin/javap -private -verbose -classpath ${maxine_cp}:${JCK_CLASSPATH} "$@"
 }
 
-function describe_dis() {
-    echo "preprocess class files with the Maxine VM and disassembles the result with javap"
-}
+#=======================================
+# 'dis' command
+#=======================================
+
+dis_help="preprocess class files with the Maxine VM and disassembles the result with javap"
 
 function run_dis() {
     TMP_DIR=/tmp/${USER}/generated.$$
-    mkdir -p ${TMP_DIR}
-    cmd="${jvm} -d64 -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap $@"
-    if $verbose ; then
-        echo $cmd
-    fi
-    eval $cmd
-    rm -rf ${TMP_DIR}
+    run mkdir -p ${TMP_DIR}
+    run ${jvm} -d64 -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
+    run rm -rf ${TMP_DIR}
 }
 
-function describe_jtest() {
-    echo "run the Java Tester"
-}
+#=======================================
+# 'jtest' command
+#=======================================
+
+jtest_help="run the Java Tester"
+
 function run_jtest() {
     vm_args=""
     jtester_args=""
-	while [ "$1" != "" ]; do
-	    case $1 in
-	        -- )
-	            shift
-	            jtester_args="$@"
-	            break
-	            ;;
-	        -h )
+    while [ "$1" != "" ]; do
+        case $1 in
+            -- )
+                shift
+                jtester_args="$@"
+                break
+                ;;
+            -h )
                 echo "Usage: jtest <VM options> -- <Java Tester options>"
                 return
-	            ;;
-	        * )
-	            vm_args="$vmargs $1"
-	            ;;
-	    esac
-	    shift
-	done
-    cmd="${maxine_vm} -classpath ${MAXINE_HOME}/Base/bin:${MAXINE_HOME}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args"
-    if $verbose ; then
-        echo $cmd
-    fi
-    eval $cmd
+                ;;
+            * )
+                vm_args="$vmargs $1"
+                ;;
+        esac
+        shift
+    done
+    run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
+#=======================================
+# 'helloworld' command
+#=======================================
 
-function describe_hw() {
-    echo "run a basic 'hello world' program on the Maxine VM"
+helloworld_help="run a basic 'hello world' program on the Maxine VM"
+
+function run_helloworld() {
+    run ${maxine_vm} -classpath ${maxine_dir}/VM/bin "$@" util.HelloWorld
 }
 
-function run_hw() {
-    ${maxine_vm} -classpath ${MAXINE_HOME}/VM/bin $@ util.HelloWorld
+#=======================================
+# 'objecttree' command
+#=======================================
+
+objecttree_help="print the causality spanning-tree of the object graph in the VM image"
+
+function run_objecttree() {
+    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
-function describe_otree() {
-    echo "print the causality spanning-tree of the object graph in the VM image"
+#=======================================
+# 'methodtree' command
+#=======================================
+
+methodtree_help="print the causality spanning-tree of the method graph in the VM image"
+
+function run_methodtree() {
+    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
-function run_otree() {
-    ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
-}
+#=======================================
+# 'maxinetester' command
+#=======================================
 
-function describe_mtree() {
-    echo "print the causality spanning-tree of the method graph in the VM image"
-}
-
-function run_mtree() {
-    ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
-}
-
-function describe_maxinetester() {
-   echo "run MaxineTester"
-}
+maxinetester_help="run the MaxineTester"
 
 function run_maxinetester() {
-    ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester "$@"
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester "$@"
 }
+
+#=======================================
+# Main launcher
+#=======================================
 
 function showCommands() {
     if [ -n "$1" ]; then
@@ -354,13 +397,14 @@ function showCommands() {
     echo
     echo "available commands:"
     for run_command in `declare -Ff | grep 'run_' | cut -d ' ' -f 3 | sort`; do
-        command="`echo $run_command | sed 's:run_::g'`"
-        describe_command="`echo $run_command | sed 's:run_:describe_:g'`"
-        if [ "`type -t ${describe_command}`" = "function" ]; then
-            echo -e " ${command}\t `eval ${describe_command}`"
-        else
-            echo -e " ${command}\t [no description available]"
+        command=${run_command/run_/}
+        help=""
+        help_var="${command}_help"
+        help=${!help_var}
+        if [ -z "$help" ]; then
+            help="[no description available]"
         fi
+        printf " %-15s %s\n" "$command" "$help"
     done
     echo
     echo "global options:"
@@ -371,10 +415,8 @@ function showCommands() {
     echo "                (default: value of the JAVA_HOME environment variable)"
     echo " -jvm         specifies Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -jvm_args    specifies Java VM arguments (default: ${default_jvm_args})"
-    echo " -maxine_home specifies base directory of Maxine code base"
-    echo "                (default: value of the MAXINE_HOME environment variable)"
-    echo " -junit4      specifies classpath for Junit 4 classes"
-    echo "                (default: value of the JUNIT4_CP environment variable)"
+    echo " -maxine      specifies base directory of the Maxine code base"
+    echo "                (default: ${maxine_dir})"
 }
 
 if [ -n "${unknown_option}" ]; then
