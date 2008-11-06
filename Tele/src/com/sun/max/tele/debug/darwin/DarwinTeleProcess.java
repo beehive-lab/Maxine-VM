@@ -115,7 +115,7 @@ public final class DarwinTeleProcess extends TeleProcess {
      */
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long threadID, int state, long stackBase, long stackSize) {
         DarwinTeleNativeThread thread = (DarwinTeleNativeThread) idToThread(threadID);
-        if (thread == null) {
+        if (thread == null) {            
             thread = new DarwinTeleNativeThread(this, threadID, stackBase, stackSize);
         }
 
@@ -124,13 +124,17 @@ public final class DarwinTeleProcess extends TeleProcess {
         threads.append(thread);
     }
 
-    @Override
-    public synchronized int read0(Address address, byte[] buffer, int offset, int length) {
-        return DarwinDataAccess.nativeReadBytes(_task, address.toLong(), buffer, offset, length);
-    }
+    private static native int nativeReadBytes(long task, long address, byte[] buffer, int offset, int length);
 
     @Override
-    public synchronized int write0(byte[] buffer, int offset, int length, Address address) {
-        return DarwinDataAccess.nativeWriteBytes(_task, address.toLong(), buffer, offset, length);
+    protected int read0(Address address, byte[] buffer, int offset, int length) {
+        return nativeReadBytes(_task, address.toLong(), buffer, offset, length);
+    }
+
+    private static native int nativeWriteBytes(long task, long address, byte[] buffer, int offset, int length);
+
+    @Override
+    protected int write0(byte[] buffer, int offset, int length, Address address) {
+        return nativeWriteBytes(_task, address.toLong(), buffer, offset, length);
     }
 }

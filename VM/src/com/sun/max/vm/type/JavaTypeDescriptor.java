@@ -383,7 +383,7 @@ public final class JavaTypeDescriptor {
     public static TypeDescriptor parseMangledArrayOrUnmangledClassName(String name) throws ClassFormatError {
         if (name.length() > 0 && name.charAt(0) == '[') {
             // parse an array using the full parsing method
-            return parseTypeDescriptor(name, 0);
+            return parseTypeDescriptor(name, 0, false);
         }
         // parse a class name separated by '.' without L or ;
         final int endIndex = parseClassName(name, 0, 0, '.');
@@ -405,7 +405,7 @@ public final class JavaTypeDescriptor {
      *                 entire string
      */
     public static TypeDescriptor parseTypeDescriptor(String string) throws ClassFormatError {
-        final TypeDescriptor descriptor = parseTypeDescriptor(string, 0);
+        final TypeDescriptor descriptor = parseTypeDescriptor(string, 0, true);
         if (descriptor.toString().length() != string.length()) {
             // if the valid class name did not occupy the entire string
             throw classFormatError("invalid type descriptor \"" + string + "\"");
@@ -418,10 +418,11 @@ public final class JavaTypeDescriptor {
      *
      * @param string the string from which to create a Java type descriptor
      * @param startIndex the index within the string from which to start parsing
+     * @param slashes TODO
      * @return a type descriptor for the specified type
      * @throws ClassFormatError if the type descriptor is not valid
      */
-    public static TypeDescriptor parseTypeDescriptor(String string, int startIndex) throws ClassFormatError {
+    public static TypeDescriptor parseTypeDescriptor(String string, int startIndex, boolean slashes) throws ClassFormatError {
         if (startIndex >= string.length()) {
             throw classFormatError("invalid type descriptor");
         }
@@ -445,10 +446,19 @@ public final class JavaTypeDescriptor {
             case 'V':
                 return VOID;
             case 'L': {
-                // parse a slashified Java class name
-                final int endIndex = parseClassName(string, startIndex, startIndex + 1, '/');
-                if (endIndex > startIndex + 1 && endIndex < string.length() && string.charAt(endIndex) == ';') {
-                    return TypeDescriptor.makeTypeDescriptor(string.substring(startIndex, endIndex + 1));
+                if (slashes) {
+                    // parse a slashified Java class name
+                    final int endIndex = parseClassName(string, startIndex, startIndex + 1, '/');
+                    if (endIndex > startIndex + 1 && endIndex < string.length() && string.charAt(endIndex) == ';') {
+                        return TypeDescriptor.makeTypeDescriptor(string.substring(startIndex, endIndex + 1));
+                    }
+                } else {
+                    // parse a dottified Java class name and convert to slashes
+                    final int endIndex = parseClassName(string, startIndex, startIndex + 1, '.');
+                    if (endIndex > startIndex + 1 && endIndex < string.length() && string.charAt(endIndex) == ';') {
+                        final String substring = string.substring(startIndex, endIndex + 1);
+                        return TypeDescriptor.makeTypeDescriptor(substring.replace('.', '/'));
+                    }
                 }
                 throw typeDescriptorError("invalid Java name", string, startIndex);
             }
@@ -462,7 +472,7 @@ public final class JavaTypeDescriptor {
                 if (dimensions > 255) {
                     throw typeDescriptorError("array with more than 255 dimensions", string, startIndex);
                 }
-                final TypeDescriptor component = parseTypeDescriptor(string, index);
+                final TypeDescriptor component = parseTypeDescriptor(string, index, slashes);
                 return getArrayDescriptorForDescriptor(component, dimensions);
             }
         }

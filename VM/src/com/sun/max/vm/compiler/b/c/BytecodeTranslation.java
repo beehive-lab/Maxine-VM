@@ -1667,10 +1667,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(_constantPool));
         implicitCheckNullPointer(receiver);
 
-        final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(currentLocation().classMethodActor());
-        final Hub mostFrequentHub = (instrumentation == null)
-                                ? null
-                                : instrumentation.getMostFrequentlyUsedHub(currentLocation().position());
+        final Hub mostFrequentHub = getMostFrequentHub();
 
         if (mostFrequentHub != null) {
             invokevirtualWithGuardedInline(index, classMethodRef, signatureDescriptor, arguments, receiver, mostFrequentHub);
@@ -1679,6 +1676,14 @@ public class BytecodeTranslation extends BytecodeVisitor {
             final CirVariable callEntryPoint = callSnippet(Kind.WORD, MethodSelectionSnippet.SelectVirtualMethod.SNIPPET, receiver, methodActor);
             completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), arguments);
         }
+    }
+
+    private Hub getMostFrequentHub() {
+        final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(currentLocation().classMethodActor());
+        final Hub mostFrequentHub = (instrumentation == null)
+                                ? null
+                                : instrumentation.getMostFrequentlyUsedHub(currentLocation().position());
+        return mostFrequentHub;
     }
 
     private void invokevirtualWithGuardedInline(int index, final ClassMethodRefConstant classMethodRef, final SignatureDescriptor signatureDescriptor, final CirValue[] arguments,
@@ -1916,8 +1921,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
 
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, interfaceMethodRef.holder(_constantPool));
 
-        final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(currentLocation().classMethodActor());
-        final Hub mostFrequentHub = (instrumentation == null) ? null : instrumentation.getMostFrequentlyUsedHub(currentLocation().position());
+        final Hub mostFrequentHub = getMostFrequentHub();
         if (mostFrequentHub != null) {
             invokeinterfaceWithGuardedInline(index, interfaceMethodRef, signatureDescriptor, arguments, receiver, mostFrequentHub);
         } else {

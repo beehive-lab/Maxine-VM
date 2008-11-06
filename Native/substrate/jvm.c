@@ -1557,7 +1557,7 @@ jint JVM_GetLastErrorString(char *buffer, int length) {
  * the given pathname string in place.
  */
 char *JVM_NativePath(char *path) {
-#if DEBUG_JVMNI
+#if debug_JVMNI
   debug_println("JVM_NativePath(%s)", path);
 #endif
     return path; // TODO
@@ -1575,7 +1575,7 @@ char *JVM_NativePath(char *path) {
  */
 jint JVM_Open(char *fileName, jint flags, jint mode) {
     int result = open(fileName, flags, mode);
-#if DEBUG_JVMNI
+#if debug_JVMNI
     debug_println("JVM_Open(%s)", fileName);
 #endif
     if (result >= 0) {

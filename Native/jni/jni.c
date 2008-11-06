@@ -84,7 +84,7 @@ static void copyVarargsToArray(jvalue *argumentArray, va_list argumentList, int 
                 break;
             }
             default: {
-                fprintf(stderr, "callObjectMethodV: unknown kind\n");
+	      fprintf(stderr, "callObjectMethodV: unknown kind = %d\n", kinds[i]);
                 exit(1);
             }
         }
@@ -476,7 +476,7 @@ static jobject NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_
  * portability reasons (i.e. handling of varargs).
  */
 void nativeInitializeJniInterface(JNIEnv env) {
-#if DEBUG_LOADER
+#if debug_LOADER
 	debug_println("BEGIN jni nativeInitialize");
 #endif
 	debug_ASSERT((jint) -1 < 0);
@@ -553,7 +553,7 @@ void nativeInitializeJniInterface(JNIEnv env) {
 
     ASSIGN_FUNCTION(NewObject);
     ASSIGN_FUNCTION(NewObjectV);
-#if DEBUG_LOADER
+#if debug_LOADER
 	debug_println("END jni nativeInitialize");
 #endif
 }

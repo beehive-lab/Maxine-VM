@@ -79,7 +79,7 @@ import com.sun.max.vm.thread.*;
  */
 public final class JniHandles {
 
-    private static final class Tag {
+    public static final class Tag {
         public static final int STACK = 0;
         public static final int LOCAL = 1;
         public static final int GLOBAL = 2;
@@ -237,7 +237,7 @@ public final class JniHandles {
         return jniHandle.asOffset().toInt() >> Tag.BITS;
     }
 
-    private static int tag(JniHandle jniHandle) {
+    public static int tag(JniHandle jniHandle) {
         return jniHandle.asOffset().toInt() & Tag.MASK;
     }
 
