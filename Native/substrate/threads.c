@@ -262,6 +262,10 @@ static Thread thread_current(void) {
 #endif
 }
 
+void *thread_self() {
+    return thread_current();
+}
+
 static int thread_join(Thread thread) {
     int error = -1;
 
