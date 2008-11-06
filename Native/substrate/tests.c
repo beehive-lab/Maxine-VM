@@ -60,3 +60,21 @@ Java_com_sun_max_vm_run_compilerTest_CompilerTestRunScheme_nativeUpdateFields(JN
     	(*env)->SetObjectField(env, object, _o, o);
     }
 }
+
+
+#define BUFSIZE 8192
+JNIEXPORT void JNICALL
+Java_test_jni_JNI_OverflowArguments_read1(JNIEnv *env, jclass cls, jlong zfile,
+														jlong zentry, jlong pos, jbyteArray bytes, jint off, jint len) {
+  if (len > BUFSIZE) {
+	 len = BUFSIZE;
+  }
+  return len;
+}
+
+JNIEXPORT void JNICALL
+Java_test_jni_JNI_OverflowArguments_read2(JNIEnv *env, jclass cls, jlong zfile,
+														jlong zentry, jlong pos, jbyteArray bytes, jint off, jint len) {
+  return off;
+}
+
