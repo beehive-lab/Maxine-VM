@@ -3,9 +3,8 @@
 # A launcher for Maxine executables and tools. This launch simplifies the task
 # of running the Maxine VM and utilities by setting up the necessary class paths
 # and executable paths. The only requirement is for the user to have set the
-# environment variable MAXINE_HOME to point to the Maxine code base and JAVA_HOME
-# to point to a JDK installation directory. The '-java_home' and '-maxine_home'
-# global options can be used instead.
+# environment variable JAVA_HOME to point to a JDK installation directory.
+# The '-java_home' global option can be used instead.
 #
 # To add a new launchable command, write a functions named 'run_<command>' and
 # define a variable named '<command>_help'. See the existing commands for examples.
@@ -23,6 +22,7 @@ unknown_option=""
 show_help=false
 default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
 jvm_args="$default_jvm_args"
+maxine_dir=""
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -38,9 +38,9 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             JAVA_HOME=$1
             ;;
-        -maxine_home )
+        -maxine )
             shift
-            MAXINE_HOME=$1
+            maxine_dir=$1
             ;;
         -jvm )
             shift
@@ -63,7 +63,25 @@ command_args=$@
 
 # Ensure that the non-optional variables are set
 test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
-test -n "${MAXINE_HOME}" || { echo "MAXINE_HOME must be set to the base directory of the Maxine code base"; exit 1; }
+
+if [ -z "${maxine_dir}" ]; then
+    # Resolve location of this script
+    me="${BASH_SOURCE[0]}"
+    while [ -h "$me" ]; do
+        me=`readlink -e "$me"`
+    done
+    pushd . >/dev/null
+    cd `dirname "${me}"`
+    cd ..
+    maxine_dir=`pwd`
+    popd >/dev/null
+fi
+
+# Sanity check: is ${maxine_dir}/bin/max an executable 
+if [ ! -x "${maxine_dir}/bin/max" ]; then
+    echo "Can't find Maxine code base at '${maxine_dir}': '${maxine_dir}/bin/max' does not exist or is not an executable"
+    exit 1
+fi
 
 # Undefined optional variables are set to defaults
 test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
@@ -106,10 +124,10 @@ projects=( \
 maxine_cp=${JAVA_HOME}/lib/tools.jar
 for project in ${projects[@]}; do
     project_dir=${project/:*/}
-    maxine_cp=${maxine_cp}:${MAXINE_HOME}/${project_dir}/bin
+    maxine_cp=${maxine_cp}:${maxine_dir}/${project_dir}/bin
 done
 
-maxine_vm=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxvm
+maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
 
 #=======================================
 # Utility for verbose execution
@@ -192,8 +210,8 @@ function run_build() {
 
     # Compile C sources
     if [[ "$projects_to_build" == *Native* ]]; then
-        echo "Compiling C sources in ${MAXINE_HOME}/Native..."
-        ( cd ${MAXINE_HOME}/Native;
+        echo "Compiling C sources in ${maxine_dir}/Native..."
+        ( cd ${maxine_dir}/Native;
           if $clean ; then
              run $make clean
           fi
@@ -212,15 +230,15 @@ function run_build() {
             continue
         fi
         if $clean ; then
-            run rm -rf ${MAXINE_HOME}/${project_dir}/bin
+            run rm -rf ${maxine_dir}/${project_dir}/bin
         fi
-        run mkdir -p ${MAXINE_HOME}/${project_dir}/bin
+        run mkdir -p ${maxine_dir}/${project_dir}/bin
 
         source_dirs_spec=${project/*:/}
         source_dirs=${source_dirs_spec//,/ }        
         for source_dir in ${source_dirs} ; do
-            ( cd ${MAXINE_HOME}/${project_dir}/${source_dir}
-              echo "Compiling Java sources in ${MAXINE_HOME}/${project_dir}/${source_dir}..."
+            ( cd ${maxine_dir}/${project_dir}/${source_dir}
+              echo "Compiling Java sources in ${maxine_dir}/${project_dir}/${source_dir}..."
               run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java`
               result=$?
               for file in `find . -type f | grep -v '.java$'`; do
@@ -323,7 +341,7 @@ function run_jtest() {
         esac
         shift
     done
-    run ${maxine_vm} -classpath ${MAXINE_HOME}/Base/bin:${MAXINE_HOME}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args
+    run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
 #=======================================
@@ -333,7 +351,7 @@ function run_jtest() {
 helloworld_help="run a basic 'hello world' program on the Maxine VM"
 
 function run_helloworld() {
-    run ${maxine_vm} -classpath ${MAXINE_HOME}/VM/bin "$@" util.HelloWorld
+    run ${maxine_vm} -classpath ${maxine_dir}/VM/bin "$@" util.HelloWorld
 }
 
 #=======================================
@@ -343,7 +361,7 @@ function run_helloworld() {
 objecttree_help="print the causality spanning-tree of the object graph in the VM image"
 
 function run_objecttree() {
-    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -353,7 +371,7 @@ function run_objecttree() {
 methodtree_help="print the causality spanning-tree of the method graph in the VM image"
 
 function run_methodtree() {
-    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${MAXINE_HOME}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================
@@ -396,8 +414,8 @@ function showCommands() {
     echo "                (default: value of the JAVA_HOME environment variable)"
     echo " -jvm         specifies Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -jvm_args    specifies Java VM arguments (default: ${default_jvm_args})"
-    echo " -maxine_home specifies base directory of Maxine code base"
-    echo "                (default: value of the MAXINE_HOME environment variable)"
+    echo " -maxine      specifies base directory of the Maxine code base"
+    echo "                (default: ${maxine_dir})"
 }
 
 if [ -n "${unknown_option}" ]; then
