@@ -220,10 +220,10 @@ public class MaxineTester {
         int exitCode = 0;
         final AppendableSequence<TestReport> passed = new ArrayListSequence<TestReport>();
         final AppendableSequence<TestReport> failed = new ArrayListSequence<TestReport>();
-        final File reportFile = new File(_outputDir.getValue(), "failures.report");
+        final File failuresReportFile = new File(_outputDir.getValue(), "failures.report");
         try {
-            final OutputStream os = new FileOutputStream(reportFile);
-            final PrintStream out = new PrintStream(new FileOutputStream(reportFile));
+            final OutputStream os = new FileOutputStream(failuresReportFile);
+            final PrintStream out = new PrintStream(new FileOutputStream(failuresReportFile));
             for (TestReport report : _reports.values()) {
                 switch (report._expectation) {
                     case PASS: {
@@ -260,25 +260,28 @@ public class MaxineTester {
                 }
             }
             os.close();
+            if (exitCode != 0) {
+                failuresReportFile.delete();
+            }
         } catch (IOException e) {
-            ProgramError.unexpected("Error writing to file " + reportFile.getAbsolutePath(), e);
+            ProgramError.unexpected("Error writing to file " + failuresReportFile.getAbsolutePath(), e);
         }
         if (exitCode != 0) {
-            final File accurateExpect = new File(_outputDir.getValue(), "accurate.expect");
+            final File accurateExpectFile = new File(_outputDir.getValue(), "accurate.expect");
             try {
-                final OutputStream os = new FileOutputStream(accurateExpect);
+                final OutputStream os = new FileOutputStream(accurateExpectFile);
                 final PrintStream out = new PrintStream(os);
                 printToAccurateExpectFile(out, passed, Expectation.PASS);
                 printToAccurateExpectFile(out, failed, Expectation.FAIL);
                 os.close();
             } catch (IOException e) {
-                ProgramWarning.message("Error writing file " + reportFile.getAbsolutePath() + ": " + e);
+                ProgramWarning.message("Error writing file " + failuresReportFile.getAbsolutePath() + ": " + e);
             }
 
             final File expectFile = new File(_expect.getValue().getAbsolutePath());
             out().println("Expectation configuration failed" + (expectFile.exists() ? ": " + expectFile.getAbsolutePath() : ""));
-            out().println("  Report: " + reportFile.getAbsolutePath());
-            out().println("  Accurate configuration: " + accurateExpect.getAbsolutePath());
+            out().println("  Report: " + failuresReportFile.getAbsolutePath());
+            out().println("  Accurate configuration: " + accurateExpectFile.getAbsolutePath());
             System.exit(exitCode);
         }
     }
