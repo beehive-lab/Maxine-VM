@@ -189,6 +189,7 @@ function run_build() {
             project_dir=${project/:*/}
             projects_to_build="$projects_to_build $project_dir"
         done
+        projects_to_build="Native $projects_to_build"
     fi
     
     if $show_build_help ; then
