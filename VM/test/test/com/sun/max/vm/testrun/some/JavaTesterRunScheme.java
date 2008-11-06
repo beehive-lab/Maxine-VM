@@ -52,9 +52,8 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.fail.HP_StringFormat01.class
     };
     @Override
-    public void run() {
+    public void runTests() {
         _testEnd = 6;
-        vmStartUp();
         _total = _testEnd - _testStart;
         _testNum = _testStart;
         while (_testNum < _testEnd) {
