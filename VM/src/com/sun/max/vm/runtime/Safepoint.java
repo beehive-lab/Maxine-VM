@@ -216,18 +216,15 @@ public abstract class Safepoint {
      *
      * @param runnable the procedure to run on this thread
      */
-    public static void runProcedure(VmThread vmThread, Procedure procedure) {
-        final Pointer vmThreadLocals = vmThread.vmThreadLocals();
-        while (true) {
-            // spin until the SAFEPOINT_PROCEDURE field is null
-            synchronized (vmThread) {
-                final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(vmThreadLocals);
-                final Runnable other = UnsafeLoophole.cast(reference.toJava());
-                if (other == null || other == procedure) {
-                    VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(vmThreadLocals, Reference.fromJava(procedure));
-                    Safepoint.trigger(vmThreadLocals);
-                    return;
-                }
+    public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
+        // spin until the SAFEPOINT_PROCEDURE field is null
+        while (!VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
+            final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(vmThreadLocals);
+            final Runnable other = UnsafeLoophole.cast(reference.toJava());
+            if (other == null || other == procedure) {
+                VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(vmThreadLocals, Reference.fromJava(procedure));
+                Safepoint.trigger(vmThreadLocals);
+                return;
             }
         }
     }
@@ -239,15 +236,8 @@ public abstract class Safepoint {
      * @param vmThread the VMThread for which to cancel the procedure
      * @param procedure the procedure to cancel
      */
-    public static void cancelProcedure(VmThread vmThread, Procedure procedure) {
-        final Pointer vmThreadLocals = vmThread.vmThreadLocals();
-        synchronized (vmThread) {
-            final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(vmThreadLocals);
-            final Runnable other = UnsafeLoophole.cast(reference.toJava());
-            if (other == procedure) {
-                VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(vmThreadLocals, null);
-            }
-        }
+    public static void cancelProcedure(Pointer vmThreadLocals, Procedure procedure) {
+        VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(Reference.fromJava(procedure), null);
     }
 
     /**

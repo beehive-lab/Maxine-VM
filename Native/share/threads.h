@@ -74,4 +74,9 @@ typedef struct {
 
 extern thread_Specifics *thread_currentSpecifics();
 
+/**
+ * For debugging purposes:
+ */
+extern void *thread_self();
+
 #endif /*__threads_h__*/
