@@ -12,4 +12,5 @@ util.GCTest4
 util.GCTest5
 [fail]
 test.output.FloatNanTest
+test.output.Printf
 util.GCTest6
