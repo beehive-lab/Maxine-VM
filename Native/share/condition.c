@@ -23,6 +23,9 @@
 #include "condition.h"
 
 void condition_initialize(Condition condition) {
+#if debug_MONITOR
+  debug_println("condition_initialize(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+#endif
 #if os_SOLARIS
     if (cond_init(condition, NULL, NULL) != 0) {
         debug_ASSERT(false);
@@ -38,6 +41,9 @@ void condition_initialize(Condition condition) {
 }
 
 void condition_destroy(Condition condition) {
+#if debug_MONITOR
+  debug_println("condition_destroy   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+#endif
 #if os_SOLARIS
     if (cond_destroy(condition) != 0) {
         debug_ASSERT(false);
@@ -51,7 +57,7 @@ void condition_destroy(Condition condition) {
 
 int condition_wait(Condition condition, Mutex mutex) {
 #if debug_MONITOR
-  debug_println("condition_wait(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", condition, mutex);
+  debug_println("condition_wait      (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition, mutex);
 #endif
 #if (os_DARWIN || os_LINUX)
     return pthread_cond_wait(condition, mutex);
@@ -70,6 +76,9 @@ int condition_wait(Condition condition, Mutex mutex) {
  * This function returns true if the thread was interrupted, false otherwise
  */
 Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
+#if debug_MONITOR
+  debug_println("condition_timedWait (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
+#endif
 	int error = 0;
 	if (timeoutMilliSeconds > 0) {
 
@@ -117,6 +126,9 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 }
 
 int condition_notify(Condition condition) {
+#if debug_MONITOR
+  debug_println("condition_notify    (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+#endif
 #if (os_DARWIN || os_LINUX)
     return pthread_cond_signal(condition);
 #elif os_SOLARIS
@@ -127,6 +139,9 @@ int condition_notify(Condition condition) {
 }
 
 int condition_notifyAll(Condition condition) {
+#if debug_MONITOR
+  debug_println("condition_notifyAll (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+#endif
 #if (os_DARWIN || os_LINUX)
 	return pthread_cond_broadcast(condition);
 #elif os_SOLARIS
