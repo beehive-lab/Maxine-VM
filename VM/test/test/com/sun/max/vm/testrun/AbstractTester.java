@@ -121,7 +121,7 @@ public abstract class AbstractTester extends JavaRunScheme {
             while (i++ < 50) {
                 Debug.print(' ');
             }
-            Debug.print("  next -XX:test=");
+            Debug.print("  next " + _testStartOption + "=");
             Debug.print(_testNum + 1);
             Debug.println("");
         }
