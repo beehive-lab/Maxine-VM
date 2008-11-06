@@ -114,7 +114,7 @@ public final class BinaryImageGenerator {
     private final Option<Boolean> _testUnlinked = _options.newBooleanOption("test-unlinked", false,
             "For the Java tester, this option specifies that each test case method should be unlinked.");
     private final Option<Boolean> _testNative = _options.newBooleanOption("native-tests", false,
-            "For the Java tester, this option specifies the native library should be dynamically linked.");
+            "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
     /**
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
