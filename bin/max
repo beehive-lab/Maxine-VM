@@ -248,7 +248,6 @@ function run_build() {
                    run cp $file ../bin/$file
                 fi
             done
-            result=$?
             popd 2>/dev/null
             if [ $result -ne 0 ]; then
                 exit $result
