@@ -162,123 +162,6 @@ public class MaxineTester {
         }
     }
 
-    private static Map<String, TestReport> _reports;
-
-    private static void initializeReports() {
-        if (_expect.getValue() != null) {
-            _reports = Collections.synchronizedMap(new TreeMap<String, TestReport>());
-            final File expectFile = new File(_expect.getValue().getAbsolutePath());
-            if (expectFile.exists()) {
-                Expectation expectation = Expectation.PASS;
-                try {
-                    final BufferedReader br = new BufferedReader(new FileReader(expectFile));
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        final String testName = line.trim();
-                        if (line.isEmpty() || line.startsWith("#")) {
-                            continue;
-                        } else if (line.equals("[" + Expectation.PASS + "]")) {
-                            expectation = Expectation.PASS;
-                        } else if (line.equals("[" + Expectation.FAIL + "]")) {
-                            expectation = Expectation.FAIL;
-                        } else {
-                            final TestReport testReport = new TestReport(testName, expectation);
-                            _reports.put(testName, testReport);
-                        }
-                    }
-                    br.close();
-                } catch (IOException ioException) {
-                    ProgramError.unexpected("Error reading file " + expectFile.getAbsolutePath(), ioException);
-                }
-            }
-        }
-    }
-
-    private static void updateReports(String testName, String failure) {
-        if (_reports != null) {
-            TestReport report = _reports.get(testName);
-            if (report == null) {
-                // Unknown tests are presumed to be negative (i.e. should fail)
-                report = new TestReport(testName, Expectation.UNKNOWN);
-            }
-            report._failure = failure;
-            _reports.put(testName, report);
-        }
-    }
-
-    private static void finalizeReports() {
-        int exitCode = 0;
-        final AppendableSequence<TestReport> passed = new ArrayListSequence<TestReport>();
-        final AppendableSequence<TestReport> failed = new ArrayListSequence<TestReport>();
-        final File reportFile = new File(_expect.getValue().getAbsolutePath() + ".report");
-        try {
-            final OutputStream os = new FileOutputStream(reportFile);
-            final PrintStream out = new PrintStream(new FileOutputStream(reportFile));
-            if (_reports != null) {
-                for (TestReport report : _reports.values()) {
-                    switch (report._expectation) {
-                        case PASS: {
-                            if (report._failure != null) {
-                                exitCode++;
-                                out.println(report._testName + ": " + report._failure);
-                                failed.append(report);
-                            } else {
-                                passed.append(report);
-                            }
-                            break;
-                        }
-                        case FAIL: {
-                            if (report._failure == null) {
-                                exitCode++;
-                                out.println(report._testName + ": was expected to fail");
-                                passed.append(report);
-                            } else {
-                                failed.append(report);
-                            }
-                            break;
-                        }
-                        case UNKNOWN: {
-                            exitCode++;
-                            if (report._failure == null) {
-                                out.println(report._testName + ": unknown test that passed");
-                                passed.append(report);
-                            } else {
-                                out.println(report._testName + ": unknown test that failed: " + report._failure);
-                                failed.append(report);
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            os.close();
-        } catch (IOException e) {
-            ProgramError.unexpected("Error writing to file " + reportFile.getAbsolutePath(), e);
-        }
-        if (exitCode != 0) {
-            final File correctedFile = new File(_expect.getValue().getAbsolutePath() + ".corrected");
-            try {
-                final OutputStream os = new FileOutputStream(correctedFile);
-                final PrintStream out = new PrintStream(os);
-                printToCorrectedExpectFile(out, passed, Expectation.PASS);
-                printToCorrectedExpectFile(out, failed, Expectation.FAIL);
-                os.close();
-            } catch (IOException e) {
-                ProgramWarning.message("Error writing file " + reportFile.getAbsolutePath() + ": " + e);
-            }
-            System.exit(exitCode);
-        }
-    }
-
-    private static void printToCorrectedExpectFile(PrintStream out, Sequence<TestReport> reports, Expectation expectation) {
-        if (!reports.isEmpty()) {
-            out.println("[" + expectation + "]");
-            for (TestReport report : reports) {
-                out.println(report);
-            }
-        }
-    }
-
     public static void main(String[] args) {
         _options.parseArguments(args);
         _javaConfigAlias = _javaConfigAliasOption.getValue();
@@ -292,6 +175,121 @@ public class MaxineTester {
         runJavaPrograms();
         runJavaTesterTests();
         finalizeReports();
+    }
+
+    private static final Map<String, TestReport> _reports = Collections.synchronizedMap(new TreeMap<String, TestReport>());
+
+    private static void initializeReports() {
+        final File expectFile = new File(_expect.getValue().getAbsolutePath());
+        if (expectFile.exists()) {
+            Expectation expectation = Expectation.PASS;
+            try {
+                final BufferedReader br = new BufferedReader(new FileReader(expectFile));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    final String testName = line.trim();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    } else if (line.equals("[" + Expectation.PASS + "]")) {
+                        expectation = Expectation.PASS;
+                    } else if (line.equals("[" + Expectation.FAIL + "]")) {
+                        expectation = Expectation.FAIL;
+                    } else {
+                        final TestReport testReport = new TestReport(testName, expectation);
+                        _reports.put(testName, testReport);
+                    }
+                }
+                br.close();
+            } catch (IOException ioException) {
+                ProgramError.unexpected("Error reading file " + expectFile.getAbsolutePath(), ioException);
+            }
+        }
+    }
+
+    private static void updateReports(String testName, String failure) {
+        TestReport report = _reports.get(testName);
+        if (report == null) {
+            // Unknown tests are presumed to be negative (i.e. should fail)
+            report = new TestReport(testName, Expectation.UNKNOWN);
+        }
+        report._failure = failure;
+        _reports.put(testName, report);
+    }
+
+    private static void finalizeReports() {
+        int exitCode = 0;
+        final AppendableSequence<TestReport> passed = new ArrayListSequence<TestReport>();
+        final AppendableSequence<TestReport> failed = new ArrayListSequence<TestReport>();
+        final File reportFile = new File(_outputDir.getValue(), "failures.report");
+        try {
+            final OutputStream os = new FileOutputStream(reportFile);
+            final PrintStream out = new PrintStream(new FileOutputStream(reportFile));
+            for (TestReport report : _reports.values()) {
+                switch (report._expectation) {
+                    case PASS: {
+                        if (report._failure != null) {
+                            exitCode++;
+                            out.println(report._testName + ": " + report._failure);
+                            failed.append(report);
+                        } else {
+                            passed.append(report);
+                        }
+                        break;
+                    }
+                    case FAIL: {
+                        if (report._failure == null) {
+                            exitCode++;
+                            out.println(report._testName + ": was expected to fail");
+                            passed.append(report);
+                        } else {
+                            failed.append(report);
+                        }
+                        break;
+                    }
+                    case UNKNOWN: {
+                        exitCode++;
+                        if (report._failure == null) {
+                            out.println(report._testName + ": unknown test that passed");
+                            passed.append(report);
+                        } else {
+                            out.println(report._testName + ": unknown test that failed: " + report._failure);
+                            failed.append(report);
+                        }
+                        break;
+                    }
+                }
+            }
+            os.close();
+        } catch (IOException e) {
+            ProgramError.unexpected("Error writing to file " + reportFile.getAbsolutePath(), e);
+        }
+        if (exitCode != 0) {
+            final File accurateExpect = new File(_outputDir.getValue(), "accurate.expect");
+            try {
+                final OutputStream os = new FileOutputStream(accurateExpect);
+                final PrintStream out = new PrintStream(os);
+                printToAccurateExpectFile(out, passed, Expectation.PASS);
+                printToAccurateExpectFile(out, failed, Expectation.FAIL);
+                os.close();
+            } catch (IOException e) {
+                ProgramWarning.message("Error writing file " + reportFile.getAbsolutePath() + ": " + e);
+            }
+
+            final File expectFile = new File(_expect.getValue().getAbsolutePath());
+            out().println("Expectation configuration failed" + (expectFile.exists() ? ": " + expectFile.getAbsolutePath() : ""));
+            out().println("  Report: " + reportFile.getAbsolutePath());
+            out().println("  Accurate configuration: " + accurateExpect.getAbsolutePath());
+            System.exit(exitCode);
+        }
+    }
+
+    private static void printToAccurateExpectFile(PrintStream out, Sequence<TestReport> reports, Expectation expectation) {
+        if (!reports.isEmpty()) {
+            out.println("[" + expectation + "]");
+            for (TestReport report : reports) {
+                out.println(report);
+            }
+        }
     }
 
     private static void runJavaTesterTests() {
