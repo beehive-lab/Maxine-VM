@@ -31,7 +31,7 @@ public class JNI_OverflowArguments {
         final byte [] buf = new byte[8338];
         final long jzfile = 0xdeadbeef;
         final long jzentry = 0xcafebabe;
-        long pos = 8192;
+        final long pos = 8192;
         final int off = 0;
         final int len = 176;
 

@@ -369,7 +369,7 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
 
     @Override
     public Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer) {
-       return framePointer;
+        return framePointer;
     }
 
     @Override

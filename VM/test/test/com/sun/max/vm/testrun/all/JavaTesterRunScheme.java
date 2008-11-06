@@ -489,11 +489,12 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.jvmni.JVM_GetFreeMemory01.class,
         test.jvmni.JVM_GetMaxMemory01.class,
         test.jvmni.JVM_GetTotalMemory01.class,
-        test.jvmni.JVM_IsNaN01.class
+        test.jvmni.JVM_IsNaN01.class,
+        test.jni.JNI_OverflowArguments.class
     };
     @Override
     public void run() {
-        _testEnd = 450;
+        _testEnd = 451;
         vmStartUp();
         _total = _testEnd - _testStart;
         _testNum = _testStart;
@@ -1848,6 +1849,9 @@ public class JavaTesterRunScheme extends AbstractTester {
                     break;
                 case 449:
                     JavaTesterTests.test_jvmni_JVM_IsNaN01();
+                    break;
+                case 450:
+                    JavaTesterTests.test_jni_JNI_OverflowArguments();
             }
         }
         reportPassed(_passed, _total);
