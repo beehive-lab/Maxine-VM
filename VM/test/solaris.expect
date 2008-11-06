@@ -1,0 +1,15 @@
+[pass]
+test.output.HelloWorld
+test.output.HelloWorldGC
+test.output.LocalCatch
+test.output.SafepointWhileInJava
+test.output.SafepointWhileInNative
+test.output.StaticInitializers
+util.GCTest1
+util.GCTest2
+util.GCTest3
+util.GCTest4
+util.GCTest5
+[fail]
+test.output.FloatNanTest
+util.GCTest6
