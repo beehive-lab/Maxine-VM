@@ -19,6 +19,7 @@
  * Company, Ltd.
  */
 #include "debug.h"
+#include "threads.h"
 
 #include "condition.h"
 
@@ -55,21 +56,35 @@ void condition_destroy(Condition condition) {
 #endif
 }
 
-int condition_wait(Condition condition, Mutex mutex) {
+#if os_GUESTVMXEN
+#   define ETIMEDOUT = -1
+#endif
+
+Boolean condition_wait(Condition condition, Mutex mutex) {
 #if debug_MONITOR
   debug_println("condition_wait      (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition, mutex);
 #endif
+  int error;
 #if (os_DARWIN || os_LINUX)
-    return pthread_cond_wait(condition, mutex);
-#elif os_SOLARIS
-    int ret = cond_wait(condition, mutex);
-    if ( ret == EINTR) {
-    	return 1;
+    error = pthread_cond_wait(condition, mutex);
+    if (error == ETIMEDOUT) {
+        return true;
     }
-    return 0;
+#elif os_SOLARIS
+    error = cond_wait(condition, mutex);
+    if (error = EINTR) {
+        return true;
+    }
  #elif os_GUESTVMXEN
-    return guestvmXen_condition_wait(*condition, *mutex, 0);
+    error = guestvmXen_condition_wait(*condition, *mutex, 0);
+    if (error == ETIMEDOUT) {
+        return true;
+    }
 #endif
+    if (error != 0) {
+        debug_println("condition_wait: unexpected error code %d", error);
+    }
+    return false;
 }
 
 /*
@@ -81,72 +96,64 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 #endif
 	int error = 0;
 	if (timeoutMilliSeconds > 0) {
-
 #       if (os_DARWIN || os_LINUX)
             struct timespec ts;
-#           define TIMEDOUT ETIMEDOUT
 #       elif os_SOLARIS
             timestruc_t ts;
-#           define TIMEDOUT ETIME
 #       elif os_GUESTVMXEN
             struct guestvmXen_TimeSpec ts;
-#           define TIMEDOUT -1
 #       endif
 
 		ts.tv_sec = timeoutMilliSeconds / 1000;
-		ts.tv_nsec = (timeoutMilliSeconds * 1000000) % 1000000000;
+		ts.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
 
 #       if (os_DARWIN || os_LINUX)
-// TODO check error code for interrupted
-            pthread_cond_timedwait(condition, mutex, &ts);
+            error = pthread_cond_timedwait(condition, mutex, &ts);
+            if (error == ETIMEDOUT) {
+                return true;
+            }
 #       elif os_SOLARIS
-            error = cond_reltimedwait(condition, mutex, &ts) == EINTR ? 1 : 0;
+            error = cond_reltimedwait(condition, mutex, &ts);
+            if (error == ETIME) {
+                return true;
+            }
 #       elif os_GUESTVMXEN
             error = guestvmXen_condition_wait(*condition, *mutex, &ts);
+            if (error == ETIMEDOUT) {
+                return true;
+            }
 #       endif
-
 	} else {
-		error = condition_wait(condition, mutex);
+		return condition_wait(condition, mutex);
 	}
-// At this point error should be 0 or 1 only!
-	switch (error) {
-		case 0: {
-			return false;
-		}
-		case 1: {
-			return true;
-		}
-		default: {
-			debug_println("condition_timedWait: unexpected error code %d", error);
-			return false;
-		}
-	}
-
-
+	if (error != 0) {
+	    debug_println("condition_timedWait: unexpected error code %d", error);
+    }
+	return false;
 }
 
-int condition_notify(Condition condition) {
+Boolean condition_notify(Condition condition) {
 #if debug_MONITOR
   debug_println("condition_notify    (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)
-    return pthread_cond_signal(condition);
+    return pthread_cond_signal(condition) == 0;
 #elif os_SOLARIS
-    return cond_signal(condition);
+    return cond_signal(condition) == 0;
 #elif os_GUESTVMXEN
-    return guestvmXen_condition_notify(*condition, 0);
+    return guestvmXen_condition_notify(*condition, 0) == 0;
 #endif
 }
 
-int condition_notifyAll(Condition condition) {
+Boolean condition_notifyAll(Condition condition) {
 #if debug_MONITOR
   debug_println("condition_notifyAll (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)
-	return pthread_cond_broadcast(condition);
+	return pthread_cond_broadcast(condition) == 0;
 #elif os_SOLARIS
-	return cond_broadcast(condition);
+	return cond_broadcast(condition) == 0;
 #elif os_GUESTVMXEN
-	return guestvmXen_condition_notify(*condition, 1);
+	return guestvmXen_condition_notify(*condition, 1) == 0;
 #endif
 }

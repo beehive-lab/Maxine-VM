@@ -133,7 +133,9 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
             return teleObject;
         }
         // Keep all the tele VM traffic outside of synchronization.
-        assert teleVM.isValidOrigin(reference.toOrigin());
+        if (!teleVM.isValidOrigin(reference.toOrigin())) {
+            return null;
+        }
 
         final Reference hubReference = teleVM.wordToReference(teleVM.layoutScheme().generalLayout().readHubReferenceAsWord(reference));
         final Reference classActorReference = teleVM.fields().Hub_classActor.readReference(hubReference);

@@ -65,9 +65,9 @@ Java_com_sun_max_vm_monitor_modal_sync_nat_ConditionVariable_nativeConditionWait
 jboolean nativeConditionNotify(Condition condition, jboolean all) {
 #if os_SOLARIS || os_LINUX || os_DARWIN || os_GUESTVMXEN
 	if (all) {
-		return condition_notifyAll(condition) == 0;
+		return condition_notifyAll(condition);
 	}
-    return condition_notify(condition) == 0;
+    return condition_notify(condition);
 #else
 #error Unimplemented
 #endif
