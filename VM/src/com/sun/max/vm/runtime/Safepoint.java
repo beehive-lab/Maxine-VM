@@ -218,14 +218,12 @@ public abstract class Safepoint {
      */
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
         // spin until the SAFEPOINT_PROCEDURE field is null
-        while (!VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
-            final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(vmThreadLocals);
-            final Runnable other = UnsafeLoophole.cast(reference.toJava());
-            if (other == null || other == procedure) {
-                VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(vmThreadLocals, Reference.fromJava(procedure));
+        while (true) {
+            if (VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
                 Safepoint.trigger(vmThreadLocals);
                 return;
             }
+            Thread.yield();
         }
     }
 
