@@ -24,7 +24,7 @@ PROJECT = ../../..
 LIB = jvm
 
 SOURCES = c.c condition.c debug.c image.c isa.c $(ISA).c jni.c jvm.c maxine.c memory.c messenger.c mutex.c \
-          relocation.c runtime.c  snippet.c threads.c time.c trap.c virtualMemory.c tests.c sync.c
+          relocation.c runtime.c  snippet.c threads.c time.c trap.c virtualMemory.c jnitests.c sync.c
 
 SOURCE_DIRS = jni platform share substrate
 
