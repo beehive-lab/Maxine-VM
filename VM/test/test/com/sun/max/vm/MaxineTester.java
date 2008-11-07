@@ -75,7 +75,7 @@ public class MaxineTester {
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
     private static final Option<File> _expect = _options.newFileOption("expect", (File) null,
                     "A file listing the expected outcome (pass or fail) of each test. The test results compared to their expected " +
-                    "will be written to <file>.report. The exit value of the MaxineTester indicates the number of tests that " +
+                    "will be written to <output-dir>/<file>.report. The exit value of the MaxineTester indicates the number of tests that " +
                     "did not satisfy their expected outcome.");
 
 
@@ -181,7 +181,10 @@ public class MaxineTester {
     private static final Map<String, TestReport> _reports = Collections.synchronizedMap(new TreeMap<String, TestReport>());
 
     private static void initializeReports() {
-        final File expectFile = new File(_expect.getValue().getAbsolutePath());
+        if (_expect.getValue() == null) {
+            return;
+        }
+        final File expectFile = _expect.getValue().getAbsoluteFile();
         if (expectFile.exists()) {
             Expectation expectation = Expectation.PASS;
             try {
@@ -279,8 +282,8 @@ public class MaxineTester {
                 ProgramWarning.message("Error writing file " + failuresReportFile.getAbsolutePath() + ": " + e);
             }
 
-            final File expectFile = new File(_expect.getValue().getAbsolutePath());
-            out().println("Expectation configuration failed" + (expectFile.exists() ? ": " + expectFile.getAbsolutePath() : ""));
+            final File expectFile = _expect.getValue() == null ? null : _expect.getValue().getAbsoluteFile();
+            out().println("Expectation configuration failed" + (expectFile != null ? ": " + expectFile.getAbsolutePath() : ""));
             out().println("  Report: " + failuresReportFile.getAbsolutePath());
             out().println("  Accurate configuration: " + accurateExpectFile.getAbsolutePath());
             System.exit(exitCode);
