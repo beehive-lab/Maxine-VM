@@ -101,8 +101,8 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
     }
 
     @Override
-    public void alloc() {
-        super.alloc();
+    public void allocate() {
+        super.allocate();
         _proxyMutex.alloc();
         _proxyVar.alloc();
     }
