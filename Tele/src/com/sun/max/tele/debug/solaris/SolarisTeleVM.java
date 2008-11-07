@@ -40,7 +40,7 @@ public final class SolarisTeleVM extends TeleVM {
     private static native long nativeLoadBootHeap(long processHandle, long mappingSize);
 
     @Override
-    protected Pointer loadBootHeap() throws IOException {
+    protected Pointer loadBootImage() throws IOException {
         final SolarisTeleProcess solarisTeleProcess = (SolarisTeleProcess) teleProcess();
         final long heap = nativeLoadBootHeap(solarisTeleProcess.processHandle(), bootImage().header()._bootHeapSize + bootImage().header()._bootCodeSize);
         if (heap == 0L) {

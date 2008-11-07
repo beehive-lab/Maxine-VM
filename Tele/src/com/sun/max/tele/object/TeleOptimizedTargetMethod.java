@@ -25,7 +25,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Surrogate for an optimized compilation of a Java {@link ClassMethod} in the tele VM.
+ * Canonical surrogate for an optimized compilation of a Java {@link ClassMethod} in the tele VM.
  *
  * @author Michael Van De Vanter
  */

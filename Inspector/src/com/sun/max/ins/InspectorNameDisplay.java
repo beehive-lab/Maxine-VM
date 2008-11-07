@@ -224,8 +224,8 @@ public final class InspectorNameDisplay extends InspectionHolder {
 
     private String positionString(TeleTargetMethod teleTargetMethod, Address address) {
         final Pointer entry = teleTargetMethod.codeStart();
-        final int position = address.minus(entry.asAddress()).toInt();
-        return position == 0 ? "" : "+0x" + Integer.toHexString(position);
+        final long position = address.minus(entry.asAddress()).toLong();
+        return position == 0 ? "" : "+0x" + Long.toHexString(position);
     }
 
     /**

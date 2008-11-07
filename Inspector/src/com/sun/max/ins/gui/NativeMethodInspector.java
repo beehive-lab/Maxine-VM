@@ -25,6 +25,7 @@ import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.vm.runtime.*;
 
 

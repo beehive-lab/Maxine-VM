@@ -31,8 +31,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
 
 /**
- * Manages a cache of information about target routines (methods and native routines) in the code manager of the target
- * VM.
+ * Manages a cache of information about target routines (methods and native routines) in the {@link CodeManager} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */

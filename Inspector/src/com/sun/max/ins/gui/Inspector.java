@@ -27,6 +27,7 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.Inspection.*;
 import com.sun.max.ins.InspectionSettings.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
@@ -259,6 +260,9 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
     }
 
     public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    }
+
+    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
     }
 
     public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {

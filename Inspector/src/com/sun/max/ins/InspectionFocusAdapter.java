@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins;
 
+import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -40,6 +41,9 @@ public class InspectionFocusAdapter implements ViewFocusListener {
     }
 
     public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    }
+
+    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
     }
 
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {

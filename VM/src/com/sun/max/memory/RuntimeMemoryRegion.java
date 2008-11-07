@@ -29,9 +29,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     private Address _start;
 
     @INSPECTED
-    private Address _top;
-
-    @INSPECTED
     protected Address _mark;
 
     @INLINE
@@ -43,15 +40,6 @@ public class RuntimeMemoryRegion implements MemoryRegion {
         _start = start;
     }
 
-
-    public final Address top() {
-        return _top;
-    }
-
-    public void setTop(Address top) {
-        _top = top;
-    }
-
     @INSPECTED
     private Size _size;
 
@@ -61,6 +49,17 @@ public class RuntimeMemoryRegion implements MemoryRegion {
 
     public void setSize(Size size) {
         _size = size;
+    }
+
+    @INSPECTED
+    private String _description = "?";
+
+    public String description() {
+        return _description;
+    }
+
+    public void setDescription(String description) {
+        _description = description;
     }
 
     public RuntimeMemoryRegion() {
@@ -96,13 +95,12 @@ public class RuntimeMemoryRegion implements MemoryRegion {
                (end().greaterEqual(memoryRegion.start()) && end().lessThan(memoryRegion.end()));
     }
 
-    public void reset() {
-        _top = _start;
+    public boolean sameAs(MemoryRegion otherMemoryRegion) {
+        return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
     }
 
     public void clear() {
         Memory.clear(start().asPointer(), size());
-        _top = _start;
     }
 
     @Override

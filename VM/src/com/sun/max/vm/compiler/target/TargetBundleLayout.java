@@ -124,7 +124,7 @@ public final class TargetBundleLayout {
     public TargetBundleLayout(int numberOfCatchRanges, int numberOfDirectCalls, int numberOfIndirectCalls, int numberOfSafepoints, int numberOfScalarLiteralBytes, int numberOfReferenceLiterals,
                     int numberOfCodeBytes, int frameReferenceMapSize, int registerReferenceMapSize) {
 
-        final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE));
+        final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
 
         final int numberOfFields = ArrayField.VALUES.length();
         _lengths = new int[numberOfFields];
@@ -231,7 +231,7 @@ public final class TargetBundleLayout {
      * @param length the updated length of the field
      */
     public void update(ArrayField field, int length) {
-        final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE));
+        final LinearAllocatorHeapRegion region = new LinearAllocatorHeapRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
         for (ArrayField f : VALUES) {
             if (f == field) {
                 f.update(length, this, region);
