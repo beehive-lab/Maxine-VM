@@ -55,7 +55,7 @@ public class WordValueLabel extends ValueLabel {
     private final ValueMode _valueMode;
 
     /**
-     * The actual kind of word value, determined empirically by reading from the {@link TeleVM}; tghis may change after update.
+     * The actual kind of word value, determined empirically by reading from the {@link TeleVM}; this may change after update.
      * Possible visual presentations of a word, constrained by the {@linkplain ValueMode valueMode} of the
      * label and its value.
      */
