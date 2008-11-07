@@ -46,7 +46,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
 
     @INLINE
     @Override
-    public final ModeDelegate getDelegate() {
+    public final ModeDelegate delegate() {
         return _delegate;
     }
 
@@ -66,7 +66,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
     }
 
     @INLINE
-    protected static final int encodeCurrentForLockwordThreadID() {
+    protected static final int encodeCurrentThreadIDForLockword() {
         return VmThreadLocal.ID.getConstantWord().asAddress().toInt() + 1;
     }
 
@@ -75,7 +75,8 @@ public abstract class AbstractModeHandler implements ModeHandler {
         return lockwordThreadID - 1;
     }
 
-    public void initialize(MaxineVM.Phase phase) { }
+    public void initialize(MaxineVM.Phase phase) {
+    }
 
     /**
      * An AbstractModeHandler subclass must implement this interface to

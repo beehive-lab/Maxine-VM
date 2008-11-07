@@ -31,5 +31,5 @@ import com.sun.max.vm.monitor.modal.schemes.*;
 public interface ModeHandler {
     void setMonitorScheme(ModalMonitorScheme monitorScheme);
     void initialize(MaxineVM.Phase phase);
-    ModeHandler getDelegate();
+    ModeHandler delegate();
 }

@@ -54,7 +54,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
         ModeHandler handler = _entryHandler;
         while (handler != null) {
             handler.setMonitorScheme(this);
-            handler = handler.getDelegate();
+            handler = handler.delegate();
         }
     }
 
@@ -66,7 +66,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
         ModeHandler handler = _entryHandler;
         while (handler != null) {
             handler.initialize(phase);
-            handler = handler.getDelegate();
+            handler = handler.delegate();
         }
         JavaMonitorManager.initialize(phase);
     }
