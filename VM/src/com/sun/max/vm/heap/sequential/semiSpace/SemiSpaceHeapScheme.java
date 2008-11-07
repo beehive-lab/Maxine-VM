@@ -123,6 +123,10 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private final Timer _codeScanTimer = GlobalMetrics.newTimer("Code scan", Clock.SYSTEM_MILLISECONDS);
     private final Timer _copyTimer = GlobalMetrics.newTimer("Copy", Clock.SYSTEM_MILLISECONDS);
 
+    // Descriptive names, useful for debugging
+    private static final String TO_SPACE_DESCRIPTION = "Heap-To";
+    private static final String FROM_SPACE_DESCRIPTION = "Heap-From";
+
     // The heart of the collector.
     // Performs the actual Garbage Collection
     private final Runnable _collect = new Runnable() {
@@ -230,6 +234,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _toSpace.setSize(size);
             _fromSpace.setStart(Memory.allocate(size));
             _toSpace.setStart(Memory.allocate(size));
+            _fromSpace.setDescription(FROM_SPACE_DESCRIPTION);
+            _toSpace.setDescription(TO_SPACE_DESCRIPTION);
 
             if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
                 Debug.print("Could not allocate object heap of size ");

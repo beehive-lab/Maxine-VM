@@ -35,14 +35,16 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
         _mark = mark.aligned();
     }
 
-    public LinearAllocatorHeapRegion() {
+    public LinearAllocatorHeapRegion(String description) {
         super();
         _mark = Address.zero();
+        setDescription(description);
     }
 
-    public LinearAllocatorHeapRegion(Address start, Size size) {
+    public LinearAllocatorHeapRegion(Address start, Size size, String description) {
         super(start, size);
         _mark = start().aligned();
+        setDescription(description);
     }
 
     public Size allocationSize(Size cellSize) {

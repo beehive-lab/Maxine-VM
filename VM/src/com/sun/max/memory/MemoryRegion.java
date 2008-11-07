@@ -22,16 +22,47 @@ package com.sun.max.memory;
 
 import com.sun.max.unsafe.*;
 
+/**
+ * A region of memory in the {@link TeleVM}.
+ *
+ * @author Bernd Mathiske
+ * @author Michael Van De Vanter
+ */
 public interface MemoryRegion {
 
+    /**
+     * @return address of the first location in the region.
+     */
     Address start();
 
+    /**
+     * @return size of the region.
+     */
     Size size();
 
+    /**
+     * @return address just past the last location in the region.
+     */
     Address end();
 
+    /**
+     * @return does the region contain the address.
+     */
     boolean contains(Address address);
 
+    /**
+     * @return does the region have any locations in common with another region.
+     */
     boolean overlaps(MemoryRegion memoryRegion);
+
+    /**
+     * @return does the region have the same bounds as another region.
+     */
+    boolean sameAs(MemoryRegion memoryRegion);
+
+    /**
+     * @return an optional, short string that describes the role being played by the region, useful for debugging.
+     */
+    String description();
 
 }
