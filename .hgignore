@@ -12,6 +12,7 @@ manifest*
 .metadata
 *.orig
 .DS_Store
+maxine-tester
 
 # switch to regexp syntax
 syntax: regexp

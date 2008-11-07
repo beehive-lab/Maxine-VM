@@ -49,7 +49,7 @@ void mutex_initialize(Mutex mutex) {
 
 #if os_SOLARIS
 
-/* These functions are already defined for Solaris. */
+    /* These functions are already defined for Solaris. */
 
 #elif os_LINUX || os_DARWIN
 

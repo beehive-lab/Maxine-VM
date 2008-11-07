@@ -84,13 +84,12 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     }
 
     private final Pointer.Procedure _triggerSafepoint = new Pointer.Procedure() {
-
         public void run(Pointer vmThreadLocals) {
             if (vmThreadLocals.isZero()) {
                 // Thread is still starting up.
                 // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
             } else {
-                Safepoint.runProcedure(VmThread.current(vmThreadLocals), _suspendProcedure);
+                Safepoint.runProcedure(vmThreadLocals, _suspendProcedure);
             }
         }
     };
@@ -98,7 +97,7 @@ public class BeltwayStopTheWorldDaemon extends BlockingServerDaemon {
     private final Pointer.Procedure _resetSafepoint = new Pointer.Procedure() {
 
         public void run(Pointer vmThreadLocals) {
-            Safepoint.cancelProcedure(VmThread.current(vmThreadLocals), _suspendProcedure);
+            Safepoint.cancelProcedure(vmThreadLocals, _suspendProcedure);
             Safepoint.reset(vmThreadLocals);
         }
     };
