@@ -27,12 +27,11 @@
 #include "threads.h"
 #include "debug.h"
 
-
-
 #define BUFSIZE 8192
 JNIEXPORT jint JNICALL
 Java_test_jni_JNI_1OverflowArguments_read1(JNIEnv *env, jclass cls, jlong zfile,
-														jlong zentry, jlong pos, jbyteArray bytes, jint off, jint len) {
+                                           jlong zentry, jlong pos, jbyteArray bytes,
+                                           jint off, jint len) {
   if (len > BUFSIZE) {
 	 len = BUFSIZE;
   }
@@ -41,6 +40,7 @@ Java_test_jni_JNI_1OverflowArguments_read1(JNIEnv *env, jclass cls, jlong zfile,
 
 JNIEXPORT jint JNICALL
 Java_test_jni_JNI_1OverflowArguments_read2(JNIEnv *env, jclass cls, jlong zfile,
-														jlong zentry, jlong pos, jbyteArray bytes, jint off, jint len) {
+                                           jlong zentry, jlong pos, jbyteArray bytes,
+                                           jint off, jint len) {
   return off;
 }

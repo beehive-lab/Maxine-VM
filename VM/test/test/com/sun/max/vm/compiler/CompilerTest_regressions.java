@@ -74,35 +74,18 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         return previous;
     }
 
-    static class CallingConventionTest {
-        @C_FUNCTION
-        private static native void nativeMethod1();
-
-        public static float callerSaveMethod(float f2) {
-            final float f1 = 1.5f;
-            final float f3 = f2 * f1;
-            nativeMethod1();
-            return f3 / f1;
-        }
+    public static void callWithLotsOfArguments(int i1, int i2, int i3) {
+        calleeWithLotsOfArguments(i1, i2, i3, 4, 5, 6, 7, 77);
     }
 
-    public static float floatOp(float f) {
-        return 1.0f;
-    }
-
-    public static float computeFloat1(float f2) {
-        final float f1 = 1.5f;
-        final float f3 = f2 * f1;
-        final float f4 = floatOp(f3) + f1;
-        return f3 / f1 + f4;
+    @NEVER_INLINE
+    private static int calleeWithLotsOfArguments(int i1,  int i2, int i3, int i4, int  i5, int i6, int i7, int i8) {
+        return ((i1 + i2 + i3  + i4)  * i7) ^ i8;
     }
 
     public void test_sparcRegression() {
-        compileMethod(CallingConventionTest.class, "nativeMethod1");
-    }
-
-    public void test_sparcRegression2() {
-        compileMethod(CallingConventionTest.class, "callerSaveMethod", SignatureDescriptor.create(float.class, float.class));
+        compileMethod("callWithLotsOfArguments");
+        compileMethod(test.jni.JNI_OverflowArguments.class, "read1");
     }
 
     // Copy of java.lang.StringCode.scale

@@ -93,7 +93,7 @@ public class SPARCStackFrameLayout {
 
     /**
      * Computes the offset of a local stack slot relative to the frame pointer register.
-     * The offset of a the local slot is computed by the EIR from the top of the stack.
+     * The offset of the local slot is computed by the EIR from the top of the stack.
      * The Eir is oblivious to the details of the stack frame layout (stack bias, register window saving area, etc...).
      * These needs to be accounted for when computing a offset from the frame pointer register.
      * @see  offsetToFirstFreeSlotFromStackPointer

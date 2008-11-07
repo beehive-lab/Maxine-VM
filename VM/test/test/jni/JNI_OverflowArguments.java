@@ -32,8 +32,8 @@ public class JNI_OverflowArguments {
         final long jzfile = 0xdeadbeef;
         final long jzentry = 0xcafebabe;
         final long pos = 8192;
-        final int off = 0;
-        final int len = 176;
+        final int off = 77;
+        final int len = 177;
 
         if (arg == 0) {
             final int res = read1(jzfile, jzentry, pos, buf, off, len);
