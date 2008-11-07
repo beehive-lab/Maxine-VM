@@ -51,9 +51,8 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.micro.String_format02.class
     };
     @Override
-    public void run() {
+    public void runTests() {
         _testEnd = 5;
-        vmStartUp();
         _total = _testEnd - _testStart;
         _testNum = _testStart;
         while (_testNum < _testEnd) {
