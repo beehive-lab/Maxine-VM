@@ -72,10 +72,9 @@ public class MaxineTester {
                     "A list of configurations for which to run the Java tester tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
-    private static final Option<File> _expectedFailures = _options.newFileOption("expect", (File) null,
+    private static final Option<File> _expect = _options.newFileOption("expect", (File) null,
                     "A file listing the tests expected to fail. The exit value of the MaxineTester is the sum of the unexpected failures, " +
                     "the unexpected passes and the number of image builds that failed.");
-
 
     private static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
 
@@ -161,10 +160,10 @@ public class MaxineTester {
     private static final Map<String, String> _testResults = Collections.synchronizedMap(new TreeMap<String, String>());
 
     private static Set<String> loadExpectedFailures() {
-        if (_expectedFailures.getValue() == null) {
+        if (_expect.getValue() == null) {
             return Collections.emptySet();
         }
-        final File expectedFailuresFile = _expectedFailures.getValue().getAbsoluteFile();
+        final File expectedFailuresFile = _expect.getValue().getAbsoluteFile();
         if (expectedFailuresFile.exists()) {
             final Set<String> expectedFailures = new HashSet<String>();
             try {
@@ -230,13 +229,13 @@ public class MaxineTester {
         }
 
         if (!unexpectedFailures.isEmpty()) {
-            out().println("Unexpected failures: [add to file specified by -" + _expectedFailures.getName() + " option]");
+            out().println("Unexpected failures: [add to file specified by -" + _expect.getName() + " option]");
             for (Map.Entry<String, String> entry : unexpectedFailures.entrySet()) {
                 out().println(entry.getKey() + "  " + entry.getValue());
             }
         }
         if (!unexpectedPasses.isEmpty()) {
-            out().println("Unexpected passes: [remove from file specified by -" + _expectedFailures.getName() + " option]");
+            out().println("Unexpected passes: [remove from file specified by -" + _expect.getName() + " option]");
             for (String testName : unexpectedPasses) {
                 out().println(testName);
             }
