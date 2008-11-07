@@ -24,7 +24,6 @@ import test.com.sun.max.vm.testrun.all.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -36,6 +35,7 @@ public abstract class AbstractTester extends JavaRunScheme {
 
     protected static Utf8Constant _testMethod = SymbolTable.makeSymbol("test");
     protected static boolean _nativeTests;
+    protected static boolean _noTests;
     protected static int _passed;
     protected static int _finished;
     protected static int _total;
@@ -45,20 +45,21 @@ public abstract class AbstractTester extends JavaRunScheme {
     protected static int _verbose = 2;
 
     private static VMIntOption _verboseLevel = new VMIntOption("-XX:TesterVerbose", 2,
-                    "Specifies the Java tester verbosity level.", MaxineVM.Phase.STARTING);
-    private static VMIntOption _testStartOption  = new VMIntOption("-XX:TesterStart=", -1,
-                    "Specifies the number of the first test to run.", MaxineVM.Phase.STARTING);
-    private static VMIntOption _testEndOption  = new VMIntOption("-XX:TesterEnd=", -1,
-                    "Specifies the number of the last test to run.", MaxineVM.Phase.STARTING);
+                    "The Java tester verbosity level.", MaxineVM.Phase.STARTING);
+    private static VMIntOption _startOption  = new VMIntOption("-XX:TesterStart=", -1,
+                    "The number of the first test to run.", MaxineVM.Phase.STARTING);
+    private static VMIntOption _endOption  = new VMIntOption("-XX:TesterEnd=", -1,
+                    "The number of the last test to run.", MaxineVM.Phase.STARTING);
+    private static VMOption _offOption  = new VMOption("-XX:TesterOff",
+                    "Omit tests and run a standard Java program.", MaxineVM.Phase.STARTING);
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
 
     public static void reportPassed(int passed, int total) {
-        Debug.print('\n');
+        Debug.println();
         Debug.print(passed);
         Debug.print(" of ");
         Debug.print(total);
-        Debug.print(" passed.");
-        Debug.print('\n');
+        Debug.println(" passed.");
     }
 
     public static void end(String run, boolean result) {
@@ -106,10 +107,9 @@ public abstract class AbstractTester extends JavaRunScheme {
             Debug.print(' ');
             Debug.print(finished);
             Debug.print(" of ");
-            Debug.print(total);
-            Debug.print('\n');
+            Debug.println(total);
         } else if (finished == total) {
-            Debug.print('\n');
+            Debug.println();
         }
     }
 
@@ -121,7 +121,7 @@ public abstract class AbstractTester extends JavaRunScheme {
             while (i++ < 50) {
                 Debug.print(' ');
             }
-            Debug.print("  next " + _testStartOption + "=");
+            Debug.print("  next " + _testStart + "=");
             Debug.print(_testNum + 1);
             Debug.println("");
         }
@@ -200,34 +200,48 @@ public abstract class AbstractTester extends JavaRunScheme {
         }
     }
 
-    protected void vmStartUp() {
-        initializeBasicFeatures();
-        _testStart = _testStartOption.getValue();
-        if (_testStart < 0) {
-            _testStart = 0;
+    @Override
+    protected boolean parseMain() {
+        if (_noTests) {
+            return super.parseMain();
         }
-        final int testEnd = _testEndOption.getValue();
-        if (testEnd == 0) {
-            _testEnd = _testStart + 1;
-        }
-        if (testEnd > 0) {
-            _testEnd = testEnd;
-        }
-        if (_nativeTests) {
-            System.loadLibrary("javatest");
-        }
-        MaxineVM.host().setPhase(Phase.RUNNING);
+        return VMOptions.parseMain(false);
     }
+
+    protected abstract void runTests();
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (_nativeTests || phase != MaxineVM.Phase.STARTING) {
+        if (phase == MaxineVM.Phase.STARTING) {
+            _noTests = _offOption.isPresent();
+            if (_nativeTests || _noTests) {
+                super.initialize(phase);
+            }
+            if (!_noTests) {
+                _testStart = _startOption.getValue();
+                if (_testStart < 0) {
+                    _testStart = 0;
+                }
+                final int testEnd = _endOption.getValue();
+                if (testEnd == 0) {
+                    _testEnd = _testStart + 1;
+                }
+                if (testEnd > 0) {
+                    _testEnd = testEnd;
+                }
+                if (_nativeTests) {
+                    System.loadLibrary("javatest");
+                }
+                runTests();
+            }
+        } else {
             super.initialize(phase);
         }
         _verbose = 3;
         if (MaxineVM.isPrototyping()) {
             registerClasses();
             _nativeTests = BinaryImageGenerator._nativeTests;
+            super.initialize(phase);
         }
     }
 

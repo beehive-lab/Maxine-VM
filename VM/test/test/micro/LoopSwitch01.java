@@ -18,21 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.jdk;
+package test.micro;
 
 /*
  * @Harness: java
- * @Runs: 0 = true
+ * @Runs: 0 = "ok0"; 10 = "ok0"; 25 = "ok0";
  */
-public class System_currentTimeMillis02 {
-    public static boolean test(int arg) {
-        long start = System.currentTimeMillis();
-        long delta = 0;
-        for (int i = 0; delta == 0 && i < 5000000; i++) {
-            delta = System.currentTimeMillis() - start;
-            // do nothing.
+public class LoopSwitch01 {
+    static int _count = 0;
+    public static String test(int arg) {
+        String line;
+        while ((line = string()) != null) {
+            switch (line.charAt(0)) {
+                case 'a':
+                    new Object();
+                    break;
+                case 'b':
+                    new Object();
+                    break;
+                default:
+                    new Object();
+                    break;
+            }
         }
-        // better get at least 40 millisecond resolution.
-        return delta >= 1 && delta < 40;
+        return "ok" + _count;
+    }
+    private static String string() {
+        if (_count == 0) {
+            return null;
+        }
+        _count--;
+        return "" + ('a' + _count);
     }
 }

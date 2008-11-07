@@ -31,6 +31,6 @@ public final class Object_hashCode01 {
     public static boolean test(int i) {
         final Object o1 = new Object();
         final Object o2 = new Object();
-        return o1.hashCode() != o2.hashCode();
+        return o1.hashCode() != 0 || o2.hashCode() != 0;
     }
 }

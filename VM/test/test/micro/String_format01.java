@@ -18,21 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.jdk;
+package test.micro;
 
 /*
  * @Harness: java
- * @Runs: 0 = true
+ * @Runs: "World" = "Hello World"; "New World Order" = "Hello New World Order"
  */
-public class System_currentTimeMillis02 {
-    public static boolean test(int arg) {
-        long start = System.currentTimeMillis();
-        long delta = 0;
-        for (int i = 0; delta == 0 && i < 5000000; i++) {
-            delta = System.currentTimeMillis() - start;
-            // do nothing.
-        }
-        // better get at least 40 millisecond resolution.
-        return delta >= 1 && delta < 40;
+public class String_format01 {
+    public static String test(String s) {
+        return String.format("Hello %s", s);
     }
 }
