@@ -421,10 +421,15 @@ public class WordValueLabel extends ValueLabel {
 
         } else if (_teleObject instanceof TeleConstantPool) {
             final TeleConstantPool teleConstantPool = (TeleConstantPool) _teleObject;
-            final ClassActor classActor = teleConstantPool.getTeleHolder().classActor();
-            setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), classActor.toJava().getSimpleName()));
-            setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), classActor.name().toString()));
-
+            final TeleClassActor teleHolder = teleConstantPool.getTeleHolder();
+            if (teleHolder == null) {
+                setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), "<holder unitialized>"));
+                setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), "<holder unitialized>"));
+            } else {
+                final ClassActor classActor =teleHolder.classActor();
+                setText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineTerseRole(), classActor.toJava().getSimpleName()));
+                setToolTipText(inspection().nameDisplay().longName(null, _teleObject, _teleObject.maxineRole(), classActor.name().toString()));
+            }
         } else if (_teleObject instanceof TeleClassConstant.Resolved) {
             final TeleClassConstant.Resolved teleResolvedClassConstant = (TeleClassConstant.Resolved) _teleObject;
             final TeleClassActor teleClassActor = teleResolvedClassConstant.getTeleClassActor();

@@ -27,6 +27,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -113,7 +114,8 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
             name = teleFieldActor.fieldActor().name().toString();
         } else if (teleObject() instanceof TeleConstantPool) {
             final TeleConstantPool teleConstantPool = (TeleConstantPool) teleObject();
-            name = teleConstantPool.getTeleHolder().classActor().simpleName();
+            final TeleClassActor teleHolder = teleConstantPool.getTeleHolder();
+            name = (teleHolder == null) ? "<null>" : teleHolder.classActor().simpleName();
         } else if (teleObject() instanceof TeleStaticTuple) {
             name = classActor.qualifiedName();
         } else if (teleObject() instanceof TeleClass) {
