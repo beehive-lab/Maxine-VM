@@ -480,7 +480,10 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.micro.Fibonacci.class,
         test.micro.InvokeVirtual_01.class,
         test.micro.InvokeVirtual_02.class,
+        test.micro.LoopSwitch01.class,
         test.micro.StrangeFrames.class,
+        test.micro.String_format01.class,
+        test.micro.String_format02.class,
         test.micro.VarArgs_String01.class,
         test.micro.VarArgs_boolean01.class,
         test.micro.VarArgs_byte01.class,
@@ -499,7 +502,7 @@ public class JavaTesterRunScheme extends AbstractTester {
     };
     @Override
     public void run() {
-        _testEnd = 456;
+        _testEnd = 459;
         vmStartUp();
         _total = _testEnd - _testStart;
         _testNum = _testStart;
@@ -1826,51 +1829,60 @@ public class JavaTesterRunScheme extends AbstractTester {
                     JavaTesterTests.test_micro_InvokeVirtual_02();
                     break;
                 case 440:
-                    JavaTesterTests.test_micro_StrangeFrames();
+                    JavaTesterTests.test_micro_LoopSwitch01();
                     break;
                 case 441:
-                    JavaTesterTests.test_micro_VarArgs_String01();
+                    JavaTesterTests.test_micro_StrangeFrames();
                     break;
                 case 442:
-                    JavaTesterTests.test_micro_VarArgs_boolean01();
+                    JavaTesterTests.test_micro_String_format01();
                     break;
                 case 443:
-                    JavaTesterTests.test_micro_VarArgs_byte01();
+                    JavaTesterTests.test_micro_String_format02();
                     break;
                 case 444:
-                    JavaTesterTests.test_micro_VarArgs_char01();
+                    JavaTesterTests.test_micro_VarArgs_String01();
                     break;
                 case 445:
-                    JavaTesterTests.test_micro_VarArgs_double01();
+                    JavaTesterTests.test_micro_VarArgs_boolean01();
                     break;
                 case 446:
-                    JavaTesterTests.test_micro_VarArgs_float01();
+                    JavaTesterTests.test_micro_VarArgs_byte01();
                     break;
                 case 447:
-                    JavaTesterTests.test_micro_VarArgs_int01();
+                    JavaTesterTests.test_micro_VarArgs_char01();
                     break;
                 case 448:
-                    JavaTesterTests.test_micro_VarArgs_long01();
+                    JavaTesterTests.test_micro_VarArgs_double01();
                     break;
                 case 449:
-                    JavaTesterTests.test_micro_VarArgs_short01();
+                    JavaTesterTests.test_micro_VarArgs_float01();
                     break;
                 case 450:
-                    JavaTesterTests.test_jvmni_JVM_ArrayCopy01();
+                    JavaTesterTests.test_micro_VarArgs_int01();
                     break;
                 case 451:
-                    JavaTesterTests.test_jvmni_JVM_GetClassContext01();
+                    JavaTesterTests.test_micro_VarArgs_long01();
                     break;
                 case 452:
-                    JavaTesterTests.test_jvmni_JVM_GetFreeMemory01();
+                    JavaTesterTests.test_micro_VarArgs_short01();
                     break;
                 case 453:
-                    JavaTesterTests.test_jvmni_JVM_GetMaxMemory01();
+                    JavaTesterTests.test_jvmni_JVM_ArrayCopy01();
                     break;
                 case 454:
-                    JavaTesterTests.test_jvmni_JVM_GetTotalMemory01();
+                    JavaTesterTests.test_jvmni_JVM_GetClassContext01();
                     break;
                 case 455:
+                    JavaTesterTests.test_jvmni_JVM_GetFreeMemory01();
+                    break;
+                case 456:
+                    JavaTesterTests.test_jvmni_JVM_GetMaxMemory01();
+                    break;
+                case 457:
+                    JavaTesterTests.test_jvmni_JVM_GetTotalMemory01();
+                    break;
+                case 458:
                     JavaTesterTests.test_jvmni_JVM_IsNaN01();
             }
         }
