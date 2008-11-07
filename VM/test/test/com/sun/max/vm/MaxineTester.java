@@ -24,8 +24,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import test.com.sun.max.vm.MaxineTester.TestReport.*;
-
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
@@ -41,6 +39,7 @@ import com.sun.max.vm.prototype.*;
  * and user programs with the generated images.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class MaxineTester {
 
@@ -73,10 +72,9 @@ public class MaxineTester {
                     "A list of configurations for which to run the Java tester tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
-    private static final Option<File> _expect = _options.newFileOption("expect", (File) null,
-                    "A file listing the expected outcome (pass or fail) of each test. The test results compared to their expected " +
-                    "will be written to <output-dir>/<file>.report. The exit value of the MaxineTester indicates the number of tests that " +
-                    "did not satisfy their expected outcome.");
+    private static final Option<File> _expectedFailures = _options.newFileOption("expect", (File) null,
+                    "A file listing the tests expected to fail. The exit value of the MaxineTester is the sum of the unexpected failures, " +
+                    "the unexpected passes and the number of image builds that failed.");
 
 
     private static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
@@ -120,31 +118,6 @@ public class MaxineTester {
         return _err.get();
     }
 
-    static class TestReport {
-        enum Expectation {
-            PASS,
-            FAIL,
-            UNKNOWN;
-
-            @Override
-            public String toString() {
-                return name().toLowerCase();
-            }
-        }
-        final String _testName;
-        final Expectation _expectation;
-        String _failure;
-        public TestReport(String testName, Expectation expectation) {
-            _expectation = expectation;
-            _testName = testName;
-        }
-        @Override
-        public String toString() {
-            return _testName;
-        }
-
-    }
-
     static {
         _imageConfigs.put("optopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests"});
         _imageConfigs.put("optjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-callee-jit"});
@@ -164,139 +137,112 @@ public class MaxineTester {
     }
 
     public static void main(String[] args) {
-        _options.parseArguments(args);
-        _javaConfigAlias = _javaConfigAliasOption.getValue();
-        if (_javaConfigAlias != null) {
-            ProgramError.check(_imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
+        try {
+            _options.parseArguments(args);
+            _javaConfigAlias = _javaConfigAliasOption.getValue();
+            if (_javaConfigAlias != null) {
+                ProgramError.check(_imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
+            }
+            final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
+            makeDirectory(outputDir);
+            Trace.on(_traceOption.getValue());
+            runJavaPrograms();
+            runJavaTesterTests();
+            System.exit(reportTestResults());
+        } catch (Throwable throwable) {
+            throwable.printStackTrace(err());
+            System.exit(-1);
         }
-        initializeReports();
-        final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
-        makeDirectory(outputDir);
-        Trace.on(_traceOption.getValue());
-        runJavaPrograms();
-        runJavaTesterTests();
-        finalizeReports();
     }
 
-    private static final Map<String, TestReport> _reports = Collections.synchronizedMap(new TreeMap<String, TestReport>());
+    /**
+     * A map from test names to a string describing a test failure or null if a test passed.
+     */
+    private static final Map<String, String> _testResults = Collections.synchronizedMap(new TreeMap<String, String>());
 
-    private static void initializeReports() {
-        if (_expect.getValue() == null) {
-            return;
+    private static Set<String> loadExpectedFailures() {
+        if (_expectedFailures.getValue() == null) {
+            return Collections.emptySet();
         }
-        final File expectFile = _expect.getValue().getAbsoluteFile();
-        if (expectFile.exists()) {
-            Expectation expectation = Expectation.PASS;
+        final File expectedFailuresFile = _expectedFailures.getValue().getAbsoluteFile();
+        if (expectedFailuresFile.exists()) {
+            final Set<String> expectedFailures = new HashSet<String>();
             try {
-                final BufferedReader br = new BufferedReader(new FileReader(expectFile));
+                final BufferedReader br = new BufferedReader(new FileReader(expectedFailuresFile));
                 String line;
                 while ((line = br.readLine()) != null) {
-                    final String testName = line.trim();
+                    final String testLine = line.trim();
                     if (line.isEmpty() || line.startsWith("#")) {
                         continue;
-                    } else if (line.equals("[" + Expectation.PASS + "]")) {
-                        expectation = Expectation.PASS;
-                    } else if (line.equals("[" + Expectation.FAIL + "]")) {
-                        expectation = Expectation.FAIL;
-                    } else {
-                        final TestReport testReport = new TestReport(testName, expectation);
-                        _reports.put(testName, testReport);
                     }
+                    // Up to the first space is the test name:
+                    final int indexOfSpace = testLine.indexOf(' ');
+                    final String testName = indexOfSpace == -1 ? testLine : testLine.substring(0, indexOfSpace);
+                    expectedFailures.add(testName);
                 }
                 br.close();
+                return expectedFailures;
             } catch (IOException ioException) {
-                ProgramError.unexpected("Error reading file " + expectFile.getAbsolutePath(), ioException);
+                ProgramWarning.message("Error reading expected failures file " + expectedFailuresFile.getAbsolutePath() + ": " + ioException);
             }
         }
+        return Collections.emptySet();
     }
 
-    private static void updateReports(String testName, String failure) {
-        TestReport report = _reports.get(testName);
-        if (report == null) {
-            // Unknown tests are presumed to be negative (i.e. should fail)
-            report = new TestReport(testName, Expectation.UNKNOWN);
+    /**
+     * Adds a test result to the global set of test results.
+     *
+     * @param testName the unique name of the test
+     * @param failure a failure message or null if the test passed
+     */
+    private static void addTestResult(String testName, String failure) {
+        _testResults.put(testName, failure);
+    }
+
+    private static int reportTestResults() {
+        int failedImages = 0;
+        for (Map.Entry<String, File> entry : _generatedImages.entrySet()) {
+            if (entry.getValue() == null) {
+                out().println("Failed building image for configuration '" + entry.getKey() + "'");
+                failedImages++;
+            }
         }
-        report._failure = failure;
-        _reports.put(testName, report);
-    }
 
-    private static void finalizeReports() {
-        int exitCode = 0;
-        final AppendableSequence<TestReport> passed = new ArrayListSequence<TestReport>();
-        final AppendableSequence<TestReport> failed = new ArrayListSequence<TestReport>();
-        final File failuresReportFile = new File(_outputDir.getValue(), "failures.report");
-        try {
-            final OutputStream os = new FileOutputStream(failuresReportFile);
-            final PrintStream out = new PrintStream(new FileOutputStream(failuresReportFile));
-            for (TestReport report : _reports.values()) {
-                switch (report._expectation) {
-                    case PASS: {
-                        if (report._failure != null) {
-                            exitCode++;
-                            out.println(report._testName + ": " + report._failure);
-                            failed.append(report);
-                        } else {
-                            passed.append(report);
-                        }
-                        break;
-                    }
-                    case FAIL: {
-                        if (report._failure == null) {
-                            exitCode++;
-                            out.println(report._testName + ": was expected to fail");
-                            passed.append(report);
-                        } else {
-                            failed.append(report);
-                        }
-                        break;
-                    }
-                    case UNKNOWN: {
-                        exitCode++;
-                        if (report._failure == null) {
-                            out.println(report._testName + ": unknown test that passed");
-                            passed.append(report);
-                        } else {
-                            out.println(report._testName + ": unknown test that failed: " + report._failure);
-                            failed.append(report);
-                        }
-                        break;
-                    }
+        final Set<String> expectedFailures = loadExpectedFailures();
+        final Map<String, String> unexpectedFailures = new HashMap<String, String>();
+        final Set<String> unexpectedPasses = new HashSet<String>();
+        final Set<String> failures = new HashSet<String>();
+
+        for (Map.Entry<String, String> entry : _testResults.entrySet()) {
+            final String testName = entry.getKey();
+            final String failureMessage = entry.getValue();
+            final boolean expectedFailure = expectedFailures.contains(testName);
+            if (failureMessage == null) {
+                if (expectedFailure) {
+                    unexpectedPasses.add(testName);
+                }
+            } else {
+                failures.add(testName);
+                if (!expectedFailure) {
+                    unexpectedFailures.put(testName, failureMessage);
                 }
             }
-            os.close();
-            if (exitCode == 0) {
-                failuresReportFile.delete();
-            }
-        } catch (IOException e) {
-            ProgramError.unexpected("Error writing to file " + failuresReportFile.getAbsolutePath(), e);
         }
-        if (exitCode != 0) {
-            final File accurateExpectFile = new File(_outputDir.getValue(), "accurate.expect");
-            try {
-                final OutputStream os = new FileOutputStream(accurateExpectFile);
-                final PrintStream out = new PrintStream(os);
-                printToAccurateExpectFile(out, passed, Expectation.PASS);
-                printToAccurateExpectFile(out, failed, Expectation.FAIL);
-                os.close();
-            } catch (IOException e) {
-                ProgramWarning.message("Error writing file " + failuresReportFile.getAbsolutePath() + ": " + e);
-            }
 
-            final File expectFile = _expect.getValue() == null ? null : _expect.getValue().getAbsoluteFile();
-            out().println("Expectation configuration failed" + (expectFile != null ? ": " + expectFile.getAbsolutePath() : ""));
-            out().println("  Report: " + failuresReportFile.getAbsolutePath());
-            out().println("  Accurate configuration: " + accurateExpectFile.getAbsolutePath());
-            System.exit(exitCode);
-        }
-    }
-
-    private static void printToAccurateExpectFile(PrintStream out, Sequence<TestReport> reports, Expectation expectation) {
-        if (!reports.isEmpty()) {
-            out.println("[" + expectation + "]");
-            for (TestReport report : reports) {
-                out.println(report);
+        if (!unexpectedFailures.isEmpty()) {
+            out().println("Unexpected failures: [add to file specified by -" + _expectedFailures.getName() + " option]");
+            for (Map.Entry<String, String> entry : unexpectedFailures.entrySet()) {
+                out().println(entry.getKey() + "  " + entry.getValue());
             }
         }
+        if (!unexpectedPasses.isEmpty()) {
+            out().println("Unexpected passes: [remove from file specified by -" + _expectedFailures.getName() + " option]");
+            for (String testName : unexpectedPasses) {
+                out().println(testName);
+            }
+        }
+
+        return unexpectedFailures.size() + unexpectedPasses.size() + failedImages;
     }
 
     private static void runJavaTesterTests() {
@@ -410,15 +356,15 @@ public class MaxineTester {
                 out().println("(" + maxineExitValue + " != " + javaExitValue + ")");
             }
             out().println("  -> see: " + maxvmOutput.getAbsolutePath());
-            updateReports(mainClass.getName(), String.format("bad exit value [received %d, expected %d]", maxineExitValue, javaExitValue));
+            addTestResult(mainClass.getName(), String.format("bad exit value [received %d, expected %d]", maxineExitValue, javaExitValue));
         } else if (compareFiles(javaOutput, maxvmOutput)) {
             out().println("OK");
-            updateReports(mainClass.getName(), null);
+            addTestResult(mainClass.getName(), null);
         } else {
             out().println("(output did not match)");
             out().println("  -> see: " + javaOutput.getAbsolutePath());
             out().println("  -> see: " + maxvmOutput.getAbsolutePath());
-            updateReports(mainClass.getName(), String.format("output did not match [compare %s with %s]", javaOutput.getPath(), maxvmOutput.getPath()));
+            addTestResult(mainClass.getName(), String.format("output did not match [compare %s with %s]", javaOutput.getPath(), maxvmOutput.getPath()));
         }
     }
 
@@ -492,6 +438,10 @@ public class MaxineTester {
         return exec(imageDir, appendArgs(new String[] {_javaExecutable.getValue()}, args), outputFile, name, timeout);
     }
 
+    /**
+     * Map from configuration names to the directory in which the image for the configuration was created.
+     * If the image generation failed for a configuration, then it will have a {@code null} entry in this map.
+     */
     private static final Map<String, File> _generatedImages = new HashMap<String, File>();
 
     public static boolean generateImage(File imageDir, String imageConfig) {
