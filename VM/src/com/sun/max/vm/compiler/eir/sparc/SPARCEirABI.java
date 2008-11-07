@@ -145,6 +145,9 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         //    double,       %d6     BIAS + RW_SAVING_AREA + 3 * wordSize
         //    int,          %o5     BIAS + RW_SAVING_AREA + 5 * wordSize
         //    int           -       BIAS + RW_SAVING_AREA + 6 * wordSize
+        //
+        // In this case, %o1, %o3 and %o4 aren't used. This means that when compiling the callee, we should add the corresponding %i registers to the pool
+        // of available registers. TODO: add a "unused parameter registers" function that takes a method signature and return a Pool of register to the reg alloc.
 
         int stackOffset = 0;
         for (int i = 0; i < kinds.length; i++) {
