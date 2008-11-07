@@ -5,6 +5,7 @@ test.output.LocalCatch
 test.output.SafepointWhileInJava
 test.output.SafepointWhileInNative
 test.output.StaticInitializers
+test.output.Printf
 util.GCTest1
 util.GCTest2
 util.GCTest3
@@ -12,5 +13,4 @@ util.GCTest4
 util.GCTest5
 [fail]
 test.output.FloatNanTest
-test.output.Printf
 util.GCTest6
