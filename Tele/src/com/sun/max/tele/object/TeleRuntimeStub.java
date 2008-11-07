@@ -18,26 +18,33 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.object;
 
-import com.sun.max.collect.*;
-import com.sun.max.jdwp.vm.data.*;
-import com.sun.max.jdwp.vm.proxy.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.collect.IndexedSequence;
+import com.sun.max.jdwp.vm.data.MachineCodeInstruction;
+import com.sun.max.jdwp.vm.data.MachineCodeInstructionArray;
+import com.sun.max.jdwp.vm.proxy.MethodProvider;
+import com.sun.max.tele.TeleCodeRegistry;
+import com.sun.max.tele.TeleTargetRoutine;
+import com.sun.max.tele.TeleVM;
+import com.sun.max.tele.debug.TeleTargetBreakpoint;
+import com.sun.max.tele.method.TargetCodeInstruction;
+import com.sun.max.tele.method.TargetCodeRegion;
+import com.sun.max.tele.method.TeleDisassembler;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Size;
+import com.sun.max.vm.bytecode.BytecodeInfo;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.runtime.RuntimeStub;
+import com.sun.max.vm.value.WordValue;
 
 /**
- * Surrogate for a {@linkplain RuntimeStub runtime stub} in the tele VM.
+ * Canonical surrogate for a {@linkplain RuntimeStub runtime stub} in the {@link TeleVM}.
  *
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-public class TeleRuntimeStub  extends TeleTupleObject implements TeleTargetRoutine  {
+public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTargetRoutine  {
 
     /**
      * Gets a {@code TeleTargetMethod} instance representing the {@link RuntimeStub} in the tele VM that contains a
@@ -64,7 +71,7 @@ public class TeleRuntimeStub  extends TeleTupleObject implements TeleTargetRouti
                 // known native or Java method
                 teleRuntimeStub = null;
             }
-        } else if (teleVM.codeContains(instructionPointer)) {
+        } else if (teleVM.teleCodeManager().contains(instructionPointer)) {
             // An address, previously unknown in the registry, in the target VM code regions.
             final Reference runtimeStubReference =  teleVM.methods().Code_codePointerToRuntimeStub.interpret(new WordValue(instructionPointer)).asReference();
             if (runtimeStubReference != null && !runtimeStubReference.isZero()) {
@@ -88,6 +95,9 @@ public class TeleRuntimeStub  extends TeleTupleObject implements TeleTargetRouti
         return _targetCodeRegion;
     }
 
+    /**
+     * A deep copy of the stub; assume that it never moves and that addresses never relocated.
+     */
     private final RuntimeStub _runtimeStub;
 
     public RuntimeStub runtimeStub() {

@@ -41,11 +41,11 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the tele VM.
+ * Canonical surrogate for several possible kinds of compilation of a Java {@link ClassMethod} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleTargetMethod extends TeleTupleObject implements TeleTargetRoutine {
+public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implements TeleTargetRoutine {
 
     /**
      * Gets a {@code TeleTargetMethod} instance representing the {@link TargetMethod} in the tele VM that contains a
@@ -72,7 +72,7 @@ public abstract class TeleTargetMethod extends TeleTupleObject implements TeleTa
                 // known native method or safepoint stub
                 teleTargetMethod = null;
             }
-        } else if (teleVM.codeContains(instructionPointer)) {
+        } else if (teleVM.teleCodeManager().contains(instructionPointer)) {
             // An address, previously unknown in the registry, in the target VM code regions.
             final Reference targetMethodReference = teleVM.methods().Code_codePointerToTargetMethod.interpret(new WordValue(instructionPointer)).asReference();
             // Possible that the address points to an unallocated area of a code region.
@@ -157,10 +157,8 @@ public abstract class TeleTargetMethod extends TeleTupleObject implements TeleTa
         super(teleVM, targetMethodReference);
         // Exception to the general policy of not performing VM i/o during object
         // construction.  This is needed for the code registry.
-        // A consequence is synchronized call to the registry from within a synchronized call to TeleObject construction.
-        final Address bundleStart = teleVM().fields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
-        final Size bundleSize = teleVM().fields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
-        _targetCodeRegion = new TargetCodeRegion(this, bundleStart, bundleSize);
+        // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
+        _targetCodeRegion = new TargetCodeRegion(this, start(), size());
         // Register every method compilation, so that they can be located by code address.
         teleVM.teleCodeRegistry().add(this);
     }

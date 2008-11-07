@@ -40,7 +40,7 @@ public final class DarwinTeleVM extends TeleVM {
     private static native long nativeLoadBootHeap(long childPID, long task, long mappingSize);
 
     @Override
-    protected Pointer loadBootHeap() throws IOException {
+    protected Pointer loadBootImage() throws IOException {
         final DarwinTeleProcess darwinTeleProcess = (DarwinTeleProcess) teleProcess();
         final long heap = nativeLoadBootHeap(darwinTeleProcess.pid(), darwinTeleProcess.task(), bootImage().header()._bootHeapSize + bootImage().header()._bootCodeSize);
         if (heap == 0L) {
