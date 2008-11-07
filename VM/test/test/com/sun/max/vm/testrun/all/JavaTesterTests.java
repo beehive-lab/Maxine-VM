@@ -15791,6 +15791,34 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_micro_LoopSwitch01() {
+        JavaTesterRunScheme.begin("test.micro.LoopSwitch01");
+        String runString = null;
+        try {
+        // test(0) == ok0
+            runString = "test(0)";
+            if (!"ok0".equals(test.micro.LoopSwitch01.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(10) == ok0
+            runString = "test(10)";
+            if (!"ok0".equals(test.micro.LoopSwitch01.test(10))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(25) == ok0
+            runString = "test(25)";
+            if (!"ok0".equals(test.micro.LoopSwitch01.test(25))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_micro_StrangeFrames() {
         JavaTesterRunScheme.begin("test.micro.StrangeFrames");
         String runString = null;
@@ -15798,6 +15826,62 @@ public class JavaTesterTests {
         // test(0) == true
             runString = "test(0)";
             if (true != test.micro.StrangeFrames.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_micro_String_format01() {
+        JavaTesterRunScheme.begin("test.micro.String_format01");
+        String runString = null;
+        try {
+        // test("World") == Hello World
+            runString = "test(\"World\")";
+            if (!"Hello World".equals(test.micro.String_format01.test("World"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test("New World Order") == Hello New World Order
+            runString = "test(\"New World Order\")";
+            if (!"Hello New World Order".equals(test.micro.String_format01.test("New World Order"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_micro_String_format02() {
+        JavaTesterRunScheme.begin("test.micro.String_format02");
+        String runString = null;
+        try {
+        // test(0) == Hello 0
+            runString = "test(0)";
+            if (!"Hello 0".equals(test.micro.String_format02.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-11) == Hello -11
+            runString = "test(-11)";
+            if (!"Hello -11".equals(test.micro.String_format02.test(-11))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2147483648) == Hello -2147483648
+            runString = "test(-2147483648)";
+            if (!"Hello -2147483648".equals(test.micro.String_format02.test(-2147483648))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2147483647) == Hello 2147483647
+            runString = "test(2147483647)";
+            if (!"Hello 2147483647".equals(test.micro.String_format02.test(2147483647))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
