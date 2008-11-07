@@ -134,11 +134,19 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     @Override
     public EirLocation[] getParameterLocations(EirStackSlot.Purpose stackSlotPurpose, Kind... kinds) {
         final EirLocation[] result = new EirLocation[kinds.length];
-        int iInteger = 0;
-        int iFloatingPoint = 0;
         final IndexedSequence<SPARCEirRegister> integerParameterRegisters = stackSlotPurpose.equals(EirStackSlot.Purpose.PARAMETER) ? _integerInRegisters : _integerOutRegisters;
+        // This strictly follows the Solaris / SPARC 64-bits ABI.
+        // Each arguments match a position on the stack, and each stack position correspond to a specific registers.
+        // So it may be the case that a register is not used. For instance, consider the following call:
+        //                          SP-relative offset to reserved stack slot
+        // f( char,         %o0     BIAS + RW_SAVING_AREA + 0 * wordSize
+        //    float,        %f3     BIAS + RW_SAVING_AREA + 1 * wordSize
+        //    short,        %o2     BIAS + RW_SAVING_AREA + 2 * wordSize
+        //    double,       %d6     BIAS + RW_SAVING_AREA + 3 * wordSize
+        //    int,          %o5     BIAS + RW_SAVING_AREA + 5 * wordSize
+        //    int           -       BIAS + RW_SAVING_AREA + 6 * wordSize
 
-
+        int stackOffset = 0;
         for (int i = 0; i < kinds.length; i++) {
             switch (kinds[i].asEnum()) {
                 case BYTE:
@@ -149,17 +157,21 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
                 case LONG:
                 case WORD:
                 case REFERENCE: {
-                    if (iInteger < integerParameterRegisters.length()) {
-                        result[i] = integerParameterRegisters.get(iInteger);
-                        iInteger++;
+                    if (i < integerParameterRegisters.length()) {
+                        result[i] = integerParameterRegisters.get(i);
+                    } else {
+                        result[i] = new EirStackSlot(stackSlotPurpose, stackOffset);
+                        stackOffset += stackSlotSize();
                     }
                     break;
                 }
                 case FLOAT:
                 case DOUBLE: {
-                    if (iFloatingPoint < _floatingPointOutRegisters.length()) {
-                        result[i] = _floatingPointOutRegisters.get(iFloatingPoint);
-                        iFloatingPoint++;
+                    if (i < _floatingPointOutRegisters.length()) {
+                        result[i] = _floatingPointOutRegisters.get(i);
+                    } else {
+                        result[i] = new EirStackSlot(stackSlotPurpose, stackOffset);
+                        stackOffset += stackSlotSize();
                     }
                     break;
                 }
@@ -167,13 +179,6 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
                     ProgramError.unknownCase();
                     return null;
                 }
-            }
-        }
-        int stackOffset = 0;
-        for (int i =  kinds.length - 1; i >= 0;  i--) {
-            if (result[i] == null) {
-                result[i] = new EirStackSlot(stackSlotPurpose, stackOffset);
-                stackOffset += stackSlotSize();
             }
         }
         return result;
