@@ -226,15 +226,13 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     protected final void initializeBasicFeatures() {
         VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.PRISTINE);
-
+        MaxineVM.writeInitialVMParams();
         MaxineVM.hostOrTarget().setPhase(MaxineVM.Phase.STARTING);
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
             VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.STARTING);
         }
-
-        MaxineVM.writeInitialVMParams();
     }
 
     protected boolean parseMain() {
