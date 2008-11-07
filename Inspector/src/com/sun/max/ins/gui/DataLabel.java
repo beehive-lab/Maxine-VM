@@ -32,7 +32,6 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-// TODO (mlvdv) - review new DataLabel, and integrate with other label usage, in particular WordValueLabel
 public abstract class DataLabel extends InspectorLabel {
 
     protected DataLabel(Inspection inspection, String text) {
@@ -321,8 +320,8 @@ public abstract class DataLabel extends InspectorLabel {
             if (_origin == null) {
                 setToolTipText(null);
             } else {
-                final int position = _address.minus(_origin).toInt();
-                setToolTipText("AsPosition: " + position + ", " +  "0x" + Integer.toHexString(position));
+                final long position = _address.minus(_origin).toLong();
+                setToolTipText("AsPosition: " + position + ", " +  "0x" + Long.toHexString(position));
             }
         }
 
@@ -336,6 +335,40 @@ public abstract class DataLabel extends InspectorLabel {
         public EnumAsText(Inspection inspection, Enum e) {
             super(inspection, e.getClass().getSimpleName() + "." + e.name(), "Enum:  " + e.getClass().getName() + "." + e.name() + " ord=" + e.ordinal());
             redisplay();
+        }
+    }
+
+    public static final class Percent extends DataLabel {
+
+        private long _numerator;
+        private long _denominator;
+
+        public Percent(Inspection inspection, long numerator, long denominator) {
+            super(inspection, null);
+            assert denominator != 0;
+            _numerator = numerator;
+            _denominator = denominator;
+            redisplay();
+        }
+
+        @Override
+        public void redisplay() {
+            setFont(style().decimalDataFont());
+            setForeground(style().decimalDataColor());
+            setBackground(style().decimalDataBackgroundColor());
+            updateText();
+        }
+
+        public void setValue(int numerator, int denominator) {
+            _numerator = numerator;
+            _denominator = denominator;
+            updateText();
+        }
+
+        private void updateText() {
+            final long percent = 100 * _numerator / _denominator;
+            setText(Long.toString(percent) + "%");
+            setToolTipText(Long.toString(_numerator) + " /  " + _denominator);
         }
     }
 

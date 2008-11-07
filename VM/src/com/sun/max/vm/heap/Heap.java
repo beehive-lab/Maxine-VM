@@ -113,7 +113,8 @@ public final class Heap {
         return _disableGCOption.isPresent();
     }
 
-    private static final LinearAllocatorHeapRegion _bootHeapRegion = new LinearAllocatorHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE));
+    @INSPECTED
+    private static final LinearAllocatorHeapRegion _bootHeapRegion = new LinearAllocatorHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
 
     @INLINE
     public static LinearAllocatorHeapRegion bootHeapRegion() {

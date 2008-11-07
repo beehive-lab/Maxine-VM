@@ -119,7 +119,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
             final Address address = Address.fromLong(settings.get(this, prefix + ".address", OptionTypes.LONG_TYPE, null));
             final boolean enabled = settings.get(this, prefix + ".enabled", OptionTypes.BOOLEAN_TYPE, null);
             final String condition = settings.get(this, prefix + ".condition", OptionTypes.STRING_TYPE, null);
-            if (_inspection.teleVM().codeContains(address)) {
+            if (_inspection.teleVM().teleCodeManager().contains(address)) {
                 try {
                     final TeleTargetBreakpoint teleBreakpoint = _inspection.teleVM().teleProcess().targetBreakpointFactory().makeBreakpoint(address, false);
                     if (condition != null) {

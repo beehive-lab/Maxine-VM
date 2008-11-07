@@ -36,9 +36,16 @@ import com.sun.max.vm.thread.*;
  * @author Aritra Bandyopadhyay
  */
 public class TeleNativeStack extends FixedMemoryRegion {
+	
+	private final TeleNativeThread _teleNativeThread;
+	
+	public TeleNativeThread teleNativeThread() {
+		return _teleNativeThread;
+	}
 
-    public TeleNativeStack(Address base, Size size) {
-        super(base, size);
+    public TeleNativeStack(Address base, Size size, TeleNativeThread teleNativeThread) {
+        super(base, size, "Thread-" + teleNativeThread.id());
+        _teleNativeThread = teleNativeThread;
     	_enabledVmThreadLocalValues = new TeleVMThreadLocalValues(Safepoint.State.ENABLED);
     	_disabledVmThreadLocalValues = new TeleVMThreadLocalValues(Safepoint.State.DISABLED);
     	_triggeredVmThreadLocalValues = new TeleVMThreadLocalValues(Safepoint.State.TRIGGERED);
@@ -46,26 +53,29 @@ public class TeleNativeStack extends FixedMemoryRegion {
 
     /**
      * Refreshes the values of the cached thread local variables of this stack.
-     *
-     * @param thread the thread that owns this stack
      */
-    void refresh(TeleNativeThread thread) {
-        if (thread != null) {
-        	final StackScanner stackScanner = new StackScanner(start(), size(), thread);
-        	final DataAccess dataAccess = thread.teleProcess().teleVM().teleProcess().dataAccess();
-        	if (_enabledVmThreadLocalValues.refresh(dataAccess, stackScanner) &&
-        	    _disabledVmThreadLocalValues.refresh(dataAccess, stackScanner) &&
-        	    _triggeredVmThreadLocalValues.refresh(dataAccess, stackScanner)) {
-        	    return;
-        	}
-        }
-        _enabledVmThreadLocalValues.invalidate();
-        _disabledVmThreadLocalValues.invalidate();
-        _triggeredVmThreadLocalValues.invalidate();
+    void refresh() {
+    	final StackScanner stackScanner = new StackScanner(start(), size(), _teleNativeThread);
+    	final DataAccess dataAccess = _teleNativeThread.teleProcess().dataAccess();
+    	if (_enabledVmThreadLocalValues.refresh(dataAccess, stackScanner) &&
+    			_disabledVmThreadLocalValues.refresh(dataAccess, stackScanner) &&
+    			_triggeredVmThreadLocalValues.refresh(dataAccess, stackScanner)) {
+    		return;
+    	}
+        invalidate();
     }
 
     /**
-     * @return the values of the safepoints-enabled {@linkplain VmThreadLocal thread local variables} on this stack it this stack is
+     * invalidates data created by scanning.
+     */
+    void invalidate() {
+        _enabledVmThreadLocalValues.invalidate();
+        _disabledVmThreadLocalValues.invalidate();
+        _triggeredVmThreadLocalValues.invalidate();    
+    }
+    
+    /**
+     * @return the values of the safepoints-enabled {@linkplain VmThreadLocal thread local variables} on this stack if this stack is
      *         associated with a {@link VmThread}, null otherwise
      */
     public TeleVMThreadLocalValues enabledVmThreadLocalValues() {
@@ -73,14 +83,14 @@ public class TeleNativeStack extends FixedMemoryRegion {
     }
 
     /**
-     * @return the values of the safepoints-disabled {@linkplain VmThreadLocal thread local variables} on this stack it this stack is
+     * @return the values of the safepoints-disabled {@linkplain VmThreadLocal thread local variables} on this stack if this stack is
      *         associated with a {@link VmThread}, null otherwise
      */
     public TeleVMThreadLocalValues disabledVmThreadLocalValues() {
         return _disabledVmThreadLocalValues;
     }
     /**
-     * @return the values of the safepoints-triggered {@linkplain VmThreadLocal thread local variables} on this stack it this stack is
+     * @return the values of the safepoints-triggered {@linkplain VmThreadLocal thread local variables} on this stack if this stack is
      *         associated with a {@link VmThread}, null otherwise
      */
     public TeleVMThreadLocalValues triggeredVmThreadLocalValues() {

@@ -27,6 +27,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 
@@ -114,29 +115,38 @@ public final class BootImageInspector extends UniqueInspector<BootImageInspector
         addInfo("target ABIs scheme:", new JavaNameLabel(inspection(), vmConfiguration.targetABIsScheme().name(), vmConfiguration.targetABIsScheme().getClass().getName()));
         addInfo("run scheme:", new JavaNameLabel(inspection(), vmConfiguration.runScheme().name(), vmConfiguration.runScheme().getClass().getName()));
 
-        addInfo("relocation scheme:", new DataLabel.IntAsDecimal(inspection(), header._relocationScheme));
-        addInfo("relocation data size:", new DataLabel.IntAsDecimal(inspection(), header._relocationDataSize));
-        addInfo("string data size:", new DataLabel.IntAsDecimal(inspection(), header._stringInfoSize));
+        addInfo("relocation scheme:", new DataLabel.IntAsHex(inspection(), header._relocationScheme));
+        addInfo("relocation data size:", new DataLabel.IntAsHex(inspection(), header._relocationDataSize));
+        addInfo("string data size:", new DataLabel.IntAsHex(inspection(), header._stringInfoSize));
 
-        addInfo("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, teleVM().bootHeapStart()));
-        addInfo("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, teleVM().bootHeapStart().plus(header._bootHeapSize)));
-        addInfo("boot heap size:", new DataLabel.IntAsDecimal(inspection(), header._bootHeapSize));
+        final Pointer bootImageStart = teleVM().bootImageStart();
 
-        addInfo("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, teleVM().bootCodeStart()));
-        addInfo("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, teleVM().bootCodeStart().plus(header._bootCodeSize)));
-        addInfo("boot code size:", new DataLabel.IntAsDecimal(inspection(), header._bootCodeSize));
-        addInfo("code cache size:", new DataLabel.IntAsDecimal(inspection(), header._codeCacheSize));
-        addInfo("thread local space size:", new DataLabel.IntAsDecimal(inspection(), header._vmThreadLocalsSize));
+        final Pointer bootHeapStart = bootImageStart;
+        final Pointer bootHeapEnd = bootHeapStart.plus(header._bootHeapSize);
 
-        addInfo("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  teleVM().bootHeapStart().plus(header._vmRunMethodOffset)));
-        addInfo("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, teleVM().bootHeapStart().plus(header._vmThreadRunMethodOffset)));
-        addInfo("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, teleVM().bootHeapStart().plus(header._runSchemeRunMethodOffset)));
+        addInfo("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart));
+        addInfo("boot heap size:", new DataLabel.IntAsHex(inspection(), header._bootHeapSize));
+        addInfo("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapEnd));
 
-        addInfo("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, teleVM().bootHeapStart().plus(header._classRegistryOffset)));
-        addInfo("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, teleVM().bootHeapStart().plus(header._heapRegionsPointerOffset)));
-        addInfo("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, teleVM().bootCodeStart().plus(header._codeRegionsPointerOffset)));
+        final Pointer bootCodeStart = bootHeapEnd;
+        final Pointer bootCodeEnd = bootCodeStart.plus(header._bootCodeSize);
 
-        addInfo("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, teleVM().bootHeapStart().plus(header._messengerInfoOffset)));
+        addInfo("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart));
+        addInfo("boot code size:", new DataLabel.IntAsHex(inspection(), header._bootCodeSize));
+        addInfo("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd));
+
+        addInfo("code cache size:", new DataLabel.IntAsHex(inspection(), header._codeCacheSize));
+        addInfo("thread local space size:", new DataLabel.IntAsHex(inspection(), header._vmThreadLocalsSize));
+
+        addInfo("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  bootImageStart.plus(header._vmRunMethodOffset)));
+        addInfo("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, bootImageStart.plus(header._vmThreadRunMethodOffset)));
+        addInfo("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, bootImageStart.plus(header._runSchemeRunMethodOffset)));
+
+        addInfo("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, bootHeapStart.plus(header._classRegistryOffset)));
+        addInfo("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart.plus(header._heapRegionsPointerOffset)));
+        addInfo("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart.plus(header._codeRegionsPointerOffset)));
+
+        addInfo("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootImageStart.plus(header._messengerInfoOffset)));
         SpringUtilities.makeCompactGrid(_infoPanel, 2);
     }
 

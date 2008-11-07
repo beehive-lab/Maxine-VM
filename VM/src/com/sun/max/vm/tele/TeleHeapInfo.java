@@ -30,6 +30,7 @@ import com.sun.max.memory.*;
  * Active only when VM is being inspected.
  *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public final class TeleHeapInfo {
 
@@ -44,11 +45,7 @@ public final class TeleHeapInfo {
             if (_roots == null) {
                 _roots = new Object[MAX_NUMBER_OF_ROOTS];
             }
-            final MemoryRegion[] result = new MemoryRegion[memoryRegions.length];
-            for (int i = 0; i < memoryRegions.length; i++) {
-                result[i] = new FixedMemoryRegion(memoryRegions[i]);
-            }
-            _memoryRegions = result;
+            _memoryRegions = memoryRegions;
         }
     }
 

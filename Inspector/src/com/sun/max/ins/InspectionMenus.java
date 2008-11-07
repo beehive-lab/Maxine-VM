@@ -33,6 +33,7 @@ import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.lang.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -323,7 +324,7 @@ public final class InspectionMenus implements Prober {
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(_inspection, teleVM().bootHeapStart(), "Inspect Object at Address...", "Inspect") {
+            new AddressInputDialog(_inspection, teleVM().teleHeapManager().teleBootHeapRegion().start(), "Inspect Object at Address...", "Inspect") {
 
                 @Override
                 public void entered(Address address) {
@@ -399,7 +400,7 @@ public final class InspectionMenus implements Prober {
 
         @Override
         protected void procedure() {
-            MemoryInspector.create(_inspection, teleVM().bootHeapStart());
+            MemoryInspector.create(_inspection, teleVM().bootImageStart());
         }
     }
 
@@ -411,7 +412,7 @@ public final class InspectionMenus implements Prober {
 
         @Override
         protected void procedure() {
-            MemoryInspector.create(_inspection, teleVM().bootCodeStart());
+            MemoryInspector.create(_inspection, teleVM().teleCodeManager().teleBootCodeRegion().start());
         }
     }
 
@@ -456,7 +457,7 @@ public final class InspectionMenus implements Prober {
             } else if (_address != null) {
                 MemoryInspector.create(_inspection, _address);
             } else {
-                new AddressInputDialog(_inspection, teleVM().bootHeapStart(), "Inspect Memory at Address...", "Inspect") {
+                new AddressInputDialog(_inspection, teleVM().bootImageStart(), "Inspect Memory at Address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
@@ -543,7 +544,7 @@ public final class InspectionMenus implements Prober {
             if (_address != null) {
                 MemoryWordInspector.create(_inspection, _address);
             } else {
-                new AddressInputDialog(_inspection, teleVM().bootHeapStart(), "Inspect Memory Words at Address...", "Inspect") {
+                new AddressInputDialog(_inspection, teleVM().bootImageStart(), "Inspect Memory Words at Address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
@@ -727,7 +728,7 @@ public final class InspectionMenus implements Prober {
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(new TeleCodeLocation(teleVM(), teleVM().bootHeapStart().plus(_offset)), true);
+            focus().setCodeLocation(new TeleCodeLocation(teleVM(), teleVM().bootImageStart().plus(_offset)), true);
         }
     }
 
@@ -757,7 +758,7 @@ public final class InspectionMenus implements Prober {
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(_inspection, teleVM().bootHeapStart(), "View Method Code Containing address...", "View Code") {
+            new AddressInputDialog(_inspection, teleVM().bootImageStart(), "View Method Code Containing address...", "View Code") {
 
                 @Override
                 public boolean isValidInput(Address address) {
@@ -790,7 +791,7 @@ public final class InspectionMenus implements Prober {
             final TeleNativeThread teleNativeThread = focus().thread();
             assert teleNativeThread != null;
             final Address indirectCallAddress = teleNativeThread.integerRegisters().getCallRegisterValue();
-            final Address initialAddress = indirectCallAddress == null ? teleVM().bootHeapStart() : indirectCallAddress;
+            final Address initialAddress = indirectCallAddress == null ? teleVM().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(_inspection, initialAddress, "View Native Code Containing Code Address...", "View Code") {
                 @Override
                 public void entered(Address address) {
@@ -1480,6 +1481,20 @@ public final class InspectionMenus implements Prober {
 
     private final ViewMethodCodeAction _viewMethodCodeAction;
 
+    public final class ViewMemoryRegionsAction extends InspectorAction {
+
+        ViewMemoryRegionsAction() {
+            super(_inspection, "MemoryRegions");
+        }
+
+        @Override
+        protected void procedure() {
+            MemoryRegionsInspector.make(_inspection);
+        }
+    }
+
+    private final ViewMemoryRegionsAction _viewMemoryRegionsAction;
+
     public final class ViewBootImageAction extends InspectorAction {
 
         ViewBootImageAction() {
@@ -1501,6 +1516,7 @@ public final class InspectionMenus implements Prober {
             menu.add(_viewStackAction);
             menu.add(_viewMethodCodeAction);
             menu.add(_viewBreakpointsAction);
+            menu.add(_viewMemoryRegionsAction);
         }
         return menu;
     }
@@ -1840,6 +1856,7 @@ public final class InspectionMenus implements Prober {
         _viewCodeAtIPAction = new ViewCodeAtIPAction();
         _viewMethodBytecodeAction = new ViewMethodBytecodeAction();
         _viewMethodCodeAction = new ViewMethodCodeAction();
+        _viewMemoryRegionsAction = new ViewMemoryRegionsAction();
         _viewMethodCodeContainingAddressAction = new ViewMethodCodeContainingAddressAction();
         _viewMethodTargetCodeAction = new ViewMethodTargetCodeAction();
         _viewNativeCodeContainingAddressAction = new ViewNativeCodeContainingAddressAction();
@@ -1871,6 +1888,10 @@ public final class InspectionMenus implements Prober {
         }
 
         public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+            updateMenuItems();
+        }
+
+        public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
             updateMenuItems();
         }
 
