@@ -42,19 +42,22 @@ import com.sun.max.vm.type.*;
 class ObjectHeaderInspector extends InspectorPanel {
 
     // first line: pointer to hub
-    private final InspectorLabel _hubLocationLabel;
+    private final InspectorLabel _hubAddressLabel;
+    private final InspectorLabel _hubOffsetLabel;
     private final InspectorLabel _hubTypeLabel;
     private final InspectorLabel _hubNameLabel;
     private final InspectorLabel _hubValueLabel;
 
     // Second line:  "misc" word
-    private final InspectorLabel _miscLocationLabel;
+    private final InspectorLabel _miscAddressLabel;
+    private final InspectorLabel _miscOffsetLabel;
     private final InspectorLabel _miscTypeLabel;
     private final InspectorLabel _miscNameLabel;
     private final InspectorLabel _miscValueLabel;
 
     // Third line:  array information
-    private final InspectorLabel _arrayLengthLocationLabel;
+    private final InspectorLabel _arrayLengthAddressLabel;
+    private final InspectorLabel _arrayLengthOffsetLabel;
     private final InspectorLabel _arrayLengthTypeLabel;
     private final InspectorLabel _arrayLengthNameLabel;
     private final InspectorLabel _arrayLengthValueLabel;
@@ -74,9 +77,15 @@ class ObjectHeaderInspector extends InspectorPanel {
 
         // First line:  pointer to hub
         final TeleHub teleHub = teleObject.getTeleHub();
-        _hubLocationLabel = new LocationLabel.AsOffset(inspection, teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt(), origin);
-        if (_parent.showPos()) {
-            add(_hubLocationLabel);
+
+        final int hubReferenceOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
+        _hubAddressLabel = new LocationLabel.AsAddressWithOffset(inspection, hubReferenceOffset, origin);
+        if (_parent.showAddresses()) {
+            add(_hubAddressLabel);
+        }
+        _hubOffsetLabel = new LocationLabel.AsOffset(inspection, hubReferenceOffset, origin);
+        if (_parent.showOffsets()) {
+            add(_hubOffsetLabel);
         }
         _hubTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass()));
         if (_parent.showType()) {
@@ -88,9 +97,14 @@ class ObjectHeaderInspector extends InspectorPanel {
         add(_hubValueLabel);
 
         // Second line:  "misc" word
-        _miscLocationLabel = new LocationLabel.AsOffset(inspection(), teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt(), origin);
-        if (_parent.showPos()) {
-            add(_miscLocationLabel);
+        final int miscWordOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
+        _miscAddressLabel = new LocationLabel.AsAddressWithOffset(inspection(), miscWordOffset, origin);
+        if (_parent.showAddresses()) {
+            add(_miscAddressLabel);
+        }
+        _miscOffsetLabel = new LocationLabel.AsOffset(inspection(), miscWordOffset, origin);
+        if (_parent.showOffsets()) {
+            add(_miscOffsetLabel);
         }
         _miscTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.WORD);
         if (_parent.showType()) {
@@ -102,11 +116,16 @@ class ObjectHeaderInspector extends InspectorPanel {
         add(_miscValueLabel);
 
         // Third line:  array information
+        final int arrayLengthOffset = teleVM().layoutScheme().arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
         if (teleObject instanceof TeleArrayObject) {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
-            _arrayLengthLocationLabel = new LocationLabel.AsOffset(inspection(), teleVM().layoutScheme().arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt(), origin);
-            if (_parent.showPos()) {
-                add(_arrayLengthLocationLabel);
+            _arrayLengthAddressLabel = new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin);
+            if (_parent.showAddresses()) {
+                add(_arrayLengthAddressLabel);
+            }
+            _arrayLengthOffsetLabel = new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin);
+            if (_parent.showOffsets()) {
+                add(_arrayLengthOffsetLabel);
             }
             _arrayLengthTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.INT);
             if (_parent.showType()) {
@@ -119,9 +138,13 @@ class ObjectHeaderInspector extends InspectorPanel {
             add(_arrayLengthValueLabel);
         } else if (teleObject instanceof TeleHybridObject) {
             final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
-            _arrayLengthLocationLabel = new LocationLabel.AsOffset(inspection(), teleVM().layoutScheme().arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt(), origin);
-            if (_parent.showPos()) {
-                add(_arrayLengthLocationLabel);
+            _arrayLengthAddressLabel = new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin);
+            if (_parent.showAddresses()) {
+                add(_arrayLengthAddressLabel);
+            }
+            _arrayLengthOffsetLabel = new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin);
+            if (_parent.showOffsets()) {
+                add(_arrayLengthOffsetLabel);
             }
             _arrayLengthTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.INT);
             if (_parent.showType()) {
@@ -133,7 +156,8 @@ class ObjectHeaderInspector extends InspectorPanel {
             _arrayLengthValueLabel = new DataLabel.IntAsDecimal(inspection(), teleHybridObject.readArrayLength());
             add(_arrayLengthValueLabel);
         } else {
-            _arrayLengthLocationLabel = null;
+            _arrayLengthAddressLabel = null;
+            _arrayLengthOffsetLabel = null;
             _arrayLengthTypeLabel = null;
             _arrayLengthNameLabel = null;
             _arrayLengthValueLabel = null;
@@ -153,20 +177,23 @@ class ObjectHeaderInspector extends InspectorPanel {
         setBackground(style().defaultBackgroundColor());
 
         // first line: pointer to hub
-        _hubLocationLabel.redisplay();
+        _hubAddressLabel.redisplay();
+        _hubOffsetLabel.redisplay();
         _hubTypeLabel.redisplay();
         _hubNameLabel.redisplay();
         _hubValueLabel.redisplay();
 
         // Second line:  "misc" word
-        _miscLocationLabel.redisplay();
+        _miscAddressLabel.redisplay();
+        _miscOffsetLabel.redisplay();
         _miscTypeLabel.redisplay();
         _miscNameLabel.redisplay();
         _miscValueLabel.redisplay();
 
         if (_teleObject instanceof TeleHybridObject || _teleObject instanceof TeleArrayObject) {
             // Third line:  array information
-            _arrayLengthLocationLabel.redisplay();
+            _arrayLengthAddressLabel.redisplay();
+            _arrayLengthOffsetLabel.redisplay();
             _arrayLengthTypeLabel.redisplay();
             _arrayLengthNameLabel.redisplay();
             _arrayLengthValueLabel.redisplay();
