@@ -170,6 +170,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             }
 
             _copyTimer.restart();
+            _copyTimer.stop();
             moveReachableObjects();
             _copyTimer.stop();
             _gcTimer.stop();

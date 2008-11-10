@@ -53,7 +53,7 @@ public abstract class BiasedLockWord64 extends LightweightLockWord64 {
     private static final Address HASHCODE_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT);
     static final Address EPOCH_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
     private static final Address NON_EPOCH_MASK = EPOCH_MASK.not();
-    private static final Address BIASED_OWNED_MASK = HASHCODE_MASK.or(EPOCH_MASK.or(THREADID_SHIFTED_MASK.shiftedLeft(THREADID_SHIFT).bitSet(SHAPE_BIT)));
+    private static final Address BIASED_OWNED_MASK = HASHCODE_MASK.or(EPOCH_MASK.or(THREADID_SHIFTED_MASK.shiftedLeft(THREADID_SHIFT).bitSet(SHAPE_BIT_INDEX)));
 
     static final int EPOCH_FIELD_WIDTH = UTIL_FIELD_WIDTH;
     static final int EPOCH_SHIFT = UTIL_SHIFT;
