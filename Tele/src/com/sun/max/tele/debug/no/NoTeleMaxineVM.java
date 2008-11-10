@@ -57,7 +57,7 @@ public final class NoTeleMaxineVM extends TeleVM {
     }
 
     @Override
-    protected Pointer loadBootHeap() throws IOException {
+    protected Pointer loadBootImage() throws IOException {
         if (bootImage().vmConfiguration().platform().operatingSystem() != OperatingSystem.GUESTVM) {
             return bootImage().map(bootImageFile(), _relocating);
         }

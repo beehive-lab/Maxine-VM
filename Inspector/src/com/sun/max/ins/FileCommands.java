@@ -38,7 +38,7 @@ public class FileCommands {
     private static final String DEFAULT_COMMAND_FILE_PROPERTY = "max.ins.defaultcommandfile";
     private static final String USER_HOME_PROPERTY = "user.home";
     private static final String DEFAULT_COMMAND_FILE = ".max_ins_commands";
-    private static final String ACTION_NAME = "Execute Commands from File...";
+    private static final String ACTION_NAME = "Execute commands from file...";
 
     private static String _defaultCommandFile;
     private static int _lineNumber;

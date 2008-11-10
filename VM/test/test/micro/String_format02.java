@@ -18,14 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.fail;
+package test.micro;
 
 /*
  * @Harness: java
- * @Runs: "World" = "Hello World"; "New World Order" = "Hello New World Order"
+ * @Runs: 0 = "Hello 0"; -11 = "Hello -11"; -2147483648 = "Hello -2147483648"; 2147483647 = "Hello 2147483647"
  */
-public class HP_StringFormat01 {
-    public static String test(String s) {
-        return String.format("Hello %s", s);
+public class String_format02 {
+    public static String test(int val) {
+        return String.format("Hello %d", val);
     }
 }

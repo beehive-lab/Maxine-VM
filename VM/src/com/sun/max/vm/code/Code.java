@@ -46,11 +46,12 @@ public final class Code {
      * The code region that contains the boot code.
      */
     @INSPECTED
-    private static final CodeRegion _bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).aligned(), Size.fromInt(Integer.MAX_VALUE / 4));
+    private static final CodeRegion _bootCodeRegion = new CodeRegion(Address.fromInt(Integer.MAX_VALUE / 2).aligned(), Size.fromInt(Integer.MAX_VALUE / 4), "Code-Boot");
 
     /**
      * Accessor for the boot code region.
-     * @return a reference to the code region that contains the boot code
+     * @return a reference to the code region that contains the boot code, with size that is "trimmed"
+     *  to reflect how much of the allocation has been used.
      */
     @INLINE
     public static CodeRegion bootCodeRegion() {
@@ -81,6 +82,7 @@ public final class Code {
     /**
      * The code manager singleton instance.
      */
+    @INSPECTED
     private static final CodeManager _codeManager = createCodeManager();
 
     /**
@@ -194,7 +196,8 @@ public final class Code {
      * @param codeRegion the code region to add
      */
     public static void registerMemoryRegion(CodeRegion codeRegion) {
-        _memoryRegions = Arrays.append(_memoryRegions, new FixedMemoryRegion(codeRegion));
+        final int nextIndex = _memoryRegions.length;
+        _memoryRegions = Arrays.append(_memoryRegions, new FixedMemoryRegion(codeRegion, "Code-" + nextIndex));
     }
 
     /**

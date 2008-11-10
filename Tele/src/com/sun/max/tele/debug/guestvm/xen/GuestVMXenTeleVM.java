@@ -45,7 +45,7 @@ public class GuestVMXenTeleVM extends TeleVM {
     }
 
     @Override
-    protected Pointer loadBootHeap() throws IOException {
+    protected Pointer loadBootImage() throws IOException {
         return _domain.getBootHeap();
     }
 

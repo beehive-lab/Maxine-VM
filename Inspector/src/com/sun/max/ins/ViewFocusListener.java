@@ -20,6 +20,7 @@
  */
 package com.sun.max.ins;
 
+import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -50,6 +51,11 @@ public interface ViewFocusListener {
      * Notifies that the global stack frame focus has been changed (view state only), non-null once running.
      */
     void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame);
+
+    /**
+     * Notifies that the global {@link MemoryRegionN} focus has been changed (view state only).
+     */
+    void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion);
 
     /**
      * Notifies that the breakpoint focus has been changed (view state only), possibly to null.

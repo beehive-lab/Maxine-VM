@@ -532,7 +532,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     }
 
     private void refreshThreads() {
-        _epoch++;
+    	_epoch++;
         final AppendableSequence<TeleNativeThread> threads = new ArrayListSequence<TeleNativeThread>(_threadMap.size());
         gatherThreads(threads);
 

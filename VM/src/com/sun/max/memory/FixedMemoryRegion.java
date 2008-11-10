@@ -45,16 +45,28 @@ public class FixedMemoryRegion implements MemoryRegion {
         return _end;
     }
 
-    public FixedMemoryRegion(Address start, Size size) {
+    private String _description;
+
+    public String description() {
+        return _description;
+    }
+
+    public void setDescription(String description) {
+        _description = description;
+    }
+
+    public FixedMemoryRegion(Address start, Size size, String description) {
         _start = start;
         _size = size;
         _end = start.plus(size);
+        _description = description;
     }
 
-    public FixedMemoryRegion(MemoryRegion memoryRegion) {
+    public FixedMemoryRegion(MemoryRegion memoryRegion, String description) {
         _start = memoryRegion.start();
         _size = memoryRegion.size();
         _end = memoryRegion.end();
+        _description = description();
     }
 
     public boolean contains(Address address) {
@@ -64,5 +76,9 @@ public class FixedMemoryRegion implements MemoryRegion {
     public boolean overlaps(MemoryRegion memoryRegion) {
         return (_start.greaterEqual(memoryRegion.start()) && _start.lessThan(memoryRegion.end())) ||
                (_end.greaterEqual(memoryRegion.start()) && _end.lessThan(memoryRegion.end()));
+    }
+
+    public boolean sameAs(MemoryRegion otherMemoryRegion) {
+        return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
     }
 }

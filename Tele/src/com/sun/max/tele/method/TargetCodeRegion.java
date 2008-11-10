@@ -25,7 +25,7 @@ import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Represents a region of memory in the tele VM that holds compiled target code.
+ * Represents a region of memory in the {@link TeleVM}  that holds compiled target code.
  *
  * @author Michael Van De Vanter
   */
@@ -38,8 +38,9 @@ public class TargetCodeRegion extends RuntimeMemoryRegion {
     }
 
     public TargetCodeRegion(TeleTargetRoutine teleTargetRoutine, Address start, Size size) {
-        super(start, size);
+        super(start, size);        
         _teleTargetRoutine = teleTargetRoutine;
+        setDescription("TeleTarget-" + _teleTargetRoutine.toString());
     }
 
 }

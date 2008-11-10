@@ -69,6 +69,13 @@ public abstract class InspectionHolder {
         return _inspection.focus();
     }
 
+    /**
+     * @return access to {@link InspectorAction}s of general use.
+     */
+    public InspectionActions actions() {
+        return _inspection.actions();
+    }
+
     protected InspectionHolder(Inspection inspection) {
         _inspection = inspection;
     }

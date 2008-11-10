@@ -62,6 +62,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     public TLAB(Size size) {
         super(size);
         _allocationMark = start();
+        setDescription("TLAB");
     }
 
     public void initializeTLAB(Address newAddress) {

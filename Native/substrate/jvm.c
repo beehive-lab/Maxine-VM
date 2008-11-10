@@ -1612,7 +1612,7 @@ JVM_Read(jint fd, char *buf, jint nbytes) {
 }
 
 /*
- * Write data from a char array to a file decriptor.
+ * Write data from a char array to a file descriptor.
  *
  * fd        the file descriptor to read from.
  * buf       the buffer from which to fetch the data.
@@ -1631,12 +1631,19 @@ JVM_Write(jint fd, char *buf, jint nbytes) {
  */
 jint
 JVM_Available(jint fd, jlong *pbytes) {
-    off_t current = lseek(fd, SEEK_CUR, 0);
-    off_t end = lseek(fd, SEEK_END, 0);
-    if (lseek(fd, SEEK_SET, current) < 0) {
-        fprintf(stderr, "lseek failed\n");
-    }
-    return (jint) (end - current);
+	jlong cur, end;
+	 if ((cur = lseek64(fd, 0L, SEEK_CUR)) == -1) {
+	    return 0;
+	 } else if ((end = lseek64(fd, 0L, SEEK_END)) == -1) {
+	    return 0;
+	 } else if (lseek64(fd, cur, SEEK_SET) == -1) {
+	    return 0;
+	 }
+	    *pbytes = end - cur;
+#if DEBUG_JVMNI
+    	printf("JVM_Available(%d, %p): %d %d %d\n", fd, pbytes, current, end, *pbytes);
+#endif
+	return 1;
 }
 
 /*
