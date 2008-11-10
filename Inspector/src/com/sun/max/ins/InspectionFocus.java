@@ -21,6 +21,7 @@
 package com.sun.max.ins;
 
 import com.sun.max.collect.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -126,7 +127,7 @@ public class InspectionFocus extends InspectionHolder{
     };
 
     /**
-     * @return the {link @TeleNativeThread} that is the current user focus (view state); non-null once set.
+     * @return the {@link TeleNativeThread} that is the current user focus (view state); non-null once set.
      */
     public TeleNativeThread thread() {
         return _thread;
@@ -142,7 +143,7 @@ public class InspectionFocus extends InspectionHolder{
     /**
      * Shifts the focus of the Inspection to a particular thread; notify interested inspectors.
      * Sets the code location to the current InstructionPointer of the newly focused thread.
-     * This is a view state change that can happen when there is no change to target VM state.
+     * This is a view state change that can happen when there is no change to {@link TeleVM}  state.
      */
     public void setThread(TeleNativeThread thread) {
         assert thread != null;
@@ -180,6 +181,9 @@ public class InspectionFocus extends InspectionHolder{
                     setStackFrame(thread, thread.frames().first(), false);
                 }
             }
+            // User Model Policy:  when thread focus changes, also set the memory region focus to the thread's stack.
+            setMemoryRegion(_thread.stack());
+
         }
     }
 
@@ -231,6 +235,56 @@ public class InspectionFocus extends InspectionHolder{
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
         if (!_codeLocation.hasTargetCodeLocation() || !_codeLocation.targetCodeInstructionAddresss().equals(stackFrame.instructionPointer())) {
             setCodeLocation(new TeleCodeLocation(teleVM(), stackFrame.instructionPointer()), interactiveForNative);
+        }
+    }
+
+
+    private MemoryRegion _memoryRegion;
+
+    private final Object _memoryRegionFocusTracer = new Object() {
+        @Override
+        public String toString() {
+            final StringBuilder name = new StringBuilder();
+            name.append(tracePrefix()).append("Focus (MemoryRegion): ").append(_memoryRegion.description());
+            return name.toString();
+        }
+    };
+
+    /**
+     * @return the {@link MemoryRegion} that is the current user focus (view state).
+     */
+    public MemoryRegion memoryRegion() {
+        return _memoryRegion;
+    }
+
+    /**
+     * Is there a currently selected {@link Memory Region}.
+     */
+    public boolean hasMemoryRegion() {
+        return _memoryRegion != null;
+    }
+
+    /**
+     * Shifts the focus of the Inspection to a particular {@link MemoryRegion}; notify interested inspectors.
+     * If the region is a  stack, then set the current thread to the thread owning the stack.
+     * This is a view state change that can happen when there is no change to the {@link TeleVM} state.
+     */
+    public void setMemoryRegion(MemoryRegion memoryRegion) {
+        // TODO (mlvdv) see about setting to null if a thread is observed to have died, or mark the region as dead?
+        if ((memoryRegion == null && _memoryRegion != null) || (memoryRegion != null && !memoryRegion.sameAs(_memoryRegion))) {
+            final MemoryRegion oldMemoryRegion = _memoryRegion;
+            _memoryRegion = memoryRegion;
+            Trace.line(TRACE_VALUE, _memoryRegionFocusTracer);
+            for (ViewFocusListener listener : _listeners.clone()) {
+                listener.memoryRegionFocusChanged(oldMemoryRegion, memoryRegion);
+            }
+            // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
+            if (_memoryRegion != null) {
+                final TeleNativeThread teleNativeThread = teleVM().teleProcess().threadContaining(_memoryRegion.start());
+                if (teleNativeThread != null) {
+                    setThread(teleNativeThread);
+                }
+            }
         }
     }
 

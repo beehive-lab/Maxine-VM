@@ -64,9 +64,9 @@ public final class ClassActorLabel extends InspectorLabel {
                 }
                 case MouseEvent.BUTTON3: {
                     final InspectorMenu menu = new InspectorMenu();
-                    menu.add(inspection().inspectionMenus().getInspectObjectAction(getTeleClassActor(), "Inspect ClassActor (Left-Button)"));
-                    menu.add(inspection().inspectionMenus().getInspectMemoryAction(getTeleClassActor(), "Inspect ClassActor memory"));
-                    menu.add(inspection().inspectionMenus().getInspectMemoryWordsAction(getTeleClassActor(), "Inspect ClassActor memory words"));
+                    menu.add(inspection().actions().inspectObject(getTeleClassActor(), "Inspect ClassActor (Left-Button)"));
+                    menu.add(inspection().actions().inspectMemory(getTeleClassActor(), "Inspect ClassActor memory"));
+                    menu.add(inspection().actions().inspectMemoryWords(getTeleClassActor(), "Inspect ClassActor memory words"));
                     menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     break;
                 }

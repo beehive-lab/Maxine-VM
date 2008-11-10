@@ -43,9 +43,6 @@ import com.sun.max.vm.value.*;
  */
 public class WordValueLabel extends ValueLabel {
 
-    // TODO (mlvdv)  WordValueLabel is in serious need of refactoring into subclasses; enough with all the switch statements.
-    // but be careful about anchoring it too tightly to classes; the nature of word values can change with update!
-
     /**
      * The expected kind of word value. The visual
      * representations available (of which there may only
@@ -58,7 +55,7 @@ public class WordValueLabel extends ValueLabel {
     private final ValueMode _valueMode;
 
     /**
-     * The actual kind of word value, determined empirically by reading from the {@link TeleVM}; may change after update.
+     * The actual kind of word value, determined empirically by reading from the {@link TeleVM}; this may change after update.
      * Possible visual presentations of a word, constrained by the {@linkplain ValueMode valueMode} of the
      * label and its value.
      */
@@ -311,7 +308,7 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordDataFont());
                 setForeground(value.isZero() ? style().wordNullDataColor() : style().wordDataColor());
                 setText(hexString);
-                setToolTipText("Int: " + (value.isZero() ? 0 : Integer.toString(value.toInt())));
+                setToolTipText("Int: " + (value.isZero() ? 0 : Long.toString(value.toLong())));
                 break;
             }
             case UNCHECKED_WORD: {
@@ -377,8 +374,8 @@ public class WordValueLabel extends ValueLabel {
                 setForeground(style().wordStackLocationDataColor());
                 setText(hexString);
                 final String threadName = inspection().nameDisplay().longName(_teleNativeThread);
-                final int offset = value().asWord().asAddress().minus(_teleNativeThread.stack().start()).toInt();
-                final String hexOffsetString = offset >= 0 ? ("+0x" + Integer.toHexString(offset)) : "0x" + Integer.toHexString(offset);
+                final long offset = value().asWord().asAddress().minus(_teleNativeThread.stack().start()).toLong();
+                final String hexOffsetString = offset >= 0 ? ("+0x" + Long.toHexString(offset)) : "0x" + Long.toHexString(offset);
                 setToolTipText("Stack:  thread=" + threadName + ", offset=" + hexOffsetString);
                 break;
             }
@@ -386,8 +383,8 @@ public class WordValueLabel extends ValueLabel {
                 setFont(style().wordAlternateTextFont());
                 setForeground(style().wordStackLocationDataColor());
                 final String threadName = inspection().nameDisplay().longName(_teleNativeThread);
-                final int offset = value().asWord().asAddress().minus(_teleNativeThread.stack().start()).toInt();
-                final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Integer.toString(offset);
+                final long offset = value().asWord().asAddress().minus(_teleNativeThread.stack().start()).toLong();
+                final String decimalOffsetString = offset >= 0 ? ("+" + offset) : Long.toString(offset);
                 setText(threadName + " " + decimalOffsetString);
                 setToolTipText("Stack:  thread=" + threadName + ", addr=0x" +  Long.toHexString(value().asWord().asAddress().toLong()));
                 break;
@@ -429,7 +426,7 @@ public class WordValueLabel extends ValueLabel {
             case CLASS_ACTOR_ID: {
                 setFont(style().wordDataFont());
                 setForeground(style().wordDataColor());
-                setText(Integer.toString(value.asWord().asAddress().toInt()));
+                setText(Long.toString(value.asWord().asAddress().toLong()));
                 if (_teleClassActor != null) {
                     setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleClassActor));
                 } else {
@@ -625,7 +622,7 @@ public class WordValueLabel extends ValueLabel {
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
                 final TeleObject teleObject = TeleObject.make(teleVM(), teleVM().wordToReference(value.toWord()));
-                action = inspection().inspectionMenus().getInspectObjectAction(teleObject);
+                action = inspection().actions().inspectObject(teleObject, null);
                 break;
             }
             case CALL_ENTRY_POINT:
@@ -646,7 +643,7 @@ public class WordValueLabel extends ValueLabel {
             case CLASS_ACTOR: {
                 final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
-                    action = inspection().inspectionMenus().getInspectObjectAction(teleClassActor, "Inspect ClassActor");
+                    action = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor");
                 }
                 break;
             }
@@ -684,7 +681,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = inspection().inspectionMenus().getInspectMemoryAction(address);
+                    action = inspection().actions().inspectMemory(address, null);
                     break;
                 }
                 case WORD:
@@ -698,7 +695,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (teleVM().heapOrCodeOrStackContains(address)) {
-                        action = inspection().inspectionMenus().getInspectMemoryAction(address);
+                        action = inspection().actions().inspectMemory(address, null);
                     }
                     break;
                 }
@@ -723,7 +720,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = inspection().inspectionMenus().getInspectMemoryWordsAction(address);
+                    action = inspection().actions().inspectMemoryWords(address, null);
                     break;
                 }
                 case WORD:
@@ -737,7 +734,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (teleVM().heapOrCodeOrStackContains(address)) {
-                        action = inspection().inspectionMenus().getInspectMemoryWordsAction(address);
+                        action = inspection().actions().inspectMemoryWords(address, null);
                     }
                     break;
                 }
@@ -824,7 +821,7 @@ public class WordValueLabel extends ValueLabel {
         private final MenuInspectMemoryWordsAction _menuInspectMemoryWordsAction;
 
         private WordValueMenuItems(Inspection inspection, Value value) {
-            _copyWordAction = inspection.inspectionMenus().getCopyValueAction(value, "Copy value to clipboard");
+            _copyWordAction = inspection.actions().copyValue(value, "Copy value to clipboard");
             _menuInspectObjectAction = new MenuInspectObjectAction(value);
             _menuToggleDisplayAction = new MenuToggleDisplayAction();
             _menuInspectMemoryAction = new MenuInspectMemoryAction(value);

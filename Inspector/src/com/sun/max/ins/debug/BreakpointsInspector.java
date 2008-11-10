@@ -113,11 +113,14 @@ public final class BreakpointsInspector extends UniqueInspector {
         scrollPane.setPreferredSize(inspection().geometry().breakpointsFramePrefSize());
         frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
         frame().setContentPane(scrollPane);
-        frame().add(new BreakpointMenuItems());
+        frame().add(new BreakpointFrameMenuItems());
         refreshView(epoch, true);
     }
 
-    private final class BreakpointMenuItems implements InspectorMenuItems {
+    /**
+     * Menu items not dependent on mouse location, suitable for the frame.
+     */
+    private final class BreakpointFrameMenuItems implements InspectorMenuItems {
 
         public void addTo(InspectorMenu menu) {
             final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
@@ -127,12 +130,62 @@ public final class BreakpointsInspector extends UniqueInspector {
             menu.add(methodEntryBreakpoints);
             menu.add(inspection().inspectionMenus().getBreakAtObjectInitializersAction());
             menu.addSeparator();
-            menu.add(inspection().inspectionMenus().getClearSelectedBreakpointAction());
-            menu.add(inspection().inspectionMenus().getClearAllBreakpointsAction());
+            menu.add(inspection().inspectionMenus().getRemoveSelectedBreakpointAction());
+            menu.add(inspection().inspectionMenus().getRemoveAllBreakpointsAction());
         }
 
         public Inspection inspection() {
             return BreakpointsInspector.this.inspection();
+        }
+
+        public void refresh(long epoch, boolean force) {
+        }
+
+        public void redisplay() {
+        }
+
+    }
+
+    /**
+     * @param breakpointData a breakpoint in the {@link TeleVM}.
+     * @return a menu of actions, some of which are specific to the specified breakpoint
+     */
+    private InspectorMenu getButton3Menu(BreakpointData breakpointData) {
+        final InspectorMenu menu = new InspectorMenu();
+        menu.add(new BreakpointMenuItems(inspection(), breakpointData));
+        menu.addSeparator();
+        final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
+        methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtTargetMethodAction());
+        methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtMethodAction());
+        methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtMethodKeyAction());
+        menu.add(methodEntryBreakpoints);
+        menu.add(inspection().inspectionMenus().getBreakAtObjectInitializersAction());
+        menu.addSeparator();
+        menu.add(inspection().inspectionMenus().getRemoveAllBreakpointsAction());
+        return menu;
+    }
+
+    private final class BreakpointMenuItems implements InspectorMenuItems {
+
+        private final Inspection _inspection;
+        private final BreakpointData _breakpointData;
+
+        BreakpointMenuItems(Inspection inspection, BreakpointData breakpointData) {
+            _inspection = inspection;
+            _breakpointData = breakpointData;
+        }
+
+        public void addTo(InspectorMenu menu) {
+            menu.add(inspection().actions().removeBreakpoint(_breakpointData.teleBreakpoint(), "Remove at " + _breakpointData.shortName()));
+            if (_breakpointData.enabled()) {
+                menu.add(inspection().actions().disableBreakpoint(_breakpointData.teleBreakpoint(), "Disable"));
+            } else {
+                menu.add(inspection().actions().enableBreakpoint(_breakpointData.teleBreakpoint(), "Enable"));
+            }
+        }
+
+        public Inspection inspection() {
+            return _inspection;
         }
 
         public void refresh(long epoch, boolean force) {
@@ -428,6 +481,15 @@ public final class BreakpointsInspector extends UniqueInspector {
                         case ENABLED:
                             break;
                     }
+                    break;
+                }
+                case MouseEvent.BUTTON3: {
+                    final Point p = mouseEvent.getPoint();
+                    final int row = _table.rowAtPoint(p);
+                    final BreakpointData breakpointData = get(row);
+                    final InspectorMenu menu = getButton3Menu(breakpointData);
+                    menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                    break;
                 }
             }
         }

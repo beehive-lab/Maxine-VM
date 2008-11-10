@@ -91,9 +91,9 @@ public abstract class ValueLabel extends InspectorLabel {
     }
 
     public final void refresh(long epoch, boolean force) {
-        if (teleVM().teleProcess().epoch() > _epoch || force) {
+        if (epoch > _epoch || force) {
             setValue(fetchValue());
-            _epoch = teleVM().teleProcess().epoch();
+            _epoch = epoch;
         }
     }
 

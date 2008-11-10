@@ -28,17 +28,9 @@ package test.jvmni;
 
 public class JVM_GetFreeMemory01 {
     public static boolean test(int arg) {
-        if (arg == 0) {
-            final long mem = call();
-
-            //TODO: come up with a better test
-            // check if return value is between 0 and a terabyte
-            return mem > 0 && mem <  1024L * 1024L * 1024L * 1024L;
-        }
-
-        return false;
+        final long mem = call();
+        return mem > 0 && mem <  1024L * 1024L * 1024L * 1024L;
     }
 
     public static native long call();
-
 }

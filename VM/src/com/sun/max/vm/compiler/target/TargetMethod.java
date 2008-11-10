@@ -76,6 +76,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     public TargetMethod(ClassMethodActor classMethodActor) {
         _classMethodActor = classMethodActor;
+        setDescription("Target-" + name());
     }
 
     public final String name() {

@@ -125,9 +125,20 @@ public class BootImage {
 
     private static final Utf8Constant run = SymbolTable.makeSymbol("run");
 
+    /**
+     * Gets the class method actor for the first method with the name "run" found
+     * while traversing all the class method actors declared by a given class and
+     * its super classes.
+     *
+     * @param javaClass the class in which to start the search for a method named "run"
+     * @return the found method or null
+     */
     public static ClassMethodActor getRunMethodActor(Class<?> javaClass) {
-        final ClassActor classActor = ClassActor.fromJava(javaClass);
-        return classActor.findLocalClassMethodActor(run);
+        final ClassMethodActor runMethodActor = ClassActor.fromJava(javaClass).findLocalClassMethodActor(run);
+        if (runMethodActor != null) {
+            return runMethodActor;
+        }
+        return getRunMethodActor(javaClass.getSuperclass());
     }
 
     /**

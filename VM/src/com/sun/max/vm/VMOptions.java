@@ -404,7 +404,16 @@ public final class VMOptions {
         }
     }
 
-    public static boolean parseMain() {
+    /**
+     * Tries to parse the next available command line argument which specifies the name of the class containing the main
+     * method to be run.
+     *
+     * @param errorIfNotPresent specifies whether the omission of a main class argument is to be considered an
+     *            {@linkplain #error(String) error}
+     * @return true if the main class name argument was successfully parsed. If so, then it's now available by calling
+     *         {@link #mainClassName()}.
+     */
+    public static boolean parseMain(boolean errorIfNotPresent) {
         try {
             if (_jarOption.isPresent()) {
                 // the first argument is the first argument to the program
@@ -417,7 +426,9 @@ public final class VMOptions {
                 parseMainClassArguments(_argumentStart + 1);
                 return _mainClassName != null;
             }
-            error("no main class specified");
+            if (errorIfNotPresent) {
+                error("no main class specified");
+            }
         } catch (Utf8Exception utf8Exception) {
             error("UTF8 problem");
         }

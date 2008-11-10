@@ -33,13 +33,13 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A code region that encapsulates a contiguous, fixed-sized memory area
+ * A code region that encapsulates a contiguous, fixed-sized memory area in the {@link TeleVM}
  * for storing code and data structures relating to code.
  */
 public class CodeRegion extends LinearAllocatorHeapRegion {
 
-    public CodeRegion() {
-        super();
+    public CodeRegion(String description) {
+        super(description);
     }
 
     /**
@@ -48,8 +48,8 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
      * @param start the starting memory address
      * @param size the size of the code region in bytes
      */
-    public CodeRegion(Address start, Size size) {
-        super(start, size);
+    public CodeRegion(Address start, Size size, String description) {
+        super(start, size, description);
     }
 
     /**

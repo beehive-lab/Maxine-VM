@@ -46,15 +46,13 @@ public class JavaTesterRunScheme extends AbstractTester {
     private static final Class<?>[] _classList = {
         test.fail.BC_invokespecial01.class,
         test.fail.BC_invokevirtual02.class,
-        test.lang.ClassLoader_loadClass01.class,
-        test.lang.Class_forName03.class,
-        test.lang.Class_forName05.class,
-        test.fail.HP_StringFormat01.class
+        test.micro.LoopSwitch01.class,
+        test.micro.String_format01.class,
+        test.micro.String_format02.class
     };
     @Override
-    public void run() {
-        _testEnd = 6;
-        vmStartUp();
+    public void runTests() {
+        _testEnd = 5;
         _total = _testEnd - _testStart;
         _testNum = _testStart;
         while (_testNum < _testEnd) {
@@ -66,16 +64,13 @@ public class JavaTesterRunScheme extends AbstractTester {
                     JavaTesterTests.test_fail_BC_invokevirtual02();
                     break;
                 case 2:
-                    JavaTesterTests.test_fail_ClassLoader_loadClass01();
+                    JavaTesterTests.test_fail_LoopSwitch01();
                     break;
                 case 3:
-                    JavaTesterTests.test_fail_Class_forName03();
+                    JavaTesterTests.test_fail_String_format01();
                     break;
                 case 4:
-                    JavaTesterTests.test_fail_Class_forName05();
-                    break;
-                case 5:
-                    JavaTesterTests.test_fail_HP_StringFormat01();
+                    JavaTesterTests.test_fail_String_format02();
             }
         }
         reportPassed(_passed, _total);
