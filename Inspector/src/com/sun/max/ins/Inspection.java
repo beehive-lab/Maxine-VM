@@ -613,6 +613,12 @@ public class Inspection extends JFrame {
         return _inspectionMenus;
     }
 
+    private final InspectionActions _inspectionActions;
+
+    public InspectionActions actions() {
+        return _inspectionActions;
+    }
+
     private final JDesktopPane _desktopPane = new JDesktopPane() {
         /**
          * Any component added to the desktop pane is brought to the front.
@@ -674,6 +680,7 @@ public class Inspection extends JFrame {
         setLocation(_geometry.inspectorFrameDefaultLocation());
 
         _inspectionMenus = new InspectionMenus(this);
+        _inspectionActions = new InspectionActions(this);
         setJMenuBar(_inspectionMenus.createJMenuBar());
 
         pack();
@@ -718,6 +725,7 @@ public class Inspection extends JFrame {
                 break;
         }
         _inspectionMenus.refresh(epoch, true);
+        _inspectionActions.refresh(epoch, true);
     }
 
     /**
@@ -773,6 +781,7 @@ public class Inspection extends JFrame {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
         _inspectionMenus.refresh(teleProcess().epoch(), true);
+        _inspectionActions.refresh(teleProcess().epoch(), true);
         //Listen for process state changes
         _teleProcess.addStateListener(new ProcessStateListener());
         // Listen for changes in breakpoints
@@ -851,54 +860,6 @@ public class Inspection extends JFrame {
 
     }
 
-    /**
-     * Notification service for changes to state in the {@link TeleVM}.
-     *
-     * Many of the notifications include the current "epoch" of the
-     * underlying process ({@see TeleProcess#epoch()}), which can
-     * be used by listeners to decide whether to update caches or
-     * not.
-     *
-     * @author Michael Van De Vanter
-     */
-    public interface InspectionListener {
-
-        /**
-         * Notifies that  {@link TeleVM} state has potentially changed and should be revisited.
-         *
-         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-         * @param force suspend caching behavior; reload state unconditionally.
-         */
-        void vmStateChanged(long epoch, boolean force);
-
-        /**
-         * Notifies that the set of threads in the {@link TeleVM} has changed; listeners can assume
-         * that the set hasn't changed unless this notification is received.
-         *
-         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-         */
-        void threadSetChanged(long epoch);
-
-        /**
-         * Notifies that the state associated with a particular thread  in the {@link TeleVM} has changed.
-         */
-        void threadStateChanged(TeleNativeThread teleNativeThread);
-
-        /**
-         * Notifies that the set of breakpoints in the {@link TeleVM} has changed.
-         */
-        void breakpointSetChanged();
-
-        /**
-         * Notifies that an important aspect of view style/parameters/configuration have changed,
-         * and that views should be reconstructed if needed (view state change only).
-         *
-         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-         */
-        void viewConfigurationChanged(long epoch);
-
-    }
-
     private IdentityHashSet<InspectionListener> _inspectionListeners = new IdentityHashSet<InspectionListener>();
 
     /**
@@ -935,6 +896,7 @@ public class Inspection extends JFrame {
             listener.vmStateChanged(epoch, force);
         }
         _inspectionMenus.refresh(epoch, force);
+        _inspectionActions.refresh(epoch, force);
     }
 
     /**
@@ -948,6 +910,7 @@ public class Inspection extends JFrame {
             listener.viewConfigurationChanged(epoch);
         }
         _inspectionMenus.redisplay();
+        _inspectionActions.redisplay();
     }
 
     /**

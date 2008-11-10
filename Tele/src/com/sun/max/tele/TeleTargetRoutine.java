@@ -75,9 +75,9 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     void setTargetCodeLabelBreakpoints();
 
     /**
-     * Clears a target code breakpoint at every label synthesized by disassembly of this method.
+     * Removes a target code breakpoint at every label synthesized by disassembly of this method.
      */
-    void clearTargetCodeLabelBreakpoints();
+    void removeTargetCodeLabelBreakpoints();
 
     /**
      * @return Local {@link TeleClassMethodActor} for the target routine in the tele VM, if it was

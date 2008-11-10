@@ -228,7 +228,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         // Set up toolbar
 
-        JButton button = new JButton(_inspection.inspectionMenus().getToggleTargetBreakpointAction());
+        JButton button = new JButton(_inspection.actions().toggleTargetCodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());

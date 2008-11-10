@@ -155,11 +155,11 @@ public final class MiscWordLabel extends ValueLabel {
     }
 
     private InspectorAction getCopyWordAction() {
-        return inspection().inspectionMenus().getCopyWordAction(value().asWord(), "Copy word to clipboard");
+        return inspection().actions().copyWord(value().asWord(), "Copy word to clipboard");
     }
 
     private InspectorAction getInspectJavaMonitorAction() {
-        final InspectorAction action = inspection().inspectionMenus().getInspectObjectAction(_teleJavaMonitor, "Inspect JavaMonitor (left-button)");
+        final InspectorAction action = inspection().actions().inspectObject(_teleJavaMonitor, "Inspect JavaMonitor (left-button)");
         action.setEnabled(_teleJavaMonitor != null);
         return action;
     }
