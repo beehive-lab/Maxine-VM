@@ -622,7 +622,7 @@ public class WordValueLabel extends ValueLabel {
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
                 final TeleObject teleObject = TeleObject.make(teleVM(), teleVM().wordToReference(value.toWord()));
-                action = inspection().inspectionMenus().getInspectObjectAction(teleObject);
+                action = inspection().actions().inspectObject(teleObject, null);
                 break;
             }
             case CALL_ENTRY_POINT:
@@ -643,7 +643,7 @@ public class WordValueLabel extends ValueLabel {
             case CLASS_ACTOR: {
                 final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
-                    action = inspection().inspectionMenus().getInspectObjectAction(teleClassActor, "Inspect ClassActor");
+                    action = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor");
                 }
                 break;
             }
@@ -681,7 +681,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = inspection().inspectionMenus().getInspectMemoryAction(address);
+                    action = inspection().actions().inspectMemory(address, null);
                     break;
                 }
                 case WORD:
@@ -695,7 +695,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (teleVM().heapOrCodeOrStackContains(address)) {
-                        action = inspection().inspectionMenus().getInspectMemoryAction(address);
+                        action = inspection().actions().inspectMemory(address, null);
                     }
                     break;
                 }
@@ -720,7 +720,7 @@ public class WordValueLabel extends ValueLabel {
                 case CALL_RETURN_POINT:
                 case CALL_RETURN_POINT_TEXT:
                 case UNCHECKED_CALL_POINT: {
-                    action = inspection().inspectionMenus().getInspectMemoryWordsAction(address);
+                    action = inspection().actions().inspectMemoryWords(address, null);
                     break;
                 }
                 case WORD:
@@ -734,7 +734,7 @@ public class WordValueLabel extends ValueLabel {
                 case UNCHECKED_WORD:
                 case INVALID: {
                     if (teleVM().heapOrCodeOrStackContains(address)) {
-                        action = inspection().inspectionMenus().getInspectMemoryWordsAction(address);
+                        action = inspection().actions().inspectMemoryWords(address, null);
                     }
                     break;
                 }
@@ -821,7 +821,7 @@ public class WordValueLabel extends ValueLabel {
         private final MenuInspectMemoryWordsAction _menuInspectMemoryWordsAction;
 
         private WordValueMenuItems(Inspection inspection, Value value) {
-            _copyWordAction = inspection.inspectionMenus().getCopyValueAction(value, "Copy value to clipboard");
+            _copyWordAction = inspection.actions().copyValue(value, "Copy value to clipboard");
             _menuInspectObjectAction = new MenuInspectObjectAction(value);
             _menuToggleDisplayAction = new MenuToggleDisplayAction();
             _menuInspectMemoryAction = new MenuInspectMemoryAction(value);

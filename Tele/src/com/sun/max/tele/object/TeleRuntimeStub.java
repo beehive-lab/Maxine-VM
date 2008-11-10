@@ -172,7 +172,7 @@ public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTar
         }
     }
 
-    public void clearTargetCodeLabelBreakpoints() {
+    public void removeTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {
                 teleVM().teleProcess().targetBreakpointFactory().removeBreakpointAt(targetCodeInstruction.address());

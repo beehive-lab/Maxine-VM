@@ -164,11 +164,11 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     protected void showMenu(MouseEvent mouseEvent) {
         final InspectorMenu menu = new InspectorMenu();
-        menu.add(inspection().inspectionMenus().getCopyWordAction(_telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
-        menu.add(inspection().inspectionMenus().getInspectMemoryAction(_telePoolConstant, "Inspect PoolConstant memory"));
-        menu.add(inspection().inspectionMenus().getInspectMemoryWordsAction(_telePoolConstant, "Inspect PoolConstant memory words"));
-        menu.add(inspection().inspectionMenus().getInspectObjectAction(_telePoolConstant, "Inspect PoolConstant #" + Integer.toString(_index)));
-        menu.add(inspection().inspectionMenus().getInspectObjectAction(_teleConstantPool, "Inspect ConstantPool"));
+        menu.add(inspection().actions().copyWord(_telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
+        menu.add(inspection().actions().inspectMemory(_telePoolConstant, "Inspect PoolConstant memory"));
+        menu.add(inspection().actions().inspectMemoryWords(_telePoolConstant, "Inspect PoolConstant memory words"));
+        menu.add(inspection().actions().inspectObject(_telePoolConstant, "Inspect PoolConstant #" + Integer.toString(_index)));
+        menu.add(inspection().actions().inspectObject(_teleConstantPool, "Inspect ConstantPool"));
         specializeMenu(menu);
         menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
     }
@@ -220,7 +220,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleClassConstant.Resolved teleResolvedClassConstant = (TeleClassConstant.Resolved) telePoolConstant();
                 final TeleClassActor teleClassActor = teleResolvedClassConstant.getTeleClassActor();
-                menu.add(inspection().inspectionMenus().getInspectObjectAction(teleClassActor, "Inspect ClassActor"));
+                menu.add(inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor"));
             }
         }
     }
@@ -263,7 +263,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleFieldRefConstant.Resolved teleResolvedFieldRefConstant = (TeleFieldRefConstant.Resolved) telePoolConstant();
                 final TeleFieldActor teleFieldActor = teleResolvedFieldRefConstant.getTeleFieldActor();
-                menu.add(inspection().inspectionMenus().getInspectObjectAction(teleFieldActor, "Inspect FieldActor"));
+                menu.add(inspection().actions().inspectObject(teleFieldActor, "Inspect FieldActor"));
             }
         }
 
@@ -372,7 +372,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 menu.addSeparator();
                 final TeleInterfaceMethodRefConstant.Resolved teleResolvedInterfaceMethodRefConstant = (TeleInterfaceMethodRefConstant.Resolved) telePoolConstant();
                 final TeleInterfaceMethodActor teleInterfaceMethodActor = teleResolvedInterfaceMethodRefConstant.getTeleInterfaceMethodActor();
-                menu.add(inspection().inspectionMenus().getInspectObjectAction(teleInterfaceMethodActor, "Inspect InterfaceMethodActor"));
+                menu.add(inspection().actions().inspectObject(teleInterfaceMethodActor, "Inspect InterfaceMethodActor"));
             }
         }
 

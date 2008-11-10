@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins;
 
-import java.awt.datatransfer.*;
 import java.io.*;
 
 import javax.swing.*;
@@ -33,7 +32,6 @@ import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
@@ -47,42 +45,22 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.BootImage.*;
-import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
- * Menus offered by an Inspection.
+ * General menus offered by an Inspection.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  * @author Aritra Bandyopadhyay
  */
-public final class InspectionMenus implements Prober {
-
-    private final Inspection _inspection;
-
-    public Inspection inspection() {
-        return _inspection;
-    }
-
-    private TeleVM teleVM() {
-        return _inspection.teleVM();
-    }
-
-    private TeleProcess teleProcess() {
-        return _inspection.teleProcess();
-    }
+public final class InspectionMenus extends InspectionHolder implements Prober {
 
     private TeleProcessController teleProcessController() {
         return inspection().controller();
-    }
-
-    private InspectionFocus focus() {
-        return _inspection.focus();
     }
 
     private boolean isSynchronousMode() {
@@ -91,523 +69,74 @@ public final class InspectionMenus implements Prober {
 
     private final JMenu _inspectionMenu = new JMenu("Inspector");
 
-    public final class RelocateAction extends InspectorAction {
-
-        RelocateAction() {
-            super(_inspection, "Relocate Boot Image");
-        }
-
-        private boolean _done;
-
-        @Override
-        protected synchronized void procedure() {
-            if (!_done) {
-                _done = true;
-                assert MaxineInspector.suspendingBeforeRelocating();
-                try {
-                    teleVM().advanceToJavaEntryPoint();
-                } catch (IOException ioException) {
-                    throw new InspectorError("error during relocation of boot image", ioException);
-                }
-                _inspectionMenu.remove(0); // remove the menu item
-                _inspectionMenu.remove(0); // remove the separator as well
-            }
-        }
-    }
-
-    public final class SetInspectorTraceLevelAction extends InspectorAction {
-
-        SetInspectorTraceLevelAction() {
-            super(_inspection, "Set Inspector Trace Level");
-        }
-
-        @Override
-        protected void procedure() {
-            final int oldLevel = Trace.level();
-            int newLevel = oldLevel;
-            final String input = _inspection.inputDialog("Set Inspector Trace Level", Integer.toString(oldLevel));
-            try {
-                newLevel = Integer.parseInt(input);
-            } catch (NumberFormatException numberFormatException) {
-                _inspection.errorMessage(numberFormatException.toString());
-            }
-            if (newLevel != oldLevel) {
-                Trace.on(newLevel);
-            }
-        }
-    }
-
-    public final class RefreshAllAction extends InspectorAction {
-
-        RefreshAllAction() {
-            super(_inspection, "Refresh All");
-        }
-
-        @Override
-        protected void procedure() {
-            _inspection.refreshAll(true);
-        }
-    }
-
-    public final class CloseAllInspectorsAction extends InspectorAction {
-
-        CloseAllInspectorsAction() {
-            super(_inspection, "Close All");
-        }
-
-        @Override
-        protected void procedure() {
-            _inspection.desktopPane().removeAll();
-            _inspection.repaint();
-        }
-    }
-
-    public final class QuitAction extends InspectorAction {
-
-        QuitAction() {
-            super(_inspection, "Quit");
-        }
-
-        @Override
-        protected void procedure() {
-            _inspection.quit();
-        }
-    }
-
-    public final class FileCommandsAction extends InspectorAction {
-
-        FileCommandsAction() {
-            super(_inspection, FileCommands.actionName());
-        }
-
-        @Override
-        protected void procedure() {
-            final String value = _inspection.inputDialog("File name: ", FileCommands.defaultCommandFile());
-            if (value != null && !value.equals("")) {
-                FileCommands.executeCommandsFromFile(_inspection, value);
-            }
-        }
-    }
-
-    /**
-     * A command that updates the {@linkplain TeleVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
-     * the tele VM's class path by rescanning the complete class path for types.
-     */
-    public final class UpdateClasspathTypes extends InspectorAction {
-
-        UpdateClasspathTypes() {
-            super(_inspection, "Rescan Class Path For Types");
-        }
-
-        @Override
-        protected void procedure() {
-            teleVM().updateLoadableTypeDescriptorsFromClasspath();
-        }
-    }
-
     private JMenu createInspectionMenu() {
         if (MaxineInspector.suspendingBeforeRelocating()) {
-            _inspectionMenu.add(new RelocateAction());
+            _inspectionMenu.add(actions().relocateBootImage());
             _inspectionMenu.addSeparator();
         }
-        _inspectionMenu.add(new SetInspectorTraceLevelAction());
-        _inspectionMenu.add(new ChangeInterpreterUseLevelAction());
-        _inspectionMenu.add(new SetTransportDebugLevelAction());
-        _inspectionMenu.add(new FileCommandsAction());
-        _inspectionMenu.add(new UpdateClasspathTypes());
+        _inspectionMenu.add(actions().setInspectorTraceLevel());
+        _inspectionMenu.add(actions().changeInterpreterUseLevel());
+        _inspectionMenu.add(actions().setTransportDebugLevel());
+        _inspectionMenu.add(actions().runFileCommands());
+        _inspectionMenu.add(actions().updateClasspathTypes());
         _inspectionMenu.addSeparator();
-        _inspectionMenu.add(new RefreshAllAction());
+        _inspectionMenu.add(actions().refreshAll());
         _inspectionMenu.addSeparator();
-        _inspectionMenu.add(new CloseAllInspectorsAction());
+        _inspectionMenu.add(actions().closeAll());
         _inspectionMenu.addSeparator();
         _inspectionMenu.add(new PreferenceDialogAction());
         _inspectionMenu.addSeparator();
-        _inspectionMenu.add(new QuitAction());
+        _inspectionMenu.add(actions().quit());
         return _inspectionMenu;
     }
 
-    public final class InspectClassAction extends InspectorAction {
 
-        InspectClassAction() {
-            super(_inspection, "Inspect Class...");
-        }
 
-        @Override
-        protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(_inspection, "Inspect Class ...", "Inspect");
-            if (teleClassActor != null) {
-                focus().setHeapObject(teleClassActor);
-            }
-        }
-    }
-
-    public final class InspectClassByHexIdAction extends InspectorAction {
-
-        InspectClassByHexIdAction() {
-            super(_inspection, "Inspect Class By ID (Hex) ...");
-        }
-
-        @Override
-        protected void procedure() {
-            final String value = _inspection.questionMessage("ID (hex): ");
-            if (value != null && !value.equals("")) {
-                try {
-                    final int serial = Integer.parseInt(value, 16);
-                    final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(serial);
-                    if (teleClassActor == null) {
-                        _inspection.errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
-                    } else {
-                        focus().setHeapObject(teleClassActor);
-                    }
-                } catch (NumberFormatException ex) {
-                    _inspection.errorMessage("Hex integer required");
-                }
-            }
-        }
-    }
-
-    public final class InspectClassByDecimalIdAction extends InspectorAction {
-
-        InspectClassByDecimalIdAction() {
-            super(_inspection, "Inspect Class By ID (decimal) ...");
-        }
-
-        @Override
-        protected void procedure() {
-            final String value = _inspection.questionMessage("ID (decimal): ");
-            if (value != null && !value.equals("")) {
-                try {
-                    final int serial = Integer.parseInt(value, 10);
-                    final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(serial);
-                    if (teleClassActor == null) {
-                        _inspection.errorMessage("failed to find classActor for ID: " + serial);
-                    } else {
-                        focus().setHeapObject(teleClassActor);
-                    }
-                } catch (NumberFormatException ex) {
-                    _inspection.errorMessage("Hex integer required");
-                }
-            }
-        }
-    }
 
     private JMenu createClassMenu() {
         final JMenu menu = new JMenu("Class");
-        menu.add(new InspectClassAction());
-        menu.add(new InspectClassByHexIdAction());
-        menu.add(new InspectClassByDecimalIdAction());
+        menu.add(actions().inspectClassActorByName());
+        menu.add(actions().inspectClassActorByHexId());
+        menu.add(actions().inspectClassActorByDecimalId());
         return menu;
-    }
-
-    public final class BootClassRegistryAction extends InspectorAction {
-
-        BootClassRegistryAction() {
-            super(_inspection, "Inspect Boot Class Registry");
-        }
-
-        @Override
-        protected void procedure() {
-            final TeleObject teleBootClassRegistry = TeleObject.make(teleVM(), teleVM().bootClassRegistryReference());
-            focus().setHeapObject(teleBootClassRegistry);
-        }
-    }
-
-    /**
-     * Action to create an object inspector; interactive if a {@link TeleObject} not specified at creation.
-     */
-    public final class InspectObjectAtAddressAction extends InspectorAction {
-
-        InspectObjectAtAddressAction() {
-            super(_inspection, "Inspect Object at Address...");
-        }
-
-        @Override
-        protected void procedure() {
-            new AddressInputDialog(_inspection, teleVM().teleHeapManager().teleBootHeapRegion().start(), "Inspect Object at Address...", "Inspect") {
-
-                @Override
-                public void entered(Address address) {
-                    final Pointer pointer = address.asPointer();
-                    if (teleVM().isValidOrigin(pointer)) {
-                        final Reference objectReference = teleVM().originToReference(pointer);
-                        final TeleObject teleObject = TeleObject.make(teleVM(), objectReference);
-                        focus().setHeapObject(teleObject);
-                    } else {
-                        _inspection.errorMessage("heap object not found at 0x"  + address.toHexString());
-                    }
-                }
-            };
-        }
-    }
-
-    /**
-     * @param surrogate for an object in the tele VM
-     * @return an Action that will create an Object Inspector
-     */
-    public InspectorAction getInspectObjectAtAddressAction() {
-        return new InspectObjectAtAddressAction();
-    }
-
-    /**
-     * Action to create an object inspector; interactive if a {@link TeleObject} not specified at creation.
-     */
-    public final class InspectObjectByIDAction extends InspectorAction {
-
-        private static final String ACTION_NAME = "Inspect Object By ID...";
-        InspectObjectByIDAction() {
-            super(_inspection, ACTION_NAME);
-        }
-
-        @Override
-        protected void procedure() {
-            final String input = _inspection.inputDialog("Inspect Object By ID..", "");
-            try {
-                final long oid = Long.parseLong(input);
-                final TeleObject teleObject = TeleObject.lookupObject(oid);
-                if (teleObject != null) {
-                    focus().setHeapObject(teleObject);
-                } else {
-                    _inspection.errorMessage("failed to find Object for ID: " + input);
-                }
-            } catch (NumberFormatException numberFormatException) {
-                _inspection.errorMessage("Not a ID: " + input);
-            }
-        }
-    }
-
-    /**
-     * @param surrogate for an object in the tele VM
-     * @return an Action that will create an Object Inspector interactively, prompting the user for a numeric object ID
-     */
-    public InspectorAction getInspectObjectByIDAction() {
-        return new InspectObjectByIDAction();
     }
 
     private JMenu createObjectMenu() {
         final JMenu menu = new JMenu("Object");
-        menu.add(new BootClassRegistryAction());
-        menu.add(new InspectObjectAtAddressAction());
-        menu.add(new InspectObjectByIDAction());
+        menu.add(actions().inspectBootClassRegistry());
+        menu.add(actions().inspectObject());
+        menu.add(actions().inspectObjectByID());
         return menu;
-    }
-
-    public final class InspectBootHeapMemoryAction extends InspectorAction {
-
-        InspectBootHeapMemoryAction() {
-            super(_inspection, "Inspect Memory at Boot Heap Region Start");
-        }
-
-        @Override
-        protected void procedure() {
-            MemoryInspector.create(_inspection, teleVM().bootImageStart());
-        }
-    }
-
-    public final class InspectBootCodeMemoryAction extends InspectorAction {
-
-        InspectBootCodeMemoryAction() {
-            super(_inspection, "Inspect Memory at Boot Code Region Start");
-        }
-
-        @Override
-        protected void procedure() {
-            MemoryInspector.create(_inspection, teleVM().teleCodeManager().teleBootCodeRegion().start());
-        }
-    }
-
-    /**
-     * Action to inspect a memory region, interactive if {@link Address} not specified.
-     */
-    public final class InspectMemoryAction extends InspectorAction {
-
-        private final Address _address;
-        private final TeleObject _teleObject;
-
-        InspectMemoryAction() {
-            super(_inspection, "Inspect Memory at Address...");
-            _address = null;
-            _teleObject = null;
-        }
-
-        InspectMemoryAction(Address address, String title) {
-            super(_inspection, title);
-            _address = address;
-            _teleObject = null;
-        }
-
-        InspectMemoryAction(Address address) {
-            this(address, "Inspect Memory");
-        }
-
-        InspectMemoryAction(TeleObject teleObject, String title) {
-            super(_inspection, title);
-            _address = null;
-            _teleObject = teleObject;
-        }
-
-        InspectMemoryAction(TeleObject teleObject) {
-            this(teleObject, "Inspect Memory");
-        }
-
-        @Override
-        protected void procedure() {
-            if (_teleObject != null) {
-                MemoryInspector.create(_inspection, _teleObject);
-            } else if (_address != null) {
-                MemoryInspector.create(_inspection, _address);
-            } else {
-                new AddressInputDialog(_inspection, teleVM().bootImageStart(), "Inspect Memory at Address...", "Inspect") {
-
-                    @Override
-                    public void entered(Address address) {
-                        MemoryInspector.create(_inspection, address);
-                    }
-                };
-            }
-        }
-    }
-
-    /**
-     * @param teleObject surrogate for an object in the tele VM
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public InspectorAction getInspectMemoryAction(TeleObject teleObject) {
-        return new InspectMemoryAction(teleObject);
-    }
-
-    /**
-     * @param teleObject surrogate for an object in the tele VM
-     * @param title a string name for the Action
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public InspectorAction getInspectMemoryAction(TeleObject teleObject, String title) {
-        return new InspectMemoryAction(teleObject, title);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the tele VM
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public InspectorAction getInspectMemoryAction(Address address) {
-        return new InspectMemoryAction(address);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the tele VM
-     * @param title a string name for the Action
-     * @return an Action that will create a Memory Inspector at the address
-     */
-    public InspectorAction getInspectMemoryAction(Address address, String title) {
-        return new InspectMemoryAction(address, title);
-    }
-
-    /**
-     * Action to inspect a memory region, interactive if {@link Address} not specified.
-     */
-    public final class InspectMemoryWordsAction extends InspectorAction {
-
-        private final Address _address;
-        private final TeleObject _teleObject;
-
-        InspectMemoryWordsAction() {
-            super(_inspection, "Inspect Memory Words at Address...");
-            _address = null;
-            _teleObject = null;
-        }
-
-        InspectMemoryWordsAction(Address address) {
-            this(address, "Inspect Memory Words");
-        }
-
-        InspectMemoryWordsAction(Address address, String title) {
-            super(_inspection, title);
-            _address = address;
-            _teleObject = null;
-        }
-
-        InspectMemoryWordsAction(TeleObject teleObject) {
-            this(teleObject, "Inspect Memory Words");
-        }
-
-        InspectMemoryWordsAction(TeleObject teleObject, String title) {
-            super(_inspection, title);
-            _address = null;
-            _teleObject = teleObject;
-        }
-
-        @Override
-        protected void procedure() {
-            if (_teleObject != null) {
-                MemoryWordInspector.create(_inspection, _teleObject);
-            }
-            if (_address != null) {
-                MemoryWordInspector.create(_inspection, _address);
-            } else {
-                new AddressInputDialog(_inspection, teleVM().bootImageStart(), "Inspect Memory Words at Address...", "Inspect") {
-
-                    @Override
-                    public void entered(Address address) {
-                        MemoryWordInspector.create(_inspection, address);
-                    }
-                };
-            }
-        }
-    }
-
-    /**
-     * @param teleObject surrogate for a valid object in the teleVM
-     * @return an Action that will create a Memory Words Inspector at the address
-     */
-    public InspectorAction getInspectMemoryWordsAction(TeleObject teleObject) {
-        return new InspectMemoryWordsAction(teleObject);
-    }
-
-    /**
-     * @param teleObject a surrogate for a valid object in the teleVM
-     * @param title a name for the action
-     * @return an Action that will create a Memory Words Inspector at the address
-     */
-    public InspectorAction getInspectMemoryWordsAction(TeleObject teleObject, String title) {
-        return new InspectMemoryWordsAction(teleObject, title);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the tele VM
-     * @return an Action that will create a Memory Words Inspector at the address
-     */
-    public InspectorAction getInspectMemoryWordsAction(Address address) {
-        return new InspectMemoryWordsAction(address);
-    }
-
-    /**
-     * @param address a valid memory {@link Address} in the tele VM
-     * @param title a name for the action
-     * @return an Action that will create a Memory Words Inspector at the address
-     */
-    public InspectorAction getInspectMemoryWordsAction(Address address, String title) {
-        return new InspectMemoryWordsAction(address, title);
     }
 
     private JMenu createMemoryMenu() {
         final JMenu menu = new JMenu("Memory");
-        menu.add(new InspectBootHeapMemoryAction());
-        menu.add(new InspectBootCodeMemoryAction());
-        menu.add(new InspectMemoryAction());
-        menu.add(new InspectMemoryWordsAction());
+
+        final JMenu wordsMenu = new JMenu("As words");
+        wordsMenu.add(actions().inspectBootHeapMemoryWords());
+        wordsMenu.add(actions().inspectBootCodeMemoryWords());
+        wordsMenu.add(actions().inspectMemoryWords());
+        menu.add(wordsMenu);
+
+        final JMenu bytesMenu = new JMenu("As bytes");
+        bytesMenu.add(actions().inspectBootHeapMemory());
+        bytesMenu.add(actions().inspectBootCodeMemory());
+        bytesMenu.add(actions().inspectMemory());
+        menu.add(bytesMenu);
         return menu;
     }
 
     public final class InspectMethodAction extends InspectorAction {
 
         public InspectMethodAction() {
-            super(_inspection, "Inspect MethodActor...");
+            super(inspection(), "Inspect MethodActor...");
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(_inspection, "Inspect MethodActor in Class...", "Select");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Inspect MethodActor in Class...", "Select");
             if (teleClassActor != null) {
-                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(_inspection, teleClassActor, "Inspect MethodActor...", "Inspect");
+                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, "Inspect MethodActor...", "Inspect");
                 if (teleMethodActor != null) {
                     focus().setHeapObject(teleMethodActor);
                 }
@@ -624,7 +153,7 @@ public final class InspectionMenus implements Prober {
     public final class ViewSelectedCodeAction extends InspectorAction {
 
         public ViewSelectedCodeAction() {
-            super(_inspection, "View Current Code Selection");
+            super(inspection(), "View Current Code Selection");
         }
 
         @Override
@@ -643,7 +172,7 @@ public final class InspectionMenus implements Prober {
     public final class ViewCodeAtIPAction extends InspectorAction {
 
         public ViewCodeAtIPAction() {
-            super(_inspection, "View Code at current IP");
+            super(inspection(), "View Code at current IP");
         }
 
         @Override
@@ -662,12 +191,12 @@ public final class InspectionMenus implements Prober {
     public final class ViewMethodBytecodeAction extends InspectorAction {
 
         public ViewMethodBytecodeAction() {
-            super(_inspection, "View Bytecodes for Method...");
+            super(inspection(), "View Bytecodes for Method...");
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(_inspection, "View Bytecode for Method in Class...", "Select");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View Bytecode for Method in Class...", "Select");
             if (teleClassActor != null) {
                 final Predicate<TeleMethodActor> hasBytecodesPredicate = new Predicate<TeleMethodActor>() {
 
@@ -676,7 +205,7 @@ public final class InspectionMenus implements Prober {
                         return teleMethodActor.hasCodeAttribute();
                     }
                 };
-                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(_inspection, teleClassActor, hasBytecodesPredicate, "View Bytecode for Method...", "Inspect");
+                final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodesPredicate, "View Bytecode for Method...", "Inspect");
                 if (teleMethodActor != null && teleMethodActor instanceof TeleClassMethodActor) {
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
                     final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), teleClassMethodActor, 0);
@@ -695,14 +224,14 @@ public final class InspectionMenus implements Prober {
     public final class ViewMethodTargetCodeAction extends InspectorAction {
 
         public ViewMethodTargetCodeAction() {
-            super(_inspection, "View Code for Method...");
+            super(inspection(), "View Code for Method...");
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(_inspection, "View Target Code for Class...", "Select");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "View Target Code for Class...", "Select");
             if (teleClassActor != null) {
-                final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(_inspection, teleClassActor, "View Target Code for Method...", "View Code", false);
+                final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), teleClassActor, "View Target Code for Method...", "View Code", false);
                 if (teleTargetMethods != null) {
                     focus().setCodeLocation(new TeleCodeLocation(teleVM(), teleTargetMethods.first().callEntryPoint()), false);
                 }
@@ -721,7 +250,7 @@ public final class InspectionMenus implements Prober {
         private final int _offset;
 
         public ViewBootImageMethodCodeAction(int offset, Class clazz, String name, Class... parameterTypes) {
-            super(_inspection, clazz.getName() + "." + name + SignatureDescriptor.fromJava(Void.TYPE, parameterTypes).toJavaString(false, false));
+            super(inspection(), clazz.getName() + "." + name + SignatureDescriptor.fromJava(Void.TYPE, parameterTypes).toJavaString(false, false));
             _offset = offset;
         }
 
@@ -752,12 +281,12 @@ public final class InspectionMenus implements Prober {
     public final class ViewMethodCodeContainingAddressAction extends InspectorAction {
 
         public ViewMethodCodeContainingAddressAction() {
-            super(_inspection, "View Method Code Containing Address...");
+            super(inspection(), "View Method Code Containing Address...");
         }
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(_inspection, teleVM().bootImageStart(), "View Method Code Containing address...", "View Code") {
+            new AddressInputDialog(inspection(), teleVM().bootImageStart(), "View Method Code Containing address...", "View Code") {
 
                 @Override
                 public boolean isValidInput(Address address) {
@@ -781,7 +310,7 @@ public final class InspectionMenus implements Prober {
     public final class ViewNativeCodeContainingAddressAction extends InspectorAction {
 
         public ViewNativeCodeContainingAddressAction() {
-            super(_inspection, "View Native Code Containing Code Address...");
+            super(inspection(), "View Native Code Containing Code Address...");
         }
 
         @Override
@@ -791,7 +320,7 @@ public final class InspectionMenus implements Prober {
             assert teleNativeThread != null;
             final Address indirectCallAddress = teleNativeThread.integerRegisters().getCallRegisterValue();
             final Address initialAddress = indirectCallAddress == null ? teleVM().bootImageStart() : indirectCallAddress;
-            new AddressInputDialog(_inspection, initialAddress, "View Native Code Containing Code Address...", "View Code") {
+            new AddressInputDialog(inspection(), initialAddress, "View Native Code Containing Code Address...", "View Code") {
                 @Override
                 public void entered(Address address) {
                     focus().setCodeLocation(new TeleCodeLocation(teleVM(), address), true);
@@ -828,7 +357,7 @@ public final class InspectionMenus implements Prober {
     public final class SingleStepAction extends InspectorAction {
 
         SingleStepAction() {
-            super(_inspection, "Single Instruction Step", true);
+            super(inspection(), "Single Instruction Step", true);
         }
 
         @Override
@@ -854,7 +383,7 @@ public final class InspectionMenus implements Prober {
     public final class RunToInstructionAction extends InspectorAction {
 
         RunToInstructionAction() {
-            super(_inspection, "Run To Selected Instruction (ignoring breakpoints)", true);
+            super(inspection(), "Run To Selected Instruction (ignoring breakpoints)", true);
         }
 
         @Override
@@ -867,7 +396,7 @@ public final class InspectionMenus implements Prober {
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
             } else {
-                _inspection.errorMessage("No instruction selected");
+                inspection().errorMessage("No instruction selected");
             }
         }
     }
@@ -885,7 +414,7 @@ public final class InspectionMenus implements Prober {
     public final class RunToInstructionWithBreakpointsAction extends InspectorAction {
 
         RunToInstructionWithBreakpointsAction() {
-            super(_inspection, "Run To Selected Instruction", true);
+            super(inspection(), "Run To Selected Instruction", true);
         }
 
         @Override
@@ -898,7 +427,7 @@ public final class InspectionMenus implements Prober {
                     throw new InspectorError("Run to instruction could not be performed.", exception);
                 }
             } else {
-                _inspection.errorMessage("No instruction selected");
+                inspection().errorMessage("No instruction selected");
             }
         }
     }
@@ -908,7 +437,7 @@ public final class InspectionMenus implements Prober {
     public final class ReturnFromFrameAction extends InspectorAction {
 
         ReturnFromFrameAction() {
-            super(_inspection, "Return From Frame (ignoring breakpoints)", true);
+            super(inspection(), "Return From Frame (ignoring breakpoints)", true);
         }
 
         @Override
@@ -937,7 +466,7 @@ public final class InspectionMenus implements Prober {
     public final class ReturnFromFrameWithBreakpointsAction extends InspectorAction {
 
         ReturnFromFrameWithBreakpointsAction() {
-            super(_inspection, "Return From Frame", true);
+            super(inspection(), "Return From Frame", true);
         }
 
         @Override
@@ -958,7 +487,7 @@ public final class InspectionMenus implements Prober {
     public final class StepOverAction extends InspectorAction {
 
         StepOverAction() {
-            super(_inspection, "Step Over (ignoring breakpoints)", true);
+            super(inspection(), "Step Over (ignoring breakpoints)", true);
         }
 
         @Override
@@ -985,7 +514,7 @@ public final class InspectionMenus implements Prober {
     public final class StepOverWithBreakpointsAction extends InspectorAction {
 
         StepOverWithBreakpointsAction() {
-            super(_inspection, "Step Over", true);
+            super(inspection(), "Step Over", true);
         }
 
         @Override
@@ -1001,49 +530,7 @@ public final class InspectionMenus implements Prober {
 
     private final StepOverWithBreakpointsAction _stepOverWithBreakpointsAction;
 
-    public final class ChangeInterpreterUseLevelAction extends InspectorAction {
 
-        ChangeInterpreterUseLevelAction() {
-            super(_inspection, "Change Interpreter Use Level...");
-        }
-
-        @Override
-        protected void procedure() {
-            final int oldLevel = teleVM().interpreterUseLevel();
-            int newLevel = oldLevel;
-            final String input = _inspection.inputDialog("Change interpreter use level (0=none, 1=some, etc)", Integer.toString(oldLevel));
-            try {
-                newLevel = Integer.parseInt(input);
-            } catch (NumberFormatException numberFormatException) {
-                _inspection.errorMessage(numberFormatException.toString());
-            }
-            if (newLevel != oldLevel) {
-                teleVM().setInterpreterUseLevel(newLevel);
-            }
-        }
-    }
-
-    public final class SetTransportDebugLevelAction extends InspectorAction {
-
-        SetTransportDebugLevelAction() {
-            super(_inspection, "Set Transport Debug Level...");
-        }
-
-        @Override
-        protected void procedure() {
-            final int oldLevel = teleProcess().transportDebugLevel();
-            int newLevel = oldLevel;
-            final String input = _inspection.inputDialog(" (Set Transport Debug Level, 0=none, 1=some, etc)", Integer.toString(oldLevel));
-            try {
-                newLevel = Integer.parseInt(input);
-            } catch (NumberFormatException numberFormatException) {
-                _inspection.errorMessage(numberFormatException.toString());
-            }
-            if (newLevel != oldLevel) {
-                teleProcess().setTransportDebugLevel(newLevel);
-            }
-        }
-    }
 
     private JMenuItem _showStackFramesMenuItem;
 
@@ -1052,7 +539,7 @@ public final class InspectionMenus implements Prober {
         private static final String MENU_TEXT = "Show All Stack Frames";
 
         ShowStackFramesAction() {
-            super(_inspection, "Show All Stack Frames");
+            super(inspection(), "Show All Stack Frames");
         }
 
         @Override
@@ -1064,7 +551,7 @@ public final class InspectionMenus implements Prober {
     public final class ResumeAction extends InspectorAction {
 
         ResumeAction() {
-            super(_inspection, "Resume", true);
+            super(inspection(), "Resume", true);
         }
 
         @Override
@@ -1081,7 +568,7 @@ public final class InspectionMenus implements Prober {
 
     public final class PauseAction extends InspectorAction {
         PauseAction() {
-            super(_inspection, "Pause Process");
+            super(inspection(), "Pause Process");
         }
 
         @Override
@@ -1108,43 +595,10 @@ public final class InspectionMenus implements Prober {
         return _resumeAction;
     }
 
-    public final class ToggleTargetBreakpointAction extends InspectorAction {
-
-        ToggleTargetBreakpointAction() {
-            super(_inspection, "Toggle Target Breakpoint");
-        }
-
-        @Override
-        protected void procedure() {
-            // TODO (mlvdv) push toggle method into factory?
-            final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
-            if (!targetCodeInstructionAddress.isZero()) {
-                TeleTargetBreakpoint breakpoint = teleProcess().targetBreakpointFactory().getNonTransientBreakpointAt(targetCodeInstructionAddress);
-                if (breakpoint == null) {
-                    breakpoint = teleProcess().targetBreakpointFactory().makeBreakpoint(targetCodeInstructionAddress, false);
-                    focus().setBreakpoint(breakpoint);
-                } else {
-                    teleProcess().targetBreakpointFactory().removeBreakpointAt(targetCodeInstructionAddress);
-                    focus().setBreakpoint(null);
-                }
-            }
-        }
-    }
-
-    private final ToggleTargetBreakpointAction _toggleTargetBreakpointAction;
-
-    /**
-     * @return an Action that will toggle on/off a breakpoint set at the target code location of the currently selected
-     *         instruction
-     */
-    public InspectorAction getToggleTargetBreakpointAction() {
-        return _toggleTargetBreakpointAction;
-    }
-
     public final class SetLabelBreakpointsAction extends InspectorAction {
 
         SetLabelBreakpointsAction() {
-            super(_inspection, "Set Breakpoint at Every Target Code Label");
+            super(inspection(), "Set Breakpoint at Every Target Code Label");
         }
 
         @Override
@@ -1154,17 +608,17 @@ public final class InspectionMenus implements Prober {
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.setTargetCodeLabelBreakpoints();
             } else {
-                _inspection.errorMessage("Unable to find target routine in which to set breakpoints");
+                inspection().errorMessage("Unable to find target routine in which to set breakpoints");
             }
         }
     }
 
     private final SetLabelBreakpointsAction _setLabelBreakpointsAction;
 
-    public final class ClearLabelBreakpointsAction extends InspectorAction {
+    public final class RemoveLabelBreakpointsAction extends InspectorAction {
 
-        ClearLabelBreakpointsAction() {
-            super(_inspection, "Clear Breakpoints at All Target Code Labels");
+        RemoveLabelBreakpointsAction() {
+            super(inspection(), "Remove Breakpoints at All Target Code Labels");
         }
 
         @Override
@@ -1172,17 +626,17 @@ public final class InspectionMenus implements Prober {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
             final TeleTargetRoutine teleTargetRoutine = teleVM().teleCodeRegistry().get(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
-                teleTargetRoutine.clearTargetCodeLabelBreakpoints();
+                teleTargetRoutine.removeTargetCodeLabelBreakpoints();
             }
         }
     }
 
-    private final ClearLabelBreakpointsAction _clearLabelBreakpointsAction;
+    private final RemoveLabelBreakpointsAction _removeLabelBreakpointsAction;
 
-    public final class ClearSelectedBreakpointAction extends InspectorAction {
+    public final class RemoveSelectedBreakpointAction extends InspectorAction {
 
-        ClearSelectedBreakpointAction() {
-            super(_inspection, "Clear Selected Breakpoint");
+        RemoveSelectedBreakpointAction() {
+            super(inspection(), "Remove Selected Breakpoint");
         }
 
         @Override
@@ -1192,24 +646,24 @@ public final class InspectionMenus implements Prober {
                 focus().setBreakpoint(null);
                 selectedTeleBreakpoint.remove();
             } else {
-                _inspection.errorMessage("No breakpoint selected");
+                inspection().errorMessage("No breakpoint selected");
             }
         }
     }
 
-    private final ClearSelectedBreakpointAction _clearSelectedBreakpointAction;
+    private final RemoveSelectedBreakpointAction _removeSelectedBreakpointAction;
 
     /**
-     * @return an Action that will clear the currently selected breakpoint
+     * @return an Action that will remove the currently selected breakpoint
      */
-    public InspectorAction getClearSelectedBreakpointAction() {
-        return _clearSelectedBreakpointAction;
+    public InspectorAction getRemoveSelectedBreakpointAction() {
+        return _removeSelectedBreakpointAction;
     }
 
-    public final class ClearAllBreakpointsAction extends InspectorAction {
+    public final class RemoveAllBreakpointsAction extends InspectorAction {
 
-        ClearAllBreakpointsAction() {
-            super(_inspection, "Clear All Breakpoints");
+        RemoveAllBreakpointsAction() {
+            super(inspection(), "Remove All Breakpoints");
         }
 
         @Override
@@ -1219,24 +673,24 @@ public final class InspectionMenus implements Prober {
         }
     }
 
-    private final ClearAllBreakpointsAction _clearAllBreakpointsAction;
+    private final RemoveAllBreakpointsAction _removeAllBreakpointsAction;
 
     /**
-     * @return an Action that will clear all existing breakpoints
+     * @return an Action that will remove all existing breakpoints
      */
-    public InspectorAction getClearAllBreakpointsAction() {
-        return _clearAllBreakpointsAction;
+    public InspectorAction getRemoveAllBreakpointsAction() {
+        return _removeAllBreakpointsAction;
     }
 
     public final class ViewBreakpointsAction extends InspectorAction {
 
         ViewBreakpointsAction() {
-            super(_inspection, "View Breakpoints");
+            super(inspection(), "View Breakpoints");
         }
 
         @Override
         protected void procedure() {
-            BreakpointsInspector.make(_inspection);
+            BreakpointsInspector.make(inspection());
         }
     }
 
@@ -1245,14 +699,14 @@ public final class InspectionMenus implements Prober {
     public final class BreakAtTargetMethodAction extends InspectorAction {
 
         BreakAtTargetMethodAction() {
-            super(_inspection, "Compiled Method...");
+            super(inspection(), "Compiled Method...");
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(_inspection, "Class for Compiled Method Entry Breakpoints...", "Select");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Class for Compiled Method Entry Breakpoints...", "Select");
             if (teleClassActor != null) {
-                final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(_inspection, teleClassActor, "Compiled Method Entry Breakpoints", "Set Breakpoints", true);
+                final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), teleClassActor, "Compiled Method Entry Breakpoints", "Set Breakpoints", true);
                 if (teleTargetMethods != null) {
                     // There may be multiple compilations of a method in the result.
                     TeleTargetBreakpoint teleTargetBreakpoint = null;
@@ -1277,14 +731,14 @@ public final class InspectionMenus implements Prober {
     public final class BreakAtMethodAction extends InspectorAction {
 
         BreakAtMethodAction() {
-            super(_inspection, "Method on Classpath...");
+            super(inspection(), "Method on Classpath...");
         }
 
         @Override
         protected void procedure() {
-            final TypeDescriptor typeDescriptor = TypeSearchDialog.show(_inspection, "Class for Bytecode Method Entry Breakpoint...", "Select");
+            final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for Bytecode Method Entry Breakpoint...", "Select");
             if (typeDescriptor != null) {
-                final MethodKey methodKey = MethodSearchDialog.show(_inspection, typeDescriptor, "Bytecode Method Entry Breakpoint", "Set Breakpoint");
+                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode Method Entry Breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0), false);
                 }
@@ -1304,12 +758,12 @@ public final class InspectionMenus implements Prober {
     public final class BreakAtMethodKeyAction extends InspectorAction {
 
         BreakAtMethodKeyAction() {
-            super(_inspection, "Method Matched by Key...");
+            super(inspection(), "Method Matched by Key...");
         }
 
         @Override
         protected void procedure() {
-            final MethodKey methodKey = MethodKeyInputDialog.show(_inspection, "Specify Method");
+            final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify Method");
             if (methodKey != null) {
                 teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0), false);
             }
@@ -1328,12 +782,12 @@ public final class InspectionMenus implements Prober {
     public final class BreakAtObjectInitializersAction extends InspectorAction {
 
         BreakAtObjectInitializersAction() {
-            super(_inspection, "Break in Compiled Object Initializers of Class...");
+            super(inspection(), "Break in Compiled Object Initializers of Class...");
         }
 
         @Override
         protected void procedure() {
-            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(_inspection, "Break in Object Initializers of Class...", "Set Breakpoint");
+            final TeleClassActor teleClassActor = ClassActorSearchDialog.show(inspection(), "Break in Object Initializers of Class...", "Set Breakpoint");
             if (teleClassActor != null) {
                 final ClassActor classActor = teleClassActor.classActor();
                 if (classActor.localVirtualMethodActors() != null) {
@@ -1366,7 +820,7 @@ public final class InspectionMenus implements Prober {
     public final class ToggleBytecodeBreakpointAction extends InspectorAction {
 
         ToggleBytecodeBreakpointAction() {
-            super(_inspection, "Toggle Bytecode Breakpoint");
+            super(inspection(), "Toggle Bytecode Breakpoint");
         }
 
         @Override
@@ -1405,16 +859,16 @@ public final class InspectionMenus implements Prober {
         menu.add(_runToInstructionWithBreakpointsAction);
         menu.add(_runToInstructionAction);
         menu.addSeparator();
-        menu.add(_toggleTargetBreakpointAction);
+        menu.add(actions().toggleTargetCodeBreakpoint());
         menu.add(_setLabelBreakpointsAction);
-        menu.add(_clearLabelBreakpointsAction);
+        menu.add(_removeLabelBreakpointsAction);
         final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
         methodEntryBreakpoints.add(_breakAtTargetMethodAction);
         methodEntryBreakpoints.add(_breakAtMethodAction);
         methodEntryBreakpoints.add(_breakAtMethodKeyAction);
         menu.add(methodEntryBreakpoints);
         menu.add(_breakAtObjectInitializersAction);
-        menu.add(_clearAllBreakpointsAction);
+        menu.add(_removeAllBreakpointsAction);
         menu.addSeparator();
         menu.add(_viewBreakpointsAction);
         menu.addSeparator();
@@ -1426,12 +880,12 @@ public final class InspectionMenus implements Prober {
     public final class ViewThreadsAction extends InspectorAction {
 
         ViewThreadsAction() {
-            super(_inspection, "Threads");
+            super(inspection(), "Threads");
         }
 
         @Override
         protected void procedure() {
-            ThreadsInspector.make(_inspection);
+            ThreadsInspector.make(inspection());
         }
     }
 
@@ -1440,12 +894,12 @@ public final class InspectionMenus implements Prober {
     public final class ViewRegistersAction extends InspectorAction {
 
         ViewRegistersAction() {
-            super(_inspection, "Registers");
+            super(inspection(), "Registers");
         }
 
         @Override
         protected void procedure() {
-            RegistersInspector.make(_inspection, focus().thread());
+            RegistersInspector.make(inspection(), focus().thread());
         }
     }
 
@@ -1454,12 +908,12 @@ public final class InspectionMenus implements Prober {
     public final class ViewStackAction extends InspectorAction {
 
         ViewStackAction() {
-            super(_inspection, "Stack");
+            super(inspection(), "Stack");
         }
 
         @Override
         protected void procedure() {
-            StackInspector.make(_inspection, focus().thread());
+            StackInspector.make(inspection(), focus().thread());
         }
     }
 
@@ -1468,7 +922,7 @@ public final class InspectionMenus implements Prober {
     public final class ViewMethodCodeAction extends InspectorAction {
 
         ViewMethodCodeAction() {
-            super(_inspection, "Method Code");
+            super(inspection(), "Method Code");
         }
 
         @Override
@@ -1483,12 +937,12 @@ public final class InspectionMenus implements Prober {
     public final class ViewMemoryRegionsAction extends InspectorAction {
 
         ViewMemoryRegionsAction() {
-            super(_inspection, "MemoryRegions");
+            super(inspection(), "MemoryRegions");
         }
 
         @Override
         protected void procedure() {
-            MemoryRegionsInspector.make(_inspection);
+            MemoryRegionsInspector.make(inspection());
         }
     }
 
@@ -1497,19 +951,19 @@ public final class InspectionMenus implements Prober {
     public final class ViewBootImageAction extends InspectorAction {
 
         ViewBootImageAction() {
-            super(_inspection, "VM Boot Image Info");
+            super(inspection(), "VM Boot Image Info");
         }
 
         @Override
         protected void procedure() {
-            BootImageInspector.make(_inspection);
+            BootImageInspector.make(inspection());
         }
     }
 
     private JMenu createViewMenu() {
         final JMenu menu = new JMenu("View");
         menu.add(new ViewBootImageAction());
-        if (_inspection.hasProcess()) {
+        if (inspection().hasProcess()) {
             menu.add(_viewThreadsAction);
             menu.add(_viewRegistersAction);
             menu.add(_viewStackAction);
@@ -1523,19 +977,19 @@ public final class InspectionMenus implements Prober {
     public final class SetVMTraceLevelAction extends InspectorAction {
 
         SetVMTraceLevelAction() {
-            super(_inspection, "Set VM Trace Level");
+            super(inspection(), "Set VM Trace Level");
         }
 
         @Override
         protected void procedure() {
-            final TeleVMTrace teleVMTrace = _inspection.teleVMTrace();
+            final TeleVMTrace teleVMTrace = inspection().teleVMTrace();
             final int oldLevel = teleVMTrace.readTraceLevel();
             int newLevel = oldLevel;
-            final String input = _inspection.inputDialog("Set VM Trace Level", Integer.toString(oldLevel));
+            final String input = inspection().inputDialog("Set VM Trace Level", Integer.toString(oldLevel));
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
-                _inspection.errorMessage(numberFormatException.toString());
+                inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
                 teleVMTrace.writeTraceLevel(newLevel);
@@ -1548,19 +1002,19 @@ public final class InspectionMenus implements Prober {
     public final class SetVMTraceThresholdAction extends InspectorAction {
 
         SetVMTraceThresholdAction() {
-            super(_inspection, "Set VM Trace Threshold");
+            super(inspection(), "Set VM Trace Threshold");
         }
 
         @Override
         protected void procedure() {
-            final TeleVMTrace teleVMTrace = _inspection.teleVMTrace();
+            final TeleVMTrace teleVMTrace = inspection().teleVMTrace();
             final long oldThreshold = teleVMTrace.readTraceThreshold();
             long newThreshold = oldThreshold;
-            final String input = _inspection.inputDialog("Set VM Trace Threshold", Long.toString(oldThreshold));
+            final String input = inspection().inputDialog("Set VM Trace Threshold", Long.toString(oldThreshold));
             try {
                 newThreshold = Long.parseLong(input);
             } catch (NumberFormatException numberFormatException) {
-                _inspection.errorMessage(numberFormatException.toString());
+                inspection().errorMessage(numberFormatException.toString());
             }
             if (newThreshold != oldThreshold) {
                 teleVMTrace.writeTraceThreshold(newThreshold);
@@ -1573,7 +1027,7 @@ public final class InspectionMenus implements Prober {
     public final class InspectJavaFrameDescriptorAction extends InspectorAction {
 
         InspectJavaFrameDescriptorAction() {
-            super(_inspection, "Inspect Java Frame Descriptor");
+            super(inspection(), "Inspect Java Frame Descriptor");
         }
 
         private TargetJavaFrameDescriptor _targetJavaFrameDescriptor;
@@ -1607,7 +1061,7 @@ public final class InspectionMenus implements Prober {
         @Override
         protected void procedure() {
             assert _targetJavaFrameDescriptor != null;
-            TargetJavaFrameDescriptorInspector.make(_inspection, _targetJavaFrameDescriptor, _abi);
+            TargetJavaFrameDescriptorInspector.make(inspection(), _targetJavaFrameDescriptor, _abi);
         }
     }
 
@@ -1631,11 +1085,11 @@ public final class InspectionMenus implements Prober {
         private static final String STOP_TEXT = "Stop Disassembling All Methods";
 
         DisassembleAllAction() {
-            super(_inspection, START_TEXT);
+            super(inspection(), START_TEXT);
         }
 
         private void stopThread() {
-            synchronized (_inspection) {
+            synchronized (inspection()) {
                 _disassembleAllThread = null;
                 _disassembleAllMenuItem.setText(START_TEXT);
             }
@@ -1682,7 +1136,7 @@ public final class InspectionMenus implements Prober {
     public final class ListCodeRegistryToFileAction extends InspectorAction {
 
         ListCodeRegistryToFileAction() {
-            super(_inspection, "List Code Registry contents to File");
+            super(inspection(), "List Code Registry contents to File");
         }
 
         @Override
@@ -1691,14 +1145,14 @@ public final class InspectionMenus implements Prober {
             final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
             fileChooser.setDialogTitle("Save TeleCodeRegistry summary to file:");
-            final int returnVal = fileChooser.showSaveDialog(_inspection);
+            final int returnVal = fileChooser.showSaveDialog(inspection());
             if (returnVal != JFileChooser.APPROVE_OPTION) {
                 return;
             }
             final File file = fileChooser.getSelectedFile();
             if (file.exists()) {
                 final int n = JOptionPane.showConfirmDialog(
-                                _inspection,
+                                inspection(),
                                 "File " + file + "exists.  Overwrite?\n",
                                 "Overwrite?",
                                 JOptionPane.YES_NO_OPTION);
@@ -1710,7 +1164,7 @@ public final class InspectionMenus implements Prober {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
                 teleVM().teleCodeRegistry().writeSummaryToStream(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
-                _inspection.errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
+                inspection().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }
         }
     }
@@ -1718,7 +1172,7 @@ public final class InspectionMenus implements Prober {
     public final class ListCodeRegistryAction extends InspectorAction {
 
         ListCodeRegistryAction() {
-            super(_inspection, "List Code Registry contents");
+            super(inspection(), "List Code Registry contents");
         }
 
         @Override
@@ -1739,24 +1193,24 @@ public final class InspectionMenus implements Prober {
     public final class AboutDialogAction extends InspectorAction {
 
         public AboutDialogAction() {
-            super(_inspection, "About");
+            super(inspection(), "About");
         }
 
         @Override
         public void procedure() {
-            new AboutDialog(_inspection);
+            new AboutDialog(inspection());
         }
     }
 
     public final class PreferenceDialogAction extends InspectorAction {
 
         public PreferenceDialogAction() {
-            super(_inspection, "Preferences...");
+            super(inspection(), "Preferences...");
         }
 
         @Override
         public void procedure() {
-            new PreferenceDialog(_inspection);
+            new PreferenceDialog(inspection());
         }
     }
 
@@ -1773,7 +1227,7 @@ public final class InspectionMenus implements Prober {
         menuBar.add(createObjectMenu());
         menuBar.add(createMemoryMenu());
         menuBar.add(createMethodMenu());
-        if (_inspection.hasProcess()) {
+        if (inspection().hasProcess()) {
             menuBar.add(createDebugMenu());
         }
         menuBar.add(createViewMenu());
@@ -1787,10 +1241,10 @@ public final class InspectionMenus implements Prober {
      * Updates the enabled/disabled state of actions.
      */
     private void updateMenuItems() {
-        final boolean hasProcess = _inspection.hasProcess();
+        final boolean hasProcess = inspection().hasProcess();
         final boolean hasThread = hasProcess && focus().hasThread();
         final TeleCodeLocation selection = focus().codeLocation();
-        final boolean hasThreadAndReadyToRun = hasThread && !_inspection.isVMRunning();
+        final boolean hasThreadAndReadyToRun = hasThread && !inspection().isVMRunning();
         final boolean hasThreadAndSelectedCodeAndReadyToRun = focus().hasCodeLocation() && hasThreadAndReadyToRun;
         _singleStepAction.setEnabled(hasThreadAndReadyToRun);
         _stepOverAction.setEnabled(hasThreadAndReadyToRun);
@@ -1799,13 +1253,12 @@ public final class InspectionMenus implements Prober {
         _returnFromFrameWithBreakpointsAction.setEnabled(hasThreadAndReadyToRun);
         _runToInstructionAction.setEnabled(hasThreadAndSelectedCodeAndReadyToRun);
         _runToInstructionWithBreakpointsAction.setEnabled(hasThreadAndSelectedCodeAndReadyToRun);
-        _toggleTargetBreakpointAction.setEnabled(hasThread && selection.hasTargetCodeLocation());
         _breakAtMethodAction.setEnabled(hasThread && teleVM().messenger().activate());
         _breakAtMethodKeyAction.setEnabled(hasThread && teleVM().messenger().activate());
         _setLabelBreakpointsAction.setEnabled(hasThread && selection.hasTargetCodeLocation());
-        _clearLabelBreakpointsAction.setEnabled(hasThread && selection.hasTargetCodeLocation());
-        _clearAllBreakpointsAction.setEnabled(hasThread && teleProcess().targetBreakpointFactory().breakpoints(true).iterator().hasNext());
-        _clearSelectedBreakpointAction.setEnabled(hasThread && focus().hasBreakpoint());
+        _removeLabelBreakpointsAction.setEnabled(hasThread && selection.hasTargetCodeLocation());
+        _removeAllBreakpointsAction.setEnabled(hasThread && teleProcess().targetBreakpointFactory().breakpoints(true).iterator().hasNext());
+        _removeSelectedBreakpointAction.setEnabled(hasThread && focus().hasBreakpoint());
         _viewThreadsAction.setEnabled(hasProcess);
         _viewRegistersAction.setEnabled(hasThread);
         _viewStackAction.setEnabled(hasThread);
@@ -1817,20 +1270,20 @@ public final class InspectionMenus implements Prober {
         _returnFromFrameWithBreakpointsAction.setEnabled(hasThreadAndReadyToRun);
         _runToInstructionWithBreakpointsAction.setEnabled(hasThreadAndReadyToRun);
         _toggleBytecodeBreakpointAction.setEnabled(hasThread && selection.hasBytecodeLocation());
-        _pauseAction.setEnabled(hasThread && !isSynchronousMode() && _inspection.isVMRunning());
+        _pauseAction.setEnabled(hasThread && !isSynchronousMode() && inspection().isVMRunning());
     }
 
     InspectionMenus(Inspection inspection) {
-        _inspection = inspection;
+        super(inspection);
         final Header header = teleVM().bootImage().header();
         // create new singleton actions; sorted alphabetically here
         _breakAtMethodAction = new BreakAtMethodAction();
         _breakAtMethodKeyAction = new BreakAtMethodKeyAction();
         _breakAtObjectInitializersAction = new BreakAtObjectInitializersAction();
         _breakAtTargetMethodAction = new BreakAtTargetMethodAction();
-        _clearAllBreakpointsAction = new ClearAllBreakpointsAction();
-        _clearLabelBreakpointsAction = new ClearLabelBreakpointsAction();
-        _clearSelectedBreakpointAction = new ClearSelectedBreakpointAction();
+        _removeAllBreakpointsAction = new RemoveAllBreakpointsAction();
+        _removeLabelBreakpointsAction = new RemoveLabelBreakpointsAction();
+        _removeSelectedBreakpointAction = new RemoveSelectedBreakpointAction();
         _inspectJavaFrameDescriptorAction = new InspectJavaFrameDescriptorAction();
         _inspectMethodAction = new InspectMethodAction();
         _pauseAction = new PauseAction();
@@ -1846,7 +1299,6 @@ public final class InspectionMenus implements Prober {
         _stepOverAction = new StepOverAction();
         _stepOverWithBreakpointsAction = new StepOverWithBreakpointsAction();
         _toggleBytecodeBreakpointAction = new ToggleBytecodeBreakpointAction();
-        _toggleTargetBreakpointAction = new ToggleTargetBreakpointAction();
         _viewBootImageRunMethodCodeAction = new ViewBootImageMethodCodeAction(header._vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
         _viewBootImageSchemeRunMethodCodeAction = new ViewBootImageMethodCodeAction(header._runSchemeRunMethodOffset, teleVM().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
         _viewBootImageThreadRunMethodCodeAction = new ViewBootImageMethodCodeAction(header._vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
@@ -1903,97 +1355,5 @@ public final class InspectionMenus implements Prober {
         }
     };
 
-    /**
-     * Action that copies a hex string version of a word to the system clipboard.
-     */
-    public final class CopyWordAction extends InspectorAction {
-
-        private final Word _word;
-
-        private CopyWordAction(Word word) {
-            this(word, "Copy word to clipboard");
-        }
-
-        private CopyWordAction(Word word, String title) {
-            super(_inspection, title);
-            _word = word;
-        }
-
-        @Override
-        public void procedure() {
-            final Clipboard clipboard = _inspection.getToolkit().getSystemClipboard();
-            final StringSelection selection = new StringSelection(_word.toHexString());
-            clipboard.setContents(selection, selection);
-        }
-    }
-
-    /**
-     * @param a tele VM {@link Word}
-     * @return an Action that copies the word's text value in hex to the system clipboard
-     */
-    public InspectorAction getCopyWordAction(Word word) {
-        return new CopyWordAction(word);
-    }
-
-    /**
-     * @param a tele VM {@link Word}
-     * @param title a string to use as the title of the action
-     * @return an Action that copies the word's text value in hex to the system clipboard
-     */
-    public InspectorAction getCopyWordAction(Word word, String title) {
-        return new CopyWordAction(word, title);
-    }
-
-    public InspectorAction getCopyValueAction(Value value, String title) {
-        Word word = Word.zero();
-        try {
-            word = value.asWord();
-        } catch (Throwable throwable) {
-        }
-        final InspectorAction action = new CopyWordAction(word, title);
-        if (word.isZero()) {
-            action.setEnabled(false);
-        }
-        return action;
-    }
-
-    /**
-     * Action to create an inspector for a specific heap object in the tele VM.
-     */
-    public final class InspectObjectAction extends InspectorAction {
-
-        final TeleObject _teleObject;
-
-        InspectObjectAction(TeleObject teleObject, String title) {
-            super(_inspection, title);
-            _teleObject = teleObject;
-        }
-
-        InspectObjectAction(TeleObject teleObject) {
-            this(teleObject, "Inspect Object");
-        }
-
-        @Override
-        protected void procedure() {
-            focus().setHeapObject(_teleObject);
-        }
-    }
-
-    /**
-     * @param surrogate for an object in the tele VM
-     * @return an Action that will create an Object Inspector
-     */
-    public InspectorAction getInspectObjectAction(TeleObject teleObject) {
-        return new InspectObjectAction(teleObject);
-    }
-
-    /**
-     * @param surrogate for an object in the tele VM
-     * @param title a string name for the Action
-     * @return an Action that will create an Object Inspector
-     */
-    public InspectorAction getInspectObjectAction(TeleObject teleObject, String title) {
-        return new InspectObjectAction(teleObject, title);
-    }
 
 }

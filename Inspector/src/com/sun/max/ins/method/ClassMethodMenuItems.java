@@ -212,7 +212,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
                 name.append(inspection().nameDisplay().methodCompilationID(teleTargetMethod));
                 name.append("  ");
                 name.append(teleTargetMethod.classActorForType().simpleName());
-                _inspectCompilationsMenu.add(inspection().inspectionMenus().getInspectObjectAction(teleTargetMethod, name.toString()));
+                _inspectCompilationsMenu.add(inspection().actions().inspectObject(teleTargetMethod, name.toString()));
             }
         }
     }
