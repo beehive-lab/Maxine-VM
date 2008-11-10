@@ -97,11 +97,11 @@ public class JavaMonitorManager {
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             for (int i = 0; i < _allBindableQty; i++) {
                 final ManagedMonitor monitor = _allBindable[i];
-                monitor.alloc();
+                monitor.allocate();
             }
             for (int i = 0; i < _allStickyQty; i++) {
                 final ManagedMonitor monitor = _allSticky[i];
-                monitor.alloc();
+                monitor.allocate();
                 monitor.setDisplacedMisc(ObjectAccess.readMisc(monitor.boundObject()));
                 monitor.refreshBoundObject();
             }
@@ -166,7 +166,7 @@ public class JavaMonitorManager {
             managedMonitor = new StandardJavaMonitor();
         }
         if (!MaxineVM.isPrototyping()) {
-            managedMonitor.alloc();
+            managedMonitor.allocate();
         }
         return managedMonitor;
     }
@@ -200,7 +200,7 @@ public class JavaMonitorManager {
         } else {
             synchronized (JavaMonitorManager.class) {
                 if (_unboundListQty < _UNBOUNDLIST_MIN_QTY) {
-                    System.gc();
+                    //System.gc();
                 }
                 if (_unboundListQty < _UNBOUNDLIST_MIN_QTY) {
                     expandUnboundList();
@@ -347,7 +347,7 @@ public class JavaMonitorManager {
             PRE_ACQUIRE, UNPROTECTED, PROTECTED
         }
 
-        void alloc();
+        void allocate();
 
         Object boundObject();
 

@@ -65,7 +65,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         return new InflatedMonitorModeHandler.ThinLockDelegate();
     }
 
-    @INLINE
+    //@INLINE
     protected final InflatedMonitorLockWord64 readMiscAndProtectBinding(Object object) {
         final InflatedMonitorLockWord64 lockWord = InflatedMonitorLockWord64.as(ObjectAccess.readMisc(object));
         if (lockWord.isBound()) {

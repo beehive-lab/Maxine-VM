@@ -49,7 +49,7 @@ final class SlowProxyAcquirableJavaMonitor extends AbstractJavaMonitor {
         _mutex = new Mutex();
         _blockingVar = new ConditionVariable();
         if (!MaxineVM.isPrototyping()) {
-            alloc();
+            allocate();
         }
     }
 
@@ -163,7 +163,7 @@ final class SlowProxyAcquirableJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void alloc() {
+    public void allocate() {
         _mutex.alloc();
         _blockingVar.alloc();
     }
