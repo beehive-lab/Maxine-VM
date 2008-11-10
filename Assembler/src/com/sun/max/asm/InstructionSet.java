@@ -20,10 +20,9 @@
  */
 package com.sun.max.asm;
 
-
 /**
  * Instruction Set Architecture monikers.
- * 
+ *
  * @author Bernd Mathiske
  */
 public enum InstructionSet {

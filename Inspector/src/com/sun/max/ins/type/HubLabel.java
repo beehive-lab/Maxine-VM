@@ -76,9 +76,9 @@ public final class HubLabel extends InspectorLabel {
 
     private void updateText() {
         final Class javaType = _teleHub.hub().classActor().toJava();
-        setText(inspection().nameDisplay().longName(null, _teleHub, _teleHub.maxineRole(), javaType.getSimpleName()));
+        setText(inspection().nameDisplay().referenceLabelText(_teleHub));
         if (!(javaType.isPrimitive() || Word.class.isAssignableFrom(javaType))) {
-            setToolTipText(inspection().nameDisplay().longName(null, _teleHub, _teleHub.maxineRole(), javaType.getName()));
+            setToolTipText(inspection().nameDisplay().referenceToolTipText(_teleHub));
         }
     }
 

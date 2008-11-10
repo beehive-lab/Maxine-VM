@@ -51,10 +51,4 @@ public final class ARMAssembly extends RiscAssembly<ARMTemplate> {
         creator.createTemplates(new RawInstructions(creator));
         return creator.templates();
     }
-
-    @Override
-    protected ARMTemplate createInlineByteTemplate() {
-        final ARMTemplateCreator creator = new ARMTemplateCreator();
-        return creator.createInlineByteTemplate();
-    }
 }

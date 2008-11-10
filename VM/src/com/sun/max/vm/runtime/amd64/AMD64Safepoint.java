@@ -29,42 +29,72 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.asm.amd64.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 
 /**
+ * The safepoint implementation for AMD64 defines the safepoint code that is injected at safepoint sites,
+ * as well as the {@linkplain #latchRegister() latch register}, and the layout and size of a trap state
+ * area. A trap state area contains the {@linkplain Trap.Number trap number} and the values of the
+ * processor's registers when a trap occurs. A trap state area is embedded in each trap stub's frame as follows:
+ *
+ * <pre>
+ *   <-- stack grows downward                       higher addresses -->
+ * |---- normal trap stub frame ---- | ---- trap state area --- | RIP |==== stack as it was when trap occurred ===>
+ *                                   |<---  TRAP_STATE_SIZE --->|<-8->|
+ *
+ *                                   ^ trapState
+ * </pre>
+ * The layout of the trap state area is described by the following C-like struct declaration:
+ * <pre>
+ * trap_state {
+ *     Word generalPurposeRegisters[16];
+ *     DoubleWord xmmRegisters[16];
+ *     Word trapNumber;
+ *     Word flagsRegister;
+ * }
+ *
+ * trap_state_with_rip {
+ *     trap_state ts;
+ *     Word trapInstructionPointer;
+ * }
+ * </pre>
+ *
+ * The fault address is stored in the RIP slot, making this frame appear as if the trap location
+ * called the trap stub directly.
+ *
+ * @author Ben L. Titzer
  * @author Bernd Mathiske
  */
 public final class AMD64Safepoint extends Safepoint {
+
+    /**
+     * ATTENTION: must be callee-saved by all C ABIs in use.
+     */
+    public static final AMD64GeneralRegister64 LATCH_REGISTER = R14;
+
+    public static final int TRAP_STATE_SIZE_WITH_RIP;
+    public static final int TRAP_STATE_SIZE_WITHOUT_RIP;
+    public static final int TRAP_NUMBER_OFFSET;
+
+    static {
+        final int generalPurposeRegisterWords = AMD64GeneralRegister64.ENUMERATOR.length();
+        final int xmmRegisterWords = 2 * AMD64XMMRegister.ENUMERATOR.length();
+        final int flagRegisterWords = 1;
+        final int trapNumberWords = 1;
+        TRAP_NUMBER_OFFSET = Word.size() * (generalPurposeRegisterWords + xmmRegisterWords);
+        TRAP_STATE_SIZE_WITHOUT_RIP = TRAP_NUMBER_OFFSET + (Word.size() * (flagRegisterWords + trapNumberWords));
+        TRAP_STATE_SIZE_WITH_RIP = TRAP_STATE_SIZE_WITHOUT_RIP + Word.size();
+    }
 
     public AMD64Safepoint(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
     }
 
-    @Override
-    public int numberOfIntegerRegisters() {
-        return 16;
-    }
-
-    @Override
-    public int numberOfFloatingPointRegisters() {
-        return 16;
-    }
-
-    /**
-     * ATTENTION: must be callee-saved by all C ABIs in use.
-     */
-    private static final AMD64GeneralRegister64 LATCH_REGISTER = R14;
-
     @INLINE(override = true)
     @Override
     public AMD64GeneralRegister64 latchRegister() {
         return LATCH_REGISTER;
-    }
-
-    @Override
-    public int latchRegisterIndex() {
-        return LATCH_REGISTER.value();
     }
 
     @Override
@@ -78,25 +108,41 @@ public final class AMD64Safepoint extends Safepoint {
         }
     }
 
-    @Override
-    public SafepointStub createSafepointStub(CriticalMethod entryPoint, Venue venue) {
-        final AMD64Assembler asm = new AMD64Assembler(0L);
-
-        try {
-            asm.mov(RAX, entryPoint.address().toLong());
-            asm.call(RAX);
-
-            if (venue == Venue.JAVA) {
-                for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
-                    asm.mov(register, (VmThreadLocal.REGISTERS.index() + register.value()) * Word.size(), latchRegister().indirect());
-                }
-            }
-            asm.jmp(VmThreadLocal.TRAP_INSTRUCTION_POINTER.index() * Word.size(), latchRegister().indirect());
-
-            return new SafepointStub(asm.toByteArray(), entryPoint.classMethodActor());
-        } catch (AssemblyException assemblyException) {
-            throw ProgramError.unexpected("could not assemble safepoint stub");
-        }
+    public static Pointer getTrapStateFromRipPointer(Pointer ripPointer) {
+        return ripPointer.minus(TRAP_STATE_SIZE_WITHOUT_RIP);
     }
 
+    @Override
+    public Pointer getInstructionPointer(Pointer trapState) {
+        // the instruction pointer is the last word in the register state
+        return trapState.readWord(AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP).asPointer();
+    }
+    @Override
+    public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
+        // TODO: get the frame pointer register from the ABI
+        return trapState.plus(TRAP_STATE_SIZE_WITH_RIP);
+    }
+    @Override
+    public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
+        // TODO: get the frame pointer register from the ABI
+        return trapState.readWord(AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+    }
+    @Override
+    public Pointer getSafepointLatch(Pointer trapState) {
+        return trapState.readWord(LATCH_REGISTER.value() * Word.size()).asPointer();
+    }
+    @Override
+    public void setSafepointLatch(Pointer trapState, Pointer value) {
+        trapState.writeWord(LATCH_REGISTER.value() * Word.size(), value);
+    }
+
+    @Override
+    public Pointer getRegisterState(Pointer trapState) {
+        return trapState;
+    }
+
+    @Override
+    public int getTrapNumber(Pointer trapState) {
+        return trapState.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
+    }
 }

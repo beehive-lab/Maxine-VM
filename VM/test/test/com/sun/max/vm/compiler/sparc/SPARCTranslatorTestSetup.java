@@ -70,6 +70,6 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
     }
     @Override
     public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return new SPARC64Disassembler(targetMethod.start().toLong());
+        return new SPARC64Disassembler(targetMethod.start().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 }

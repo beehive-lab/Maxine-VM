@@ -25,12 +25,13 @@ import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
 import com.sun.max.vm.runtime.*;
 
 
 /**
  * Visual inspector and debugger for code discovered in the target VM that is not compiled Java.
- * That is, it's runtime assembled code such as a {@linkplain SafepointStub safepoint stub} or
+ * That is, it's runtime assembled code such as a {@linkplain RuntimeStub stub} or
  * is other native code about which little is known.
  *
  * @author Michael Van De Vanter

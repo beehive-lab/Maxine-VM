@@ -32,17 +32,17 @@ import com.sun.max.lang.*;
 
 /**
  * An x86 instruction, given as an x86 template and a sequence of arguments.
- * 
+ *
  * The string representation for disassembler output has the following format,
  * which borrows from both Intel and AT&T syntax and differs from either
  * regarding indirect addressing and indexing.
- * 
+ *
  * Operand order follows Intel syntax:
- * 
+ *
  * mnemonic argument
  * mnemonic destination, source
  * mnemonic argument1, argument2, argument3
- * 
+ *
  * Some mnemonics may have operand size suffixes as in AT&T (gas) syntax.
  * Suffix    Intel size     Java size    # bits
  * ------    -----------    ---------    ------
@@ -56,61 +56,61 @@ import com.sun.max.lang.*;
  *
  * Registers etc. are named as in Intel syntax,
  * in lower case without AT&T's "%" prefix.
- * 
+ *
  * Indexing is indicated by '[' and ']', similiar to array access in the Java(TM) Programming Language:
- * 
+ *
  * base[index], e.g. eax[ebx]
- * 
+ *
  * Indirect access looks like indexing without a base (or with implicit base 0):
- * 
+ *
  * [indirect], e.g. [ecx]
  *
  * Displacements are added/subtracted from the index/indirect operand:
- * 
+ *
  * base[index + displacement], e.g. ebp[eax - 12]
  * [indirect + displacement], e.g. [esi + 100]
- * 
+ *
  * Scale is displayed as multiplication of the index:
- * 
+ *
  * [base[index * scale] or base[index * scale + displacement], e.g. ecx[ebx * 4 + 10]
- * 
+ *
  * A scale of 1 is left implicit, i.e. not printed.
  * Scale literals are the unsigned decimal integer numbers 2, 4, 8.
- * 
+ *
  * Displacement literals are signed decimal integer numbers.
- * 
+ *
  * Direct memory references (pointer literals) are unsigned hexadecimal integer numbers, e.g.:
- * 
+ *
  * [0x12345678], 0x12345678[eax]
  *
  * Immediate operands are unsigned hexadecimal integer numbers, e.g.:
- * 
+ *
  * 0x12, 0xffff, 0x0, 0x123456789abcdef
  *
  * Offset operands are signed decimal integer numbers, like displacements, but without space between the sign and the number, e.g.:
- * 
+ *
  * jmp +12
  * call -2048
- * 
+ *
  * RIP (Relative to Instruction Pointer) addressing is a combination of an offset operand and indirect addressing, e.g.:
- * 
+ *
  * add [+20], eax
  * mov ebx, [-200]
- * 
+ *
  * The disassembler displays synthetic labels for all target addresses
  * within the disassembled address range that hit the start address of an instruction.
  * Operands that coincide with such a label are displayed with the respective Label prepended. e.g.:
- * 
+ *
  * jmp L1: +100
  * adc [L2: +128], ESI
- * 
+ *
  * @author Bernd Mathiske
  * @author Greg Wright
  */
 public abstract class X86DisassembledInstruction<Template_Type extends X86Template> extends DisassembledInstruction<Template_Type> {
 
-    protected X86DisassembledInstruction(int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
-        super(position, bytes, template, arguments);
+    protected X86DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+        super(disassembler, position, bytes, template, arguments);
     }
 
     private String getSibIndexAndScale(Queue<X86Operand> operands, Queue<Argument> arguments) {
@@ -136,7 +136,7 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         return "-" + space + s.substring(1);
     }
 
-    private String getOperand(Queue<X86Operand> operands, Queue<Argument> arguments, Sequence<DisassembledLabel> labels) {
+    private String getOperand(Queue<X86Operand> operands, Queue<Argument> arguments, AddressMapper addressMapper) {
         final X86Operand operand = operands.remove();
         if (operand instanceof ImplicitOperand) {
             final ImplicitOperand implicitOperand = (ImplicitOperand) operand;
@@ -168,7 +168,7 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         }
         if (parameter instanceof X86AddressParameter) {
             String address = argument.disassembledValue();
-            final DisassembledLabel label = addressArgumentToLabel((ImmediateArgument) argument, labels);
+            final DisassembledLabel label = addressMapper.labelAt((ImmediateArgument) argument);
             if (label != null) {
                 address = label.name() + ": " + address;
             }
@@ -183,7 +183,8 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
         }
         if (parameter instanceof X86OffsetParameter) {
             String offset = addition(argument, "");
-            final DisassembledLabel label = offsetArgumentToLabel((ImmediateArgument) argument, labels);
+            final ImmediateArgument targetAddress = addressForRelativeAddressing().plus((ImmediateArgument) argument);
+            final DisassembledLabel label =  addressMapper.labelAt(targetAddress);
             if (label != null) {
                 offset = label.name() + ": " + offset;
             }
@@ -199,35 +200,34 @@ public abstract class X86DisassembledInstruction<Template_Type extends X86Templa
     }
 
     @Override
-    public String externalName() {
+    public String mnemonic() {
         return template().externalName();
     }
 
     @Override
-    public String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
+    public String operandsToString(AddressMapper addressMapper) {
         final Queue<X86Operand> operandQueue = new MutableQueue<X86Operand>(template().operands());
         final Queue<Argument> argumentQueue = new MutableQueue<Argument>(arguments());
         String result = "";
         String separator = "";
         while (!operandQueue.isEmpty()) {
-            result += separator + getOperand(operandQueue, argumentQueue, labels);
+            result += separator + getOperand(operandQueue, argumentQueue, addressMapper);
             separator = ", ";
         }
         return result;
     }
 
     @Override
-    public String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper) {
-        String s = operandsToString(labels, globalLabelMapper);
+    public String toString(AddressMapper addressMapper) {
+        String s = operandsToString(addressMapper);
         if (s.length() > 0) {
             s = "  " + s;
         }
-        return Strings.padLengthWithSpaces(externalName(), 8) + s;
+        return Strings.padLengthWithSpaces(mnemonic(), 8) + s;
     }
 
     @Override
-    public int positionForRelativeAddressing() {
-        return startPosition() + bytes().length;
+    public ImmediateArgument addressForRelativeAddressing() {
+        return endAddress();
     }
-
 }

@@ -42,11 +42,5 @@ public final class AMD64Assembly extends X86Assembly<AMD64Template> {
         return creator.templates();
     }
 
-    @Override
-    protected AMD64Template createInlineByteTemplate() {
-        final AMD64TemplateCreator creator = new AMD64TemplateCreator();
-        return creator.createInlineBytesTemplate();
-    }
-
     public static final AMD64Assembly ASSEMBLY = new AMD64Assembly();
 }

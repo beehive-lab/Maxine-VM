@@ -19,6 +19,7 @@
  * Company, Ltd.
  */
 /**
+ * @author Ben L. Titzer
  * @author Bernd Mathiske
  */
 #include <alloca.h>
@@ -41,27 +42,154 @@
 #include "threads.h"
 #include <sys/mman.h>
 
-NativeThreadLocals *thread_createSegments(int id, Size stackSize);
-void thread_initSegments(NativeThreadLocals *nativeThreadLocals);
-void thread_destroySegments(NativeThreadLocals *nativeThreadLocals);
-
-#if os_SOLARIS
-void* thread_getSpecific(ThreadKey key) {
-    void *value;
-    int result = thr_getspecific(key, &value);
-    if (result != 0) {
-        debug_exit(result, "thr_getspecific failed");
-    }
-    return value;
-}
+#if (os_DARWIN || os_LINUX)
+#   include <pthread.h>
+#   include <errno.h>
+    typedef pthread_t Thread;
+    typedef pthread_key_t SpecificsKey;
+#   define thread_setSpecific pthread_setspecific
+#elif os_SOLARIS
+#   include <thread.h>
+    typedef thread_t Thread;
+    typedef thread_key_t SpecificsKey;
+#   define thread_setSpecific thr_setspecific
+#elif os_GUESTVMXEN
+#   include "guestvmXen.h"
+    typedef guestvmXen_Thread Thread;
+    typedef guestvmXen_SpecificsKey SpecificsKey;
+#   define thread_setSpecific guestvmXen_thread_setSpecific
 #endif
 
-ThreadKey nativeThreadLocalsKey;
+static SpecificsKey _specificsKey;
 
 void threads_initialize() {
-    thread_initializeThreadKey(&nativeThreadLocalsKey, free);
+#   if os_DARWIN || os_LINUX
+        pthread_key_create(&_specificsKey, free);
+#   elif os_SOLARIS
+        thr_keycreate(&_specificsKey, free);
+#   elif os_GUESTVMXEN
+        guestvmXen_thread_initializeSpecificsKey(&_specificsKey, free);
+#   else
+#       error Unimplemented
+#   endif
 }
 
+thread_Specifics *thread_currentSpecifics() {
+#   if os_DARWIN || os_LINUX
+        return (thread_Specifics*) pthread_getspecific(_specificsKey);
+#   elif os_SOLARIS
+        thread_Specifics *value;
+        int result = thr_getspecific(_specificsKey, &value);
+        if (result != 0) {
+            debug_exit(result, "thr_getspecific failed");
+        }
+        return value;
+#   elif os_GUESTVMXEN
+        return (thread_Specifics*) guestvmXen_thread_getSpecific(_specificsKey);
+#   else
+#       error Unimplemented
+#   endif
+}
+
+thread_Specifics *thread_createSegments(int id, Size stackSize) {
+    thread_Specifics *threadSpecifics = calloc(1, sizeof(thread_Specifics));
+    threadSpecifics->id = id;
+
+#if (os_LINUX || os_DARWIN || os_GUESTVMXEN)
+    threadSpecifics->stackBase = (Address) malloc(stackSize);
+    threadSpecifics->stackSize = stackSize;
+#endif
+
+    return threadSpecifics;
+}
+
+void thread_initSegments(thread_Specifics *threadSpecifics) {
+    Address stackBottom;
+#if os_SOLARIS
+    /* we let the thread library allocate the stack for us. */
+    stack_t stackInfo;
+    int result = thr_stksegment(&stackInfo);
+
+    if (result != 0) {
+        debug_exit(result, "thr_stksegment failed");
+    }
+
+    threadSpecifics->stackSize = stackInfo.ss_size;
+    threadSpecifics->stackBase = stackInfo.ss_sp - stackInfo.ss_size;
+    /* the thread library protects a page below the stack for us. */
+    stackBottom = threadSpecifics->stackBase;
+#else
+    /* the stack is malloc'd on these platforms, protect a page for the thread locals */
+    stackBottom = pageAlign(threadSpecifics->stackBase);
+    protectPage(stackBottom);
+    stackBottom += getPageSize();
+#endif
+    int vmThreadLocalsSize = image_header()->vmThreadLocalsSize;
+    Address current = stackBottom - sizeof(Address);
+    Size refMapAreaSize = 1 + threadSpecifics->stackSize / sizeof(Address) / 8;
+
+    /* be sure to clear each of the thread local spaces */
+    memset((void *) (current + sizeof(Address)), 0, vmThreadLocalsSize * 3);
+
+    threadSpecifics->triggeredVmThreadLocals = current;
+    current += vmThreadLocalsSize;
+    threadSpecifics->enabledVmThreadLocals = current;
+    current += vmThreadLocalsSize;
+    threadSpecifics->disabledVmThreadLocals = current;
+    current += vmThreadLocalsSize;
+    threadSpecifics->refMapArea = current;
+    current = pageAlign(current + refMapAreaSize);
+    threadSpecifics->stackRedZone = current;
+    current += getPageSize();
+    threadSpecifics->stackYellowZone = current;
+    current += getPageSize();
+
+#if debug_THREADS
+    int id = threadSpecifics->id;
+    debug_println("thread %3d: stackBase = %p", id, threadSpecifics->stackBase);
+    debug_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(threadSpecifics->stackBase));
+    debug_println("thread %3d: stackSize = %d", id, threadSpecifics->stackSize);
+    debug_println("thread %3d: stackBottom = %p", id, stackBottom);
+    debug_println("thread %3d: triggeredVmThreadLocals = %p", id, threadSpecifics->triggeredVmThreadLocals);
+    debug_println("thread %3d: enabledVmThreadLocals   = %p", id, threadSpecifics->enabledVmThreadLocals);
+    debug_println("thread %3d: disabledVmThreadLocals  = %p", id, threadSpecifics->disabledVmThreadLocals);
+    debug_println("thread %3d: refMapArea = %p", id, threadSpecifics->refMapArea);
+    debug_println("thread %3d: redZone    = %p", id, threadSpecifics->stackRedZone);
+    debug_println("thread %3d: yellowZone = %p", id, threadSpecifics->stackYellowZone);
+    debug_println("thread %3d: current    = %p", id, current);
+    debug_println("thread %3d: endOfStack = %p", id, threadSpecifics->stackBase + threadSpecifics->stackSize);
+#endif
+
+  /* make sure we didn't run out of space. */
+  debug_ASSERT(threadSpecifics->stackBase + threadSpecifics->stackSize > current);
+
+#if os_GUESTVMXEN
+    stackinfo_t stackInfo;
+    guestvmXen_get_stack_info(&stackInfo);
+    debug_ASSERT(threadSpecifics->stackBase == (Address)stackInfo.ss_sp - stackInfo.ss_size);
+    debug_ASSERT(threadSpecifics->stackSize == stackInfo.ss_size);
+#endif
+
+    protectPage(threadSpecifics->stackRedZone);
+    protectPage(threadSpecifics->stackYellowZone);
+}
+
+void tryUnprotectPage(Address address) {
+    if (address != (Address) 0) {
+        unprotectPage(address);
+    }
+}
+
+void thread_destroySegments(thread_Specifics *threadSpecifics) {
+    /* unprotect pages so some other unfortunate soul doesn't get zapped when reusing the space */
+    tryUnprotectPage(threadSpecifics->stackRedZone);
+    tryUnprotectPage(threadSpecifics->stackYellowZone);
+#if (os_LINUX || os_DARWIN || os_GUESTVMXEN)
+    /* these platforms have an extra protected page for the triggered thread locals */
+    tryUnprotectPage(pageAlign(threadSpecifics->stackBase));
+    /* the stack is free'd by the pthreads library. */
+#endif
+}
 static Thread thread_create(jint id, Size stackSize, int priority) {
     Thread thread;
 #if !os_GUESTVMXEN
@@ -73,35 +201,35 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
         return (Thread) 0;
     }
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("thread_create: id = %d, stack size = %ld", id, stackSize);
 #endif
 
     /* create the native thread locals and allocate stack if necessary */
-    NativeThreadLocals *nativeThreadLocals = thread_createSegments(id, stackSize);
+    thread_Specifics *threadSpecifics = thread_createSegments(id, stackSize);
 
-#if DEBUG_THREADS
-    debug_println("thread_create: stack base %lx", nativeThreadLocals->stackBase);
+#if debug_THREADS
+    debug_println("thread_create: stack base %lx", threadSpecifics->stackBase);
 #endif
 
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread_with_stack("java_thread",
 		thread_runJava,
-		nativeThreadLocals->stackBase,
-	        nativeThreadLocals->stackSize,
+		(void*) threadSpecifics->stackBase,
+	    threadSpecifics->stackSize,
 		priority,
-		nativeThreadLocals);
+		threadSpecifics);
 #elif (os_LINUX || os_DARWIN)
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);
-    pthread_attr_setstack(&attributes, (void *) nativeThreadLocals->stackBase, nativeThreadLocals->stackSize);
+    pthread_attr_setstack(&attributes, (void *) threadSpecifics->stackBase, threadSpecifics->stackSize);
     pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_JOINABLE);
 
-    error = pthread_create(&thread, &attributes, (void *(*)(void *)) thread_runJava, nativeThreadLocals);
+    error = pthread_create(&thread, &attributes, (void *(*)(void *)) thread_runJava, threadSpecifics);
     pthread_attr_destroy(&attributes);
     if (error != 0) {
         debug_println("pthread_create failed with error: %d", error);
-	thread_destroySegments(nativeThreadLocals);
+	thread_destroySegments(threadSpecifics);
         return (Thread) 0;
     }
 #elif os_SOLARIS
@@ -109,18 +237,16 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
      * We let the system allocate the stack as doing so gets us a protected page
      * immediately below the bottom of the stack which is required for safepoints to work.
      */
-    error = thr_create((void *) NULL, (size_t) stackSize, thread_runJava, nativeThreadLocals, THR_NEW_LWP | THR_BOUND, &thread);
+    error = thr_create((void *) NULL, (size_t) stackSize, thread_runJava, threadSpecifics, THR_NEW_LWP | THR_BOUND, &thread);
     if (error != 0) {
         debug_println("%s", strerror(error));
         debug_println("thr_create failed with error: %d", error);
-        thread_destroySegments(nativeThreadLocals);
+        thread_destroySegments(threadSpecifics);
         return (Thread) 0;
     }
-
 #else
-#error Unknown operating system target
+#   error Unimplemented
 #endif
-
     return thread;
 }
 
@@ -132,8 +258,12 @@ static Thread thread_current(void) {
 #elif os_GUESTVMXEN
     return guestvmXen_get_current();
 #else
-#error Unknown operating system target
+#   error Unimplemented
 #endif
+}
+
+void *thread_self() {
+    return thread_current();
 }
 
 static int thread_join(Thread thread) {
@@ -153,7 +283,7 @@ static int thread_join(Thread thread) {
 #elif os_GUESTVMXEN
     error = guestvmXen_thread_join(thread);
 #else
-#error Unimplemented
+#   error Unimplemented
 #endif
 
     if (error != 0) {
@@ -163,154 +293,56 @@ static int thread_join(Thread thread) {
 }
 
 void thread_runJava(void *arg) {
-    NativeThreadLocals *nativeThreadLocals = (NativeThreadLocals *) arg;
+    thread_Specifics *threadSpecifics = (thread_Specifics *) arg;
     Address nativeThread = (Address) thread_current();
 
-    debug_ASSERT(nativeThreadLocals != NULL);
-    thread_setSpecific(nativeThreadLocalsKey, nativeThreadLocals);
+    debug_ASSERT(threadSpecifics != NULL);
+    thread_setSpecific(_specificsKey, threadSpecifics);
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("thread_runJava: BEGIN t=%lx", nativeThread);
 #endif
 
     /* set up the vm thread locals, guard pages, etc */
-    thread_initSegments(nativeThreadLocals);
+    thread_initSegments(threadSpecifics);
 
 #if (os_GUESTVMXEN)
     /* mark this thread as a java thread */
-    guestvmXen_set_javaId((Thread)nativeThread, nativeThreadLocals->id);
+    guestvmXen_set_javaId((Thread)nativeThread, threadSpecifics->id);
 #endif
 
     VMThreadRunMethod method = (VMThreadRunMethod) (image_heap() + (Address) image_header()->vmThreadRunMethodOffset);
 
-#if DEBUG_THREADS
-    debug_print("thread_runJava: id=%d, t=%lx, calling method: ", nativeThreadLocals->id, nativeThread);
+#if debug_THREADS
+    debug_print("thread_runJava: id=%d, t=%lx, calling method: ", threadSpecifics->id, nativeThread);
     void image_printAddress(Address address);
     image_printAddress((Address) method);
     debug_println("");
 #endif
 
-    (*method)(nativeThreadLocals->id, nativeThread,
-            nativeThreadLocals->stackBase,
-            nativeThreadLocals->triggeredVmThreadLocals,
-            nativeThreadLocals->enabledVmThreadLocals,
-            nativeThreadLocals->disabledVmThreadLocals,
-            nativeThreadLocals->refMapArea,
-            nativeThreadLocals->stackRedZone,
-            nativeThreadLocals->stackYellowZone,
-            nativeThreadLocals->stackBase + nativeThreadLocals->stackSize);
+    (*method)(threadSpecifics->id,
+              nativeThread,
+              threadSpecifics->stackBase,
+              threadSpecifics->triggeredVmThreadLocals,
+              threadSpecifics->enabledVmThreadLocals,
+              threadSpecifics->disabledVmThreadLocals,
+              threadSpecifics->refMapArea,
+              threadSpecifics->stackRedZone,
+              threadSpecifics->stackYellowZone,
+              threadSpecifics->stackBase + threadSpecifics->stackSize);
 #if (os_GUESTVMXEN)
     /* mark this thread as a non-java thread */
     guestvmXen_set_javaId((Thread)nativeThread, -1);
 #endif
 
     /* destroy thread locals, deallocate stack, restore guard pages */
-    thread_destroySegments(nativeThreadLocals);
+    thread_destroySegments(threadSpecifics);
 
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("thread_runJava: END t=%lx", nativeThread);
 #endif
 }
 
-NativeThreadLocals *thread_createSegments(int id, Size stackSize) {
-    NativeThreadLocals *nativeThreadLocals = calloc(1, sizeof(NativeThreadLocals));
-    nativeThreadLocals->id = id;
-
-#if (os_LINUX || os_DARWIN || os_GUESTVMXEN)
-    nativeThreadLocals->stackBase = (Address) malloc(stackSize);
-    nativeThreadLocals->stackSize = stackSize;
-#endif
-
-    return nativeThreadLocals;
-}
-
-void thread_initSegments(NativeThreadLocals *nativeThreadLocals) {
-    Address stackBottom;
-#if os_SOLARIS
-    /* we let the thread library allocate the stack for us. */
-    stack_t stackInfo;
-    int result = thr_stksegment(&stackInfo);
-
-    if (result != 0) {
-        debug_exit(result, "thr_stksegment failed");
-    }
-
-    nativeThreadLocals->stackSize = stackInfo.ss_size;
-    nativeThreadLocals->stackBase = stackInfo.ss_sp - stackInfo.ss_size;
-    /* the thread library protects a page below the stack for us. */
-    stackBottom = nativeThreadLocals->stackBase;
-#else
-    /* the stack is malloc'd on these platforms, protect a page for the thread locals */
-    stackBottom = pageAlign(nativeThreadLocals->stackBase);
-    protectPage(stackBottom);
-    stackBottom += getPageSize();
-#endif
-    int vmThreadLocalsSize = image_header()->vmThreadLocalsSize;
-    Address current = stackBottom - sizeof(Address);
-    Size refMapAreaSize = 1 + nativeThreadLocals->stackSize / sizeof(Address) / 8;
-
-    /* be sure to clear each of the thread local spaces */
-    memset((void *) (current + sizeof(Address)), 0, vmThreadLocalsSize * 3);
-
-    nativeThreadLocals->triggeredVmThreadLocals = current;
-    current += vmThreadLocalsSize;
-    nativeThreadLocals->enabledVmThreadLocals = current;
-    current += vmThreadLocalsSize;
-    nativeThreadLocals->disabledVmThreadLocals = current;
-    current += vmThreadLocalsSize;
-    nativeThreadLocals->refMapArea = current;
-    current = pageAlign(current + refMapAreaSize);
-    nativeThreadLocals->stackRedZone = current;
-    current += getPageSize();
-    nativeThreadLocals->stackYellowZone = current;
-    current += getPageSize();
-
-#if DEBUG_THREADS
-    int id = nativeThreadLocals->id;
-    debug_println("thread %3d: stackBase = %p", id, nativeThreadLocals->stackBase);
-    debug_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(nativeThreadLocals->stackBase));
-    debug_println("thread %3d: stackSize = %d", id, nativeThreadLocals->stackSize);
-    debug_println("thread %3d: stackBottom = %p", id, stackBottom);
-    debug_println("thread %3d: triggeredVmThreadLocals = %p", id, nativeThreadLocals->triggeredVmThreadLocals);
-    debug_println("thread %3d: enabledVmThreadLocals   = %p", id, nativeThreadLocals->enabledVmThreadLocals);
-    debug_println("thread %3d: disabledVmThreadLocals  = %p", id, nativeThreadLocals->disabledVmThreadLocals);
-    debug_println("thread %3d: refMapArea = %p", id, nativeThreadLocals->refMapArea);
-    debug_println("thread %3d: redZone    = %p", id, nativeThreadLocals->stackRedZone);
-    debug_println("thread %3d: yellowZone = %p", id, nativeThreadLocals->stackYellowZone);
-    debug_println("thread %3d: current    = %p", id, current);
-    debug_println("thread %3d: endOfStack = %p", id, nativeThreadLocals->stackBase + nativeThreadLocals->stackSize);
-#endif
-
-  /* make sure we didn't run out of space. */
-  debug_ASSERT(nativeThreadLocals->stackBase + nativeThreadLocals->stackSize > current);
-
-#if os_GUESTVMXEN
-    stackinfo_t stackInfo;
-    guestvmXen_get_stack_info(&stackInfo);
-    debug_ASSERT(nativeThreadLocals->stackBase == (Address)stackInfo.ss_sp - stackInfo.ss_size);
-    debug_ASSERT(nativeThreadLocals->stackSize == stackInfo.ss_size);
-#endif
-
-    protectPage(nativeThreadLocals->stackRedZone);
-    protectPage(nativeThreadLocals->stackYellowZone);
-}
-
-void tryUnprotectPage(Address address) {
-    if (address != (Address) 0) {
-        unprotectPage(address);
-    }
-}
-
-void thread_destroySegments(NativeThreadLocals *nativeThreadLocals) {
-    /* unprotect pages so some other unfortunate soul doesn't get zapped when reusing the space */
-    tryUnprotectPage(nativeThreadLocals->stackRedZone);
-    tryUnprotectPage(nativeThreadLocals->stackYellowZone);
-#if (os_LINUX || os_DARWIN || os_GUESTVMXEN)
-    /* these platforms have an extra protected page for the triggered thread locals */
-    tryUnprotectPage(pageAlign(nativeThreadLocals->stackBase));
-    /* the stack is free'd by the pthreads library. */
-#endif
-}
 
 /*
  * Create a thread.
@@ -325,14 +357,14 @@ Address nativeThreadCreate(jint id, Size stackSize, jint priority) {
  * @C_FUNCTION - called from Java
  */
 jboolean nativeJoin(Address thread) {
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("BEGIN nativeJoin: %lx", thread);
 #endif
     if (thread == 0L) {
         return false;
     }
     jboolean result = thread_join((Thread) thread) == 0;
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("END nativeJoin: %lx", thread);
 #endif
     return result;
@@ -375,8 +407,7 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
 
     if (value == -1) {
         int error = errno;
-        if (error != EINTR) {
-            //TODO: handle this. Either throw and exception or retry.
+        if (error != EINTR && error != 0) {
             debug_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec);
         }
     }
@@ -401,7 +432,7 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
         debug_println("nativeSetPriority %d failed!", priority);
     }
 #elif os_GUESTVMXEN
-    guestvmXen_set_priority((void*)nativeThread, priority);
+    guestvmXen_set_priority((void *) nativeThread, priority);
 #else
     debug_println("nativeSetPriority %d ignored!", priority);
 #endif
@@ -417,7 +448,7 @@ long nativeGetDefaultThreadSignalStackSize() {
 
 void nativeSetupAlternateSignalStack(Address base, long size) {
 	debug_ASSERT(wordAlign(base) == base);
-#if DEBUG_THREADS
+#if debug_THREADS
     debug_println("nativeSetupAlternateSignalStack: alternate stack at %lx, size %lx ", base, size);
 #endif
 #if os_DARWIN || os_LINUX || os_SOLARIS

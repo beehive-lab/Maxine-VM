@@ -96,34 +96,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     protected final Set<Integer> _branchTargets;
 
-    private VariableSequence<Integer> _inlineDataPositions;
+    protected final InlineDataRecorder _inlineDataRecorder = new InlineDataRecorder();
 
-    protected final InlineDataRecorder _inlineDataRecorder = new InlineDataRecorder() {
-        public void record(int startPosition, int size) {
-            if (size != 0) {
-                if (_inlineDataPositions == null) {
-                    _inlineDataPositions = new ArrayListSequence<Integer>();
-                } else {
-                    final int lastEndPosition = _inlineDataPositions.last();
-                    assert lastEndPosition <= startPosition;
-                }
-                _inlineDataPositions.append(startPosition);
-                _inlineDataPositions.append(startPosition + size);
-            }
-        }
-    };
-
-    private int[] inlineDataPositions() {
-        if (_inlineDataPositions == null) {
-            return null;
-        }
-        final int[] inlineDataPositions = new int[_inlineDataPositions.length()];
-        int i = 0;
-        for (Integer position : _inlineDataPositions) {
-            inlineDataPositions[i++] = position;
-        }
-        return inlineDataPositions;
-    }
     /**
      * Only call this after emitting all code.
      * @return the code position to which the JIT method returns in its optimized-to-JIT adapter
@@ -466,7 +440,6 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                     Object codeOrCodeBuffer,
                     int optimizedCallerAdapterFrameCodeSize,
                     int adapterReturnPosition,
-                    int[] inlineDataPositions, // FIXME: remove
                     TargetABI abi) {
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) targetMethod;
         jitTargetMethod.setGenerated(
@@ -484,7 +457,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             codeOrCodeBuffer,
             optimizedCallerAdapterFrameCodeSize,
             adapterReturnPosition,
-            inlineDataPositions(),
+            _inlineDataRecorder.encodedDescriptors(),
             stops._isDirectCallToRuntime,
             _bytecodeToTargetCodePositionMap,
             _bytecodeInfos,

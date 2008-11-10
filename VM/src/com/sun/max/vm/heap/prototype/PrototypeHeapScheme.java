@@ -30,7 +30,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -51,19 +50,19 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
         return false;
     }
 
-    public int auxiliarySpaceSize(int bootImageSize) {
-        return 0;
+    public int adjustedCardTableShift() {
+        return -1;
     }
 
-    public Action getAction() {
-        return null;
+    public int auxiliarySpaceSize(int bootImageSize) {
+        return 0;
     }
 
     public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
 
     }
 
-    public void initializeVmThread(VmThread vmThread) {
+    public void initializeVmThread(Pointer vmThreadLocals) {
     }
 
     public Object createArrayIntoCell(DynamicHub hub, int length, Pointer cell) {
@@ -164,26 +163,6 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
     }
 
     public Pointer gcBumpAllocate(RuntimeMemoryRegion region, Size size) {
-        return null;
-    }
-
-    public BeltWayCellVisitor getVisitor() {
-        return null;
-    }
-
-    public BeltWayPointerIndexVisitor getPointerIndexGripUpdater() {
-        return null;
-    }
-
-    public BeltWayPointerOffsetVisitor getPointerOffsetGripUpdater() {
-        return null;
-    }
-
-    public BeltWayPointerIndexVisitor getPointerIndexGripVerifier() {
-        return null;
-    }
-
-    public BeltWayPointerOffsetVisitor getPointerOffsetGripVerifier() {
         return null;
     }
 

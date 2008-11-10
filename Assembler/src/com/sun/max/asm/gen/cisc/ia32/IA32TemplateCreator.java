@@ -20,11 +20,7 @@
  */
 package com.sun.max.asm.gen.cisc.ia32;
 
-import static com.sun.max.asm.gen.cisc.x86.OperandCode.*;
-import static com.sun.max.util.HexByte.*;
-
 import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 
 /**
@@ -39,12 +35,5 @@ public class IA32TemplateCreator extends X86TemplateCreator<IA32Template> {
     @Override
     protected IA32Template createTemplate(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context) {
         return new IA32Template(instructionDescription, serial, instructionFamily, context);
-    }
-
-    public IA32Template createInlineBytesTemplate() {
-        final Object[] specification = {_00, ".BYTE", Ib};
-        final IA32Template template = new IA32Template(new X86InstructionDescription(new ArraySequence<Object>(specification)), 0, null, null);
-        X86InstructionDescriptionVisitor.Static.visitInstructionDescription(template, template.instructionDescription());
-        return template;
     }
 }

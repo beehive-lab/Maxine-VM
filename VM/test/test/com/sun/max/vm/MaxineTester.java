@@ -39,6 +39,7 @@ import com.sun.max.vm.prototype.*;
  * and user programs with the generated images.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class MaxineTester {
 
@@ -46,32 +47,36 @@ public class MaxineTester {
 
     private static final OptionSet _options = new OptionSet();
     private static final Option<String> _outputDir = _options.newStringOption("output-dir", "maxine-tester",
-                    "Specifies the output directory for the results of the maxine tester.");
+                    "The output directory for the results of the maxine tester.");
     private static final Option<Integer> _imageBuildTimeOut = _options.newIntegerOption("image-build-timeout", 600,
-                    "Specifies the number of seconds to wait for an image build to complete before " +
+                    "The number of seconds to wait for an image build to complete before " +
                     "timing out and killing it.");
     private static final Option<String> _javaExecutable = _options.newStringOption("java-executable", "java",
-                    "Specifies the name of or full path to the Java VM executable to use. This must be a JDK 6 or greater VM.");
+                    "The name of or full path to the Java VM executable to use. This must be a JDK 6 or greater VM.");
     private static final Option<Integer> _javaTesterTimeOut = _options.newIntegerOption("java-tester-timeout", 50,
-                    "Specifies the number of seconds to wait for the in-target Java tester tests to complete before " +
+                    "The number of seconds to wait for the in-target Java tester tests to complete before " +
                     "timing out and killing it.");
     private static final Option<Integer> _javaTesterConcurrency = _options.newIntegerOption("java-tester-concurrency", 1,
-                    "Specifies the number of Java tester tests to run in parallel.");
-    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 40,
-                    "Specifies the number of seconds to wait for the target VM to complete before " +
+                    "The number of Java tester tests to run in parallel.");
+    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 50,
+                    "The number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
     private static final Option<Boolean> _echoOutput = _options.newBooleanOption("echo-output", false,
                     "Causes the output of image builds and test runs to be directed to the console rather than " +
                     "output file(s)");
     private static final Option<Integer> _traceOption = _options.newIntegerOption("trace", 0,
-                    "Sets the tracing level for building the images and running the tests.");
+                    "The tracing level for building the images and running the tests.");
     private static final Option<Boolean> _skipImageGen = _options.newBooleanOption("skip-image-gen", false,
                     "Skip the generation of the image, which is useful for testing the Maxine tester itself.");
     private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs", "optopt,jitopt,optjit,jitjit",
-                    "This option selects a list of configurations for which to run the Java tester tests.");
+                    "A list of configurations for which to run the Java tester tests.");
+    private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
+                    "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
+    private static final Option<File> _expect = _options.newFileOption("expect", (File) null,
+                    "A file listing the tests expected to fail. The exit value of the MaxineTester is the sum of the unexpected failures, " +
+                    "the unexpected passes and the number of image builds that failed.");
 
     private static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
-    private static final Map<String, String[]> _vmOptionConfigs = new HashMap<String, String[]>();
 
     private static final Class[] _mainClasses = {
         test.output.HelloWorld.class,
@@ -81,6 +86,7 @@ public class MaxineTester {
         test.output.FloatNanTest.class,
         test.output.StaticInitializers.class,
         test.output.LocalCatch.class,
+        test.output.Printf.class,
         util.GCTest1.class,
         util.GCTest2.class,
         util.GCTest3.class,
@@ -88,6 +94,8 @@ public class MaxineTester {
         util.GCTest5.class,
         util.GCTest6.class
     };
+
+    private static String _javaConfigAlias = null;
 
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
         @Override
@@ -115,11 +123,6 @@ public class MaxineTester {
         _imageConfigs.put("jitopt", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit"});
         _imageConfigs.put("jitjit", new String[] {"-run=test.com.sun.max.vm.testrun.all", "-native-tests", "-test-caller-jit", "-test-callee-jit"});
         _imageConfigs.put("java", new String[] {"-run=com.sun.max.vm.run.java"});
-
-        _vmOptionConfigs.put("opt", new String[] {"-Xopt"});
-        _vmOptionConfigs.put("jit", new String[] {"-Xjit"});
-        _vmOptionConfigs.put("rct3", new String[] {"-XX:RCT=3"});
-        _vmOptionConfigs.put("pgi", new String[] {"-XX:PGI"});
     }
 
     private static void makeDirectory(File directory) {
@@ -133,12 +136,112 @@ public class MaxineTester {
     }
 
     public static void main(String[] args) {
-        _options.parseArguments(args);
-        final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
-        makeDirectory(outputDir);
-        Trace.on(_traceOption.getValue());
-        runJavaPrograms();
-        runJavaTesterTests();
+        try {
+            _options.parseArguments(args);
+            _javaConfigAlias = _javaConfigAliasOption.getValue();
+            if (_javaConfigAlias != null) {
+                ProgramError.check(_imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
+            }
+            final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
+            makeDirectory(outputDir);
+            Trace.on(_traceOption.getValue());
+            runJavaPrograms();
+            runJavaTesterTests();
+            System.exit(reportTestResults());
+        } catch (Throwable throwable) {
+            throwable.printStackTrace(err());
+            System.exit(-1);
+        }
+    }
+
+    /**
+     * A map from test names to a string describing a test failure or null if a test passed.
+     */
+    private static final Map<String, String> _testResults = Collections.synchronizedMap(new TreeMap<String, String>());
+
+    private static Set<String> loadExpectedFailures() {
+        if (_expect.getValue() == null) {
+            return Collections.emptySet();
+        }
+        final File expectedFailuresFile = _expect.getValue().getAbsoluteFile();
+        if (expectedFailuresFile.exists()) {
+            final Set<String> expectedFailures = new HashSet<String>();
+            try {
+                final BufferedReader br = new BufferedReader(new FileReader(expectedFailuresFile));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    final String testLine = line.trim();
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        continue;
+                    }
+                    // Up to the first space is the test name:
+                    final int indexOfSpace = testLine.indexOf(' ');
+                    final String testName = indexOfSpace == -1 ? testLine : testLine.substring(0, indexOfSpace);
+                    expectedFailures.add(testName);
+                }
+                br.close();
+                return expectedFailures;
+            } catch (IOException ioException) {
+                ProgramWarning.message("Error reading expected failures file " + expectedFailuresFile.getAbsolutePath() + ": " + ioException);
+            }
+        }
+        return Collections.emptySet();
+    }
+
+    /**
+     * Adds a test result to the global set of test results.
+     *
+     * @param testName the unique name of the test
+     * @param failure a failure message or null if the test passed
+     */
+    private static void addTestResult(String testName, String failure) {
+        _testResults.put(testName, failure);
+    }
+
+    private static int reportTestResults() {
+        int failedImages = 0;
+        for (Map.Entry<String, File> entry : _generatedImages.entrySet()) {
+            if (entry.getValue() == null) {
+                out().println("Failed building image for configuration '" + entry.getKey() + "'");
+                failedImages++;
+            }
+        }
+
+        final Set<String> expectedFailures = loadExpectedFailures();
+        final Map<String, String> unexpectedFailures = new HashMap<String, String>();
+        final Set<String> unexpectedPasses = new HashSet<String>();
+        final Set<String> failures = new HashSet<String>();
+
+        for (Map.Entry<String, String> entry : _testResults.entrySet()) {
+            final String testName = entry.getKey();
+            final String failureMessage = entry.getValue();
+            final boolean expectedFailure = expectedFailures.contains(testName);
+            if (failureMessage == null) {
+                if (expectedFailure) {
+                    unexpectedPasses.add(testName);
+                }
+            } else {
+                failures.add(testName);
+                if (!expectedFailure) {
+                    unexpectedFailures.put(testName, failureMessage);
+                }
+            }
+        }
+
+        if (!unexpectedFailures.isEmpty()) {
+            out().println("Unexpected failures: [add to file specified by -" + _expect.getName() + " option]");
+            for (Map.Entry<String, String> entry : unexpectedFailures.entrySet()) {
+                out().println(entry.getKey() + "  " + entry.getValue());
+            }
+        }
+        if (!unexpectedPasses.isEmpty()) {
+            out().println("Unexpected passes: [remove from file specified by -" + _expect.getName() + " option]");
+            for (String testName : unexpectedPasses) {
+                out().println(testName);
+            }
+        }
+
+        return unexpectedFailures.size() + unexpectedPasses.size() + failedImages;
     }
 
     private static void runJavaTesterTests() {
@@ -220,13 +323,14 @@ public class MaxineTester {
     }
 
     private static void runJavaPrograms() {
-        final String config = "java";
+        final String config = _javaConfigAlias == null ? "java" : _javaConfigAlias;
+        final File outputDir = new File(_outputDir.getValue(), "java");
         final File imageDir = new File(_outputDir.getValue(), config);
         out().println("Building Java run scheme: started");
         if (_skipImageGen.getValue() || generateImage(imageDir, config)) {
             out().println("Building Java run scheme: OK");
             for (Class mainClass : _mainClasses) {
-                runJavaProgram(imageDir, mainClass);
+                runJavaProgram(outputDir, imageDir, mainClass);
             }
         } else {
             out().println("Building Java run scheme: failed");
@@ -235,24 +339,31 @@ public class MaxineTester {
         }
     }
 
-    private static void runJavaProgram(File imageDir, Class mainClass) {
+    private static void runJavaProgram(File outputDir, File imageDir, Class mainClass) {
         out().print("Running " + mainClass.getName() + "...");
-        final File javaOutput = getOutputFile(imageDir, "JVM_" + mainClass.getSimpleName(), "output");
-        final File maxvmOutput = getOutputFile(imageDir, "MAXVM_" + mainClass.getSimpleName(), "output");
+        final File javaOutput = getOutputFile(outputDir, "JVM_" + mainClass.getSimpleName(), "output");
+        final File maxvmOutput = getOutputFile(outputDir, "MAXVM_" + mainClass.getSimpleName(), "output");
 
         final String[] args = buildJavaArgs(mainClass, new String[0], new String[0]);
 
         final int javaExitValue = runJavaVM(mainClass, args, imageDir, javaOutput, _javaRunTimeOut.getValue());
         final int maxineExitValue = runMaxineVM(mainClass, args, imageDir, maxvmOutput, _javaRunTimeOut.getValue());
         if (javaExitValue != maxineExitValue) {
-            out().println("(" + maxineExitValue + " != " + javaExitValue + ")");
+            if (maxineExitValue == PROCESS_TIMEOUT) {
+                out().println("(timed out)");
+            } else {
+                out().println("(" + maxineExitValue + " != " + javaExitValue + ")");
+            }
             out().println("  -> see: " + maxvmOutput.getAbsolutePath());
+            addTestResult(mainClass.getName(), String.format("bad exit value [received %d, expected %d]", maxineExitValue, javaExitValue));
         } else if (compareFiles(javaOutput, maxvmOutput)) {
             out().println("OK");
+            addTestResult(mainClass.getName(), null);
         } else {
             out().println("(output did not match)");
             out().println("  -> see: " + javaOutput.getAbsolutePath());
             out().println("  -> see: " + maxvmOutput.getAbsolutePath());
+            addTestResult(mainClass.getName(), String.format("output did not match [compare %s with %s]", javaOutput.getPath(), maxvmOutput.getPath()));
         }
     }
 
@@ -315,6 +426,9 @@ public class MaxineTester {
 
     private static int runMaxineVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = imageDir.getName() + "/maxvm" + (mainClass == null ? "" : " " + mainClass.getName());
+        if (mainClass != null && _javaConfigAlias != null) {
+            return exec(imageDir, appendArgs(new String[] {"./maxvm", "-XX:TesterOff"}, args), outputFile, name, timeout);
+        }
         return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), outputFile, name, timeout);
     }
 
@@ -323,7 +437,16 @@ public class MaxineTester {
         return exec(imageDir, appendArgs(new String[] {_javaExecutable.getValue()}, args), outputFile, name, timeout);
     }
 
+    /**
+     * Map from configuration names to the directory in which the image for the configuration was created.
+     * If the image generation failed for a configuration, then it will have a {@code null} entry in this map.
+     */
+    private static final Map<String, File> _generatedImages = new HashMap<String, File>();
+
     public static boolean generateImage(File imageDir, String imageConfig) {
+        if (_generatedImages.containsKey(imageConfig)) {
+            return _generatedImages.get(imageConfig) != null;
+        }
         final String[] generatorArguments = _imageConfigs.get(imageConfig);
         if (generatorArguments == null) {
             ProgramError.unexpected("unknown image configuration: " + imageConfig);
@@ -342,10 +465,12 @@ public class MaxineTester {
             copyBinary(imageDir, mapLibraryName("javatest"));
             copyBinary(imageDir, mapLibraryName("prototype"));
             copyBinary(imageDir, mapLibraryName("inspector"));
+            _generatedImages.put(imageConfig, imageDir);
             return true;
         } else if (exitValue == PROCESS_TIMEOUT) {
             out().println("(image build timed out): " + new File(imageDir, BinaryImageGenerator.getDefaultBootImageFilePath().getName()));
         }
+        _generatedImages.put(imageConfig, null);
         return false;
     }
 
@@ -379,7 +504,7 @@ public class MaxineTester {
         return outputFile;
     }
 
-    private static String[] appendArgs(String[] args, String[] extraArgs) {
+    private static String[] appendArgs(String[] args, String... extraArgs) {
         String[] result = args;
         if (extraArgs.length > 0) {
             result = new String[args.length + extraArgs.length];
@@ -465,31 +590,37 @@ public class MaxineTester {
         @Override
 
         public void run() {
-            try {
-                final long start = System.currentTimeMillis();
-                while (System.currentTimeMillis() - start < _timeoutMillis) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        // do nothing.
-                    }
-                    try {
-                        _exitValue = _process.exitValue();
-                        return;
-                    } catch (IllegalThreadStateException e) {
-                        _exitValue = PROCESS_TIMEOUT;
-                    }
+            final long start = System.currentTimeMillis();
+            while (System.currentTimeMillis() - start < _timeoutMillis) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    // do nothing.
                 }
-                synchronized (this) {
-                    // Timed out:
-                    _process.destroy();
-                    notifyAll();
+                try {
+                    _exitValue = _process.exitValue();
+                    _stdout.close();
+                    _stderr.close();
+                    _stdin.close();
+                    synchronized (this) {
+                        // Timed out:
+                        notifyAll();
+                    }
+                    return;
+                } catch (IllegalThreadStateException e) {
+                    // do nothing.
                 }
-            } finally {
-                _stdout.close();
-                _stderr.close();
-                _stdin.close();
             }
+            _exitValue = PROCESS_TIMEOUT;
+            _stdout.close();
+            _stderr.close();
+            _stdin.close();
+            synchronized (this) {
+                // Timed out:
+                _process.destroy();
+                notifyAll();
+            }
+            return;
         }
 
         public int exitValue() {

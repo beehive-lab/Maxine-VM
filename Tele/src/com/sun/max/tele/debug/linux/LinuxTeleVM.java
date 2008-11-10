@@ -63,7 +63,7 @@ public final class LinuxTeleVM extends TeleVM {
     }
 
     @Override
-    protected Pointer loadBootHeap() throws IOException {
+    protected Pointer loadBootImage() throws IOException {
         Pointer heap = Pointer.zero();
         final LinuxTeleProcess linuxInferiorProcess = (LinuxTeleProcess) teleProcess();
         try {

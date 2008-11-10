@@ -121,7 +121,7 @@ public class BoundLabelTest extends MaxTestCase {
     }
 
     private void disassemble(long startAddress, byte[] bytes) throws IOException, AssemblyException {
-        final AMD64Disassembler disassembler = new AMD64Disassembler(startAddress);
+        final AMD64Disassembler disassembler = new AMD64Disassembler(startAddress, null);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(bytes));
         disassembler.scanAndPrint(stream, System.out);
     }

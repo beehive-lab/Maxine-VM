@@ -32,7 +32,7 @@ public class System_currentTimeMillis02 {
             delta = System.currentTimeMillis() - start;
             // do nothing.
         }
-        // better get at least 20 millisecond resolution.
-        return delta >= 1 && delta < 20;
+        // better get at least 40 millisecond resolution.
+        return delta >= 1 && delta < 40;
     }
 }

@@ -25,10 +25,11 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -262,53 +263,35 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
     /**
      * Tests whether all call labels are still pointing at CALL instructions.
      */
-    private boolean areLabelsValid(byte[] code) throws AssemblyException {
+    private boolean areLabelsValid(byte[] code, Address startAddress) throws AssemblyException {
         for (Label label : _directCallLabels) {
             if (!_assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isCall(code, label.position())) {
+                if (MaxineVM.isPrototyping()) {
+                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(_inlineDataRecorder));
+                }
                 return false;
             }
         }
         for (Label label : _safepointLabels) {
             if (!_assembler.boundLabels().contains(label) || label.state() != Label.State.BOUND || !isSafepoint(code, label.position())) {
+                if (MaxineVM.isPrototyping()) {
+                    Disassemble.disassemble(System.out, code, VMConfiguration.hostOrTarget().platform().processorKind(), startAddress, InlineDataDecoder.createFrom(_inlineDataRecorder));
+                }
                 return false;
             }
         }
         return true;
     }
 
-    VariableSequence<Integer> _inlineDataPositions;
-    private final InlineDataRecorder _inlineDataRecorder = new InlineDataRecorder() {
-        @Override
-        public void record(int startPosition, int size) {
-            if (size != 0) {
-                if (_inlineDataPositions == null) {
-                    _inlineDataPositions = new ArrayListSequence<Integer>();
-                } else {
-                    final int lastEndPosition = _inlineDataPositions.last();
-                    assert lastEndPosition <= startPosition;
-                }
-                _inlineDataPositions.append(startPosition);
-                _inlineDataPositions.append(startPosition + size);
-            }
-        }
-    };
+    private final InlineDataRecorder _inlineDataRecorder = new InlineDataRecorder();
 
-    public int[] inlineDataPositions() {
-        if (_inlineDataPositions == null) {
-            return null;
-        }
-        final int[] inlineDataPositions = new int[_inlineDataPositions.length()];
-        int i = 0;
-        for (Integer position : _inlineDataPositions) {
-            inlineDataPositions[i++] = position;
-        }
-        Metrics.accumulate("InlineDataPositions", inlineDataPositions.length);
-        return inlineDataPositions;
+    public InlineDataRecorder inlineDataRecorder() {
+        return _inlineDataRecorder;
     }
 
     public byte[] toByteArray() throws AssemblyException {
         final byte[] result = _assembler.toByteArray(_inlineDataRecorder);
-        assert areLabelsValid(result);
+        assert areLabelsValid(result, Address.fromLong(_assembler.baseAddress()));
         return result;
     }
 

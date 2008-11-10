@@ -71,12 +71,12 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
         adapterFrameGenerator.emitEpilogue(assembler);
         final byte[] code = assembler.toByteArray();
         assert methodEntryPoint.position() % 8 == 0;
-        final AMD64Disassembler disassembler = new AMD64Disassembler(0L);
+        final AMD64Disassembler disassembler = new AMD64Disassembler(0L, null);
         final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
 
         try {
             while (bufferedInputStream.available() > 0) {
-                disassembler.print(Trace.stream(), disassembler.scanOneInstruction(bufferedInputStream));
+                disassembler.print(Trace.stream(), disassembler.scanOne(bufferedInputStream));
             }
         } catch (Throwable throwable) {
             System.err.println("could not disassemble any further: " + throwable);

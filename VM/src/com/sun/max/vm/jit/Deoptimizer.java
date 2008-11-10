@@ -81,10 +81,10 @@ public abstract class Deoptimizer {
             final Word safepointEpoch = VmThreadLocal.SAFEPOINT_EPOCH.getVariableWord();
 
             final Deoptimization deoptimization = _deoptimizer.createDeoptimization();
-            new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(VmThreadLocal.TRAP_INSTRUCTION_POINTER.getVariableWord().asPointer(),
-                                                                            VmThreadLocal.TRAP_STACK_POINTER.getVariableWord().asPointer(),
-                                                                            VmThreadLocal.TRAP_FRAME_POINTER.getVariableWord().asPointer(),
-                                                                            deoptimization);
+            // TODO: where to start the stack walk?
+            final Pointer stackPointer = Pointer.zero();
+            final Pointer framePointer = Pointer.zero();
+            new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, stackPointer, framePointer, deoptimization);
 
             final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer);
             final TargetJavaFrameDescriptor targetJavaFrameDescriptor = targetMethod.getJavaFrameDescriptor(stopIndex);
@@ -93,7 +93,7 @@ public abstract class Deoptimizer {
 
             Safepoint.disable();
             if (VmThreadLocal.SAFEPOINT_EPOCH.getVariableWord().equals(safepointEpoch)) {
-                VmThreadLocal.DEOPTIMIZER_REFERENCE_OCCURRENCES.setVariableReference(Reference.fromJava(ReferenceOccurrences.NONE));
+                VmThreadLocal.DEOPTIMIZER_REFERENCE_OCCURRENCES.setVariableReference(Reference.fromJava(Situation.RETURN_SCALAR));
                 VmThreadLocal.DEOPTIMIZER_INSTRUCTION_POINTER.setVariableWord(Word.zero());
                 deoptimization.patchExecutionContext();
                 ProgramError.unexpected(); // Never reached. The previous statement should land us in the deoptimized method.
@@ -117,7 +117,7 @@ public abstract class Deoptimizer {
     /**
      * Which safepoint-saved integer registers need to be preserved by the GC throughout deoptimization.
      */
-    public enum ReferenceOccurrences {
+    public enum Situation {
         /**
          * Indicates an illegal instruction in Java code at an unexpected position, i.e. a bug.
          */
@@ -129,14 +129,14 @@ public abstract class Deoptimizer {
          * Since all registers in optimized code are caller-saved,
          * no registers at all need to be tracked by the GC.
          */
-        NONE,
+        RETURN_SCALAR,
 
         /**
          * Indicates that the illegal instruction trap happened
          * just after a return from a call that DID return a reference.
          * So the GC needs to track the register that carries a reference return result.
          */
-        RETURN,
+        RETURN_REFERENCE,
 
         /**
          * Indicates that the illegal instruction trap happened at a safepoint.
@@ -145,28 +145,28 @@ public abstract class Deoptimizer {
         SAFEPOINT
     }
 
-    public static ReferenceOccurrences determineReferenceOccurrences(TargetMethod targetMethod, Pointer instructionPointer) {
+    public static Situation determineCase(TargetMethod targetMethod, Pointer instructionPointer) {
         if (!Memory.equals(instructionPointer, _deoptimizer.illegalInstruction()) || targetMethod instanceof JitTargetMethod) {
-            return ReferenceOccurrences.ERROR;
+            return Situation.ERROR;
         }
         final int position = instructionPointer.minus(targetMethod.codeStart()).toInt();
         int i;
         for (i = 0; i < targetMethod.numberOfDirectCalls(); i++) {
             if (position == targetMethod.stopPosition(i) + _deoptimizer.directCallSize()) {
-                return targetMethod.isReferenceCall(i) ? ReferenceOccurrences.RETURN : ReferenceOccurrences.NONE;
+                return targetMethod.isReferenceCall(i) ? Situation.RETURN_REFERENCE : Situation.RETURN_SCALAR;
             }
         }
         for (; i < targetMethod.numberOfIndirectCalls(); i++) {
             if (position == targetMethod.stopPosition(i) + _deoptimizer.indirectCallSize(targetMethod, i)) {
-                return targetMethod.isReferenceCall(i) ? ReferenceOccurrences.RETURN : ReferenceOccurrences.NONE;
+                return targetMethod.isReferenceCall(i) ? Situation.RETURN_REFERENCE : Situation.RETURN_SCALAR;
             }
         }
         for (; i < targetMethod.numberOfSafepoints(); i++) {
             if (position == targetMethod.stopPosition(i)) {
-                return ReferenceOccurrences.SAFEPOINT;
+                return Situation.SAFEPOINT;
             }
         }
-        return ReferenceOccurrences.ERROR;
+        return Situation.ERROR;
     }
 
     public abstract TargetLocation.IntegerRegister referenceReturnRegister();

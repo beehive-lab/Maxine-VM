@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
@@ -75,6 +76,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     public TargetMethod(ClassMethodActor classMethodActor) {
         _classMethodActor = classMethodActor;
+        setDescription("Target-" + name());
     }
 
     public final String name() {
@@ -263,11 +265,20 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     private byte[] _compressedJavaFrameDescriptors;
 
     /**
-     * If non-null, this array encodes the positions that delimit ranges of instructions and inline data in {@code TargetMethod#code()}.
-     * The array is a list of pairs denoting the start (inclusive) and end (exclusive) positions of a range of inline data in {@link #code()}.
+     * If non-null, this array encodes a serialized array of {@link InlineDataDescriptor} objects.
      */
     @INSPECTED
-    private int[] _inlineDataPositions;
+    private byte[] _encodedInlineDataDescriptors;
+
+    /**
+     * Gets the {@linkplain InlineDataDescriptor inline data descriptors} associated with this target method's code
+     * encoded as a byte array in the format described {@linkplain InlineDataDescriptor here}.
+     *
+     * @return null if there are no inline data descriptors associated with this target method's code
+     */
+    public byte[] encodedInlineDataDescriptors() {
+        return _encodedInlineDataDescriptors;
+    }
 
     /**
      * @see TargetJavaFrameDescriptor#compress(com.sun.max.collect.Sequence)
@@ -483,13 +494,40 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         final StringBuilder buf = new StringBuilder();
         final JavaStackFrameLayout layout = stackFrameLayout();
         final Slots slots = layout.slots();
+        int safepointIndex = 0;
+        final int firstSafepointStopIndex = numberOfDirectCalls() + numberOfIndirectCalls();
         for (int stopIndex = 0; stopIndex < numberOfStopPositions(); ++stopIndex) {
             final int stopPosition = stopPosition(stopIndex);
-            buf.append(String.format("stop position: %d%n", stopPosition));
-            final int byteIndex = stopIndex * frameReferenceMapSize();
+            buf.append(String.format("stop: index=%d, position=%d, type=%s%n", stopIndex, stopPosition,
+                            stopIndex < numberOfDirectCalls() ? "direct call" :
+                           (stopIndex < firstSafepointStopIndex ? "indirect call" : "safepoint")));
+            int byteIndex = stopIndex * frameReferenceMapSize();
             final ByteArrayBitMap referenceMap = new ByteArrayBitMap(referenceMaps(), byteIndex, frameReferenceMapSize());
             buf.append(slots.toString(referenceMap));
+            if (stopIndex >= firstSafepointStopIndex && registerReferenceMapSize() != 0) {
+                // The register reference maps come after all the frame reference maps in _referenceMaps.
+                byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize() * safepointIndex);
+                String referenceRegisters = "";
+                buf.append("Register map:");
+                for (int i = 0; i < registerReferenceMapSize(); i++) {
+                    final byte refMapByte = _referenceMaps[byteIndex];
+                    buf.append(String.format(" 0x%x", refMapByte & 0xff));
+                    if (refMapByte != 0) {
+                        for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
+                            if (((refMapByte >>> bitIndex) & 1) != 0) {
+                                referenceRegisters += "reg" + (bitIndex + (i * Bytes.WIDTH)) + " ";
+                            }
+                        }
+                    }
+                    byteIndex++;
+                }
+                if (!referenceRegisters.isEmpty()) {
+                    buf.append(" { " + referenceRegisters + "}");
+                }
+                ++safepointIndex;
+            }
         }
+
         return buf.toString();
     }
 
@@ -553,7 +591,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                             byte[] scalarLiteralBytes,
                             Object[] referenceLiterals,
                             Object codeOrCodeBuffer,
-                            int[] inlineDataPositions,
+                            byte[] encodedInlineDataDescriptors,
                             int frameSize,
                             int frameReferenceMapSize,
                             TargetABI abi,
@@ -566,7 +604,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         _numberOfGuardpoints = numberOfGuardpoints;
         _abi = abi;
         _compressedJavaFrameDescriptors = compressedJavaFrameDescriptors;
-        _inlineDataPositions = inlineDataPositions;
+        _encodedInlineDataDescriptors = encodedInlineDataDescriptors;
         _markerPosition = markerPosition;
 
         assert checkReferenceMapSize(stopPositions, numberOfSafepoints, referenceMaps, frameReferenceMapSize);
@@ -751,11 +789,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     public final String traceToString() {
-        final CharArrayWriter charArrayWriter = new CharArrayWriter();
-        final IndentWriter writer = new IndentWriter(charArrayWriter);
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
         writer.println("target method: " + this);
         traceBundle(writer);
-        return charArrayWriter.toString();
+        if (MaxineVM.isPrototyping()) {
+            Disassemble.disassemble(byteArrayOutputStream, this);
+        }
+        return byteArrayOutputStream.toString();
     }
 
     public Class<? extends IrTraceObserver> irTraceObserverType() {
@@ -845,7 +886,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                         scalarLiteralBytes() == null ? null : scalarLiteralBytes().clone(),
                         duplicatedReferenceLiterals,
                         code().clone(),
-                        _inlineDataPositions,
+                        _encodedInlineDataDescriptors,
                         frameSize(),
                         frameReferenceMapSize(),
                         abi(),
@@ -864,7 +905,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                             scalarLiteralBytes(),
                             referenceLiterals(),
                             code(),
-                            _inlineDataPositions,
+                            _encodedInlineDataDescriptors,
                             frameSize(),
                             frameReferenceMapSize(),
                             abi(),
@@ -1047,6 +1088,4 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer);
     }
-
-
 }

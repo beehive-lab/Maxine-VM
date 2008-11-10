@@ -85,6 +85,11 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
                 }
             }
 
+            @Override
+            public Collection<Element_Type> toCollection() {
+                return Collections.emptySet();
+            }
+
             public Iterator<Element_Type> iterator() {
                 return new Iterator<Element_Type>() {
                     public boolean hasNext() {
@@ -153,6 +158,11 @@ public interface DeterministicSet<Element_Type> extends Sequence<Element_Type> {
                 ProgramError.unexpected();
                 return null;
             }
+        }
+
+        @Override
+        public Collection<Element_Type> toCollection() {
+            return Collections.singleton(_element);
         }
 
         public Iterator<Element_Type> iterator() {

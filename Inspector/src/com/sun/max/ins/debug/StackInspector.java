@@ -181,12 +181,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                     final RuntimeStubStackFrame runtimeStubStackFrame = (RuntimeStubStackFrame) stackFrame;
                     final RuntimeStub runtimeStub = runtimeStubStackFrame.stub();
                     name = runtimeStub.name();
-                    if (runtimeStub instanceof SafepointStub) {
-                        final SafepointStub safepointStub = (SafepointStub) runtimeStub;
-                        toolTip = "Safepoint stub for " + safepointStub.callee().format("%r %H.%n(%p)");
-                    } else {
-                        toolTip = name;
-                    }
+                    toolTip = name;
                 } else {
                     ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                     name = "nativeMethod:0x" + stackFrame.instructionPointer().toHexString();
@@ -351,7 +346,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
             header.add(new WordValueLabel(_inspection, ValueMode.INTEGER_REGISTER, adapterStackFrame.instructionPointer()));
             SpringUtilities.makeCompactGrid(header, 2);
 
-            add(new JScrollPane(header), BorderLayout.NORTH);
+            add(header, BorderLayout.NORTH);
             add(new JPanel(), BorderLayout.CENTER);
         }
 

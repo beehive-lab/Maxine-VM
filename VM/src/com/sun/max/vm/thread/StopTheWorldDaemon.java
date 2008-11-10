@@ -22,14 +22,9 @@ package com.sun.max.vm.thread;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
-import com.sun.max.lang.*;
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.sequential.Beltway.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
@@ -40,42 +35,34 @@ import com.sun.max.vm.runtime.*;
  * implement stop-the-world GC.
  *
  * @author Bernd Mathiske
+ * @author Ben L. Titzer
  */
 public class StopTheWorldDaemon extends BlockingServerDaemon {
 
-    private static void suspendCurrentThread() {
-        Safepoint.disable();
-        final Pointer vmThreadLocals = Safepoint.getLatchRegister();
+    private static Safepoint.Procedure _suspendProcedure = new Safepoint.Procedure() {
+        @Override
+        public void run(Pointer trapState) {
+            // note that this procedure always runs with safepoints disabled
+            final Pointer vmThreadLocals = Safepoint.getLatchRegister();
+            if (VmThreadLocal.inJava(vmThreadLocals)) {
+                VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.JAVA));
+                VmThreadLocal.prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
+            } else {
+                // GC may already be ongoing
+            }
 
-        if (VmThreadLocal.SAFEPOINT_VENUE.getVariableReference(vmThreadLocals).toJava() == Safepoint.Venue.JAVA) {
-            // TODO: only do this at GC safepoints, not others
-            VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
-        } else {
-            // GC may already be ongoing
+            synchronized (VmThreadMap.ACTIVE) {
+                // this is ok even though the GC does not get to scan this frame, because the object involved is in the boot image
+            }
+            VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
         }
-
-        synchronized (VmThreadMap.ACTIVE) {
-            // Synchronizing on VmThreadMap.ACTIVE causes this thread to block
-            // as the GC daemon has taken the lock and won't release it until
-            // GC is complete.
-        }
-
-        Safepoint.enable();
-        VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
-    }
-
-    private static final CriticalMethod _suspend = new CriticalMethod(StopTheWorldDaemon.class, "suspendCurrentThread", CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-
-    private Pointer _safepointNativeStubEntryPoint;
-
-    private Pointer _safepointJavaStubEntryPoint;
+    };
 
     private Runnable _procedure = null;
 
     public StopTheWorldDaemon(String name, Runnable procedure) {
         super(name);
         _procedure = procedure;
-        // _currentTLAB = BeltwayHeapScheme._scavengerTLABs[BeltwayConfiguration._numberOfGCThreads];
 
     }
 
@@ -90,34 +77,28 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         } catch (InterruptedException interruptedException) {
         }
 
-        _safepointNativeStubEntryPoint = VMConfiguration.hostOrTarget().safepoint().createSafepointStub(_suspend, Safepoint.Venue.NATIVE).start().asPointer();
-        _safepointJavaStubEntryPoint = VMConfiguration.hostOrTarget().safepoint().createSafepointStub(_suspend, Safepoint.Venue.JAVA).start().asPointer();
-
         super.start();
     }
 
     private final Pointer.Procedure _triggerSafepoint = new Pointer.Procedure() {
-
         public void run(Pointer vmThreadLocals) {
             if (vmThreadLocals.isZero()) {
                 // Thread is still starting up.
                 // Do not need to do anything, because it will try to lock 'VmThreadMap.ACTIVE' and thus block.
             } else {
-                Safepoint.trigger(vmThreadLocals, _safepointNativeStubEntryPoint, _safepointJavaStubEntryPoint);
+                Safepoint.runProcedure(vmThreadLocals, _suspendProcedure);
             }
         }
     };
 
     private final Pointer.Procedure _resetSafepoint = new Pointer.Procedure() {
-
         public void run(Pointer vmThreadLocals) {
+            Safepoint.cancelProcedure(vmThreadLocals, _suspendProcedure);
             Safepoint.reset(vmThreadLocals);
-
         }
     };
 
     private final Pointer.Procedure _waitUntilNonMutating = new Pointer.Procedure() {
-
         public void run(Pointer vmThreadLocals) {
             while (VmThreadLocal.inJava(vmThreadLocals)) {
                 try {
@@ -145,97 +126,31 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private final Pointer.Procedure _fillLastTlabs = new Pointer.Procedure() {
-
-        public void run(Pointer localSpace) {
-            if (!localSpace.isZero()) {
-                final VmThread thread = VmThread.current(localSpace);
-                if (thread != null) {
-                    final TLAB tlab = thread.getTLAB();
-                    if (!tlab.isFull()) {
-                        tlab.fillTLAB();
-                    }
-                }
-            }
-        }
-    };
-
-
-    private static class TLABScavengerReset implements Procedure<VmThread> {
-        @Override
-        public void run(VmThread thread) {
-            thread.getTLAB().unSet();
-        }
-    }
-
-    private TLABScavengerReset _tlabScavengerReset = new TLABScavengerReset();
-
-    private static final Pointer.Procedure _prepareGCThreadStackMap = new Pointer.Procedure() {
-        @Override
-        public void run(Pointer vmThreadLocals) {
-            VmThreadLocal.prepareStackReferenceMap(vmThreadLocals);
-        }
-    };
-
-    private final Runnable _gcRequest = new Runnable() {
-
-        public void run() {
-            synchronized (VmThreadMap.ACTIVE) {
-                BeltwayHeapScheme._inGC = true;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _triggerSafepoint);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _waitUntilNonMutating);
-                if (BeltwayConfiguration._useTLABS) {
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _fillLastTlabs);
-                }
-                if (BeltwayConfiguration._useGCTlabs) {
-                    VmThreadMap.ACTIVE.forAllVmThreads(_isGCOrStopTheWorldDaemonThread, _tlabScavengerReset);
-                }
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isGCThread, _prepareGCThreadStackMap);
-                VmThreadLocal.prepareCurrentStackReferenceMap();
-                _procedure.run();
-                BeltwayHeapScheme._inGC = false;
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCThreadLocalsOrCurrent, _resetSafepoint);
-            }
-        }
-
-
-    };
-
-    private static final Predicate<VmThread> _isGCOrStopTheWorldDaemonThread = new Predicate<VmThread>() {
-        @Override
-        public boolean evaluate(VmThread vmThread) {
-            final Thread javaThread = vmThread.javaThread();
-            return javaThread instanceof StopTheWorldDaemon || javaThread instanceof BeltwayCollectorThread;
-        }
-    };
-
-    private static final Pointer.Predicate _isNotGCThreadLocalsOrCurrent = new Pointer.Predicate() {
-        @Override
+    private static final Pointer.Predicate _isNotGCOrCurrentThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
-            if (vmThreadLocals != VmThread.current().vmThreadLocals()) {
-                final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
-                return !(javaThread instanceof StopTheWorldDaemon) && !(javaThread instanceof BeltwayCollectorThread);
-            }
-            return false;
+            return vmThreadLocals != VmThread.current().vmThreadLocals() && !Heap.isGcThread(VmThread.current(vmThreadLocals));
         }
     };
 
     private static final Pointer.Predicate _isGCThread = new Pointer.Predicate() {
-        @Override
         public boolean evaluate(Pointer vmThreadLocals) {
-            final Thread javaThread = VmThread.current(vmThreadLocals).javaThread();
-            return javaThread instanceof BeltwayCollectorThread;
+            return Heap.isGcThread(VmThread.current(vmThreadLocals));
+        }
+    };
+
+    private final Runnable _gcRequest = new Runnable() {
+        public void run() {
+            synchronized (VmThreadMap.ACTIVE) {
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _triggerSafepoint);
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _waitUntilNonMutating);
+                VmThreadLocal.prepareCurrentStackReferenceMap();
+                _procedure.run();
+                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
+            }
         }
     };
 
     public void execute() {
         execute(_gcRequest);
     }
-
-    public TLAB getScavengeTLAB() {
-        return _currentTLAB;
-    }
-
-    private TLAB _currentTLAB;
-
 }

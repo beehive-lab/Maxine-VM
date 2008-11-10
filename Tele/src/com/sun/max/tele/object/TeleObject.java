@@ -33,10 +33,10 @@ import com.sun.max.collect.HashMapping;
 import com.sun.max.jdwp.vm.proxy.ObjectProvider;
 import com.sun.max.jdwp.vm.proxy.ReferenceTypeProvider;
 import com.sun.max.lang.StaticLoophole;
+import com.sun.max.memory.RuntimeMemoryRegion;
 import com.sun.max.program.Problem;
 import com.sun.max.program.Trace;
 import com.sun.max.tele.TeleError;
-import com.sun.max.tele.TeleRuntimeStub;
 import com.sun.max.tele.TeleVM;
 import com.sun.max.tele.TeleVMHolder;
 import com.sun.max.tele.TeleVmThread;
@@ -67,6 +67,8 @@ import com.sun.max.vm.classfile.constant.InterfaceMethodRefConstant;
 import com.sun.max.vm.classfile.constant.PoolConstant;
 import com.sun.max.vm.classfile.constant.StringConstant;
 import com.sun.max.vm.classfile.constant.Utf8Constant;
+import com.sun.max.vm.code.CodeManager;
+import com.sun.max.vm.code.CodeRegion;
 import com.sun.max.vm.compiler.builtin.Builtin;
 import com.sun.max.vm.compiler.target.OptimizedTargetMethod;
 import com.sun.max.vm.jit.JitTargetMethod;
@@ -221,7 +223,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
                     } else if (ReferenceClassActor.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleReferenceClassActor(teleVM, reference);
 
-                        // Other Maxine support
+                        // Maxine code management
                     } else if (JitTargetMethod.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleJitTargetMethod(teleVM, reference);
 
@@ -230,7 +232,17 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
 
                     } else if (RuntimeStub.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleRuntimeStub(teleVM, reference);
+                        
+                    } else if (CodeRegion.class.isAssignableFrom(javaClass)) {
+                    	teleObject = new TeleCodeRegion(teleVM, reference);
+                    	
+                    } else if (CodeManager.class.isAssignableFrom(javaClass)) {
+                    	teleObject = new TeleCodeManager(teleVM, reference);
+                    	
+                    } else if (RuntimeMemoryRegion.class.isAssignableFrom(javaClass)) {
+                    	teleObject = new TeleRuntimeMemoryRegion(teleVM, reference);
 
+                     // Other Maxine support
                     } else if (Kind.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleKind(teleVM, reference);
 

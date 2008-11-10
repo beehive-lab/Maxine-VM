@@ -65,7 +65,7 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
         return false;
     }
 
-    protected abstract void createJitFrame(TargetJavaFrameDescriptor targetJavaFrameDescriptor, Deoptimizer.ReferenceOccurrences referenceOccurrences);
+    protected abstract void createJitFrame(TargetJavaFrameDescriptor targetJavaFrameDescriptor, Deoptimizer.Situation situation);
 
     protected abstract void createAdapterFrame(TargetJavaFrameDescriptor targetJavaFrameDescriptor);
 
@@ -73,14 +73,14 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
 
     void createJitFrames(TargetJavaFrameDescriptor targetJavaFrameDescriptor) {
         TargetJavaFrameDescriptor d = targetJavaFrameDescriptor;
-        createJitFrame(d, (Deoptimizer.ReferenceOccurrences) VmThreadLocal.DEOPTIMIZER_REFERENCE_OCCURRENCES.getVariableReference().toJava());
+        createJitFrame(d, (Deoptimizer.Situation) VmThreadLocal.DEOPTIMIZER_REFERENCE_OCCURRENCES.getVariableReference().toJava());
         while (true) {
             final TargetJavaFrameDescriptor next = targetJavaFrameDescriptor.parent();
             if (next == null) {
                 break;
             }
             d = next;
-            createJitFrame(d, Deoptimizer.ReferenceOccurrences.SAFEPOINT);
+            createJitFrame(d, Deoptimizer.Situation.SAFEPOINT);
         }
         if (_isParentFrameOptimized) {
             final ClassMethodActor classMethodActor = d.bytecodeLocation().classMethodActor();

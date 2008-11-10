@@ -129,6 +129,10 @@ public final class VmClassLoader extends ClassLoader {
     }
 
     public synchronized Class<?> findBootstrapClass(String name) throws ClassNotFoundException {
+        final Class c = findLoadedClass(name);
+        if (c != null) {
+            return c;
+        }
         return findClass(classpath(), name);
     }
 

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.code;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -28,7 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.util.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -65,6 +66,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     /**
      * An array of the code regions.
      */
+    @INSPECTED
     protected final CodeRegion[] _runtimeCodeRegions;
 
     /**
@@ -86,7 +88,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
         super();
         _runtimeCodeRegions = new CodeRegion[numberOfRuntimeCodeRegions];
         for (int i = 0; i < numberOfRuntimeCodeRegions; i++) {
-            _runtimeCodeRegions[i] = new CodeRegion();
+            _runtimeCodeRegions[i] = new CodeRegion("Code-" + i);
         }
     }
 
@@ -99,6 +101,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     /**
      * The current code region that is the default for allocating new target methods.
      */
+    @INSPECTED
     private CodeRegion _currentCodeRegion = Code.bootCodeRegion();
 
     /**
@@ -224,18 +227,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      */
     synchronized TargetMethod[] methodKeyToTargetMethods(MethodKey methodKey) {
         return _methodKeyToTargetMethods.get(methodKey);
-    }
-
-    /**
-     * TODO: clean this up.
-     */
-    void visitCells(Visitor cellVisitor, Action action, RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
-        CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, Code.bootCodeRegion(), from, to);
-        for (CodeRegion codeRegion : _runtimeCodeRegions) {
-            if (codeRegion != null) {
-                CellVisitorImpl.linearVisitAllCells((BeltWayCellVisitor) cellVisitor, action, codeRegion, from, to);
-            }
-        }
     }
 
     /**

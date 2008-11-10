@@ -132,6 +132,11 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
     }
 
     @Override
+    public Collection<Element_Type> toCollection() {
+        return java.util.Arrays.asList(_array);
+    }
+
+    @Override
     public String toString() {
         return Arrays.toString(_array, ", ");
     }

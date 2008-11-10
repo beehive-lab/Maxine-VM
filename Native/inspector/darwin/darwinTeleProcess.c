@@ -39,6 +39,7 @@
 #include "debugPtrace.h"
 #include "jni.h"
 #include "word.h"
+#include "virtualMemory.h"
 
 #include "teleProcess.h"
 #include "teleNativeThread.h"
@@ -150,7 +151,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         }
 
         mach_vm_address_t stackBase = threadState.__rsp;
-        mach_vm_size_t stackSize;
+        mach_vm_size_t stackSize = 16; // initialized to something small
         mach_port_t objectName;
         vm_region_basic_info_data_64_t info;
         count = VM_REGION_BASIC_INFO_COUNT_64;
@@ -159,7 +160,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
             debug_println("mach_vm_region failed, error: %d, %s", error, mach_error_string(error));
             return false;
         }
-
+        
         (*env)->CallVoidMethod(env, process, _methodID, result, (long) thread, state, (jlong) stackBase, (jlong) stackSize);
     }
 
@@ -189,4 +190,43 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, j
     }
 
     return true;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong task, jlong address, jbyteArray byteArray, jint offset, jint length) {
+  mach_vm_size_t bytesRead = length;
+  
+  jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
+  if (buffer == 0) {
+      debug_println("failed to malloc byteArray of %d bytes", length);
+      return -1;
+  }
+  
+  kern_return_t result = mach_vm_read_overwrite(task, (vm_address_t) address, length, (vm_address_t) buffer, &bytesRead);
+  if (result == KERN_SUCCESS && bytesRead > 0) {
+      (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
+  }
+  free(buffer);
+
+  return result == KERN_SUCCESS ? bytesRead : -1;
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong task, jlong address, jbyteArray byteArray, jint offset, jint length) {
+    jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
+    if (buffer == 0) {
+        debug_println("failed to malloc byteArray of %d bytes", length);
+        return -1;
+    }
+
+    (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
+    if ((*env)->ExceptionOccurred(env) != NULL) {
+        debug_println("failed to copy %d bytes from byteArray into buffer", length);
+        return -1;
+    }
+
+    
+    kern_return_t result = mach_vm_write(task, (vm_address_t) address, (vm_offset_t) buffer, length);
+    free(buffer);
+    return result == KERN_SUCCESS ? length : -1;
 }

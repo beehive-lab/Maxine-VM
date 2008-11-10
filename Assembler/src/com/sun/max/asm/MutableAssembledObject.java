@@ -23,7 +23,7 @@ package com.sun.max.asm;
 /**
  * An assembled object whose position and size may change.
  * Examples include span-dependent jump instructions to labels and padding bytes for memory alignment.
- * 
+ *
  * @author David Liu
  * @author Doug Simon
  */

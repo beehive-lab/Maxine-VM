@@ -37,6 +37,7 @@ import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -55,9 +56,14 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     private static Manager _manager;
 
+    private static Preferences _globalPreferences;
+
+    public static synchronized Preferences globalPreferences(Inspection inspection) {
+        return _globalPreferences;
+    }
+
     /**
-     * Manages inspection of objects in the {@link TeleVM} heap.
-     * Has no visible presence or direct user interaction at this time.
+     * Singleton manager;  no visible presence or direct user interaction at this time.
      *
      * @author Michael Van De Vanter
      */
@@ -65,6 +71,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
         private Manager(Inspection inspection) {
             super(inspection);
+            _globalPreferences = new Preferences(inspection);
         }
 
         public static void make(Inspection inspection) {
@@ -116,7 +123,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     public static class Preferences {
         private final Inspection _inspection;
         boolean _showHeader;
-        boolean _showFieldPosition;
+        boolean _showAddresses;
+        boolean _showOffsets;
         boolean _showFieldType;
 
         Preferences(Inspection inspection) {
@@ -125,15 +133,17 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("objectInspectorPrefs", null) {
                 public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                     saveSettingsEvent.save("showHeader", _showHeader);
-                    saveSettingsEvent.save("showFieldPosition", _showFieldPosition);
+                    saveSettingsEvent.save("showAddresses", _showAddresses);
+                    saveSettingsEvent.save("showOffsets", _showOffsets);
                     saveSettingsEvent.save("showFieldType", _showFieldType);
                 }
             };
             settings.addSaveSettingsListener(saveSettingsListener);
 
             _showHeader = settings.get(saveSettingsListener, "showHeader", OptionTypes.BOOLEAN_TYPE, true);
-            _showHeader = settings.get(saveSettingsListener, "showFieldPosition", OptionTypes.BOOLEAN_TYPE, true);
-            _showHeader = settings.get(saveSettingsListener, "showFieldType", OptionTypes.BOOLEAN_TYPE, true);
+            _showAddresses = settings.get(saveSettingsListener, "showAddresses", OptionTypes.BOOLEAN_TYPE, false);
+            _showOffsets = settings.get(saveSettingsListener, "showOffsets", OptionTypes.BOOLEAN_TYPE, true);
+            _showFieldType = settings.get(saveSettingsListener, "showFieldType", OptionTypes.BOOLEAN_TYPE, true);
         }
 
         /**
@@ -146,34 +156,43 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             alwaysShowHeaderCheckBox.setToolTipText("Show new Object Inspectors initially display the header?");
             alwaysShowHeaderCheckBox.setSelected(_showHeader);
 
-            final JCheckBox alwaysShowPosCheckBox = new JCheckBox("Position");
-            alwaysShowPosCheckBox.setOpaque(true);
-            alwaysShowPosCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowPosCheckBox.setToolTipText("Display positions in tuples?");
-            alwaysShowPosCheckBox.setSelected(_showFieldPosition);
+            final JCheckBox alwaysShowAddressesCheckBox = new JCheckBox("Addresses");
+            alwaysShowAddressesCheckBox.setOpaque(true);
+            alwaysShowAddressesCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
+            alwaysShowAddressesCheckBox.setToolTipText("Display addresses?");
+            alwaysShowAddressesCheckBox.setSelected(_showAddresses);
 
-            final JCheckBox alwaysShowTypeCheckBox = new JCheckBox("Type");
-            alwaysShowTypeCheckBox.setOpaque(true);
-            alwaysShowTypeCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowTypeCheckBox.setToolTipText("Display types in tuples?");
-            alwaysShowTypeCheckBox.setSelected(_showFieldType);
+            final JCheckBox alwaysShowOffsetsCheckBox = new JCheckBox("Offsets");
+            alwaysShowOffsetsCheckBox.setOpaque(true);
+            alwaysShowOffsetsCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
+            alwaysShowOffsetsCheckBox.setToolTipText("Display offsets?");
+            alwaysShowOffsetsCheckBox.setSelected(_showOffsets);
+
+            final JCheckBox alwaysShowTupleTypeCheckBox = new JCheckBox("Type");
+            alwaysShowTupleTypeCheckBox.setOpaque(true);
+            alwaysShowTupleTypeCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
+            alwaysShowTupleTypeCheckBox.setToolTipText("Display types in tuples?");
+            alwaysShowTupleTypeCheckBox.setSelected(_showFieldType);
 
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
                     final Object source = e.getItemSelectable();
                     if (source == alwaysShowHeaderCheckBox) {
                         _showHeader = alwaysShowHeaderCheckBox.isSelected();
-                    } else if (source == alwaysShowPosCheckBox) {
-                        _showFieldPosition = alwaysShowPosCheckBox.isSelected();
-                    } else if (source == alwaysShowTypeCheckBox) {
-                        _showFieldType = alwaysShowTypeCheckBox.isSelected();
+                    } else if (source == alwaysShowAddressesCheckBox) {
+                        _showAddresses = alwaysShowAddressesCheckBox.isSelected();
+                    } else if (source == alwaysShowOffsetsCheckBox) {
+                        _showOffsets = alwaysShowOffsetsCheckBox.isSelected();
+                    } else if (source == alwaysShowTupleTypeCheckBox) {
+                        _showFieldType = alwaysShowTupleTypeCheckBox.isSelected();
                     }
                     _inspection.settings().save();
                 }
             };
             alwaysShowHeaderCheckBox.addItemListener(itemListener);
-            alwaysShowPosCheckBox.addItemListener(itemListener);
-            alwaysShowTypeCheckBox.addItemListener(itemListener);
+            alwaysShowAddressesCheckBox.addItemListener(itemListener);
+            alwaysShowOffsetsCheckBox.addItemListener(itemListener);
+            alwaysShowTupleTypeCheckBox.addItemListener(itemListener);
 
             final JPanel panel = new JPanel(new BorderLayout());
             panel.setOpaque(true);
@@ -182,8 +201,9 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             final JPanel content = new JPanel();
             content.add(new TextLabel(_inspection, "Show:  "));
             content.add(alwaysShowHeaderCheckBox);
-            content.add(alwaysShowPosCheckBox);
-            content.add(alwaysShowTypeCheckBox);
+            content.add(alwaysShowAddressesCheckBox);
+            content.add(alwaysShowOffsetsCheckBox);
+            content.add(alwaysShowTupleTypeCheckBox);
 
             panel.add(content, BorderLayout.WEST);
             return panel;
@@ -225,15 +245,6 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     }
 
-    private static Preferences _globalPreferences;
-
-    public static synchronized Preferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new Preferences(inspection);
-        }
-        return _globalPreferences;
-    }
-
 
     private final TeleObject _teleObject;
 
@@ -250,7 +261,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private Pointer _currentObjectOrigin;
 
     private final JCheckBoxMenuItem _showHeaderMenuCheckBox;
-    private final JCheckBoxMenuItem _showPosMenuCheckBox;
+    private final JCheckBoxMenuItem _showAddressesMenuCheckBox;
+    private final JCheckBoxMenuItem _showOffsetsMenuCheckBox;
     private final JCheckBoxMenuItem _showTypeMenuCheckBox;
 
     private ObjectHeaderInspector _objectHeaderInspector;
@@ -269,8 +281,14 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 reconstructView();
             }
         });
-        _showPosMenuCheckBox = new JCheckBoxMenuItem("Display tuple position", preferences._showFieldPosition);
-        _showPosMenuCheckBox.addActionListener(new ActionListener() {
+        _showAddressesMenuCheckBox = new JCheckBoxMenuItem("Display addresses", preferences._showAddresses);
+        _showAddressesMenuCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
+        _showOffsetsMenuCheckBox = new JCheckBoxMenuItem("Display offsets", preferences._showOffsets);
+        _showOffsetsMenuCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 reconstructView();
             }
@@ -290,7 +308,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         setLocationRelativeToMouse(inspection().geometry().objectInspectorNewFrameDiagonalOffset());
         frame().menu().addSeparator();
         frame().menu().add(_showHeaderMenuCheckBox);
-        frame().menu().add(_showPosMenuCheckBox);
+        frame().menu().add(_showAddressesMenuCheckBox);
+        frame().menu().add(_showOffsetsMenuCheckBox);
         frame().menu().add(_showTypeMenuCheckBox);
         frame().menu().add(new InspectorAction(inspection(), "Object Display Prefs..") {
             @Override
@@ -317,6 +336,11 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     }
 
     @Override
+    public final String getTitle() {
+        return _teleObject.getCurrentOrigin().toHexString() + inspection().nameDisplay().referenceLabelText(_teleObject);
+    }
+
+    @Override
     public void inspectorGetsWindowFocus() {
         if (_teleObject != inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(_teleObject);
@@ -340,11 +364,18 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         super.inspectorClosing();
     }
 
-    /**
-     * @return whether to display the "Position" column for headers and tuples
+     /**
+     * @return whether to display the "Address" column for headers, tuples, and arrays
      */
-    public boolean showPos() {
-        return _showPosMenuCheckBox.getState();
+    public boolean showAddresses() {
+        return _showAddressesMenuCheckBox.getState();
+    }
+
+    /**
+     * @return whether to display the "Offset" column for headers, tuples and arrays
+     */
+    public boolean showOffsets() {
+        return _showOffsetsMenuCheckBox.getState();
     }
 
     /**
@@ -359,10 +390,27 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
      */
     public int numberOfTupleColumns() {
         int result = 2;
-        if (showPos()) {
+        if (showAddresses()) {
+            result++;
+        }
+        if (showOffsets()) {
             result++;
         }
         if (showType()) {
+            result++;
+        }
+        return result;
+    }
+
+    /**
+     * @return how many columns are currently being displayed
+     */
+    public int numberOfArrayColumns() {
+        int result = 2;
+        if (showAddresses()) {
+            result++;
+        }
+        if (showOffsets()) {
             result++;
         }
         return result;
@@ -420,8 +468,11 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             }
         });
         for (final FieldActor fieldActor : fieldActors) {
-            if (showPos()) {
-                fieldsPanel.add(new LocationLabel.AsOffset(inspection(), fieldActor.offset(), _currentObjectOrigin));                           // Field Offset
+            if (showAddresses()) {
+                fieldsPanel.add(new LocationLabel.AsAddressWithOffset(inspection(), fieldActor.offset(), _currentObjectOrigin));  // Field address
+            }
+            if (showOffsets()) {
+                fieldsPanel.add(new LocationLabel.AsOffset(inspection(), fieldActor.offset(), _currentObjectOrigin));                           // Field position
             }
             if (showType()) {
                 fieldsPanel.add(new ClassActorLabel(inspection(), fieldActor.descriptor()));                                                              // Field type
@@ -473,12 +524,19 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     protected JPanel createArrayPanel(AppendableSequence<ValueLabel> valueLabels, final Kind kind, int startOffset, int startIndex, int length, String indexPrefix,
                                       WordValueLabel.ValueMode wordValueMode) {
+        final int size = kind.size();
         final JPanel panel = new JPanel(new SpringLayout());
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
         for (int i = 0; i < length; i++) {
             final int index = startIndex + i;
-            panel.add(new LocationLabel.AsIndex(inspection(), indexPrefix, i, startOffset + (i * kind.size()), _currentObjectOrigin));
+            if (showAddresses()) {
+                panel.add(new LocationLabel.AsAddressWithOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
+            }
+            if (showOffsets()) {
+                panel.add(new LocationLabel.AsOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
+            }
+            panel.add(new LocationLabel.AsIndex(inspection(), indexPrefix, i, startOffset + (i * size), _currentObjectOrigin));
             if (kind == Kind.REFERENCE) {
                 valueLabels.append(new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE) {
                     @Override
@@ -503,7 +561,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             }
             panel.add(valueLabels.last());
         }
-        SpringUtilities.makeCompactGrid(panel, 2);
+        SpringUtilities.makeCompactGrid(panel, numberOfArrayColumns());
         panel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         return panel;
     }

@@ -21,13 +21,14 @@
 package com.sun.max.tele;
 
 import com.sun.max.lang.*;
+import com.sun.max.tele.debug.TeleNativeThread;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Canonical surrogate for a {@link VmThread} in the Target VM.
- * The name of a thread can be changed dynamically in the Target VM.
+ * Canonical surrogate for a {@link VmThread} in the {@link TeleVM}.
+ * The name of a thread can be changed dynamically in the {@link TeleVM}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -46,18 +47,23 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
     // the most recent execution epoch when we checked the name reference
     private long _epoch = -1;
 
-    // the string representing the name of the thread the last time we checked the Target VM.
+    // the string representing the name of the thread the last time we checked the {@link TeleVM}.
     // assume that strings are immutable, so only re-read when the reference changes.
     private Reference _nameReference;
 
+    public TeleVmThread(TeleVM teleVM, Reference vmThreadReference) {
+        super(teleVM, vmThreadReference);
+        _serial = teleVM().fields().VmThread_serial.readLong(vmThreadReference);
+    }
+
     /**
-     * @return the name assigned to the thread in the Target VM; may change dynamically.
+     * @return the name assigned to the thread in the {@link TeleVM}; may change dynamically.
      */
     public String name() {
         if (teleProcess().epoch() > _epoch) {
             final Reference nameReference = teleVM().fields().VmThread_name.readReference(reference());
             if (_nameReference == null || !nameReference.equals(_nameReference)) {
-                // Assume strings in the tele VM don't change, so we don't need to re-read
+                // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
                 // if we've already seen the string (depends on canonical references).
                 _nameReference = nameReference;
                 _name = teleVM().getString(_nameReference);
@@ -67,9 +73,16 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
         return _name;
     }
 
-    public TeleVmThread(TeleVM teleVM, Reference vmThreadReference) {
-        super(teleVM, vmThreadReference);
-        _serial = teleVM().fields().VmThread_serial.readLong(vmThreadReference);
+    /**
+     * @return the native thread in the {@link TeleVM} with which this VM thread is associated.
+     */
+    public TeleNativeThread teleNativeThread() {
+    	for (TeleNativeThread teleNativeThread : teleProcess().threads()) {
+    		if (this.equals(teleNativeThread.teleVmThread())) {
+    			return teleNativeThread;
+    		}
+    	}
+    	return null;
     }
 
     @Override

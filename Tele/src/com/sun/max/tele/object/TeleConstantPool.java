@@ -57,7 +57,11 @@ public final class TeleConstantPool extends TeleTupleObject{
      */
     public TelePoolConstant readTelePoolConstant(int index) {
         final Reference poolConstantReference = teleVM().getElementValue(Kind.REFERENCE, constantsArrayReference(), index).asReference();
-        return (TelePoolConstant) TeleObject.make(teleVM(), poolConstantReference);
+        final TeleObject teleObject = TeleObject.make(teleVM(), poolConstantReference);
+        if (!(teleObject instanceof TelePoolConstant)) {
+        	return null;
+        }
+		return (TelePoolConstant) teleObject;
     }
 
     /**

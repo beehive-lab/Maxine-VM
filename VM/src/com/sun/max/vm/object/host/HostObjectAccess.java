@@ -209,61 +209,12 @@ public final class HostObjectAccess {
         }
         if (object instanceof Value) {
             // canonicalize all instances of com.sun.max.vm.value.Value
-            if (_valueMap == null) {
-                _valueMap = new HashMap<Value, Value>();
-            }
-            final Value iv = (Value) object;
-
-            // '-0' requires a compiler literal that is separated from '0',
-            // even though '==' per FPU would return 'true':
-            switch (iv.kind().asEnum()) {
-                case FLOAT: {
-                    if (iv.asFloat() == 0F && Float.floatToRawIntBits(iv.asFloat()) != 0) {
-                        return iv;
-                    }
-                    break;
-                }
-                case DOUBLE: {
-                    if (iv.asDouble() == 0D && Double.doubleToRawLongBits(iv.asDouble()) != 0L) {
-                        return iv;
-                    }
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
-            final Value rv = _valueMap.get(iv);
-            if (rv != null) {
-                return rv;
-            }
-            _valueMap.put(iv, iv);
-            return iv;
+            return hostToTargetValue(object);
         }
         if (_objectMap == null) {
             // remap certain objects to certain other objects
-            _objectMap = new IdentityHashMap<Object, Object>();
-
-            _objectMap.put(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, VmClassLoader.VM_CLASS_LOADER);
-            _objectMap.put(VmClassLoader.VM_CLASS_LOADER.getParent(), NULL);
-            _objectMap.put(_systemThreadGroup, NULL);
-            _objectMap.put(_mainThread, _mainThread);
-            final ThreadGroup threadGroup = new ThreadGroup("MaxineVM");
-            WithoutAccessCheck.setInstanceField(threadGroup, "parent", null);
-            _objectMap.put(_mainThread.getThreadGroup(), threadGroup);
-            _objectMap.put(threadGroup, threadGroup);
-            _objectMap.put(MaxineVM.host(), MaxineVM.target());
-            _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), new Properties());
-            try {
-                _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.ApplicationShutdownHooks"), "hooks"), new IdentityHashMap<Thread, Thread>());
-                _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.Shutdown"), "hooks"), new ArrayList<Runnable>());
-            } catch (ClassNotFoundException classNotFoundException) {
-                ProgramError.unexpected(classNotFoundException);
-            }
-
-            HackJDK.fixBufferedInputStream(_objectMap);
+            initializeObjectIdentityMap();
         }
-
         final Object replace = _objectMap.get(object);
         if (replace == NULL) {
             return null;
@@ -271,10 +222,7 @@ public final class HostObjectAccess {
         if (replace != null) {
             return replace;
         }
-        if (object instanceof Thread) {
-            return null;
-        }
-        if (object instanceof ThreadGroup) {
+        if (object instanceof Thread || object instanceof ThreadGroup) {
             return null;
         }
 
@@ -287,5 +235,61 @@ public final class HostObjectAccess {
             return nameAndType;
         }
         return object;
+    }
+
+    private static void initializeObjectIdentityMap() {
+        _objectMap = new IdentityHashMap<Object, Object>();
+
+        _objectMap.put(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, VmClassLoader.VM_CLASS_LOADER);
+        _objectMap.put(VmClassLoader.VM_CLASS_LOADER.getParent(), NULL);
+        _objectMap.put(_systemThreadGroup, NULL);
+        _objectMap.put(_mainThread, _mainThread);
+        final ThreadGroup threadGroup = new ThreadGroup("MaxineVM");
+        WithoutAccessCheck.setInstanceField(threadGroup, "parent", null);
+        _objectMap.put(_mainThread.getThreadGroup(), threadGroup);
+        _objectMap.put(threadGroup, threadGroup);
+        _objectMap.put(MaxineVM.host(), MaxineVM.target());
+        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), new Properties());
+        try {
+            _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.ApplicationShutdownHooks"), "hooks"), new IdentityHashMap<Thread, Thread>());
+            _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.Shutdown"), "hooks"), new ArrayList<Runnable>());
+        } catch (ClassNotFoundException classNotFoundException) {
+            ProgramError.unexpected(classNotFoundException);
+        }
+
+        HackJDK.fixBufferedInputStream(_objectMap);
+    }
+
+    private static Object hostToTargetValue(Object object) {
+        if (_valueMap == null) {
+            _valueMap = new HashMap<Value, Value>();
+        }
+        final Value iv = (Value) object;
+
+        // '-0' requires a compiler literal that is separated from '0',
+        // even though '==' per FPU would return 'true':
+        switch (iv.kind().asEnum()) {
+            case FLOAT: {
+                if (iv.asFloat() == 0F && Float.floatToRawIntBits(iv.asFloat()) != 0) {
+                    return iv;
+                }
+                break;
+            }
+            case DOUBLE: {
+                if (iv.asDouble() == 0D && Double.doubleToRawLongBits(iv.asDouble()) != 0L) {
+                    return iv;
+                }
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+        final Value rv = _valueMap.get(iv);
+        if (rv != null) {
+            return rv;
+        }
+        _valueMap.put(iv, iv);
+        return iv;
     }
 }

@@ -24,13 +24,13 @@ import com.sun.max.program.*;
 
 /**
  * Assembler labels for symbolic addressing.
- * 
+ *
  * This class provides combined functionality for both 32-bit and 64-bit address spaces.
  * The respective assembler narrows the usable interface to either.
  *
  * @see Assembler32
  * @see Assembler64
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class Label implements Argument {
@@ -40,6 +40,12 @@ public final class Label implements Argument {
     }
 
     protected State _state = State.UNASSIGNED;
+
+    public static Label createBoundLabel(int position) {
+        final Label label = new Label();
+        label.bind(position);
+        return label;
+    }
 
     public Label() {
     }
@@ -64,12 +70,12 @@ public final class Label implements Argument {
      * Binds this label to a position in the assembler's instruction stream that represents the start of an instruction.
      * The assembler may update the position if any emitted instructions change lengths, so that this label keeps
      * denoting the same logical instruction.
-     * 
+     *
      * Only to be called by {@link Assembler#bindLabel(Label)}.
-     * 
+     *
      * @param position
      *            an instruction's position in the assembler's instruction stream
-     * 
+     *
      * @see Assembler#bindLabel(Label)
      */
     void bind(int position) {
@@ -89,9 +95,9 @@ public final class Label implements Argument {
      * Assigns a fixed, absolute 32-bit address to this label.
      * If used in a 64-bit assembler,
      * the effective address value would be unsigned-extended.
-     * 
+     *
      * @param address an absolute memory location
-     * 
+     *
      * @see Assembler#bindLabel(Label)
      */
     void fix32(int address32) {
@@ -101,9 +107,9 @@ public final class Label implements Argument {
 
     /**
      * Assigns a fixed, absolute 64-bit address to this label.
-     * 
+     *
      * @param address an absolute memory location
-     * 
+     *
      * @see Assembler#bindLabel(Label)
      */
     void fix64(long address64) {

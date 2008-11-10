@@ -30,13 +30,14 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
+import com.sun.max.ins.InspectionActions.*;
 import com.sun.max.ins.InspectionMenus.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.TeleProcess.*;
 
 /**
  */
-public abstract class InspectorAction extends AbstractAction {
+public abstract class InspectorAction extends AbstractAction implements Prober {
 
     /**
      * The set of InspectorAction types to which a key stroke can be bound.
@@ -45,7 +46,7 @@ public abstract class InspectorAction extends AbstractAction {
     public static final Set<Class<? extends InspectorAction>> KEY_BINDABLE_ACTIONS = new HashSet<Class<? extends InspectorAction>>(Arrays.asList(
         ViewBootImageAction.class,
         QuitAction.class,
-        InspectClassAction.class,
+        InspectClassActorByNameAction.class,
         InspectMethodAction.class,
         ViewMethodBytecodeAction.class,
         ViewMethodTargetCodeAction.class,
@@ -58,9 +59,9 @@ public abstract class InspectorAction extends AbstractAction {
         StepOverWithBreakpointsAction.class,
         ResumeAction.class,
         PauseAction.class,
-        ToggleTargetBreakpointAction.class,
+        ToggleTargetCodeBreakpointAction.class,
         SetLabelBreakpointsAction.class,
-        ClearLabelBreakpointsAction.class,
+        RemoveLabelBreakpointsAction.class,
         BreakAtMethodAction.class,
         BreakAtObjectInitializersAction.class,
         BreakAtTargetMethodAction.class
@@ -139,7 +140,7 @@ public abstract class InspectorAction extends AbstractAction {
     public static final KeyBindingMap MAXINE_KEY_BINDING_MAP = new KeyBindingMap("Maxine").
         add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
-        add(InspectClassAction.class, 'C', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(InspectClassActorByNameAction.class, 'C', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeAction.class, 'B', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodTargetCodeAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -150,12 +151,12 @@ public abstract class InspectorAction extends AbstractAction {
         add(ReturnFromFrameAction.class, 'F', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ResumeAction.class, 'R', CTRL_DOWN_MASK).
         add(PauseAction.class, 'P', CTRL_DOWN_MASK).
-        add(ToggleTargetBreakpointAction.class, 'B', CTRL_DOWN_MASK).
+        add(ToggleTargetCodeBreakpointAction.class, 'B', CTRL_DOWN_MASK).
         add(BreakAtTargetMethodAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(BreakAtMethodAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(BreakAtObjectInitializersAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
-        add(ClearLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(RemoveLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(RunToInstructionWithBreakpointsAction.class, 'T', CTRL_DOWN_MASK).
         add(RunToInstructionAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
 
@@ -165,7 +166,7 @@ public abstract class InspectorAction extends AbstractAction {
     public static final KeyBindingMap NETBEANS_KEY_BINDINGS = new KeyBindingMap("NetBeans").
         add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
-        add(InspectClassAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodTargetCodeAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -176,12 +177,12 @@ public abstract class InspectorAction extends AbstractAction {
         add(ReturnFromFrameAction.class, VK_F7, CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ResumeAction.class, VK_F5).
         add(PauseAction.class, 'P', CTRL_DOWN_MASK).
-        add(ToggleTargetBreakpointAction.class, VK_F8, CTRL_DOWN_MASK).
+        add(ToggleTargetCodeBreakpointAction.class, VK_F8, CTRL_DOWN_MASK).
         add(BreakAtTargetMethodAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(BreakAtMethodAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(BreakAtObjectInitializersAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
-        add(ClearLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(RemoveLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(RunToInstructionWithBreakpointsAction.class, VK_F4).
         add(RunToInstructionAction.class, VK_F4, CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
 
@@ -191,7 +192,7 @@ public abstract class InspectorAction extends AbstractAction {
     public static final KeyBindingMap ECLIPSE_KEY_BINDINGS = new KeyBindingMap("Eclipse").
         add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
-        add(InspectClassAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(InspectMethodAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodBytecodeAction.class, 'J', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ViewMethodTargetCodeAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
@@ -202,12 +203,12 @@ public abstract class InspectorAction extends AbstractAction {
         add(ReturnFromFrameAction.class, VK_F7, CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(ResumeAction.class, VK_F8).
         add(PauseAction.class, 'P', CTRL_DOWN_MASK).
-        add(ToggleTargetBreakpointAction.class, 'B', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(ToggleTargetCodeBreakpointAction.class, 'B', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(BreakAtTargetMethodAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(BreakAtMethodAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(BreakAtObjectInitializersAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
-        add(ClearLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(RemoveLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(RunToInstructionWithBreakpointsAction.class, 'R', CTRL_DOWN_MASK).
         add(RunToInstructionAction.class, 'R', CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
 
@@ -254,6 +255,12 @@ public abstract class InspectorAction extends AbstractAction {
     }
 
     protected abstract void procedure();
+
+    public void refresh(long epoch, boolean force) {
+    }
+
+    public void redisplay() {
+    }
 
     public void perform() {
         synchronized (_inspection) {
