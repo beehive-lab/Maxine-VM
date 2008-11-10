@@ -95,7 +95,7 @@ public class NewJavaRunScheme extends AbstractVMScheme implements RunScheme {
         Trace.on(VMOptions.traceLevel());
         Trace.line(VMOptions.traceLevel(), "trace level is " + VMOptions.traceLevel());
 
-        if (VMOptions.parseMain()) {
+        if (VMOptions.parseMain(true)) {
             final BootClassLoader bootClassLoader = new BootClassLoader();
             Classes.forName(SandBox.class.getName(), true, bootClassLoader);
         }

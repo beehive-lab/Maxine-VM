@@ -37,7 +37,6 @@ import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.schemes.*;
 import com.sun.max.vm.monitor.modal.sync.*;
@@ -365,8 +364,6 @@ public class VmThread {
      */
     public static void createAndRunMainThread() {
         final Size requestedStackSize = _stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize();
-        // link critical sleep method
-        nonJniNativeSleep.link();
 
         final Word nativeThread = nativeThreadCreate(_mainVMThread._threadMapID, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
@@ -456,7 +453,7 @@ public class VmThread {
      * @param disabledVmThreadLocals the address of the VM thread locals in effect when safepoints are
      *            {@linkplain Safepoint#disable() disabled} for this thread
      * @param triggeredVmThreadLocals the address of the VM thread locals in effect when safepoints are
-     *            {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered} for this thread
+     *            {@linkplain Safepoint#trigger(Pointer) triggered} for this thread
      */
     @C_FUNCTION
     private static void run(int id, Address nativeThread,
@@ -492,17 +489,10 @@ public class VmThread {
         VmThreadLocal.TAG.setConstantWord(enabledVmThreadLocals, TAG);
         SAFEPOINT_VENUE.setVariableReference(enabledVmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
 
-        // enable write barriers by setting the adjusted card table address
-        if (MaxineVM.isRunning() || MaxineVM.isStarting()) {
-            // use the normal card table
-            ADJUSTED_CARDTABLE_BASE.setConstantWord(enabledVmThreadLocals, CardRegion.getAdjustedCardTable());
-        } else {
-            // use the primordial card table
-            ADJUSTED_CARDTABLE_BASE.setConstantWord(enabledVmThreadLocals, ADJUSTED_CARDTABLE_BASE.getConstantWord(MaxineVM.primordialVmThreadLocals()));
-        }
-
         // Add the VM thread locals to the active map
         final VmThread vmThread = VmThreadMap.ACTIVE.addVmThreadLocals(id, enabledVmThreadLocals);
+
+        Heap.initializeVmThread(enabledVmThreadLocals);
 
         vmThread._nativeThread = nativeThread;
         vmThread._vmThreadLocals = enabledVmThreadLocals;

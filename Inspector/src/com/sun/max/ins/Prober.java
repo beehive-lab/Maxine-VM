@@ -30,11 +30,6 @@ package com.sun.max.ins;
 public interface Prober {
 
     /**
-     * @return the inspection session of which this {@link Prober} is a part.
-     */
-    Inspection inspection();
-
-    /**
      * Brings prober/view up to date with the state of the {@link TeleVM}.
      *
      * @param epoch current execution age of the tele process.

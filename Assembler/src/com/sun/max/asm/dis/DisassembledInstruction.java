@@ -32,18 +32,29 @@ import com.sun.max.collect.*;
  * @author Bernd Mathiske
  * @author Greg Wright
  */
-public abstract class DisassembledInstruction<Template_Type extends Template> implements AssemblyObject, AddressInstruction {
+public abstract class DisassembledInstruction<Template_Type extends Template> implements DisassembledObject {
 
+    private final Disassembler _disassembler;
     private final int _startPosition;
     private final byte[] _bytes;
     private final Template_Type _template;
     private final IndexedSequence<Argument> _arguments;
 
-    protected DisassembledInstruction(int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+    protected DisassembledInstruction(Disassembler disassembler, int position, byte[] bytes, Template_Type template, IndexedSequence<Argument> arguments) {
+        assert bytes.length != 0;
+        _disassembler = disassembler;
         _startPosition = position;
         _bytes = bytes;
         _template = template;
         _arguments = arguments;
+    }
+
+    public ImmediateArgument startAddress() {
+        return _disassembler.startAddress().plus(_startPosition);
+    }
+
+    public ImmediateArgument endAddress() {
+        return _disassembler.startAddress().plus(endPosition());
     }
 
     public int startPosition() {
@@ -81,50 +92,39 @@ public abstract class DisassembledInstruction<Template_Type extends Template> im
         return result;
     }
 
-    protected static DisassembledLabel instructionPositionToLabel(int instructionPosition, Sequence<DisassembledLabel> labels) {
-        for (DisassembledLabel label : labels) {
-            if (label.position() == instructionPosition) {
-                return label;
+    @Override
+    public String toString() {
+        return toString(_disassembler.addressMapper());
+    }
+
+    public abstract String toString(AddressMapper addressMapper);
+
+    public abstract String operandsToString(AddressMapper addressMapper);
+
+    /**
+     * Gets the address to which an offset argument of this instruction is relative.
+     */
+    public abstract ImmediateArgument addressForRelativeAddressing();
+
+    @Override
+    public ImmediateArgument targetAddress() {
+        final Template_Type template = template();
+        final int parameterIndex = template.labelParameterIndex();
+        if (parameterIndex >= 0) {
+            final ImmediateArgument immediateArgument = (ImmediateArgument) arguments().get(parameterIndex);
+            final Parameter parameter = template.parameters().get(parameterIndex);
+            if (parameter instanceof OffsetParameter) {
+                return addressForRelativeAddressing().plus(immediateArgument);
             }
+            return immediateArgument;
         }
         return null;
     }
 
-    protected DisassembledLabel offsetArgumentToLabel(ImmediateArgument argument, Sequence<DisassembledLabel> labels) {
-        final int argumentOffset = (int) argument.asLong();
-        final int targetPosition = argumentOffset + positionForRelativeAddressing();
-        return instructionPositionToLabel(targetPosition, labels);
-    }
-
-    protected DisassembledLabel addressArgumentToLabel(ImmediateArgument argument, Sequence<DisassembledLabel> labels) {
-        final long targetOffset = addressToPosition(argument);
-        if (targetOffset < 0) {
-            return null;
-        }
-        return instructionPositionToLabel((int) targetOffset, labels);
-    }
-
-    public abstract String toString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
-
-    public String toString(Sequence<DisassembledLabel> labels) {
-        return toString(labels, null);
-    }
-
-    public abstract String externalName();
-
-    public abstract String operandsToString(Sequence<DisassembledLabel> labels, GlobalLabelMapper globalLabelMapper);
-
-    public String operandsToString(Sequence<DisassembledLabel> labels) {
-        return operandsToString(labels, null);
-    }
-
-    public abstract int positionForRelativeAddressing();
-
-    /*
-     * Return the byte array encoding this instruction.
+    /**
+     * Gets the byte array encoding this instruction.
      */
     protected byte[] rawInstruction() {
         return _bytes;
     }
-
 }

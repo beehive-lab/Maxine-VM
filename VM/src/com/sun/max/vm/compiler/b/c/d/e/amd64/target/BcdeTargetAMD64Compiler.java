@@ -24,6 +24,7 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.asm.amd64.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -41,6 +42,7 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.amd64.*;
@@ -241,7 +243,32 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
         switch (purpose) {
             case REFERENCE_MAP_PREPARING: {
                 // frame pointer == stack pointer
-                if (!targetMethod.prepareFrameReferenceMap((StackReferenceMapPreparer) context, instructionPointer, stackPointer, stackPointer)) {
+                final StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
+                Pointer trapState = stackFrameWalker.trapState();
+                if (!trapState.isZero()) {
+                    FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
+                    final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                    if (safepoint.getTrapNumber(trapState) == Trap.Number.STACK_FAULT) {
+                        // There's no need to deal with the any references in a frame that triggered a stack overflow.
+                        // The explicit stack banging code that causes a stack overflow trap is always in the
+                        // prologue which is guaranteed not to be in the scope of a local exception handler.
+                        // Thus, no GC roots need to be scanned in this frame.
+                        break;
+                    }
+                } else {
+                    if (targetMethod.classMethodActor().isTrapStub()) {
+                        final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                        trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
+                        stackFrameWalker.setTrapState(trapState);
+                        if (safepoint.getTrapNumber(trapState) != Trap.Number.STACK_FAULT) {
+                            // Only scan with references in registers for a caller that did not trap due to stack overflow - see comment above.
+                            // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
+                            final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
+                            preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), callerInstructionPointer);
+                        }
+                    }
+                }
+                if (!targetMethod.prepareFrameReferenceMap(preparer, instructionPointer, stackPointer, stackPointer)) {
                     return false;
                 }
                 break;
@@ -273,8 +300,16 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
 
         final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
         final Pointer callerStackPointer = ripPointer.plus(Word.size()); // Skip RIP word
-        // framePointer == stackPointer for this scheme.
-        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerStackPointer);
+        final Pointer callerFramePointer;
+        if (targetMethod.classMethodActor().isTrapStub()) {
+            // framePointer is whatever was in the frame pointer register at the time of the trap
+            final Pointer trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
+            callerFramePointer = stackFrameWalker.readWord(trapState, AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
+        } else {
+            // framePointer == stackPointer for this scheme.
+            callerFramePointer = callerStackPointer;
+        }
+        stackFrameWalker.advance(callerInstructionPointer, callerStackPointer, callerFramePointer);
         return true;
     }
 

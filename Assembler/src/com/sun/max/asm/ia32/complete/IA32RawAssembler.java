@@ -5157,7 +5157,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code call  }<i>rel16</i>
-     * Example disassembly syntax: {@code call      L1: +4660}
+     * Example disassembly syntax: {@code call      +4660}
      */
     // Template#: 569, Serial#: 2400
     public void call(short rel16) {
@@ -18819,7 +18819,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jb  }<i>rel8</i>
-     * Example disassembly syntax: {@code jb        L1: +18}
+     * Example disassembly syntax: {@code jb        +18}
      */
     // Template#: 2087, Serial#: 264
     public void jb(byte rel8) {
@@ -18837,7 +18837,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jbe  }<i>rel8</i>
-     * Example disassembly syntax: {@code jbe       L1: +18}
+     * Example disassembly syntax: {@code jbe       +18}
      */
     // Template#: 2089, Serial#: 268
     public void jbe(byte rel8) {
@@ -18855,7 +18855,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jecxz  }<i>rel8</i>
-     * Example disassembly syntax: {@code jecxz     L1: +18}
+     * Example disassembly syntax: {@code jecxz     +18}
      */
     // Template#: 2091, Serial#: 1335
     public void jecxz(byte rel8) {
@@ -18864,7 +18864,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jl  }<i>rel8</i>
-     * Example disassembly syntax: {@code jl        L1: +18}
+     * Example disassembly syntax: {@code jl        +18}
      */
     // Template#: 2092, Serial#: 1812
     public void jl(byte rel8) {
@@ -18882,7 +18882,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jle  }<i>rel8</i>
-     * Example disassembly syntax: {@code jle       L1: +18}
+     * Example disassembly syntax: {@code jle       +18}
      */
     // Template#: 2094, Serial#: 1814
     public void jle(byte rel8) {
@@ -18900,7 +18900,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jmp  }<i>rel8</i>
-     * Example disassembly syntax: {@code jmp       L1: +18}
+     * Example disassembly syntax: {@code jmp       +18}
      */
     // Template#: 2096, Serial#: 2403
     public void jmp(byte rel8) {
@@ -19008,7 +19008,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnb  }<i>rel8</i>
-     * Example disassembly syntax: {@code jnb       L1: +18}
+     * Example disassembly syntax: {@code jnb       +18}
      */
     // Template#: 2108, Serial#: 265
     public void jnb(byte rel8) {
@@ -19026,7 +19026,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnbe  }<i>rel8</i>
-     * Example disassembly syntax: {@code jnbe      L1: +18}
+     * Example disassembly syntax: {@code jnbe      +18}
      */
     // Template#: 2110, Serial#: 269
     public void jnbe(byte rel8) {
@@ -19044,7 +19044,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnl  }<i>rel8</i>
-     * Example disassembly syntax: {@code jnl       L1: +18}
+     * Example disassembly syntax: {@code jnl       +18}
      */
     // Template#: 2112, Serial#: 1813
     public void jnl(byte rel8) {
@@ -19062,7 +19062,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnle  }<i>rel8</i>
-     * Example disassembly syntax: {@code jnle      L1: +18}
+     * Example disassembly syntax: {@code jnle      +18}
      */
     // Template#: 2114, Serial#: 1815
     public void jnle(byte rel8) {
@@ -19080,7 +19080,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jno  }<i>rel8</i>
-     * Example disassembly syntax: {@code jno       L1: +18}
+     * Example disassembly syntax: {@code jno       +18}
      */
     // Template#: 2116, Serial#: 263
     public void jno(byte rel8) {
@@ -19098,7 +19098,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnp  }<i>rel8</i>
-     * Example disassembly syntax: {@code jnp       L1: +18}
+     * Example disassembly syntax: {@code jnp       +18}
      */
     // Template#: 2118, Serial#: 1811
     public void jnp(byte rel8) {
@@ -19116,7 +19116,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jns  }<i>rel8</i>
-     * Example disassembly syntax: {@code jns       L1: +18}
+     * Example disassembly syntax: {@code jns       +18}
      */
     // Template#: 2120, Serial#: 1809
     public void jns(byte rel8) {
@@ -19134,7 +19134,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnz  }<i>rel8</i>
-     * Example disassembly syntax: {@code jnz       L1: +18}
+     * Example disassembly syntax: {@code jnz       +18}
      */
     // Template#: 2122, Serial#: 267
     public void jnz(byte rel8) {
@@ -19152,7 +19152,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jo  }<i>rel8</i>
-     * Example disassembly syntax: {@code jo        L1: +18}
+     * Example disassembly syntax: {@code jo        +18}
      */
     // Template#: 2124, Serial#: 262
     public void jo(byte rel8) {
@@ -19170,7 +19170,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jp  }<i>rel8</i>
-     * Example disassembly syntax: {@code jp        L1: +18}
+     * Example disassembly syntax: {@code jp        +18}
      */
     // Template#: 2126, Serial#: 1810
     public void jp(byte rel8) {
@@ -19188,7 +19188,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code js  }<i>rel8</i>
-     * Example disassembly syntax: {@code js        L1: +18}
+     * Example disassembly syntax: {@code js        +18}
      */
     // Template#: 2128, Serial#: 1808
     public void js(byte rel8) {
@@ -19206,7 +19206,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jz  }<i>rel8</i>
-     * Example disassembly syntax: {@code jz        L1: +18}
+     * Example disassembly syntax: {@code jz        +18}
      */
     // Template#: 2130, Serial#: 266
     public void jz(byte rel8) {
@@ -20547,7 +20547,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loop  }<i>rel8</i>
-     * Example disassembly syntax: {@code loop      L1: +18}
+     * Example disassembly syntax: {@code loop      +18}
      */
     // Template#: 2279, Serial#: 1334
     public void loop(byte rel8) {
@@ -20556,7 +20556,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loope  }<i>rel8</i>
-     * Example disassembly syntax: {@code loope     L1: +18}
+     * Example disassembly syntax: {@code loope     +18}
      */
     // Template#: 2280, Serial#: 1333
     public void loope(byte rel8) {
@@ -20565,7 +20565,7 @@ public abstract class IA32RawAssembler extends AbstractIA32Assembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loopne  }<i>rel8</i>
-     * Example disassembly syntax: {@code loopne    L1: +18}
+     * Example disassembly syntax: {@code loopne    +18}
      */
     // Template#: 2281, Serial#: 1332
     public void loopne(byte rel8) {

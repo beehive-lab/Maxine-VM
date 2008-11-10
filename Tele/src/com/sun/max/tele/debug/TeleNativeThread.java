@@ -145,7 +145,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         _integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         _floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         _stateRegisters = new TeleStateRegisters(vmConfiguration);
-        _stack = new TeleNativeStack(Address.fromLong(stackBase), Size.fromLong(stackSize));
+        _stack = new TeleNativeStack(Address.fromLong(stackBase), Size.fromLong(stackSize), this);
         _breakpointIsAtInstructionPointer = teleProcess().teleVM().vmConfiguration().platform().processorKind().instructionSet() == InstructionSet.SPARC;
     }
 
@@ -198,7 +198,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     public final void refresh(long epoch) {
         if (_state == DEAD) {
-            _stack.refresh(null);
+            _stack.invalidate();
             refreshFrames(true);
             _breakpoint = null;
             _teleVmThread = null;
@@ -228,7 +228,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * This method also updates the reference to the {@linkplain #teleVmThread() tele VmThread}.
      */
     private void refreshStack() {
-        _stack.refresh(this);
+        _stack.refresh();
         final TeleVMThreadLocalValues enableVmThreadLocalValues = _stack.enabledVmThreadLocalValues();
         if (enableVmThreadLocalValues.isValid()) {
             final Long threadLocalValue = enableVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
@@ -246,10 +246,15 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private void refreshBreakpoint() {
         final Factory breakpointFactory = teleProcess().targetBreakpointFactory();
-        breakpointFactory.registerBreakpointSetByVM(this);
+        TeleTargetBreakpoint breakpoint = null;
+        try {
+            breakpointFactory.registerBreakpointSetByVM(this);
 
-        final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
-        final TeleTargetBreakpoint breakpoint = breakpointFactory.getBreakpointAt(breakpointAddress);
+            final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
+            breakpoint = breakpointFactory.getBreakpointAt(breakpointAddress);
+        } catch (DataIOError dataIOError) {
+        	// This is a catch for problems getting accurate state for threads that are not at breakpoints
+        }
         if (breakpoint != null) {
             _state = BREAKPOINT;
             _breakpoint = breakpoint;

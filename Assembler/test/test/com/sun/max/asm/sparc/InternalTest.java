@@ -110,7 +110,7 @@ public class InternalTest extends MaxTestCase {
     public void test32() throws IOException, AssemblyException {
         final int startAddress = 0x12340000;
         final SPARC32Assembler assembler = new SPARC32Assembler(startAddress);
-        final SPARC32Disassembler disassembler = new SPARC32Disassembler(startAddress);
+        final SPARC32Disassembler disassembler = new SPARC32Disassembler(startAddress, null);
         final byte[] bytes = assemble(assembler);
         disassemble(disassembler, bytes);
         System.out.println();
@@ -119,7 +119,7 @@ public class InternalTest extends MaxTestCase {
     public void test64() throws IOException, AssemblyException {
         final long startAddress = 0x1234567812340000L;
         final SPARC64Assembler assembler = new SPARC64Assembler(startAddress);
-        final SPARC64Disassembler disassembler = new SPARC64Disassembler(startAddress);
+        final SPARC64Disassembler disassembler = new SPARC64Disassembler(startAddress, null);
         final byte[] bytes = assemble(assembler);
         disassemble(disassembler, bytes);
         System.out.println();

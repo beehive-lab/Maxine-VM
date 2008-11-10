@@ -37,7 +37,7 @@ import com.sun.max.vm.prototype.*;
 
 /**
  * Class containing the main function to startup the Maxine JDWP server. The server is listening for incoming
- * connections on port {@link Main.PORT}.
+ * connections on port.
  *
  * @author Thomas Wuerthinger
  */

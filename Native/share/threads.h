@@ -30,30 +30,6 @@
  * Alas, we did not manage to have every C compiler properly distinguish "thread.h" from <thread.h>.
  */
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_t Thread;
-    typedef pthread_key_t ThreadKey;
-#   define thread_getSpecific pthread_getspecific
-#   define thread_setSpecific pthread_setspecific
-#   define thread_initializeThreadKey pthread_key_create
-#elif os_SOLARIS
-#   include <thread.h>
-    typedef thread_t Thread;
-    typedef thread_key_t ThreadKey;
-#   define thread_setSpecific thr_setspecific
-#   define thread_initializeThreadKey thr_keycreate
-    extern void* thread_getSpecific(ThreadKey key);
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_Thread Thread;
-    typedef guestvmXen_ThreadKey ThreadKey;
-#   define thread_getSpecific guestvmXen_thread_getSpecific
-#   define thread_setSpecific guestvmXen_thread_setSpecific
-#   define thread_initializeThreadKey guestvmXen_thread_initializeThreadKey
-#endif
-
 /**
  * Global symbol that the Inspector can look up to check whether a thread's start function is this one.
  */
@@ -94,8 +70,13 @@ typedef struct {
     Address refMapArea;
     Address stackYellowZone;
     Address stackRedZone;
-} NativeThreadLocals;
+} thread_Specifics;
 
-extern ThreadKey nativeThreadLocalsKey;
+extern thread_Specifics *thread_currentSpecifics();
+
+/**
+ * For debugging purposes:
+ */
+extern void *thread_self();
 
 #endif /*__threads_h__*/

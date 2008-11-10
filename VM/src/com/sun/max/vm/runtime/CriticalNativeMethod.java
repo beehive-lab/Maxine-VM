@@ -78,7 +78,7 @@ public class CriticalNativeMethod extends CriticalMethod {
     /**
      * Links the critical native methods in the image.
      */
-    public static void initialize() {
+    public static void linkAll() {
         for (CriticalNativeMethod method : _criticalNativeMethods) {
             method.link();
         }

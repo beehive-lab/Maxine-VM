@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.heap.sequential.Beltway.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
@@ -58,6 +57,7 @@ public class JavaMonitorManager {
 
     private static final int _UNBOUNDLIST_IMAGE_QTY = 2000; // Have a large amount to start with until we get gc right
     private static final int _UNBOUNDLIST_MIN_QTY = 50; // Always keep a minimum in case gc or monitor allocation needs
+
     // monitors
     private static final int _UNBOUNDLIST_GROW_QTY = 2000;
     private static int _unboundListQty = 0;
@@ -71,7 +71,6 @@ public class JavaMonitorManager {
     private static boolean _gcDeadlockDetection = true;
 
     public interface UnboundMiscWordWriter {
-
         void writeUnboundMiscWord(Object object, Word preBindingMiscWord);
     }
 
@@ -83,15 +82,9 @@ public class JavaMonitorManager {
 
     public static void initialize(MaxineVM.Phase phase) {
         Mutex.initialize(phase);
-        ConditionVariable.initialize(phase);
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());
-
-            for (int i = 0; i < BeltwayConfiguration._numberOfGCThreads; i++) {
-                prototypeBindStickyMonitor(BeltwayCollectorThread._tokens[i], new StandardJavaMonitor());
-            }
-            prototypeBindStickyMonitor(BeltwayCollectorThread._callerToken, new StandardJavaMonitor());
 
             if (_gcDeadlockDetection) {
                 prototypeBindStickyMonitor(MaxineVM.hostOrTarget().configuration().heapScheme(), new StandardJavaMonitor.HeapSchemeDeadlockDetectionJavaMonitor());
@@ -135,7 +128,7 @@ public class JavaMonitorManager {
     }
 
     @PROTOTYPE_ONLY
-    static void prototypeBindStickyMonitor(Object object, ManagedMonitor monitor) {
+    public static void prototypeBindStickyMonitor(Object object, ManagedMonitor monitor) {
         monitor.setBoundObject(object);
         prototypeAddToAllSticky(monitor);
     }

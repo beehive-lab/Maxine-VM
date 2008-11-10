@@ -149,7 +149,7 @@ public abstract class SignatureDescriptor extends Descriptor {
         typeDescriptorList.add(JavaTypeDescriptor.VOID); // placeholder until the return type is parsed
         int i = startIndex + 1;
         while (string.charAt(i) != ')') {
-            final TypeDescriptor descriptor = parseTypeDescriptor(string, i);
+            final TypeDescriptor descriptor = parseTypeDescriptor(string, i, true);
             typeDescriptorList.add(descriptor);
             i = i + descriptor.toString().length();
             if (i >= string.length()) {
@@ -157,7 +157,7 @@ public abstract class SignatureDescriptor extends Descriptor {
             }
         }
         i++;
-        final TypeDescriptor descriptor = parseTypeDescriptor(string, i);
+        final TypeDescriptor descriptor = parseTypeDescriptor(string, i, true);
         if (i + descriptor.toString().length() != string.length()) {
             throw classFormatError("Invalid method signature: " + string);
         }

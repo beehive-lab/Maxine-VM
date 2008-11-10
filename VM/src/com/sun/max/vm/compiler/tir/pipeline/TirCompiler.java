@@ -74,7 +74,7 @@ public class TirCompiler {
         if (DISSASSEMBLE) {
             Visualizer.print(dirTranslator.method());
             Trace.stream().println(eirMethod.traceToString());
-            Disassemble.targetMethod(targetMethod);
+            Disassemble.disassemble(System.out, targetMethod);
             final IndexedSequence<TargetJavaFrameDescriptor> descriptors = TargetJavaFrameDescriptor.inflate(targetMethod.compressedJavaFrameDescriptors());
             for (TargetJavaFrameDescriptor descriptor : descriptors) {
                 if (descriptor != null) {

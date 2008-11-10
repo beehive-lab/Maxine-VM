@@ -25,44 +25,25 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 
 /**
- * 
+ *
  *
  * @author Bernd Mathiske
  */
 public class SPARC64Disassembler extends SPARCDisassembler<SPARC64DisassembledInstruction> {
 
-    private final long _startAddress;
-
-    public SPARC64Disassembler(long startAddress) {
-        super(SPARCAssembly.ASSEMBLY, WordWidth.BITS_64);
-        _startAddress = startAddress;
-    }
-
-    @Override
-    public Class<SPARC64DisassembledInstruction> disassembledInstructionType() {
-        return SPARC64DisassembledInstruction.class;
+    public SPARC64Disassembler(long startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(new Immediate64Argument(startAddress), SPARCAssembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
     protected SPARC64DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, SPARCTemplate template, IndexedSequence<Argument> arguments) {
-        return new SPARC64DisassembledInstruction(_startAddress, position, bytes, template, arguments);
-    }
-
-    @Override
-    protected SPARC64DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new SPARC64DisassembledInstruction(_startAddress, position, bytes, SPARCAssembly.ASSEMBLY.inlineByteTemplate(), arguments);
+        return new SPARC64DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new SPARC64Assembler(_startAddress + position);
+        return new SPARC64Assembler(startAddress().asLong() + position);
     }
-
 }

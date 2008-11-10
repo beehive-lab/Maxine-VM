@@ -64,9 +64,9 @@ public final class ClassActorLabel extends InspectorLabel {
                 }
                 case MouseEvent.BUTTON3: {
                     final InspectorMenu menu = new InspectorMenu();
-                    menu.add(inspection().inspectionMenus().getInspectObjectAction(getTeleClassActor(), "Inspect ClassActor (Left-Button)"));
-                    menu.add(inspection().inspectionMenus().getInspectMemoryAction(getTeleClassActor(), "Inspect ClassActor memory"));
-                    menu.add(inspection().inspectionMenus().getInspectMemoryWordsAction(getTeleClassActor(), "Inspect ClassActor memory words"));
+                    menu.add(inspection().actions().inspectObject(getTeleClassActor(), "Inspect ClassActor (Left-Button)"));
+                    menu.add(inspection().actions().inspectMemory(getTeleClassActor(), "Inspect ClassActor memory"));
+                    menu.add(inspection().actions().inspectMemoryWords(getTeleClassActor(), "Inspect ClassActor memory words"));
                     menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
                     break;
                 }
@@ -108,7 +108,7 @@ public final class ClassActorLabel extends InspectorLabel {
     }
 
     /**
-     * Fetches local surrogate for the {@link ClassActor} in the tele VM associated with this label,
+     * Fetches local surrogate for the {@link ClassActor} in the {@link TeleVM} associated with this label,
      * or set it to null if the class is not loaded in the inspected virtual machine.
      * @return a tele class actor, or null if the class is not loaded.
      */
@@ -126,14 +126,13 @@ public final class ClassActorLabel extends InspectorLabel {
         }
         final Class javaType = _typeDescriptor.toJava(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
         final TeleClassActor teleClassActor = getTeleClassActorOrNull();
-        String prefix = null;
-        if (teleClassActor == null) {
-            prefix = "<unloaded>";
-            setForeground(style().javaUnresolvedNameColor());
-        }
         setText(javaType.getSimpleName());
-        setToolTipText(inspection().nameDisplay().longName(prefix, teleClassActor, "ClassActor", javaType.getName()));
-        if (getTeleClassActorOrNull() != null) {
+
+        if (teleClassActor == null) {
+            setForeground(style().javaUnresolvedNameColor());
+            setToolTipText("<unloaded>" +  javaType.getName());
+        } else {
+            setToolTipText(inspection().nameDisplay().referenceToolTipText(teleClassActor));
             addMouseListener(_inspectorMouseClickAdapter);
         }
     }

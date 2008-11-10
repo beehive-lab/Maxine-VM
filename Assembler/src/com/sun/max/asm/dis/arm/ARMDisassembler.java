@@ -34,34 +34,22 @@ import com.sun.max.lang.*;
  */
 public class ARMDisassembler extends RiscDisassembler<ARMTemplate, ARMDisassembledInstruction>{
 
-    private final int _startAddress;
-
-    public ARMDisassembler(int startAddress) {
-        super(ARMAssembly.ASSEMBLY, WordWidth.BITS_32, Endianness.BIG);
-        _startAddress = startAddress;
-    }
-
-    @Override
-    protected ARMDisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new ARMDisassembledInstruction(_startAddress, position, bytes, ARMAssembly.ASSEMBLY.inlineByteTemplate(), arguments);
+    public ARMDisassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(new Immediate32Argument(startAddress), ARMAssembly.ASSEMBLY, Endianness.BIG, inlineDataDecoder);
     }
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new ARMAssembler(_startAddress + position);
-    }
-
-    @Override
-    public Class<ARMDisassembledInstruction> disassembledInstructionType() {
-        return ARMDisassembledInstruction.class;
+        return new ARMAssembler((int) startAddress().asLong() + position);
     }
 
     @Override
     protected ARMDisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, ARMTemplate template, IndexedSequence<Argument> arguments) {
-        return new ARMDisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new ARMDisassembledInstruction(this, position, bytes, template, arguments);
+    }
+
+    @Override
+    protected ARMTemplate createInlineDataTemplate(InstructionDescription instructionDescription) {
+        return new ARMTemplate(instructionDescription);
     }
 }

@@ -24,13 +24,13 @@ import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
 
 /**
- * 
- * 
+ *
+ *
  * @author Bernd Mathiske
  */
 public class SPARCTemplate extends RiscTemplate {
 
-    SPARCTemplate(InstructionDescription instructionDescription) {
+    public SPARCTemplate(InstructionDescription instructionDescription) {
         super(instructionDescription);
     }
 }

@@ -26,6 +26,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.dis.x86.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.cisc.ia32.*;
+import com.sun.max.asm.gen.cisc.x86.*;
 import com.sun.max.asm.ia32.complete.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -39,11 +40,8 @@ import com.sun.max.util.*;
  */
 public class IA32Disassembler extends X86Disassembler<IA32Template, IA32DisassembledInstruction> {
 
-    private final int _startAddress;
-
-    public IA32Disassembler(int startAddress) {
-        super(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);
-        _startAddress = startAddress;
+    public IA32Disassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
+        super(new Immediate32Argument(startAddress), IA32Assembly.ASSEMBLY, inlineDataDecoder);
     }
 
     @Override
@@ -52,27 +50,18 @@ public class IA32Disassembler extends X86Disassembler<IA32Template, IA32Disassem
     }
 
     @Override
-    public Class<IA32DisassembledInstruction> disassembledInstructionType() {
-        return IA32DisassembledInstruction.class;
-    }
-
-    @Override
     protected IA32DisassembledInstruction createDisassembledInstruction(int position, byte[] bytes, IA32Template template, IndexedSequence<Argument> arguments) {
-        return new IA32DisassembledInstruction(_startAddress, position, bytes, template, arguments);
+        return new IA32DisassembledInstruction(this, position, bytes, template, arguments);
     }
 
     @Override
-    protected IA32DisassembledInstruction createDisassembledInlineBytesInstruction(int position, byte[] bytes) {
-        final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
-        for (byte b : bytes) {
-            arguments.append(new Immediate8Argument(b));
-        }
-        return new IA32DisassembledInstruction(_startAddress, position, bytes, IA32Assembly.ASSEMBLY.inlineByteTemplate(), arguments);
+    protected IA32Template createInlineDataTemplate(Object[] specification) {
+        return new IA32Template(new X86InstructionDescription(new ArraySequence<Object>(specification)), 0, null, null);
     }
 
     @Override
     protected Assembler createAssembler(int position) {
-        return new IA32Assembler(_startAddress + position);
+        return new IA32Assembler((int) startAddress().asLong() + position);
     }
 
     private static Map<X86InstructionHeader, AppendableSequence<IA32Template>> _headerToTemplates = X86InstructionHeader.createMapping(IA32Assembly.ASSEMBLY, WordWidth.BITS_32);

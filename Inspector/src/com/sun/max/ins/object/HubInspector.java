@@ -137,12 +137,5 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         }
     }
 
-    @Override
-    public String getTitle() {
-        final String addressPrefix = teleObject().getCurrentOrigin().toHexString();
-        final ClassActor typeClassActor = _teleHub.hub().classActor();
-        return inspection().nameDisplay().longName(addressPrefix, teleObject(), teleObject().maxineRole(), typeClassActor.qualifiedName());
-    }
-
 
 }

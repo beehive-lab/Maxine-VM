@@ -88,7 +88,7 @@ public class InternalTest extends MaxTestCase {
     public void test32() throws IOException, AssemblyException {
         final int startAddress = 0x12340000;
         final PPC32Assembler assembler = new PPC32Assembler(startAddress);
-        final PPC32Disassembler disassembler = new PPC32Disassembler(startAddress);
+        final PPC32Disassembler disassembler = new PPC32Disassembler(startAddress, null);
         final byte[] bytes = assemble(assembler);
         disassemble(disassembler, bytes);
         System.out.println();
@@ -97,7 +97,7 @@ public class InternalTest extends MaxTestCase {
     public void test64() throws IOException, AssemblyException {
         final long startAddress = 0x1234567812340000L;
         final PPC64Assembler assembler = new PPC64Assembler(startAddress);
-        final PPC64Disassembler disassembler = new PPC64Disassembler(startAddress);
+        final PPC64Disassembler disassembler = new PPC64Disassembler(startAddress, null);
         final byte[] bytes = assemble(assembler);
         disassemble(disassembler, bytes);
         System.out.println();

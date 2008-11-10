@@ -21,10 +21,11 @@
 package com.sun.max.vm.reference.card;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
-import com.sun.max.vm.heap.sequential.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
@@ -37,6 +38,13 @@ public final class CardReferenceScheme extends AbstractVMScheme implements Refer
 
     public CardReferenceScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
+        ProgramError.check(vmConfiguration.heapScheme().adjustedCardTableShift() > 0, "card reference scheme requires a heap with card tables");
+    }
+
+    @UNSAFE
+    @FOLD
+    private static HeapScheme heapScheme() {
+        return VMConfiguration.hostOrTarget().heapScheme();
     }
 
     @UNSAFE
@@ -352,7 +360,7 @@ public final class CardReferenceScheme extends AbstractVMScheme implements Refer
 
     @INLINE
     public void performWriteBarrier(Reference reference) {
-        cardTableBase().writeByte(reference.toOrigin().unsignedShiftedRight(CardRegion.getAddressShiftLength()).asOffset(), (byte) 0);
+        cardTableBase().writeByte(reference.toOrigin().unsignedShiftedRight(heapScheme().adjustedCardTableShift()).asOffset(), (byte) 0);
     }
 
     @INLINE

@@ -31,10 +31,27 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
+ * The platform specific details of the mechanism by which a thread can be suspended via
+ * polling at prudently chosen execution points. The polling has the effect of causing
+ * a trap.
+ *
+ * The <i>trap state</i> of the thread is recorded at such a trap and is made available
+ * via these methods:
+ * <ul>
+ * <li>{@link #getInstructionPointer(Pointer)}</li>
+ * <li>{@link #getStackPointer(Pointer, TargetMethod)}</li>
+ * <li>{@link #getFramePointer(Pointer, TargetMethod)}</li>
+ * <li>{@link #getSafepointLatch(Pointer)}</li>
+ * <li>{@link #getRegisterState(Pointer)}</li>
+ * <li>{@link #getTrapNumber(Pointer)}</li>
+ * <li>{@link #setSafepointLatch(Pointer, Pointer)}</li>
+ * </ul>
+ *
  * @author Bernd Mathiske
  */
 public abstract class Safepoint {
@@ -64,6 +81,10 @@ public abstract class Safepoint {
             return ordinal();
         }
 
+        public int offset() {
+            return _key.offset();
+        }
+
         public static final IndexedSequence<State> VALUES = new ArraySequence<State>(values());
     }
 
@@ -74,6 +95,7 @@ public abstract class Safepoint {
             final Constructor<?> constructor = safepointClass.getConstructor(VMConfiguration.class);
             return (Safepoint) constructor.newInstance(vmConfiguration);
         } catch (Exception exception) {
+            exception.printStackTrace();
             throw ProgramError.unexpected("could not create safepoint: " + exception);
         }
     }
@@ -88,19 +110,6 @@ public abstract class Safepoint {
         _vmConfiguration = vmConfiguration;
     }
 
-    /**
-     * Returns the number of integer registers that needs to be saved in {@linkplain VmThreadLocal VM thread locals} by
-     * safepoint traps. This may not match the total number of integer registers of the ISA, depending on operating
-     * system ABI.
-     *
-     * @return the number of integer registers that needs to be saved in VM thread locals by safepoint traps
-     */
-    public abstract int numberOfIntegerRegisters();
-
-    public abstract int numberOfFloatingPointRegisters();
-
-    public abstract int latchRegisterIndex();
-
     @INLINE
     public static Pointer getLatchRegister() {
         return VMRegister.getSafepointLatchRegister();
@@ -111,9 +120,7 @@ public abstract class Safepoint {
         VMRegister.setSafepointLatchRegister(latch);
     }
 
-    public static void trigger(Pointer latch, Word nativeStub, Word javaStub) {
-        VmThreadLocal.SAFEPOINT_NATIVE_STUB.setConstantWord(latch, nativeStub);
-        VmThreadLocal.SAFEPOINT_JAVA_STUB.setConstantWord(latch, javaStub);
+    public static void trigger(Pointer latch) {
         VmThreadLocal.SAFEPOINT_LATCH.setVariableWord(latch, VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(latch));
     }
 
@@ -134,15 +141,6 @@ public abstract class Safepoint {
     @INLINE
     public static void enable() {
         setLatchRegister(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer());
-    }
-
-    public static void without(Runnable runnable) {
-        try {
-            Safepoint.disable();
-            runnable.run();
-        } finally {
-            Safepoint.enable();
-        }
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {
@@ -208,40 +206,58 @@ public abstract class Safepoint {
     }
 
     /**
-     * Creates a machine code sequence to be run after the {@linkplain Trap Java trap handler} for a safepoint returns.
-     * The stub is responsible for executing the code for which the safepoint was triggered (e.g. suspending a thread
-     * for GC). Once that code returns, then the stub then resumes execution at the safepoint instruction.
+     * Run a given procedure on the thread corresponding to the specified {@code VmThread} instance,
+     * when that thread is at a safepoint and safepoints are disabled.
+     * This method allows the VM to stop a thread at a safepoint and then run the specified procedure (e.g. garbage collection
+     * or biased monitor revocation). Note that this method returns when the procedure is successfully
+     * queued to be run on that thread, but the procedure may not actually have run yet.
+     * Note also that this method will spin
+     * if that thread is already executing or is scheduled to execute another procedure.
      *
-     * @param safepointEntry the code executing the post-safepoint action
-     * @param venue specifies if the stub is to handle taking a safepoint when the thread is executing in Java code or
-     *            in native code
-     * @return the safepoint stub
+     * @param runnable the procedure to run on this thread
      */
-    public abstract SafepointStub createSafepointStub(CriticalMethod safepointEntry, Venue venue);
-
-    private final int _latchRegisterIndex = latchRegister().value();
-
-    public static Address trapHandler(Pointer vmThreadLocals) {
-        final Address epoch = VmThreadLocal.SAFEPOINT_EPOCH.getVariableWord().asAddress().plus(1);
-        VmThreadLocal.SAFEPOINT_EPOCH.setVariableWord(epoch);
-
-        if (VmThreadLocal.inJava(vmThreadLocals)) {
-            // We have reached a safepoint from normal Java code.
-            VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Venue.JAVA));
-
-            // Reenable safepoints when the stub will have returned:
-            final Pointer enabledVmThreadLocals = VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
-            final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
-            enabledVmThreadLocals.setWord(VmThreadLocal.REGISTERS.index() + safepoint._latchRegisterIndex, enabledVmThreadLocals);
-
-            return VmThreadLocal.SAFEPOINT_JAVA_STUB.getConstantWord(vmThreadLocals).asAddress();
+    public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
+        // spin until the SAFEPOINT_PROCEDURE field is null
+        while (true) {
+            if (VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
+                Safepoint.trigger(vmThreadLocals);
+                return;
+            }
+            Thread.yield();
         }
-
-        // ATTENTION: GC may be ongoing already - we must not use any references to objects that are not in the boot image!
-
-        // We have reached a safepoint on exit from native code.
-        VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Venue.NATIVE));
-        return VmThreadLocal.SAFEPOINT_NATIVE_STUB.getConstantWord(vmThreadLocals).asAddress();
     }
 
+    /**
+     * Cancel a procedure that may be outstanding for a thread. If the thread has not yet executed the procedure,
+     * then it will be cancelled (i.e. {@link VmThreadLocal#SAFEPOINT_PROCEDURE} will be set to {@code null}).
+     *
+     * @param vmThread the VMThread for which to cancel the procedure
+     * @param procedure the procedure to cancel
+     */
+    public static void cancelProcedure(Pointer vmThreadLocals, Procedure procedure) {
+        VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(Reference.fromJava(procedure), null);
+    }
+
+    /**
+     * A procedure to run at a safepoint.
+     *
+     * @author Ben L. Titzer
+     */
+    public interface Procedure {
+        void run(Pointer trapState);
+    }
+
+    /**
+     * Reads the value of the instruction pointer saved in a given trap state area.
+     *
+     * @param trapState the block of memory holding the trap state
+     * @return the value of the instruction pointer saved in {@code trapState}
+     */
+    public abstract Pointer getInstructionPointer(Pointer trapState);
+    public abstract Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod);
+    public abstract Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod);
+    public abstract Pointer getSafepointLatch(Pointer trapState);
+    public abstract void setSafepointLatch(Pointer trapState, Pointer value);
+    public abstract int getTrapNumber(Pointer trapState);
+    public abstract Pointer getRegisterState(Pointer trapState);
 }

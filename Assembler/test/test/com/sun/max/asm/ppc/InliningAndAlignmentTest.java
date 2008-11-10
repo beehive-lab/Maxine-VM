@@ -62,7 +62,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         disassembler.scanAndPrint(stream, System.out);
     }
 
-    private byte[] assembleInlineData(PPCAssembler asm, long startAddress, int pointerSize) throws IOException, AssemblyException {
+    private byte[] assembleInlineData(PPCAssembler asm, long startAddress, int pointerSize, InlineDataRecorder recorder) throws IOException, AssemblyException {
         final Directives dir = asm.directives();
         final Label label1 = new Label();
 
@@ -111,7 +111,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         asm.nop();
 
         // retrieve the byte stream output of the assembler and confirm that the inlined data is in the expected format, and are aligned correctly
-        final byte[] asmBytes = asm.toByteArray();
+        final byte[] asmBytes = asm.toByteArray(recorder);
 
         assertTrue(ByteUtils.checkBytes(ByteUtils.toByteArray(byteValue), asmBytes, inlinedByte.position()));
         assertEquals(1, inlinedShort.position() - inlinedByte.position());
@@ -142,23 +142,25 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         System.out.println("--- testInlineData32: ---");
         final int startAddress = 0x12345678;
         final PPC32Assembler assembler = new PPC32Assembler(startAddress);
-        final PPC32Disassembler disassembler = new PPC32Disassembler(startAddress);
-        final byte[] bytes = assembleInlineData(assembler, startAddress, 4);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleInlineData(assembler, startAddress, 4, recorder);
+        final PPC32Disassembler disassembler = new PPC32Disassembler(startAddress, InlineDataDecoder.createFrom(recorder));
         disassemble(disassembler, bytes);
         System.out.println();
     }
 
     public void testInlineData64() throws IOException, AssemblyException {
-        System.out.println("--- testInlineData64: ---");
-        final long startAddress = 0x1234567812340000L;
+        System.out.println("--- testAlignmentPadding64: ---");
+        final long startAddress = 0x1234567812345678L;
         final PPC64Assembler assembler = new PPC64Assembler(startAddress);
-        final PPC64Disassembler disassembler = new PPC64Disassembler(startAddress);
-        final byte[] bytes = assembleInlineData(assembler, startAddress, 8);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress, recorder);
+        final PPC64Disassembler disassembler = new PPC64Disassembler(startAddress, InlineDataDecoder.createFrom(recorder));
         disassemble(disassembler, bytes);
         System.out.println();
     }
 
-    private byte[] assembleAlignmentPadding(PPCAssembler asm, long startAddress) throws IOException, AssemblyException {
+    private byte[] assembleAlignmentPadding(PPCAssembler asm, long startAddress, InlineDataRecorder recorder) throws IOException, AssemblyException {
         // test memory alignment directives from 1 byte to 16 bytes
         final Directives dir = asm.directives();
 
@@ -245,7 +247,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         asm.nop();
 
         // check the memory alignment (and that the memory locations were unaligned before the alignment directives)
-        final byte[] asmCode = asm.toByteArray();
+        final byte[] asmCode = asm.toByteArray(recorder);
 
         assertEquals(1, (startAddress + unalignedLabel2.position()) % 2);
         assertEquals(0, (startAddress + alignedLabel2.position()) % 2);
@@ -274,8 +276,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         System.out.println("--- testAlignmentPadding32: ---");
         final int startAddress = 0x12345678;
         final PPC32Assembler assembler = new PPC32Assembler(startAddress);
-        final PPC32Disassembler disassembler = new PPC32Disassembler(startAddress);
-        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress, recorder);
+        final PPC32Disassembler disassembler = new PPC32Disassembler(startAddress, InlineDataDecoder.createFrom(recorder));
         disassemble(disassembler, bytes);
         System.out.println();
     }
@@ -284,8 +287,9 @@ public class InliningAndAlignmentTest extends MaxTestCase {
         System.out.println("--- testAlignmentPadding64: ---");
         final long startAddress = 0x1234567812345678L;
         final PPC64Assembler assembler = new PPC64Assembler(startAddress);
-        final PPC64Disassembler disassembler = new PPC64Disassembler(startAddress);
-        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress);
+        final InlineDataRecorder recorder = new InlineDataRecorder();
+        final byte[] bytes = assembleAlignmentPadding(assembler, startAddress, recorder);
+        final PPC64Disassembler disassembler = new PPC64Disassembler(startAddress, InlineDataDecoder.createFrom(recorder));
         disassemble(disassembler, bytes);
         System.out.println();
     }

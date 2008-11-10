@@ -22,12 +22,16 @@ package com.sun.max.vm.compiler.eir.amd64;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.amd64.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.asm.amd64.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Ben L. Titzer
  */
 public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisitor, AMD64EirTargetEmitter> implements AMD64EirInstruction {
 
@@ -41,6 +45,8 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
     public void emit(AMD64EirTargetEmitter emitter) {
         if (!eirMethod().isTemplate()) {
             final int frameSize = eirMethod().frameSize();
+            final AMD64Assembler asm = emitter.assembler();
+            final AMD64GeneralRegister64 framePointer = emitter.framePointer();
             if (eirMethod().classMethodActor() instanceof TrampolineMethodActor) {
                 final TrampolineMethodActor trampoline = (TrampolineMethodActor) eirMethod().classMethodActor();
                 if (trampoline.invocation() != TRAMPOLINE.Invocation.STATIC) {
@@ -55,22 +61,45 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
                     // Last, we manipulate the frame pointer only once, and at the end, so as not minimize the work for stack walkers.
                     final AMD64GeneralRegister64 newRipRegister = ((AMD64EirRegister.General) emitter.abi().getResultLocation(Kind.WORD)).as64();
                     if (frameSize == 0) {
-                        emitter.assembler().push(newRipRegister);
+                        asm.push(newRipRegister);
                     } else {
                         assert frameSize >= Kind.WORD.size();
                         final int offsetToNewRip = frameSize - Kind.WORD.size();
-                        emitter.assembler().mov(offsetToNewRip, emitter.framePointer().indirect(), newRipRegister);
+                        asm.mov(offsetToNewRip, framePointer.indirect(), newRipRegister);
                         if (offsetToNewRip > 0) {
-                            emitter.assembler().addq(emitter.framePointer(), offsetToNewRip);
+                            asm.addq(framePointer, offsetToNewRip);
                         }
                     }
                     return;
                 }
+            } else if (eirMethod().classMethodActor().isTrapStub()) {
+                // we need to restore the entire register state from the stack before returning.
+                emitTrapStubEpilogue(asm, framePointer, eirMethod().frameSize());
+                return;
             }
             if (frameSize != 0) {
-                emitter.assembler().addq(emitter.framePointer(), frameSize);
+                asm.addq(framePointer, frameSize);
             }
         }
+    }
+
+    private void emitTrapStubEpilogue(final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int frameSize) {
+        final int originalFrameSize = frameSize - AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP;
+        int offset = originalFrameSize;
+        // restore all the general purpose registers
+        for (AMD64GeneralRegister64 register : AMD64GeneralRegister64.ENUMERATOR) {
+            // all registers are the same as when the trap occurred (except the frame pointer)
+            asm.mov(register, offset, framePointer.indirect());
+            offset += Word.size();
+        }
+        // restore all the floating point registers
+        for (AMD64XMMRegister register : AMD64XMMRegister.ENUMERATOR) {
+            asm.movdq(register, offset, framePointer.indirect());
+            offset += 2 * Word.size();
+        }
+        // now pop the flags register off the stack before returning
+        asm.addq(framePointer, frameSize - Word.size());
+        asm.popfq();
     }
 
     @Override

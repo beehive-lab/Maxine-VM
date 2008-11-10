@@ -179,7 +179,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 }
 
                 // Normally, we would have to initialize tracing this late,
-                // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which gets during 'initializeSystemClass()'.
+                // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.
 
                 setupClassLoaders();
                 break;
@@ -226,18 +226,18 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     protected final void initializeBasicFeatures() {
         VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.PRISTINE);
-
+        MaxineVM.writeInitialVMParams();
         MaxineVM.hostOrTarget().setPhase(MaxineVM.Phase.STARTING);
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
             VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.STARTING);
         }
-
-        MaxineVM.writeInitialVMParams();
-
     }
 
+    protected boolean parseMain() {
+        return VMOptions.parseMain(true);
+    }
 
     /**
      * The run() method is the entrypoint to this run scheme, after the VM has started up.
@@ -260,7 +260,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 sun.misc.Version.print();
             }
 
-            if (!VMOptions.parseMain()) {
+            if (!parseMain()) {
                 return;
             }
 

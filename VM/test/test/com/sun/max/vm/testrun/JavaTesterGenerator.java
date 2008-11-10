@@ -183,10 +183,9 @@ public class JavaTesterGenerator {
     public void genRunMethod(LinkedList<JavaExecHarness.JavaTestCase> testCases) {
         _writer.indent();
         _writer.println("@Override");
-        _writer.println("public void run() {");
+        _writer.println("public void runTests() {");
         _writer.indent();
         _writer.println("_testEnd = " + testCases.size() + ";");
-        _writer.println("vmStartUp();");
         if (_restartOption.getValue()) {
             _writer.println("_total = _testEnd - _testStart;");
             _writer.println("_testNum = _testStart;");

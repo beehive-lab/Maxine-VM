@@ -1,7 +1,7 @@
-#Thu Jul 24 10:44:34 PDT 2008
+#Mon Oct 27 10:26:29 PDT 2008
 eclipse.preferences.version=1
 editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
-formatter_profile=_Unmanaged profile 'MaxineJavaCodeStyle' 2
+formatter_profile=_MaxineJavaCodeStyle
 formatter_settings_version=11
 org.eclipse.jdt.ui.exception.name=e
 org.eclipse.jdt.ui.gettersetter.use.is=true

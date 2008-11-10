@@ -33,7 +33,7 @@ import com.sun.max.program.*;
  */
 public class IA32Template extends X86Template {
 
-    IA32Template(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context) {
+    public IA32Template(X86InstructionDescription instructionDescription, int serial, InstructionAssessment instructionFamily, X86TemplateContext context) {
         super(instructionDescription, serial, instructionFamily, context);
     }
 

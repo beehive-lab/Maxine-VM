@@ -78,7 +78,6 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
 
     private final JTable _table = new ThreadJTable();
 
-
     private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "threadsInspector");
 
     private ThreadsInspector(Inspection inspection, Residence residence) {

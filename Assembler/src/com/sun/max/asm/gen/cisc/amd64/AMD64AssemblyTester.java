@@ -53,7 +53,7 @@ public class AMD64AssemblyTester extends X86AssemblyTester<AMD64Template, AMD64D
 
     @Override
     protected AMD64Disassembler createTestDisassembler() {
-        return new AMD64Disassembler(0L);
+        return new AMD64Disassembler(0L, null);
     }
 
     @Override

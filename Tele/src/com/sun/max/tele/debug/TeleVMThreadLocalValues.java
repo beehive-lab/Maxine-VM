@@ -53,7 +53,7 @@ public class TeleVMThreadLocalValues {
     	if (_start.isZero()) {
     		final Pointer vmThreadLocals = stackScanner.vmThreadLocals();
     		if (!vmThreadLocals.isZero()) {
-    			_start = dataAccess.readWord(vmThreadLocals, VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.offset()).asPointer();
+    			_start = dataAccess.readWord(vmThreadLocals, _safepointState.offset()).asPointer();
     		}
     	}
     	if (!_start.isZero()) {

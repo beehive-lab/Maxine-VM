@@ -39,48 +39,50 @@ import com.sun.max.vm.compiler.target.*;
 /**
  * @author Bernd Mathiske
  */
+@PROTOTYPE_ONLY
 public final class Disassemble {
 
-    @PROTOTYPE_ONLY
     private Disassemble() {
     }
 
-    @PROTOTYPE_ONLY
-    private static Disassembler createDisassembler(ProcessorKind processorKind, Address startAddress) {
+    private static Disassembler createDisassembler(ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
         switch (processorKind.instructionSet()) {
             case ARM:
-                return new ARMDisassembler(startAddress.toInt());
+                return new ARMDisassembler(startAddress.toInt(), inlineDataDecoder);
             case AMD64:
-                return new AMD64Disassembler(startAddress.toLong());
+                return new AMD64Disassembler(startAddress.toLong(), inlineDataDecoder);
             case IA32:
-                return new IA32Disassembler(startAddress.toInt());
+                return new IA32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case PPC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new PPC64Disassembler(startAddress.toLong());
+                    return new PPC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
-                return new PPC32Disassembler(startAddress.toInt());
+                return new PPC32Disassembler(startAddress.toInt(), inlineDataDecoder);
             case SPARC:
                 if (processorKind.dataModel().wordWidth() == WordWidth.BITS_64) {
-                    return new SPARC64Disassembler(startAddress.toLong());
+                    return new SPARC64Disassembler(startAddress.toLong(), inlineDataDecoder);
                 }
-                return new SPARC32Disassembler(startAddress.toInt());
+                return new SPARC32Disassembler(startAddress.toInt(), inlineDataDecoder);
         }
         ProgramError.unknownCase();
         return null;
     }
 
-    @PROTOTYPE_ONLY
-    public static void targetMethod(TargetMethod targetMethod) {
-        final ProcessorKind processorKind = targetMethod.compilerScheme().vmConfiguration().platform().processorKind();
-        final Disassembler disassembler = createDisassembler(processorKind, targetMethod.codeStart());
-        final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(targetMethod.code()));
+    public static void disassemble(OutputStream out, byte[] code, ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
+        final Disassembler disassembler = createDisassembler(processorKind, startAddress, inlineDataDecoder);
+        final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(code));
         try {
-            disassembler.scanAndPrint(stream, System.out);
+            disassembler.scanAndPrint(stream, out);
         } catch (IOException ioException) {
             ProgramError.unexpected();
         } catch (AssemblyException assemblyException) {
             System.err.println(assemblyException);
         }
+    }
+
+    public static void disassemble(OutputStream out, TargetMethod targetMethod) {
+        final ProcessorKind processorKind = targetMethod.compilerScheme().vmConfiguration().platform().processorKind();
+        disassemble(out, targetMethod.code(), processorKind, targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 
 }

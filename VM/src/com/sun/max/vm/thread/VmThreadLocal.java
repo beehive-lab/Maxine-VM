@@ -22,14 +22,11 @@ package com.sun.max.vm.thread;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.util.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -51,14 +48,14 @@ import com.sun.max.vm.type.*;
  * <dd>Safepoints for the thread are {@linkplain Safepoint#disable() disabled}. The base address of this TLS area is
  * obtained by reading the {@link #SAFEPOINTS_DISABLED_THREAD_LOCALS} variable from any TLS area.</dd>
  * <dt>Triggered</dt>
- * <dd>Safepoints for the thread are {@linkplain Safepoint#trigger(Pointer, Word, Word) triggered}. The base address of
+ * <dd>Safepoints for the thread are {@linkplain Safepoint#trigger(Pointer) triggered}. The base address of
  * this TLS area is obtained by reading the {@link #SAFEPOINTS_TRIGGERED_THREAD_LOCALS} variable from any TLS area.</dd>
  * </dl>
  *
  * The memory for the three TLS areas is located on the stack as described in the thread stack layout
  * diagram {@linkplain VmThread here}.
  *
- * All thread local variables occupy one word, except the {@linkplain #REGISTERS last}.
+ * All thread local variables occupy one word, except the {@linkplain #LAST_SLOT last}.
  */
 public enum VmThreadLocal {
     /**
@@ -85,6 +82,12 @@ public enum VmThreadLocal {
     SAFEPOINTS_TRIGGERED_THREAD_LOCALS(Kind.WORD),
 
     SAFEPOINT_EPOCH(Kind.WORD),
+
+    /**
+     * The procedure to run when a safepoint has been triggered.
+     */
+    SAFEPOINT_PROCEDURE(Kind.REFERENCE),
+
     ID(Kind.WORD),
     VM_THREAD(Kind.REFERENCE),
     NATIVE_THREAD(Kind.WORD),
@@ -119,43 +122,30 @@ public enum VmThreadLocal {
     /**
      * Holds the biased card table address. Card table writes are usually done using *(cardTableBase + reference-heap a.
      */
-    ADJUSTED_CARDTABLE_BASE(Kind.WORD), TAG(Kind.WORD), SAFEPOINT_VENUE(Kind.REFERENCE), SAFEPOINT_NATIVE_STUB(Kind.WORD), SAFEPOINT_JAVA_STUB(Kind.WORD),
+    ADJUSTED_CARDTABLE_BASE(Kind.WORD),
+    SAFEPOINT_VENUE(Kind.REFERENCE),
+
+    /**
+     * The number of the trap (i.e. signal) that occurred.
+     */
+    TRAP_NUMBER(Kind.WORD),
 
     /**
      * The value of the instruction pointer when the last trap occurred.
-     *
-     * @see #IN_TRAP_STUB_AFTER_RECORDING_TRAP_FRAME
+     * NOTE: like other trap information, this is ONLY VALID for a short time and should only be
+     * used by the C trap handler and the prologue of the trap stub to pass information.
      */
     TRAP_INSTRUCTION_POINTER(Kind.WORD),
 
     /**
-     * The value of the stack pointer when the last trap occurred.
-     *
-     * @see #IN_TRAP_STUB_AFTER_RECORDING_TRAP_FRAME
+     * The fault address causing the trap.
      */
-    TRAP_STACK_POINTER(Kind.WORD),
+    TRAP_FAULT_ADDRESS(Kind.WORD),
 
     /**
-     * The value of the frame pointer when the last trap occurred.
-     *
-     * @see #IN_TRAP_STUB_AFTER_RECORDING_TRAP_FRAME
+     * The value on the top of the stack that was overwritten by the native trap handler.
      */
-    TRAP_FRAME_POINTER(Kind.WORD),
-
-    /**
-     * When a trap occurs, the {@link #TRAP_INSTRUCTION_POINTER}, {@link #TRAP_STACK_POINTER} and
-     * {@link #TRAP_FRAME_POINTER} values are only guaranteed to reflect the trap frame info once the appropriate Java
-     * trap handler (i.e. any of the methods in {@link Trap} annotated with {@link C_FUNCTION} with the
-     * {@link C_FUNCTION#isSignalHandler()} element set to true) has returned. While execution is in a trap handler,
-     * this guarantee only holds when this value is not zero.
-     *
-     * Note that this guarantee is somewhat conservative and is only used by the inspector as means for making a "best
-     * effort" to show the stack when inspecting a thread currently executing in an exception handler. This guarantee is
-     * conservative is because this thread local variable must be reset to zero before returning from the Java trap
-     * handler and so there will be a short sequence of instructions between the zeroing of the variable and the return
-     * instruction (e.g. restoring callee saved registers).
-     */
-    TRAP_HANDLER_HAS_RECORDED_TRAP_FRAME(Kind.WORD),
+    TRAP_TOP_OF_STACK(Kind.WORD),
 
     /**
      * @see Deoptimizer.ReferenceOccurrences
@@ -209,10 +199,9 @@ public enum VmThreadLocal {
     BACKWARD_LINK(Kind.WORD),
 
     /**
-     * Saving area for integer registers live during a trap.
-     * Used by trap handlers (and safepoints which operate as a special trap).
+     * The last slot.
      */
-    REGISTERS(Kind.WORD); // must be last, space for saved register values starts here
+    TAG(Kind.WORD);
 
     private final Kind _kind;
 
@@ -232,31 +221,20 @@ public enum VmThreadLocal {
      */
     public static final IndexedSequence<String> NAMES;
 
-    public static final int NUMBER_OF_INTEGER_REGISTERS;
-    public static final int NUMBER_OF_FLOATING_POINT_REGISTERS;
-
     static {
-        NUMBER_OF_INTEGER_REGISTERS = VMConfiguration.target().safepoint().numberOfIntegerRegisters();
-        NUMBER_OF_FLOATING_POINT_REGISTERS = VMConfiguration.target().safepoint().numberOfFloatingPointRegisters();
-        THREAD_LOCAL_STORAGE_SIZE = Size.fromInt((REGISTERS.index() + NUMBER_OF_INTEGER_REGISTERS) * Word.size() +
-                            NUMBER_OF_FLOATING_POINT_REGISTERS * Doubles.SIZE);
-        ProgramError.check(REGISTERS.ordinal() == values().length - 1);
+        THREAD_LOCAL_STORAGE_SIZE = Size.fromInt((TAG.ordinal() + 1) * Word.size());
+        ProgramError.check(TAG.ordinal() == values().length - 1);
         ProgramError.check(THREAD_LOCAL_STORAGE_SIZE.aligned().equals(THREAD_LOCAL_STORAGE_SIZE), "THREAD_LOCAL_STORAGE_SIZE is not word-aligned");
+
+        // The C code in trap.c relies on the following relationships:
+        ProgramError.check(TRAP_NUMBER.ordinal() + 1 == TRAP_INSTRUCTION_POINTER.ordinal());
+        ProgramError.check(TRAP_NUMBER.ordinal() + 2 == TRAP_FAULT_ADDRESS.ordinal());
+        ProgramError.check(TRAP_NUMBER.ordinal() + 3 == TRAP_TOP_OF_STACK.ordinal());
 
         final String[] names = new String[THREAD_LOCAL_STORAGE_SIZE.toInt() / Word.size()];
         for (VmThreadLocal vmThreadLocal : VALUES) {
             names[vmThreadLocal.index()] = vmThreadLocal.name();
         }
-        int registerNameIndex = REGISTERS.index();
-        for (int i = 0; i < NUMBER_OF_INTEGER_REGISTERS; ++i) {
-            names[registerNameIndex] = "REG" + i;
-            registerNameIndex++;
-        }
-        for (int i = 0; i < NUMBER_OF_FLOATING_POINT_REGISTERS; ++i) {
-            names[registerNameIndex] = "FP_REG" + i;
-            registerNameIndex++;
-        }
-        ProgramError.check(names.length == registerNameIndex);
         NAMES = new ArraySequence<String>(names);
     }
 
@@ -497,20 +475,29 @@ public enum VmThreadLocal {
         return getVariableReference(VmThread.currentVmThreadLocals());
     }
 
-    public static boolean inJava(Pointer latch) {
-        return LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(latch).isZero();
+    public static boolean inJava(Pointer vmThreadLocals) {
+        return LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).isZero();
     }
 
     // GC support:
 
     /**
-     * Prepares a reference map for the entire stack of a VM thread including all of VM thread locals (which include
-     * saved register values iff at a Java safepoint) while the GC has not changed anything yet.
+     * Prepares a reference map for the stack of a VM thread executing or blocked in native code.
      *
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
      */
     public static void prepareStackReferenceMap(Pointer vmThreadLocals) {
         VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(vmThreadLocals);
+    }
+
+    /**
+     * Prepares a reference map for the entire stack of a VM thread starting from a trap.
+     *
+     * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
+     * @param trapState a pointer to the trap state
+     */
+    public static void prepareStackReferenceMapFromTrap(Pointer vmThreadLocals, Pointer trapState) {
+        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMapFromTrap(vmThreadLocals, trapState);
     }
 
     /**
@@ -529,10 +516,12 @@ public enum VmThreadLocal {
      * from it.
      */
     @NEVER_INLINE
-    static void prepareCurrentStackReferenceMap() {
+    public static void prepareCurrentStackReferenceMap() {
         fakeNearbyStopPosition();
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(), VMRegister.getInstructionPointer(), VMRegister.getAbiStackPointer(),
-                        VMRegister.getAbiFramePointer());
+        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
+                                                                                VMRegister.getInstructionPointer(),
+                                                                                VMRegister.getAbiStackPointer(),
+                                                                                VMRegister.getAbiFramePointer());
     }
 
     /**
@@ -560,8 +549,8 @@ public enum VmThreadLocal {
         }
 
         boolean lockDisabledSafepoints = false;
-        if (Heap.traceGC()) {
-            lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map scanning
+        if (Heap.traceGCRootScanning()) {
+            lockDisabledSafepoints = Debug.lock(); // Note: as a side effect, this lock serializes stack reference map scanning
             Debug.print("Scanning stack reference map for thread ");
             Debug.printVmThread(vmThread, false);
             Debug.println(":");
@@ -576,7 +565,7 @@ public enum VmThreadLocal {
         StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestSlot, vmThreadLocalsEnd(vmThreadLocals), wordPointerIndexVisitor);
         StackReferenceMapPreparer.scanReferenceMapRange(vmThreadLocals, lowestActiveSlot, highestSlot, wordPointerIndexVisitor);
 
-        if (Heap.traceGC()) {
+        if (Heap.traceGCRootScanning()) {
             Debug.unlock(lockDisabledSafepoints);
         }
     }

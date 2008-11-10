@@ -5426,7 +5426,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jb  }<i>label</i>
-     * Example disassembly syntax: {@code jb        L1: +18}
+     * Example disassembly syntax: {@code jb        +18}
      */
     // Template#: 450, Serial#: 264
     public void jb(final Label label) {
@@ -5438,7 +5438,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jbe  }<i>label</i>
-     * Example disassembly syntax: {@code jbe       L1: +18}
+     * Example disassembly syntax: {@code jbe       +18}
      */
     // Template#: 451, Serial#: 268
     public void jbe(final Label label) {
@@ -5450,7 +5450,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jecxz  }<i>label</i>
-     * Example disassembly syntax: {@code jecxz     L1: +18}
+     * Example disassembly syntax: {@code jecxz     +18}
      */
     // Template#: 452, Serial#: 1335
     public void jecxz(final Label label) {
@@ -5462,7 +5462,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jl  }<i>label</i>
-     * Example disassembly syntax: {@code jl        L1: +18}
+     * Example disassembly syntax: {@code jl        +18}
      */
     // Template#: 453, Serial#: 1812
     public void jl(final Label label) {
@@ -5474,7 +5474,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jle  }<i>label</i>
-     * Example disassembly syntax: {@code jle       L1: +18}
+     * Example disassembly syntax: {@code jle       +18}
      */
     // Template#: 454, Serial#: 1814
     public void jle(final Label label) {
@@ -5486,7 +5486,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jmp  }<i>label</i>
-     * Example disassembly syntax: {@code jmp       L1: +18}
+     * Example disassembly syntax: {@code jmp       +18}
      */
     // Template#: 455, Serial#: 2403
     public void jmp(final Label label) {
@@ -5522,7 +5522,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnb  }<i>label</i>
-     * Example disassembly syntax: {@code jnb       L1: +18}
+     * Example disassembly syntax: {@code jnb       +18}
      */
     // Template#: 458, Serial#: 265
     public void jnb(final Label label) {
@@ -5534,7 +5534,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnbe  }<i>label</i>
-     * Example disassembly syntax: {@code jnbe      L1: +18}
+     * Example disassembly syntax: {@code jnbe      +18}
      */
     // Template#: 459, Serial#: 269
     public void jnbe(final Label label) {
@@ -5546,7 +5546,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnl  }<i>label</i>
-     * Example disassembly syntax: {@code jnl       L1: +18}
+     * Example disassembly syntax: {@code jnl       +18}
      */
     // Template#: 460, Serial#: 1813
     public void jnl(final Label label) {
@@ -5558,7 +5558,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnle  }<i>label</i>
-     * Example disassembly syntax: {@code jnle      L1: +18}
+     * Example disassembly syntax: {@code jnle      +18}
      */
     // Template#: 461, Serial#: 1815
     public void jnle(final Label label) {
@@ -5570,7 +5570,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jno  }<i>label</i>
-     * Example disassembly syntax: {@code jno       L1: +18}
+     * Example disassembly syntax: {@code jno       +18}
      */
     // Template#: 462, Serial#: 263
     public void jno(final Label label) {
@@ -5582,7 +5582,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnp  }<i>label</i>
-     * Example disassembly syntax: {@code jnp       L1: +18}
+     * Example disassembly syntax: {@code jnp       +18}
      */
     // Template#: 463, Serial#: 1811
     public void jnp(final Label label) {
@@ -5594,7 +5594,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jns  }<i>label</i>
-     * Example disassembly syntax: {@code jns       L1: +18}
+     * Example disassembly syntax: {@code jns       +18}
      */
     // Template#: 464, Serial#: 1809
     public void jns(final Label label) {
@@ -5606,7 +5606,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jnz  }<i>label</i>
-     * Example disassembly syntax: {@code jnz       L1: +18}
+     * Example disassembly syntax: {@code jnz       +18}
      */
     // Template#: 465, Serial#: 267
     public void jnz(final Label label) {
@@ -5618,7 +5618,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jo  }<i>label</i>
-     * Example disassembly syntax: {@code jo        L1: +18}
+     * Example disassembly syntax: {@code jo        +18}
      */
     // Template#: 466, Serial#: 262
     public void jo(final Label label) {
@@ -5630,7 +5630,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jp  }<i>label</i>
-     * Example disassembly syntax: {@code jp        L1: +18}
+     * Example disassembly syntax: {@code jp        +18}
      */
     // Template#: 467, Serial#: 1810
     public void jp(final Label label) {
@@ -5642,7 +5642,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code js  }<i>label</i>
-     * Example disassembly syntax: {@code js        L1: +18}
+     * Example disassembly syntax: {@code js        +18}
      */
     // Template#: 468, Serial#: 1808
     public void js(final Label label) {
@@ -5654,7 +5654,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code jz  }<i>label</i>
-     * Example disassembly syntax: {@code jz        L1: +18}
+     * Example disassembly syntax: {@code jz        +18}
      */
     // Template#: 469, Serial#: 266
     public void jz(final Label label) {
@@ -6074,7 +6074,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loop  }<i>label</i>
-     * Example disassembly syntax: {@code loop      L1: +18}
+     * Example disassembly syntax: {@code loop      +18}
      */
     // Template#: 504, Serial#: 1334
     public void loop(final Label label) {
@@ -6086,7 +6086,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loope  }<i>label</i>
-     * Example disassembly syntax: {@code loope     L1: +18}
+     * Example disassembly syntax: {@code loope     +18}
      */
     // Template#: 505, Serial#: 1333
     public void loope(final Label label) {
@@ -6098,7 +6098,7 @@ public abstract class IA32LabelAssembler extends IA32RawAssembler {
 
     /**
      * Pseudo-external assembler syntax: {@code loopne  }<i>label</i>
-     * Example disassembly syntax: {@code loopne    L1: +18}
+     * Example disassembly syntax: {@code loopne    +18}
      */
     // Template#: 506, Serial#: 1332
     public void loopne(final Label label) {

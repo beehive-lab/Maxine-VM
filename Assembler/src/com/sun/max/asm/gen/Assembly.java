@@ -82,17 +82,6 @@ public abstract class Assembly<Template_Type extends Template> {
         return _templates;
     }
 
-    protected abstract Template_Type createInlineByteTemplate();
-
-    private Template_Type _inlineByteTemplate;
-
-    public Template_Type inlineByteTemplate() {
-        if (_inlineByteTemplate == null) {
-            _inlineByteTemplate = createInlineByteTemplate();
-        }
-        return _inlineByteTemplate;
-    }
-
     public final Sequence<Template_Type> labelTemplates() {
         if (_labelTemplates == null) {
             _labelTemplates = new LinkSequence<Template_Type>();

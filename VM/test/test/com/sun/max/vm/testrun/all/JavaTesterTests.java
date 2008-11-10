@@ -8237,6 +8237,68 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_lang_Bridge_method01() {
+        JavaTesterRunScheme.begin("test.lang.Bridge_method01");
+        String runString = null;
+        try {
+        // test(0) == 1
+            runString = "test(0)";
+            if (1 != test.lang.Bridge_method01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.lang.Bridge_method01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_lang_ClassLoader_loadClass01() {
+        JavaTesterRunScheme.begin("test.lang.ClassLoader_loadClass01");
+        String runString = null;
+        try {
+        // test(0) == class java.lang.String
+            runString = "test(0)";
+            if (!"class java.lang.String".equals(test.lang.ClassLoader_loadClass01.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(1)";
+                test.lang.ClassLoader_loadClass01.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(2) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(2)";
+                test.lang.ClassLoader_loadClass01.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_lang_Class_Literal01() {
         JavaTesterRunScheme.begin("test.lang.Class_Literal01");
         String runString = null;
@@ -8494,6 +8556,162 @@ public class JavaTesterTests {
                     JavaTesterRunScheme.end(runString, e);
                     return;
                 }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_lang_Class_forName03() {
+        JavaTesterRunScheme.begin("test.lang.Class_forName03");
+        String runString = null;
+        try {
+        // test(0) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(0)";
+                test.lang.Class_forName03.test(0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(1) == class [Ljava.lang.String;
+            runString = "test(1)";
+            if (!"class [Ljava.lang.String;".equals(test.lang.Class_forName03.test(1))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(2)";
+                test.lang.Class_forName03.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == class [I
+            runString = "test(3)";
+            if (!"class [I".equals(test.lang.Class_forName03.test(3))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(4)";
+                test.lang.Class_forName03.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(5) == null
+            runString = "test(5)";
+            if (null != test.lang.Class_forName03.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_lang_Class_forName04() {
+        JavaTesterRunScheme.begin("test.lang.Class_forName04");
+        String runString = null;
+        try {
+        // test(0) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(0)";
+                test.lang.Class_forName04.test(0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(1) == class [Ljava.lang.String;
+            runString = "test(1)";
+            if (!"class [Ljava.lang.String;".equals(test.lang.Class_forName04.test(1))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(2)";
+                test.lang.Class_forName04.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == class [I
+            runString = "test(3)";
+            if (!"class [I".equals(test.lang.Class_forName04.test(3))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ClassNotFoundException
+            try {
+                runString = "test(4)";
+                test.lang.Class_forName04.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassNotFoundException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(5) == null
+            runString = "test(5)";
+            if (null != test.lang.Class_forName04.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_lang_Class_forName05() {
+        JavaTesterRunScheme.begin("test.lang.Class_forName05");
+        String runString = null;
+        try {
+        // test(0) == class java.lang.String
+            runString = "test(0)";
+            if (!"class java.lang.String".equals(test.lang.Class_forName05.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == class [Ljava.lang.String;
+            runString = "test(1)";
+            if (!"class [Ljava.lang.String;".equals(test.lang.Class_forName05.test(1))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == null
+            runString = "test(5)";
+            if (null != test.lang.Class_forName05.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
             }
         } catch (Throwable t) {
             JavaTesterRunScheme.end(runString, t);
@@ -10838,6 +11056,28 @@ public class JavaTesterTests {
         // test(9223372036854775807) == false
             runString = "test(9223372036854775807)";
             if (false != test.lang.Long_lessEqual03.test(9223372036854775807L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_lang_Math_pow() {
+        JavaTesterRunScheme.begin("test.lang.Math_pow");
+        String runString = null;
+        try {
+        // test(2.0) == 4.0
+            runString = "test(2.0)";
+            if (4.0 != test.lang.Math_pow.test(2.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3.1) == 8.574187700290345
+            runString = "test(3.1)";
+            if (8.574187700290345 != test.lang.Math_pow.test(3.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -15551,6 +15791,34 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_micro_LoopSwitch01() {
+        JavaTesterRunScheme.begin("test.micro.LoopSwitch01");
+        String runString = null;
+        try {
+        // test(0) == ok0
+            runString = "test(0)";
+            if (!"ok0".equals(test.micro.LoopSwitch01.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(10) == ok0
+            runString = "test(10)";
+            if (!"ok0".equals(test.micro.LoopSwitch01.test(10))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(25) == ok0
+            runString = "test(25)";
+            if (!"ok0".equals(test.micro.LoopSwitch01.test(25))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_micro_StrangeFrames() {
         JavaTesterRunScheme.begin("test.micro.StrangeFrames");
         String runString = null;
@@ -15558,6 +15826,62 @@ public class JavaTesterTests {
         // test(0) == true
             runString = "test(0)";
             if (true != test.micro.StrangeFrames.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_micro_String_format01() {
+        JavaTesterRunScheme.begin("test.micro.String_format01");
+        String runString = null;
+        try {
+        // test("World") == Hello World
+            runString = "test(\"World\")";
+            if (!"Hello World".equals(test.micro.String_format01.test("World"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test("New World Order") == Hello New World Order
+            runString = "test(\"New World Order\")";
+            if (!"Hello New World Order".equals(test.micro.String_format01.test("New World Order"))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_micro_String_format02() {
+        JavaTesterRunScheme.begin("test.micro.String_format02");
+        String runString = null;
+        try {
+        // test(0) == Hello 0
+            runString = "test(0)";
+            if (!"Hello 0".equals(test.micro.String_format02.test(0))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-11) == Hello -11
+            runString = "test(-11)";
+            if (!"Hello -11".equals(test.micro.String_format02.test(-11))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2147483648) == Hello -2147483648
+            runString = "test(-2147483648)";
+            if (!"Hello -2147483648".equals(test.micro.String_format02.test(-2147483648))) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2147483647) == Hello 2147483647
+            runString = "test(2147483647)";
+            if (!"Hello 2147483647".equals(test.micro.String_format02.test(2147483647))) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

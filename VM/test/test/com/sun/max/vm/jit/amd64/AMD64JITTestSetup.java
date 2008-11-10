@@ -56,6 +56,6 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
 
     @Override
     public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return new AMD64Disassembler(targetMethod.start().toLong());
+        return new AMD64Disassembler(targetMethod.start().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 }
