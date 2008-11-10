@@ -252,6 +252,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             if (VMOptions.earlyVMExitRequested()) {
                 return;
             }
+
+            error = false;
+
             if (_versionOption.isPresent()) {
                 sun.misc.Version.print();
                 return;
@@ -263,6 +266,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             if (!parseMain()) {
                 return;
             }
+
+            error = true;
 
             MaxineVM.host().setPhase(Phase.RUNNING);
             VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.RUNNING);
