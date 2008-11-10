@@ -154,12 +154,11 @@ public class VmThread {
         return _stackFrameWalker;
     }
 
-    public StackFrameWalker newStackFrameWalker() {
-        return new VmStackFrameWalker(vmThreadLocals());
-    }
-
     private final StackReferenceMapPreparer _stackReferenceMapPreparer = new StackReferenceMapPreparer(this);
 
+    /**
+     * Gets the thread-local object used to prepare the reference map for this stack's thread during garbage collection.
+     */
     public StackReferenceMapPreparer stackReferenceMapPreparer() {
         return _stackReferenceMapPreparer;
     }
