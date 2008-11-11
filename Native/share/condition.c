@@ -66,6 +66,9 @@ Boolean condition_wait(Condition condition, Mutex mutex) {
 #endif
   int error;
 #if (os_DARWIN || os_LINUX)
+#   if os_DARWIN
+        condition_initialize(condition);
+#   endif
     error = pthread_cond_wait(condition, mutex);
     if (error == ETIMEDOUT) {
         return true;
@@ -108,6 +111,9 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 		ts.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
 
 #       if (os_DARWIN || os_LINUX)
+#           if os_DARWIN
+                condition_initialize(condition);
+#           endif
             error = pthread_cond_timedwait(condition, mutex, &ts);
             if (error == ETIMEDOUT) {
                 return true;

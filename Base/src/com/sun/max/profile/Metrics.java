@@ -88,6 +88,11 @@ public final class Metrics {
         }
     }
 
+    /**
+     * ATTENTION: do not use 'synchronized' in the timer implementation.
+     * Otherwise we would have to specify sticky monitors
+     * for those timers if they are used in GC code.
+     */
     public static class Timer implements Metric {
         protected final Clock _clock;
         protected final Counter _counter;
@@ -108,12 +113,12 @@ public final class Metrics {
             return time;
         }
 
-        public synchronized void reset() {
+        public void reset() {
             _start = 0;
             _counter.reset();
         }
 
-        public synchronized void restart() {
+        public void restart() {
             reset();
             start();
         }

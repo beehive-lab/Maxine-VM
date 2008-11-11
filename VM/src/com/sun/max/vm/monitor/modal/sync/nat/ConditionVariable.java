@@ -62,12 +62,12 @@ public final class ConditionVariable {
     public ConditionVariable() {
     }
 
-    public void alloc() {
+    public void allocate() {
         _condition =  Memory.mustAllocate(_size);
         nativeConditionInitialize(_condition);
     }
 
-    public boolean requiresAlloc() {
+    public boolean requiresAllocation() {
         return _condition.equals(Pointer.zero());
     }
 

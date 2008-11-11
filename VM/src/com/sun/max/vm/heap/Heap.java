@@ -22,10 +22,12 @@ package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
 
@@ -221,4 +223,5 @@ public final class Heap {
     public static boolean isPinned(Object object) {
         return heapScheme().isPinned(object);
     }
+
 }

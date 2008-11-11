@@ -200,7 +200,7 @@ public class JavaMonitorManager {
         } else {
             synchronized (JavaMonitorManager.class) {
                 if (_unboundListQty < _UNBOUNDLIST_MIN_QTY) {
-                    //System.gc();
+                    System.gc();
                 }
                 if (_unboundListQty < _UNBOUNDLIST_MIN_QTY) {
                     expandUnboundList();
