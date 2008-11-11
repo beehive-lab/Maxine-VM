@@ -185,7 +185,6 @@ public class JavaTesterGenerator {
         _writer.println("@Override");
         _writer.println("public void runTests() {");
         _writer.indent();
-        _writer.println("_testEnd = " + testCases.size() + ";");
         if (_restartOption.getValue()) {
             _writer.println("_total = _testEnd - _testStart;");
             _writer.println("_testNum = _testStart;");

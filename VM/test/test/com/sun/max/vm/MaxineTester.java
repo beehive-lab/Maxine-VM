@@ -23,6 +23,7 @@ package test.com.sun.max.vm;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -296,18 +297,25 @@ public class MaxineTester {
 
         out.println("Java tester: Started " + config);
         if (_skipImageGen.getValue() || generateImage(imageDir, config)) {
-            final File outputFile = getOutputFile(imageDir, "JAVA_TESTER_OUTPUT", config);
-            final int exitValue = runMaxineVM(null, new String[0], imageDir, outputFile, _javaTesterTimeOut.getValue());
-            final String summary = parseJavaTesterOutputFile(outputFile);
-            out.print("Java tester: Stopped " + config + " - ");
-            if (exitValue == 0) {
-                out.println(summary);
-            } else if (exitValue == PROCESS_TIMEOUT) {
-                out.println("(timed out): " + summary);
-                out.println("  -> see: " + outputFile.getAbsolutePath());
-            } else {
-                out.println("(exit = " + exitValue + "): " + summary);
-                out.println("  -> see: " + outputFile.getAbsolutePath());
+            String nextTestOption = "-XX:TesterStart=0";
+            int executions = 0;
+            while (nextTestOption != null) {
+                final File outputFile = getOutputFile(imageDir, "JAVA_TESTER_OUTPUT" + (executions == 0 ? "" : "-" + executions), config);
+                final int exitValue = runMaxineVM(null, new String[] {nextTestOption}, imageDir, outputFile, _javaTesterTimeOut.getValue());
+                final JavaTesterResult result = parseJavaTesterOutputFile(outputFile);
+                final String summary = result._summary;
+                nextTestOption = result._nextTestOption;
+                out.print("Java tester: Stopped " + config + " - ");
+                if (exitValue == 0) {
+                    out.println(summary);
+                } else if (exitValue == PROCESS_TIMEOUT) {
+                    out.println("(timed out): " + summary);
+                    out.println("  -> see: " + outputFile.getAbsolutePath());
+                } else {
+                    out.println("(exit = " + exitValue + "): " + summary);
+                    out.println("  -> see: " + outputFile.getAbsolutePath());
+                }
+                executions++;
             }
         } else {
             out.println("(image build failed)");
@@ -382,45 +390,75 @@ public class MaxineTester {
         }
     }
 
-    private static String parseJavaTesterOutputFile(File outputFile) {
+    static class JavaTesterResult {
+        final String _summary;
+        final String _nextTestOption;
+
+        JavaTesterResult(String summary, String nextTestOption) {
+            _nextTestOption = nextTestOption;
+            _summary = summary;
+        }
+
+    }
+
+    private static final Pattern TEST_BEGIN_LINE = Pattern.compile("\\d+: +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
+
+    private static JavaTesterResult parseJavaTesterOutputFile(File outputFile) {
+        String nextTestOption = null;
+        String lastTest = null;
         try {
             final BufferedReader reader = new BufferedReader(new FileReader(outputFile));
             final AppendableSequence<String> failedLines = new ArrayListSequence<String>();
             try {
                 while (true) {
-                    // read each line, searching for the strings "failed" or "passed"
                     final String line = reader.readLine();
 
                     if (line == null) {
                         break;
                     }
 
-                    final int failedIndex = line.indexOf("failed");
-                    if (failedIndex > 0) {
+                    final Matcher matcher = TEST_BEGIN_LINE.matcher(line);
+                    if (matcher.matches()) {
+                        lastTest = matcher.group(1);
+                        addTestResult(lastTest, null);
+                        final String nextTestNumber = matcher.group(2);
+                        final String endTestNumber = matcher.group(3);
+                        if (!nextTestNumber.equals(endTestNumber)) {
+                            nextTestOption = "-XX:TesterStart=" + nextTestNumber;
+                        } else {
+                            nextTestOption = null;
+                        }
+
+                    } else if (line.contains("failed")) {
                         failedLines.append(line); // found a line with "failed"--probably a failed test
-                    }
-                    final int passedIndex = line.indexOf("passed.");
-                    if (passedIndex > 0) {
-                        // found a line with "passed."--probably the summary at the bottom of the output
+                        addTestResult(lastTest, line);
+                    } else if (line.startsWith("Done: ")) {
+                        lastTest = null;
+                        // found the terminating line indicating how many tests passed
                         if (failedLines.isEmpty()) {
-                            return line;
+                            assert nextTestOption == null;
+                            return new JavaTesterResult(line, null);
                         }
                         break;
                     }
                 }
+                if (lastTest != null) {
+                    addTestResult(lastTest, "never returned a result");
+                    failedLines.append(lastTest + " failed: never returned a result");
+                }
                 if (failedLines.isEmpty()) {
-                    return "no failures";
+                    return new JavaTesterResult("no failures", nextTestOption);
                 }
                 final StringBuffer buffer = new StringBuffer("failures: ");
                 for (String failed : failedLines) {
                     buffer.append("\n").append(failed);
                 }
-                return buffer.toString();
+                return new JavaTesterResult(buffer.toString(), nextTestOption);
             } finally {
                 reader.close();
             }
         } catch (IOException e) {
-            return "could not open file: " + outputFile.getPath();
+            return new JavaTesterResult("could not open file: " + outputFile.getPath(), null);
         }
     }
 
