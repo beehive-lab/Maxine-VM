@@ -133,7 +133,7 @@ public final class MiscWordLabel extends ValueLabel {
                 final boolean isBound = inflatedLockWord.isBound();
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.
-                    final Reference javaMonitorReference = inflatedLockWord.getBoundMonitorReference();
+                    final Reference javaMonitorReference = teleVM().wordToReference(inflatedLockWord.getBoundMonitorReferenceAsWord());
                     _teleJavaMonitor = TeleObject.make(teleVM(), javaMonitorReference);
                     final String name = _teleJavaMonitor.classActorForType().qualifiedName();
                     setToolTipText("InflatedMonitorLockWord64:  bound, monitor=" + name);

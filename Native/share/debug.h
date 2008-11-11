@@ -69,7 +69,7 @@ extern void debug_print_double(double d);
 
 #define debug_LOADER 0
 #define debug_TRAP 0
-#define debug_MONITOR 1
+#define debug_MONITOR 0
 #define debug_LINKER 0
 #define debug_JVMNI 0
 #define debug_THREADS 0

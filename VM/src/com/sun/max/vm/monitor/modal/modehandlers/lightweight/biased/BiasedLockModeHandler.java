@@ -174,7 +174,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         getDelegate().delegateBeforeGarbageCollection();
     }
 
-    //@INLINE
     @Override
     public void monitorExit(Object object) {
         nullCheck(object);
@@ -279,7 +278,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             super(delegate);
         }
 
-        //@INLINE
         @Override
         public void monitorEnter(Object object) {
             nullCheck(object);
@@ -385,7 +383,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             super(delegate);
         }
 
-        //@INLINE
         @Override
         public void monitorEnter(Object object) {
             nullCheck(object);
