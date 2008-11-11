@@ -54,7 +54,7 @@ public class VMIntOption extends VMOption {
     public boolean parseValue(Pointer optionValue) {
         _value = CString.parseUnsignedInt(optionValue);
         // TODO: deal with negative numbers.
-        return true;
+        return _value >= 0;
     }
 
     /**
