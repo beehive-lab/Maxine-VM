@@ -57,6 +57,9 @@ public final class ConditionVariable {
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
 
     public static void initialize(MaxineVM.Phase phase) {
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            _size = nativeConditionSize();
+        }
     }
 
     public ConditionVariable() {
