@@ -482,8 +482,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     private static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each
 
-    // time
-
     @NEVER_INLINE
     private Pointer retryAllocate(Size size) {
         Pointer oldAllocationMark;

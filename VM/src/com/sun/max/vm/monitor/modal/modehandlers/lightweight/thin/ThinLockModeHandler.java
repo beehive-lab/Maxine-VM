@@ -345,7 +345,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             super(delegate);
         }
 
-        //@INLINE
         @Override
         public void monitorEnter(Object object) {
             nullCheck(object);
@@ -365,7 +364,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             }
         }
 
-        //@INLINE
         @Override
         public void monitorExit(Object object) {
             nullCheck(object);

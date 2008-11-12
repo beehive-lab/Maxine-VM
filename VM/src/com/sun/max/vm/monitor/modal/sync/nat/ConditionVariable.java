@@ -57,17 +57,20 @@ public final class ConditionVariable {
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
 
     public static void initialize(MaxineVM.Phase phase) {
+        if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            _size = nativeConditionSize();
+        }
     }
 
     public ConditionVariable() {
     }
 
-    public void alloc() {
+    public void allocate() {
         _condition =  Memory.mustAllocate(_size);
         nativeConditionInitialize(_condition);
     }
 
-    public boolean requiresAlloc() {
+    public boolean requiresAllocation() {
         return _condition.equals(Pointer.zero());
     }
 
