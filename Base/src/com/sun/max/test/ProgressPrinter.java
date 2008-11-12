@@ -23,7 +23,7 @@ package com.sun.max.test;
 import java.io.*;
 
 /**
- * The <code>ProgressPrinter</code> class is useful for printing status information
+ * The {@code ProgressPrinter} class is useful for printing status information
  * to the console while running tests. This class supports three output modes;
  * <i>silent</i>, where only test failures are printed at the end, <i>quiet</i>,
  * where each test produces either an '.' or an 'X' for success or failure, respectively,

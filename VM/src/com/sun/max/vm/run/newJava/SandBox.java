@@ -27,7 +27,6 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -73,7 +72,7 @@ final class SandBox {
 
         boolean error = true;
         try {
-            Debug.println("invoking main()");
+            Log.println("invoking main()");
             final SystemClassLoader systemClassLoader = new SystemClassLoader();
             final Class<?> mainClass = systemClassLoader.loadClass(VMOptions.mainClassName());
             final Method mainMethod = mainClass.getDeclaredMethod("main", String[].class);

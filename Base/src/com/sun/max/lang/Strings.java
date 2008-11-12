@@ -235,7 +235,7 @@ public final class Strings {
     /**
      * Prepends {@code n} space characters to every line in String {@code lines},
      * including a possibly non-empty line following the final newline.
-     * Returns {@code lines} if <code>spaces <= 0</code>
+     * Returns {@code lines} if {@code spaces <= 0}
      */
     public static String indent(String lines, int spaces) {
         return indent(lines, spaces(spaces));

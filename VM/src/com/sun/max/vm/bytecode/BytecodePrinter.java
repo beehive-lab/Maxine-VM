@@ -85,7 +85,7 @@ public class BytecodePrinter extends BytecodeVisitor {
             writer.flush();
             return stream.toString();
         } catch (Throwable throwable) {
-            ProgramWarning.message("could not print bytecodes");
+            ProgramWarning.message("could not print bytecodes: " + throwable);
             return "";
         }
     }

@@ -46,7 +46,7 @@ public class BirTracer extends Tracer {
 
     /**
      * Visits a {@link TreeAnchor}.
-     * @return <code>true</code> if tracing should commence / continue, or <code>false</code> otherwise.
+     * @return {@code true} if tracing should commence / continue, or {@code false} otherwise.
      */
     public boolean visitAnchor(TreeAnchor anchor, State<Value> state) {
         anchor.setStackHeight(state.last().stackHeight());
@@ -56,7 +56,7 @@ public class BirTracer extends Tracer {
 
     /**
      * Visits an invoke.
-     * @return <code>true</code> if tracing should commence / continue, or <code>false</code> otherwise.
+     * @return {@code true} if tracing should commence / continue, or {@code false} otherwise.
      */
     public boolean visitInvoke(ClassMethodActor target, BirState state) {
         return true;
@@ -64,7 +64,7 @@ public class BirTracer extends Tracer {
 
     /**
      * Visits a bytecode instruction.
-     * @return <code>true</code> of tracing should continue, or <code>false</code> otherwise.
+     * @return {@code true} of tracing should continue, or {@code false} otherwise.
      */
     public boolean visitBytecode(BytecodeLocation location, BirState state) {
         assert MaxineVM.isPrototyping();

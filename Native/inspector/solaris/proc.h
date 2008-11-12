@@ -99,9 +99,9 @@ extern	int	_proc_Lalt_stack(const char *func, int line, struct ps_lwphandle *lh,
 /*
  * Writes a string to the debug log stream describing each status flag that is set in a given thread or process flags value.
  */
-extern void debug_printStatusFlags(const char *prefix, int pr_flags, const char *suffix);
+extern void log_printStatusFlags(const char *prefix, int pr_flags, const char *suffix);
 
 /*
  * Writes a string to the debug log stream describing the why a given lwp is stopped (if it is stopped).
  */
-extern void debug_printWhyStopped(const char *prefix, lwpstatus_t *lwpstatus, const char *suffix);
+extern void log_printWhyStopped(const char *prefix, lwpstatus_t *lwpstatus, const char *suffix);

@@ -23,7 +23,6 @@ package com.sun.max.vm.heap.beltway;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
@@ -68,7 +67,7 @@ public class BeltwayHeapVerifier {
         _belt = belt;
         _heapRootsVerifier.run();
         if (Heap.verbose()) {
-            Debug.println("Finished Roots Verification");
+            Log.println("Finished Roots Verification");
         }
         Pointer cell = regionStartAddress.asPointer();
         while (cell.lessThan(allocationMark)) {

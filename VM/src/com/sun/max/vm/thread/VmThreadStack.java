@@ -23,7 +23,7 @@ package com.sun.max.vm.thread;
 import com.sun.max.unsafe.*;
 
 /**
- * The <code>VmThreadStack</code> class implements an object that encapsulates all the information about
+ * The {@code VmThreadStack} class implements an object that encapsulates all the information about
  * a VM thread's stack, including the stack segments such as a reference map area, guard pages, user area,
  * native area, etc.
  *

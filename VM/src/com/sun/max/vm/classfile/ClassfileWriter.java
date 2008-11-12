@@ -39,6 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -56,12 +57,11 @@ public class ClassfileWriter {
     DataOutputStream _dataOutputStream;
 
     /**
-     * Saves a generated class actor as a class file accessible to the {@linkplain VmClassLoader VM class loader} or to the inspector.
+     * Saves a generated class actor as a class file accessible to the {@linkplain VmClassLoader VM class loader} or to
+     * the inspector.
      *
-     * @param classInfo
-     *                the class to be written as a class file
-     * @param constantPoolEditor
-     *                an editor on a constant pool associated with {@code classActor}
+     * @param classInfo the class to be written as a class file
+     * @param constantPoolEditor an editor on a constant pool associated with {@code classActor}
      */
     public static void saveGeneratedClass(ClassInfo classInfo, final ConstantPoolEditor constantPoolEditor) throws IOException {
         final byte[] classfile = toByteArray(classInfo, constantPoolEditor);
@@ -75,8 +75,7 @@ public class ClassfileWriter {
     /**
      * Creates a JVM class file for a given class.
      *
-     * @param classInfo
-     *                the class to be written as a class file
+     * @param classInfo the class to be written as a class file
      * @return a byte array containing the class file
      */
     public static byte[] toByteArray(ClassInfo classInfo) {
@@ -86,10 +85,8 @@ public class ClassfileWriter {
     /**
      * Creates a JVM class file for a given class.
      *
-     * @param classInfo
-     *                the class to be written as a class file
-     * @param constantPoolEditor
-     *                an editor on a constant pool associated with {@code classInfo}
+     * @param classInfo the class to be written as a class file
+     * @param constantPoolEditor an editor on a constant pool associated with {@code classInfo}
      * @return a byte array containing the class file
      */
     public static byte[] toByteArray(ClassInfo classInfo, ConstantPoolEditor constantPoolEditor) {
@@ -106,8 +103,7 @@ public class ClassfileWriter {
     /**
      * Makes a copy of a class actor's constant pool and return an editor on it.
      *
-     * @param classActor
-     *                the class whose constant pool is to be copied
+     * @param classActor the class whose constant pool is to be copied
      * @return an editor on a copy of {@code classActor}'s constant pool
      */
     public static ConstantPoolEditor mutableConstantPoolEditorFor(ClassActor classActor) {
@@ -130,18 +126,14 @@ public class ClassfileWriter {
     /**
      * Writes a JVM class file for a given class to a given output stream.
      *
-     * @param classInfo
-     *                the class to be written as a class file
-     * @param constantPoolEditor
-     *                an editor on a constant pool associated with {@code classInfo}.
-     *                <p>
-     *                <b>It's imperative that this constant pool editor was obtained AFTER {@code classInfo} was
-     *                constructed as the construction of a ClassInfo object may add more entries to the given class
-     *                actor's constant pool.</b>
-     * @param outputStream
-     *                where to write the class file
-     * @throws IOException
-     *                 if an IO error occurs while writing to {@code outputStream}
+     * @param classInfo the class to be written as a class file
+     * @param constantPoolEditor an editor on a constant pool associated with {@code classInfo}.
+     *            <p>
+     *            <b>It's imperative that this constant pool editor was obtained AFTER {@code classInfo} was constructed
+     *            as the construction of a ClassInfo object may add more entries to the given class actor's constant
+     *            pool.</b>
+     * @param outputStream where to write the class file
+     * @throws IOException if an IO error occurs while writing to {@code outputStream}
      */
     public ClassfileWriter(ClassInfo classInfo, ConstantPoolEditor constantPoolEditor, OutputStream outputStream) throws IOException {
         _constantPoolEditor = constantPoolEditor;
@@ -456,6 +448,9 @@ public class ClassfileWriter {
 
         @Override
         protected void write(ClassfileWriter cf) throws IOException {
+            if (_actor.name().string().equals("nativeJoin")) {
+                System.console();
+            }
             cf.writeUnsigned2(classfileFlags());
             cf.writeUnsigned2(cf.indexOfUtf8(_actor.name()));
             cf.writeUnsigned2(cf.indexOfUtf8(_actor.descriptor()));
@@ -511,7 +506,6 @@ public class ClassfileWriter {
         public Code(CodeAttribute codeAttribute) {
             super("Code");
             _codeAttribute = codeAttribute;
-
             final StackMapTable stackMapTable = codeAttribute.stackMapTable();
             final LineNumberTable lineNumberTable = codeAttribute.lineNumberTable();
             final LocalVariableTable localVariableTable = codeAttribute.localVariableTable();
@@ -550,13 +544,42 @@ public class ClassfileWriter {
             }
         }
 
+        /**
+         * Replace non-standard bytecodes with standard JVM bytecodes.
+         */
+        private static byte[] standardizeCode(final CodeAttribute codeAttribute, final ClassfileWriter cf) {
+            final byte[] code = codeAttribute.code();
+            if (code == null) {
+                return code;
+            }
+            final byte[] codeCopy = code.clone();
+            final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
+                @Override
+                protected void callnative(int nativeFunctionDescriptorIndex) {
+                    final Utf8Constant name = SymbolTable.makeSymbol("callnative_" + nativeFunctionDescriptorIndex);
+                    final ConstantPool pool = codeAttribute.constantPool();
+                    final SignatureDescriptor signature = SignatureDescriptor.create(pool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
+                    final ClassMethodRefConstant method = PoolConstantFactory.createClassMethodConstant(pool.holder(), name, signature);
+                    final int index = cf.indexOf(method);
+                    final int position = getBytecodeScanner().getCurrentOpcodePosition();
+                    codeCopy[position] = (byte) Bytecode.INVOKESTATIC.ordinal();
+                    codeCopy[position + 1] = (byte) (index >> 8);
+                    codeCopy[position + 2] = (byte) index;
+                }
+            };
+            new BytecodeScanner(bytecodeAdapter).scan(new BytecodeBlock(code));
+            return codeCopy;
+        }
+
         @Override
         protected void writeData(ClassfileWriter cf) throws IOException {
-            final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = _codeAttribute.exceptionHandlerTable();
-            cf.writeUnsigned2(_codeAttribute.maxStack());
-            cf.writeUnsigned2(_codeAttribute.maxLocals());
-            cf.writeUnsigned4(_codeAttribute.code().length);
-            cf.writeUnsigned1Array(_codeAttribute.code());
+            final CodeAttribute codeAttribute = _codeAttribute;
+            final Sequence<ExceptionHandlerEntry> exceptionHandlerTable = codeAttribute.exceptionHandlerTable();
+            cf.writeUnsigned2(codeAttribute.maxStack());
+            cf.writeUnsigned2(codeAttribute.maxLocals());
+            final byte[] code = standardizeCode(codeAttribute, cf);
+            cf.writeUnsigned4(code.length);
+            cf.writeUnsigned1Array(code);
             cf.writeUnsigned2(exceptionHandlerTable.length());
             for (ExceptionHandlerEntry info : exceptionHandlerTable) {
                 cf.writeUnsigned2(info.startPosition()); // start_pc
