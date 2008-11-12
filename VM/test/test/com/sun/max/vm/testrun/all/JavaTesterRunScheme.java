@@ -502,8 +502,8 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.jni.JNI_OverflowArguments.class
     };
     @Override
-    public void run() {
-        _testEnd = 459;
+    public void runTests() {
+        _testEnd = 460;
         _total = _testEnd - _testStart;
         _testNum = _testStart;
         while (_testNum < _testEnd) {
@@ -1885,7 +1885,7 @@ public class JavaTesterRunScheme extends AbstractTester {
                 case 458:
                     JavaTesterTests.test_jvmni_JVM_IsNaN01();
                     break;
-                case 450:
+                case 459:
                     JavaTesterTests.test_jni_JNI_OverflowArguments();
             }
         }
