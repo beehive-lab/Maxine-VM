@@ -290,48 +290,48 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         // Set up toolbar
         // TODO (mlvdv) implement remaining debugging controls in Bytecode view
         // the disabled ones haven't been adapted for bytecode-based debugging
-        JButton button = new JButton(_inspection.inspectionMenus().getToggleBytecodeBreakpointAction());
+        JButton button = new JButton(_inspection.actions().toggleBytecodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getStepOverAction());
+        button = new JButton(_inspection.actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOverButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getSingleStepAction());
+        button = new JButton(_inspection.actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepInButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getReturnFromFrameAction());
+        button = new JButton(_inspection.actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
         button.setEnabled(haveTargetCodeAddresses());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getRunToInstructionAction());
+        button = new JButton(_inspection.actions().debugRunToInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
         button.setEnabled(haveTargetCodeAddresses());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getResumeAction());
+        button = new JButton(_inspection.actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugContinueButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getPauseAction());
+        button = new JButton(_inspection.actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugPauseButtonIcon());
