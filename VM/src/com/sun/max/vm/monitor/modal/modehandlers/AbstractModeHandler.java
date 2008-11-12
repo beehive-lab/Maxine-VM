@@ -33,7 +33,7 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class AbstractModeHandler implements ModeHandler {
 
-    private static final boolean EXPLICIT_NULL_CHECKS = true;
+    private static final boolean _EXPLICIT_NULL_CHECKS = true;
 
     @CONSTANT_WHEN_NOT_ZERO
     private ModalMonitorScheme _monitorScheme;
@@ -60,7 +60,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
 
     @INLINE
     protected final void nullCheck(Object object) {
-        if (EXPLICIT_NULL_CHECKS && object == null) {
+        if (_EXPLICIT_NULL_CHECKS && object == null) {
             throw new NullPointerException();
         }
     }

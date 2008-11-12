@@ -221,4 +221,5 @@ public final class Heap {
     public static boolean isPinned(Object object) {
         return heapScheme().isPinned(object);
     }
+
 }

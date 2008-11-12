@@ -82,6 +82,7 @@ public class JavaMonitorManager {
 
     public static void initialize(MaxineVM.Phase phase) {
         Mutex.initialize(phase);
+        ConditionVariable.initialize(phase);
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());
@@ -97,11 +98,11 @@ public class JavaMonitorManager {
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             for (int i = 0; i < _allBindableQty; i++) {
                 final ManagedMonitor monitor = _allBindable[i];
-                monitor.alloc();
+                monitor.allocate();
             }
             for (int i = 0; i < _allStickyQty; i++) {
                 final ManagedMonitor monitor = _allSticky[i];
-                monitor.alloc();
+                monitor.allocate();
                 monitor.setDisplacedMisc(ObjectAccess.readMisc(monitor.boundObject()));
                 monitor.refreshBoundObject();
             }
@@ -166,7 +167,7 @@ public class JavaMonitorManager {
             managedMonitor = new StandardJavaMonitor();
         }
         if (!MaxineVM.isPrototyping()) {
-            managedMonitor.alloc();
+            managedMonitor.allocate();
         }
         return managedMonitor;
     }
@@ -347,7 +348,7 @@ public class JavaMonitorManager {
             PRE_ACQUIRE, UNPROTECTED, PROTECTED
         }
 
-        void alloc();
+        void allocate();
 
         Object boundObject();
 
