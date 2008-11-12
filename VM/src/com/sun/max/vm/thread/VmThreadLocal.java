@@ -545,6 +545,11 @@ public enum VmThreadLocal {
             Debug.print(" and ");
             Debug.print(lowestActiveSlot);
             Debug.println(" are not covered by the reference map.");
+            Throw.stackDump("Stack trace for thread:",
+                            LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals).asPointer(),
+                            LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer(),
+                            LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer());
+
             FatalError.unexpected("Stack reference map does not cover all active slots");
         }
 
