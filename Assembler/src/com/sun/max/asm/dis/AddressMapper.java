@@ -36,8 +36,20 @@ import com.sun.max.collect.*;
 public class AddressMapper {
 
     private int _serial;
+    private int _unnamedLabels;
     private final Map<ImmediateArgument, DisassembledObject> _objectMap = new HashMap<ImmediateArgument, DisassembledObject>();
-    private final Map<ImmediateArgument, DisassembledLabel> _labelMap = new HashMap<ImmediateArgument, DisassembledLabel>();
+    private final Map<ImmediateArgument, DisassembledLabel> _labelMap = new TreeMap<ImmediateArgument, DisassembledLabel>(new Comparator<ImmediateArgument>() {
+        public int compare(ImmediateArgument o1, ImmediateArgument o2) {
+            final long l1 = o1.asLong();
+            final long l2 = o2.asLong();
+            if (l1 < l2) {
+                return -1;
+            } else if (l1 > l2) {
+                return 1;
+            }
+            return 0;
+        }
+    });
 
     /**
      * Gets the label for a given address.
@@ -45,7 +57,8 @@ public class AddressMapper {
      * @param address the address for which a label is requested
      * @return the label for {@code address} or null if no label exists for that address
      */
-    public DisassembledLabel labelAt(ImmediateArgument address) {
+    public synchronized DisassembledLabel labelAt(ImmediateArgument address) {
+        fixupUnnamedLabels();
         return _labelMap.get(address);
     }
 
@@ -55,7 +68,8 @@ public class AddressMapper {
      * @param disassembledObject the disassembled object for which a label is requested
      * @return the label corresponding to {@code disassembledObject}'s start address or null if no label exists for that address
      */
-    public DisassembledLabel labelAt(DisassembledObject disassembledObject) {
+    public synchronized DisassembledLabel labelAt(DisassembledObject disassembledObject) {
+        fixupUnnamedLabels();
         return labelAt(disassembledObject.startAddress());
     }
 
@@ -64,7 +78,7 @@ public class AddressMapper {
      *
      * @return the previous mapping (if any) for {@code address}
      */
-    public DisassembledLabel add(ImmediateArgument address, String name) {
+    public synchronized DisassembledLabel add(ImmediateArgument address, String name) {
         return _labelMap.put(address, new DisassembledLabel(address, name));
     }
 
@@ -85,7 +99,7 @@ public class AddressMapper {
      *
      * @param disassembledObjects the disassembled objects to consider
      */
-    public void add(Sequence<DisassembledObject> disassembledObjects) {
+    public synchronized void add(Sequence<DisassembledObject> disassembledObjects) {
         for (DisassembledObject disassembledObject : disassembledObjects) {
             final ImmediateArgument address = disassembledObject.startAddress();
             _objectMap.put(address, disassembledObject);
@@ -99,9 +113,28 @@ public class AddressMapper {
                 } else {
                     DisassembledLabel label = _labelMap.get(targetAddress);
                     if (label == null || label.target() != targetDisassembledObject) {
-                        label = new DisassembledLabel(targetDisassembledObject, "L" + _serial++);
+                        label = new UnnamedLabel(targetDisassembledObject);
+                        _unnamedLabels++;
                         _labelMap.put(targetAddress, label);
                     }
+                }
+            }
+        }
+    }
+
+    private static class UnnamedLabel extends DisassembledLabel {
+        UnnamedLabel(DisassembledObject targetDisassembledObject) {
+            super(targetDisassembledObject, "L?");
+        }
+    }
+
+    private void fixupUnnamedLabels() {
+        while (_unnamedLabels != 0) {
+            for (Map.Entry<ImmediateArgument, DisassembledLabel> entry : _labelMap.entrySet()) {
+                final DisassembledLabel label = entry.getValue();
+                if (label instanceof UnnamedLabel) {
+                    entry.setValue(new DisassembledLabel(label.target(), "L" + (++_serial)));
+                    _unnamedLabels--;
                 }
             }
         }
@@ -110,7 +143,8 @@ public class AddressMapper {
     /**
      * Computes the maximum length of any label name in this mapping.
      */
-    public int maximumLabelNameLength() {
+    public synchronized int maximumLabelNameLength() {
+        fixupUnnamedLabels();
         int max = 0;
         for (DisassembledLabel label : _labelMap.values()) {
             final String name = label.name();
