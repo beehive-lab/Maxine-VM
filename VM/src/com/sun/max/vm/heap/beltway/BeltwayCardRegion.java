@@ -27,7 +27,6 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.thread.*;
 
@@ -115,26 +114,26 @@ public class BeltwayCardRegion {
         _cardTableSize = Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH);
 
         if (Heap.verbose()) {
-            Debug.print("\nCardRegion.initialize: covered region start ");
-            Debug.println(_region.start());
-            Debug.print("CardRegion.initialize: covered region size ");
-            Debug.println(_region.size());
-            Debug.print("CardRegion.initialize: cardTable start ");
-            Debug.println(cardTableStart);
-            Debug.print("CardRegion.initialize: cardTable card size ");
-            Debug.println(cardSize());
-            Debug.print("CardRegion.initialize: card table size ");
-            Debug.print(_numberOfCards * CARD_SLOT_LENGTH);
-            Debug.println();
-            Debug.print("CardRegion.initialize: cardTable end ");
-            Debug.println(cardTableStart.plus(Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH)));
-            Debug.print("CardRegion.initialize: number of cards ");
-            Debug.println(_numberOfCards);
+            Log.print("\nCardRegion.initialize: covered region start ");
+            Log.println(_region.start());
+            Log.print("CardRegion.initialize: covered region size ");
+            Log.println(_region.size());
+            Log.print("CardRegion.initialize: cardTable start ");
+            Log.println(cardTableStart);
+            Log.print("CardRegion.initialize: cardTable card size ");
+            Log.println(cardSize());
+            Log.print("CardRegion.initialize: card table size ");
+            Log.print(_numberOfCards * CARD_SLOT_LENGTH);
+            Log.println();
+            Log.print("CardRegion.initialize: cardTable end ");
+            Log.println(cardTableStart.plus(Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH)));
+            Log.print("CardRegion.initialize: number of cards ");
+            Log.println(_numberOfCards);
         }
 
         if (VirtualMemory.allocateMemoryAtFixedAddress(cardTableStart, Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH)) == false) {
-            Debug.print("MaxineVM: Could not allocate memory starting @address: ");
-            Debug.println(cardTableStart);
+            Log.print("MaxineVM: Could not allocate memory starting @address: ");
+            Log.println(cardTableStart);
             MaxineVM.native_exit(MaxineVM.HARD_EXIT_CODE);
         }
         _cardTableStart = cardTableStart;
@@ -143,7 +142,7 @@ public class BeltwayCardRegion {
 
     public void clearAllCards() {
         if (Heap.verbose()) {
-            Debug.println("CardRegion.clearAllCards: clearing the card table before use ");
+            Log.println("CardRegion.clearAllCards: clearing the card table before use ");
         }
         clearCardRegion(_cardTableStart, _cardTableStart.plus(_cardTableSize));
     }
@@ -151,10 +150,10 @@ public class BeltwayCardRegion {
     // clears all cards from start to end , including end.
     void clearCardRegion(Address start, Address end) {
         if (Heap.verbose()) {
-            Debug.print("CardRegion.clearCardRegion: begin ");
-            Debug.println(start);
-            Debug.print("CardRegion.clearCardRegion: end ");
-            Debug.println(end);
+            Log.print("CardRegion.clearCardRegion: begin ");
+            Log.println(start);
+            Log.print("CardRegion.clearCardRegion: end ");
+            Log.println(end);
         }
 
         Address addr = start;
@@ -164,7 +163,7 @@ public class BeltwayCardRegion {
         }
 
         if (Heap.verbose()) {
-            Debug.println("CardRegion.clearCard   Region: done");
+            Log.println("CardRegion.clearCard   Region: done");
 
         }
     }
@@ -173,25 +172,25 @@ public class BeltwayCardRegion {
         final Address start = _cardTableStart;
         final Address end = _cardTableStart.plus(_cardTableSize.minus(CARD_SLOT_LENGTH));
 
-        Debug.print("CardRegion.dumpCardTable: begin");
-        Debug.println(start);
-        Debug.print("CardRegion.dumpCardTable: end ");
-        Debug.println(end);
+        Log.print("CardRegion.dumpCardTable: begin");
+        Log.println(start);
+        Log.print("CardRegion.dumpCardTable: end ");
+        Log.println(end);
 
         Address addr = start;
         while (addr.lessEqual(end)) {
             if (isCardMarked(addr)) {
-                Debug.print("---- 0 ");
-                Debug.println(addr);
+                Log.print("---- 0 ");
+                Log.println(addr);
             } else {
-                Debug.print("1 ");
-                Debug.println(addr);
+                Log.print("1 ");
+                Log.println(addr);
             }
 
             addr = addr.plus(CARD_SLOT_LENGTH);
         }
 
-        Debug.println("CardRegion.dumpCardTable: done");
+        Log.println("CardRegion.dumpCardTable: done");
     }
 
     private boolean isCardMarked(Address addr) {
@@ -230,14 +229,14 @@ public class BeltwayCardRegion {
         _adjustedCardTable = BeltwayCardRegion.adjustedCardTableBase(regularCardTable);
 
         if (Heap.verbose()) {
-            Debug.print("switchToRegularCardTable: primordialCardTable address ");
-            Debug.println(primordialCardTable);
-            Debug.print("switchToRegularCardTable: primordialCardTable size ");
-            Debug.println(primordialCardTableSize);
-            Debug.print("switchToRegularCardTable: regular card table address ");
-            Debug.println(regularCardTable);
-            Debug.print("switchToRegularCardTable: regular adjusted card table address ");
-            Debug.println(_adjustedCardTable);
+            Log.print("switchToRegularCardTable: primordialCardTable address ");
+            Log.println(primordialCardTable);
+            Log.print("switchToRegularCardTable: primordialCardTable size ");
+            Log.println(primordialCardTableSize);
+            Log.print("switchToRegularCardTable: regular card table address ");
+            Log.println(regularCardTable);
+            Log.print("switchToRegularCardTable: regular adjusted card table address ");
+            Log.println(_adjustedCardTable);
         }
 
         for (int index = 0; index < primordialCardTableSize; index++) {

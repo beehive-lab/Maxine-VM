@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.observer;
 
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.monitor.modal.modehandlers.observer.ObserverModeHandler.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
@@ -36,26 +36,26 @@ public class GCTracingObserver implements MonitorObserver {
     public void notify(Event event, Object object) {
         // Test for GC thread by id, as we might be in the middle of moving VmThread objects.
         if (VmThreadLocal.ID.getConstantWord().asAddress().toInt() == 1) {
-            final boolean lockDisabledSafepoints = Debug.lock();
-            Debug.print(event.name());
-            Debug.print(" on instance of class defined in: ");
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print(event.name());
+            Log.print(" on instance of class defined in: ");
             final Hub hub = ObjectAccess.readHub(object);
             if (hub == null) {
-                Debug.println("Null Hub");
+                Log.println("Null Hub");
                 return;
             }
             final ClassActor actor = hub.classActor();
             if (actor == null) {
-                Debug.println("Null ClassActor");
+                Log.println("Null ClassActor");
                 return;
             }
             final String sourceFileName = actor.sourceFileName();
             if (sourceFileName == null) {
-                Debug.println("Null source file name");
+                Log.println("Null source file name");
                 return;
             }
-            Debug.println(sourceFileName);
-            Debug.unlock(lockDisabledSafepoints);
+            Log.println(sourceFileName);
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 }

@@ -254,10 +254,10 @@ public final class VmThreadMap {
     }
 
     /**
-     * Gets the <code>VmThread</code> object associated with the specified thread id.
+     * Gets the {@code VmThread} object associated with the specified thread id.
      *
      * @param id the thread id
-     * @return a reference to the <code>VmThread</code> object for the specified id
+     * @return a reference to the {@code VmThread} object for the specified id
      */
     @INLINE
     public VmThread getVmThreadForID(int id) {
@@ -265,8 +265,8 @@ public final class VmThreadMap {
     }
 
     /**
-     * The <code>IDMap</code> class manages thread ids and a mapping between thread ids and
-     * the corresponding <code>VmThread</code> instance.
+     * The {@code IDMap} class manages thread ids and a mapping between thread ids and
+     * the corresponding {@code VmThread} instance.
      */
     private class IDMap {
         private int _nextID;

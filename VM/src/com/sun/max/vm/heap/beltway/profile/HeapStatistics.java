@@ -21,7 +21,7 @@
 package com.sun.max.vm.heap.beltway.profile;
 
 import com.sun.max.collect.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.*;
 
 /**
  * This calls hold statistics information about a GC. Currently it is synchronized so as we are not concerned with
@@ -197,44 +197,44 @@ public class HeapStatistics {
     }
 
     public static void printMutatorStats() {
-        Debug.print(" Mutator Cycle: ");
-        Debug.println(_mutatorCycles);
-        Debug.print(" Total objects allocated on heap: ");
-        Debug.println(_heapAllocations);
-        Debug.print(" Total eden allocated on heap: ");
-        Debug.println(_edenAllocations);
-        Debug.print(" Total TLABS allocated: ");
-        Debug.println(_mutatorTlabAllocations);
+        Log.print(" Mutator Cycle: ");
+        Log.println(_mutatorCycles);
+        Log.print(" Total objects allocated on heap: ");
+        Log.println(_heapAllocations);
+        Log.print(" Total eden allocated on heap: ");
+        Log.println(_edenAllocations);
+        Log.print(" Total TLABS allocated: ");
+        Log.println(_mutatorTlabAllocations);
     }
 
     public static void printGCStats() {
-        Debug.print(" Total Collections: ");
-        Debug.println(_totalCollections);
-        Debug.print("Eden Collections: ");
-        Debug.println(_edenCollections);
-        Debug.print("To Space Collections: ");
-        Debug.println(_toSpaceCollections);
-        Debug.print("Mature Collections: ");
-        Debug.println(_matureCollections);
-        Debug.print("Eden Survivors: ");
-        Debug.println(_edenSurvivors);
-        Debug.print("ToSpace Survivors: ");
-        Debug.println(_toSpaceSurvivors);
-        Debug.print("Mature Survivors: ");
-        Debug.println(_matureSpaceSurvivors);
+        Log.print(" Total Collections: ");
+        Log.println(_totalCollections);
+        Log.print("Eden Collections: ");
+        Log.println(_edenCollections);
+        Log.print("To Space Collections: ");
+        Log.println(_toSpaceCollections);
+        Log.print("Mature Collections: ");
+        Log.println(_matureCollections);
+        Log.print("Eden Survivors: ");
+        Log.println(_edenSurvivors);
+        Log.print("ToSpace Survivors: ");
+        Log.println(_toSpaceSurvivors);
+        Log.print("Mature Survivors: ");
+        Log.println(_matureSpaceSurvivors);
 
 
-        Debug.print("Percentage of eden survivors: ");
+        Log.print("Percentage of eden survivors: ");
         final double edenSurvivorPercentage = _edenSurvivors / _sumSurvivors;
-        Debug.println(edenSurvivorPercentage);
+        Log.println(edenSurvivorPercentage);
 
-        Debug.print("Percentage of toSpace survivors: ");
+        Log.print("Percentage of toSpace survivors: ");
         final double toSpaceSurvivorPercentage = _toSpaceSurvivors / _sumSurvivors;
-        Debug.println(toSpaceSurvivorPercentage);
+        Log.println(toSpaceSurvivorPercentage);
 
-        Debug.print("Percentage of mature survivors: ");
+        Log.print("Percentage of mature survivors: ");
         final double matureSurvivorPercentage = _matureSpaceSurvivors / _sumSurvivors;
-        Debug.println(matureSurvivorPercentage);
+        Log.println(matureSurvivorPercentage);
 
 
     }

@@ -21,10 +21,11 @@
 package com.sun.max.vm.hotpath.compiler;
 
 import java.lang.reflect.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.*;
 
 import sun.misc.*;
+
+import com.sun.max.program.*;
+import com.sun.max.vm.*;
 
 
 public class UnsafeAccess {

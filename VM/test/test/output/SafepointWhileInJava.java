@@ -28,7 +28,7 @@ public class SafepointWhileInJava {
         public void run() {
             System.out.println("Spinner: spinning...");
             final Object[] localRefs = new Object[1000];
-            while (!_done) {
+            while (!stopRequested()) {
                 frameWithReferences(localRefs);
                 ++_iterations;
             }
@@ -40,6 +40,13 @@ public class SafepointWhileInJava {
                 o = localRefs[i];
             }
             return o;
+        }
+
+        synchronized boolean stopRequested() {
+            return _done;
+        }
+        synchronized void requestStop() {
+            _done = true;
         }
     }
 
@@ -62,7 +69,7 @@ public class SafepointWhileInJava {
         }
 
         // Stop 'spinner'
-        spinner._done = true;
+        spinner.requestStop();
         spinnerThread.join();
     }
 }

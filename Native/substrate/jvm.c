@@ -33,7 +33,7 @@
 #include <string.h>
 
 #include "jni.h"
-#include "debug.h"
+#include "log.h"
 #include "mutex.h"
 #include "threads.h"
 #include "maxine.h"
@@ -1558,7 +1558,7 @@ jint JVM_GetLastErrorString(char *buffer, int length) {
  */
 char *JVM_NativePath(char *path) {
 #if debug_JVMNI
-  debug_println("JVM_NativePath(%s)", path);
+  log_println("JVM_NativePath(%s)", path);
 #endif
     return path; // TODO
 }
@@ -1576,7 +1576,7 @@ char *JVM_NativePath(char *path) {
 jint JVM_Open(char *fileName, jint flags, jint mode) {
     int result = open(fileName, flags, mode);
 #if debug_JVMNI
-    debug_println("JVM_Open(%s)", fileName);
+    log_println("JVM_Open(%s)", fileName);
 #endif
     if (result >= 0) {
         return result;

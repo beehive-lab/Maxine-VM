@@ -108,7 +108,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * for templates where the number of test cases can be very large.
      *
      * It is important to note that the value returned by {@link #next()} is only valid
-     * until {@code next()} is called again. That is, the same <code>Sequence<Argument></code>
+     * until {@code next()} is called again. That is, the same {@code Sequence}
      * object is returned by each call to {@code next()}, only its contents have changed.
      *
      * @author Doug Simon
@@ -376,7 +376,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * to be able to remotely execute via SSH as user {@code dsimon} on machine
      * {@code remote}:
      * <p>
-     * <table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre><code>
+     * <table border="1" cellspacing="0" cellpadding="5" width="100%" bgcolor="#CCCCCC"><tr><td><pre>
      * [dsimon@local:~]$ <b>ssh-keygen -t dsa</b>
      * Generating public/private dsa key pair.
      * Enter file in which to save the key (/home/dsimon/.ssh/id_dsa):
@@ -392,7 +392,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
      * [dsimon@local:~]$ ssh dsimon@remote
      * Password:
      * [dsimon@remote:~]$ <b>{@literal cat id_dsa.pub >> .ssh/authorized_keys2}</b>
-     * </code></pre></td></tr></table>
+     * </pre></td></tr></table>
      *
      * @param remoteUserAndHost a {@code user@host} value denoting a machine that
      *        supports remote execution via SSH2 using public key authentication
