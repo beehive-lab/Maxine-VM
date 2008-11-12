@@ -163,7 +163,7 @@ public final class Throw {
     }
 
     /**
-     * Dumps the stack of the current thread.
+     * Dumps the entire stack of the current thread.
      * <p>
      * This stack dump is meant to be more primitive that the dump obtained by {@link Thread#dumpStack()} in that all
      * the actual frames are dumped, not only the frames of application visible methods. In addition, there is no
@@ -181,6 +181,17 @@ public final class Throw {
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, _stackFrameDumper);
     }
 
+    /**
+     * Dumps the stack of the current thread. This method is equivalent to
+     * {@link #stackDump(String, Pointer, Pointer, Pointer)} except that it takes an extra parameter ({@code depth})
+     * that specifies the maximum number of stack frames to be walked.
+     *
+     * @param message the message to print accompanying the stack trace
+     * @param instructionPointer the instruction pointer at which to begin the stack trace
+     * @param cpuStackPointer the stack pointer at which to begin the stack trace
+     * @param cpuFramePointer the frame pointer at which to begin the stack trace
+     * @param depth the maximum number of stack frames to be walked
+     */
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer, int depth) {
         Debug.println(message);
         new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, new StackFrameDumper(depth));
