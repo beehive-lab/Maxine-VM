@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.thread.*;
 
@@ -116,11 +116,11 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
     @Override
     public void dump() {
         super.dump();
-        Debug.print(" ownerAcquired=");
-        Debug.print(_ownerAcquired);
-        Debug.print(" proxyMutex=");
-        Debug.print(_proxyMutex.asPointer());
-        Debug.print(" proxyCondVar=");
-        Debug.print(_proxyVar.asPointer());
+        Log.print(" ownerAcquired=");
+        Log.print(_ownerAcquired);
+        Log.print(" proxyMutex=");
+        Log.print(_proxyMutex.asPointer());
+        Log.print(" proxyCondVar=");
+        Log.print(_proxyVar.asPointer());
     }
 }

@@ -23,7 +23,7 @@
  */
 
 #include "virtualMemory.h"
-#include "debug.h"
+#include "log.h"
 
 #if defined(GUESTVMXEN)
 #include <guestvmXen.h>
@@ -105,7 +105,7 @@ Java_com_sun_max_memory_VirtualMemory_nativeAllocateAtFixedAddress(JNIEnv *env, 
 Address virtualMemory_reserve(Size size) {
 	Address addr = 	(Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_NORESERVE, -1, (off_t) 0);
 #if debug_LOADER
-	debug_println(" %d virtualMemory_reserve reserved %lx at %p",sizeof(size), size, addr);
+	log_println(" %d virtualMemory_reserve reserved %lx at %p",sizeof(size), size, addr);
 #endif
 	return addr;
 }
@@ -133,7 +133,7 @@ jboolean virtualMemory_allocateAtFixedAddress(Address address, Size size) {
 }
 
 void protectPage(Address pageAddress) {
-    debug_ASSERT(pageAlign(pageAddress) == pageAddress);
+    c_ASSERT(pageAlign(pageAddress) == pageAddress);
 
 #if os_SOLARIS || os_DARWIN || os_LINUX
     if (mprotect((Word) pageAddress, getPageSize(), PROT_NONE) != 0) {
@@ -148,7 +148,7 @@ void protectPage(Address pageAddress) {
 }
 
 void unprotectPage(Address pageAddress) {
-	debug_ASSERT(pageAlign(pageAddress) == pageAddress);
+	c_ASSERT(pageAlign(pageAddress) == pageAddress);
 #if os_SOLARIS || os_DARWIN || os_LINUX
 	if (mprotect((Word) pageAddress, getPageSize(), PROT_READ| PROT_WRITE) != 0){
          int error = errno;

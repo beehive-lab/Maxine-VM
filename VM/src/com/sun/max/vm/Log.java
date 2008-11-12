@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.debug;
+package com.sun.max.vm;
 
 import java.io.*;
 
@@ -26,74 +26,72 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * This class contains debugging utilities, in particular, "out" and "err" print streams that
- * go directly to native code (e.g. C-style printf) and thus provide a quicker way of producing
- * output that depends on fewer VM features, and is thus useful for debugging lower-level primitives.
+ * This class presents a low-level VM logging facility that closely resembles (but extends) that offered by standard
+ * {@link PrintStream}s. All output of the methods in this class goes to a configurable {@linkplain #os output stream}.
  *
  * @author Ben L. Titzer
  * @author Doug Simon
  */
-public final class Debug {
+public final class Log {
 
-    private Debug() {
+    private Log() {
     }
 
     static {
-        new CriticalNativeMethod(Debug.class, "debug_lock");
-        new CriticalNativeMethod(Debug.class, "debug_unlock");
+        new CriticalNativeMethod(Log.class, "log_lock");
+        new CriticalNativeMethod(Log.class, "log_unlock");
 
-        new CriticalNativeMethod(Debug.class, "debug_print_buffer");
-        new CriticalNativeMethod(Debug.class, "debug_print_boolean");
-        new CriticalNativeMethod(Debug.class, "debug_print_char");
-        new CriticalNativeMethod(Debug.class, "debug_print_int");
-        new CriticalNativeMethod(Debug.class, "debug_print_long");
-        new CriticalNativeMethod(Debug.class, "debug_print_float");
-        new CriticalNativeMethod(Debug.class, "debug_print_double");
-        new CriticalNativeMethod(Debug.class, "debug_print_word");
-        new CriticalNativeMethod(Debug.class, "debug_print_newline");
+        new CriticalNativeMethod(Log.class, "log_print_buffer");
+        new CriticalNativeMethod(Log.class, "log_print_boolean");
+        new CriticalNativeMethod(Log.class, "log_print_char");
+        new CriticalNativeMethod(Log.class, "log_print_int");
+        new CriticalNativeMethod(Log.class, "log_print_long");
+        new CriticalNativeMethod(Log.class, "log_print_float");
+        new CriticalNativeMethod(Log.class, "log_print_double");
+        new CriticalNativeMethod(Log.class, "log_print_word");
+        new CriticalNativeMethod(Log.class, "log_print_newline");
     }
 
     @C_FUNCTION
-    private static native void debug_print_buffer(Address val);
+    private static native void log_print_buffer(Address val);
 
     @C_FUNCTION
-    private static native void debug_print_boolean(boolean val);
+    private static native void log_print_boolean(boolean val);
 
     @C_FUNCTION
-    private static native void debug_print_char(int val);
+    private static native void log_print_char(int val);
 
     @C_FUNCTION
-    private static native void debug_print_int(int val);
+    private static native void log_print_int(int val);
 
     @C_FUNCTION
-    private static native void debug_print_long(long val);
+    private static native void log_print_long(long val);
 
     @C_FUNCTION
-    private static native void debug_print_float(float val);
+    private static native void log_print_float(float val);
 
     @C_FUNCTION
-    private static native void debug_print_double(double val);
+    private static native void log_print_double(double val);
 
     @C_FUNCTION
-    private static native void debug_print_word(Word val);
+    private static native void log_print_word(Word val);
 
     @C_FUNCTION
-    private static native void debug_print_newline();
+    private static native void log_print_newline();
 
     @C_FUNCTION
-    private static native void debug_lock();
+    private static native void log_lock();
 
     @C_FUNCTION
-    private static native void debug_unlock();
+    private static native void log_unlock();
 
     /**
-     * The singleton VM output stream.
+     * The singleton VM log output stream.
      *
      * This output stream writes to the native standard output stream by default. It can be redirected
      * to write to the native standard error stream or a file instead by setting the value of the
@@ -102,50 +100,51 @@ public final class Debug {
      * output will be written. The special values {@code "stdout"} and {@code "stderr"} are
      * interpreted to mean the native standard output and error streams respectively.
      */
-    public static final OutputStream os = new DebugOutputStream();
+    public static final OutputStream os = new LogOutputStream();
+
 
     /**
      * The singleton VM print stream. This print stream sends all its output to {@link #os}.
      */
-    public static final DebugPrintStream out = new DebugPrintStream(os);
+    public static final LogPrintStream out = new LogPrintStream(os);
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(String)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(String)} on {@link #out}.
      */
     public static void print(String s) {
         out.print(s);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(String, boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(String, boolean)} on {@link #out}.
      */
     public static void print(String s, boolean withNewLine) {
         out.print(s, withNewLine);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(Object)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(Object)} on {@link #out}.
      */
     public static void print(Object object) {
         out.print(object);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(int)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(int)} on {@link #out}.
      */
     public static void print(int i) {
         out.print(i);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(long)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(long)} on {@link #out}.
      */
     public static void print(long i) {
         out.print(i);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(char)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(char)} on {@link #out}.
      */
     public static void print(char c) {
         out.print(c);
@@ -159,115 +158,115 @@ public final class Debug {
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(double)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(double)} on {@link #out}.
      */
     public static void print(double d) {
         out.print(d);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(float)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(float)} on {@link #out}.
      */
     public static void print(float f) {
         out.print(f);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(char[])} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(char[])} on {@link #out}.
      */
     public static void print(char[] c) {
         out.print(c);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#print(Word)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#print(Word)} on {@link #out}.
      */
     public static void print(Word word) {
         out.print(word);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(String)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(String)} on {@link #out}.
      */
     public static void println(String s) {
         out.println(s);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(Object)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(Object)} on {@link #out}.
      */
     public static void println(Object object) {
         out.println(object);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println()} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println()} on {@link #out}.
      */
     public static void println() {
         out.println();
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(int)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(int)} on {@link #out}.
      */
     public static void println(int i) {
         out.println(i);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(long)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(long)} on {@link #out}.
      */
     public static void println(long i) {
         out.println(i);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(char)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(char)} on {@link #out}.
      */
     public static void println(char c) {
         out.println(c);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(boolean)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(boolean)} on {@link #out}.
      */
     public static void println(boolean b) {
         out.println(b);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(double)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(double)} on {@link #out}.
      */
     public static void println(double d) {
         out.println(d);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(float)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(float)} on {@link #out}.
      */
     public static void println(float f) {
         out.println(f);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(char[])} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(char[])} on {@link #out}.
      */
     public static void println(char[] c) {
         out.println(c);
     }
 
     /**
-     * Equivalent to calling {@link DebugPrintStream#println(Word)} on {@link #out}.
+     * Equivalent to calling {@link LogPrintStream#println(Word)} on {@link #out}.
      */
     public static void println(Word word) {
         out.println(word);
     }
 
-    private static final class DebugOutputStream extends OutputStream {
+    private static final class LogOutputStream extends OutputStream {
         /**
-         * Only a {@linkplain Debug#os singleton} instance of this class exists.
+         * Only a {@linkplain Log#os singleton} instance of this class exists.
          */
-        private DebugOutputStream() {
+        private LogOutputStream() {
         }
 
         @PROTOTYPE_ONLY
@@ -299,7 +298,7 @@ public final class Debug {
                     _prototypeOutputStream.flush();
                 }
             } else {
-                debug_print_char(b);
+                log_print_char(b);
             }
         }
 
@@ -314,16 +313,16 @@ public final class Debug {
                     }
                 }
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
+                final boolean lockDisabledSafepoints = Log.lock();
                 final Pointer buffer = BootMemory.buffer();
                 final int bufferSize = BootMemory.bufferSize();
                 int i = off;
                 final int end = off + len;
                 while (i < end) {
                     i = CString.writeBytes(b, i, end, buffer, bufferSize);
-                    debug_print_buffer(buffer);
+                    log_print_buffer(buffer);
                 }
-                Debug.unlock(lockDisabledSafepoints);
+                Log.unlock(lockDisabledSafepoints);
             }
         }
     }
@@ -416,11 +415,11 @@ public final class Debug {
         }
     }
 
-    public static final class DebugPrintStream extends PrintStream {
+    public static final class LogPrintStream extends PrintStream {
         /**
-         * Only a {@linkplain Debug#out singleton} instance of this class exists.
+         * Only a {@linkplain Log#out singleton} instance of this class exists.
          */
-        private DebugPrintStream(OutputStream output) {
+        private LogPrintStream(OutputStream output) {
             super(output);
         }
 
@@ -436,9 +435,9 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.print(s);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
+                final boolean lockDisabledSafepoints = Log.lock();
                 printString(s);
-                Debug.unlock(lockDisabledSafepoints);
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -447,7 +446,7 @@ public final class Debug {
                 super.print(i);
             } else {
                 // locking is not really necessary for primitives
-                debug_print_int(i);
+                log_print_int(i);
             }
         }
         @Override
@@ -456,7 +455,7 @@ public final class Debug {
                 super.print(i);
             } else {
                 // locking is not really necessary for primitives
-                debug_print_long(i);
+                log_print_long(i);
             }
         }
         @Override
@@ -465,7 +464,7 @@ public final class Debug {
                 super.print(c);
             } else {
                 // locking is not really necessary for primitives
-                debug_print_char(c);
+                log_print_char(c);
             }
         }
         @Override
@@ -474,7 +473,7 @@ public final class Debug {
                 super.print(b);
             } else {
                 // locking is not really necessary for primitives
-                debug_print_boolean(b);
+                log_print_boolean(b);
             }
         }
         @Override
@@ -483,7 +482,7 @@ public final class Debug {
                 super.print(d);
             } else {
                 // locking is not really necessary for primitives
-                debug_print_double(d);
+                log_print_double(d);
             }
         }
         @Override
@@ -492,7 +491,7 @@ public final class Debug {
                 super.print(f);
             } else {
                 // locking is not really necessary for primitives
-                debug_print_float(f);
+                log_print_float(f);
             }
         }
         @Override
@@ -500,9 +499,9 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.print(c);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
+                final boolean lockDisabledSafepoints = Log.lock();
                 printChars(c);
-                Debug.unlock(lockDisabledSafepoints);
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         public void print(Word word) {
@@ -510,7 +509,7 @@ public final class Debug {
                 super.print(word.toHexString());
             } else {
                 // locking is not really necessary for primitives
-                debug_print_word(word);
+                log_print_word(word);
             }
         }
         @Override
@@ -518,10 +517,10 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(s);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
+                final boolean lockDisabledSafepoints = Log.lock();
                 printString(s);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -529,9 +528,9 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println();
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -539,10 +538,10 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(i);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_int(i);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_int(i);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -550,10 +549,10 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(i);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_long(i);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_long(i);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -561,10 +560,10 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(c);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_char(c);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_char(c);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -572,10 +571,10 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(b);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_boolean(b);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_boolean(b);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -583,10 +582,10 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(d);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_double(d);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_double(d);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -594,10 +593,10 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(f);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_float(f);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_float(f);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         @Override
@@ -605,20 +604,20 @@ public final class Debug {
             if (MaxineVM.isPrototyping()) {
                 super.println(c);
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
+                final boolean lockDisabledSafepoints = Log.lock();
                 printChars(c);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
         public void println(Word word) {
             if (MaxineVM.isPrototyping()) {
                 super.println(word.toHexString());
             } else {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                debug_print_word(word);
-                debug_print_newline();
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                log_print_word(word);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
             }
         }
 
@@ -629,7 +628,7 @@ public final class Debug {
             int i = 0;
             while (i < s.length()) {
                 i = CString.writePartialUtf8(s, i, buffer, bufferSize);
-                debug_print_buffer(buffer);
+                log_print_buffer(buffer);
             }
         }
 
@@ -639,7 +638,7 @@ public final class Debug {
             int i = 0;
             while (i < ch.length) {
                 i = CString.writePartialUtf8(ch, i, buffer, bufferSize);
-                debug_print_buffer(buffer);
+                log_print_buffer(buffer);
             }
         }
     }
@@ -661,7 +660,7 @@ public final class Debug {
         if (!safepointsDisabled) {
             Safepoint.disable();
         }
-        Debug.debug_lock();
+        Log.log_lock();
         return !safepointsDisabled;
     }
 
@@ -674,7 +673,7 @@ public final class Debug {
      *            this call will re-enable them.
      */
     public static void unlock(boolean lockDisabledSafepoints) {
-        Debug.debug_unlock();
+        Log.log_unlock();
         FatalError.check(Safepoint.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Debug.lock() and Debug.unlock()");
         if (lockDisabledSafepoints) {
             Safepoint.enable();

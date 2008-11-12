@@ -33,7 +33,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -184,11 +183,11 @@ public abstract class StackFrameWalker {
                                     return;
                                 }
                             } else {
-                                Debug.print("Native code called/entered a Java method not annotated with @C_FUNCTION: ");
-                                Debug.print(lastJavaCalleeMethodActor.name().string());
-                                Debug.print(lastJavaCalleeMethodActor.descriptor().string());
-                                Debug.print(" in ");
-                                Debug.println(lastJavaCalleeMethodActor.holder().name().string());
+                                Log.print("Native code called/entered a Java method not annotated with @C_FUNCTION: ");
+                                Log.print(lastJavaCalleeMethodActor.name().string());
+                                Log.print(lastJavaCalleeMethodActor.descriptor().string());
+                                Log.print(" in ");
+                                Log.println(lastJavaCalleeMethodActor.holder().name().string());
                                 FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub");
                             }
                         }
@@ -204,13 +203,13 @@ public abstract class StackFrameWalker {
         if (lastJavaCallee != null) {
             final ClassMethodActor classMethodActor = lastJavaCallee.classMethodActor();
             if (classMethodActor.isCFunction() && !classMethodActor.isTrapStub()) {
-                Debug.print("Caller of VM entry point (@C_FUNCTION method) \"");
-                Debug.print(lastJavaCallee.name());
-                Debug.print("\" is not native code: ");
-                Debug.print(targetMethod.name());
-                Debug.print(targetMethod.classMethodActor().descriptor().string());
-                Debug.print(" in ");
-                Debug.println(targetMethod.classMethodActor().holder().name().string());
+                Log.print("Caller of VM entry point (@C_FUNCTION method) \"");
+                Log.print(lastJavaCallee.name());
+                Log.print("\" is not native code: ");
+                Log.print(targetMethod.name());
+                Log.print(targetMethod.classMethodActor().descriptor().string());
+                Log.print(" in ");
+                Log.println(targetMethod.classMethodActor().holder().name().string());
                 FatalError.unexpected("Caller of a VM entry point (@C_FUNCTION method) must be native code");
             }
         }
@@ -281,8 +280,8 @@ public abstract class StackFrameWalker {
         }
 
         if (!_stackPointer.isZero()) {
-            Debug.print("Stack walker already in use for ");
-            Debug.println(_purpose.name());
+            Log.print("Stack walker already in use for ");
+            Log.println(_purpose.name());
             _stackPointer = Pointer.zero();
             _purpose = null;
             FatalError.unexpected("Stack walker already in use");
@@ -330,7 +329,7 @@ public abstract class StackFrameWalker {
                 if (_calleeStackFrame == null || !stackFrame.isSameFrame(_calleeStackFrame)) {
                     _calleeStackFrame = stackFrame;
                 } else {
-                    Debug.println("Same frame being visited twice: " + stackFrame);
+                    Log.println("Same frame being visited twice: " + stackFrame);
                 }
                 return visitor.visitFrame(stackFrame);
             }

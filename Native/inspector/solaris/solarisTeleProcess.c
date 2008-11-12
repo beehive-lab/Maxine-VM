@@ -23,7 +23,7 @@
  */
 
 
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 
 #include "proc.h"
@@ -41,7 +41,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadBytes(JNIEnv *e
 
     jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
     if (buffer == 0) {
-        debug_println("failed to malloc byteArray of %d bytes", length);
+        log_println("failed to malloc byteArray of %d bytes", length);
         return -1;
     }
 
@@ -59,13 +59,13 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWriteBytes(JNIEnv *
 
     jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
     if (buffer == 0) {
-        debug_println("failed to malloc byteArray of %d bytes", length);
+        log_println("failed to malloc byteArray of %d bytes", length);
         return -1;
     }
 
     (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
     if ((*env)->ExceptionOccurred(env) != NULL) {
-        debug_println("failed to copy %d bytes from byteArray into buffer", length);
+        log_println("failed to copy %d bytes from byteArray into buffer", length);
         return -1;
     }
 
@@ -80,10 +80,10 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv 
     char path[MAX_PATH_LENGTH];
     char **argv = (char**) commandLineArgumentArray;
 
-    debug_println("argv[0]: %s", argv[0]);
+    log_println("argv[0]: %s", argv[0]);
     struct ps_prochandle *ph = proc_Pcreate(argv[0], argv, &error, path, sizeof(path));
     if (error != 0) {
-        debug_println("could not create child process: %s", Pcreate_error(error));
+        log_println("could not create child process: %s", Pcreate_error(error));
         return NULL;
     }
 
@@ -103,7 +103,7 @@ JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jlong processHandle) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     if (Pdstop(ph) != 0) {
-        debug_println("Cannot stop the process");
+        log_println("Cannot stop the process");
         return false;
     }
     return true;
@@ -139,19 +139,19 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeResume(JNIEnv *env,
     Psetfault(ph, &faults);
 
     if (Pclearfault(ph) != 0) {
-        debug_println("Pclearfault failed");
+        log_println("Pclearfault failed");
         return false;
     }
 
     if (Pclearsig(ph) != 0) {
-        debug_println("Pclearsig failed");
+        log_println("Pclearsig failed");
         return false;
     }
 
     proc_Psync(ph);
 
     if (proc_Psetrun(ph, 0, 0) != 0) {
-        debug_println("Psetrun failed, proc_Pstate %d", proc_Pstate(ph));
+        log_println("Psetrun failed, proc_Pstate %d", proc_Pstate(ph));
         return false;
     }
     return true;
@@ -162,19 +162,19 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, j
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
     if (proc_Pwait(ph, 0) != 0) {
         int rc = proc_Pstate(ph);
-        debug_println("nativeResume: Pwait failed, proc_Pstate %d", rc);
+        log_println("nativeResume: Pwait failed, proc_Pstate %d", rc);
         return false;
     }
 
     if (Pclearfault(ph) != 0) {
         int rc = proc_Pstate(ph);
-        debug_println("Pclearfault failed, proc_Pstate %d", rc);
+        log_println("Pclearfault failed, proc_Pstate %d", rc);
         return false;
     }
 
     if (Pclearsig(ph) != 0) {
         int rc = proc_Pstate(ph);
-        debug_println("Pclearsig failed, proc_Pstate %d", rc);
+        log_println("Pclearsig failed, proc_Pstate %d", rc);
         return false;
     }
 
@@ -188,7 +188,7 @@ ThreadState_t lwpStatusToThreadState(lwpstatus_t *lwpStatus) {
     int flags = lwpStatus->pr_flags;
 
     /* This is only called after a Pwait so all threads should be stopped. */
-    debug_ASSERT((lwpStatus->pr_flags & PR_STOPPED) != 0);
+    c_ASSERT((lwpStatus->pr_flags & PR_STOPPED) != 0);
 
     ThreadState_t result = TS_SUSPENDED;
     if (why == PR_FAULTED && what == FLTBPT){
@@ -203,7 +203,7 @@ WaitResult_t reasonForStopping(lwpstatus_t *lwpStatus) {
     short what = lwpStatus->pr_what;
 
 
-    debug_printWhyStopped("LWP stopped: reason = ", lwpStatus, "\n");
+    log_printWhyStopped("LWP stopped: reason = ", lwpStatus, "\n");
 
     if (why == PR_REQUESTED) {
         /* TODO: need to find out why this is the right answer! */
@@ -249,15 +249,15 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     int error;
     struct ps_lwphandle *lh = proc_Lgrab(a->ph, (lwpid_t) lwpId, &error);
     if (error != 0) {
-        debug_println("gather threads");
-        debug_println("Lgrab failed: %s", Lgrab_error(error));
+        log_println("gather threads");
+        log_println("Lgrab failed: %s", Lgrab_error(error));
         return error;
     }
 
     stack_t stack;
 
     if (proc_Lmain_stack(lh, &stack) != 0) {
-        debug_println("Lmain_stack failed");
+        log_println("Lmain_stack failed");
         stack.ss_sp = 0;
         stack.ss_size = 0;
         proc_Lfree(lh);
@@ -268,15 +268,15 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
 
     if (_methodID == NULL) {
         jclass c = (*a->env)->GetObjectClass(a->env, a->process);
-        debug_ASSERT(c != NULL);
+        c_ASSERT(c != NULL);
         _methodID = (*a->env)->GetMethodID(a->env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIJJ)V");
-        debug_ASSERT(_methodID != NULL);
+        c_ASSERT(_methodID != NULL);
     }
 
 #if debug_INSPECTOR_NATIVE
-    debug_println("gatherThread[lwp id = %d]", lwpId);
-    debug_printStatusFlags("Status flags: ", lwpStatus->pr_flags, "\n");
-    debug_printWhyStopped("Why stopped: ", lwpStatus, "\n");
+    log_println("gatherThread[lwp id = %d]", lwpId);
+    log_printStatusFlags("Status flags: ", lwpStatus->pr_flags, "\n");
+    log_printWhyStopped("Why stopped: ", lwpStatus, "\n");
 #endif
     
     (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, lwpId, threadState, stack.ss_sp, stack.ss_size);
@@ -288,7 +288,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     if (Pcreate_agent(ph) != 0) {
-        debug_println("could not create agent lwp in tele process");
+        log_println("could not create agent lwp in tele process");
     }
 
     struct Argument a;

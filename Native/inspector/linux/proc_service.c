@@ -22,7 +22,7 @@
 #include <sys/ptrace.h>
 #include <stdarg.h>
 
-#include "debug.h"
+#include "log.h"
 #include "libInfo.h"
 #include "ptrace.h"
 
@@ -45,13 +45,13 @@ ps_err_e ps_pcontinue(struct ps_prochandle *ph) {
 
 ps_err_e ps_lstop(struct ps_prochandle *ph, lwpid_t lwpid) {
     /* This routine is allegedly never used by thread_db. */
-    debug_println("ps_lstop");
+    log_println("ps_lstop");
     return PS_ERR;    
 }
 
 ps_err_e ps_lcontinue(struct ps_prochandle *ph, lwpid_t lwpid) {
     /* This routine is allegedly never used by thread_db. */
-    debug_println("ps_lcontinue");
+    log_println("ps_lcontinue");
     return PS_ERR;    
 }
 
@@ -80,7 +80,7 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
         errno = 0;
         rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, aligned_addr, 0);
         if (errno) {
-            debug_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
+            log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return PS_ERR;
         }
         for (; aligned_addr != addr; aligned_addr++, ptr++) {
@@ -97,7 +97,7 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
         errno = 0;
         rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, aligned_addr, 0);
         if (errno) { 
-            debug_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
+            log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return false;
         }
         *(long *)buf = rslt;
@@ -110,7 +110,7 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
         errno = 0;
         rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, aligned_addr, 0);
         if (errno) {
-            debug_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
+            log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return false;
         }
         for (; aligned_addr != end_addr; aligned_addr++) {
@@ -121,42 +121,42 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
 }
 
 ps_err_e ps_pdwrite(struct ps_prochandle *ph, psaddr_t addr, const void *buf, size_t size) {
-    debug_println("ps_pdwrite");
+    log_println("ps_pdwrite");
     return PS_ERR;
 }
 
 ps_err_e ps_lsetfpregs(struct ps_prochandle *ph, lwpid_t lid, const prfpregset_t *fpregs) {
-    debug_println("ps_lsetfpregs");
+    log_println("ps_lsetfpregs");
     return PS_ERR;
 }
 
 ps_err_e ps_lsetregs(struct ps_prochandle *ph, lwpid_t lid, const prgregset_t gregset) {
-    debug_println("ps_lsetregs");
+    log_println("ps_lsetregs");
     return PS_ERR;
 }
 
 ps_err_e ps_lgetfpregs(struct  ps_prochandle  *ph,  lwpid_t lid, prfpregset_t *fpregs) {
-    debug_println("ps_lgetfpregs");
+    log_println("ps_lgetfpregs");
     return PS_ERR;
 }
 
 ps_err_e ps_lgetregs(struct ps_prochandle *ph, lwpid_t lid, prgregset_t gregset) {
-    debug_println("ps_lgetregs");
+    log_println("ps_lgetregs");
     return PS_ERR;
 }
 
 ps_err_e ps_lgetxregsize(struct ps_prochandle *ph, lwpid_t lwpid, int *xregsize) {
-    debug_println("ps_lgetxregsize");
+    log_println("ps_lgetxregsize");
     return PS_ERR;
 }
 
 ps_err_e ps_lgetxregs(struct ps_prochandle *ph, lwpid_t lwpid, caddr_t xregset) {
-    debug_println("ps_lgetxregs");
+    log_println("ps_lgetxregs");
     return PS_ERR;
 }
 
 ps_err_e ps_lsetxregs(struct ps_prochandle *ph, lwpid_t lwpid, caddr_t xregset) {
-    debug_println("ps_lsetxregs");
+    log_println("ps_lsetxregs");
     return PS_ERR;
 }
 
@@ -168,6 +168,6 @@ void ps_plog (const char *format, ...) {
 }
 
 ps_err_e ps_get_thread_area() {
-    debug_println("ps_get_thread_area");
+    log_println("ps_get_thread_area");
     return PS_ERR;
 }

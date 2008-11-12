@@ -21,6 +21,7 @@
 package com.sun.max.vm.thread;
 
 import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 

@@ -35,7 +35,7 @@
 #include <mach/vm_map.h>
 
 #include "darwinTeleNativeThread.h"
-#include "debug.h"
+#include "log.h"
 #include "debugPtrace.h"
 #include "jni.h"
 #include "word.h"
@@ -49,7 +49,7 @@ jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
         int status;
         int error = waitpid(pid, &status, 0);
         if (error != pid) {
-            debug_println("waitpid failed with errno: %d", errno);
+            log_println("waitpid failed with errno: %d", errno);
             return false;
         }
         if (WIFEXITED(status)) {
@@ -66,7 +66,7 @@ jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
             } else {
                 error = ptrace(PT_CONTINUE, pid, (char*) 1, signal);
                 if (error != 0) {
-                    debug_println("ptrace(PT_CONTINUE) failed = %d", error);
+                    log_println("ptrace(PT_CONTINUE) failed = %d", error);
                     return false;
                 }
             }
@@ -93,7 +93,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
 
         debug_exit(1, "execv failed in child process");
     } else if (childPid < 0) {
-        debug_println("fork failed");
+        log_println("fork failed");
         return -1L;
     } else {
         /* parent: */
@@ -132,9 +132,9 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
 
     if (_methodID == NULL) {
         jclass c = (*env)->GetObjectClass(env, process);
-        debug_ASSERT(c != NULL);
+        c_ASSERT(c != NULL);
         _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIJJ)V");
-        debug_ASSERT(_methodID != NULL);
+        c_ASSERT(_methodID != NULL);
     }
 
     for (i = 0; i < numberOfThreads; i++) {
@@ -146,7 +146,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         mach_msg_type_number_t count = THREAD_STATE_COUNT;
         kern_return_t error = thread_get_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
         if (error != KERN_SUCCESS) {
-            debug_println("thread_get_state failed, error: %d, %s", error, mach_error_string(error));
+            log_println("thread_get_state failed, error: %d, %s", error, mach_error_string(error));
             return false;
         }
 
@@ -157,7 +157,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         count = VM_REGION_BASIC_INFO_COUNT_64;
         error = mach_vm_region((vm_map_t) task, &stackBase, &stackSize, VM_REGION_BASIC_INFO_64, (vm_region_info_t) &info, &count, &objectName);
         if (error != KERN_SUCCESS) {
-            debug_println("mach_vm_region failed, error: %d, %s", error, mach_error_string(error));
+            log_println("mach_vm_region failed, error: %d, %s", error, mach_error_string(error));
             return false;
         }
         
@@ -165,7 +165,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
     }
 
     if (vm_deallocate(mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {
-        debug_println("vm_deallocate failed");
+        log_println("vm_deallocate failed");
         return false;
     }
     return true;
@@ -185,7 +185,7 @@ JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong pid) {
     int error = ptrace(PT_CONTINUE, pid, (char*) 1, 0);
     if (error != 0) {
-        debug_println("ptrace(PT_CONTINUE) failed = %d", error);
+        log_println("ptrace(PT_CONTINUE) failed = %d", error);
         return false;
     }
 
@@ -198,7 +198,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env
   
   jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
   if (buffer == 0) {
-      debug_println("failed to malloc byteArray of %d bytes", length);
+      log_println("failed to malloc byteArray of %d bytes", length);
       return -1;
   }
   
@@ -215,13 +215,13 @@ JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong task, jlong address, jbyteArray byteArray, jint offset, jint length) {
     jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
     if (buffer == 0) {
-        debug_println("failed to malloc byteArray of %d bytes", length);
+        log_println("failed to malloc byteArray of %d bytes", length);
         return -1;
     }
 
     (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
     if ((*env)->ExceptionOccurred(env) != NULL) {
-        debug_println("failed to copy %d bytes from byteArray into buffer", length);
+        log_println("failed to copy %d bytes from byteArray into buffer", length);
         return -1;
     }
 

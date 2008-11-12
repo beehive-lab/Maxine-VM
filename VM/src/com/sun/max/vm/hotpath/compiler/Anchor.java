@@ -21,6 +21,7 @@
 package com.sun.max.vm.hotpath.compiler;
 
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.instrument.*;
 
 
 public class Anchor {

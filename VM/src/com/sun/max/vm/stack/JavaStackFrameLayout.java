@@ -20,12 +20,12 @@
  */
 package com.sun.max.vm.stack;
 
+import java.util.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.lang.Arrays;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.collect.*;
-
-import java.util.*;
 
 /**
  * Describes the layout of an activation frame for code compiled by the VM.

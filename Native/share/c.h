@@ -24,13 +24,13 @@
 #ifndef __c_h__
 #define __c_h__ 1
 
-/* 
+/*
  * For portability issues, we make sure we pull enough standard includes here to
  * have the appropriate definitions of macros used in MaxineNative's definitions
  * for word sizing, endianness etc. Not doing this may cause (at least on Solaris)
- * incorrect definitions being picked up (e.g., _LP64 isn't defined yet by the 
- * time word.h is pulled). Doing the include in this file (which all other depends on) 
- * ensures that the necessary definitions have been pulled in. 
+ * incorrect definitions being picked up (e.g., _LP64 isn't defined yet by the
+ * time word.h is pulled). Doing the include in this file (which all other depends on)
+ * ensures that the necessary definitions have been pulled in.
  * Including stdio only does the trick. [Laurent]
  */
 #include <stdio.h>
@@ -66,5 +66,10 @@ extern void c_initialize(void);
 
 #define c_unimplemented() c_unimplemented_impl(__func__, __FILE__, __LINE__)
 extern int c_unimplemented_impl(const char* function, const char* file, int line);
+
+#define c_ASSERT(condition) \
+    do { c_assert((condition), STRINGIZE(condition), __FILE__, __LINE__); } while (0)
+
+extern void c_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber);
 
 #endif /*__c_h__*/

@@ -35,7 +35,7 @@
 #include "virtualMemory.h"
 
 #include "image.h"
-#include "debug.h"
+#include "log.h"
 #include "word.h"
 
 /* TODO: make this cpu-dependent: */
@@ -99,7 +99,7 @@ static void readHeader(int fd) {
 #else
 	from = (jint *) &maxvm_image_start;
 #if debug_LOADER
-	debug_println("image.readHeader @ 0x%x,", &maxvm_image_start);
+	log_println("image.readHeader @ 0x%x,", &maxvm_image_start);
 #endif
 #endif
 	to = (jint *) _header;
@@ -148,7 +148,7 @@ static void readStringInfo(int fd) {
     _stringInfoData = ((char *) &maxvm_image_start + sizeof(struct image_Header));
 #endif
 #if debug_LOADER
-	 debug_println("image.readStringInfo @ 0x%x", _stringInfoData);
+	 log_println("image.readStringInfo @ 0x%x", _stringInfoData);
 #endif
 	p = (char **) _stringInfo;
     s = _stringInfoData;
@@ -174,7 +174,7 @@ static char *endiannessToString(jint isBigEndian) {
 
 static void checkImage(void) {
 #if debug_LOADER
-	debug_println("image.checkImage");
+	log_println("image.checkImage");
 #endif
 	if ((_header->isBigEndian != 0) != word_BIG_ENDIAN) {
         debug_exit(3, "image has wrong endianess - expected: %s, found: %s",
@@ -242,7 +242,7 @@ static void checkTrailer(int fd) {
     }
  #else
 #if debug_LOADER
-   debug_println("image.checkTrailer offset: %d", trailerOffset);
+   log_println("image.checkTrailer offset: %d", trailerOffset);
 #endif
    trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_start) + trailerOffset);
 #endif
@@ -284,7 +284,7 @@ Address image_code(void) {
 static void mapHeapAndCode(int fd) {
     int fileOffset = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize);
 #if debug_LOADER
-    debug_println("image.mapHeapAndCode");
+    log_println("image.mapHeapAndCode");
 #endif
 #if MEMORY_IMAGE
     _heap = (Address) &maxvm_image_start + fileOffset;
@@ -301,8 +301,8 @@ static void mapHeapAndCode(int fd) {
       debug_exit(4, "could not reserve boot image");
     }
 #if debug_LOADER
-    debug_println("reserved 1 TB at %p", _heap);
-    debug_println("reserved address space ends at %p", _heap + TERA_BYTE);
+    log_println("reserved 1 TB at %p", _heap);
+    log_println("reserved address space ends at %p", _heap + TERA_BYTE);
 #endif
 
     if (!virtualMemory_mapFileAtFixedAddress(_heap, _header->bootHeapSize + _header->bootCodeSize, fd, fileOffset)) {
@@ -319,7 +319,7 @@ static void relocate(int fd) {
    off_t wantedFileOffset;
     Byte *relocationData;
 #if debug_LOADER
-	debug_println("image.relocate");
+	log_println("image.relocate");
 #endif
 #if !MEMORY_IMAGE
     off_t actualFileOffset;
@@ -367,7 +367,7 @@ int image_load(char *imageFileName) {
 	int fd = -1;
 #if !MEMORY_IMAGE
 #if debug_LOADER
-	 debug_println("reading image from %s", imageFileName);
+	 log_println("reading image from %s", imageFileName);
 #endif
     fd = open(imageFileName, O_RDWR);
     if (fd < 0) {
@@ -381,11 +381,11 @@ int image_load(char *imageFileName) {
     checkTrailer(fd);
 	mapHeapAndCode(fd);
 #if debug_LOADER
-	 debug_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
+	 log_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
 #endif
     relocate(fd);
 #if debug_LOADER
-	 debug_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
+	 log_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
 #endif
     return fd;
 }
@@ -393,7 +393,7 @@ int image_load(char *imageFileName) {
 Address nativeGetEndOfCodeRegion(){
 	Address addr = _codeEnd + _header->codeCacheSize ;
 #if debug_LOADER
-	debug_println("nativeGetEndOfCodeRegion: end of boot region @ %p code cache size %ld code end  %p", addr, _header->codeCacheSize, _codeEnd);
+	log_println("nativeGetEndOfCodeRegion: end of boot region @ %p code cache size %ld code end  %p", addr, _header->codeCacheSize, _codeEnd);
 #endif
 	return addr;
 }
@@ -401,13 +401,13 @@ Address nativeGetEndOfCodeRegion(){
 
 void image_printAddress(Address address) {
 #if word_64_BITS
-  debug_print("0x%016lx", address);
+  log_print("0x%016lx", address);
 #else
-  debug_print("0x%08lx", address);
+  log_print("0x%08lx", address);
 #endif
   if (address >= _heap && address < _code) {
-    debug_print("(heap + %d)", (int)(address - _heap));
+    log_print("(heap + %d)", (int)(address - _heap));
   } else if (address >= _code && address < _codeEnd) {
-    debug_print("(code + %d)", (int)(address - _code));
+    log_print("(code + %d)", (int)(address - _code));
   }
 }

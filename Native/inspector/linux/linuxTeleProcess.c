@@ -24,7 +24,7 @@
 #include <thread_db.h>
 #include <sys/types.h>
 
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 #include "libInfo.h"
 #include "threads.h"
@@ -47,19 +47,19 @@ Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeCreateAgent(JNIEnv *env
 
     struct ps_prochandle *ph = (struct ps_prochandle *) calloc(1, sizeof(*ph));
     if (ph == NULL) {
-        debug_println("could not calloc ps_prochandle");
+        log_println("could not calloc ps_prochandle");
         return 0L;
     }
     ph->pid = processID;
 
     if (!read_LibInfo(ph)) {
-        debug_println("could not read lib info");
+        log_println("could not read lib info");
         return 0L;
     }
 
     error = td_ta_new(ph, &ta);
     if (error != TD_OK || ta == NULL) {
-        debug_println("td_ta_new failed");
+        log_println("td_ta_new failed");
         free(ph);
         return 0L;
     }
@@ -103,7 +103,7 @@ static int gatherThread(const td_thrhandle_t *th, void *data) {
 
     td_err_e error = td_thr_get_info(th, &info);
     if (error != TD_OK) {
-        debug_println("td_thr_get_info failed: %d", error);
+        log_println("td_thr_get_info failed: %d", error);
         return -1;
     }
 
@@ -116,7 +116,7 @@ static int gatherThread(const td_thrhandle_t *th, void *data) {
         jclass c = (*a->env)->GetObjectClass(a->env, a->process);
         _methodID = (*a->env)->GetMethodID(a->env, c, "jniGatherThread",
                                            "(Ljava/util/Map;ZJIJJ)V");
-        debug_ASSERT(_methodID != NULL);
+        c_ASSERT(_methodID != NULL);
     }
 
     (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, isSuspended,
@@ -130,7 +130,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *e
     struct ps_prochandle *ph = NULL;
     td_err_e error = td_ta_get_ph(ta, &ph);
     if (error != TD_OK || ph == NULL) {
-        debug_println("td_ta_get_ph failed");
+        log_println("td_ta_get_ph failed");
         return false;
     }
 
