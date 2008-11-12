@@ -30,7 +30,7 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.InspectorAction.*;
+import com.sun.max.ins.InspectorKeyBindings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -213,7 +213,7 @@ public class Inspection extends JFrame {
         }
     }
 
-    private KeyBindingMap _keyBindingMap = InspectorAction.MAXINE_KEY_BINDING_MAP;
+    private KeyBindingMap _keyBindingMap = InspectorKeyBindings.MAXINE_KEY_BINDING_MAP;
 
     private final AppendableSequence<InspectorAction> _actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
 
@@ -222,7 +222,7 @@ public class Inspection extends JFrame {
      */
     public void registerAction(InspectorAction inspectorAction) {
         final Class<? extends InspectorAction> actionClass = inspectorAction.getClass();
-        if (InspectorAction.KEY_BINDABLE_ACTIONS.contains(actionClass)) {
+        if (InspectorKeyBindings.KEY_BINDABLE_ACTIONS.contains(actionClass)) {
             _actionsWithKeyBindings.append(inspectorAction);
             final KeyStroke keyStroke = _keyBindingMap.get(actionClass);
             inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
@@ -603,18 +603,12 @@ public class Inspection extends JFrame {
         return _settings;
     }
 
-    private final InspectionMenus _inspectionMenus;
-
-    /**
-     * @return Global menu items for the inspection.
-     * These get refreshed after {@link TeleVM} state changes.
-     */
-    public InspectionMenus inspectionMenus() {
-        return _inspectionMenus;
-    }
-
     private final InspectionActions _inspectionActions;
 
+    /**
+     * @return the global collection of actions, many of which are
+     * singletons with state that gets refreshed.
+     */
     public InspectionActions actions() {
         return _inspectionActions;
     }
@@ -678,10 +672,8 @@ public class Inspection extends JFrame {
         _desktopPane.setMinimumSize(_geometry.inspectorFrameMinSize());
         _desktopPane.setPreferredSize(_geometry.inspectorFramePrefSize());
         setLocation(_geometry.inspectorFrameDefaultLocation());
-
-        _inspectionMenus = new InspectionMenus(this);
         _inspectionActions = new InspectionActions(this);
-        setJMenuBar(_inspectionMenus.createJMenuBar());
+        setJMenuBar(InspectorMenuBar.create(_inspectionActions));
 
         pack();
     }
@@ -724,7 +716,6 @@ public class Inspection extends JFrame {
                 informationMessage("The maxvm Process has terminated", "Process Terminated");
                 break;
         }
-        _inspectionMenus.refresh(epoch, true);
         _inspectionActions.refresh(epoch, true);
     }
 
@@ -780,7 +771,6 @@ public class Inspection extends JFrame {
     void initialize() throws IOException {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
-        _inspectionMenus.refresh(teleProcess().epoch(), true);
         _inspectionActions.refresh(teleProcess().epoch(), true);
         //Listen for process state changes
         _teleProcess.addStateListener(new ProcessStateListener());
@@ -895,7 +885,6 @@ public class Inspection extends JFrame {
             Trace.line(TRACE_VALUE, tracePrefix() + "refreshView: " + listener);
             listener.vmStateChanged(epoch, force);
         }
-        _inspectionMenus.refresh(epoch, force);
         _inspectionActions.refresh(epoch, force);
     }
 
@@ -909,7 +898,6 @@ public class Inspection extends JFrame {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
             listener.viewConfigurationChanged(epoch);
         }
-        _inspectionMenus.redisplay();
         _inspectionActions.redisplay();
     }
 
