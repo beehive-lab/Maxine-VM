@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.method;
+package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -31,18 +31,25 @@ import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
 
 /**
- * Encapsulates preferences about which columns should be visible in a table-based code viewer.
+ * Encapsulates preferences about which columns should be visible in a table-based viewer.
+ * There are three modes of use:
+ * <ul>
+ *  <li>1.  Global, persistent preferences.</li>
+ *  <li>2.  Instance-based preferences, which default to a global preference, but which can be overridden
+ *       with preferences that do not persist.</li>
+ *  <li>3.  Singleton instance-based preferences, where overrides are treated as persistent global choices.</li>
+ *  </ul>
  *
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-public abstract class CodeColumnVisibilityPreferences<Column_Type extends Enum<Column_Type>> {
+public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<Column_Type>> {
 
     /**
-     * A predicate specifying which columns are to be displayed in the code viewer.
+     * A predicate specifying which columns are to be displayed in the table-based viewer.
      */
     private final Map<Column_Type, Boolean> _visibleColumns;
 
@@ -57,18 +64,19 @@ public abstract class CodeColumnVisibilityPreferences<Column_Type extends Enum<C
     protected final Class<Column_Type> _columnTypeClass;
 
     /**
-     * Creates an object for storing the preferences about which columns should be visible in a table-based code viewer.
+     * Mode 1:  Global, persistent preferences.
+     *
+     * Creates an object for storing the preferences about which columns should be visible in a table-based viewer.
      * The returned object persists itself via the inspection's {@linkplain InspectionSettings settings}. That is, this
-     * constructor should be used to create a set of preferences that are applied as the default for all the code
+     * constructor should be used to create a set of preferences that are applied as the default for all the
      * viewers of a specific type.
      *
      * @param inspection the inspection context
      * @param name the name under which these preferences should be persisted in the inspection's settings
-     * @param columnTypeClass the {@link Enum} class defining the constants describing the columns in the table-based
-     *            code view
+     * @param columnTypeClass the {@link Enum} class defining the constants describing the columns in the table-based view
      * @param columnTypeValues the constants defined by {@code columnTypeClass}
      */
-    protected CodeColumnVisibilityPreferences(Inspection inspection,
+    protected TableColumnVisibilityPreferences(Inspection inspection,
                     String name,
                     Class<Column_Type> columnTypeClass,
                     IndexedSequence<Column_Type> columnTypeValues) {
@@ -79,7 +87,7 @@ public abstract class CodeColumnVisibilityPreferences<Column_Type extends Enum<C
         final InspectionSettings settings = inspection.settings();
         _saveSettingsListener = new AbstractSaveSettingsListener(name, null) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                CodeColumnVisibilityPreferences.this.saveSettings(saveSettingsEvent);
+                TableColumnVisibilityPreferences.this.saveSettings(saveSettingsEvent);
             }
         };
         settings.addSaveSettingsListener(_saveSettingsListener);
@@ -92,19 +100,29 @@ public abstract class CodeColumnVisibilityPreferences<Column_Type extends Enum<C
     }
 
     /**
-     * Creates an object for storing the preferences about which columns should be visible in a table-based code viewer.
+     * Creates an object for storing the preferences about which columns should be visible in a table-based viewer.
      * The returned object does not persist itself via the inspection's {@linkplain InspectionSettings settings}. That is, this
-     * constructor should be used to create a set of preferences specific to an individual instance of a code viewer.
+     * constructor should be used to create a set of preferences specific to an individual instance of a viewer.
+     *
      *
      * @param defaultPreferences the preferences from which the returned object should get its default values
      */
-    public CodeColumnVisibilityPreferences(CodeColumnVisibilityPreferences<Column_Type> defaultPreferences) {
+    public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<Column_Type> defaultPreferences, boolean singletonInstance) {
         _inspection = defaultPreferences._inspection;
         _saveSettingsListener = null;
         _columnTypeClass = defaultPreferences._columnTypeClass;
         _columnTypeValues = defaultPreferences._columnTypeValues;
-        _visibleColumns = new EnumMap<Column_Type, Boolean>(defaultPreferences._visibleColumns);
+        if (singletonInstance) {
+            _visibleColumns = defaultPreferences._visibleColumns;
+        } else {
+            _visibleColumns = new EnumMap<Column_Type, Boolean>(defaultPreferences._visibleColumns);
+        }
     }
+
+    public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<Column_Type> defaultPreferences) {
+        this (defaultPreferences, false);
+    }
+
 
     protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {
         for (Map.Entry<Column_Type, Boolean> entry : _visibleColumns.entrySet()) {
@@ -116,21 +134,21 @@ public abstract class CodeColumnVisibilityPreferences<Column_Type extends Enum<C
      * Determines if a given column type is visible by default (i.e. before the user has a chance to modify these
      * preferences).
      *
-     * @param columnType denotes a column in a table-base code viewer
+     * @param columnType denotes a column in a table-base viewer
      */
     protected abstract boolean defaultVisibility(Column_Type columnType);
 
     /**
      * Determines if a given column type is allowed to be invisible.
      *
-     * @param columnType denotes a column in a table-base code viewer
+     * @param columnType denotes a column in a table-base viewer
      */
     protected abstract boolean canBeMadeInvisible(Column_Type columnType);
 
     /**
      * Gets the label to be used for a a given column type.
      *
-     * @param columnType denotes a column in a table-base code viewer
+     * @param columnType denotes a column in a table-base viewer
      */
     protected abstract String label(Column_Type columnType);
 
@@ -193,14 +211,21 @@ public abstract class CodeColumnVisibilityPreferences<Column_Type extends Enum<C
     }
 
     /**
-     * A dialog that allows the user to specify both global preferences as well as preferences for an
-     * individual code viewer.
+     * A dialog that allows the user to specify preferences about column visibility.
      */
     public static final class Dialog<Column_Type extends Enum<Column_Type>> extends InspectorDialog {
+
+        /**
+         * Create a dialog that allows the user to specify both global preferences as well as preferences for an individual viewer.
+         * @param inspection
+         * @param title
+         * @param instancePreferences
+         * @param globalPreferences
+         */
         public Dialog(Inspection inspection,
                         String title,
-                        CodeColumnVisibilityPreferences<Column_Type> instancePreferences,
-                        CodeColumnVisibilityPreferences<Column_Type> globalPreferences) {
+                        TableColumnVisibilityPreferences<Column_Type> instancePreferences,
+                        TableColumnVisibilityPreferences<Column_Type> globalPreferences) {
             super(inspection, title, true);
 
             final JPanel contentPanel = new JPanel();
@@ -244,6 +269,44 @@ public abstract class CodeColumnVisibilityPreferences<Column_Type extends Enum<C
             }));
 
             contentPanel.add(prefPanel, BorderLayout.CENTER);
+            contentPanel.add(buttonsPanel, BorderLayout.SOUTH);
+
+            setContentPane(contentPanel);
+            pack();
+            inspection().moveToMiddle(this);
+            setVisible(true);
+        }
+
+        /**
+         * Create a dialog that allows the user to specify preferences for an individual viewer.
+         * @param inspection
+         * @param title
+         * @param instancePreferences
+         */
+        public Dialog(Inspection inspection,
+                        String title,
+                        TableColumnVisibilityPreferences<Column_Type> instancePreferences) {
+            super(inspection, title, true);
+
+            final JPanel contentPanel = new JPanel();
+            contentPanel.setLayout(new BorderLayout());
+            contentPanel.setOpaque(true);
+            contentPanel.setBackground(style().defaultBackgroundColor());
+
+            final JPanel viewOptionPanel = instancePreferences.getPanel();
+            viewOptionPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+
+            final JPanel buttonsPanel = new JPanel();
+            buttonsPanel.setOpaque(true);
+            buttonsPanel.setBackground(style().defaultBackgroundColor());
+            buttonsPanel.add(new JButton(new InspectorAction(inspection(), "Close") {
+                @Override
+                protected void procedure() {
+                    dispose();
+                }
+            }));
+
+            contentPanel.add(viewOptionPanel, BorderLayout.CENTER);
             contentPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
             setContentPane(contentPanel);
