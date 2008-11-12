@@ -191,7 +191,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void alloc() {
+    public void allocate() {
         _mutex.alloc();
     }
 

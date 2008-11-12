@@ -18,18 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.monitor.modal.modehandlers;
+package com.sun.max.vm.heap.sequential.noGC;
 
+import com.sun.max.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.monitor.modal.schemes.*;
+import com.sun.max.vm.heap.*;
 
 /**
- * Base communication required between mode handlers.
+ * @see MaxPackage
  *
- * @author Simon Wilkinson
+ * @author Bernd Mathiske
  */
-public interface ModeHandler {
-    void setMonitorScheme(ModalMonitorScheme monitorScheme);
-    void initialize(MaxineVM.Phase phase);
-    ModeHandler delegate();
+public class Package extends VMPackage {
+    public Package() {
+        registerScheme(HeapScheme.class, NoGCHeapScheme.class);
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage().equals(this);
+    }
 }

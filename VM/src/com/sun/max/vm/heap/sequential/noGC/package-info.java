@@ -18,18 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.monitor.modal.modehandlers;
-
-import com.sun.max.vm.*;
-import com.sun.max.vm.monitor.modal.schemes.*;
-
 /**
- * Base communication required between mode handlers.
+ * A heap that lets you allocate, but never reclaims any memory, i.e. never performs a garbage collection.
+ * With this setup, you can call System.gc() to test the safepoint mechanism
+ * without potential object reference corruption by a presumably broken GC.
  *
- * @author Simon Wilkinson
+ * @author Bernd Mathiske
  */
-public interface ModeHandler {
-    void setMonitorScheme(ModalMonitorScheme monitorScheme);
-    void initialize(MaxineVM.Phase phase);
-    ModeHandler delegate();
-}
+package com.sun.max.vm.heap.sequential.noGC;
+
+
+
