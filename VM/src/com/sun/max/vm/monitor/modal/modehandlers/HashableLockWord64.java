@@ -42,7 +42,7 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
      */
 
     protected static final int HASH_FIELD_WIDTH = 32;
-    protected static final int HASHCODE_SHIFT = MODE_BIT_QTY;
+    protected static final int HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
     protected static final Address HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
 
     protected HashableLockWord64() {

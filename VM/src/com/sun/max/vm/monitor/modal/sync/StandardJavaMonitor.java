@@ -28,7 +28,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- *
  * @author Simon Wilkinson
  */
 public class StandardJavaMonitor extends AbstractJavaMonitor {
@@ -134,8 +133,8 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         }
 
         final ConditionVariable waitingCondition  = _ownerThread.waitingCondition();
-        if (waitingCondition.requiresAlloc()) {
-            waitingCondition.alloc();
+        if (waitingCondition.requiresAllocation()) {
+            waitingCondition.allocate();
         }
         _ownerThread.setNextWaitingThread(_waitingThreads);
         _waitingThreads = _ownerThread;

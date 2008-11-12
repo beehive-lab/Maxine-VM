@@ -20,7 +20,6 @@
  */
 package util;
 
-import com.sun.max.vm.*;
 
 /**
  * Fills the heap with garbage, runs until GC has been triggered a few times.
