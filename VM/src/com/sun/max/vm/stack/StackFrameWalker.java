@@ -236,7 +236,7 @@ public abstract class StackFrameWalker {
             final Word lastJavaCallerInstructionPointer = readWord(savedLastJavaCallerInstructionPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
             final Word lastJavaCallerStackPointer = readWord(savedLastJavaCallerStackPointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
             final Word lastJavaCallerFramePointer = readWord(savedLastJavaCallerFramePointer().address(lastJavaCallee, namedVariablesBasePointer), 0);
-            advance(getReturnInstructionPointerForNativeStub(lastJavaCallerInstructionPointer.asPointer(), true),
+            advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer.asPointer(), true),
                     lastJavaCallerStackPointer,
                     lastJavaCallerFramePointer);
             return true;
@@ -270,7 +270,7 @@ public abstract class StackFrameWalker {
 
             FatalError.check(!lastJavaCallerInstructionPointer.isZero(), "Thread cannot be 'in native' without having recorded the last Java caller in thread locals");
         }
-        advance(getReturnInstructionPointerForNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING),
+        advance(getNativeFunctionCallInstructionPointerInNativeStub(lastJavaCallerInstructionPointer, purpose != INSPECTING),
                 lastJavaCallerStackPointer,
                 lastJavaCallerFramePointer);
     }
@@ -290,42 +290,31 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Gets the address of the instruction immediately after the call to the native function in a
-     * {@linkplain NativeStubGenerator native stub}. That is, get the address of the instruction to which the native
-     * code will return. There is a {@linkplain Safepoint#hard() hard} safepoint immediately following the native
-     * function call and so this method returns the address of the first instruction implementing the hard safepoint.
+     * Gets the address of the call to the native function in a {@linkplain NativeStubGenerator native stub}. That is,
+     * this method gets the address of the instruction to which the native code will return.
+     *
+     * Finding this address relies on the invariant that the next {@linkplain StopType stop} after the instruction
+     * pointer recorded by the {@linkplain NativeCallPrologue native call prologue} is for the call to the native
+     * function.
      *
      * @param instructionPointer the instruction pointer in a native stub as saved by {@link NativeCallPrologue} or
      *            {@link NativeCallPrologueForC}
-     * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if no safepoint
-     *            instruction can be found after {@code instructionPointer}. If this value is false and no safepoint
+     * @param fatalIfNotFound specifies whether a {@linkplain FatalError fatal error} should be raised if no call
+     *            instruction can be found after {@code instructionPointer}. If this value is false and no call
      *            instruction is found, then {@code instructionPointer} is returned.
-     * @return the address of the first safepoint instruction after {@code instructionPointer}
+     * @return the address of the first call instruction after {@code instructionPointer}
      */
-    private Pointer getReturnInstructionPointerForNativeStub(Pointer instructionPointer, boolean fatalIfNotFound) {
+    private Pointer getNativeFunctionCallInstructionPointerInNativeStub(Pointer instructionPointer, boolean fatalIfNotFound) {
         final TargetMethod nativeStubTargetMethod = targetMethodFor(instructionPointer);
         //FatalError.check(nativeStubTargetMethod.classMethodActor().isNative(), "Instruction pointer not within a native stub");
         if (nativeStubTargetMethod != null) {
-            final int firstSafepointIndex = nativeStubTargetMethod.numberOfDirectCalls() + nativeStubTargetMethod.numberOfIndirectCalls();
-            final Pointer firstInstruction = nativeStubTargetMethod.codeStart();
-            final int instructionPosition = instructionPointer.minus(firstInstruction).toInt();
-        nextStop:
-            for (int i = firstSafepointIndex; i < nativeStubTargetMethod.numberOfStopPositions(); i++) {
-                final int stopPosition = nativeStubTargetMethod.stopPosition(i);
-                if (stopPosition >= instructionPosition) {
-                    final Pointer stopInstruction = firstInstruction.plus(stopPosition);
-                    final byte[] safepointCode = VMConfiguration.target().safepoint().code();
-                    for (int offset = 0; offset < safepointCode.length; ++offset) {
-                        if (safepointCode[offset] != readByte(stopInstruction, offset)) {
-                            break nextStop;
-                        }
-                    }
-                    return stopInstruction;
-                }
+            final Pointer nativeFunctionCall = nativeStubTargetMethod.findNextCall(instructionPointer);
+            if (!nativeFunctionCall.isZero()) {
+                return nativeFunctionCall;
             }
         }
         if (fatalIfNotFound) {
-            throw FatalError.unexpected("Could not find safepoint instruction in native stub after the native function call");
+            throw FatalError.unexpected("Could not find native function call in native stub");
         }
         return instructionPointer;
     }
@@ -446,7 +435,7 @@ public abstract class StackFrameWalker {
      * and frame pointer. This method will return all stack frames, including native frames, adapter frames, and
      * non-application visible stack frames. This method accepts an appendable sequence of stack frames
      *
-     * @param stackFrames an appendable sequence of stack frames to collect the results; if <code>null</code>, this method
+     * @param stackFrames an appendable sequence of stack frames to collect the results; if {@code null}, this method
      * will create a new appendable sequence for collecting the result
      * @param instructionPointer the instruction pointer from which to begin the stack walk
      * @param stackPointer the stack pointer from which to begin the stack walk

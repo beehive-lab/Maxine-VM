@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -93,10 +94,24 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         @SNIPPET
         @INLINE
         public static void nativeCallEpilogue(Pointer vmThreadLocals) {
-            Safepoint.hard();
+            // Ensure that reading of the GC state variable sees the last write to it:
+            MemoryBarrier.storeLoad();
+
+            spinUntilNotCollecting();
+//            Safepoint.hard();
+
+            // Ensure that the store below to LAST_JAVA_CALLER_INSTRUCTION_POINTER can only happen after GC:
+            MemoryBarrier.loadStore();
 
             // Set the current instruction pointer in TLS to zero to indicate the transition back into Java code
             LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
+        }
+
+        @NO_SAFEPOINTS("Cannot take a trap while GC is running")
+        private static void spinUntilNotCollecting() {
+            while (Heap.isCollecting()) {
+                // Busy loop that is free of safepoints and object accesses
+            }
         }
 
         public static final NativeCallEpilogue SNIPPET = new NativeCallEpilogue();

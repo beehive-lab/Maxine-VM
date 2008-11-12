@@ -78,7 +78,7 @@ public final class Heap {
 
     /**
      * Returns whether the "-verbose:gc" option was specified.
-     * @return <code>true</code> if the user specified the "-verbose:gc" command line option; <code>false</code>
+     * @return {@code true} if the user specified the "-verbose:gc" command line option; {@code false}
      * otherwise
      */
     public static boolean verbose() {
@@ -125,7 +125,7 @@ public final class Heap {
 
     /**
      * Returns whether the "-XX:DisableGC" option was specified.
-     * @return <code>true</code> if the user specified the "-XX:DisableGC" command line option; <code>false</code>
+     * @return {@code true} if the user specified the "-XX:DisableGC" command line option; {@code false}
      * otherwise
      * @return
      */
@@ -190,8 +190,27 @@ public final class Heap {
         return heapScheme().contains(address);
     }
 
+    private static boolean _collecting;
+
     public static boolean collectGarbage(Size requestedFreeSpace) {
         return heapScheme().collectGarbage(requestedFreeSpace);
+    }
+
+    /**
+     * Toggles the {@linkplain #isCollecting() flag} indicating whether or not a garbage collection is running.
+     */
+    public static void toggleCollecting() {
+        _collecting = !_collecting;
+    }
+
+    /**
+     * Determines if a garbage collection is currently running.
+     *
+     * @return {@code true} if a garbage collection is running, {@code false} otherwise
+     */
+    @INLINE
+    public static boolean isCollecting() {
+        return _collecting;
     }
 
     public static Size reportFreeSpace() {
