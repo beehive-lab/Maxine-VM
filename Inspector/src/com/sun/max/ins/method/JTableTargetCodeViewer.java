@@ -234,37 +234,37 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getStepOverAction());
+        button = new JButton(_inspection.actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOverButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getSingleStepAction());
+        button = new JButton(_inspection.actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepInButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getReturnFromFrameAction());
+        button = new JButton(_inspection.actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getRunToInstructionAction());
+        button = new JButton(_inspection.actions().debugRunToInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getResumeAction());
+        button = new JButton(_inspection.actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugContinueButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.inspectionMenus().getPauseAction());
+        button = new JButton(_inspection.actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugPauseButtonIcon());

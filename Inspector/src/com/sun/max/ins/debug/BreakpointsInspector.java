@@ -124,14 +124,14 @@ public final class BreakpointsInspector extends UniqueInspector {
 
         public void addTo(InspectorMenu menu) {
             final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
-            methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtTargetMethodAction());
-            methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtMethodAction());
-            methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtMethodKeyAction());
+            methodEntryBreakpoints.add(inspection().actions().setTargetCodeBreakpointAtMethodEntriesByName());
+            methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByName());
+            methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
             menu.add(methodEntryBreakpoints);
-            menu.add(inspection().inspectionMenus().getBreakAtObjectInitializersAction());
+            menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
             menu.addSeparator();
-            menu.add(inspection().inspectionMenus().getRemoveSelectedBreakpointAction());
-            menu.add(inspection().inspectionMenus().getRemoveAllBreakpointsAction());
+            menu.add(inspection().actions().removeBreakpoint());
+            menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
         }
 
         public Inspection inspection() {
@@ -155,13 +155,13 @@ public final class BreakpointsInspector extends UniqueInspector {
         menu.add(new BreakpointMenuItems(inspection(), breakpointData));
         menu.addSeparator();
         final JMenu methodEntryBreakpoints = new JMenu("Break at Method Entry");
-        methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtTargetMethodAction());
-        methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtMethodAction());
-        methodEntryBreakpoints.add(inspection().inspectionMenus().getBreakAtMethodKeyAction());
+        methodEntryBreakpoints.add(inspection().actions().setTargetCodeBreakpointAtMethodEntriesByName());
+        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByName());
+        methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
-        menu.add(inspection().inspectionMenus().getBreakAtObjectInitializersAction());
+        menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
         menu.addSeparator();
-        menu.add(inspection().inspectionMenus().getRemoveAllBreakpointsAction());
+        menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
         return menu;
     }
 
