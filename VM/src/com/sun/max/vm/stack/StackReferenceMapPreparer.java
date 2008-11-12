@@ -671,6 +671,10 @@ public final class StackReferenceMapPreparer {
         } else {
             final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer);
             if (stopIndex < 0) {
+                Debug.print("Could not find stop postion for instruction at position ");
+                Debug.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                Debug.print(" in ");
+                Debug.printMethodActor(targetMethod.classMethodActor(), true);
                 throw FatalError.unexpected("Could not find stop position in target method");
             }
 
