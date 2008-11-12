@@ -31,12 +31,6 @@
 #   include <unistd.h>
 #endif
 
-#if os_SOLARIS && isa_SPARC
-    /* Get STACK_BIAS definition for Solaris / SPARC */
-#   include <sys/stack.h>
-    typedef struct rwindow * RegisterWindow;
-#endif
-
 #include "threads.h"
 #include "virtualMemory.h"
 #include "debug.h"
@@ -44,6 +38,14 @@
 #include "os.h"
 #include "isa.h"
 #include "image.h"
+
+#if os_SOLARIS 
+#   if isa_SPARC
+    /* Get STACK_BIAS definition for Solaris / SPARC */
+#      include <sys/stack.h>
+       typedef struct rwindow * RegisterWindow;
+#   endif
+#endif
 
 #if os_GUESTVMXEN
 #   include <guestvmXen.h>
