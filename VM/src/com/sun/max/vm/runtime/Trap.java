@@ -33,7 +33,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -155,9 +154,9 @@ public final class Trap {
             }
         } else {
             // the fault occurred in native code
-            Debug.out.print("Trap in native code (or runtime stub) @ ");
-            Debug.out.print(instructionPointer);
-            Debug.out.println(", exiting.");
+            Log.print("Trap in native code (or runtime stub) @ ");
+            Log.print(instructionPointer);
+            Log.println(", exiting.");
             FatalError.unexpected("Trap in native code");
         }
     }
@@ -179,12 +178,12 @@ public final class Trap {
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
 
         if (_dumpStackOnTrap.isPresent()) {
-            Debug.print("Trap ");
-            Debug.print(trap);
-            Debug.print(" @ ");
-            Debug.print(instructionPointer);
-            Debug.print(", trap instruction pointer: ");
-            Debug.print(trapInstructionPointer);
+            Log.print("Trap ");
+            Log.print(trap);
+            Log.print(" @ ");
+            Log.print(instructionPointer);
+            Log.print(", trap instruction pointer: ");
+            Log.print(trapInstructionPointer);
             Throw.stackDump("", instructionPointer, safepoint.getStackPointer(trapState, null), safepoint.getFramePointer(trapState, null));
         }
 
@@ -197,17 +196,17 @@ public final class Trap {
         // check to see if this fault originated in a runtime stub
         final RuntimeStub runtimeStub = Code.codePointerToRuntimeStub(instructionPointer);
         if (runtimeStub != null) {
-            Debug.print("Trap ");
-            Debug.print(trap);
-            Debug.print(" in runtime stub @ ");
+            Log.print("Trap ");
+            Log.print(trap);
+            Log.print(" in runtime stub @ ");
             return runtimeStub;
         }
 
         // this fault occurred in native code
-        Debug.print("Trap ");
-        Debug.print(trap);
-        Debug.print(" in native code @ ");
-        Debug.println(instructionPointer);
+        Log.print("Trap ");
+        Log.print(trap);
+        Log.print(" in native code @ ");
+        Log.println(instructionPointer);
 
         return null;
     }

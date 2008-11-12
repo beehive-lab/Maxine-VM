@@ -22,7 +22,6 @@ package com.sun.max.vm;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
-import com.sun.max.vm.debug.*;
 
 /**
  * A class that represents an option to the virtual machine, including both the low-level,
@@ -157,7 +156,7 @@ public class VMOption {
     }
 
     /**
-     * Prints an error message with the {@link Debug} facility describing why the call to {@link #check()} returned {@code false}.
+     * Prints an error message with the {@link Log} facility describing why the call to {@link #check()} returned {@code false}.
      * This method will not be called if {@link #check()} returned {@code true}.
      */
     public void printErrorMessage() {

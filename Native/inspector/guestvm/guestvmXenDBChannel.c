@@ -23,7 +23,7 @@
 #include <assert.h>
 
 #include "isa.h"
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 #include "teleProcess.h"
 #include "teleNativeThread.h"
@@ -37,7 +37,7 @@ struct minios_regs *checked_get_regs(char *f, int threadId) {
     struct minios_regs *minios_regs;
     minios_regs = get_regs(threadId);
     if (minios_regs == NULL) {
-        debug_println("guestvmXenNativeThread_%s: cannot get registers for thread %d", f, threadId);
+        log_println("guestvmXenNativeThread_%s: cannot get registers for thread %d", f, threadId);
         gather_and_trace_threads();
     }
     return minios_regs;
@@ -73,12 +73,12 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
     struct minios_regs *minios_regs;
 
     if (integerRegistersLength > sizeof(canonicalIntegerRegisters)) {
-        debug_println("buffer for integer register data is too large");
+        log_println("buffer for integer register data is too large");
         return false;
     }
 
     if (stateRegistersLength > sizeof(canonicalStateRegisters)) {
-        debug_println("buffer for state register data is too large");
+        log_println("buffer for state register data is too large");
         return false;
     }
 
@@ -119,14 +119,14 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeWriteByte(JNIE
     assert(sizeof(unsigned long) == 8);
     /* read old 64bit value */
     long_val = read_u64(aligned_address);
-    debug_println(" >> Read %lx at %lx, bit offset = %d, value=%lx, mask=%lx",
+    log_println(" >> Read %lx at %lx, bit offset = %d, value=%lx, mask=%lx",
             long_val, aligned_address, bit_offset, value, mask);
     /* clear the byte we are interested in */
     long_val &= ~mask;
     /* or it with the new value */
     long_val |= value;
 
-    debug_println(" >> Writing %lx at %lx, request for %x at %lx",
+    log_println(" >> Writing %lx at %lx, request for %x at %lx",
             long_val, aligned_address, value, address);
     write_u64(aligned_address, long_val);
 
@@ -144,7 +144,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadInt(JNIEnv
     assert(sizeof(unsigned long) == 8);
     long_val = read_u64(aligned_address);
     value = ((long_val >> bit_offset) & mask);
-//    debug_println(" >> Request to read from %lx, read from %lx, value %lx, returning %x\n", address, aligned_address, long_val, value);
+//    log_println(" >> Request to read from %lx, read from %lx, value %lx, returning %x\n", address, aligned_address, long_val, value);
 
     return (jlong) value;
 }
@@ -160,14 +160,14 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadShort(JNIE
     assert(sizeof(unsigned long) == 8);
     long_val = read_u64(aligned_address);
     value = ((long_val >> bit_offset) & mask);
-//    debug_println(" >> Request to read short from %lx, read from %lx, value %lx, returning %x\n", address, aligned_address, long_val, value);
+//    log_println(" >> Request to read short from %lx, read from %lx, value %lx, returning %x\n", address, aligned_address, long_val, value);
 
     return (jint) value;
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeAttach(JNIEnv *env, jclass c, jint domainId) {
-    debug_println("Calling do_attach on domId=%d", domainId);
+    log_println("Calling do_attach on domId=%d", domainId);
     return db_attach(domainId);
 }
 
@@ -211,7 +211,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(
 
     threads = gather_threads(&num_threads);
     gather_thread_method = (*env)->GetStaticMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;ILjava/lang/String;IJJ)V");
-    debug_ASSERT(gather_thread_method != NULL);
+    c_ASSERT(gather_thread_method != NULL);
     for (i=0; i<num_threads; i++) {
      	struct thread_state state = threads[i].state;
 
@@ -235,7 +235,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(
 void trace_thread(struct thread *thread) {
     struct thread_state state = thread->state;
     if (trace && !state.is_xen) {
-        debug_println("thread %s (%d), ra %d, r %d, dying %d, rds %d, ds %d, mw %d, nw %d, jw %d, sl %d",
+        log_println("thread %s (%d), ra %d, r %d, dying %d, rds %d, ds %d, mw %d, nw %d, jw %d, sl %d",
             thread->name, thread->id, state.is_runnable, state.is_running, state.is_dying, state.is_req_debug_suspend, state.is_debug_suspend,
             state.is_aux1, state.is_aux2, state.is_joining, state.is_sleeping);
     }
@@ -265,7 +265,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
     struct thread_state *state;
 
     /* Gather threads first (to figure out which ones to resume) */
-    if (trace) debug_println("checking which threads to resume");
+    if (trace) log_println("checking which threads to resume");
     threads = gather_threads(&num_threads);
     trace_threads(threads, num_threads);
     for(i=0; i<num_threads; i++)
@@ -273,14 +273,14 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
         state = &threads[i].state;
         if((!state->is_runnable) && (!state->is_running) && (state->is_debug_suspend))
         {
-            if (trace) debug_println("  resuming thread %s, %d", threads[i].name, threads[i].id);
+            if (trace) log_println("  resuming thread %s, %d", threads[i].name, threads[i].id);
             resume(threads[i].id);
         }
     }
     free_threads(threads, num_threads);
     /* Poll waiting for the thread to block */
 again:
-    if (trace) debug_println("waiting for a thread to block");
+    if (trace) log_println("waiting for a thread to block");
     threads = gather_threads(&num_threads);
     if (threads == NULL) {
         // target domain has explicitly terminated
@@ -313,7 +313,7 @@ out:
         int rc = 0;
         state = &threads[i].state;
         if (!state->is_xen && !state->is_debug_suspend) {
-            if (trace) debug_println("suspending %s, %d", threads[i].name, threads[i].id);
+            if (trace) log_println("suspending %s, %d", threads[i].name, threads[i].id);
             rc = suspend(threads[i].id);
         }
     }
@@ -338,7 +338,7 @@ JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadBytes(JNIEnv *env, jclass c, jlong address, jbyteArray byteArray, jint offset, jint length) {
     jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
     if (buffer == 0) {
-        debug_println("failed to malloc buffer of %d bytes", length);
+        log_println("failed to malloc buffer of %d bytes", length);
         return -1;
     }
 
@@ -355,13 +355,13 @@ JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeWriteBytes(JNIEnv *env, jclass c, jlong address, jbyteArray byteArray, jint offset, jint length) {
     jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
     if (buffer == 0) {
-        debug_println("failed to malloc byteArray of %d bytes", length);
+        log_println("failed to malloc byteArray of %d bytes", length);
         return -1;
     }
 
     (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
     if ((*env)->ExceptionOccurred(env) != NULL) {
-        debug_println("failed to copy %d bytes from byteArray into buffer", length);
+        log_println("failed to copy %d bytes from byteArray into buffer", length);
         return -1;
     }
 
@@ -377,5 +377,5 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeMaxByteBufferS
 
 void teleProcess_initialize(void)
 {
-    debug_println("teleProcess_initialize for guestvmXen");
+    log_println("teleProcess_initialize for guestvmXen");
 }

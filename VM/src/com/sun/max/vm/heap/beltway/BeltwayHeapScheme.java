@@ -233,12 +233,12 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         final int endCardIndex = _cardRegion.getCardIndexFromHeapAddress(_beltManager.getEnd());
         for (int i = startCardIndex; i < endCardIndex; i++) {
             if (_cardRegion.isCardMarked(i)) {
-                Debug.print("0");
+                Log.print("0");
             } else {
-                Debug.print("1");
+                Log.print("1");
             }
-            Debug.print(" -- ");
-            Debug.println(_cardRegion.getHeapAddressFromCardIndex(i));
+            Log.print(" -- ");
+            Log.println(_cardRegion.getHeapAddressFromCardIndex(i));
         }
     }
 
@@ -246,13 +246,13 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         final int boundaryIndex = _cardRegion.getCardIndexFromHeapAddress(address);
         final int prevIndex = _cardRegion.getCardIndexFromHeapAddress(address.minusWords(1));
         if (boundaryIndex == prevIndex) {
-            Debug.println("Error in TLAB allignment");
-            Debug.println("Erroneous Address");
-            Debug.print(address);
-            Debug.println("boundaryIndex");
-            Debug.println(boundaryIndex);
-            Debug.println("prevIndex");
-            Debug.println(prevIndex);
+            Log.println("Error in TLAB allignment");
+            Log.println("Erroneous Address");
+            Log.print(address);
+            Log.println("boundaryIndex");
+            Log.println(boundaryIndex);
+            Log.println("prevIndex");
+            Log.println(prevIndex);
             FatalError.unexpected("ERROR in CARD ALLIGNMENT");
 
         }
@@ -281,14 +281,14 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
         for (int i = startCardIndex; i < endCardIndex; i++) {
             if (_cardRegion.isCardMarked(i)) {
-                Debug.print("Card: ");
-                Debug.print(i);
-                Debug.println("  is Dirty ");
+                Log.print("Card: ");
+                Log.print(i);
+                Log.println("  is Dirty ");
 
                 final Address heapStartAddress = _cardRegion.getHeapAddressFromCardIndex(i);
 
-                Debug.print("Correspoding heap Address: ");
-                Debug.println(heapStartAddress);
+                Log.print("Correspoding heap Address: ");
+                Log.println(heapStartAddress);
             }
         }
     }
@@ -367,7 +367,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
             if (belt.getIndex() == (BeltwayConfiguration.getNumberOfBelts() - 1)) {
                 throw _outOfMemoryError;
             }
-            if (!collectGarbage(size)) {
+            if (!Heap.collectGarbage(size)) {
                 throw _outOfMemoryError;
             }
             return allocateSlowPath(belt, size);
@@ -395,7 +395,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
                 if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
                     //Debug.println("Nursery is full, trigger GC");
-                    if (!collectGarbage(size)) {
+                    if (!Heap.collectGarbage(size)) {
                         throw _outOfMemoryError;
 
                     }
@@ -434,7 +434,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
                 }
                 if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
                     //Debug.println("Nursery is full, trigger GC");
-                    if (!collectGarbage(size) || BeltwayHeapScheme._outOfMemory) {
+                    if (!Heap.collectGarbage(size) || BeltwayHeapScheme._outOfMemory) {
                         throw _outOfMemoryError;
 
                     }

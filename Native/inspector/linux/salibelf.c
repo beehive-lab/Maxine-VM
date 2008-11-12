@@ -22,7 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "debug.h"
+#include "log.h"
 
 #include "salibelf.h"
 
@@ -49,12 +49,12 @@ ELF_PHDR* read_program_header_table(int fd, ELF_EHDR* hdr) {
    size_t nbytes = hdr->e_phnum * hdr->e_phentsize;
 
    if ((phbuf = (ELF_PHDR*) malloc(nbytes)) == NULL) {
-      debug_println("can't allocate memory for reading program header table");
+      log_println("can't allocate memory for reading program header table");
       return NULL;
    }
 
    if (pread(fd, phbuf, nbytes, hdr->e_phoff) != nbytes) {
-      debug_println("ELF file is truncated! can't read program header table");
+      log_println("ELF file is truncated! can't read program header table");
       free(phbuf);
       return NULL;
    }
@@ -69,12 +69,12 @@ ELF_SHDR* read_section_header_table(int fd, ELF_EHDR* hdr) {
    size_t nbytes = hdr->e_shnum * hdr->e_shentsize;
 
    if ((shbuf = (ELF_SHDR*) malloc(nbytes)) == NULL) {
-      debug_println("can't allocate memory for reading section header table");
+      log_println("can't allocate memory for reading section header table");
       return NULL;
    }
 
    if (pread(fd, shbuf, nbytes, hdr->e_shoff) != nbytes) {
-      debug_println("ELF file is truncated! can't read section header table");
+      log_println("ELF file is truncated! can't read section header table");
       free(shbuf);
       return NULL;
    }
@@ -89,12 +89,12 @@ void* read_section_data(int fd, ELF_EHDR* ehdr, ELF_SHDR* shdr) {
      return buf;
   }
   if ((buf = calloc(shdr->sh_size, 1)) == NULL) {
-     debug_println("can't allocate memory for reading section data");
+     log_println("can't allocate memory for reading section data");
      return NULL;
   }
   if (pread(fd, buf, shdr->sh_size, shdr->sh_offset) != shdr->sh_size) {
      free(buf);
-     debug_println("section data read failed");
+     log_println("section data read failed");
      return NULL;
   }
   return buf;

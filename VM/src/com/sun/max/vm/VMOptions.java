@@ -29,7 +29,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.VMOption.*;
-import com.sun.max.vm.debug.*;
 
 /**
  * Basic VM argument handling.
@@ -74,13 +73,13 @@ public final class VMOptions {
     }
 
     public static void printHelpForOption(String prefix, String value, String help) {
-        Debug.print("    ");
-        Debug.print(prefix);
-        Debug.print(value);
-        Debug.print(" ");
+        Log.print("    ");
+        Log.print(prefix);
+        Log.print(value);
+        Log.print(" ");
         int column = 5 + prefix.length() + value.length();
         for (; column < HELP_INDENT; column++) {
-            Debug.print(' ');
+            Log.print(' ');
         }
         if (help != null) {
             // reformat the help text by wrapping the lines after column 72.
@@ -88,18 +87,18 @@ public final class VMOptions {
             for (int j = 0; j < help.length(); j++) {
                 final char ch = help.charAt(j);
                 if (column > 72 && (ch == ' ' || ch == '\t')) {
-                    Debug.println();
+                    Log.println();
                     for (int k = 0; k < HELP_INDENT; k++) {
-                        Debug.print(' ');
+                        Log.print(' ');
                     }
                     column = HELP_INDENT;
                 } else {
-                    Debug.print(ch);
+                    Log.print(ch);
                     column++;
                 }
             }
         }
-        Debug.println();
+        Log.println();
     }
 
     @PROTOTYPE_ONLY
@@ -139,16 +138,16 @@ public final class VMOptions {
 
     private static void printOptions(String label, Category category) {
         if (label != null) {
-            Debug.println();
-            Debug.println(label);
+            Log.println();
+            Log.println(label);
         }
         printOptions(_pristinePhaseOptions, label, category);
         printOptions(_startingPhaseOptions, label, category);
     }
 
     public static void printUsage() {
-        Debug.println("Usage: maxvm [-options] [class | -jar jarfile]  [args...]");
-        Debug.println("where options include:");
+        Log.println("Usage: maxvm [-options] [class | -jar jarfile]  [args...]");
+        Log.println("where options include:");
 
         printOptions(null, Category.STANDARD);
         printOptions("Non-standard options:", Category.NON_STANDARD);
@@ -166,19 +165,19 @@ public final class VMOptions {
 
     protected static void error(String errorMessage) {
         _earlyVMExitRequested = true;
-        Debug.print("VM program argument parsing error: ");
-        Debug.println(errorMessage);
+        Log.print("VM program argument parsing error: ");
+        Log.println(errorMessage);
         printUsage();
         MaxineVM.setExitCode(1);
     }
 
     protected static void error(VMOption option) {
         _earlyVMExitRequested = true;
-        Debug.print("Error while parsing ");
-        Debug.print(option.toString());
-        Debug.print(": ");
+        Log.print("Error while parsing ");
+        Log.print(option.toString());
+        Log.print(": ");
         option.printErrorMessage();
-        Debug.println();
+        Log.println();
         printUsage();
         MaxineVM.setExitCode(1);
     }
@@ -341,12 +340,12 @@ public final class VMOptions {
         if (noErrorFound) {
             if (_printConfiguration.isPresent() || _showConfiguration.isPresent()) {
                 final VMConfiguration vm = VMConfiguration.target();
-                Debug.println("VM Configuration:");
-                Debug.println("  Build level: " + vm.buildLevel());
-                Debug.println("  Platform: " + vm.platform());
+                Log.println("VM Configuration:");
+                Log.println("  Build level: " + vm.buildLevel());
+                Log.println("  Platform: " + vm.platform());
                 for (VMScheme vmScheme : vm.vmSchemes()) {
                     final String specification = vmScheme.specification().getSimpleName();
-                    Debug.println("  " + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
+                    Log.println("  " + specification.replace("Scheme", " scheme") + ": " + vmScheme.getClass().getName());
                 }
                 if (_printConfiguration.isPresent()) {
                     _earlyVMExitRequested = true;

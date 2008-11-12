@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <alloca.h>
 
-#include "debug.h"
+#include "log.h"
 #include "image.h"
 #include "threads.h"
 #include "messenger.h"
@@ -119,17 +119,17 @@ static int loadImage(void) {
 static void *openDynamicLibrary(char *path) {
 #if debug_LINKER
     if (path == NULL) {
-        debug_println("openDynamicLibrary (null)");
+        log_println("openDynamicLibrary (null)");
     } else {
-        debug_println("openDynamicLibrary %s (0x%016lX)", path, path);
+        log_println("openDynamicLibrary %s (0x%016lX)", path, path);
     }
 #endif
     void *result = dlopen(path, RTLD_LAZY);
 #if debug_LINKER
     if (path == NULL) {
-        debug_println("openDynamicLibrary (null) = 0x%016lX", result);
+        log_println("openDynamicLibrary (null) = 0x%016lX", result);
     } else {
-        debug_println("openDynamicLibrary %s = 0x%016lX", path, result);
+        log_println("openDynamicLibrary %s = 0x%016lX", path, result);
     }
 #endif
     return result;
@@ -160,15 +160,15 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #if !os_GUESTVMXEN
     char *ldpath = getenv("LD_LIBRARY_PATH");
     if (ldpath == NULL) {
-        debug_println("LD_LIBRARY_PATH not set");
+        log_println("LD_LIBRARY_PATH not set");
     } else {
-        debug_println("LD_LIBRARY_PATH=%s", ldpath);
+        log_println("LD_LIBRARY_PATH=%s", ldpath);
     }
 #endif
-    debug_println("Arguments: argc %d, argv %lx", argc, argv);
+    log_println("Arguments: argc %d, argv %lx", argc, argv);
     int i;
     for (i = 0; i < argc; i++) {
-        debug_println("arg[%d]: %lx, \"%s\"", i, argv[i], argv[i]);
+        log_println("arg[%d]: %lx, \"%s\"", i, argv[i], argv[i]);
     }
 #endif
 
@@ -190,7 +190,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     memset((char *) primordialVmThreadLocals, 0, image_header()->vmThreadLocalsSize);
 
 #if debug_LOADER
-    debug_println("primordial VM thread locals allocated at: %p", primordialVmThreadLocals);
+    log_println("primordial VM thread locals allocated at: %p", primordialVmThreadLocals);
 #endif
 
     Address auxiliarySpace = 0;
@@ -201,30 +201,30 @@ int maxine(int argc, char *argv[], char *executablePath) {
             debug_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);
         }
 #if debug_LOADER
-        debug_println("allocated %lu bytes of auxiliary space at 0x%p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
+        log_println("allocated %lu bytes of auxiliary space at 0x%p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
 #endif
         memset(auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
     }
 
 #if debug_LOADER
-    debug_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
+    log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
                     primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
 #endif
     exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
 
 #if debug_LOADER
-    debug_println("start method exited with code: %d", exitCode);
+    log_println("start method exited with code: %d", exitCode);
 #endif
 
     if (fd > 0) {
         int error = close(fd);
         if (error != 0) {
-            debug_println("WARNING: could not close image file");
+            log_println("WARNING: could not close image file");
         }
     }
 
 #if debug_LOADER
-    debug_println("exit code: %d", exitCode);
+    log_println("exit code: %d", exitCode);
 #endif
 
     return exitCode;
@@ -258,7 +258,7 @@ void *native_environment() {
 #if debug_LOADER
     int i = 0;
     for (i = 0; environ[i] != NULL; i++)
-    debug_println("native_environment[%d]: %s", i, environ[i]);
+    log_println("native_environment[%d]: %s", i, environ[i]);
 #endif
     return (void *)environ;
 }

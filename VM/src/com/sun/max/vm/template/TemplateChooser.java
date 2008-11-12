@@ -102,7 +102,7 @@ public abstract class TemplateChooser {
      * @param kind of the operand
      * @param selector for retrieving the most appropriate template
      * @param instrumented selects an instrumented variant of the template
-     * @return the selected template, or <code>null</code> if the selector fails to match the template
+     * @return the selected template, or {@code null} if the selector fails to match the template
      */
     public abstract CompiledBytecodeTemplate select(Kind kind, Selector selector);
 

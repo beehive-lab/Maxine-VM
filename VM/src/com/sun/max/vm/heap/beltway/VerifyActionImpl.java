@@ -50,12 +50,12 @@ public class VerifyActionImpl implements Verify {
     public void checkCellTag(Pointer cell) {
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                Debug.print("Error: ");
-                Debug.println(cell);
-                Debug.print("  origin: ");
-                Debug.println(Layout.cellToOrigin(cell));
-                Debug.print("cell long: ");
-                Debug.println(cell);
+                Log.print("Error: ");
+                Log.println(cell);
+                Log.print("  origin: ");
+                Log.println(Layout.cellToOrigin(cell));
+                Log.print("cell long: ");
+                Log.println(cell);
                 FatalError.unexpected("missing object tag");
             }
         }
@@ -95,8 +95,8 @@ public class VerifyActionImpl implements Verify {
         final Pointer origin = grip.toOrigin();
         checkGripTag(grip);
         if (!(from.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
-            Debug.print("Invalid grip: ");
-            Debug.print(origin);
+            Log.print("Invalid grip: ");
+            Log.print(origin);
             FatalError.unexpected("invalid grip");
 
         }

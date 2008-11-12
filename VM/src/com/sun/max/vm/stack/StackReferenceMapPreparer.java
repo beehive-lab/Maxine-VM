@@ -35,7 +35,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.object.*;
@@ -124,18 +123,18 @@ public final class StackReferenceMapPreparer {
 
         boolean lockDisabledSafepoints = false;
         if (Heap.traceGCRootScanning()) {
-            lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map preparation
-            Debug.print("Preparing stack reference map for thread ");
-            Debug.printVmThread(vmThread, false);
-            Debug.println(":");
-            Debug.print("  Highest slot: ");
-            Debug.println(highestStackSlot);
-            Debug.print("  Lowest active slot: ");
-            Debug.println(stackPointer);
-            Debug.print("  Lowest slot: ");
-            Debug.println(_lowestStackSlot);
-            Debug.print("  Current thread is ");
-            Debug.printVmThread(VmThread.current(), true);
+            lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
+            Log.print("Preparing stack reference map for thread ");
+            Log.printVmThread(vmThread, false);
+            Log.println(":");
+            Log.print("  Highest slot: ");
+            Log.println(highestStackSlot);
+            Log.print("  Lowest active slot: ");
+            Log.println(stackPointer);
+            Log.print("  Lowest slot: ");
+            Log.println(_lowestStackSlot);
+            Log.print("  Current thread is ");
+            Log.printVmThread(VmThread.current(), true);
         }
 
         // prepare references for each of the vm thread locals copies
@@ -148,7 +147,7 @@ public final class StackReferenceMapPreparer {
         stackFrameWalker.prepareReferenceMap(instructionPointer, stackPointer, framePointer, this);
 
         if (Heap.traceGCRootScanning()) {
-            Debug.unlock(lockDisabledSafepoints);
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 
@@ -183,18 +182,18 @@ public final class StackReferenceMapPreparer {
 
         boolean lockDisabledSafepoints = false;
         if (Heap.traceGCRootScanning()) {
-            lockDisabledSafepoints = Debug.lock(); // Note: This lock basically serializes stack reference map preparation
-            Debug.print("Completing preparation of stack reference map for thread ");
-            Debug.printVmThread(vmThread, false);
-            Debug.println(":");
-            Debug.print("  Highest slot: ");
-            Debug.println(highestSlot);
-            Debug.print("  Lowest active slot: ");
-            Debug.println(stackPointer);
-            Debug.print("  Lowest slot: ");
-            Debug.println(_lowestStackSlot);
-            Debug.print("  Current thread is ");
-            Debug.printVmThread(VmThread.current(), true);
+            lockDisabledSafepoints = Log.lock(); // Note: This lock basically serializes stack reference map preparation
+            Log.print("Completing preparation of stack reference map for thread ");
+            Log.printVmThread(vmThread, false);
+            Log.println(":");
+            Log.print("  Highest slot: ");
+            Log.println(highestSlot);
+            Log.print("  Lowest active slot: ");
+            Log.println(stackPointer);
+            Log.print("  Lowest slot: ");
+            Log.println(_lowestStackSlot);
+            Log.print("  Current thread is ");
+            Log.printVmThread(VmThread.current(), true);
         }
 
         // walk the stack and prepare references for each stack frame
@@ -204,7 +203,7 @@ public final class StackReferenceMapPreparer {
         _completingReferenceMap = false;
 
         if (Heap.traceGCRootScanning()) {
-            Debug.unlock(lockDisabledSafepoints);
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 
@@ -252,37 +251,37 @@ public final class StackReferenceMapPreparer {
     private static void printSlot(int slotIndex, Pointer vmThreadLocals, Pointer framePointer) {
         final Pointer slotAddress = slotAddress(slotIndex, vmThreadLocals);
         final Pointer referenceMap = VmThreadLocal.STACK_REFERENCE_MAP.getConstantWord(vmThreadLocals).asPointer();
-        Debug.print("index=");
-        Debug.print(slotIndex);
+        Log.print("index=");
+        Log.print(slotIndex);
         if (!framePointer.isZero()) {
             final int offset = slotAddress.minus(framePointer).toInt();
             if (offset >= 0) {
-                Debug.print(", fp+");
+                Log.print(", fp+");
             } else {
-                Debug.print(", fp");
+                Log.print(", fp");
             }
-            Debug.print(offset);
+            Log.print(offset);
         }
-        Debug.print(", address=");
-        Debug.print(slotAddress);
-        Debug.print(", value=");
-        Debug.print(slotAddress.readWord(0));
+        Log.print(", address=");
+        Log.print(slotAddress);
+        Log.print(", value=");
+        Log.print(slotAddress.readWord(0));
         if (slotAddress.lessThan(referenceMap)) {
             final Pointer enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             final Pointer triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
             if (slotAddress.greaterEqual(disabledVmThreadLocals)) {
-                Debug.print(", name=");
+                Log.print(", name=");
                 final int vmThreadLocalIndex = slotAddress.minus(disabledVmThreadLocals).dividedBy(Word.size()).toInt();
-                Debug.print(NAMES.get(vmThreadLocalIndex));
+                Log.print(NAMES.get(vmThreadLocalIndex));
             } else if (slotAddress.greaterEqual(enabledVmThreadLocals)) {
-                Debug.print(", name=");
+                Log.print(", name=");
                 final int vmThreadLocalIndex = slotAddress.minus(enabledVmThreadLocals).dividedBy(Word.size()).toInt();
-                Debug.print(NAMES.get(vmThreadLocalIndex));
+                Log.print(NAMES.get(vmThreadLocalIndex));
             } else if (slotAddress.greaterEqual(triggeredVmThreadLocals)) {
-                Debug.print(", name=");
+                Log.print(", name=");
                 final int vmThreadLocalIndex = slotAddress.minus(triggeredVmThreadLocals).dividedBy(Word.size()).toInt();
-                Debug.print(NAMES.get(vmThreadLocalIndex));
+                Log.print(NAMES.get(vmThreadLocalIndex));
             }
         }
     }
@@ -334,10 +333,10 @@ public final class StackReferenceMapPreparer {
             tracePrepareReferenceMap(targetMethod, targetMethod.findClosestStopIndex(instructionPointer), "registers");
             final int safepointIndex = targetMethod.findSafepointIndex(instructionPointer);
             if (safepointIndex < 0) {
-                Debug.print("Could not find safepoint index for instruction at position ");
-                Debug.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
-                Debug.print(" in ");
-                Debug.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.print("Could not find safepoint index for instruction at position ");
+                Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                Log.print(" in ");
+                Log.printMethodActor(targetMethod.classMethodActor(), true);
                 FatalError.unexpected("Could not find safepoint index");
             }
 
@@ -396,14 +395,14 @@ public final class StackReferenceMapPreparer {
 
     private void tracePrepareReferenceMap(TargetMethod targetMethod, int stopIndex, String label) {
         if (Heap.traceGCRootScanning()) {
-            Debug.print("  Preparing reference map for ");
-            Debug.print(label);
-            Debug.print(" of ");
-            Debug.printMethodActor(targetMethod.classMethodActor(), false);
-            Debug.print(" +");
-            Debug.println(targetMethod.stopPosition(stopIndex));
-            Debug.print("    Stop index: ");
-            Debug.println(stopIndex);
+            Log.print("  Preparing reference map for ");
+            Log.print(label);
+            Log.print(" of ");
+            Log.printMethodActor(targetMethod.classMethodActor(), false);
+            Log.print(" +");
+            Log.println(targetMethod.stopPosition(stopIndex));
+            Log.print("    Stop index: ");
+            Log.println(stopIndex);
         }
     }
 
@@ -417,14 +416,14 @@ public final class StackReferenceMapPreparer {
      */
     private void traceReferenceMapByteBefore(int byteIndex, final byte referenceMapByte, String referenceMapLabel) {
         if (Heap.traceGCRootScanning()) {
-            Debug.print("    ");
-            Debug.print(referenceMapLabel);
-            Debug.print(" map byte index: ");
-            Debug.println(byteIndex);
-            Debug.print("    ");
-            Debug.print(referenceMapLabel);
-            Debug.print(" map byte:       ");
-            Debug.println(Address.fromInt(referenceMapByte & 0xff));
+            Log.print("    ");
+            Log.print(referenceMapLabel);
+            Log.print(" map byte index: ");
+            Log.println(byteIndex);
+            Log.print("    ");
+            Log.print(referenceMapLabel);
+            Log.print(" map byte:       ");
+            Log.println(Address.fromInt(referenceMapByte & 0xff));
         }
     }
 
@@ -442,9 +441,9 @@ public final class StackReferenceMapPreparer {
             for (int bitIndex = 0; bitIndex < Bytes.WIDTH; bitIndex++) {
                 if (((referenceMapByte >>> bitIndex) & 1) != 0) {
                     final int slotIndex = baseSlotIndex + bitIndex;
-                    Debug.print("      Slot: ");
+                    Log.print("      Slot: ");
                     printSlot(slotIndex, framePointer);
-                    Debug.println();
+                    Log.println();
                 }
             }
         }
@@ -502,12 +501,12 @@ public final class StackReferenceMapPreparer {
             final boolean isInvokestatic = (code[bytecodePosition] & 0xFF) == Bytecode.INVOKESTATIC.ordinal();
 
             if (Heap.traceGCRootScanning()) {
-                Debug.print("    Bytecode position: ");
-                Debug.println(bytecodePosition);
-                Debug.print("           Slot index: ");
-                Debug.println(_framePointerSlotIndex);
-                Debug.print("     Is invokestatic?: ");
-                Debug.println(isInvokestatic);
+                Log.print("    Bytecode position: ");
+                Log.println(bytecodePosition);
+                Log.print("           Slot index: ");
+                Log.println(_framePointerSlotIndex);
+                Log.print("     Is invokestatic?: ");
+                Log.println(isInvokestatic);
             }
             // Process the parameters first
             methodConstant.signature(constantPool).visitParameterDescriptors(this, true);
@@ -541,27 +540,27 @@ public final class StackReferenceMapPreparer {
 
         private void traceReceiver(Pointer stackPointer, final int slotIndex) {
             if (Heap.traceGCRootScanning()) {
-                Debug.print("    Parameter: param index=");
-                Debug.print(_parameterIndex);
+                Log.print("    Parameter: param index=");
+                Log.print(_parameterIndex);
                 printSlot(slotIndex, stackPointer);
-                Debug.println(", receiver");
+                Log.println(", receiver");
             }
         }
 
         private void traceTypeDescriptor(TypeDescriptor parameterTypeDescriptor) {
             if (Heap.traceGCRootScanning()) {
-                Debug.print("    Parameter: type=");
-                Debug.println(parameterTypeDescriptor.string());
+                Log.print("    Parameter: type=");
+                Log.println(parameterTypeDescriptor.string());
             }
         }
 
         private void traceTypeDescriptor(TypeDescriptor parameterTypeDescriptor, final int slotIndex) {
             if (Heap.traceGCRootScanning()) {
-                Debug.print("    Parameter: param index=");
-                Debug.print(_parameterIndex);
+                Log.print("    Parameter: param index=");
+                Log.print(_parameterIndex);
                 printSlot(slotIndex, slotAddress(_framePointerSlotIndex));
-                Debug.print(", type=");
-                Debug.println(parameterTypeDescriptor.string());
+                Log.print(", type=");
+                Log.println(parameterTypeDescriptor.string());
             }
         }
     }
@@ -571,10 +570,10 @@ public final class StackReferenceMapPreparer {
     private void setTrampolineStackSlotBitForRegister(int framePointerSlotIndex, int parameterRegisterIndex) {
         _referenceMap.setBit(framePointerSlotIndex + parameterRegisterIndex);
         if (Heap.traceGCRootScanning()) {
-            Debug.print("    Parameter: register index=");
-            Debug.print(parameterRegisterIndex);
+            Log.print("    Parameter: register index=");
+            Log.print(parameterRegisterIndex);
             printSlot(framePointerSlotIndex + parameterRegisterIndex, slotAddress(framePointerSlotIndex));
-            Debug.println();
+            Log.println();
         }
     }
 
@@ -618,8 +617,8 @@ public final class StackReferenceMapPreparer {
                 }
             }
             if (Heap.traceGCRootScanning()) {
-                Debug.print("    Callee: ");
-                Debug.printMethodActor(callee, true);
+                Log.print("    Callee: ");
+                Log.printMethodActor(callee, true);
             }
             if (!callee.isStatic()) {
                 setTrampolineStackSlotBitForRegister(_framePointerSlotIndex, 0);
@@ -671,19 +670,19 @@ public final class StackReferenceMapPreparer {
         } else {
             final int stopIndex = targetMethod.findClosestStopIndex(instructionPointer);
             if (stopIndex < 0) {
-                Debug.print("Could not find stop postion for instruction at position ");
-                Debug.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
-                Debug.print(" in ");
-                Debug.printMethodActor(targetMethod.classMethodActor(), true);
+                Log.print("Could not find stop postion for instruction at position ");
+                Log.print(instructionPointer.minus(targetMethod.codeStart()).toInt());
+                Log.print(" in ");
+                Log.printMethodActor(targetMethod.classMethodActor(), true);
                 throw FatalError.unexpected("Could not find stop position in target method");
             }
 
             if (_trampolineTargetMethod != null) {
                 if (Heap.traceGCRootScanning()) {
-                    Debug.print("  Preparing trampoline frame reference map called by ");
-                    Debug.print((targetMethod instanceof JitTargetMethod) ? "JIT'ed" : "optimized");
-                    Debug.print(" caller ");
-                    Debug.printMethodActor(targetMethod.classMethodActor(), true);
+                    Log.print("  Preparing trampoline frame reference map called by ");
+                    Log.print((targetMethod instanceof JitTargetMethod) ? "JIT'ed" : "optimized");
+                    Log.print(" caller ");
+                    Log.printMethodActor(targetMethod.classMethodActor(), true);
                 }
                 if (targetMethod instanceof JitTargetMethod) {
                     // This is a call from a JIT target method to a trampoline.
@@ -787,9 +786,9 @@ public final class StackReferenceMapPreparer {
             for (int bitIndex = startBit; bitIndex < endBit; bitIndex++) {
                 if (((refMapByte >>> bitIndex) & 1) != 0) {
                     if (Heap.traceGCRootScanning()) {
-                        Debug.print("    Slot: ");
+                        Log.print("    Slot: ");
                         printSlot(baseIndex + bitIndex, vmThreadLocals, Pointer.zero());
-                        Debug.println();
+                        Log.println();
                     }
                     wordPointerIndexVisitor.visitPointerIndex(slot, bitIndex);
                 }

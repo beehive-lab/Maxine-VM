@@ -20,6 +20,9 @@
  */
 package com.sun.max.vm.jni;
 
+import java.io.*;
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
@@ -29,12 +32,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
-
-import java.io.*;
-import java.lang.reflect.*;
 
 /**
  * Interface to the platform dependent functions for dealing with dynamically loaded libraries and
@@ -108,7 +107,7 @@ public final class DynamicLinker {
             }
         }
         if (VerboseVMOption.verboseJNI()) {
-            Debug.println("Loaded library from " + absolutePath);
+            Log.println("Loaded library from " + absolutePath);
         }
         return handle;
     }
