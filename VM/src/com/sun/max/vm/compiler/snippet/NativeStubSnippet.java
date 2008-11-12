@@ -98,7 +98,6 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
             MemoryBarrier.storeLoad();
 
             spinUntilNotCollecting();
-//            Safepoint.hard();
 
             // Ensure that the store below to LAST_JAVA_CALLER_INSTRUCTION_POINTER can only happen after GC:
             MemoryBarrier.loadStore();
