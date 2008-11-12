@@ -30,7 +30,7 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.InspectorAction.*;
+import com.sun.max.ins.InspectorKeyBindings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -213,7 +213,7 @@ public class Inspection extends JFrame {
         }
     }
 
-    private KeyBindingMap _keyBindingMap = InspectorAction.MAXINE_KEY_BINDING_MAP;
+    private KeyBindingMap _keyBindingMap = InspectorKeyBindings.MAXINE_KEY_BINDING_MAP;
 
     private final AppendableSequence<InspectorAction> _actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
 
@@ -222,7 +222,7 @@ public class Inspection extends JFrame {
      */
     public void registerAction(InspectorAction inspectorAction) {
         final Class<? extends InspectorAction> actionClass = inspectorAction.getClass();
-        if (InspectorAction.KEY_BINDABLE_ACTIONS.contains(actionClass)) {
+        if (InspectorKeyBindings.KEY_BINDABLE_ACTIONS.contains(actionClass)) {
             _actionsWithKeyBindings.append(inspectorAction);
             final KeyStroke keyStroke = _keyBindingMap.get(actionClass);
             inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
@@ -603,14 +603,14 @@ public class Inspection extends JFrame {
         return _settings;
     }
 
-    private final InspectionMenus _inspectionMenus;
+    private final InspectionActions _inspectionActions;
 
     /**
-     * @return Global menu items for the inspection.
-     * These get refreshed after {@link TeleVM} state changes.
+     * @return the global collection of actions, many of which are
+     * singletons with state that gets refreshed.
      */
-    public InspectionMenus inspectionMenus() {
-        return _inspectionMenus;
+    public InspectionActions actions() {
+        return _inspectionActions;
     }
 
     private final JDesktopPane _desktopPane = new JDesktopPane() {
@@ -672,9 +672,8 @@ public class Inspection extends JFrame {
         _desktopPane.setMinimumSize(_geometry.inspectorFrameMinSize());
         _desktopPane.setPreferredSize(_geometry.inspectorFramePrefSize());
         setLocation(_geometry.inspectorFrameDefaultLocation());
-
-        _inspectionMenus = new InspectionMenus(this);
-        setJMenuBar(_inspectionMenus.createJMenuBar());
+        _inspectionActions = new InspectionActions(this);
+        setJMenuBar(InspectorMenuBar.create(_inspectionActions));
 
         pack();
     }
@@ -717,7 +716,7 @@ public class Inspection extends JFrame {
                 informationMessage("The maxvm Process has terminated", "Process Terminated");
                 break;
         }
-        _inspectionMenus.refresh(epoch, true);
+        _inspectionActions.refresh(epoch, true);
     }
 
     /**
@@ -772,7 +771,7 @@ public class Inspection extends JFrame {
     void initialize() throws IOException {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
-        _inspectionMenus.refresh(teleProcess().epoch(), true);
+        _inspectionActions.refresh(teleProcess().epoch(), true);
         //Listen for process state changes
         _teleProcess.addStateListener(new ProcessStateListener());
         // Listen for changes in breakpoints
@@ -851,54 +850,6 @@ public class Inspection extends JFrame {
 
     }
 
-    /**
-     * Notification service for changes to state in the {@link TeleVM}.
-     *
-     * Many of the notifications include the current "epoch" of the
-     * underlying process ({@see TeleProcess#epoch()}), which can
-     * be used by listeners to decide whether to update caches or
-     * not.
-     *
-     * @author Michael Van De Vanter
-     */
-    public interface InspectionListener {
-
-        /**
-         * Notifies that  {@link TeleVM} state has potentially changed and should be revisited.
-         *
-         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-         * @param force suspend caching behavior; reload state unconditionally.
-         */
-        void vmStateChanged(long epoch, boolean force);
-
-        /**
-         * Notifies that the set of threads in the {@link TeleVM} has changed; listeners can assume
-         * that the set hasn't changed unless this notification is received.
-         *
-         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-         */
-        void threadSetChanged(long epoch);
-
-        /**
-         * Notifies that the state associated with a particular thread  in the {@link TeleVM} has changed.
-         */
-        void threadStateChanged(TeleNativeThread teleNativeThread);
-
-        /**
-         * Notifies that the set of breakpoints in the {@link TeleVM} has changed.
-         */
-        void breakpointSetChanged();
-
-        /**
-         * Notifies that an important aspect of view style/parameters/configuration have changed,
-         * and that views should be reconstructed if needed (view state change only).
-         *
-         * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-         */
-        void viewConfigurationChanged(long epoch);
-
-    }
-
     private IdentityHashSet<InspectionListener> _inspectionListeners = new IdentityHashSet<InspectionListener>();
 
     /**
@@ -934,7 +885,7 @@ public class Inspection extends JFrame {
             Trace.line(TRACE_VALUE, tracePrefix() + "refreshView: " + listener);
             listener.vmStateChanged(epoch, force);
         }
-        _inspectionMenus.refresh(epoch, force);
+        _inspectionActions.refresh(epoch, force);
     }
 
     /**
@@ -947,7 +898,7 @@ public class Inspection extends JFrame {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
             listener.viewConfigurationChanged(epoch);
         }
-        _inspectionMenus.redisplay();
+        _inspectionActions.redisplay();
     }
 
     /**

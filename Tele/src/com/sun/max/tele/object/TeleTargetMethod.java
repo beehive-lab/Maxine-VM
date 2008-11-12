@@ -240,7 +240,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         }
     }
 
-    public void clearTargetCodeLabelBreakpoints() {
+    public void removeTargetCodeLabelBreakpoints() {
         initialize();
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {

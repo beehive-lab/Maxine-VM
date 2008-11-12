@@ -42,6 +42,7 @@ public abstract class AbstractTester extends JavaRunScheme {
     protected static int _testNum;
     protected static int _testStart;
     protected static int _testEnd;
+    protected static int _testCount;
     protected static int _verbose = 2;
 
     private static VMIntOption _verboseLevel = new VMIntOption("-XX:TesterVerbose", 2,
@@ -49,13 +50,13 @@ public abstract class AbstractTester extends JavaRunScheme {
     private static VMIntOption _startOption  = new VMIntOption("-XX:TesterStart=", -1,
                     "The number of the first test to run.", MaxineVM.Phase.STARTING);
     private static VMIntOption _endOption  = new VMIntOption("-XX:TesterEnd=", -1,
-                    "The number of the last test to run.", MaxineVM.Phase.STARTING);
+                    "The number of the last test to run. Specify 0 to run exactly one test.", MaxineVM.Phase.STARTING);
     private static VMOption _offOption  = new VMOption("-XX:TesterOff",
                     "Omit tests and run a standard Java program.", MaxineVM.Phase.STARTING);
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
 
     public static void reportPassed(int passed, int total) {
-        Debug.println();
+        Debug.print("Done: ");
         Debug.print(passed);
         Debug.print(" of ");
         Debug.print(total);
@@ -121,9 +122,7 @@ public abstract class AbstractTester extends JavaRunScheme {
             while (i++ < 50) {
                 Debug.print(' ');
             }
-            Debug.print("  next " + _testStart + "=");
-            Debug.print(_testNum + 1);
-            Debug.println("");
+            Debug.println("  next: '" + _startOption + (_testNum + 1) + "', end: '" + _endOption + _testCount + "'");
         }
     }
 
@@ -225,9 +224,10 @@ public abstract class AbstractTester extends JavaRunScheme {
                 final int testEnd = _endOption.getValue();
                 if (testEnd == 0) {
                     _testEnd = _testStart + 1;
-                }
-                if (testEnd > 0) {
+                } else if (testEnd > 0) {
                     _testEnd = testEnd;
+                } else {
+                    _testEnd = _testCount;
                 }
                 if (_nativeTests) {
                     System.loadLibrary("javatest");
@@ -241,6 +241,7 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (MaxineVM.isPrototyping()) {
             registerClasses();
             _nativeTests = BinaryImageGenerator._nativeTests;
+            _testCount = getClassList().length;
             super.initialize(phase);
         }
     }

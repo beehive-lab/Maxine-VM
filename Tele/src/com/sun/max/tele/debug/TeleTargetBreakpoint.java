@@ -190,6 +190,18 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
             }
             return Iterables.join(Iterables.toIterableWithLength(_breakpoints.values()), Iterables.toIterableWithLength(_transientBreakpoints.values()));
         }
+        
+        /**
+         * @param omitTransientBreakpoints specifies whether or not {@linkplain TeleBreakpoint#isTransient()}
+         * @return the number of existing target breakpoints in he {@link TeleVM}.
+         */
+        public synchronized int size(boolean omitTransientBreakpoints) {
+            int result = _breakpoints.size();
+            if (!omitTransientBreakpoints) {
+                result += _transientBreakpoints.size();       
+            }
+            return result;
+        }
 
         /**
          * Gets a target code breakpoint set at a specified address in the tele VM, if it exists, null otherwise. If
