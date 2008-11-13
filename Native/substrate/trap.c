@@ -94,7 +94,7 @@ void setHandler(int signal, void *handler) {
     newSigaction.sa_handler = handler;
 
     if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
-        debug_exit(1, "sigaction failed");
+        log_exit(1, "sigaction failed");
     }
 #endif
 }
@@ -203,7 +203,7 @@ static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #endif
 }
 
-#if debug_TRAP
+#if log_TRAP
 char *signalName(int signal) {
     switch (signal) {
     case SIGSEGV: return "SIGSEGV";
@@ -222,18 +222,18 @@ static int isInGuardZone(Address address, Address zoneBegin) {
 }
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
-#if debug_TRAP
+#if log_TRAP
     log_println("SIGNAL: %0d", signal);
 #endif
     thread_Specifics *threadSpecifics = (thread_Specifics *) thread_currentSpecifics();
     if (threadSpecifics == 0) {
-        debug_exit(-22, "could not find native thread locals in trap handler");
+        log_exit(-22, "could not find native thread locals in trap handler");
     }
 
     Address disabledVmThreadLocals = threadSpecifics->disabledVmThreadLocals;
 
     if (disabledVmThreadLocals == 0) {
-        debug_exit(-21, "could not find disabled VM thread locals in trap handler");
+        log_exit(-21, "could not find disabled VM thread locals in trap handler");
     }
 
     int trapNumber = getTrapNumber(signal);
@@ -245,10 +245,10 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         trapNumber = STACK_FAULT;
     } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackRedZone)) {
         /* if the stack pointer is in the red zone, (we shouldn't be alive) */
-        debug_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
+        log_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
     } else if (stackPointer == 0) {
         /* if the stack pointer is zero, (we shouldn't be alive) */
-        debug_exit(-19, "SIGSEGV: (stack pointer is zero)");
+        log_exit(-19, "SIGSEGV: (stack pointer is zero)");
     }
 
     /* save the trap information in the disabled vm thread locals */
@@ -258,7 +258,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     trapInfo[2] = getFaultAddress(signalInfo, ucontext);
     trapInfo[3] = (Address)*stackPointer;
 
-#if debug_TRAP
+#if log_TRAP
     char *sigName = signalName(signal);
     if (sigName != NULL) {
         log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
@@ -272,7 +272,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
     *stackPointer = (Word)disabledVmThreadLocals;
 
-#if debug_TRAP
+#if log_TRAP
     log_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
 #endif
     setInstructionPointer(ucontext, _javaTrapStub);

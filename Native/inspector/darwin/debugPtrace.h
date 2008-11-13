@@ -43,7 +43,7 @@
 
 #define PT_FIRSTMACH    32  /* for machine-specific requests */
 
-extern int debug_ptrace(const char *func, int line, int _request, pid_t _pid, caddr_t _addr, int _data);
-#define ptrace(request, pid, address, data) debug_ptrace(__func__, __LINE__, request, pid, address, data)
+extern int log_ptrace(const char *func, int line, int _request, pid_t _pid, caddr_t _addr, int _data);
+#define ptrace(request, pid, address, data) log_ptrace(__func__, __LINE__, request, pid, address, data)
 
 #endif

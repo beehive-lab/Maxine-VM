@@ -83,14 +83,6 @@ public final class VMConfigurations {
         return new com.sun.max.vm.reference.heap.Package();
     }
 
-    /**
-     * Creates a configuration with fixed settings.
-     *
-     * @param buildLevel
-     * @param platform
-     * @param compilerPackage
-     * @return the configuration object
-     */
     public static VMConfiguration createStandardJit(BuildLevel buildLevel, Platform platform) {
         return new VMConfiguration(buildLevel, platform, new com.sun.max.vm.grip.direct.Package(), defaultReferenceScheme(), new com.sun.max.vm.layout.ohm.Package(),
                         defaultHeapPackage(), new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package(), defaultCompilerPackage(platform), defaultJitCompilerPackage(platform),
