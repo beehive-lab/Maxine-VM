@@ -496,9 +496,10 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
                 // Return from the adapter frame
                 assembler().bindLabel(adapterReturnPoint);
                // The %i7 and %i6 were untouched by JIT-ed code and still comprises, respectively, the caller's PC and stack pointer.
-                // Results by the JITed code follows the standard calling convention and should be stored already in  %i0 and %f0.
+                // Results by the JITed code follows the JIT calling convention and are stored in  %o0 and %f0.
+                // We need to move %o0 in the %o0 of the caller's window.
                 assembler().ret();
-                assembler().restore();
+                assembler().restore(GPR.O0, GPR.G0, GPR.O0);
                 assembler().bindLabel(_jitEntryPoint);
                 // Save the caller's literal base. It's saving area for the literal base is immediately below its frame pointer.
                 assembler().stx(_literalBaseRegister, _jitedCodeFramePointer, -STACK_SLOT_SIZE);
