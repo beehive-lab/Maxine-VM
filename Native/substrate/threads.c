@@ -79,7 +79,7 @@ thread_Specifics *thread_currentSpecifics() {
         return (thread_Specifics*) pthread_getspecific(_specificsKey);
 #   elif os_SOLARIS
         thread_Specifics *value;
-        int result = thr_getspecific(_specificsKey, &value);
+        int result = thr_getspecific(_specificsKey, (void**) &value);
         if (result != 0) {
             log_exit(result, "thr_getspecific failed");
         }
@@ -115,7 +115,7 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     }
 
     threadSpecifics->stackSize = stackInfo.ss_size;
-    threadSpecifics->stackBase = stackInfo.ss_sp - stackInfo.ss_size;
+    threadSpecifics->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
     /* the thread library protects a page below the stack for us. */
     stackBottom = threadSpecifics->stackBase;
 #else
@@ -263,7 +263,7 @@ static Thread thread_current(void) {
 }
 
 void *thread_self() {
-    return thread_current();
+    return (void *) thread_current();
 }
 
 static int thread_join(Thread thread) {
@@ -292,7 +292,7 @@ static int thread_join(Thread thread) {
     return error;
 }
 
-void thread_runJava(void *arg) {
+void *thread_runJava(void *arg) {
     thread_Specifics *threadSpecifics = (thread_Specifics *) arg;
     Address nativeThread = (Address) thread_current();
 
@@ -341,6 +341,8 @@ void thread_runJava(void *arg) {
 #if log_THREADS
     log_println("thread_runJava: END t=%lx", nativeThread);
 #endif
+    /* Successful thread exit */
+    return NULL;
 }
 
 

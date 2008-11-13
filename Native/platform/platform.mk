@@ -153,7 +153,7 @@ endif
 ifeq ($(OS),solaris)
 	CC = cc -g
 	C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) 
-	CFLAGS = -w $(KPIG_FLAG) -xarch=$(ARCH) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
+	CFLAGS =  -xc99 -errwarn -erroff=E_ARGUEMENT_MISMATCH -errtags -errfmt=error $(KPIG_FLAG) -xarch=$(ARCH) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
 	LINK_MAIN = cc -g -xarch=$(ARCH) -lc -lthread -ldl -o $(MAIN)
 	LINK_LIB = cc -g -G -xarch=$(ARCH) -lresolv -lc -lm -ldl -lthread -lrt -lproc
 	LIB_PREFIX = lib

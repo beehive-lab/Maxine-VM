@@ -192,22 +192,22 @@ void amd64_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters os, amd
     c->r14 = (Word) os->r14;
     c->r15 = (Word) os->r15;
 #elif os_SOLARIS
-    c->rax = os[REG_RAX];
-    c->rcx = os[REG_RCX];
-    c->rdx = os[REG_RDX];
-    c->rbx = os[REG_RBX];
-    c->rsp = os[REG_RSP];
-    c->rbp = os[REG_RBP];
-    c->rsi = os[REG_RSI];
-    c->rdi = os[REG_RDI];
-    c->r8 = os[REG_R8];
-    c->r9 = os[REG_R9];
-    c->r10 = os[REG_R10];
-    c->r11 = os[REG_R11];
-    c->r12 = os[REG_R12];
-    c->r13 = os[REG_R13];
-    c->r14 = os[REG_R14];
-    c->r15 = os[REG_R15];
+    c->rax = (Word) os[REG_RAX];
+    c->rcx = (Word) os[REG_RCX];
+    c->rdx = (Word) os[REG_RDX];
+    c->rbx = (Word) os[REG_RBX];
+    c->rsp = (Word) os[REG_RSP];
+    c->rbp = (Word) os[REG_RBP];
+    c->rsi = (Word) os[REG_RSI];
+    c->rdi = (Word) os[REG_RDI];
+    c->r8 = (Word) os[REG_R8];
+    c->r9 = (Word) os[REG_R9];
+    c->r10 = (Word) os[REG_R10];
+    c->r11 = (Word) os[REG_R11];
+    c->r12 = (Word) os[REG_R12];
+    c->r13 = (Word) os[REG_R13];
+    c->r14 = (Word) os[REG_R14];
+    c->r15 = (Word) os[REG_R15];
 #else
 #error Unimplemented
 #endif
@@ -359,8 +359,8 @@ void amd64_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters os, amd64_C
 #elif os_LINUX
     // TODO
 #elif os_SOLARIS
-    c->rip = os[REG_RIP];
-    c->flags = os[REG_RFL];
+    c->rip = (Word) os[REG_RIP];
+    c->flags = (Word) os[REG_RFL];
 #elif os_GUESTVMXEN
     c->rip = (Word) os->rip;
     c->flags = (Word) 0xdeadbeef; // TODO

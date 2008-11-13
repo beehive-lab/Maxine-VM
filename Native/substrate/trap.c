@@ -79,9 +79,15 @@ int getTrapNumber(int signal) {
 
 static Address _javaTrapStub;
 
-void setHandler(int signal, void *handler) {
 #if os_GUESTVMXEN
-    register_fault_handler(signal, (fault_handler_t)handler);
+#define SignalHandlerFunction fault_handler_t
+#else
+typedef void (*SignalHandlerFunction)(int signal, SigInfo *signalInfo, void *ucontext);
+#endif
+
+void setHandler(int signal, SignalHandlerFunction handler) {
+#if os_GUESTVMXEN
+    register_fault_handler(signal, handler);
 #else
 
     struct sigaction newSigaction;
@@ -91,7 +97,7 @@ void setHandler(int signal, void *handler) {
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
     newSigaction.sa_sigaction = handler;
-    newSigaction.sa_handler = handler;
+    newSigaction.sa_handler = NULL;
 
     if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
         log_exit(1, "sigaction failed");
@@ -280,11 +286,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
 void nativeInitialize(Address javaTrapStub) {
     _javaTrapStub = javaTrapStub;
-    setHandler(SIGSEGV, globalSignalHandler);
-    setHandler(SIGBUS, globalSignalHandler);
-    setHandler(SIGILL, globalSignalHandler);
-    setHandler(SIGFPE, globalSignalHandler);
-    setHandler(SIGUSR1, globalSignalHandler);
+    setHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
 }
 
 
