@@ -93,12 +93,12 @@ static void readHeader(int fd) {
 	struct image_Header rawHeaderStruct;
     int n = read(fd, &rawHeaderStruct, sizeof(struct image_Header));
     if (n != sizeof(struct image_Header)) {
-      debug_exit(1, "could not read image header");
+      log_exit(1, "could not read image header");
     }
 	from = (jint *) &rawHeaderStruct;
 #else
 	from = (jint *) &maxvm_image_start;
-#if debug_LOADER
+#if log_LOADER
 	log_println("image.readHeader @ 0x%x,", &maxvm_image_start);
 #endif
 #endif
@@ -137,17 +137,17 @@ static void readStringInfo(int fd) {
 	int n;
     _stringInfoData = malloc(_header->stringDataSize);
     if (_stringInfoData == NULL) {
-      debug_exit(1, "could not allocate string info");
+      log_exit(1, "could not allocate string info");
     }
 
     n = read(fd, _stringInfoData, _header->stringDataSize);
     if (n != _header->stringDataSize) {
-      debug_exit(2, "could not read string info");
+      log_exit(2, "could not read string info");
     }
 #else
     _stringInfoData = ((char *) &maxvm_image_start + sizeof(struct image_Header));
 #endif
-#if debug_LOADER
+#if log_LOADER
 	 log_println("image.readStringInfo @ 0x%x", _stringInfoData);
 #endif
 	p = (char **) _stringInfo;
@@ -173,29 +173,29 @@ static char *endiannessToString(jint isBigEndian) {
 }
 
 static void checkImage(void) {
-#if debug_LOADER
+#if log_LOADER
 	log_println("image.checkImage");
 #endif
 	if ((_header->isBigEndian != 0) != word_BIG_ENDIAN) {
-        debug_exit(3, "image has wrong endianess - expected: %s, found: %s",
+        log_exit(3, "image has wrong endianess - expected: %s, found: %s",
                 endiannessToString(word_BIG_ENDIAN), endiannessToString(_header->isBigEndian));
     }
     if (_header->identification != IMAGE_IDENTIFICATION) {
-      debug_exit(2, "not a valid Maxine VM boot image file");
+      log_exit(2, "not a valid Maxine VM boot image file");
     }
     if (_header->version != IMAGE_VERSION) {
-      debug_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_VERSION, _header->version);
+      log_exit(2, "wrong image format version - expected: %d, found: %d", IMAGE_VERSION, _header->version);
     }
     if ((_header->wordSize == 8) != word_64_BITS) {
-        debug_exit(2, "image has wrong word size - expected: %d bits, found: %d bits",
+        log_exit(2, "image has wrong word size - expected: %d bits, found: %d bits",
                 word_64_BITS ? 64 : 32, _header->wordSize * 8);
     }
     if (_header->alignmentSize < MIN_ALIGNMENT) {
-        debug_exit(2, "image has insufficient alignment - expected: %d, found: %d",
+        log_exit(2, "image has insufficient alignment - expected: %d, found: %d",
                 MIN_ALIGNMENT, _header->alignmentSize);
     }
     if (_header->pageSize != getpagesize()) {
-        debug_exit(2, "image has wrong page size - expected: %d, found: %d",
+        log_exit(2, "image has wrong page size - expected: %d, found: %d",
                 getpagesize(), _header->pageSize);
     }
 }
@@ -224,24 +224,24 @@ static void checkTrailer(int fd) {
 #if !MEMORY_IMAGE
     fileSize = lseek(fd, 0, SEEK_END);
     if (fileSize < 0) {
-      debug_exit(1, "could not set end position in file");
+      log_exit(1, "could not set end position in file");
     }
     if (fileSize - sizeof(trailerStruct) < trailerOffset) {
-      debug_exit(2, "truncated file");
+      log_exit(2, "truncated file");
     }
     if (fileSize - sizeof(trailerStruct) > trailerOffset) {
         fprintf(stderr, "WARNING: file too large - expected: %d,  found %d\n", (int) (trailerOffset + sizeof(trailerStruct)), (int) fileSize);
     }
     offset = lseek(fd, trailerOffset, SEEK_SET);
     if (offset != trailerOffset) {
-      debug_exit(1, "could not set trailer position in file");
+      log_exit(1, "could not set trailer position in file");
     }
     n = read(fd, &trailerStruct, sizeof(trailerStruct));
     if (n != sizeof(trailerStruct)) {
-      debug_exit(1, "could not read trailer");
+      log_exit(1, "could not read trailer");
     }
  #else
-#if debug_LOADER
+#if log_LOADER
    log_println("image.checkTrailer offset: %d", trailerOffset);
 #endif
    trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_start) + trailerOffset);
@@ -252,11 +252,11 @@ static void checkTrailer(int fd) {
 #if !MEMORY_IMAGE
         offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
         if (offset != fileSize - sizeof(trailerStruct)) {
-	  debug_exit(1, "could not set trailer position at end of file");
+	  log_exit(1, "could not set trailer position at end of file");
         }
         n = read(fd, &trailerStruct, sizeof(trailerStruct));
         if (n != sizeof(trailerStruct)) {
-	  debug_exit(1, "could not read trailer at end of file");
+	  log_exit(1, "could not read trailer at end of file");
         }
 #else
         trailerStructPtr = (image_Trailer)(((char*)&maxvm_image_end) - sizeof(trailerStruct));
@@ -283,7 +283,7 @@ Address image_code(void) {
 
 static void mapHeapAndCode(int fd) {
     int fileOffset = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize);
-#if debug_LOADER
+#if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif
 #if MEMORY_IMAGE
@@ -291,22 +291,22 @@ static void mapHeapAndCode(int fd) {
 #elif os_LINUX
     _heap = virtualMemory_mapFileIn31BitSpace(_header->bootHeapSize + _header->bootCodeSize, fd, fileOffset);
     if (_heap == 0) {
-      debug_exit(4, "could not map boot image");
+      log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
     // Reserve more than -Xmx should ever demand.
     // Most of this will be released again once in Java code by the heap scheme
     _heap = virtualMemory_reserve(TERA_BYTE);
     if (_heap == 0) {
-      debug_exit(4, "could not reserve boot image");
+      log_exit(4, "could not reserve boot image");
     }
-#if debug_LOADER
+#if log_LOADER
     log_println("reserved 1 TB at %p", _heap);
     log_println("reserved address space ends at %p", _heap + TERA_BYTE);
 #endif
 
     if (!virtualMemory_mapFileAtFixedAddress(_heap, _header->bootHeapSize + _header->bootCodeSize, fd, fileOffset)) {
-      debug_exit(4, "could not map boot image");
+      log_exit(4, "could not map boot image");
     }
 #else
 #error Unimplemented
@@ -318,7 +318,7 @@ static void mapHeapAndCode(int fd) {
 static void relocate(int fd) {
    off_t wantedFileOffset;
     Byte *relocationData;
-#if debug_LOADER
+#if log_LOADER
 	log_println("image.relocate");
 #endif
 #if !MEMORY_IMAGE
@@ -330,16 +330,16 @@ static void relocate(int fd) {
 #if !MEMORY_IMAGE
     relocationData = (Byte *) malloc(_header->relocationDataSize);
     if (relocationData == NULL) {
-      debug_exit(1, "could not allocate memory for relocation data");
+      log_exit(1, "could not allocate memory for relocation data");
     }
 
     actualFileOffset = lseek(fd, wantedFileOffset, SEEK_SET);
     if (actualFileOffset != wantedFileOffset) {
-      debug_exit(1, "could not set relocation data position in file");
+      log_exit(1, "could not set relocation data position in file");
     }
     n = read(fd, relocationData, _header->relocationDataSize);
     if (n != _header->relocationDataSize) {
-      debug_exit(1, "could not read relocation data");
+      log_exit(1, "could not read relocation data");
     }
 #else
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
@@ -366,12 +366,12 @@ int image_load(char *imageFileName) {
 	}
 	int fd = -1;
 #if !MEMORY_IMAGE
-#if debug_LOADER
+#if log_LOADER
 	 log_println("reading image from %s", imageFileName);
 #endif
     fd = open(imageFileName, O_RDWR);
     if (fd < 0) {
-      debug_exit(1, "could not open image file: %s", imageFileName);
+      log_exit(1, "could not open image file: %s", imageFileName);
     }
 #endif
 
@@ -380,11 +380,11 @@ int image_load(char *imageFileName) {
     readStringInfo(fd);
     checkTrailer(fd);
 	mapHeapAndCode(fd);
-#if debug_LOADER
+#if log_LOADER
 	 log_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
 #endif
     relocate(fd);
-#if debug_LOADER
+#if log_LOADER
 	 log_println("code @%p codeEnd @%p heap @%p", _code,_codeEnd, _heap);
 #endif
     return fd;
@@ -392,7 +392,7 @@ int image_load(char *imageFileName) {
 
 Address nativeGetEndOfCodeRegion(){
 	Address addr = _codeEnd + _header->codeCacheSize ;
-#if debug_LOADER
+#if log_LOADER
 	log_println("nativeGetEndOfCodeRegion: end of boot region @ %p code cache size %ld code end  %p", addr, _header->codeCacheSize, _codeEnd);
 #endif
 	return addr;

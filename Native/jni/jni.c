@@ -476,7 +476,7 @@ static jobject NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_
  * portability reasons (i.e. handling of varargs).
  */
 void nativeInitializeJniInterface(JNIEnv env) {
-#if debug_LOADER
+#if log_LOADER
 	log_println("BEGIN jni nativeInitialize");
 #endif
 	c_ASSERT((jint) -1 < 0);
@@ -553,7 +553,7 @@ void nativeInitializeJniInterface(JNIEnv env) {
 
     ASSIGN_FUNCTION(NewObject);
     ASSIGN_FUNCTION(NewObjectV);
-#if debug_LOADER
+#if log_LOADER
 	log_println("END jni nativeInitialize");
 #endif
 }
