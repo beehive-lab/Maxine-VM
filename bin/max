@@ -23,6 +23,7 @@ show_help=false
 default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
 jvm_args="$default_jvm_args"
 maxine_dir=""
+make=gmake
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -33,6 +34,10 @@ while [ "${1:0:1}" = "-" ]; do
             ;;
         -h )
             show_help=true
+            ;;
+        -make )
+            shift
+            make=$1
             ;;
         -java_home )
             shift
@@ -95,12 +100,19 @@ if [[ "$java_version" != 1.6* ]]; then
     exit 255
 fi 
 
+arch=""
 if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
     case $OS in
-        Darwin*) MAXINE_OS=darwin ;;
-        Linux*)  MAXINE_OS=linux ;;
-        SunOS*)  MAXINE_OS=solaris ;;
+        Darwin* )
+            MAXINE_OS=darwin
+            ;;
+        Linux* )
+            MAXINE_OS=linux
+            ;;
+        SunOS* )
+            MAXINE_OS=solaris
+            ;;
     esac
     if [ -z "${MAXINE_OS}" ]; then
         echo "Supported operating system could not be derived from $OS. Please set MAXINE_OS explicitly."
@@ -148,7 +160,6 @@ function run() {
 build_help="compile the Maxine Java and C sources, linking the latter"
 function run_build() {
     javac=${JAVA_HOME}/bin/javac
-    make=gmake
     show_build_help=false
     native_only=false
     exit_after_help=false
@@ -158,10 +169,6 @@ function run_build() {
         case $1 in
             -h )
                 show_build_help=true
-                ;;
-            -make )
-                shift
-                make=$1
                 ;;
             -javac )
                 shift
@@ -198,7 +205,6 @@ function run_build() {
         echo
         echo "where options include:"
         echo " -h         show help message"
-        echo " -make      path to GNU make executable (default: gmake)"
         echo " -clean     removes existing binaries and class files before building projects"
         echo " -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac"
         echo " -junit4    class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
@@ -387,6 +393,17 @@ function run_maxinetester() {
 }
 
 #=======================================
+# 'pushtests' command
+#=======================================
+
+gate_help="run the tests used to validate a push to the stable Maxine repository"
+
+function run_gate() {
+    platform="`$make -s -C ${maxine_dir}/Native platform`" 
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -expect=${maxine_dir}/VM/test/${platform}.expect -java-tester-configs=optjit -java-config-alias=optjit "$@"
+}
+
+#=======================================
 # Main launcher
 #=======================================
 
@@ -418,6 +435,7 @@ function showCommands() {
     echo " -jvm_args    specifies Java VM arguments (default: ${default_jvm_args})"
     echo " -maxine      specifies base directory of the Maxine code base"
     echo "                (default: ${maxine_dir})"
+    echo " -make        path to GNU make executable (default: gmake)"
 }
 
 if [ -n "${unknown_option}" ]; then

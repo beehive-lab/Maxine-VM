@@ -210,7 +210,7 @@ public abstract class Safepoint {
         SafepointBuiltin.hardSafepoint();
         SafepointBuiltin.hardSafepoint();
 
-        // Ensure that stores to {@link VmThreadLocals.LAST_JAVA_CALLER_INSTRUCTION_POINTER} can only happen after GC:
+        // Ensure that subsequent stores only happen once the safepoint trap has occurred
         MemoryBarrier.loadStore();
     }
 
