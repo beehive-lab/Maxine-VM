@@ -734,8 +734,12 @@ public class ClassfileReader {
                         _classfileStream.skip(attributeSize);
                     }
 
-                    if (!attributeSize.equals(_classfileStream.getPosition().minus(startPosition))) {
-                        throw classFormatError("Invalid attribute_length for " + attributeName + " attribute");
+                    final Address distance = _classfileStream.getPosition().minus(startPosition);
+                    if (!attributeSize.equals(distance)) {
+                        final int size = attributeSize.toInt();
+                        final int dist = distance.toInt();
+                        final String message = "Invalid attribute_length for " + attributeName + " attribute (reported " + size + " != parsed " + dist + ")";
+                        throw classFormatError(message);
                     }
                 }
 
