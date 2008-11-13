@@ -25,4 +25,4 @@
 
 #include "jni.h"
 #include "threads.h"
-#include "debug.h"
+#include "log.h"

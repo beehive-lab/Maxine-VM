@@ -27,7 +27,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.run.java.*;
 
@@ -56,11 +55,11 @@ public abstract class AbstractTester extends JavaRunScheme {
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
 
     public static void reportPassed(int passed, int total) {
-        Debug.print("Done: ");
-        Debug.print(passed);
-        Debug.print(" of ");
-        Debug.print(total);
-        Debug.println(" passed.");
+        Log.print("Done: ");
+        Log.print(passed);
+        Log.print(" of ");
+        Log.print(total);
+        Log.println(" passed.");
     }
 
     public static void end(String run, boolean result) {
@@ -73,7 +72,7 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (_verbose == 3) {
             if (!result) {
                 printRun(run);
-                Debug.println(" failed with incorrect result");
+                Log.println(" failed with incorrect result");
             }
         }
         _testNum++;
@@ -85,58 +84,58 @@ public abstract class AbstractTester extends JavaRunScheme {
         }
         if (_verbose == 3) {
             printRun(run);
-            Debug.print(" failed with exception !");
-            Debug.println(t.getClass().getName());
+            Log.print(" failed with exception !");
+            Log.println(t.getClass().getName());
         }
         _testNum++;
     }
 
     private static void printRun(String run) {
-        Debug.print("\t");
+        Log.print("\t");
         printTestNum();
         if (run != null) {
-            Debug.print(run);
+            Log.print(run);
         }
     }
 
     public static void verbose(boolean passed, int finished, int total) {
-        Debug.print(passed ? '.' : 'X');
+        Log.print(passed ? '.' : 'X');
         if (finished % 10 == 0) {
-            Debug.print(' ');
+            Log.print(' ');
         }
         if (finished % 50 == 0) {
-            Debug.print(' ');
-            Debug.print(finished);
-            Debug.print(" of ");
-            Debug.println(total);
+            Log.print(' ');
+            Log.print(finished);
+            Log.print(" of ");
+            Log.println(total);
         } else if (finished == total) {
-            Debug.println();
+            Log.println();
         }
     }
 
     public static void begin(String test) {
         if (_verbose == 3) {
             printTestNum();
-            Debug.print(test);
+            Log.print(test);
             int i = test.length();
             while (i++ < 50) {
-                Debug.print(' ');
+                Log.print(' ');
             }
-            Debug.println("  next: '" + _startOption + (_testNum + 1) + "', end: '" + _endOption + _testCount + "'");
+            Log.println("  next: '" + _startOption + (_testNum + 1) + "', end: '" + _endOption + _testCount + "'");
         }
     }
 
     public static void printTestNum() {
         // print out the test number (aligned to the left)
-        Debug.print(_testNum);
-        Debug.print(':');
+        Log.print(_testNum);
+        Log.print(':');
         if (_testNum < 100) {
-            Debug.print(' ');
+            Log.print(' ');
         }
         if (_testNum < 10) {
-            Debug.print(' ');
+            Log.print(' ');
         }
-        Debug.print(' ');
+        Log.print(' ');
     }
 
     public AbstractTester(VMConfiguration vmConfiguration) {

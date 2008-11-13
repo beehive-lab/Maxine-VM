@@ -38,7 +38,6 @@ import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -107,7 +106,7 @@ public abstract class ClassMethodActor extends MethodActor {
             _nativeFunctionPointer = linkNativeFunction();
             if (!MaxineVM.isPrimordialOrPristine()) {
                 if (VerboseVMOption.verboseJNI()) {
-                    Debug.println("[Dynamic-linking native method " + holder().name() + "." + name() + " = " + _nativeFunctionPointer.toHexString() + "]");
+                    Log.println("[Dynamic-linking native method " + holder().name() + "." + name() + " = " + _nativeFunctionPointer.toHexString() + "]");
                 }
             }
         }
@@ -148,7 +147,7 @@ public abstract class ClassMethodActor extends MethodActor {
         _nativeFunctionPointer = nativeFunctionPointer;
         if (!MaxineVM.isPrimordialOrPristine()) {
             if (VerboseVMOption.verboseJNI()) {
-                Debug.println("[" + (nativeFunctionPointer.isZero() ? "Unregistering" : "Registering") + " JNI native method " + holder().name() + "." + name() + "]");
+                Log.println("[" + (nativeFunctionPointer.isZero() ? "Unregistering" : "Registering") + " JNI native method " + holder().name() + "." + name() + "]");
             }
         }
     }

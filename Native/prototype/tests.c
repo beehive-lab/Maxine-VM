@@ -21,7 +21,7 @@
 /**
  * @author Doug Simon
  */
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 
 JNIEXPORT void JNICALL

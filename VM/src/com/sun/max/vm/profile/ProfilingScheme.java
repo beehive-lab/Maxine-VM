@@ -20,8 +20,8 @@
  */
 package com.sun.max.vm.profile;
 
-import java.util.*;
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
@@ -29,7 +29,6 @@ import com.sun.max.profile.ValueMetrics.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
-import com.sun.max.vm.debug.*;
 
 /**
  * This scheme is used to collect Profiling data. Collecting is enabled at the beginning of the VM
@@ -160,7 +159,7 @@ public class ProfilingScheme extends AbstractVMScheme implements VMScheme {
         try {
             _out = new PrintStream(_profilingDumpFileName);
         } catch (FileNotFoundException e) {
-            Debug.println("Cannot create max.prof");
+            Log.println("Cannot create max.prof");
             e.printStackTrace();
             return;
         }

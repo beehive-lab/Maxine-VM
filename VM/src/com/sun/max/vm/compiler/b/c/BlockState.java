@@ -21,9 +21,9 @@
 package com.sun.max.vm.compiler.b.c;
 
 import com.sun.max.collect.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.compiler.cir.*;
-import com.sun.max.vm.debug.*;
 
 /**
  * Abstract interpretation state associated with a block.
@@ -69,7 +69,7 @@ public class BlockState {
 
     public void addCirBlock(CirBlock cirBlock) {
         if (_cirBlockList == null) {
-            Debug.println("_cirBlockList is null");
+            Log.println("_cirBlockList is null");
             assert false;
         }
         _cirBlockList.append(cirBlock);

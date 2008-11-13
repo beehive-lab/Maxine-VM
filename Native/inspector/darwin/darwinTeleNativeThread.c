@@ -35,7 +35,7 @@
 #include <mach/vm_map.h>
 
 #include "darwinTeleNativeThread.h"
-#include "debug.h"
+#include "log.h"
 #include "debugPtrace.h"
 #include "jni.h"
 #include "word.h"
@@ -56,17 +56,17 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JN
     OsStateRegistersStruct osStateRegisters;
 
     if (integerRegistersLength > sizeof(canonicalIntegerRegisters)) {
-        debug_println("buffer for integer register data is too large");
+        log_println("buffer for integer register data is too large");
         return false;
     }
 
     if (stateRegistersLength > sizeof(canonicalStateRegisters)) {
-        debug_println("buffer for state register data is too large");
+        log_println("buffer for state register data is too large");
         return false;
     }
 
     if (floatingPointRegistersLength > sizeof(canonicalFloatingPointRegisters)) {
-        debug_println("buffer for floating point register data is too large");
+        log_println("buffer for floating point register data is too large");
         return false;
     }
 
@@ -113,7 +113,7 @@ jboolean setSingleStep(thread_act_t thread, jboolean isEnabled) {
     mach_msg_type_number_t count = THREAD_STATE_COUNT;
     kern_return_t error = thread_get_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
     if (error != KERN_SUCCESS) {
-        debug_println("thread_get_state failed, error: %d, %s", error, mach_error_string(error));
+        log_println("thread_get_state failed, error: %d, %s", error, mach_error_string(error));
         return false;
     }
 
@@ -124,7 +124,7 @@ jboolean setSingleStep(thread_act_t thread, jboolean isEnabled) {
     }
     error = thread_set_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, count);
     if (error != KERN_SUCCESS) {
-        debug_println("thread_set_state failed, error: %d, %s", error, mach_error_string(error));
+        log_println("thread_set_state failed, error: %d, %s", error, mach_error_string(error));
         return false;
     }
     return true;
@@ -133,10 +133,10 @@ jboolean setSingleStep(thread_act_t thread, jboolean isEnabled) {
 static char* threadRunStateNames[] = { "<unknown>", "RUNNING", "STOPPED", "WAITING", "UNINTERRUPTIBLE", "HALTED" };
 
 static void dumpBasicThreadInfo(thread_t thread, thread_basic_info_t threadInfo) {
-    debug_println("thread info for %ld:", thread);
-    debug_println("    run state: %d [%s]:", threadInfo->run_state, threadRunStateNames[threadInfo->run_state]);
-    debug_println("    flags: 0x%x [%s%s]:", threadInfo->flags, (threadInfo->flags & TH_FLAGS_SWAPPED ? "SWAPPED " : ""), (threadInfo->flags & TH_FLAGS_IDLE ? "IDLE " : ""));
-    debug_println("    suspend count: %d:", threadInfo->suspend_count);
+    log_println("thread info for %ld:", thread);
+    log_println("    run state: %d [%s]:", threadInfo->run_state, threadRunStateNames[threadInfo->run_state]);
+    log_println("    flags: 0x%x [%s%s]:", threadInfo->flags, (threadInfo->flags & TH_FLAGS_SWAPPED ? "SWAPPED " : ""), (threadInfo->flags & TH_FLAGS_IDLE ? "IDLE " : ""));
+    log_println("    suspend count: %d:", threadInfo->suspend_count);
 }
 
 static jboolean suspendOtherThreads(jlong task, thread_t current) {
@@ -155,13 +155,13 @@ static jboolean suspendOtherThreads(jlong task, thread_t current) {
         if (thread_list[i] != current) {
             kret = thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
             if (kret != KERN_SUCCESS) {
-                debug_println("thread_info() failed on other thread when single stepping");
+                log_println("thread_info() failed on other thread when single stepping");
                 return false;
             }
             if (info.suspend_count == 0) {
                 kret = thread_suspend(thread_list[i]);
                 if (kret != KERN_SUCCESS) {
-                    debug_println("thread_suspend() failed on other thread when single stepping");
+                    log_println("thread_suspend() failed on other thread when single stepping");
                     return false;
                 }
             }
@@ -174,7 +174,7 @@ static jboolean suspendOtherThreads(jlong task, thread_t current) {
     // get info for the current thread
     kret = thread_info(current, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
     if (kret != KERN_SUCCESS) {
-        debug_println("thread_info() failed on thread to step");
+        log_println("thread_info() failed on thread to step");
         return false;
     }
     for (j = 0; j < info.suspend_count; j++) {
@@ -198,13 +198,13 @@ static jboolean unsuspendOtherThreads(jlong task, thread_t current) {
         if (thread_list[i] != current) {
             kret = thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
             if (kret != KERN_SUCCESS) {
-                debug_println("thread_info() failed when single stepping");
+                log_println("thread_info() failed when single stepping");
                 return false;
             }
             for (j = 0; j < info.suspend_count; j++) {
                 kret = thread_resume(thread_list[i]);
                 if (kret != KERN_SUCCESS) {
-                    debug_println("thread_resume() failed when single stepping");
+                    log_println("thread_resume() failed when single stepping");
                     return false;
                 }
             }
@@ -230,10 +230,10 @@ static void waitALittle() {
     usleep(200);
 }
 
-static jboolean singleStep(jlong pid, jlong task, thread_t current) {    
+static jboolean singleStep(jlong pid, jlong task, thread_t current) {
     int error = ptrace(PT_STEP, pid, (char *) 1, 0);
     if (error != 0) {
-        debug_println("could not ptrace(PT_STEP) for pid = %d", error);
+        log_println("could not ptrace(PT_STEP) for pid = %d", error);
         return false;
     }
     waitALittle();

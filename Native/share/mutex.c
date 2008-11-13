@@ -19,26 +19,26 @@
  * Company, Ltd.
  */
 #include "mutex.h"
-#include "debug.h"
+#include "log.h"
 
 void mutex_initialize(Mutex mutex) {
 #   if os_SOLARIS
 	    if (mutex_init(mutex, LOCK_RECURSIVE | LOCK_ERRORCHECK, NULL) != 0) {
-	        debug_ASSERT(false);
+	        c_ASSERT(false);
 	    }
 #   elif os_LINUX || os_DARWIN
 	    pthread_mutexattr_t mutex_attribute;
 	    if (pthread_mutexattr_init(&mutex_attribute) != 0) {
-	        debug_ASSERT(false);
+	        c_ASSERT(false);
 	    }
 	    if (pthread_mutexattr_settype(&mutex_attribute, PTHREAD_MUTEX_RECURSIVE) != 0) {
-	        debug_ASSERT(false);
+	        c_ASSERT(false);
 	    }
 	    if (pthread_mutex_init(mutex, &mutex_attribute) != 0) {
-	        debug_ASSERT(false);
+	        c_ASSERT(false);
 	    }
 	    if (pthread_mutexattr_destroy(&mutex_attribute) != 0) {
-	        debug_ASSERT(false);
+	        c_ASSERT(false);
 	    }
 #   elif os_GUESTVMXEN
 	    *mutex = guestvmXen_monitor_create();
@@ -63,7 +63,7 @@ void mutex_initialize(Mutex mutex) {
 
 	void mutex_destroy(Mutex mutex) {
 	    if (pthread_mutex_destroy(mutex) != 0) {
-	        debug_ASSERT(false);
+	        c_ASSERT(false);
 	    }
 	}
 
@@ -71,14 +71,14 @@ void mutex_initialize(Mutex mutex) {
 
 	int mutex_lock(Mutex mutex) {
 		if (guestvmXen_monitor_enter(*mutex) != 0) {
-			debug_ASSERT(false);
+			c_ASSERT(false);
 		}
 		return 0;
 	}
 
 	int mutex_unlock(Mutex mutex) {
 		if (guestvmXen_monitor_exit(*mutex) != 0) {
-			debug_ASSERT(false);
+			c_ASSERT(false);
 		}
 		return 0;
 	}

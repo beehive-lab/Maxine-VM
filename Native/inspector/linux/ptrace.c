@@ -38,7 +38,7 @@
 
 #include <sys/ptrace.h>
 
-#include "debug.h"
+#include "log.h"
 #include "word.h"
 #include "isa.h"
 #include "jni.h"
@@ -323,7 +323,7 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadIntegerRegisters(JNIEnv *env,
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
 
     if (length > sizeof(canonicalIntegerRegisters)) {
-        debug_println("buffer for register data is too large");
+        log_println("buffer for register data is too large");
         return false;
     }
 
@@ -343,7 +343,7 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadFloatingPointRegisters(JNIEnv
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
 
     if (length > sizeof(canonicalIntegerRegisters)) {
-        debug_println("buffer for register data is too large");
+        log_println("buffer for register data is too large");
         return false;
     }
 

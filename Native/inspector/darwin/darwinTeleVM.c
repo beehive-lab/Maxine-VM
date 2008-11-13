@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "debug.h"
+#include "log.h"
 #include "debugPtrace.h"
 #include "jni.h"
 

@@ -22,8 +22,8 @@ package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.*;
 import com.sun.max.vm.object.*;
@@ -163,15 +163,15 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public void dump() {
-        Debug.print(ObjectAccess.readClassActor(this).name().string());
-        Debug.print(" boundTo=");
-        Debug.print(boundObject() == null ? "null" : ObjectAccess.readClassActor(boundObject()).name().string());
-        Debug.print(" owner=");
-        Debug.print(_ownerThread == null ? "null" : _ownerThread.getName());
-        Debug.print(" recursion=");
-        Debug.print(_recursionCount);
-        Debug.print(" binding=");
-        Debug.print(_bindingProtection.name());
+        Log.print(ObjectAccess.readClassActor(this).name().string());
+        Log.print(" boundTo=");
+        Log.print(boundObject() == null ? "null" : ObjectAccess.readClassActor(boundObject()).name().string());
+        Log.print(" owner=");
+        Log.print(_ownerThread == null ? "null" : _ownerThread.getName());
+        Log.print(" recursion=");
+        Log.print(_recursionCount);
+        Log.print(" binding=");
+        Log.print(_bindingProtection.name());
     }
 
 }

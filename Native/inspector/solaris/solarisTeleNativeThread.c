@@ -19,7 +19,7 @@
  * Company, Ltd.
  */
 #include "proc.h"
-#include "debug.h"
+#include "log.h"
 #include "isa.h"
 #include "jni.h"
 #include "os.h"
@@ -44,7 +44,7 @@ struct ps_lwphandle {
 	int error; \
 	struct ps_lwphandle *lh = proc_Lgrab((struct ps_prochandle *) ph, (lwpid_t) lwpId, &error); \
 	if (error != 0) { \
-    	debug_println("Lgrab failed: %s", Lgrab_error(error)); \
+    	log_println("Lgrab failed: %s", Lgrab_error(error)); \
 		return errorReturnValue; \
 	}
 
@@ -58,17 +58,17 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeReadRegisters(
     isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
 
     if (integerRegistersLength > sizeof(canonicalIntegerRegisters)) {
-        debug_println("buffer for integer register data is too large");
+        log_println("buffer for integer register data is too large");
         return false;
     }
 
     if (stateRegistersLength > sizeof(canonicalStateRegisters)) {
-        debug_println("buffer for state register data is too large");
+        log_println("buffer for state register data is too large");
         return false;
     }
 
     if (floatingPointRegistersLength > sizeof(canonicalFloatingPointRegisters)) {
-        debug_println("buffer for floating point register data is too large");
+        log_println("buffer for floating point register data is too large");
         return false;
     }
 
@@ -77,11 +77,11 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeReadRegisters(
 
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 	if (proc_Plwp_getregs(ph, lwpId, osRegisters) != 0) {
-		debug_println("Plwp_getregs failed");
+		log_println("Plwp_getregs failed");
 		return false;
 	}
 	if (Plwp_getfpregs(ph, lwpId, &osFloatingPointRegisters) != 0) {
-		debug_println("Plwp_getfpregs failed");
+		log_println("Plwp_getfpregs failed");
 		return false;
 	}
 
@@ -100,7 +100,7 @@ static long getRegister(jlong processHandle, jlong lwpId, int registerIndex) {
 	INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
 
 	if (proc_Lwait(lh, 0) != 0) {
-    	debug_println("Lwait failed");
+    	log_println("Lwait failed");
     	proc_Lfree(lh);
 		return -1L;
 	}
@@ -108,7 +108,7 @@ static long getRegister(jlong processHandle, jlong lwpId, int registerIndex) {
 
 	jlong result = -1L;
 	if (proc_Lgetareg(lh, registerIndex, &result) != 0) {
-    	debug_println("Lgetareg failed");
+    	log_println("Lgetareg failed");
     	proc_Lfree(lh);
     	return -1L;
 	}
@@ -121,13 +121,13 @@ static jboolean setRegister(jlong processHandle, jlong lwpId, int registerIndex,
 	INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
 
 	if (proc_Lwait(lh, 0) != 0) {
-    	debug_println("Lwait failed");
+    	log_println("Lwait failed");
     	proc_Lfree(lh);
 		return false;
 	}
 
 	if (proc_Lputareg(lh, registerIndex, value) != 0) {
-    	debug_println("Lputareg failed");
+    	log_println("Lputareg failed");
     	proc_Lfree(lh);
     	return false;
 	}
@@ -146,13 +146,13 @@ JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong processHandle, jlong lwpId) {
 	INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
     if (proc_Lclearfault(lh) != 0) {
-        debug_println("Lclearfault failed");
+        log_println("Lclearfault failed");
         proc_Lfree(lh);
         return false;
     }
 
     if (proc_Lsetrun(lh, 0, PRSTEP) != 0) {
-        debug_println("Lsetrun failed");
+        log_println("Lsetrun failed");
         proc_Lfree(lh);
         return false;
     }

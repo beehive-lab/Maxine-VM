@@ -6,7 +6,7 @@
 # environment variable JAVA_HOME to point to a JDK installation directory.
 # The '-java_home' global option can be used instead.
 #
-# To add a new launchable command, write a functions named 'run_<command>' and
+# To add a new launchable command, write a function named 'run_<command>' and
 # define a variable named '<command>_help'. See the existing commands for examples.
 # Once added, the command can be launched as follows:
 #
@@ -64,6 +64,7 @@ command_args=$@
 # Ensure that the non-optional variables are set
 test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
 
+# Try to find the base directory of the Maxine code base by using the path of this script
 if [ -z "${maxine_dir}" ]; then
     # Resolve location of this script
     me="${BASH_SOURCE[0]}"
@@ -200,7 +201,7 @@ function run_build() {
         echo " -make      path to GNU make executable (default: gmake)"
         echo " -clean     removes existing binaries and class files before building projects"
         echo " -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac"
-        echo " -junit4    class path for Junit 4 classes (default: value ofJUNIT4_CP environment variable)"
+        echo " -junit4    class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
         echo
         echo "If no projects are given, then all projects are built."
         return

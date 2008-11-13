@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
@@ -107,17 +106,17 @@ public class JavaMonitorManager {
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
             if (Monitor.traceMonitors() && _allStickyQty > 0) {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                Debug.println("Sticky monitors:");
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.println("Sticky monitors:");
                 for (int i = 0; i < _allStickyQty; i++) {
                     final ManagedMonitor monitor = _allSticky[i];
-                    Debug.print("  ");
-                    Debug.print(i);
-                    Debug.print(": ");
+                    Log.print("  ");
+                    Log.print(i);
+                    Log.print(": ");
                     monitor.dump();
-                    Debug.println();
+                    Log.println();
                 }
-                Debug.unlock(lockDisabledSafepoints);
+                Log.unlock(lockDisabledSafepoints);
             }
         }
     }
@@ -210,11 +209,11 @@ public class JavaMonitorManager {
         }
         monitor.setBoundObject(object);
         if (Monitor.traceMonitors()) {
-            final boolean lockDisabledSafepoints = Debug.lock();
-            Debug.print("Bound monitor: ");
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Bound monitor: ");
             monitor.dump();
-            Debug.println();
-            Debug.unlock(lockDisabledSafepoints);
+            Log.println();
+            Log.unlock(lockDisabledSafepoints);
         }
         return monitor;
     }
