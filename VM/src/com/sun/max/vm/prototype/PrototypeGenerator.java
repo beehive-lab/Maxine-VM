@@ -50,7 +50,6 @@ import com.sun.max.vm.type.*;
  * (raw data). This class also constructs the VM configuration from a number
  * of command line options.
  *
- *
  * @author Bernd Mathiske
  * @author Doug Simon
  * @author Ben L. Titzer

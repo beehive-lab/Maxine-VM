@@ -273,7 +273,7 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
         c_ASSERT(_methodID != NULL);
     }
 
-#if debug_INSPECTOR_NATIVE
+#if log_INSPECTOR_NATIVE
     log_println("gatherThread[lwp id = %d]", lwpId);
     log_printStatusFlags("Status flags: ", lwpStatus->pr_flags, "\n");
     log_printWhyStopped("Why stopped: ", lwpStatus, "\n");

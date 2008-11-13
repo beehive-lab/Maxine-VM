@@ -52,11 +52,11 @@ JNIMethod resolveCriticalStaticMethod(JNIEnv *env, char *className, char *method
 	JNIMethod result;
 	result.jClass = (*env)->FindClass(env, className);
 	if (result.jClass == NULL) {
-		debug_exit(-1, "JVM_*: could not resolve critical class \"%s\"", className);
+		log_exit(-1, "JVM_*: could not resolve critical class \"%s\"", className);
 	}
 	result.jMethod = (*env)->GetStaticMethodID(env, result.jClass, methodName, signature);
 	if (result.jMethod == NULL) {
-		debug_exit(-1, "JVM_*: could not resolve critical method \"%s.%s%s\"", className, methodName, signature);
+		log_exit(-1, "JVM_*: could not resolve critical method \"%s.%s%s\"", className, methodName, signature);
 	}
 	return result;
 }
@@ -65,11 +65,11 @@ JNIMethod resolveCriticalInstanceMethod(JNIEnv *env, char *className, char *meth
 	JNIMethod result;
 	result.jClass = (*env)->FindClass(env, className);
 	if (result.jClass == NULL) {
-		debug_exit(-1, "JVM_*: could not resolve critical class \"%s\"", className);
+		log_exit(-1, "JVM_*: could not resolve critical class \"%s\"", className);
 	}
 	result.jMethod = (*env)->GetMethodID(env, result.jClass, methodName, signature);
 	if (result.jMethod == NULL) {
-		debug_exit(-1, "JVM_*: could not resolve critical method \"%s.%s%s\"", className, methodName, signature);
+		log_exit(-1, "JVM_*: could not resolve critical method \"%s.%s%s\"", className, methodName, signature);
 	}
 	return result;
 }
@@ -1557,7 +1557,7 @@ jint JVM_GetLastErrorString(char *buffer, int length) {
  * the given pathname string in place.
  */
 char *JVM_NativePath(char *path) {
-#if debug_JVMNI
+#if log_JVMNI
   log_println("JVM_NativePath(%s)", path);
 #endif
     return path; // TODO
@@ -1575,7 +1575,7 @@ char *JVM_NativePath(char *path) {
  */
 jint JVM_Open(char *fileName, jint flags, jint mode) {
     int result = open(fileName, flags, mode);
-#if debug_JVMNI
+#if log_JVMNI
     log_println("JVM_Open(%s)", fileName);
 #endif
     if (result >= 0) {
