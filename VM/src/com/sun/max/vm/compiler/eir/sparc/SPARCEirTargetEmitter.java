@@ -67,6 +67,7 @@ public final class SPARCEirTargetEmitter extends EirTargetEmitter<SPARCAssembler
         }
         // Locals are addressed from the frame pointer too. But they are located below FP. Due to the bias, their offset may be positive as well.
         // This makes their offset independent of SP.
+        // Note that slot.offset is an offset relative to the stack pointer. It needs to be converted into a frame pointer-relative offset.
         final int offset =  SPARCStackFrameLayout.localSlotOffsetFromFrame(frameSize(), slot.offset());
         return new StackAddress(offset, framePointer());
     }

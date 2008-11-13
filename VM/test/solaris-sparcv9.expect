@@ -1,3 +1,4 @@
 test.output.FloatNanTest
 test.output.JavacTest
 test.output.JREJarLoadTest
+test.except.Catch_StackOverflowError_01
