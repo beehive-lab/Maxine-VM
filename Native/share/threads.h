@@ -33,7 +33,7 @@
 /**
  * Global symbol that the Inspector can look up to check whether a thread's start function is this one.
  */
-extern void thread_runJava(void *jniNativeInterface);
+extern void *thread_runJava(void *jniNativeInterface);
 
 /**
  * The signature of the Java method entrypoint for new threads.
