@@ -121,6 +121,9 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
      */
     protected static final IndexedSequence<SPARCEirRegister> _integerSystemReservedGlobalRegisters = new ArraySequence<SPARCEirRegister>(G0, G6, G7);
 
+    public static IndexedSequence<SPARCEirRegister> integerSystemReservedGlobalRegisters() {
+        return _integerSystemReservedGlobalRegisters;
+    }
 
     protected static final IndexedSequence<SPARCEirRegister> _integerOutRegisters = new ArraySequence<SPARCEirRegister>(O0, O1, O2, O3, O4, O5);
     protected static final IndexedSequence<SPARCEirRegister> _integerInRegisters = new ArraySequence<SPARCEirRegister>(I0, I1, I2, I3, I4, I5);
