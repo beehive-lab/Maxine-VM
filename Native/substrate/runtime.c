@@ -84,6 +84,6 @@ Java_java_lang_Runtime_availableProcessors(JNIEnv *env, jclass c, jobject runtim
 #elif os_GUESTVMXEN
 	return guestvmXen_numProcessors();
 #else
-#error Unimplemented
+	c_UNIMPLEMENTED();
 #endif
 }

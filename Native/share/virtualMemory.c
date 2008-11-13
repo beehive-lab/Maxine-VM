@@ -143,7 +143,7 @@ void protectPage(Address pageAddress) {
 #elif os_GUESTVMXEN
     guestvmXen_protectPage(pageAddress);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -157,7 +157,7 @@ void unprotectPage(Address pageAddress) {
 #elif os_GUESTVMXEN
 	guestvmXen_unProtectPage(pageAddress);
 #else
-#error Unimplemented
+	c_UNIMPLEMENTED();
 #endif
 }
 

@@ -36,25 +36,27 @@ jint nativeMutexSize(void) {
 	return sizeof(mutex_Struct);
 }
 
-jint nativeConditionSize(void) {
-	return sizeof(condition_Struct);
-}
-
 void nativeMutexInitialize(Mutex mutex) {
 	mutex_initialize(mutex);
 }
 
-void nativeConditionInitialize(Condition condition) {
-    condition_initialize(condition);
-}
-
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_vm_monitor_modal_sync_nat_Mutex_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
-	return mutex_lock(mutex) == 0;
+	return mutex_enter(mutex) == 0;
 }
 
 jboolean nativeMutexUnlock(Mutex mutex) {
-    return mutex_unlock(mutex) == 0;
+    return mutex_exit(mutex) == 0;
+}
+
+
+
+jint nativeConditionSize(void) {
+    return sizeof(condition_Struct);
+}
+
+void nativeConditionInitialize(Condition condition) {
+    condition_initialize(condition);
 }
 
 JNIEXPORT jboolean JNICALL

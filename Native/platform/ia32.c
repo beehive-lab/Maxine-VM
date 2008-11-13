@@ -24,5 +24,5 @@
 #include "ia32.h"
 
 void ia32_canonicalizeTeleIntegerRegisters(ia32_OsTeleIntegerRegisters os, ia32_CanonicalIntegerRegisters c) {
-#error Unimplemented
+    c_UNIMPLEMENTED();
 }

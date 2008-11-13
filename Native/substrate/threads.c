@@ -70,7 +70,7 @@ void threads_initialize() {
 #   elif os_GUESTVMXEN
         guestvmXen_thread_initializeSpecificsKey(&_specificsKey, free);
 #   else
-#       error Unimplemented
+        c_UNIMPLEMENTED();
 #   endif
 }
 
@@ -87,7 +87,7 @@ thread_Specifics *thread_currentSpecifics() {
 #   elif os_GUESTVMXEN
         return (thread_Specifics*) guestvmXen_thread_getSpecific(_specificsKey);
 #   else
-#       error Unimplemented
+        c_UNIMPLEMENTED();
 #   endif
 }
 
@@ -245,7 +245,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
         return (Thread) 0;
     }
 #else
-#   error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
     return thread;
 }
@@ -258,7 +258,7 @@ static Thread thread_current(void) {
 #elif os_GUESTVMXEN
     return guestvmXen_get_current();
 #else
-#   error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -283,7 +283,7 @@ static int thread_join(Thread thread) {
 #elif os_GUESTVMXEN
     error = guestvmXen_thread_join(thread);
 #else
-#   error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 
     if (error != 0) {
@@ -466,7 +466,7 @@ void nativeSetupAlternateSignalStack(Address base, long size) {
 #elif os_GUESTVMXEN
 	/* Nothing to do */
 #else
-#   error Unimplemented
+	c_UNIMPLEMENTED();
 #endif
 }
 
