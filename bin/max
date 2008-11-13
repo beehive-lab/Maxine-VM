@@ -400,7 +400,7 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
 
 function run_gate() {
     platform="`$make -s -C ${maxine_dir}/Native platform`" 
-    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -expect=${maxine_dir}/VM/test/${platform}.expect -java-tester-configs=optjit -java-config-alias=optjit "$@"
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -expect=${maxine_dir}/VM/test/${platform}.expect -java-tester-configs=optjit -java-config-alias=optjit -maxvm-configs=std "$@"
 }
 
 #=======================================
