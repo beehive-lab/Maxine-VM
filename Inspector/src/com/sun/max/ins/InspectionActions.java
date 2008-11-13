@@ -600,6 +600,37 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
 
     /**
+     * Action:  makes visible the {@link BreakpointsInspector}.
+     */
+    final class ViewBreakpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Breakpoints";
+
+        ViewBreakpointsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            BreakpointsInspector.make(inspection());
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess());
+        }
+    }
+
+    private InspectorAction _viewBreakpoints = new ViewBreakpointsAction(null);
+
+    /**
+     * @return an Action that will make visible the {@link BreakpointsInspector}.
+     */
+    public final InspectorAction viewBreakpoints() {
+        return _viewBreakpoints;
+    }
+    /**
      * Action:  makes visible the {@link MemoryRegionsInspector}.
      */
     final class ViewMemoryRegionsAction extends InspectorAction {
@@ -633,35 +664,31 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
 
     /**
-     * Action:  makes visible the {@link ThreadsInspector}.
+     * Action:  makes visible the {@link MethodInspector}.
      */
-    final class ViewThreadsAction extends InspectorAction {
+    final class ViewMethodCodeAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Threads";
+        private static final String DEFAULT_TITLE = "Method code";
 
-        ViewThreadsAction(String title) {
+        ViewMethodCodeAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
-            _refreshableActions.append(this);
         }
 
         @Override
         protected void procedure() {
-            ThreadsInspector.make(inspection());
-        }
-
-        @Override
-        public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess());
+            final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), focus().thread().instructionPointer());
+            focus().setCodeLocation(teleCodeLocation, true);
         }
     }
 
-    private InspectorAction _viewThreads = new ViewThreadsAction(null);
+    private InspectorAction _viewMethodCode = new ViewMethodCodeAction(null);
 
     /**
-     * @return an Action that will make visible the {@link ThreadsInspector}.
+     * @return an Action that will make visible the {@link MethodInspector}, with
+     * initial view set to the method containing the instruction pointer of the current thread.
      */
-    public final InspectorAction viewThreads() {
-        return _viewThreads;
+    public final InspectorAction viewMethodCode() {
+        return _viewMethodCode;
     }
 
 
@@ -732,49 +759,20 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
 
     /**
-     * Action:  makes visible the {@link MethodInspector}.
+     * Action:  makes visible the {@link ThreadsInspector}.
      */
-    final class ViewMethodCodeAction extends InspectorAction {
+    final class ViewThreadsAction extends InspectorAction {
 
-        private static final String DEFAULT_TITLE = "Method code";
+        private static final String DEFAULT_TITLE = "Threads";
 
-        ViewMethodCodeAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-        }
-
-        @Override
-        protected void procedure() {
-            final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), focus().thread().instructionPointer());
-            focus().setCodeLocation(teleCodeLocation, true);
-        }
-    }
-
-    private InspectorAction _viewMethodCode = new ViewMethodCodeAction(null);
-
-    /**
-     * @return an Action that will make visible the {@link MethodInspector}, with
-     * initial view set to the method containing the instruction pointer of the current thread.
-     */
-    public final InspectorAction viewMethodCode() {
-        return _viewMethodCode;
-    }
-
-
-    /**
-     * Action:  makes visible the {@link BreakpointsInspector}.
-     */
-    final class ViewBreakpointsAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Breakpoints";
-
-        ViewBreakpointsAction(String title) {
+        ViewThreadsAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
         }
 
         @Override
         protected void procedure() {
-            BreakpointsInspector.make(inspection());
+            ThreadsInspector.make(inspection());
         }
 
         @Override
@@ -783,13 +781,46 @@ public class InspectionActions extends InspectionHolder implements Prober{
         }
     }
 
-    private InspectorAction _viewBreakpoints = new ViewBreakpointsAction(null);
+    private InspectorAction _viewThreads = new ViewThreadsAction(null);
 
     /**
-     * @return an Action that will make visible the {@link BreakpointsInspector}.
+     * @return an Action that will make visible the {@link ThreadsInspector}.
      */
-    public final InspectorAction viewBreakpoints() {
-        return _viewBreakpoints;
+    public final InspectorAction viewThreads() {
+        return _viewThreads;
+    }
+
+
+    /**
+     * Action:  makes visible the {@link VmThreadLocalsInspector}.
+     */
+    final class ViewVmThreadLocalsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "VM thread locals";
+
+        ViewVmThreadLocalsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            VmThreadLocalsInspector.make(inspection());
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess() && focus().hasThread());
+        }
+    }
+
+    private InspectorAction _viewVmThreadLocals = new ViewVmThreadLocalsAction(null);
+
+    /**
+     * @return an Action that will make visible the {@link ThreadsInspector}.
+     */
+    public final InspectorAction viewVmThreadLocals() {
+        return _viewVmThreadLocals;
     }
 
 
