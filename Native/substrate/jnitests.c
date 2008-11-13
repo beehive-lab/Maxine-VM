@@ -20,7 +20,7 @@
  */
 /**
  * A set of tests that need to be in the target.
- * 
+ *
  * @author Doug Simon
  */
 #include "log.h"
@@ -33,7 +33,7 @@ Java_com_sun_max_vm_run_compilerTest_CompilerTestRunScheme_nativeUpdateFields(JN
     	printf("Could not get class of object\n");
     	return;
     }
-    
+
     if (n > 0) {
     	jmethodID mid = (*env)->GetMethodID(env, _class, "testNative", "(I)V");
     	if (mid == NULL) {
@@ -60,3 +60,21 @@ Java_com_sun_max_vm_run_compilerTest_CompilerTestRunScheme_nativeUpdateFields(JN
     	(*env)->SetObjectField(env, object, _o, o);
     }
 }
+
+
+#define BUFSIZE 8192
+JNIEXPORT jint JNICALL
+Java_test_jni_JNI_1OverflowArguments_read1(JNIEnv *env, jclass cls, jlong zfile,
+														jlong zentry, jlong pos, jbyteArray bytes, jint off, jint len) {
+  if (len > BUFSIZE) {
+	 len = BUFSIZE;
+  }
+  return len;
+}
+
+JNIEXPORT jint JNICALL
+Java_test_jni_JNI_1OverflowArguments_read2(JNIEnv *env, jclass cls, jlong zfile,
+														jlong zentry, jlong pos, jbyteArray bytes, jint off, jint len) {
+  return off;
+}
+

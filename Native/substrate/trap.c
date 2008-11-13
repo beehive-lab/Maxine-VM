@@ -31,12 +31,6 @@
 #   include <unistd.h>
 #endif
 
-#if os_SOLARIS && isa_SPARC
-    /* Get STACK_BIAS definition for Solaris / SPARC */
-#   include <sys/stack.h>
-    typedef struct rwindow * RegisterWindow;
-#endif
-
 #include "threads.h"
 #include "virtualMemory.h"
 #include "log.h"
@@ -44,6 +38,12 @@
 #include "os.h"
 #include "isa.h"
 #include "image.h"
+
+#if os_SOLARIS && isa_SPARC
+    /* Get STACK_BIAS definition for Solaris / SPARC */
+#      include <sys/stack.h>
+       typedef struct rwindow * RegisterWindow;
+#endif
 
 #if os_GUESTVMXEN
 #   include <guestvmXen.h>
@@ -256,7 +256,14 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     trapInfo[0] = trapNumber;
     trapInfo[1] = getInstructionPointer(ucontext);
     trapInfo[2] = getFaultAddress(signalInfo, ucontext);
+#if os_SOLARIS && isa_SPARC
+	 /* set the safepoint latch register of the trapped frame to the disable state */
+	 ucontext->uc_mcontext.gregs[REG_G2] = disabledVmThreadLocals;
+#else
+    /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
     trapInfo[3] = (Address)*stackPointer;
+    *stackPointer = (Word)disabledVmThreadLocals;
+#endif
 
 #if log_TRAP
     char *sigName = signalName(signal);
@@ -265,14 +272,10 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
         log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
         log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
+#   if !(os_SOLARIS && isa_SPARC)
         log_println("trapInfo[3] (stack top value)     = %p", trapInfo[3]);
+#   endif
     }
-#endif
-
-    /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
-    *stackPointer = (Word)disabledVmThreadLocals;
-
-#if log_TRAP
     log_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
 #endif
     setInstructionPointer(ucontext, _javaTrapStub);

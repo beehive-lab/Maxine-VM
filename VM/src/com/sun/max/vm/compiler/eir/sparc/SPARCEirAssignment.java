@@ -27,6 +27,7 @@ import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -109,12 +110,14 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
      */
     private void emit_S_GF(SPARCEirTargetEmitter emitter, EirRegister destinationRegister) {
         final SPARCEirTargetEmitter.StackAddress stackAddress = emitter.stackAddress(sourceLocation().asStackSlot());
-        if (canUseImmediate(stackAddress.offset())) {
-            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), stackAddress.offset(), destinationRegister);
+        final int offset = stackAddress.offset() + JitStackFrameLayout.offsetInStackSlot(kind());
+
+        if (canUseImmediate(offset)) {
+            SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offset, destinationRegister);
         } else {
             try {
                 final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
-                emitter.assembler().setsw(stackAddress.offset(), offsetRegister.as());
+                emitter.assembler().setsw(offset, offsetRegister.as());
                 SPARCEirLoad.emit(emitter, kind(), SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offsetRegister, destinationRegister);
             } catch (AssemblyException e) {
                 ProgramError.unexpected();
@@ -133,12 +136,13 @@ public class SPARCEirAssignment extends SPARCEirBinaryOperation.Move implements 
      */
     private void emit_GF_S(SPARCEirTargetEmitter emitter, EirRegister sourceRegister) {
         final SPARCEirTargetEmitter.StackAddress stackAddress = emitter.stackAddress(destinationLocation().asStackSlot());
-        if (canUseImmediate(stackAddress.offset())) {
-            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), stackAddress.offset());
+        final int offset = stackAddress.offset() + JitStackFrameLayout.offsetInStackSlot(kind());
+        if (canUseImmediate(offset)) {
+            SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offset);
         } else {
             try {
                 final SPARCEirRegister.GeneralPurpose offsetRegister = offsetRegister(emitter);
-                emitter.assembler().setsw(stackAddress.offset(), offsetRegister.as());
+                emitter.assembler().setsw(offset, offsetRegister.as());
                 SPARCEirStore.emit(emitter, kind(), sourceRegister, SPARCEirRegister.GeneralPurpose.from(stackAddress.base()), offsetRegister);
             } catch (AssemblyException e) {
                 ProgramError.unexpected();
