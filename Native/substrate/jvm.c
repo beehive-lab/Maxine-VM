@@ -1867,16 +1867,16 @@ void *JVM_RawMonitorCreate(void) {
 
 
 void JVM_RawMonitorDestroy(void *monitor) {
-    mutex_destroy((Mutex) monitor);
+    mutex_dispose((Mutex) monitor);
     free(monitor);
 }
 
 jint JVM_RawMonitorEnter(void *monitor) {
-    return mutex_lock((Mutex) monitor);
+    return mutex_enter((Mutex) monitor);
 }
 
 void JVM_RawMonitorExit(void *monitor) {
-    mutex_unlock((Mutex) monitor);
+    mutex_exit((Mutex) monitor);
 }
 
 /*

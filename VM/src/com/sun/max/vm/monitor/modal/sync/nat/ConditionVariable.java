@@ -55,6 +55,8 @@ public final class ConditionVariable {
     private static native boolean nativeConditionNotify(Pointer condition, boolean all);
 
     /**
+     * This must be a fully informative JNI call, not a C_FUNCTION, because it can block and the stack walker needs to know the last Java frame.
+     *
      * @return whether waiting succeeded, i.e. no error and no interrupt occurred
      */
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
