@@ -18,21 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#include "debug.h"
+#include "log.h"
 
 #include "condition.h"
 
 void condition_initialize(Condition condition) {
 #if debug_MONITOR
-  debug_println("condition_initialize(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+  log_println("condition_initialize(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
 #endif
 #if os_SOLARIS
     if (cond_init(condition, NULL, NULL) != 0) {
-        debug_ASSERT(false);
+        c_ASSERT(false);
     }
 #elif os_LINUX || os_DARWIN
     if (pthread_cond_init(condition, NULL) != 0) {
-        debug_ASSERT(false);
+        c_ASSERT(false);
     }
 #elif os_GUESTVMXEN
     *condition = guestvmXen_condition_create();
@@ -42,22 +42,22 @@ void condition_initialize(Condition condition) {
 
 void condition_destroy(Condition condition) {
 #if debug_MONITOR
-  debug_println("condition_destroy   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+  log_println("condition_destroy   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
 #endif
 #if os_SOLARIS
     if (cond_destroy(condition) != 0) {
-        debug_ASSERT(false);
+        c_ASSERT(false);
     }
 #elif os_LINUX || os_DARWIN
     if (pthread_cond_destroy(condition) != 0) {
-        debug_ASSERT(false);
+        c_ASSERT(false);
     }
 #endif
 }
 
 int condition_wait(Condition condition, Mutex mutex) {
 #if debug_MONITOR
-  debug_println("condition_wait      (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition, mutex);
+  log_println("condition_wait      (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition, mutex);
 #endif
 #if (os_DARWIN || os_LINUX)
     return pthread_cond_wait(condition, mutex);
@@ -77,7 +77,7 @@ int condition_wait(Condition condition, Mutex mutex) {
  */
 Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
 #if debug_MONITOR
-  debug_println("condition_timedWait (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
+  log_println("condition_timedWait (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	int error = 0;
 	if (timeoutMilliSeconds > 0) {
@@ -117,7 +117,7 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 			return true;
 		}
 		default: {
-			debug_println("condition_timedWait: unexpected error code %d", error);
+			log_println("condition_timedWait: unexpected error code %d", error);
 			return false;
 		}
 	}
@@ -127,7 +127,7 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 
 int condition_notify(Condition condition) {
 #if debug_MONITOR
-  debug_println("condition_notify    (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+  log_println("condition_notify    (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)
     return pthread_cond_signal(condition);
@@ -140,7 +140,7 @@ int condition_notify(Condition condition) {
 
 int condition_notifyAll(Condition condition) {
 #if debug_MONITOR
-  debug_println("condition_notifyAll (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+  log_println("condition_notifyAll (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)
 	return pthread_cond_broadcast(condition);

@@ -31,6 +31,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -72,36 +73,132 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         return memoryRegionsInspector;
     }
 
-    enum ColumnKind {
-        NAME,
-        START,
-        END,
-        SIZE,
-        ALLOC;
+    /**
+     * Defines the columns supported by the inspector; the view includes one of each
+     * kind.  The visibility of them, however, may be changed by the user.
+     */
+    private enum ColumnKind {
+        NAME("Name", true) {
+            @Override
+            public boolean canBeMadeInvisible() {
+                return false;
+            }
+        },
+        START("Start", true),
+        END("End", true),
+        SIZE("Size", true),
+        ALLOC("Allocation", true);
+
+        private final String _label;
+        private final boolean _defaultVisibility;
+
+        private ColumnKind(String label, boolean defaultVisibility) {
+            _label = label;
+            _defaultVisibility = defaultVisibility;
+            assert defaultVisibility || canBeMadeInvisible();
+        }
+
+        public String label() {
+            return _label;
+        }
+
+        @Override
+        public String toString() {
+            return _label;
+        }
+
+        /**
+         * @return whether this column kind can be made invisible; default true.
+         */
+        public boolean canBeMadeInvisible() {
+            return true;
+        }
+
+        /**
+         * Determines if this column should be visible by default; default true.
+         */
+        public boolean defaultVisibility() {
+            return _defaultVisibility;
+        }
 
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
     }
 
+
+    public static class Preferences extends TableColumnVisibilityPreferences<ColumnKind> {
+
+        /**
+         * Create a set of preferences specified for use by singleton instances, where local and
+         * persistent global choices are identical.
+         */
+        public Preferences(TableColumnVisibilityPreferences<ColumnKind> otherPreferences) {
+            super(otherPreferences, true);
+        }
+
+        public Preferences(Inspection inspection) {
+            super(inspection, "memoryRegionsInspectorPrefs", ColumnKind.class, ColumnKind.VALUES);
+        }
+
+        @Override
+        protected boolean canBeMadeInvisible(ColumnKind columnType) {
+            return columnType.canBeMadeInvisible();
+        }
+
+        @Override
+        protected boolean defaultVisibility(ColumnKind columnType) {
+            return columnType.defaultVisibility();
+        }
+
+        @Override
+        protected String label(ColumnKind columnType) {
+            return columnType.label();
+        }
+    }
+
+    private static Preferences _globalPreferences;
+
+    public static synchronized Preferences globalPreferences(Inspection inspection) {
+        if (_globalPreferences == null) {
+            _globalPreferences = new Preferences(inspection);
+        }
+        return _globalPreferences;
+    }
+
+
     private final HeapScheme _heapScheme;
     private final String _heapSchemeName;
 
-    private final JTable _table = new MemoryRegionJTable();
+    private final JTable _table;
+    private final MemoryRegionTableModel _model;
+    private final MemoryRegionColumnModel _columnModel;
+    private final TableColumn[] _columns;
 
     private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "MemoryRegionsInspector");
 
     private final TeleCodeManager _teleCodeManager;
 
-    private final HeapRegionData _bootHeapRegionData;
-    private final CodeRegionData _bootCodeRegionData;
+    private final HeapRegionDisplay _bootHeapRegionDisplay;
+    private final CodeRegionDisplay _bootCodeRegionDisplay;
 
     private MemoryRegionsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
         _teleCodeManager = teleVM().teleCodeManager();
-        _bootHeapRegionData = new HeapRegionData(teleVM().teleHeapManager().teleBootHeapRegion());
-        _bootCodeRegionData = new CodeRegionData(_teleCodeManager.teleBootCodeRegion(), -1);
+        _bootHeapRegionDisplay = new HeapRegionDisplay(teleVM().teleHeapManager().teleBootHeapRegion());
+        _bootCodeRegionDisplay = new CodeRegionDisplay(_teleCodeManager.teleBootCodeRegion(), -1);
         _heapScheme = teleVM().vmConfiguration().heapScheme();
         _heapSchemeName = _heapScheme.getClass().getSimpleName();
+        _model = new MemoryRegionTableModel();
+        _columns = new TableColumn[ColumnKind.VALUES.length()];
+        _columnModel = new MemoryRegionColumnModel();
+        _table = new JTable(_model, _columnModel);
         createFrame(null);
+        frame().menu().addSeparator();
+        frame().menu().add(new InspectorAction(inspection, "Preferences") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "Memory Regions View Options", _columnModel.preferences());
+            }
+        });
     }
 
     @Override
@@ -144,153 +241,45 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         refreshView(epoch, true);
     }
 
-    private final class MemoryRegionJTable extends JTable {
-        final TableCellRenderer _nameCellRenderer;
-        final TableCellRenderer _startAddressCellRenderer;
-        final TableCellRenderer _endAddressCellRenderer;
-        final TableCellRenderer _sizeCellRenderer;
-        final TableCellRenderer _allocCellRenderer;
+    private final class MemoryRegionColumnModel extends DefaultTableColumnModel {
 
-        MemoryRegionJTable() {
-            super(new MemoryRegionTableModel());
-            _nameCellRenderer = new NameCellRenderer(inspection());
-            _startAddressCellRenderer = new StartAddressCellRenderer(inspection());
-            _endAddressCellRenderer = new EndAddressCellRenderer(inspection());
-            _sizeCellRenderer = new SizeCellRenderer();
-            _allocCellRenderer = new AllocCellRenderer();
+        private final Preferences _preferences;
+
+        private MemoryRegionColumnModel() {
+            _preferences = new Preferences(MemoryRegionsInspector.globalPreferences(inspection())) {
+                @Override
+                public void setIsVisible(ColumnKind columnKind, boolean visible) {
+                    super.setIsVisible(columnKind, visible);
+                    final int col = columnKind.ordinal();
+                    if (visible) {
+                        addColumn(_columns[col]);
+                    } else {
+                        removeColumn(_columns[col]);
+                    }
+                    // setColumnSizes();
+                    // refresh(teleVM().teleProcess().epoch(), true);
+                }
+            };
+
+            createColumn(ColumnKind.NAME, new NameCellRenderer(inspection()));
+            createColumn(ColumnKind.START, new StartAddressCellRenderer());
+            createColumn(ColumnKind.END, new EndAddressCellRenderer());
+            createColumn(ColumnKind.SIZE, new SizeCellRenderer());
+            createColumn(ColumnKind.ALLOC, new AllocCellRenderer());
         }
 
-        @Override
-        public TableCellRenderer getCellRenderer(int row, int column) {
-            switch (ColumnKind.VALUES.get(column)) {
-                case NAME:
-                    return _nameCellRenderer;
-                case START:
-                    return _startAddressCellRenderer;
-                case END:
-                    return _endAddressCellRenderer;
-                case SIZE:
-                    return _sizeCellRenderer;
-                case ALLOC:
-                    return _allocCellRenderer;
-                default:
-                    Problem.error("Unexpected MemoryRegions Data column");
+        private Preferences preferences() {
+            return _preferences;
+        }
+
+        private void createColumn(ColumnKind columnKind, TableCellRenderer renderer) {
+            final int col = columnKind.ordinal();
+            _columns[col] = new TableColumn(col, 0, renderer, null);
+            _columns[col].setHeaderValue(columnKind.label());
+            if (_preferences.isVisible(columnKind)) {
+                addColumn(_columns[col]);
             }
-            return null;
-        }
-
-        public void refreshView() {
-        }
-    }
-
-
-    // VM epoch when data last read.
-    private long _epoch = -1;
-
-
-
-    @Override
-    public void refreshView(long epoch, boolean force) {
-        if (epoch > _epoch || force) {
-            final MemoryRegionTableModel model = (MemoryRegionTableModel) _table.getModel();
-            model.refresh();
-        }
-    }
-
-    public void viewConfigurationChanged(long epoch) {
-        refreshView(epoch, true);
-    }
-
-
-    private final class NameCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        NameCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionData memoryRegionData = (MemoryRegionData) value;
-            setText(memoryRegionData.description());
-            setToolTipText(memoryRegionData.toolTipText());
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class StartAddressCellRenderer extends WordValueLabel implements TableCellRenderer {
-
-        StartAddressCellRenderer(Inspection inspection) {
-            super(inspection, ValueMode.WORD);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionData memoryRegionData = (MemoryRegionData) value;
-            setValue(WordValue.from(memoryRegionData.start().asWord()));
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class EndAddressCellRenderer extends WordValueLabel implements TableCellRenderer {
-
-        EndAddressCellRenderer(Inspection inspection) {
-            super(inspection, ValueMode.WORD);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionData memoryRegionData = (MemoryRegionData) value;
-            setValue(WordValue.from(memoryRegionData.end().asWord()));
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class SizeCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
-
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionData memoryRegionData = (MemoryRegionData) value;
-            final DataLabel.LongAsHex sizeDataLabel = new DataLabel.LongAsHex(inspection(), memoryRegionData.size().toLong());
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                sizeDataLabel.setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                sizeDataLabel.setBackground(style().defaultTextBackgroundColor());
-            }
-            return sizeDataLabel;
-        }
-    }
-
-    private final class AllocCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
-
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final MemoryRegionData memoryRegionData = (MemoryRegionData) value;
-            final long allocated = memoryRegionData.allocated().toLong();
-            final DataLabel.Percent percentDataLabel = new DataLabel.Percent(inspection(), allocated, memoryRegionData.size().toLong());
-            percentDataLabel.setToolTipText("Allocated from region: 0x" + Long.toHexString(allocated) + "(" + allocated + ")");
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                percentDataLabel.setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                percentDataLabel.setBackground(style().defaultTextBackgroundColor());
-            }
-            return  percentDataLabel;
+            _columns[col].setIdentifier(columnKind);
         }
     }
 
@@ -298,28 +287,28 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     private final class MemoryRegionTableModel extends AbstractTableModel {
 
-        private SortedMemoryRegionList<MemoryRegionData> _sortedMemoryRegions;
+        private SortedMemoryRegionList<MemoryRegionDisplay> _sortedMemoryRegions;
 
         void refresh() {
-            _sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionData>();
+            _sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
-            _sortedMemoryRegions.add(_bootHeapRegionData);
+            _sortedMemoryRegions.add(_bootHeapRegionDisplay);
             for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : teleVM().teleHeapManager().teleHeapRegions()) {
-                _sortedMemoryRegions.add(new HeapRegionData(teleRuntimeMemoryRegion));
+                _sortedMemoryRegions.add(new HeapRegionDisplay(teleRuntimeMemoryRegion));
             }
 
-            _sortedMemoryRegions.add(_bootCodeRegionData);
+            _sortedMemoryRegions.add(_bootCodeRegionDisplay);
             final IndexedSequence<TeleCodeRegion> teleCodeRegions = _teleCodeManager.teleCodeRegions();
             for (int index = 0; index < teleCodeRegions.length(); index++) {
                 final TeleCodeRegion teleCodeRegion = teleCodeRegions.get(index);
                 // Only display regions that have memory allocated to them, but that could be a view option.
                 if (teleCodeRegion.isAllocated()) {
-                    _sortedMemoryRegions.add(new CodeRegionData(teleCodeRegion, index));
+                    _sortedMemoryRegions.add(new CodeRegionDisplay(teleCodeRegion, index));
                 }
             }
 
             for (TeleNativeThread thread : teleProcess().threads()) {
-                _sortedMemoryRegions.add(new StackRegionData(thread.stack()));
+                _sortedMemoryRegions.add(new StackRegionDisplay(thread.stack()));
             }
 
             fireTableDataChanged();
@@ -338,7 +327,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (MemoryRegionData memoryRegionData : _sortedMemoryRegions.memoryRegions()) {
+            for (MemoryRegionDisplay memoryRegionData : _sortedMemoryRegions.memoryRegions()) {
                 if (count == row) {
                     return memoryRegionData;
                 }
@@ -349,30 +338,13 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
         @Override
         public Class< ? > getColumnClass(int c) {
-            return MemoryRegionData.class;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            switch (ColumnKind.VALUES.get(column)) {
-                case NAME:
-                    return "Name";
-                case START:
-                    return "Start";
-                case END:
-                    return "End";
-                case SIZE:
-                    return "Size";
-                case ALLOC:
-                    return "Alloc";
-            }
-            return "";
+            return MemoryRegionDisplay.class;
         }
 
         int findRow(MemoryRegion memoryRegion) {
             assert memoryRegion != null;
             int row = 0;
-            for (MemoryRegionData memoryRegionData : _sortedMemoryRegions.memoryRegions()) {
+            for (MemoryRegionDisplay memoryRegionData : _sortedMemoryRegions.memoryRegions()) {
                 if (memoryRegion.sameAs(memoryRegionData)) {
                     return row;
                 }
@@ -382,7 +354,116 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
             return -1;
         }
 
+        public void redisplay() {
+            for (MemoryRegionDisplay memoryRegionData : _sortedMemoryRegions) {
+                memoryRegionData.redisplay();
+            }
+        }
+
     }
+
+    // VM epoch when data last read.
+    private long _epoch = -1;
+
+    @Override
+    public void refreshView(long epoch, boolean force) {
+        if (epoch > _epoch || force) {
+            final MemoryRegionTableModel model = (MemoryRegionTableModel) _table.getModel();
+            model.refresh();
+            _epoch = epoch;
+        }
+    }
+
+    public void viewConfigurationChanged(long epoch) {
+        _model.redisplay();
+    }
+
+
+    private final class NameCellRenderer extends PlainLabel implements TableCellRenderer {
+
+        NameCellRenderer(Inspection inspection) {
+            super(inspection, null);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
+            setText(memoryRegionData.description());
+            setToolTipText(memoryRegionData.toolTipText());
+            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
+                setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                setBackground(style().defaultTextBackgroundColor());
+            }
+            return this;
+        }
+
+    }
+
+    private final class StartAddressCellRenderer implements TableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
+            final WordValueLabel label = memoryRegionData.startLabel();
+            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
+                label.setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                label.setBackground(style().defaultTextBackgroundColor());
+            }
+            return label;
+        }
+
+    }
+
+    private final class EndAddressCellRenderer implements TableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
+            final WordValueLabel label = memoryRegionData.endLabel();
+            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
+                label.setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                label.setBackground(style().defaultTextBackgroundColor());
+            }
+            return label;
+        }
+    }
+
+    private final class SizeCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
+
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
+            final DataLabel.LongAsHex sizeDataLabel = new DataLabel.LongAsHex(inspection(), memoryRegionData.size().toLong());
+            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
+                sizeDataLabel.setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                sizeDataLabel.setBackground(style().defaultTextBackgroundColor());
+            }
+            return sizeDataLabel;
+        }
+    }
+
+    private final class AllocCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) value;
+            final long allocated = memoryRegionData.allocated().toLong();
+            final DataLabel.Percent percentDataLabel = new DataLabel.Percent(inspection(), allocated, memoryRegionData.size().toLong());
+            percentDataLabel.setToolTipText("Allocated from region: 0x" + Long.toHexString(allocated) + "(" + allocated + ")");
+            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
+                percentDataLabel.setBackground(style().defaultCodeAlternateBackgroundColor());
+            } else {
+                percentDataLabel.setBackground(style().defaultTextBackgroundColor());
+            }
+            return  percentDataLabel;
+        }
+    }
+
 
     enum MemoryRegionKind {
         HEAP,
@@ -393,7 +474,11 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         public static final IndexedSequence<MemoryRegionKind> VALUES = new ArraySequence<MemoryRegionKind>(values());
     }
 
-    private abstract class MemoryRegionData implements MemoryRegion {
+    /**
+     * Wraps a {@link MemoryRegion} with additional display-related behavior.
+     *
+     */
+    private abstract class MemoryRegionDisplay implements MemoryRegion {
 
         abstract MemoryRegion memoryRegion();
 
@@ -436,9 +521,46 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
         abstract MemoryRegionKind kind();
 
+        private WordValueLabel _startLabel;
+
+        public WordValueLabel startLabel() {
+            if (_startLabel == null) {
+                _startLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
+                    @Override
+                    public Value fetchValue() {
+                        return WordValue.from(MemoryRegionDisplay.this.start().asWord());
+                    }
+                };
+            }
+            return _startLabel;
+        }
+
+        private WordValueLabel _endLabel;
+
+        public WordValueLabel endLabel() {
+            if (_endLabel == null) {
+                _endLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
+                    @Override
+                    public Value fetchValue() {
+                        return WordValue.from(MemoryRegionDisplay.this.end().asWord());
+                    }
+                };
+            }
+            return _endLabel;
+        }
+
+        public void redisplay() {
+            if (_startLabel != null) {
+                _startLabel.redisplay();
+            }
+            if (_endLabel != null) {
+                _endLabel.redisplay();
+            }
+        }
+
     }
 
-    private final class HeapRegionData extends MemoryRegionData {
+    private final class HeapRegionDisplay extends MemoryRegionDisplay {
 
         private final TeleRuntimeMemoryRegion _teleRuntimeMemoryRegion;
 
@@ -447,7 +569,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
             return _teleRuntimeMemoryRegion;
         }
 
-        HeapRegionData(TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
+        HeapRegionDisplay(TeleRuntimeMemoryRegion teleRuntimeMemoryRegion) {
             _teleRuntimeMemoryRegion = teleRuntimeMemoryRegion;
         }
 
@@ -463,14 +585,14 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
         @Override
         String toolTipText() {
-            if (this == _bootHeapRegionData) {
+            if (this == _bootHeapRegionDisplay) {
                 return "Boot heap region";
             }
             return "Dynamic region:  " + description() + "{" + _heapSchemeName + "}";
         }
     }
 
-    private final class CodeRegionData extends MemoryRegionData {
+    private final class CodeRegionDisplay extends MemoryRegionDisplay {
 
         private final TeleCodeRegion _teleCodeRegion;
 
@@ -484,7 +606,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
             return _teleCodeRegion;
         }
 
-        CodeRegionData(TeleCodeRegion teleCodeRegion, int index) {
+        CodeRegionDisplay(TeleCodeRegion teleCodeRegion, int index) {
             _teleCodeRegion = teleCodeRegion;
             _index = index;
         }
@@ -509,7 +631,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     }
 
-    private final class StackRegionData extends MemoryRegionData {
+    private final class StackRegionDisplay extends MemoryRegionDisplay {
 
         private final TeleNativeStack _teleNativeStack;
 
@@ -518,7 +640,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
             return _teleNativeStack;
         }
 
-        StackRegionData(TeleNativeStack teleNativeStack) {
+        StackRegionDisplay(TeleNativeStack teleNativeStack) {
             _teleNativeStack = teleNativeStack;
         }
 
@@ -554,7 +676,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
             if (selectedRow != -1 && selectedColumn != -1) {
                 // Left button selects a table cell; also cause a code selection at the row.
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                    final MemoryRegionData memoryRegionData = (MemoryRegionData) _table.getValueAt(selectedRow, selectedColumn);
+                    final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) _table.getValueAt(selectedRow, selectedColumn);
                     focus().setMemoryRegion(memoryRegionData.memoryRegion());
                 }
             }

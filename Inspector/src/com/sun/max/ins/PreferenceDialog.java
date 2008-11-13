@@ -28,6 +28,7 @@ import javax.swing.border.*;
 
 import com.sun.max.gui.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.object.*;
 
@@ -60,6 +61,15 @@ public class PreferenceDialog extends InspectorDialog {
         final JPanel keyBindingsPanel = inspection().preferences().getPanel();
         keyBindingsPanel.setBorder(border);
         prefPanel.add(keyBindingsPanel);
+
+        final JPanel memoryRegionsLabelPanel = new JPanel(new BorderLayout());
+        memoryRegionsLabelPanel.setBorder(border);
+        memoryRegionsLabelPanel.add(new TextLabel(inspection, "Memory regions"), BorderLayout.WEST);
+        prefPanel.add(memoryRegionsLabelPanel);
+
+        final JPanel memoryRegionsInspectorPanel = MemoryRegionsInspector.globalPreferences(inspection).getPanel();
+        memoryRegionsInspectorPanel.setBorder(border);
+        prefPanel.add(memoryRegionsInspectorPanel);
 
         final JPanel objectLabelPanel = new JPanel(new BorderLayout());
         objectLabelPanel.setBorder(border);

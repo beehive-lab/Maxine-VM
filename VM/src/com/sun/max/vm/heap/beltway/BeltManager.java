@@ -24,8 +24,8 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 
 /**
@@ -210,8 +210,8 @@ public final class BeltManager {
         for (int i = 0; i < BeltwayConfiguration.getNumberOfBelts(); i++) {
             size = size.plus(_belts.get(i).size());
         }
-        Debug.print("Total Memory: ");
-        Debug.println(size.toLong());
+        Log.print("Total Memory: ");
+        Log.println(size.toLong());
     }
 
 }

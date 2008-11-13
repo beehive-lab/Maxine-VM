@@ -23,7 +23,7 @@
  * @author Laurent Daynes
  */
 #include "sparc.h"
-#include <debug.h>
+#include "log.h"
 
 void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIntegerRegisters c, sparc_OsSignalIntegerRegisters os) {
 #if os_SOLARIS
@@ -74,9 +74,9 @@ void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters c) {
   int r = R_G0;
   Word *p = &c->g0;
   while (r <= R_I7) {
-    char rn = registerNames[r / 8]; 
+    char rn = registerNames[r / 8];
     for (int i = 0; i < 8; i++, r++) {
-   	 debug_println("%%%c%d = 0x%016lx [%ld]", rn, i, p[r], p[r]);
+   	 log_println("%%%c%d = 0x%016lx [%ld]", rn, i, p[r], p[r]);
 	 }
   }
 #else

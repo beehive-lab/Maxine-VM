@@ -67,18 +67,18 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     private final class MethodsMenuItems implements InspectorMenuItems {
 
         public void addTo(InspectorMenu menu) {
-            menu.add(inspection().inspectionMenus().getInspectMethodAction());
-            menu.add(inspection().inspectionMenus().getViewSelectedCodeAction());
-            menu.add(inspection().inspectionMenus().getViewCodeAtIPAction());
-            menu.add(inspection().inspectionMenus().getViewMethodBytecodeAction());
-            menu.add(inspection().inspectionMenus().getViewMethodTargetCodeAction());
+            menu.add(inspection().actions().inspectMethodActorByName());
+            menu.add(inspection().actions().viewMethodCodeAtSelection());
+            menu.add(inspection().actions().viewMethodCodeAtIP());
+            menu.add(inspection().actions().viewMethodBytecodeByName());
+            menu.add(inspection().actions().viewMethodTargetCodeByName());
             final JMenu sub = new JMenu("View Boot Image Method Code");
-            sub.add(inspection().inspectionMenus().getViewBootImageRunMethodCodeAction());
-            sub.add(inspection().inspectionMenus().getViewBootImageThreadRunMethodCodeAction());
-            sub.add(inspection().inspectionMenus().getViewBootImageSchemeRunMethodCodeAction());
+            sub.add(inspection().actions().viewRunMethodCodeInBootImage());
+            sub.add(inspection().actions().viewThreadRunMethodCodeInBootImage());
+            sub.add(inspection().actions().viewSchemeRunMethodCodeInBootImage());
             menu.add(sub);
-            menu.add(inspection().inspectionMenus().getViewMethodCodeContainingAddressAction());
-            menu.add(inspection().inspectionMenus().getViewNativeCodeContainingAddressAction());
+            menu.add(inspection().actions().viewMethodCodeByAddress());
+            menu.add(inspection().actions().viewNativeCodeByAddress());
         }
 
         public Inspection inspection() {

@@ -25,7 +25,7 @@
 #include <fcntl.h>
 #include <thread_db.h>
 
-#include "debug.h"
+#include "log.h"
 
 #include "libInfo.h"
 
@@ -60,7 +60,7 @@ int pathmap_open(const char* name) {
       strcat(alt_path, name);
       fd = open(alt_path, O_RDONLY);
       if (fd >= 0) {
-         debug_println("path %s substituted for %s", alt_path, name);
+         log_println("path %s substituted for %s", alt_path, name);
          return fd;
       }
 
@@ -69,7 +69,7 @@ int pathmap_open(const char* name) {
          strcat(alt_path, strrchr(name, '/'));
          fd = open(alt_path, O_RDONLY);
          if (fd >= 0) {
-            debug_println("path %s substituted for %s", alt_path, name);
+            log_println("path %s substituted for %s", alt_path, name);
             return fd;
          }
       }
@@ -95,7 +95,7 @@ static LibInfo* add_LibInfo_fd(struct ps_prochandle* ph, const char* libname, in
   
    newlib = (LibInfo *) calloc(1, sizeof(struct LibInfo));
    if (newlib == NULL) {
-      debug_println("can't allocate memory for LibInfo");
+      log_println("can't allocate memory for LibInfo");
       return NULL;
    }
 
@@ -105,7 +105,7 @@ static LibInfo* add_LibInfo_fd(struct ps_prochandle* ph, const char* libname, in
    if (fd == -1) {
       newlib->fd = pathmap_open(newlib->name);
       if (newlib->fd < 0) {
-         debug_println("can't open shared object %s", newlib->name);
+         log_println("can't open shared object %s", newlib->name);
          free(newlib);
          return NULL;
       }
@@ -123,7 +123,7 @@ static LibInfo* add_LibInfo_fd(struct ps_prochandle* ph, const char* libname, in
 
    newlib->symtab = build_symtab(newlib->fd);
    if (newlib->symtab == NULL) {
-      debug_println("symbol table build failed for %s", newlib->name);
+      log_println("symbol table build failed for %s", newlib->name);
    }
 
    // even if symbol table building fails, we add the LibInfo.
@@ -213,7 +213,7 @@ Boolean read_LibInfo(struct ps_prochandle* ph) {
     sprintf(fname, "/proc/%d/maps", ph->pid);
     file = fopen(fname, "r");
     if (file == NULL) {
-        debug_println("can't open /proc/%d/maps file", ph->pid);
+        log_println("can't open /proc/%d/maps file", ph->pid);
         return false;
     }
 
@@ -248,7 +248,7 @@ uintptr_t lookup_symbol(struct ps_prochandle* ph, const char* sym_name) {
       }
       lib = lib->next;
    }
-   debug_println("lookup failed for symbol '%s'", sym_name);
+   log_println("lookup failed for symbol '%s'", sym_name);
    return (uintptr_t) NULL;
 }
 
