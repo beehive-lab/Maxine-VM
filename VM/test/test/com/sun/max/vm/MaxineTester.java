@@ -84,6 +84,7 @@ public class MaxineTester {
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
+        test.output.Recursion.class,
         test.output.FloatNanTest.class,
         test.output.StaticInitializers.class,
         test.output.LocalCatch.class,
