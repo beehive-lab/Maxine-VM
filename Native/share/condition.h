@@ -37,7 +37,7 @@
 #endif
 
 typedef condition_Struct *Condition;
-    
+
 extern void condition_initialize(Condition condition);
 extern void condition_destroy(Condition condition);
 extern Boolean condition_wait(Condition condition, Mutex mutex);

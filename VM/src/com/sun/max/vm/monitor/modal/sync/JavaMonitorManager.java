@@ -81,8 +81,6 @@ public class JavaMonitorManager {
     private static boolean _requireProxyAcquirableMonitors;
 
     public static void initialize(MaxineVM.Phase phase) {
-        Mutex.initialize(phase);
-        ConditionVariable.initialize(phase);
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());
@@ -96,6 +94,8 @@ public class JavaMonitorManager {
                 prototypeAddToBindableMonitors(monitor);
             }
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
+            Mutex.initialize();
+            ConditionVariable.initialize();
             for (int i = 0; i < _numberOfBindableMonitors; i++) {
                 final ManagedMonitor monitor = _bindableMonitors[i];
                 monitor.allocate();

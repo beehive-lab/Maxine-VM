@@ -86,13 +86,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-/*        if (phase == MaxineVM.Phase.STARTING) {
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException interruptedException) {
-            }
-        }
-*/
     }
 
     // Inspector support
