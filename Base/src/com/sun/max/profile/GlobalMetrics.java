@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.sun.max.lang.*;
 import com.sun.max.profile.Metrics.*;
 
-
 public class GlobalMetrics {
 
     static class EntryComparator implements Comparator<Map.Entry<String, Metric>> {

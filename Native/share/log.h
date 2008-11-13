@@ -37,6 +37,8 @@ extern void log_lock(void);
 
 extern void log_unlock(void);
 
+#define debug_FATAL() debug_ASSERT(false)
+
 extern void log_print_int(int val);
 extern void log_print_boolean(char val);
 extern void log_print_char(int val);
@@ -69,7 +71,7 @@ extern void log_print_double(double d);
 
 #define log_LOADER 0
 #define log_TRAP 0
-#define log_MONITOR 0
+#define debug_MONITOR 1
 #define log_LINKER 0
 #define log_JVMNI 0
 #define log_THREADS 0

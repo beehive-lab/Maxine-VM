@@ -18,31 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#ifndef __condition_h__
-#define __condition_h__ 1
+/**
+ * A heap that lets you allocate, but never reclaims any memory, i.e. never performs a garbage collection.
+ * With this setup, you can call System.gc() to test the safepoint mechanism
+ * without potential object reference corruption by a presumably broken GC.
+ *
+ * @author Bernd Mathiske
+ */
+package com.sun.max.vm.heap.sequential.noGC;
 
-#include "mutex.h"
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_cond_t condition_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <errno.h>
-    typedef cond_t condition_Struct;
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_condition_t condition_Struct;
-#endif
 
-typedef condition_Struct *Condition;
-
-extern void condition_initialize(Condition condition);
-extern void condition_destroy(Condition condition);
-extern Boolean condition_wait(Condition condition, Mutex mutex);
-extern Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern Boolean condition_notify(Condition condition);
-extern Boolean condition_notifyAll(Condition condition);
-
-#endif /*__condition_h__*/

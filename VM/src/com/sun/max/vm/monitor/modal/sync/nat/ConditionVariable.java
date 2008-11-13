@@ -54,20 +54,25 @@ public final class ConditionVariable {
     @C_FUNCTION
     private static native boolean nativeConditionNotify(Pointer condition, boolean all);
 
+    /**
+     * @return whether waiting succeeded, i.e. no error and no interrupt occurred
+     */
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
 
-    public static void initialize(MaxineVM.Phase phase) {
+    public static void initialize() {
+        assert MaxineVM.hostOrTarget().phase() == MaxineVM.Phase.PRIMORDIAL;
+        _size = nativeConditionSize();
     }
 
     public ConditionVariable() {
     }
 
-    public void alloc() {
+    public void allocate() {
         _condition =  Memory.mustAllocate(_size);
         nativeConditionInitialize(_condition);
     }
 
-    public boolean requiresAlloc() {
+    public boolean requiresAllocation() {
         return _condition.equals(Pointer.zero());
     }
 
