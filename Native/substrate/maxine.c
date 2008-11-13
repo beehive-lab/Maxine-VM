@@ -117,7 +117,7 @@ static int loadImage(void) {
 }
 
 static void *openDynamicLibrary(char *path) {
-#if debug_LINKER
+#if log_LINKER
     if (path == NULL) {
         log_println("openDynamicLibrary (null)");
     } else {
@@ -125,7 +125,7 @@ static void *openDynamicLibrary(char *path) {
     }
 #endif
     void *result = dlopen(path, RTLD_LAZY);
-#if debug_LINKER
+#if log_LINKER
     if (path == NULL) {
         log_println("openDynamicLibrary (null) = 0x%016lX", result);
     } else {
@@ -156,7 +156,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     _executablePath = executablePath;
 #endif
 
-#if debug_LOADER
+#if log_LOADER
 #if !os_GUESTVMXEN
     char *ldpath = getenv("LD_LIBRARY_PATH");
     if (ldpath == NULL) {
@@ -189,7 +189,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     // Initialize all primordial VM thread locals to 0/null:
     memset((char *) primordialVmThreadLocals, 0, image_header()->vmThreadLocalsSize);
 
-#if debug_LOADER
+#if log_LOADER
     log_println("primordial VM thread locals allocated at: %p", primordialVmThreadLocals);
 #endif
 
@@ -198,21 +198,21 @@ int maxine(int argc, char *argv[], char *executablePath) {
     if (auxiliarySpaceSize) {
         auxiliarySpace = (Address) malloc(image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
         if (auxiliarySpace == 0) {
-            debug_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);
+            log_exit(1, "Failed to allocate %lu bytes of auxiliary space", auxiliarySpaceSize);
         }
-#if debug_LOADER
+#if log_LOADER
         log_println("allocated %lu bytes of auxiliary space at 0x%p\n", image_header()->auxiliarySpaceSize, auxiliarySpace);
 #endif
         memset(auxiliarySpace, 1, image_header()->auxiliarySpaceSize + REFERENCE_BUFFER_SIZE);
     }
 
-#if debug_LOADER
+#if log_LOADER
     log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
                     primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
 #endif
     exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
 
-#if debug_LOADER
+#if log_LOADER
     log_println("start method exited with code: %d", exitCode);
 #endif
 
@@ -223,7 +223,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
         }
     }
 
-#if debug_LOADER
+#if log_LOADER
     log_println("exit code: %d", exitCode);
 #endif
 
@@ -245,17 +245,17 @@ void native_exit(jint code) {
 }
 
 void native_trap_exit(int code, void *address) {
-    debug_exit(code, "MaxineVM: Trap in native code at 0x%lx\n", address);
+    log_exit(code, "MaxineVM: Trap in native code at 0x%lx\n", address);
 }
 
 void native_stack_trap_exit(int code, void *address) {
-    debug_exit(code, "MaxineVM: Native code hit the stack overflow guard page at 0x%lx\n", address);
+    log_exit(code, "MaxineVM: Native code hit the stack overflow guard page at 0x%lx\n", address);
 }
 
 #if os_DARWIN
 void *native_environment() {
     void **environ = (void **)*_NSGetEnviron();
-#if debug_LOADER
+#if log_LOADER
     int i = 0;
     for (i = 0; environ[i] != NULL; i++)
     log_println("native_environment[%d]: %s", i, environ[i]);

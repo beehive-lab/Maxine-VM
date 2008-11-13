@@ -88,7 +88,7 @@ static const char* requestToString(int request) {
     return "<unknown>";
 }
 
-int debug_ptrace(const char *func, int line, int request, pid_t pid, caddr_t address, int data) {
+int log_ptrace(const char *func, int line, int request, pid_t pid, caddr_t address, int data) {
     int result;
 
     if (_logging) {

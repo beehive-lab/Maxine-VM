@@ -85,13 +85,13 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
         /*child:*/
 
         if (ptrace(PT_TRACE_ME, 0, 0, 0) != 0) {
-            debug_exit(1, "ptrace failed in child process");
+            log_exit(1, "ptrace failed in child process");
         }
 
         /* This call does not return if it succeeds: */
         execv(argv[0], argv);
 
-        debug_exit(1, "execv failed in child process");
+        log_exit(1, "execv failed in child process");
     } else if (childPid < 0) {
         log_println("fork failed");
         return -1L;

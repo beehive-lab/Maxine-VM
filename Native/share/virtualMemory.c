@@ -104,7 +104,7 @@ Java_com_sun_max_memory_VirtualMemory_nativeAllocateAtFixedAddress(JNIEnv *env, 
 
 Address virtualMemory_reserve(Size size) {
 	Address addr = 	(Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_NORESERVE, -1, (off_t) 0);
-#if debug_LOADER
+#if log_LOADER
 	log_println(" %d virtualMemory_reserve reserved %lx at %p",sizeof(size), size, addr);
 #endif
 	return addr;
@@ -138,7 +138,7 @@ void protectPage(Address pageAddress) {
 #if os_SOLARIS || os_DARWIN || os_LINUX
     if (mprotect((Word) pageAddress, getPageSize(), PROT_NONE) != 0) {
          int error = errno;
-         debug_exit(error, "protectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
+         log_exit(error, "protectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
     }
 #elif os_GUESTVMXEN
     guestvmXen_protectPage(pageAddress);
@@ -152,7 +152,7 @@ void unprotectPage(Address pageAddress) {
 #if os_SOLARIS || os_DARWIN || os_LINUX
 	if (mprotect((Word) pageAddress, getPageSize(), PROT_READ| PROT_WRITE) != 0){
          int error = errno;
-		 debug_exit(error, "unprotectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
+		 log_exit(error, "unprotectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
 	}
 #elif os_GUESTVMXEN
 	guestvmXen_unProtectPage(pageAddress);
