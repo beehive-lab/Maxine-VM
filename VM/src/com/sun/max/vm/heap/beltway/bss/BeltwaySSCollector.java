@@ -21,7 +21,6 @@
 package com.sun.max.vm.heap.beltway.bss;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.tele.*;
@@ -51,12 +50,12 @@ public class BeltwaySSCollector implements Runnable {
     public void run() {
         _collections++;
         if (Heap.verbose()) {
-            Debug.print("Collection: ");
-            Debug.println(_collections);
+            Log.print("Collection: ");
+            Log.println(_collections);
         }
         final BeltwayHeapSchemeBSS beltwayHeapSchemeBSS = (BeltwayHeapSchemeBSS) _beltwayHeapScheme;
         if (Heap.verbose()) {
-            Debug.println("Verify Heap");
+            Log.println("Verify Heap");
             _beltwayHeapScheme.getVerifier().verifyHeap(beltwayHeapSchemeBSS.getFromSpace().start(), beltwayHeapSchemeBSS.getFromSpace().getAllocationMark(), BeltManager.getApplicationHeap());
         }
 
@@ -64,7 +63,7 @@ public class BeltwaySSCollector implements Runnable {
         VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
         if (Heap.verbose()) {
-            Debug.println("Scanning roots...");
+            Log.println("Scanning roots...");
         }
 
         // Start scanning the reachable objects from my roots.
@@ -73,19 +72,19 @@ public class BeltwaySSCollector implements Runnable {
         beltwayHeapSchemeBSS.getRootScannerUpdater().run();
 
         if (Heap.verbose()) {
-            Debug.println("Scanning boot heap...");
+            Log.println("Scanning boot heap...");
         }
 
         beltwayHeapSchemeBSS.scanBootHeap(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
 
         if (Heap.verbose()) {
-            Debug.println("Scanning code...");
+            Log.println("Scanning code...");
         }
 
         beltwayHeapSchemeBSS.scanCode(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
 
         if (Heap.verbose()) {
-            Debug.println("Moving recheable...");
+            Log.println("Moving recheable...");
         }
 
         if (BeltwayConfiguration._parallelScavenging) {
@@ -93,13 +92,13 @@ public class BeltwaySSCollector implements Runnable {
             beltwayHeapSchemeBSS.initializeGCThreads(beltwayHeapSchemeBSS, beltwayHeapSchemeBSS.getToSpace(), beltwayHeapSchemeBSS.getFromSpace());
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
             if (Heap.verbose()) {
-                Debug.println("Start Threads");
+                Log.println("Start Threads");
             }
 
             beltwayHeapSchemeBSS.startGCThreads();
 
             if (Heap.verbose()) {
-                Debug.println("Join Threads");
+                Log.println("Join Threads");
             }
         } else {
             beltwayHeapSchemeBSS.linearScanRegionBelt(beltwayHeapSchemeBSS.getToSpace(), beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
@@ -116,8 +115,8 @@ public class BeltwaySSCollector implements Runnable {
         beltwayHeapSchemeBSS.getBeltManager().swapBelts(beltwayHeapSchemeBSS.getFromSpace(), beltwayHeapSchemeBSS.getToSpace());
         beltwayHeapSchemeBSS.getToSpace().resetAllocationMark();
         if (Heap.verbose()) {
-            Debug.print("Finished Collection: ");
-            Debug.println(_collections);
+            Log.print("Finished Collection: ");
+            Log.println(_collections);
         }
     }
 }

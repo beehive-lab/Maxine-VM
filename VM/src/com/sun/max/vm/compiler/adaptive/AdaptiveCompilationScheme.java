@@ -36,7 +36,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.stack.*;
@@ -466,7 +465,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             }
             try {
                 if (VerboseVMOption.verboseCompilation()) {
-                    Debug.println(compiler.name() + ": Compiling " + _methodState.classMethodActor().qualifiedName());
+                    Log.println(compiler.name() + ": Compiling " + _methodState.classMethodActor().qualifiedName());
                     if (_compilationTimer != null) {
                         // The _compilationTimer field will still be null if this compilation occurs while it is being initialized
                         _compilationTimer.startNewComputation();
@@ -474,14 +473,14 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 }
                 targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(_methodState.classMethodActor(), compilationDirective));
                 if (VerboseVMOption.verboseCompilation()) {
-                    Debug.print(compiler.name() + ": Compiled  " + _methodState.classMethodActor().qualifiedName() + " @ ");
-                    Debug.print(targetMethod.codeStart());
-                    Debug.print("{length=" + targetMethod.codeLength() + "}");
+                    Log.print(compiler.name() + ": Compiled  " + _methodState.classMethodActor().qualifiedName() + " @ ");
+                    Log.print(targetMethod.codeStart());
+                    Log.print("{length=" + targetMethod.codeLength() + "}");
                     if (_compilationTimer != null) {
                         final long time = _compilationTimer.stop();
-                        Debug.print(" (" + (time / 1000000) + " msecs)");
+                        Log.print(" (" + (time / 1000000) + " msecs)");
                     }
-                    Debug.println();
+                    Log.println();
                 }
             } finally {
                 _done = true;
@@ -875,7 +874,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                 } catch (InterruptedException e) {
                     // do nothing.
                 } catch (Throwable t) {
-                    Debug.print("Exception during compilation of " + _compilation._methodState.classMethodActor() + " " + t.getClass());
+                    Log.print("Exception during compilation of " + _compilation._methodState.classMethodActor() + " " + t.getClass());
                     t.printStackTrace();
                 }
             }

@@ -62,11 +62,11 @@ public final class DebugHeap {
     public static Pointer checkDebugCellTag(RuntimeMemoryRegion from, Pointer cell) {
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!isValidCellTag(cell.getWord(0))) {
-                Debug.print("Invalid object tag @ ");
-                Debug.print(cell);
-                Debug.print("(start + ");
-                Debug.print(cell.minus(from.start()).asOffset().toInt());
-                Debug.println(")");
+                Log.print("Invalid object tag @ ");
+                Log.print(cell);
+                Log.print("(start + ");
+                Log.print(cell.minus(from.start()).asOffset().toInt());
+                Log.println(")");
                 FatalError.unexpected("INVALID CELL TAG");
             }
             return cell.plusWords(1);

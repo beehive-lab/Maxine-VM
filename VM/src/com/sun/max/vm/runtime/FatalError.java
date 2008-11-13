@@ -23,7 +23,6 @@ package com.sun.max.vm.runtime;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -41,18 +40,18 @@ public final class FatalError extends Error {
         }
 
         if (ExitingGuard._guard) {
-            Debug.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
+            Log.println("FATAL VM ERROR: Error occurred while handling previous fatal VM error");
             MaxineVM.native_exit(11);
         }
         ExitingGuard._guard = true;
 
-        final boolean lockDisabledSafepoints = Debug.lock();
-        Debug.print("FATAL VM ERROR: ");
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("FATAL VM ERROR: ");
         Throw.stackDump(message, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         if (Throw._scanStackOnFatalError.isPresent()) {
             Throw.stackScan("stack scan", VMRegister.getCpuStackPointer(), VmThread.current().vmThreadLocals());
         }
-        Debug.unlock(lockDisabledSafepoints);
+        Log.unlock(lockDisabledSafepoints);
         MaxineVM.native_exit(11);
         throw UnsafeLoophole.cast(FatalError.class, null);
     }

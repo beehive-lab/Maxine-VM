@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.runtime;
 
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
 import java.lang.reflect.*;
 
 import com.sun.max.*;
@@ -57,9 +59,9 @@ import com.sun.max.vm.thread.*;
 public abstract class Safepoint {
 
     public enum State implements PoolObject {
-        ENABLED(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS),
-        DISABLED(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS),
-        TRIGGERED(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS);
+        ENABLED(SAFEPOINTS_ENABLED_THREAD_LOCALS),
+        DISABLED(SAFEPOINTS_DISABLED_THREAD_LOCALS),
+        TRIGGERED(SAFEPOINTS_TRIGGERED_THREAD_LOCALS);
 
         private final VmThreadLocal _key;
 
@@ -84,8 +86,6 @@ public abstract class Safepoint {
         public int offset() {
             return _key.offset();
         }
-
-        public static final IndexedSequence<State> VALUES = new ArraySequence<State>(values());
     }
 
     public static Safepoint create(VMConfiguration vmConfiguration) {
@@ -115,39 +115,79 @@ public abstract class Safepoint {
         return VMRegister.getSafepointLatchRegister();
     }
 
+    /**
+     *
+     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
+     *            thread locals can be obtained
+     */
     @INLINE
-    public static void setLatchRegister(Pointer latch) {
-        VMRegister.setSafepointLatchRegister(latch);
+    public static void setLatchRegister(Pointer vmThreadLocals) {
+        VMRegister.setSafepointLatchRegister(vmThreadLocals);
     }
 
-    public static void trigger(Pointer latch) {
-        VmThreadLocal.SAFEPOINT_LATCH.setVariableWord(latch, VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(latch));
+    /**
+     * Sets the value of the {@linkplain VmThreadLocal#SAFEPOINT_LATCH safepoint latch} in the safepoints-enabled VM
+     * thread locals to point to the safepoints-triggered VM thread locals. This will cause a safepoint trap the next
+     * time a safepoint instruction is executed while safepoints are {@linkplain #isEnabled() enabled}.
+     *
+     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
+     *            thread locals can be obtained
+     */
+    public static void trigger(Pointer vmThreadLocals) {
+        SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }
 
-    public static void reset(Pointer latch) {
-        VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(latch, Reference.fromJava(Safepoint.Venue.NATIVE));
-        VmThreadLocal.SAFEPOINT_LATCH.setVariableWord(latch, VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(latch));
+    /**
+     * Sets the value of the {@linkplain VmThreadLocal#SAFEPOINT_LATCH safepoint latch} in the safepoints-enabled VM
+     * thread locals to point to itself. This means that subsequent executions of a safepoint instruction will cause a trap
+     * until safepoints are once again {@linkplain #trigger(Pointer) triggered}.
+     *
+     * @param vmThreadLocals a pointer to a copy of the thread locals from which the base of the safepoints-enabled
+     *            thread locals can be obtained
+     */
+    public static void reset(Pointer vmThreadLocals) {
+        SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
+        SAFEPOINT_LATCH.setVariableWord(vmThreadLocals, SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals));
     }
 
+    /**
+     * Determines if safepoints are enabled (but not triggered) for the current thread.
+     */
+    public static boolean isEnabled() {
+        return getLatchRegister().equals(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer()) &&
+            SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord());
+    }
+
+    /**
+     * Determines if safepoints are disabled for the current thread.
+     */
     public static boolean isDisabled() {
-        return getLatchRegister().equals(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        return getLatchRegister().equals(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
+    }
+
+    /**
+     * Determines if safepoints are triggered for the current thread.
+     */
+    public static boolean isTriggered() {
+        return getLatchRegister().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord().asPointer()) ||
+            SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
     }
 
     @INLINE
     public static void disable() {
-        setLatchRegister(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        setLatchRegister(SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord().asPointer());
     }
 
     @INLINE
     public static void enable() {
-        setLatchRegister(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer());
+        setLatchRegister(SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord().asPointer());
     }
 
     public static void initializePrimordial(Pointer primordialVmThreadLocals) {
-        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), primordialVmThreadLocals);
-        primordialVmThreadLocals.setWord(VmThreadLocal.SAFEPOINT_LATCH.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_ENABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_DISABLED_THREAD_LOCALS.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index(), primordialVmThreadLocals);
+        primordialVmThreadLocals.setWord(SAFEPOINT_LATCH.index(), primordialVmThreadLocals);
         Safepoint.setLatchRegister(primordialVmThreadLocals);
     }
 
@@ -206,7 +246,7 @@ public abstract class Safepoint {
     }
 
     /**
-     * Run a given procedure on the thread corresponding to the specified {@code VmThread} instance,
+     * Runs a given procedure on the thread corresponding to the specified {@code VmThread} instance,
      * when that thread is at a safepoint and safepoints are disabled.
      * This method allows the VM to stop a thread at a safepoint and then run the specified procedure (e.g. garbage collection
      * or biased monitor revocation). Note that this method returns when the procedure is successfully
@@ -219,7 +259,7 @@ public abstract class Safepoint {
     public static void runProcedure(Pointer vmThreadLocals, Procedure procedure) {
         // spin until the SAFEPOINT_PROCEDURE field is null
         while (true) {
-            if (VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
+            if (SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(null, Reference.fromJava(procedure)).isZero()) {
                 Safepoint.trigger(vmThreadLocals);
                 return;
             }
@@ -235,7 +275,7 @@ public abstract class Safepoint {
      * @param procedure the procedure to cancel
      */
     public static void cancelProcedure(Pointer vmThreadLocals, Procedure procedure) {
-        VmThreadLocal.SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(Reference.fromJava(procedure), null);
+        SAFEPOINT_PROCEDURE.pointer(vmThreadLocals).compareAndSwapReference(Reference.fromJava(procedure), null);
     }
 
     /**

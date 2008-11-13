@@ -158,14 +158,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     @INSPECTED
     private int[] _stopPositions;
 
-    public final int[] stopPositions() {
-        return _stopPositions;
-    }
-
-    public final int numberOfStopPositions() {
-        return _stopPositions == null ? 0 : _stopPositions.length;
-    }
-
     /**
      * Gets the array recording the positions of the {@link StopType stops} in this target method.
      * <p>
@@ -189,6 +181,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *
      * @see StopType
      */
+    public final int[] stopPositions() {
+        return _stopPositions;
+    }
+
+    public final int numberOfStopPositions() {
+        return _stopPositions == null ? 0 : _stopPositions.length;
+    }
+
     public final int stopPosition(int stopIndex) {
         return _stopPositions[stopIndex] & ~REFERENCE_RETURN_FLAG;
     }
@@ -574,7 +574,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @param scalarLiteralBytes a byte array encoding the scalar data accessed by this target via code relative offsets
      * @param referenceLiterals an object array encoding the object references accessed by this target via code relative
      *            offsets
-     * @param codeOrCodeBuffer the compiled code, either as a byte array, or as a <code>CodeBuffer</code> object
+     * @param codeOrCodeBuffer the compiled code, either as a byte array, or as a {@code CodeBuffer} object
      * @param frameSize the amount of stack allocated for an activation frame during a call to this target method
      * @param abi
      */
@@ -1011,6 +1011,31 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             return targetCodePosition;
         }
         return -1;
+    }
+
+    /**
+     * Gets the address of the next call (direct or indirect) in this target method after a given instruction pointer.
+     *
+     * @return {@link Pointer#zero()} if no call exists in this target method after {@code instructionPointer}
+     */
+    public Pointer findNextCall(Pointer instructionPointer) {
+        final int targetCodePosition = targetCodePositionFor(instructionPointer);
+        if (_stopPositions == null || targetCodePosition < 0 || targetCodePosition > _code.length) {
+            return Pointer.zero();
+        }
+
+        int closestCallPosition = Integer.MAX_VALUE;
+        final int numberOfCalls = numberOfDirectCalls() + numberOfIndirectCalls();
+        for (int i = 0; i < numberOfCalls; i++) {
+            final int callPosition = stopPosition(i);
+            if (callPosition > targetCodePosition && callPosition < closestCallPosition) {
+                closestCallPosition = callPosition;
+            }
+        }
+        if (closestCallPosition != Integer.MAX_VALUE) {
+            return _codeStart.plus(closestCallPosition);
+        }
+        return Pointer.zero();
     }
 
     /**

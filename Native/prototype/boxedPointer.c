@@ -25,7 +25,7 @@
 
 #include "word.h"
 #include "jni.h"
-#include "debug.h"
+#include "log.h"
 
 /*
  * We make no assumptions at all as to what alignment is required for any multi-byte access

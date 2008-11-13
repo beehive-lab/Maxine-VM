@@ -26,7 +26,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 
@@ -86,12 +85,12 @@ public class NewJavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     public void run() {
         bareMinimum();
-        Debug.print("start nanoTime: ");
-        Debug.println(System.nanoTime());
-        Debug.print("start currentTimeMillis: ");
-        Debug.println(System.currentTimeMillis());
+        Log.print("start nanoTime: ");
+        Log.println(System.nanoTime());
+        Log.print("start currentTimeMillis: ");
+        Log.println(System.currentTimeMillis());
 
-        Trace.setStream(Debug.out);
+        Trace.setStream(Log.out);
         Trace.on(VMOptions.traceLevel());
         Trace.line(VMOptions.traceLevel(), "trace level is " + VMOptions.traceLevel());
 
@@ -100,9 +99,9 @@ public class NewJavaRunScheme extends AbstractVMScheme implements RunScheme {
             Classes.forName(SandBox.class.getName(), true, bootClassLoader);
         }
 
-        Debug.print("end nanoTime: ");
-        Debug.println(System.nanoTime());
-        Debug.print("end currentTimeMillis: ");
-        Debug.println(System.currentTimeMillis());
+        Log.print("end nanoTime: ");
+        Log.println(System.nanoTime());
+        Log.print("end currentTimeMillis: ");
+        Log.println(System.currentTimeMillis());
     }
 }

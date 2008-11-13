@@ -202,7 +202,7 @@ public class OptionSet {
 
     /**
      * The {@code getArguments()} method gets the leftover command line options
-     * from the last call to {@code parseArguments}</code>.
+     * from the last call to {@code parseArguments}.
      *
      * @return the leftover command line options
      */
