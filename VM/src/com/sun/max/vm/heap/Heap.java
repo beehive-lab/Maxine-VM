@@ -196,23 +196,6 @@ public final class Heap {
         return heapScheme().collectGarbage(requestedFreeSpace);
     }
 
-    /**
-     * Toggles the {@linkplain #isCollecting() flag} indicating whether or not a garbage collection is running.
-     */
-    public static void toggleCollecting() {
-        _collecting = !_collecting;
-    }
-
-    /**
-     * Determines if a garbage collection is currently running.
-     *
-     * @return {@code true} if a garbage collection is running, {@code false} otherwise
-     */
-    @INLINE
-    public static boolean isCollecting() {
-        return _collecting;
-    }
-
     public static Size reportFreeSpace() {
         return heapScheme().reportFreeSpace();
     }

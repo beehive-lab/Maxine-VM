@@ -141,13 +141,11 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
     private final Runnable _gcRequest = new Runnable() {
         public void run() {
             synchronized (VmThreadMap.ACTIVE) {
-                Heap.toggleCollecting();
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _triggerSafepoint);
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _waitUntilNonMutating);
                 VmThreadLocal.prepareCurrentStackReferenceMap();
                 _procedure.run();
                 VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
-                Heap.toggleCollecting();
             }
         }
     };
