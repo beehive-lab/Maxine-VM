@@ -52,7 +52,7 @@ void c_initialize(void) {
     c_ASSERT(sizeof(Signed8) == 8);
 }
 
-int c_unimplemented_impl(const char* function, const char* file, int line) {
+int _c_unimplemented(const char* function, const char* file, int line) {
     extern void exit(int);
 
     log_println("unimplemented (%s in %s:%d)", function, file, line);
@@ -60,7 +60,7 @@ int c_unimplemented_impl(const char* function, const char* file, int line) {
     return -1;
 }
 
-void c_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
+void _c_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
     if (!condition) {
         log_println("assert %s[%d]: %s", fileName, lineNumber, conditionString);
         exit(1);

@@ -92,7 +92,7 @@ Java_com_sun_max_memory_VirtualMemory_nativeAllocateIn31BitSpace(JNIEnv *env, jc
 #if os_LINUX
     return (Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0);
 #else
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 #endif
 }
@@ -127,7 +127,7 @@ jboolean virtualMemory_allocateAtFixedAddress(Address address, Size size) {
 #if os_SOLARIS || os_DARWIN
   return (jboolean) ((Address) mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0) == address);
 #else
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return false;
 #endif
 }

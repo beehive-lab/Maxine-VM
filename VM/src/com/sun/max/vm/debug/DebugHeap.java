@@ -34,7 +34,7 @@ public final class DebugHeap {
 
     public static final int UNINITIALIZED = 0xdeadbeef;
 
-    public static final long LONG_OBJECT_TAG = 0xcccccccceeeeeeeeL;
+    public static final long LONG_OBJECT_TAG = 0xccccddddddddeeeeL;
 
     public static final int INT_OBJECT_TAG = 0xcccceeee;
 

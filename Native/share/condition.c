@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#include "debug.h"
+#include "log.h"
 #include "threads.h"
 
 #include "condition.h"
@@ -29,11 +29,11 @@ void condition_initialize(Condition condition) {
 #   endif
 #   if os_SOLARIS
         if (cond_init(condition, NULL, NULL) != 0) {
-            debug_FATAL();
+            c_FATAL();
         }
 #   elif os_LINUX || os_DARWIN
         if (pthread_cond_init(condition, NULL) != 0) {
-            debug_FATAL();
+            c_FATAL();
         }
 #   elif os_GUESTVMXEN
         *condition = guestvmXen_condition_create();
@@ -48,11 +48,11 @@ void condition_destroy(Condition condition) {
 #   endif
 #   if os_SOLARIS
         if (cond_destroy(condition) != 0) {
-            debug_FATAL();
+            c_FATAL();
         }
 #   elif os_LINUX || os_DARWIN
         if (pthread_cond_destroy(condition) != 0) {
-            debug_FATAL();
+            c_FATAL();
         }
 #   endif
 }
