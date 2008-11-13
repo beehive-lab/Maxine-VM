@@ -65,7 +65,7 @@ image_Header image_header(void) {
 }
 
 static jint getLittleEndianInt(jint *pInt) {
-    int i;
+    unsigned int i;
     jint result = 0;
     Byte *pByte = (Byte *) pInt;
     for (i = 0; i < sizeof(jint); i++) {
@@ -78,7 +78,7 @@ static jint getBigEndianInt(jint *pInt) {
     int i;
     jint result = 0;
     Byte *pByte = (Byte *) pInt;
-    for (i = sizeof(jint) - 1; i >= 0; i--) {
+    for (i = (int) sizeof(jint) - 1; i >= 0; i--) {
         result |= *pByte++ << (i * 8);
     }
     return result;
@@ -87,7 +87,7 @@ static jint getBigEndianInt(jint *pInt) {
 static void readHeader(int fd) {
     jint *from, *to;
     jint isBigEndian;
-    int i;
+    unsigned int i;
 
 #if !MEMORY_IMAGE
     struct image_Header rawHeaderStruct;
@@ -179,7 +179,7 @@ static void checkImage(void) {
     if ((_header->isBigEndian != 0) != word_BIG_ENDIAN) {
         log_exit(3, "image has wrong endianess - expected: %s, found: %s", endiannessToString(word_BIG_ENDIAN), endiannessToString(_header->isBigEndian));
     }
-    if (_header->identification != IMAGE_IDENTIFICATION) {
+    if (_header->identification != (jint) IMAGE_IDENTIFICATION) {
         log_exit(2, "not a valid Maxine VM boot image file");
     }
     if (_header->version != IMAGE_VERSION) {
@@ -222,10 +222,10 @@ static void checkTrailer(int fd) {
     if (fileSize < 0) {
         log_exit(1, "could not set end position in file");
     }
-    if (fileSize - sizeof(trailerStruct) < trailerOffset) {
+    if (fileSize - (off_t) sizeof(trailerStruct) < trailerOffset) {
         log_exit(2, "truncated file");
     }
-    if (fileSize - sizeof(trailerStruct) > trailerOffset) {
+    if (fileSize - (off_t) sizeof(trailerStruct) > trailerOffset) {
         fprintf(stderr, "WARNING: file too large - expected: %d,  found %d\n", (int) (trailerOffset + sizeof(trailerStruct)), (int) fileSize);
     }
     offset = lseek(fd, trailerOffset, SEEK_SET);
@@ -247,7 +247,7 @@ static void checkTrailer(int fd) {
         fprintf(stderr, "inconsistent trailer\n");
 #if !MEMORY_IMAGE
         offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
-        if (offset != fileSize - sizeof(trailerStruct)) {
+        if (offset != fileSize - (off_t) sizeof(trailerStruct)) {
             log_exit(1, "could not set trailer position at end of file");
         }
         n = read(fd, &trailerStruct, sizeof(trailerStruct));
