@@ -106,8 +106,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
     }
 
-    public static class Preferences extends CodeColumnVisibilityPreferences<ColumnKind> {
-        public Preferences(CodeColumnVisibilityPreferences<ColumnKind> otherPreferences) {
+    public static class Preferences extends TableColumnVisibilityPreferences<ColumnKind> {
+        public Preferences(TableColumnVisibilityPreferences<ColumnKind> otherPreferences) {
             super(otherPreferences);
         }
 
@@ -280,7 +280,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         final JButton viewOptionsButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
-                new CodeColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "TargetCode View Options", _columnModel.preferences(), globalPreferences(inspection()));
+                new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "TargetCode View Options", _columnModel.preferences(), globalPreferences(inspection()));
             }
         });
         viewOptionsButton.setText("View...");

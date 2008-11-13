@@ -37,7 +37,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -169,7 +168,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
 
-                Trace.setStream(Debug.out);
+                Trace.setStream(Log.out);
                 Trace.on(VMOptions.traceLevel());
 
                 try {
@@ -288,8 +287,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         } catch (IOException ioException) {
             System.err.println("error reading jar file: " + ioException);
         } catch (ProgramError programError) {
-            Debug.print("ProgramError: ");
-            Debug.println(programError.getMessage());
+            Log.print("ProgramError: ");
+            Log.println(programError.getMessage());
         } finally {
             if (error) {
                 MaxineVM.setExitCode(1);

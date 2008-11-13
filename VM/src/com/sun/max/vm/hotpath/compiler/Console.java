@@ -23,7 +23,7 @@ package com.sun.max.vm.hotpath.compiler;
 import java.io.*;
 
 import com.sun.max.program.option.*;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.*;
 
 public class Console {
     public static Option<Boolean> _prettifyOutput = new Option<Boolean>("PrettifyOutput", Boolean.FALSE, OptionTypes.BOOLEAN_TYPE, "Enables colored console output.");
@@ -176,44 +176,44 @@ public class Console {
         public void color(Color background, Color foreground) {
             if (prettifyOutput()) {
                 if (background != null) {
-                    Debug.print((char) 27 + _backgroundColorCodes[background.ordinal()]);
+                    Log.print((char) 27 + _backgroundColorCodes[background.ordinal()]);
                 }
                 if (foreground != null) {
-                    Debug.print((char) 27 + _colorCodes[foreground.ordinal()]);
+                    Log.print((char) 27 + _colorCodes[foreground.ordinal()]);
                 }
             }
         }
 
         public void color(Color color) {
             if (prettifyOutput()) {
-                Debug.print((char) 27 + _colorCodes[color.ordinal()]);
+                Log.print((char) 27 + _colorCodes[color.ordinal()]);
             }
         }
 
         public void clearColor() {
             if (prettifyOutput()) {
-                Debug.print((char) 27 + "[0m");
+                Log.print((char) 27 + "[0m");
             }
         }
 
         public void println(Color color, String s) {
             color(color);
-            Debug.println(s);
+            Log.println(s);
             clearColor();
         }
 
         public void println(String s) {
-            Debug.println(s);
+            Log.println(s);
         }
 
         public void print(Color color, String s) {
             color(color);
-            Debug.print(s);
+            Log.print(s);
             clearColor();
         }
 
         public void print(String s) {
-            Debug.print(s);
+            Log.print(s);
         }
     }
 

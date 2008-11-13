@@ -51,9 +51,6 @@ import com.sun.max.vm.trampoline.*;
  */
 public final class VMConfiguration {
 
-//    private final Map<Scheme, MaxPackage> SCHEMES
-
-
     private final BuildLevel _buildLevel;
 
     @INLINE

@@ -1,7 +1,7 @@
 package test.interactive;
 
 /**
- * The <code>System_currentTimeMillis01</code> class definition.
+ * The {@code System_currentTimeMillis01} class definition.
  *
  * @author Ben L. Titzer
  */

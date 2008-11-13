@@ -103,7 +103,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
     }
 
-    public static class Preferences extends CodeColumnVisibilityPreferences<ColumnKind> {
+    public static class Preferences extends TableColumnVisibilityPreferences<ColumnKind> {
         private PoolConstantLabel.Mode _operandDisplayMode;
 
         public Preferences(Inspection inspection) {
@@ -347,7 +347,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         final JButton viewOptionsButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
-                new CodeColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "Bytecode View Options", _columnModel.preferences(), globalPreferences(inspection()));
+                new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "Bytecode View Options", _columnModel.preferences(), globalPreferences(inspection()));
             }
         });
         viewOptionsButton.setText("View...");

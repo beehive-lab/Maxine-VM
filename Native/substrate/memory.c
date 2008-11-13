@@ -32,7 +32,7 @@
 #include "jni.h"
 #include "memory.h"
 #include "virtualMemory.h"
-#include "debug.h"
+#include "log.h"
 
 long total_memory = -1;
 long max_memory = -1;

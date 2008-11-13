@@ -6,7 +6,7 @@
 # environment variable JAVA_HOME to point to a JDK installation directory.
 # The '-java_home' global option can be used instead.
 #
-# To add a new launchable command, write a functions named 'run_<command>' and
+# To add a new launchable command, write a function named 'run_<command>' and
 # define a variable named '<command>_help'. See the existing commands for examples.
 # Once added, the command can be launched as follows:
 #
@@ -23,6 +23,7 @@ show_help=false
 default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
 jvm_args="$default_jvm_args"
 maxine_dir=""
+make=gmake
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -33,6 +34,10 @@ while [ "${1:0:1}" = "-" ]; do
             ;;
         -h )
             show_help=true
+            ;;
+        -make )
+            shift
+            make=$1
             ;;
         -java_home )
             shift
@@ -64,6 +69,7 @@ command_args=$@
 # Ensure that the non-optional variables are set
 test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
 
+# Try to find the base directory of the Maxine code base by using the path of this script
 if [ -z "${maxine_dir}" ]; then
     # Resolve location of this script
     me="${BASH_SOURCE[0]}"
@@ -94,12 +100,19 @@ if [[ "$java_version" != 1.6* ]]; then
     exit 255
 fi 
 
+arch=""
 if [ -z "${MAXINE_OS}" ]; then
     OS=`uname -s`
     case $OS in
-        Darwin*) MAXINE_OS=darwin ;;
-        Linux*)  MAXINE_OS=linux ;;
-        SunOS*)  MAXINE_OS=solaris ;;
+        Darwin* )
+            MAXINE_OS=darwin
+            ;;
+        Linux* )
+            MAXINE_OS=linux
+            ;;
+        SunOS* )
+            MAXINE_OS=solaris
+            ;;
     esac
     if [ -z "${MAXINE_OS}" ]; then
         echo "Supported operating system could not be derived from $OS. Please set MAXINE_OS explicitly."
@@ -147,7 +160,6 @@ function run() {
 build_help="compile the Maxine Java and C sources, linking the latter"
 function run_build() {
     javac=${JAVA_HOME}/bin/javac
-    make=gmake
     show_build_help=false
     native_only=false
     exit_after_help=false
@@ -157,10 +169,6 @@ function run_build() {
         case $1 in
             -h )
                 show_build_help=true
-                ;;
-            -make )
-                shift
-                make=$1
                 ;;
             -javac )
                 shift
@@ -197,10 +205,9 @@ function run_build() {
         echo
         echo "where options include:"
         echo " -h         show help message"
-        echo " -make      path to GNU make executable (default: gmake)"
         echo " -clean     removes existing binaries and class files before building projects"
         echo " -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac"
-        echo " -junit4    class path for Junit 4 classes (default: value ofJUNIT4_CP environment variable)"
+        echo " -junit4    class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
         echo
         echo "If no projects are given, then all projects are built."
         return
@@ -386,6 +393,28 @@ function run_maxinetester() {
 }
 
 #=======================================
+# 'gate' command
+#=======================================
+
+gate_help="run the tests used to validate a push to the stable Maxine repository"
+
+function run_gate() {
+    platform="`$make -s -C ${maxine_dir}/Native platform`" 
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -expect=${maxine_dir}/VM/test/${platform}.expect -java-tester-configs=optjit -java-config-alias=optjit "$@"
+}
+
+#=======================================
+# 'gate' command
+#=======================================
+
+gate_help="run the tests used to validate a push to the stable Maxine repository"
+
+function run_gate() {
+    platform="`$make -s -C ${maxine_dir}/Native platform`" 
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -expect=${maxine_dir}/VM/test/${platform}.expect -java-tester-configs=optjit -java-config-alias=optjit "$@"
+}
+
+#=======================================
 # Main launcher
 #=======================================
 
@@ -417,6 +446,7 @@ function showCommands() {
     echo " -jvm_args    specifies Java VM arguments (default: ${default_jvm_args})"
     echo " -maxine      specifies base directory of the Maxine code base"
     echo "                (default: ${maxine_dir})"
+    echo " -make        path to GNU make executable (default: gmake)"
 }
 
 if [ -n "${unknown_option}" ]; then

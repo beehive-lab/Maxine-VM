@@ -23,7 +23,7 @@
  */
 
 #include "virtualMemory.h"
-#include "debug.h"
+#include "log.h"
 
 #if defined(GUESTVMXEN)
 #include <guestvmXen.h>
@@ -92,7 +92,7 @@ Java_com_sun_max_memory_VirtualMemory_nativeAllocateIn31BitSpace(JNIEnv *env, jc
 #if os_LINUX
     return (Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0);
 #else
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 #endif
 }
@@ -104,8 +104,8 @@ Java_com_sun_max_memory_VirtualMemory_nativeAllocateAtFixedAddress(JNIEnv *env, 
 
 Address virtualMemory_reserve(Size size) {
 	Address addr = 	(Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_NORESERVE, -1, (off_t) 0);
-#if debug_LOADER
-	debug_println(" %d virtualMemory_reserve reserved %lx at %p",sizeof(size), size, addr);
+#if log_LOADER
+	log_println(" %d virtualMemory_reserve reserved %lx at %p",sizeof(size), size, addr);
 #endif
 	return addr;
 }
@@ -127,18 +127,18 @@ jboolean virtualMemory_allocateAtFixedAddress(Address address, Size size) {
 #if os_SOLARIS || os_DARWIN
   return (jboolean) ((Address) mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0) == address);
 #else
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return false;
 #endif
 }
 
 void protectPage(Address pageAddress) {
-    debug_ASSERT(pageAlign(pageAddress) == pageAddress);
+    c_ASSERT(pageAlign(pageAddress) == pageAddress);
 
 #if os_SOLARIS || os_DARWIN || os_LINUX
     if (mprotect((Word) pageAddress, getPageSize(), PROT_NONE) != 0) {
          int error = errno;
-         debug_exit(error, "protectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
+         log_exit(error, "protectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
     }
 #elif os_GUESTVMXEN
     guestvmXen_protectPage(pageAddress);
@@ -148,11 +148,11 @@ void protectPage(Address pageAddress) {
 }
 
 void unprotectPage(Address pageAddress) {
-	debug_ASSERT(pageAlign(pageAddress) == pageAddress);
+	c_ASSERT(pageAlign(pageAddress) == pageAddress);
 #if os_SOLARIS || os_DARWIN || os_LINUX
 	if (mprotect((Word) pageAddress, getPageSize(), PROT_READ| PROT_WRITE) != 0){
          int error = errno;
-		 debug_exit(error, "unprotectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
+		 log_exit(error, "unprotectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
 	}
 #elif os_GUESTVMXEN
 	guestvmXen_unProtectPage(pageAddress);

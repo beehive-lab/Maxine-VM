@@ -29,7 +29,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.*;
@@ -65,13 +64,13 @@ public final class MethodTrace {
             VmThreadLocal.METHOD_TRACE_COUNT.setVariableWord(Address.fromInt(1));
             final long count = a.unsignedShiftedRight(1).toLong();
             if (count >= _methodTraceOption.getValue().toLong()) {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                Debug.print(VmThread.currentVmThreadLocals());
-                Debug.print(" - ");
-                Debug.print(count);
-                Debug.print(" enter: ");
-                Debug.println(methodName);
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print(VmThread.currentVmThreadLocals());
+                Log.print(" - ");
+                Log.print(count);
+                Log.print(" enter: ");
+                Log.println(methodName);
+                Log.unlock(lockDisabledSafepoints);
             }
             VmThreadLocal.METHOD_TRACE_COUNT.setVariableWord(a.plus(2));
         }
@@ -83,13 +82,13 @@ public final class MethodTrace {
             VmThreadLocal.METHOD_TRACE_COUNT.setVariableWord(Address.fromInt(1));
             final long count = a.unsignedShiftedRight(1).toLong();
             if (count >= _methodTraceOption.getValue().toLong()) {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                Debug.print(VmThread.currentVmThreadLocals());
-                Debug.print(" - ");
-                Debug.print(count);
-                Debug.print(" leave: ");
-                Debug.println(methodName);
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print(VmThread.currentVmThreadLocals());
+                Log.print(" - ");
+                Log.print(count);
+                Log.print(" leave: ");
+                Log.println(methodName);
+                Log.unlock(lockDisabledSafepoints);
             }
             VmThreadLocal.METHOD_TRACE_COUNT.setVariableWord(a.plus(2));
         }
@@ -101,13 +100,13 @@ public final class MethodTrace {
             VmThreadLocal.METHOD_TRACE_COUNT.setVariableWord(Address.fromInt(1));
             final long count = a.unsignedShiftedRight(1).toLong();
             if (count >= _methodTraceOption.getValue().toLong()) {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                Debug.print(VmThread.currentVmThreadLocals());
-                Debug.print(" - ");
-                Debug.print(count);
-                Debug.print(" throwFrom: ");
-                Debug.println(methodName);
-                Debug.unlock(lockDisabledSafepoints);
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print(VmThread.currentVmThreadLocals());
+                Log.print(" - ");
+                Log.print(count);
+                Log.print(" throwFrom: ");
+                Log.println(methodName);
+                Log.unlock(lockDisabledSafepoints);
             }
             VmThreadLocal.METHOD_TRACE_COUNT.setVariableWord(a.plus(2));
         }
@@ -120,7 +119,7 @@ public final class MethodTrace {
 
     private static final IdentityHashSet<Class> _excludedClasses = new LinkedIdentityHashSet<Class>(new Class[]{
         MethodTrace.class,
-        Debug.class,
+        Log.class,
         MaxineVM.class,
         BootMemory.class,
         String.class,

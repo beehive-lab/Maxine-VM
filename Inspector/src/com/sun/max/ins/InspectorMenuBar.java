@@ -166,6 +166,7 @@ public final class InspectorMenuBar extends InspectionHolder {
         if (_actions.inspection().hasProcess()) {
             menu.add(_actions.viewMemoryRegions());
             menu.add(_actions.viewThreads());
+            menu.add(_actions.viewVmThreadLocals());
             menu.add(_actions.viewRegisters());
             menu.add(_actions.viewStack());
             menu.add(_actions.viewMethodCode());

@@ -34,7 +34,7 @@ public final class DebugHeap {
 
     public static final int UNINITIALIZED = 0xdeadbeef;
 
-    public static final long LONG_OBJECT_TAG = 0xcccccccceeeeeeeeL;
+    public static final long LONG_OBJECT_TAG = 0xccccddddddddeeeeL;
 
     public static final int INT_OBJECT_TAG = 0xcccceeee;
 
@@ -62,11 +62,11 @@ public final class DebugHeap {
     public static Pointer checkDebugCellTag(RuntimeMemoryRegion from, Pointer cell) {
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!isValidCellTag(cell.getWord(0))) {
-                Debug.print("Invalid object tag @ ");
-                Debug.print(cell);
-                Debug.print("(start + ");
-                Debug.print(cell.minus(from.start()).asOffset().toInt());
-                Debug.println(")");
+                Log.print("Invalid object tag @ ");
+                Log.print(cell);
+                Log.print("(start + ");
+                Log.print(cell.minus(from.start()).asOffset().toInt());
+                Log.println(")");
                 FatalError.unexpected("INVALID CELL TAG");
             }
             return cell.plusWords(1);

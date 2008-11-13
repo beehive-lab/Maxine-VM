@@ -26,13 +26,13 @@ import com.sun.max.program.*;
  * A daemon thread that hangs around, waiting,
  * then executes a given procedure when requested,
  * then waits again.
- * 
+ *
  * The client thread is blocking while the server thread
  * is executing a request and
  * the server thread is blocking inbetween serving requests.
- * 
+ *
  * Only one thread at a time can interact with the server thread.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class BlockingServerDaemon extends Thread {
@@ -61,7 +61,6 @@ public class BlockingServerDaemon extends Thread {
     @Override
     public final void run() {
         while (true) {
-
             // Let the client thread continue as soon as we are waiting for requests again:
             synchronized (_token) {
                 _token.notify();

@@ -24,7 +24,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 
 /**
@@ -157,34 +156,34 @@ public class SideTable {
         _sideTableSize = Size.fromLong(_numberOfChunks * CHUNK_SLOT_LENGTH);
 
         if (Heap.verbose()) {
-            Debug.print("\nSidetable.initialize: covered region start ");
-            Debug.println(_region.start());
-            Debug.print("Sidetable.initialize: covered region size ");
-            Debug.println(_region.size());
-            Debug.print("Sidetable.initialize: Sidetable start ");
-            Debug.println(_sideTableStart);
-            Debug.print("Sidetable.initialize: Sidetable chunk size ");
-            Debug.println(chunkSize());
-            Debug.print("Sidetable.initialize: Sidetable size ");
-            Debug.println(_sideTableSize.toLong());
-            Debug.print("Sidetable.initialize: sideTable end ");
-            Debug.println(_sideTableStart.plus(_sideTableSize));
-            Debug.print("Sidetable.initialize: number of cards ");
-            Debug.println(_numberOfChunks);
+            Log.print("\nSidetable.initialize: covered region start ");
+            Log.println(_region.start());
+            Log.print("Sidetable.initialize: covered region size ");
+            Log.println(_region.size());
+            Log.print("Sidetable.initialize: Sidetable start ");
+            Log.println(_sideTableStart);
+            Log.print("Sidetable.initialize: Sidetable chunk size ");
+            Log.println(chunkSize());
+            Log.print("Sidetable.initialize: Sidetable size ");
+            Log.println(_sideTableSize.toLong());
+            Log.print("Sidetable.initialize: sideTable end ");
+            Log.println(_sideTableStart.plus(_sideTableSize));
+            Log.print("Sidetable.initialize: number of cards ");
+            Log.println(_numberOfChunks);
         }
 
         if (VirtualMemory.allocateMemoryAtFixedAddress(_sideTableStart, _sideTableSize) == false) {
-            Debug.print("MaxineVM: Could not allocate memory starting @address ");
-            Debug.print(_sideTableStart);
+            Log.print("MaxineVM: Could not allocate memory starting @address ");
+            Log.print(_sideTableStart);
             MaxineVM.native_exit(MaxineVM.HARD_EXIT_CODE);
         }
 
 
         if (Heap.verbose()) {
-            Debug.print("--boot address shift");
-            Debug.println(Heap.bootHeapRegion().start().unsignedShiftedRight(chunkShift()));
-            Debug.print("--sidetable start");
-            Debug.println(_sideTableStart);
+            Log.print("--boot address shift");
+            Log.println(Heap.bootHeapRegion().start().unsignedShiftedRight(chunkShift()));
+            Log.print("--sidetable start");
+            Log.println(_sideTableStart);
         }
 
         _biasedSideTableBase = _sideTableStart.minus(Heap.bootHeapRegion().start().unsignedShiftedRight(chunkShift()));
@@ -193,7 +192,7 @@ public class SideTable {
 
     public void clearAllChunkSlots() {
         if (Heap.verbose()) {
-            Debug.println("Sidetable.clearAllChunkSlots: clearing the card table before use ");
+            Log.println("Sidetable.clearAllChunkSlots: clearing the card table before use ");
         }
         clearSideTableRegion(_sideTableStart, _sideTableStart.plus(_sideTableSize));
 
@@ -201,7 +200,7 @@ public class SideTable {
 
     public void restoreAllChunkSlots() {
         if (Heap.verbose()) {
-            Debug.println("Sidetable.clearAllChunkSlots: clearing the card table before use ");
+            Log.println("Sidetable.clearAllChunkSlots: clearing the card table before use ");
         }
         restoreSideTableRegion(_sideTableStart, _sideTableStart.plus(_sideTableSize));
 
@@ -210,10 +209,10 @@ public class SideTable {
     // clears all cards from start to end , including end.
     void clearSideTableRegion(Address start, Address end) {
         if (Heap.verbose()) {
-            Debug.print("Sidetable.clearAllChunkSlots: begin ");
-            Debug.println(start);
-            Debug.print("Sidetable.clearAllChunkSlots: end ");
-            Debug.println(end);
+            Log.print("Sidetable.clearAllChunkSlots: begin ");
+            Log.println(start);
+            Log.print("Sidetable.clearAllChunkSlots: end ");
+            Log.println(end);
         }
 
         Address addr = start;
@@ -223,7 +222,7 @@ public class SideTable {
         }
 
         if (Heap.verbose()) {
-            Debug.println("Sidetable.clearAllChunkSlots   Region: done");
+            Log.println("Sidetable.clearAllChunkSlots   Region: done");
 
         }
     }
@@ -231,10 +230,10 @@ public class SideTable {
     // clears all cards from start to end , including end.
     void restoreSideTableRegion(Address start, Address end) {
         if (Heap.verbose()) {
-            Debug.print("Sidetable.restoreAllChunkSlots: begin ");
-            Debug.println(start);
-            Debug.print("Sidetable.restoreAllChunkSlots: end ");
-            Debug.println(end);
+            Log.print("Sidetable.restoreAllChunkSlots: begin ");
+            Log.println(start);
+            Log.print("Sidetable.restoreAllChunkSlots: end ");
+            Log.println(end);
         }
 
         Address addr = start;
@@ -246,7 +245,7 @@ public class SideTable {
         }
 
         if (Heap.verbose()) {
-            Debug.println("Sidetable:restoreAllChunkSlots   Region: done");
+            Log.println("Sidetable:restoreAllChunkSlots   Region: done");
 
         }
     }
@@ -255,25 +254,25 @@ public class SideTable {
         final Address start = _sideTableStart;
         final Address end = _sideTableStart.plus(_sideTableSize.minus(CHUNK_SLOT_LENGTH));
 
-        Debug.print("SideRegion.dumpSideTable: begin");
-        Debug.print(start);
-        Debug.print("SideRegion.dumpSideTable: end ");
-        Debug.print(end);
+        Log.print("SideRegion.dumpSideTable: begin");
+        Log.print(start);
+        Log.print("SideRegion.dumpSideTable: end ");
+        Log.print(end);
 
         Address addr = start;
         while (addr.lessEqual(end)) {
             if (isStart(addr)) {
-                Debug.print("---- 1 ");
-                Debug.print(addr);
+                Log.print("---- 1 ");
+                Log.print(addr);
             } else if (isScavenged(addr)) {
-                Debug.print("++ 2 ");
-                Debug.print(addr);
+                Log.print("++ 2 ");
+                Log.print(addr);
 
             }
             addr = addr.plus(CHUNK_SLOT_LENGTH);
         }
 
-        Debug.println("SideRegion.dumpSideTable: done");
+        Log.println("SideRegion.dumpSideTable: done");
     }
 
     private static  boolean isStart(Address addr) {
@@ -314,7 +313,7 @@ public class SideTable {
 
     public void restoreAllChunks() {
         if (Heap.verbose()) {
-            Debug.println("CardRegion.clearAllCards: clearing the card table before use ");
+            Log.println("CardRegion.clearAllCards: clearing the card table before use ");
         }
         restoreCardRegion(_sideTableStart, _sideTableStart.plus(_sideTableSize));
 
@@ -323,10 +322,10 @@ public class SideTable {
     // clears all cards from start to end , including end.
     void restoreCardRegion(Address start, Address end) {
         if (Heap.verbose()) {
-            Debug.print("SideTableRegion.clearCardRegion: begin ");
-            Debug.println(start);
-            Debug.print("SideTableRegion.clearCardRegion: end ");
-            Debug.println(end);
+            Log.print("SideTableRegion.clearCardRegion: begin ");
+            Log.println(start);
+            Log.print("SideTableRegion.clearCardRegion: end ");
+            Log.println(end);
         }
 
         Address addr = start;
@@ -338,7 +337,7 @@ public class SideTable {
         }
 
         if (Heap.verbose()) {
-            Debug.println("CardRegion.clearCard   Region: done");
+            Log.println("CardRegion.clearCard   Region: done");
 
         }
     }

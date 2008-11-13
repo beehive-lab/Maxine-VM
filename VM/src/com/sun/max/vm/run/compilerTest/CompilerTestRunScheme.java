@@ -21,7 +21,6 @@
 package com.sun.max.vm.run.compilerTest;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.*;
 
@@ -64,7 +63,7 @@ public class CompilerTestRunScheme extends JavaRunScheme {
         boolean _done;
         @Override
         public void run() {
-            Debug.println("[" + this + "] Hello world");
+            Log.println("[" + this + "] Hello world");
             _done = true;
         }
     }
@@ -83,47 +82,47 @@ public class CompilerTestRunScheme extends JavaRunScheme {
             thread2.join();
             thread3.join();
         } catch (InterruptedException e) {
-            Debug.println("testMultipleThreads: fail");
+            Log.println("testMultipleThreads: fail");
             return;
         }
 
-        Debug.println("testMultipleThreads: pass");
+        Log.println("testMultipleThreads: pass");
     }
 
     private void testNullPointerException(Object object) {
         try {
             object.toString();
         } catch (NullPointerException nullPointerException) {
-            Debug.println("testNullPointerException: pass");
+            Log.println("testNullPointerException: pass");
         }
     }
 
     private void testException() {
         try {
             a();
-            Debug.println("testException: fail");
+            Log.println("testException: fail");
         } catch (Throwable e) {
-            Debug.println("testException: pass");
+            Log.println("testException: pass");
         }
     }
 
     private void testException1() {
         try {
             a();
-            Debug.println("testException1: fail");
+            Log.println("testException1: fail");
         } catch (Throwable e) {
-            Debug.println(e.toString());
-            Debug.println("testException1: pass");
+            Log.println(e.toString());
+            Log.println("testException1: pass");
         }
     }
 
     private void testException2() {
         try {
             a();
-            Debug.println("testException2: fail");
+            Log.println("testException2: fail");
         } catch (Throwable e) {
-            e.printStackTrace(Debug.out);
-            Debug.println("testException2: pass");
+            e.printStackTrace(Log.out);
+            Log.println("testException2: pass");
         }
     }
 
@@ -131,7 +130,7 @@ public class CompilerTestRunScheme extends JavaRunScheme {
         try {
             throw _exception;
         } catch (Throwable e) {
-            Debug.println("testException3: pass");
+            Log.println("testException3: pass");
         }
     }
 
@@ -142,7 +141,7 @@ public class CompilerTestRunScheme extends JavaRunScheme {
         try {
             throw new TestException();
         } catch (TestException testException) {
-            Debug.println("testException4: pass");
+            Log.println("testException4: pass");
         }
     }
 
@@ -156,14 +155,14 @@ public class CompilerTestRunScheme extends JavaRunScheme {
         boolean pass = true;
         nativeUpdateFields(0, intValue, this);
         if (_i != intValue) {
-            Debug.println(_i + " != " + intValue);
+            Log.println(_i + " != " + intValue);
             pass = false;
         }
         if (_o != this) {
-            Debug.println(Reference.fromJava(_o).toOrigin().toString() + " != " + Reference.fromJava(this).toOrigin().toString());
+            Log.println(Reference.fromJava(_o).toOrigin().toString() + " != " + Reference.fromJava(this).toOrigin().toString());
             pass = false;
         }
-        Debug.println("testNative: " + (pass ? "pass" : "fail"));
+        Log.println("testNative: " + (pass ? "pass" : "fail"));
     }
 
     private void testNativeRecursive(int recursion) {
@@ -174,13 +173,13 @@ public class CompilerTestRunScheme extends JavaRunScheme {
             return;
         }
         if (_i != intValue) {
-            Debug.println(_i + " != " + intValue);
+            Log.println(_i + " != " + intValue);
             pass = false;
         }
         if (_o != this) {
-            Debug.println(Reference.fromJava(_o).toOrigin().toString() + " != " + Reference.fromJava(this).toOrigin().toString());
+            Log.println(Reference.fromJava(_o).toOrigin().toString() + " != " + Reference.fromJava(this).toOrigin().toString());
             pass = false;
         }
-        Debug.println("testNative: " + (pass ? "pass" : "fail"));
+        Log.println("testNative: " + (pass ? "pass" : "fail"));
     }
 }

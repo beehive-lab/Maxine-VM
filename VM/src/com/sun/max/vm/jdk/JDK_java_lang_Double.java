@@ -24,7 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * The <code>JDK_java_lang_Double</code> class implements substitutions
+ * The {@code JDK_java_lang_Double} class implements substitutions
  * that intrinsify some double operations.
  *
  * @author Ben L. Titzer

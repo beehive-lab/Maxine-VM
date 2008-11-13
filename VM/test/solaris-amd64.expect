@@ -1,2 +1,4 @@
 test.output.FloatNanTest
-
+test.output.JavacTest
+test.output.JREJarLoadTest
+test.output.ZipFileReader

@@ -80,8 +80,8 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
     private final Runnable _collect = new Runnable() {
         public void run() {
             if (Heap.verbose()) {
-                Debug.print("-- no GC--   size: ");
-                Debug.println(_allocationMark.minus(_space.start()).toInt());
+                Log.print("-- no GC--   size: ");
+                Log.println(_allocationMark.minus(_space.start()).toInt());
             }
 
             verifyHeap();
@@ -96,13 +96,13 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
             _clearTimer.stop();
 
             if (Heap.traceGCRootScanning()) {
-                Debug.println("Scanning roots...");
+                Log.println("Scanning roots...");
             }
             _rootScanTimer.restart();
             _rootScanTimer.stop();
 
             if (Heap.traceGC()) {
-                Debug.println("Scanning boot heap...");
+                Log.println("Scanning boot heap...");
             }
             _bootHeapScanTimer.restart();
             _bootHeapScanTimer.stop();
@@ -111,7 +111,7 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
             _codeScanTimer.stop();
 
             if (Heap.traceGC()) {
-                Debug.println("Moving reachable...");
+                Log.println("Moving reachable...");
             }
 
             _copyTimer.restart();
@@ -125,32 +125,32 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
             TeleHeapInfo.afterGarbageCollection();
 
             if (Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Debug.lock();
-                Debug.print("clear & initialize: ");
-                Debug.print(_clearTimer.getMilliSeconds());
-                Debug.print("   root scan: ");
-                Debug.print(_rootScanTimer.getMilliSeconds());
-                Debug.print("   boot heap scan: ");
-                Debug.print(_bootHeapScanTimer.getMilliSeconds());
-                Debug.print("   code scan: ");
-                Debug.print(_codeScanTimer.getMilliSeconds());
-                Debug.print("   copy: ");
-                Debug.print(_copyTimer.getMilliSeconds());
-                Debug.println();
-                Debug.print("GC <");
-                Debug.print(_numberOfGarbageCollectionInvocations);
-                Debug.print("> ");
-                Debug.print(_gcTimer.getMilliSeconds());
-                Debug.println(" (ms)");
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("clear & initialize: ");
+                Log.print(_clearTimer.getMilliSeconds());
+                Log.print("   root scan: ");
+                Log.print(_rootScanTimer.getMilliSeconds());
+                Log.print("   boot heap scan: ");
+                Log.print(_bootHeapScanTimer.getMilliSeconds());
+                Log.print("   code scan: ");
+                Log.print(_codeScanTimer.getMilliSeconds());
+                Log.print("   copy: ");
+                Log.print(_copyTimer.getMilliSeconds());
+                Log.println();
+                Log.print("GC <");
+                Log.print(_numberOfGarbageCollectionInvocations);
+                Log.print("> ");
+                Log.print(_gcTimer.getMilliSeconds());
+                Log.println(" (ms)");
 
-                Debug.print("--After GC--   bytes copied: ");
-                Debug.print(_allocationMark.minus(_space.start()).toInt());
-                Debug.println();
-                Debug.unlock(lockDisabledSafepoints);
+                Log.print("--After GC--   bytes copied: ");
+                Log.print(_allocationMark.minus(_space.start()).toInt());
+                Log.println();
+                Log.unlock(lockDisabledSafepoints);
             }
 
             if (Heap.verbose()) {
-                Debug.println("-- no GC--   done.");
+                Log.println("-- no GC--   done.");
             }
         }
     };
@@ -195,11 +195,11 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
     private void checkCellTag(Pointer cell) {
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                Debug.print("cell: ");
-                Debug.print(cell);
-                Debug.print("  origin: ");
-                Debug.print(Layout.cellToOrigin(cell));
-                Debug.println();
+                Log.print("cell: ");
+                Log.print(cell);
+                Log.print("  origin: ");
+                Log.print(Layout.cellToOrigin(cell));
+                Log.println();
                 FatalError.unexpected("missing object tag");
             }
         }
@@ -338,13 +338,13 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
         checkGripTag(grip);
         final Pointer origin = grip.toOrigin();
         if (!(_space.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
-            Debug.print("invalid grip: ");
-            Debug.print(origin.asAddress());
-            Debug.print(" @ ");
-            Debug.print(address);
-            Debug.print(" + ");
-            Debug.print(index);
-            Debug.println();
+            Log.print("invalid grip: ");
+            Log.print(origin.asAddress());
+            Log.print(" @ ");
+            Log.print(address);
+            Log.print(" + ");
+            Log.print(index);
+            Log.println();
             FatalError.unexpected("invalid grip");
         }
     }
@@ -389,7 +389,7 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
 
     private void verifyHeap() {
         if (Heap.traceGC()) {
-            Debug.println("Verifying heap...");
+            Log.println("Verifying heap...");
         }
         _heapRootsVerifier.run();
         Pointer cell = _space.start().asPointer();
@@ -417,7 +417,7 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
             }
         }
         if (Heap.traceGC()) {
-            Debug.println("done verifying heap");
+            Log.println("done verifying heap");
         }
     }
 
