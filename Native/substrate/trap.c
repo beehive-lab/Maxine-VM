@@ -152,35 +152,6 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #endif
 }
 
-static Address getFramePointer(UContext *ucontext) {
-#if os_SOLARIS
-#   if isa_SPARC /* 64-bit SPARC*/
-        Address sp = ucontext->uc_mcontext.gregs[REG_SP];
-        RegisterWindow rwin = (RegisterWindow) (sp + STACK_BIAS);
-        Address fp = (Address) rwin->rw_fp;
-        return fp;
-#   elif isa_AMD64 || isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_FP];
-#   else
-#       error Unimplemented
-#   endif
-#elif os_LINUX
-#   if isa_AMD64
-        return ucontext->uc_mcontext.gregs[REG_RBP];
-#   elif isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_EBP];
-#   else
-#       error Unimplemented
-#   endif
-#elif os_DARWIN
-    return ucontext->uc_mcontext->__ss.__rbp;
-#elif os_GUESTVMXEN
-    return ucontext->rbp;
-#else
-#   error Unimplemented
-#endif
-}
-
 static Address getStackPointer(UContext *ucontext) {
 #if os_SOLARIS
   return ucontext->uc_mcontext.gregs[REG_SP];

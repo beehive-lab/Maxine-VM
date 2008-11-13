@@ -130,15 +130,6 @@ jboolean setSingleStep(thread_act_t thread, jboolean isEnabled) {
     return true;
 }
 
-static char* threadRunStateNames[] = { "<unknown>", "RUNNING", "STOPPED", "WAITING", "UNINTERRUPTIBLE", "HALTED" };
-
-static void dumpBasicThreadInfo(thread_t thread, thread_basic_info_t threadInfo) {
-    log_println("thread info for %ld:", thread);
-    log_println("    run state: %d [%s]:", threadInfo->run_state, threadRunStateNames[threadInfo->run_state]);
-    log_println("    flags: 0x%x [%s%s]:", threadInfo->flags, (threadInfo->flags & TH_FLAGS_SWAPPED ? "SWAPPED " : ""), (threadInfo->flags & TH_FLAGS_IDLE ? "IDLE " : ""));
-    log_println("    suspend count: %d:", threadInfo->suspend_count);
-}
-
 static jboolean suspendOtherThreads(jlong task, thread_t current) {
     thread_array_t thread_list = NULL;
     unsigned int nthreads = 0;

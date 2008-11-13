@@ -130,7 +130,7 @@ endif
 ifeq ($(OS),darwin)
 	CC = gcc -g $(DARWIN_GCC_MFLAG)
 	C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET)
-	CFLAGS = -Wall -Wno-long-long -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
+	CFLAGS = -Wall -Werror -Wno-main -Wno-long-long -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
 	LINK_MAIN = gcc -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
 	LINK_LIB = gcc -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup -lc -lm
 	LIB_PREFIX = lib
