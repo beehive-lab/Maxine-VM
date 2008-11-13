@@ -37,8 +37,6 @@ extern void log_lock(void);
 
 extern void log_unlock(void);
 
-#define debug_FATAL() debug_ASSERT(false)
-
 extern void log_print_int(int val);
 extern void log_print_boolean(char val);
 extern void log_print_char(int val);

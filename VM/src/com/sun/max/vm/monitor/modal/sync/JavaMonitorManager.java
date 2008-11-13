@@ -106,7 +106,7 @@ public class JavaMonitorManager {
                 monitor.refreshBoundObject();
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
-            if (Monitor.traceMonitors() && _allStickyQty > 0) {
+            if (Monitor.traceMonitors() && _numberOfStickyMonitors > 0) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.println("Sticky monitors:");
                 for (int i = 0; i < _numberOfStickyMonitors; i++) {

@@ -63,7 +63,7 @@ void sparc_canonicalizeSignalFloatingPointRegisters(sparc_OsSignalFloatingPointR
 	 r++;
   }
 #else
-  c_unimplemented();
+  c_UNIMPLEMENTED();
 #endif
 }
 
