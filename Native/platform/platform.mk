@@ -98,12 +98,12 @@ ifeq ($(TARGETOS),SunOS)
     	    ISA := sparc
     	    ARCH := v8
     	endif
+        PLATFORM := $(OS)-$(ISA)$(ARCH)
     endif
 endif
 
 ifeq ($(findstring CYGWIN,$(TARGETOS)),CYGWIN)
     OS := windows
-    
     ISA := ia32
 endif
 
@@ -122,6 +122,9 @@ ifndef ISA
   $(error unknown ISA)
 endif
 
+ifndef PLATFORM
+    PLATFORM := $(OS)-$(ISA)
+endif
 
 
 ifeq ($(OS),darwin)
