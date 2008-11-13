@@ -73,7 +73,7 @@ public final class ConditionVariable {
     }
 
     public boolean requiresAllocation() {
-        return _condition.equals(Pointer.zero());
+        return _condition.isZero();
     }
 
     @INLINE
