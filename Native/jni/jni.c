@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "debug.h"
+#include "log.h"
 #include "kind.h"
 #include "word.h"
 
@@ -477,13 +477,13 @@ static jobject NewObjectV(JNIEnv *env, jclass javaClass, jmethodID methodID, va_
  */
 void nativeInitializeJniInterface(JNIEnv env) {
 #if debug_LOADER
-	debug_println("BEGIN jni nativeInitialize");
+	log_println("BEGIN jni nativeInitialize");
 #endif
-	debug_ASSERT((jint) -1 < 0);
-    debug_ASSERT(sizeof(jint) == 4);
+	c_ASSERT((jint) -1 < 0);
+    c_ASSERT(sizeof(jint) == 4);
 
-    debug_ASSERT((jlong) -1 < 0);
-    debug_ASSERT(sizeof(jlong) == 8);
+    c_ASSERT((jlong) -1 < 0);
+    c_ASSERT(sizeof(jlong) == 8);
 
     ASSIGN_FUNCTION(CallObjectMethod);
     ASSIGN_FUNCTION(CallBooleanMethod);
@@ -554,6 +554,6 @@ void nativeInitializeJniInterface(JNIEnv env) {
     ASSIGN_FUNCTION(NewObject);
     ASSIGN_FUNCTION(NewObjectV);
 #if debug_LOADER
-	debug_println("END jni nativeInitialize");
+	log_println("END jni nativeInitialize");
 #endif
 }

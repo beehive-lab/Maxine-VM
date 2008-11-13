@@ -24,7 +24,6 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -101,7 +100,7 @@ public class BeltwayCollectorThread extends Thread {
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
             if (_runningGCThreads == 0) {
                 if (Heap.verbose()) {
-                    Debug.println("Resuming Stop the World Daemon");
+                    Log.println("Resuming Stop the World Daemon");
                 }
                 _start = false;
                 _callerToken.notify();
@@ -122,7 +121,7 @@ public class BeltwayCollectorThread extends Thread {
             if (_runningGCThreads == BeltwayConfiguration._numberOfGCThreads) {
                 try {
                     if (Heap.verbose()) {
-                        Debug.println("Pausing Stop The World Daemon");
+                        Log.println("Pausing Stop The World Daemon");
                     }
                     _start = true;
                     _callerToken.wait();

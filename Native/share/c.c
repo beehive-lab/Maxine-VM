@@ -22,40 +22,47 @@
  * @author Bernd Mathiske
  */
 
-#include "debug.h"
+#include "log.h"
 
 #include "c.h"
 
 void c_initialize(void) {
-    debug_ASSERT((Unsigned1) -1 > 0);
-    debug_ASSERT(sizeof(Unsigned1) == 1);
+    c_ASSERT((Unsigned1) -1 > 0);
+    c_ASSERT(sizeof(Unsigned1) == 1);
 
-    debug_ASSERT((Unsigned2) -1 > 0);
-    debug_ASSERT(sizeof(Unsigned2) == 2);
+    c_ASSERT((Unsigned2) -1 > 0);
+    c_ASSERT(sizeof(Unsigned2) == 2);
 
-    debug_ASSERT((Unsigned4) -1 > 0);
-    debug_ASSERT(sizeof(Unsigned4) == 4);
+    c_ASSERT((Unsigned4) -1 > 0);
+    c_ASSERT(sizeof(Unsigned4) == 4);
 
-    debug_ASSERT((Unsigned8) -1 > 0);
-    debug_ASSERT(sizeof(Unsigned8) == 8);
+    c_ASSERT((Unsigned8) -1 > 0);
+    c_ASSERT(sizeof(Unsigned8) == 8);
 
-    debug_ASSERT((Signed1) -1 < 0);
-    debug_ASSERT(sizeof(Signed1) == 1);
+    c_ASSERT((Signed1) -1 < 0);
+    c_ASSERT(sizeof(Signed1) == 1);
 
-    debug_ASSERT((Signed2) -1 < 0);
-    debug_ASSERT(sizeof(Signed2) == 2);
+    c_ASSERT((Signed2) -1 < 0);
+    c_ASSERT(sizeof(Signed2) == 2);
 
-    debug_ASSERT((Signed4) -1 < 0);
-    debug_ASSERT(sizeof(Signed4) == 4);
+    c_ASSERT((Signed4) -1 < 0);
+    c_ASSERT(sizeof(Signed4) == 4);
 
-    debug_ASSERT((Signed8) -1 < 0);
-    debug_ASSERT(sizeof(Signed8) == 8);
+    c_ASSERT((Signed8) -1 < 0);
+    c_ASSERT(sizeof(Signed8) == 8);
 }
 
 int c_unimplemented_impl(const char* function, const char* file, int line) {
     extern void exit(int);
 
-    debug_println("unimplemented (%s in %s:%d)", function, file, line);
+    log_println("unimplemented (%s in %s:%d)", function, file, line);
     exit(1);
     return -1;
+}
+
+void c_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
+    if (!condition) {
+        log_println("assert %s[%d]: %s", fileName, lineNumber, conditionString);
+        exit(1);
+    }
 }

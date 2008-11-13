@@ -18,35 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 /**
+ * Low level VM logging facility.
+ *
+ * The native methods in VM/src/com/sun/max/vm/debug/Log.java map directly the functions declared in this file.
+ *
  * @author Bernd Mathiske
  */
-#ifndef __debug_h__
-#define __debug_h__ 1
+#ifndef __log_h__
+#define __log_h__ 1
 
 #include "c.h"
 #include "word.h"
 #include "jni.h"
 
-#define debug_ASSERT(condition) \
-    do { debug_assert((condition), STRINGIZE(condition), __FILE__, __LINE__); } while (0)
+extern void log_lock(void);
 
-extern void debug_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber);
+extern void log_unlock(void);
 
-extern void debug_lock(void);
-
-extern void debug_unlock(void);
-
-extern void debug_print_int(int val);
-extern void debug_print_boolean(char val);
-extern void debug_print_char(int val);
-extern void debug_print_long(jlong val);
-extern void debug_print_word(Address val);
-extern void debug_print_buffer(char *buffer);
-extern void debug_print_format(char *format, ...);
-extern void debug_print_newline(void);
-extern void debug_print_float(float f);
-extern void debug_print_double(double d);
+extern void log_print_int(int val);
+extern void log_print_boolean(char val);
+extern void log_print_char(int val);
+extern void log_print_long(jlong val);
+extern void log_print_word(Address val);
+extern void log_print_buffer(char *buffer);
+extern void log_print_format(char *format, ...);
+extern void log_print_newline(void);
+extern void log_print_float(float f);
+extern void log_print_double(double d);
 
 #if os_WINDOWS
 #define NEWLINE_STRING "\r\n"
@@ -54,10 +54,10 @@ extern void debug_print_double(double d);
 #define NEWLINE_STRING "\n"
 #endif
 
-#define debug_print(format, ...) debug_print_format(format, ##__VA_ARGS__)
-#define debug_println(format, ...) debug_print_format(format NEWLINE_STRING, ##__VA_ARGS__)
-#define debug_exit(code, format, ...) do {\
-    debug_print_format(format NEWLINE_STRING, ##__VA_ARGS__); \
+#define log_print(format, ...) log_print_format(format, ##__VA_ARGS__)
+#define log_println(format, ...) log_print_format(format NEWLINE_STRING, ##__VA_ARGS__)
+#define log_exit(code, format, ...) do {\
+    log_print_format(format NEWLINE_STRING, ##__VA_ARGS__); \
     exit(code); \
 } while(0)
 
@@ -67,12 +67,12 @@ extern void debug_print_double(double d);
 #define ADDRESS_FORMAT "0x%08x"
 #endif
 
-#define debug_LOADER 0
-#define debug_TRAP 0
-#define debug_MONITOR 0
-#define debug_LINKER 0
-#define debug_JVMNI 0
-#define debug_THREADS 0
-#define debug_INSPECTOR_NATIVE 0
+#define log_LOADER 0
+#define log_TRAP 0
+#define log_MONITOR 0
+#define log_LINKER 0
+#define log_JVMNI 0
+#define log_THREADS 0
+#define log_INSPECTOR_NATIVE 0
 
-#endif /*__debug_h__*/
+#endif /*__log_h__*/

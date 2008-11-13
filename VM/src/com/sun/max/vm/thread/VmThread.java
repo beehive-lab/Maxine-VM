@@ -35,7 +35,6 @@ import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.schemes.*;
@@ -542,15 +541,15 @@ public class VmThread {
             final Pointer stackYellowZone = _guardPage.asPointer();
             final Pointer stackRedZone = stackYellowZone.minus(guardPageSize());
             final Pointer stackEnd = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(enabledVmThreadLocals).asPointer();
-            final boolean lockDisabledSafepoints = Debug.lock();
-            Debug.print("Initialization completed for thread[serial=");
-            Debug.print(_serial);
-            Debug.print(", name=\"");
-            Debug.print(_name);
-            Debug.println("\"]:");
-            Debug.print("  Adjusted card table address: ");
-            Debug.println(ADJUSTED_CARDTABLE_BASE.getConstantWord());
-            Debug.println("  Stack layout:");
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Initialization completed for thread[serial=");
+            Log.print(_serial);
+            Log.print(", name=\"");
+            Log.print(_name);
+            Log.println("\"]:");
+            Log.print("  Adjusted card table address: ");
+            Log.println(ADJUSTED_CARDTABLE_BASE.getConstantWord());
+            Log.println("  Stack layout:");
             Address lastRegionStart = Address.zero();
             final int stackSize = stackEnd.minus(stackBase).toInt();
             final Pointer stackPointer = SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER);
@@ -566,7 +565,7 @@ public class VmThread {
             if (stackBase.lessThan(triggeredVmThreadLocals)) {
                 lastRegionStart = traceStackRegion("Unmapped page", stackBase, stackBase, triggeredVmThreadLocals, lastRegionStart, stackSize);
             }
-            Debug.unlock(lockDisabledSafepoints);
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 
@@ -582,61 +581,61 @@ public class VmThread {
             final int startOffset = start.minus(base).toInt();
             final int endOffset = startOffset + size;
             if (lastRegionStart.isZero() || !lastRegionStart.equals(end)) {
-                Debug.print("  +----- ");
-                Debug.print(end);
-                Debug.print("  [");
-                Debug.print(endOffset >= 0 ? "+" : "");
-                Debug.print(endOffset);
-                Debug.println("]");
+                Log.print("  +----- ");
+                Log.print(end);
+                Log.print("  [");
+                Log.print(endOffset >= 0 ? "+" : "");
+                Log.print(endOffset);
+                Log.println("]");
             }
-            Debug.println("  |");
-            Debug.print("  | ");
-            Debug.print(label);
-            Debug.print(" [");
-            Debug.print(size);
-            Debug.print(" bytes, ");
-            Debug.print(((float) size * 100) / usedStackSize);
-            Debug.println("%]");
-            Debug.println("  |");
-            Debug.print("  +----- ");
-            Debug.print(start);
-            Debug.print(" [");
-            Debug.print(startOffset >= 0 ? "+" : "");
-            Debug.print(startOffset);
-            Debug.println("]");
+            Log.println("  |");
+            Log.print("  | ");
+            Log.print(label);
+            Log.print(" [");
+            Log.print(size);
+            Log.print(" bytes, ");
+            Log.print(((float) size * 100) / usedStackSize);
+            Log.println("%]");
+            Log.println("  |");
+            Log.print("  +----- ");
+            Log.print(start);
+            Log.print(" [");
+            Log.print(startOffset >= 0 ? "+" : "");
+            Log.print(startOffset);
+            Log.println("]");
         }
         return start;
     }
 
     private void traceThreadForUncaughtException(Throwable throwable) {
         if (traceThreads()) {
-            final boolean lockDisabledSafepoints = Debug.lock();
-            Debug.print("VmThread[serial=");
-            Debug.print(_serial);
-            Debug.print(", name=\"");
-            Debug.print(_name);
-            Debug.print("] Uncaught exception of type ");
-            Debug.println(ObjectAccess.readClassActor(throwable).name());
-            Debug.unlock(lockDisabledSafepoints);
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("VmThread[serial=");
+            Log.print(_serial);
+            Log.print(", name=\"");
+            Log.print(_name);
+            Log.print("] Uncaught exception of type ");
+            Log.println(ObjectAccess.readClassActor(throwable).name());
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 
     private void traceThreadAfterTermination() {
         if (traceThreads()) {
-            final boolean lockDisabledSafepoints = Debug.lock();
-            Debug.print("Thread terminated [serial=");
-            Debug.print(_serial);
-            Debug.print(", name=\"");
-            Debug.print(_name);
-            Debug.println("\"]");
-            Debug.unlock(lockDisabledSafepoints);
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Thread terminated [serial=");
+            Log.print(_serial);
+            Log.print(", name=\"");
+            Log.print(_name);
+            Log.println("\"]");
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 
     private static void invokeShutdownHooks() {
         //Shutdown.shutdown(), but it's not visible
         if (traceThreads()) {
-            Debug.println("invoking Shutdown hooks");
+            Log.println("invoking Shutdown hooks");
         }
         try {
             final ClassActor classActor = ClassActor.fromJava(Class.forName("java.lang.Shutdown"));

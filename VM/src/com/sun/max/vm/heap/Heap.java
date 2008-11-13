@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
 
@@ -48,7 +47,7 @@ public final class Heap {
         }
         @Override
         public void printErrorMessage() {
-            Debug.print("initial heap size must not be greater than max heap size");
+            Log.print("initial heap size must not be greater than max heap size");
         }
     };
 
@@ -78,7 +77,7 @@ public final class Heap {
 
     /**
      * Returns whether the "-verbose:gc" option was specified.
-     * @return <code>true</code> if the user specified the "-verbose:gc" command line option; <code>false</code>
+     * @return {@code true} if the user specified the "-verbose:gc" command line option; {@code false}
      * otherwise
      */
     public static boolean verbose() {
@@ -125,7 +124,8 @@ public final class Heap {
 
     /**
      * Returns whether the "-XX:DisableGC" option was specified.
-     * @return <code>true</code> if the user specified the "-XX:DisableGC" command line option; <code>false</code>
+     *
+     * @return {@code true} if the user specified the "-XX:DisableGC" command line option; {@code false}
      * otherwise
      * @return
      */
@@ -189,6 +189,8 @@ public final class Heap {
     public static boolean contains(Address address) {
         return heapScheme().contains(address);
     }
+
+    private static boolean _collecting;
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
         return heapScheme().collectGarbage(requestedFreeSpace);

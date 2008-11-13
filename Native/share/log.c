@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 #include "mutex.h"
 #include "threads.h"
@@ -35,9 +35,9 @@
 static FILE *fileStream = NULL;
 #endif
 
-void debug_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
+void log_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
     if (!condition) {
-        debug_println("debug_assert %s[%d]: %s", fileName, lineNumber, conditionString);
+        log_println("log_assert %s[%d]: %s", fileName, lineNumber, conditionString);
         exit(1);
     }
 }
@@ -45,21 +45,21 @@ void debug_assert(Boolean condition, char *conditionString, char *fileName, int 
 static jboolean _isLockInitialized = false;
 static mutex_Struct _mutex;
 
-void debug_lock(void) {
+void log_lock(void) {
 	if (!_isLockInitialized) {
 		mutex_initialize(&_mutex);
 		_isLockInitialized = true;
 	}
 	int result;
 	if ((result = mutex_lock(&_mutex)) != 0) {
-	    debug_exit(-1, "Could not lock mutex: %s", strerror(result));
+	    log_exit(-1, "Could not lock mutex: %s", strerror(result));
 	}
 }
 
-void debug_unlock(void) {
+void log_unlock(void) {
     int result;
 	if ((result = mutex_unlock(&_mutex)) != 0) {
-        debug_exit(-1, "Could not lock mutex: %s", strerror(result));
+        log_exit(-1, "Could not lock mutex: %s", strerror(result));
 	}
 }
 
@@ -91,7 +91,7 @@ FILE *getFileStream() {
 }
 #endif
 
-void debug_print_format(char *format, ...) {
+void log_print_format(char *format, ...) {
 #if !os_GUESTVMXEN
     va_list ap;
     va_start(ap, format);
@@ -106,45 +106,45 @@ void debug_print_format(char *format, ...) {
 #endif
 }
 
-void debug_print_int(int val) {
-    debug_print_format("%d", val);
+void log_print_int(int val) {
+    log_print_format("%d", val);
 }
 
-void debug_print_boolean(char val) {
+void log_print_boolean(char val) {
 	if (val == 0) {
-	    debug_print_format("false");
+	    log_print_format("false");
     } else {
-        debug_print_format("true");
+        log_print_format("true");
     }
 }
 
-void debug_print_char(int val) {
-	debug_print_format("%c", val);
+void log_print_char(int val) {
+	log_print_format("%c", val);
 }
 
-void debug_print_long(jlong val) {
-	debug_print_format("%ld", val);
+void log_print_long(jlong val) {
+	log_print_format("%ld", val);
 }
 
-void debug_print_buffer(char *buffer) {
-	debug_print_format("%s", buffer);
+void log_print_buffer(char *buffer) {
+	log_print_format("%s", buffer);
 }
 
-void debug_print_word(Address address) {
-    debug_print_format(ADDRESS_FORMAT, address);
+void log_print_word(Address address) {
+    log_print_format(ADDRESS_FORMAT, address);
 }
 
-void debug_print_newline() {
-    debug_print_format(NEWLINE_STRING);
+void log_print_newline() {
+    log_print_format(NEWLINE_STRING);
 }
 
-void debug_print_float(float f) {
+void log_print_float(float f) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
-	debug_print_format("%f", f);
+	log_print_format("%f", f);
 }
 
-void debug_print_double(double d) {
+void log_print_double(double d) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
-	debug_print_format("%lf", d);
+	log_print_format("%lf", d);
 
 }

@@ -21,7 +21,6 @@
 package com.sun.max.vm.run.jitTest;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.run.java.*;
 
@@ -38,9 +37,9 @@ public class JitTestRunScheme extends JavaRunScheme {
     @Override
     public void run() {
         initializeBasicFeatures();
-        Debug.println("*** begin of JIT tests");
+        Log.println("*** begin of JIT tests");
         JitTest.test();
-        Debug.println("*** end of JIT tests");
+        Log.println("*** end of JIT tests");
     }
 
     @Override
