@@ -1,0 +1,1 @@
+-Dmax.test.arguments=-vmclasses:-jcklist=test/com/sun/max/vm/verifier/jck.classes.txt
