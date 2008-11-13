@@ -30,7 +30,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
@@ -94,13 +93,13 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
 
         if (HotpathConfiguration.isEnabled()) {
             if (compilationDirective.traceInstrument()) {
-                Debug.print("JIT TRACED: ");
+                Log.print("JIT TRACED: ");
             } else {
-                Debug.print("JIT: ");
+                Log.print("JIT: ");
             }
 
-            Debug.print(classMethodActor.toString());
-            Debug.println();
+            Log.print(classMethodActor.toString());
+            Log.println();
         }
 
         final MethodInstrumentation methodInstrumentation = VMConfiguration.target().compilationScheme().makeMethodInstrumentation(classMethodActor);

@@ -21,8 +21,8 @@
 /*
  * @author Bernd Mathiske
  */
-#include <amd64.h>
-#include <debug.h>
+#include "amd64.h"
+#include "log.h"
 
 void amd64_decanonicalizeSignalIntegerRegisters(amd64_CanonicalIntegerRegisters c, amd64_OsSignalIntegerRegisters os) {
 #if os_SOLARIS || os_LINUX
@@ -139,7 +139,7 @@ void amd64_canonicalizeSignalIntegerRegisters(amd64_OsSignalIntegerRegisters os,
 }
 
 void amd64_printCanonicalIntegerRegisters(amd64_CanonicalIntegerRegisters c) {
-#   define PRINT_REG(name, field) debug_println(name " = 0x%016lx [%ld]", c->field, c->field)
+#   define PRINT_REG(name, field) log_println(name " = 0x%016lx [%ld]", c->field, c->field)
     PRINT_REG("RAX", rax);
     PRINT_REG("RCX", rcx);
     PRINT_REG("RDX", rdx);
@@ -229,8 +229,8 @@ void amd64_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters os, amd
 	}
 #endif
 
-	
-	
+
+
 void amd64_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegisters os, amd64_CanonicalFloatingPointRegisters c) {
 #if os_DARWIN
     c->xmm0 = GET_DARWIN_FP_REGISTER(0);
@@ -346,7 +346,7 @@ void amd64_canonicalizeSignalFloatingPointRegisters(amd64_OsSignalFloatingPointR
     c->xmm12 = GET_DARWIN_FP_REGISTER(12);
     c->xmm13 = GET_DARWIN_FP_REGISTER(13);
     c->xmm14 = GET_DARWIN_FP_REGISTER(14);
-    c->xmm15 = GET_DARWIN_FP_REGISTER(15);    
+    c->xmm15 = GET_DARWIN_FP_REGISTER(15);
 #else
 #   error Unimplemented
 #endif
@@ -370,7 +370,7 @@ void amd64_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters os, amd64_C
 }
 
 void amd64_printCanonicalFloatingPointRegisters(amd64_CanonicalFloatingPointRegisters c) {
-#   define PRINT_XMM(id) debug_println("XMM%-2d = 0x%016lx [%lf]", id, CONCATENATE(c->xmm, id), CONCATENATE(c->xmm, id))
+#   define PRINT_XMM(id) log_println("XMM%-2d = 0x%016lx [%lf]", id, CONCATENATE(c->xmm, id), CONCATENATE(c->xmm, id))
     PRINT_XMM(0);
     PRINT_XMM(1);
     PRINT_XMM(2);

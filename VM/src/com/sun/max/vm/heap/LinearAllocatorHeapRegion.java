@@ -98,11 +98,11 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
             if (VMConfiguration.hostOrTarget().debugging()) {
                 cell = cell.plusWords(1);
                 if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                    Debug.print("CELL VISITOR ERROR: missing object tag @ ");
-                    Debug.print(cell);
-                    Debug.print("(start + ");
-                    Debug.print(cell.minus(start()).asOffset().toInt());
-                    Debug.println(")");
+                    Log.print("CELL VISITOR ERROR: missing object tag @ ");
+                    Log.print(cell);
+                    Log.print("(start + ");
+                    Log.print(cell.minus(start()).asOffset().toInt());
+                    Log.println(")");
                     System.exit(1);
                 }
             }

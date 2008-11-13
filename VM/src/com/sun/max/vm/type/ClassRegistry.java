@@ -34,7 +34,6 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.value.*;
 
@@ -160,8 +159,8 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
     public ClassActor get(TypeDescriptor typeDescriptor) {
         final ClassActor classActor = _typeDescriptorToClassActor.get(typeDescriptor);
         if (false && (!MaxineVM.isPrototyping() && classActor == null)) {
-            Debug.print("unresolved: ");
-            Debug.println(typeDescriptor.string());
+            Log.print("unresolved: ");
+            Log.println(typeDescriptor.string());
         }
         return classActor;
     }

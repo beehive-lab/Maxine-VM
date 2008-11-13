@@ -41,8 +41,8 @@ public class CopyActionImpl implements Action {
         final Pointer fromOrigin = origin.toOrigin();
         if (VMConfiguration.hostOrTarget().debugging()) {
             if (!VMConfiguration.hostOrTarget().heapScheme().contains(fromOrigin)) {
-                Debug.print("invalid grip: ");
-                Debug.println(origin.toOrigin().asAddress());
+                Log.print("invalid grip: ");
+                Log.println(origin.toOrigin().asAddress());
                 FatalError.unexpected("invalid grip");
             }
 

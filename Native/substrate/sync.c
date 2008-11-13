@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "condition.h"
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 #include "mutex.h"
 #include "os.h"

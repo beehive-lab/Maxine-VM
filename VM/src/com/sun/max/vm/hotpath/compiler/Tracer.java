@@ -22,7 +22,6 @@ package com.sun.max.vm.hotpath.compiler;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.Option;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.tir.*;
@@ -234,7 +233,7 @@ public abstract class Tracer {
     }
 
     /**
-     * @return <code>true</code> if any
+     * @return {@code true} if any
      */
     public boolean isRecording() {
         for (Scope scope : _scopes) {

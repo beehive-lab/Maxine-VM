@@ -21,7 +21,7 @@
 #include "os.h"
 #include <stdlib.h>
 
-#include "debug.h"
+#include "log.h"
 #include "word.h"
 #include "jni.h"
 
@@ -128,7 +128,7 @@ void relocation_apply(void *heap, int relocationScheme, void *relocationData, in
     Address base = (Address) heap;
     Byte *bytes = (Byte *) relocationData;
     int dataOffset = 0;
-    debug_ASSERT(relocationScheme == relocation_DEFAULT_SCHEME);
+    c_ASSERT(relocationScheme == relocation_DEFAULT_SCHEME);
 
     if (wordSize == sizeof(Unsigned4)) {
         if (isBigEndian) {
@@ -143,7 +143,7 @@ void relocation_apply(void *heap, int relocationScheme, void *relocationData, in
             RELOCATION_LOOP(Unsigned8, getLittleEndianUnsigned8, putLittleEndianUnsigned8);
         }
     } else {
-        debug_ASSERT(false);
+        c_ASSERT(false);
     }
 }
 
