@@ -77,7 +77,7 @@ void amd64_decanonicalizeSignalIntegerRegisters(amd64_CanonicalIntegerRegisters 
     os->__r14 = (Address) c->r14;
     os->__r15 = (Address) c->r15;
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -134,7 +134,7 @@ void amd64_canonicalizeSignalIntegerRegisters(amd64_OsSignalIntegerRegisters os,
     c->r14 = (Word) os->__r14;
     c->r15 = (Word) os->__r15;
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -209,7 +209,7 @@ void amd64_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters os, amd
     c->r14 = os[REG_R14];
     c->r15 = os[REG_R15];
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -271,7 +271,7 @@ void amd64_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegis
 #elif os_GUESTVMXEN
     // TODO
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -348,7 +348,7 @@ void amd64_canonicalizeSignalFloatingPointRegisters(amd64_OsSignalFloatingPointR
     c->xmm14 = GET_DARWIN_FP_REGISTER(14);
     c->xmm15 = GET_DARWIN_FP_REGISTER(15);
 #else
-#   error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -365,7 +365,7 @@ void amd64_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters os, amd64_C
     c->rip = (Word) os->rip;
     c->flags = (Word) 0xdeadbeef; // TODO
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 

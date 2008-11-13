@@ -51,14 +51,14 @@ void log_lock(void) {
 		_isLockInitialized = true;
 	}
 	int result;
-	if ((result = mutex_lock(&_mutex)) != 0) {
+	if ((result = mutex_enter(&_mutex)) != 0) {
 	    log_exit(-1, "Could not lock mutex: %s", strerror(result));
 	}
 }
 
 void log_unlock(void) {
     int result;
-	if ((result = mutex_unlock(&_mutex)) != 0) {
+	if ((result = mutex_exit(&_mutex)) != 0) {
         log_exit(-1, "Could not lock mutex: %s", strerror(result));
 	}
 }

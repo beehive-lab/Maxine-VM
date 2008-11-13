@@ -309,7 +309,7 @@ static void mapHeapAndCode(int fd) {
       log_exit(4, "could not map boot image");
     }
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
     _code = _heap + _header->bootHeapSize;
     _codeEnd = _code + _header->bootCodeSize;

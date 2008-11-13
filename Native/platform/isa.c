@@ -26,7 +26,7 @@ void isa_decanonicalizeSignalIntegerRegisters(isa_OsSignalCanonicalIntegerRegist
 #elif isa_SPARC
 	sparc_decanonicalizeSignalIntegerRegisters(canonicalIntegerRegisters, osSignalIntegerRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -36,7 +36,7 @@ void isa_canonicalizeSignalIntegerRegisters(isa_OsSignalIntegerRegisters osSigna
 #elif isa_SPARC
    sparc_canonicalizeSignalIntegerRegisters(osSignalIntegerRegisters, canonicalIntegerRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -46,7 +46,7 @@ void isa_canonicalizeSignalFloatingPointRegisters(isa_OsSignalFloatingPointRegis
 #elif isa_SPARC
 	sparc_canonicalizeSignalFloatingPointRegisters(osSignalFloatingPointRegisters, canonicalFloatingPointRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -56,7 +56,7 @@ void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters canonicalI
 #elif isa_SPARC
     sparc_printCanonicalIntegerRegisters(canonicalIntegerRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -66,7 +66,7 @@ void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegister
 #elif isa_SPARC
     sparc_printCanonicalFloatingPointRegisters(canonicalFloatingPointRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -80,7 +80,7 @@ void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters osTeleInteg
 #elif isa_SPARC
 	sparc_canonicalizeTeleIntegerRegisters(osTeleIntegerRegisters, canonicalIntegerRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -90,7 +90,7 @@ void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters osTeleStateRegi
 #elif isa_SPARC
 	sparc_canonicalizeTeleStateRegisters(osTeleStateRegisters, canonicalStateRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -100,6 +100,6 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
 #elif isa_SPARC
 	sparc_canonicalizeTeleFloatingPointRegisters(osTeleFloatingPointRegisters, canonicalFloatingPointRegisters);
 #else
-#error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
