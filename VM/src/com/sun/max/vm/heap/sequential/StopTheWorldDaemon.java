@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.thread;
+package com.sun.max.vm.heap.sequential;
 
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
@@ -27,6 +27,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A daemon thread that hangs around, waiting, then executes a given procedure when requested, then waits again.

@@ -133,7 +133,7 @@ JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos,
 }
 
 jobject JVM_InitProperties(JNIEnv *env, jobject p) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -141,7 +141,7 @@ jobject JVM_InitProperties(JNIEnv *env, jobject p) {
  * java.io.File
  */
 void JVM_OnExit(void (*func)(void)) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 /*
@@ -156,11 +156,11 @@ void JVM_Halt(jint code) {
 }
 
 void JVM_GC(void) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 jlong JVM_MaxObjectInspectionAge(void) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -187,30 +187,30 @@ JVM_MaxMemory(void) {
 
 jint
 JVM_ActiveProcessorCount(void) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 void *
 JVM_LoadLibrary(const char *name) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 void
 JVM_UnloadLibrary(void * handle) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 void *
 JVM_FindLibraryEntry(void *handle, const char *name) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jboolean
 JVM_IsSupportedJNIVersion(jint version) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -233,7 +233,7 @@ JVM_FillInStackTrace(JNIEnv *env, jobject throwable) {
 
 void
 JVM_PrintStackTrace(JNIEnv *env, jobject throwable, jobject printable) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 jint
@@ -275,7 +275,7 @@ JVM_CompileClasses(JNIEnv *env, jclass cls, jstring jname) {
 
 jobject
 JVM_CompilerCommand(JNIEnv *env, jclass compCls, jobject arg) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -378,19 +378,19 @@ JVM_HoldsLock(JNIEnv *env, jclass threadClass, jobject obj) {
 
 void
 JVM_DumpAllStacks(JNIEnv *env, jclass unused) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 jobjectArray
 JVM_GetAllThreads(JNIEnv *env, jclass c) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 /* getStackTrace() and getAllStackTraces() method */
 jobjectArray
 JVM_DumpThreads(JNIEnv *env, jclass threadClass, jobjectArray threads) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -399,13 +399,13 @@ JVM_DumpThreads(JNIEnv *env, jclass threadClass, jobjectArray threads) {
  */
 jclass
 JVM_CurrentLoadedClass(JNIEnv *env) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject
 JVM_CurrentClassLoader(JNIEnv *env) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -418,13 +418,13 @@ JVM_GetClassContext(JNIEnv *env) {
 
 jint
 JVM_ClassDepth(JNIEnv *env, jstring name) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_ClassLoaderDepth(JNIEnv *env) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -449,20 +449,20 @@ JVM_GetSystemPackages(JNIEnv *env) {
 jobject
 JVM_AllocateNewObject(JNIEnv *env, jobject obj, jclass currClass,
                       jclass initClass) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject
 JVM_AllocateNewArray(JNIEnv *env, jobject obj, jclass currClass,
                      jint length) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject
 JVM_LatestUserDefinedLoader(JNIEnv *env) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -473,7 +473,7 @@ JVM_LatestUserDefinedLoader(JNIEnv *env) {
 jclass
 JVM_LoadClass0(JNIEnv *env, jobject obj, jclass currClass,
                jstring currClassName) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -493,7 +493,7 @@ JVM_GetArrayElement(JNIEnv *env, jobject arr, jint index) {
 jvalue
 JVM_GetPrimitiveArrayElement(JNIEnv *env, jobject arr, jint index, jint wCode) {
 	jvalue v;
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return v;
 }
 
@@ -505,18 +505,18 @@ JVM_SetArrayElement(JNIEnv *env, jobject arr, jint index, jobject val) {
 void
 JVM_SetPrimitiveArrayElement(JNIEnv *env, jobject arr, jint index, jvalue v,
                  unsigned char vCode) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 jobject
 JVM_NewArray(JNIEnv *env, jclass eltClass, jint length) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject
 JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -533,7 +533,7 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim) {
  */
 jclass
 JVM_GetCallerClass(JNIEnv *env, int n) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -543,7 +543,7 @@ JVM_GetCallerClass(JNIEnv *env, int n) {
  */
 jclass
 JVM_FindPrimitiveClass(JNIEnv *env, const char *utf) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -552,7 +552,7 @@ JVM_FindPrimitiveClass(JNIEnv *env, const char *utf) {
  */
 void
 JVM_ResolveClass(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 /*
@@ -563,7 +563,7 @@ JVM_ResolveClass(JNIEnv *env, jclass cls) {
 jclass
 JVM_FindClassFromClassLoader(JNIEnv *env, const char *name, jboolean init,
                  jobject loader, jboolean throwError) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -573,14 +573,14 @@ JVM_FindClassFromClassLoader(JNIEnv *env, const char *name, jboolean init,
 jclass
 JVM_FindClassFromClass(JNIEnv *env, const char *name, jboolean init,
                  jclass from) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 /* Find a loaded class cached by the VM */
 jclass
 JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -588,7 +588,7 @@ JVM_FindLoadedClass(JNIEnv *env, jobject loader, jstring name) {
 jclass
 JVM_DefineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf,
                 jsize len, jobject pd) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -597,7 +597,7 @@ jclass
 JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
                           const jbyte *buf, jsize len, jobject pd,
                           const char *source) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -613,13 +613,13 @@ JVM_GetClassName(JNIEnv *env, jclass cls) {
 
 jobjectArray
 JVM_GetClassInterfaces(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject
 JVM_GetClassLoader(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -631,24 +631,24 @@ JVM_IsInterface(JNIEnv *env, jclass cls) {
 
 jobjectArray
 JVM_GetClassSigners(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 void
 JVM_SetClassSigners(JNIEnv *env, jclass cls, jobjectArray signers) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 jobject
 JVM_GetProtectionDomain(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 void
 JVM_SetProtectionDomain(JNIEnv *env, jclass cls, jobject protection_domain) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 jboolean
@@ -665,39 +665,39 @@ JVM_IsPrimitiveClass(JNIEnv *env, jclass cls) {
 
 jclass
 JVM_GetComponentType(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_GetClassModifiers(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobjectArray
 JVM_GetDeclaredClasses(JNIEnv *env, jclass ofClass) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jclass
 JVM_GetDeclaringClass(JNIEnv *env, jclass ofClass) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 /* Generics support (JDK 1.5) */
 jstring
 JVM_GetClassSignature(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 /* Annotations support (JDK 1.5) */
 jbyteArray
 JVM_GetClassAnnotations(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -706,28 +706,28 @@ JVM_GetClassAnnotations(JNIEnv *env, jclass cls) {
 // field is a handle to a java.lang.reflect.Field object
 jbyteArray
 JVM_GetFieldAnnotations(JNIEnv *env, jobject field) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 // method is a handle to a java.lang.reflect.Method object
 jbyteArray
 JVM_GetMethodAnnotations(JNIEnv *env, jobject method) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 // method is a handle to a java.lang.reflect.Method object
 jbyteArray
 JVM_GetMethodDefaultAnnotationValue(JNIEnv *env, jobject method) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 // method is a handle to a java.lang.reflect.Method object
 jbyteArray
 JVM_GetMethodParameterAnnotations(JNIEnv *env, jobject method) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -738,19 +738,19 @@ JVM_GetMethodParameterAnnotations(JNIEnv *env, jobject method) {
 
 jobjectArray
 JVM_GetClassDeclaredMethods(JNIEnv *env, jclass ofClass, jboolean publicOnly) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobjectArray
 JVM_GetClassDeclaredFields(JNIEnv *env, jclass ofClass, jboolean publicOnly) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobjectArray
 JVM_GetClassDeclaredConstructors(JNIEnv *env, jclass ofClass, jboolean publicOnly) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -762,7 +762,7 @@ JVM_GetClassDeclaredConstructors(JNIEnv *env, jclass ofClass, jboolean publicOnl
    valid. */
 jint
 JVM_GetClassAccessFlags(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -772,91 +772,91 @@ JVM_GetClassAccessFlags(JNIEnv *env, jclass cls) {
 
 jobject
 JVM_GetClassConstantPool(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint JVM_ConstantPoolGetSize
 (JNIEnv *env, jobject unused, jobject jcpool) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jclass JVM_ConstantPoolGetClassAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jclass JVM_ConstantPoolGetClassAtIfLoaded
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject JVM_ConstantPoolGetMethodAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject JVM_ConstantPoolGetMethodAtIfLoaded
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject JVM_ConstantPoolGetFieldAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject JVM_ConstantPoolGetFieldAtIfLoaded
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobjectArray JVM_ConstantPoolGetMemberRefInfoAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint JVM_ConstantPoolGetIntAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jlong JVM_ConstantPoolGetLongAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jfloat JVM_ConstantPoolGetFloatAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jdouble JVM_ConstantPoolGetDoubleAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jstring JVM_ConstantPoolGetStringAt
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jstring JVM_ConstantPoolGetUTF8At
 (JNIEnv *env, jobject unused, jobject jcpool, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -867,19 +867,19 @@ jstring JVM_ConstantPoolGetUTF8At
 jobject
 JVM_DoPrivileged(JNIEnv *env, jclass cls,
          jobject action, jobject context, jboolean wrapException) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject
 JVM_GetInheritedAccessControlContext(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jobject
 JVM_GetStackAccessControlContext(JNIEnv *env, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -892,19 +892,19 @@ JVM_GetStackAccessControlContext(JNIEnv *env, jclass cls) {
 
 void *
 JVM_RegisterSignal(jint sig, void *handler) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jboolean
 JVM_RaiseSignal(jint sig) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_FindSignal(const char *name) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -913,7 +913,7 @@ JVM_FindSignal(const char *name) {
  */
 jboolean
 JVM_DesiredAssertionStatus(JNIEnv *env, jclass unused, jclass cls) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -922,7 +922,7 @@ JVM_DesiredAssertionStatus(JNIEnv *env, jclass unused, jclass cls) {
  */
 jobject
 JVM_AssertionStatusDirectives(JNIEnv *env, jclass unused) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -936,7 +936,7 @@ JVM_SupportsCX8(void) {
 
 jboolean
 JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fldID, jlong oldVal, jlong newVal) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -952,7 +952,7 @@ JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fldID, jlong oldVal, jlong newVa
  */
 const char *
 JVM_GetClassNameUTF(JNIEnv *env, jclass cb) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -961,7 +961,7 @@ JVM_GetClassNameUTF(JNIEnv *env, jclass cb) {
  */
 void
 JVM_GetClassCPTypes(JNIEnv *env, jclass cb, unsigned char *types) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 /*
@@ -969,7 +969,7 @@ JVM_GetClassCPTypes(JNIEnv *env, jclass cb, unsigned char *types) {
  */
 jint
 JVM_GetClassCPEntriesCount(JNIEnv *env, jclass cb) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -978,13 +978,13 @@ JVM_GetClassCPEntriesCount(JNIEnv *env, jclass cb) {
  */
 jint
 JVM_GetClassFieldsCount(JNIEnv *env, jclass cb) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_GetClassMethodsCount(JNIEnv *env, jclass cb) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -997,7 +997,7 @@ JVM_GetClassMethodsCount(JNIEnv *env, jclass cb) {
 void
 JVM_GetMethodIxExceptionIndexes(JNIEnv *env, jclass cb, jint method_index,
                 unsigned short *exceptions) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 /*
  * Returns the number of exceptions raised by a given method.
@@ -1005,7 +1005,7 @@ JVM_GetMethodIxExceptionIndexes(JNIEnv *env, jclass cb, jint method_index,
  */
 jint
 JVM_GetMethodIxExceptionsCount(JNIEnv *env, jclass cb, jint method_index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1018,7 +1018,7 @@ JVM_GetMethodIxExceptionsCount(JNIEnv *env, jclass cb, jint method_index) {
 void
 JVM_GetMethodIxByteCode(JNIEnv *env, jclass cb, jint method_index,
             unsigned char *code) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 /*
@@ -1027,7 +1027,7 @@ JVM_GetMethodIxByteCode(JNIEnv *env, jclass cb, jint method_index,
  */
 jint
 JVM_GetMethodIxByteCodeLength(JNIEnv *env, jclass cb, jint method_index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1051,7 +1051,7 @@ void
 JVM_GetMethodIxExceptionTableEntry(JNIEnv *env, jclass cb, jint method_index,
                    jint entry_index,
                    JVM_ExceptionTableEntryType *entry) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 /*
@@ -1060,7 +1060,7 @@ JVM_GetMethodIxExceptionTableEntry(JNIEnv *env, jclass cb, jint method_index,
  */
 jint
 JVM_GetMethodIxExceptionTableLength(JNIEnv *env, jclass cb, int index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1070,7 +1070,7 @@ JVM_GetMethodIxExceptionTableLength(JNIEnv *env, jclass cb, int index) {
  */
 jint
 JVM_GetFieldIxModifiers(JNIEnv *env, jclass cb, int index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1080,7 +1080,7 @@ JVM_GetFieldIxModifiers(JNIEnv *env, jclass cb, int index) {
  */
 jint
 JVM_GetMethodIxModifiers(JNIEnv *env, jclass cb, int index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1090,7 +1090,7 @@ JVM_GetMethodIxModifiers(JNIEnv *env, jclass cb, int index) {
  */
 jint
 JVM_GetMethodIxLocalsCount(JNIEnv *env, jclass cb, int index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1100,7 +1100,7 @@ JVM_GetMethodIxLocalsCount(JNIEnv *env, jclass cb, int index) {
  */
 jint
 JVM_GetMethodIxArgsSize(JNIEnv *env, jclass cb, int index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1110,7 +1110,7 @@ JVM_GetMethodIxArgsSize(JNIEnv *env, jclass cb, int index) {
  */
 jint
 JVM_GetMethodIxMaxStack(JNIEnv *env, jclass cb, int index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1120,7 +1120,7 @@ JVM_GetMethodIxMaxStack(JNIEnv *env, jclass cb, int index) {
  */
 jboolean
 JVM_IsConstructorIx(JNIEnv *env, jclass cb, int index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1133,7 +1133,7 @@ JVM_IsConstructorIx(JNIEnv *env, jclass cb, int index) {
  */
 const char *
 JVM_GetMethodIxNameUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1146,7 +1146,7 @@ JVM_GetMethodIxNameUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetMethodIxSignatureUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1162,7 +1162,7 @@ JVM_GetMethodIxSignatureUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetCPFieldNameUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1178,7 +1178,7 @@ JVM_GetCPFieldNameUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetCPMethodNameUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1194,7 +1194,7 @@ JVM_GetCPMethodNameUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetCPMethodSignatureUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1210,7 +1210,7 @@ JVM_GetCPMethodSignatureUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetCPFieldSignatureUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1225,7 +1225,7 @@ JVM_GetCPFieldSignatureUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetCPClassNameUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1242,7 +1242,7 @@ JVM_GetCPClassNameUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetCPFieldClassNameUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1260,7 +1260,7 @@ JVM_GetCPFieldClassNameUTF(JNIEnv *env, jclass cb, jint index) {
  */
 const char *
 JVM_GetCPMethodClassNameUTF(JNIEnv *env, jclass cb, jint index) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1275,7 +1275,7 @@ JVM_GetCPMethodClassNameUTF(JNIEnv *env, jclass cb, jint index) {
  */
 jint
 JVM_GetCPFieldModifiers(JNIEnv *env, jclass cb, int index, jclass calledClass) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1287,7 +1287,7 @@ JVM_GetCPFieldModifiers(JNIEnv *env, jclass cb, int index, jclass calledClass) {
  */
 jint
 JVM_GetCPMethodModifiers(JNIEnv *env, jclass cb, int index, jclass calledClass) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1296,7 +1296,7 @@ JVM_GetCPMethodModifiers(JNIEnv *env, jclass cb, int index, jclass calledClass) 
  */
 void
 JVM_ReleaseUTF(const char *utf) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
 }
 
 /*
@@ -1304,7 +1304,7 @@ JVM_ReleaseUTF(const char *utf) {
  */
 jboolean
 JVM_IsSameClassPackage(JNIEnv *env, jclass class1, jclass class2) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1546,7 +1546,7 @@ jint JVM_GetLastErrorString(char *buffer, int length) {
 #elif os_LINUX
     return strlen(strerror_r(errno, buffer, length));
 #else
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 #endif
 }
@@ -1686,7 +1686,7 @@ JVM_Sync(jint fd) {
 
 jint
 JVM_InitializeSocketLibrary(void) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1694,100 +1694,100 @@ struct sockaddr;
 
 jint
 JVM_Socket(jint domain, jint type, jint protocol) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_SocketClose(jint fd) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_SocketShutdown(jint fd, jint howto) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_Send(jint fd, char *buf, jint nBytes, jint flags) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_Timeout(int fd, long timeout) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_Listen(jint fd, jint count) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_Connect(jint fd, struct sockaddr *him, jint len) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_Bind(jint fd, struct sockaddr *him, jint len) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_Accept(jint fd, struct sockaddr *him, jint *len) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_RecvFrom(jint fd, char *buf, int nBytes,
                   int flags, struct sockaddr *from, int *fromlen) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_SendTo(jint fd, char *buf, int len,
                 int flags, struct sockaddr *to, int tolen) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_SocketAvailable(jint fd, jint *result) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 
 jint
 JVM_GetSockName(jint fd, struct sockaddr *him, int *len) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 jint
 JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1799,19 +1799,19 @@ JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen) 
 
 struct protoent *
 JVM_GetProtoByName(char* name) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 struct hostent*
 JVM_GetHostByAddr(const char* name, int len, int type) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 struct hostent*
 JVM_GetHostByName(char* name) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1819,7 +1819,7 @@ JVM_GetHostByName(char* name) {
 
 int
 JVM_GetHostName(char* name, int namelen) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1834,13 +1834,13 @@ JVM_GetHostName(char* name, int namelen) {
  */
 int
 jio_vsnprintf(char *str, size_t count, const char *fmt, va_list args) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
 int
 jio_snprintf(char *str, size_t count, const char *fmt, ...) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1883,7 +1883,7 @@ void JVM_RawMonitorExit(void *monitor) {
  * java.lang.management support
  */
 void *JVM_GetManagement(jint version) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1894,7 +1894,7 @@ void *JVM_GetManagement(jint version) {
  */
 jobject
 JVM_InitAgentProperties(JNIEnv *env, jobject agent_props) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1911,7 +1911,7 @@ JVM_InitAgentProperties(JNIEnv *env, jobject agent_props) {
  */
 jobjectArray
 JVM_GetEnclosingMethodInfo(JNIEnv* env, jclass ofClass) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1936,7 +1936,7 @@ enum {
  */
 jintArray
 JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState) {
-    c_unimplemented();
+    c_UNIMPLEMENTED();
     return 0;
 }
 
@@ -1950,7 +1950,7 @@ JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState) {
  */
 jobjectArray
 JVM_GetThreadStateNames(JNIEnv* env, jint javaThreadState, jintArray values) {
-  c_unimplemented();
+  c_UNIMPLEMENTED();
   return 0;
 }
 

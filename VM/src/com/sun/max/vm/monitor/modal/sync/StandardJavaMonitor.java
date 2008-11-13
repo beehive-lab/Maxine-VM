@@ -28,7 +28,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- *
  * @author Simon Wilkinson
  */
 public class StandardJavaMonitor extends AbstractJavaMonitor {
@@ -125,7 +124,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         if (_ownerThread != VmThread.current()) {
             raiseIllegalMonitorStateException(_ownerThread);
         }
-        final int rcount = _recursionCount;
+        final int recursionCount = _recursionCount;
         final VmThread ownerThread = _ownerThread;
         if (timeoutMilliSeconds == 0L) {
             _ownerThread.setState(Thread.State.WAITING);
@@ -134,19 +133,18 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         }
 
         final ConditionVariable waitingCondition  = _ownerThread.waitingCondition();
-        if (waitingCondition.requiresAlloc()) {
-            waitingCondition.alloc();
+        if (waitingCondition.requiresAllocation()) {
+            waitingCondition.allocate();
         }
         _ownerThread.setNextWaitingThread(_waitingThreads);
         _waitingThreads = _ownerThread;
         _ownerThread = null;
-        final boolean interrupted = ownerThread.waitingCondition().threadWait(_mutex, timeoutMilliSeconds);
+        final boolean interrupted = !waitingCondition.threadWait(_mutex, timeoutMilliSeconds);
         _ownerThread = ownerThread;
         _ownerThread.setState(Thread.State.RUNNABLE);
-        _recursionCount = rcount;
+        _recursionCount = recursionCount;
 
         if (interrupted) {
-            // Clear thread's interrupted flag
             _ownerThread.setInterrupted();
             throw new InterruptedException();
         }
@@ -191,7 +189,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void alloc() {
+    public void allocate() {
         _mutex.alloc();
     }
 

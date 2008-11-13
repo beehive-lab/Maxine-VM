@@ -54,7 +54,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
         ModeHandler handler = _entryHandler;
         while (handler != null) {
             handler.setMonitorScheme(this);
-            handler = handler.getDelegate();
+            handler = handler.delegate();
         }
     }
 
@@ -63,12 +63,12 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
         if (phase == MaxineVM.Phase.PROTOTYPING || phase == MaxineVM.Phase.PRIMORDIAL) {
             ProgramError.check(Word.width() == WordWidth.BITS_64, "ModalMonitorScheme requires a 64-bit word.");
         }
+        JavaMonitorManager.initialize(phase);
         ModeHandler handler = _entryHandler;
         while (handler != null) {
             handler.initialize(phase);
-            handler = handler.getDelegate();
+            handler = handler.delegate();
         }
-        JavaMonitorManager.initialize(phase);
     }
 
     protected final MonitorSchemeEntry entryHandler() {
