@@ -85,7 +85,6 @@ public class MaxineTester {
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
         test.output.Recursion.class,
-        test.output.FloatNanTest.class,
         test.output.StaticInitializers.class,
         test.output.LocalCatch.class,
         test.output.Printf.class,
@@ -94,7 +93,11 @@ public class MaxineTester {
         util.GCTest3.class,
         util.GCTest4.class,
         util.GCTest5.class,
-        util.GCTest6.class
+        util.GCTest6.class,
+        test.output.FloatNanTest.class,
+        test.output.JavacTest.class,
+        test.output.JREJarLoadTest.class,
+        test.output.ZipFileReader.class,
     };
 
     private static String _javaConfigAlias = null;
