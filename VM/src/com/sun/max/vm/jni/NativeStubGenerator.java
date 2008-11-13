@@ -31,8 +31,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.graft.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
-import com.sun.max.vm.debug.Debug.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -119,9 +117,8 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final ClassMethodRefConstant _handles = createClassMethodConstant(VmThread.class, makeSymbol("jniHandles"));
     private static final ClassMethodRefConstant _handlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("top"));
     private static final ClassMethodRefConstant _resetHandlesTop = createClassMethodConstant(JniHandles.class, makeSymbol("resetTop"), int.class);
-    private static final FieldRefConstant _debugPrintStream = createFieldConstant(Debug.class, makeSymbol("out"));
-    private static final ClassMethodRefConstant _debugPrintln_String = createClassMethodConstant(DebugPrintStream.class, makeSymbol("println"), String.class);
-    private static final ClassMethodRefConstant _debugPrint_String = createClassMethodConstant(DebugPrintStream.class, makeSymbol("print"), String.class);
+    private static final ClassMethodRefConstant _logPrintln_String = createClassMethodConstant(Log.class, makeSymbol("println"), String.class);
+    private static final ClassMethodRefConstant _logPrint_String = createClassMethodConstant(Log.class, makeSymbol("print"), String.class);
     private static final ClassMethodRefConstant _traceJNI = createClassMethodConstant(ClassMethodActor.class, makeSymbol("traceJNI"));
     private static final StringConstant _threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
@@ -292,9 +289,8 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
     private void traceJniEntry() {
         invokestatic(_traceCurrentThreadPrefix, 0, 0);
-        getstatic(_debugPrintStream);
         ldc(PoolConstantFactory.createStringConstant("\" entering JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
-        invokevirtual(_debugPrintln_String, 2, 0);
+        invokestatic(_logPrintln_String, 1, 0);
     }
 
     /**
@@ -317,13 +313,12 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
     private void traceJniExit() {
         invokestatic(_traceCurrentThreadPrefix, 0, 0);
-        getstatic(_debugPrintStream);
         ldc(PoolConstantFactory.createStringConstant("\" exiting JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
-        invokevirtual(_debugPrintln_String, 2, 0);
+        invokestatic(_logPrintln_String, 1, 0);
     }
 
     private static void traceCurrentThreadPrefix() {
-        Debug.print("[Thread \"");
-        Debug.print(VmThread.current().getName());
+        Log.print("[Thread \"");
+        Log.print(VmThread.current().getName());
     }
 }

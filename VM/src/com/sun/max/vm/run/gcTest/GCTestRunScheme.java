@@ -27,7 +27,6 @@ import com.sun.max.collect.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
@@ -49,7 +48,7 @@ public class GCTestRunScheme  extends AbstractVMScheme implements RunScheme {
     public void run() {
         VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.PRISTINE);
 
-        Debug.println("initialized schemes pristine");
+        Log.println("initialized schemes pristine");
 
         Trap.initialize();
         MaxineVM.hostOrTarget().setPhase(MaxineVM.Phase.STARTING);
@@ -58,7 +57,7 @@ public class GCTestRunScheme  extends AbstractVMScheme implements RunScheme {
         VMOptions.parseStarting();
 
         VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.STARTING);
-        Debug.println("initialized schemes starting");
+        Log.println("initialized schemes starting");
 
         final HelloWorldThread[] thread = new HelloWorldThread[1];
 
@@ -77,10 +76,10 @@ public class GCTestRunScheme  extends AbstractVMScheme implements RunScheme {
                 e.printStackTrace();
             }
         }
-        Debug.println("Running gctest");
+        Log.println("Running gctest");
         final Object[] o = new Object[50000];
 
-        Debug.print(Reference.fromJava(o).toOrigin().asAddress());
+        Log.print(Reference.fromJava(o).toOrigin().asAddress());
 
         final Object object = new Object();
 
@@ -135,13 +134,13 @@ public class GCTestRunScheme  extends AbstractVMScheme implements RunScheme {
                     }
                 }
             }
-            Debug.println("done executing loop");
+            Log.println("done executing loop");
             if (_id == 0) {
                 synchronized (_token) {
                     _token.notify();
                 }
             }
-            Debug.println(this.getName() + " done");
+            Log.println(this.getName() + " done");
             _done = true;
         }
     }

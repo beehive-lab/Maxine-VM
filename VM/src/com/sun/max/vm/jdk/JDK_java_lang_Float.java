@@ -24,7 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
- * The <code>JDK_java_lang_Float</code> class implements substitutions for the
+ * The {@code JDK_java_lang_Float} class implements substitutions for the
  * float class.
  *
  * @author Ben L. Titzer

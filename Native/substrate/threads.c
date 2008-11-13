@@ -34,7 +34,7 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
-#include "debug.h"
+#include "log.h"
 #include "image.h"
 #include "jni.h"
 #include "word.h"
@@ -146,28 +146,28 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
 
 #if debug_THREADS
     int id = threadSpecifics->id;
-    debug_println("thread %3d: stackBase = %p", id, threadSpecifics->stackBase);
-    debug_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(threadSpecifics->stackBase));
-    debug_println("thread %3d: stackSize = %d", id, threadSpecifics->stackSize);
-    debug_println("thread %3d: stackBottom = %p", id, stackBottom);
-    debug_println("thread %3d: triggeredVmThreadLocals = %p", id, threadSpecifics->triggeredVmThreadLocals);
-    debug_println("thread %3d: enabledVmThreadLocals   = %p", id, threadSpecifics->enabledVmThreadLocals);
-    debug_println("thread %3d: disabledVmThreadLocals  = %p", id, threadSpecifics->disabledVmThreadLocals);
-    debug_println("thread %3d: refMapArea = %p", id, threadSpecifics->refMapArea);
-    debug_println("thread %3d: redZone    = %p", id, threadSpecifics->stackRedZone);
-    debug_println("thread %3d: yellowZone = %p", id, threadSpecifics->stackYellowZone);
-    debug_println("thread %3d: current    = %p", id, current);
-    debug_println("thread %3d: endOfStack = %p", id, threadSpecifics->stackBase + threadSpecifics->stackSize);
+    log_println("thread %3d: stackBase = %p", id, threadSpecifics->stackBase);
+    log_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(threadSpecifics->stackBase));
+    log_println("thread %3d: stackSize = %d", id, threadSpecifics->stackSize);
+    log_println("thread %3d: stackBottom = %p", id, stackBottom);
+    log_println("thread %3d: triggeredVmThreadLocals = %p", id, threadSpecifics->triggeredVmThreadLocals);
+    log_println("thread %3d: enabledVmThreadLocals   = %p", id, threadSpecifics->enabledVmThreadLocals);
+    log_println("thread %3d: disabledVmThreadLocals  = %p", id, threadSpecifics->disabledVmThreadLocals);
+    log_println("thread %3d: refMapArea = %p", id, threadSpecifics->refMapArea);
+    log_println("thread %3d: redZone    = %p", id, threadSpecifics->stackRedZone);
+    log_println("thread %3d: yellowZone = %p", id, threadSpecifics->stackYellowZone);
+    log_println("thread %3d: current    = %p", id, current);
+    log_println("thread %3d: endOfStack = %p", id, threadSpecifics->stackBase + threadSpecifics->stackSize);
 #endif
 
   /* make sure we didn't run out of space. */
-  debug_ASSERT(threadSpecifics->stackBase + threadSpecifics->stackSize > current);
+  c_ASSERT(threadSpecifics->stackBase + threadSpecifics->stackSize > current);
 
 #if os_GUESTVMXEN
     stackinfo_t stackInfo;
     guestvmXen_get_stack_info(&stackInfo);
-    debug_ASSERT(threadSpecifics->stackBase == (Address)stackInfo.ss_sp - stackInfo.ss_size);
-    debug_ASSERT(threadSpecifics->stackSize == stackInfo.ss_size);
+    c_ASSERT(threadSpecifics->stackBase == (Address)stackInfo.ss_sp - stackInfo.ss_size);
+    c_ASSERT(threadSpecifics->stackSize == stackInfo.ss_size);
 #endif
 
     protectPage(threadSpecifics->stackRedZone);
@@ -197,19 +197,19 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 #endif
 
     if (pageAlign(stackSize) != stackSize) {
-        debug_println("thread_create: thread stack size must be a multiple of the OS page size (%d)", getPageSize());
+        log_println("thread_create: thread stack size must be a multiple of the OS page size (%d)", getPageSize());
         return (Thread) 0;
     }
 
 #if debug_THREADS
-    debug_println("thread_create: id = %d, stack size = %ld", id, stackSize);
+    log_println("thread_create: id = %d, stack size = %ld", id, stackSize);
 #endif
 
     /* create the native thread locals and allocate stack if necessary */
     thread_Specifics *threadSpecifics = thread_createSegments(id, stackSize);
 
 #if debug_THREADS
-    debug_println("thread_create: stack base %lx", threadSpecifics->stackBase);
+    log_println("thread_create: stack base %lx", threadSpecifics->stackBase);
 #endif
 
 #if os_GUESTVMXEN
@@ -228,7 +228,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     error = pthread_create(&thread, &attributes, (void *(*)(void *)) thread_runJava, threadSpecifics);
     pthread_attr_destroy(&attributes);
     if (error != 0) {
-        debug_println("pthread_create failed with error: %d", error);
+        log_println("pthread_create failed with error: %d", error);
 	thread_destroySegments(threadSpecifics);
         return (Thread) 0;
     }
@@ -239,8 +239,8 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
      */
     error = thr_create((void *) NULL, (size_t) stackSize, thread_runJava, threadSpecifics, THR_NEW_LWP | THR_BOUND, &thread);
     if (error != 0) {
-        debug_println("%s", strerror(error));
-        debug_println("thr_create failed with error: %d", error);
+        log_println("%s", strerror(error));
+        log_println("thr_create failed with error: %d", error);
         thread_destroySegments(threadSpecifics);
         return (Thread) 0;
     }
@@ -287,7 +287,7 @@ static int thread_join(Thread thread) {
 #endif
 
     if (error != 0) {
-        debug_println("thread_join failed with error: %d", error);
+        log_println("thread_join failed with error: %d", error);
     }
     return error;
 }
@@ -296,11 +296,11 @@ void thread_runJava(void *arg) {
     thread_Specifics *threadSpecifics = (thread_Specifics *) arg;
     Address nativeThread = (Address) thread_current();
 
-    debug_ASSERT(threadSpecifics != NULL);
+    c_ASSERT(threadSpecifics != NULL);
     thread_setSpecific(_specificsKey, threadSpecifics);
 
 #if debug_THREADS
-    debug_println("thread_runJava: BEGIN t=%lx", nativeThread);
+    log_println("thread_runJava: BEGIN t=%lx", nativeThread);
 #endif
 
     /* set up the vm thread locals, guard pages, etc */
@@ -314,10 +314,10 @@ void thread_runJava(void *arg) {
     VMThreadRunMethod method = (VMThreadRunMethod) (image_heap() + (Address) image_header()->vmThreadRunMethodOffset);
 
 #if debug_THREADS
-    debug_print("thread_runJava: id=%d, t=%lx, calling method: ", threadSpecifics->id, nativeThread);
+    log_print("thread_runJava: id=%d, t=%lx, calling method: ", threadSpecifics->id, nativeThread);
     void image_printAddress(Address address);
     image_printAddress((Address) method);
-    debug_println("");
+    log_println("");
 #endif
 
     (*method)(threadSpecifics->id,
@@ -339,7 +339,7 @@ void thread_runJava(void *arg) {
     thread_destroySegments(threadSpecifics);
 
 #if debug_THREADS
-    debug_println("thread_runJava: END t=%lx", nativeThread);
+    log_println("thread_runJava: END t=%lx", nativeThread);
 #endif
 }
 
@@ -358,14 +358,14 @@ Address nativeThreadCreate(jint id, Size stackSize, jint priority) {
  */
 jboolean nativeJoin(Address thread) {
 #if debug_THREADS
-    debug_println("BEGIN nativeJoin: %lx", thread);
+    log_println("BEGIN nativeJoin: %lx", thread);
 #endif
     if (thread == 0L) {
         return false;
     }
     jboolean result = thread_join((Thread) thread) == 0;
 #if debug_THREADS
-    debug_println("END nativeJoin: %lx", thread);
+    log_println("END nativeJoin: %lx", thread);
 #endif
     return result;
 }
@@ -377,7 +377,7 @@ Java_com_sun_max_vm_thread_VmThread_nativeYield(JNIEnv *env, jclass c) {
 #elif os_GUESTVMXEN
     guestvmXen_yield();
 #else
-    debug_println("nativeYield ignored!");
+    log_println("nativeYield ignored!");
 #endif
 }
 
@@ -391,7 +391,7 @@ Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Addre
 #elif os_GUESTVMXEN
 	guestvmXen_interrupt((void*)nativeThread);
 #else
-    debug_println("nativeInterrupt ignored!");
+    log_println("nativeInterrupt ignored!");
  #endif
 }
 
@@ -408,7 +408,7 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
     if (value == -1) {
         int error = errno;
         if (error != EINTR && error != 0) {
-            debug_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec);
+            log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec);
         }
     }
     return value;
@@ -429,12 +429,12 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
 #if os_SOLARIS
     int result = thr_setprio(nativeThread, priority);
     if (result != 0) {
-        debug_println("nativeSetPriority %d failed!", priority);
+        log_println("nativeSetPriority %d failed!", priority);
     }
 #elif os_GUESTVMXEN
     guestvmXen_set_priority((void *) nativeThread, priority);
 #else
-    debug_println("nativeSetPriority %d ignored!", priority);
+    log_println("nativeSetPriority %d ignored!", priority);
 #endif
 }
 
@@ -447,9 +447,9 @@ long nativeGetDefaultThreadSignalStackSize() {
 }
 
 void nativeSetupAlternateSignalStack(Address base, long size) {
-	debug_ASSERT(wordAlign(base) == base);
+	c_ASSERT(wordAlign(base) == base);
 #if debug_THREADS
-    debug_println("nativeSetupAlternateSignalStack: alternate stack at %lx, size %lx ", base, size);
+    log_println("nativeSetupAlternateSignalStack: alternate stack at %lx, size %lx ", base, size);
 #endif
 #if os_DARWIN || os_LINUX || os_SOLARIS
 

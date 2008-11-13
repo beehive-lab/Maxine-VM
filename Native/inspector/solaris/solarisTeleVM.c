@@ -24,7 +24,7 @@
 
 #include <strings.h>
 
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 #include "proc.h"
 
@@ -68,15 +68,15 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleVM_nativeLoadBootHeap(JNIEnv *env
     	proc_Pupdate_maps(ph);
 	
         if (proc_Psetrun(ph, 0, 0) != 0) {
-            debug_println("nativeLoadBootHeap: Psetrun failed");
+            log_println("nativeLoadBootHeap: Psetrun failed");
             return 0L;
 	    }
         if (proc_Pwait(ph, 0) != 0) {
-            debug_println("nativeLoadBootHeap: Pwait failed");
+            log_println("nativeLoadBootHeap: Pwait failed");
             return 0L;
 	    }
         if (proc_Pmapping_iter(ph, mappingFunction, &a) != 0) {
-            debug_println("nativeLoadBootHeap: Pmapping_iter failed");
+            log_println("nativeLoadBootHeap: Pmapping_iter failed");
             return 0L;
         }
         if (a.heap != 0L) {

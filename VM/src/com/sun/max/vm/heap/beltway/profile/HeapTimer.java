@@ -26,7 +26,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.profile.*;
 import com.sun.max.profile.Metrics.Timer;
-import com.sun.max.vm.debug.*;
+import com.sun.max.vm.*;
 
 /**
  * This class contains GC timing facilities.
@@ -114,31 +114,31 @@ public class HeapTimer {
     }
 
     public static void printLastCollection() {
-        Debug.println("Time statistics of Last Collections: ");
+        Log.println("Time statistics of Last Collections: ");
         printCollection(_timers.length());
     }
 
     public static void printCollection(int collectionNum) {
         final Map<String, Metrics.Timer> timerBuffer = _timers.get(collectionNum);
-        Debug.print("Collection: ");
-        Debug.println(collectionNum);
+        Log.print("Collection: ");
+        Log.println(collectionNum);
         for (int i = 0; i < _timersLabels.length; i++) {
             printTimer(_timersLabels[i], timerBuffer.get(_timersLabels[i]));
         }
     }
 
     public static void printAllCollections() {
-        Debug.println("Time statistics of ALL Collections: ");
+        Log.println("Time statistics of ALL Collections: ");
         for (int i = 0; i < _timers.length(); i++) {
             printCollection(i);
         }
     }
 
     public static void printTimer(String timerName, Metrics.Timer timer) {
-        Debug.print(timerName);
-        Debug.print(": ");
-        Debug.print(timer.getMilliSeconds());
-        Debug.println(" msecs.");
+        Log.print(timerName);
+        Log.print(": ");
+        Log.print(timer.getMilliSeconds());
+        Log.println(" msecs.");
     }
 
 }

@@ -52,7 +52,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
             }
 
             synchronized (VmThreadMap.ACTIVE) {
-                // this is ok even though the GC does not get to scan this frame, because the object involved is in the boot image
+                // Stops this thread until GC is done.
             }
             VmThreadLocal.SAFEPOINT_VENUE.setVariableReference(vmThreadLocals, Reference.fromJava(Safepoint.Venue.NATIVE));
         }

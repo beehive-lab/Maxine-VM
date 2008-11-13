@@ -557,7 +557,7 @@ public class TirRecorder {
 
     /**
      * Takes a state snapshot using the bytecode position at the specified anchor. This differs from the
-     * <code>takeSnapshot()</code> which assumes the bytecode position is given by the <code>currentOpcodePosition()</code>.
+     * {@code takeSnapshot()} which assumes the bytecode position is given by the {@code currentOpcodePosition()}.
      * This method is typically used whenever a snapshot is taken without a call to {@link #record(BytecodeLocation)}.
      */
     public TirState takeSnapshot(TreeAnchor anchor) {

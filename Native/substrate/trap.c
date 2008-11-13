@@ -33,7 +33,7 @@
 
 #include "threads.h"
 #include "virtualMemory.h"
-#include "debug.h"
+#include "log.h"
 #include "jni.h"
 #include "os.h"
 #include "isa.h"
@@ -223,7 +223,7 @@ static int isInGuardZone(Address address, Address zoneBegin) {
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
 #if debug_TRAP
-    debug_println("SIGNAL: %0d", signal);
+    log_println("SIGNAL: %0d", signal);
 #endif
     thread_Specifics *threadSpecifics = (thread_Specifics *) thread_currentSpecifics();
     if (threadSpecifics == 0) {
@@ -268,15 +268,15 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 #if debug_TRAP
     char *sigName = signalName(signal);
     if (sigName != NULL) {
-        debug_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
-        debug_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
-        debug_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
-        debug_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
-#if !(os_SOLARIS && isa_SPARC)
-        debug_println("trapInfo[3] (stack top value)     = %p", trapInfo[3]);
-#endif
+        log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
+        log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
+        log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
+        log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
+#   if !(os_SOLARIS && isa_SPARC)
+        log_println("trapInfo[3] (stack top value)     = %p", trapInfo[3]);
+#   endif
     }
-    debug_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
+    log_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
 #endif
     setInstructionPointer(ucontext, _javaTrapStub);
 }

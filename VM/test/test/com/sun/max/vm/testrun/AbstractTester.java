@@ -27,7 +27,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.debug.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.run.java.*;
 
@@ -42,6 +41,7 @@ public abstract class AbstractTester extends JavaRunScheme {
     protected static int _testNum;
     protected static int _testStart;
     protected static int _testEnd;
+    protected static int _testCount;
     protected static int _verbose = 2;
 
     private static VMIntOption _verboseLevel = new VMIntOption("-XX:TesterVerbose", 2,
@@ -49,17 +49,17 @@ public abstract class AbstractTester extends JavaRunScheme {
     private static VMIntOption _startOption  = new VMIntOption("-XX:TesterStart=", -1,
                     "The number of the first test to run.", MaxineVM.Phase.STARTING);
     private static VMIntOption _endOption  = new VMIntOption("-XX:TesterEnd=", -1,
-                    "The number of the last test to run.", MaxineVM.Phase.STARTING);
+                    "The number of the last test to run. Specify 0 to run exactly one test.", MaxineVM.Phase.STARTING);
     private static VMOption _offOption  = new VMOption("-XX:TesterOff",
                     "Omit tests and run a standard Java program.", MaxineVM.Phase.STARTING);
     private static final boolean COMPILE_ALL_TEST_METHODS = true;
 
     public static void reportPassed(int passed, int total) {
-        Debug.println();
-        Debug.print(passed);
-        Debug.print(" of ");
-        Debug.print(total);
-        Debug.println(" passed.");
+        Log.print("Done: ");
+        Log.print(passed);
+        Log.print(" of ");
+        Log.print(total);
+        Log.println(" passed.");
     }
 
     public static void end(String run, boolean result) {
@@ -72,7 +72,7 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (_verbose == 3) {
             if (!result) {
                 printRun(run);
-                Debug.println(" failed with incorrect result");
+                Log.println(" failed with incorrect result");
             }
         }
         _testNum++;
@@ -84,60 +84,58 @@ public abstract class AbstractTester extends JavaRunScheme {
         }
         if (_verbose == 3) {
             printRun(run);
-            Debug.print(" failed with exception !");
-            Debug.println(t.getClass().getName());
+            Log.print(" failed with exception !");
+            Log.println(t.getClass().getName());
         }
         _testNum++;
     }
 
     private static void printRun(String run) {
-        Debug.print("\t");
+        Log.print("\t");
         printTestNum();
         if (run != null) {
-            Debug.print(run);
+            Log.print(run);
         }
     }
 
     public static void verbose(boolean passed, int finished, int total) {
-        Debug.print(passed ? '.' : 'X');
+        Log.print(passed ? '.' : 'X');
         if (finished % 10 == 0) {
-            Debug.print(' ');
+            Log.print(' ');
         }
         if (finished % 50 == 0) {
-            Debug.print(' ');
-            Debug.print(finished);
-            Debug.print(" of ");
-            Debug.println(total);
+            Log.print(' ');
+            Log.print(finished);
+            Log.print(" of ");
+            Log.println(total);
         } else if (finished == total) {
-            Debug.println();
+            Log.println();
         }
     }
 
     public static void begin(String test) {
         if (_verbose == 3) {
             printTestNum();
-            Debug.print(test);
+            Log.print(test);
             int i = test.length();
             while (i++ < 50) {
-                Debug.print(' ');
+                Log.print(' ');
             }
-            Debug.print("  next " + _testStart + "=");
-            Debug.print(_testNum + 1);
-            Debug.println("");
+            Log.println("  next: '" + _startOption + (_testNum + 1) + "', end: '" + _endOption + _testCount + "'");
         }
     }
 
     public static void printTestNum() {
         // print out the test number (aligned to the left)
-        Debug.print(_testNum);
-        Debug.print(':');
+        Log.print(_testNum);
+        Log.print(':');
         if (_testNum < 100) {
-            Debug.print(' ');
+            Log.print(' ');
         }
         if (_testNum < 10) {
-            Debug.print(' ');
+            Log.print(' ');
         }
-        Debug.print(' ');
+        Log.print(' ');
     }
 
     public AbstractTester(VMConfiguration vmConfiguration) {
@@ -225,9 +223,10 @@ public abstract class AbstractTester extends JavaRunScheme {
                 final int testEnd = _endOption.getValue();
                 if (testEnd == 0) {
                     _testEnd = _testStart + 1;
-                }
-                if (testEnd > 0) {
+                } else if (testEnd > 0) {
                     _testEnd = testEnd;
+                } else {
+                    _testEnd = _testCount;
                 }
                 if (_nativeTests) {
                     System.loadLibrary("javatest");
@@ -241,6 +240,7 @@ public abstract class AbstractTester extends JavaRunScheme {
         if (MaxineVM.isPrototyping()) {
             registerClasses();
             _nativeTests = BinaryImageGenerator._nativeTests;
+            _testCount = getClassList().length;
             super.initialize(phase);
         }
     }

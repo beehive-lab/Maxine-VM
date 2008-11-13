@@ -21,27 +21,36 @@
 package test.output;
 
 public class SafepointWhileInNative {
-    private static final class Sleeper implements Runnable {
+    static final class Sleeper implements Runnable {
+        boolean _done;
         public void run() {
             System.out.println("Sleeper: sleeping...");
             synchronized (this) {
                 // Notify that 'sleeper' has started
                 notify();
             }
-            synchronized (this) {
-                // Go to sleep
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            while (!stopRequested()) {
+                synchronized (this) {
+                    // Go to sleep
+                    try {
+                        wait(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             System.out.println("Sleeper: woke up!");
         }
+        synchronized boolean stopRequested() {
+            return _done;
+        }
+        synchronized void requestStop() {
+            _done = true;
+        }
     }
 
     public static void main(String[] args) throws InterruptedException {
-        final Runnable sleeper = new Sleeper();
+        final Sleeper sleeper = new Sleeper();
         System.gc();
         final Thread sleeperThread = new Thread(sleeper, "Sleeper");
 
@@ -61,10 +70,7 @@ public class SafepointWhileInNative {
         System.gc();
         System.out.println("GC stop");
 
-        synchronized (sleeper) {
-            // Wake up 'sleeper'
-            sleeper.notify();
-        }
+        sleeper.requestStop();
         sleeperThread.join();
     }
 }

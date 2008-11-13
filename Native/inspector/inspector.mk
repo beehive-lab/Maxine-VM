@@ -26,7 +26,7 @@ LIB = inspector
 include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/inspector/$(OS)/$(OS).mk
 
-SOURCES = $(OS_SOURCES) address.c arithmeticException.c boxedMemory.c boxedPointer.c c.c debug.c inspector.c mutex.c isa.c $(ISA).c jni.c loophole.c platform.c relocation.c virtualMemory.c
+SOURCES = $(OS_SOURCES) address.c arithmeticException.c boxedMemory.c boxedPointer.c c.c log.c inspector.c mutex.c isa.c $(ISA).c jni.c loophole.c platform.c relocation.c virtualMemory.c
 
 SOURCE_DIRS = inspector inspector/$(OS) jni platform prototype share
 

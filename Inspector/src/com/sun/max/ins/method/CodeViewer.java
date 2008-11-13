@@ -42,18 +42,6 @@ import com.sun.max.vm.stack.*;
  *
  * @author Michael Van De Vanter
  */
-/**
- * @author Michael Van De Vanter
- *
- */
-/**
- * @author Michael Van De Vanter
- *
- */
-/**
- * @author Michael Van De Vanter
- *
- */
 public abstract class CodeViewer extends InspectorPanel {
 
     private final MethodInspector _parent;

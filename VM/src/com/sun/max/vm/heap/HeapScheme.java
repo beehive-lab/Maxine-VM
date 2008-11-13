@@ -160,6 +160,12 @@ public interface HeapScheme extends VMScheme {
      */
     boolean contains(Address address);
 
+    /**
+     * Performs a garbage collection.
+     *
+     * @param requestedFreeSpace the minimum amount of space the collection must free up
+     * @return {@code true} if {@code requestedFreeSpace} was freed up, {@code false} otherwise
+     */
     boolean collectGarbage(Size requestedFreeSpace);
 
     Size reportFreeSpace();

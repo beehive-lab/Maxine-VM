@@ -63,6 +63,8 @@ build/$(OS)/javatest/makefile : javatest/javatest.mk
  
 clean :
 	rm -rf build/$(OS)
- 
-.PHONY: clean prototype substrate launch inspector javatest
+
+platform :
+	echo $(PLATFORM)
+.PHONY: clean prototype substrate launch inspector javatest platform
 

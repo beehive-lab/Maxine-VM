@@ -23,7 +23,7 @@
 #include <sys/ptrace.h>
 
 #include "word.h"
-#include "debug.h"
+#include "log.h"
 
 static Boolean _logging = false;
 
@@ -92,11 +92,11 @@ int debug_ptrace(const char *func, int line, int request, pid_t pid, caddr_t add
     int result;
 
     if (_logging) {
-        debug_print("%s:%d ptrace(%s, %d, 0x%lx, %d)", func, line, requestToString(request), pid, address, data);
+        log_print("%s:%d ptrace(%s, %d, 0x%lx, %d)", func, line, requestToString(request), pid, address, data);
     }
     result = ptrace(request, pid, address, data);
     if (_logging) {
-        debug_print(" = %d\n", result);
+        log_print(" = %d\n", result);
     }
     return result;
 }
