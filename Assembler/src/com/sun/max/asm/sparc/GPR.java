@@ -105,4 +105,16 @@ public class GPR extends AbstractSymbolicArgument {
 
     public static final Symbolizer<GPR> SYMBOLIZER = Symbolizer.Static.initialize(GPR.class);
     public static final Symbolizer<Even> EVEN_SYMBOLIZER = Symbolizer.Static.initialize(GPR.class, Even.class);
+
+    public static final Symbolizer<GPR> GLOBAL_SYMBOLIZER = Symbolizer.Static.fromSymbolizer(SYMBOLIZER, new com.sun.max.util.Predicate<GPR>() {
+        public boolean evaluate(GPR register) {
+            return register.isGlobal();
+        }
+    });
+
+    public static final Symbolizer<GPR> IN_SYMBOLIZER = Symbolizer.Static.fromSymbolizer(SYMBOLIZER, new com.sun.max.util.Predicate<GPR>() {
+        public boolean evaluate(GPR register) {
+            return register.isIn();
+        }
+    });
 }

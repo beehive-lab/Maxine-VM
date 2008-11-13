@@ -26,7 +26,7 @@ LIB = javatest
 include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/inspector/$(OS)/$(OS).mk
 
-SOURCES = jvmni.c tests.c threads.c
+SOURCES = jvmni.c tests.c threads.c jnitests.c
 
 SOURCE_DIRS = javatest jni platform prototype share substrate
 
