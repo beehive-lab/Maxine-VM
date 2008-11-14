@@ -97,6 +97,7 @@ public class IrTraceObserver extends IrObserverAdapter {
         if (hasLevel(afterGenerationTraceLevel())) {
             _out.println(traceString(irMethod, "after generation"));
             _out.println(irMethod.traceToString());
+            _out.flush();
         }
     }
 
