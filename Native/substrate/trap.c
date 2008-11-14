@@ -97,7 +97,7 @@ void setHandler(int signal, SignalHandlerFunction handler) {
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
     newSigaction.sa_sigaction = handler;
-    newSigaction.sa_handler = NULL;
+    newSigaction.sa_handler = handler;
 
     if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
         log_exit(1, "sigaction failed");
