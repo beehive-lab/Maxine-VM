@@ -79,9 +79,15 @@ int getTrapNumber(int signal) {
 
 static Address _javaTrapStub;
 
-void setHandler(int signal, void *handler) {
 #if os_GUESTVMXEN
-    register_fault_handler(signal, (fault_handler_t)handler);
+#define SignalHandlerFunction fault_handler_t
+#else
+typedef void (*SignalHandlerFunction)(int signal, SigInfo *signalInfo, void *ucontext);
+#endif
+
+void setHandler(int signal, SignalHandlerFunction handler) {
+#if os_GUESTVMXEN
+    register_fault_handler(signal, handler);
 #else
 
     struct sigaction newSigaction;
@@ -141,35 +147,6 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #   endif
 #elif os_GUESTVMXEN
     ucontext->rip = (unsigned long) stub;
-#else
-#   error Unimplemented
-#endif
-}
-
-static Address getFramePointer(UContext *ucontext) {
-#if os_SOLARIS
-#   if isa_SPARC /* 64-bit SPARC*/
-        Address sp = ucontext->uc_mcontext.gregs[REG_SP];
-        RegisterWindow rwin = (RegisterWindow) (sp + STACK_BIAS);
-        Address fp = (Address) rwin->rw_fp;
-        return fp;
-#   elif isa_AMD64 || isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_FP];
-#   else
-#       error Unimplemented
-#   endif
-#elif os_LINUX
-#   if isa_AMD64
-        return ucontext->uc_mcontext.gregs[REG_RBP];
-#   elif isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_EBP];
-#   else
-#       error Unimplemented
-#   endif
-#elif os_DARWIN
-    return ucontext->uc_mcontext->__ss.__rbp;
-#elif os_GUESTVMXEN
-    return ucontext->rbp;
 #else
 #   error Unimplemented
 #endif
@@ -283,11 +260,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
 void nativeInitialize(Address javaTrapStub) {
     _javaTrapStub = javaTrapStub;
-    setHandler(SIGSEGV, globalSignalHandler);
-    setHandler(SIGBUS, globalSignalHandler);
-    setHandler(SIGILL, globalSignalHandler);
-    setHandler(SIGFPE, globalSignalHandler);
-    setHandler(SIGUSR1, globalSignalHandler);
+    setHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
 }
 
 
