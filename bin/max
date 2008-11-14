@@ -22,6 +22,8 @@ unknown_option=""
 show_help=false
 default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
 jvm_args="$default_jvm_args"
+jvm_args_prefix=""
+jvm_args_suffix=""
 maxine_dir=""
 make=gmake
 while [ "${1:0:1}" = "-" ]; do
@@ -55,6 +57,14 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             jvm_args=$1
             ;;
+        -jvm_args_prefix )
+            shift
+            jvm_args_prefix=$1
+            ;;
+        -jvm_args_suffix )
+            shift
+            jvm_args_suffix=$1
+            ;;
         * )
             unknown_option=$1
             break
@@ -64,6 +74,7 @@ while [ "${1:0:1}" = "-" ]; do
 done
 command=$1
 shift
+jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
 command_args=$@
 
 # Ensure that the non-optional variables are set
@@ -432,6 +443,8 @@ function showCommands() {
     echo "                (default: value of the JAVA_HOME environment variable)"
     echo " -jvm         specifies Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -jvm_args    specifies Java VM arguments (default: ${default_jvm_args})"
+    echo " -jvm_args_prefix prefix Java VM arguments"
+    echo " -jvm_args_suffix suffix Java VM arguments"
     echo " -maxine      specifies base directory of the Maxine code base"
     echo "                (default: ${maxine_dir})"
     echo " -make        path to GNU make executable (default: gmake)"
