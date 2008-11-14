@@ -41,10 +41,6 @@ import com.sun.max.vm.type.*;
  * that one source implement a bytecode based on a given set of assumption, i.e., resolved symbolic reference,
  * initialized class of operands, top of stack cached in register(s), and so on.
  *
- * TODO: the implementation here currently assumes an AMD64-like stack that grows downward: the assumption is visible
- * wherever the low-level StackFrameBuiltins are used in the code. This should be changed to make this code
- * platform-independent and re-usable across target.
- *
  * This source of templates makes no assumptions.
  *
  * @author Laurent Daynes

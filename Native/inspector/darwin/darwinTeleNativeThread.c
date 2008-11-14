@@ -55,17 +55,17 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JN
     OsFloatingPointRegistersStruct osFloatRegisters;
     OsStateRegistersStruct osStateRegisters;
 
-    if (integerRegistersLength > sizeof(canonicalIntegerRegisters)) {
+    if (integerRegistersLength > (jint) sizeof(canonicalIntegerRegisters)) {
         log_println("buffer for integer register data is too large");
         return false;
     }
 
-    if (stateRegistersLength > sizeof(canonicalStateRegisters)) {
+    if (stateRegistersLength > (jint) sizeof(canonicalStateRegisters)) {
         log_println("buffer for state register data is too large");
         return false;
     }
 
-    if (floatingPointRegistersLength > sizeof(canonicalFloatingPointRegisters)) {
+    if (floatingPointRegistersLength > (jint) sizeof(canonicalFloatingPointRegisters)) {
         log_println("buffer for floating point register data is too large");
         return false;
     }
@@ -130,15 +130,6 @@ jboolean setSingleStep(thread_act_t thread, jboolean isEnabled) {
     return true;
 }
 
-static char* threadRunStateNames[] = { "<unknown>", "RUNNING", "STOPPED", "WAITING", "UNINTERRUPTIBLE", "HALTED" };
-
-static void dumpBasicThreadInfo(thread_t thread, thread_basic_info_t threadInfo) {
-    log_println("thread info for %ld:", thread);
-    log_println("    run state: %d [%s]:", threadInfo->run_state, threadRunStateNames[threadInfo->run_state]);
-    log_println("    flags: 0x%x [%s%s]:", threadInfo->flags, (threadInfo->flags & TH_FLAGS_SWAPPED ? "SWAPPED " : ""), (threadInfo->flags & TH_FLAGS_IDLE ? "IDLE " : ""));
-    log_println("    suspend count: %d:", threadInfo->suspend_count);
-}
-
 static jboolean suspendOtherThreads(jlong task, thread_t current) {
     thread_array_t thread_list = NULL;
     unsigned int nthreads = 0;
@@ -177,7 +168,7 @@ static jboolean suspendOtherThreads(jlong task, thread_t current) {
         log_println("thread_info() failed on thread to step");
         return false;
     }
-    for (j = 0; j < info.suspend_count; j++) {
+    for (j = 0; j < (unsigned) info.suspend_count; j++) {
         // unsuspend the current thread.
         thread_resume(current);
     }
@@ -201,7 +192,7 @@ static jboolean unsuspendOtherThreads(jlong task, thread_t current) {
                 log_println("thread_info() failed when single stepping");
                 return false;
             }
-            for (j = 0; j < info.suspend_count; j++) {
+            for (j = 0; j < (unsigned) info.suspend_count; j++) {
                 kret = thread_resume(thread_list[i]);
                 if (kret != KERN_SUCCESS) {
                     log_println("thread_resume() failed when single stepping");

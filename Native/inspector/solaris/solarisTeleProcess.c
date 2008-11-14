@@ -87,7 +87,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv 
         return NULL;
     }
 
-    return ph;
+    return (jlong) ph;
 }
 
 JNIEXPORT void JNICALL
@@ -182,7 +182,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWait(JNIEnv *env, j
     return true;
 }
 
-ThreadState_t lwpStatusToThreadState(lwpstatus_t *lwpStatus) {
+ThreadState_t lwpStatusToThreadState(const lwpstatus_t *lwpStatus) {
     short why = lwpStatus->pr_why;
     short what = lwpStatus->pr_what;
     int flags = lwpStatus->pr_flags;
@@ -237,7 +237,7 @@ static jmethodID _methodID = NULL;
 
 static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     Argument a = (Argument) data;
-    pstatus_t *pStatus = proc_Pstatus(a->ph);
+    pstatus_t *pStatus = (pstatus_t *) proc_Pstatus(a->ph);
     if (lwpStatus->pr_lwpid == pStatus->pr_agentid) {
         // Ignore the agent thread (i.e. the thread communicating with the inspector)
         return 0;
@@ -278,7 +278,7 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     log_printStatusFlags("Status flags: ", lwpStatus->pr_flags, "\n");
     log_printWhyStopped("Why stopped: ", lwpStatus, "\n");
 #endif
-    
+
     (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, lwpId, threadState, stack.ss_sp, stack.ss_size);
     return 0;
 }

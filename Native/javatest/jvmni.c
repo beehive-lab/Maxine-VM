@@ -30,6 +30,25 @@
 
 #include "jni.h"
 
+JNIEXPORT jobjectArray JNICALL
+JVM_GetClassContext(JNIEnv *env);
+
+JNIEXPORT jboolean JNICALL
+JVM_IsNaN(JNIEnv *env, jdouble d);
+
+JNIEXPORT jlong JNICALL
+JVM_MaxMemory();
+
+JNIEXPORT jlong JNICALL
+JVM_TotalMemory();
+
+JNIEXPORT jlong JNICALL
+JVM_FreeMemory();
+
+JNIEXPORT void JNICALL
+JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos,
+               jobject dst, jint dst_pos, jint length);
+
 JNIEXPORT jobject JNICALL
 Java_test_jvmni_JVM_1GetClassContext01_call(JNIEnv *env, jclass c)
 {

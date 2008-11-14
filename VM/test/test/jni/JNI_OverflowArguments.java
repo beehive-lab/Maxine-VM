@@ -18,52 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Bernd Mathiske
+package test.jni;
+
+
+/*
+ * @Harness: java
+ * @Runs: 0 = true, 1 = true
  */
+public class JNI_OverflowArguments {
 
-#include <stdlib.h>
-#include "log.h"
+    public static boolean test(int arg) {
+        final byte [] buf = new byte[8338];
+        final long jzfile = 0xdeadbeef;
+        final long jzentry = 0xcafebabe;
+        final long pos = 8192;
+        final int off = 77;
+        final int len = 177;
 
-#include "c.h"
-
-void c_initialize(void) {
-    c_ASSERT((Unsigned1) -1 > 0);
-    c_ASSERT(sizeof(Unsigned1) == 1);
-
-    c_ASSERT((Unsigned2) -1 > 0);
-    c_ASSERT(sizeof(Unsigned2) == 2);
-
-    c_ASSERT((Unsigned4) -1 > 0);
-    c_ASSERT(sizeof(Unsigned4) == 4);
-
-    c_ASSERT((Unsigned8) -1 > 0);
-    c_ASSERT(sizeof(Unsigned8) == 8);
-
-    c_ASSERT((Signed1) -1 < 0);
-    c_ASSERT(sizeof(Signed1) == 1);
-
-    c_ASSERT((Signed2) -1 < 0);
-    c_ASSERT(sizeof(Signed2) == 2);
-
-    c_ASSERT((Signed4) -1 < 0);
-    c_ASSERT(sizeof(Signed4) == 4);
-
-    c_ASSERT((Signed8) -1 < 0);
-    c_ASSERT(sizeof(Signed8) == 8);
-}
-
-int c_unimplemented_impl(const char* function, const char* file, int line) {
-    extern void exit(int);
-
-    log_println("unimplemented (%s in %s:%d)", function, file, line);
-    exit(1);
-    return -1;
-}
-
-void c_assert(Boolean condition, char *conditionString, char *fileName, int lineNumber) {
-    if (!condition) {
-        log_println("assert %s[%d]: %s", fileName, lineNumber, conditionString);
-        exit(1);
+        if (arg == 0) {
+            final int res = read1(jzfile, jzentry, pos, buf, off, len);
+            if (res == len) {
+                return true;
+            }
+        } else if (arg == 1) {
+            final int res = read2(jzfile, jzentry, pos, buf, off, len);
+            if (res == off) {
+                return true;
+            }
+        }
+        return false;
     }
+
+    private static native int read1(long jzfile, long jzentry,
+                   long pos, byte[] b, int off, int len);
+    private static native int read2(long jzfile, long jzentry,
+                    long pos, byte[] b, int off, int len);
 }

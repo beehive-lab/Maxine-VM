@@ -70,7 +70,7 @@ public final class AMD64EirPrologue extends EirPrologue<AMD64EirInstructionVisit
         }
     }
 
-    public static void emitTrapStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
+    private static void emitTrapStubPrologue(EirMethod eirMethod, final AMD64Assembler asm, final AMD64GeneralRegister64 framePointer, final int originalFrameSize) {
         final AMD64GeneralRegister64 latchRegister = AMD64Safepoint.LATCH_REGISTER;
         final AMD64GeneralRegister64 scratchRegister = AMD64GeneralRegister64.R11;
         // expand the frame size for this method to allow for the saved register state
