@@ -86,7 +86,7 @@ public class MaxineTesterConfiguration {
     static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
     public static boolean isExpectedFailure(Class outputTestClass, String config) {
-        final Platform platform = Platform.target();
+        final Platform platform = Platform.host();
         if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
             final ProcessorKind processorKind = platform.processorKind();
             if (processorKind.processorModel() == ProcessorModel.AMD64) {

@@ -1311,6 +1311,12 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         addInstruction(new JMP_indirect(eirBlock(), address));
     }
 
+
+    @Override
+    public void visitPause(Pause builtin, DirValue result, DirValue[] arguments) {
+        addInstruction(new PAUSE(eirBlock()));
+    }
+
     @Override
     public void visitCompareInts(CompareInts builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirResult == null;

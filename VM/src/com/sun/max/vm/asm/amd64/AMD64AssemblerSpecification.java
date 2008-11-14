@@ -458,6 +458,7 @@ interface AMD64AssemblerSpecification {
     void popfq();
     void push(AMD64GeneralRegister64 register);
     void pushfq();
+    void repe();
     void ret();
     void ret(short imm16);
     void rip_add(AMD64GeneralRegister32 destination, int rel32);
@@ -5122,7 +5123,6 @@ interface AMD64AssemblerSpecification {
 //    void rdmsr();
 //    void rdpmc();
 //    void rdtsc();
-//    void repe();
 //    void repne();
 //    void retf();
 //    void retf(short imm16);
