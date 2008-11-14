@@ -33,6 +33,7 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -225,9 +226,22 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer _allocationMarkPointer;
 
+    @PROTOTYPE_ONLY
+    private void protectTimer(Metrics.Timer timer) {
+        JavaMonitorManager.prototypeBindStickyMonitor(timer);
+        JavaMonitorManager.prototypeBindStickyMonitor(timer.counter());
+    }
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRISTINE) {
+        if (MaxineVM.isPrototyping()) {
+            protectTimer(_clearTimer);
+            protectTimer(_gcTimer);
+            protectTimer(_rootScanTimer);
+            protectTimer(_bootHeapScanTimer);
+            protectTimer(_codeScanTimer);
+            protectTimer(_copyTimer);
+        } else if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize();
 
             _fromSpace.setSize(size);
