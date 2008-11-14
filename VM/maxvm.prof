@@ -1,0 +1,594 @@
+BEGIN Bytecode_Size: 
+  37         : 5
+  12         : 101
+  7          : 10
+  6          : 9
+  5          : 8
+  3          : 2
+  3          : 4
+  3          : 15
+  3          : 19
+  3          : 18
+  3          : 41
+  2          : 1
+  2          : 6
+  2          : 11
+  2          : 12
+  2          : 21
+  2          : 22
+  2          : 26
+  2          : 31
+  2          : 33
+  2          : 43
+  2          : 40
+  2          : 46
+  2          : 55
+  2          : 74
+  2          : 84
+  2          : 92
+  2          : 90
+  2          : 102
+  2          : 109
+  1          : 141
+  1          : 7
+  1          : 404
+  1          : 16
+  1          : 257
+  1          : 262
+  1          : 20
+  1          : 562
+  1          : 23
+  1          : 25
+  1          : 24
+  1          : 27
+  1          : 28
+  1          : 305
+  1          : 34
+  1          : 170
+  1          : 35
+  1          : 32
+  1          : 38
+  1          : 39
+  1          : 36
+  1          : 42
+  1          : 312
+  1          : 47
+  1          : 44
+  1          : 48
+  1          : 53
+  1          : 52
+  1          : 59
+  1          : 178
+  1          : 58
+  1          : 176
+  1          : 57
+  1          : 60
+  1          : 204
+  1          : 70
+  1          : 64
+  1          : 336
+  1          : 1158
+  1          : 72
+  1          : 621
+  1          : 87
+  1          : 86
+  1          : 212
+  1          : 95
+  1          : 88
+  1          : 91
+  1          : 369
+  1          : 229
+  1          : 105
+  1          : 119
+  1          : 114
+  1          : 127
+  1          : 125
+  1          : 121
+END Bytecode_Size
+BEGIN Targetcode_Size: 
+  19         : 151
+  11         : 1438
+  10         : 126
+  5          : 230
+  3          : 117
+  3          : 176
+  2          : 259
+  2          : 334
+  2          : 851
+  2          : 111
+  2          : 204
+  2          : 217
+  2          : 250
+  1          : 819
+  1          : 818
+  1          : 276
+  1          : 1364
+  1          : 1090
+  1          : 1361
+  1          : 5247
+  1          : 565
+  1          : 3808
+  1          : 1650
+  1          : 574
+  1          : 1349
+  1          : 811
+  1          : 787
+  1          : 308
+  1          : 1602
+  1          : 316
+  1          : 793
+  1          : 523
+  1          : 1145
+  1          : 7099
+  1          : 4053
+  1          : 296
+  1          : 783
+  1          : 542
+  1          : 340
+  1          : 1026
+  1          : 347
+  1          : 622
+  1          : 74
+  1          : 1290
+  1          : 626
+  1          : 1838
+  1          : 1597
+  1          : 631
+  1          : 1283
+  1          : 1830
+  1          : 633
+  1          : 875
+  1          : 1045
+  1          : 98
+  1          : 586
+  1          : 587
+  1          : 3979
+  1          : 2531
+  1          : 356
+  1          : 119
+  1          : 832
+  1          : 1323
+  1          : 116
+  1          : 3036
+  1          : 600
+  1          : 840
+  1          : 360
+  1          : 1078
+  1          : 1793
+  1          : 958
+  1          : 950
+  1          : 132
+  1          : 134
+  1          : 153
+  1          : 154
+  1          : 3418
+  1          : 1235
+  1          : 144
+  1          : 692
+  1          : 150
+  1          : 388
+  1          : 649
+  1          : 923
+  1          : 1249
+  1          : 446
+  1          : 438
+  1          : 2356
+  1          : 428
+  1          : 419
+  1          : 182
+  1          : 183
+  1          : 14008
+  1          : 205
+  1          : 1424
+  1          : 1154
+  1          : 200
+  1          : 203
+  1          : 1159
+  1          : 1971
+  1          : 199
+  1          : 466
+  1          : 195
+  1          : 4588
+  1          : 218
+  1          : 212
+  1          : 215
+  1          : 1457
+  1          : 2400
+  1          : 716
+  1          : 718
+  1          : 1463
+  1          : 3362
+  1          : 1466
+  1          : 503
+  1          : 228
+  1          : 1678
+  1          : 1470
+  1          : 5111
+  1          : 731
+  1          : 488
+  1          : 251
+  1          : 14619
+  1          : 2425
+  1          : 1215
+  1          : 483
+  1          : 482
+END Targetcode_Size
+BEGIN TargetcodeSize_Per_Bytecode: 
+  19         : 302
+  16         : 142
+  11         : 252
+  5          : 140
+  4          : 230
+  3          : 131
+  3          : 154
+  3          : 148
+  3          : 585
+  3          : 352
+  3          : 126
+  2          : 139
+  2          : 138
+  2          : 277
+  2          : 143
+  2          : 282
+  2          : 132
+  2          : 134
+  2          : 158
+  2          : 144
+  2          : 171
+  2          : 161
+  2          : 434
+  2          : 180
+  2          : 201
+  2          : 200
+  2          : 222
+  2          : 219
+  2          : 235
+  2          : 118
+  2          : 255
+  2          : 121
+  2          : 120
+  1          : 141
+  1          : 276
+  1          : 129
+  1          : 130
+  1          : 135
+  1          : 152
+  1          : 256
+  1          : 155
+  1          : 156
+  1          : 145
+  1          : 265
+  1          : 147
+  1          : 149
+  1          : 268
+  1          : 151
+  1          : 170
+  1          : 169
+  1          : 175
+  1          : 173
+  1          : 172
+  1          : 162
+  1          : 160
+  1          : 167
+  1          : 166
+  1          : 165
+  1          : 164
+  1          : 186
+  1          : 184
+  1          : 291
+  1          : 190
+  1          : 178
+  1          : 182
+  1          : 300
+  1          : 183
+  1          : 205
+  1          : 340
+  1          : 338
+  1          : 202
+  1          : 77
+  1          : 193
+  1          : 192
+  1          : 740
+  1          : 223
+  1          : 86
+  1          : 80
+  1          : 457
+  1          : 214
+  1          : 208
+  1          : 234
+  1          : 232
+  1          : 231
+  1          : 377
+  1          : 980
+  1          : 253
+  1          : 113
+  1          : 248
+  1          : 125
+  1          : 124
+  1          : 242
+  1          : 360
+  1          : 243
+END TargetcodeSize_Per_Bytecode
+BEGIN Compilation_Stats
+                     #Compiler :      BC_Size :  Source_Size :  Target_Size :     Dir_Call :     Ind_Call :   Safepoints :         Refs :  ScalarBytes : Comp_Time (ms) : Method
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        1.354 : com.sun.max.vm.reflection.GeneratedMethodStub233.invoke
+              AMD64JitCompiler :          176 :            0 :         1424 :           40 :            4 :            0 :           18 :            0 :        2.383 : java.lang.System.initializeSystemClass
+              AMD64JitCompiler :          119 :            0 :         1971 :           23 :            6 :            3 :           13 :            0 :        0.624 : com.sun.max.vm.reflection.GeneratedConstructorStub1.newInstance
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.437 : com.sun.max.vm.reflection.GeneratedMethodStub234.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.404 : com.sun.max.vm.reflection.GeneratedMethodStub235.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.261 : com.sun.max.vm.reflection.GeneratedMethodStub236.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.384 : com.sun.max.vm.reflection.GeneratedMethodStub237.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.344 : com.sun.max.vm.reflection.GeneratedMethodStub238.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.326 : com.sun.max.vm.reflection.GeneratedMethodStub239.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.318 : com.sun.max.vm.reflection.GeneratedMethodStub240.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.386 : com.sun.max.vm.reflection.GeneratedMethodStub241.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.341 : com.sun.max.vm.reflection.GeneratedMethodStub242.invoke
+              AMD64JitCompiler :          101 :            0 :         1438 :           17 :            4 :            3 :           11 :            0 :        0.372 : com.sun.max.vm.reflection.GeneratedMethodStub243.invoke
+              AMD64JitCompiler :          114 :            0 :         1349 :           14 :           10 :            0 :           20 :            0 :        0.584 : java.io.File.<clinit>
+              AMD64JitCompiler :           55 :            0 :          840 :            7 :            4 :            1 :            1 :            0 :        0.420 : java.lang.Class.desiredAssertionStatus
+       BcdeTargetAMD64Compiler :           41 :            0 :          316 :            5 :            1 :            2 :            2 :            8 :       18.276 : java.io.FileSystem.getFileSystem
+              AMD64JitCompiler :          105 :            0 :         1470 :           19 :            4 :            3 :           11 :            0 :        0.339 : com.sun.max.vm.reflection.GeneratedConstructorStub2.newInstance
+              AMD64JitCompiler :           92 :            0 :         1290 :           20 :            3 :            0 :           12 :            0 :        0.604 : java.io.UnixFileSystem.<init>
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.090 : java.io.FileSystem.<init>
+              AMD64JitCompiler :            1 :            0 :           98 :            0 :            1 :            0 :            1 :            0 :        0.122 : java.lang.Object.<init>
+              AMD64JitCompiler :            8 :            0 :          144 :            1 :            1 :            0 :            1 :            0 :        0.126 : java.io.ExpiringCache.<init>
+              AMD64JitCompiler :           36 :            0 :          488 :            4 :            1 :            0 :            2 :            0 :        0.245 : java.io.ExpiringCache.<init>
+              AMD64JitCompiler :           10 :            0 :          230 :            2 :            1 :            0 :            1 :            0 :        0.125 : java.io.ExpiringCache$1.<init>
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.132 : java.io.UnixFileSystem.getSeparator
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.090 : java.io.UnixFileSystem.getPathSeparator
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.183 : java.io.File$1.<init>
+              AMD64JitCompiler :            5 :            0 :          176 :            1 :            1 :            0 :            2 :            0 :        0.192 : sun.misc.SharedSecrets.setJavaIODeleteOnExitAccess
+              AMD64JitCompiler :           25 :            0 :          215 :            3 :            1 :            0 :            7 :            0 :        0.177 : sun.misc.Version.init
+              AMD64JitCompiler :           84 :            0 :         1597 :           18 :            7 :            1 :           18 :            0 :        0.413 : java.lang.Terminator.setup
+              AMD64JitCompiler :           19 :            0 :          250 :            0 :            2 :            0 :            5 :            0 :        0.169 : sun.misc.SharedSecrets.getJavaIOAccess
+              AMD64JitCompiler :            9 :            0 :          182 :            2 :            1 :            0 :            2 :            0 :        0.186 : java.io.Console$1.consoleRestoreHook
+              AMD64JitCompiler :           10 :            0 :          230 :            2 :            1 :            0 :            1 :            0 :        0.242 : java.io.Console$1$1.<init>
+              AMD64JitCompiler :           48 :            0 :          631 :            8 :            2 :            1 :            6 :            0 :        0.286 : java.lang.Shutdown.add
+              AMD64JitCompiler :           33 :            0 :          419 :            7 :            1 :            0 :            8 :            0 :        0.202 : java.lang.ApplicationShutdownHooks.hook
+              AMD64JitCompiler :           19 :            0 :          250 :            0 :            2 :            0 :            5 :            0 :        0.123 : sun.misc.SharedSecrets.getJavaIODeleteOnExitAccess
+              AMD64JitCompiler :           10 :            0 :          200 :            1 :            2 :            0 :            3 :            0 :        0.190 : sun.misc.VM.initializeOSEnvironment
+              AMD64JitCompiler :           64 :            0 :          950 :            0 :            5 :            0 :            2 :            0 :        0.588 : java.util.concurrent.atomic.AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl.compareAndSet
+              AMD64JitCompiler :            1 :            0 :           74 :            0 :            1 :            0 :            1 :            0 :        0.162 : sun.misc.OSEnvironment.initialize
+              AMD64JitCompiler :           74 :            0 :          958 :            5 :            4 :            0 :            9 :            0 :        0.410 : sun.misc.VM.maxDirectMemory
+              AMD64JitCompiler :           16 :            0 :          259 :            1 :            2 :            0 :            2 :            0 :        0.113 : java.lang.System.getProperties
+              AMD64JitCompiler :            4 :            0 :          111 :            0 :            1 :            0 :            2 :            0 :        0.076 : java.lang.System.getSecurityManager
+              AMD64JitCompiler :           34 :            0 :          483 :            5 :            2 :            0 :            3 :            0 :        0.195 : java.lang.System.setProperties
+              AMD64JitCompiler :            5 :            0 :          116 :            0 :            1 :            0 :            2 :            0 :        0.080 : sun.misc.VM.booted
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.089 : java.lang.Thread.getThreadGroup
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.106 : java.lang.System$2.<init>
+              AMD64JitCompiler :            5 :            0 :          176 :            1 :            1 :            0 :            2 :            0 :        0.158 : sun.misc.SharedSecrets.setJavaLangAccess
+              AMD64JitCompiler :           22 :            0 :          622 :           10 :            2 :            0 :            6 :            0 :        0.204 : sun.misc.Launcher.<clinit>
+              AMD64JitCompiler :            5 :            0 :          134 :            1 :            1 :            0 :            1 :            0 :        0.200 : sun.misc.Launcher$Factory.<init>
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.090 : sun.misc.Launcher$Factory.<init>
+              AMD64JitCompiler :          262 :            0 :         3808 :           33 :           11 :            6 :           27 :            0 :        0.758 : sun.misc.Launcher.<init>
+              AMD64JitCompiler :           11 :            0 :          132 :            3 :            1 :            0 :            2 :            0 :        0.258 : java.net.URLClassLoader.<clinit>
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.144 : java.net.URLClassLoader$7.<init>
+              AMD64JitCompiler :            5 :            0 :          176 :            1 :            1 :            0 :            2 :            0 :        0.102 : sun.misc.SharedSecrets.setJavaNetAccess
+              AMD64JitCompiler :           46 :            0 :         1026 :           11 :            3 :            1 :            7 :            0 :        0.286 : sun.misc.Launcher$ExtClassLoader.getExtClassLoader
+              AMD64JitCompiler :           72 :            0 :         1159 :           10 :            3 :            1 :            7 :            0 :        0.339 : sun.misc.Launcher$ExtClassLoader.getExtDirs
+              AMD64JitCompiler :           10 :            0 :          230 :            2 :            1 :            0 :            1 :            0 :        0.176 : sun.misc.Launcher$ExtClassLoader$1.<init>
+              AMD64JitCompiler :           40 :            0 :          633 :            4 :            2 :            1 :            3 :            0 :        0.172 : sun.misc.Launcher$ExtClassLoader$1.run
+              AMD64JitCompiler :           23 :            0 :          428 :            4 :            2 :            0 :            2 :            0 :        0.203 : sun.misc.Launcher$ExtClassLoader.<init>
+              AMD64JitCompiler :          102 :            0 :         1650 :           10 :            7 :            2 :            6 :            0 :        0.416 : sun.misc.Launcher$ExtClassLoader.getExtURLs
+              AMD64JitCompiler :           27 :            0 :          466 :            5 :            1 :            0 :            1 :            0 :        0.168 : java.util.Vector.copyInto
+              AMD64JitCompiler :            4 :            0 :          183 :            1 :            1 :            0 :            2 :            0 :        0.145 : sun.misc.Launcher.access$100
+              AMD64JitCompiler :           41 :            0 :          718 :            8 :            3 :            0 :            3 :            0 :        0.279 : java.net.URLClassLoader.<init>
+              AMD64JitCompiler :           41 :            0 :          574 :            5 :            2 :            0 :            2 :            0 :        0.338 : java.security.SecureClassLoader.<init>
+              AMD64JitCompiler :          109 :            0 :         1466 :           21 :            2 :            0 :            6 :            0 :        0.392 : java.lang.ClassLoader.<init>
+              AMD64JitCompiler :           95 :            0 :         1323 :           16 :            3 :            1 :            7 :            0 :        0.565 : sun.misc.URLClassPath.<init>
+              AMD64JitCompiler :           53 :            0 :          787 :            6 :            2 :            2 :            1 :            0 :        0.226 : sun.misc.URLClassPath.push
+              AMD64JitCompiler :          141 :            0 :         2425 :           15 :           14 :            3 :           16 :            0 :        0.581 : sun.misc.Launcher$Factory.createURLStreamHandler
+              AMD64JitCompiler :            6 :            0 :          203 :            2 :            1 :            0 :            3 :            0 :        0.099 : sun.misc.Launcher$Factory.<clinit>
+              AMD64JitCompiler :          102 :            0 :         1457 :           18 :            4 :            3 :           11 :            0 :        0.448 : com.sun.max.vm.reflection.GeneratedConstructorStub3.newInstance
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.097 : sun.net.www.protocol.jar.Handler.<init>
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.164 : java.net.URLStreamHandler.<init>
+              AMD64JitCompiler :           18 :            0 :          296 :            1 :            2 :            0 :            3 :            0 :        0.179 : sun.misc.Launcher$AppClassLoader.<clinit>
+              AMD64JitCompiler :           39 :            0 :          783 :            8 :            3 :            0 :            7 :            0 :        0.208 : sun.misc.Launcher$AppClassLoader.getAppClassLoader
+              AMD64JitCompiler :            5 :            0 :          217 :            1 :            2 :            0 :            2 :            0 :        0.099 : sun.misc.Launcher.access$200
+              AMD64JitCompiler :          204 :            0 :         3418 :           24 :            6 :            2 :           12 :            0 :        0.588 : sun.misc.Launcher.getClassPath
+              AMD64JitCompiler :           20 :            0 :          438 :            4 :            1 :            0 :            1 :            0 :        0.165 : sun.misc.Launcher$AppClassLoader$1.<init>
+              AMD64JitCompiler :           35 :            0 :          503 :            4 :            2 :            0 :            4 :            0 :        0.282 : sun.misc.Launcher$AppClassLoader$1.run
+              AMD64JitCompiler :            5 :            0 :          217 :            1 :            2 :            0 :            2 :            0 :        0.094 : sun.misc.Launcher.access$300
+              AMD64JitCompiler :           31 :            0 :          875 :            6 :            2 :            1 :            3 :            0 :        0.165 : sun.misc.Launcher.pathToURLs
+              AMD64JitCompiler :           59 :            0 :         1078 :           10 :            3 :            2 :            7 :            0 :        0.201 : sun.misc.Launcher.getFileURL
+              AMD64JitCompiler :           21 :            0 :          388 :            2 :            3 :            0 :            3 :            0 :        0.182 : java.io.File.getCanonicalFile
+              AMD64JitCompiler :           15 :            0 :          308 :            2 :            1 :            0 :            1 :            0 :        0.160 : java.io.File.<init>
+              AMD64JitCompiler :          621 :            0 :        14619 :          120 :           43 :            1 :          119 :            0 :        1.391 : sun.net.www.ParseUtil.<clinit>
+              AMD64JitCompiler :           52 :            0 :          649 :            4 :            1 :            1 :            1 :            0 :        0.266 : sun.net.www.ParseUtil.lowMask
+              AMD64JitCompiler :           60 :            0 :          731 :            4 :            1 :            1 :            1 :            0 :        0.233 : sun.net.www.ParseUtil.highMask
+              AMD64JitCompiler :           46 :            0 :          716 :            0 :            3 :            1 :            1 :            0 :        0.193 : sun.net.www.ParseUtil.lowMask
+              AMD64JitCompiler :           57 :            0 :          811 :            0 :            3 :            1 :            1 :            0 :        0.188 : sun.net.www.ParseUtil.highMask
+              AMD64JitCompiler :           88 :            0 :         1235 :            7 :           11 :            0 :           10 :            0 :        0.294 : sun.net.www.ParseUtil.fileToEncodedURL
+              AMD64JitCompiler :            8 :            0 :          212 :            0 :            2 :            0 :            2 :            0 :        0.108 : java.io.File.getAbsolutePath
+              AMD64JitCompiler :            6 :            0 :          153 :            1 :            1 :            0 :            1 :            0 :        0.143 : sun.net.www.ParseUtil.encodePath
+              AMD64JitCompiler :          336 :            0 :         3979 :           15 :            5 :            1 :            6 :            0 :        0.809 : sun.net.www.ParseUtil.encodePath
+              AMD64JitCompiler :            9 :            0 :          230 :            1 :            1 :            0 :            1 :            0 :        0.211 : java.net.URL.<init>
+              AMD64JitCompiler :           11 :            0 :          259 :            1 :            1 :            0 :            1 :            0 :        0.112 : java.net.URL.<init>
+              AMD64JitCompiler :          312 :            0 :         4588 :           37 :           26 :            0 :           20 :            0 :        0.943 : java.net.URL.<init>
+              AMD64JitCompiler :           87 :            0 :         1361 :            5 :            7 :            0 :            1 :            0 :        0.402 : java.net.Parts.<init>
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.092 : java.net.Parts.getPath
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.086 : java.net.Parts.getQuery
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.086 : java.net.Parts.getRef
+              AMD64JitCompiler :          369 :            0 :         5247 :           30 :           22 :            5 :           34 :            0 :        1.052 : java.net.URL.getURLStreamHandler
+              AMD64JitCompiler :           10 :            0 :          276 :            2 :            2 :            0 :            2 :            0 :        0.122 : sun.misc.Launcher$AppClassLoader.<init>
+              AMD64JitCompiler :            4 :            0 :          111 :            0 :            1 :            0 :            2 :            0 :        0.129 : sun.misc.Launcher.getLauncher
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.097 : sun.misc.Launcher.getClassLoader
+              AMD64JitCompiler :           55 :            0 :          851 :            6 :            4 :            0 :            1 :            0 :        0.289 : sun.misc.Launcher$AppClassLoader.loadClass
+              AMD64JitCompiler :           47 :            0 :         1090 :           10 :            3 :            1 :            7 :            0 :        0.347 : java.net.URLClassLoader.findClass
+              AMD64JitCompiler :           15 :            0 :          334 :            3 :            1 :            0 :            1 :            0 :        0.163 : java.net.URLClassLoader$1.<init>
+              AMD64JitCompiler :           91 :            0 :         1283 :           10 :            4 :            1 :            6 :            0 :        0.331 : java.net.URLClassLoader$1.run
+              AMD64JitCompiler :           74 :            0 :         1145 :            5 :            7 :            1 :            7 :            0 :        0.285 : sun.misc.URLClassPath.getResource
+              AMD64JitCompiler :           42 :            0 :          626 :           10 :            1 :            0 :            8 :            0 :        0.251 : sun.misc.URLClassPath.<clinit>
+              AMD64JitCompiler :          178 :            0 :         2531 :           17 :            9 :            5 :            5 :            0 :        0.528 : sun.misc.URLClassPath.getLoader
+              AMD64JitCompiler :           43 :            0 :         1045 :           10 :            3 :            1 :            7 :            0 :        0.258 : sun.misc.URLClassPath.getLoader
+              AMD64JitCompiler :           15 :            0 :          334 :            3 :            1 :            0 :            1 :            0 :        0.154 : sun.misc.URLClassPath$3.<init>
+              AMD64JitCompiler :           86 :            0 :         1364 :           10 :            7 :            0 :            8 :            0 :        0.299 : sun.misc.URLClassPath$3.run
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.167 : java.net.URL.getFile
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.088 : java.net.URL.getProtocol
+              AMD64JitCompiler :           58 :            0 :          819 :            8 :            5 :            0 :            6 :            0 :        0.285 : sun.misc.URLClassPath$FileLoader.<init>
+              AMD64JitCompiler :           10 :            0 :          230 :            2 :            1 :            0 :            1 :            0 :        0.122 : sun.misc.URLClassPath$Loader.<init>
+              AMD64JitCompiler :          212 :            0 :         2400 :           15 :            5 :            2 :            6 :            0 :        0.558 : sun.net.www.ParseUtil.decode
+              AMD64JitCompiler :            2 :            0 :          117 :            0 :            1 :            0 :            1 :            0 :        0.084 : sun.misc.URLClassPath$Loader.getClassPath
+              AMD64JitCompiler :          127 :            0 :         1838 :           14 :            9 :            1 :           10 :            0 :        0.386 : sun.misc.URLClassPath$FileLoader.getResource
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.088 : sun.misc.URLClassPath$Loader.getBaseURL
+              AMD64JitCompiler :            8 :            0 :          199 :            1 :            1 :            0 :            1 :            0 :        0.181 : java.net.URL.<init>
+              AMD64JitCompiler :          562 :            0 :         7099 :           37 :           22 :            5 :           14 :            0 :        1.325 : java.net.URL.<init>
+              AMD64JitCompiler :           18 :            0 :          347 :            1 :            2 :            0 :            2 :            0 :        0.283 : sun.net.www.protocol.file.Handler.parseURL
+              AMD64JitCompiler :         1158 :            0 :        14008 :           33 :           95 :            4 :           35 :            0 :       88.765 : java.net.URLStreamHandler.parseURL
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.527 : java.net.URL.getAuthority
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.117 : java.net.URL.getUserInfo
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.088 : java.net.URL.getHost
+              AMD64JitCompiler :            5 :            0 :          150 :            0 :            1 :            0 :            1 :            0 :        0.091 : java.net.URL.getPort
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.093 : java.net.URL.getPath
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.094 : java.net.URL.getQuery
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.118 : java.net.URL.getRef
+              AMD64JitCompiler :           40 :            0 :          692 :            3 :            3 :            0 :            3 :            0 :        0.300 : java.net.URLStreamHandler.setURL
+              AMD64JitCompiler :          121 :            0 :         1830 :           16 :            5 :            1 :            3 :            0 :        0.410 : java.net.URL.set
+              AMD64JitCompiler :           26 :            0 :          542 :            5 :            1 :            0 :            1 :            0 :        0.226 : sun.misc.URLClassPath$FileLoader$1.<init>
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.095 : sun.misc.Resource.<init>
+              AMD64JitCompiler :            7 :            0 :          204 :            1 :            1 :            0 :            1 :            0 :        0.162 : java.net.URLClassLoader.access$000
+              AMD64JitCompiler :          257 :            0 :         3362 :           15 :           24 :            0 :           11 :            0 :        0.872 : java.net.URLClassLoader.defineClass
+              AMD64JitCompiler :            8 :            0 :          205 :            0 :            2 :            0 :            1 :            0 :        0.125 : sun.misc.URLClassPath$FileLoader$1.getCodeSourceURL
+              AMD64JitCompiler :            2 :            0 :          117 :            0 :            1 :            0 :            1 :            0 :        0.100 : sun.misc.Resource.getManifest
+              AMD64JitCompiler :           84 :            0 :         1215 :           10 :            3 :            1 :            3 :            0 :        0.338 : java.lang.ClassLoader.definePackage
+              AMD64JitCompiler :           24 :            0 :          818 :            5 :            2 :            0 :            4 :            0 :        0.162 : sun.misc.Resource.getByteBuffer
+              AMD64JitCompiler :           32 :            0 :          587 :            5 :            2 :            0 :            1 :            0 :        0.255 : sun.misc.Resource.cachedInputStream
+              AMD64JitCompiler :           12 :            0 :          204 :            2 :            1 :            0 :            2 :            0 :        0.115 : sun.misc.URLClassPath$FileLoader$1.getInputStream
+              AMD64JitCompiler :          404 :            0 :         5111 :           33 :            8 :           14 :           21 :            0 :        1.011 : sun.misc.Resource.getBytes
+              AMD64JitCompiler :            8 :            0 :          119 :            2 :            1 :            0 :            1 :            0 :        0.089 : java.lang.Thread.interrupted
+              AMD64JitCompiler :            9 :            0 :          218 :            0 :            2 :            0 :            1 :            0 :        0.121 : sun.misc.URLClassPath$FileLoader$1.getContentLength
+              AMD64JitCompiler :            2 :            0 :          117 :            0 :            1 :            0 :            1 :            0 :        0.198 : sun.misc.Resource.getCodeSigners
+              AMD64JitCompiler :           43 :            0 :          923 :            8 :            2 :            0 :            3 :            0 :        0.417 : java.security.CodeSource.<init>
+              AMD64JitCompiler :           31 :            0 :          600 :            1 :            3 :            0 :            1 :            0 :        0.230 : java.security.SecureClassLoader.defineClass
+              AMD64JitCompiler :          125 :            0 :         1793 :           10 :            9 :            1 :            9 :            0 :        0.608 : java.security.SecureClassLoader.getProtectionDomain
+              AMD64JitCompiler :           21 :            0 :          356 :            3 :            2 :            0 :            3 :            0 :        0.191 : sun.misc.Launcher$AppClassLoader.getPermissions
+              AMD64JitCompiler :          305 :            0 :         4053 :           21 :           22 :            1 :           22 :            0 :        0.965 : java.net.URLClassLoader.getPermissions
+              AMD64JitCompiler :           12 :            0 :          195 :            3 :            1 :            0 :            2 :            0 :        0.178 : java.security.SecureClassLoader.getPermissions
+              AMD64JitCompiler :           18 :            0 :          251 :            3 :            1 :            0 :            3 :            0 :        0.116 : java.security.SecureClassLoader.check
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.092 : java.security.CodeSource.getLocation
+              AMD64JitCompiler :            9 :            0 :          228 :            0 :            2 :            0 :            1 :            0 :        0.119 : java.net.URL.openConnection
+              AMD64JitCompiler :           19 :            0 :          446 :            4 :            2 :            0 :            1 :            0 :        0.300 : sun.net.www.protocol.file.Handler.openConnection
+              AMD64JitCompiler :          229 :            0 :         3036 :           21 :           22 :            1 :           16 :            0 :        0.677 : sun.net.www.protocol.file.Handler.openConnection
+              AMD64JitCompiler :           10 :            0 :          360 :            3 :            2 :            0 :            3 :            0 :        0.180 : sun.net.www.protocol.file.Handler.createFileURLConnection
+              AMD64JitCompiler :           38 :            0 :          586 :            2 :            1 :            0 :            1 :            0 :        0.235 : sun.net.www.protocol.file.FileURLConnection.<init>
+              AMD64JitCompiler :           22 :            0 :          482 :            5 :            2 :            0 :            3 :            0 :        0.150 : sun.net.www.URLConnection.<init>
+              AMD64JitCompiler :           44 :            0 :          793 :            4 :            1 :            0 :            3 :            0 :        0.308 : java.net.URLConnection.<init>
+              AMD64JitCompiler :           33 :            0 :          832 :           12 :            1 :            0 :            8 :            0 :        0.411 : java.net.URLConnection.<clinit>
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.102 : java.net.UnknownContentHandler.<init>
+              AMD64JitCompiler :            5 :            0 :          126 :            1 :            1 :            0 :            1 :            0 :        0.088 : java.net.ContentHandler.<init>
+              AMD64JitCompiler :            9 :            0 :          154 :            2 :            1 :            0 :            1 :            0 :        0.133 : sun.net.www.MessageHeader.<init>
+              AMD64JitCompiler :           92 :            0 :         1154 :            6 :            1 :            0 :            3 :            0 :        0.283 : sun.net.www.MessageHeader.grow
+              AMD64JitCompiler :           70 :            0 :          851 :            7 :            3 :            0 :            7 :            0 :        0.415 : sun.net.www.protocol.file.FileURLConnection.getPermission
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.121 : java.security.Permission.getName
+              AMD64JitCompiler :           90 :            0 :         1602 :            9 :            3 :            0 :            6 :            0 :        0.384 : java.security.ProtectionDomain.<init>
+              AMD64JitCompiler :           90 :            0 :         1249 :            9 :            1 :            1 :            3 :            0 :        0.442 : java.lang.ClassLoader.defineClass
+              AMD64JitCompiler :          109 :            0 :         1463 :           13 :           11 :            0 :            8 :            0 :        0.502 : java.lang.ClassLoader.preDefineClass
+              AMD64JitCompiler :            5 :            0 :          151 :            0 :            1 :            0 :            1 :            0 :        0.152 : java.security.ProtectionDomain.getCodeSource
+              AMD64JitCompiler :          170 :            0 :         2356 :           14 :           11 :            0 :            9 :            0 :        0.625 : java.lang.ClassLoader.checkCerts
+              AMD64JitCompiler :           28 :            0 :          565 :            0 :            5 :            0 :            1 :            0 :        0.189 : java.lang.ClassLoader.defineClassSourceLocation
+              AMD64JitCompiler :           26 :            0 :          523 :            0 :            5 :            0 :            1 :            0 :        0.186 : java.lang.ClassLoader.postDefineClass
+              AMD64JitCompiler :          101 :            0 :         1678 :           19 :            5 :            3 :           12 :            0 :        0.383 : com.sun.max.vm.reflection.GeneratedMethodStub244.invoke
+              AMD64JitCompiler :            9 :            0 :          340 :            2 :            2 :            0 :            4 :            0 :        0.109 : util.HelloWorld.main
+END Compilation_Stats
+BEGIN IrGeneration_Stats
+                 #Ir :  Level :       Time : Method
+                 BIR :      5 :      0.031 : java.io.FileSystem.getFileSystem
+         Initial CIR :      5 :      0.002 : java.io.FileSystem.getFileSystem
+HCIR Free Variable Capturing :      5 :      0.109 : java.io.FileSystem.getFileSystem
+    Alpha conversion :      5 :      0.046 : java.io.FileSystem.getFileSystem
+ Pruning Java locals :      5 :      0.002 : java.io.FileSystem.getFileSystem
+        HCIR -> LCIR :      5 :      0.336 : java.io.FileSystem.getFileSystem
+LCIR Free Variable Capturing :      5 :      0.139 : java.io.FileSystem.getFileSystem
+    Alpha conversion :      5 :      0.068 : java.io.FileSystem.getFileSystem
+ Pruning Java locals :      5 :      0.002 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.103 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.040 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.059 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.031 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.031 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.030 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.003 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.030 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.029 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.028 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.028 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.060 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.032 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.026 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.027 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.051 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.043 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.015 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.019 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.019 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.024 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.042 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.021 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.023 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.007 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.017 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.014 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.037 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.015 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.030 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.012 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.013 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.003 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.012 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.015 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.011 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.054 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.010 : java.io.FileSystem.getFileSystem
+           Deflation :      6 :      1.508 : java.io.FileSystem.getFileSystem
+           Deflation :      6 :      0.049 : java.io.FileSystem.getFileSystem
+      Block Updating :      7 :      0.137 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.157 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.048 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.123 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.045 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.119 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.115 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.170 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.116 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.214 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.057 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.055 : java.io.FileSystem.getFileSystem
+     Method Updating :      7 :      0.300 : java.io.FileSystem.getFileSystem
+      Block Updating :      7 :      0.075 : java.io.FileSystem.getFileSystem
+      Block Updating :      7 :      0.070 : java.io.FileSystem.getFileSystem
+      Block Updating :      7 :      0.096 : java.io.FileSystem.getFileSystem
+      Block Updating :      7 :      0.064 : java.io.FileSystem.getFileSystem
+            Inlining :      6 :      2.212 : java.io.FileSystem.getFileSystem
+            Inlining :      6 :      0.053 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.040 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.041 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.032 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.020 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.018 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.010 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.015 : java.io.FileSystem.getFileSystem
+             Folding :      7 :      0.006 : java.io.FileSystem.getFileSystem
+      Beta Reduction :      7 :      0.009 : java.io.FileSystem.getFileSystem
+           Deflation :      6 :      0.547 : java.io.FileSystem.getFileSystem
+           Deflation :      6 :      0.224 : java.io.FileSystem.getFileSystem
+            Inlining :      6 :      0.055 : java.io.FileSystem.getFileSystem
+          Optimizing :      5 :      4.765 : java.io.FileSystem.getFileSystem
+                 CIR :      4 :      6.751 : java.io.FileSystem.getFileSystem
+ Unifying DIR blocks :      4 :      0.250 : java.io.FileSystem.getFileSystem
+                 DIR :      3 :      8.615 : java.io.FileSystem.getFileSystem
+  Initial EIR blocks :      3 :      0.803 : java.io.FileSystem.getFileSystem
+ Splitting variables :      4 :      0.633 : java.io.FileSystem.getFileSystem
+Determining live ranges :      4 :      1.950 : java.io.FileSystem.getFileSystem
+Determining interference graph :      3 :      2.760 : java.io.FileSystem.getFileSystem
+Verifying live ranges :      3 :      0.251 : java.io.FileSystem.getFileSystem
+Verifying interference graph :      3 :      0.907 : java.io.FileSystem.getFileSystem
+Verifying live ranges :      3 :      0.219 : java.io.FileSystem.getFileSystem
+Verifying interference graph :      3 :      0.851 : java.io.FileSystem.getFileSystem
+    EIR block layout :      3 :      0.015 : java.io.FileSystem.getFileSystem
+                 EIR :      2 :     17.672 : java.io.FileSystem.getFileSystem
+               AMD64 :      1 :     18.251 : java.io.FileSystem.getFileSystem
+END IrGeneration_Stats
+Running time for each phase:
+PRISTINE to STARTING: 51.174 msec
+STARTING to RUNNING: 171.285 msec
+RUNNING to end: 433.807 msec
