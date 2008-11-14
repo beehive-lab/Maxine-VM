@@ -72,9 +72,6 @@ public class MaxineTester {
                     "A list of configurations for which to run the Maxine output tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
-    private static final Option<File> _expect = _options.newFileOption("expect", (File) null,
-                    "A file listing the tests expected to fail. The exit value of the MaxineTester is the sum of the unexpected failures, " +
-                    "the unexpected passes and the number of image builds that failed.");
 
     private static String _javaConfigAlias = null;
 
@@ -133,36 +130,6 @@ public class MaxineTester {
     private static final Map<String, String> _unexpectedFailures = Collections.synchronizedMap(new TreeMap<String, String>());
     private static final Map<String, String> _unexpectedPasses = Collections.synchronizedMap(new TreeMap<String, String>());
 
-
-    private static Set<String> loadExpectedFailures() {
-        if (_expect.getValue() == null) {
-            return Collections.emptySet();
-        }
-        final File expectedFailuresFile = _expect.getValue().getAbsoluteFile();
-        if (expectedFailuresFile.exists()) {
-            final Set<String> expectedFailures = new HashSet<String>();
-            try {
-                final BufferedReader br = new BufferedReader(new FileReader(expectedFailuresFile));
-                String line;
-                while ((line = br.readLine()) != null) {
-                    final String testLine = line.trim();
-                    if (line.isEmpty() || line.startsWith("#")) {
-                        continue;
-                    }
-                    // Up to the first space is the test name:
-                    final int indexOfSpace = testLine.indexOf(' ');
-                    final String testName = indexOfSpace == -1 ? testLine : testLine.substring(0, indexOfSpace);
-                    expectedFailures.add(testName);
-                }
-                br.close();
-                return expectedFailures;
-            } catch (IOException ioException) {
-                ProgramWarning.message("Error reading expected failures file " + expectedFailuresFile.getAbsolutePath() + ": " + ioException);
-            }
-        }
-        return Collections.emptySet();
-    }
-
     /**
      * Adds a test result to the global set of test results.
      *
@@ -188,13 +155,13 @@ public class MaxineTester {
         }
 
         if (!_unexpectedFailures.isEmpty()) {
-            out().println("Unexpected failures: [add to file specified by -" + _expect.getName() + " option]");
+            out().println("Unexpected failures:");
             for (Map.Entry<String, String> entry : _unexpectedFailures.entrySet()) {
                 out().println(entry.getKey() + "  " + entry.getValue());
             }
         }
         if (!_unexpectedPasses.isEmpty()) {
-            out().println("Unexpected passes: [remove from file specified by -" + _expect.getName() + " option]");
+            out().println("Unexpected passes:");
             for (String testName : _unexpectedPasses.keySet()) {
                 out().println(testName);
             }
