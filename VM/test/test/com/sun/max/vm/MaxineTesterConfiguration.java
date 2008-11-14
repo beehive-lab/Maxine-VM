@@ -22,6 +22,7 @@ package test.com.sun.max.vm;
 
 import java.util.*;
 
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 
 
@@ -49,12 +50,20 @@ public class MaxineTesterConfiguration {
         test.output.ZipFileReader.class,
     };
 
-    static final Class[] _expectedFailures = {
+    static final Set<Class> _expectedFailuresSolarisAMD64 = new HashSet<Class>(Arrays.asList(new Class[] {
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
         test.output.ZipFileReader.class,
-    };
+    }));
+
+    static final Set<Class> _expectedFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
+        test.output.FloatNanTest.class,
+        test.output.JavacTest.class,
+        test.output.JREJarLoadTest.class,
+        test.except.Catch_StackOverflowError_01.class,
+        test.output.ZipFileReader.class,
+    }));
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
@@ -77,9 +86,13 @@ public class MaxineTesterConfiguration {
     static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
     public static boolean isExpectedFailure(Class outputTestClass, String config) {
-        for (Class klass : _expectedFailures) {
-            if (klass == outputTestClass) {
-                return true;
+        final Platform platform = Platform.target();
+        if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
+            final ProcessorKind processorKind = platform.processorKind();
+            if (processorKind.processorModel() == ProcessorModel.AMD64) {
+                return _expectedFailuresSolarisAMD64.contains(outputTestClass);
+            } else if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
+                return _expectedFailuresSolarisSPARCV9.contains(outputTestClass);
             }
         }
         return false;
