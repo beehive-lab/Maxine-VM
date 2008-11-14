@@ -132,6 +132,28 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final GetInstructionPointer BUILTIN = new GetInstructionPointer();
     }
 
+    /**
+     * @see Pause
+     */
+    @BUILTIN(builtinClass = SpecialBuiltin.Pause.class)
+    public static native void pause();
+
+    /**
+     * If the CPU supports it, then this builtin issues an instruction that improves the performance of spin loops by
+     * providing a hint to the processor that the current thread is in a spin loop. The processor may use this to
+     * optimize power power consumption while in the spin loop.
+     *
+     * If the CPU does not support such an instruction, then nothing is emitted for this builtin.
+     */
+    public static class Pause extends SpecialBuiltin {
+        @Override
+        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
+            assert arguments.length == 0;
+            visitor.visitPause(this, result, arguments);
+        }
+        public static final Pause BUILTIN = new Pause();
+    }
+
     @BUILTIN(builtinClass = SpecialBuiltin.Jump.class)
     public static native void jump(Address address);
 

@@ -676,6 +676,9 @@ public class AMD64EirInterpreter extends EirInterpreter implements AMD64EirInstr
     public void visit(MFENCE instruction) {
     }
 
+    public void visit(PAUSE instruction) {
+    }
+
     public void visit(MOVD_I32_F32 instruction) {
         final float f = _cpu.readFloat(instruction.sourceOperand().location());
         _cpu.writeInt(instruction.destinationOperand().location(), UnsafeLoophole.floatToInt(f));

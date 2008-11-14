@@ -180,6 +180,7 @@ public interface BuiltinVisitor<IR_Type> {
     void visitAddWordsToIntegerRegister(AddWordsToIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
     void visitPush(Push builtin, IR_Type result, IR_Type[] arguments);
     void visitPop(Pop builtin, IR_Type result, IR_Type[] arguments);
+    void visitPause(Pause builtin, IR_Type result, IR_Type[] arguments);
 
     void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, IR_Type result, IR_Type[] arguments);
 

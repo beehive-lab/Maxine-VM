@@ -1688,6 +1688,23 @@ public interface AMD64EirInstruction {
         }
     }
 
+    public static class PAUSE extends AMD64EirOperation {
+        public PAUSE(EirBlock block) {
+            super(block);
+        }
+
+        @Override
+        public void emit(AMD64EirTargetEmitter emitter) {
+            emitter.assembler().repe();
+            emitter.assembler().nop();
+        }
+
+        @Override
+        public void acceptVisitor(AMD64EirInstructionVisitor visitor) {
+            visitor.visit(this);
+        }
+    }
+
     public static class JMP extends AMD64EirLocalControlTransfer implements EirJump {
 
         public JMP(EirBlock block, EirBlock target) {

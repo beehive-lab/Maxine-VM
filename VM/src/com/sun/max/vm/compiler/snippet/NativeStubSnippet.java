@@ -27,6 +27,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.jni.*;
@@ -109,7 +110,8 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
         @NO_SAFEPOINTS("Cannot take a trap while GC is running")
         private static void spinWhileSafepointsAreTriggered() {
             while (Safepoint.isTriggered()) {
-                // Busy loop that is free of safepoints and object accesses
+                // Spin loop that is free of safepoints and object accesses
+                SpecialBuiltin.pause();
             }
         }
 

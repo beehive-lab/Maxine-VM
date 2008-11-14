@@ -336,6 +336,10 @@ public class AMD64EirInstructionAdapter extends EirInstructionAdapter implements
         visitOperation(instruction);
     }
 
+    public void visit(PAUSE instruction) {
+        visitOperation(instruction);
+    }
+
     public void visit(MOVD_I32_F32 instruction) {
         visitMove(instruction);
     }
