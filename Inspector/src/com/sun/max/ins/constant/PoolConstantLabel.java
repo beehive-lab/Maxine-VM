@@ -20,12 +20,14 @@
  */
 package com.sun.max.ins.constant;
 
+import java.awt.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -77,33 +79,40 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private long _epoch = -1;
 
-    public static PoolConstantLabel make(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-        final Tag tag = teleConstantPool.getTeleHolder().classActor().constantPool().at(index).tag();
-        PoolConstantLabel poolConstantLabel;
-        switch (tag) {
-            case CLASS:
-                poolConstantLabel = new PoolConstantLabel.Class(inspection, index, teleConstantPool, mode);
-                break;
-            case FIELD_REF:
-                poolConstantLabel = new PoolConstantLabel.Field(inspection, index, teleConstantPool, mode);
-                break;
-            case METHOD_REF:
-                poolConstantLabel = new PoolConstantLabel.ClassMethod(inspection, index, teleConstantPool, mode);
-                break;
-            case INTERFACE_METHOD_REF:
-                poolConstantLabel = new PoolConstantLabel.InterfaceMethod(inspection, index, teleConstantPool, mode);
-                break;
-            case STRING:
-                poolConstantLabel = new PoolConstantLabel.StringConstant(inspection, index, teleConstantPool, mode);
-                break;
-            case UTF8:
-                poolConstantLabel = new PoolConstantLabel.Utf8Constant(inspection, index, teleConstantPool, mode);
-                break;
-            default:
-                poolConstantLabel = new PoolConstantLabel.Other(inspection, index, teleConstantPool, mode);
-                break;
+    public static Component make(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
+        try {
+            final Tag tag = teleConstantPool.getTeleHolder().classActor().constantPool().at(index).tag();
+            PoolConstantLabel poolConstantLabel;
+            switch (tag) {
+                case CLASS:
+                    poolConstantLabel = new PoolConstantLabel.Class(inspection, index, teleConstantPool, mode);
+                    break;
+                case FIELD_REF:
+                    poolConstantLabel = new PoolConstantLabel.Field(inspection, index, teleConstantPool, mode);
+                    break;
+                case METHOD_REF:
+                    poolConstantLabel = new PoolConstantLabel.ClassMethod(inspection, index, teleConstantPool, mode);
+                    break;
+                case INTERFACE_METHOD_REF:
+                    poolConstantLabel = new PoolConstantLabel.InterfaceMethod(inspection, index, teleConstantPool, mode);
+                    break;
+                case STRING:
+                    poolConstantLabel = new PoolConstantLabel.StringConstant(inspection, index, teleConstantPool, mode);
+                    break;
+                case UTF8:
+                    poolConstantLabel = new PoolConstantLabel.Utf8Constant(inspection, index, teleConstantPool, mode);
+                    break;
+                default:
+                    poolConstantLabel = new PoolConstantLabel.Other(inspection, index, teleConstantPool, mode);
+                    break;
+            }
+            return poolConstantLabel;
+        } catch (Throwable throwable) {
+            final TextLabel errorLabel = new TextLabel(inspection, "<error: " + throwable + ">");
+            errorLabel.setBackground(Color.RED);
+            ProgramWarning.message("error rendering constant pool: " + throwable.getStackTrace());
+            return errorLabel;
         }
-        return poolConstantLabel;
     }
 
     protected PoolConstantLabel(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {

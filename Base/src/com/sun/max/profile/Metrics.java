@@ -77,7 +77,7 @@ public final class Metrics {
             _accumulation = 0;
         }
 
-        public void report(String name, PrintStream stream) {
+        public synchronized void report(String name, PrintStream stream) {
             if (_accumulation > 0) {
                 final double average = _accumulation / (double) _count;
                 Metrics.report(stream, name, "total", "--", String.valueOf(_accumulation), "accumulated");
@@ -103,31 +103,35 @@ public final class Metrics {
             this._counter = new Counter();
         }
 
-        public void start() {
+        public Counter counter() {
+            return _counter;
+        }
+
+        public synchronized void start() {
             _start = _clock.getTicks();
         }
 
-        public long stop() {
+        public synchronized long stop() {
             final long time = _clock.getTicks() - _start;
             _counter.accumulate(time);
             return time;
         }
 
-        public void reset() {
+        public synchronized void reset() {
             _start = 0;
             _counter.reset();
         }
 
-        public void restart() {
+        public synchronized void restart() {
             reset();
             start();
         }
 
-        public long getMilliSeconds() {
+        public synchronized long getMilliSeconds() {
             return (1000 * _counter._accumulation) / _clock.getHZ();
         }
 
-        public String toSeconds() {
+        public synchronized String toSeconds() {
             final long hz = _clock.getHZ();
             final long total = _counter._accumulation;
             if (hz > 0) {
@@ -136,7 +140,7 @@ public final class Metrics {
             return total + " ticks";
         }
 
-        public void report(String name, PrintStream stream) {
+        public synchronized void report(String name, PrintStream stream) {
             if (_counter._count > 0) {
                 final long hz = _clock.getHZ();
                 final long total = _counter._accumulation;
