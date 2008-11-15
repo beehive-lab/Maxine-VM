@@ -67,7 +67,7 @@ public class HubInspector extends ObjectInspector<HubInspector> {
     private AppendableSequence<ValueLabel> _valueLabels = new ArrayListSequence<ValueLabel>();
 
     @Override
-    public synchronized Sequence<ValueLabel> valueLabels() {
+    public synchronized AppendableSequence<ValueLabel> valueLabels() {
         return _valueLabels;
     }
 
