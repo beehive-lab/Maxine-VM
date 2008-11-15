@@ -94,7 +94,7 @@ public class BirMethod extends AbstractIrMethod {
         final CharArrayWriter charArrayWriter = new CharArrayWriter();
         final IndentWriter writer = new IndentWriter(charArrayWriter);
         writer.println("BIR: " + name());
-        if (_blocks != null && _blocks.isEmpty()) {
+        if (_blocks != null && !_blocks.isEmpty()) {
             writer.indent();
             writer.println("maxStack: " + _maxStack);
             writer.println("maxLocals: " + _maxLocals);

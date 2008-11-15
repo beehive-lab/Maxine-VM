@@ -113,16 +113,12 @@ public class MaxTestCase extends TestCase {
     /**
      * Creates a JUnit test suite for a given package and populates it with all the classes in that package that
      * subclass {@link TestCase} if {@code addClasses == true}.
-     * 
-     * 
-     * @param maxPackage
-     *            the package to create a test suite for
-     * @param addClasses
-     *            specifies if the package(s) are to be scanned for tests
-     * @param scanSubPackages
-     *            specifies if the sub-packages of {@code maxPackage} should be processed
-     * @param lastTests
-     *            adds these tests to the end of the suite. This is useful to run long running tests last.
+     *
+     *
+     * @param maxPackage the package to create a test suite for
+     * @param addClasses specifies if the package(s) are to be scanned for tests
+     * @param scanSubPackages specifies if the sub-packages of {@code maxPackage} should be processed
+     * @param lastTests adds these tests to the end of the suite. This is useful to run long running tests last.
      * @return
      */
     public static TestSuite createSuite(MaxPackage maxPackage, boolean addClasses, boolean scanSubPackages, Class... lastTests) {
@@ -144,7 +140,7 @@ public class MaxTestCase extends TestCase {
 
     /**
      * Adds all the classes in {@code javaPackage} that subclass {@link TestCase} to {@code suite}.
-     * 
+     *
      * @param lastTests adds these tests to the end of the suite
      */
     public static void addTests(MaxPackage maxPackage, Set<Class<? extends TestCase>> testClasses, Class... lastTests) {

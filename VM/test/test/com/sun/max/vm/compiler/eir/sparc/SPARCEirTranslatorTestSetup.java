@@ -68,9 +68,4 @@ public class SPARCEirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     public EirMethod translate(ClassMethodActor classMethodActor) {
         return eirGenerator().makeIrMethod(classMethodActor);
     }
-    @Override
-    public void chainedSetUp() {
-        super.chainedSetUp();
-        compilerScheme().compileSnippets();
-    }
 }
