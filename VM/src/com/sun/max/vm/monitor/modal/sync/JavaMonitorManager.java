@@ -200,7 +200,7 @@ public class JavaMonitorManager {
         } else {
             synchronized (JavaMonitorManager.class) {
                 if (_numberOfUnboundMonitors < _UNBOUNDLIST_MIN_QTY) {
-                    //System.gc();
+                    System.gc();
                 }
                 if (_numberOfUnboundMonitors < _UNBOUNDLIST_MIN_QTY) {
                     expandUnboundList();
@@ -273,7 +273,7 @@ public class JavaMonitorManager {
      */
     public static void beforeGarbageCollection() {
         _inGlobalSafePoint = true;
-        //unbindUnownedMonitors();
+        unbindUnownedMonitors();
     }
 
     /**
