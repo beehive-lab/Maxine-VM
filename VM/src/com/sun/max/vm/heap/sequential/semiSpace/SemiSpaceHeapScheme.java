@@ -178,6 +178,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _copyTimer.stop();
             _gcTimer.stop();
 
+            // Bring the inspectable mark up to date, since it is not updated during the move.
+            _toSpace.setAllocationMark(_allocationMark); // for debugging
+
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
             verifyHeap();
@@ -217,8 +220,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     private StopTheWorldDaemon _collectorThread;
 
-    private RuntimeMemoryRegion _fromSpace = new RuntimeMemoryRegion(Size.zero(), Size.zero());
-    private RuntimeMemoryRegion _toSpace = new RuntimeMemoryRegion(Size.zero(), Size.zero());
+    private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion(FROM_SPACE_DESCRIPTION);
+    private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion(TO_SPACE_DESCRIPTION);
     private Address _top;
     private volatile Address _allocationMark;
 
@@ -234,8 +237,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _toSpace.setSize(size);
             _fromSpace.setStart(Memory.allocate(size));
             _toSpace.setStart(Memory.allocate(size));
-            _fromSpace.setDescription(FROM_SPACE_DESCRIPTION);
-            _toSpace.setDescription(TO_SPACE_DESCRIPTION);
 
             if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
                 Log.print("Could not allocate object heap of size ");
@@ -267,9 +268,11 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
         _fromSpace.setStart(_toSpace.start());
         _fromSpace.setSize(_toSpace.size());
+        _fromSpace.setAllocationMark(_toSpace.getAllocationMark()); // for debugging
 
         _toSpace.setStart(oldFromSpaceStart);
         _toSpace.setSize(oldFromSpaceSize);
+        _toSpace.setAllocationMark(_toSpace.start());  // for debugging
 
         _allocationMark = _toSpace.start();
         _top = _toSpace.end();
@@ -524,8 +527,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         }
         final Pointer end = cell.plus(size);
         if (end.greaterThan(_top) || _allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
-            return retryAllocate(size);
+            cell = retryAllocate(size);
         }
+        _toSpace.setAllocationMark(_allocationMark);
         return cell;
     }
 
