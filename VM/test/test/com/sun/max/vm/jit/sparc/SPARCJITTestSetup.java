@@ -25,11 +25,8 @@ import test.com.sun.max.vm.compiler.sparc.*;
 import test.com.sun.max.vm.jit.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.dis.sparc.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.sparc.*;
 import com.sun.max.vm.template.*;
@@ -51,10 +48,5 @@ public class SPARCJITTestSetup extends SPARCTranslatorTestSetup  implements JITT
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
         return new SPARCJitCompiler(VMConfiguration.target(), templateTable);
-    }
-
-    @Override
-    public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return new SPARC64Disassembler(targetMethod.start().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 }
