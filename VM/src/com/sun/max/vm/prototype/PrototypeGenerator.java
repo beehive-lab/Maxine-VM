@@ -210,6 +210,7 @@ public final class PrototypeGenerator {
 
     /**
      * Creates the default VM configuration.
+     *
      * @return the default VM configuration
      */
     private VMConfiguration createDefaultVMConfiguration() {

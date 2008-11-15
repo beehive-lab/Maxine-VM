@@ -24,8 +24,6 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.dis.sparc.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
@@ -61,15 +59,5 @@ public class SPARCTranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
         final ProcessorKind proc = new ProcessorKind(ProcessorModel.SPARC, InstructionSet.SPARC,
                         new DataModel(WordWidth.BITS_64, Endianness.BIG, Alignment.BYTES_8));
         return new Platform(proc, OperatingSystem.SOLARIS, OperatingSystem.SOLARIS.defaultPageSize());
-    }
-
-    @Override
-    public void chainedSetUp() {
-        super.chainedSetUp();
-        compilerScheme().compileSnippets();
-    }
-    @Override
-    public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return new SPARC64Disassembler(targetMethod.start().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 }

@@ -52,7 +52,7 @@ import com.sun.max.vm.compiler.ir.*;
  *
  * <pre>
  *     -Dmax.ir.observer.filters=IrMethodFilter
- *     -Dmax.ir.observer.method=(method name filters separated by '.')
+ *     -Dmax.ir.observer.method=(method name filters separated by ',')
  * </pre>
  * <p>
  * Where the second system property is used by the IrMethodFilter to determine which methods to trace.
@@ -62,7 +62,7 @@ import com.sun.max.vm.compiler.ir.*;
  * property:
  *
  * <pre>
- *     -Dmax.ir.trace=[(trace level):](method name filters separated by '.')
+ *     -Dmax.ir.trace=[(trace level):](method name filters separated by ',')
  * </pre>
  * For example, to trace all IR's when compiling a method who name includes the string {@code "getClass"} or {@code "hasNext"}:
  * <pre>
@@ -76,6 +76,8 @@ import com.sun.max.vm.compiler.ir.*;
  * @author Ben L. Titzer
  */
 public class IrObserverConfiguration {
+
+    public static final String MAX_IR_TRACE_PROPERTY = "max.ir.trace";
 
     static final Package _package = new Package();
 
@@ -104,7 +106,7 @@ public class IrObserverConfiguration {
     }
 
     private static String[] parseMaxIrTraceProperty() {
-        String irTraceValue = System.getProperty("max.ir.trace", "");
+        String irTraceValue = System.getProperty(MAX_IR_TRACE_PROPERTY, "");
         String[] methodsToBeTraced = {};
         if (!irTraceValue.isEmpty()) {
             final int indexOfColon = irTraceValue.indexOf(':');

@@ -25,11 +25,8 @@ import test.com.sun.max.vm.compiler.amd64.*;
 import test.com.sun.max.vm.jit.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.amd64.*;
 import com.sun.max.vm.template.*;
@@ -52,10 +49,5 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
 
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
         return new AMD64JitCompiler(VMConfiguration.target(), templateTable);
-    }
-
-    @Override
-    public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return new AMD64Disassembler(targetMethod.start().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 }

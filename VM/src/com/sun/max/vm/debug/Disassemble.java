@@ -45,7 +45,7 @@ public final class Disassemble {
     private Disassemble() {
     }
 
-    private static Disassembler createDisassembler(ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
+    public static Disassembler createDisassembler(ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
         switch (processorKind.instructionSet()) {
             case ARM:
                 return new ARMDisassembler(startAddress.toInt(), inlineDataDecoder);
