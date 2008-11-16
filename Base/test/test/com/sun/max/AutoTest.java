@@ -40,7 +40,6 @@ public final class AutoTest {
         suite.addTest(test.com.sun.max.program.option.AllTests.suite());
         suite.addTest(test.com.sun.max.lang.AllTests.suite());
         suite.addTest(test.com.sun.max.profile.AllTests.suite());
-        suite.addTest(test.com.sun.max.sync.AllTests.suite());
         suite.addTest(test.com.sun.max.util.AllTests.suite());
         return suite;
     }

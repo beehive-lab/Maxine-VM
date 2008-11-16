@@ -70,7 +70,7 @@ extern void log_print_double(double d);
 #define log_LOADER 0
 #define log_TRAP 0
 #define log_MUTEX 0
-#define log_CONDITION 1
+#define log_CONDITION 0
 #define log_LINKER 0
 #define log_JVMNI 0
 #define log_THREADS 0
