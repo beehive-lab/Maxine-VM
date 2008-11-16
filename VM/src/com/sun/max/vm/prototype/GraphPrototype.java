@@ -66,7 +66,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Creates a new link from the specified parent object the the child object.
-         * 
+         *
          * @param parent the parent object (i.e. the one containing the reference)
          * @param name the name of the link
          */
@@ -77,7 +77,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Converts this link to a string.
-         * 
+         *
          * @return the name of this link as a string
          */
         public String name() {
@@ -89,7 +89,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Converts this link to a string that is suitable for use as a sufix.
-         * 
+         *
          * @return the name of this link
          */
         public String nameAsSuffix() {
@@ -103,7 +103,7 @@ public class GraphPrototype extends Prototype {
     /**
      * Get the parent of the specified object. The link graph forms a tree, with
      * every object having either zero or one parent.
-     * 
+     *
      * @param object the object for which to get the object
      * @return the object which is the parent of the specified object
      */
@@ -113,7 +113,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Get the set of all links.
-     * 
+     *
      * @return the set of all links
      */
     public Set<Map.Entry<Object, Link>> links() {
@@ -122,7 +122,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Print the path from the root to the specified object.
-     * 
+     *
      * @param object the object for which to print the path
      * @param out the stream to which to print the output
      */
@@ -140,7 +140,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Print the path from the root to the specified object to the standard output stream.
-     * 
+     *
      * @param object
      */
     public void printPath(Object object) {
@@ -149,7 +149,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Add a link between the parent object and the child object with the specified link name.
-     * 
+     *
      * @param parent the parent object
      * @param child the child object
      * @param fieldNameOrArrayIndex the name of the field or the array index which characterizes the
@@ -174,7 +174,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Checks whether the specified field is static.
-     * 
+     *
      * @param field the field to check
      * @return {@code true} if the specified field is static; {@code false} otherwise
      */
@@ -184,7 +184,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Checks whether the specified field is of reference type.
-     * 
+     *
      * @param field the field to check
      * @return {@code true} if the field is a reference type; {@code false} otherwise
      */
@@ -198,7 +198,7 @@ public class GraphPrototype extends Prototype {
     /**
      * Extracts and registers the instance fields of the specified class. Some fields are
      * filtered. See {@link HackJDK#isOmittedField(Field) HackJDK} for details.
-     * 
+     *
      * @param javaClass the java class
      * @return a sequence of the instance fields of the specified class that are not filtered
      */
@@ -222,7 +222,7 @@ public class GraphPrototype extends Prototype {
     /**
      * Get the class reference from an object and gather the non-filtered instance fields
      * for the specified object.
-     * 
+     *
      * @param object the object for which to get the class and instance fields
      * @param javaClass the java class of the object
      * @return a sequence of the instance fields for the object
@@ -244,7 +244,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Iterate over the reference elements of an array and add the referenced objects.
-     * 
+     *
      * @param array the array to iterate over
      */
     private void gatherReferenceArrayElements(Object[] array) {
@@ -255,7 +255,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Iterate over the reference fields for an object and add the referenced objects.
-     * 
+     *
      * @param dynamicReferenceFields the sequence of reference fields
      * @param object the object from which to read the values
      */
@@ -272,7 +272,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Gather the static reference fields and add the referenced objects.
-     * 
+     *
      * @param staticTuple the static tuple of the class
      */
     private void gatherStaticTuple(StaticTuple staticTuple) {
@@ -291,7 +291,7 @@ public class GraphPrototype extends Prototype {
     /**
      * Gathers all objects referenced directly and indirectly by this object, including from
      * instance reference fields, static reference fields, the class object itself, etc.
-     * 
+     *
      * @param object the object to scan
      */
     private void gatherChildren(Object object) {
@@ -325,7 +325,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Creates a class info data structure for the specified Java class.
-         * 
+         *
          * @param clazz the java class
          */
         ClassInfo(Class clazz) {
@@ -334,7 +334,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Copy this class info object.
-         * 
+         *
          * @return a new class info object with the same values as this one
          */
         ClassInfo copy() {
@@ -348,7 +348,7 @@ public class GraphPrototype extends Prototype {
          * Checks if the specified object is equal to this one. This implementation
          * considers the other object equal to this one if the underlying Java classes
          * are equal.
-         * 
+         *
          * @param obj the other object
          */
         @Override
@@ -362,7 +362,7 @@ public class GraphPrototype extends Prototype {
         /**
          * Calculates and returns the aggregate number of objects of this class and all its
          * subclasses.
-         * 
+         *
          * @return the number of instances of this class and all its subclasses
          */
         long aggregateNumberOfObjects() {
@@ -376,7 +376,7 @@ public class GraphPrototype extends Prototype {
         /**
          * Calculates and returns the aggregate size of all objects of this class and all of its
          * subclasses.
-         * 
+         *
          * @return the size of all instances of this class and its subclasses
          */
         long aggregateTotalSize() {
@@ -389,7 +389,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Computes a hashcode for this object.
-         * 
+         *
          * @return the hashcode of the underlying Java class
          */
         @Override
@@ -399,7 +399,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Convert this object to a string.
-         * 
+         *
          * @return the result of calling {@code .toString()} on the underlying Java class
          */
         @Override
@@ -409,7 +409,7 @@ public class GraphPrototype extends Prototype {
 
         /**
          * Returns average instance size (i.e. total size divided by number of objects).
-         * 
+         *
          * @return the average instance size of instances of this classes
          */
         long averageInstanceSize() {
@@ -511,7 +511,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Create the class info for the specified class, it it does not already exist.
-     * 
+     *
      * @param c the class for which to create the info
      * @return the class info for the specified class
      */
@@ -559,7 +559,7 @@ public class GraphPrototype extends Prototype {
 
     /**
      * Gets a reference to the compiled prototype.
-     * 
+     *
      * @return a reference to the compiled prototype for this graph prototype
      */
     public CompiledPrototype compiledPrototype() {
@@ -569,7 +569,7 @@ public class GraphPrototype extends Prototype {
     /**
      * Create a new graph prototype from the specified compiled prototype and compute the transitive closure
      * of all references.
-     * 
+     *
      * @param compiledPrototype the compiled prototype from which to begin creating the graph prototype
      * @param tree a boolean indicating whether to generate a tree file that contains connectivity information
      * about the graph that is useful for debugging

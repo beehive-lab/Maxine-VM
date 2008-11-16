@@ -175,7 +175,6 @@ public class JavaMonitorManager {
         _bindableMonitors[_numberOfBindableMonitors++] = monitor;
     }
 
-    @INLINE
     private static ManagedMonitor takeFromUnboundList() {
         // No safe points in here, so safe to touch the free list.
         final ManagedMonitor monitor = _unboundList;
@@ -185,7 +184,6 @@ public class JavaMonitorManager {
         return monitor;
     }
 
-    @INLINE
     private static void addToUnboundList(ManagedMonitor monitor) {
         // No safe points in here, so safe to touch the free list.
         monitor.setNext(_unboundList);
