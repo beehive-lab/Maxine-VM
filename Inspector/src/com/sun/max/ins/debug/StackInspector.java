@@ -78,7 +78,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
     private final FrameSelectionListener _frameSelectionListener = new FrameSelectionListener();
     private static final int DEFAULT_MAX_FRAMES_DISPLAY = 500;
     private static final String MAX_FRAMES_DISPLAY_PROPERTY = "inspector.max.stack.frames.display";
-    private static int _maxFramesDisplay;
+    private static int _defaultMaxFramesDisplay;
     private boolean _stateChanged = true;  // conservative assessment of possible stack change
     private SelectedFrame<? extends StackFrame> _selectedFrame;
     private JSplitPane _splitPane;
@@ -88,12 +88,12 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         final String value = System.getProperty(MAX_FRAMES_DISPLAY_PROPERTY);
         if (value != null) {
             try {
-                _maxFramesDisplay = Integer.parseInt(value);
+                _defaultMaxFramesDisplay = Integer.parseInt(value);
             } catch (NumberFormatException ex) {
                 ProgramError.unexpected(MAX_FRAMES_DISPLAY_PROPERTY + " value " +  value + " not an integer");
             }
         } else {
-            _maxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
+            _defaultMaxFramesDisplay = DEFAULT_MAX_FRAMES_DISPLAY;
         }
     }
 
@@ -287,6 +287,8 @@ public class StackInspector extends UniqueInspector<StackInspector> {
     public void viewConfigurationChanged(long epoch) {
         reconstructView();
     }
+
+    private int _maxFramesDisplay = _defaultMaxFramesDisplay;
 
     /**
      * Add frames to the stack model until {@link #_maxFramesDisplay} reached.
@@ -581,7 +583,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                     }
                     newRightComponent = _selectedFrame;
                 } else if (stackFrame instanceof TruncatedStackFrame) {
-                    _maxFramesDisplay += DEFAULT_MAX_FRAMES_DISPLAY;
+                    _maxFramesDisplay *= 2;
                     _stateChanged = true;
                     refreshView(true);
                 } else {

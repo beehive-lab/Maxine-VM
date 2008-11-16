@@ -109,23 +109,23 @@ public final class MiscWordLabel extends ValueLabel {
             if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, BiasedLockWord64.class)) {
                 final BiasedLockWord64 biasedLockWord = BiasedLockWord64.as(modalLockWord);
                 final int hashcode = biasedLockWord.getHashcode();
-                final int lockCount = biasedLockWord.getRecursionCount();
+                final int recursion = biasedLockWord.getRecursionCount();
                 final int ownerThreadID = BiasedLockModeHandler.decodeBiasOwnerThreadID(biasedLockWord);
                 final TeleNativeThread thread = teleVM().teleProcess().idToThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 final int biasEpoch = biasedLockWord.getEpoch().toInt();
-                setText("BiasedLock(" + lockCount + "): " + hexString);
-                setToolTipText("BiasedLockWord64:  lockCount=" + lockCount +   ";  thread=" +
+                setText("BiasedLock(" + recursion + "): " + hexString);
+                setToolTipText("BiasedLockWord64:  recursion=" + recursion +   ";  thread=" +
                                 threadName + ";  biasEpoch=" + biasEpoch  + "; hashcode=" + hashcode);
             } else if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, ThinLockWord64.class)) {
                 final ThinLockWord64 thinLockWord = ThinLockWord64.as(modalLockWord);
                 final int hashcode = thinLockWord.getHashcode();
-                final int lockCount = thinLockWord.getRecursionCount();
+                final int recursionCount = thinLockWord.getRecursionCount();
                 final int ownerThreadID = ThinLockModeHandler.decodeLockOwnerThreadID(thinLockWord);
                 final TeleNativeThread thread = teleVM().teleProcess().idToThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
-                setText("ThinLock(" + lockCount + "): " + hexString);
-                setToolTipText("ThinLockWord64:  lockCount=" + lockCount +   ";  thread=" +
+                setText("ThinLock(" + recursionCount + "): " + hexString);
+                setToolTipText("ThinLockWord64:  recursion=" + recursionCount +   ";  thread=" +
                                 threadName  + "; hashcode=" + hashcode);
             } else if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, InflatedMonitorLockWord64.class)) {
                 setText("InflatedMonitorLock: " + hexString);
@@ -134,9 +134,13 @@ public final class MiscWordLabel extends ValueLabel {
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.
                     final Reference javaMonitorReference = teleVM().wordToReference(inflatedLockWord.getBoundMonitorReferenceAsWord());
-                    _teleJavaMonitor = TeleObject.make(teleVM(), javaMonitorReference);
-                    final String name = _teleJavaMonitor.classActorForType().qualifiedName();
-                    setToolTipText("InflatedMonitorLockWord64:  bound, monitor=" + name);
+                    if (javaMonitorReference.isZero()) {
+                        setToolTipText("InflatedMonitorLockWord64:  bound, monitor=null");
+                    } else {
+                        _teleJavaMonitor = TeleObject.make(teleVM(), javaMonitorReference);
+                        final String name = _teleJavaMonitor.classActorForType().qualifiedName();
+                        setToolTipText("InflatedMonitorLockWord64:  bound, monitor=" + name);
+                    }
                 } else {
                     // Field access
                     final int hashcode = inflatedLockWord.getHashcode();

@@ -226,20 +226,6 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
         private final boolean _isFinal;
 
         /**
-         * Defines a property that can only be set once.
-         *
-         * @param keyType
-         *                the type of objects to which the property applies
-         * @param valueType
-         *                the type of the property's values
-         * @param defaultValue
-         *                the default value of the property
-         */
-        private Property(Class keyType, Class valueType, Object defaultValue) {
-            this(true, keyType, valueType, defaultValue);
-        }
-
-        /**
          * Defines a property.
          *
          * @param isFinal
@@ -256,6 +242,20 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             _valueType = valueType;
             _defaultValue = defaultValue;
             _isFinal = isFinal;
+        }
+
+        /**
+         * Defines a property that can only be set once.
+         *
+         * @param keyType
+         *                the type of objects to which the property applies
+         * @param valueType
+         *                the type of the property's values
+         * @param defaultValue
+         *                the default value of the property
+         */
+        private Property(Class keyType, Class valueType, Object defaultValue) {
+            this(true, keyType, valueType, defaultValue);
         }
 
         VariableMapping<Object, Object> createMap() {
