@@ -46,7 +46,7 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
 
     protected static final int RCOUNT_FIELD_WIDTH = 5; // Must be <= 8 (see incrementCount())
     protected static final int UTIL_FIELD_WIDTH = 9;
-    protected static final int THREADID_FIELD_WIDTH = 64 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + MODE_BIT_QTY);
+    protected static final int THREADID_FIELD_WIDTH = 64 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
 
     protected static final int THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
     protected static final int UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;

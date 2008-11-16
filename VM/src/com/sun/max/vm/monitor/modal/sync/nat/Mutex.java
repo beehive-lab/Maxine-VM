@@ -56,10 +56,9 @@ public final class Mutex {
 
     private static native boolean nativeMutexLock(Pointer mutex);
 
-    public static void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            _size = nativeMutexSize();
-        }
+    public static void initialize() {
+        assert MaxineVM.hostOrTarget().phase() == MaxineVM.Phase.PRIMORDIAL;
+        _size = nativeMutexSize();
     }
 
     public Mutex() {

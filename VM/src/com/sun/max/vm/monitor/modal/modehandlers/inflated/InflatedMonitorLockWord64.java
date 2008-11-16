@@ -26,8 +26,6 @@ import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.sync.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Abstracts bit field access to a 64-bit inflated lock word.
@@ -40,13 +38,13 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
     /*
      * bit [63............................... 1  0]     Shape         Mode      State
      *
-     *     [Def. by l. weight monitor scheme][m][0]     Lightweight
+     *     [Def. by lightwght monitor scheme][m][0]     Lightweight
      *     [            0           ][ hash ][0][1]     Inflated      Unbound   Unlocked
      *     [ Pointer to JavaMonitor object  ][1][1]     Inflated      Bound     Unlocked or locked
      *
      */
 
-    private static final Address MONITOR_MASK = Word.allOnes().asAddress().shiftedLeft(MODE_BIT_QTY);
+    private static final Address MONITOR_MASK = Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS);
 
     protected InflatedMonitorLockWord64() {
     }
@@ -66,25 +64,25 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
 
     @INLINE
     public final boolean isBound() {
-        return asAddress().isBitSet(MISC_BIT);
+        return asAddress().isBitSet(MISC_BIT_INDEX);
     }
 
     @INLINE
     public static final InflatedMonitorLockWord64 boundFromMonitor(JavaMonitor monitor) {
-        return as(ObjectAccess.toOrigin(monitor).asAddress().bitSet(SHAPE_BIT).bitSet(MISC_BIT));
+        return as(UnsafeLoophole.objectToWord(monitor).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
     @INLINE
     public final JavaMonitor getBoundMonitor() {
-        return (JavaMonitor) Reference.fromOrigin(asAddress().and(MONITOR_MASK).asPointer()).toJava();
+        return (JavaMonitor) UnsafeLoophole.wordToObject(asAddress().and(MONITOR_MASK).asPointer());
     }
 
-    public final Reference getBoundMonitorReference() {
-        return Reference.fromOrigin(asAddress().and(MONITOR_MASK).asPointer());
+    public final Word getBoundMonitorReferenceAsWord() {
+        return asAddress().and(MONITOR_MASK).asPointer();
     }
 
     @INLINE
     public static final InflatedMonitorLockWord64 unboundFromHashcode(int hashcode) {
-        return InflatedMonitorLockWord64.as(HashableLockWord64.as(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT));
+        return InflatedMonitorLockWord64.as(HashableLockWord64.as(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
     }
 }

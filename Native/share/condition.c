@@ -19,134 +19,156 @@
  * Company, Ltd.
  */
 #include "log.h"
+#include "threads.h"
 
 #include "condition.h"
 
 void condition_initialize(Condition condition) {
-#if log_MONITOR
-  log_println("condition_initialize(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
-#endif
-#if os_SOLARIS
-    if (cond_init(condition, NULL, NULL) != 0) {
-        c_ASSERT(false);
-    }
-#elif os_LINUX || os_DARWIN
-    if (pthread_cond_init(condition, NULL) != 0) {
-        c_ASSERT(false);
-    }
-#elif os_GUESTVMXEN
-    *condition = guestvmXen_condition_create();
-#endif
-
+#   if log_CONDITION
+        log_println("condition_initialize(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+#   endif
+#   if os_SOLARIS
+        if (cond_init(condition, NULL, NULL) != 0) {
+            c_FATAL();
+        }
+#   elif os_LINUX || os_DARWIN
+        if (pthread_cond_init(condition, NULL) != 0) {
+            c_FATAL();
+        }
+#   elif os_GUESTVMXEN
+        *condition = guestvmXen_condition_create();
+#   else
+#      error
+#   endif
 }
 
 void condition_destroy(Condition condition) {
-#if log_MONITOR
-  log_println("condition_destroy   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
-#endif
-#if os_SOLARIS
-    if (cond_destroy(condition) != 0) {
-        c_ASSERT(false);
-    }
-#elif os_LINUX || os_DARWIN
-    if (pthread_cond_destroy(condition) != 0) {
-        c_ASSERT(false);
-    }
-#endif
+#   if log_CONDITION
+        log_println("condition_destroy   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+#   endif
+#   if os_SOLARIS
+        if (cond_destroy(condition) != 0) {
+            c_FATAL();
+        }
+#   elif os_LINUX || os_DARWIN
+        if (pthread_cond_destroy(condition) != 0) {
+            c_FATAL();
+        }
+#   endif
 }
 
-int condition_wait(Condition condition, Mutex mutex) {
-#if log_MONITOR
-  log_println("condition_wait      (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition, mutex);
+#if os_GUESTVMXEN
+#   define ETIMEDOUT = -1
 #endif
-#if (os_DARWIN || os_LINUX)
-    return pthread_cond_wait(condition, mutex);
-#elif os_SOLARIS
-    int ret = cond_wait(condition, mutex);
-    if ( ret == EINTR) {
-    	return 1;
+
+/*
+ * This function returns false if the thread was interrupted or an error occurred, true otherwise
+ */
+Boolean condition_wait(Condition condition, Mutex mutex) {
+    #if log_CONDITION
+        log_println("condition_wait      (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition, mutex);
+    #endif
+    int error;
+#   if (os_DARWIN || os_LINUX)
+        error = pthread_cond_wait(condition, mutex);
+        if (error == ETIMEDOUT) {
+            return false;
+        }
+#   elif os_SOLARIS
+        error = cond_wait(condition, mutex);
+        if (error == EINTR) {
+#           if log_CONDITION
+                log_println("condition_wait: error code EINTR");
+#           endif
+            return false;
+        }
+#   elif os_GUESTVMXEN
+        error = guestvmXen_condition_wait(*condition, *mutex, 0);
+        if (error == ETIMEDOUT) {
+            return false;
+        }
+#   endif
+    if (error != 0) {
+        log_println("condition_wait: unexpected error code %d", error);
+        return false;
     }
-    return 0;
- #elif os_GUESTVMXEN
-    return guestvmXen_condition_wait(*condition, *mutex, 0);
-#endif
+    return true;
 }
 
 /*
- * This function returns true if the thread was interrupted, false otherwise
+ * This function returns false if the thread was interrupted or an error occurred, true otherwise
  */
 Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
-#if log_MONITOR
-  log_println("condition_timedWait (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
-#endif
-	int error = 0;
+    #if log_CONDITION
+        log_println("condition_timedWait (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
+    #endif
+	int error;
 	if (timeoutMilliSeconds > 0) {
-
 #       if (os_DARWIN || os_LINUX)
             struct timespec ts;
-#           define TIMEDOUT ETIMEDOUT
 #       elif os_SOLARIS
             timestruc_t ts;
-#           define TIMEDOUT ETIME
 #       elif os_GUESTVMXEN
             struct guestvmXen_TimeSpec ts;
-#           define TIMEDOUT -1
 #       endif
 
 		ts.tv_sec = timeoutMilliSeconds / 1000;
-		ts.tv_nsec = (timeoutMilliSeconds * 1000000) % 1000000000;
+		ts.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
 
 #       if (os_DARWIN || os_LINUX)
-// TODO check error code for interrupted
-            pthread_cond_timedwait(condition, mutex, &ts);
+            error = pthread_cond_timedwait(condition, mutex, &ts);
+            if (error == ETIMEDOUT) {
+                return false;
+            }
 #       elif os_SOLARIS
-            error = cond_reltimedwait(condition, mutex, &ts) == EINTR ? 1 : 0;
+            error = cond_reltimedwait(condition, mutex, &ts);
+            if (error == ETIME) {
+                return false;
+            }
 #       elif os_GUESTVMXEN
             error = guestvmXen_condition_wait(*condition, *mutex, &ts);
+            if (error == ETIMEDOUT) {
+                return false;
+            }
+#       else
+#           error
 #       endif
-
 	} else {
-		error = condition_wait(condition, mutex);
+		return condition_wait(condition, mutex);
 	}
-// At this point error should be 0 or 1 only!
-	switch (error) {
-		case 0: {
-			return false;
-		}
-		case 1: {
-			return true;
-		}
-		default: {
-			log_println("condition_timedWait: unexpected error code %d", error);
-			return false;
-		}
-	}
-
-
+	if (error != 0) {
+	    log_println("condition_timedWait: unexpected error code %d", error);
+	    return false;
+    }
+	return true;
 }
 
-int condition_notify(Condition condition) {
-#if log_MONITOR
-  log_println("condition_notify    (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
-#endif
-#if (os_DARWIN || os_LINUX)
-    return pthread_cond_signal(condition);
-#elif os_SOLARIS
-    return cond_signal(condition);
-#elif os_GUESTVMXEN
-    return guestvmXen_condition_notify(*condition, 0);
-#endif
+Boolean condition_notify(Condition condition) {
+    #if log_CONDITION
+        log_println("condition_notify    (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+    #endif
+    #if (os_DARWIN || os_LINUX)
+        return pthread_cond_signal(condition) == 0;
+    #elif os_SOLARIS
+        return cond_signal(condition) == 0;
+    #elif os_GUESTVMXEN
+        return guestvmXen_condition_notify(*condition, 0) == 0;
+    #else
+#       error
+    #endif
 }
 
-int condition_notifyAll(Condition condition) {
-#if log_MONITOR
-  log_println("condition_notifyAll (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
-#endif
-#if (os_DARWIN || os_LINUX)
-	return pthread_cond_broadcast(condition);
-#elif os_SOLARIS
-	return cond_broadcast(condition);
-#elif os_GUESTVMXEN
-	return guestvmXen_condition_notify(*condition, 1);
-#endif
+Boolean condition_notifyAll(Condition condition) {
+    #if log_CONDITION
+        log_println("condition_notifyAll (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+    #endif
+    #if (os_DARWIN || os_LINUX)
+        return pthread_cond_broadcast(condition) == 0;
+    #elif os_SOLARIS
+        return cond_broadcast(condition) == 0;
+    #elif os_GUESTVMXEN
+        return guestvmXen_condition_notify(*condition, 1) == 0;
+    #else
+    #   error
+    #endif
 }
