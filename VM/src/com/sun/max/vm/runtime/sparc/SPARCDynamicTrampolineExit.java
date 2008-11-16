@@ -22,8 +22,15 @@ package com.sun.max.vm.runtime.sparc;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 
+import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.sparc.*;
 import com.sun.max.vm.trampoline.*;
 
 
@@ -44,6 +51,15 @@ public class SPARCDynamicTrampolineExit extends DynamicTrampolineExit {
      */
     @Override
     public Address trampolineReturnAddress(DynamicTrampoline dynamicTrampoline, Address vtableEntryPoint, Pointer stackPointer) {
-        return  vtableEntryPoint.plus(OPTIMIZED_ENTRY_POINT.offsetFromCodeStart() - VTABLE_ENTRY_POINT.offsetFromCodeStart());
+        // Have to get the caller of the trampoline to figure out what entry point to return.
+        // We've been passed the stack pointer of the trampoline. From that we can obtain %i7 from the register window saving area,
+        // obtain the target method (which is the caller of the trampoline) and infer what entry point need to be used to call the
+        // resolved method. Have to flush the register window first to guarantee that the stack slot for %i7 is up to date.
+
+        SpecialBuiltin.flushRegisterWindows();
+        final Pointer trampolineCallerPC = SPARCStackFrameLayout.getRegisterInSavedWindow(stackPointer, GPR.I7).asPointer();
+        final TargetMethod caller = Code.codePointerToTargetMethod(trampolineCallerPC);
+        final CallEntryPoint calleeEntryPoint =  (caller instanceof JitTargetMethod)  ? JIT_ENTRY_POINT : OPTIMIZED_ENTRY_POINT;
+        return  vtableEntryPoint.plus(calleeEntryPoint.offsetFromCodeStart() - VTABLE_ENTRY_POINT.offsetFromCodeStart());
     }
 }

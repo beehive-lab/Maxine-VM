@@ -92,7 +92,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleVM_nativeLoadBootHeap(JNIEnv *env, 
                     /* too many mmaps before we found ours */
                     break;
                 }
-                if (state.__rsi == mappingSize) {
+                if ((jlong) state.__rsi == mappingSize) {
                     /* Step over the syscall and analyze the result next time around. */
                     found = true;
                 }

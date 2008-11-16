@@ -61,10 +61,4 @@ public class DirTranslatorTestSetup extends CompilerTestSetup<DirMethod> {
         return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
                                      new com.sun.max.vm.compiler.b.c.d.Package());
     }
-
-    @Override
-    public void chainedSetUp() {
-        super.chainedSetUp();
-        compilerScheme().compileSnippets();
-    }
 }

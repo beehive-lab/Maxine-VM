@@ -130,7 +130,7 @@ endif
 ifeq ($(OS),darwin)
 	CC = gcc -g $(DARWIN_GCC_MFLAG)
 	C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET)
-	CFLAGS = -Wall -Wno-long-long -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
+	CFLAGS = -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
 	LINK_MAIN = gcc -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
 	LINK_LIB = gcc -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup -lc -lm
 	LIB_PREFIX = lib
@@ -153,7 +153,7 @@ endif
 ifeq ($(OS),solaris)
 	CC = cc -g
 	C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) 
-	CFLAGS = -w $(KPIG_FLAG) -xarch=$(ARCH) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
+	CFLAGS =  -xc99 -errwarn -erroff=E_ARGUEMENT_MISMATCH -errtags -errfmt=error $(KPIG_FLAG) -xarch=$(ARCH) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
 	LINK_MAIN = cc -g -xarch=$(ARCH) -lc -lthread -ldl -o $(MAIN)
 	LINK_LIB = cc -g -G -xarch=$(ARCH) -lresolv -lc -lm -ldl -lthread -lrt -lproc
 	LIB_PREFIX = lib

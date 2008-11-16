@@ -22,6 +22,8 @@ package com.sun.max.vm.runtime.sparc;
 
 import static com.sun.max.asm.sparc.GPR.*;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
@@ -32,10 +34,38 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.util.Predicate;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.eir.sparc.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.sparc.*;
 
 /**
+ * The safepoint implementation for SPARC defines the safepoint code that is injected at safepoint sites,
+ * as well as the {@linkplain #latchRegister() latch register}, and the layout and size of a trap state
+ * area. A trap state area contains the {@linkplain Trap.Number trap number} and the values of the
+ * processor's registers when a trap occurs -- except for those registers captured in the trapped frame's register window.
+ * The trap state is stored just above the register window (spill slots are stored immediately after the frame pointer).
+ * A trap state area is embedded in each trap stub's frame as follows:
+ * <pre>
+ * RW: register window
+ *  <-- stack grows downward                                                         higher addresses -->
+ *  trap                                                            trapped
+ *  stub's                                                          frame's
+ * <--RW--> <--  trap state area -->                                 <--RW->
+ * | %i %l |%g | %o | %f | trap num |--- normal trap stub frame --- | %i %l |==== stack as it was when trap occurred ===>
+ *         |<--  TRAP_STATE_SIZE -->|
+ *         ^ trapState
+ * </pre>
+ *
+ * The layout of the trap state area is described by the following C-like struct declaration:
+* trap_state {
+ *     Word globalRegisters[15];  %g1 to %g5
+ *     Word outputRegisters[16]   %o0 to %o7
+ *     Word floatingPointRegisters[32]; %f0 to %f31
+ *     Word trapNumber;
+ *     Word flagsRegister;
+ * }
+ *
  * @author Bernd Mathiske
  * @author Laurent Daynes
  */
@@ -51,12 +81,39 @@ public final class SPARCSafepoint extends Safepoint {
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    private static final GPR _LATCH_REGISTER = G2;
+    public static final GPR LATCH_REGISTER = G2;
+
+    public static final Symbolizer<GPR> TRAP_SAVED_GLOBAL_SYMBOLIZER = Symbolizer.Static.fromSymbolizer(GLOBAL_SYMBOLIZER, new com.sun.max.util.Predicate<GPR>() {
+        private final Collection<SPARCEirRegister> _reservedGlobalRegisters = SPARCEirABI.integerSystemReservedGlobalRegisters().toCollection();
+        public boolean evaluate(GPR register) {
+            return !_reservedGlobalRegisters.contains(SPARCEirRegister.GeneralPurpose.from(register));
+        }
+    });
+
+    public static final int TRAP_STATE_SIZE;
+    public static final int TRAP_NUMBER_OFFSET;
+    public static final int TRAP_SP_OFFSET;
+    public static final int TRAP_IP_OFFSET;
+    public static final int TRAP_LATCH_OFFSET;
+
+    static {
+        final int globalRegisterWords = TRAP_SAVED_GLOBAL_SYMBOLIZER.numberOfValues(); // %g1 to %g5
+        final int outRegisterWords = IN_SYMBOLIZER.numberOfValues();    // %o0 to %o7
+        final int floatingPointRegisterWords = 32; // %f0-%f32
+        TRAP_LATCH_OFFSET = Word.size();
+        // Offset to %o6 in trap state.
+        TRAP_SP_OFFSET = Word.size() * (globalRegisterWords + (O6.value() - O0.value()));
+        // Offset to %o7 in trap state
+        TRAP_IP_OFFSET = TRAP_SP_OFFSET + Word.size();
+        TRAP_NUMBER_OFFSET = Word.size() * (globalRegisterWords + outRegisterWords + floatingPointRegisterWords);
+        TRAP_STATE_SIZE = TRAP_NUMBER_OFFSET + Word.size();
+        // FIXME: saving of flags states ?
+    }
 
     @INLINE(override = true)
     @Override
     public GPR latchRegister() {
-        return _LATCH_REGISTER;
+        return LATCH_REGISTER;
     }
 
     private SPARCAssembler createAssembler() {
@@ -71,9 +128,9 @@ public final class SPARCSafepoint extends Safepoint {
         final SPARCAssembler asm = createAssembler();
         try {
             if (_is32Bit) {
-                asm.lduw(_LATCH_REGISTER, G0, _LATCH_REGISTER);
+                asm.lduw(LATCH_REGISTER, G0, LATCH_REGISTER);
             } else {
-                asm.ldx(_LATCH_REGISTER, G0, _LATCH_REGISTER);
+                asm.ldx(LATCH_REGISTER, G0, LATCH_REGISTER);
             }
             return asm.toByteArray();
         } catch (AssemblyException assemblyException) {
@@ -89,30 +146,37 @@ public final class SPARCSafepoint extends Safepoint {
 
     @Override
     public Pointer getInstructionPointer(Pointer trapState) {
-        throw Problem.unimplemented();
+        return trapState.readWord(SPARCSafepoint.TRAP_IP_OFFSET).asPointer();
     }
     @Override
     public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
-        throw Problem.unimplemented();
+        return trapState.readWord(SPARCSafepoint.TRAP_SP_OFFSET).asPointer();
     }
+
     @Override
     public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
-        throw Problem.unimplemented();
+        final Pointer registerWindow = getStackPointer(trapState, targetMethod);
+        final GPR framePointerRegister = (GPR) targetMethod.abi().framePointer();
+        return SPARCStackFrameLayout.getRegisterInSavedWindow(registerWindow, framePointerRegister).asPointer();
     }
+
     @Override
     public Pointer getSafepointLatch(Pointer trapState) {
-        throw Problem.unimplemented();
+        return trapState.readWord(TRAP_LATCH_OFFSET).asPointer();
     }
+
     @Override
     public void setSafepointLatch(Pointer trapState, Pointer value) {
-        throw Problem.unimplemented();
+        trapState.writeWord(TRAP_LATCH_OFFSET, value);
     }
+
     @Override
     public Pointer getRegisterState(Pointer trapState) {
-        throw Problem.unimplemented();
+        return trapState;
     }
+
     @Override
     public int getTrapNumber(Pointer trapState) {
-        throw Problem.unimplemented();
+        return trapState.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
     }
 }

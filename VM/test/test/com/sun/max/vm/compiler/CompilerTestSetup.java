@@ -31,6 +31,7 @@ import junit.framework.Test;
 import org.junit.*;
 
 import com.sun.max.*;
+import com.sun.max.asm.*;
 import com.sun.max.asm.dis.*;
 import com.sun.max.ide.*;
 import com.sun.max.profile.*;
@@ -42,6 +43,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -74,18 +76,24 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
      * @param targetMethod a compiled method whose {@linkplain TargetMethod#code() code} is to be disassembled
      * @return a disassembler for the ISA specific code in {@code targetMethod} or null if no such disassembler is available
      */
-    public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return null;
+    public final Disassembler disassemblerFor(TargetMethod targetMethod) {
+        return Disassemble.createDisassembler(VMConfiguration.target().platform().processorKind(), targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
     }
 
     protected void chainedSetUp() {
         Trace.on(1);
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator();
-        _javaPrototype = prototypeGenerator.createJavaPrototype(new OptionSet(), createVMConfiguration(), false);
+        _javaPrototype = createJavaPrototype();
         _javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
 
         Trace.line(1, "Host VM configuration:\n" + MaxineVM.host().configuration());
         Trace.line(1, "Target VM configuration:\n" + MaxineVM.target().configuration());
+
+        compilerScheme().compileSnippets();
+    }
+
+    protected JavaPrototype createJavaPrototype() {
+        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator();
+        return prototypeGenerator.createJavaPrototype(new OptionSet(), createVMConfiguration(), false);
     }
 
     private boolean _setupGuard;
@@ -123,7 +131,9 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
         try {
             _javaPrototype.vmConfiguration().finalizeSchemes(Phase.RUNNING);
             writeGeneratedClassfilesToJar();
-            GlobalMetrics.report(Trace.stream());
+            if (Trace.hasLevel(1)) {
+                GlobalMetrics.report(Trace.stream());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -18,35 +18,39 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.jit.sparc;
+package test.jni;
 
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.sparc.*;
-import test.com.sun.max.vm.jit.*;
 
-import com.sun.max.asm.*;
-import com.sun.max.platform.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.jit.*;
-import com.sun.max.vm.jit.sparc.*;
-import com.sun.max.vm.template.*;
-
-/**
- * Test setup for JIT tests on SPARC.
- *
- * @author Laurent Daynes
+/*
+ * @Harness: java
+ * @Runs: 0 = true, 1 = true
  */
-public class SPARCJITTestSetup extends SPARCTranslatorTestSetup  implements JITTestSetup {
-    public SPARCJITTestSetup(Test test) {
-        super(test);
+public class JNI_OverflowArguments {
+
+    public static boolean test(int arg) {
+        final byte [] buf = new byte[8338];
+        final long jzfile = 0xdeadbeef;
+        final long jzentry = 0xcafebabe;
+        final long pos = 8192;
+        final int off = 77;
+        final int len = 177;
+
+        if (arg == 0) {
+            final int res = read1(jzfile, jzentry, pos, buf, off, len);
+            if (res == len) {
+                return true;
+            }
+        } else if (arg == 1) {
+            final int res = read2(jzfile, jzentry, pos, buf, off, len);
+            if (res == off) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    @Override
-    protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.SPARC));
-    }
-
-    public JitCompiler newJitCompiler(TemplateTable templateTable) {
-        return new SPARCJitCompiler(VMConfiguration.target(), templateTable);
-    }
+    private static native int read1(long jzfile, long jzentry,
+                   long pos, byte[] b, int off, int len);
+    private static native int read2(long jzfile, long jzentry,
+                    long pos, byte[] b, int off, int len);
 }

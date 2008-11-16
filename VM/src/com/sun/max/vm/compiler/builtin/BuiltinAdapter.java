@@ -622,6 +622,10 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitGetInstructionPointer(builtin, result, arguments);
     }
 
+    public void visitPause(Pause builtin, IR_Type result, IR_Type[] arguments) {
+        visitSpecialBuiltin(builtin, result, arguments);
+    }
+
     public void visitJump(Jump builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }

@@ -91,7 +91,7 @@ FILE *getFileStream() {
 }
 #endif
 
-void log_print_format(char *format, ...) {
+void log_print_format(const char *format, ...) {
 #if !os_GUESTVMXEN
     va_list ap;
     va_start(ap, format);
@@ -126,7 +126,7 @@ void log_print_long(jlong val) {
 	log_print_format("%ld", val);
 }
 
-void log_print_buffer(char *buffer) {
+void log_print_buffer(const char *buffer) {
 	log_print_format("%s", buffer);
 }
 

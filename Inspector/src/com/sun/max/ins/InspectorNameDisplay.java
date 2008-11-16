@@ -133,7 +133,11 @@ public final class InspectorNameDisplay extends InspectionHolder {
      * @return human readable string identifying a VM thread in a standard format.
      */
     public String longName(TeleVmThread teleVmThread) {
-        return shortName(teleVmThread) + " [" + teleVmThread.teleNativeThread().id() + "]";
+        final TeleNativeThread teleNativeThread = teleVmThread.teleNativeThread();
+        if (teleNativeThread != null) {
+            return shortName(teleVmThread) + " [" + teleNativeThread.id() + "]";
+        }
+        return shortName(teleVmThread);
     }
 
     /**

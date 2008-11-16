@@ -31,12 +31,6 @@
 #   include <unistd.h>
 #endif
 
-#if os_SOLARIS && isa_SPARC
-    /* Get STACK_BIAS definition for Solaris / SPARC */
-#   include <sys/stack.h>
-    typedef struct rwindow * RegisterWindow;
-#endif
-
 #include "threads.h"
 #include "virtualMemory.h"
 #include "log.h"
@@ -44,6 +38,12 @@
 #include "os.h"
 #include "isa.h"
 #include "image.h"
+
+#if os_SOLARIS && isa_SPARC
+    /* Get STACK_BIAS definition for Solaris / SPARC */
+#      include <sys/stack.h>
+       typedef struct rwindow * RegisterWindow;
+#endif
 
 #if os_GUESTVMXEN
 #   include <guestvmXen.h>
@@ -79,9 +79,15 @@ int getTrapNumber(int signal) {
 
 static Address _javaTrapStub;
 
-void setHandler(int signal, void *handler) {
 #if os_GUESTVMXEN
-    register_fault_handler(signal, (fault_handler_t)handler);
+#define SignalHandlerFunction fault_handler_t
+#else
+typedef void (*SignalHandlerFunction)(int signal, SigInfo *signalInfo, void *ucontext);
+#endif
+
+void setHandler(int signal, SignalHandlerFunction handler) {
+#if os_GUESTVMXEN
+    register_fault_handler(signal, handler);
 #else
 
     struct sigaction newSigaction;
@@ -91,7 +97,6 @@ void setHandler(int signal, void *handler) {
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
     newSigaction.sa_sigaction = handler;
-    newSigaction.sa_handler = handler;
 
     if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
         log_exit(1, "sigaction failed");
@@ -141,35 +146,6 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #   endif
 #elif os_GUESTVMXEN
     ucontext->rip = (unsigned long) stub;
-#else
-    c_UNIMPLEMENTED();
-#endif
-}
-
-static Address getFramePointer(UContext *ucontext) {
-#if os_SOLARIS
-#   if isa_SPARC /* 64-bit SPARC*/
-        Address sp = ucontext->uc_mcontext.gregs[REG_SP];
-        RegisterWindow rwin = (RegisterWindow) (sp + STACK_BIAS);
-        Address fp = (Address) rwin->rw_fp;
-        return fp;
-#   elif isa_AMD64 || isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_FP];
-#   else
-        c_UNIMPLEMENTED();
-#   endif
-#elif os_LINUX
-#   if isa_AMD64
-        return ucontext->uc_mcontext.gregs[REG_RBP];
-#   elif isa_IA32
-        return ucontext->uc_mcontext.gregs[REG_EBP];
-#   else
-        c_UNIMPLEMENTED();
-#   endif
-#elif os_DARWIN
-    return ucontext->uc_mcontext->__ss.__rbp;
-#elif os_GUESTVMXEN
-    return ucontext->rbp;
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -256,7 +232,14 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     trapInfo[0] = trapNumber;
     trapInfo[1] = getInstructionPointer(ucontext);
     trapInfo[2] = getFaultAddress(signalInfo, ucontext);
+#if os_SOLARIS && isa_SPARC
+	 /* set the safepoint latch register of the trapped frame to the disable state */
+	 ucontext->uc_mcontext.gregs[REG_G2] = disabledVmThreadLocals;
+#else
+    /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
     trapInfo[3] = (Address)*stackPointer;
+    *stackPointer = (Word)disabledVmThreadLocals;
+#endif
 
 #if log_TRAP
     char *sigName = signalName(signal);
@@ -265,14 +248,10 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
         log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
         log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
+#   if !(os_SOLARIS && isa_SPARC)
         log_println("trapInfo[3] (stack top value)     = %p", trapInfo[3]);
+#   endif
     }
-#endif
-
-    /* note: overwrite the stack top with a pointer to the vm thread locals for the java stub to pick up */
-    *stackPointer = (Word)disabledVmThreadLocals;
-
-#if log_TRAP
     log_println("SIGNAL: returning to java trap stub 0x%0lx\n", _javaTrapStub);
 #endif
     setInstructionPointer(ucontext, _javaTrapStub);
@@ -280,11 +259,11 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
 void nativeInitialize(Address javaTrapStub) {
     _javaTrapStub = javaTrapStub;
-    setHandler(SIGSEGV, globalSignalHandler);
-    setHandler(SIGBUS, globalSignalHandler);
-    setHandler(SIGILL, globalSignalHandler);
-    setHandler(SIGFPE, globalSignalHandler);
-    setHandler(SIGUSR1, globalSignalHandler);
+    setHandler(SIGSEGV, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGBUS, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGILL, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGFPE, (SignalHandlerFunction) globalSignalHandler);
+    setHandler(SIGUSR1, (SignalHandlerFunction) globalSignalHandler);
 }
 
 

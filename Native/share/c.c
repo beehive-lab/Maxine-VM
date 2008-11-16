@@ -22,6 +22,7 @@
  * @author Bernd Mathiske
  */
 
+#include <stdlib.h>
 #include "log.h"
 
 #include "c.h"

@@ -20,7 +20,12 @@
  */
 package com.sun.max.vm.compiler.eir.sparc;
 
+import com.sun.max.asm.sparc.*;
+import com.sun.max.asm.sparc.complete.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.runtime.sparc.*;
+import com.sun.max.vm.stack.sparc.*;
 
 /**
  * @author Bernd Mathiske
@@ -35,6 +40,9 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
 
     @Override
     public void emit(SPARCEirTargetEmitter emitter) {
+        if (eirMethod().classMethodActor().isTrapStub()) {
+            emitTrapStubEpilogue(emitter);
+        }
     }
 
     @Override
@@ -42,4 +50,30 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
         visitor.visit(this);
     }
 
+    private void emitTrapStubEpilogue(SPARCEirTargetEmitter emitter) {
+        final SPARCAssembler asm = emitter.assembler();
+        final GPR stackPointer = ((SPARCEirRegister.GeneralPurpose) emitter.abi().stackPointer()).as();
+        final int wordSize = Word.size();
+        final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
+        int offset = trapStateOffset;
+        // restore all the general purpose registers no in the register windows
+        // restore all the floating point registers
+        for (GPR register : SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
+            asm.ldx(stackPointer, offset, register);
+            offset += wordSize;
+        }
+        for (GPR register : GPR.IN_SYMBOLIZER) {
+            asm.ldx(stackPointer, offset, register);
+            offset += wordSize;
+        }
+        for (int i = 0; i < 32; i++) {
+            final FPR fpr = FPR.fromValue(i);
+            if (fpr instanceof DFPR) {
+                asm.ldd(stackPointer, offset, (DFPR) fpr);
+            } else {
+                asm.ld(stackPointer, offset, (SFPR) fpr);
+            }
+            offset += wordSize;
+        }
+    }
 }
