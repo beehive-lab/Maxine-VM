@@ -148,6 +148,11 @@ public enum VmThreadLocal {
     TRAP_TOP_OF_STACK(Kind.WORD),
 
     /**
+     * The value in the safepoint latch register when entering a trap.
+     */
+    TRAP_SAFEPOINT_LATCH(Kind.WORD),
+
+    /**
      * @see Deoptimizer.ReferenceOccurrences
      */
     DEOPTIMIZER_REFERENCE_OCCURRENCES(Kind.REFERENCE),
