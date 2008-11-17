@@ -18,18 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package test.output;
 
 
 /**
- * Executes the equivalent of HelloWorld with a GC between two calls.
- *
- * @author Ben L. Titzer
+ * This is a test case used in the automated testing framework. This program is automatically
+ * run on both a standard JVM (e.g. Hotspot), and the Maxine VM, and the resulting output
+ * is compared directly.
  */
-public final class GCTest1 {
+public class HelloWorldReflect {
     public static void main(String[] args) {
-        System.out.println(GCTest1.class.getSimpleName() + " started.");
-        System.gc();
-        System.out.println(GCTest1.class.getSimpleName() + " done.");
+        java.lang.reflect.Method m;
+        try {
+            m = ClassLoader.getSystemClassLoader().loadClass("test.output.Hello").getMethod("main", String[].class);
+            m.invoke(null, (Object) args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello World!");
     }
 }

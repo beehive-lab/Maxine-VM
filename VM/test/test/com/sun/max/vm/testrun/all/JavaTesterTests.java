@@ -14359,6 +14359,22 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_jdk_UnsafeAccess01() {
+        JavaTesterRunScheme.begin("test.jdk.UnsafeAccess01");
+        String runString = null;
+        try {
+        // test(0) == 42
+            runString = "test(0)";
+            if (42 != test.jdk.UnsafeAccess01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_threads_Monitor_contended01() {
         JavaTesterRunScheme.begin("test.threads.Monitor_contended01");
         String runString = null;
