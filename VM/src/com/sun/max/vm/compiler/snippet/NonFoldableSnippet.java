@@ -63,7 +63,7 @@ public abstract class NonFoldableSnippet extends Snippet {
     }
 
     @INLINE
-    static Object createArray(ClassActor arrayClassActor, int length) {
+    public static Object createArray(ClassActor arrayClassActor, int length) {
         if (length < 0) {
             throw new NegativeArraySizeException();
         }
@@ -82,6 +82,11 @@ public abstract class NonFoldableSnippet extends Snippet {
     }
 
     public static final class CreatePrimitiveArray extends NonFoldableSnippet {
+        @NEVER_INLINE
+        public static Object neverInlineCreatePrimitiveArray(Kind kind, int length) {
+            return createArray(kind.arrayClassActor(), length);
+        }
+
         @SNIPPET
         public static Object createPrimitiveArray(Kind kind, int length) {
             return createArray(kind.arrayClassActor(), length);
@@ -90,6 +95,11 @@ public abstract class NonFoldableSnippet extends Snippet {
     }
 
     public static final class CreateReferenceArray extends NonFoldableSnippet {
+        @NEVER_INLINE
+        public static Object neverInlineCreateReferenceArray(ArrayClassActor arrayClassActor, int length) {
+            return createArray(arrayClassActor, length);
+        }
+
         @SNIPPET
         public static Object createReferenceArray(ArrayClassActor arrayClassActor, int length) {
             return createArray(arrayClassActor, length);
