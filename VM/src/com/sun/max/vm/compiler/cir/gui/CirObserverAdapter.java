@@ -87,7 +87,7 @@ public class CirObserverAdapter extends IrObserverAdapter {
     }
 
     public static synchronized void visualize(CirMethod cirMethod, CirNode node, String transform) {
-        if (_visualizer != null) {
+        if (_visualizer != null && _visualizer.shouldBeTraced(cirMethod.classMethodActor())) {
             final CirAnnotatedTraceBuilder builder = new CirAnnotatedTraceBuilder(node);
             _visualizer.add(new CirAnnotatedTrace(builder.trace(), builder.elements(), cirMethod.classMethodActor(), transform));
         }

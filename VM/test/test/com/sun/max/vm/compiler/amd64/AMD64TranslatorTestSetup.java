@@ -24,8 +24,6 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.asm.*;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
@@ -54,19 +52,8 @@ public class AMD64TranslatorTestSetup extends CompilerTestSetup<TargetMethod> {
     }
 
     @Override
-    public Disassembler disassemblerFor(TargetMethod targetMethod) {
-        return new AMD64Disassembler(targetMethod.start().toLong(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
-    }
-
-    @Override
     protected VMConfiguration createVMConfiguration() {
         return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
                                     new com.sun.max.vm.compiler.b.c.d.e.amd64.target.Package());
-    }
-
-    @Override
-    public void chainedSetUp() {
-        super.chainedSetUp();
-        compilerScheme().compileSnippets();
     }
 }

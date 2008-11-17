@@ -63,10 +63,4 @@ public class AMD64EirTranslatorTestSetup extends CompilerTestSetup<EirMethod> {
     protected VMConfiguration createVMConfiguration() {
         return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64), new com.sun.max.vm.compiler.b.c.d.e.amd64.Package());
     }
-
-    @Override
-    public void chainedSetUp() {
-        super.chainedSetUp();
-        compilerScheme().compileSnippets();
-    }
 }

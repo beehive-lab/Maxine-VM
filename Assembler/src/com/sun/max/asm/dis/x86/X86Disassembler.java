@@ -63,8 +63,11 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
             if (header._opcode1 == null) {
                 if (hexByte == X86Opcode.ADDRESS_SIZE) {
                     header._hasAddressSizePrefix = true;
-                } else if (hexByte == X86Opcode.OPERAND_SIZE || hexByte == X86Opcode.REPE || hexByte == X86Opcode.REPNE) {
+                } else if (hexByte == X86Opcode.OPERAND_SIZE) {
                     header._instructionSelectionPrefix = hexByte;
+                } else if (hexByte == X86Opcode.REPE || hexByte == X86Opcode.REPNE) {
+                    header._instructionSelectionPrefix = hexByte;
+                    return header;
                 } else if (isRexPrefix(hexByte)) {
                     header._rexPrefix = hexByte;
                 } else {
@@ -227,15 +230,15 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
     public DisassembledObject scanInstruction(BufferedInputStream stream, X86InstructionHeader header) throws IOException, AssemblyException {
         _serial++;
         Trace.line(4, "instruction: " + _serial);
-        boolean isFloatingPointEscape = false;
-        if (X86Opcode.isFloatingPointEscape(header._opcode1)) {
-            final int byte2 = stream.read();
-            if (byte2 >= 0xC0) {
-                isFloatingPointEscape = true;
-                header._opcode2 = HexByte.VALUES.get(byte2);
-            }
-        }
         if (header._opcode1 != null) {
+            boolean isFloatingPointEscape = false;
+            if (X86Opcode.isFloatingPointEscape(header._opcode1)) {
+                final int byte2 = stream.read();
+                if (byte2 >= 0xC0) {
+                    isFloatingPointEscape = true;
+                    header._opcode2 = HexByte.VALUES.get(byte2);
+                }
+            }
             final Sequence<Template_Type> templates = headerToTemplates().get(header);
             if (templates != null) {
                 for (Template_Type template : templates) {

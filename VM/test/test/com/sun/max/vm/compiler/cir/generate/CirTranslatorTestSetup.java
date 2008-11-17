@@ -45,10 +45,4 @@ public class CirTranslatorTestSetup extends CirCompilerTestSetup {
         return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
                                    new com.sun.max.vm.compiler.b.c.Package());
     }
-
-    @Override
-    public void chainedSetUp() {
-        super.chainedSetUp();
-        compilerScheme().compileSnippets();
-    }
 }

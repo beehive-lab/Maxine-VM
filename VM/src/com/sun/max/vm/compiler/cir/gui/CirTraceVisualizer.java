@@ -33,6 +33,7 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
@@ -451,6 +452,9 @@ final class CirTraceVisualizer extends JPanel {
     private Highlighter.HighlightPainter _selectedElementPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
     private Highlighter.HighlightPainter _searchPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.CYAN);
 
+    private final JCheckBox _enableFilter;
+    private final JTextField _filter;
+
     private final HeaderPanel _headerPanel;
     private final TracePanel _leftTrace;
     private final TracePanel _rightTrace;
@@ -515,6 +519,26 @@ final class CirTraceVisualizer extends JPanel {
     private CirTraceVisualizer(JFrame frame) {
         _frame = frame;
         setLayout(new BorderLayout());
+
+        final JPanel filterPanel = new JPanel(new SpringLayout());
+        final JLabel filterLabel = new JLabel("Filter");
+        _enableFilter = new JCheckBox();
+        filterPanel.setToolTipText("Only show traces whose title contains this string");
+        _enableFilter.setSelected(false);
+        _filter = new JTextField("");
+        _filter.setEnabled(false);
+        filterLabel.setEnabled(false);
+        filterPanel.add(_enableFilter);
+        filterPanel.add(filterLabel);
+        filterPanel.add(_filter);
+        _enableFilter.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                _filter.setEnabled(_enableFilter.isSelected());
+                filterLabel.setEnabled(_enableFilter.isSelected());
+            }
+        });
+        SpringUtilities.makeCompactGrid(filterPanel, 3);
+        add(filterPanel, BorderLayout.NORTH);
 
         _leftTrace = new TracePanel(_leftTracePane);
         _rightTrace = new TracePanel(_rightTracePane);
@@ -897,6 +921,13 @@ final class CirTraceVisualizer extends JPanel {
             });
         }
 
+        // Show a dialog to allow the user to enter/modify the trace filter before any traces are sent to the visualizer
+        final String s = (String) JOptionPane.showInputDialog(frame,
+                        "Enter substring for filtering trace of interest to methods whose fully qualified name contains the substring", "Trace Filter Wizard", JOptionPane.QUESTION_MESSAGE, null, null, visualizer._filter.getText());
+        if (s != null) {
+            visualizer._filter.setText(s);
+        }
+
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -923,6 +954,8 @@ final class CirTraceVisualizer extends JPanel {
         settings.setProperty("window.width", String.valueOf(bounds.width));
         settings.setProperty("window.height", String.valueOf(bounds.height));
         settings.setProperty("font.size.slider", String.valueOf(_fontSizeSlider.getValue()));
+        settings.setProperty("filter.text", _filter.getText());
+        settings.setProperty("filter.enabled", String.valueOf(_filter.isEnabled()));
         settings.setProperty("traceSplitPane.dividerLocation", String.valueOf(_traceAndDetailView.getDividerLocation()));
         settings.setProperty("splitPane.dividerLocation", String.valueOf(_splitPane.getDividerLocation()));
         final File settingsFile = new File(System.getProperty("user.home"), SETTINGS_FILE_NAME);
@@ -957,6 +990,8 @@ final class CirTraceVisualizer extends JPanel {
             bounds.height = Integer.parseInt(settings.getProperty("window.height", "200"));
             _frame.setBounds(bounds);
             _fontSizeSlider.setValue(Integer.parseInt(settings.getProperty("font.size.slider", String.valueOf(DEFAULT_FONT_SIZE))));
+            _filter.setText(settings.getProperty("filter.text", ""));
+            _enableFilter.setSelected(Boolean.valueOf(settings.getProperty("filter.enabled", String.valueOf(false))));
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                     _traceAndDetailView.setDividerLocation(Integer.parseInt(settings.getProperty("traceSplitPane.dividerLocation", "0")));
@@ -1118,6 +1153,17 @@ final class CirTraceVisualizer extends JPanel {
     private void refreshNavigation() {
         _traceNavigationPanel.update();
         _traceListNavigationPanel.update();
+    }
+
+    public boolean shouldBeTraced(MethodActor classMethodActor) {
+        if (_filter.isEnabled()) {
+            if (classMethodActor != null) {
+                return classMethodActor.format("%H.%n(%p)").contains(_filter.getText());
+
+            }
+            return false;
+        }
+        return true;
     }
 
     public synchronized void add(CirAnnotatedTrace cirAnnotatedTrace) {
