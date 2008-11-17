@@ -67,12 +67,6 @@ public class MaxineTesterConfiguration {
         test.hotpath.HP_series.class,
         test.threads.Thread_isInterrupted02.class,
         test.threads.Thread_join01.class,
-        util.GCTest1.class,
-        util.GCTest2.class,
-        util.GCTest3.class,
-        util.GCTest4.class,
-        util.GCTest5.class,
-        util.GCTest6.class
     }));
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
