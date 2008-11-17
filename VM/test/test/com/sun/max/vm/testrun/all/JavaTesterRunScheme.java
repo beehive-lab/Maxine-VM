@@ -503,7 +503,6 @@ public class JavaTesterRunScheme extends AbstractTester {
     };
     @Override
     public void runTests() {
-        _testEnd = 460;
         _total = _testEnd - _testStart;
         _testNum = _testStart;
         while (_testNum < _testEnd) {
