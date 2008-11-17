@@ -20,9 +20,6 @@
  */
 package com.sun.max.vm.compiler.cir.optimize;
 
-import java.util.*;
-
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
