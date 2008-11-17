@@ -18,31 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#ifndef __condition_h__
-#define __condition_h__ 1
+package test.output;
 
-#include "mutex.h"
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_cond_t condition_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <errno.h>
-    typedef cond_t condition_Struct;
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_condition_t condition_Struct;
-#endif
-
-typedef condition_Struct *Condition;
-
-extern void condition_initialize(Condition condition);
-extern void condition_destroy(Condition condition);
-extern Boolean condition_wait(Condition condition, Mutex mutex);
-extern Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern Boolean condition_notify(Condition condition);
-extern Boolean condition_notifyAll(Condition condition);
-
-#endif /*__condition_h__*/
+/**
+ * Executes the equivalent of HelloWorld with a GC between two calls.
+ *
+ * @author Ben L. Titzer
+ */
+public final class GCTest1 {
+    public static void main(String[] args) {
+        System.out.println(GCTest1.class.getSimpleName() + " started.");
+        System.gc();
+        System.out.println(GCTest1.class.getSimpleName() + " done.");
+    }
+}

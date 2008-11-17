@@ -23,7 +23,7 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Denotes a field, method or constructor that is reflected upon by the inspector.
+ * Marks a field, method or constructor that is reflected upon by the inspector.
  *
  * @author Doug Simon
  */

@@ -82,7 +82,7 @@ public final class VirtualMemory {
     @C_FUNCTION
     static native boolean nativeAllocateMemoryAtFixedAddress(Address pointer, Size size);
 
-
+    @C_FUNCTION
     private static native boolean nativeAllocateAtFixedAddress(Address address, Size size);
 
     /**

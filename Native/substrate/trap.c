@@ -118,7 +118,7 @@ static Address getInstructionPointer(UContext *ucontext) {
 #elif os_GUESTVMXEN
         return ucontext->rip;
 #else
-#   error Unimplemented
+        c_UNIMPLEMENTED();
 #endif
 }
 
@@ -147,7 +147,7 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #elif os_GUESTVMXEN
     ucontext->rip = (unsigned long) stub;
 #else
-#   error Unimplemented
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -160,14 +160,14 @@ static Address getStackPointer(UContext *ucontext) {
 #   elif isa_IA32
         return ucontext->uc_mcontext.gregs[REG_UESP];
 #   else
-#       error Unimplemented
+        c_UNIMPLEMENTED();
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rsp;
 #elif os_GUESTVMXEN
         return ucontext->rsp;
 #else
-#   error Unimplemented
+        c_UNIMPLEMENTED();
 #endif
 }
 

@@ -35,7 +35,7 @@ void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIntegerRe
 	 r++;
   }
 #else
-#error Unimplemented
+  c_UNIMPLEMENTED();
 #endif
 }
 
@@ -50,7 +50,7 @@ void sparc_canonicalizeSignalIntegerRegisters(sparc_OsSignalIntegerRegisters os,
 	 r++;
   }
 #else
-#error Unimplemented
+  c_UNIMPLEMENTED();
 #endif
 }
 
@@ -63,7 +63,7 @@ void sparc_canonicalizeSignalFloatingPointRegisters(sparc_OsSignalFloatingPointR
 	 r++;
   }
 #else
-  c_unimplemented();
+  c_UNIMPLEMENTED();
 #endif
 }
 
@@ -80,7 +80,7 @@ void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters c) {
 	 }
   }
 #else
-#error Unimplemented
+  c_UNIMPLEMENTED();
 #endif
 }
 
@@ -94,7 +94,7 @@ void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters os, spa
 	 r++;
   }
 #else
-#error Unimplemented
+  c_UNIMPLEMENTED();
 #endif
 }
 
@@ -104,7 +104,7 @@ void sparc_canonicalizeTeleStateRegisters(sparc_OsTeleStateRegisters os, sparc_C
   c->pc = (Word) os[R_PC];
   c->npc = (Word) os[R_nPC];
 #else
-#error Unimplemented
+  c_UNIMPLEMENTED();
 #endif
 }
 
@@ -116,7 +116,7 @@ void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegis
 	 r++;
   }
 #else
-#error Unimplemented
+  c_UNIMPLEMENTED();
 #endif
 }
 

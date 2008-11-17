@@ -18,18 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package com.sun.max.vm.heap.sequential.noGC;
 
+import com.sun.max.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 
 /**
- * Executes the equivalent of HelloWorld with a GC between two calls.
+ * @see MaxPackage
  *
- * @author Ben L. Titzer
+ * @author Bernd Mathiske
  */
-public final class GCTest1 {
-    public static void main(String[] args) {
-        System.out.println(GCTest1.class.getSimpleName() + " started.");
-        System.gc();
-        System.out.println(GCTest1.class.getSimpleName() + " done.");
+public class Package extends VMPackage {
+    public Package() {
+        registerScheme(HeapScheme.class, NoGCHeapScheme.class);
+    }
+
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage().equals(this);
     }
 }

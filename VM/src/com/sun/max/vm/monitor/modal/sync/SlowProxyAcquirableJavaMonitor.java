@@ -48,7 +48,7 @@ final class SlowProxyAcquirableJavaMonitor extends AbstractJavaMonitor {
         _mutex = new Mutex();
         _blockingVar = new ConditionVariable();
         if (!MaxineVM.isPrototyping()) {
-            alloc();
+            allocate();
         }
     }
 
@@ -93,7 +93,7 @@ final class SlowProxyAcquirableJavaMonitor extends AbstractJavaMonitor {
         _mutex.lock();
         if (_ownerThread.waitingCondition() == null) {
             final ConditionVariable condVar = new ConditionVariable();
-            condVar.alloc();
+            condVar.allocate();
             _ownerThread.setWaitingCondition(condVar);
         }
         final int rcount = _recursionCount;
@@ -162,9 +162,9 @@ final class SlowProxyAcquirableJavaMonitor extends AbstractJavaMonitor {
     }
 
     @Override
-    public void alloc() {
+    public void allocate() {
         _mutex.alloc();
-        _blockingVar.alloc();
+        _blockingVar.allocate();
     }
 
     @Override

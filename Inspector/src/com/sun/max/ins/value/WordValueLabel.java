@@ -25,6 +25,7 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
@@ -743,6 +744,18 @@ public class WordValueLabel extends ValueLabel {
         return action;
     }
 
+    private InspectorAction getShowMemoryRegionAction(Value value) {
+        InspectorAction action = null;
+        if (value != VoidValue.VOID) {
+            final Address address = value.toWord().asAddress();
+            final MemoryRegion memoryRegion = teleVM().memoryRegionContaining(address);
+            if (memoryRegion != null) {
+                action = inspection().actions().selectMemoryRegion(memoryRegion);
+            }
+        }
+        return action;
+    }
+
     private final class WordValueMenuItems implements InspectorMenuItems {
 
         private final InspectorAction _copyWordAction;
@@ -784,6 +797,7 @@ public class WordValueLabel extends ValueLabel {
 
         private final MenuToggleDisplayAction _menuToggleDisplayAction;
 
+
         private final class MenuInspectMemoryAction extends InspectorAction {
 
             private final InspectorAction _inspectMemoryAction;
@@ -801,6 +815,7 @@ public class WordValueLabel extends ValueLabel {
         }
 
         private final MenuInspectMemoryAction _menuInspectMemoryAction;
+
 
         private final class MenuInspectMemoryWordsAction extends InspectorAction {
 
@@ -820,12 +835,37 @@ public class WordValueLabel extends ValueLabel {
 
         private final MenuInspectMemoryWordsAction _menuInspectMemoryWordsAction;
 
+
+        private final class MenuShowMemoryRegionAction extends InspectorAction {
+
+            private final InspectorAction _showMemoryRegionAction;
+
+            private MenuShowMemoryRegionAction(Value value) {
+                super(inspection(), "Show memory region");
+                _showMemoryRegionAction = getShowMemoryRegionAction(value);
+                if (_showMemoryRegionAction == null) {
+                    setEnabled(false);
+                } else {
+                    setEnabled(true);
+                    setName(_showMemoryRegionAction.name());
+                }
+            }
+
+            @Override
+            public void procedure() {
+                _showMemoryRegionAction.perform();
+            }
+        }
+
+        private final MenuShowMemoryRegionAction _menuShowMemoryRegionAction;
+
         private WordValueMenuItems(Inspection inspection, Value value) {
             _copyWordAction = inspection.actions().copyValue(value, "Copy value to clipboard");
             _menuInspectObjectAction = new MenuInspectObjectAction(value);
             _menuToggleDisplayAction = new MenuToggleDisplayAction();
             _menuInspectMemoryAction = new MenuInspectMemoryAction(value);
             _menuInspectMemoryWordsAction = new MenuInspectMemoryWordsAction(value);
+            _menuShowMemoryRegionAction = new MenuShowMemoryRegionAction(value);
         }
 
         public void addTo(InspectorMenu menu) {
@@ -834,6 +874,7 @@ public class WordValueLabel extends ValueLabel {
             menu.add(_menuToggleDisplayAction);
             menu.add(_menuInspectMemoryAction);
             menu.add(_menuInspectMemoryWordsAction);
+            menu.add(_menuShowMemoryRegionAction);
             menu.addSeparator();
 
         }

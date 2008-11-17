@@ -19,14 +19,11 @@
  * Company, Ltd.
  */
 /**
- * A simple semi-space scavenger a la Cheney
- * 
+ * A simple semi-space scavenger a la Cheney.
+ *
  * @author Bernd Mathiske
  */
-@Hypothetical
 package com.sun.max.vm.heap.sequential.semiSpace;
-
-import com.sun.max.annotate.*;
 
 
 

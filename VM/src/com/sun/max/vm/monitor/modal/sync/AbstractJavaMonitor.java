@@ -73,7 +73,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     public abstract void monitorPrivateRelease();
 
     @Override
-    public abstract void alloc();
+    public abstract void allocate();
 
     @Override
     public final boolean isOwnedBy(VmThread thread) {

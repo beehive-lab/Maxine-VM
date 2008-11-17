@@ -33,6 +33,7 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -178,6 +179,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _copyTimer.stop();
             _gcTimer.stop();
 
+            // Bring the inspectable mark up to date, since it is not updated during the move.
+            _toSpace.setAllocationMark(_allocationMark); // for debugging
+
             VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
             verifyHeap();
@@ -217,25 +221,36 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     private StopTheWorldDaemon _collectorThread;
 
-    private RuntimeMemoryRegion _fromSpace = new RuntimeMemoryRegion(Size.zero(), Size.zero());
-    private RuntimeMemoryRegion _toSpace = new RuntimeMemoryRegion(Size.zero(), Size.zero());
+    private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion(FROM_SPACE_DESCRIPTION);
+    private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion(TO_SPACE_DESCRIPTION);
     private Address _top;
     private volatile Address _allocationMark;
 
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer _allocationMarkPointer;
 
+    @PROTOTYPE_ONLY
+    private void protectTimer(Metrics.Timer timer) {
+        JavaMonitorManager.prototypeBindStickyMonitor(timer);
+        JavaMonitorManager.prototypeBindStickyMonitor(timer.counter());
+    }
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PRISTINE) {
+        if (MaxineVM.isPrototyping()) {
+            protectTimer(_clearTimer);
+            protectTimer(_gcTimer);
+            protectTimer(_rootScanTimer);
+            protectTimer(_bootHeapScanTimer);
+            protectTimer(_codeScanTimer);
+            protectTimer(_copyTimer);
+        } else if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize();
 
             _fromSpace.setSize(size);
             _toSpace.setSize(size);
             _fromSpace.setStart(Memory.allocate(size));
             _toSpace.setStart(Memory.allocate(size));
-            _fromSpace.setDescription(FROM_SPACE_DESCRIPTION);
-            _toSpace.setDescription(TO_SPACE_DESCRIPTION);
 
             if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
                 Log.print("Could not allocate object heap of size ");
@@ -267,9 +282,11 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
         _fromSpace.setStart(_toSpace.start());
         _fromSpace.setSize(_toSpace.size());
+        _fromSpace.setAllocationMark(_toSpace.getAllocationMark()); // for debugging
 
         _toSpace.setStart(oldFromSpaceStart);
         _toSpace.setSize(oldFromSpaceSize);
+        _toSpace.setAllocationMark(_toSpace.start());  // for debugging
 
         _allocationMark = _toSpace.start();
         _top = _toSpace.end();
@@ -482,8 +499,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     private static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each
 
-    // time
-
     @NEVER_INLINE
     private Pointer retryAllocate(Size size) {
         Pointer oldAllocationMark;
@@ -524,8 +539,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         }
         final Pointer end = cell.plus(size);
         if (end.greaterThan(_top) || _allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
-            return retryAllocate(size);
+            cell = retryAllocate(size);
         }
+        _toSpace.setAllocationMark(_allocationMark);
         return cell;
     }
 
