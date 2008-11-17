@@ -385,11 +385,11 @@ Java_com_sun_max_vm_thread_VmThread_nativeYield(JNIEnv *env, jclass c) {
 
 JNIEXPORT void JNICALL
 Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Address nativeThread) {
- #if os_SOLARIS
+#if os_SOLARIS
     // Signals the thread
 	int result = thr_kill(nativeThread, SIGUSR1);
 	if (result != 0) {
-    }
+   }
 #elif os_GUESTVMXEN
 	guestvmXen_interrupt((void*)nativeThread);
 #else
