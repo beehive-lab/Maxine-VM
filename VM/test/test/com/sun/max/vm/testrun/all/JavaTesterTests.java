@@ -14363,9 +14363,9 @@ public class JavaTesterTests {
         JavaTesterRunScheme.begin("test.jdk.UnsafeAccess01");
         String runString = null;
         try {
-        // test(0) == 1
+        // test(0) == 42
             runString = "test(0)";
-            if (1 != test.jdk.UnsafeAccess01.test(0)) {
+            if (42 != test.jdk.UnsafeAccess01.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
