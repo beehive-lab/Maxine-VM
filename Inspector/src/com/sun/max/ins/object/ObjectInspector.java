@@ -126,6 +126,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         boolean _showAddresses;
         boolean _showOffsets;
         boolean _showFieldType;
+        boolean _showMemoryRegion;
 
         Preferences(Inspection inspection) {
             _inspection = inspection;
@@ -136,6 +137,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                     saveSettingsEvent.save("showAddresses", _showAddresses);
                     saveSettingsEvent.save("showOffsets", _showOffsets);
                     saveSettingsEvent.save("showFieldType", _showFieldType);
+                    saveSettingsEvent.save("showMemoryRegion",  _showMemoryRegion);
                 }
             };
             settings.addSaveSettingsListener(saveSettingsListener);
@@ -144,6 +146,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             _showAddresses = settings.get(saveSettingsListener, "showAddresses", OptionTypes.BOOLEAN_TYPE, false);
             _showOffsets = settings.get(saveSettingsListener, "showOffsets", OptionTypes.BOOLEAN_TYPE, true);
             _showFieldType = settings.get(saveSettingsListener, "showFieldType", OptionTypes.BOOLEAN_TYPE, true);
+            _showMemoryRegion = settings.get(saveSettingsListener, "showMemoryRegion", OptionTypes.BOOLEAN_TYPE, false);
         }
 
         /**
@@ -174,6 +177,12 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             alwaysShowTupleTypeCheckBox.setToolTipText("Display types in tuples?");
             alwaysShowTupleTypeCheckBox.setSelected(_showFieldType);
 
+            final JCheckBox alwaysShowMemoryRegionCheckBox = new JCheckBox("Region");
+            alwaysShowMemoryRegionCheckBox.setOpaque(true);
+            alwaysShowMemoryRegionCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
+            alwaysShowMemoryRegionCheckBox.setToolTipText("Display memory region in tuples?");
+            alwaysShowMemoryRegionCheckBox.setSelected(_showMemoryRegion);
+
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
                     final Object source = e.getItemSelectable();
@@ -185,6 +194,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                         _showOffsets = alwaysShowOffsetsCheckBox.isSelected();
                     } else if (source == alwaysShowTupleTypeCheckBox) {
                         _showFieldType = alwaysShowTupleTypeCheckBox.isSelected();
+                    } else if (source == alwaysShowMemoryRegionCheckBox) {
+                        _showMemoryRegion = alwaysShowMemoryRegionCheckBox.isSelected();
                     }
                     _inspection.settings().save();
                 }
@@ -193,6 +204,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             alwaysShowAddressesCheckBox.addItemListener(itemListener);
             alwaysShowOffsetsCheckBox.addItemListener(itemListener);
             alwaysShowTupleTypeCheckBox.addItemListener(itemListener);
+            alwaysShowMemoryRegionCheckBox.addItemListener(itemListener);
 
             final JPanel panel = new JPanel(new BorderLayout());
             panel.setOpaque(true);
@@ -204,6 +216,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             content.add(alwaysShowAddressesCheckBox);
             content.add(alwaysShowOffsetsCheckBox);
             content.add(alwaysShowTupleTypeCheckBox);
+            content.add(alwaysShowMemoryRegionCheckBox);
 
             panel.add(content, BorderLayout.WEST);
             return panel;
@@ -264,6 +277,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private final JCheckBoxMenuItem _showAddressesMenuCheckBox;
     private final JCheckBoxMenuItem _showOffsetsMenuCheckBox;
     private final JCheckBoxMenuItem _showTypeMenuCheckBox;
+    private final JCheckBoxMenuItem _showMemoryRegionMenuCheckBox;
 
     private ObjectHeaderInspector _objectHeaderInspector;
 
@@ -299,6 +313,12 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 reconstructView();
             }
         });
+        _showMemoryRegionMenuCheckBox = new JCheckBoxMenuItem("Display memory region", preferences._showMemoryRegion);
+        _showMemoryRegionMenuCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
         _objectInspectors.add(this);
     }
 
@@ -311,6 +331,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         frame().menu().add(_showAddressesMenuCheckBox);
         frame().menu().add(_showOffsetsMenuCheckBox);
         frame().menu().add(_showTypeMenuCheckBox);
+        frame().menu().add(_showMemoryRegionMenuCheckBox);
         frame().menu().add(new InspectorAction(inspection(), "Object Display Prefs..") {
             @Override
             public void procedure() {
@@ -329,7 +350,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
         if (_showHeaderMenuCheckBox.getState()) {
-            _objectHeaderInspector = new ObjectHeaderInspector(inspection(), teleObject(), this);
+            _objectHeaderInspector = new ObjectHeaderInspector(inspection(), teleObject(), this, valueLabels());
             panel.add(_objectHeaderInspector, BorderLayout.NORTH);
         }
         frame().setContentPane(panel);
@@ -386,10 +407,18 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     }
 
     /**
+     * @return whether to display the "Region" column for headers and tuples
+     */
+    public boolean showMemoryRegion() {
+        return _showMemoryRegionMenuCheckBox.getState();
+    }
+
+
+    /**
      * @return how many columns are currently being displayed
      */
     public int numberOfTupleColumns() {
-        int result = 2;
+        int result = 2; // always show field name and value
         if (showAddresses()) {
             result++;
         }
@@ -397,6 +426,9 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             result++;
         }
         if (showType()) {
+            result++;
+        }
+        if (showMemoryRegion()) {
             result++;
         }
         return result;
@@ -411,6 +443,9 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             result++;
         }
         if (showOffsets()) {
+            result++;
+        }
+        if (showMemoryRegion()) {
             result++;
         }
         return result;
@@ -428,7 +463,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         }
     };
 
-    protected abstract Sequence<ValueLabel> valueLabels();
+    protected abstract AppendableSequence<ValueLabel> valueLabels();
 
     @Override
     public synchronized void refreshView(long epoch, boolean force) {
@@ -509,6 +544,17 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             }
             valueLabels.append(valueLabel);
             fieldsPanel.add(valueLabel);                                                                                                                                     // Field value
+
+            if (showMemoryRegion()) {
+                final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
+                    @Override
+                    public Value fetchValue() {
+                        return _teleObject.readFieldValue(fieldActor);
+                    }
+                };
+                valueLabels.append(memoryRegionValueLabel);
+                fieldsPanel.add(memoryRegionValueLabel);
+            }
         }
     }
 
@@ -560,6 +606,16 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 });
             }
             panel.add(valueLabels.last());
+            if (showMemoryRegion()) {
+                final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
+                    @Override
+                    public Value fetchValue() {
+                        return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                    }
+                };
+                valueLabels.append(memoryRegionValueLabel);
+                panel.add(memoryRegionValueLabel);
+            }
         }
         SpringUtilities.makeCompactGrid(panel, numberOfArrayColumns());
         panel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));

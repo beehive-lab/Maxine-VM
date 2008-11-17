@@ -32,6 +32,7 @@ import com.sun.max.ins.java.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.type.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -1126,6 +1127,35 @@ public class InspectionActions extends InspectionHolder implements Prober{
     public final InspectorAction inspectBootCodeMemoryWords() {
         return _inspectBootCodeMemoryWords;
     }
+
+
+    /**
+     * Action: sets inspection focus to specified {@link MemoryRegion}.
+     */
+    final class SelectMemoryRegionAction extends InspectorAction {
+
+        private final MemoryRegion _memoryRegion;
+        private static final String DEFAULT_TITLE = "Select memory region";
+
+        SelectMemoryRegionAction(String title, MemoryRegion memoryRegion) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _memoryRegion = memoryRegion;
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setMemoryRegion(_memoryRegion);
+        }
+    }
+
+    /**
+     * @return an Action that will create a Memory Inspector at the start of the boot code
+     */
+    public final InspectorAction selectMemoryRegion(MemoryRegion memoryRegion) {
+        final String title = "Select Memory Region \"" + memoryRegion.description() + "\"";
+        return new SelectMemoryRegionAction(title, memoryRegion);
+    }
+
 
     /**
      * Action: create an Object Inspector, interactively specified by address..

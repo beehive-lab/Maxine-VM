@@ -69,7 +69,7 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     private AppendableSequence<ValueLabel> _valueLabels = new LinkSequence<ValueLabel>();
 
     @Override
-    public synchronized Sequence<ValueLabel> valueLabels() {
+    public synchronized AppendableSequence<ValueLabel> valueLabels() {
         return _valueLabels;
     }
 

@@ -18,31 +18,33 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-#ifndef __condition_h__
-#define __condition_h__ 1
+package test.jdk;
 
-#include "mutex.h"
+import java.lang.reflect.*;
 
-#if (os_DARWIN || os_LINUX)
-#   include <pthread.h>
-#   include <errno.h>
-    typedef pthread_cond_t condition_Struct;
-#elif os_SOLARIS
-#   include <thread.h>
-#   include <errno.h>
-    typedef cond_t condition_Struct;
-#elif os_GUESTVMXEN
-#   include "guestvmXen.h"
-    typedef guestvmXen_condition_t condition_Struct;
-#endif
+import sun.misc.*;
 
-typedef condition_Struct *Condition;
+/*
+ * @Harness: java
+ * @Runs: 0=42
+ */
+public class UnsafeAccess01 {
 
-extern void condition_initialize(Condition condition);
-extern void condition_destroy(Condition condition);
-extern Boolean condition_wait(Condition condition, Mutex mutex);
-extern Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 milliSeconds);
-extern Boolean condition_notify(Condition condition);
-extern Boolean condition_notifyAll(Condition condition);
+    private int _field = 42;
 
-#endif /*__condition_h__*/
+    public static int test(int arg) throws SecurityException, NoSuchFieldException, IllegalAccessException {
+        final Unsafe unsafe = getUnsafe();
+
+        final UnsafeAccess01 object = new UnsafeAccess01();
+        final Field field = UnsafeAccess01.class.getDeclaredField("_field");
+        final long offset = unsafe.objectFieldOffset(field);
+        final int value = unsafe.getInt(object, offset);
+        return value;
+    }
+
+    private static Unsafe getUnsafe() throws NoSuchFieldException, IllegalAccessException {
+        final Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+        unsafeField.setAccessible(true);
+        return (Unsafe) unsafeField.get(null);
+    }
+}

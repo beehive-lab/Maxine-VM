@@ -50,7 +50,7 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      */
 
     private static final Address UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
-    private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT).or(UTIL_MASK);
+    private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
 
 
     protected ThinLockWord64() {

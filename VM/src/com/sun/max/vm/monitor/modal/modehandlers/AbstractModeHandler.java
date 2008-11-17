@@ -33,7 +33,7 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class AbstractModeHandler implements ModeHandler {
 
-    private static final boolean EXPLICIT_NULL_CHECKS = true;
+    private static final boolean _EXPLICIT_NULL_CHECKS = true;
 
     @CONSTANT_WHEN_NOT_ZERO
     private ModalMonitorScheme _monitorScheme;
@@ -46,7 +46,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
 
     @INLINE
     @Override
-    public final ModeDelegate getDelegate() {
+    public final ModeDelegate delegate() {
         return _delegate;
     }
 
@@ -60,13 +60,13 @@ public abstract class AbstractModeHandler implements ModeHandler {
 
     @INLINE
     protected final void nullCheck(Object object) {
-        if (EXPLICIT_NULL_CHECKS && object == null) {
+        if (_EXPLICIT_NULL_CHECKS && object == null) {
             throw new NullPointerException();
         }
     }
 
     @INLINE
-    protected static final int encodeCurrentForLockwordThreadID() {
+    protected static final int encodeCurrentThreadIDForLockword() {
         return VmThreadLocal.ID.getConstantWord().asAddress().toInt() + 1;
     }
 
@@ -75,7 +75,8 @@ public abstract class AbstractModeHandler implements ModeHandler {
         return lockwordThreadID - 1;
     }
 
-    public void initialize(MaxineVM.Phase phase) { }
+    public void initialize(MaxineVM.Phase phase) {
+    }
 
     /**
      * An AbstractModeHandler subclass must implement this interface to

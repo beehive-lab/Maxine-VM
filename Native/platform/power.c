@@ -24,5 +24,5 @@
 #include "power.h"
 
 void power_canonicalizeTeleIntegerRegisters(power_OsTeleIntegerRegisters os, power_CanonicalIntegerRegisters c) {
-#error Unimplemented
+    c_UNIMPLEMENTED();
 }

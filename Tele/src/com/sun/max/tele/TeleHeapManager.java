@@ -152,7 +152,7 @@ public class TeleHeapManager extends TeleVMHolder {
 		}
 		return null;
 	}
-
+	
 	/**
 	 * @return whether any of the heap regions in the {@link TeleVM} contain the address; always returns true
 	 * in the context of a call in progress to {@link #refresh()}, in order to avoid a circularity.

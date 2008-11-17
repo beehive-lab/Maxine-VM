@@ -38,7 +38,7 @@ import com.sun.max.tele.*;
  */
 public class InspectionSettings {
 
-    private static final int TRACE_VALUE = 1;
+    private static final int TRACE_VALUE = 2;
 
     private String tracePrefix() {
         return "[Inspector] ";

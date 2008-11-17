@@ -128,24 +128,27 @@ public class TeleNativeStack extends FixedMemoryRegion {
 		}
 
 	    private Pointer getVmThreadLocalsFromTagPointer(Pointer pointer) {
-            final Word value = _dataAccess.readWord(pointer);
-            if (value.equals(VmThread.TAG)) {
-                final Pointer vmThreadLocals = pointer.minusWords(VmThreadLocal.TAG.index());
-                final Word disabledVmThreadLocals = _dataAccess.readWord(vmThreadLocals, VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.offset());
-                if (disabledVmThreadLocals.equals(_dataAccess.readWord(disabledVmThreadLocals.asAddress(), VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.offset()))) {
-                    final Pointer enabledVmThreadLocals = _dataAccess.readWord(disabledVmThreadLocals.asAddress(), VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.offset()).asPointer();
-                    final Word vmThreadWord = _dataAccess.readWord(enabledVmThreadLocals, VmThreadLocal.VM_THREAD.offset());
-                    if (!vmThreadWord.isZero()) {
-                        final Reference vmThreadReference = _teleVM.wordToReference(vmThreadWord);
-                        try {
-                            if (VmThread.class.isAssignableFrom(_teleVM.makeClassActorForTypeOf(vmThreadReference).toJava())) {
-                                return enabledVmThreadLocals;
+	        try {
+                final Word value = _dataAccess.readWord(pointer);
+                if (value.equals(VmThread.TAG)) {
+                    final Pointer vmThreadLocals = pointer.minusWords(VmThreadLocal.TAG.index());
+                    final Word disabledVmThreadLocals = _dataAccess.readWord(vmThreadLocals, VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.offset());
+                    if (disabledVmThreadLocals.equals(_dataAccess.readWord(disabledVmThreadLocals.asAddress(), VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.offset()))) {
+                        final Pointer enabledVmThreadLocals = _dataAccess.readWord(disabledVmThreadLocals.asAddress(), VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.offset()).asPointer();
+                        final Word vmThreadWord = _dataAccess.readWord(enabledVmThreadLocals, VmThreadLocal.VM_THREAD.offset());
+                        if (!vmThreadWord.isZero()) {
+                            final Reference vmThreadReference = _teleVM.wordToReference(vmThreadWord);
+                            try {
+                                if (VmThread.class.isAssignableFrom(_teleVM.makeClassActorForTypeOf(vmThreadReference).toJava())) {
+                                    return enabledVmThreadLocals;
+                                }
+                            } catch (TeleError teleError) {
                             }
-                        } catch (TeleError teleError) {
                         }
                     }
                 }
-            }
+	        } catch (DataIOError dataIOError) {	            
+	        }
             return Pointer.zero();
 	    }
 	    
