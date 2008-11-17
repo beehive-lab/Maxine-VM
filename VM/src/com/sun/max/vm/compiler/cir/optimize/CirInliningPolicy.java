@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.cir.optimize;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.prototype.*;
 
@@ -67,8 +68,6 @@ public class CirInliningPolicy {
         return false;
     }
 
-    public static final CirInliningPolicy STATIC = new CirInliningPolicy(Accessor.class);
-
     public static final CirInliningPolicy NONE = new CirInliningPolicy(Accessor.class) {
         @Override
         public boolean isInlineable(CirOptimizer cirOptimizer, CirBlock block, CirValue[] arguments) {
@@ -76,10 +75,29 @@ public class CirInliningPolicy {
         }
     };
 
-    public static final CirInliningPolicy DYNAMIC = new CirInliningPolicy(Accessor.class) {
+    public static class Static extends CirInliningPolicy {
+        public Static() {
+            super(Accessor.class);
+        }
+
         @Override
         public boolean shouldInline(CirOptimizer cirOptimizer, CirMethod method, CirValue[] arguments) {
+            final ClassMethodActor classMethodActor = method.classMethodActor();
+            if (classMethodActor.isDeclaredNeverInline() || classMethodActor.isDeclaredFoldable() || method.isFoldable(cirOptimizer, arguments)) {
+                return false;
+            }
             return method.isSmallStraightlineCode();
         }
-    };
+    }
+
+    public static class Dynamic extends Static {
+        public Dynamic() {
+            super();
+        }
+    }
+
+    public static final CirInliningPolicy STATIC = new Static();
+
+    public static final CirInliningPolicy DYNAMIC = new Dynamic();
+
 }

@@ -117,9 +117,9 @@ public abstract class ClassMethodActor extends MethodActor {
      * Determines if a given native method actor has the same name any other native method actor in a set of method
      * actors.
      */
+    @NEVER_INLINE
     private boolean isOverloadedByNativeMethod() {
         return holder().forAllClassMethodActors(new Predicate<ClassMethodActor>() {
-
             public boolean evaluate(ClassMethodActor classMethodActor) {
                 return classMethodActor != ClassMethodActor.this && classMethodActor.isNative() && classMethodActor.name().equals(name());
             }
@@ -130,6 +130,7 @@ public abstract class ClassMethodActor extends MethodActor {
      * There's no need to synchronize this method - it's fine for multiple threads to each link the native function in
      * the case where's there is a race as the result of resolution will always be the same value.
      */
+    @NEVER_INLINE
     private Word linkNativeFunction() throws UnsatisfiedLinkError {
         return DynamicLinker.lookup(this, nativeSymbol());
     }
