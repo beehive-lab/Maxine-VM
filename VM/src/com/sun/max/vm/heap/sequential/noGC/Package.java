@@ -18,18 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.vm.heap.sequential.noGC;
+
+import com.sun.max.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 
 /**
- * This exception is thrown whenever a data access request to a OS level process
- * cannot be satisfied by the OS.
+ * @see MaxPackage
  *
- * @author Aritra Bandyopadhyay
+ * @author Bernd Mathiske
  */
-public class DataAccessException extends ProcessException {
-
-    public DataAccessException(String message) {
-        super(message);
+public class Package extends VMPackage {
+    public Package() {
+        registerScheme(HeapScheme.class, NoGCHeapScheme.class);
     }
 
+    @Override
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return vmConfiguration.heapPackage().equals(this);
+    }
 }

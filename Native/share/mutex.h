@@ -38,13 +38,11 @@
 typedef mutex_Struct *Mutex;
 
 extern void mutex_initialize(Mutex mutex);
+extern void mutex_dispose(Mutex mutex);
 
-#if !os_SOLARIS
-	extern void mutex_destroy(Mutex mutex);
-	extern int mutex_lock(Mutex mutex);
-	extern int mutex_unlock(Mutex mutex);
-#endif
-	
+extern int mutex_enter(Mutex mutex);
+extern int mutex_exit(Mutex mutex);
+
 extern Boolean mutex_isHeld(Mutex mutex);
-	
+
 #endif /*__mutex_h__*/

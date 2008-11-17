@@ -42,7 +42,7 @@ public class MaxineTesterConfiguration {
         util.GCTest2.class,
         util.GCTest3.class,
         util.GCTest4.class,
-        util.GCTest5.class,
+//        util.GCTest5.class,
         util.GCTest6.class,
         test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,

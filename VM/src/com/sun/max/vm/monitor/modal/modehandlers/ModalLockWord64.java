@@ -45,9 +45,9 @@ public abstract class ModalLockWord64 extends Word {
      *
      */
 
-    protected static final int MODE_BIT_QTY = 2;
-    protected static final int SHAPE_BIT = 0;
-    protected static final int MISC_BIT = 1;
+    protected static final int NUMBER_OF_MODE_BITS = 2;
+    protected static final int SHAPE_BIT_INDEX = 0;
+    protected static final int MISC_BIT_INDEX = 1;
 
     protected ModalLockWord64() {
     }
@@ -62,7 +62,7 @@ public abstract class ModalLockWord64 extends Word {
 
     @INLINE
     public final boolean isInflated() {
-        return asAddress().isBitSet(SHAPE_BIT);
+        return asAddress().isBitSet(SHAPE_BIT_INDEX);
     }
 
     @INLINE

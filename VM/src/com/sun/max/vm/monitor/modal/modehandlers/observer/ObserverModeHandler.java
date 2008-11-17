@@ -90,12 +90,12 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
 
     @Override
     public void afterGarbageCollection() {
-        getDelegate().delegateAfterGarbageCollection();
+        delegate().delegateAfterGarbageCollection();
     }
 
     @Override
     public void beforeGarbageCollection() {
-        getDelegate().delegateBeforeGarbageCollection();
+        delegate().delegateBeforeGarbageCollection();
     }
 
     @Override
@@ -110,7 +110,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
             return monitorScheme().createHashCode(object);
         }
         notifyObservers(Event.MAKE_HASHCODE, object);
-        return getDelegate().delegateMakeHashcode(object, ModalLockWord64.as(ObjectAccess.readMisc(object)));
+        return delegate().delegateMakeHashcode(object, ModalLockWord64.as(ObjectAccess.readMisc(object)));
     }
 
     @Override
@@ -121,7 +121,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
             return;
         }
         notifyObservers(Event.MONITOR_ENTER, object);
-        getDelegate().delegateMonitorEnter(object, ModalLockWord64.as(ObjectAccess.readMisc(object)), encodeCurrentForLockwordThreadID());
+        delegate().delegateMonitorEnter(object, ModalLockWord64.as(ObjectAccess.readMisc(object)), encodeCurrentThreadIDForLockword());
     }
 
     @Override
@@ -132,7 +132,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
             return;
         }
         notifyObservers(Event.MONITOR_EXIT, object);
-        getDelegate().delegateMonitorExit(object, ModalLockWord64.as(ObjectAccess.readMisc(object)));
+        delegate().delegateMonitorExit(object, ModalLockWord64.as(ObjectAccess.readMisc(object)));
     }
 
     @Override
@@ -147,7 +147,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
         } else {
             notifyObservers(Event.MONITOR_NOTIFY, object);
         }
-        getDelegate().delegateMonitorNotify(object, all, ModalLockWord64.as(ObjectAccess.readMisc(object)));
+        delegate().delegateMonitorNotify(object, all, ModalLockWord64.as(ObjectAccess.readMisc(object)));
     }
 
     @Override
@@ -158,7 +158,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
             return;
         }
         notifyObservers(Event.MONITOR_WAIT, object);
-        getDelegate().delegateMonitorWait(object, timeout, ModalLockWord64.as(ObjectAccess.readMisc(object)));
+        delegate().delegateMonitorWait(object, timeout, ModalLockWord64.as(ObjectAccess.readMisc(object)));
     }
 
     private final boolean[] _threadHoldsMonitorResult = new boolean[1];
@@ -167,7 +167,7 @@ public final class ObserverModeHandler extends AbstractModeHandler implements Mo
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         nullCheck(object);
         final ModalLockWord64 lockWord = ModalLockWord64.as(ObjectAccess.readMisc(object));
-        getDelegate().delegateThreadHoldsMonitor(object, lockWord, thread, encodeCurrentForLockwordThreadID(), _threadHoldsMonitorResult);
+        delegate().delegateThreadHoldsMonitor(object, lockWord, thread, encodeCurrentThreadIDForLockword(), _threadHoldsMonitorResult);
         return _threadHoldsMonitorResult[0];
     }
 
