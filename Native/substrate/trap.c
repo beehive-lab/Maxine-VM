@@ -233,6 +233,8 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     trapInfo[1] = getInstructionPointer(ucontext);
     trapInfo[2] = getFaultAddress(signalInfo, ucontext);
 #if os_SOLARIS && isa_SPARC
+	 /* save the value of the safepoint latch at the trapped instruction */
+	 trapInfo[3] = ucontext->uc_mcontext.gregs[REG_G2];
 	 /* set the safepoint latch register of the trapped frame to the disable state */
 	 ucontext->uc_mcontext.gregs[REG_G2] = disabledVmThreadLocals;
 #else
