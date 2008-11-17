@@ -54,8 +54,6 @@ void c_initialize(void) {
 }
 
 int _c_unimplemented(const char* function, const char* file, int line) {
-    extern void exit(int);
-
     log_println("unimplemented (%s in %s:%d)", function, file, line);
     exit(1);
     return -1;

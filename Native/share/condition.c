@@ -58,7 +58,7 @@ void condition_destroy(Condition condition) {
 }
 
 #if os_GUESTVMXEN
-#   define ETIMEDOUT = -1
+#   define ETIMEDOUT -1
 #endif
 
 /*
