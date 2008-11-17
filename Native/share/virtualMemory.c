@@ -97,8 +97,7 @@ Java_com_sun_max_memory_VirtualMemory_nativeAllocateIn31BitSpace(JNIEnv *env, jc
 #endif
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeAllocateAtFixedAddress(JNIEnv *env, jclass c, Address address, Size size) {
+jboolean nativeAllocateAtFixedAddress(Address address, Size size) {
     return virtualMemory_allocateAtFixedAddress(address, size);
 }
 
