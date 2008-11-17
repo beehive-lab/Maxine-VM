@@ -118,17 +118,20 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 #       if (os_DARWIN || os_LINUX)
             error = pthread_cond_timedwait(condition, mutex, &ts);
             if (error == ETIMEDOUT) {
-                return false;
+                return true;
             }
 #       elif os_SOLARIS
             error = cond_reltimedwait(condition, mutex, &ts);
             if (error == ETIME) {
+                return true;
+            }
+            if (error == EINTR) {
                 return false;
             }
 #       elif os_GUESTVMXEN
             error = guestvmXen_condition_wait(*condition, *mutex, &ts);
             if (error == ETIMEDOUT) {
-                return false;
+                return true;
             }
 #       else
 #           error
