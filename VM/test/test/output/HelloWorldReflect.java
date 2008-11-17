@@ -18,18 +18,28 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package test.output;
+
 
 /**
- * This exception is thrown whenever a data access request to a OS level process
- * cannot be satisfied by the OS.
- *
- * @author Aritra Bandyopadhyay
+ * This is a test case used in the automated testing framework. This program is automatically
+ * run on both a standard JVM (e.g. Hotspot), and the Maxine VM, and the resulting output
+ * is compared directly.
  */
-public class DataAccessException extends ProcessException {
-
-    public DataAccessException(String message) {
-        super(message);
+public class HelloWorldReflect {
+    public static void main(String[] args) {
+        java.lang.reflect.Method m;
+        try {
+            m = ClassLoader.getSystemClassLoader().loadClass("test.output.Hello").getMethod("main", String[].class);
+            m.invoke(null, (Object) args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+}
 
+class Hello {
+    public static void main(String[] args) {
+        System.out.println("Hello World!");
+    }
 }

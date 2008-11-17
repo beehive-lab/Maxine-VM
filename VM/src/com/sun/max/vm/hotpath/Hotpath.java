@@ -35,6 +35,7 @@ public class Hotpath {
         return JitTracer.startCurrent(anchor);
     }
 
+    @NEVER_INLINE
     @UNSAFE
     public static Address trace(Pointer instructionPointer, Pointer stackPointer) {
         return JitTracer.traceCurrent(instructionPointer, stackPointer);
