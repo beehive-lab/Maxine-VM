@@ -61,7 +61,7 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
     private AppendableSequence<ValueLabel> _valueLabels = new ArrayListSequence<ValueLabel>();
 
     @Override
-    protected synchronized Sequence<ValueLabel> valueLabels() {
+    protected synchronized AppendableSequence<ValueLabel> valueLabels() {
         return _valueLabels;
     }
 

@@ -22,6 +22,7 @@ package com.sun.max.ins.object;
 
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -32,40 +33,21 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
- * A panel that displays the head information of a Maxine low level object.
+ * A panel that displays the header information of a Maxine low level heap object.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
 class ObjectHeaderInspector extends InspectorPanel {
 
-    // first line: pointer to hub
-    private final InspectorLabel _hubAddressLabel;
-    private final InspectorLabel _hubOffsetLabel;
-    private final InspectorLabel _hubTypeLabel;
-    private final InspectorLabel _hubNameLabel;
-    private final InspectorLabel _hubValueLabel;
-
-    // Second line:  "misc" word
-    private final InspectorLabel _miscAddressLabel;
-    private final InspectorLabel _miscOffsetLabel;
-    private final InspectorLabel _miscTypeLabel;
-    private final InspectorLabel _miscNameLabel;
-    private final InspectorLabel _miscValueLabel;
-
-    // Third line:  array information
-    private final InspectorLabel _arrayLengthAddressLabel;
-    private final InspectorLabel _arrayLengthOffsetLabel;
-    private final InspectorLabel _arrayLengthTypeLabel;
-    private final InspectorLabel _arrayLengthNameLabel;
-    private final InspectorLabel _arrayLengthValueLabel;
-
+    private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(20);
     private final TeleObject _teleObject;
     private final ObjectInspector _parent;
 
-    ObjectHeaderInspector(final Inspection inspection, final TeleObject teleObject, ObjectInspector parent) {
+    ObjectHeaderInspector(final Inspection inspection, final TeleObject teleObject, ObjectInspector parent, AppendableSequence<ValueLabel> valueLabels) {
         super(inspection, new SpringLayout());
         _teleObject = teleObject;
         _parent = parent;
@@ -79,124 +61,105 @@ class ObjectHeaderInspector extends InspectorPanel {
         final TeleHub teleHub = teleObject.getTeleHub();
 
         final int hubReferenceOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
-        _hubAddressLabel = new LocationLabel.AsAddressWithOffset(inspection, hubReferenceOffset, origin);
+
         if (_parent.showAddresses()) {
-            add(_hubAddressLabel);
+            addLabel(new LocationLabel.AsAddressWithOffset(inspection, hubReferenceOffset, origin));
         }
-        _hubOffsetLabel = new LocationLabel.AsOffset(inspection, hubReferenceOffset, origin);
         if (_parent.showOffsets()) {
-            add(_hubOffsetLabel);
+            addLabel(new LocationLabel.AsOffset(inspection, hubReferenceOffset, origin));
         }
-        _hubTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass()));
         if (_parent.showType()) {
-            add(_hubTypeLabel);
+            addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass())));
         }
-        _hubNameLabel = new TextLabel(inspection(), "hub");
-        add(_hubNameLabel);
-        _hubValueLabel = new WordValueLabel(inspection(), ValueMode.REFERENCE, teleHub.getCurrentOrigin());
-        add(_hubValueLabel);
+        addLabel(new TextLabel(inspection(), "hub"));
+        addLabel(new WordValueLabel(inspection(), ValueMode.REFERENCE, teleHub.getCurrentOrigin()));
+        if (_parent.showMemoryRegion()) {
+            final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
+                @Override
+                public Value fetchValue() {
+                    final TeleHub hub = _teleObject.getTeleHub();
+                    return WordValue.from(hub.getCurrentOrigin().asWord());
+                }
+            };
+            addLabel(memoryRegionValueLabel);
+            valueLabels.append(memoryRegionValueLabel);
+        }
 
         // Second line:  "misc" word
         final int miscWordOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
-        _miscAddressLabel = new LocationLabel.AsAddressWithOffset(inspection(), miscWordOffset, origin);
         if (_parent.showAddresses()) {
-            add(_miscAddressLabel);
+            addLabel(new LocationLabel.AsAddressWithOffset(inspection(), miscWordOffset, origin));
         }
-        _miscOffsetLabel = new LocationLabel.AsOffset(inspection(), miscWordOffset, origin);
         if (_parent.showOffsets()) {
-            add(_miscOffsetLabel);
+            addLabel(new LocationLabel.AsOffset(inspection(), miscWordOffset, origin));
         }
-        _miscTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.WORD);
         if (_parent.showType()) {
-            add(_miscTypeLabel);
+            addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.WORD));
         }
-        _miscNameLabel = new TextLabel(inspection(), "misc");
-        add(_miscNameLabel);
-        _miscValueLabel = new MiscWordLabel(inspection(), teleObject);
-        add(_miscValueLabel);
+        addLabel(new TextLabel(inspection(), "misc"));
+        final ValueLabel miscValueLabel = new MiscWordLabel(inspection(), teleObject);
+        addLabel(miscValueLabel);
+        valueLabels.append(miscValueLabel);
+        if (_parent.showMemoryRegion()) {
+            addLabel(new PlainLabel(inspection(), ""));
+        }
 
         // Third line:  array information
         final int arrayLengthOffset = teleVM().layoutScheme().arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
         if (teleObject instanceof TeleArrayObject) {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
-            _arrayLengthAddressLabel = new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin);
             if (_parent.showAddresses()) {
-                add(_arrayLengthAddressLabel);
+                addLabel(new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin));
             }
-            _arrayLengthOffsetLabel = new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin);
             if (_parent.showOffsets()) {
-                add(_arrayLengthOffsetLabel);
+                addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
-            _arrayLengthTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.INT);
             if (_parent.showType()) {
-                add(_arrayLengthTypeLabel);
+                addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
             }
-            _arrayLengthNameLabel = new TextLabel(inspection(), "length");
-            add(_arrayLengthNameLabel);
+            addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes
-            _arrayLengthValueLabel = new DataLabel.IntAsDecimal(inspection(), teleArrayObject.getLength());
-            add(_arrayLengthValueLabel);
+            addLabel(new DataLabel.IntAsDecimal(inspection(), teleArrayObject.getLength()));
+            if (_parent.showMemoryRegion()) {
+                addLabel(new PlainLabel(inspection(), ""));
+            }
         } else if (teleObject instanceof TeleHybridObject) {
             final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
-            _arrayLengthAddressLabel = new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin);
             if (_parent.showAddresses()) {
-                add(_arrayLengthAddressLabel);
+                addLabel(new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin));
             }
-            _arrayLengthOffsetLabel = new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin);
             if (_parent.showOffsets()) {
-                add(_arrayLengthOffsetLabel);
+                addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
-            _arrayLengthTypeLabel = new ClassActorLabel(inspection(), JavaTypeDescriptor.INT);
             if (_parent.showType()) {
-                add(_arrayLengthTypeLabel);
+                addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
             }
-            _arrayLengthNameLabel = new TextLabel(inspection(), "length");
-            add(_arrayLengthNameLabel);
+            addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes
-            _arrayLengthValueLabel = new DataLabel.IntAsDecimal(inspection(), teleHybridObject.readArrayLength());
-            add(_arrayLengthValueLabel);
-        } else {
-            _arrayLengthAddressLabel = null;
-            _arrayLengthOffsetLabel = null;
-            _arrayLengthTypeLabel = null;
-            _arrayLengthNameLabel = null;
-            _arrayLengthValueLabel = null;
+            addLabel(new DataLabel.IntAsDecimal(inspection(), teleHybridObject.readArrayLength()));
+            if (_parent.showMemoryRegion()) {
+                addLabel(new PlainLabel(inspection(), ""));
+            }
         }
-
         final int columns = parent.numberOfTupleColumns();
         SpringUtilities.makeCompactGrid(this, getComponentCount() / columns, columns, 0, 0, 10, 2);
     }
 
     public void refresh(long epoch, boolean force) {
-        _miscValueLabel.refresh(epoch, force);
+        // Handled by parent via {@link ObjectInspector#valueLabels()}.
+    }
+
+    private void addLabel(InspectorLabel inspectorLabel) {
+        add(inspectorLabel);
+        _labels.append(inspectorLabel);
     }
 
     public void redisplay() {
-
         setOpaque(true);
         setBackground(style().defaultBackgroundColor());
-
-        // first line: pointer to hub
-        _hubAddressLabel.redisplay();
-        _hubOffsetLabel.redisplay();
-        _hubTypeLabel.redisplay();
-        _hubNameLabel.redisplay();
-        _hubValueLabel.redisplay();
-
-        // Second line:  "misc" word
-        _miscAddressLabel.redisplay();
-        _miscOffsetLabel.redisplay();
-        _miscTypeLabel.redisplay();
-        _miscNameLabel.redisplay();
-        _miscValueLabel.redisplay();
-
-        if (_teleObject instanceof TeleHybridObject || _teleObject instanceof TeleArrayObject) {
-            // Third line:  array information
-            _arrayLengthAddressLabel.redisplay();
-            _arrayLengthOffsetLabel.redisplay();
-            _arrayLengthTypeLabel.redisplay();
-            _arrayLengthNameLabel.redisplay();
-            _arrayLengthValueLabel.redisplay();
+        for (InspectorLabel inspectorLabel : _labels) {
+            inspectorLabel.redisplay();
         }
     }
+
 }
