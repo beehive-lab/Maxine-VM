@@ -318,7 +318,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
                         @Override
                         public void opcodeDecoded() {
                             final Bytecode code = currentOpcode();
-                            if (code.is(Bytecode.Flags.INVOKE_ | Bytecode.Flags.CONDITIONAL_BRANCH | Bytecode.Flags.UNCONDITIONAL_BRANCH | Bytecode.Flags.SWITCH)) {
+                            if (code.is(Bytecode.Flags.CONDITIONAL_BRANCH | Bytecode.Flags.UNCONDITIONAL_BRANCH | Bytecode.Flags.SWITCH)) {
                                 _simple = false;
                             }
                         }

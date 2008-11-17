@@ -59,7 +59,7 @@ public final class ResolvedBytecodeTemplateSource {
     @INLINE
     public static void anewarray(ArrayClassActor arrayClassActor) {
         final int length = JitStackFrameOperation.peekInt(0);
-        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.createReferenceArray(arrayClassActor, length));
+        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.neverInlineCreateReferenceArray(arrayClassActor, length));
     }
 
     @INLINE
