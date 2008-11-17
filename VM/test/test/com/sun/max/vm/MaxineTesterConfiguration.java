@@ -38,12 +38,13 @@ public class MaxineTesterConfiguration {
         test.output.StaticInitializers.class,
         test.output.LocalCatch.class,
         test.output.Printf.class,
-        util.GCTest1.class,
-        util.GCTest2.class,
-        util.GCTest3.class,
-        util.GCTest4.class,
-//        util.GCTest5.class,
-        util.GCTest6.class,
+        test.output.GCTest1.class,
+        test.output.GCTest2.class,
+        test.output.GCTest3.class,
+        test.output.GCTest4.class,
+//        test.output.GCTest5.class,
+        test.output.GCTest6.class,
+        test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
@@ -51,6 +52,7 @@ public class MaxineTesterConfiguration {
     };
 
     static final Set<Class> _expectedFailuresSolarisAMD64 = new HashSet<Class>(Arrays.asList(new Class[] {
+        test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
@@ -58,6 +60,7 @@ public class MaxineTesterConfiguration {
     }));
 
     static final Set<Class> _expectedFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
+        test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
