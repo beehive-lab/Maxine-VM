@@ -28,7 +28,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
@@ -300,34 +299,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
 
     public boolean neverInline() {
         return classMethodActor().isDeclaredNeverInline();
-    }
-
-    /**
-     * Return true if this dynamic method is a simple accessor (i.e., its body follows the pattern aload_0, getfield, return).
-     * @return
-     */
-    public boolean isSmallStraightlineCode() {
-        if (classMethodActor().codeAttribute().code().length >= 20) {
-            return false;
-        }
-        class Scan {
-            boolean _simple = true;
-            boolean doScan() {
-                final BytecodeScanner scanner =
-                    new BytecodeScanner(new BytecodeAdapter() {
-                        @Override
-                        public void opcodeDecoded() {
-                            final Bytecode code = currentOpcode();
-                            if (code.is(Bytecode.Flags.CONDITIONAL_BRANCH | Bytecode.Flags.UNCONDITIONAL_BRANCH | Bytecode.Flags.SWITCH)) {
-                                _simple = false;
-                            }
-                        }
-                    });
-                scanner.scan(classMethodActor());
-                return _simple;
-            }
-        }
-        return (new Scan()).doScan();
     }
 
     public boolean needsJavaFrameDescriptor() {

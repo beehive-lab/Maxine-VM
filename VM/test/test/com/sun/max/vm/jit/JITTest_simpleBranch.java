@@ -219,7 +219,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
 
             @Override
             public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases)  {
-                getBytecodeScanner().skipBytes(numberOfCases * 4);
+                bytecodeScanner().skipBytes(numberOfCases * 4);
                 confirmPresence();
             }
         };

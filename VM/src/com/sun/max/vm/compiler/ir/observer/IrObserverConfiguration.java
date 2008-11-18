@@ -64,7 +64,7 @@ import com.sun.max.vm.compiler.ir.*;
  * <pre>
  *     -Dmax.ir.trace=[(trace level):](method name filters separated by ',')
  * </pre>
- * For example, to trace all IR's when compiling a method who name includes the string {@code "getClass"} or {@code "hasNext"}:
+ * For example, to trace all IR's when compiling a method whose name includes the string {@code "getClass"} or {@code "hasNext"}:
  * <pre>
  *     -Dmax.ir.trace=getClass,hasNext
  * </pre>

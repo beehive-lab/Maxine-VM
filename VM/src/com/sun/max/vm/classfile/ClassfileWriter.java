@@ -561,7 +561,7 @@ public class ClassfileWriter {
                     final SignatureDescriptor signature = SignatureDescriptor.create(pool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
                     final ClassMethodRefConstant method = PoolConstantFactory.createClassMethodConstant(pool.holder(), name, signature);
                     final int index = cf.indexOf(method);
-                    final int position = getBytecodeScanner().getCurrentOpcodePosition();
+                    final int position = bytecodeScanner().currentOpcodePosition();
                     codeCopy[position] = (byte) Bytecode.INVOKESTATIC.ordinal();
                     codeCopy[position + 1] = (byte) (index >> 8);
                     codeCopy[position + 2] = (byte) index;

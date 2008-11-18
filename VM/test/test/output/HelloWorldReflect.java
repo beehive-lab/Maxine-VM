@@ -20,6 +20,8 @@
  */
 package test.output;
 
+import java.lang.reflect.*;
+
 
 /**
  * This is a test case used in the automated testing framework. This program is automatically
@@ -28,18 +30,25 @@ package test.output;
  */
 public class HelloWorldReflect {
     public static void main(String[] args) {
-        java.lang.reflect.Method m;
         try {
-            m = ClassLoader.getSystemClassLoader().loadClass("test.output.Hello").getMethod("main", String[].class);
-            m.invoke(null, (Object) args);
+            final ClassLoader thisClassLoader = HelloWorldReflect.class.getClassLoader();
+            final ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+
+            System.out.println("thisClassLoader == systemClassLoader? " + (thisClassLoader == systemClassLoader));
+
+            invokeHellos(args, thisClassLoader);
+            invokeHellos(args, systemClassLoader);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-}
 
-class Hello {
-    public static void main(String[] args) {
-        System.out.println("Hello World!");
+    private static void invokeHellos(String[] args, final ClassLoader classLoader) throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException, InvocationTargetException {
+        java.lang.reflect.Method m;
+        m = classLoader.loadClass("test.output.Hello1").getMethod("main", String[].class);
+        m.invoke(null, (Object) args);
+
+        m = classLoader.loadClass("test.output.Hello2").getMethod("main", String[].class);
+        m.invoke(null, (Object) args);
     }
 }

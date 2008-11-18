@@ -43,27 +43,27 @@ public final class BytecodeScanner {
 
     protected BytecodeBlock _bytecodeBlock;
 
-    public BytecodeBlock getBytecodeBlock() {
+    public BytecodeBlock bytecodeBlock() {
         return _bytecodeBlock;
     }
 
     private int _currentBytePosition;
 
-    public int getCurrentBytePosition() {
+    public int currentBytePosition() {
         return _currentBytePosition;
     }
 
-    protected boolean _done;
+    protected boolean _stopped;
 
     /**
      * Stop the scanning.
      */
     public void stop() {
-        _done = true;
+        _stopped = true;
     }
 
     public boolean wasStopped() {
-        return _done;
+        return _stopped;
     }
 
     protected Bytecode _currentOpcode;
@@ -76,21 +76,21 @@ public final class BytecodeScanner {
      * {@link BytecodeVisitor#instructionDecoded()} then the opcode is returned and {@link #isCurrentOpcodeWidened()}
      * will return false.
      */
-    public Bytecode getCurrentOpcode() {
+    public Bytecode currentOpcode() {
         return _currentOpcode;
     }
 
     protected int _currentOpcodePosition;
 
     @INLINE
-    public int getCurrentOpcodePosition() {
+    public int currentOpcodePosition() {
         return _currentOpcodePosition;
     }
 
     protected boolean _currentOpcodeWidened;
 
     /**
-     * @see #getCurrentOpcode()
+     * @see #currentOpcode()
      */
     public boolean isCurrentOpcodeWidened() {
         return _currentOpcodeWidened;
@@ -228,7 +228,7 @@ public final class BytecodeScanner {
     protected void scanInstruction() {
         _currentOpcode = Bytecode.from(readUnsigned1());
         _bytecodeVisitor.opcodeDecoded();
-        if (_done) {
+        if (_stopped) {
             return;
         }
         switch (_currentOpcode) {
@@ -1160,7 +1160,7 @@ public final class BytecodeScanner {
             _currentBytePosition = _bytecodeBlock.start();
             _currentOpcodePosition = _currentBytePosition;
             _bytecodeVisitor.prologue();
-            while (!_done && _currentBytePosition <= _bytecodeBlock.end()) {
+            while (!_stopped && _currentBytePosition <= _bytecodeBlock.end()) {
                 _currentOpcodePosition = _currentBytePosition;
                 scanInstruction();
             }
