@@ -46,14 +46,21 @@ public class IrTraceObserver extends IrObserverAdapter {
 
     private final int _traceLevel;
 
+    private final Class<? extends IrMethod> _observableType;
+
     public static final String PROPERTY_TRACE_LEVEL = "max.ir.trace.level";
 
     protected static final int DEFAULT_TRACE_LEVEL = 3;
 
     public IrTraceObserver() {
-        int traceLevel = Trace.level();
+        this(IrMethod.class);
+    }
+
+    public IrTraceObserver(Class<? extends IrMethod> observableType) {
+        _observableType = observableType;
+        int traceLevel = 3;
         try {
-            traceLevel = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(Trace.level())));
+            traceLevel = Integer.parseInt(System.getProperty(PROPERTY_TRACE_LEVEL, String.valueOf(traceLevel)));
         } catch (NumberFormatException e) {
             ProgramWarning.message("Value for system property \"" + PROPERTY_TRACE_LEVEL + "\" not a valid integer: " + System.getProperty(PROPERTY_TRACE_LEVEL));
         }
@@ -115,5 +122,10 @@ public class IrTraceObserver extends IrObserverAdapter {
             _out.println(traceString(irMethod, "after transformation: " + transform));
             _out.println(irMethod.traceToString());
         }
+    }
+
+    @Override
+    public Class<? extends IrMethod> observableType() {
+        return _observableType;
     }
 }
