@@ -1331,7 +1331,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
          * Gets the type of object constructed by a {@link Bytecode#NEW} instruction at a given position.
          */
         private TypeDescriptor getTypeDescriptorFromNewBytecode(int position) {
-            final byte[] bytecodes = getBytecodeScanner().getBytecodeBlock().code();
+            final byte[] bytecodes = bytecodeScanner().bytecodeBlock().code();
             try {
                 final int constantPoolIndex = ((bytecodes[position + 1] & 0xFF) << 8) | (bytecodes[position + 2] & 0xFF);
                 return constantPool().classAt(constantPoolIndex).typeDescriptor();
@@ -1571,7 +1571,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         public void lookupswitch(int defaultOffset, int numberOfCases) {
             _frame.pop(INTEGER);
             performBranch(currentOpcodePosition() + defaultOffset);
-            final BytecodeScanner scanner = getBytecodeScanner();
+            final BytecodeScanner scanner = bytecodeScanner();
             int lastMatch = 0;
             for (int i = 0; i < numberOfCases; i++) {
                 final int match = scanner.readSwitchCase();
@@ -1790,7 +1790,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 throw verifyError("Low match greater than high match in TABLESWITCH: " + lowMatch + " > " + highMatch);
             }
             performBranch(currentOpcodePosition() + defaultOffset);
-            final BytecodeScanner scanner = getBytecodeScanner();
+            final BytecodeScanner scanner = bytecodeScanner();
             for (int i = 0; i < numberOfCases; i++) {
                 performBranch(currentOpcodePosition() + scanner.readSwitchOffset());
             }

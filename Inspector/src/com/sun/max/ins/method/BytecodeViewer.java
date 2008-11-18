@@ -410,7 +410,7 @@ public abstract class BytecodeViewer extends CodeViewer {
             _operand1 = new BytecodeOperandLabel(inspection(), defaultOffset + ", [" + lowMatch + " - " + highMatch + "] -> ");
             final StringBuilder sb = new StringBuilder();
             for (int i = 0; i != numberOfCases; ++i) {
-                sb.append(getBytecodeScanner().readSwitchOffset());
+                sb.append(bytecodeScanner().readSwitchOffset());
                 if (i != numberOfCases - 1) {
                     sb.append(' ');
                 }
@@ -425,7 +425,7 @@ public abstract class BytecodeViewer extends CodeViewer {
             String s = "";
             String separator = ", ";
             for (int i = 0; i < numberOfCases; i++) {
-                s += separator + getBytecodeScanner().readSwitchCase() + "->" + getBytecodeScanner().readSwitchOffset();
+                s += separator + bytecodeScanner().readSwitchCase() + "->" + bytecodeScanner().readSwitchOffset();
                 separator = " ";
             }
             _operand2 = new BytecodeOperandLabel(inspection(), s);
