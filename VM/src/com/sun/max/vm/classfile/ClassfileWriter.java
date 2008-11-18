@@ -654,22 +654,27 @@ public class ClassfileWriter {
      */
     @PROTOTYPE_ONLY
     public static void main(String[] args) {
-        final OptionSet options = new OptionSet();
+        final OptionSet options = new OptionSet() {
+            @Override
+            protected void printHelpHeader(PrintStream stream) {
+                stream.println("Usage: " + ClassfileWriter.class.getSimpleName() + " [-options] <classes>...");
+                stream.println();
+                stream.println("where options include:");
+            }
+        };
         final Option<File> outputDirectoryOption = options.newFileOption("d", new File("generated").getAbsoluteFile(),
             "Specifies where to place generated class files");
         final Option<Boolean> javapOption = options.newBooleanOption("javap", false,
             "Runs javap on the generated class file(s).");
         Trace.addTo(options);
+        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
         options.parseArguments(args);
         final String[] arguments = options.getArguments();
         if (arguments.length == 0) {
-            System.out.println("Usage: " + ClassfileWriter.class.getName() + " [-options] <classes>...");
-            System.out.println();
-            System.out.println("where options include:");
             options.printHelp(System.out, 80);
             return;
         }
-        new PrototypeGenerator().createJavaPrototype(options.getArgumentsAndUnrecognizedOptions(), VMConfigurations.createStandard(BuildLevel.PRODUCT, Platform.host()), false);
+        prototypeGenerator.createJavaPrototype(VMConfigurations.createStandard(BuildLevel.PRODUCT, Platform.host()), false);
         ClassActor.prohibitPackagePrefix(null); // allow extra classes
 
         final Map<String, byte[]> classNameToClassfileMap = new LinkedHashMap<String, byte[]>();

@@ -190,6 +190,7 @@ public final class BinaryImageGenerator {
         final long start = System.currentTimeMillis();
         CompilerScheme compilerScheme = null;
         try {
+            final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(_options);
             Trace.addTo(_options);
             _options.parseArguments(programArguments);
             BinaryImageGenerator._calleeJit = _testCalleeJit.getValue();
@@ -204,8 +205,7 @@ public final class BinaryImageGenerator {
                 MethodTrace.enable();
             }
 
-            final PrototypeGenerator prototypeGenerator = new PrototypeGenerator();
-            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(_options.getArgumentsAndUnrecognizedOptions(), _treeOption.getValue());
+            final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(_treeOption.getValue());
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.PROTOTYPING);
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
