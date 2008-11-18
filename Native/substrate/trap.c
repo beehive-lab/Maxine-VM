@@ -96,6 +96,11 @@ void setHandler(int signal, SignalHandlerFunction handler) {
     memset((char *) &newSigaction, 0, sizeof(newSigaction));
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+#if os_SOLARIS
+	 if (signal==SIGUSR1) {
+		newSigaction.sa_flags = SA_SIGINFO | SA_ONSTACK;
+	 }
+#endif
     newSigaction.sa_sigaction = handler;
 
     if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
@@ -125,14 +130,6 @@ static Address getInstructionPointer(UContext *ucontext) {
 static void setInstructionPointer(UContext *ucontext, Address stub) {
 #if os_SOLARIS
 #   if isa_SPARC
-     /* Make the stub look like it is called by the method that caused the exception.
-      * Stubs create a frame on entry. To enable stack walking we need to make believe
-      * that a stub was properly called from the method that caused the exception.
-      * We set O7 to the current's PC before (O7 is temp and is not expected to survive
-      * any implicit exception.
-      */
-  /* ucontext->uc_mcontext.gregs[REG_O7] = ucontext->uc_mcontext.gregs[REG_PC];
-      ucontext->uc_mcontext.gregs[REG_O7] = 0; */
     ucontext->uc_mcontext.gregs[REG_nPC] = (greg_t) (stub + 4);
 #   endif
     ucontext->uc_mcontext.gregs[REG_PC] = (greg_t) stub;
