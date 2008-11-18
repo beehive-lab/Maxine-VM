@@ -58,8 +58,8 @@ import com.sun.max.vm.compiler.ir.*;
  * Where the second system property is used by the IrMethodFilter to determine which methods to trace.
  * <p>
  * As a convenience, all the IR's for a specified set of methods can be traced with their
- * {@linkplain IrMethod#irTraceObserverType() specific IR trace observers} via use of the {@code "max.ir.trace"}
- * property:
+ * {@linkplain IrMethod#irTraceObserverType() specific IR trace observers} via use of the {@link #IR_TRACE_PROPERTY}
+ * system property:
  *
  * <pre>
  *     -Dmax.ir.trace=[(trace level):](method name filters separated by ',')
@@ -77,7 +77,10 @@ import com.sun.max.vm.compiler.ir.*;
  */
 public class IrObserverConfiguration {
 
-    public static final String MAX_IR_TRACE_PROPERTY = "max.ir.trace";
+    /**
+     * The name of the system property that can be set to control IR tracing for one or more methods as they are compiled.
+     */
+    public static final String IR_TRACE_PROPERTY = "max.ir.trace";
 
     static final Package _package = new Package();
 
@@ -106,7 +109,10 @@ public class IrObserverConfiguration {
     }
 
     private static String[] parseMaxIrTraceProperty() {
-        String irTraceValue = System.getProperty(MAX_IR_TRACE_PROPERTY, "");
+        String irTraceValue = System.getProperty(IR_TRACE_PROPERTY);
+        if (irTraceValue == null) {
+            return null;
+        }
         String[] methodsToBeTraced = {};
         if (!irTraceValue.isEmpty()) {
             final int indexOfColon = irTraceValue.indexOf(':');
@@ -120,7 +126,7 @@ public class IrObserverConfiguration {
     }
 
     private static String addTraceObservers(String irObservers, String[] methodsToBeTraced) {
-        if (methodsToBeTraced.length > 0) {
+        if (methodsToBeTraced != null) {
             if (!irObservers.contains(IrTraceObserverDispatcher.class.getSimpleName())) {
                 return Strings.concat(irObservers, IrTraceObserverDispatcher.class.getName(), ",");
             }
@@ -130,13 +136,17 @@ public class IrObserverConfiguration {
 
     private static String addTraceFilters(String irFilters, String[] methodsToBeTraced) {
         String extendedIrFilters = irFilters;
-        if (methodsToBeTraced.length > 0) {
+        if (methodsToBeTraced != null) {
             if (!extendedIrFilters.contains(IrMethodFilter.class.getSimpleName())) {
                 extendedIrFilters = Strings.concat(extendedIrFilters, IrMethodFilter.class.getName(), ",");
             }
             String filterProperty = System.getProperty(IrMethodFilter.PROPERTY_FILTER, "");
-            for (String methodName : methodsToBeTraced) {
-                filterProperty = Strings.concat(filterProperty, methodName, ",");
+            if (methodsToBeTraced.length == 0) {
+                filterProperty = Strings.concat(filterProperty, "", ",");
+            } else {
+                for (String methodName : methodsToBeTraced) {
+                    filterProperty = Strings.concat(filterProperty, methodName, ",");
+                }
             }
             System.setProperty(IrMethodFilter.PROPERTY_FILTER, filterProperty);
         }
