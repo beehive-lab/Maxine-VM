@@ -344,7 +344,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(staticMethodActor);
                 return;
             }
-            _state.enter(staticMethodActor, currentByteAddress());
+            _state.enter(staticMethodActor, currentBytePosition());
             jumpTo(0);
         }
 
@@ -364,7 +364,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(virtualMethodActor);
                 return;
             }
-            _state.enter(virtualMethodActor, currentByteAddress());
+            _state.enter(virtualMethodActor, currentBytePosition());
             jumpTo(0);
         }
 
@@ -384,7 +384,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(virtualMethodActor);
                 return;
             }
-            _state.enter(virtualMethodActor, currentByteAddress());
+            _state.enter(virtualMethodActor, currentBytePosition());
             jumpTo(0);
         }
 
@@ -396,7 +396,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
                 execute(virtualMethodActor);
                 return;
             }
-            _state.enter(virtualMethodActor, currentByteAddress());
+            _state.enter(virtualMethodActor, currentBytePosition());
             jumpTo(0);
         }
 

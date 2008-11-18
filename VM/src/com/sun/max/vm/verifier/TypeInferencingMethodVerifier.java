@@ -95,7 +95,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
     @Override
     public int currentOpcodePosition() {
-        return _scanner == null ? -1 : _scanner.getCurrentOpcodePosition();
+        return _scanner == null ? -1 : _scanner.currentOpcodePosition();
     }
 
     public Instruction instructionAt(int position) {
@@ -263,7 +263,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
         final int subroutineEntryPosition = currentOpcodePosition() + offset;
         final Subroutine subroutine = classVerifier().getSubroutine(subroutineEntryPosition, codeAttribute().maxLocals());
 
-        final int returnPosition = _scanner.getCurrentBytePosition();
+        final int returnPosition = _scanner.currentBytePosition();
         final boolean firstVisit = !subroutine.containsRetTarget(returnPosition);
         if (firstVisit) {
             subroutine.addRetTarget(returnPosition);
@@ -356,7 +356,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             public void instructionDecoded() {
                 final int currentOpcodePosition = currentOpcodePosition();
                 if (_instructionMap[currentOpcodePosition] == null) {
-                    _previous = new Instruction(currentOpcode(), currentOpcodePosition, currentByteAddress(), _previous);
+                    _previous = new Instruction(currentOpcode(), currentOpcodePosition, currentBytePosition(), _previous);
                 }
             }
 
@@ -365,7 +365,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
             }
 
             private void branch(int offset) {
-                _previous = new Branch(currentOpcode(), currentOpcodePosition(), currentByteAddress(), makeTarget(offset), _previous);
+                _previous = new Branch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), _previous);
             }
 
             @Override
@@ -460,7 +460,7 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             @Override
             protected void jsr(int offset) {
-                _previous = new Jsr(currentOpcode(), currentOpcodePosition(), currentByteAddress(), makeTarget(offset), _previous);
+                _previous = new Jsr(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(offset), _previous);
 
                 // Create a target at the JSR to save the frame state before entering the subroutine. This
                 // is used to restore the frame state upon leaving the subroutine via a RET.
@@ -474,16 +474,16 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
 
             @Override
             protected void ret(int index) {
-                _previous = new Ret(currentOpcode(), currentOpcodePosition(), currentByteAddress(), _previous);
+                _previous = new Ret(currentOpcode(), currentOpcodePosition(), currentBytePosition(), _previous);
             }
 
             @Override
             protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
                 final TypeState[] targets = new TypeState[numberOfCases];
                 for (int i = 0; i != numberOfCases; ++i) {
-                    targets[i] = makeTarget(getBytecodeScanner().readSwitchOffset());
+                    targets[i] = makeTarget(bytecodeScanner().readSwitchOffset());
                 }
-                _previous = new Tableswitch(currentOpcode(), currentOpcodePosition(), currentByteAddress(), makeTarget(defaultOffset), lowMatch, highMatch, targets, _previous);
+                _previous = new Tableswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), lowMatch, highMatch, targets, _previous);
             }
 
             @Override
@@ -491,10 +491,10 @@ public class TypeInferencingMethodVerifier extends TypeCheckingMethodVerifier {
                 final TypeState[] targets = new TypeState[numberOfCases];
                 final int[] matches = new int[numberOfCases];
                 for (int i = 0; i != numberOfCases; ++i) {
-                    matches[i] = getBytecodeScanner().readSwitchCase();
-                    targets[i] = makeTarget(getBytecodeScanner().readSwitchOffset());
+                    matches[i] = bytecodeScanner().readSwitchCase();
+                    targets[i] = makeTarget(bytecodeScanner().readSwitchOffset());
                 }
-                _previous = new Lookupswitch(currentOpcode(), currentOpcodePosition(), currentByteAddress(), makeTarget(defaultOffset), matches, targets, _previous);
+                _previous = new Lookupswitch(currentOpcode(), currentOpcodePosition(), currentBytePosition(), makeTarget(defaultOffset), matches, targets, _previous);
             }
         }
 

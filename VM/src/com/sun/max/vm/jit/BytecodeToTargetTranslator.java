@@ -861,8 +861,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     // Look ahead/behind helpers
     protected byte getByte(int byteAddress) {
-        final BytecodeScanner bytecodeScanner = getBytecodeScanner();
-        return bytecodeScanner.getBytecodeBlock().code()[byteAddress];
+        final BytecodeScanner bytecodeScanner = bytecodeScanner();
+        return bytecodeScanner.bytecodeBlock().code()[byteAddress];
     }
 
     public int getUnsigned1(int byteAddress) {
@@ -876,7 +876,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     public Bytecode getNextBytecode() {
-        return getBytecodeAt(getBytecodeScanner().getCurrentBytePosition());
+        return getBytecodeAt(bytecodeScanner().currentBytePosition());
     }
 
     public Bytecode getBytecodeAt(int opcodeAddress) {
