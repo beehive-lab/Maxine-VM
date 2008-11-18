@@ -20,57 +20,25 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
+import java.util.regex.*;
 
-import javax.swing.*;
+import com.sun.max.collect.*;
 
-import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 
 /**
- * Base class for {@link Inspector} text fields.
- * Appears like a {@link JLabel}, except that the
- * text can be selected and copied by a user.
+ * Regular expression pattern matcher; identifies by number the rows that match a pattern.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
+ * @see {@link java.util.regex.Pattern}
  */
-public abstract class InspectorLabel extends JTextField implements TextSearchable, Prober {
-
-    private final Inspection _inspection;
-
-    public final Inspection inspection() {
-        return _inspection;
-    }
-
-    public final InspectorStyle style() {
-        return _inspection.style();
-    }
-
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
-    }
-
-    public InspectorLabel(Inspection inspection) {
-        this(inspection, null);
-    }
-
-    public InspectorLabel(Inspection inspection, String text) {
-        super(text);
-        _inspection = inspection;
-        setEditable(false);
-    }
-
-    @Override
-    public String getSearchableText() {
-        return getText();
-    }
+public interface RowTextSearcher {
 
     /**
-     * Prevents the border from being drawn so that this field looks like a {@link JLabel}.
+     * Find rows matching a regexp pattern.
+     *
+     * @param pattern a regular expression pattern
+     * @return rows in the row-based object being searched that match the {@link Pattern}.
      */
-    @Override
-    protected void paintBorder(Graphics g) {
-        // super.paintBorder(g);
-    }
+    IndexedSequence<Integer> search(Pattern pattern);
+
 }

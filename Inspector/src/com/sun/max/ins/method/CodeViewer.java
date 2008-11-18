@@ -28,6 +28,8 @@ import javax.swing.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.vm.stack.*;
@@ -44,9 +46,14 @@ import com.sun.max.vm.stack.*;
  */
 public abstract class CodeViewer extends InspectorPanel {
 
+    private static final int TRACE_VALUE = 2;
+
     private final MethodInspector _parent;
 
+    private JPanel _toolBarPanel;
     private JToolBar _toolBar;
+    private RowTextSearchToolBar _searchToolBar;
+    private final JButton _searchButton;
     private final JButton _activeRowsButton;
     private JButton _viewCloseButton;
 
@@ -70,6 +77,14 @@ public abstract class CodeViewer extends InspectorPanel {
     public CodeViewer(Inspection inspection, MethodInspector parent) {
         super(inspection, new BorderLayout());
         _parent = parent;
+
+        _searchButton = new JButton(new AbstractAction() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                addSearchToolBar();
+            }
+        });
+        _searchButton.setText("Search...");
+        _searchButton.setToolTipText("Open toolbar for searching");
 
         _activeRowsButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -99,11 +114,126 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     protected void createView(long epoch) {
+        _toolBarPanel = new JPanel();
+        _toolBarPanel.setLayout(new GridLayout(0, 1));
         _toolBar = new JToolBar();
         _toolBar.setFloatable(false);
         _toolBar.setRollover(true);
-        add(_toolBar, BorderLayout.NORTH);
+        _toolBarPanel.add(_toolBar);
+        add(_toolBarPanel, BorderLayout.NORTH);
     }
+
+    private IndexedSequence<Integer> _searchMatchingRows = null;
+
+    /**
+     * @return the rows that match a current search session; null if no search session active.
+     */
+    protected final IndexedSequence<Integer> getSearchMatchingRows() {
+        return _searchMatchingRows;
+    }
+
+    private final RowSearchListener _searchListener = new RowSearchListener() {
+
+        public void searchResult(IndexedSequence<Integer> searchMatchingRows) {
+            _searchMatchingRows = searchMatchingRows;
+            // go to next matching row from current selection
+            if (_searchMatchingRows != null) {
+                Trace.line(TRACE_VALUE, "search: matches " + _searchMatchingRows.length() + " = " + _searchMatchingRows);
+            } else {
+                System.out.println("search: cleared");
+            }
+            repaint();
+        }
+
+        public void selectNextResult() {
+            setFocusAtNextSearchMatch();
+        }
+
+        public void selectPreviousResult() {
+            setFocusAtPreviousSearchMatch();
+        }
+
+        public void closeSearch() {
+            CodeViewer.this.closeSearch();
+        }
+    };
+
+    private void addSearchToolBar() {
+        if (_searchToolBar == null) {
+            _searchToolBar = new RowTextSearchToolBar(inspection(), _searchListener, getRowTextSearcher());
+            _toolBarPanel.add(_searchToolBar);
+            parent().frame().pack();
+            _searchToolBar.getFocus();
+        }
+    }
+
+    private void closeSearch() {
+        Trace.line(TRACE_VALUE, "search:  closing");
+        _toolBarPanel.remove(_searchToolBar);
+        parent().frame().pack();
+        _searchToolBar = null;
+        _searchMatchingRows = null;
+        // do some kind of update in case there were display effects.
+    }
+
+    private void setFocusAtNextSearchMatch() {
+        Trace.line(TRACE_VALUE, "search:  next match");
+        if (_searchMatchingRows.length() > 0) {
+            int currentRow = getSelectedRow();
+            for (int row : _searchMatchingRows) {
+                if (row > currentRow) {
+                    setFocusAtRow(row);
+                    return;
+                }
+            }
+            // wrap, could be optional, or dialog choice
+            currentRow = -1;
+            for (int row : _searchMatchingRows) {
+                if (row > currentRow) {
+                    setFocusAtRow(row);
+                    return;
+                }
+            }
+        } else {
+            flash();
+        }
+    }
+
+    private void setFocusAtPreviousSearchMatch() {
+        Trace.line(TRACE_VALUE, "search:  previous match");
+        if (_searchMatchingRows.length() > 0) {
+            int currentRow = getSelectedRow();
+            for (int index = _searchMatchingRows.length() - 1; index >= 0; index--) {
+                final Integer matchingRow = _searchMatchingRows.get(index);
+                if (matchingRow < currentRow) {
+                    setFocusAtRow(matchingRow);
+                    return;
+                }
+            }
+            // wrap, could be optional, or dialog choice
+            currentRow = getRowCount();
+            for (int index = _searchMatchingRows.length() - 1; index >= 0; index--) {
+                final Integer matchingRow = _searchMatchingRows.get(index);
+                if (matchingRow < currentRow) {
+                    setFocusAtRow(matchingRow);
+                    return;
+                }
+            }
+        } else {
+            flash();
+        }
+    }
+
+
+    /**
+     * @return a searcher for locating rows with a textual regexp.
+     */
+    protected abstract RowTextSearcher getRowTextSearcher();
+
+    /**
+     * @return how man rows are in the view.
+     */
+    protected abstract int getRowCount();
 
     /**
      * @return the row in a code display that is currently selected (at code focus); -1 if no selection
@@ -115,10 +245,24 @@ public abstract class CodeViewer extends InspectorPanel {
      */
     protected abstract void setFocusAtRow(int row);
 
+    /**
+     * Adds a button to the view's tool bar that enables textual search.
+     */
+    protected void addSearchButton() {
+        toolBar().add(_searchButton);
+    }
+
+    /**
+     * Adds a button to the view's tool bar that enables navigation among "active" rows, those that correspond to
+     * stack locations in the current thread.
+     */
     protected void addActiveRowsButton() {
         toolBar().add(_activeRowsButton);
     }
 
+    /**
+     * Adds a button to the view's tool bar that closes this view.
+     */
     protected void addCodeViewCloseButton() {
         _toolBar.add(_viewCloseButton);
     }
@@ -140,6 +284,10 @@ public abstract class CodeViewer extends InspectorPanel {
                 setMaximumSize(new Dimension(size.width + 40, size.height + 40));
             }
         }
+    }
+
+    protected void flash() {
+        _parent.frame().flash();
     }
 
 
