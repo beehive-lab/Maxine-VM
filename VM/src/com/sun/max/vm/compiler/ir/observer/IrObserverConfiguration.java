@@ -109,7 +109,7 @@ public class IrObserverConfiguration {
     }
 
     private static String[] parseMaxIrTraceProperty() {
-        String irTraceValue = System.getProperty(MAX_IR_TRACE_PROPERTY);
+        String irTraceValue = System.getProperty(IR_TRACE_PROPERTY);
         if (irTraceValue == null) {
             return null;
         }
