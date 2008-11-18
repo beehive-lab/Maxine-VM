@@ -29,6 +29,7 @@ import javax.swing.border.*;
  * A fully specified style, designed to be evolve slowly and resemble earlier prototypes.
  *
  * @author Michael Van De Vanter
+ * @see <a href="http://en.wikipedia.org/wiki/Web_colors#HTML_color_names">X11 color names</a>
  *
  */
 public class StandardInspectorStyle extends InspectorStyleAdapter {
@@ -56,7 +57,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private final Color _paleGray = InspectorStyle.CoolGray2;
     private final Color _paleBlue = InspectorStyle.SunBlue3;
 
-    private final Color _backgroundGray = new Color(238, 238, 238);
+    private final Color _backgroundGray = new Color(238, 238, 238); // very pale
 
     @Override
     public Color defaultBackgroundColor() {
@@ -128,13 +129,13 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     // Special styles for interpreted data values
-    private Color _nullDataColor = new Color(124, 124, 64); //brown
-    private Color _wordValidReferenceDataColor = new Color(0, 192, 0); //green
-    private Color _wordUncheckedReferenceDataColor = new Color(64, 128, 64);
+    private Color _nullDataColor = new Color(139, 69, 19); // X11 SaddleBrown
+    private Color _wordValidReferenceDataColor = new Color(24, 139, 34); // X11 ForestGreen
+    private Color _wordUncheckedReferenceDataColor = new Color(144, 238, 144); // X11 LightGreen
     private Color _wordInvalidReferenceDataColor = Color.red;
-    private Color _wordStackLocationDataColor = Color.magenta;
+    private Color _wordStackLocationDataColor = new Color(186, 85, 211); // X11 MediumOrchid
     private Color _invalidDataColor = Color.red;
-    private Color _wordCallEntryPointColor = Color.blue;
+    private Color _wordCallEntryPointColor = new Color(0, 0, 205); // X11 MediumBlue
     private Color _wordCallReturnPointColor = new Color(64, 64, 192);
     private Color _wordUncheckedCallPointColor = new Color(96, 96, 148);
     private Color _wordSelectedColor = Color.blue;
@@ -366,5 +367,18 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color debugCallReturnTagColor() {
         return _debugCallReturnTagColor;
     }
+
+    // Search
+    private final Color _searchPatternFailedColor = new Color(255, 192, 203); // X11 Pink
+    @Override
+    public Color searchPatternFailedColor() {
+        return _searchPatternFailedColor;
+    }
+    private final Color _searchRowMatchedBackground = new Color(255, 255, 224);  // X11 LightYellow
+    @Override
+    public Color searchRowMatchedBackground() {
+        return _searchRowMatchedBackground;
+    }
+
 
 }

@@ -72,7 +72,7 @@ public class TeleClassRegistry extends TeleVMHolder {
 
     private static final Logger LOGGER = Logger.getLogger(TeleClassRegistry.class.getName());
     
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 3;
     
     // TODO (mlvdv)  Generalize to map either  (TypeDescriptor, ClassLoader) -> ClassActor Reference *or*  TypeDescriptor -> ClassActor Reference*
     private final Map<TypeDescriptor, Reference> _typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
