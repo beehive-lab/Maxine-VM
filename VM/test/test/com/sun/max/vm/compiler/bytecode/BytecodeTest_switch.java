@@ -53,7 +53,7 @@ public abstract class BytecodeTest_switch<Method_Type extends IrMethod> extends 
 
                 @Override
                 public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
-                    getBytecodeScanner().skipBytes(numberOfCases * 4);
+                    bytecodeScanner().skipBytes(numberOfCases * 4);
                     confirmPresence();
                 }
             };
@@ -88,7 +88,7 @@ public abstract class BytecodeTest_switch<Method_Type extends IrMethod> extends 
 
             @Override
             public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
-                getBytecodeScanner().skipBytes(numberOfCases * 4);
+                bytecodeScanner().skipBytes(numberOfCases * 4);
                 confirmPresence();
             }
         };
@@ -121,7 +121,7 @@ public abstract class BytecodeTest_switch<Method_Type extends IrMethod> extends 
 
             @Override
             public void lookupswitch(int defaultOffset, int numberOfCases) {
-                getBytecodeScanner().skipBytes(numberOfCases * 8);
+                bytecodeScanner().skipBytes(numberOfCases * 8);
                 confirmPresence();
             }
         };
@@ -154,7 +154,7 @@ public abstract class BytecodeTest_switch<Method_Type extends IrMethod> extends 
 
             @Override
             public void lookupswitch(int defaultOffset, int numberOfCases) {
-                getBytecodeScanner().skipBytes(numberOfCases * 8);
+                bytecodeScanner().skipBytes(numberOfCases * 8);
                 confirmPresence();
             }
         };
