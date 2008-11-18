@@ -93,9 +93,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
         if (_irObservers != null) {
             synchronized (this) {
                 for (IrObserver observer : _irObservers) {
-                    if (observer.observableType().isAssignableFrom(irMethod.getClass())) {
-                        observer.observeAllocation(irMethod);
-                    }
+                    observer.observeAllocation(irMethod);
                 }
             }
         }
@@ -105,9 +103,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
         if (_irObservers != null) {
             synchronized (this) {
                 for (IrObserver observer : _irObservers) {
-                    if (observer.observableType().isAssignableFrom(irMethod.getClass())) {
-                        observer.observeBeforeGeneration(irMethod, this);
-                    }
+                    observer.observeBeforeGeneration(irMethod, this);
                 }
             }
         }
@@ -117,9 +113,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
         if (_irObservers != null) {
             synchronized (this) {
                 for (IrObserver observer : _irObservers) {
-                    if (observer.observableType().isAssignableFrom(irMethod.getClass())) {
-                        observer.observeAfterGeneration(irMethod, this);
-                    }
+                    observer.observeAfterGeneration(irMethod, this);
                 }
             }
         }
@@ -130,9 +124,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
         if (_irObservers != null) {
             synchronized (this) {
                 for (IrObserver observer : _irObservers) {
-                    if (observer.observableType().isAssignableFrom(irMethod.getClass())) {
-                        observer.observeBeforeTransformation(irMethod, context, transform);
-                    }
+                    observer.observeBeforeTransformation(irMethod, context, transform);
                 }
             }
         }
@@ -142,9 +134,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
         if (_irObservers != null) {
             synchronized (this) {
                 for (IrObserver observer : _irObservers) {
-                    if (observer.observableType().isAssignableFrom(irMethod.getClass())) {
-                        observer.observeAfterTransformation(irMethod, context, transform);
-                    }
+                    observer.observeAfterTransformation(irMethod, context, transform);
                 }
             }
         }

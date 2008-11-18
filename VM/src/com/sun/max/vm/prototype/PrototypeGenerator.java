@@ -103,21 +103,22 @@ public final class PrototypeGenerator {
 
     /**
      * Creates a new prototype generator.
+     *
+     * @param optionSet the set of options to which the prototype generator specific options will be added
      */
-    public PrototypeGenerator() {
-        Trace.addTo(_options);
+    public PrototypeGenerator(OptionSet optionSet) {
+        optionSet.addOptions(_options);
     }
 
     /**
      * Creates a VM configuration from the specified option set and the specified default configuration.
      * The options supplied may individually override the values in the default configuration.
      *
-     * @param optionSet a set of pre-parsed command line options
      * @param defaultConfiguration the default VM configuration
      * @return a new VM configuration based on the default configuration with the specific options
      * selected
      */
-    private VMConfiguration createVMConfiguration(OptionSet optionSet, final VMConfiguration defaultConfiguration) {
+    private VMConfiguration createVMConfiguration(final VMConfiguration defaultConfiguration) {
         // set the defaults manually using the default configuration
         _processorModel.setDefaultValue(defaultConfiguration.platform().processorKind().processorModel());
         _instructionSet.setDefaultValue(defaultConfiguration.platform().processorKind().instructionSet());
@@ -136,9 +137,6 @@ public final class PrototypeGenerator {
         _trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage());
         _targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage());
         _runScheme.setDefaultValue(defaultConfiguration.runPackage());
-
-        // now parse the arguments
-        _options.loadOptions(optionSet);
 
         if (_threadsOption.getValue() <= 0) {
             throw new Option.Error("The value specified for " + _threadsOption + " must be greater than 0.");
@@ -193,14 +191,13 @@ public final class PrototypeGenerator {
     /**
      * Create the Java prototype, which includes the basic JDK and Maxine classes.
      *
-     * @param optionSet a set of pre-parsed options from the command line
      * @param vmConfiguration the default VM configuration
      * @param loadingPackages a boolean indicating whether to load the basic VM and JDK packages
      * @return a new Java prototype object
      */
-    public JavaPrototype createJavaPrototype(OptionSet optionSet, VMConfiguration vmConfiguration, boolean loadingPackages) {
+    public JavaPrototype createJavaPrototype(VMConfiguration vmConfiguration, boolean loadingPackages) {
         try {
-            return new JavaPrototype(createVMConfiguration(optionSet, vmConfiguration), loadingPackages);
+            return new JavaPrototype(createVMConfiguration(vmConfiguration), loadingPackages);
         } catch (Throwable throwable) {
             reportThrowable(throwable);
             ProgramError.unexpected("Java prototype failed");
@@ -220,12 +217,11 @@ public final class PrototypeGenerator {
     /**
      * Creates the default Java prototype.
      *
-     * @param optionSet the pre-parsed command line options
      * @param loadPackages a boolean indicating whether to load the basic VM and JDK packages
      * @return the new default Java prototype
      */
-    public JavaPrototype createJavaPrototype(OptionSet optionSet, boolean loadPackages) {
-        return createJavaPrototype(optionSet, createDefaultVMConfiguration(), loadPackages);
+    public JavaPrototype createJavaPrototype(boolean loadPackages) {
+        return createJavaPrototype(createDefaultVMConfiguration(), loadPackages);
     }
 
     /**
@@ -234,13 +230,12 @@ public final class PrototypeGenerator {
      * both the {@code CompiledPrototype} and the {@code GraphPrototype} iteratively
      * until it reaches a fixpoint.
      *
-     * @param optionSet the set of pre-parsed command line options
      * @param tree a boolean indicating whether to record an object tree, which is useful for debugging
      * @return the final graph prototype of the VM
      */
-    public GraphPrototype createGraphPrototype(OptionSet optionSet, final boolean tree) {
+    public GraphPrototype createGraphPrototype(final boolean tree) {
         HackJDK.checkVMFlags();
-        final JavaPrototype javaPrototype = createJavaPrototype(optionSet, true);
+        final JavaPrototype javaPrototype = createJavaPrototype(true);
         try {
             javaPrototype.loadCoreJavaPackages();
             final Timer compileTimer = GlobalMetrics.newTimer("CompiledPrototype", Clock.SYSTEM_MILLISECONDS);
@@ -291,13 +286,12 @@ public final class PrototypeGenerator {
      * Create a data prototype, by first building a graph prototype, then choosing layouts, and
      * eventually encoding the entire graph prototype into a binary form.
      *
-     * @param optionSet the set of pre-parsed command line options
      * @param tree a boolean indicating whether to produce an object tree
      * @return a completed data prototype
      */
-    DataPrototype createDataPrototype(OptionSet optionSet, boolean tree) {
+    DataPrototype createDataPrototype(boolean tree) {
         final Timer dataTimer = GlobalMetrics.newTimer("DataPrototype", Clock.SYSTEM_MILLISECONDS);
-        final GraphPrototype graphPrototype = createGraphPrototype(optionSet, tree);
+        final GraphPrototype graphPrototype = createGraphPrototype(tree);
         dataTimer.start();
         final DataPrototype dataPrototype = new DataPrototype(graphPrototype, null);
         dataTimer.stop();

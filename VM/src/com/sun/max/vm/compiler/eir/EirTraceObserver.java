@@ -151,38 +151,42 @@ public class EirTraceObserver extends IrTraceObserver {
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
-        final Transformation transformation = (Transformation) transform;
-        final int transformTraceLevel = transformation._traceLevel;
-        if (hasLevel(transformTraceLevel)) {
-            if (irMethod instanceof EirMethod) {
-                _out.println(traceString(irMethod, "before transformation: " + transform));
-                final EirMethod eirMethod = (EirMethod) irMethod;
-                if (context == null || eirMethod.isGenerated()) {
-                    _out.println(irMethod.traceToString());
+        if (irMethod instanceof EirMethod) {
+            final Transformation transformation = (Transformation) transform;
+            final int transformTraceLevel = transformation._traceLevel;
+            if (hasLevel(transformTraceLevel)) {
+                if (irMethod instanceof EirMethod) {
+                    _out.println(traceString(irMethod, "before transformation: " + transform));
+                    final EirMethod eirMethod = (EirMethod) irMethod;
+                    if (context == null || eirMethod.isGenerated()) {
+                        _out.println(irMethod.traceToString());
+                    } else {
+                        transformation.traceContext(context);
+                    }
                 } else {
-                    transformation.traceContext(context);
+                    super.observeBeforeTransformation(irMethod, context, transform);
                 }
-            } else {
-                super.observeBeforeTransformation(irMethod, context, transform);
             }
         }
     }
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-        final Transformation transformation = (Transformation) transform;
-        final int transformTraceLevel = transformation._traceLevel;
-        if (hasLevel(transformTraceLevel)) {
-            if (irMethod instanceof EirMethod) {
-                _out.println(traceString(irMethod, "after transformation: " + transform));
-                final EirMethod eirMethod = (EirMethod) irMethod;
-                if (context == null || eirMethod.isGenerated()) {
-                    _out.println(irMethod.traceToString());
+        if (irMethod instanceof EirMethod) {
+            final Transformation transformation = (Transformation) transform;
+            final int transformTraceLevel = transformation._traceLevel;
+            if (hasLevel(transformTraceLevel)) {
+                if (irMethod instanceof EirMethod) {
+                    _out.println(traceString(irMethod, "after transformation: " + transform));
+                    final EirMethod eirMethod = (EirMethod) irMethod;
+                    if (context == null || eirMethod.isGenerated()) {
+                        _out.println(irMethod.traceToString());
+                    } else {
+                        transformation.traceContext(context);
+                    }
                 } else {
-                    transformation.traceContext(context);
+                    super.observeAfterTransformation(irMethod, context, transform);
                 }
-            } else {
-                super.observeAfterTransformation(irMethod, context, transform);
             }
         }
     }

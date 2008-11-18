@@ -57,8 +57,8 @@ public class EIRTestExecutor implements JavaExecHarness.Executor {
     private static void initialize(boolean loadingPackages) {
         final VMConfiguration cfg = VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host().constrainedByInstructionSet(InstructionSet.AMD64),
                         new com.sun.max.vm.compiler.b.c.d.e.amd64.Package());
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator();
-        final Prototype jpt = prototypeGenerator.createJavaPrototype(new OptionSet(), cfg, loadingPackages);
+        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
+        final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
         final EirGeneratorScheme compilerScheme = (EirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         compilerScheme.compileSnippets();
         _generator = compilerScheme.eirGenerator();
