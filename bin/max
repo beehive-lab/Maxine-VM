@@ -361,6 +361,8 @@ function run_jtest() {
                 ;;
             -h )
                 echo "Usage: jtest <VM options> -- <Java Tester options>"
+                echo "where Java Tester options include:"
+                run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin test.com.sun.max.vm.compiler.JavaTester -help
                 return
                 ;;
             * )
@@ -369,7 +371,7 @@ function run_jtest() {
         esac
         shift
     done
-    run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args
+    run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
 #=======================================
@@ -419,7 +421,7 @@ function run_maxinetester() {
 gate_help="run the tests used to validate a push to the stable Maxine repository"
 
 function run_gate() {
-    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-tester-configs=optjit -java-config-alias=optjit "$@"
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optjit "$@"
 }
 
 #=======================================

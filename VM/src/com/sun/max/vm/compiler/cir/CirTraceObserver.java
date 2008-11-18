@@ -42,6 +42,7 @@ import com.sun.max.vm.compiler.ir.observer.*;
 public class CirTraceObserver extends IrTraceObserver {
 
     public CirTraceObserver() {
+        super(CirMethod.class);
     }
 
     public enum Transformation {
