@@ -29,10 +29,10 @@ import com.sun.max.lang.*;
  * Lisp-like lists made of "cons" cells.
  *
  * @author Bernd Mathiske
- * 
+ *
  * Notes:  the representation of the empty list is null,
  * which means that the non-static methods here do not apply
- * 
+ *
  */
 public class Cons<Element_Type> implements LinearCollection<Element_Type> {
 
@@ -118,4 +118,14 @@ public class Cons<Element_Type> implements LinearCollection<Element_Type> {
         return a == b;
     }
 
+    public static <Element_Type> boolean containsIdentical(Cons<Element_Type> list, Element_Type element) {
+        Cons l = list;
+        while (l != null) {
+            if (l.head() == element) {
+                return true;
+            }
+            l = l.tail();
+        }
+        return false;
+    }
 }

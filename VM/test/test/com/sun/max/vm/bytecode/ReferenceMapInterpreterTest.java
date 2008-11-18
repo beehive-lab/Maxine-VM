@@ -203,7 +203,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
                 @Override
                 protected void opcodeDecoded() {
-                    final int bytecodePosition = getBytecodeScanner().getCurrentOpcodePosition();
+                    final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
                     _currentMap = new ReferenceMap(codeAttribute.maxLocals(), codeAttribute.maxStack());
                     _referenceMaps[bytecodePosition] = _currentMap;
                     interpreter.interpretReferenceSlotsAt(InterpreterMapMaker.this, InterpreterMapMaker.this, bytecodePosition, true);

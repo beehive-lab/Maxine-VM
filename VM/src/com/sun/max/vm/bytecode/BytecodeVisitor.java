@@ -25,7 +25,7 @@ import com.sun.max.annotate.*;
 /**
  * An abstract class that can be extended and paired with a {@link BytecodeScanner} to process
  * the instructions decoded from a JVM instruction stream.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class BytecodeVisitor {
@@ -37,18 +37,18 @@ public abstract class BytecodeVisitor {
     }
 
     @INLINE
-    public final BytecodeScanner getBytecodeScanner() {
+    public final BytecodeScanner bytecodeScanner() {
         return _bytecodeScanner;
     }
 
     @INLINE
-    public final int currentByteAddress() {
-        return _bytecodeScanner.getCurrentBytePosition();
+    public final int currentBytePosition() {
+        return _bytecodeScanner.currentBytePosition();
     }
 
     @INLINE
     public final Bytecode currentOpcode() {
-        return _bytecodeScanner.getCurrentOpcode();
+        return _bytecodeScanner.currentOpcode();
     }
 
     /**
@@ -61,12 +61,12 @@ public abstract class BytecodeVisitor {
 
     @INLINE
     public final int currentOpcodePosition() {
-        return _bytecodeScanner.getCurrentOpcodePosition();
+        return _bytecodeScanner.currentOpcodePosition();
     }
 
     @INLINE
     protected final byte[] code() {
-        return _bytecodeScanner.getBytecodeBlock().code();
+        return _bytecodeScanner.bytecodeBlock().code();
     }
 
     /**
@@ -78,7 +78,7 @@ public abstract class BytecodeVisitor {
 
     /**
      * Subclasses override this method if they need to do any processing after the
-     * {@linkplain #getBytecodeScanner() scanner} has decoded the {@linkplain #currentOpcode() opcode} of an instruction
+     * {@linkplain #bytecodeScanner() scanner} has decoded the {@linkplain #currentOpcode() opcode} of an instruction
      * but before it dispatches to the relevant bytecode specific method in this visitor.
      * <p>
      * The default implementation does nothing.
@@ -88,7 +88,7 @@ public abstract class BytecodeVisitor {
 
     /**
      * Subclasses override this method if they need to do any processing after the
-     * {@linkplain #getBytecodeScanner() scanner} has decoded a complete instruction.
+     * {@linkplain #bytecodeScanner() scanner} has decoded a complete instruction.
      * <p>
      * The default implementation does nothing.
      */
