@@ -20,12 +20,13 @@
  */
 package com.sun.max.vm.jdk;
 
+import java.lang.reflect.*;
+
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
@@ -41,6 +42,8 @@ final class JDK_sun_reflect_Reflection {
 
     private JDK_sun_reflect_Reflection() {
     }
+
+    private static final CriticalMethod _javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke");
 
     /**
      * This class implements a closure that records the method actor at a particular
@@ -62,10 +65,15 @@ final class JDK_sun_reflect_Reflection {
             if (stackFrame.isAdapter()) {
                 return true;
             }
-            final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer());
+            //final TargetMethod targetMethod = Code.codePointerToTargetMethod(stackFrame.instructionPointer());
+            final TargetMethod targetMethod = stackFrame.targetMethod();
             if (targetMethod == null) {
                 // native frame
                 _realFramesToSkip--; // TODO: find out whether this is according to getCallerClass' intended "spec"
+                return true;
+            }
+            // according to sun.reflect.Reflection, getCallerClass() should ignore java.lang.reflect.Method.invoke
+            if (isReflectionMethod(targetMethod)) {
                 return true;
             }
 
@@ -100,6 +108,10 @@ final class JDK_sun_reflect_Reflection {
             }
             return true;
         }
+    }
+
+    private static boolean isReflectionMethod(TargetMethod targetMethod) {
+        return targetMethod.classMethodActor() == _javaLangReflectMethodInvoke.classMethodActor();
     }
 
     /**

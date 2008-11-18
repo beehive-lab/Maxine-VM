@@ -52,7 +52,6 @@ public class MaxineTesterConfiguration {
     };
 
     static final Set<Class> _expectedFailuresSolarisAMD64 = new HashSet<Class>(Arrays.asList(new Class[] {
-        test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
@@ -60,7 +59,6 @@ public class MaxineTesterConfiguration {
     }));
 
     static final Set<Class> _expectedFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
-        test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
