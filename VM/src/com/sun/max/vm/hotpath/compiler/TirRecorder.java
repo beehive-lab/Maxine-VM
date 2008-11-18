@@ -509,7 +509,7 @@ public class TirRecorder {
             if (target.isNative()) {
                 call(target, takeSnapshot());
             } else {
-                final int invokeReturnPosition = currentByteAddress();
+                final int invokeReturnPosition = currentBytePosition();
                 _state.enter(target, invokeReturnPosition);
                 if (_printState.getValue()) {
                     Console.println(Color.LIGHTRED, "invoked: method: " + method.toString());

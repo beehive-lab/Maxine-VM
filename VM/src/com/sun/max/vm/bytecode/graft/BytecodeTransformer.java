@@ -120,7 +120,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
     protected final void instructionDecoded() {
         if (!_ignoreCurrentInstruction) {
             final byte[] bytes = code();
-            for (int address = currentOpcodePosition(); address != currentByteAddress(); ++address) {
+            for (int address = currentOpcodePosition(); address != currentBytePosition(); ++address) {
                 _assembler.appendByte(bytes[address]);
             }
         } else {
@@ -244,7 +244,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         final Label[] relocatableTargets = new Label[numberOfCases];
         for (int i = 0; i != numberOfCases; ++i) {
-            relocatableTargets[i] = relocatableTarget(getBytecodeScanner().readSwitchOffset());
+            relocatableTargets[i] = relocatableTarget(bytecodeScanner().readSwitchOffset());
         }
         _assembler.tableswitch(relocatableTarget(defaultOffset), lowMatch, highMatch, relocatableTargets);
         ignoreCurrentInstruction();
@@ -255,7 +255,7 @@ public class BytecodeTransformer extends BytecodeAdapter {
         final Label[] relocatableTargets = new Label[numberOfCases];
         final int[] matches = new int[numberOfCases];
         for (int i = 0; i != numberOfCases; ++i) {
-            final BytecodeScanner scanner = getBytecodeScanner();
+            final BytecodeScanner scanner = bytecodeScanner();
             matches[i] = scanner.readSwitchCase();
             relocatableTargets[i] = relocatableTarget(scanner.readSwitchOffset());
         }
