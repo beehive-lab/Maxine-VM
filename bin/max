@@ -339,8 +339,18 @@ dis_help="preprocess class files with the Maxine VM and disassembles the result 
 function run_dis() {
     TMP_DIR=/tmp/${USER}/generated.$$
     run mkdir -p ${TMP_DIR}
-    run ${jvm} -d64 -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
+    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
     run rm -rf ${TMP_DIR}
+}
+
+#=======================================
+# 'inspect' command
+#=======================================
+
+inspect_help="launch a given program under the inspector"
+
+function run_inspect() {
+    run ${jvm} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$@"\"
 }
 
 #=======================================
@@ -421,7 +431,7 @@ function run_maxinetester() {
 gate_help="run the tests used to validate a push to the stable Maxine repository"
 
 function run_gate() {
-    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-tester-configs=optjit -java-config-alias=optjit "$@"
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optjit "$@"
 }
 
 #=======================================
