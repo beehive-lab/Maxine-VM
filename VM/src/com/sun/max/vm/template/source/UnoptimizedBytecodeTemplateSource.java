@@ -103,7 +103,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     public static void anewarray(ReferenceResolutionGuard guard) {
         final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveArrayClass.resolveArrayClass(guard));
         final int length = JitStackFrameOperation.peekInt(0);
-        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.createReferenceArray(arrayClassActor, length));
+        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.neverInlineCreateReferenceArray(arrayClassActor, length));
     }
 
     @INLINE
@@ -1604,7 +1604,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     public static void newarray(Kind kind) {
         final int length = JitStackFrameOperation.peekInt(0);
-        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreatePrimitiveArray.createPrimitiveArray(kind, length));
+        JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreatePrimitiveArray.neverInlineCreatePrimitiveArray(kind, length));
     }
 
     @INLINE

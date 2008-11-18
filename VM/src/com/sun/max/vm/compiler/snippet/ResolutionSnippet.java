@@ -108,7 +108,6 @@ public abstract class ResolutionSnippet extends Snippet {
     }
 
     abstract static class EntrypointResolutionSnippet extends ResolutionSnippet {
-
         EntrypointResolutionSnippet() {
             super(EntrypointResolutionGuard.class);
         }
@@ -121,6 +120,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveClass extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -142,6 +142,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveArrayClass extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -163,6 +164,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveTypeAndMakeInitialized extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -190,6 +192,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveStaticFieldForReading extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -215,6 +218,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveStaticFieldForWriting extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -243,6 +247,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveInstanceFieldForReading extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -271,6 +276,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveInstanceFieldForWriting extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -299,6 +305,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveStaticMethod extends EntrypointResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(EntrypointResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -356,6 +363,7 @@ public abstract class ResolutionSnippet extends Snippet {
             return dynamicMethodActor;
         }
 
+        @NEVER_INLINE
         public static void resolve(EntrypointResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -385,6 +393,7 @@ public abstract class ResolutionSnippet extends Snippet {
 
     public static final class ResolveVirtualMethod extends ReferenceResolutionSnippet {
 
+        @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();
@@ -408,6 +417,8 @@ public abstract class ResolutionSnippet extends Snippet {
     }
 
     public static final class ResolveInterfaceMethod extends ReferenceResolutionSnippet {
+
+        @NEVER_INLINE
         public static void resolve(ReferenceResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();

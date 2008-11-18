@@ -20,57 +20,17 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
-
-import javax.swing.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 
 /**
- * Base class for {@link Inspector} text fields.
- * Appears like a {@link JLabel}, except that the
- * text can be selected and copied by a user.
+ * Objects that are subject to textual search, for example by a {@link TableRowTextSearcher}.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class InspectorLabel extends JTextField implements TextSearchable, Prober {
-
-    private final Inspection _inspection;
-
-    public final Inspection inspection() {
-        return _inspection;
-    }
-
-    public final InspectorStyle style() {
-        return _inspection.style();
-    }
-
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
-    }
-
-    public InspectorLabel(Inspection inspection) {
-        this(inspection, null);
-    }
-
-    public InspectorLabel(Inspection inspection, String text) {
-        super(text);
-        _inspection = inspection;
-        setEditable(false);
-    }
-
-    @Override
-    public String getSearchableText() {
-        return getText();
-    }
+public interface TextSearchable {
 
     /**
-     * Prevents the border from being drawn so that this field looks like a {@link JLabel}.
+     * @return a string suitable for use during text searching.
      */
-    @Override
-    protected void paintBorder(Graphics g) {
-        // super.paintBorder(g);
-    }
+    String getSearchableText();
+
 }
