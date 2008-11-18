@@ -121,7 +121,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private CirContinuation getAdjacentContinuation() {
-        return getBlockContinuation(currentByteAddress());
+        return getBlockContinuation(currentBytePosition());
     }
 
     public void terminateBlock() {
@@ -300,7 +300,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected boolean isEndOfBlock() {
-        return currentByteAddress() == _methodTranslation.getBlockStateAt(currentOpcodePosition()).birBlock().bytecodeBlock().end() + 1;
+        return currentBytePosition() == _methodTranslation.getBlockStateAt(currentOpcodePosition()).birBlock().bytecodeBlock().end() + 1;
     }
 
     private void conditionalBranch(CirValue value1, CirSwitch cirSwitch, CirValue value2, int offset) {
@@ -1486,7 +1486,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
         final int nArguments = (numberOfCases * 2) + 2;
         final CirValue[] arguments = new CirValue[nArguments];
         arguments[0] = pop(Kind.INT);
-        final BytecodeScanner scanner = getBytecodeScanner();
+        final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
             final int match = lowMatch + i;
             arguments[1 + i] = CirConstant.fromInt(match);
@@ -1504,7 +1504,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
         final int nArguments = (numberOfCases * 2) + 2;
         final CirValue[] arguments = new CirValue[nArguments];
         arguments[0] = pop(Kind.INT);
-        final BytecodeScanner scanner = getBytecodeScanner();
+        final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
             arguments[1 + i] = CirConstant.fromInt(scanner.readSwitchCase());
             arguments[1 + numberOfCases + i] = getBranchContinuation(scanner.readSwitchOffset());

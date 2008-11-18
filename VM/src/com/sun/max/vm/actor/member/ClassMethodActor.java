@@ -280,7 +280,7 @@ public abstract class ClassMethodActor extends MethodActor {
             protected void opcodeDecoded() {
                 final Bytecode currentOpcode = currentOpcode();
                 if (currentOpcode.is(JSR_OR_RET)) {
-                    getBytecodeScanner().stop();
+                    bytecodeScanner().stop();
                 }
             }
         };
@@ -302,7 +302,7 @@ public abstract class ClassMethodActor extends MethodActor {
             protected void opcodeDecoded() {
                 final Bytecode currentOpcode = currentOpcode();
                 if (currentOpcode.is(CONDITIONAL_BRANCH | UNCONDITIONAL_BRANCH | SWITCH)) {
-                    getBytecodeScanner().stop();
+                    bytecodeScanner().stop();
                 }
             }
         };

@@ -715,12 +715,12 @@ public class BytecodeAdapter extends BytecodeVisitor {
 
     @Override
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
-        getBytecodeScanner().skipBytes(numberOfCases * 4);
+        bytecodeScanner().skipBytes(numberOfCases * 4);
     }
 
     @Override
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
-        getBytecodeScanner().skipBytes(numberOfCases * 8);
+        bytecodeScanner().skipBytes(numberOfCases * 8);
     }
 
     @Override
