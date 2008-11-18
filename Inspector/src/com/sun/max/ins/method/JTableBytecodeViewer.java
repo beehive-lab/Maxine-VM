@@ -256,7 +256,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             @Override
             public void paintChildren(Graphics g) {
                 super.paintChildren(g);
-                final int row = _table.getSelectionModel().getMinSelectionIndex();
+                final int row = getSelectedRow();
                 if (row >= 0) {
                     g.setColor(style().debugSelectedCodeBorderColor());
                     g.drawRect(0, row * _table.getRowHeight(row), getWidth() - 1, _table.getRowHeight(row) - 1);
@@ -343,6 +343,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         toolBar().add(Box.createHorizontalGlue());
 
+        addSearchButton();
+
         addActiveRowsButton();
 
         final JButton viewOptionsButton = new JButton(new AbstractAction() {
@@ -364,6 +366,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     }
 
     @Override
+    protected int getRowCount() {
+        return _table.getRowCount();
+    }
+
+    @Override
     protected int getSelectedRow() {
         return _table.getSelectedRow();
     }
@@ -374,12 +381,17 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), teleClassMethodActor(), position), false);
     }
 
-    /**
+    @Override
+    protected RowTextSearcher getRowTextSearcher() {
+        return new TableRowTextSearcher(_inspection, _table);
+    }
+
+   /**
      * Global code selection has changed.
      */
     @Override
     public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
-        final int oldSelectedRow = _table.getSelectionModel().getMinSelectionIndex();
+        final int oldSelectedRow = getSelectedRow();
         if (teleCodeLocation.hasBytecodeLocation()) {
             final BytecodeLocation bytecodeLocation = teleCodeLocation.bytecodeLocation();
             if (bytecodeLocation.classMethodActor() == teleClassMethodActor().classMethodActor()) {
@@ -544,6 +556,14 @@ public class JTableBytecodeViewer extends BytecodeViewer {
      * @return Color to be used for the background of all row labels; may have special overrides in future, as for Target Code
      */
     private Color getRowBackgroundColor(int row) {
+        final IndexedSequence<Integer> searchMatchingRows = getSearchMatchingRows();
+        if (searchMatchingRows != null) {
+            for (int matchingRow : searchMatchingRows) {
+                if (row == matchingRow) {
+                    return style().searchRowMatchedBackground();
+                }
+            }
+        }
         return style().bytecodeBackgroundColor();
     }
 
@@ -577,7 +597,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class TagRenderer extends JLabel implements TableCellRenderer {
+    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             setOpaque(true);
             setBackground(getRowBackgroundColor(row));
@@ -630,6 +650,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             }
             setToolTipText(toolTipText.toString());
             return this;
+        }
+
+        public String getSearchableText() {
+            return "";
         }
     }
 
@@ -713,8 +737,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setText("");
-            setToolTipText(null);
             final BytecodeLocation bytecodeLocation = (BytecodeLocation) value;
             final String sourceFileName = bytecodeLocation.sourceFileName();
             final int lineNumber = bytecodeLocation.sourceLineNumber();
@@ -723,8 +745,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 setToolTipText(sourceFileName + ":" + lineNumber);
             } else {
                 setText("");
-                setToolTipText(null);
+                setToolTipText("Source line not available");
             }
+            setBackground(getRowBackgroundColor(row));
             _lastBytecodeLocation = bytecodeLocation;
             return this;
         }

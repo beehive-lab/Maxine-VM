@@ -197,7 +197,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             @Override
             public void paintChildren(Graphics g) {
                 super.paintChildren(g);
-                final int row = _table.getSelectionModel().getMinSelectionIndex();
+                final int row = getSelectedRow();
                 if (row >= 0) {
                     g.setColor(style().debugSelectedCodeBorderColor());
                     g.drawRect(0, row * _table.getRowHeight(row), getWidth() - 1, _table.getRowHeight(row) - 1);
@@ -278,6 +278,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         addActiveRowsButton();
 
+        addSearchButton();
+
         final JButton viewOptionsButton = new JButton(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
                 new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "TargetCode View Options", _columnModel.preferences(), globalPreferences(inspection()));
@@ -299,6 +301,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     @Override
+    protected int getRowCount() {
+        return _table.getRowCount();
+    }
+
+    @Override
     protected int getSelectedRow() {
         return _table.getSelectedRow();
     }
@@ -308,6 +315,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeInstructionAt(row).address()), false);
     }
 
+    @Override
+    protected RowTextSearcher getRowTextSearcher() {
+        return new TableRowTextSearcher(_inspection, _table);
+    }
 
     /**
      * Global code selection has been set; return true iff the view contains selection.
@@ -316,7 +327,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     @Override
     public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
-        final int oldSelectedRow = _table.getSelectionModel().getMinSelectionIndex();
+        final int oldSelectedRow = getSelectedRow();
         if (teleCodeLocation.hasTargetCodeLocation()) {
             final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddresss();
             if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
@@ -491,7 +502,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class TagRenderer extends JLabel implements TableCellRenderer {
+    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             setOpaque(true);
             setBackground(rowToBackgroundColor(row));
@@ -530,6 +541,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             }
             setToolTipText(toolTipText.toString());
             return this;
+        }
+
+        public String getSearchableText() {
+            return "";
         }
     }
 
@@ -666,7 +681,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BytecodeLocation bytecodeLocation = rowToBytecodeLocation(row);
             setText("");
-            setToolTipText(null);
+            setToolTipText("Source line not available");
+            setBackground(rowToBackgroundColor(row));
             if (bytecodeLocation != null) {
                 final String sourceFileName = bytecodeLocation.sourceFileName();
                 final int lineNumber = bytecodeLocation.sourceLineNumber();
