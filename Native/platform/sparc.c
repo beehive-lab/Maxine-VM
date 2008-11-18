@@ -120,4 +120,16 @@ void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegis
 #endif
 }
 
+void sparc_printCanonicalFloatingPointRegisters(sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
+#if os_SOLARIS
+#define PRINT_FPR(r) log_println("F%-2d =  0x%016lx [%lf]", r, canonicalFloatingPointRegisters->dRegs[r], canonicalFloatingPointRegisters->dRegs[r])
+  int r = 0;
+  while (r < 32) {
+    PRINT_FPR(r);
+	 r++;
+  }
+#else
+  c_UNIMPLEMENTED();
+#endif
+}
 
