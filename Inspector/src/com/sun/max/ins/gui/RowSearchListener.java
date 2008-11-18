@@ -20,57 +20,38 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
+import com.sun.max.collect.*;
 
-import javax.swing.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 
 /**
- * Base class for {@link Inspector} text fields.
- * Appears like a {@link JLabel}, except that the
- * text can be selected and copied by a user.
+ * Callback interface for views that incorporate of row-based searching and
+ * allow forward and backward navigation among the most recent set of matching rows.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class InspectorLabel extends JTextField implements TextSearchable, Prober {
-
-    private final Inspection _inspection;
-
-    public final Inspection inspection() {
-        return _inspection;
-    }
-
-    public final InspectorStyle style() {
-        return _inspection.style();
-    }
-
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
-    }
-
-    public InspectorLabel(Inspection inspection) {
-        this(inspection, null);
-    }
-
-    public InspectorLabel(Inspection inspection, String text) {
-        super(text);
-        _inspection = inspection;
-        setEditable(false);
-    }
-
-    @Override
-    public String getSearchableText() {
-        return getText();
-    }
+public interface RowSearchListener {
 
     /**
-     * Prevents the border from being drawn so that this field looks like a {@link JLabel}.
+     * Notifies the result of a new table search.
+     *
+     * @param searchMatchingRows the rows that match the supplied pattern, length=0 if no matches, null if pattern is empty (no search).
      */
-    @Override
-    protected void paintBorder(Graphics g) {
-        // super.paintBorder(g);
-    }
+    void searchResult(IndexedSequence<Integer> searchMatchingRows);
+
+    /**
+     * Notifies that the user has requested to see the next match, relative to the current selection, of the most recent search.
+     * This is not supposed to happen if the most recent search produced no matches.
+     */
+    void selectNextResult();
+
+    /**
+     * Notifies that the user has requested to see the previous match, relative to the current selection, of the most recent search.
+    * This is not supposed to happen if the most recent search produced no matches.
+     */
+    void selectPreviousResult();
+
+    /**
+     * Notifies that the user has requested that the search be closed.
+     */
+    void closeSearch();
 }
