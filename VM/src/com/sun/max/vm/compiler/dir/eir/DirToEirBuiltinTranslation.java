@@ -129,4 +129,7 @@ public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue
         addInstruction(new EirMarker(eirBlock()));
     }
 
+    @Override
+    public void visitPause(Pause builtin, DirValue result, DirValue[] arguments) {
+    }
 }

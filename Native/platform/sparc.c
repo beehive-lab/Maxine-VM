@@ -30,7 +30,7 @@ void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIntegerRe
   int r = REG_G1;
   Word *p = &c->g1;
   while (r <= REG_O7) {
-	 os[r] = *p;
+	 os[r] = (greg_t) *p;
 	 p++;
 	 r++;
   }
@@ -100,9 +100,9 @@ void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters os, spa
 
 void sparc_canonicalizeTeleStateRegisters(sparc_OsTeleStateRegisters os, sparc_CanonicalStateRegisters c) {
 #if os_SOLARIS
-  c->ccr = os[R_CCR];
-  c->pc = os[R_PC];
-  c->npc = os[R_nPC];
+  c->ccr = (Word) os[R_CCR];
+  c->pc = (Word) os[R_PC];
+  c->npc = (Word) os[R_nPC];
 #else
   c_UNIMPLEMENTED();
 #endif
@@ -112,7 +112,7 @@ void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegis
 #if os_SOLARIS
   int r = 0;
   while (r < 32) {
-	 c->dRegs[r] = os->pr_fr.pr_regs[r];
+	 c->dRegs[r] = (Word) os->pr_fr.pr_regs[r];
 	 r++;
   }
 #else
