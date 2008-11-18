@@ -361,8 +361,8 @@ final class CirTraceVisualizer extends JPanel {
                 public void actionPerformed(ActionEvent event) {
                     final int returnedIndex = getNextSearch(_actorText.getText(), _nodeText.getText(), SearchDirection.BACKWARD);
                     if (returnedIndex != -1) {
-                        if (_currentTraceListIndex != returnedIndex) {
-                            _currentTraceListIndex = returnedIndex;
+                        if (_indexWithinTrace != returnedIndex) {
+                            _indexWithinTrace = returnedIndex;
                             refreshView();
                         }
                         if (_actorCheck.isSelected()) {
@@ -386,8 +386,8 @@ final class CirTraceVisualizer extends JPanel {
                 public void actionPerformed(ActionEvent event) {
                     final int returnedIndex = getNextSearch(_actorText.getText(), _nodeText.getText(), SearchDirection.FORWARD);
                     if (returnedIndex != -1) {
-                        if (_currentTraceListIndex != returnedIndex) {
-                            _currentTraceListIndex = returnedIndex;
+                        if (_indexWithinTrace != returnedIndex) {
+                            _indexWithinTrace = returnedIndex;
                             refreshView();
                         }
                         if (_actorCheck.isSelected()) {
@@ -581,7 +581,7 @@ final class CirTraceVisualizer extends JPanel {
         _searchPanel = new SearchPanel();
 
         final JPanel southPanel = new JPanel();
-        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.X_AXIS));
+        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
         southPanel.add(_searchPanel);
 
         final JCheckBox findCheck = new JCheckBox("Find");
@@ -594,10 +594,16 @@ final class CirTraceVisualizer extends JPanel {
             }
         });
 
-        southPanel.add(findCheck/*, BorderLayout.WEST*/);
-        southPanel.add(_traceListNavigationPanel/*, BorderLayout.CENTER*/);
-        southPanel.add(_traceNavigationPanel/*, BorderLayout.EAST*/);
-        southPanel.add(fontSizeSliderPanel);
+        final JPanel westPanel = new JPanel();
+        westPanel.add(findCheck);
+        westPanel.add(fontSizeSliderPanel);
+
+        final JPanel p = new JPanel(new BorderLayout());
+        p.add(westPanel, BorderLayout.WEST);
+        p.add(_traceListNavigationPanel, BorderLayout.CENTER);
+        p.add(_traceNavigationPanel, BorderLayout.EAST);
+
+        southPanel.add(p);
 
         _searchPanel.setVisible(false);
         add(southPanel, BorderLayout.SOUTH);
@@ -1284,14 +1290,10 @@ final class CirTraceVisualizer extends JPanel {
     /**
      * Gets the index of next trace in selected direction which satisfies search criteria.
      *
-     * @param actor
-     *            term to search in method signatures.
-     * @param node
-     *            term to search in traces.
-     * @param direction
-     *            backward or forward.
-     * @return
-     *            index of the first trace that satisfies criteria.
+     * @param actor term to search in method signatures.
+     * @param node term to search in traces.
+     * @param direction backward or forward.
+     * @return index of the first trace that satisfies criteria.
      */
     private int getNextSearch(String actor, String node, SearchDirection direction) {
         final boolean inActors = _searchPanel._actorCheck.isSelected();
@@ -1304,12 +1306,12 @@ final class CirTraceVisualizer extends JPanel {
         //decide from which index to search
         final int startIndex;
         if (!isCurrentHighlighted) {
-            startIndex = _currentTraceListIndex;
+            startIndex = _indexWithinTrace;
         } else {
             if (direction == SearchDirection.FORWARD) {
-                startIndex = isWrapSearch ? (_currentTraceListIndex + 1) % lastIndex : _currentTraceListIndex + 1;
+                startIndex = isWrapSearch ? (_indexWithinTrace + 1) % lastIndex : _indexWithinTrace + 1;
             } else {
-                startIndex = isWrapSearch ? (lastIndex + _currentTraceListIndex - 1) % lastIndex : _currentTraceListIndex - 1;
+                startIndex = isWrapSearch ? (lastIndex + _indexWithinTrace - 1) % lastIndex : _indexWithinTrace - 1;
             }
         }
 
@@ -1339,14 +1341,10 @@ final class CirTraceVisualizer extends JPanel {
     /**
      * Gets ranges in search-text which match search-term depending upon regular expression and match case options.
      *
-     * @param trace
-     *            current Cir trace.
-     * @param searchIn
-     *            String to search in.
-     * @param lookFor
-     *            String to search for.
-     * @param inTrace
-     *            boolean which tells if current search is in a signature or a trace.
+     * @param trace current Cir trace.
+     * @param searchIn String to search in.
+     * @param lookFor String to search for.
+     * @param inTrace boolean which tells if current search is in a signature or a trace.
      * @return sequence of matching ranges.
      */
     private VariableSequence<Range> getSearchStringRanges(CirAnnotatedTrace trace, String searchIn, String lookFor, boolean inTrace) {
