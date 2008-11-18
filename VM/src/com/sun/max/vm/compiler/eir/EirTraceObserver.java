@@ -44,6 +44,7 @@ import com.sun.max.vm.compiler.ir.observer.*;
 public class EirTraceObserver extends IrTraceObserver {
 
     public EirTraceObserver() {
+        super(EirMethod.class);
     }
 
     public enum Transformation {

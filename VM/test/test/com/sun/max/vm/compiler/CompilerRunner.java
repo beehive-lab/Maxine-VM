@@ -22,6 +22,8 @@ package test.com.sun.max.vm.compiler;
 
 import java.lang.reflect.*;
 
+import test.com.sun.max.vm.jit.*;
+
 import junit.framework.*;
 
 import com.sun.max.program.*;
@@ -29,9 +31,12 @@ import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
+import com.sun.max.vm.jit.*;
 import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -40,12 +45,12 @@ import com.sun.max.vm.type.*;
  * is the VM configuration context of compilation.
  *
  * The compilation process is traced to the console through use of the {@link IrObserver} framework. In particular, this
- * utility sets the value of the {@link IrObserverConfiguration#MAX_IR_TRACE_PROPERTY} system property to trace all IRs
+ * utility sets the value of the {@link IrObserverConfiguration#IR_TRACE_PROPERTY} system property to trace all IRs
  * of the methods explicitly listed on the command line.
  *
  * @author Doug Simon
  */
-public class CompilerRunner extends CompilerTestSetup<IrMethod> {
+public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTestSetup {
 
     public CompilerRunner(Test test) {
         super(test);
@@ -54,6 +59,8 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> {
     private static OptionSet _options = new OptionSet(true);
 
     private static final Option<Integer> _irTraceLevel = _options.newIntegerOption("ir-trace", 3, "The detail level for IR tracing.");
+    private static final Option<Boolean> _cirGui = _options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");
+    private static final Option<Boolean> _jit = _options.newBooleanOption("jit", false, "Compile with the JIT compiler.");
 
     @Override
     protected JavaPrototype createJavaPrototype() {
@@ -64,7 +71,10 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> {
     public static void main(String[] args) {
         _options = _options.parseArguments(args).getArgumentsAndUnrecognizedOptions();
 
-        System.setProperty(IrObserverConfiguration.MAX_IR_TRACE_PROPERTY, _irTraceLevel.getValue() + ":");
+        System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, _irTraceLevel.getValue() + ":");
+        if (_cirGui.getValue()) {
+            System.setProperty(CirGenerator.CIR_GUI_PROPERTY, "true");
+        }
 
         final String[] arguments = _options.getArguments();
         final TestSuite suite = new TestSuite();
@@ -115,19 +125,20 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> {
 
     private static void addTestCase(final TestSuite suite, final Class javaClass, final String methodName, final SignatureDescriptor signature) {
         final String name = createTestName(javaClass, methodName, signature);
-        final String value = System.getProperty(IrObserverConfiguration.MAX_IR_TRACE_PROPERTY);
-        System.setProperty(IrObserverConfiguration.MAX_IR_TRACE_PROPERTY, value + "," + name);
+        final String value = System.getProperty(IrObserverConfiguration.IR_TRACE_PROPERTY);
+        System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, value + "," + name);
         suite.addTest(new Test() {
             public int countTestCases() {
                 return 1;
             }
             public void run(TestResult result) {
+                final CompilerTestCase compilerTestCase = _jit.getValue() ? new JitCompilerTestCase(name) {} : new CompilerTestCase(name) {};
                 if (signature != null) {
-                    new CompilerTestCase(name) {}.compileMethod(javaClass, methodName, signature);
+                    compilerTestCase.compileMethod(javaClass, methodName, signature);
                 } else if (methodName != null) {
-                    new CompilerTestCase(name) {}.compileMethod(javaClass, methodName);
+                    compilerTestCase.compileMethod(javaClass, methodName);
                 } else {
-                    new CompilerTestCase(name) {}.compileClass(javaClass);
+                    compilerTestCase.compileClass(javaClass);
                 }
             }
         });
@@ -141,5 +152,12 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> {
     @Override
     public IrMethod translate(ClassMethodActor classMethodActor) {
         return javaPrototype().vmConfiguration().compilerScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
+    }
+
+    @Override
+    public JitCompiler newJitCompiler(TemplateTable templateTable) {
+        final JitCompiler jitScheme = (JitCompiler) VMConfiguration.target().jitScheme();
+        jitScheme.initializeForJitCompilations();
+        return jitScheme;
     }
 }
