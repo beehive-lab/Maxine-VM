@@ -361,6 +361,8 @@ function run_jtest() {
                 ;;
             -h )
                 echo "Usage: jtest <VM options> -- <Java Tester options>"
+                echo "where Java Tester options include:"
+                run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin test.com.sun.max.vm.compiler.JavaTester -help
                 return
                 ;;
             * )
@@ -369,7 +371,7 @@ function run_jtest() {
         esac
         shift
     done
-    run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin test.com.sun.max.vm.compiler.JavaTester $jtester_args
+    run ${maxine_vm} -classpath ${maxine_dir}/Base/bin:${maxine_dir}/VM/bin $vm_args test.com.sun.max.vm.compiler.JavaTester $jtester_args
 }
 
 #=======================================

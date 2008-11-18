@@ -23,37 +23,34 @@ package com.sun.max.vm.compiler.ir.observer;
 import com.sun.max.vm.compiler.ir.*;
 
 
-public class IrObserverAdapter implements IrObserver {
+public abstract class IrObserverAdapter implements IrObserver {
 
     /**
      * Attach to any IR generator.
      */
-    @Override
     public boolean attach(IrGenerator generator) {
         return true;
     }
 
-    @Override
     public void finish() {
     }
 
-    @Override
     public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
     }
 
-    @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
     }
 
-    @Override
     public void observeAllocation(IrMethod irMethod) {
     }
 
-    @Override
     public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
     }
 
-    @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
+    }
+
+    public Class<? extends IrMethod> observableType() {
+        return IrMethod.class;
     }
 }

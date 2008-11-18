@@ -42,6 +42,7 @@ import com.sun.max.vm.compiler.ir.observer.*;
 public class DirTraceObserver extends IrTraceObserver {
 
     public DirTraceObserver() {
+        super(DirMethod.class);
     }
 
     public enum Transformation {
