@@ -213,6 +213,14 @@ public interface InspectorStyle {
 
     Icon debugActiveRowButtonIcon();
 
+    // Search related
+    Icon searchNextMatchButtonIcon();
+    Icon searchPreviousMatchButtonIcon();
+    /** Background color for patterns typed into a search field that don't match anything. */
+    Color searchPatternFailedColor();
+    /** Background color for rows that have been matched by a search. */
+    Color searchRowMatchedBackground();
+
     // Standard Color Palates.  Please don't change; create new colors if needed.
     // Palate 1:  Primary colors, designed to work well together
     Color SunBlue1 = new Color(83, 130, 161);
@@ -228,7 +236,7 @@ public interface InspectorStyle {
     Color SunBlue3 = new Color(163, 184, 203);
     Color SunOrange3 = new Color(237, 155, 79);
     Color SunGreen3 = new Color(197, 213, 169);
-    Color SunYellow33 = new Color(248, 213, 131);
+    Color SunYellow3 = new Color(248, 213, 131);
     // Neutral Colors
     Color Black = new Color(0, 0, 0);
     Color CoolGray1 = new Color(112, 114, 119);
