@@ -62,9 +62,10 @@ public class MaxineTesterConfiguration {
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
-        test.hotpath.HP_series.class,
-        test.threads.Thread_isInterrupted02.class,
-        test.threads.Thread_join01.class,
+        test.hotpath.HP_life.class, // 328
+        test.hotpath.HP_series.class, // 333
+        test.threads.Thread_isInterrupted02.class, // 412
+        test.threads.Thread_isInterrupted04.class, // 414
     }));
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
