@@ -70,6 +70,10 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
         return _instructions;
     }
 
+    /**
+     * Color to use for background of a row during normal display; modulated by safepoints, etc.
+     * May be overridden by other states.
+     */
     private final Color[] _rowToBackGroundColor;
     private final String[] _rowToTagText;
     private final BytecodeLocation[] _rowToBytecodeLocation;
@@ -223,6 +227,14 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
     }
 
     protected final Color rowToBackgroundColor(int row) {
+        final IndexedSequence<Integer> searchMatchingRows = getSearchMatchingRows();
+        if (searchMatchingRows != null) {
+            for (int matchingRow : searchMatchingRows) {
+                if (row == matchingRow) {
+                    return style().searchRowMatchedBackground();
+                }
+            }
+        }
         return _rowToBackGroundColor[row];
     }
 

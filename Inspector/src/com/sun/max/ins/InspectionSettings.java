@@ -314,7 +314,7 @@ public class InspectionSettings {
      */
     private synchronized void doSave() {
         final Properties newProperties = new SortedProperties();
-        Trace.line(TRACE_VALUE, tracePrefix() + "saving settings");
+        Trace.line(TRACE_VALUE, tracePrefix() + "saving settings to: " + _settingsFile.toString());
         for (SaveSettingsListener saveSettingsListener : _clients.values()) {
             final SaveSettingsEvent saveSettingsEvent = new SaveSettingsEvent(saveSettingsListener, newProperties);
             saveSettingsListener.saveSettings(saveSettingsEvent);
