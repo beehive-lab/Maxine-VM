@@ -58,7 +58,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         super(test);
     }
 
-    private static final OptionSet _options = new OptionSet(true) {
+    private static final OptionSet _options = new OptionSet() {
         @Override
         protected void printHelpHeader(PrintStream stream) {
             stream.println("Usage: " + CompilerRunner.class.getSimpleName() + " [-options] <compilation specs>");
@@ -87,6 +87,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     }
 
     public static void main(String[] args) {
+        Trace.addTo(_options);
         _options.parseArguments(args);
 
         System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, _irTraceLevel.getValue() + ":");

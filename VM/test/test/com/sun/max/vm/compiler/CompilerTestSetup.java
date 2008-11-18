@@ -81,7 +81,6 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
     }
 
     protected void chainedSetUp() {
-        Trace.on(1);
         _javaPrototype = createJavaPrototype();
         _javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
 
@@ -93,6 +92,7 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
 
     protected JavaPrototype createJavaPrototype() {
         final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
+        Trace.on(1);
         return prototypeGenerator.createJavaPrototype(createVMConfiguration(), false);
     }
 

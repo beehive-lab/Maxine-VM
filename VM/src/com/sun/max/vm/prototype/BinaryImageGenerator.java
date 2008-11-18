@@ -71,7 +71,7 @@ public final class BinaryImageGenerator {
     private static final String OUTPUT_DIRECTORY = "Native" + File.separator + "generated" + File.separator +
         System.getProperty(OPERATING_SYSTEM_PROPERTY, OperatingSystem.current().name()).toLowerCase();
 
-    private final OptionSet _options = new OptionSet(true);
+    private final OptionSet _options = new OptionSet();
 
     private final Option<Boolean> _treeOption = _options.newBooleanOption("tree", false,
             "Selects whether the binary image generator will create a tree file " +
