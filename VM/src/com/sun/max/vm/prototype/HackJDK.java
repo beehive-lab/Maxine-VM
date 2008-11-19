@@ -263,7 +263,12 @@ public final class HackJDK {
 
         f(VM.class, "booted"),
         f(VM.class, "finalRefCount"),
-        f(VM.class, "peakFinalRefCount")
+        f(VM.class, "peakFinalRefCount"),
+
+        // If Proxy is allowed in the image, we don't want these fields.
+        f(Proxy.class, "constructorParams"),
+        f(Proxy.class, "loaderToCache"),
+        f(Proxy.class, "proxyClasses")
     );
 
     /**
