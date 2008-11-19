@@ -64,7 +64,6 @@ public class MaxineTesterConfiguration {
         test.output.JREJarLoadTest.class,
         test.hotpath.HP_life.class, // 328
         test.hotpath.HP_series.class, // 333
-        test.threads.Thread_isInterrupted04.class, // 414
     }));
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();

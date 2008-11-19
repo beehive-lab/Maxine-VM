@@ -93,6 +93,10 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         return createReturn(eirBlock);
     }
 
+    protected EirInstruction createTrapStubExit(EirBlock eirBlock) {
+        return createReturn(eirBlock);
+    }
+
     @Override
     public EirEpilogue createEpilogueAndReturn(EirBlock eirBlock) {
         for (int i = 0; i < _calleeSavedEirRegisters.length; i++) {
@@ -104,6 +108,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
             if (_eirMethod.isTrampoline()) {
                 final boolean isStaticTrampoline = ((TrampolineMethodActor) _eirMethod.classMethodActor()).invocation() == TRAMPOLINE.Invocation.STATIC;
                 eirBlock.appendInstruction(createTrampolineExit(eirBlock, isStaticTrampoline));
+            } else if (eirMethod().classMethodActor().isTrapStub()) {
+                eirBlock.appendInstruction(createTrapStubExit(eirBlock));
             } else {
                 eirBlock.appendInstruction(createReturn(eirBlock));
             }

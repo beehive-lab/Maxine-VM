@@ -590,32 +590,45 @@ public interface SPARCEirInstruction {
 
 
     public static class RET extends SPARCEirOperation implements EirControlTransfer {
-        final boolean _isTrampolineExit;
-        final boolean _fromStaticTrampoline;
-        public RET(EirBlock block, boolean isTrampolineExit, boolean fromStaticTrampoline) {
+        public enum FROM {
+            JAVA_METHOD,
+            TRAMPOLINE,
+            STATIC_TRAMPOLINE,
+            TRAP_STUB
+        }
+
+        final FROM _from;
+        public RET(EirBlock block, FROM returnFrom) {
             super(block);
-            _isTrampolineExit = isTrampolineExit;
-            _fromStaticTrampoline = fromStaticTrampoline;
+            _from = returnFrom;
         }
         public RET(EirBlock block) {
-            this(block, false, false);
+            this(block, FROM.JAVA_METHOD);
         }
 
         @Override
         public void emit(SPARCEirTargetEmitter emitter) {
-            if  (_isTrampolineExit) {
-                if (_fromStaticTrampoline) {
+            switch(_from) {
+                case TRAMPOLINE:
+                    emitter.assembler().jmpl(O0, G0, G0);
+                    emitter.assembler().restore(O1, G0, O0);   // Restore the receiver in %o0
+                    break;
+                case STATIC_TRAMPOLINE:
                     // Static trampolines return at the call instruction in order to re-execute the call instruction
                     // The call instruction is stored in i7 (the ret pseudo instruction is just jmpl %i7 +8).
                     emitter.assembler().jmpl(I7, G0, G0);
                     emitter.assembler().restore(G0, G0, G0);
-                } else {
-                    emitter.assembler().jmpl(O0, G0, G0);
-                    emitter.assembler().restore(O1, G0, O0);   // Restore the receiver in %o0
-                }
-            } else {
-                emitter.assembler().ret();
-                emitter.assembler().restore(G0, G0, G0);
+                    break;
+                case TRAP_STUB:
+                    // TrapStubEpilogue set the return address into L0. Can't touch I7 (or any other I register)
+                    // because this one should contains whatever value was in the trapped instruction's O7 register.
+                    emitter.assembler().jmpl(L0, G0, G0);
+                    emitter.assembler().restore(G0, G0, G0);
+                    break;
+                case JAVA_METHOD:
+                    emitter.assembler().ret();
+                    emitter.assembler().restore(G0, G0, G0);
+                    break;
             }
         }
         @Override

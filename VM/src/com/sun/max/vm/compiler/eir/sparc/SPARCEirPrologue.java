@@ -126,6 +126,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         final GPR latchRegister = SPARCSafepoint.LATCH_REGISTER;
         final int frameSize = eirMethod().frameSize() + SPARCSafepoint.TRAP_STATE_SIZE;
         final GPR scratchRegister = GPR.L0;
+        final GPR scratchRegister2 = GPR.L1;
         assert SPARCAssembler.isSimm13(frameSize);
         eirMethod().setFrameSize(frameSize);
 
@@ -166,9 +167,17 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
             }
             offset += wordSize;
         }
+        asm.rd(StateRegister.CCR, scratchRegister);
+        asm.rd(StateRegister.FPRS, scratchRegister2);
+        asm.stx(scratchRegister, stackPointer, offset);
+        offset += wordSize;
+        asm.stx(scratchRegister2, stackPointer, offset);
+        offset += wordSize;
+        // offset now points to the location where the trap number will be stored in the trap state.
+
         final TargetABI targetABI = VMConfiguration.hostOrTarget().targetABIsScheme().optimizedJavaABI();
 
-        // Setup return address
+        // Setup return address -- to enable stack walker
         asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), GPR.I7);
         // Setup arguments for the trapStub
         final IndexedSequence parameterRegisters = targetABI.integerIncomingParameterRegisters();
