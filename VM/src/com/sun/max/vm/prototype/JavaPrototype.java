@@ -210,17 +210,17 @@ public class JavaPrototype extends Prototype {
      * Loads java packages that are necessary to build the prototype.
      */
     public void loadCoreJavaPackages() {
-        // Don't want the static Map fields initialized
-        PrototypeClassLoader.omitClass(java.lang.reflect.Proxy.class);
+        if (System.getProperty("max.allow.all.core.packages") == null) {
+            // Don't want the static Map fields initialized
+            PrototypeClassLoader.omitClass(java.lang.reflect.Proxy.class);
 
-        // LogManager and FileSystemPreferences have many side effects
-        // that we do not wish to account for before running the target VM.
-        // In particular they install shutdown hooks,
-        // which then end up in the boot image and cause bugs at target runtime.
-        if (System.getProperty("max.allow.java.util.logging") == null) {
+            // LogManager and FileSystemPreferences have many side effects
+            // that we do not wish to account for before running the target VM.
+            // In particular they install shutdown hooks,
+            // which then end up in the boot image and cause bugs at target runtime.
             PrototypeClassLoader.omitPackage("java.util.logging");
+            PrototypeClassLoader.omitPackage("java.util.prefs");
         }
-        PrototypeClassLoader.omitPackage("java.util.prefs");
 
         HackJDK.checkVMFlags();
         // TODO: determine which of these classes and packages are actually needed
@@ -237,7 +237,8 @@ public class JavaPrototype extends Prototype {
         loadClass(java.util.Arrays.class);
         loadClass(sun.misc.VM.class);
 
-        // These classes need to be compiled and in the boot image in order to be able to run the optimizing compiler at run time.
+        // These classes need to be compiled and in the boot image in order to be able to run the optimizing compiler at
+        // run time.
         loadClass(sun.misc.SharedSecrets.class);
         loadClass(sun.reflect.annotation.AnnotationParser.class);
         loadClass(sun.reflect.Reflection.class);
