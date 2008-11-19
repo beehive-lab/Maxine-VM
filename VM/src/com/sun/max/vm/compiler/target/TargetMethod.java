@@ -508,7 +508,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                 // The register reference maps come after all the frame reference maps in _referenceMaps.
                 byteIndex = frameReferenceMapsSize() + (registerReferenceMapSize() * safepointIndex);
                 String referenceRegisters = "";
-                buf.append("Register map:");
+                buf.append("  register map:");
                 for (int i = 0; i < registerReferenceMapSize(); i++) {
                     final byte refMapByte = _referenceMaps[byteIndex];
                     buf.append(String.format(" 0x%x", refMapByte & 0xff));
@@ -524,6 +524,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                 if (!referenceRegisters.isEmpty()) {
                     buf.append(" { " + referenceRegisters + "}");
                 }
+                buf.append(String.format("%n"));
                 ++safepointIndex;
             }
         }

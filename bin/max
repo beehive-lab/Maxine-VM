@@ -431,7 +431,7 @@ function run_maxinetester() {
 gate_help="run the tests used to validate a push to the stable Maxine repository"
 
 function run_gate() {
-    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optjit "$@"
+    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optjit -java-executable=${jvm} "$@"
 }
 
 #=======================================
