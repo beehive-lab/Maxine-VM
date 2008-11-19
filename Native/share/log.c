@@ -140,7 +140,11 @@ void log_print_newline() {
 
 void log_print_float(float f) {
 	// TODO: fprintf may not produce exactly the same format of floating point numbers
+#if os_GUESTVMXEN
+	log_print_buffer("%f not supported");
+#else
 	log_print_format("%f", f);
+#endif
 }
 
 void log_print_double(double d) {
