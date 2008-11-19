@@ -123,6 +123,13 @@ public final class InspectorNameDisplay extends InspectionHolder {
     }
 
     /**
+     * @return a string to use in place of data that should be read from the {@link TeleVM},
+     * but which cannot be for some reason (no process, process terminated, other i/o error).
+     */
+    public String unavailableTeleData() {
+        return "???";
+    }
+    /**
      * @return human readable string identifying a VM thread in a standard format.
      */
     public String shortName(TeleVmThread teleVmThread) {

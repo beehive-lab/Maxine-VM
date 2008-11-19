@@ -65,9 +65,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
     public static MemoryRegionsInspector make(Inspection inspection) {
         MemoryRegionsInspector memoryRegionsInspector = getInspector(inspection);
         if (memoryRegionsInspector == null) {
-            Trace.begin(1, "initializing MemoryRegionsInspector");
             memoryRegionsInspector = new MemoryRegionsInspector(inspection, Residence.INTERNAL);
-            Trace.end(1, "initializing MemoryRegionsInspector");
         }
         memoryRegionsInspector.highlight();
         return memoryRegionsInspector;
@@ -182,6 +180,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     private MemoryRegionsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
+        Trace.begin(1, tracePrefix() + "initializing");
         _teleCodeManager = teleVM().teleCodeManager();
         _bootHeapRegionDisplay = new HeapRegionDisplay(teleVM().teleHeapManager().teleBootHeapRegion());
         _bootCodeRegionDisplay = new CodeRegionDisplay(_teleCodeManager.teleBootCodeRegion(), -1);
@@ -199,6 +198,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
                 new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "Memory Regions View Options", _columnModel.preferences());
             }
         });
+        Trace.end(1, tracePrefix() + "initializing");
     }
 
     @Override
@@ -207,7 +207,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "MemoryRegions";
     }
 
@@ -709,6 +709,16 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         _table.setRowSelectionInterval(row, row);
     }
 
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        super.inspectorClosing();
+    }
 
+    @Override
+    public void vmProcessTerminated() {
+        Trace.line(1, tracePrefix() + " closing - process terminated");
+        dispose();
+    }
 
 }

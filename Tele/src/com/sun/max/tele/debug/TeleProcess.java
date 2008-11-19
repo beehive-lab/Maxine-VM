@@ -47,7 +47,8 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
 
     private static final int TRACE_VALUE = 2;
 
-    private String  tracePrefix() {
+    @Override
+    protected String  tracePrefix() {
         return "[" + Thread.currentThread().getName() + "] ";
     }
 
@@ -144,7 +145,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
                                     Trace.line(TRACE_VALUE, tracePrefix() + "continuing after hitting unsatisfied conditional breakpoint");
                                     TeleProcess.this.resume();
                                     continuing = true;
-                                } catch (ExecutionRequestException executionRequestException) {
+                                } catch (OSExecutionRequestException executionRequestException) {
                                     Trace.line(TRACE_VALUE, tracePrefix() + "process terminated while attempting to step over unsatisfied conditional breakpoint");
                                     updateState(TERMINATED);
                                     return;
@@ -233,7 +234,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
                     request.execute();
                     Trace.end(TRACE_VALUE, tracePrefix() + "executing request: " + request);
                     updateState(RUNNING);
-                } catch (ExecutionRequestException executionRequestException) {
+                } catch (OSExecutionRequestException executionRequestException) {
                     executionRequestException.printStackTrace();
                     return;
                 }
@@ -418,17 +419,17 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     /**
      * Resumes this process.
      *
-     * @throws ExecutionRequestException if there was some problem while resuming this process
+     * @throws OSExecutionRequestException if there was some problem while resuming this process
      */
-    protected abstract void resume() throws ExecutionRequestException;
+    protected abstract void resume() throws OSExecutionRequestException;
 
     /**
      * Suspends this process.
      *
      * @throws InvalidProcessRequestException if the current process state is not {@link State#RUNNING}
-     * @throws ExecutionRequestException if there was some problem in executing the suspension
+     * @throws OSExecutionRequestException if there was some problem in executing the suspension
      */
-    public final void pause() throws InvalidProcessRequestException, ExecutionRequestException {
+    public final void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
         if (_state != RUNNING) {
             throw new InvalidProcessRequestException("Can only suspend a running tele process, not a tele process that is " + _state.toString().toLowerCase());
         }
@@ -437,18 +438,18 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
 
     /**
      * Suspends this process.
-     * @throws ExecutionRequestException if the request could not be performed
+     * @throws OSExecutionRequestException if the request could not be performed
      */
-    protected abstract void suspend() throws ExecutionRequestException;
+    protected abstract void suspend() throws OSExecutionRequestException;
 
     /**
      * Single steps a given thread.
      * @param thread the thread to single step
-     * @throws ExecutionRequestException if there was a problem issuing the single step
+     * @throws OSExecutionRequestException if there was a problem issuing the single step
      */
-    protected final void singleStep(TeleNativeThread thread) throws ExecutionRequestException {
+    protected final void singleStep(TeleNativeThread thread) throws OSExecutionRequestException {
         if (!thread.singleStep()) {
-            throw new ExecutionRequestException("Error while single stepping thread " + thread);
+            throw new OSExecutionRequestException("Error while single stepping thread " + thread);
         }
     }
 
@@ -456,22 +457,22 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     /**
      * Single steps a given thread.
      * @param teleNativeThread the thread to step
-     * @throws ExecutionRequestException if there was a problem issuing the single step
+     * @throws OSExecutionRequestException if there was a problem issuing the single step
      */
-    protected void performSingleStep(TeleNativeThread teleNativeThread) throws ExecutionRequestException {
+    protected void performSingleStep(TeleNativeThread teleNativeThread) throws OSExecutionRequestException {
         this._lastSingleStepThread = teleNativeThread;
         singleStep(teleNativeThread);
     }
 
 
-    public final void terminate() throws InvalidProcessRequestException, ExecutionRequestException {
+    public final void terminate() throws InvalidProcessRequestException, OSExecutionRequestException {
         if (_state == TERMINATED) {
             throw new InvalidProcessRequestException("Can only terminate a non-terminated tele process, not a tele process that is " + _state.toString().toLowerCase());
         }
         kill();
     }
 
-    protected abstract void kill() throws ExecutionRequestException;
+    protected abstract void kill() throws OSExecutionRequestException;
 
     /**
      * Waits for this process to stop.

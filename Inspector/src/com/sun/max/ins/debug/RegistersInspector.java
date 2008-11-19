@@ -148,7 +148,7 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
                 }
                 moveToFront();
             } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle("Registers " + getTitle());
+                frame().setTitle("Registers " + getTextForTitle());
             }
         }
     }
@@ -162,7 +162,7 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return inspection().nameDisplay().longName(_teleNativeThread);
     }
 

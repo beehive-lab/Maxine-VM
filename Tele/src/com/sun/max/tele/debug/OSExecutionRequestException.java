@@ -25,9 +25,9 @@ package com.sun.max.tele.debug;
  *
  * @author Aritra Bandyopadhyay
  */
-public class ExecutionRequestException extends ProcessException {
+public class OSExecutionRequestException extends ProcessException {
 
-    public ExecutionRequestException(String message) {
+    public OSExecutionRequestException(String message) {
         super(message);
     }
 
