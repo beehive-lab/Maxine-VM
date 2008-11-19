@@ -82,6 +82,8 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
         super(inspection, residence);
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
+        refreshView(inspection.teleVM().teleProcess().epoch(), true);
+        JTableColumnResizer.adjustColumnPreferredWidths(_table);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 

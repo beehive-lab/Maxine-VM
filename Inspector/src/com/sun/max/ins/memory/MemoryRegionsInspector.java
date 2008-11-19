@@ -85,7 +85,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         START("Start", true),
         END("End", true),
         SIZE("Size", true),
-        ALLOC("Allocation", true);
+        ALLOC("Alloc", true);
 
         private final String _label;
         private final boolean _defaultVisibility;
@@ -190,6 +190,8 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new MemoryRegionColumnModel();
         _table = new JTable(_model, _columnModel);
+        _model.refresh();
+        JTableColumnResizer.adjustColumnPreferredWidths(_table);
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(new InspectorAction(inspection, "Preferences") {
