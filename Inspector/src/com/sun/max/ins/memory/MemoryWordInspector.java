@@ -285,7 +285,7 @@ public final class MemoryWordInspector extends Inspector {
     };
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Memory Words @ " + _address.toHexString();
     }
 
@@ -361,9 +361,7 @@ public final class MemoryWordInspector extends Inspector {
             }
         };
         _disabledInspectObjectAction.setEnabled(false);
-
-
-
+        Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }
 
     private static final IdentityHashSet<MemoryWordInspector> _memoryWordInspectors = new IdentityHashSet<MemoryWordInspector>();
@@ -391,6 +389,18 @@ public final class MemoryWordInspector extends Inspector {
         final Pointer cell = teleObject.getCurrentCell();
         final int size = teleObject.getCurrentSize().toInt();
         return create(inspection, Residence.INTERNAL, cell, size);
+    }
+
+    @Override
+    public void inspectorClosing() {
+        // don't try to recompute the title, just get the one that's been in use
+        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle() + " - process terminated");
+        super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
     }
 
 }

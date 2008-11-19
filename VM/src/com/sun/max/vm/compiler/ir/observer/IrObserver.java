@@ -86,11 +86,6 @@ public interface IrObserver {
     void observeAfterTransformation(IrMethod irMethod, Object context, Object transform);
 
     /**
-     * Gets the most general type of {@linkplain IrMethod IR} for which this observer is specialized.
-     */
-    Class<? extends IrMethod> observableType();
-
-    /**
      * This method allows an observer to do cleanup work. It is called when the RUNNING phase is ending.
      */
     void finish();

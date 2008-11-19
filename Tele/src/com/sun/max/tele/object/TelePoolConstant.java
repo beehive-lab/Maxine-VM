@@ -35,7 +35,8 @@ public class TelePoolConstant extends TeleTupleObject {
     }
 
     /**
-     * @return whether a reference constant in the tele VM is resolved; true for non-reference constants
+     * @return whether a reference constant in the {@link TeleVM} is resolved; true for non-reference constants.
+     * Does not read from the {@link TeleVM}.
      */
     public boolean isResolved() {
         return true;

@@ -207,13 +207,12 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                 Log.print(_gcTimer.getMilliSeconds());
                 Log.println(" (ms)");
 
-                Log.print("--After GC--   bytes copied: ");
-                Log.print(_allocationMark.minus(_toSpace.start()).toInt());
                 Log.println();
                 Log.unlock(lockDisabledSafepoints);
             }
             if (Heap.verbose()) {
-                Log.println("GC done");
+                Log.print("--After  GC--   size: ");
+                Log.println(_allocationMark.minus(_toSpace.start()).toInt());
             }
             _numberOfGarbageTurnovers++;
         }

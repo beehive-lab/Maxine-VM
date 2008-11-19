@@ -65,15 +65,17 @@ public class DirTraceObserver extends IrTraceObserver {
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
-        final int transformTraceLevel = transformTraceLevel(transform);
-        if (hasLevel(transformTraceLevel)) {
-            if (irMethod instanceof DirMethod) {
-                _out.println(traceString(irMethod, "before transformation: " + transform));
-                final DirMethod dirMethod = (DirMethod) irMethod;
-                if (dirMethod.isGenerated() || context == null) {
-                    _out.println(irMethod.traceToString());
-                } else {
-                    traceDirBlocks(context);
+        if (irMethod instanceof DirMethod) {
+            final int transformTraceLevel = transformTraceLevel(transform);
+            if (hasLevel(transformTraceLevel)) {
+                if (irMethod instanceof DirMethod) {
+                    _out.println(traceString(irMethod, "before transformation: " + transform));
+                    final DirMethod dirMethod = (DirMethod) irMethod;
+                    if (dirMethod.isGenerated() || context == null) {
+                        _out.println(irMethod.traceToString());
+                    } else {
+                        traceDirBlocks(context);
+                    }
                 }
             }
         }
@@ -90,15 +92,17 @@ public class DirTraceObserver extends IrTraceObserver {
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-        final int transformTraceLevel = transformTraceLevel(transform);
-        if (Trace.hasLevel(transformTraceLevel)) {
-            if (irMethod instanceof DirMethod) {
-                _out.println(traceString(irMethod, "after transformation: " + transform));
-                final DirMethod dirMethod = (DirMethod) irMethod;
-                if (dirMethod.isGenerated() || context == null) {
-                    _out.println(irMethod.traceToString());
-                } else {
-                    traceDirBlocks(context);
+        if (irMethod instanceof DirMethod) {
+            final int transformTraceLevel = transformTraceLevel(transform);
+            if (Trace.hasLevel(transformTraceLevel)) {
+                if (irMethod instanceof DirMethod) {
+                    _out.println(traceString(irMethod, "after transformation: " + transform));
+                    final DirMethod dirMethod = (DirMethod) irMethod;
+                    if (dirMethod.isGenerated() || context == null) {
+                        _out.println(irMethod.traceToString());
+                    } else {
+                        traceDirBlocks(context);
+                    }
                 }
             }
         }

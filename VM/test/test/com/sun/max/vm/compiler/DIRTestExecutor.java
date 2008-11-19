@@ -52,10 +52,10 @@ public class DIRTestExecutor implements JavaExecHarness.Executor {
     private static Utf8Constant _testMethod = SymbolTable.makeSymbol("test");
 
     private static void initialize(boolean loadingPackages) {
-        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator();
+        final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(new OptionSet());
         final VMConfiguration cfg = VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host(),
                         new com.sun.max.vm.compiler.b.c.d.Package());
-        final Prototype jpt = prototypeGenerator.createJavaPrototype(new OptionSet(), cfg, loadingPackages);
+        final Prototype jpt = prototypeGenerator.createJavaPrototype(cfg, loadingPackages);
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) jpt.vmConfiguration().compilerScheme();
         dirGeneratorScheme.compileSnippets();
         _generator = dirGeneratorScheme.dirGenerator();

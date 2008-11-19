@@ -61,9 +61,7 @@ public final class BreakpointsInspector extends UniqueInspector {
     public static BreakpointsInspector make(Inspection inspection) {
         BreakpointsInspector breakpointsInspector = getInspector(inspection);
         if (breakpointsInspector == null) {
-            Trace.begin(1, "initializing BreakpointsInspector");
             breakpointsInspector = new BreakpointsInspector(inspection, Residence.INTERNAL);
-            Trace.end(1, "initializing BreakpointsInspector");
         }
         breakpointsInspector.highlight();
         return breakpointsInspector;
@@ -88,7 +86,9 @@ public final class BreakpointsInspector extends UniqueInspector {
 
     private BreakpointsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
+        Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
+        Trace.end(1,  tracePrefix() + " initializing");
     }
 
     private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "breakpointsInspector");
@@ -99,7 +99,7 @@ public final class BreakpointsInspector extends UniqueInspector {
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Breakpoints";
     }
 
@@ -628,6 +628,17 @@ public final class BreakpointsInspector extends UniqueInspector {
             row++;
         }
         return -1;
+    }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
     }
 
     /**

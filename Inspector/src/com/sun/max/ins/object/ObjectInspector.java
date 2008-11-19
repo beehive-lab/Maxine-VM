@@ -36,6 +36,7 @@ import com.sun.max.ins.memory.MemoryInspector.*;
 import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -76,6 +77,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
         public static void make(Inspection inspection) {
             if (_manager == null) {
+                Trace.begin(1, "[ObjectInspector] initializing manager");
                 _manager = new Manager(inspection);
                 inspection.focus().addListener(new InspectionFocusAdapter() {
 
@@ -86,6 +88,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                         }
                     }
                 });
+                Trace.end(1, "[ObjectInspector] initializing manager");
             }
         }
 
@@ -286,6 +289,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         final Preferences preferences = globalPreferences(inspection);
         _teleObject = teleObject;
         _currentObjectOrigin = teleObject().getCurrentOrigin();
+        Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
         _showHeaderMenuCheckBox = new JCheckBoxMenuItem("Display Object Header", preferences._showHeader);
         _showHeaderMenuCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -357,7 +361,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     }
 
     @Override
-    public final String getTitle() {
+    public final String getTextForTitle() {
         return _teleObject.getCurrentOrigin().toHexString() + inspection().nameDisplay().referenceLabelText(_teleObject);
     }
 
@@ -379,6 +383,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     @Override
     public void inspectorClosing() {
+        // don't try to recompute the title, just get the one that's been in use
+        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle());
         if (_teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
@@ -648,5 +654,9 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         MemoryWordInspector.create(inspection(), _teleObject);
     }
 
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
+    }
 
 }

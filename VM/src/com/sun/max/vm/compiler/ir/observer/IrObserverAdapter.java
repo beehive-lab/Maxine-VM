@@ -49,8 +49,4 @@ public abstract class IrObserverAdapter implements IrObserver {
 
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
     }
-
-    public Class<? extends IrMethod> observableType() {
-        return IrMethod.class;
-    }
 }

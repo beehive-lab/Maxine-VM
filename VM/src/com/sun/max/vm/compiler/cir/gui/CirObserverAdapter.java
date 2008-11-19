@@ -92,9 +92,4 @@ public class CirObserverAdapter extends IrObserverAdapter {
             _visualizer.add(new CirAnnotatedTrace(builder.trace(), builder.elements(), cirMethod.classMethodActor(), transform));
         }
     }
-
-    @Override
-    public Class<? extends IrMethod> observableType() {
-        return CirMethod.class;
-    }
 }

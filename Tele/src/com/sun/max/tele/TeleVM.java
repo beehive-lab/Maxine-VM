@@ -56,7 +56,7 @@ import com.sun.max.program.Classpath;
 import com.sun.max.program.Problem;
 import com.sun.max.program.ProgramError;
 import com.sun.max.program.Trace;
-import com.sun.max.tele.debug.ExecutionRequestException;
+import com.sun.max.tele.debug.OSExecutionRequestException;
 import com.sun.max.tele.debug.InvalidProcessRequestException;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint;
 import com.sun.max.tele.debug.TeleMessenger;
@@ -1028,7 +1028,7 @@ public abstract class TeleVM implements VMAccess {
 					LOGGER.info("Doing single step instead of resume!");
 					teleProcess().controller().singleStep(
 							_registeredSingleStepThread, false);
-				} catch (ExecutionRequestException e) {
+				} catch (OSExecutionRequestException e) {
 					LOGGER
 							.log(
 									Level.SEVERE,
@@ -1055,7 +1055,7 @@ public abstract class TeleVM implements VMAccess {
 				try {
 					teleProcess().controller().runToInstruction(returnAddress,
 							false, true);
-				} catch (ExecutionRequestException e) {
+				} catch (OSExecutionRequestException e) {
 					LOGGER
 							.log(
 									Level.SEVERE,
@@ -1077,7 +1077,7 @@ public abstract class TeleVM implements VMAccess {
 				try {
 					LOGGER.info("Client tried to resume the VM!");
 					this.teleProcess().controller().resume(false, false);
-				} catch (ExecutionRequestException e) {
+				} catch (OSExecutionRequestException e) {
 					LOGGER.log(Level.SEVERE,
 							"Unexpected error while resuming the VM", e);
 				} catch (InvalidProcessRequestException e) {
@@ -1098,7 +1098,7 @@ public abstract class TeleVM implements VMAccess {
 			LOGGER.info("Pausing VM...");
 			try {
 				teleProcess().controller().pause();
-			} catch (ExecutionRequestException e) {
+			} catch (OSExecutionRequestException e) {
 				LOGGER.log(Level.SEVERE,
 						"Unexpected error while pausing the VM", e);
 			} catch (InvalidProcessRequestException e) {

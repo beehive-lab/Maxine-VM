@@ -33,14 +33,14 @@ import com.sun.max.program.option.*;
  * @author Doug Simon
  * @author Ben L. Titzer
  */
-public class ProgramArgumentParserTest extends TestCase {
+public class OptionSetTest extends TestCase {
 
-    public ProgramArgumentParserTest(String name) {
+    public OptionSetTest(String name) {
         super(name);
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(ProgramArgumentParserTest.class);
+        junit.textui.TestRunner.run(OptionSetTest.class);
     }
 
     private static Number parseScaledLong(String number) {
@@ -129,8 +129,6 @@ public class ProgramArgumentParserTest extends TestCase {
 
     /**
      * Test class for instance option.
-     *
-     * @author Thomas Wuerthinger
      */
     public static class InstanceTestClassA implements Runnable {
         public void run() {
@@ -139,8 +137,6 @@ public class ProgramArgumentParserTest extends TestCase {
 
     /**
      * Test class for instance options.
-     *
-     * @author Thomas Wuerthinger
      */
     public static class InstanceTestClassB implements Runnable {
         public void run() {

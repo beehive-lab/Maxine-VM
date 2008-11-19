@@ -50,7 +50,7 @@ import com.sun.max.vm.verifier.*;
  */
 public class VerifierTest extends CompilerTestCase<BirMethod> {
 
-    private static final OptionSet options = new OptionSet(true);
+    private static final OptionSet options = new OptionSet();
 
     private static final Option<String> CLASS = options.newStringOption("class", null,
             "This option specifies the Java class to verify.");

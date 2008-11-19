@@ -49,15 +49,11 @@ import com.sun.max.vm.reference.Reference;
  */
 public class TeleHeapManager extends TeleVMHolder {
 
-	private static final int TRACE_VALUE = 1;
-
 	private static TeleHeapManager _teleHeapManager;
 	
 	public static final TeleHeapManager make(TeleVM teleVM) {
 		if (_teleHeapManager ==  null) {
-			Trace.begin(TRACE_VALUE, "Creating TeleHeapManager");
 			_teleHeapManager = new TeleHeapManager(teleVM);
-			Trace.end(TRACE_VALUE, "Creating TeleHeapManager");
 		}
 		return _teleHeapManager;
 	}
@@ -91,11 +87,11 @@ public class TeleHeapManager extends TeleVMHolder {
 	 * Lazy initialization; try to keep data reading out of constructor.
 	 */
 	public void initialize() {
-		Trace.begin(TRACE_VALUE, "Initializing TeleHeapManager");
+        Trace.begin(1, tracePrefix() + " initializing");
 		final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
 		_teleBootHeapRegion = (TeleRuntimeMemoryRegion) TeleObject.make(teleVM(), bootHeapRegionReference);
 		refresh();
-		Trace.end(TRACE_VALUE, "Initializing TeleHeapManager");
+        Trace.end(1, tracePrefix() + " initializing");
 		}
 	
 	private boolean _updatingHeapMemoryRegions = false;

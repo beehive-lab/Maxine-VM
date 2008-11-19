@@ -39,9 +39,19 @@ public abstract class TeleVMHolder {
     public TeleProcess teleProcess() {
         return _teleVM.teleProcess();
     }
+    
+    private final String _tracePrefix;
+
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return _tracePrefix;
+    }
 
     protected TeleVMHolder(TeleVM teleVM) {
         _teleVM = teleVM;
+        _tracePrefix = "[" + getClass().getSimpleName() + "]";
     }
 
 }

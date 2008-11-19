@@ -440,7 +440,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
             @Override
             public void procedure() {
                 refreshView(true);
-                Trace.line(TRACE_VALUE, "Refreshing method view: " + getTitle());
+                Trace.line(TRACE_VALUE, tracePrefix() + "Refreshing view: " + getTextForTitle());
             }
         });
         frame().menu().add(new InspectorAction(inspection(), "Close all other tabs") {
@@ -515,7 +515,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
                 }
                 moveToFront();
             } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle(getTitle());
+                frame().setTitle(getTextForTitle());
             }
         }
     }
@@ -535,6 +535,12 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
      *            view in the method inspection, then dispose of the method inspection as well.
      */
     public abstract void closeCodeViewer(CodeViewer codeViewer);
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle());
+        super.inspectorClosing();
+    }
 
     public void makeMemoryInspector() {
         if (teleTargetRoutine() != null) {

@@ -134,7 +134,7 @@ public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocal
                 }
                 moveToFront();
             } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle("Registers " + getTitle());
+                frame().setTitle("Registers " + getTextForTitle());
             }
         }
     }
@@ -144,7 +144,7 @@ public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocal
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return inspection().nameDisplay().longName(_teleNativeThread);
     }
 
