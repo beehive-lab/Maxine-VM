@@ -26,6 +26,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.sparc.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * @author Bernd Mathiske
@@ -52,11 +53,18 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
 
     private void emitTrapStubEpilogue(SPARCEirTargetEmitter emitter) {
         final SPARCAssembler asm = emitter.assembler();
+        final GPR latchRegister = SPARCSafepoint.LATCH_REGISTER;
         final GPR stackPointer = ((SPARCEirRegister.GeneralPurpose) emitter.abi().stackPointer()).as();
+        final GPR returnAddressRegister = GPR.L0;
+        final GPR scratchRegister1 = GPR.L1;
+        final GPR scratchRegister2 = GPR.L2;
         final int wordSize = Word.size();
         final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
         int offset = trapStateOffset;
-        // restore all the general purpose registers no in the register windows
+        // Setup return address -- to enable stack walker
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_INSTRUCTION_POINTER.offset(), returnAddressRegister);
+
+        // restore all the general purpose registers not in the register windows
         // restore all the floating point registers
         for (GPR register : SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
             asm.ldx(stackPointer, offset, register);
@@ -75,5 +83,10 @@ public final class SPARCEirEpilogue extends EirEpilogue<SPARCEirInstructionVisit
             }
             offset += wordSize;
         }
+        asm.ldx(stackPointer, offset, scratchRegister1);
+        offset += wordSize;
+        asm.ldx(stackPointer, offset, scratchRegister2);
+        asm.wr(scratchRegister1, GPR.G0, StateRegister.CCR);
+        asm.wr(scratchRegister2, GPR.G0, StateRegister.FPRS);
     }
 }
