@@ -82,11 +82,21 @@ public abstract class BytecodeViewer extends CodeViewer {
 
     private final TeleConstantPool _teleConstantPool;
 
+    /**
+     * @return local surrogate for the {@link ConstantPool} in the {@link TeleVM} that is associated with this method.
+     */
     protected TeleConstantPool teleConstantPool() {
         return _teleConstantPool;
     }
 
-    private final ConstantPool _constantPool;
+    private final ConstantPool _localConstantPool;
+
+    /**
+     * @return local {@link ConstantPool}, should be equivalent to the one in the {@link TeleVM} that is associated with this method.
+     */
+    protected ConstantPool localConstantPool() {
+        return _localConstantPool;
+    }
 
     /**
      * Disassembled target code instructions from the associated compilation of the method, null if none associated.
@@ -122,7 +132,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         // Always use the {@link ConstantPool} taken from the {@link CodeAttribute}; in a substituted method, the
         // constant pool for the bytecodes is the one from the origin of the substitution, not the current holder of the method.
         _teleConstantPool = teleCodeAttribute.getTeleConstantPool();
-        _constantPool = _teleConstantPool.getTeleHolder().classActor().constantPool();
+        _localConstantPool = _teleConstantPool.getTeleHolder().classActor().constantPool();
         _methodBytes = teleCodeAttribute.readBytecodes();
         // ProgramWarning.check(Bytes.equals(_methodBytes, teleMethod.classMethodActor().codeAttribute().code()),
         // "inconsistent bytecode");
@@ -161,7 +171,7 @@ public abstract class BytecodeViewer extends CodeViewer {
         while (currentBytecodeOffset < _methodBytes.length) {
             final OutputStream stream = new NullOutputStream();
             try {
-                final InspectorBytecodePrinter bytecodePrinter = new InspectorBytecodePrinter(new PrintStream(stream), _constantPool);
+                final InspectorBytecodePrinter bytecodePrinter = new InspectorBytecodePrinter(new PrintStream(stream), _localConstantPool);
                 final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodePrinter);
                 final int nextBytecodeOffset = bytecodeScanner.scanInstruction(_methodBytes, currentBytecodeOffset);
                 final byte[] instructionBytes = Bytes.getSection(_methodBytes, currentBytecodeOffset, nextBytecodeOffset);

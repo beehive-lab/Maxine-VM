@@ -84,7 +84,7 @@ public class Inspection extends JFrame {
      * @return Is the Inspector in debugging mode with a legitimate process?
      */
     public boolean hasProcess() {
-        return !(_teleProcess instanceof NoTeleProcess);
+        return !(_teleProcess instanceof NoTeleProcess) && _vmState != State.TERMINATED;
     }
 
     private final  TeleProcessController _processController;
@@ -678,7 +678,21 @@ public class Inspection extends JFrame {
         pack();
     }
 
-    private boolean _isVMRunning;
+    private State _vmState = State.STOPPED;
+
+    /**
+     *  Note that there is a delay, as well as a
+     * gap in the AWT event queue between the actual change in the
+     * {@link TeleProcess} and the receipt of notification by the
+     * Inspector. This value may not always agree with what's reported by
+     * {@link TeleProcess#state()}.
+     *
+     * @return the presumed state of the {@link TeleVM} as of the
+     * most recent update, subject to quantum and other effects.
+     */
+    public State vmState() {
+        return _vmState;
+    }
 
     /**
      * Is the {@link TeleVM} running, as of the most recent state update?
@@ -689,30 +703,43 @@ public class Inspection extends JFrame {
      * {@link TeleProcess#state()}.  In particular, the AWT event
      * queue might initiate new action sequences when the {@link TeleVM}
      * has actually stopped, but before the Inspector receives notification.
+     *
+     * @return {@link #vmState} == RUNNING.
      */
     public boolean isVMRunning() {
-        return _isVMRunning;
+        return _vmState == State.RUNNING;
+    }
+
+    public boolean isVMReady() {
+        return hasProcess() && _vmState == State.STOPPED;
     }
 
     /**
      * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
      */
     void processStateChange(State newState) {
+        _vmState = newState;
         final long epoch = teleProcess().epoch();
         Trace.line(TRACE_VALUE, tracePrefix() + "process state notification: (" + newState + ", " + epoch + ")");
         switch(newState) {
             case STOPPED:
-                _isVMRunning = false;
                 updateAfterVMStopped(epoch);
                 getJMenuBar().setBackground(InspectorStyle.SunBlue3);
                 break;
             case RUNNING:
-                _isVMRunning = true;
                 getJMenuBar().setBackground(InspectorStyle.SunGreen3);
                 break;
             case TERMINATED:
-                _isVMRunning = false;
+                Trace.line(1, tracePrefix() + " - VM process terminated");
                 getJMenuBar().setBackground(Color.RED);
+                // Give all process-sensitive views a chance to shut down
+                for (InspectionListener listener : _inspectionListeners.clone()) {
+                    listener.vmProcessTerminated();
+                }
+                // Clear any possibly misleading view state.
+                focus().clearAll();
+                // Be sure all process-sensitive actions are disabled.
+                _inspectionActions.refresh(epoch, false);
                 informationMessage("The maxvm Process has terminated", "Process Terminated");
                 break;
         }
@@ -1007,10 +1034,13 @@ public class Inspection extends JFrame {
     public void quit() {
         try {
             settings().quit();
-            teleVM().teleProcess().controller().terminate();
+            if (hasProcess()) {
+                teleVM().teleProcess().controller().terminate();
+            }
         } catch (Throwable throwable) {
             ProgramWarning.message("error during shutdown - but we quit anyway: " + throwable);
         } finally {
+            Trace.line(1, tracePrefix() + " exiting, Goodbye");
             System.exit(0);
         }
     }

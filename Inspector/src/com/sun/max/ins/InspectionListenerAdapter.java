@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
 /**
@@ -37,43 +36,22 @@ import com.sun.max.tele.debug.*;
  */
 public abstract class InspectionListenerAdapter implements InspectionListener {
 
-    /**
-     * Notifies that  {@link TeleVM} state has potentially changed and should be revisited.
-     *
-     * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-     * @param force suspend caching behavior; reload state unconditionally.
-     */
     public void vmStateChanged(long epoch, boolean force) {
     }
 
-    /**
-     * Notifies that the set of threads in the {@link TeleVM} has changed; listeners can assume
-     * that the set hasn't changed unless this notification is received.
-     *
-     * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-     */
     public void threadSetChanged(long epoch) {
     }
 
-    /**
-     * Notifies that the state associated with a particular thread  in the {@link TeleVM} has changed.
-     */
     public void threadStateChanged(TeleNativeThread teleNativeThread) {
     }
 
-    /**
-     * Notifies that the set of breakpoints in the {@link TeleVM} has changed.
-     */
     public void breakpointSetChanged() {
     }
 
-    /**
-     * Notifies that an important aspect of view style/parameters/configuration have changed,
-     * and that views should be reconstructed if needed (view state change only).
-     *
-     * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
-     */
     public void viewConfigurationChanged(long epoch) {
+    }
+
+    public void vmProcessTerminated() {
     }
 
 }

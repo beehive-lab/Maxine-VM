@@ -105,7 +105,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return _inspection.nameDisplay().longName(_teleNativeThread);
     }
 
@@ -685,7 +685,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                 }
                 moveToFront();
             } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle("Stack " + getTitle());
+                frame().setTitle("Stack " + getTextForTitle());
             }
         }
     }

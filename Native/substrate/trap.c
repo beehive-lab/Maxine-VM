@@ -247,7 +247,9 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
         log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);
         log_println("trapInfo[1] (instruction pointer) = %p", trapInfo[1]);
         log_println("trapInfo[2] (fault address)       = %p", trapInfo[2]);
-#   if !(os_SOLARIS && isa_SPARC)
+#   if os_SOLARIS && isa_SPARC
+        log_println("trapInfo[3] (safepoint latch)     = %p", trapInfo[3]);
+#   else
         log_println("trapInfo[3] (stack top value)     = %p", trapInfo[3]);
 #   endif
     }

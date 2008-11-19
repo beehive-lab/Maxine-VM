@@ -147,7 +147,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         if (_javaFrameDescriptor != null) {
             return shortString(_javaFrameDescriptor.bytecodeLocation());
         }

@@ -21,6 +21,7 @@
 package com.sun.max.ins;
 
 import com.sun.max.collect.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -42,7 +43,7 @@ import com.sun.max.vm.stack.*;
  *
  * @author Michael Van De Vanter
  */
-public class InspectionFocus extends InspectionHolder{
+public class InspectionFocus extends InspectionHolder {
 
     private static final int TRACE_VALUE = 2;
 
@@ -76,6 +77,14 @@ public class InspectionFocus extends InspectionHolder{
             return tracePrefix() + "Focus (Code Location):  " + inspection().nameDisplay().longName(_codeLocation);
         }
     };
+
+    public void clearAll() {
+        _thread = null;
+        _stackFrame = null;
+        _memoryRegion = null;
+        _breakpoint  = null;
+        _heapObject = null;
+    }
 
     /**
      * The current location of user interest in the code being inspected (view state).

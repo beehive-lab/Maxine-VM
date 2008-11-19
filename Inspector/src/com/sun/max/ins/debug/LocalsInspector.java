@@ -276,7 +276,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "StackFrame @ " + _jitStackFrame.framePointer().toHexString();
     }
 

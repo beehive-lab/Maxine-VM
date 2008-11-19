@@ -51,14 +51,14 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Methods";
     }
 
     @Override
     public void add(MethodInspector methodInspector) {
         final String longTitle = methodInspector.getToolTip();
-        add(methodInspector, methodInspector.getTitle(), longTitle, longTitle);
+        add(methodInspector, methodInspector.getTextForTitle(), longTitle, longTitle);
         addCloseIconToTab(methodInspector);
         methodInspector.frame().invalidate();
         methodInspector.frame().repaint();

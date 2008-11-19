@@ -21,10 +21,11 @@
 package com.sun.max.tele.debug;
 
 /**
- * This exception is thrown when a data access or execution request cannot
- * be satisfied at some OS level process.
+ * This exception is thrown when a {@link TeleProcess} is unable to satisfy some
+ * request, either in the VM or native code.
  *
  * @author Aritra Bandyopadhyay
+ * @author Michael Van De Vanter
  */
 public class ProcessException extends Exception {
 

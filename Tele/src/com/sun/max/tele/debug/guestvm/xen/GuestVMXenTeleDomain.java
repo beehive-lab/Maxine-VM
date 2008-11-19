@@ -117,7 +117,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected void kill() throws ExecutionRequestException {
+    protected void kill() throws OSExecutionRequestException {
         Problem.unimplementedWarning("cannot kill target domain from Inspector");
     }
 
@@ -133,16 +133,16 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected void resume() throws ExecutionRequestException {
+    protected void resume() throws OSExecutionRequestException {
         final int rrc = GuestVMXenDBChannel.resume(_domainId);
         _terminated = rrc != 0;
     }
 
     @Override
-    public void suspend() throws ExecutionRequestException {
+    public void suspend() throws OSExecutionRequestException {
         for (TeleNativeThread thread : threads()) {
             if (!thread.threadSuspend()) {
-                throw new ExecutionRequestException("Could not suspend the VM [problem suspending + " + thread + "]");
+                throw new OSExecutionRequestException("Could not suspend the VM [problem suspending + " + thread + "]");
             }
         }
     }
