@@ -25,6 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -45,12 +46,14 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     /**
      * Size of a stack slot maintained by JIT-ed code. It may differ from {@link JavaStackFrameLayout#STACK_SLOT_SIZE} due to alignment
-     * constraint imposed on stack frame by the target platform (e.g., Darwin AMD64 and SPARC 64 requires 16-byte aligned stack frame).
+     * constraints imposed on a stack frame by the target platform (e.g., Darwin AMD64 and SPARC 64 requires 16-byte aligned stack frame).
      * In this case, it may be simpler for the JIT to use a custom size of slots for its stack frame that differs from the stack slot sized used by
      * the optimizing compiler (e.g., 16 bytes instead of 8 on both Solaris / SPARC 64 and Darwin / AMD 64).
      */
     public static final int JIT_SLOT_SIZE = getJitSlotSize();
     public static final int JIT_STACK_BIAS = getJitStackBias();
+
+    public static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI();
 
     private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind().dataModel().endianness();
 
