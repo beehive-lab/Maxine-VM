@@ -297,7 +297,7 @@ public class AMD64TranslatorTest_switchbytecodes extends CompilerTestCase<Target
 
             @Override
             public void lookupswitch(int defaultOffset, int numberOfCases) {
-                getBytecodeScanner().skipBytes(numberOfCases * 8);
+                bytecodeScanner().skipBytes(numberOfCases * 8);
                 confirmPresence();
             }
         };

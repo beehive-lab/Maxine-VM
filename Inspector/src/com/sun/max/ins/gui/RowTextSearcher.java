@@ -18,35 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.ir.observer;
+package com.sun.max.ins.gui;
 
-import com.sun.max.vm.compiler.ir.*;
+import java.util.regex.*;
+
+import com.sun.max.collect.*;
 
 
-public abstract class IrObserverAdapter implements IrObserver {
+/**
+ * Regular expression pattern matcher; identifies by number the rows that match a pattern.
+ *
+ * @author Michael Van De Vanter
+ * @see {@link java.util.regex.Pattern}
+ */
+public interface RowTextSearcher {
 
     /**
-     * Attach to any IR generator.
+     * Find rows matching a regexp pattern.
+     *
+     * @param pattern a regular expression pattern
+     * @return rows in the row-based object being searched that match the {@link Pattern}.
      */
-    public boolean attach(IrGenerator generator) {
-        return true;
-    }
+    IndexedSequence<Integer> search(Pattern pattern);
 
-    public void finish() {
-    }
-
-    public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
-    }
-
-    public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-    }
-
-    public void observeAllocation(IrMethod irMethod) {
-    }
-
-    public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
-    }
-
-    public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
-    }
 }

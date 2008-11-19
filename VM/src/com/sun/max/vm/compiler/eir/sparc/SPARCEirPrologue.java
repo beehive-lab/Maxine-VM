@@ -53,6 +53,19 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
     private static final SPARCAssembler _ASM = SPARCAssembler.createAssembler(WordWidth.BITS_64);
 
     /**
+     * The maximum imm13 offset we can get for a stack offset. It leaves about 4K
+     * for the stack overflow routine to operate if we hit a protected zone.
+     */
+    private static final int DEFAULT_STACK_BANG_OFFSET = -2045;
+
+    private static int stackBangOffset(int frameSize) {
+        if (SPARCAssembler.isSimm13(frameSize)) {
+            return DEFAULT_STACK_BANG_OFFSET;
+        }
+        return STACK_BIAS.SPARC_V9.stackBias() - frameSize;
+    }
+
+    /**
      * Returns the number of instructions of the frame builder for a given frame size.
      * The save instruction in the last instruction of the frame builder.
      * This information is useful for stack walkers to determine whether a method activation is in its caller
@@ -64,7 +77,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         if (SPARCAssembler.isSimm13(frameSize)) {
             return 2;
         }
-        final int stackBangOffset = STACK_BIAS.SPARC_V9.stackBias() - frameSize;
+        final int stackBangOffset = stackBangOffset(frameSize);
         if (SPARCAssembler.isSimm13(stackBangOffset)) {
             return 2 + _ASM.setswNumberOfInstructions(stackBangOffset);
         }
@@ -85,20 +98,20 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         // frame we're creating should an stack overflow occur (especially if a save instruction subsequent to the one that
         // create this frame traps). To avoid this, we bang on the top of the frame we're creating. If this one cause a SIGSEGV,
         // we know the current register window can take the trap.
-        final int stackBangOffset = STACK_BIAS.SPARC_V9.stackBias() - frameSize;
+        final int stackBangOffset = stackBangOffset(frameSize);
         if (SPARCAssembler.isSimm13(frameSize)) {
             assert SPARCAssembler.isSimm13(stackBangOffset);
-            asm.ldx(stackPointer, stackBangOffset, GPR.G0);
+            asm.lduw(stackPointer, stackBangOffset, GPR.G0);
             asm.save(stackPointer, -frameSize, stackPointer);
         } else {
             final GPR frameSizeReg = scratchRegister;
             try {
                 if (SPARCAssembler.isSimm13(stackBangOffset)) {
-                    asm.ldx(stackPointer, stackBangOffset, GPR.G0);
+                    asm.lduw(stackPointer, stackBangOffset, GPR.G0);
                     asm.setsw(-frameSize, frameSizeReg);
                 } else {
                     asm.setsw(stackBangOffset, frameSizeReg);
-                    asm.ldx(stackPointer, frameSizeReg, GPR.G0);
+                    asm.lduw(stackPointer, frameSizeReg, GPR.G0);
                     asm.sub(frameSizeReg, STACK_BIAS.SPARC_V9.stackBias(), frameSizeReg);
                 }
                 asm.save(stackPointer, frameSizeReg, stackPointer);
@@ -109,6 +122,7 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
 
     private void emitTrapStubPrologue(SPARCAssembler asm, GPR stackPointer) {
         // Note: the safepoint latch register is already set to the disabled state (the C code in trap.c took care of that)
+        // The value of the latch register at the trap instruction is stored in the trap state.
         final GPR latchRegister = SPARCSafepoint.LATCH_REGISTER;
         final int frameSize = eirMethod().frameSize() + SPARCSafepoint.TRAP_STATE_SIZE;
         final GPR scratchRegister = GPR.L0;
@@ -125,10 +139,18 @@ public final class SPARCEirPrologue extends EirPrologue<SPARCEirInstructionVisit
         asm.flushw();
         final int wordSize = Word.size();
         final int trapStateOffset =  SPARCStackFrameLayout.offsetToFirstFreeSlotFromStackPointer();
-
         int offset = trapStateOffset;
+
+        // We want to copy in the trap state the value of the latch register at the instruction that causes the trap.
+        // This is in the TRAP_TOP_OF_STACK register.
+        asm.ldx(latchRegister, VmThreadLocal.TRAP_TOP_OF_STACK.offset(), scratchRegister);
+
         for (GPR register :  SPARCSafepoint.TRAP_SAVED_GLOBAL_SYMBOLIZER) {
-            asm.stx(register, stackPointer, offset);
+            if (register == latchRegister) {
+                asm.stx(scratchRegister, stackPointer, offset);
+            } else {
+                asm.stx(register, stackPointer, offset);
+            }
             offset += wordSize;
         }
         for (GPR register : GPR.IN_SYMBOLIZER) {

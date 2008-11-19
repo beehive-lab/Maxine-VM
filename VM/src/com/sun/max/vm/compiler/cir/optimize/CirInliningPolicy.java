@@ -20,9 +20,11 @@
  */
 package com.sun.max.vm.compiler.cir.optimize;
 
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.prototype.*;
 
@@ -86,7 +88,11 @@ public class CirInliningPolicy {
             if (classMethodActor.isDeclaredNeverInline() || classMethodActor.isDeclaredFoldable() || method.isFoldable(cirOptimizer, arguments)) {
                 return false;
             }
-            return method.isSmallStraightlineCode();
+            final boolean result = BytecodeAssessor.hasSmallStraightlineCode(method.classMethodActor());
+            if (result) {
+                Trace.line(7, "should inline: " + method.classMethodActor().qualifiedName());
+            }
+            return result;
         }
     }
 

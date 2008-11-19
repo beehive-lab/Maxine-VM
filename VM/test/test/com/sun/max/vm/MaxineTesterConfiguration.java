@@ -52,7 +52,6 @@ public class MaxineTesterConfiguration {
     };
 
     static final Set<Class> _expectedFailuresSolarisAMD64 = new HashSet<Class>(Arrays.asList(new Class[] {
-        test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
@@ -60,12 +59,12 @@ public class MaxineTesterConfiguration {
     }));
 
     static final Set<Class> _expectedFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
-        test.output.HelloWorldReflect.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
-        test.except.Catch_StackOverflowError_01.class,
-        test.output.ZipFileReader.class,
+        test.hotpath.HP_life.class, // 328
+        test.hotpath.HP_series.class, // 333
+        test.threads.Thread_isInterrupted04.class, // 414
     }));
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();

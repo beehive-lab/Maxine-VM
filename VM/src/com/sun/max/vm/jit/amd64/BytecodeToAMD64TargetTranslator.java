@@ -315,7 +315,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
             _codeBuffer.reserve(jumpTable32.size());
 
             // Remember the location of the tableSwitch bytecode and the area in the code buffer where the targets will be written.
-            final BytecodeScanner scanner = getBytecodeScanner();
+            final BytecodeScanner scanner = bytecodeScanner();
             final int[] targetBytecodePositions = new int[numberOfCases];
             for (int i = 0; i != numberOfCases; ++i) {
                 targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;
@@ -377,7 +377,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
 
             final int[] matches = new int[numberOfCases];
             final int[] targetBytecodePositions = new int[numberOfCases];
-            final BytecodeScanner scanner = getBytecodeScanner();
+            final BytecodeScanner scanner = bytecodeScanner();
             for (int i = 0; i != numberOfCases; ++i) {
                 matches[i] = scanner.readSwitchCase();
                 targetBytecodePositions[i] = scanner.readSwitchOffset() + opcodePosition;

@@ -1232,7 +1232,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
         final int[] switchCases = new int[numberOfCases];
         final int[] switchOffsets = new int[numberOfCases];
-        final BytecodeScanner scanner = getBytecodeScanner();
+        final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
             switchCases[i] = scanner.readSwitchCase();
             switchOffsets[i] = scanner.readSwitchOffset();
@@ -1243,7 +1243,7 @@ public abstract class BytecodeAggregatingVisitor extends BytecodeVisitor {
     @Override
     protected final void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         final int[] switchOffsets = new int[numberOfCases];
-        final BytecodeScanner scanner = getBytecodeScanner();
+        final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
             switchOffsets[i] = scanner.readSwitchOffset();
         }

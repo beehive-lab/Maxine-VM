@@ -60,7 +60,7 @@ public class JITTest_compileSwitches extends JitCompilerTestCase {
         new BytecodeConfirmation(method.classMethodActor()) {
             @Override
             protected void lookupswitch(int defaultOffset, int numberOfCases) {
-                getBytecodeScanner().skipBytes(numberOfCases * 8);
+                bytecodeScanner().skipBytes(numberOfCases * 8);
                 confirmPresence();
             }
         };
@@ -96,7 +96,7 @@ public class JITTest_compileSwitches extends JitCompilerTestCase {
         new BytecodeConfirmation(method.classMethodActor()) {
             @Override
             public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases)  {
-                getBytecodeScanner().skipBytes(numberOfCases * 4);
+                bytecodeScanner().skipBytes(numberOfCases * 4);
                 confirmPresence();
             }
         };

@@ -395,6 +395,24 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
         return _debugActiveRowButtonIcon;
     }
 
+
+    // Search related
+    private final Icon _searchNextMatchButtonIcon = IconFactory.createDownArrow(14, 14);
+    public Icon searchNextMatchButtonIcon() {
+        return _searchNextMatchButtonIcon;
+    }
+    private final Icon _searchPreviousMatchButtonIcon = IconFactory.createUpArrow(14, 14);
+    public Icon searchPreviousMatchButtonIcon() {
+        return _searchPreviousMatchButtonIcon;
+    }
+    public Color searchPatternFailedColor() {
+        return Color.red;
+    }
+    public Color searchRowMatchedBackground() {
+        return SunYellow3;
+    }
+
+
     /** Returns an ImageIcon, or null if the path was invalid. */
     protected ImageIcon createImageIcon(String path, String description) {
         final java.net.URL imgURL = getClass().getResource(path);

@@ -18,35 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.ir.observer;
-
-import com.sun.max.vm.compiler.ir.*;
+package com.sun.max.ins.gui;
 
 
-public abstract class IrObserverAdapter implements IrObserver {
+/**
+ * Objects that are subject to textual search, for example by a {@link TableRowTextSearcher}.
+ *
+ * @author Michael Van De Vanter
+ */
+public interface TextSearchable {
 
     /**
-     * Attach to any IR generator.
+     * @return a string suitable for use during text searching.
      */
-    public boolean attach(IrGenerator generator) {
-        return true;
-    }
+    String getSearchableText();
 
-    public void finish() {
-    }
-
-    public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
-    }
-
-    public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-    }
-
-    public void observeAllocation(IrMethod irMethod) {
-    }
-
-    public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
-    }
-
-    public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
-    }
 }

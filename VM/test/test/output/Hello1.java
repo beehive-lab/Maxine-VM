@@ -18,35 +18,15 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.ir.observer;
+package test.output;
 
-import com.sun.max.vm.compiler.ir.*;
-
-
-public abstract class IrObserverAdapter implements IrObserver {
-
-    /**
-     * Attach to any IR generator.
-     */
-    public boolean attach(IrGenerator generator) {
-        return true;
-    }
-
-    public void finish() {
-    }
-
-    public void observeAfterGeneration(IrMethod irMethod, IrGenerator irGenerator) {
-    }
-
-    public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-    }
-
-    public void observeAllocation(IrMethod irMethod) {
-    }
-
-    public void observeBeforeGeneration(IrMethod irMethod, IrGenerator irGenerator) {
-    }
-
-    public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
+/**
+ * A test class for the {@link test.output.HelloWorldReflect} class.
+ *
+ * @author Ben L. Titzer
+ */
+public class Hello1 {
+    public static void main(String[] args) {
+        System.out.println("Hello World!");
     }
 }

@@ -42,6 +42,7 @@ import com.sun.max.vm.compiler.ir.observer.*;
 public class CirTraceObserver extends IrTraceObserver {
 
     public CirTraceObserver() {
+        super(CirMethod.class);
     }
 
     public enum Transformation {
@@ -82,16 +83,18 @@ public class CirTraceObserver extends IrTraceObserver {
 
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
-        final int transformTraceLevel = transformTraceLevel(transform);
-        if (hasLevel(transformTraceLevel)) {
-            if (irMethod instanceof CirMethod) {
-                _out.println(traceString(irMethod, "before transformation: " + transform));
-                final CirMethod cirMethod = (CirMethod) irMethod;
-                if (cirMethod.isGenerated() || context == null) {
-                    _out.println(irMethod.traceToString());
-                } else {
-                    final CirNode cirNode = (CirNode) context;
-                    _out.println(cirNode.traceToString(false));
+        if (irMethod instanceof CirMethod) {
+            final int transformTraceLevel = transformTraceLevel(transform);
+            if (hasLevel(transformTraceLevel)) {
+                if (irMethod instanceof CirMethod) {
+                    _out.println(traceString(irMethod, "before transformation: " + transform));
+                    final CirMethod cirMethod = (CirMethod) irMethod;
+                    if (cirMethod.isGenerated() || context == null) {
+                        _out.println(irMethod.traceToString());
+                    } else {
+                        final CirNode cirNode = (CirNode) context;
+                        _out.println(cirNode.traceToString(false));
+                    }
                 }
             }
         }
@@ -99,16 +102,18 @@ public class CirTraceObserver extends IrTraceObserver {
 
     @Override
     public void observeAfterTransformation(IrMethod irMethod, Object context, Object transform) {
-        final int transformTraceLevel = transformTraceLevel(transform);
-        if (hasLevel(transformTraceLevel)) {
-            if (irMethod instanceof CirMethod) {
-                _out.println(traceString(irMethod, "after transformation: " + transform));
-                final CirMethod cirMethod = (CirMethod) irMethod;
-                if (cirMethod.isGenerated() || context == null) {
-                    _out.println(irMethod.traceToString());
-                } else {
-                    final CirNode cirNode = (CirNode) context;
-                    _out.println(cirNode.traceToString(false));
+        if (irMethod instanceof CirMethod) {
+            final int transformTraceLevel = transformTraceLevel(transform);
+            if (hasLevel(transformTraceLevel)) {
+                if (irMethod instanceof CirMethod) {
+                    _out.println(traceString(irMethod, "after transformation: " + transform));
+                    final CirMethod cirMethod = (CirMethod) irMethod;
+                    if (cirMethod.isGenerated() || context == null) {
+                        _out.println(irMethod.traceToString());
+                    } else {
+                        final CirNode cirNode = (CirNode) context;
+                        _out.println(cirNode.traceToString(false));
+                    }
                 }
             }
         }

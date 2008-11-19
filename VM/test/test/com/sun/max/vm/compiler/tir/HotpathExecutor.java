@@ -135,8 +135,9 @@ public class HotpathExecutor implements JavaExecHarness.Executor {
     // Checkstyle: stop
     public static void setUp() {
         Console.out().println(Color.LIGHTGREEN, "Initializing ...");
-        final PrototypeGenerator generator = new PrototypeGenerator();
-        final JavaPrototype javaPrototype = generator.createJavaPrototype(new OptionSet(), createVMConfiguration(), false);
+        final PrototypeGenerator generator = new PrototypeGenerator(_optionSet);
+        Trace.addTo(_optionSet);
+        final JavaPrototype javaPrototype = generator.createJavaPrototype(createVMConfiguration(), false);
         javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
         javaPrototype.vmConfiguration().compilerScheme().compileSnippets();
 

@@ -175,7 +175,7 @@ public class BytecodePrinter extends BytecodeVisitor {
 
     protected void epilog() {
         if (_printBytes) {
-            final int endAddress = currentByteAddress();
+            final int endAddress = currentBytePosition();
             _writer.print(" |");
             final byte[] bytes = code();
             for (int i = currentOpcodePosition(); i < endAddress; i++) {
@@ -1086,7 +1086,7 @@ public class BytecodePrinter extends BytecodeVisitor {
         printImmediate(lowMatch);
         printImmediate(highMatch);
         for (int i = 0; i < numberOfCases; i++) {
-            printImmediate(getBytecodeScanner().readSwitchOffset());
+            printImmediate(bytecodeScanner().readSwitchOffset());
         }
         epilog();
     }
@@ -1097,8 +1097,8 @@ public class BytecodePrinter extends BytecodeVisitor {
         printOpcode();
         printImmediate(defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
-            printImmediate(getBytecodeScanner().readSwitchCase());
-            printImmediate(getBytecodeScanner().readSwitchOffset());
+            printImmediate(bytecodeScanner().readSwitchCase());
+            printImmediate(bytecodeScanner().readSwitchOffset());
         }
         epilog();
     }

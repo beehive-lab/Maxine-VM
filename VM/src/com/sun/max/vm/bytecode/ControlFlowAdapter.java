@@ -54,7 +54,7 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
      * and the other at the given offset from it.
      */
     private void fork(int offset) {
-        fallThrough(currentByteAddress());
+        fallThrough(currentBytePosition());
         jump(currentOpcodePosition() + offset);
     }
 
@@ -142,7 +142,7 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         jump(currentOpcodePosition() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
-            final BytecodeScanner scanner = getBytecodeScanner();
+            final BytecodeScanner scanner = bytecodeScanner();
             jump(currentOpcodePosition() + scanner.readSwitchOffset());
         }
     }
@@ -151,7 +151,7 @@ public abstract class ControlFlowAdapter extends BytecodeAdapter {
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
         jump(currentOpcodePosition() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
-            final BytecodeScanner scanner = getBytecodeScanner();
+            final BytecodeScanner scanner = bytecodeScanner();
             scanner.readSwitchCase(); // ignore case value
             jump(currentOpcodePosition() + scanner.readSwitchOffset());
         }
