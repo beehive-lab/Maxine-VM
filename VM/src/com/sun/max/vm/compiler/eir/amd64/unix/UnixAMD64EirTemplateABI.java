@@ -28,12 +28,12 @@ import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
-/** 
+/**
  * ABI for templates produced by the optimizing compiler and used by template-based code generator on AMD64 Unix.
- * The primary differences to the opto's normal Java ABI are: (i) spillings should be performed relative to a frame pointer
+ * The primary differences to the opto's normal Java ABI are: (i) spilling should be performed relative to a frame pointer
  * distinct from the stack pointer (the stack pointer being used explicitly by the templates to manage an expression stack);
  * and (ii), no adapter frames need be generated for templates.
- * 
+ *
  * @author Laurent Daynes
  */
 public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
