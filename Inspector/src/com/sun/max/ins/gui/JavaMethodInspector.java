@@ -132,7 +132,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         final ClassMethodActor classMethodActor = _teleClassMethodActor.classMethodActor();
         final StringBuilder sb = new StringBuilder(50);
         sb.append(classMethodActor.holder().simpleName());

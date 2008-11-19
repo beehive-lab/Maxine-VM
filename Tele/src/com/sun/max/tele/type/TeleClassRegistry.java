@@ -94,7 +94,7 @@ public class TeleClassRegistry extends TeleVMHolder {
 		final String typeDescriptorString = teleVM().getString(stringReference);
 		final TypeDescriptor typeDescriptor = JavaTypeDescriptor.parseTypeDescriptor(typeDescriptorString);
 		_typeDescriptorToClassActorReference.put(typeDescriptor, classActorReference);		
-		Trace.line(TRACE_VALUE, "TeleClassRegistry: adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
+		Trace.line(TRACE_VALUE, tracePrefix() + ": adding class (" + id + ", " + typeDescriptor.toJavaString() + ")");
 	}
 
     /**
@@ -117,7 +117,7 @@ public class TeleClassRegistry extends TeleVMHolder {
      */
     public TeleClassRegistry(TeleVM teleVM) {
         super(teleVM);
-        Trace.begin(1, "creating TeleClassRegistry");
+        Trace.begin(1, tracePrefix() + " initializing");
         int count = 0;
         try {
             final Reference classRegistryReference = teleVM().bootClassRegistryReference();
@@ -162,7 +162,7 @@ public class TeleClassRegistry extends TeleVMHolder {
             throw new TeleError("could not build inspector type registry", throwable);
         }
         _preLoadedClassCount = count;
-        Trace.end(1, "creating TeleClassRegistry (" + _preLoadedClassCount + " pre-loaded entries)");
+        Trace.end(1, tracePrefix() + " initializing (" + _preLoadedClassCount + " pre-loaded entries)");
     }
 
     /**
@@ -180,7 +180,7 @@ public class TeleClassRegistry extends TeleVMHolder {
     		addToRegistry(classActorReference);
     		index++;
     	}
-    	Trace.line(TRACE_VALUE, "TeleClassRegistry refreshed: static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount));   
+    	Trace.line(TRACE_VALUE, tracePrefix() + " refreshed: static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount));   
     	_dynamicallyLoadedClassCount = remoteLoadedClassCount;
     }
     

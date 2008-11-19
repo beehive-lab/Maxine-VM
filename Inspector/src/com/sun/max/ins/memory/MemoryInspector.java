@@ -29,6 +29,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -85,6 +86,7 @@ public final class MemoryInspector extends Inspector {
         createFrame(null);
         setLocationRelativeToMouse();
         _memoryInspectors.add(this);
+        Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }
 
     private Address _address;
@@ -198,7 +200,7 @@ public final class MemoryInspector extends Inspector {
     };
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return MemoryInspector.class.getSimpleName() + ": " + _address.toHexString();
     }
 
@@ -276,5 +278,16 @@ public final class MemoryInspector extends Inspector {
         return s;
     }
 
+    @Override
+    public void inspectorClosing() {
+        // don't try to recompute the title, just get the one that's been in use
+        Trace.line(1, tracePrefix() + " closing for " + getCurrentTitle() + " - process terminated");
+        super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
+    }
 
 }

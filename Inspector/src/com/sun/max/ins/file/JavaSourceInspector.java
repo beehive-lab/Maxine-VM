@@ -40,7 +40,7 @@ public final class JavaSourceInspector  extends FileInspector {
     private JTextArea _textArea;
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return file().getName();
     }
 

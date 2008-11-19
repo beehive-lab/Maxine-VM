@@ -27,6 +27,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
@@ -54,11 +55,13 @@ public final class BootImageInspector extends UniqueInspector<BootImageInspector
 
     private BootImageInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
+        Trace.begin(1, tracePrefix() + "initializing");
         createFrame(null);
+        Trace.end(1, tracePrefix() + "initializing");
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Boot Image: " + teleVM().bootImageFile().getAbsolutePath();
     }
     @Override
@@ -148,6 +151,12 @@ public final class BootImageInspector extends UniqueInspector<BootImageInspector
 
         addInfo("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootImageStart.plus(header._messengerInfoOffset)));
         SpringUtilities.makeCompactGrid(_infoPanel, 2);
+    }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        super.inspectorClosing();
     }
 
 }

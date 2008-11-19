@@ -52,12 +52,12 @@ public final class TeleProcessController {
      *
      * @param instructionPointer the destination instruction
      * @throws InvalidProcessRequestException
-     * @throws ExecutionRequestException
+     * @throws OSExecutionRequestException
      */
-    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws ExecutionRequestException, InvalidProcessRequestException {
+    public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
         final TeleEventRequest request = new TeleEventRequest("runToInstruction", null) {
             @Override
-            public void execute() throws ExecutionRequestException {
+            public void execute() throws OSExecutionRequestException {
                 final Factory breakpointFactory = _teleProcess.targetBreakpointFactory();
 
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
@@ -85,14 +85,14 @@ public final class TeleProcessController {
         teleProcess().terminate();
     }
 
-    public void pause() throws InvalidProcessRequestException, ExecutionRequestException {
+    public void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
         teleProcess().pause();
     }
 
-    public void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, ExecutionRequestException {
+    public void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
         final TeleEventRequest request = new TeleEventRequest("resume", null) {
             @Override
-            public void execute() throws ExecutionRequestException {
+            public void execute() throws OSExecutionRequestException {
                 for (TeleNativeThread thread : teleProcess().threads()) {
                     thread.evadeBreakpoint();
                 }
@@ -105,24 +105,24 @@ public final class TeleProcessController {
         teleProcess().scheduleRequest(request, synchronous);
     }
 
-    public void singleStep(final TeleNativeThread thread, boolean isSynchronous) throws InvalidProcessRequestException, ExecutionRequestException    {
+    public void singleStep(final TeleNativeThread thread, boolean isSynchronous) throws InvalidProcessRequestException, OSExecutionRequestException    {
         final TeleEventRequest request = new TeleEventRequest("singleStep", thread) {
             @Override
-            public void execute() throws ExecutionRequestException {
+            public void execute() throws OSExecutionRequestException {
                 teleProcess().performSingleStep(thread);
             }
         };
         teleProcess().scheduleRequest(request, isSynchronous);
     }
 
-    public void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, ExecutionRequestException {
+    public void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
         final TeleEventRequest request = new TeleEventRequest("stepOver", thread) {
 
             private Pointer _oldInstructionPointer;
             private Pointer _oldReturnAddress;
 
             @Override
-            public void execute() throws ExecutionRequestException {
+            public void execute() throws OSExecutionRequestException {
                 _oldInstructionPointer = thread.instructionPointer();
                 _oldReturnAddress = thread.getReturnAddress();
                 teleProcess().performSingleStep(thread);
@@ -134,7 +134,7 @@ public final class TeleProcessController {
                 if (stepOutAddress != null) {
                     try {
                         runToInstruction(stepOutAddress, true, disableBreakpoints);
-                    } catch (ExecutionRequestException e) {
+                    } catch (OSExecutionRequestException e) {
                         e.printStackTrace();
                     } catch (InvalidProcessRequestException e) {
                         e.printStackTrace();

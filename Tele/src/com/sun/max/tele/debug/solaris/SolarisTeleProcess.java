@@ -65,25 +65,25 @@ public final class SolarisTeleProcess extends TeleProcess {
     private static native void nativeKill(long processHandle);
 
     @Override
-    public void kill() throws ExecutionRequestException {
+    public void kill() throws OSExecutionRequestException {
         nativeKill(_processHandle);
     }
 
     private static native boolean nativeSuspend(long processHandle);
 
     @Override
-    public void suspend() throws ExecutionRequestException {
+    public void suspend() throws OSExecutionRequestException {
         if (!nativeSuspend(_processHandle)) {
-            throw new ExecutionRequestException("Could not suspend process");
+            throw new OSExecutionRequestException("Could not suspend process");
         }
     }
 
     private static native boolean nativeResume(long processHandle);
 
     @Override
-    public void resume() throws ExecutionRequestException {
+    public void resume() throws OSExecutionRequestException {
         if (!nativeResume(_processHandle)) {
-            throw new ExecutionRequestException("The VM could not be resumed");
+            throw new OSExecutionRequestException("The VM could not be resumed");
         }
     }
 

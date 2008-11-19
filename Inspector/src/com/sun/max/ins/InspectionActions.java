@@ -361,6 +361,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         ChangeInterpreterUseLevelAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
         }
 
         @Override
@@ -376,6 +377,11 @@ public class InspectionActions extends InspectionHolder implements Prober{
             if (newLevel != oldLevel) {
                 teleVM().setInterpreterUseLevel(newLevel);
             }
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess());
         }
     }
 
@@ -400,6 +406,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         SetTransportDebugLevelAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
         }
 
         @Override
@@ -415,6 +422,11 @@ public class InspectionActions extends InspectionHolder implements Prober{
             if (newLevel != oldLevel) {
                 teleProcess().setTransportDebugLevel(newLevel);
             }
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess());
         }
     }
 
@@ -631,6 +643,8 @@ public class InspectionActions extends InspectionHolder implements Prober{
     public final InspectorAction viewBreakpoints() {
         return _viewBreakpoints;
     }
+
+
     /**
      * Action:  makes visible the {@link MemoryRegionsInspector}.
      */
@@ -888,6 +902,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             super(inspection(), "Inspect memory at address...");
             _address = null;
             _teleObject = null;
+            _refreshableActions.append(this);
         }
 
         InspectMemoryAction(Address address, String title) {
@@ -909,7 +924,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             } else if (_address != null) {
                 MemoryInspector.create(inspection(), _address);
             } else {
-                new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Inspect memory ataddress...", "Inspect") {
+                new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Inspect memory at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
@@ -1012,6 +1027,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         InspectMemoryWordsAction() {
             super(inspection(), "Inspect memory words at address...");
+            _refreshableActions.append(this);
             _address = null;
             _teleObject = null;
         }
@@ -1084,6 +1100,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         InspectBootHeapMemoryWordsAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
         }
 
         @Override
@@ -1725,6 +1742,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         RemoveSelectedBreakpointAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
@@ -1869,6 +1887,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         ToggleTargetCodeBreakpointAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
@@ -1917,6 +1936,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         SetTargetCodeLabelBreakpointsAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
@@ -1961,6 +1981,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         RemoveTargetCodeLabelBreakpointsAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
@@ -2003,6 +2024,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         RemoveAllTargetCodeBreakpointsAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
@@ -2139,6 +2161,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         ToggleBytecodeBreakpointAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
@@ -2312,7 +2335,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
 
@@ -2353,7 +2376,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
 
@@ -2395,7 +2418,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
 
@@ -2439,7 +2462,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && focus().hasCodeLocation() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
         }
     }
 
@@ -2483,7 +2506,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && focus().hasCodeLocation() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
         }
     }
 
@@ -2522,7 +2545,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
 
@@ -2561,7 +2584,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
 
@@ -2601,7 +2624,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && !inspection().isVMRunning());
+            setEnabled(focus().hasThread() && inspection().isVMReady());
         }
     }
 

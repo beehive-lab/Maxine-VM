@@ -30,6 +30,7 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.classfile.constant.FieldRefConstant.*;
@@ -38,6 +39,9 @@ import com.sun.max.vm.type.*;
 
 /**
  * A label for displaying a {@link PoolConstant} in the {@link TeleVM} that is a reference.
+ * For literal constants, the labels rely on the local counterpart to the remote one.
+ * For resolvable constants, an attempt is made to read the remote version in order
+ * to determine if resolved or not.
  *
  * @author Michael Van De Vanter
  */
@@ -57,6 +61,10 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private final int _index;
 
+    /**
+     * Surrogate for the {@link ConstantPool} in the {@link TeleVM}.
+     * Might be null, and might be unreachable.
+     */
     private final TeleConstantPool _teleConstantPool;
 
     private TelePoolConstant _telePoolConstant;
@@ -77,48 +85,44 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         return _localPoolConstant;
     }
 
-    private long _epoch = -1;
-
-    public static Component make(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-        try {
-            final Tag tag = teleConstantPool.getTeleHolder().classActor().constantPool().at(index).tag();
-            PoolConstantLabel poolConstantLabel;
-            switch (tag) {
-                case CLASS:
-                    poolConstantLabel = new PoolConstantLabel.Class(inspection, index, teleConstantPool, mode);
-                    break;
-                case FIELD_REF:
-                    poolConstantLabel = new PoolConstantLabel.Field(inspection, index, teleConstantPool, mode);
-                    break;
-                case METHOD_REF:
-                    poolConstantLabel = new PoolConstantLabel.ClassMethod(inspection, index, teleConstantPool, mode);
-                    break;
-                case INTERFACE_METHOD_REF:
-                    poolConstantLabel = new PoolConstantLabel.InterfaceMethod(inspection, index, teleConstantPool, mode);
-                    break;
-                case STRING:
-                    poolConstantLabel = new PoolConstantLabel.StringConstant(inspection, index, teleConstantPool, mode);
-                    break;
-                case UTF8:
-                    poolConstantLabel = new PoolConstantLabel.Utf8Constant(inspection, index, teleConstantPool, mode);
-                    break;
-                default:
-                    poolConstantLabel = new PoolConstantLabel.Other(inspection, index, teleConstantPool, mode);
-                    break;
-            }
-            return poolConstantLabel;
-        } catch (Throwable throwable) {
-            final TextLabel errorLabel = new TextLabel(inspection, "<error: " + throwable + ">");
-            errorLabel.setBackground(Color.RED);
-            ProgramWarning.message("error rendering constant pool: " + throwable.getStackTrace());
-            return errorLabel;
-        }
+    protected final boolean isResolved() {
+        return _telePoolConstant != null && _telePoolConstant.isResolved();
     }
 
-    protected PoolConstantLabel(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
+    private long _epoch = -1;
+
+    public static Component make(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+        final Tag tag = localConstantPool.at(index).tag();
+        PoolConstantLabel poolConstantLabel;
+        switch (tag) {
+            case CLASS:
+                poolConstantLabel = new PoolConstantLabel.Class(inspection, index, localConstantPool, teleConstantPool, mode);
+                break;
+            case FIELD_REF:
+                poolConstantLabel = new PoolConstantLabel.Field(inspection, index, localConstantPool, teleConstantPool, mode);
+                break;
+            case METHOD_REF:
+                poolConstantLabel = new PoolConstantLabel.ClassMethod(inspection, index, localConstantPool, teleConstantPool, mode);
+                break;
+            case INTERFACE_METHOD_REF:
+                poolConstantLabel = new PoolConstantLabel.InterfaceMethod(inspection, index, localConstantPool, teleConstantPool, mode);
+                break;
+            case STRING:
+                poolConstantLabel = new PoolConstantLabel.StringConstant(inspection, index, localConstantPool, teleConstantPool, mode);
+                break;
+            case UTF8:
+                poolConstantLabel = new PoolConstantLabel.Utf8Constant(inspection, index, localConstantPool, teleConstantPool, mode);
+                break;
+            default:
+                poolConstantLabel = new PoolConstantLabel.Other(inspection, index, localConstantPool, teleConstantPool, mode);
+        }
+        return poolConstantLabel;
+    }
+
+    protected PoolConstantLabel(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
         super(inspection, null);
         _index = index;
-        _localConstantPool = teleConstantPool.getTeleHolder().classActor().constantPool();
+        _localConstantPool = localConstantPool;
         _localPoolConstant = _localConstantPool.at(index);
         _teleConstantPool = teleConstantPool;
         _mode = mode;
@@ -146,8 +150,12 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     public void refresh(long epoch, boolean force) {
         if (epoch > _epoch || force) {
-            if (_telePoolConstant == null || !_telePoolConstant.isResolved()) {
-                _telePoolConstant = _teleConstantPool.readTelePoolConstant(_index);
+            if (_teleConstantPool != null) {
+                try {
+                    _telePoolConstant = _teleConstantPool.readTelePoolConstant(_index);
+                } catch (DataIOError dataIOError) {
+                    _telePoolConstant = null;
+                }
                 updateText();
             }
             _epoch = epoch;
@@ -167,18 +175,21 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     }
 
     protected final void setJavapResolvableToolTipText(String kind, String name) {
-        setToolTipText("#" + Integer.toString(_index) + "; //" + kind + " " + name
-                        + " (" + (_telePoolConstant.isResolved() ? "Resolved" : "Unresolved") + ")");
+        final String resolution = _telePoolConstant == null ? inspection().nameDisplay().unavailableTeleData() :
+            (isResolved() ? "Resolved" : "Unresolved");
+        setToolTipText("#" + Integer.toString(_index) + "; //" + kind + " " + name + " (" + resolution + ")");
     }
 
     protected void showMenu(MouseEvent mouseEvent) {
         final InspectorMenu menu = new InspectorMenu();
-        menu.add(inspection().actions().copyWord(_telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
-        menu.add(inspection().actions().inspectMemory(_telePoolConstant, "Inspect PoolConstant memory"));
-        menu.add(inspection().actions().inspectMemoryWords(_telePoolConstant, "Inspect PoolConstant memory words"));
-        menu.add(inspection().actions().inspectObject(_telePoolConstant, "Inspect PoolConstant #" + Integer.toString(_index)));
-        menu.add(inspection().actions().inspectObject(_teleConstantPool, "Inspect ConstantPool"));
-        specializeMenu(menu);
+        if (_telePoolConstant != null) {
+            menu.add(inspection().actions().copyWord(_telePoolConstant.getCurrentOrigin(), "Copy PoolConstant address toclipboard"));
+            menu.add(inspection().actions().inspectMemory(_telePoolConstant, "Inspect PoolConstant memory"));
+            menu.add(inspection().actions().inspectMemoryWords(_telePoolConstant, "Inspect PoolConstant memory words"));
+            menu.add(inspection().actions().inspectObject(_telePoolConstant, "Inspect PoolConstant #" + Integer.toString(_index)));
+            menu.add(inspection().actions().inspectObject(_teleConstantPool, "Inspect ConstantPool"));
+            specializeMenu(menu);
+        }
         menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
     }
 
@@ -196,8 +207,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private static final class Class extends PoolConstantLabel {
 
-        private Class(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-            super(inspection, index, teleConstantPool, mode);
+        private Class(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
             redisplay();
         }
 
@@ -216,7 +227,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     Problem.unimplemented();
             }
             setJavapResolvableToolTipText("Class", typeDescriptor.toString());
-            if (telePoolConstant().isResolved()) {
+            if (isResolved()) {
                 setForeground(style().bytecodeColor());
             } else {
                 setForeground(style().javaUnresolvedNameColor());
@@ -225,7 +236,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
         @Override
         protected void specializeMenu(InspectorMenu menu) {
-            if (telePoolConstant().isResolved()) {
+            if (isResolved()) {
                 menu.addSeparator();
                 final TeleClassConstant.Resolved teleResolvedClassConstant = (TeleClassConstant.Resolved) telePoolConstant();
                 final TeleClassActor teleClassActor = teleResolvedClassConstant.getTeleClassActor();
@@ -236,8 +247,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private static final class Field extends PoolConstantLabel {
 
-        private Field(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-            super(inspection, index, teleConstantPool, mode);
+        private Field(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
             redisplay();
         }
 
@@ -259,7 +270,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     Problem.unimplemented();
             }
             setJavapResolvableToolTipText("Field", holderName + "." + fieldName + ":" + fieldRefConstant.type(localConstantPool()).toString());
-            if (telePoolConstant().isResolved()) {
+            if (isResolved()) {
                 setForeground(style().bytecodeColor());
             } else {
                 setForeground(style().javaUnresolvedNameColor());
@@ -268,7 +279,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
         @Override
         protected void specializeMenu(InspectorMenu menu) {
-            if (telePoolConstant().isResolved()) {
+            if (isResolved()) {
                 menu.addSeparator();
                 final TeleFieldRefConstant.Resolved teleResolvedFieldRefConstant = (TeleFieldRefConstant.Resolved) telePoolConstant();
                 final TeleFieldActor teleFieldActor = teleResolvedFieldRefConstant.getTeleFieldActor();
@@ -285,15 +296,19 @@ public abstract class PoolConstantLabel extends InspectorLabel {
          */
         private TeleClassMethodActor _teleClassMethodActor;
 
-        private ClassMethod(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-            super(inspection, index, teleConstantPool, mode);
+        private ClassMethod(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
             redisplay();
         }
 
         private void checkResolved() {
-            if (_teleClassMethodActor == null && telePoolConstant().isResolved()) {
+            _teleClassMethodActor = null;
+            if (isResolved()) {
                 final TeleClassMethodRefConstant.Resolved teleResolvedClassMethodRefConstant = (TeleClassMethodRefConstant.Resolved) telePoolConstant();
-                _teleClassMethodActor = teleResolvedClassMethodRefConstant.getTeleClassMethodActor();
+                try {
+                    _teleClassMethodActor = teleResolvedClassMethodRefConstant.getTeleClassMethodActor();
+                } catch (DataIOError dataIOError) {
+                }
             }
         }
 
@@ -347,8 +362,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private static final class InterfaceMethod extends PoolConstantLabel {
 
-        private InterfaceMethod(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-            super(inspection, index, teleConstantPool, mode);
+        private InterfaceMethod(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
             redisplay();
         }
 
@@ -368,7 +383,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     Problem.unimplemented();
             }
             setJavapResolvableToolTipText("InterfaceMethod", holderName + "." + methodName + ":" + methodRefConstant.descriptor(localConstantPool()).toString());
-            if (telePoolConstant().isResolved()) {
+            if (isResolved()) {
                 setForeground(style().bytecodeColor());
             } else {
                 setForeground(style().javaUnresolvedNameColor());
@@ -377,7 +392,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
         @Override
         protected void specializeMenu(InspectorMenu menu) {
-            if (telePoolConstant().isResolved()) {
+            if (isResolved()) {
                 menu.addSeparator();
                 final TeleInterfaceMethodRefConstant.Resolved teleResolvedInterfaceMethodRefConstant = (TeleInterfaceMethodRefConstant.Resolved) telePoolConstant();
                 final TeleInterfaceMethodActor teleInterfaceMethodActor = teleResolvedInterfaceMethodRefConstant.getTeleInterfaceMethodActor();
@@ -389,8 +404,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private static final class StringConstant extends PoolConstantLabel {
 
-        private StringConstant(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-            super(inspection, index, teleConstantPool, mode);
+        private StringConstant(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
             redisplay();
         }
 
@@ -415,8 +430,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private static final class Utf8Constant extends PoolConstantLabel {
 
-        private Utf8Constant(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-            super(inspection, index, teleConstantPool, mode);
+        private Utf8Constant(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
             redisplay();
         }
 
@@ -442,8 +457,8 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private static final class Other extends PoolConstantLabel {
 
-        private Other(Inspection inspection, int index, TeleConstantPool teleConstantPool, Mode mode) {
-            super(inspection, index, teleConstantPool, mode);
+        private Other(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+            super(inspection, index, localConstantPool, teleConstantPool, mode);
             redisplay();
         }
 

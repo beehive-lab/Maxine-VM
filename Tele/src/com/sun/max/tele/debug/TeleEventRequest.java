@@ -51,9 +51,9 @@ public abstract class TeleEventRequest {
     /**
      * Modifies the execution {@linkplain TeleProcess#state() state} of the tele process.
      *
-     * @throws ExecutionRequestException if an error occurred while trying to modify the execution state
+     * @throws OSExecutionRequestException if an error occurred while trying to modify the execution state
      */
-    public abstract void execute() throws ExecutionRequestException;
+    public abstract void execute() throws OSExecutionRequestException;
 
     /**
      * Performs some action once the tele process next stops after {@link #execute()} has been called.

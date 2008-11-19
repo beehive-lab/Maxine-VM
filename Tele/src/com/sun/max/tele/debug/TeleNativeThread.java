@@ -387,7 +387,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * If this thread is currently at a {@linkplain #breakpoint() breakpoint} it is single stepped to the next
      * instruction.
      */
-    public void evadeBreakpoint() throws ExecutionRequestException {
+    public void evadeBreakpoint() throws OSExecutionRequestException {
         if (_breakpoint != null) {
             assert !_breakpoint.isActivated() : "Cannot single step at an activated breakpoint";
             teleProcess().singleStep(this);

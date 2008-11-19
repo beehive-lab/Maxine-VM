@@ -59,7 +59,7 @@ public final class EirInspector extends IrInspector<EirInspector> {
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return _eirPanel.createTitle();
     }
 

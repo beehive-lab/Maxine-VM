@@ -54,7 +54,7 @@ public class NativeMethodInspector extends MethodInspector {
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         if (_teleTargetRoutine instanceof TeleRuntimeStub) {
             final TeleRuntimeStub teleRuntimeStub = (TeleRuntimeStub) _teleTargetRoutine;
             return Strings.capitalizeFirst(teleRuntimeStub.runtimeStub().name(), false);
@@ -64,7 +64,7 @@ public class NativeMethodInspector extends MethodInspector {
 
     @Override
     public String getToolTip() {
-        return getTitle();
+        return getTextForTitle();
     }
 
     @Override

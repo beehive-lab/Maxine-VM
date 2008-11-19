@@ -39,9 +39,9 @@ public class TeleCodeRegistry extends TeleVMHolder {
 
     public TeleCodeRegistry(TeleVM teleVM) {
         super(teleVM);
-        Trace.begin(1, "creating TeleCodeRegistry");
+        Trace.begin(1, tracePrefix() + " initializing");
         TeleObject.copyStaticFields(teleVM, JniFunctionWrapper.class);
-        Trace.end(1, "creating TeleCodeRegistry");
+        Trace.end(1, tracePrefix() + " initializing");
     }
 
     private final SortedMemoryRegionList<TargetCodeRegion> _targetCodeRegions = new SortedMemoryRegionList<TargetCodeRegion>();

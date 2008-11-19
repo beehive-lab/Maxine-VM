@@ -70,4 +70,9 @@ public interface InspectionListener {
      */
     void viewConfigurationChanged(long epoch);
 
+    /**
+     * Notifies that a running {@link TeleProcess} associated with a {@link @TeleVm} has
+     * stopped running.
+     */
+    void vmProcessTerminated();
 }

@@ -102,7 +102,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Aggregator for " + _objectAggregator.type();
     }
 

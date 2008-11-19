@@ -50,12 +50,12 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
     private static RegistersInspectorContainer make(Inspection inspection) {
         RegistersInspectorContainer registersInspectorContainer = get(inspection);
         if (registersInspectorContainer == null) {
-            Trace.begin(1, "initializing RegistersInspectorContainer");
+            Trace.begin(1, "[RegistersInspector] initializing");
             registersInspectorContainer = new RegistersInspectorContainer(inspection, Residence.INTERNAL);
             for (TeleNativeThread thread : inspection.teleVM().teleProcess().threads()) {
                 registersInspectorContainer.add(new RegistersInspector(inspection, thread, registersInspectorContainer));
             }
-            Trace.end(1, "initializing RegistersInspectorContainer");
+            Trace.end(1, "[RegistersInspector] initializing");
         }
         registersInspectorContainer.updateThreadFocus(inspection.focus().thread());
         return registersInspectorContainer;
@@ -122,7 +122,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Registers";
     }
 
@@ -158,7 +158,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
 
     @Override
     public void add(RegistersInspector registersInspector) {
-        super.add(registersInspector, registersInspector.getTitle());
+        super.add(registersInspector, registersInspector.getTextForTitle());
         registersInspector.frame().invalidate();
         registersInspector.frame().repaint();
     }
@@ -184,13 +184,16 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
         }
     }
 
-    /**
-     * Receives notification that the window system is closing this inspector.
-     */
     @Override
     public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
         removeChangeListener(_tabChangeListener);
         super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
     }
 
 }

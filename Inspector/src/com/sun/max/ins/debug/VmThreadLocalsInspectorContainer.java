@@ -50,12 +50,12 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
     private static VmThreadLocalsInspectorContainer make(Inspection inspection) {
         VmThreadLocalsInspectorContainer threadLocalsInspectorContainer = get(inspection);
         if (threadLocalsInspectorContainer == null) {
-            Trace.begin(1, "initializing ThreadLocalsInspectorContainer");
+            Trace.begin(1, "[VmThreadLocalsInspector] initializing");
             threadLocalsInspectorContainer = new VmThreadLocalsInspectorContainer(inspection, Residence.INTERNAL);
             for (TeleNativeThread thread : inspection.teleVM().teleProcess().threads()) {
                 threadLocalsInspectorContainer.add(new VmThreadLocalsInspector(inspection, thread, threadLocalsInspectorContainer));
             }
-            Trace.end(1, "initializing ThreadLocalsInspectorContainer");
+            Trace.end(1, "[VmThreadLocalsInspector] initializing");
         }
         threadLocalsInspectorContainer.updateThreadFocus(inspection.focus().thread());
         return threadLocalsInspectorContainer;
@@ -123,7 +123,7 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Thread Locals";
     }
 
@@ -159,7 +159,7 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
 
     @Override
     public void add(VmThreadLocalsInspector threadLocalsInspector) {
-        super.add(threadLocalsInspector, threadLocalsInspector.getTitle());
+        super.add(threadLocalsInspector, threadLocalsInspector.getTextForTitle());
         threadLocalsInspector.frame().invalidate();
         threadLocalsInspector.frame().repaint();
     }
@@ -185,13 +185,16 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
         }
     }
 
-    /**
-     * Receives notification that the window system is closing this inspector.
-     */
     @Override
     public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
         removeChangeListener(_tabChangeListener);
         super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
     }
 
 }

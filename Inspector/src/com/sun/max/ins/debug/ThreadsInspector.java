@@ -58,9 +58,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
     public static ThreadsInspector make(Inspection inspection) {
         ThreadsInspector threadsInspector = getInspector(inspection);
         if (threadsInspector == null) {
-            Trace.begin(1, "initializing ThreadsInspector");
             threadsInspector = new ThreadsInspector(inspection, Residence.INTERNAL);
-            Trace.end(1, "initializing ThreadsInspector");
         }
         threadsInspector.highlight();
         return threadsInspector;
@@ -82,7 +80,9 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
 
     private ThreadsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
+        Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
+        Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
@@ -91,7 +91,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Threads";
     }
 
@@ -381,6 +381,17 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
     public void viewConfigurationChanged(long epoch) {
         //  All view configurations are applied dynamically in this inspector.
         refreshView(epoch, true);
+    }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
     }
 
 }
