@@ -99,6 +99,9 @@ class ExecutionFrame {
 
         public ExceptionHandlerEntry findHandler(ClassActor exceptionClassActor, int codeOffset) {
             for (ExceptionHandlerEntry handler : _handlers) {
+                if (handler.catchTypeIndex() == 0) {
+                    return handler;
+                }
                 if (codeOffset >= handler.startPosition() && codeOffset < handler.endPosition() &&
                         constantPool().classAt(handler.catchTypeIndex()).resolve(constantPool(), handler.catchTypeIndex()).isAssignableFrom(exceptionClassActor)) {
                     return handler;
