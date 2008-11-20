@@ -34,6 +34,7 @@ import com.sun.max.ins.InspectionActions.*;
  * Support for binding {@link KeyStroke}s to {@link InspectorActions}s.
  *
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public class InspectorKeyBindings {
 
@@ -133,33 +134,7 @@ public class InspectorKeyBindings {
     }
 
     /**
-     * The keys bindings that were defined in an ad-hoc fashion as the Maxine inspector was developed.
-     */
-    public static final KeyBindingMap MAXINE_KEY_BINDING_MAP = new KeyBindingMap("Maxine").
-        add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
-        add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
-        add(InspectClassActorByNameAction.class, 'C', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(InspectMethodActorByNameAction.class, 'M', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(ViewMethodBytecodeByNameAction.class, 'B', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(ViewMethodTargetCodeByNameAction.class, 'D', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(DebugSingleStepAction.class, 'S', CTRL_DOWN_MASK).
-        add(DebugStepOverWithBreakpointsAction.class, 'W', CTRL_DOWN_MASK).
-        add(DebugStepOverAction.class, 'W', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(DebugReturnFromFrameWithBreakpointsAction.class, 'F', CTRL_DOWN_MASK).
-        add(DebugReturnFromFrameAction.class, 'F', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(DebugResumeAction.class, 'R', CTRL_DOWN_MASK).
-        add(DebugPauseAction.class, 'P', CTRL_DOWN_MASK).
-        add(ToggleTargetCodeBreakpointAction.class, 'B', CTRL_DOWN_MASK).
-        add(SetTargetCodeBreakpointAtMethodEntriesByNameAction.class, 'E', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetBytecodeBreakpointAtMethodEntryByNameAction.class, 'S', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetTargetCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(SetTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
-        add(RemoveTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(DebugRunToInstructionWithBreakpointsAction.class, 'T', CTRL_DOWN_MASK).
-        add(DebugRunToInstructionAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
-
-    /**
-     * A set of key bindings that matches the default bindings in N for similar actions.
+     * A set of key bindings that matches the default bindings in NetBeans for similar actions.
      */
     public static final KeyBindingMap NETBEANS_KEY_BINDINGS = new KeyBindingMap("NetBeans").
         add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
@@ -185,9 +160,9 @@ public class InspectorKeyBindings {
         add(DebugRunToInstructionAction.class, VK_F4, CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
 
     /**
-     * A set of key bindings that matches the default bindings in Eclipse for similar actions.
+     * A default set of key bindings.
      */
-    public static final KeyBindingMap ECLIPSE_KEY_BINDINGS = new KeyBindingMap("Eclipse").
+    public static final KeyBindingMap DEFAULT_KEY_BINDINGS = new KeyBindingMap("Default").
         add(ViewBootImageAction.class, 'I', CTRL_DOWN_MASK).
         add(QuitAction.class, 'Q', CTRL_DOWN_MASK).
         add(InspectClassActorByNameAction.class, 'T', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
