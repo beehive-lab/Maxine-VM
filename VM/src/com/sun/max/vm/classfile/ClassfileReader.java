@@ -1191,11 +1191,13 @@ public class ClassfileReader {
 
     private ClassActor loadClass(final Utf8Constant name, Object source) {
         try {
+            String optSource = null;
             if (VerboseVMOption.verboseClassLoading()) {
                 if (source != null) {
                     Log.println("[Loading " + name + " from " + source + "]");
                 } else {
-                    Log.println("[Loading " + name + " from " + _classLoader.getClass().getName() + "]");
+                    optSource = _classLoader == null ? "generated data" : _classLoader.getClass().getName();
+                    Log.println("[Loading " + name + " from " + optSource + "]");
                 }
             }
             enterContext(new Object() {
@@ -1210,7 +1212,7 @@ public class ClassfileReader {
                 if (source != null) {
                     Log.println("[Loaded " + name + " from " + source + "]");
                 } else {
-                    Log.println("[Loaded " + name + " from " + _classLoader.getClass().getName() + "]");
+                    Log.println("[Loaded " + name + " from " + optSource + "]");
                 }
             }
 
