@@ -54,16 +54,24 @@ public class CirInliningPolicy {
         return block.isInlineable(cirOptimizer, arguments);
     }
 
-    public boolean isInlineable(CirOptimizer cirOptimizer, CirMethod method, CirValue[] arguments) {
-        if (method.mustInline(cirOptimizer, arguments)) {
-            return true;
-        } else if (method.neverInline()) {
+    public boolean isInlineable(CirOptimizer cirOptimizer, CirMethod cirMethod, CirValue[] arguments) {
+        final ClassMethodActor compilee = cirMethod.classMethodActor().compilee();
+        if (compilee.isNeverInline() || compilee.isDeclaredFoldable() || cirMethod.mustNotInline(cirOptimizer, arguments)) {
             return false;
-        } else if (MaxineVM.isPrototyping() && CompiledPrototype.jitCompile(method.classMethodActor())) {
+        }
+        if (compilee.isInline()) {
+            if (compilee.isInlineAfterSnippetsAreCompiled() && !cirOptimizer.cirGenerator().compilerScheme().areSnippetsCompiled()) {
+                return false;
+            }
+            return true;
+        } else if (MaxineVM.isPrototyping() && CompiledPrototype.jitCompile(cirMethod.classMethodActor())) {
             // for testing purposes, don't inline methods that are marked to be compiled by the JIT
             return false;
         }
-        return shouldInline(cirOptimizer, method, arguments);
+        if (cirMethod.isFoldable(cirOptimizer, arguments)) {
+            return false;
+        }
+        return shouldInline(cirOptimizer, cirMethod, arguments);
     }
 
     protected boolean shouldInline(CirOptimizer cirOptimizer, CirMethod method, CirValue[] arguments) {
@@ -84,10 +92,6 @@ public class CirInliningPolicy {
 
         @Override
         public boolean shouldInline(CirOptimizer cirOptimizer, CirMethod method, CirValue[] arguments) {
-            final ClassMethodActor classMethodActor = method.classMethodActor();
-            if (classMethodActor.isDeclaredNeverInline() || classMethodActor.isDeclaredFoldable() || method.isFoldable(cirOptimizer, arguments)) {
-                return false;
-            }
             final boolean result = BytecodeAssessor.hasSmallStraightlineCode(method.classMethodActor());
             if (result) {
                 Trace.line(7, "should inline: " + method.classMethodActor().qualifiedName());
