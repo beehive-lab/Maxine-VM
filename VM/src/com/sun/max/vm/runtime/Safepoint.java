@@ -169,6 +169,9 @@ public abstract class Safepoint {
      * Determines if safepoints are triggered for the current thread.
      */
     public static boolean isTriggered() {
+        if (MaxineVM.isPrototyping()) {
+            return false;
+        }
         return getLatchRegister().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord().asPointer()) ||
             SAFEPOINT_LATCH.getVariableWord().equals(SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord());
     }

@@ -27,6 +27,7 @@ import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.jni.*;
@@ -37,6 +38,17 @@ public abstract class BytecodeTest_native<Method_Type extends IrMethod> extends 
 
     protected BytecodeTest_native(String name) {
         super(name);
+    }
+
+    public void test_reference_identity1() {
+        Trace.on(3);
+        final Method_Type method = compileMethod("referenceIdentity", SignatureDescriptor.create(Object.class, Object.class));
+        if (hasInterpreter()) {
+            final Object object = "XXX";
+            final Value value = ReferenceValue.from(object);
+            final Value returnedValue = execute(method, value);
+            assertTrue(returnedValue.equals(value));
+        }
     }
 
     private static native void nop();
@@ -255,7 +267,7 @@ public abstract class BytecodeTest_native<Method_Type extends IrMethod> extends 
                     Object object54,
                     Object object55);
 
-    public void notest_manyObjectParameters() {
+    public void test_manyObjectParameters() {
         // This must be the number of parameters in the 'manyObjectParameters' native method
         final int numberOfParameters = 56;
 

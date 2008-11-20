@@ -656,8 +656,11 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         }
     }
 
+    /**
+     * TODO: debug stub interpretation and reenable this.
+     */
     protected boolean shouldTestStubs() {
-        return true;
+        return false;
     }
 
     /**
