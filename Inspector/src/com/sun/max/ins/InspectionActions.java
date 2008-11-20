@@ -117,6 +117,13 @@ public class InspectionActions extends InspectionHolder implements Prober{
     private static final int TRACE_VALUE = 2;
 
     /**
+     * Name of the Action for searching in an Inspector view.
+     */
+    public static final String SEARCH_ACTION = "Search";
+
+
+
+    /**
      * Actions that are held and shared; they have state that will be refreshed.
      * This is particularly important for actions that enable/disable, depending on the inspection state.
      */
