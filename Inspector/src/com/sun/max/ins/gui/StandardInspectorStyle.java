@@ -371,12 +371,12 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // Search
     private final Color _searchPatternFailedColor = new Color(255, 192, 203); // X11 Pink
     @Override
-    public Color searchPatternFailedColor() {
+    public Color searchFailedBackground() {
         return _searchPatternFailedColor;
     }
     private final Color _searchRowMatchedBackground = new Color(255, 255, 200);  // light yellow, but not as light as X11 LightYellow
     @Override
-    public Color searchRowMatchedBackground() {
+    public Color searchMatchedBackground() {
         return _searchRowMatchedBackground;
     }
 
