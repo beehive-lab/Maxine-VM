@@ -21,8 +21,6 @@
 package test.com.sun.max.vm.compiler;
 
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * Translates almost all of the packages in the project to test the translator.
@@ -44,11 +42,7 @@ public abstract class CompilerTest_max<Method_Type extends IrMethod> extends Com
     }
 
     public void test_1() {
-        final Method_Type method = compileMethod(VmThread.class, "nativeSleep");
-        if (method instanceof TargetMethod) {
-            final TargetMethod targetMethod = (TargetMethod) method;
-            traceBundleAndDisassemble(targetMethod);
-        }
+        compilePackage(new com.sun.max.vm.compiler.target.Package());
     }
 
     public void test_basePackages() {

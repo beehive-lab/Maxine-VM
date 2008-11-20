@@ -560,7 +560,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         if (searchMatchingRows != null) {
             for (int matchingRow : searchMatchingRows) {
                 if (row == matchingRow) {
-                    return style().searchRowMatchedBackground();
+                    return style().searchMatchedBackground();
                 }
             }
         }

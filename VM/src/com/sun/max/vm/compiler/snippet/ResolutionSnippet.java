@@ -304,7 +304,6 @@ public abstract class ResolutionSnippet extends Snippet {
     }
 
     public static final class ResolveStaticMethod extends EntrypointResolutionSnippet {
-
         @NEVER_INLINE
         private static void resolve(EntrypointResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
@@ -334,6 +333,7 @@ public abstract class ResolutionSnippet extends Snippet {
             return guard.value();
         }
 
+        @NEVER_INLINE
         public static Word resolveTracedStaticMethod(EntrypointResolutionGuard guard) {
             final ConstantPool constantPool = guard.constantPool();
             final int index = guard.constantPoolIndex();

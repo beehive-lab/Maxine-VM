@@ -132,89 +132,93 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     // Performs the actual Garbage Collection
     private final Runnable _collect = new Runnable() {
         public void run() {
-            if (Heap.verbose()) {
-                Log.print("--Before GC--   size: ");
-                Log.println(_allocationMark.minus(_toSpace.start()).toInt());
+            try {
+                if (Heap.verbose()) {
+                    Log.print("--Before GC--   size: ");
+                    Log.println(_allocationMark.minus(_toSpace.start()).toInt());
+                }
+
+                // Calls the beforeGarbageCollection() method of the plugged monitor Scheme.
+                // Pre-verification of the heap.
+                verifyHeap();
+
+                ++_numberOfGarbageCollectionInvocations;
+                TeleHeapInfo.beforeGarbageCollection();
+
+                VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
+
+                _gcTimer.restart();
+
+                _clearTimer.restart();
+                swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
+                _clearTimer.stop();
+
+                if (Heap.traceGCRootScanning()) {
+                    Log.println("Scanning roots...");
+                }
+                _rootScanTimer.restart();
+                _heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
+                _rootScanTimer.stop();
+
+                if (Heap.traceGC()) {
+                    Log.println("Scanning boot heap...");
+                }
+                _bootHeapScanTimer.restart();
+                scanBootHeap();
+                _bootHeapScanTimer.stop();
+
+                _codeScanTimer.restart();
+                scanCode();
+                _codeScanTimer.stop();
+
+                if (Heap.traceGC()) {
+                    Log.println("Moving reachable...");
+                }
+
+                _copyTimer.restart();
+                moveReachableObjects();
+                _copyTimer.stop();
+                _gcTimer.stop();
+
+                // Bring the inspectable mark up to date, since it is not updated during the move.
+                _toSpace.setAllocationMark(_allocationMark); // for debugging
+
+                VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
+
+                verifyHeap();
+
+                TeleHeapInfo.afterGarbageCollection();
+
+                if (Heap.traceGC()) {
+                    final boolean lockDisabledSafepoints = Log.lock();
+                    Log.print("clear & initialize: ");
+                    Log.print(_clearTimer.getMilliSeconds());
+                    Log.print("   root scan: ");
+                    Log.print(_rootScanTimer.getMilliSeconds());
+                    Log.print("   boot heap scan: ");
+                    Log.print(_bootHeapScanTimer.getMilliSeconds());
+                    Log.print("   code scan: ");
+                    Log.print(_codeScanTimer.getMilliSeconds());
+                    Log.print("   copy: ");
+                    Log.print(_copyTimer.getMilliSeconds());
+                    Log.println();
+                    Log.print("GC <");
+                    Log.print(_numberOfGarbageCollectionInvocations);
+                    Log.print("> ");
+                    Log.print(_gcTimer.getMilliSeconds());
+                    Log.println(" (ms)");
+
+                    Log.println();
+                    Log.unlock(lockDisabledSafepoints);
+                }
+                if (Heap.verbose()) {
+                    Log.print("--After  GC--   size: ");
+                    Log.println(_allocationMark.minus(_toSpace.start()).toInt());
+                }
+                _numberOfGarbageTurnovers++;
+            } catch (Throwable throwable) {
+                FatalError.unexpected(throwable.toString() + " during GC");
             }
-
-            // Calls the beforeGarbageCollection() method of the plugged monitor Scheme.
-            // Pre-verification of the heap.
-            verifyHeap();
-
-            ++_numberOfGarbageCollectionInvocations;
-            TeleHeapInfo.beforeGarbageCollection();
-
-            VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
-
-            _gcTimer.restart();
-
-            _clearTimer.restart();
-            swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
-            _clearTimer.stop();
-
-            if (Heap.traceGCRootScanning()) {
-                Log.println("Scanning roots...");
-            }
-            _rootScanTimer.restart();
-            _heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
-            _rootScanTimer.stop();
-
-            if (Heap.traceGC()) {
-                Log.println("Scanning boot heap...");
-            }
-            _bootHeapScanTimer.restart();
-            scanBootHeap();
-            _bootHeapScanTimer.stop();
-
-            _codeScanTimer.restart();
-            scanCode();
-            _codeScanTimer.stop();
-
-            if (Heap.traceGC()) {
-                Log.println("Moving reachable...");
-            }
-
-            _copyTimer.restart();
-            moveReachableObjects();
-            _copyTimer.stop();
-            _gcTimer.stop();
-
-            // Bring the inspectable mark up to date, since it is not updated during the move.
-            _toSpace.setAllocationMark(_allocationMark); // for debugging
-
-            VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
-
-            verifyHeap();
-
-            TeleHeapInfo.afterGarbageCollection();
-
-            if (Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("clear & initialize: ");
-                Log.print(_clearTimer.getMilliSeconds());
-                Log.print("   root scan: ");
-                Log.print(_rootScanTimer.getMilliSeconds());
-                Log.print("   boot heap scan: ");
-                Log.print(_bootHeapScanTimer.getMilliSeconds());
-                Log.print("   code scan: ");
-                Log.print(_codeScanTimer.getMilliSeconds());
-                Log.print("   copy: ");
-                Log.print(_copyTimer.getMilliSeconds());
-                Log.println();
-                Log.print("GC <");
-                Log.print(_numberOfGarbageCollectionInvocations);
-                Log.print("> ");
-                Log.print(_gcTimer.getMilliSeconds());
-                Log.println(" (ms)");
-
-                Log.println();
-                Log.unlock(lockDisabledSafepoints);
-            }
-            if (Heap.verbose()) {
-                Log.print("--After  GC--   size: ");
-                Log.println(_allocationMark.minus(_toSpace.start()).toInt());
-            }
-            _numberOfGarbageTurnovers++;
         }
     };
 

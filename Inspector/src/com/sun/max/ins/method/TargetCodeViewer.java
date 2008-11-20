@@ -231,7 +231,7 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
         if (searchMatchingRows != null) {
             for (int matchingRow : searchMatchingRows) {
                 if (row == matchingRow) {
-                    return style().searchRowMatchedBackground();
+                    return style().searchMatchedBackground();
                 }
             }
         }

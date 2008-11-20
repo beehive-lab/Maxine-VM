@@ -52,13 +52,13 @@ public final class CirSelectInterfaceMethod extends CirSpecialSnippet {
     }
 
     @Override
-    public boolean mustInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
+    public boolean mustNotInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
         if (MaxineVM.isPrototyping()) {
             if (isConstantArgument(arguments, Parameter.declaredMethod)) {
                 final MethodActor declaredMethod = (MethodActor) getConstantArgumentValue(arguments, Parameter.declaredMethod).asObject();
                 // Accessor method selection must never be inlined, instead it must always be folded:
                 if (declaredMethod.holder().toJava() == Accessor.class) {
-                    return false;
+                    return true;
                 }
                 // Inlining of method selection for methods with accessor arguments must never be attempted:
                 for (Class parameterClass : declaredMethod.toJava().getParameterTypes()) {
@@ -68,7 +68,7 @@ public final class CirSelectInterfaceMethod extends CirSpecialSnippet {
                 }
             }
         }
-        return super.mustInline(cirOptimizer, arguments);
+        return super.mustNotInline(cirOptimizer, arguments);
     }
 
     @Override

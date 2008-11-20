@@ -149,7 +149,7 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     @Override
     public boolean setEnabled(boolean enabled) {
-        assert !isTransient() : "cannot diable transient breakpoint: " + this;
+        assert !isTransient() : "cannot disable transient breakpoint: " + this;
         if (enabled != _enabled) {
             _enabled = enabled;
             if (enabled) {

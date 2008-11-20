@@ -402,6 +402,11 @@ public abstract class Actor {
     }
 
     @INLINE
+    public static boolean isInlineAfterSnippetsAreCompiled(int flags) {
+        return (flags & INLINE_AFTER_SNIPPETS_ARE_COMPILED) != 0;
+    }
+
+    @INLINE
     public static boolean isNeverInline(int flags) {
         return (flags & NEVER_INLINE) != 0;
     }

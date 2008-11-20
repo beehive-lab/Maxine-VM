@@ -217,9 +217,9 @@ public interface InspectorStyle {
     Icon searchNextMatchButtonIcon();
     Icon searchPreviousMatchButtonIcon();
     /** Background color for patterns typed into a search field that don't match anything. */
-    Color searchPatternFailedColor();
+    Color searchFailedBackground();
     /** Background color for rows that have been matched by a search. */
-    Color searchRowMatchedBackground();
+    Color searchMatchedBackground();
 
     // Standard Color Palates.  Please don't change; create new colors if needed.
     // Palate 1:  Primary colors, designed to work well together

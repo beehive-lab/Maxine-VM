@@ -213,7 +213,7 @@ public class Inspection extends JFrame {
         }
     }
 
-    private KeyBindingMap _keyBindingMap = InspectorKeyBindings.MAXINE_KEY_BINDING_MAP;
+    private KeyBindingMap _keyBindingMap = InspectorKeyBindings.DEFAULT_KEY_BINDINGS;
 
     private final AppendableSequence<InspectorAction> _actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
 
