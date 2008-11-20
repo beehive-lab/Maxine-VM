@@ -315,6 +315,11 @@ public abstract class EirMethodGeneration {
         _eirEpilogue.addUse(useValue);
     }
 
+    public void addEpilogueStackSlotUse(EirValue useValue) {
+        makeEpilogue();
+        _eirEpilogue.addStackSlotUse(useValue);
+    }
+
     public abstract EirEpilogue createEpilogueAndReturn(EirBlock eirBlock);
 
     public EirBlock makeEpilogue() {

@@ -154,7 +154,7 @@ public class RowTextSearchToolBar extends JToolBar {
             try {
                 pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
             } catch (PatternSyntaxException patternSyntaxException) {
-                _textField.setBackground(_inspection.style().searchPatternFailedColor());
+                _textField.setBackground(_inspection.style().searchFailedBackground());
                 _statusLabel.setText("regexp error");
                 return;
             }
@@ -168,11 +168,11 @@ public class RowTextSearchToolBar extends JToolBar {
                 _statusLabel.setText(Integer.toString(matchCount) + " rows matched");
             }
             if (matchCount > 0) {
-                _textField.setBackground(_textFieldDefaultBackground);
+                _textField.setBackground(_inspection.style().searchMatchedBackground());
                 _nextButton.setEnabled(true);
                 _previousButton.setEnabled(true);
             } else {
-                _textField.setBackground(_inspection.style().searchPatternFailedColor());
+                _textField.setBackground(_inspection.style().searchFailedBackground());
                 _nextButton.setEnabled(false);
                 _previousButton.setEnabled(false);
             }

@@ -106,7 +106,7 @@ fi
 
 # Undefined optional variables are set to defaults
 test -n "${jvm}" || jvm="${JAVA_HOME}/bin/java"
-jvm="$jvm $jvm_args"
+jvm_exe="$jvm $jvm_args"
 
 # Ensure that a JDK 6 is being used
 java_version="`$jvm -version 2>&1 | head -1 | cut -d '"' -f2`"
@@ -281,7 +281,7 @@ function run_build() {
 image_help="build a VM image"
 
 function run_image() {
-    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -build=DEBUG -run=java $@
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -build=DEBUG -run=java $@
 }
 
 #=======================================
@@ -291,7 +291,7 @@ function run_image() {
 compile_help="compile a list of classes and/or methods"
 
 function run_compile() {
-    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@
 }
 
 #=======================================
@@ -339,7 +339,7 @@ dis_help="preprocess class files with the Maxine VM and disassembles the result 
 function run_dis() {
     TMP_DIR=/tmp/${USER}/generated.$$
     run mkdir -p ${TMP_DIR}
-    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.classfile.ClassfileWriter -d=${TMP_DIR} -javap "$@"
     run rm -rf ${TMP_DIR}
 }
 
@@ -350,7 +350,7 @@ function run_dis() {
 inspect_help="launch a given program under the inspector"
 
 function run_inspect() {
-    run ${jvm} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$@"\"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$@"\"
 }
 
 #=======================================
@@ -401,7 +401,7 @@ function run_helloworld() {
 objecttree_help="print the causality spanning-tree of the object graph in the VM image"
 
 function run_objecttree() {
-    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
 
 #=======================================
@@ -411,7 +411,7 @@ function run_objecttree() {
 methodtree_help="print the causality spanning-tree of the method graph in the VM image"
 
 function run_methodtree() {
-    run ${jvm} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
 }
 
 #=======================================
@@ -421,7 +421,7 @@ function run_methodtree() {
 maxinetester_help="run the MaxineTester"
 
 function run_maxinetester() {
-    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester "$@"
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester "$@"
 }
 
 #=======================================
@@ -431,7 +431,7 @@ function run_maxinetester() {
 gate_help="run the tests used to validate a push to the stable Maxine repository"
 
 function run_gate() {
-    run ${jvm} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optjit "$@"
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optjit -java-executable="${jvm}" "$@"
 }
 
 #=======================================

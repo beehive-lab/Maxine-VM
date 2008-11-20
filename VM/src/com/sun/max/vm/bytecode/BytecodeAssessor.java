@@ -60,13 +60,15 @@ public final class BytecodeAssessor {
                 private void checkInvoke(int index) {
                     final ClassMethodRefConstant constant = constantPool.classMethodAt(index);
                     if (constant.isResolvableWithoutClassLoading(constantPool)) {
-                        final ClassMethodActor callee = (ClassMethodActor) constant.resolve(constantPool, index);
-                        if (!hasStraightLineCode(callee, new Cons<ClassMethodActor>(classMethodActor, callers))) {
-                            bytecodeScanner().stop();
+                        try {
+                            final ClassMethodActor callee = (ClassMethodActor) constant.resolve(constantPool, index);
+                            if (hasStraightLineCode(callee, new Cons<ClassMethodActor>(classMethodActor, callers))) {
+                                return;
+                            }
+                        } catch (NoSuchMethodError noSuchMethodError) {
                         }
-                    } else {
-                        bytecodeScanner().stop();
                     }
+                    bytecodeScanner().stop();
                 }
 
                 @Override

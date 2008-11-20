@@ -156,6 +156,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         if (suite.countTestCases() == 0) {
             return;
         }
+        Trace.stream().println("Initializing compiler...");
         junit.textui.TestRunner.run(new CompilerRunner(suite));
     }
 

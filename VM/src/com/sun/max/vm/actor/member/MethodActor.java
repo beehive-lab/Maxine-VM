@@ -141,6 +141,11 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
+    public final boolean isInlineAfterSnippetsAreCompiled() {
+        return isInlineAfterSnippetsAreCompiled(flags());
+    }
+
+    @INLINE
     public final boolean isNeverInline() {
         return isNeverInline(flags());
     }

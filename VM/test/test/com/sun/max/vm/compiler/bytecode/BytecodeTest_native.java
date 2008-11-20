@@ -255,7 +255,7 @@ public abstract class BytecodeTest_native<Method_Type extends IrMethod> extends 
                     Object object54,
                     Object object55);
 
-    public void notest_manyObjectParameters() {
+    public void test_manyObjectParameters() {
         // This must be the number of parameters in the 'manyObjectParameters' native method
         final int numberOfParameters = 56;
 

@@ -66,6 +66,12 @@ public abstract class EirEpilogue<EirInstructionVisitor_Type extends EirInstruct
         _useOperands.append(operand);
     }
 
+    public void addStackSlotUse(EirValue usedValue) {
+        final EirOperand operand = new EirOperand(this, EirOperand.Effect.USE, EirLocationCategory.S);
+        operand.setEirValue(usedValue);
+        _useOperands.append(operand);
+    }
+
     public EirEpilogue(EirBlock block, EirMethod eirMethod,
                        EirValue[] calleeSavedValues, EirLocation[] calleeSavedRegisters,
                        EirLocation returnResultLocation) {

@@ -126,7 +126,7 @@ public class EirTraceObserver extends IrTraceObserver {
             final Class<Iterable<EirVariable>> type = null;
             final Iterable<EirVariable> variables = StaticLoophole.cast(type, context);
             for (EirVariable variable : variables) {
-                // Cannot sort variable's by their weight as they may not yet have been calculated: used serial numbers instead
+                // Cannot sort variable's by their weight as they may not yet have been calculated: use serial numbers instead
                 final Comparator<EirVariable> serialNumberComparator = new Comparator<EirVariable>() {
                     public int compare(EirVariable o1, EirVariable o2) {
                         return o1.serial() - o2.serial();
