@@ -405,10 +405,10 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
     public Icon searchPreviousMatchButtonIcon() {
         return _searchPreviousMatchButtonIcon;
     }
-    public Color searchPatternFailedColor() {
+    public Color searchFailedBackground() {
         return Color.red;
     }
-    public Color searchRowMatchedBackground() {
+    public Color searchMatchedBackground() {
         return SunYellow3;
     }
 

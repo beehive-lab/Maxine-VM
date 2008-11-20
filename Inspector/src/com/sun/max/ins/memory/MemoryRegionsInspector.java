@@ -76,28 +76,34 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
      * kind.  The visibility of them, however, may be changed by the user.
      */
     private enum ColumnKind {
-        NAME("Name", true) {
+        NAME("Name", null, true) {
             @Override
             public boolean canBeMadeInvisible() {
                 return false;
             }
         },
-        START("Start", true),
-        END("End", true),
-        SIZE("Size", true),
-        ALLOC("Allocation", true);
+        START("Start", "Starting address", true),
+        END("End", "Ending address", true),
+        SIZE("Size", "Region size allocated from OS", true),
+        ALLOC("Alloc", "Memory allocated by VM within region", true);
 
         private final String _label;
+        private final String _toolTipText;
         private final boolean _defaultVisibility;
 
-        private ColumnKind(String label, boolean defaultVisibility) {
+        private ColumnKind(String label, String toolTipText, boolean defaultVisibility) {
             _label = label;
+            _toolTipText = toolTipText;
             _defaultVisibility = defaultVisibility;
             assert defaultVisibility || canBeMadeInvisible();
         }
 
         public String label() {
             return _label;
+        }
+
+        public String toolTipText() {
+            return _toolTipText;
         }
 
         @Override
@@ -189,7 +195,9 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         _model = new MemoryRegionTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new MemoryRegionColumnModel();
-        _table = new JTable(_model, _columnModel);
+        _table = new MemoryRegionJTable(_model, _columnModel);
+        _model.refresh();
+        JTableColumnResizer.adjustColumnPreferredWidths(_table);
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(new InspectorAction(inspection, "Preferences") {
@@ -217,30 +225,31 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
         _table.setColumnSelectionAllowed(false);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         _table.addMouseListener(new MemoryRegionsInspectorMouseClickAdapter(inspection()));
-//        final ListSelectionModel listSelectionModel = _table.getSelectionModel();
-//        listSelectionModel.addListSelectionListener(new ListSelectionListener() {
-//            public void valueChanged(ListSelectionEvent event) {
-//                if (event.getValueIsAdjusting()) {
-//                    return;
-//                }
-//                assert event.getSource() == listSelectionModel;
-//                // Decide whether to propagate the new table selection.
-//                // If the new table selection agrees with the global thread
-//                // selection, then this table change is just an initialization or update notification.
-//                if (!listSelectionModel.isSelectionEmpty()) {
-//                    final TeleNativeThread teleNativeThread = (TeleNativeThread) _table.getValueAt(_table.getSelectedRow(), 0);
-//                    // A user action in this inspector has selected a thread different than the global selection; propagate the change.
-//                    inspection().focus().setThread(teleNativeThread);
-//                }
-//            }
-//        });
         final JScrollPane scrollPane = new JScrollPane(_table);
-        // scrollPane.setPreferredSize(inspection().geometry().threadsFramePrefSize());
-        // frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
         frame().setContentPane(scrollPane);
         refreshView(epoch, true);
     }
 
+
+    private final class MemoryRegionJTable extends JTable {
+
+        MemoryRegionJTable(MemoryRegionTableModel memoryRegionTableModel, MemoryRegionColumnModel memoryRegionColumnModel) {
+            super(memoryRegionTableModel, memoryRegionColumnModel);
+        }
+
+        @Override
+        protected JTableHeader createDefaultTableHeader() {
+            return new JTableHeader(_columnModel) {
+                @Override
+                public String getToolTipText(MouseEvent mouseEvent) {
+                    final Point p = mouseEvent.getPoint();
+                    final int index = _columnModel.getColumnIndexAtX(p.x);
+                    return ColumnKind.VALUES.get(index).toolTipText();
+                }
+            };
+        }
+
+    }
     private final class MemoryRegionColumnModel extends DefaultTableColumnModel {
 
         private final Preferences _preferences;

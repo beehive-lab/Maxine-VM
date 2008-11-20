@@ -227,7 +227,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _table.setPreferredScrollableViewportSize(preferredTableSize);
 
         // Set up toolbar
-
         JButton button = new JButton(_inspection.actions().toggleTargetCodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
