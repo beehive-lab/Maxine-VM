@@ -22,7 +22,6 @@ package com.sun.max.vm.stack.amd64;
 
 import com.sun.max.asm.amd64.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
@@ -40,26 +39,26 @@ import com.sun.max.vm.stack.*;
  * <pre>
  *   Base  Index       Contents
  *   ----------------+--------------------------------+----------------              maximumSlotOffset() if P > 0
- *  [+frameSize+P+1] | Java parameter 0               | Incoming
+ *      [+R+(P*J)+1] | Java parameter 0               | Incoming
  *                   |     ...                        | Java
- *    [+frameSize+1] | Java parameter (P-1)           | parameters
+ *            [+R+1] | Java parameter (P-1)           | parameters
  *   ----------------+--------------------------------+----------------
- *      [+frameSize] | return address                 | Call save          ___
- *    [+frameSize-1] | caller's FP value              | area                ^
+ *              [+R] | return address                 | Call save          ___
+ *            [+R-1] | caller's FP value              | area                ^
  *                   +--------------------------------+----------------     |
  *                   |     ...                        | alignment           |
  *                   +--------------------------------+----------------     |        maximumSlotOffset() if P == 0
- *        [+(T-1)]   | template spill slot (T-1)      | Template            |
+ *          [+(T-1)] | template spill slot (T-1)      | Template            |
  *                   |     ...                        | spill               |
- *        [+0]       | template spill slot 0          | area            frameSize()
+ *              [+0] | template spill slot 0          | area            frameSize()
  *  FP (%RBP)  ==>   +--------------------------------+----------------     |
- *        [-1]       | Java non-parameter local 0     | Java                |
+ *              [-J] | Java non-parameter local 0     | Java                |
  *                   |     ...                        | non-parameters      |
- *        [-L]       | Java non-parameter local (L-1) | locals              v
+ *          [-(L*J)] | Java non-parameter local (L-1) | locals              v
  *                   +--------------------------------+----------------    ---
- *        [-(L+1)]   | Java stack slot 0              | Java
+ *      [-((L+1)*J)] | Java stack slot 0              | Java
  *                   |     ...                        | operand
- *        [-(L+S)]   | Java stack slot (S-1)          | stack
+ *      [-((L+S)*J)] | Java stack slot (S-1)          | stack
  *  SP (%RSP)  ==>   +--------------------------------+----------------  lowestSlotOffset()
  *
  * where:
@@ -67,6 +66,8 @@ import com.sun.max.vm.stack.*;
  *      L == Number of Java non-parameter local slots
  *      S == Number of Java operand stack slots  # (i.e. maxStack)
  *      T == Number of template spill slots
+ *      R == Return address offset [ frameSize - sizeOfNonParameterLocals() ]
+ *      J == Stack slots per JIT slot [ JIT_SLOT_SIZE / Word.size() ]
  *
  * </pre>
  *
@@ -105,7 +106,7 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
     public int frameSize() {
         final int numberOfSlots = 1 + _numberOfTemplateSlots; // one extra word for the caller RBP
         final int unalignedSize = numberOfSlots * STACK_SLOT_SIZE + sizeOfNonParameterLocals();
-        return VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(unalignedSize);
+        return JIT_ABI.alignFrameSize(unalignedSize);
     }
 
     @Override
@@ -115,7 +116,7 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
             // | non-parameter locals | template slots | caller FP | return address | parameters |
             // | <-------------------- frameSize() --------------> |
             //                        ^ RBP                                         ^ parameterStart
-            final int parameterStart = frameSize() - sizeOfNonParameterLocals() + Word.size();
+            final int parameterStart = returnAddressOffset() + Word.size();
             return parameterStart + JIT_SLOT_SIZE * (_numberOfParameterSlots - 1 - localVariableIndex);
         }
         // The slot index is at a negative offset from RBP.
@@ -127,15 +128,15 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
 
     @Override
     public int operandStackOffset(int operandStackIndex) {
-        return 0 - ((numberOfNonParameterSlots() + operandStackIndex + 1) * JitStackFrameLayout.JIT_SLOT_SIZE);
+        return 0 - ((numberOfNonParameterSlots() + operandStackIndex + 1) * JIT_SLOT_SIZE);
     }
 
     public int returnAddressOffset() {
-        return frameSize();
+        return frameSize() - sizeOfNonParameterLocals();
     }
 
     public int callersRBPOffset() {
-        return frameSize() - Word.size();
+        return returnAddressOffset() - STACK_SLOT_SIZE;
     }
 
     @Override

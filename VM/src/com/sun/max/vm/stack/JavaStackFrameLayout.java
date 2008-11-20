@@ -142,7 +142,7 @@ public abstract class JavaStackFrameLayout {
     }
 
     /**
-     * A collection of {@link Slot} objects that describes each stack slot within a frame in more detail. Note that
+     * A collection of {@link Slot} objects that describe each stack slot within a frame in more detail. Note that
      * {@linkplain #iterator() iterating} over the slots goes from the slot with the highest offset to the slot with the
      * lowest offset.
      */
@@ -166,8 +166,7 @@ public abstract class JavaStackFrameLayout {
         /**
          * Gets a descriptive name for the slot at a given offset.
          *
-         * @param offset
-         *                a frame pointer relative offset
+         * @param offset a frame pointer relative offset
          * @return a descriptive name for the slot at {@code offset}.
          */
         protected String nameOfSlot(int offset) {
@@ -185,8 +184,7 @@ public abstract class JavaStackFrameLayout {
          * Gets the frame reference map index that corresponds with the slot at a given offset. If the slot in not
          * covered by a frame reference map, then -1 is returned.
          *
-         * @param offset
-         *                a frame pointer relative offset
+         * @param offset a frame pointer relative offset
          * @return the frame reference map index for the slot at {@code offset} or -1 if that slot in not covered by a
          *         frame reference map
          */
@@ -240,9 +238,8 @@ public abstract class JavaStackFrameLayout {
         /**
          * Formats the layout of the frame as a string.
          *
-         * @param referenceMap
-         *                if not null, extra detail is added to the returned string to indicate which slots contain
-         *                references according to this reference map
+         * @param referenceMap if not null, extra detail is added to the returned string to indicate which slots contain
+         *            references according to this reference map
          */
         public String toString(ByteArrayBitMap referenceMap) {
             final StringBuilder sb = new StringBuilder();

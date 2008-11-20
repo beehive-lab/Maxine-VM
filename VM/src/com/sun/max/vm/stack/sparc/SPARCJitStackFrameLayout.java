@@ -21,7 +21,6 @@
 package com.sun.max.vm.stack.sparc;
 
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
@@ -52,27 +51,27 @@ import com.sun.max.vm.stack.*;
  * <pre>
  *   Base  Index       Contents
  *   ----------------+--------------------------------+----------------              maximumSlotOffset() if P > 0
- *  [+frameSize+P+1] | Java parameter 0               | Incoming
+ *      [+R+(P*J)+1] | Java parameter 0               | Incoming
  *                   |     ...                        | Java
- *    [+frameSize+1] | Java parameter (P-1)           | parameters
+ *            [+R+1] | Java parameter (P-1)           | parameters
  *   ----------------+--------------------------------+----------------    ___
- *      [+frameSize] | return address                 | Call                ^
- *    [+frameSize-1] | caller's FP value              | save                |
- *    [+frameSize-2] | caller's Literal Base          | area                |
+ *              [+R] | return address                 | Call                ^
+ *            [+R-1] | caller's FP value              | save                |
+ *            [+R-2] | caller's Literal Base          | area                |
  *                   +--------------------------------+----------------     |
  *                   |     ...                        | alignment           |
  *                   +--------------------------------+----------------     |        maximumSlotOffset() if P == 0
- *        [+(T-1)]   | template spill slot (T-1)      | Template            |
+ *          [+(T-1)] | template spill slot (T-1)      | Template            |
  *                   |     ...                        | spill               |
- *        [+0]       | template spill slot 0          | area            frameSize()
+ *              [+0] | template spill slot 0          | area            frameSize()
  *  FP (%l0)  ==>    +--------------------------------+----------------     |
- *        [-1]       | Java non-parameter local 0     | Java                |
+ *              [-J] | Java non-parameter local 0     | Java                |
  *                   |     ...                        | non-parameters      |
- *        [-L]       | Java non-parameter local (L-1) | locals              v
+ *          [-(L*J)] | Java non-parameter local (L-1) | locals              v
  *                   +--------------------------------+----------------    ---
- *        [-(L+1)]   | Java stack slot 0              | Java
+ *      [-((L+1)*J)] | Java stack slot 0              | Java
  *                   |     ...                        | operand
- *        [-(L+S)]   | Java stack slot (S-1)          | stack
+ *      [-((L+S)*J)] | Java stack slot (S-1)          | stack
  *  TOS       ==>    +--------------------------------+----------------  lowestSlotOffset()
  *                   | outgoing register area         |
  *                   | (6 x 8 bytes = 96 bytes)       | Only for the
@@ -87,6 +86,8 @@ import com.sun.max.vm.stack.*;
  *      L == Number of Java non-parameter local slots
  *      S == Number of Java operand stack slots  # (i.e. maxStack)
  *      T == Number of template spill slots
+ *      R == Return address offset [ frameSize - sizeOfNonParameterLocals() ]
+ *      J == Stack slots per JIT slot [ JIT_SLOT_SIZE / Word.size() ]
  *
  * </pre>
  * The parameters portion of the stack frame is set up by the caller.
@@ -139,8 +140,6 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         _numberOfTemplateSlots = numberOfTemplateSlots;
     }
 
-    private static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI();
-
     @Override
     public int frameSize() {
         return offsetToTopOfFrameFromFramePointer() + sizeOfLocalArea();
@@ -186,7 +185,7 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
             //                             ^ FP                                          ^ parameterStart
             // LB: literal base saving area.
 
-            final int parameterStart = frameSize() - sizeOfLocalArea();
+            final int parameterStart = returnAddressOffset() + Word.size();
             return parameterStart + JIT_SLOT_SIZE * (_numberOfParameterSlots - 1 - localVariableIndex);
         }
         // The slot index is at a negative offset from FP.
@@ -248,11 +247,11 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
     }
 
     public int returnAddressOffset() {
-        return frameSize() - STACK_SLOT_SIZE;
+        return frameSize() - sizeOfNonParameterLocals();
     }
 
     public int callersFPOffset() {
-        return frameSize() - 2 * STACK_SLOT_SIZE;
+        return returnAddressOffset() - STACK_SLOT_SIZE;
     }
 
     @Override
