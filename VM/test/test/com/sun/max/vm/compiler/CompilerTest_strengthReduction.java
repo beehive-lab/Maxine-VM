@@ -267,10 +267,6 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
         return a / _intMinusOne;
     }
 
-    private static int intDividedByEight(int a) {
-        return a / _intEight;
-    }
-
     public void test_intDividedBy() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "intDividedBy0");
         assertFalse(compiledMethod.contains(JavaBuiltin.IntDivided.BUILTIN, false));
@@ -295,11 +291,6 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
         assertFalse(compiledMethod.contains(JavaBuiltin.IntDivided.BUILTIN, false));
         result = execute(compiledMethod, IntValue.from(99));
         assertEquals(result.asInt(), -99);
-
-        compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "intDividedByEight");
-        assertFalse(compiledMethod.contains(JavaBuiltin.IntDivided.BUILTIN, false));
-        result = execute(compiledMethod, IntValue.from(80));
-        assertEquals(result.asInt(), 10);
     }
 
     private static long longDividedBy0(long a) {
@@ -316,10 +307,6 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
 
     private static long longDividedByMinusOne(long a) {
         return a / _longMinusOne;
-    }
-
-    private static long longDividedByEight(long a) {
-        return a / _longEight;
     }
 
     public void test_longDividedBy() {
@@ -346,11 +333,6 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
         assertFalse(compiledMethod.contains(JavaBuiltin.LongDivided.BUILTIN, false));
         result = execute(compiledMethod, LongValue.from(99L));
         assertEquals(result.asLong(), -99L);
-
-        compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "longDividedByEight");
-        assertFalse(compiledMethod.contains(JavaBuiltin.LongDivided.BUILTIN, false));
-        result = execute(compiledMethod, LongValue.from(80));
-        assertEquals(result.asLong(), 10L);
     }
 
     private static Address addressDividedByAddress0(Address a) {

@@ -49,11 +49,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native Pointer getFloatingPointRegister(VMRegister.Role r);
 
     public static class GetFloatingPointRegister extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 1;
             visitor.visitGetFloatingPointRegister(this, result, arguments);
         }
+
         public static final GetFloatingPointRegister BUILTIN = new GetFloatingPointRegister();
     }
 
@@ -61,11 +63,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native Pointer getIntegerRegister(VMRegister.Role r);
 
     public static class GetIntegerRegister extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 1;
             visitor.visitGetIntegerRegister(this, result, arguments);
         }
+
         public static final GetIntegerRegister BUILTIN = new GetIntegerRegister();
     }
 
@@ -73,11 +77,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native Pointer setIntegerRegister(VMRegister.Role r, Word value);
 
     public static class SetIntegerRegister extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
             visitor.visitSetIntegerRegister(this, result, arguments);
         }
+
         public static final SetIntegerRegister BUILTIN = new SetIntegerRegister();
     }
 
@@ -85,11 +91,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void addWordsToIntegerRegister(VMRegister.Role registerRole, int numberOfWords);
 
     public static class AddWordsToIntegerRegister extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 2;
             visitor.visitAddWordsToIntegerRegister(this, result, arguments);
         }
+
         public static final AddWordsToIntegerRegister BUILTIN = new AddWordsToIntegerRegister();
     }
 
@@ -100,11 +108,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void pushObject(Object value);
 
     public static class Push extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 1;
             visitor.visitPush(this, result, arguments);
         }
+
         public static final Push BUILTIN = new Push();
     }
 
@@ -112,11 +122,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native Word pop();
 
     public static class Pop extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 0;
             visitor.visitPop(this, result, arguments);
         }
+
         public static final Pop BUILTIN = new Pop();
     }
 
@@ -124,11 +136,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native Pointer getInstructionPointer();
 
     public static class GetInstructionPointer extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 0;
             visitor.visitGetInstructionPointer(this, result, arguments);
         }
+
         public static final GetInstructionPointer BUILTIN = new GetInstructionPointer();
     }
 
@@ -146,11 +160,13 @@ public abstract class SpecialBuiltin extends Builtin {
      * If the CPU does not support such an instruction, then nothing is emitted for this builtin.
      */
     public static class Pause extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 0;
             visitor.visitPause(this, result, arguments);
         }
+
         public static final Pause BUILTIN = new Pause();
     }
 
@@ -158,11 +174,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void jump(Address address);
 
     public static class Jump extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 1;
             visitor.visitJump(this, result, arguments);
         }
+
         public static final Jump BUILTIN = new Jump();
     }
 
@@ -216,14 +234,15 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native Word callWord(Word address, Object receiver);
 
     public static class Call extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 0 || arguments.length == 1 || arguments.length == 2;
             visitor.visitCall(this, result, arguments);
         }
+
         public static final Call BUILTIN = new Call();
     }
-
 
     @BUILTIN(builtinClass = SpecialBuiltin.UnsignedIntGreaterEqual.class)
     public static boolean unsignedIntGreaterEqual(int value1, int value2) {
@@ -233,6 +252,7 @@ public abstract class SpecialBuiltin extends Builtin {
     }
 
     public static class UnsignedIntGreaterEqual extends SpecialBuiltin {
+
         @Override
         public final boolean hasSideEffects() {
             return false;
@@ -243,9 +263,9 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 2;
             visitor.visitUnsignedIntGreaterEqual(this, result, arguments);
         }
+
         public static final UnsignedIntGreaterEqual BUILTIN = new UnsignedIntGreaterEqual();
     }
-
 
     /**
      * A compare instruction modifying condition flags, without returning a value in a register or memory location.
@@ -254,6 +274,7 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void compareInts(int value1, int value2);
 
     public static class CompareInts extends SpecialBuiltin {
+
         @Override
         public final boolean hasSideEffects() {
             return false;
@@ -264,6 +285,7 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 2;
             visitor.visitCompareInts(this, result, arguments);
         }
+
         public static final CompareInts BUILTIN = new CompareInts();
     }
 
@@ -274,6 +296,7 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void compareReferences(Object value1, Object value2);
 
     public static class CompareReferences extends SpecialBuiltin {
+
         @Override
         public final boolean hasSideEffects() {
             return false;
@@ -284,10 +307,12 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 2;
             visitor.visitCompareReferences(this, result, arguments);
         }
+
         public static final CompareReferences BUILTIN = new CompareReferences();
     }
 
     public static class BarMemory extends SpecialBuiltin {
+
         public BarMemory() {
             super(MemoryBarrier.class);
         }
@@ -297,6 +322,7 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 1;
             visitor.visitBarMemory(this, result, arguments);
         }
+
         public static final BarMemory BUILTIN = new BarMemory();
     }
 
@@ -304,11 +330,13 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void flushRegisterWindows();
 
     public static class FlushRegisterWindows extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 0;
             visitor.visitFlushRegisterWindows(this, result, arguments);
         }
+
         public static final FlushRegisterWindows BUILTIN = new FlushRegisterWindows();
     }
 
@@ -316,15 +344,18 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void breakpoint();
 
     public static class Breakpoint extends SpecialBuiltin {
+
         @Override
         public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
             assert arguments.length == 0;
             visitor.visitBreakpoint(this, result, arguments);
         }
+
         public static final Breakpoint BUILTIN = new Breakpoint();
     }
 
     public static class IntToFloat extends SpecialBuiltin {
+
         public IntToFloat() {
             super(UnsafeLoophole.class);
         }
@@ -334,10 +365,12 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 1;
             visitor.visitIntToFloat(this, result, arguments);
         }
+
         public static final IntToFloat BUILTIN = new IntToFloat();
     }
 
     public static class FloatToInt extends SpecialBuiltin {
+
         public FloatToInt() {
             super(UnsafeLoophole.class);
         }
@@ -347,10 +380,12 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 1;
             visitor.visitFloatToInt(this, result, arguments);
         }
+
         public static final FloatToInt BUILTIN = new FloatToInt();
     }
 
     public static class LongToDouble extends SpecialBuiltin {
+
         public LongToDouble() {
             super(UnsafeLoophole.class);
         }
@@ -360,10 +395,12 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 1;
             visitor.visitLongToDouble(this, result, arguments);
         }
+
         public static final LongToDouble BUILTIN = new LongToDouble();
     }
 
     public static class DoubleToLong extends SpecialBuiltin {
+
         public DoubleToLong() {
             super(UnsafeLoophole.class);
         }
@@ -373,6 +410,7 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 1;
             visitor.visitDoubleToLong(this, result, arguments);
         }
+
         public static final DoubleToLong BUILTIN = new DoubleToLong();
     }
 
@@ -383,6 +421,7 @@ public abstract class SpecialBuiltin extends Builtin {
     public static native void mark();
 
     public static class Marker extends SpecialBuiltin {
+
         @Override
         public boolean hasSideEffects() {
             return false;
@@ -393,6 +432,7 @@ public abstract class SpecialBuiltin extends Builtin {
             assert arguments.length == 0;
             visitor.visitMarker(this, result, arguments);
         }
+
         public static final Marker BUILTIN = new Marker();
     }
 

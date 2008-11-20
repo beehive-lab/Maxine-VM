@@ -35,8 +35,8 @@ import com.sun.max.vm.value.*;
 /**
  * Base class in a hierarchy of types that encode data locations that can be addressed by target code.
  *
- * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Bernd Mathiske
  */
 public abstract class TargetLocation {
 

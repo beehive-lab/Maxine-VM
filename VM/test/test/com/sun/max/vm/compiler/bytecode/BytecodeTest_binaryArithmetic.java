@@ -324,7 +324,7 @@ public abstract class BytecodeTest_binaryArithmetic<Method_Type extends IrMethod
         return a % b;
     }
 
-    public void notest_frem() {
+    public void test_frem() {
         final Method_Type method = compileMethod("perform_frem", SignatureDescriptor.create(float.class, float.class, float.class));
         new BytecodeConfirmation(method.classMethodActor()) {
 
@@ -340,7 +340,7 @@ public abstract class BytecodeTest_binaryArithmetic<Method_Type extends IrMethod
         return a % b;
     }
 
-    public void notest_drem() {
+    public void test_drem() {
         final Method_Type method = compileMethod("perform_drem", SignatureDescriptor.create(double.class, double.class, double.class));
         new BytecodeConfirmation(method.classMethodActor()) {
 
