@@ -50,7 +50,7 @@ public abstract class CompilerTest_reflection<Method_Type extends IrMethod> exte
         Object[] _array;
 
         public Instance() {
-            this(Address.fromInt(1), 1, "1", (byte) 1, new Object[]{new Integer(1)});
+            this(Address.fromInt(1), 1, "1", (byte) 1, new Object[1]);
         }
 
         public Instance(int i, String s, byte b, Object[] array) {

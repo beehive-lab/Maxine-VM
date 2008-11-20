@@ -52,7 +52,7 @@ public final class CirSelectVirtualMethod extends CirSpecialSnippet {
     }
 
     @Override
-    public boolean mustInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
+    public boolean mustNotInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
         if (MaxineVM.isPrototyping()) {
             if (isConstantArgument(arguments, Parameter.declaredVirtualMethodActor)) {
                 final MethodActor declaredMethod = (MethodActor) getConstantArgumentValue(arguments, Parameter.declaredVirtualMethodActor).asObject();
@@ -64,7 +64,7 @@ public final class CirSelectVirtualMethod extends CirSpecialSnippet {
                 }
             }
         }
-        return super.mustInline(cirOptimizer, arguments);
+        return super.mustNotInline(cirOptimizer, arguments);
     }
 
     @Override

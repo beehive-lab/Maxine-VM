@@ -293,8 +293,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return CirBetaReduction.applyMultiple(closure, arguments);
     }
 
-    public boolean mustInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
-        return !classMethodActor().isDeclaredNeverInline() && classMethodActor().isDeclaredInline(cirOptimizer.cirGenerator().compilerScheme());
+    public boolean mustNotInline(CirOptimizer cirOptimizer, CirValue[] arguments) {
+        return false;
     }
 
     public boolean neverInline() {

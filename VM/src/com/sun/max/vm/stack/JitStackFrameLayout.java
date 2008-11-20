@@ -25,6 +25,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -45,12 +46,23 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
 
     /**
      * Size of a stack slot maintained by JIT-ed code. It may differ from {@link JavaStackFrameLayout#STACK_SLOT_SIZE} due to alignment
-     * constraint imposed on stack frame by the target platform (e.g., Darwin AMD64 and SPARC 64 requires 16-byte aligned stack frame).
+     * constraints imposed on a stack frame by the target platform (e.g., Darwin AMD64 and SPARC 64 requires 16-byte aligned stack frame).
      * In this case, it may be simpler for the JIT to use a custom size of slots for its stack frame that differs from the stack slot sized used by
      * the optimizing compiler (e.g., 16 bytes instead of 8 on both Solaris / SPARC 64 and Darwin / AMD 64).
+     *
+     * If the JIT uses more than one stack slot for a JIT variable, then there is an assumption that the variable only occupies
+     * the stack slot at the lower (or lowest if more than 2 stack slots are used per JIT variable) address.
      */
     public static final int JIT_SLOT_SIZE = getJitSlotSize();
     public static final int JIT_STACK_BIAS = getJitStackBias();
+
+    public static final int  STACK_SLOTS_PER_JIT_SLOT = JIT_SLOT_SIZE / STACK_SLOT_SIZE;
+
+    static {
+        assert JIT_SLOT_SIZE % STACK_SLOT_SIZE == 0 : "JIT_SLOT_SIZE must be an even multiple of STACK_SLOT_SIZE";
+    }
+
+    public static final TargetABI JIT_ABI = VMConfiguration.target().targetABIsScheme().jitABI();
 
     private static final Endianness ENDIANNESS =  VMConfiguration.target().platform().processorKind().dataModel().endianness();
 
@@ -238,16 +250,36 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
             return "local " + localVariableIndex + " [non-parameter " + (localVariableIndex - _numberOfParameterSlots) + "]";
         }
 
+        protected boolean isFillerSlot(int jitSlotOffset, int offset) {
+            if (JIT_SLOT_SIZE == STACK_SLOT_SIZE) {
+                return false;
+            }
+            for (int fillerOffset = jitSlotOffset + STACK_SLOT_SIZE; fillerOffset < jitSlotOffset + JIT_SLOT_SIZE; fillerOffset += STACK_SLOT_SIZE) {
+                if (offset == fillerOffset) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         @Override
         protected String nameOfSlot(int offset) {
             for (int i = 0; i != _numberOfLocalSlots; ++i) {
-                if (offset == localVariableOffset(i)) {
+                final int localVariableOffset = localVariableOffset(i);
+                if (offset == localVariableOffset) {
                     return nameOfLocal(i);
+                }
+                if (isFillerSlot(localVariableOffset, offset)) {
+                    return "local " + i + " [filler]";
                 }
             }
             for (int i = 0; i != _numberOfOperandStackSlots; ++i) {
-                if (operandStackOffset(i) == offset) {
+                final int operandStackOffset = operandStackOffset(i);
+                if (operandStackOffset == offset) {
                     return "operand stack " + i;
+                }
+                if (isFillerSlot(operandStackOffset, offset)) {
+                    return "operand stack " + i + " [filler]";
                 }
             }
             return super.nameOfSlot(offset);

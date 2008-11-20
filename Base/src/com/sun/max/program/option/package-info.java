@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 /**
- * Command line option parsing and side effect management
- * 
+ * Command line option parsing and side effect management.
+ *
  * @author Bernd Mathiske
  */
 package com.sun.max.program.option;

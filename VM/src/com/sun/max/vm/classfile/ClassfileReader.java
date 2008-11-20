@@ -639,8 +639,6 @@ public class ClassfileReader {
     }
 
     protected MethodActor[] readMethods(boolean isInterface) {
-
-
         final int numberOfMethods = _classfileStream.readUnsigned2();
         final MethodActor[] methodActors = new MethodActor[numberOfMethods];
         int nextMethodIndex = 0;
