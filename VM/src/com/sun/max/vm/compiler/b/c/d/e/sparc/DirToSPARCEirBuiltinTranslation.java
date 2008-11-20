@@ -564,6 +564,7 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
         } else {
             stackVariableKey = null;
         }
+        methodTranslation().addEpilogueStackSlotUse(stackSlot);
         addInstruction(new SET_STACK_ADDRESS(eirBlock(), result, stackSlot, stackVariableKey));
     }
 

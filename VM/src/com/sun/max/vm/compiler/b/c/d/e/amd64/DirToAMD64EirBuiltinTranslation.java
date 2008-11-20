@@ -1391,14 +1391,14 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
         if (dirArguments.length == 2) {
             if (!(dirArguments[1] instanceof DirConstant)) {
-                ProgramError.check(dirArguments[1] instanceof DirConstant, "the " + StackVariable.class.getSimpleName() +
-                                " used with the " + MakeStackVariable.class.getSimpleName() + " built-in must be a compile-time constant");
+                ProgramError.unexpected("the " + StackVariable.class.getSimpleName() + " used with the " + MakeStackVariable.class.getSimpleName() + " built-in must be a compile-time constant");
             }
             final Object stackVariableKeyObject = ((DirConstant) dirArguments[1]).value().asObject();
             stackVariableKey = (StackVariable) stackVariableKeyObject;
         } else {
             stackVariableKey = null;
         }
+        methodTranslation().addEpilogueStackSlotUse(stackSlot);
         addInstruction(new LEA_STACK_ADDRESS(eirBlock(), result, stackSlot, stackVariableKey));
     }
 
