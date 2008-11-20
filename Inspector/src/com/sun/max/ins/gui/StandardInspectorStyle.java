@@ -374,7 +374,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color searchPatternFailedColor() {
         return _searchPatternFailedColor;
     }
-    private final Color _searchRowMatchedBackground = new Color(255, 255, 224);  // X11 LightYellow
+    private final Color _searchRowMatchedBackground = new Color(255, 255, 200);  // light yellow, but not as light as X11 LightYellow
     @Override
     public Color searchRowMatchedBackground() {
         return _searchRowMatchedBackground;
