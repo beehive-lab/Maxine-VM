@@ -43,10 +43,11 @@ public class ZipFileReader {
             final ZipEntry zipEntry = entries.nextElement();
             System.out.println(zipEntry.getName() + ": " + zipEntry.getCompressedSize() + " / " + zipEntry.getSize());
             final InputStream inputStream = zipFile.getInputStream(zipEntry);
-            final byte[] buffer = new byte[4096];
+            final byte[] buffer = new byte[100];
             int offset = 0;
             while (inputStream.available() > 0) {
                 final int len = inputStream.read(buffer);
+                System.out.println("offset: " + offset + " (" + len + " bytes)");
                 final StringBuffer sbuf = new StringBuffer(len * 4);
                 for (int i = 0; i < len; i++, offset++) {
                     final int val = buffer[i];
@@ -58,6 +59,7 @@ public class ZipFileReader {
                     }
                 }
                 System.out.print(sbuf.toString());
+                System.out.println();
             }
             System.out.println();
         }
