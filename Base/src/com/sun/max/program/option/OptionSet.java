@@ -475,12 +475,21 @@ public class OptionSet {
     }
 
     /**
+     * Prints the help message header.
+     *
+     * @param stream the output stream to which to write the help text
+     */
+    protected void printHelpHeader(PrintStream stream) {
+    }
+
+    /**
      * The {@code printHelp()} method prints a textual listing of these options and their syntax
      * to the specified output stream.
      * @param stream the output stream to which to write the help text
      * @param width the length of the line to truncate
      */
     public void printHelp(PrintStream stream, int width) {
+        printHelpHeader(stream);
         for (Option<?> option : getSortedOptions()) {
             final Option<Object> opt = StaticLoophole.cast(option);
             stream.print("    " + getUsage(opt));

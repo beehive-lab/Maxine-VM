@@ -47,6 +47,15 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
 
     private InspectorFrame _frame;
 
+    private final String _tracePrefix;
+
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return _tracePrefix;
+    }
+
     /**
      * @return the window system frame in which the Inspector displays its view
      */
@@ -81,7 +90,14 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
     /**
      * @return a short string suitable for appearing in the window frame of an inspector.
      */
-    public abstract String getTitle();
+    public abstract String getTextForTitle();
+
+    /**
+     * @return the string currently appearing in the title of the Inspector's window frame
+     */
+    public String getCurrentTitle() {
+        return frame().getTitle();
+    }
 
     /**
      * Enum containing constants denoting whether an inspector should be viewed with an {@linkplain #INTERNAL internal}
@@ -145,6 +161,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
     protected Inspector(Inspection inspection, Residence residence) {
         super(inspection);
         _residence = residence;
+        _tracePrefix = "[" + getClass().getSimpleName() + "]";
     }
 
     /**
@@ -184,7 +201,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
                 _frame = new ExternalInspectorFrame(this);
                 break;
         }
-        frame().setTitle(getTitle());
+        frame().setTitle(getTextForTitle());
         createView(teleProcess().epoch());
         _frame.pack();
         updateSize();
@@ -251,6 +268,9 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
     }
 
     public void breakpointSetChanged() {
+    }
+
+    public void vmProcessTerminated() {
     }
 
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
@@ -402,7 +422,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + ":  " + getTitle();
+        return this.getClass().getSimpleName() + ":  " + getTextForTitle();
     }
 
 }

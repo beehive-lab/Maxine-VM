@@ -25,6 +25,7 @@ import javax.swing.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
@@ -54,12 +55,12 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
     private static StackInspectorContainer make(Inspection inspection) {
         StackInspectorContainer stackInspectorContainer = get(inspection);
         if (stackInspectorContainer == null) {
-            Trace.begin(1, "initializing StackInspectorContainer");
+            Trace.begin(1, "[StackInspector] initializing");
             stackInspectorContainer = new StackInspectorContainer(inspection, Residence.INTERNAL);
             for (TeleNativeThread thread : inspection.teleVM().teleProcess().threads()) {
                 stackInspectorContainer.add(new StackInspector(inspection, thread, stackInspectorContainer.residence(), stackInspectorContainer));
             }
-            Trace.end(1, "initializing StackInspectorContainer");
+            Trace.end(1, "[StackInspector] initializing");
         }
         stackInspectorContainer.updateThreadFocus(inspection.focus().thread());
         return stackInspectorContainer;
@@ -121,7 +122,7 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return "Stacks";
     }
 
@@ -155,7 +156,7 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
 
     @Override
     public void add(StackInspector stackInspector) {
-        super.add(stackInspector, stackInspector.getTitle());
+        super.add(stackInspector, stackInspector.getTextForTitle());
         stackInspector.frame().invalidate();
         stackInspector.frame().repaint();
     }
@@ -178,15 +179,6 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
                 break;
             }
         }
-    }
-
-    /**
-     * Receives notification that the window system is closing this inspector.
-     */
-    @Override
-    public void inspectorClosing() {
-        removeChangeListener(_tabChangeListener);
-        super.inspectorClosing();
     }
 
     static class TruncatedStackFrame extends StackFrame {
@@ -220,4 +212,17 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
             return false;
         }
     }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        removeChangeListener(_tabChangeListener);
+        super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        dispose();
+    }
+
 }

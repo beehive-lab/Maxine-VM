@@ -78,16 +78,16 @@ public final class DarwinTeleProcess extends TeleProcess {
 
 
     @Override
-    public void suspend() throws ExecutionRequestException {
+    public void suspend() throws OSExecutionRequestException {
         if (!nativeSuspend(_task)) {
             throw new TeleError("could not suspend process");
         }
     }
 
     @Override
-    public void resume() throws ExecutionRequestException {
+    public void resume() throws OSExecutionRequestException {
         if (!nativeResume(_pid)) {
-            throw new ExecutionRequestException("Resume could not be completed");
+            throw new OSExecutionRequestException("Resume could not be completed");
         }
     }
 
@@ -99,7 +99,7 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected void kill() throws ExecutionRequestException {
+    protected void kill() throws OSExecutionRequestException {
         nativeKill(_pid);
     }
 

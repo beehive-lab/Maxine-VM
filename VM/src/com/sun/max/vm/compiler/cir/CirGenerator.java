@@ -37,12 +37,17 @@ import com.sun.max.vm.compiler.ir.observer.*;
  */
 public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMethod> {
 
+    /**
+     * The name of the system property that, if non-null when a CIR generator is instantiated, enables the CIR visualizer.
+     */
+    public static final String CIR_GUI_PROPERTY = "max.cir.gui";
+
     private static final Map<ClassMethodActor, CirMethod> _cirCache = new HashMap<ClassMethodActor, CirMethod>();
 
     public CirGenerator(CirGeneratorScheme cirGeneratorScheme) {
         super(cirGeneratorScheme, "CIR");
         IrObserver irObserver = null;
-        final String cirGuiLevel = System.getProperty("max.cir.gui");
+        final String cirGuiLevel = System.getProperty(CIR_GUI_PROPERTY);
         if (cirGuiLevel != null) {
             final String irObserverClassName = "com.sun.max.vm.compiler.cir.gui.CirObserverAdapter";
             try {

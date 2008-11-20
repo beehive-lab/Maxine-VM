@@ -108,7 +108,12 @@ public final class DirToSPARCEirMethodTranslation extends DirToEirMethodTranslat
 
     @Override
     protected EirInstruction createTrampolineExit(EirBlock eirBlock, boolean isStaticTrampoline) {
-        return new RET(eirBlock, true, isStaticTrampoline);
+        return new RET(eirBlock, isStaticTrampoline ? RET.FROM.STATIC_TRAMPOLINE : RET.FROM.TRAMPOLINE);
+    }
+
+    @Override
+    protected EirInstruction createTrapStubExit(EirBlock eirBlock) {
+        return new RET(eirBlock, RET.FROM.TRAP_STUB);
     }
 
     @Override

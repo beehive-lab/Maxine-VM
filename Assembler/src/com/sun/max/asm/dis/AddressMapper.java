@@ -114,8 +114,10 @@ public class AddressMapper {
                     DisassembledLabel label = _labelMap.get(targetAddress);
                     if (label == null || label.target() != targetDisassembledObject) {
                         label = new UnnamedLabel(targetDisassembledObject);
-                        _unnamedLabels++;
-                        _labelMap.put(targetAddress, label);
+                        final DisassembledLabel oldValue = _labelMap.put(targetAddress, label);
+                        if (!(oldValue instanceof UnnamedLabel)) {
+                            _unnamedLabels++;
+                        }
                     }
                 }
             }

@@ -100,14 +100,14 @@ public final class SPARCSafepoint extends Safepoint {
         final int globalRegisterWords = TRAP_SAVED_GLOBAL_SYMBOLIZER.numberOfValues(); // %g1 to %g5
         final int outRegisterWords = IN_SYMBOLIZER.numberOfValues();    // %o0 to %o7
         final int floatingPointRegisterWords = 32; // %f0-%f32
+        final int stateRegisters = 2;
         TRAP_LATCH_OFFSET = Word.size();
         // Offset to %o6 in trap state.
         TRAP_SP_OFFSET = Word.size() * (globalRegisterWords + (O6.value() - O0.value()));
         // Offset to %o7 in trap state
         TRAP_IP_OFFSET = TRAP_SP_OFFSET + Word.size();
-        TRAP_NUMBER_OFFSET = Word.size() * (globalRegisterWords + outRegisterWords + floatingPointRegisterWords);
+        TRAP_NUMBER_OFFSET = Word.size() * (globalRegisterWords + outRegisterWords + floatingPointRegisterWords + stateRegisters);
         TRAP_STATE_SIZE = TRAP_NUMBER_OFFSET + Word.size();
-        // FIXME: saving of flags states ?
     }
 
     @INLINE(override = true)

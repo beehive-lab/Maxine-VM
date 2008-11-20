@@ -62,17 +62,17 @@ public final class NoTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected void kill() throws ExecutionRequestException {
+    protected void kill() throws OSExecutionRequestException {
         throw Problem.unimplemented();
     }
 
     @Override
-    protected void resume() throws ExecutionRequestException {
+    protected void resume() throws OSExecutionRequestException {
         throw Problem.unimplemented();
     }
 
     @Override
-    protected void suspend() throws ExecutionRequestException {
+    protected void suspend() throws OSExecutionRequestException {
         Problem.unimplemented();
     }
 

@@ -425,7 +425,7 @@ public class MaxineTester {
     private static int runMaxineVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = imageDir.getName() + "/maxvm" + (mainClass == null ? "" : " " + mainClass.getName());
         if (mainClass != null && _javaConfigAlias != null) {
-            return exec(imageDir, appendArgs(new String[] {"./maxvm", "-XX:TesterOff"}, args), outputFile, name, timeout);
+            return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), outputFile, name, timeout);
         }
         return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), outputFile, name, timeout);
     }

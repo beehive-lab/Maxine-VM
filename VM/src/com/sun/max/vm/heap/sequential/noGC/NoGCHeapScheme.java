@@ -50,6 +50,24 @@ import com.sun.max.vm.type.*;
  */
 public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme {
 
+    private static final class NoGCHeapMemoryRegion extends RuntimeMemoryRegion {
+
+        /**
+         * @param title how the region should identify itself for debugging purposes
+         */
+        public NoGCHeapMemoryRegion(String title) {
+            super(Size.zero(), Size.zero());
+            setDescription(title);
+        }
+
+        /**
+         * @param address sets an inspected field that can be used for debugging.
+         */
+        void setAllocationMark(Address address) {
+            _mark = address;
+        }
+    }
+
     public boolean isGcThread(VmThread vmThread) {
         return vmThread.javaThread() instanceof StopTheWorldDaemon;
     }
@@ -157,7 +175,7 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
 
     private StopTheWorldDaemon _collectorThread;
 
-    private RuntimeMemoryRegion _space = new RuntimeMemoryRegion(Size.zero(), Size.zero());
+    private NoGCHeapMemoryRegion _space = new NoGCHeapMemoryRegion("Heap-NoGC");
     private Address _top;
     private volatile Address _allocationMark;
 
@@ -177,6 +195,9 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
             _allocationMarkPointer = ClassActor.fromJava(NoGCHeapScheme.class).findLocalInstanceFieldActor("_allocationMark").pointer(this);
 
             // From now on we can allocate
+
+            // For debugging
+            _space.setAllocationMark(_allocationMark);
 
             TeleHeapInfo.registerMemoryRegions(_space);
         } else if (phase == MaxineVM.Phase.STARTING) {
@@ -255,6 +276,8 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
         if (end.greaterThan(_top) || _allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
             return fail();
         }
+        // For debugging
+        _space.setAllocationMark(_allocationMark);
         return cell;
     }
 

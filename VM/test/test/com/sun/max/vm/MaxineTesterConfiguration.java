@@ -62,8 +62,8 @@ public class MaxineTesterConfiguration {
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
-        test.except.Catch_StackOverflowError_01.class,
-        test.output.ZipFileReader.class,
+        test.hotpath.HP_life.class, // 328
+        test.hotpath.HP_series.class, // 333
     }));
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();

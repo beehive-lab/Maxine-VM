@@ -66,7 +66,7 @@ public final class DirInspector extends IrInspector<DirInspector> {
     }
 
     @Override
-    public String getTitle() {
+    public String getTextForTitle() {
         return _dirMethod.name() + "(" + Arrays.toString(_dirMethod.parameters(), ", ") + ")";
     }
 

@@ -82,7 +82,7 @@ public final class LinuxTeleProcess extends TeleProcess {
     private static native boolean nativeFreeAgent(long agent);
 
     @Override
-    protected void kill() throws ExecutionRequestException {
+    protected void kill() throws OSExecutionRequestException {
         try {
             SingleThread.execute(new Runnable() {
                 public void run() {
@@ -97,12 +97,12 @@ public final class LinuxTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected void resume() throws ExecutionRequestException {
+    protected void resume() throws OSExecutionRequestException {
         Problem.unimplemented();
     }
 
     @Override
-    protected void suspend() throws ExecutionRequestException {
+    protected void suspend() throws OSExecutionRequestException {
         Problem.unimplemented();
     }
 
