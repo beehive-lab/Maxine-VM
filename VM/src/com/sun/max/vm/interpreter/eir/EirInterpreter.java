@@ -124,9 +124,9 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
     public EirInterpreter(EirGenerator eirGenerator) {
         _eirGenerator = eirGenerator;
-        _traceLevel = 0; _traceOption.getValue();
+        _traceLevel = _traceOption.getValue();
         _traceFilters = _traceFiltersOption.getValue();
-        _traceCpu = true; _traceCpuOption.getValue();
+        _traceCpu = _traceCpuOption.getValue();
         _traceStack = _traceStackOption.getValue();
         _jitEnabled = _jitOption.getValue();
         _frame = initialEirFrame();
