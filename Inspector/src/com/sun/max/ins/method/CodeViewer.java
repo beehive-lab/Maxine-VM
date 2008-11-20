@@ -20,6 +20,9 @@
  */
 package com.sun.max.ins.method;
 
+import static com.sun.max.ins.InspectionActions.*;
+import static java.awt.event.InputEvent.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -111,6 +114,11 @@ public abstract class CodeViewer extends InspectorPanel {
         });
         _viewCloseButton.setIcon(style().codeViewCloseIcon());
         _viewCloseButton.setToolTipText("Close " + codeViewerKindName());
+
+        getActionMap().put(SEARCH_ACTION, new SearchAction());
+
+        // TODO (mlvdv)  generalize so that this binding comes from a preference
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke('F', CTRL_DOWN_MASK), SEARCH_ACTION);
     }
 
     protected void createView(long epoch) {
@@ -418,6 +426,19 @@ public abstract class CodeViewer extends InspectorPanel {
             return _activeRows.elementAt(_currentActiveRowIndex);
         }
         return -1;
+    }
+
+    private final class SearchAction extends InspectorAction {
+
+        SearchAction() {
+            super(inspection(), SEARCH_ACTION);
+        }
+
+        @Override
+        public void procedure() {
+            addSearchToolBar();
+        }
+
     }
 
 }
