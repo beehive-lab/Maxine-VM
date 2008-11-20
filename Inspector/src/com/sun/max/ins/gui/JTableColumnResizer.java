@@ -27,8 +27,8 @@ import javax.swing.table.*;
 
 
 /**
- * Sets the preferred width of columns in a {@link JTable}, based on the
- * data and header labels present.
+ * Sets the preferred width of columns in a {@link JTable}, based on both the
+ * data present in the model and column header labels.
  *
  * @author Michael Van De Vanter
  *
@@ -40,36 +40,23 @@ public class JTableColumnResizer {
         // make that the preferred width
         final TableColumnModel columnModel = table.getColumnModel();
         for (int col = 0; col < table.getColumnCount(); col++) {
-            System.out.println("--- col " + col + " ---");
             int maxwidth = 0;
             for (int row = 0; row < table.getRowCount(); row++) {
                 final TableCellRenderer rend = table.getCellRenderer(row, col);
                 final Object value = table.getValueAt(row, col);
                 final Component comp = rend.getTableCellRendererComponent(table, value,  false,  false,  row, col);
                 maxwidth = Math.max(comp.getPreferredSize().width, maxwidth);
-                System.out.println("col " + col +  " pref width now " +  maxwidth);
             } // for row
-
-            /* this version of the width set doesn't consider the
-               column header's preferred width
-
-            TableColumn column = columnModel.getColumn (col);
-            column.setPreferredWidth (maxwidth); */
-
-            /* this version of the width set considers the
-               column header's preferred width too */
+            // Take the column header into consideration as well.
             final TableColumn column = columnModel.getColumn(col);
             TableCellRenderer headerRenderer = column.getHeaderRenderer();
             if (headerRenderer == null) {
                 headerRenderer = table.getTableHeader().getDefaultRenderer();
             }
             final Object headerValue = column.getHeaderValue();
-            final Component headerComp =
-                    headerRenderer.getTableCellRendererComponent(table, headerValue, false, false, 0, col);
+            final Component headerComp = headerRenderer.getTableCellRendererComponent(table, headerValue, false, false, 0, col);
             maxwidth = Math.max(maxwidth, headerComp.getPreferredSize().width);
             column.setPreferredWidth(maxwidth);
-
-
         } // for col
     }
 }

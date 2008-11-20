@@ -139,8 +139,6 @@ public abstract class CodeViewer extends InspectorPanel {
             // go to next matching row from current selection
             if (_searchMatchingRows != null) {
                 Trace.line(TRACE_VALUE, "search: matches " + _searchMatchingRows.length() + " = " + _searchMatchingRows);
-            } else {
-                System.out.println("search: cleared");
             }
             repaint();
         }
