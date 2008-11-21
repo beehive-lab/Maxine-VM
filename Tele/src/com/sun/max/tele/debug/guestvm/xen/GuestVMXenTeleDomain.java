@@ -54,11 +54,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
             _domainId = id;
         }
         GuestVMXenDBChannel.attach(this, _domainId);
-        if (System.getProperty("max.ins.access.page") != null) {
-            _dataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
-        } else {
-            _dataAccess = new GuestVMXenDataAccess(platform.processorKind().dataModel(), _domainId);
-        }
+        _dataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
     }
 
     @Override
@@ -76,22 +72,13 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         return GuestVMXenDBChannel.getBootHeapStart();
     }
 
-    private static final String primordialThreadName = "maxine";
-
-    @Override
-    protected void initPrimordialThread(TeleNativeThread thread) {
-        if (((GuestVMXenNativeThread) thread).name().equals(primordialThreadName)) {
-            super.initPrimordialThread(thread);
-        }
-    }
-
     /**
      * This is called from nativeGatherThreads.
      *
      * @param threadId
      * @param name
      */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, String name, int state, long stackBase, long stackSize) {
+    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize) {
         GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idToThread(threadId);
         if (thread == null) {
         	/* Need to align and skip over the guard page at the base of the stack.
@@ -100,7 +87,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         	final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
         	final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
         	final long adjStackSize = stackSize - (stackBottom - stackBase);
-            thread = new GuestVMXenNativeThread(this, threadId, name, stackBottom, adjStackSize);
+            thread = new GuestVMXenNativeThread(this, threadId, stackBottom, adjStackSize);
         } else {
             thread.setMarked(false);
         }
