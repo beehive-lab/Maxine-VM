@@ -110,8 +110,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
      * Gets the actor for this field's type.
      */
     public ClassActor type() {
-        // Still starting up, do not use full class loader functionality yet:
-        return descriptor().toClassActor(holder().classLoader());
+        return descriptor().resolve(holder().classLoader());
     }
 
     @CONSTANT
