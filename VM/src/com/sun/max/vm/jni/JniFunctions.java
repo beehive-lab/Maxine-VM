@@ -1644,7 +1644,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final boolean[] a = (boolean[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setBoolean(i, a[start + i]);
         }
     }
@@ -1652,7 +1652,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final byte[] a = (byte[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setByte(i, a[start + i]);
         }
     }
@@ -1660,7 +1660,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final char[] a = (char[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setChar(i, a[start + i]);
         }
     }
@@ -1668,7 +1668,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final short[] a = (short[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setShort(i, a[start + i]);
         }
     }
@@ -1676,7 +1676,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final int[] a = (int[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setInt(i, a[start + i]);
         }
     }
@@ -1684,7 +1684,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final long[] a = (long[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setLong(i, a[start + i]);
         }
     }
@@ -1692,7 +1692,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final float[] a = (float[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setFloat(i, a[start + i]);
         }
     }
@@ -1700,7 +1700,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final double[] a = (double[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             buffer.setDouble(i, a[start + i]);
         }
     }
@@ -1708,7 +1708,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetBooleanArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final boolean[] a = (boolean[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getBoolean(i);
         }
     }
@@ -1716,7 +1716,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetByteArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final byte[] a = (byte[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getByte(i);
         }
     }
@@ -1724,7 +1724,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetCharArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final char[] a = (char[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getChar(i);
         }
     }
@@ -1732,7 +1732,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetShortArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final short[] a = (short[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getShort(i);
         }
     }
@@ -1740,7 +1740,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetIntArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final int[] a = (int[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getInt(i);
         }
     }
@@ -1748,7 +1748,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetLongArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final long[] a = (long[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getLong(i);
         }
     }
@@ -1756,7 +1756,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetFloatArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final float[] a = (float[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getFloat(i);
         }
     }
@@ -1764,7 +1764,7 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void SetDoubleArrayRegion(Pointer env, JniHandle array, int start, int length, Pointer buffer) {
         final double[] a = (double[]) array.get();
-        for (int i = start; i < length; i++) {
+        for (int i = 0; i < length; i++) {
             a[start + i] = buffer.getDouble(i);
         }
     }
@@ -1861,24 +1861,24 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
-        Problem.unimplemented();
+        FatalError.unexpected("GetPrimitiveArrayCritical is unimplemented");
         return null;
     }
 
     @JNI_FUNCTION
     private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer cArray, int mode) {
-        Problem.unimplemented();
+        FatalError.unexpected("ReleasePrimitiveArrayCritical is unimplemented");
     }
 
     @JNI_FUNCTION
     private static Pointer GetStringCritical(Pointer env, JniHandle string, Pointer isCopy) {
-        Problem.unimplemented();
+        FatalError.unexpected("GetStringCritical is unimplemented");
         return null;
     }
 
     @JNI_FUNCTION
     private static void ReleaseStringCritical(Pointer env, JniHandle string, final Pointer cString) {
-        Problem.unimplemented();
+        FatalError.unexpected("ReleaseStringCritical is unimplemented");
     }
 
     @JNI_FUNCTION

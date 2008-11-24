@@ -26,6 +26,7 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
 import com.sun.max.lang.*;
@@ -96,12 +97,35 @@ public class MaxineTester {
     }
 
     private static void makeDirectory(File directory) {
-        if (directory.exists()) {
-            ProgramError.check(directory.isDirectory(), "Path already exists but is not a directory: " + directory);
-            return;
-        }
-        if (!directory.mkdirs()) {
+        if (!directory.exists() && !directory.mkdirs()) {
             ProgramError.unexpected("Could not make directory " + directory);
+        }
+        ProgramError.check(directory.isDirectory(), "Path is not a directory: " + directory);
+        copyInputFiles(directory);
+    }
+
+    private static void copyInputFiles(File directory) {
+        final Set<java.lang.Package> outputTestPackages = new HashSet<java.lang.Package>();
+        for (Class mainClass : MaxineTesterConfiguration._outputTestClasses) {
+            outputTestPackages.add(mainClass.getPackage());
+        }
+        final File parent = JavaProject.findVcsProjectDirectory();
+        for (java.lang.Package p : outputTestPackages) {
+            File dir = new File(parent, "test");
+            for (String n : p.getName().split("\\.")) {
+                dir = new File(dir, n);
+            }
+            for (File f : dir.listFiles()) {
+                if (f.getName().endsWith(".input")) {
+                    try {
+                        Files.copy(f, new File(directory, f.getName()));
+                    } catch (FileNotFoundException e) {
+                        // do nothing.
+                    } catch (IOException e) {
+                        // do nothing.
+                    }
+                }
+            }
         }
     }
 
@@ -225,7 +249,7 @@ public class MaxineTester {
             String nextTestOption = "-XX:TesterStart=0";
             int executions = 0;
             while (nextTestOption != null) {
-                final File outputFile = getOutputFile(imageDir, "JAVA_TESTER_OUTPUT" + (executions == 0 ? "" : "-" + executions), config);
+                final File outputFile = getOutputFile(imageDir, "JAVA_TESTER" + (executions == 0 ? "" : "-" + executions), config);
                 final int exitValue = runMaxineVM(null, new String[] {nextTestOption}, imageDir, outputFile, _javaTesterTimeOut.getValue());
                 final JavaTesterResult result = parseJavaTesterOutputFile(outputFile);
                 final String summary = result._summary;
@@ -244,7 +268,7 @@ public class MaxineTester {
             }
         } else {
             out.println("(image build failed)");
-            final File outputFile = getOutputFile(imageDir, "IMAGE_GENERATION_OUTPUT", config);
+            final File outputFile = getOutputFile(imageDir, "IMAGE", config);
             out.println("  -> see: " + outputFile.getAbsolutePath());
         }
 
@@ -267,14 +291,14 @@ public class MaxineTester {
             }
         } else {
             out().println("Building Java run scheme: failed");
-            final File outputFile = getOutputFile(imageDir, "IMAGE_GENERATION_OUTPUT", config);
+            final File outputFile = getOutputFile(imageDir, "IMAGEGEN", config);
             out().println("  -> see: " + outputFile.getAbsolutePath());
         }
     }
 
     private static void runOutputTest(File outputDir, File imageDir, Class mainClass) {
         out().print(left50("Running " + mainClass.getName() + ": "));
-        final File javaOutput = getOutputFile(outputDir, "JVM_" + mainClass.getSimpleName(), "output");
+        final File javaOutput = getOutputFile(outputDir, "JVM_" + mainClass.getSimpleName(), null);
 
         final String[] args = buildJavaArgs(mainClass, null, null, null);
         final int javaExitValue = runJavaVM(mainClass, args, imageDir, javaOutput, _javaRunTimeOut.getValue());
@@ -316,7 +340,7 @@ public class MaxineTester {
     private static void runMaxineVMOutputTest(String config, File outputDir, File imageDir, Class mainClass, final File javaOutput, final int javaExitValue) {
         final String[] vmOptions = MaxineTesterConfiguration.getVMOptions(config);
         final String[] args = buildJavaArgs(mainClass, vmOptions, null, null);
-        final File maxvmOutput = getOutputFile(outputDir, "MAXVM_" + mainClass.getSimpleName() + "_" + config, "output");
+        final File maxvmOutput = getOutputFile(outputDir, "MAXVM_" + mainClass.getSimpleName(), config);
         final int maxineExitValue = runMaxineVM(mainClass, args, imageDir, maxvmOutput, _javaRunTimeOut.getValue());
         if (javaExitValue != maxineExitValue) {
             if (maxineExitValue == PROCESS_TIMEOUT) {
@@ -494,7 +518,8 @@ public class MaxineTester {
     }
 
     private static File getOutputFile(File outputDir, String outputFileName, String imageConfig) {
-        final File file = new File(outputDir, outputFileName + "." + imageConfig);
+        final String configString = imageConfig == null ? "" : "_" + imageConfig;
+        final File file = new File(outputDir, outputFileName + configString + ".output");
         makeDirectory(file.getParentFile());
         return file;
     }
@@ -588,12 +613,9 @@ public class MaxineTester {
             final long start = System.currentTimeMillis();
             while (System.currentTimeMillis() - start < _timeoutMillis) {
                 try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    // do nothing.
-                }
-                try {
+                    Thread.sleep(50);
                     _exitValue = _process.exitValue();
+                    Thread.sleep(50);
                     _stdout.close();
                     _stderr.close();
                     _stdin.close();
@@ -603,6 +625,8 @@ public class MaxineTester {
                     }
                     return;
                 } catch (IllegalThreadStateException e) {
+                    // do nothing.
+                } catch (InterruptedException e) {
                     // do nothing.
                 }
             }
