@@ -45,23 +45,20 @@ public class MaxineTesterConfiguration {
 //        test.output.GCTest5.class,
         test.output.GCTest6.class,
         test.output.HelloWorldReflect.class,
-        test.output.FloatNanTest.class,
-        test.output.JavacTest.class,
         test.output.JREJarLoadTest.class,
         test.output.ZipFileReader.class,
+        test.output.FloatNanTest.class,
+        test.output.JavacTest.class,
     };
 
     static final Set<Class> _expectedFailuresSolarisAMD64 = new HashSet<Class>(Arrays.asList(new Class[] {
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
-        test.output.JREJarLoadTest.class,
-        test.output.ZipFileReader.class,
     }));
 
     static final Set<Class> _expectedFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
-        test.output.JREJarLoadTest.class,
         test.hotpath.HP_life.class, // 328
         test.hotpath.HP_series.class, // 333
     }));
