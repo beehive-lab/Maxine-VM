@@ -185,7 +185,8 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
             //                             ^ FP                                          ^ parameterStart
             // LB: literal base saving area.
 
-            final int parameterStart = returnAddressOffset() + Word.size();
+            // Local variables are accessed via FP, not SP.
+            final int parameterStart = frameSize() - sizeOfLocalArea();
             return parameterStart + JIT_SLOT_SIZE * (_numberOfParameterSlots - 1 - localVariableIndex);
         }
         // The slot index is at a negative offset from FP.
@@ -246,10 +247,19 @@ public class SPARCJitStackFrameLayout extends JitStackFrameLayout {
         return false;
     }
 
+    /**
+     * Offset to the slot where the return address is stored, relative to the stack pointer.
+     * @return
+     */
     public int returnAddressOffset() {
-        return frameSize() - sizeOfNonParameterLocals();
+        // return frameSize() - sizeOfNonParameterLocals();
+        return frameSize() - STACK_SLOT_SIZE;
     }
 
+    /**
+     * Offset to the slot where the caller's FP is stored, relative to the stack pointer.
+     * @return
+     */
     public int callersFPOffset() {
         return returnAddressOffset() - STACK_SLOT_SIZE;
     }
