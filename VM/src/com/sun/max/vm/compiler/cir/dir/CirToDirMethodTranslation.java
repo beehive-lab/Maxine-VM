@@ -264,10 +264,8 @@ class CirToDirMethodTranslation {
             return targetTranslation._dirBlock;
         }
         if (translation._cc != null) {
-            final CirClosure closure = translation._cc._closure;
-            final Translation targetTranslation = makeNormalTranslation(closure, translation);
-            link(translation._dirBlock, targetTranslation._dirBlock);
-            return targetTranslation._dirBlock;
+            link(translation._dirBlock, translation._cc._dirBlock);
+            return translation._cc._dirBlock;
         }
         final DirBlock returnBlock = getReturnBlock();
         link(translation._dirBlock, returnBlock);
