@@ -26,7 +26,6 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
 import com.sun.max.lang.*;
