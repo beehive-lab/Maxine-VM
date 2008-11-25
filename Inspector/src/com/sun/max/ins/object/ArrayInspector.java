@@ -42,19 +42,11 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
     private final ArrayClassActor _arrayClassActor;
     private final int _length;
 
-    private static final int MAX = 800;
-
     ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
         super(inspection, residence, teleObject);
         _teleArrayObject = (TeleArrayObject) teleObject;
         _arrayClassActor = (ArrayClassActor) teleObject.classActorForType();
-        final int length = _teleArrayObject.getLength();
-        if (length > MAX) {
-            inspection().errorMessage("array display slow: length > " + MAX + " not supported yet", "ArrayInspector");
-            _length = MAX;
-        } else {
-            _length = length;
-        }
+        _length = _teleArrayObject.getLength();
         createFrame(null);
     }
 

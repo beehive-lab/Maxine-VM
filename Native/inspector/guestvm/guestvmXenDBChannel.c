@@ -33,14 +33,14 @@ extern void gather_and_trace_threads(void);
 static int trace = 0;  // set to non-zero to trace thread resumption/blocking
 static int terminated = 0;
 
-struct minios_regs *checked_get_regs(char *f, int threadId) {
-    struct minios_regs *minios_regs;
-    minios_regs = get_regs(threadId);
-    if (minios_regs == NULL) {
+struct db_regs *checked_get_regs(char *f, int threadId) {
+    struct db_regs *db_regs;
+    db_regs = get_regs(threadId);
+    if (db_regs == NULL) {
         log_println("guestvmXenNativeThread_%s: cannot get registers for thread %d", f, threadId);
         gather_and_trace_threads();
     }
-    return minios_regs;
+    return db_regs;
 }
 
 JNIEXPORT jlong JNICALL
@@ -67,10 +67,10 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
 		jbyteArray integerRegisters, jint integerRegistersLength,
 		jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
 		jbyteArray stateRegisters, jint stateRegistersLength) {
-	
+
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
-    struct minios_regs *minios_regs;
+    struct db_regs *db_regs;
 
     if (integerRegistersLength > sizeof(canonicalIntegerRegisters)) {
         log_println("buffer for integer register data is too large");
@@ -82,13 +82,13 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadRegisters(
         return false;
     }
 
-    minios_regs = checked_get_regs("nativeReadRegisters", threadId);
-    if (minios_regs == NULL) {
+    db_regs = checked_get_regs("nativeReadRegisters", threadId);
+    if (db_regs == NULL) {
     	return false;
     }
 
-	isa_canonicalizeTeleIntegerRegisters(minios_regs, &canonicalIntegerRegisters);
-	isa_canonicalizeTeleStateRegisters(minios_regs, &canonicalStateRegisters);
+	isa_canonicalizeTeleIntegerRegisters(db_regs, &canonicalIntegerRegisters);
+	isa_canonicalizeTeleStateRegisters(db_regs, &canonicalStateRegisters);
 
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
@@ -176,27 +176,22 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeDetach(JNIEnv 
     return db_detach();
 }
 
-void free_threads(struct thread *threads, int num)
+void free_threads(struct db_thread *threads, int num)
 {
-    int i;
-
-    for(i=0; i<num; i++)
-        free(threads[i].name);
-
     free(threads);
 }
 
-static ThreadState_t toThreadState(struct thread_state* state) {
-    if (state->is_aux1) {
+static ThreadState_t toThreadState(int state) {
+    if (state & AUX1_FLAG) {
         return TS_MONITOR_WAIT;
     }
-    if (state->is_aux2) {
+    if (state & AUX2_FLAG) {
         return TS_NOTIFY_WAIT;
     }
-    if (state->is_joining) {
+    if (state & JOIN_FLAG) {
         return TS_JOIN_WAIT;
     }
-    if (state->is_sleeping) {
+    if (state & SLEEP_FLAG) {
         return TS_SLEEPING;
     }
     return TS_SUSPENDED;
@@ -204,44 +199,42 @@ static ThreadState_t toThreadState(struct thread_state* state) {
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject threadSeq, jint domainId) {
-    struct thread *threads;
+    struct db_thread *threads;
     int num_threads, i;
     jmethodID gather_thread_method;
-    jstring jname;
 
     threads = gather_threads(&num_threads);
-    gather_thread_method = (*env)->GetStaticMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;ILjava/lang/String;IJJ)V");
+    gather_thread_method = (*env)->GetStaticMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJ)V");
     c_ASSERT(gather_thread_method != NULL);
     for (i=0; i<num_threads; i++) {
-     	struct thread_state state = threads[i].state;
-
-        unsigned long stack_size, stack_start;
-        int ret;
-
-        ret = get_thread_stack(threads[i].id, &stack_start, &stack_size);
-        assert(ret == 1);
-
-        if (!state.is_xen) {
-            jname = (*env)->NewStringUTF(env, threads[i].name);
-            (*env)->CallStaticVoidMethod(env, c, gather_thread_method, threadSeq, threads[i].id, jname, toThreadState(&state), stack_start, stack_size);
-        }
+            (*env)->CallStaticVoidMethod(env, c, gather_thread_method, threadSeq, threads[i].id, toThreadState(threads[i].flags), threads[i].stack, threads[i].stack_size);
     }
 
-    free_threads(threads, num_threads);
+    free(threads);
 
     return 0;
 }
 
-void trace_thread(struct thread *thread) {
-    struct thread_state state = thread->state;
-    if (trace && !state.is_xen) {
-        log_println("thread %s (%d), ra %d, r %d, dying %d, rds %d, ds %d, mw %d, nw %d, jw %d, sl %d",
-            thread->name, thread->id, state.is_runnable, state.is_running, state.is_dying, state.is_req_debug_suspend, state.is_debug_suspend,
-            state.is_aux1, state.is_aux2, state.is_joining, state.is_sleeping);
+int is_state(int state, int flag) {
+	return state & flag ? 1 : 0;
+}
+
+int is_th_state(struct db_thread *thread, int flag) {
+	return is_state(thread->flags, flag);
+}
+
+void trace_thread(struct db_thread *thread) {
+    int state = thread->flags;
+    if (trace) {
+        log_println("thread %d, ra %d, r %d, dying %d, rds %d, ds %d, mw %d, nw %d, jw %d, sl %d",
+            thread->id, is_state(state, RUNNABLE_FLAG), is_state(state, RUNNING_FLAG), 
+            is_state(state, DYING_FLAG), is_state(state, REQ_DEBUG_SUSPEND_FLAG),
+            is_state(state, DEBUG_SUSPEND_FLAG), is_state(state, AUX1_FLAG), 
+            is_state(state, AUX2_FLAG), is_state(state, JOIN_FLAG), is_state(state, SLEEP_FLAG));
     }
 }
 
-void trace_threads(struct thread *threads, int num_threads) {
+void trace_threads(struct db_thread *threads, int num_threads) {
     int i;
     for(i=0; i<num_threads; i++) {
         trace_thread(&threads[i]);
@@ -249,20 +242,19 @@ void trace_threads(struct thread *threads, int num_threads) {
 }
 
 void gather_and_trace_threads(void) {
-    struct thread *threads;
+    struct db_thread *threads;
     int num_threads;
     if (terminated) return;
     threads = gather_threads(&num_threads);
     trace_threads(threads, num_threads);
-    free_threads(threads, num_threads);
+    free(threads);
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv *env, jobject domain, jint domainId) {
     unsigned long sleep_time = 0;
-    struct thread *threads;
+    struct db_thread *threads;
     int num_threads, i;
-    struct thread_state *state;
 
     /* Gather threads first (to figure out which ones to resume) */
     if (trace) log_println("checking which threads to resume");
@@ -270,14 +262,13 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeResume(JNIEnv 
     trace_threads(threads, num_threads);
     for(i=0; i<num_threads; i++)
     {
-        state = &threads[i].state;
-        if((!state->is_runnable) && (!state->is_running) && (state->is_debug_suspend))
+        if (is_th_state(&threads[i], DEBUG_SUSPEND_FLAG))
         {
-            if (trace) log_println("  resuming thread %s, %d", threads[i].name, threads[i].id);
+            if (trace) log_println("  resuming thread %d", threads[i].id);
             resume(threads[i].id);
         }
     }
-    free_threads(threads, num_threads);
+    free(threads);
     /* Poll waiting for the thread to block */
 again:
     if (trace) log_println("waiting for a thread to block");
@@ -291,12 +282,11 @@ again:
     }
     trace_threads(threads, num_threads);
 
-    for(i=0; i<num_threads; i++) {
-        state = &threads[i].state;
-        if((!state->is_runnable) && (!state->is_running) && (state->is_debug_suspend))
+    for (i=0; i<num_threads; i++) {
+        if (is_th_state(&threads[i], DEBUG_SUSPEND_FLAG))
             goto out;
     }
-    free_threads(threads, num_threads);
+    free(threads);
     sleep_time += 1000000;  // usecs
     usleep(sleep_time);
     goto again;
@@ -311,16 +301,15 @@ out:
 
     for(i=0; i<num_threads; i++) {
         int rc = 0;
-        state = &threads[i].state;
-        if (!state->is_xen && !state->is_debug_suspend) {
-            if (trace) log_println("suspending %s, %d", threads[i].name, threads[i].id);
+        if (!is_th_state(&threads[i], DEBUG_SUSPEND_FLAG)) {
+            if (trace) log_println("suspending %d", threads[i].id);
             rc = suspend(threads[i].id);
         }
     }
-    free_threads(threads, num_threads);
+    free(threads);
     threads = gather_threads(&num_threads);
     trace_threads(threads, num_threads);
-    free_threads(threads, num_threads);
+    free(threads);
     return 0;
 }
 

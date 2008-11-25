@@ -26,21 +26,15 @@ import com.sun.max.unsafe.*;
 
 public class GuestVMXenNativeThread extends TeleNativeThread {
 
-    private final String _name;
     private boolean _mark;
-
-    public String name() {
-        return _name;
-    }
 
     @Override
     public GuestVMXenTeleDomain teleProcess() {
         return (GuestVMXenTeleDomain) super.teleProcess();
     }
 
-    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, int id, String name, long stackBase, long stackSize) {
+    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, int id, long stackBase, long stackSize) {
         super(teleDomain, stackBase, stackSize, id);
-        _name = name;
     }
 
     @Override
