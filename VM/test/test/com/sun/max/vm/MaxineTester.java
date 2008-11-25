@@ -109,20 +109,24 @@ public class MaxineTester {
         for (Class mainClass : MaxineTesterConfiguration._outputTestClasses) {
             outputTestPackages.add(mainClass.getPackage());
         }
-        final File parent = JavaProject.findVcsProjectDirectory();
+        final File parent = new File(new File("VM"), "test");
+        ProgramError.check(parent != null && parent.exists(), "Could not find VM/test: trying running in the root of your Maxine repository");
         for (java.lang.Package p : outputTestPackages) {
-            File dir = new File(parent, "test");
+            File dir = parent;
             for (String n : p.getName().split("\\.")) {
                 dir = new File(dir, n);
             }
-            for (File f : dir.listFiles()) {
-                if (f.getName().endsWith(".input")) {
-                    try {
-                        Files.copy(f, new File(directory, f.getName()));
-                    } catch (FileNotFoundException e) {
-                        // do nothing.
-                    } catch (IOException e) {
-                        // do nothing.
+            final File[] files = dir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.getName().endsWith(".input")) {
+                        try {
+                            Files.copy(f, new File(directory, f.getName()));
+                        } catch (FileNotFoundException e) {
+                            // do nothing.
+                        } catch (IOException e) {
+                            // do nothing.
+                        }
                     }
                 }
             }
@@ -268,7 +272,7 @@ public class MaxineTester {
             }
         } else {
             out.println("(image build failed)");
-            final File outputFile = getOutputFile(imageDir, "IMAGE", config);
+            final File outputFile = getOutputFile(imageDir, "IMAGEGEN", config);
             out.println("  -> see: " + outputFile.getAbsolutePath());
         }
 
@@ -478,7 +482,7 @@ public class MaxineTester {
         final String[] vmOptions = new String[] {"-Xss2m", "-Xms1G", "-Xmx2G"};
         String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, vmOptions, imageArguments, null);
         javaArgs = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
-        final File outputFile = getOutputFile(imageDir, "IMAGE_GENERATION_OUTPUT", imageConfig);
+        final File outputFile = getOutputFile(imageDir, "IMAGEGEN", imageConfig);
 
         final int exitValue = exec(null, javaArgs, outputFile, "Building " + imageDir.getName() + "/maxine.vm", _imageBuildTimeOut.getValue());
         if (exitValue == 0) {
