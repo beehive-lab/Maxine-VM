@@ -41,7 +41,6 @@ import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * The normal Java run scheme that starts up the standard JDK services, loads a user
@@ -63,8 +62,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         "-showversion", "print product version and continue", MaxineVM.Phase.STARTING);
     private static final VMOption _D64Option = new VMOption("-d64",
         "Selects the 64-bit data model if available. Currently ignored.", MaxineVM.Phase.PRISTINE);
-
-    private static final boolean LOOKUP_MAIN_USING_ACTOR = false;
 
     public JavaRunScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -299,23 +296,18 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     }
 
     private void lookupAndInvokeMain(Class<?> mainClass) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-        if (LOOKUP_MAIN_USING_ACTOR) {
-            final StaticMethodActor mainMethod = ClassActor.fromJava(mainClass).findStaticMethodActor(SymbolTable.makeSymbol("main"), SignatureDescriptor.create(void.class, String[].class));
-            mainMethod.invoke(ReferenceValue.from(VMOptions.mainClassArguments()));
-        } else {
-            final Method mainMethod = mainClass.getDeclaredMethod("main", String[].class);
-            final int modifiers = mainMethod.getModifiers();
-            if ((!Modifier.isPublic(modifiers)) || (!Modifier.isStatic(modifiers)) || (mainMethod.getReturnType() != void.class)) {
-                throw new NoSuchMethodException("main");
-            }
-            AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                public Object run() {
-                    mainMethod.setAccessible(true);
-                    return null;
-                }
-            });
-            mainMethod.invoke(null, new Object[] {VMOptions.mainClassArguments()});
+        final Method mainMethod = mainClass.getDeclaredMethod("main", String[].class);
+        final int modifiers = mainMethod.getModifiers();
+        if ((!Modifier.isPublic(modifiers)) || (!Modifier.isStatic(modifiers)) || (mainMethod.getReturnType() != void.class)) {
+            throw new NoSuchMethodException("main");
         }
+        AccessController.doPrivileged(new PrivilegedAction<Object>() {
+            public Object run() {
+                mainMethod.setAccessible(true);
+                return null;
+            }
+        });
+        mainMethod.invoke(null, new Object[] {VMOptions.mainClassArguments()});
     }
 
     private Class<?> loadMainClass() throws IOException, ClassNotFoundException {

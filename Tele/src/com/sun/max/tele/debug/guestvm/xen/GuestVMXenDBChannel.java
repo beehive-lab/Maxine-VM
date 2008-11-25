@@ -136,8 +136,8 @@ public final class GuestVMXenDBChannel {
      * @param stackBase
      * @param stackSize
      */
-    static void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, String name, int state, long stackBase, long stackSize) {
-        _teleDomain.jniGatherThread(threads, threadId, name, state, stackBase, stackSize);
+    static void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize) {
+        _teleDomain.jniGatherThread(threads, threadId, state, stackBase, stackSize);
     }
 
     private static native boolean nativeAttach(int domId);

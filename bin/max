@@ -457,7 +457,7 @@ function showCommands() {
     done
     echo
     echo "global options:"
-    echo " -v               enable verbose output"
+    echo " -v               enable verbose output "
     echo " -d               enable debug output"
     echo " -h               show launcher help"
     echo " -java_home       specifies JDK installation directory (must be JDK 6 or later)"

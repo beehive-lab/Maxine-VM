@@ -117,7 +117,7 @@ public abstract class RiscExternalInstruction implements RiscInstructionDescript
 
     private void printBranchDisplacement(ImmediateArgument immediateArgument) {
         final int delta = (int) immediateArgument.asLong();
-        if (_address != null && _address.asLong() > 0) {
+        if (_address != null) {
             final ImmediateArgument targetAddress = _address.plus(delta);
             final DisassembledLabel label = _addressMapper.labelAt(targetAddress);
             if (label != null) {

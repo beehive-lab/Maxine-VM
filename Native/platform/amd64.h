@@ -53,9 +53,9 @@
 #   include <guestvmXen.h>
     typedef struct fault_regs* amd64_OsSignalIntegerRegisters;
     typedef struct fault_regs* amd64_OsSignalFloatingPointRegisters;
-    typedef struct minios_regs* amd64_OsTeleIntegerRegisters;
-    typedef struct minios_regs* amd64_OsTeleStateRegisters;
-    typedef struct minios_regs* amd64_OsTeleFloatingPointRegisters;
+    typedef struct db_regs* amd64_OsTeleIntegerRegisters;
+    typedef struct db_regs* amd64_OsTeleStateRegisters;
+    typedef struct db_regs* amd64_OsTeleFloatingPointRegisters;
 #else
 #   error
 #endif
