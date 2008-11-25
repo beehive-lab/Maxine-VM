@@ -107,6 +107,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
          * This methods spins in a busy loop while safepoints for the current thread are triggered which means a garbage
          * collection is currently running.
          */
+        @INLINE
         @NO_SAFEPOINTS("Cannot take a trap while GC is running")
         private static void spinWhileSafepointsAreTriggered() {
             while (Safepoint.isTriggered()) {

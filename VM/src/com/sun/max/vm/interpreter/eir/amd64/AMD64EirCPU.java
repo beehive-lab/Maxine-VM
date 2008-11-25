@@ -74,6 +74,8 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
 
         stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINT_LATCH.index()), _vmThreadLocals);
         stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_ENABLED_THREAD_LOCALS.index()), _vmThreadLocals);
+        stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_DISABLED_THREAD_LOCALS.index()), _vmThreadLocals);
+        stack.writeWord(_vmThreadLocals.plusWords(VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.index()), Pointer.fromInt(-1));
         stack.write(_vmThreadLocals.plusWords(VmThreadLocal.VM_THREAD.index()), ReferenceValue.from(VmThread.current()));
 
         // Set up the latch register
