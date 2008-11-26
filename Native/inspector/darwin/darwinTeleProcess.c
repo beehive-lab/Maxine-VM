@@ -44,10 +44,13 @@
 #include "teleProcess.h"
 #include "teleNativeThread.h"
 
-jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
+extern jboolean disableSingleStepping(jlong task);
+
+jboolean ptraceWaitForSignal(jlong pid, jlong task, int signalnum) {
     while (1) {
         int status;
         int error = waitpid(pid, &status, 0);
+
         if (error != pid) {
             log_println("waitpid failed with errno: %d", errno);
             return false;
@@ -61,6 +64,11 @@ jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
         if (WIFSTOPPED(status)) {
             // check whether the process received a signal, and continue with it if so.
             int signal = WSTOPSIG(status);
+
+            if (signalnum == signal && signalnum == SIGTRAP) {
+                disableSingleStepping(task);
+            }
+
             if (signal == 0 || signal == signalnum) {
                 return true;
             } else {
@@ -178,7 +186,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, 
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong pid, jlong task) {
-    return ptraceWaitForSignal(pid, SIGTRAP);
+    return ptraceWaitForSignal(pid, task, SIGTRAP);
 }
 
 JNIEXPORT jboolean JNICALL
