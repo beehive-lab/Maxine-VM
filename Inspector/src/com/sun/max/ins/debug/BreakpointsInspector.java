@@ -805,7 +805,7 @@ public final class BreakpointsInspector extends UniqueInspector {
             final Address address = teleTargetBreakpoint.address();
             final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
             if (teleTargetMethod != null) {
-                _shortName = inspection().nameDisplay().shortName(teleTargetMethod, address);
+                _shortName = inspection().nameDisplay().shortName(teleTargetMethod);
                 _longName = inspection().nameDisplay().longName(teleTargetMethod, address);
                 _codeStart = teleTargetMethod.codeStart();
                 _location = address.minus(_codeStart.asAddress()).toInt();
@@ -813,15 +813,23 @@ public final class BreakpointsInspector extends UniqueInspector {
                 final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(teleVM(), address);
                 if (teleRuntimeStub != null) {
                     _codeStart = teleRuntimeStub.runtimeStub().start();
+                    _location = address.minus(_codeStart).toInt();
                     _shortName = "runtime stub[0x" + _codeStart + "]";
                     _longName = _shortName;
-                    _location = address.minus(_codeStart).toInt();
                 } else {
-                    // Must be an address in native code
-                    _shortName = "0x" + address.toHexString();
-                    _longName = "native code at 0x" + address.toHexString();
-                    _codeStart = address;
-                    _location = 0;
+                    final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.make(teleVM(), address);
+                    if (teleNativeTargetRoutine != null) {
+                        _codeStart = teleNativeTargetRoutine.codeStart();
+                        _location = address.minus(_codeStart.asAddress()).toInt();
+                        _shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+                        _longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+                    } else {
+                        // Must be an address in an unknown area of native code
+                        _shortName = "0x" + address.toHexString();
+                        _longName = "native code at 0x" + address.toHexString();
+                        _codeStart = address;
+                        _location = 0;
+                    }
                 }
             }
         }

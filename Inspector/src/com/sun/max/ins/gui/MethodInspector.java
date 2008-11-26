@@ -128,9 +128,9 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
                         final MutableInnerClassGlobal<MethodInspector> result = new MutableInnerClassGlobal<MethodInspector>();
                         new NativeMethodAddressInputDialog(inspection, address, TeleNativeTargetRoutine.DEFAULT_NATIVE_CODE_LENGTH) {
                             @Override
-                            public void entered(Address nativeAddress, Size codeSize, String title) {
+                            public void entered(Address nativeAddress, Size codeSize, String name) {
                                 try {
-                                    final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.create(inspection.teleVM(), nativeAddress, codeSize);
+                                    final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.create(inspection.teleVM(), nativeAddress, codeSize, name);
                                     result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
                                     // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                                     result.value().highlight();
