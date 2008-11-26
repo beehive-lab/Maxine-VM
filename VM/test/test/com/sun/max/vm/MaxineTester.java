@@ -68,7 +68,7 @@ public class MaxineTester {
                     "Skip the generation of the image, which is useful for testing the Maxine tester itself.");
     private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs", MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
-    private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs", MaxineTesterConfiguration.defaultMaxvmnOutputConfigs(),
+    private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs", MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
@@ -618,7 +618,7 @@ public class MaxineTester {
                 try {
                     Thread.sleep(50);
                     _exitValue = _process.exitValue();
-                    Thread.sleep(50);
+                    Thread.sleep(100);
                     _stdout.close();
                     _stderr.close();
                     _stdin.close();
