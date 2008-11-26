@@ -49,4 +49,9 @@ public class SPARCJITTestSetup extends SPARCTranslatorTestSetup  implements JITT
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
         return new SPARCJitCompiler(VMConfiguration.target(), templateTable);
     }
+
+    @Override
+    public boolean disassembleCompiledMethods() {
+        return true;
+    }
 }

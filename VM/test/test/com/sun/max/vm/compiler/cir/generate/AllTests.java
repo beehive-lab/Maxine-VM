@@ -36,7 +36,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = MaxTestCase.createSuite(new Package(), true, CirTranslatorTest_max.class, CirTranslatorTest_subtype.class);
+        final TestSuite suite = new TestCaseClassSet(new Package()).addToEnd(CirTranslatorTest_max.class, CirTranslatorTest_subtype.class).toTestSuite();
         return new CirTranslatorTestSetup(suite);
     }
 }

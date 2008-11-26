@@ -207,4 +207,9 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         jitScheme.initializeForJitCompilations();
         return jitScheme;
     }
+
+    @Override
+    public boolean disassembleCompiledMethods() {
+        return true;
+    }
 }

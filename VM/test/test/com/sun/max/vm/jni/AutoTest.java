@@ -34,6 +34,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return MaxTestCase.createSuite(new Package(), true);
+        return new TestCaseClassSet(new Package()).toTestSuite();
     }
 }

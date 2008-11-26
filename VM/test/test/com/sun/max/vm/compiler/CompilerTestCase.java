@@ -749,7 +749,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
      * the compiled code. If a disassembler is not available for the code, then only the metadata is traced.
      * The trace is sent to the standard {@linkplain Trace#stream() trace stream}.
      */
-    protected void traceBundleAndDisassemble(TargetMethod targetMethod) {
+    public void traceBundleAndDisassemble(TargetMethod targetMethod) {
         targetMethod.traceBundle(INDENT_WRITER);
         INDENT_WRITER.println("Reference Maps:");
         INDENT_WRITER.indent();

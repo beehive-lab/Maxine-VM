@@ -24,8 +24,6 @@ import junit.framework.*;
 
 import org.junit.runner.*;
 
-import com.sun.max.ide.*;
-
 @RunWith(org.junit.runners.AllTests.class)
 public final class AllTests {
     private AllTests() {
@@ -36,7 +34,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = MaxTestCase.createSuite(new Package(), false);
+        final TestSuite suite = new TestSuite(new Package().name());
         suite.addTest(test.com.sun.max.vm.compiler.cir.transform.AllTests.suite());
         suite.addTest(test.com.sun.max.vm.compiler.cir.generate.AllTests.suite());
         //suite.addTest(test.com.sun.max.vm.compiler.cir.optimize.AllTests.suite());

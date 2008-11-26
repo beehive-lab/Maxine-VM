@@ -34,7 +34,7 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        final TestSuite suite = MaxTestCase.createSuite(new Package(), true, DirTranslatorTest_max.class);
+        final TestSuite suite = new TestCaseClassSet(new Package()).addToEnd(DirTranslatorTest_max.class).toTestSuite();
         return new DirTranslatorTestSetup(suite);
     }
 }

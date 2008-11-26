@@ -18,23 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.eir.amd64;
+package test.com.sun.max.vm.compiler.eir.sparc;
 
 import junit.framework.*;
 
 import com.sun.max.ide.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class NoAutoTest {
-    private NoAutoTest() {
+public final class AutoTest {
+    private AutoTest() {
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(NoAutoTest.suite());
+        junit.textui.TestRunner.run(AutoTest.suite());
     }
 
     public static Test suite() {
-        final TestSuite suite = MaxTestCase.createSuite(new Package(), true, AMD64EirTranslatorTest_max.class);
-        return new AMD64EirTranslatorTestSetup(suite);
+        final Class[] slowTests = {SPARCEirTranslatorTest_max.class, SPARCEirTranslatorTest_subtype.class};
+        final TestSuite suite = new TestCaseClassSet(new Package()).removeAll(slowTests).toTestSuite();
+        return new SPARCEirTranslatorTestSetup(suite);
     }
 }
