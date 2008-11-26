@@ -51,17 +51,25 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
     };
 
-    static final Set<Class> _expectedFailuresSolarisAMD64 = new HashSet<Class>(Arrays.asList(new Class[] {
-        test.output.FloatNanTest.class,
-        test.output.JavacTest.class,
-    }));
+    static Set<String> toClassNames(Class<?>... classes) {
+        final Set<String> classNames = new HashSet<String>(classes.length);
+        for (Class c : classes) {
+            classNames.add(c.getName());
+        }
+        return classNames;
+    }
 
-    static final Set<Class> _expectedFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
+    static final Set<String> _expectedFailuresSolarisAMD64 = toClassNames(
+        test.output.FloatNanTest.class,
+        test.output.JavacTest.class
+    );
+
+    static final Set<String> _expectedFailuresSolarisSPARCV9 = toClassNames(
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.hotpath.HP_life.class, // 328
-        test.hotpath.HP_series.class, // 333
-    }));
+        test.hotpath.HP_series.class // 333
+    );
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
@@ -83,14 +91,20 @@ public class MaxineTesterConfiguration {
     static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
     static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
-    public static boolean isExpectedFailure(Class outputTestClass, String config) {
+    /**
+     * Determines if a given test is known to fail.
+     *
+     * @param testName a unique identifier for the test
+     * @param config the {@linkplain #_maxvmConfigs maxvm} configuration used during the test execution. This value may be null.
+     */
+    public static boolean isExpectedFailure(String testName, String config) {
         final Platform platform = Platform.host();
         if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
             final ProcessorKind processorKind = platform.processorKind();
             if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                return _expectedFailuresSolarisAMD64.contains(outputTestClass);
+                return _expectedFailuresSolarisAMD64.contains(testName);
             } else if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
-                return _expectedFailuresSolarisSPARCV9.contains(outputTestClass);
+                return _expectedFailuresSolarisSPARCV9.contains(testName);
             }
         }
         return false;
