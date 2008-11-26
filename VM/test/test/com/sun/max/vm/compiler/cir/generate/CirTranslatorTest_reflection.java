@@ -33,9 +33,7 @@ public class CirTranslatorTest_reflection extends CompilerTest_reflection<CirMet
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_reflection.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_reflection.class);
-        // $JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

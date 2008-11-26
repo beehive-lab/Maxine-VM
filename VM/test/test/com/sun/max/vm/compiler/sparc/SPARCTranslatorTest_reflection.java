@@ -36,9 +36,7 @@ public class SPARCTranslatorTest_reflection extends CompilerTest_reflection<CirM
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCTranslatorTest_reflection.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCTranslatorTest_reflection.class);
-        // $JUnit-END$
         return new SPARCTranslatorTestSetup(suite);
     }
 

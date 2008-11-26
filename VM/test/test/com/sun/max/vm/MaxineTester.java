@@ -279,7 +279,7 @@ public class MaxineTester {
      *
      * @param resultsFile the file to parse
      * @param passed specifies if the file list tests that passed or failed
-     * @param testNames in non-null, then all test names parsed from the file are appended to this sequence
+     * @param testNames if non-null, then all test names parsed from the file are appended to this sequence
      */
     private static void parseAutoTestResults(File resultsFile, boolean passed, AppendableSequence<String> testNames) {
         try {
@@ -348,7 +348,7 @@ public class MaxineTester {
                 _autoTestsWithExceptions.append(autoTest);
             }
             final long runTime = System.currentTimeMillis() - start;
-            out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + "seconds]");
+            out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
             for (String testName : failedTestNames) {
                 out().println("    failed " + testName);
             }

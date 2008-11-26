@@ -27,9 +27,7 @@ public class CirOptimizerTest_getstatic extends BytecodeTest_getstatic {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_getstatic.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_getstatic.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

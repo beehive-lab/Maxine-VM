@@ -27,9 +27,7 @@ public class CirOptimizerTest_arrayStore extends BytecodeTest_arrayStore {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_arrayStore.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_arrayStore.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

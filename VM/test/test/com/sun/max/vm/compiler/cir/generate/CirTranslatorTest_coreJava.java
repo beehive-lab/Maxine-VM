@@ -36,9 +36,7 @@ public class CirTranslatorTest_coreJava extends CompilerTest_coreJava {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_coreJava.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_coreJava.class);
-        // $JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

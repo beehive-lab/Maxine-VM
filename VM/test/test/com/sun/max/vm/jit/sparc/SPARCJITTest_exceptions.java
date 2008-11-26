@@ -38,9 +38,7 @@ public class SPARCJITTest_exceptions extends JITTest_exceptions {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_exceptions.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_exceptions.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

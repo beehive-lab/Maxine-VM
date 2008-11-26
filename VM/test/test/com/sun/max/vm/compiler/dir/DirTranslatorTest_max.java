@@ -36,9 +36,7 @@ public class DirTranslatorTest_max extends CompilerTest_max {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_max.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_max.class);
-        // $JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

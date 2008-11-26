@@ -36,9 +36,7 @@ public class AMD64TranslatorTest_regressions extends CompilerTest_regressions<Ci
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64TranslatorTest_regressions.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64TranslatorTest_regressions.class);
-        // $JUnit-END$
         return new AMD64TranslatorTestSetup(suite);
     }
 

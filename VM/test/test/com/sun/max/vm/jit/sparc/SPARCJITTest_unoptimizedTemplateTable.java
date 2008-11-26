@@ -38,9 +38,7 @@ public class SPARCJITTest_unoptimizedTemplateTable extends JITTest_unoptimizedTe
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_unoptimizedTemplateTable.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_unoptimizedTemplateTable.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

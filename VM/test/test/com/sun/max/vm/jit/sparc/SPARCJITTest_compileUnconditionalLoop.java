@@ -38,9 +38,7 @@ public class SPARCJITTest_compileUnconditionalLoop extends JITTest_compileUncond
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileUnconditionalLoop.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileUnconditionalLoop.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

@@ -38,9 +38,7 @@ public class AMD64JITTest_compileMethodUsingArray extends JITTest_compileMethodU
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_compileMethodUsingArray.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_compileMethodUsingArray.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }
