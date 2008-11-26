@@ -38,9 +38,7 @@ public class AMD64JITTest_unoptimizedTemplateTable extends JITTest_unoptimizedTe
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_unoptimizedTemplateTable.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_unoptimizedTemplateTable.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

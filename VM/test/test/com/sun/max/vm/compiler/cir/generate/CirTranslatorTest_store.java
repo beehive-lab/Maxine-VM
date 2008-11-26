@@ -27,9 +27,7 @@ public class CirTranslatorTest_store extends BytecodeTest_store {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_store.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_store.class);
-        // $JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

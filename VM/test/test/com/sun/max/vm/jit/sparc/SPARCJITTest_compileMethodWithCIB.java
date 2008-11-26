@@ -38,9 +38,7 @@ public class SPARCJITTest_compileMethodWithCIB extends JITTest_compileMethodWith
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileMethodWithCIB.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileMethodWithCIB.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

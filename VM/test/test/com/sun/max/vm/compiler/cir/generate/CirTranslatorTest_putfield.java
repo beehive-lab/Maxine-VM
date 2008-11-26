@@ -27,9 +27,7 @@ public class CirTranslatorTest_putfield extends BytecodeTest_putfield {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_putfield.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_putfield.class);
-        // $JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 
