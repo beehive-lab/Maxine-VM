@@ -51,12 +51,20 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
     };
 
-    static final Set<Class> _expectedFailuresSolarisAMD64 = new HashSet<Class>(Arrays.asList(new Class[] {
-        test.output.FloatNanTest.class,
-        test.output.JavacTest.class,
-    }));
+    static Set<String> toClassNames(Class<?>... classes) {
+        final Set<String> classNames = new HashSet<String>(classes.length);
+        for (Class c : classes) {
+            classNames.add(c.getName());
+        }
+        return classNames;
+    }
 
-    static final Set<Class> _expectedFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
+    static final Set<String> _expectedFailuresSolarisAMD64 = toClassNames(
+        test.output.FloatNanTest.class,
+        test.output.JavacTest.class
+    );
+
+    static final Set<String> _expectedFailuresSolarisSPARCV9 = toClassNames(
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
@@ -76,7 +84,7 @@ public class MaxineTesterConfiguration {
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.hotpath.HP_series.class// 333
-    }));
+    );
 
     static final Set<Class> _expectedJitFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
         test.output.HelloWorld.class,
@@ -156,17 +164,23 @@ public class MaxineTesterConfiguration {
         return DEFAULT_JAVA_TESTER_CONFIGS;
     }
 
-    public static boolean isExpectedFailure(Class outputTestClass, String config) {
+    /**
+     * Determines if a given test is known to fail.
+     *
+     * @param testName a unique identifier for the test
+     * @param config the {@linkplain #_maxvmConfigs maxvm} configuration used during the test execution. This value may be null.
+     */
+    public static boolean isExpectedFailure(String testName, String config) {
         final Platform platform = Platform.host();
         if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
             final ProcessorKind processorKind = platform.processorKind();
             if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                return _expectedFailuresSolarisAMD64.contains(outputTestClass);
+                return _expectedFailuresSolarisAMD64.contains(testName);
             } else if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
                 if (config.indexOf("jit") >= 0) {
                     return _expectedJitFailuresSolarisSPARCV9.contains(outputTestClass);
                 }
-                return _expectedFailuresSolarisSPARCV9.contains(outputTestClass);
+                return _expectedFailuresSolarisSPARCV9.contains(testName);
             }
         }
         return false;

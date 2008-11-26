@@ -27,9 +27,7 @@ public class CirOptimizerTest_controlFlow extends CompilerTest_controlFlow {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_controlFlow.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_controlFlow.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

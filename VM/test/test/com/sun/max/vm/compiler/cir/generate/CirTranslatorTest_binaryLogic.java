@@ -27,9 +27,7 @@ public class CirTranslatorTest_binaryLogic extends BytecodeTest_binaryLogic {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_binaryLogic.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_binaryLogic.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

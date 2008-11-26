@@ -38,9 +38,7 @@ public class SPARCJITTest_compile_BC_putfield extends JITTest_compile_BC_putfiel
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compile_BC_putfield.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compile_BC_putfield.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

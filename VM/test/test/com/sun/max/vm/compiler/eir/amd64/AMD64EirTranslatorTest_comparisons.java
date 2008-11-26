@@ -30,9 +30,7 @@ public class AMD64EirTranslatorTest_comparisons extends CompilerTest_comparisons
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64EirTranslatorTest_comparisons.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(AMD64EirTranslatorTest_comparisons.class);
-        //$JUnit-END$
         return new AMD64EirTranslatorTestSetup(suite);
     }
 

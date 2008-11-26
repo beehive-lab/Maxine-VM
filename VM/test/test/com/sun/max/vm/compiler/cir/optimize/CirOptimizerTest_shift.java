@@ -27,9 +27,7 @@ public class CirOptimizerTest_shift extends BytecodeTest_shift {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_shift.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_shift.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

@@ -37,11 +37,9 @@ public final class AllTests {
 
     public static Test suite() {
         final TestSuite suite = MaxTestCase.createSuite(new Package(), false);
-        //$JUnit-BEGIN$
         suite.addTest(test.com.sun.max.vm.compiler.cir.transform.AllTests.suite());
         suite.addTest(test.com.sun.max.vm.compiler.cir.generate.AllTests.suite());
         //suite.addTest(test.com.sun.max.vm.compiler.cir.optimize.AllTests.suite());
-        //$JUnit-END$
         return suite;
     }
 }

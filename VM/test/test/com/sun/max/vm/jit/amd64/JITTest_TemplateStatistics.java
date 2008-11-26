@@ -37,9 +37,7 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(JITTest_TemplateStatistics.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(JITTest_TemplateStatistics.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 

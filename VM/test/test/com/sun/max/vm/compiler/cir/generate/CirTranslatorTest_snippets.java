@@ -28,9 +28,7 @@ public class CirTranslatorTest_snippets extends CompilerTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_snippets.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_snippets.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

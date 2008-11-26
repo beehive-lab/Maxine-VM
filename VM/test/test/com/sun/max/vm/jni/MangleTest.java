@@ -193,6 +193,10 @@ public class MangleTest extends MaxTestCase {
                     // Too many generated methods
                     return true;
                 }
+                if (className.startsWith(new test.com.sun.max.Package().name())) {
+                    // Avoid test classes
+                    return true;
+                }
                 try {
                     final Class<?> clazz = Class.forName(className, false, MangleTest.class.getClassLoader());
                     mangleAndDemangle(clazz);

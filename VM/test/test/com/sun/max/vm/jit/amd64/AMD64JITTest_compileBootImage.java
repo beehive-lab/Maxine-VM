@@ -38,9 +38,7 @@ public class AMD64JITTest_compileBootImage extends JITTest_compileBootImage {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_compileBootImage.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_compileBootImage.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

@@ -29,9 +29,7 @@ public class CirTranslatorTest_arrayLoad extends BytecodeTest_arrayLoad<CirMetho
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_arrayLoad.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_arrayLoad.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

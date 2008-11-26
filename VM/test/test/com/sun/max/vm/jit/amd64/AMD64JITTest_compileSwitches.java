@@ -39,9 +39,7 @@ public class AMD64JITTest_compileSwitches extends JITTest_compileSwitches {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_compileSwitches.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_compileSwitches.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }
