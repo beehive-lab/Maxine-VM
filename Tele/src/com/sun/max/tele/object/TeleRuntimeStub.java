@@ -116,6 +116,10 @@ public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTar
         teleVM().teleCodeRegistry().add(this);
     }
 
+    public String name() {
+        return _runtimeStub.name();
+    }
+    
     public TeleClassMethodActor getTeleClassMethodActor() {
         return null;
     }

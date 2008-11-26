@@ -324,14 +324,14 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     private static final Border _debugEnabledTargetBreakpointTagBorder =
-        BorderFactory.createLineBorder(_debugBreakpointBorderColor, 2);
+        BorderFactory.createLineBorder(_debugBreakpointBorderColor, 3);
     @Override
     public Border debugEnabledTargetBreakpointTagBorder() {
         return _debugEnabledTargetBreakpointTagBorder;
     }
 
     private static final Border _debugDisabledTargetBreakpointTagBorder =
-        BorderFactory.createMatteBorder(2, 2, 2, 2, IconFactory.createPixelatedIcon(_debugBreakpointBorderColor));
+        BorderFactory.createMatteBorder(3, 3, 3, 3, IconFactory.createPixelatedIcon(_debugBreakpointBorderColor));
     @Override
     public Border debugDisabledTargetBreakpointTagBorder() {
         return _debugDisabledTargetBreakpointTagBorder;

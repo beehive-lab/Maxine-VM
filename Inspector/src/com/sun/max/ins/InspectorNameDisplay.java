@@ -211,6 +211,13 @@ public final class InspectorNameDisplay extends InspectionHolder {
     }
 
     /**
+     * E.g. "foo(Pointer, Word, int[])[0]"
+     */
+    public String shortName(TeleTargetMethod teleTargetMethod) {
+        return teleTargetMethod.classMethodActor().format("%n(%p)" + methodCompilationID(teleTargetMethod));
+    }
+
+    /**
      * E.g. "int foo(Pointer, Word, int[])[0]"
      *
      * @param returnTypeSpecification specifies where the return type should appear in the returned value
@@ -296,6 +303,22 @@ public final class InspectorNameDisplay extends InspectionHolder {
     }
 
     /**
+     * E.g. user supplied name or "@0xffffffffffffffff"
+     */
+    public String shortName(TeleNativeTargetRoutine teleNativeTargetRoutine) {
+        final String title = teleNativeTargetRoutine.name();
+        return title == null ? "@0x" + teleNativeTargetRoutine.codeStart().toHexString() : title;
+    }
+
+    /**
+     * E.g. user supplied name or "Native code @0xffffffffffffffff"
+     */
+    public String longName(TeleNativeTargetRoutine teleNativeTargetRoutine) {
+        final String title = teleNativeTargetRoutine.name();
+        return title == null ? "Native code @0x" + teleNativeTargetRoutine.codeStart().toHexString() : "Native code: " + title;
+    }
+
+    /**
      * E.g. "int foo(Pointer, Word, int[]) in com.sun.max.ins.Bar"
      * E.g. "int foo(Pointer, Word, int[])+14 in com.sun.max.ins.Bar"
      */
@@ -326,7 +349,7 @@ public final class InspectorNameDisplay extends InspectionHolder {
         if (teleCodeLocation.hasTargetCodeLocation()) {
             final Address address = teleCodeLocation.targetCodeInstructionAddresss();
             name.append("Target{0x").append(address.toHexString());
-            if (TeleNativeTargetRoutine.get(teleVM(), address) != null) {
+            if (TeleNativeTargetRoutine.make(teleVM(), address) != null) {
                 name.append("}");
             } else {
                 final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
