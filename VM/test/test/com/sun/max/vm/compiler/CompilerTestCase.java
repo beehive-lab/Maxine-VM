@@ -279,7 +279,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
     protected ClassMethodActor getClassMethodActor(Class javaClass, String methodName, SignatureDescriptor signature) {
         final ClassMethodActor classMethodActor = ClassActor.fromJava(javaClass).findClassMethodActor(makeSymbol(methodName), signature);
         if (classMethodActor == null) {
-            fail();
+            fail("No such method: " + javaClass.getName() + "." + methodName + signature);
         }
         return classMethodActor;
     }
@@ -292,7 +292,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
             thisClass = thisClass.getSuperclass();
         } while (classMethodActor == null && thisClass != null);
         if (classMethodActor == null) {
-            fail();
+            fail("No such method: " + javaClass.getName() + "." + methodName);
         }
         return classMethodActor;
     }
