@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.jit;
 
+import test.com.sun.max.vm.compiler.*;
+
 import com.sun.max.asm.dis.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
@@ -28,10 +30,16 @@ import com.sun.max.vm.template.*;
 /**
  * Common interface to all JIT Test setup.
  * Used by JitCompilerTestCase to create instance of the tested JIT compiler and the corresponding disassembler.
- * 
+ *
  * @author Laurent Daynes
  */
 public interface JITTestSetup {
     JitCompiler newJitCompiler(TemplateTable templateTable);
     Disassembler disassemblerFor(TargetMethod targetMethod);
+
+    /**
+     * Specifies whether all the methods in a {@link JitCompilerTestCase} should be
+     * {@linkplain CompilerTestCase#traceBundleAndDisassemble traced and disassembled} by default.
+     */
+    boolean disassembleCompiledMethods();
 }

@@ -36,7 +36,7 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = MaxTestCase.createSuite(new Package(), false);
+        final TestSuite suite = new TestCaseClassSet(new Package()).toTestSuite();
         suite.addTestSuite(LoadUnsafeBoxLibraryTest.class);
         suite.addTestSuite(WordTest.class);
         suite.addTestSuite(AddressTest.class);

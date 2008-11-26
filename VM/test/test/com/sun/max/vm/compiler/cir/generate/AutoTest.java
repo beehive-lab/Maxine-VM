@@ -34,7 +34,8 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        final TestSuite suite = MaxTestCase.createSuite(new Package(), true, CirTranslatorTest_subtype.class, CirTranslatorTest_max.class);
+        final Class[] slowTests = {CirTranslatorTest_max.class};
+        final TestSuite suite = new TestCaseClassSet(new Package()).removeAll(slowTests).toTestSuite();
         return new CirTranslatorTestSetup(suite);
     }
 }

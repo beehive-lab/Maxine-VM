@@ -129,6 +129,10 @@ public class MaxineTesterConfiguration {
         test.hotpath.HP_series.class // 333
     );
 
+    static final Set<String> _expectedAutoTestFailures = new HashSet<String>(Arrays.asList(
+        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.amd64.AMD64EirTranslatorTest_native)"
+    ));
+
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
 
@@ -182,6 +186,9 @@ public class MaxineTesterConfiguration {
                 }
                 return _expectedFailuresSolarisSPARCV9.contains(testName);
             }
+        }
+        if (_expectedAutoTestFailures.contains(testName)) {
+            return true;
         }
         return false;
     }
