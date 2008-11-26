@@ -66,7 +66,8 @@ public class MaxineTester {
                     "The tracing level for building the images and running the tests.");
     private static final Option<Boolean> _skipImageGen = _options.newBooleanOption("skip-image-gen", false,
                     "Skip the generation of the image, which is useful for testing the Maxine tester itself.");
-    private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs", MaxineTesterConfiguration.defaultJavaTesterConfigs(),
+    private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs",
+                    MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
     private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs", MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
