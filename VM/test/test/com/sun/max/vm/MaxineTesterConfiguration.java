@@ -88,8 +88,23 @@ public class MaxineTesterConfiguration {
         MaxineTesterConfiguration._maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
     }
 
-    static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
-    static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
+    private static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
+    private static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
+
+    public static String defaultMaxvmnOutputConfigs() {
+        return "std,jit,pgi";
+    }
+
+    public static String defaultJavaTesterConfigs() {
+        final Platform platform = Platform.host();
+        if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
+            final ProcessorKind processorKind = platform.processorKind();
+            if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
+                return "optopt";
+            }
+        }
+        return DEFAULT_JAVA_TESTER_CONFIGS;
+    }
 
     /**
      * Determines if a given test is known to fail.
