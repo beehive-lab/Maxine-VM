@@ -21,13 +21,13 @@
 package test.com.sun.max.vm;
 
 import java.io.*;
+import java.text.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
-import junit.framework.*;
-
 import org.junit.runner.*;
+import org.junit.runner.notification.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -76,10 +76,10 @@ public class MaxineTester {
                     "A list of configurations for which to run the Maxine output tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
-    private static final Option<Integer> _junitTimeOut = _options.newIntegerOption("junit-timeout", 300,
+    private static final Option<Integer> _autoTestTimeOut = _options.newIntegerOption("auto-test-timeout", 300,
                     "The number of seconds to wait for a JUnit auto-test to complete before " +
                     "timing out and killing it.");
-    private static final Option<Boolean> _skipJUnitTestsOption = _options.newBooleanOption("skip-junit-tests", false,
+    private static final Option<Boolean> _skipAutoTestsOption = _options.newBooleanOption("skip-auto -tests", false,
                     "Skip running of the JUnit auto-test classes found on the class path.");
 
     private static String _javaConfigAlias = null;
@@ -196,9 +196,8 @@ public class MaxineTester {
         }
 
         int failedAutoTests = 0;
-        for (Map.Entry<String, File> entry : _autoTestsWithExceptions.entrySet()) {
-            out().println("Non-zero exit status for'" + entry.getKey() + "'");
-            out().println("see: " + entry.getValue());
+        for (String autoTest : _autoTestsWithExceptions) {
+            out().println("Non-zero exit status for'" + autoTest + "'");
             failedAutoTests++;
         }
 
@@ -218,69 +217,105 @@ public class MaxineTester {
         return _unexpectedFailures.size() + _unexpectedPasses.size() + failedImages + failedAutoTests;
     }
 
-    public static class AutoTestRunner {
-        static void listFailures(String outFile, int failureCount,  Enumeration<TestFailure> failures) throws IOException {
-            if (failureCount > 0) {
-                final PrintStream stream = new PrintStream(new FileOutputStream(outFile));
-                while (failures.hasMoreElements()) {
-                    final TestFailure failure = failures.nextElement();
-                    stream.println(failure.failedTest().toString());
-                }
-                stream.close();
-            }
-        }
+    /**
+     * A helper class for running one or more JUnit tests. This helper delegates to {@link JUnitCore} to do most of the work.
+     */
+    public static class JUnitTestRunner {
 
+        /**
+         * Runs the JUnit tests in a given class.
+         *
+         * @param args an array with the following three elements:
+         *            <ol>
+         *            <li>The name of a class containing the JUnit test(s) to be run.</li>
+         *            <li>The path of a file to which the {@linkplain Description name} of the tests that pass will be
+         *            written.</li>
+         *            <li>The path of a file to which the name of the tests that fail will be written.</li>
+         *            </ol>
+         */
         public static void main(String[] args) throws Exception {
-            final String autoTestClassName = args[0];
-            final String failuresFile = args[1];
-
+            final String testClassName = args[0];
+            final PrintStream passed = new PrintStream(new FileOutputStream(args[1]));
+            final PrintStream failed = new PrintStream(new FileOutputStream(args[2]));
             final JUnitCore junit = new JUnitCore();
-            final Result result = junit.runMain(new String[] {autoTestClassName});
-            result.getFailures();
+            junit.addListener(new RunListener() {
+                boolean _failed;
 
-            final junit.textui.TestRunner testRunner = new junit.textui.TestRunner();
-            final Test test = testRunner.getTest(autoTestClassName);
-            final TestResult testResult = testRunner.doRun(test);
-            listFailures(failuresFile, testResult.failureCount(), testResult.failures());
-            listFailures(failuresFile, testResult.errorCount(), testResult.errors());
+                @Override
+                public void testStarted(Description description) throws Exception {
+                    System.out.println("running " + description);
+                }
+
+                @Override
+                public void testFailure(Failure failure) throws Exception {
+                    _failed = true;
+                }
+
+                @Override
+                public void testFinished(Description description) throws Exception {
+                    if (_failed) {
+                        failed.println(description);
+                    } else {
+                        passed.println(description);
+                    }
+                    _failed = false;
+                }
+            });
+
+            junit.run(Class.forName(testClassName));
+            passed.close();
+            failed.close();
         }
     }
 
-    private static Map<String, File> _autoTestsWithExceptions = new TreeMap<String, File>();
+    /**
+     * A list of the {@linkplain #runAutoTests auto-tests} that caused the Java process to exit with an exception.
+     */
+    private static AppendableSequence<String> _autoTestsWithExceptions = new ArrayListSequence<String>();
 
-    private static String parseAutoTestFailures(File failuresFile) {
+    /**
+     * Parses a file of test names (one per line) run as part of an auto-test. The global records of test results are
+     * {@linkplain #addTestResult(String, String, boolean) updated} appropriately.
+     *
+     * @param resultsFile the file to parse
+     * @param passed specifies if the file list tests that passed or failed
+     * @param testNames in non-null, then all test names parsed from the file are appended to this sequence
+     */
+    private static void parseAutoTestResults(File resultsFile, boolean passed, AppendableSequence<String> testNames) {
         try {
-            final BufferedReader reader = new BufferedReader(new FileReader(failuresFile));
-            final StringBuilder buf = new StringBuilder();
+            final BufferedReader reader = new BufferedReader(new FileReader(resultsFile));
             String line;
             while ((line = reader.readLine()) != null) {
                 final String testName = line;
                 final boolean expectedFailure = MaxineTesterConfiguration.isExpectedFailure(testName, null);
-                addTestResult(testName, "failed", expectedFailure);
-                buf.append(String.format("%n  %s", testName));
+                addTestResult(testName, passed ? null : "failed", expectedFailure);
+                if (testNames != null) {
+                    testNames.append(testName);
+                }
             }
             reader.close();
-            if (buf.length() == 0) {
-                return "no failures";
-            }
-            return "failures: " + buf;
         } catch (IOException ioException) {
-            return "could not read '" + failuresFile.getAbsolutePath() + "': " + ioException;
+            out().println("could not read '" + resultsFile.getAbsolutePath() + "': " + ioException);
         }
     }
 
+    /**
+     * Runs all the auto-tests available on the class path. An auto-test is a class whose unqualified name is "AutoTest"
+     * that resides in a sub-package of the {@code test.com.sun.max} package. These classes are assumed to contain one
+     * or more JUnit tests that can be run via {@link JUnitCore}.
+     */
     private static void runAutoTests() {
-        if (_skipJUnitTestsOption.getValue()) {
+        if (_skipAutoTestsOption.getValue()) {
             return;
         }
-        final File outputDir = new File(_outputDir.getValue(), "junit");
+        final File outputDir = new File(_outputDir.getValue(), "auto-tests");
         final PrintStream out = out();
 
         final AppendableSequence<String> autoTests = new ArrayListSequence<String>();
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
-                if (className.endsWith(".AutoTest")) {
+                if (className.startsWith(new test.com.sun.max.Package().name()) && className.endsWith(".AutoTest")) {
                     autoTests.append(className);
                 }
                 return true;
@@ -289,23 +324,33 @@ public class MaxineTester {
 
         for (String autoTest : autoTests) {
             final File outputFile = getOutputFile(outputDir, autoTest, null);
-            final File failuresFile = getOutputFile(outputDir, autoTest, null, ".failures");
+            final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
+            final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
 
-            String[] javaArgs = buildJavaArgs(AutoTestRunner.class, null, new String[] {autoTest, failuresFile.getPath()}, null);
-            javaArgs = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
+            final String[] javaArgs = buildJavaArgs(JUnitTestRunner.class, null, new String[] {autoTest, passedFile.getName(), failedFile.getName()}, null);
+            final String[] command = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
 
-            final int exitValue = exec(outputDir, javaArgs, outputFile, autoTest, _junitTimeOut.getValue());
-            out.print("JUnit auto-test: Stopped " + autoTest + " - ");
-            if (exitValue == 0) {
-                final String summary = parseAutoTestFailures(failuresFile);
-                out.println(summary);
-            } else {
+            out.println("JUnit auto-test: Started " + autoTest);
+            final long start = System.currentTimeMillis();
+            final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
+            out.print("JUnit auto-test: Stopped " + autoTest);
+
+            final AppendableSequence<String> failedTestNames = new ArrayListSequence<String>();
+            parseAutoTestResults(passedFile, true, null);
+            parseAutoTestResults(failedFile, false, failedTestNames);
+
+            if (exitValue != 0) {
                 if (exitValue == PROCESS_TIMEOUT) {
-                    out().println("(timed out)");
+                    out().print(" (timed out)");
                 } else {
-                    out().println("(exit value == " + exitValue + ")");
+                    out().print(" (exit value == " + exitValue + ")");
                 }
-                _autoTestsWithExceptions.put(autoTest, outputFile);
+                _autoTestsWithExceptions.append(autoTest);
+            }
+            final long runTime = System.currentTimeMillis() - start;
+            out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + "seconds]");
+            for (String testName : failedTestNames) {
+                out().println("    failed " + testName);
             }
         }
     }
