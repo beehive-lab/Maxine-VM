@@ -211,11 +211,11 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
             // - virtual method with no parameter (except the receiver)
             //
             // The former, because it doesn't have any parameter.
-            // The latter, because its single parameter is already loaded in the appropriate register (%o0), thanks to the way the invokevirtual template
-            //  is implemented.
+            // The latter, because its single parameter is already loaded in the appropriate register (%o0),
+            // thanks to the way the invokevirtual templates are implemented.
             //
-            // For these method, we only need to save the literal base register in the caller's saving area. This is necessary for stack unwinding, which
-            // expect to retrieve literal base register from there.
+            // For these methods, we only need to save the literal base register in the caller's saving area.
+            // This is necessary for stack unwinding, which expects to retrieve the literal base register from there.
             // This can be done in place, in the two-instruction prologue in the jit-entry point.
 
             if (jitToOptimizedCallNeedsAdapterFrame(classMethodActor())) {
