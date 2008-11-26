@@ -28,9 +28,7 @@ public class CirTranslatorTest_cmp extends BytecodeTest_cmp {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_cmp.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_cmp.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

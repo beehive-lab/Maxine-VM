@@ -27,9 +27,7 @@ public class SPARCEirTranslatorTest_arrayLoad extends BytecodeTest_arrayLoad {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_arrayLoad.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_arrayLoad.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

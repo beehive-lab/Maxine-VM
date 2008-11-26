@@ -53,9 +53,7 @@ public class InternalTest extends MaxTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(InternalTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(InternalTest.class);
-        //$JUnit-END$
         return suite;
     }
 

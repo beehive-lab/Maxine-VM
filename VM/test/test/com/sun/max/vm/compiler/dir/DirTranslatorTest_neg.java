@@ -27,9 +27,7 @@ public class DirTranslatorTest_neg extends BytecodeTest_neg {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_neg.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_neg.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

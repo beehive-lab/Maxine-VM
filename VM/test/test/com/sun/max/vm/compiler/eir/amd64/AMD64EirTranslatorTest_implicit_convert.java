@@ -27,9 +27,7 @@ public class AMD64EirTranslatorTest_implicit_convert extends BytecodeTest_implic
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64EirTranslatorTest_implicit_convert.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(AMD64EirTranslatorTest_implicit_convert.class);
-        //$JUnit-END$
         return new AMD64EirTranslatorTestSetup(suite);
     }
 

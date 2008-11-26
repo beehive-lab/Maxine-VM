@@ -27,9 +27,7 @@ public class DirTranslatorTest_shift extends BytecodeTest_shift {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_shift.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_shift.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

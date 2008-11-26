@@ -27,9 +27,7 @@ public class DirTranslatorTest_large extends CompilerTest_large {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_large.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_large.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

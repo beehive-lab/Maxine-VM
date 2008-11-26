@@ -47,9 +47,7 @@ public class RawExternalTest extends ExternalAssemblerTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(RawExternalTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(RawExternalTest.class);
-        //$JUnit-END$
         return suite;
     }
 

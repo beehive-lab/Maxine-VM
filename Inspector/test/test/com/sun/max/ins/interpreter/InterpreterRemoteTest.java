@@ -63,9 +63,7 @@ public class InterpreterRemoteTest extends TestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(InterpreterRemoteTest.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(InterpreterRemoteTest.class);
-        //$JUnit-END$
         return suite;
     }
 
