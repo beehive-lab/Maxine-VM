@@ -48,9 +48,7 @@ public class InterpreterTest extends TestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(InterpreterTest.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(InterpreterTest.class);
-        //$JUnit-END$
         return new InterpreterTestSetup(suite);
     }
 

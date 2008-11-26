@@ -44,9 +44,7 @@ public class SpeedTest extends MaxTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SpeedTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SpeedTest.class);
-        //$JUnit-END$
         return suite;
     }
 

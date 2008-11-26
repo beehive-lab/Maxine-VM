@@ -35,7 +35,6 @@ public final class AutoTest {
 
     public static Test suite() {
         final TestSuite suite = MaxTestCase.createSuite(new Package(), false);
-        //$JUnit-BEGIN$
         suite.addTestSuite(LoadUnsafeBoxLibraryTest.class);
         suite.addTestSuite(WordTest.class);
         suite.addTestSuite(AddressTest.class);
@@ -43,7 +42,6 @@ public final class AutoTest {
         suite.addTestSuite(OffsetTest.class);
         suite.addTestSuite(PointerTest.class);
         suite.addTestSuite(MemoryTest.class);
-        //$JUnit-END$
         return suite;
     }
 }

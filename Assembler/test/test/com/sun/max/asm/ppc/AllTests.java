@@ -39,8 +39,6 @@ public final class AllTests {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
-        //$JUnit-BEGIN$
-        //$JUnit-END$
         return suite;
     }
 

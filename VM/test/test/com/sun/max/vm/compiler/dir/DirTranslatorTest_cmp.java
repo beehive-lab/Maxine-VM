@@ -28,9 +28,7 @@ public class DirTranslatorTest_cmp extends BytecodeTest_cmp {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_cmp.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_cmp.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

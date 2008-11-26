@@ -31,9 +31,7 @@ public class CirOptimizerTest_misc extends BytecodeTest_misc {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_misc.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_misc.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 
