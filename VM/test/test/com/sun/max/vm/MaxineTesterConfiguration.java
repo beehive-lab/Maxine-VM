@@ -86,7 +86,7 @@ public class MaxineTesterConfiguration {
         test.hotpath.HP_series.class// 333
     );
 
-    static final Set<Class> _expectedJitFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
+    static final Set<String> _expectedJitFailuresSolarisSPARCV9 = toClassNames(
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
@@ -127,7 +127,7 @@ public class MaxineTesterConfiguration {
         test.reflect.Array_get03.class,
         test.reflect.Array_getBoolean01.class,
         test.hotpath.HP_series.class // 333
-    }));
+    );
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
@@ -177,8 +177,8 @@ public class MaxineTesterConfiguration {
             if (processorKind.processorModel() == ProcessorModel.AMD64) {
                 return _expectedFailuresSolarisAMD64.contains(testName);
             } else if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
-                if (config.indexOf("jit") >= 0) {
-                    return _expectedJitFailuresSolarisSPARCV9.contains(outputTestClass);
+                if (config.contains("jit")) {
+                    return _expectedJitFailuresSolarisSPARCV9.contains(testName);
                 }
                 return _expectedFailuresSolarisSPARCV9.contains(testName);
             }
