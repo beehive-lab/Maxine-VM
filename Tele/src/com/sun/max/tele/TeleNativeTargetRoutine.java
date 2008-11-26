@@ -31,27 +31,26 @@ import com.sun.max.vm.bytecode.*;
 
 /**
  * Holds information about a block of code in
- * the process of the target VM, about which little is known
- * other than the memory location.
+ * the process of the {@link TeleVM}, about which little is known
+ * other than the memory location and possibly an assigned name.
  *
  * @author Michael Van De Vanter
- *
  */
 public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleTargetRoutine {
 
     public static final Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
 
     /**
-     * @return a newly created surrogate for a block of native code discovered in the tele VM
+     * @param name a name for the region
+     * @return a newly created surrogate for a block of native code discovered in the {@link TeleVM}
      * about which little more is known than its location.
-     * @throws IllegalArgumentException if any code already known occupies the specified code location.
+     * @throws {@link TeleError} if any code already known occupies the specified code location.
      */
-    public static TeleNativeTargetRoutine create(TeleVM teleVM, Address codeStart, Size codeSize) {
+    public static TeleNativeTargetRoutine create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
         TeleNativeTargetRoutine teleNativeTargetRoutine = null;
         try {
-            // It's possible that the region specified by 'address' and 'size' overlaps an existing native method since
-            // the sizes are estimates by the user.
-            teleNativeTargetRoutine = new TeleNativeTargetRoutine(teleVM, codeStart, codeSize);
+            // Fail if the region specified by 'address' and 'size' overlaps an existing native  entry
+            teleNativeTargetRoutine = new TeleNativeTargetRoutine(teleVM, codeStart, codeSize, name);
         } catch (IllegalArgumentException illegalArgumentException) {
             throw new TeleError("Native code region is overlapping an existing code region");
         }
@@ -59,11 +58,11 @@ public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleT
     }
 
     /**
-     * @return an already existing surrogate for a block of native code discovered in the teleVM
+     * @return an already existing surrogate for a block of native code discovered in the {@link teleVM}
      * whose location includes the specified address, null if not known to be a native routine
      * or if known to be a Java method.
      */
-    public static TeleNativeTargetRoutine get(TeleVM teleVM, Address address) {
+    public static TeleNativeTargetRoutine make(TeleVM teleVM, Address address) {
         return teleVM.teleCodeRegistry().get(TeleNativeTargetRoutine.class, address);
     }
 
@@ -81,8 +80,14 @@ public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleT
     public TargetCodeRegion targetCodeRegion() {
         return _targetCodeRegion;
     }
+    
+    private final String _name;
+    
+    public String name() {
+        return _name;
+    }
 
-    public TeleNativeTargetRoutine(TeleVM teleVM, Address start, Size size) {
+    private TeleNativeTargetRoutine(TeleVM teleVM, Address start, Size size, String name) {
         super(teleVM);
         _teleRoutine = new TeleRoutine() {
             public String getUniqueName() {
@@ -90,6 +95,7 @@ public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleT
             }
         };
         _targetCodeRegion = new TargetCodeRegion(this, start, size);
+        _name = name;
         teleVM().teleCodeRegistry().add(this);
     }
 
