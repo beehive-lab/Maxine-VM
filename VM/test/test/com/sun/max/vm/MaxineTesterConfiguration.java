@@ -75,9 +75,7 @@ public class MaxineTesterConfiguration {
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
-        test.output.FloatNanTest.class,
-        test.output.JavacTest.class,
-        test.hotpath.HP_series.class, // 333
+        test.hotpath.HP_series.class// 333
     }));
 
     static final Set<Class> _expectedJitFailuresSolarisSPARCV9 = new HashSet<Class>(Arrays.asList(new Class[] {
