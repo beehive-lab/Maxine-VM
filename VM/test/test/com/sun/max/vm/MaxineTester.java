@@ -25,6 +25,10 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
+import junit.framework.*;
+
+import org.junit.runner.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
@@ -72,6 +76,11 @@ public class MaxineTester {
                     "A list of configurations for which to run the Maxine output tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
+    private static final Option<Integer> _junitTimeOut = _options.newIntegerOption("junit-timeout", 300,
+                    "The number of seconds to wait for a JUnit auto-test to complete before " +
+                    "timing out and killing it.");
+    private static final Option<Boolean> _skipJUnitTestsOption = _options.newBooleanOption("skip-junit-tests", false,
+                    "Skip running of the JUnit auto-test classes found on the class path.");
 
     private static String _javaConfigAlias = null;
 
@@ -142,6 +151,7 @@ public class MaxineTester {
             final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
             makeDirectory(outputDir);
             Trace.on(_traceOption.getValue());
+            runAutoTests();
             buildJavaRunSchemeAndRunOutputTests();
             runJavaTesterTests();
             System.exit(reportTestResults());
@@ -172,6 +182,10 @@ public class MaxineTester {
         }
     }
 
+    private static void addTestResult(String testName, String failure) {
+        addTestResult(testName, failure, MaxineTesterConfiguration.isExpectedFailure(testName, null));
+    }
+
     private static int reportTestResults() {
         int failedImages = 0;
         for (Map.Entry<String, File> entry : _generatedImages.entrySet()) {
@@ -179,6 +193,13 @@ public class MaxineTester {
                 out().println("Failed building image for configuration '" + entry.getKey() + "'");
                 failedImages++;
             }
+        }
+
+        int failedAutoTests = 0;
+        for (Map.Entry<String, File> entry : _autoTestsWithExceptions.entrySet()) {
+            out().println("Non-zero exit status for'" + entry.getKey() + "'");
+            out().println("see: " + entry.getValue());
+            failedAutoTests++;
         }
 
         if (!_unexpectedFailures.isEmpty()) {
@@ -194,7 +215,99 @@ public class MaxineTester {
             }
         }
 
-        return _unexpectedFailures.size() + _unexpectedPasses.size() + failedImages;
+        return _unexpectedFailures.size() + _unexpectedPasses.size() + failedImages + failedAutoTests;
+    }
+
+    public static class AutoTestRunner {
+        static void listFailures(String outFile, int failureCount,  Enumeration<TestFailure> failures) throws IOException {
+            if (failureCount > 0) {
+                final PrintStream stream = new PrintStream(new FileOutputStream(outFile));
+                while (failures.hasMoreElements()) {
+                    final TestFailure failure = failures.nextElement();
+                    stream.println(failure.failedTest().toString());
+                }
+                stream.close();
+            }
+        }
+
+        public static void main(String[] args) throws Exception {
+            final String autoTestClassName = args[0];
+            final String failuresFile = args[1];
+
+            final JUnitCore junit = new JUnitCore();
+            final Result result = junit.runMain(new String[] {autoTestClassName});
+            result.getFailures();
+
+            final junit.textui.TestRunner testRunner = new junit.textui.TestRunner();
+            final Test test = testRunner.getTest(autoTestClassName);
+            final TestResult testResult = testRunner.doRun(test);
+            listFailures(failuresFile, testResult.failureCount(), testResult.failures());
+            listFailures(failuresFile, testResult.errorCount(), testResult.errors());
+        }
+    }
+
+    private static Map<String, File> _autoTestsWithExceptions = new TreeMap<String, File>();
+
+    private static String parseAutoTestFailures(File failuresFile) {
+        try {
+            final BufferedReader reader = new BufferedReader(new FileReader(failuresFile));
+            final StringBuilder buf = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                final String testName = line;
+                final boolean expectedFailure = MaxineTesterConfiguration.isExpectedFailure(testName, null);
+                addTestResult(testName, "failed", expectedFailure);
+                buf.append(String.format("%n  %s", testName));
+            }
+            reader.close();
+            if (buf.length() == 0) {
+                return "no failures";
+            }
+            return "failures: " + buf;
+        } catch (IOException ioException) {
+            return "could not read '" + failuresFile.getAbsolutePath() + "': " + ioException;
+        }
+    }
+
+    private static void runAutoTests() {
+        if (_skipJUnitTestsOption.getValue()) {
+            return;
+        }
+        final File outputDir = new File(_outputDir.getValue(), "junit");
+        final PrintStream out = out();
+
+        final AppendableSequence<String> autoTests = new ArrayListSequence<String>();
+        new ClassSearch() {
+            @Override
+            protected boolean visitClass(String className) {
+                if (className.endsWith(".AutoTest")) {
+                    autoTests.append(className);
+                }
+                return true;
+            }
+        }.run(Classpath.fromSystem());
+
+        for (String autoTest : autoTests) {
+            final File outputFile = getOutputFile(outputDir, autoTest, null);
+            final File failuresFile = getOutputFile(outputDir, autoTest, null, ".failures");
+
+            String[] javaArgs = buildJavaArgs(AutoTestRunner.class, null, new String[] {autoTest, failuresFile.getPath()}, null);
+            javaArgs = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
+
+            final int exitValue = exec(outputDir, javaArgs, outputFile, autoTest, _junitTimeOut.getValue());
+            out.print("JUnit auto-test: Stopped " + autoTest + " - ");
+            if (exitValue == 0) {
+                final String summary = parseAutoTestFailures(failuresFile);
+                out.println(summary);
+            } else {
+                if (exitValue == PROCESS_TIMEOUT) {
+                    out().println("(timed out)");
+                } else {
+                    out().println("(exit value == " + exitValue + ")");
+                }
+                _autoTestsWithExceptions.put(autoTest, outputFile);
+            }
+        }
     }
 
     private static void runJavaTesterTests() {
@@ -319,7 +432,7 @@ public class MaxineTester {
     }
 
     private static boolean printFailed(Class mainClass, String config) {
-        final boolean expected = MaxineTesterConfiguration.isExpectedFailure(mainClass, config);
+        final boolean expected = MaxineTesterConfiguration.isExpectedFailure(mainClass.getName(), config);
         if (expected) {
             out().print(left16(config + ": (normal)"));
         } else {
@@ -330,7 +443,7 @@ public class MaxineTester {
     }
 
     private static boolean printSuccess(Class mainClass, String config) {
-        final boolean expected = MaxineTesterConfiguration.isExpectedFailure(mainClass, config);
+        final boolean expected = MaxineTesterConfiguration.isExpectedFailure(mainClass.getName(), config);
         if (expected) {
             out().print(left16(config + ": (passed)"));
         } else {
@@ -407,7 +520,7 @@ public class MaxineTester {
                     final Matcher matcher = TEST_BEGIN_LINE.matcher(line);
                     if (matcher.matches()) {
                         lastTest = matcher.group(1);
-                        addTestResult(lastTest, null, false);
+                        addTestResult(lastTest, null);
                         final String nextTestNumber = matcher.group(2);
                         final String endTestNumber = matcher.group(3);
                         if (!nextTestNumber.equals(endTestNumber)) {
@@ -418,7 +531,7 @@ public class MaxineTester {
 
                     } else if (line.contains("failed")) {
                         failedLines.append(line); // found a line with "failed"--probably a failed test
-                        addTestResult(lastTest, line, false);
+                        addTestResult(lastTest, line);
                     } else if (line.startsWith("Done: ")) {
                         lastTest = null;
                         // found the terminating line indicating how many tests passed
@@ -430,7 +543,7 @@ public class MaxineTester {
                     }
                 }
                 if (lastTest != null) {
-                    addTestResult(lastTest, "never returned a result", false);
+                    addTestResult(lastTest, "never returned a result");
                     failedLines.append(lastTest + " failed: never returned a result");
                 }
                 if (failedLines.isEmpty()) {
@@ -520,11 +633,15 @@ public class MaxineTester {
         }
     }
 
-    private static File getOutputFile(File outputDir, String outputFileName, String imageConfig) {
+    private static File getOutputFile(File outputDir, String outputFileName, String imageConfig, String suffix) {
         final String configString = imageConfig == null ? "" : "_" + imageConfig;
-        final File file = new File(outputDir, outputFileName + configString + ".output");
+        final File file = new File(outputDir, outputFileName + configString + suffix);
         makeDirectory(file.getParentFile());
         return file;
+    }
+
+    private static File getOutputFile(File outputDir, String outputFileName, String imageConfig) {
+        return getOutputFile(outputDir, outputFileName, imageConfig, ".output");
     }
 
     private static String[] appendArgs(String[] args, String... extraArgs) {
