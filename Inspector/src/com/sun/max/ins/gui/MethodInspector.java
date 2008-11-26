@@ -104,7 +104,6 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         final TeleTargetRoutine teleTargetRoutine = inspection.teleVM().teleCodeRegistry().get(TeleTargetRoutine.class, address);
         if (teleTargetRoutine != null) {
             if (teleTargetRoutine instanceof TeleNativeTargetRoutine) {
-                //inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), address), true);
                 methodInspector = make(inspection, teleTargetRoutine);
             } else if (teleTargetRoutine instanceof TeleTargetMethod) {
                 methodInspector = make(inspection, (TeleTargetMethod) teleTargetRoutine, CodeKind.TARGET_CODE);
@@ -118,7 +117,6 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
             if (teleTargetMethod != null) {
                 // Java method
                 methodInspector = make(inspection, teleTargetMethod, CodeKind.TARGET_CODE);
-                // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), address));
             } else {
                 final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(inspection.teleVM(), address);
                 if (teleRuntimeStub != null) {
