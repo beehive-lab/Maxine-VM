@@ -42,10 +42,11 @@ public class MaxineTesterConfiguration {
         test.output.GCTest2.class,
         test.output.GCTest3.class,
         test.output.GCTest4.class,
-//        test.output.GCTest5.class,
+        test.output.GCTest5.class,
         test.output.GCTest6.class,
         test.output.HelloWorldReflect.class,
         test.output.JREJarLoadTest.class,
+        test.output.FileReader.class,
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
@@ -141,7 +142,7 @@ public class MaxineTesterConfiguration {
     private static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
     private static final String DEFAULT_JAVA_TESTER_CONFIGS = "optopt,jitopt,optjit,jitjit";
 
-    public static String defaultMaxvmnOutputConfigs() {
+    public static String defaultMaxvmOutputConfigs() {
         return "std,jit,pgi";
     }
 

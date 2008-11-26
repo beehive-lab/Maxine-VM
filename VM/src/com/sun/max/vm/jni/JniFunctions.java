@@ -35,7 +35,9 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
@@ -1323,9 +1325,7 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static JniHandle GetStringChars(Pointer env, JniHandle string, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        setCopyPointer(isCopy, true);
         return JniHandles.createLocalHandle(((String) string.get()).toCharArray());
     }
 
@@ -1350,9 +1350,7 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetStringUTFChars(Pointer env, JniHandle string, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        setCopyPointer(isCopy, true);
         return CString.utf8FromJava((String) string.get());
     }
 
@@ -1369,8 +1367,9 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static JniHandle NewObjectArray(Pointer env, int length, JniHandle elementType, JniHandle initialElementValue) {
         final Object array = Array.newInstance((Class) elementType.get(), length);
+        final Object initialValue = initialElementValue.get();
         for (int i = 0; i < length; i++) {
-            Array.set(array, i, initialElementValue.get());
+            Array.set(array, i, initialValue);
         }
         return JniHandles.createLocalHandle(array);
     }
@@ -1427,9 +1426,11 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetBooleanArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getBooleanArrayElements(array, isCopy);
+    }
+
+    private static Pointer getBooleanArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final boolean[] a = (boolean[]) array.get();
         final Pointer pointer = Memory.mustAllocate(a.length);
         for (int i = 0; i < a.length; i++) {
@@ -1440,11 +1441,13 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetByteArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getByteArrayElements(array, isCopy);
+    }
+
+    private static Pointer getByteArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final byte[] a = (byte[]) array.get();
-        final Pointer pointer = Memory.mustAllocate(a.length);
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.BYTE.size());
         for (int i = 0; i < a.length; i++) {
             pointer.setByte(i, a[i]);
         }
@@ -1453,11 +1456,13 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetCharArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getCharArrayElements(array, isCopy);
+    }
+
+    private static Pointer getCharArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final char[] a = (char[]) array.get();
-        final Pointer pointer = Memory.mustAllocate(a.length);
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.CHAR.size());
         for (int i = 0; i < a.length; i++) {
             pointer.setChar(i, a[i]);
         }
@@ -1466,11 +1471,13 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetShortArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getShortArrayElements(array, isCopy);
+    }
+
+    private static Pointer getShortArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final short[] a = (short[]) array.get();
-        final Pointer pointer = Memory.mustAllocate(a.length);
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.SHORT.size());
         for (int i = 0; i < a.length; i++) {
             pointer.setShort(i, a[i]);
         }
@@ -1479,11 +1486,13 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetIntArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getIntArrayElements(array, isCopy);
+    }
+
+    private static Pointer getIntArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final int[] a = (int[]) array.get();
-        final Pointer pointer = Memory.mustAllocate(a.length);
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.INT.size());
         for (int i = 0; i < a.length; i++) {
             pointer.setInt(i, a[i]);
         }
@@ -1492,11 +1501,13 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetLongArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getLongArrayElements(array, isCopy);
+    }
+
+    private static Pointer getLongArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final long[] a = (long[]) array.get();
-        final Pointer pointer = Memory.mustAllocate(a.length);
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.LONG.size());
         for (int i = 0; i < a.length; i++) {
             pointer.setLong(i, a[i]);
         }
@@ -1505,11 +1516,13 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetFloatArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getFloatArrayElements(array, isCopy);
+    }
+
+    private static Pointer getFloatArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final float[] a = (float[]) array.get();
-        final Pointer pointer = Memory.mustAllocate(a.length);
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.FLOAT.size());
         for (int i = 0; i < a.length; i++) {
             pointer.setFloat(i, a[i]);
         }
@@ -1518,11 +1531,13 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static Pointer GetDoubleArrayElements(Pointer env, JniHandle array, Pointer isCopy) {
-        if (!isCopy.isZero()) {
-            isCopy.setBoolean(true);
-        }
+        return getDoubleArrayElements(array, isCopy);
+    }
+
+    private static Pointer getDoubleArrayElements(JniHandle array, Pointer isCopy) throws OutOfMemoryError {
+        setCopyPointer(isCopy, true);
         final double[] a = (double[]) array.get();
-        final Pointer pointer = Memory.mustAllocate(a.length);
+        final Pointer pointer = Memory.mustAllocate(a.length * Kind.DOUBLE.size());
         for (int i = 0; i < a.length; i++) {
             pointer.setDouble(i, a[i]);
         }
@@ -1531,114 +1546,122 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static void ReleaseBooleanArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseBooleanArrayElements(array, elements, mode);
+    }
+
+    private static void releaseBooleanArrayElements(JniHandle array, Pointer elements, int mode) {
         final boolean[] a = (boolean[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getBoolean(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
     private static void ReleaseByteArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseByteArrayElements(array, elements, mode);
+    }
+
+    private static void releaseByteArrayElements(JniHandle array, Pointer elements, int mode) {
         final byte[] a = (byte[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getByte(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
     private static void ReleaseCharArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseCharArrayElements(array, elements, mode);
+    }
+
+    private static void releaseCharArrayElements(JniHandle array, Pointer elements, int mode) {
         final char[] a = (char[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getChar(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
     private static void ReleaseShortArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseShortArrayElements(array, elements, mode);
+    }
+
+    private static void releaseShortArrayElements(JniHandle array, Pointer elements, int mode) {
         final short[] a = (short[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getShort(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
     private static void ReleaseIntArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseIntArrayElements(array, elements, mode);
+    }
+
+    private static void releaseIntArrayElements(JniHandle array, Pointer elements, int mode) {
         final int[] a = (int[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getInt(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
     private static void ReleaseLongArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseLongArrayElements(array, elements, mode);
+    }
+
+    private static void releaseLongArrayElements(JniHandle array, Pointer elements, int mode) {
         final long[] a = (long[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getLong(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
     private static void ReleaseFloatArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseFloatArrayElements(array, elements, mode);
+    }
+
+    private static void releaseFloatArrayElements(JniHandle array, Pointer elements, int mode) {
         final float[] a = (float[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getFloat(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
     private static void ReleaseDoubleArrayElements(Pointer env, JniHandle array, Pointer elements, int mode) {
+        releaseDoubleArrayElements(array, elements, mode);
+    }
+
+    private static void releaseDoubleArrayElements(JniHandle array, Pointer elements, int mode) {
         final double[] a = (double[]) array.get();
         if (mode == 0 || mode == JNI_COMMIT) {
             for (int i = 0; i < a.length; i++) {
                 a[i] = elements.getDouble(i);
             }
         }
-        if (mode == 0 || mode == JNI_ABORT) {
-            Memory.deallocate(elements);
-        }
-        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+        releaseElements(elements, mode);
     }
 
     @JNI_FUNCTION
@@ -1847,27 +1870,83 @@ public final class JniFunctions {
     @JNI_FUNCTION
     private static void GetStringRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
         final String s = (String) string.get();
-        for (int i = start; i < length; i++) {
-            buffer.setChar(i, s.charAt(i));
+        for (int i = 0; i < length; i++) {
+            buffer.setChar(i, s.charAt(i + start));
         }
     }
 
     @JNI_FUNCTION
     private static void GetStringUTFRegion(Pointer env, JniHandle string, int start, int length, Pointer buffer) {
-        final String s = ((String) string.get()).substring(start, length - start);
+        final String s = ((String) string.get()).substring(start, start + length);
         final byte[] utf = Utf8.stringToUtf8(s);
         Memory.writeBytes(utf, utf.length, buffer);
     }
 
     @JNI_FUNCTION
     private static Pointer GetPrimitiveArrayCritical(Pointer env, JniHandle array, Pointer isCopy) {
-        FatalError.unexpected("GetPrimitiveArrayCritical is unimplemented");
+        final Object arrayObject = array.get();
+        if (Heap.pin(arrayObject)) {
+            setCopyPointer(isCopy, false);
+            return Reference.fromJava(arrayObject).toOrigin().plus(Layout.byteArrayLayout().getElementOffsetFromOrigin(0));
+        }
+        if (arrayObject instanceof boolean[]) {
+            return getBooleanArrayElements(array, isCopy);
+        }
+        if (arrayObject instanceof byte[]) {
+            return getByteArrayElements(array, isCopy);
+        }
+        if (arrayObject instanceof char[]) {
+            return getCharArrayElements(array, isCopy);
+        }
+        if (arrayObject instanceof short[]) {
+            return getShortArrayElements(array, isCopy);
+        }
+        if (arrayObject instanceof int[]) {
+            return getIntArrayElements(array, isCopy);
+        }
+        if (arrayObject instanceof long[]) {
+            return getLongArrayElements(array, isCopy);
+        }
+        if (arrayObject instanceof float[]) {
+            return getFloatArrayElements(array, isCopy);
+        }
+        if (arrayObject instanceof double[]) {
+            return getDoubleArrayElements(array, isCopy);
+        }
         return null;
     }
 
     @JNI_FUNCTION
-    private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer cArray, int mode) {
-        FatalError.unexpected("ReleasePrimitiveArrayCritical is unimplemented");
+    private static void ReleasePrimitiveArrayCritical(Pointer env, JniHandle array, Pointer elements, int mode) {
+        final Object arrayObject = array.get();
+        if (Heap.isPinned(arrayObject)) {
+            Heap.unpin(arrayObject);
+        } else {
+            if (arrayObject instanceof boolean[]) {
+                releaseBooleanArrayElements(array, elements, mode);
+            }
+            if (arrayObject instanceof byte[]) {
+                releaseByteArrayElements(array, elements, mode);
+            }
+            if (arrayObject instanceof char[]) {
+                releaseCharArrayElements(array, elements, mode);
+            }
+            if (arrayObject instanceof short[]) {
+                releaseShortArrayElements(array, elements, mode);
+            }
+            if (arrayObject instanceof int[]) {
+                releaseIntArrayElements(array, elements, mode);
+            }
+            if (arrayObject instanceof long[]) {
+                releaseLongArrayElements(array, elements, mode);
+            }
+            if (arrayObject instanceof float[]) {
+                releaseFloatArrayElements(array, elements, mode);
+            }
+            if (arrayObject instanceof double[]) {
+                releaseDoubleArrayElements(array, elements, mode);
+            }
+        }
     }
 
     @JNI_FUNCTION
@@ -1951,4 +2030,18 @@ public final class JniFunctions {
     }
 
     // Checkstyle: resume method name check
+
+    private static void setCopyPointer(Pointer isCopy, boolean bool) {
+        if (!isCopy.isZero()) {
+            isCopy.setBoolean(bool);
+        }
+    }
+
+    private static void releaseElements(Pointer elements, int mode) {
+        if (mode == 0 || mode == JNI_ABORT) {
+            Memory.deallocate(elements);
+        }
+        assert mode == 0 || mode == JNI_COMMIT || mode == JNI_ABORT;
+    }
+
 }
