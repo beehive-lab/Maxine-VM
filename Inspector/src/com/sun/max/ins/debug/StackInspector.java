@@ -141,6 +141,14 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         _parent = parent;
 
         _list.setCellRenderer(new DefaultListCellRenderer() {
+            /**
+             * @param list
+             * @param value
+             * @param modelIndex
+             * @param isSelected
+             * @param cellHasFocus
+             * @return
+             */
             @Override
             public Component getListCellRendererComponent(JList list, Object value, int modelIndex, boolean isSelected, boolean cellHasFocus) {
                 final StackFrame stackFrame = (StackFrame) value;
@@ -184,8 +192,16 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                     toolTip = name;
                 } else {
                     ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
-                    name = "nativeMethod:0x" + stackFrame.instructionPointer().toHexString();
-                    toolTip = "nativeMethod";
+                    final Pointer instructionPointer = stackFrame.instructionPointer();
+                    final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.make(teleVM(), instructionPointer);
+                    if (teleNativeTargetRoutine != null) {
+                        // native that we know something about
+                        name = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+                        toolTip = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+                    } else {
+                        name = "nativeMethod:0x" + instructionPointer.toHexString();
+                        toolTip = "nativeMethod";
+                    }
                 }
                 toolTip = "Stack " + modelIndex + ":  " + toolTip;
                 setToolTipText(toolTip);

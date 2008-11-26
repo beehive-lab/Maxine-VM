@@ -30,21 +30,35 @@ import com.sun.max.vm.runtime.*;
 
 
 /**
- * Visual inspector and debugger for code discovered in the target VM that is not compiled Java.
+ * Visual inspector and debugger for code discovered in the {@link TeleVM} that is not compiled Java.
  * That is, it's runtime assembled code such as a {@linkplain RuntimeStub stub} or
  * is other native code about which little is known.
  *
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public class NativeMethodInspector extends MethodInspector {
+public final class NativeMethodInspector extends MethodInspector {
 
     private final TeleTargetRoutine _teleTargetRoutine;
     private TargetCodeViewer _targetCodeViewer = null;
+    private final String _shortName;
+    private final String _longName;
 
     public NativeMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent, null, teleTargetRoutine.teleRoutine());
         _teleTargetRoutine = teleTargetRoutine;
+        if (_teleTargetRoutine instanceof TeleRuntimeStub) {
+            final TeleRuntimeStub teleRuntimeStub = (TeleRuntimeStub) _teleTargetRoutine;
+            _shortName = Strings.capitalizeFirst(teleRuntimeStub.name(), false);
+            _longName = _shortName;
+        } else if (_teleTargetRoutine instanceof TeleNativeTargetRoutine) {
+            final TeleNativeTargetRoutine teleNativeTargetRoutine  = (TeleNativeTargetRoutine) _teleTargetRoutine;
+            _shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
+            _longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
+        } else {
+            _shortName = _teleTargetRoutine.name();
+            _longName = _shortName;
+        }
         createFrame(null);
     }
 
@@ -55,16 +69,12 @@ public class NativeMethodInspector extends MethodInspector {
 
     @Override
     public String getTextForTitle() {
-        if (_teleTargetRoutine instanceof TeleRuntimeStub) {
-            final TeleRuntimeStub teleRuntimeStub = (TeleRuntimeStub) _teleTargetRoutine;
-            return Strings.capitalizeFirst(teleRuntimeStub.runtimeStub().name(), false);
-        }
-        return teleTargetRoutine().teleRoutine().getUniqueName();
+        return _shortName;
     }
 
     @Override
     public String getToolTip() {
-        return getTextForTitle();
+        return _longName;
     }
 
     @Override
