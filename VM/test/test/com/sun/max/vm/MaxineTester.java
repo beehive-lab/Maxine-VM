@@ -69,7 +69,8 @@ public class MaxineTester {
     private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs",
                     MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
-    private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs", MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
+    private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs",
+                    MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
@@ -255,7 +256,7 @@ public class MaxineTester {
             while (nextTestOption != null) {
                 final File outputFile = getOutputFile(imageDir, "JAVA_TESTER" + (executions == 0 ? "" : "-" + executions), config);
                 final int exitValue = runMaxineVM(null, new String[] {nextTestOption}, imageDir, outputFile, _javaTesterTimeOut.getValue());
-                final JavaTesterResult result = parseJavaTesterOutputFile(outputFile);
+                final JavaTesterResult result = parseJavaTesterOutputFile(config, outputFile);
                 final String summary = result._summary;
                 nextTestOption = result._nextTestOption;
                 out.print("Java tester: Stopped " + config + " - ");
@@ -391,7 +392,7 @@ public class MaxineTester {
 
     private static final Pattern TEST_BEGIN_LINE = Pattern.compile("\\d+: +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
 
-    private static JavaTesterResult parseJavaTesterOutputFile(File outputFile) {
+    private static JavaTesterResult parseJavaTesterOutputFile(String config, File outputFile) {
         String nextTestOption = null;
         String lastTest = null;
         try {
@@ -419,7 +420,13 @@ public class MaxineTester {
 
                     } else if (line.contains("failed")) {
                         failedLines.append(line); // found a line with "failed"--probably a failed test
-                        addTestResult(lastTest, line, false);
+                        try {
+                            final Class mainClass = Class.forName(lastTest);
+                            final boolean expected = MaxineTesterConfiguration.isExpectedFailure(mainClass, config);
+                            addTestResult(lastTest, line, expected);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     } else if (line.startsWith("Done: ")) {
                         lastTest = null;
                         // found the terminating line indicating how many tests passed
