@@ -23,7 +23,6 @@ package test.com.sun.max.vm.jit;
 import test.com.sun.max.vm.compiler.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.source.*;
@@ -144,7 +143,6 @@ public class JITTest_compileStaticMethodInvocation extends JitCompilerTestCase {
     }
 
     void compileMethod(String methodName, final Bytecode bytecode, Class returnType) {
-        Trace.line(1, "\n\n ** Compiling " + methodName);
         final TargetMethod targetMethod = compileMethod(methodName, SignatureDescriptor.create(returnType));
         new BytecodeConfirmation(targetMethod.classMethodActor()) {
             @Override
