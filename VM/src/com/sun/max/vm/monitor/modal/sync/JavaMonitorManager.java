@@ -54,11 +54,16 @@ import com.sun.max.vm.thread.*;
  */
 public class JavaMonitorManager {
 
-    private static final int _UNBOUNDLIST_IMAGE_QTY = 2000; // Have a large amount to start with until we get gc right
-    private static final int _UNBOUNDLIST_MIN_QTY = 50; // Always keep a minimum in case gc or monitor allocation needs
+    // Image build time properties
+    private static final String UNBOUNDLIST_IMAGE_QTY_PROPERTY = "max.monitor.unboundpool.imagesize";
+    private static final String UNBOUNDLIST_GROW_QTY_PROPERTY = "max.monitor.unboundpool.grow";
+
+    private static final int _UNBOUNDLIST_MIN_QTY = 25;      // minimum to keep in case gc or monitor allocation needs
+    private static final int _UNBOUNDLIST_IMAGE_QTY = 50; // Initial allocation in image
 
     // monitors
-    private static final int _UNBOUNDLIST_GROW_QTY = 2000;
+    private static final int _UNBOUNDLIST_GROW_QTY_DEFAULT = 50;  // default
+    private static int _unBoundListGrowQty = _UNBOUNDLIST_GROW_QTY_DEFAULT;
     private static int _numberOfUnboundMonitors = 0;
     private static ManagedMonitor _unboundList;
     private static ManagedMonitor[] _bindableMonitors = new ManagedMonitor[0];
@@ -87,7 +92,16 @@ public class JavaMonitorManager {
             if (_gcDeadlockDetection) {
                 prototypeBindStickyMonitor(MaxineVM.hostOrTarget().configuration().heapScheme(), new StandardJavaMonitor.HeapSchemeDeadlockDetectionJavaMonitor());
             }
-            for (int i = 0; i < _UNBOUNDLIST_IMAGE_QTY; i++) {
+            int unBoundListImageQty = _UNBOUNDLIST_IMAGE_QTY;
+            final String  unBoundListImageQtyProperty = System.getProperty(UNBOUNDLIST_IMAGE_QTY_PROPERTY);
+            if (unBoundListImageQtyProperty != null) {
+                unBoundListImageQty = Integer.parseInt(unBoundListImageQtyProperty);
+            }
+            final String  unBoundListGrowQtyProperty = System.getProperty(UNBOUNDLIST_GROW_QTY_PROPERTY);
+            if (unBoundListGrowQtyProperty != null) {
+                _unBoundListGrowQty = Integer.parseInt(unBoundListGrowQtyProperty);
+            }
+            for (int i = 0; i < unBoundListImageQty; i++) {
                 final ManagedMonitor monitor = newManagedMonitor();
                 addToUnboundList(monitor);
                 prototypeAddToBindableMonitors(monitor);
@@ -151,7 +165,7 @@ public class JavaMonitorManager {
     @PROTOTYPE_ONLY
     private static void prototypeAddToBindableMonitors(ManagedMonitor monitor) {
         if (_numberOfBindableMonitors == _bindableMonitors.length) {
-            final ManagedMonitor[] newAllBindable = new ManagedMonitor[_bindableMonitors.length + _UNBOUNDLIST_GROW_QTY];
+            final ManagedMonitor[] newAllBindable = new ManagedMonitor[_bindableMonitors.length + _unBoundListGrowQty];
             System.arraycopy(_bindableMonitors, 0, newAllBindable, 0, _bindableMonitors.length);
             _bindableMonitors = newAllBindable;
         }
@@ -232,10 +246,10 @@ public class JavaMonitorManager {
 
     private static void expandUnboundList() {
         ManagedMonitor newUnboundList = null;
-        final ManagedMonitor[] newAllBindable = new ManagedMonitor[_bindableMonitors.length + _UNBOUNDLIST_GROW_QTY];
+        final ManagedMonitor[] newAllBindable = new ManagedMonitor[_bindableMonitors.length + _unBoundListGrowQty];
 
         // Create the new monitors
-        for (int i = 0; i < _UNBOUNDLIST_GROW_QTY; i++) {
+        for (int i = 0; i < _unBoundListGrowQty; i++) {
             final ManagedMonitor monitor = newManagedMonitor();
             monitor.setNext(newUnboundList);
             newUnboundList = monitor;
