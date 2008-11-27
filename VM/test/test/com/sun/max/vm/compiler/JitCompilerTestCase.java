@@ -123,7 +123,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
 
     @Override
     protected JitTargetMethod compileMethod(final ClassMethodActor classMethodActor) {
-        Trace.line(1, "Compiling " + classMethodActor.name());
+        Trace.line(2, "Compiling " + classMethodActor.name());
         return MaxineVM.usingTarget(new Function<JitTargetMethod>() {
             public JitTargetMethod call() {
                 try {

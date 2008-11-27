@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.vm.jit;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.source.*;
 /**
@@ -31,9 +30,7 @@ import com.sun.max.vm.template.source.*;
 public class JITTest_unoptimizedTemplateTable extends TemplateTableTestCase {
 
     public void test_generate() {
-        Trace.on(1);
         final TemplateTable templateTable = new TemplateTable(UnoptimizedBytecodeTemplateSource.class);
         validateTemplateTable(templateTable, UnoptimizedBytecodeTemplateSource.class);
-        Trace.line(1, "\ndone\n");
     }
 }
