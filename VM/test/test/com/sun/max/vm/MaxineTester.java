@@ -312,12 +312,12 @@ public class MaxineTester {
         final File outputDir = new File(_outputDir.getValue(), "auto-tests");
         final PrintStream out = out();
 
-        final AppendableSequence<String> autoTests = new ArrayListSequence<String>();
+        final Set<String> autoTests = new TreeSet<String>();
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
                 if (className.startsWith(new test.com.sun.max.Package().name()) && className.endsWith(".AutoTest")) {
-                    autoTests.append(className);
+                    autoTests.add(className);
                 }
                 return true;
             }
