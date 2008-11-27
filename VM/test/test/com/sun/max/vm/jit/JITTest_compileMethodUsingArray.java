@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.compiler.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
 
@@ -35,8 +34,6 @@ public class JITTest_compileMethodUsingArray extends JitCompilerTestCase {
 
     void compileMethod(Kind kind) {
         final String methodName = methodNameFor(kind);
-        Trace.on(1);
-        Trace.line(1, "\nCompile " + methodName);
         compileMethod(methodName, SignatureDescriptor.create("()V"));
     }
 

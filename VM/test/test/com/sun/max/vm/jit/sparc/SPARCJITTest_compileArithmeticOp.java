@@ -38,9 +38,7 @@ public class SPARCJITTest_compileArithmeticOp extends JITTest_compileArithmeticO
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileArithmeticOp.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileArithmeticOp.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

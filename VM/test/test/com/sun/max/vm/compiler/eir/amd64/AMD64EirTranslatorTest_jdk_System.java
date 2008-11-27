@@ -32,9 +32,7 @@ public class AMD64EirTranslatorTest_jdk_System extends JdkTest_System<CirMethod>
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64EirTranslatorTest_jdk_System.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(AMD64EirTranslatorTest_jdk_System.class);
-        //$JUnit-END$
         return new AMD64EirTranslatorTestSetup(suite);
     }
 

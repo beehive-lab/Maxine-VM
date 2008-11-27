@@ -36,9 +36,7 @@ public class SPARCEirTranslatorTest_regressions extends CompilerTest_regressions
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_regressions.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_regressions.class);
-        // $JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

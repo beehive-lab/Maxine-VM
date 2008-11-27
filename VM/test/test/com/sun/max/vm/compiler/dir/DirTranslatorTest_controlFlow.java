@@ -27,9 +27,7 @@ public class DirTranslatorTest_controlFlow extends CompilerTest_controlFlow {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_controlFlow.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_controlFlow.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

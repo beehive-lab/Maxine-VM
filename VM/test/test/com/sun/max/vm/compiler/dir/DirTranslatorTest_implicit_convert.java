@@ -27,9 +27,7 @@ public class DirTranslatorTest_implicit_convert extends BytecodeTest_implicit_co
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_implicit_convert.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_implicit_convert.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

@@ -38,9 +38,7 @@ public class SPARCJITTest_unresolvedGetField extends JITTest_unresolvedGetField 
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_unresolvedGetField.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_unresolvedGetField.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

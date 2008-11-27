@@ -18,9 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * Tests generating various prototypes and images.
- *
- * @author Doug Simon
- */
-package test.com.sun.max.vm.prototype;
+package test.com.sun.max.vm.compiler.eir.sparc;
+
+import junit.framework.*;
+
+import com.sun.max.ide.*;
+
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public final class AutoTest {
+    private AutoTest() {
+    }
+
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(AutoTest.suite());
+    }
+
+    public static Test suite() {
+        final Class[] slowTests = {SPARCEirTranslatorTest_max.class, SPARCEirTranslatorTest_subtype.class};
+        final TestSuite suite = new TestCaseClassSet(new Package()).removeAll(slowTests).toTestSuite();
+        return new SPARCEirTranslatorTestSetup(suite);
+    }
+}

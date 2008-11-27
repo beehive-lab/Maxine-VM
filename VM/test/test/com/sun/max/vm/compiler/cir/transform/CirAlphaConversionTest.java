@@ -38,9 +38,7 @@ public class CirAlphaConversionTest extends MaxTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirAlphaConversionTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirAlphaConversionTest.class);
-        //$JUnit-END$
         Trace.on(1);
         return suite;
     }

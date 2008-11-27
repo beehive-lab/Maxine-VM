@@ -27,9 +27,7 @@ public class DirTranslatorTest_binaryLogic extends BytecodeTest_binaryLogic {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_binaryLogic.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_binaryLogic.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

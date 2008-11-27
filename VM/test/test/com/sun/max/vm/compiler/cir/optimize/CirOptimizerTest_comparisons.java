@@ -30,9 +30,7 @@ public class CirOptimizerTest_comparisons extends CompilerTest_comparisons {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_comparisons.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_comparisons.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

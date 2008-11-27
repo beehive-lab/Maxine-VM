@@ -47,9 +47,7 @@ public class InliningAndAlignmentTest extends MaxTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(InliningAndAlignmentTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(InliningAndAlignmentTest.class);
-        //$JUnit-END$
         return suite;
     }
 

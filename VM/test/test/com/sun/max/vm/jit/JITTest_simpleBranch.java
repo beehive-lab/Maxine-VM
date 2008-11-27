@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * A simple test to print the output produced by the optimizing compiler.
- * 
+ *
  * @author Laurent Daynes
  */
 public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
@@ -84,7 +84,6 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
     }
 
     private void do_ifne(String testName) {
-        Trace.on(1);
         final TargetMethod method = compileMethod("perform_" + testName, SignatureDescriptor.create(int.class, int.class));
         new BytecodeConfirmation(method.classMethodActor()) {
 
@@ -101,7 +100,6 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
                 confirmPresence();
             }
         };
-        disassemble(method);
     }
 
     public void test_ifne() {
@@ -121,7 +119,6 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
     }
 
     private void do_invoke(final String testName, Class argumentType) {
-        Trace.on(1);
         final TargetMethod method = compileMethod("perform_" + testName, SignatureDescriptor.create(void.class, argumentType));
         new BytecodeConfirmation(method.classMethodActor()) {
             private void confirmFor(String bytecodeName) {
@@ -150,9 +147,7 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
                 confirmPresence();
             }
         };
-        Trace.on(1);
         Trace.line(1, method.classMethodActor().name());
-        disassemble(method);
     }
 
     public void test_unresolved_invokespecial() {
@@ -223,7 +218,6 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
                 confirmPresence();
             }
         };
-        disassemble(method);
     }
 }
 

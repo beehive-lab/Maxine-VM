@@ -27,9 +27,7 @@ public class CirOptimizerTest_implicit_convert extends BytecodeTest_implicit_con
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_implicit_convert.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_implicit_convert.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

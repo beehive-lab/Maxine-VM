@@ -40,9 +40,6 @@ public final class AutoTest {
         suite.addTest(SPARCTranslatorTest_regressions.suite());
         suite.addTest(SPARCTranslatorTest_reflection.suite());
         suite.addTest(SPARCTranslatorTest_entryPoints.suite());
-        suite.addTest(SPARCTranslatorTest_referencedMethod.suite());
-//        suite.addTest(SPARCTranslatorTest_coreJava.suite());
-//        suite.addTest(SPARCTranslatorTest_max.suite());
         return suite;
     }
 }

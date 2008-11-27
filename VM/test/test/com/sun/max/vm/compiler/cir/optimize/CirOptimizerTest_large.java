@@ -27,9 +27,7 @@ public class CirOptimizerTest_large extends CompilerTest_large {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_large.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_large.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

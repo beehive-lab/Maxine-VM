@@ -27,9 +27,7 @@ public class CirTranslatorTest_switch extends BytecodeTest_switch {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_switch.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_switch.class);
-        // $JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 
