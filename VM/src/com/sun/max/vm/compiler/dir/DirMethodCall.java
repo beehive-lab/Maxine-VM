@@ -118,6 +118,9 @@ public class DirMethodCall extends DirCall {
         if (catchBlock() != null) {
             s += " -> #" + catchBlock().serial();
         }
+        if (_javaFrameDescriptor != null) {
+            s += " " + _javaFrameDescriptor.toString();
+        }
         return s;
     }
 

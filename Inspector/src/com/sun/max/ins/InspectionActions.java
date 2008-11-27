@@ -2650,7 +2650,6 @@ public class InspectionActions extends InspectionHolder implements Prober{
      * Action:  displays an inspection of the current Java frame descriptor.
      */
     final class InspectJavaFrameDescriptorAction extends InspectorAction {
-
         private static final String DEFAULT_TITLE = "Inspect Java frame descriptor";
         private TargetJavaFrameDescriptor _targetJavaFrameDescriptor;
         private TargetABI _abi;
@@ -2667,7 +2666,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         }
 
         /**
-         * @return // TODO: what does this return?
+         * @return whether there is a Java frame descriptor at the focus target code location
          */
         private boolean inspectable() {
             final Address instructionAddress = focus().codeLocation().targetCodeInstructionAddresss();

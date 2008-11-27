@@ -66,7 +66,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
 
     @Override
     public boolean needsJavaFrameDescriptor() {
-        return false;
+        return true;
     }
 
     @Override
@@ -86,7 +86,12 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
      * @author Yi Guo
      * @author Aziz Ghuloum
      */
-    private static final class JavaBuiltinOperator extends JavaOperator implements Lowerable{
+    private static final class JavaBuiltinOperator extends JavaOperator implements Lowerable {
+        @Override
+        public boolean needsJavaFrameDescriptor() {
+            return false;
+        }
+
         private final CirBuiltin _cirBuiltin;
 
         private JavaBuiltinOperator(Builtin builtin) {
