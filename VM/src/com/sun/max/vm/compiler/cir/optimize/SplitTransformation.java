@@ -34,7 +34,7 @@ import com.sun.max.vm.type.*;
  * Split transformation changes the code shape for path-sensitive analysis by inserting split operators.
  * Each split operator is attached to a branch of a call to a CirSwitch.
  *
- * The input to the split operator is called vold and the output of the split operator is vnew. Split operator creates a
+ * The input to the split operator is called vold and the output of the split operator is vnew. The split operator creates a
  * new variable (vnew) in which the path-sensitive analysis can save the conditional abstract value of vold if the
  * branch specified in the split operator is taken.
  *
@@ -45,6 +45,11 @@ import com.sun.max.vm.type.*;
 public final class SplitTransformation {
 
     public static class Split extends JavaOperator {
+
+        @Override
+        public boolean needsJavaFrameDescriptor() {
+            return false;
+        }
 
         @Override
         public Kind[] parameterKinds() {
@@ -59,9 +64,9 @@ public final class SplitTransformation {
          * Note that branch = 0 means the default branch. switch (v) { p1 : cont1 // branch order = 1 p2 : cont2 //
          * branch order = 2 default : defaultCont //branch order = 0 }
          */
-        public Split(CirCall op, int branch) {
-            assert op.procedure() instanceof CirSwitch;
-            _switchCall = op;
+        public Split(CirCall switchCall, int branch) {
+            assert switchCall.procedure() instanceof CirSwitch;
+            _switchCall = switchCall;
             _branchOrder = branch;
         }
 
