@@ -353,6 +353,9 @@ public class MaxineTester {
             for (String testName : failedTestNames) {
                 out().println("    failed " + testName);
             }
+            if (!failedTestNames.isEmpty()) {
+                out().println("    see:  " + outputFile.getAbsolutePath());
+            }
         }
     }
 
