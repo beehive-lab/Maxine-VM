@@ -51,20 +51,50 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
     };
 
-    static Set<String> toClassNames(Class<?>... classes) {
-        final Set<String> classNames = new HashSet<String>(classes.length);
-        for (Class c : classes) {
-            classNames.add(c.getName());
+    static void addTestName(Object object, Set<String> testNames) {
+        if (object instanceof Class) {
+            final Class c = (Class) object;
+            testNames.add(c.getName());
+        } else if (object instanceof Iterable) {
+            for (Object o : (Iterable) object) {
+                addTestName(o, testNames);
+            }
+        } else if (object instanceof Object[]) {
+            testNames.addAll(toTestNames((Object[]) object));
+        } else {
+            testNames.add(object.toString());
         }
-        return classNames;
     }
 
-    static final Set<String> _expectedFailuresSolarisAMD64 = toClassNames(
+    static Set<String> toTestNames(Object... objects) {
+        final Set<String> testNames = new HashSet<String>(objects.length);
+        for (Object object : objects) {
+            addTestName(object, testNames);
+        }
+        return testNames;
+    }
+
+    static final String[] _expectedAutoTestFailures = {
+        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.amd64.AMD64EirTranslatorTest_native)",
+        "test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",
+        "test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",
+        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.amd64.AMD64EirTranslatorTest_native)",
+        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
+        "test_manyParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
+        "test_nop(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
+        "test_nop_cfunction(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
+        "test_primitive_identity(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
+        "test_reference_identity(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
+        "test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)"
+    };
+
+    static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
         test.output.FloatNanTest.class,
-        test.output.JavacTest.class
+        test.output.JavacTest.class,
+        _expectedAutoTestFailures
     );
 
-    static final Set<String> _expectedFailuresSolarisSPARCV9 = toClassNames(
+    static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
@@ -83,10 +113,11 @@ public class MaxineTesterConfiguration {
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
-        test.hotpath.HP_series.class// 333
+        test.hotpath.HP_series.class, // 333
+        _expectedAutoTestFailures
     );
 
-    static final Set<String> _expectedJitFailuresSolarisSPARCV9 = toClassNames(
+    static final Set<String> _expectedJitFailuresSolarisSPARCV9 = toTestNames(
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
@@ -128,10 +159,6 @@ public class MaxineTesterConfiguration {
         test.reflect.Array_getBoolean01.class,
         test.hotpath.HP_series.class // 333
     );
-
-    static final Set<String> _expectedAutoTestFailures = new HashSet<String>(Arrays.asList(
-        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.amd64.AMD64EirTranslatorTest_native)"
-    ));
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
@@ -181,14 +208,11 @@ public class MaxineTesterConfiguration {
             if (processorKind.processorModel() == ProcessorModel.AMD64) {
                 return _expectedFailuresSolarisAMD64.contains(testName);
             } else if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
-                if (config.contains("jit")) {
+                if (config != null && config.contains("jit")) {
                     return _expectedJitFailuresSolarisSPARCV9.contains(testName);
                 }
                 return _expectedFailuresSolarisSPARCV9.contains(testName);
             }
-        }
-        if (_expectedAutoTestFailures.contains(testName)) {
-            return true;
         }
         return false;
     }
