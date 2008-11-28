@@ -42,7 +42,7 @@ public class MaxineTesterConfiguration {
         test.output.GCTest2.class,
         test.output.GCTest3.class,
         test.output.GCTest4.class,
-        test.output.GCTest5.class,
+        //test.output.GCTest5.class,
         test.output.GCTest6.class,
         test.output.HelloWorldReflect.class,
         test.output.JREJarLoadTest.class,
