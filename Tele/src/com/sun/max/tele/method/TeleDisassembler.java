@@ -200,6 +200,13 @@ public final class TeleDisassembler {
         private static final int SET_LITERAL_BASE_INSTRUCTION;
 
         private static final int NOP_TEMPLATE;
+        
+        private static final int FLUSHW_TEMPLATE;
+        
+        /**
+         * Offset to the rdpc instruction that sets the literal base from the flushw instruction of the trapStub.
+         */
+        private static final int TRAP_STUB_RDPC_OFFSET = 232;
 
         private static final int DISP19_MASK = 0x7ffff;
 
@@ -212,11 +219,15 @@ public final class TeleDisassembler {
             asm.rd(StateRegister.PC, literalBaseRegister);
             int setLiteralBaseInstruction = 0;
             int nopTemplate = 0;
+            int flushwTemplate = 0;
             try {
                 setLiteralBaseInstruction = endianness.readInt(new ByteArrayInputStream(asm.toByteArray()));
                 asm.reset();
                 asm.nop();
                 nopTemplate = endianness.readInt(new ByteArrayInputStream(asm.toByteArray()));
+                asm.reset();
+                asm.flushw();
+                flushwTemplate = endianness.readInt(new ByteArrayInputStream(asm.toByteArray()));
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (AssemblyException e) {
@@ -224,15 +235,31 @@ public final class TeleDisassembler {
             }
             SET_LITERAL_BASE_INSTRUCTION = setLiteralBaseInstruction;
             NOP_TEMPLATE = nopTemplate;
+            FLUSHW_TEMPLATE = flushwTemplate;
         }
 
+        private static boolean isTrapStub(byte [] code) throws IOException { 
+            if (code.length > TRAP_STUB_RDPC_OFFSET) {
+                final ByteArrayInputStream in = new ByteArrayInputStream(code, 0, code.length);
+                in.skip(8);
+                if (ENDIANNESS.readInt(in) == FLUSHW_TEMPLATE) {
+                    in.reset();
+                    in.skip(TRAP_STUB_RDPC_OFFSET);
+                    if (ENDIANNESS.readInt(in) == SET_LITERAL_BASE_INSTRUCTION) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
         private static int searchLiteralBaseInstruction(int start, int end, byte [] code) {
             final int codeSize = ((end > code.length) ? code.length : end) - start;
             if (codeSize > 0) {
                 try {
                     final ByteArrayInputStream in = new ByteArrayInputStream(code, start, codeSize);
                     int baseOffset = start;
-                    int numInstructions = codeSize / 4;
+                    int numInstructions = codeSize / 4;                   
                     while (numInstructions > 0) {
                         if (ENDIANNESS.readInt(in) == SET_LITERAL_BASE_INSTRUCTION) {
                             return baseOffset;
@@ -240,14 +267,18 @@ public final class TeleDisassembler {
                         baseOffset += 4;
                         numInstructions--;
                     }
-                    // not found. The code may be JITed.
+                    // not found. Might the trapStub.
+                    if (isTrapStub(code)) {
+                        return TRAP_STUB_RDPC_OFFSET;
+                    }
+                    // The code may be JITed.
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
             return -1;
         }
-
+        
         private static int literalBaseFromCodeStart(byte [] code) {
             assert code.length % 4 == 0;
             try {
