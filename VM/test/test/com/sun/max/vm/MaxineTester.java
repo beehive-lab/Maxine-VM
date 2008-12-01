@@ -287,6 +287,7 @@ public class MaxineTester {
 
                 @Override
                 public void testFailure(Failure failure) throws Exception {
+                    failure.getException().printStackTrace(System.out);
                     _failed = true;
                 }
 
