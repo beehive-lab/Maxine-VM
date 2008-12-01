@@ -21,6 +21,7 @@
 package test.com.sun.max.vm.compiler;
 
 import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Translates almost all of the packages in the project to test the translator.
@@ -42,7 +43,7 @@ public abstract class CompilerTest_max<Method_Type extends IrMethod> extends Com
     }
 
     public void test_1() {
-        compilePackage(new com.sun.max.vm.compiler.target.Package());
+        compileMethod(Trap.class, "nativeInitialize");
     }
 
     public void test_basePackages() {

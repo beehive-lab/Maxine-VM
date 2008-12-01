@@ -41,15 +41,18 @@ public class ArrayLoad extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
+
     @Override
     public String toString() {
         return "Arrayload";
     }
 
     private boolean _canRaiseNullPointerException = true;
+
     public void setCanRaiseNullPointerException(boolean flag) {
         _canRaiseNullPointerException = flag;
     }
+
     public boolean canRaiseNullPointerException() {
         return _canRaiseNullPointerException;
     }
