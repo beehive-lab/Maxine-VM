@@ -25,7 +25,7 @@ import test.com.sun.max.vm.compiler.*;
 
 /**
  * Translates and optimizes almost all packages in the project to test the optimizer.
- * 
+ *
  * @author Bernd Mathiske
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
@@ -36,9 +36,7 @@ public class AMD64TranslatorTest_coreJava extends CompilerTest_coreJava {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AMD64TranslatorTest_coreJava.class.getSimpleName());
-        suite.addTestSuite(AMD64TranslatorTest_coreJava.class);
-        return new AMD64TranslatorTestSetup(suite);
+        return new AMD64TranslatorTestSetup(new TestSuite(AMD64TranslatorTest_coreJava.class));
     }
 
     public AMD64TranslatorTest_coreJava(String name) {

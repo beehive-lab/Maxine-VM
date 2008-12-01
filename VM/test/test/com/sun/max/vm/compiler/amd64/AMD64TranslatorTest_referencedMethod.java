@@ -182,9 +182,7 @@ public class AMD64TranslatorTest_referencedMethod extends CompilerTestCase<Targe
         });
     }
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AMD64TranslatorTest_referencedMethod.class.getSimpleName());
-        suite.addTestSuite(AMD64TranslatorTest_referencedMethod.class);
-        return new AMD64TranslatorTestSetup(suite); // This performs the test
+        return new AMD64TranslatorTestSetup(new TestSuite(AMD64TranslatorTest_referencedMethod.class)); // This performs the test
     }
 
     public AMD64TranslatorTest_referencedMethod(String name) {

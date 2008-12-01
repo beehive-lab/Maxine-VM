@@ -34,8 +34,7 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        final Class[] slowTests = {DirTranslatorTest_max.class, DirTranslatorTest_subtype.class};
-        final TestSuite suite = new TestCaseClassSet(new Package()).removeAll(slowTests).toTestSuite();
+        final TestSuite suite = new TestCaseClassSet(new Package()).toTestSuite();
         return new DirTranslatorTestSetup(suite);
     }
 }

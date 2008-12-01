@@ -34,8 +34,7 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        final Class[] slowTests = {AMD64EirTranslatorTest_max.class, AMD64EirTranslatorTest_subtype.class};
-        final TestSuite suite = new TestCaseClassSet(new Package()).removeAll(slowTests).toTestSuite();
+        final TestSuite suite = new TestCaseClassSet(new Package()).toTestSuite();
         return new AMD64EirTranslatorTestSetup(suite);
     }
 }

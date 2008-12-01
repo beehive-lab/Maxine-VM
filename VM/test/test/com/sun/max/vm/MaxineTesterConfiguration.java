@@ -22,6 +22,11 @@ package test.com.sun.max.vm;
 
 import java.util.*;
 
+import test.com.sun.max.vm.compiler.*;
+import test.com.sun.max.vm.compiler.bytecode.*;
+
+import junit.framework.*;
+
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 
@@ -215,6 +220,28 @@ public class MaxineTesterConfiguration {
                     return _expectedJitFailuresSolarisSPARCV9.contains(testName);
                 }
                 return _expectedFailuresSolarisSPARCV9.contains(testName);
+            }
+        }
+        return false;
+    }
+
+
+    static final Set<Class> _slowAutoTestClasses = new HashSet<Class>(Arrays.asList((Class)
+                    CompilerTest_max.class,
+                    CompilerTest_coreJava.class,
+                    JitCompilerTestCase.class,
+                    BytecodeTest_subtype.class));
+
+    /**
+     * Determines which JUnit test cases are known to take a non-trivial amount of time to execute.
+     * These tests are omitted by the MaxineTester unless the
+     * @param testCase
+     * @return
+     */
+    public static boolean isSlowAutoTestCase(TestCase testCase) {
+        for (Class<?> c : _slowAutoTestClasses) {
+            if (c.isAssignableFrom(testCase.getClass())) {
+                return true;
             }
         }
         return false;
