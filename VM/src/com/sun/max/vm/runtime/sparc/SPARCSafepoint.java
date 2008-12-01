@@ -21,6 +21,7 @@
 package com.sun.max.vm.runtime.sparc;
 
 import static com.sun.max.asm.sparc.GPR.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
@@ -93,7 +94,6 @@ public final class SPARCSafepoint extends Safepoint {
     public static final int TRAP_STATE_SIZE;
     public static final int TRAP_NUMBER_OFFSET;
     public static final int TRAP_SP_OFFSET;
-    public static final int TRAP_IP_OFFSET;
     public static final int TRAP_LATCH_OFFSET;
 
     static {
@@ -104,8 +104,6 @@ public final class SPARCSafepoint extends Safepoint {
         TRAP_LATCH_OFFSET = Word.size();
         // Offset to %o6 in trap state.
         TRAP_SP_OFFSET = Word.size() * (globalRegisterWords + (O6.value() - O0.value()));
-        // Offset to %o7 in trap state
-        TRAP_IP_OFFSET = TRAP_SP_OFFSET + Word.size();
         TRAP_NUMBER_OFFSET = Word.size() * (globalRegisterWords + outRegisterWords + floatingPointRegisterWords + stateRegisters);
         TRAP_STATE_SIZE = TRAP_NUMBER_OFFSET + Word.size();
     }
@@ -146,8 +144,10 @@ public final class SPARCSafepoint extends Safepoint {
 
     @Override
     public Pointer getInstructionPointer(Pointer trapState) {
-        return trapState.readWord(SPARCSafepoint.TRAP_IP_OFFSET).asPointer();
+        // We're in the trap stub. The latch register is set to the disabled vm thread locals.
+        return TRAP_INSTRUCTION_POINTER.pointer(Safepoint.getLatchRegister()).readWord(0).asPointer();
     }
+
     @Override
     public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
         return trapState.readWord(SPARCSafepoint.TRAP_SP_OFFSET).asPointer();
