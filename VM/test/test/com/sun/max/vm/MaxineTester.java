@@ -26,8 +26,13 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
+import junit.framework.*;
+
+import org.junit.internal.requests.*;
+import org.junit.internal.runners.*;
 import org.junit.runner.*;
 import org.junit.runner.notification.*;
+import org.junit.runners.AllTests;
 
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -232,13 +237,45 @@ public class MaxineTester {
          *            <li>The name of a class containing the JUnit test(s) to be run.</li>
          *            <li>The path of a file to which the {@linkplain Description name} of the tests that pass will be
          *            written.</li>
-         *            <li>The path of a file to which the name of the tests that fail will be written.</li>
+         *            <li>The path of a file to which the name of the tests that fail will be written. If this file
+         *            already exists, then only the tests listed in the file will be run.</li>
          *            </ol>
          */
-        public static void main(String[] args) throws Exception {
+        public static void main(String[] args) throws Throwable {
             final String testClassName = args[0];
-            final PrintStream passed = new PrintStream(new FileOutputStream(args[1]));
-            final PrintStream failed = new PrintStream(new FileOutputStream(args[2]));
+            final File passedFile = new File(args[1]);
+            final File failedFile = new File(args[2]);
+
+            final Class<?> testClass = Class.forName(testClassName);
+            final Test test = AllTests.testFromSuiteMethod(testClass);
+
+            final Runner runner;
+            if (failedFile.exists()) {
+                System.out.println("Only (re)running the tests listed in " + failedFile.getAbsolutePath());
+                final Set<String> failedTestNames = new HashSet<String>();
+                parseAutoTestResults(failedFile, false, failedTestNames);
+                runner = new OldTestClassRunner(test) {
+                    @Override
+                    public void run(RunNotifier notifier) {
+                        final TestResult result = new TestResult() {
+                            @Override
+                            protected void run(TestCase testCase) {
+                                final Description description = Description.createTestDescription(testCase.getClass(), testCase.getName());
+                                if (failedTestNames.contains(description.toString())) {
+                                    super.run(testCase);
+                                }
+                            }
+                        };
+                        result.addListener(createAdaptingListener(notifier));
+                        test.run(result);
+                    }
+                };
+            } else {
+                runner = null;
+            }
+
+            final PrintStream passed = new PrintStream(new FileOutputStream(passedFile));
+            final PrintStream failed = new PrintStream(new FileOutputStream(failedFile));
             final JUnitCore junit = new JUnitCore();
             junit.addListener(new RunListener() {
                 boolean _failed;
@@ -264,7 +301,14 @@ public class MaxineTester {
                 }
             });
 
-            junit.run(Class.forName(testClassName));
+            final Request request = new ClassRequest(testClass) {
+                @Override
+                public Runner getRunner() {
+                    return runner == null ? super.getRunner() : runner;
+                }
+            };
+
+            junit.run(request);
             passed.close();
             failed.close();
         }
@@ -281,9 +325,9 @@ public class MaxineTester {
      *
      * @param resultsFile the file to parse
      * @param passed specifies if the file list tests that passed or failed
-     * @param testNames if non-null, then all test names parsed from the file are appended to this sequence
+     * @param testNames if non-null, then all test names parsed from the file are added to this set
      */
-    private static void parseAutoTestResults(File resultsFile, boolean passed, AppendableSequence<String> testNames) {
+    private static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> testNames) {
         try {
             final BufferedReader reader = new BufferedReader(new FileReader(resultsFile));
             String line;
@@ -292,7 +336,7 @@ public class MaxineTester {
                 final boolean expectedFailure = MaxineTesterConfiguration.isExpectedFailure(testName, null);
                 addTestResult(testName, passed ? null : "failed", expectedFailure);
                 if (testNames != null) {
-                    testNames.append(testName);
+                    testNames.add(testName);
                 }
             }
             reader.close();
@@ -337,7 +381,7 @@ public class MaxineTester {
             final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
             out.print("JUnit auto-test: Stopped " + autoTest);
 
-            final AppendableSequence<String> failedTestNames = new ArrayListSequence<String>();
+            final Set<String> failedTestNames = new HashSet<String>();
             parseAutoTestResults(passedFile, true, null);
             parseAutoTestResults(failedFile, false, failedTestNames);
 
@@ -355,7 +399,7 @@ public class MaxineTester {
                 out().println("    failed " + testName);
             }
             if (!failedTestNames.isEmpty()) {
-                out().println("    see:  " + outputFile.getAbsolutePath());
+                out().println("    see: " + outputFile.getAbsolutePath());
             }
         }
     }
