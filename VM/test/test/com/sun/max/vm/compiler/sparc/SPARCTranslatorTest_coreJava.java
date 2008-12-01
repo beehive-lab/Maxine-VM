@@ -32,9 +32,7 @@ public class SPARCTranslatorTest_coreJava extends CompilerTest_coreJava {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCTranslatorTest_coreJava.class.getSimpleName());
-        suite.addTestSuite(SPARCTranslatorTest_coreJava.class);
-        return new SPARCTranslatorTestSetup(suite);
+        return new SPARCTranslatorTestSetup(new TestSuite(SPARCTranslatorTest_coreJava.class));
     }
 
     public SPARCTranslatorTest_coreJava(String name) {

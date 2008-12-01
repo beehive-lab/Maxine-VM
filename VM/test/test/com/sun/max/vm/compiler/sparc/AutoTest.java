@@ -36,10 +36,10 @@ public final class AutoTest {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AutoTest.class.getPackage().getName());
-        suite.addTest(SPARCTranslatorTest_snippets.suite());
-        suite.addTest(SPARCTranslatorTest_regressions.suite());
-        suite.addTest(SPARCTranslatorTest_reflection.suite());
-        suite.addTest(SPARCTranslatorTest_entryPoints.suite());
-        return suite;
+        suite.addTestSuite(SPARCTranslatorTest_snippets.class);
+        suite.addTestSuite(SPARCTranslatorTest_regressions.class);
+        suite.addTestSuite(SPARCTranslatorTest_reflection.class);
+        suite.addTestSuite(SPARCTranslatorTest_entryPoints.class);
+        return new SPARCTranslatorTestSetup(suite);
     }
 }

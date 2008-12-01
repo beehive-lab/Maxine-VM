@@ -33,11 +33,11 @@ public final class AutoTest {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AutoTest.class.getPackage().getName());
-        suite.addTest(AMD64TranslatorTest_native.suite());
-        suite.addTest(AMD64TranslatorTest_snippets.suite());
-        suite.addTest(AMD64TranslatorTest_regressions.suite());
-        suite.addTest(AMD64TranslatorTest_reflection.suite());
-        suite.addTest(AMD64TranslatorTest_entryPoints.suite());
-        return suite;
+        suite.addTestSuite(AMD64TranslatorTest_native.class);
+        suite.addTestSuite(AMD64TranslatorTest_snippets.class);
+        suite.addTestSuite(AMD64TranslatorTest_regressions.class);
+        suite.addTestSuite(AMD64TranslatorTest_reflection.class);
+        suite.addTestSuite(AMD64TranslatorTest_entryPoints.class);
+        return new AMD64TranslatorTestSetup(suite);
     }
 }

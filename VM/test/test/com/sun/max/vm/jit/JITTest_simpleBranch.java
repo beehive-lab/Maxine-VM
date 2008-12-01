@@ -68,47 +68,68 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
         ResolvedAtCompileTime.parameterlessResolvedStaticMethod();
     }
 
-    public int perform_ifne(int i) {
-        if (i  == 0) {
-            return 1;
-        }
-        return i << 1;
-    }
-
-    public int perform_ifne2(int i) {
-        int c = i;
-        while (c != 0) {
-            c = c >> 1;
-        }
-        return c;
-    }
-
-    private void do_ifne(String testName) {
-        final TargetMethod method = compileMethod("perform_" + testName, SignatureDescriptor.create(int.class, int.class));
-        new BytecodeConfirmation(method.classMethodActor()) {
-
-            @Override
-            public void iload_1() {
-                confirmPresence();
-            }
-            @Override
-            public void ifne(int index) {
-                confirmPresence();
-            }
-            @Override
-            public void ireturn() {
-                confirmPresence();
-            }
-        };
-    }
-
+    /**
+     * public void perform_ifne(int i) {
+     *    if (i == 0) {
+     *        return 1;
+     *    }
+     *    return i << 1;
+     * }.
+     */
     public void test_ifne() {
-        do_ifne("ifne");
+        new TestBytecodeAssembler(false, "test_ifne", SignatureDescriptor.create("(I)I")) {
+            @Override
+            public void generateCode() {
+                final int i = 1;
+                final Label label = newLabel();
+                iload(i);
+                ifne(label);
+                iconst(1);
+                ireturn();
+                label.bind();
+                iload(i);
+                iconst(1);
+                ishl();
+                ireturn();
+            }
+        }.compile(getClass());
     }
 
+    /**
+     * public void perform_ifne2(int i) {
+     *    int c = i;
+     *    while (c != 0) {
+     *        c = c >> 1;
+     *    }
+     *    return c;
+     * }.
+     */
     public void test_ifne2() {
-        do_ifne("ifne2");
+        new TestBytecodeAssembler(false, "perform_ifne2", SignatureDescriptor.create("(I)I")) {
+            @Override
+            public void generateCode() {
+                final int i = 1;
+                final int c = allocateLocal(Kind.INT);
+                final Label loopTest = newLabel();
+                final Label loopHead = newLabel();
+                iload(i);
+                istore(c);
+                goto_(loopTest);
+                loopHead.bind();
+                iload(c);
+                iconst(1);
+                ishr();
+                istore(c);
+                loopTest.bind();
+                iload(c);
+                ifne(loopHead);
+                iload(c);
+                ireturn();
+            }
+        }.compile(getClass());
     }
+
+
 
     private void do_unresolved_invoke(final String testName) {
         do_invoke("unresolved_" + testName, UnresolvedAtCompileTime.class);
@@ -220,4 +241,3 @@ public class JITTest_simpleBranch extends CompilerTestCase<TargetMethod> {
         };
     }
 }
-

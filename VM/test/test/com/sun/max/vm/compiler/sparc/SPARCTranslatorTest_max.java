@@ -34,9 +34,7 @@ public class SPARCTranslatorTest_max extends CompilerTest_max {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCTranslatorTest_max.class.getSimpleName());
-        suite.addTestSuite(SPARCTranslatorTest_max.class);
-        return new SPARCTranslatorTestSetup(suite);
+        return new SPARCTranslatorTestSetup(new TestSuite(SPARCTranslatorTest_max.class));
     }
 
     public SPARCTranslatorTest_max(String name) {

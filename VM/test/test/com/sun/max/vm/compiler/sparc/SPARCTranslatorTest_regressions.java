@@ -34,9 +34,7 @@ public class SPARCTranslatorTest_regressions extends CompilerTest_regressions {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCTranslatorTest_regressions.class.getSimpleName());
-        suite.addTestSuite(SPARCTranslatorTest_regressions.class);
-        return new SPARCTranslatorTestSetup(suite);
+        return new SPARCTranslatorTestSetup(new TestSuite(SPARCTranslatorTest_regressions.class));
     }
 
     public SPARCTranslatorTest_regressions(String name) {
