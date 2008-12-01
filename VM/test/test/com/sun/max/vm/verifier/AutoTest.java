@@ -25,7 +25,7 @@ import junit.framework.*;
 import com.sun.max.ide.*;
 
 /**
- * 
+ *
  * @author Doug Simon
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
@@ -38,6 +38,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new VerifierTestSetup(MaxTestCase.createSuite(new Package(), true));
+        return new VerifierTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
     }
 }

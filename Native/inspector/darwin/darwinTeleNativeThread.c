@@ -40,8 +40,6 @@
 #include "jni.h"
 #include "word.h"
 
-extern int ptraceWaitForSignal(jlong pid, int signalnum);
-
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JNIEnv *env, jclass c, jlong task, jlong thread,
                 jbyteArray integerRegisters, jint integerRegistersLength,
@@ -134,7 +132,7 @@ static jboolean suspendOtherThreads(jlong task, thread_t current) {
     thread_array_t thread_list = NULL;
     unsigned int nthreads = 0;
     kern_return_t kret;
-    unsigned i, j;
+    unsigned i;
 
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
@@ -162,16 +160,6 @@ static jboolean suspendOtherThreads(jlong task, thread_t current) {
     // deallocate thread list
     vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
 
-    // get info for the current thread
-    kret = thread_info(current, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
-    if (kret != KERN_SUCCESS) {
-        log_println("thread_info() failed on thread to step");
-        return false;
-    }
-    for (j = 0; j < (unsigned) info.suspend_count; j++) {
-        // unsuspend the current thread.
-        thread_resume(current);
-    }
     return true;
 }
 
@@ -207,35 +195,62 @@ static jboolean unsuspendOtherThreads(jlong task, thread_t current) {
     return true;
 }
 
-/**
- * TODO: find out what should really be placed here.
- * This works somehow by delaying the next steps enough so that they succeed.
- */
-static void waitALittle() {
-    int i;
-    for (i = 0; i < 5000; i++) {
-        char s[1];
-        s[0] = '\0';
-        printf(s);
-    }
-    usleep(200);
-}
+jboolean disableSingleStepping(jlong task) {
+    thread_array_t thread_list = NULL;
+    unsigned int nthreads = 0;
+    kern_return_t kret;
+    unsigned i;
 
-static jboolean singleStep(jlong pid, jlong task, thread_t current) {
-    int error = ptrace(PT_STEP, pid, (char *) 1, 0);
-    if (error != 0) {
-        log_println("could not ptrace(PT_STEP) for pid = %d", error);
-        return false;
+    kret = task_threads((task_t) task, &thread_list, &nthreads);
+
+    for (i = 0; i < nthreads; i++) {
+        setSingleStep(thread_list[i], false);
     }
-    waitALittle();
+
+    // deallocate thread list
+    vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
+
     return true;
 }
 
+static jboolean resumeThread(jlong pid, jlong task, thread_t current) {
+    kern_return_t kret;
+    struct thread_basic_info info;
+    unsigned int info_count = THREAD_BASIC_INFO_COUNT;
+    unsigned int j;
+
+    // get info for the current thread
+    kret = thread_info(current, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    if (kret != KERN_SUCCESS) {
+        log_println("thread_info() failed on thread to step");
+        return false;
+    }
+
+    // the thread will not resume unless the task is also resumed
+    task_resume((task_t) task);
+
+    // if the thread is WAITING it will not resume unless we abort it first
+    // the thread is WAITING if if stopped because of a trap
+    if (info.run_state == TH_STATE_WAITING) {
+        thread_abort(current);
+    }
+
+    // resume the thread
+    for (j = 0; j < (unsigned) info.suspend_count; j++) {
+        thread_resume(current);
+    }
+
+    return true;
+}
+
+/**
+ * Single stepping works by setting the single step flag in the rFLAGS register and then resuming the thread.
+ * After the TRAP signal is received the single stepping flag is cleared for all threads using the disableSingleStepping() method.
+ */
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong pid, jlong task, jlong thread) {
   return setSingleStep((thread_act_t) thread, true)
       && suspendOtherThreads(task, (thread_t) thread)
-      && singleStep(pid, task, (thread_t) thread)
-      && unsuspendOtherThreads(task, (thread_t) thread)
-      && setSingleStep((thread_act_t) thread, false);
+      && resumeThread(pid, task, (thread_t) thread)
+      && unsuspendOtherThreads(task, (thread_t) thread);
 }

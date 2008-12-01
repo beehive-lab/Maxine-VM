@@ -27,9 +27,7 @@ public class DirTranslatorTest_putstatic extends BytecodeTest_putstatic {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_putstatic.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_putstatic.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

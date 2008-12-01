@@ -32,9 +32,7 @@ public class CirOptimizerTest_strengthReduction extends CompilerTest_strengthRed
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_strengthReduction.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_strengthReduction.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

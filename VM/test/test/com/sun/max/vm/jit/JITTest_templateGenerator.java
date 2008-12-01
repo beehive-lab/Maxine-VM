@@ -30,7 +30,6 @@ public class JITTest_templateGenerator extends TemplateTableTestCase {
 
     private void generateAndDisassemble(Class templateSource) {
         final BytecodeTemplateGenerator bytecodeTemplateGen = new BytecodeTemplateGenerator();
-        Trace.on(1);
         final VariableSequence<CompiledBytecodeTemplate> templates = new ArrayListSequence<CompiledBytecodeTemplate>();
         bytecodeTemplateGen.generateBytecodeTemplates(templateSource, templates);
         Trace.line(1, "Generated Template:");

@@ -22,7 +22,6 @@ package test.com.sun.max.vm.jit;
 
 import test.com.sun.max.vm.compiler.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
@@ -48,9 +47,7 @@ public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
 
     // Used to debug conditional branches
     public void test_not_equal() {
-        Trace.on(3);
-        final TargetMethod method = compileMethod("perform_not_equal", SignatureDescriptor.create(int.class, int.class, int.class));
-        disassemble(method);
+        compileMethod("perform_not_equal", SignatureDescriptor.create(int.class, int.class, int.class));
     }
 
     public Object perform_use_null_constant(Object o, int a) {
@@ -58,9 +55,7 @@ public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
     }
 
     public void test_use_null_constant() {
-        Trace.on(3);
-        final TargetMethod method = compileMethod("perform_use_null_constant", SignatureDescriptor.create(Object.class, Object.class, int.class));
-        disassemble(method);
+        compileMethod("perform_use_null_constant", SignatureDescriptor.create(Object.class, Object.class, int.class));
     }
 
     public int perform_visitor(ResolvedAtCompileTime resolvedAtCompileTime) {
@@ -68,12 +63,10 @@ public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
     }
 
     public void test_visitor() throws ClassNotFoundException {
-        Trace.on(3);
         // Make sure the class whose field is being accessed is loaded in the target first (we want a resolved symbol at compiled time).
         PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.loadClass(ResolvedAtCompileTime.class.getName());
         // Now compile the method we're interested in
-        final TargetMethod method = compileMethod("perform_visitor", SignatureDescriptor.create(int.class, ResolvedAtCompileTime.class));
-        disassemble(method);
+        compileMethod("perform_visitor", SignatureDescriptor.create(int.class, ResolvedAtCompileTime.class));
     }
 
     public void perform_increment() {
@@ -83,12 +76,7 @@ public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
     }
 
     public void test_increment() {
-        //Trace.on(3);
-        final TargetMethod method = compileMethod("perform_increment", SignatureDescriptor.create(void.class));
-        Trace.on(1);
-        Trace.line(1, method.classMethodActor().name());
-
-        traceBundleAndDisassemble(method);
+        compileMethod("perform_increment", SignatureDescriptor.create(void.class));
     }
 
     public int foo(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
@@ -101,16 +89,7 @@ public class JITTest_resolvedGetField extends CompilerTestCase<TargetMethod> {
     }
 
     public void test_invocation() {
-        //Trace.on(3);
-        final TargetMethod method = compileMethod("perform_invocation", SignatureDescriptor.create(void.class, int.class));
-        final TargetMethod method2 = compileMethod("foo", SignatureDescriptor.create(int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class));
-        Trace.on(1);
-        Trace.line(1, method.classMethodActor().name().toString());
-        disassemble(method);
-        Trace.line(1, "\n\n" + method2.classMethodActor().name());
-        disassemble(method2);
+        compileMethod("perform_invocation", SignatureDescriptor.create(void.class, int.class));
+        compileMethod("foo", SignatureDescriptor.create(int.class, int.class, int.class, int.class, int.class, int.class, int.class, int.class));
     }
-
 }
-
-

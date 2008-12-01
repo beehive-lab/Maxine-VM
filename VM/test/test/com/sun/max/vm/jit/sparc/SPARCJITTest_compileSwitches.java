@@ -38,9 +38,7 @@ public class SPARCJITTest_compileSwitches extends JITTest_compileSwitches {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileSwitches.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileSwitches.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

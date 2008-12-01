@@ -141,7 +141,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
                         if (method.getName().contains(methodNamePattern)) {
                             final SignatureDescriptor methodSignature = SignatureDescriptor.fromJava(method);
                             if (signature == null || signature.equals(methodSignature)) {
-                                addTestCase(suite, javaClass, methodNamePattern, methodSignature);
+                                addTestCase(suite, javaClass, method.getName(), methodSignature);
                             }
                         }
                     }
@@ -206,5 +206,10 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         final JitCompiler jitScheme = (JitCompiler) VMConfiguration.target().jitScheme();
         jitScheme.initializeForJitCompilations();
         return jitScheme;
+    }
+
+    @Override
+    public boolean disassembleCompiledMethods() {
+        return true;
     }
 }

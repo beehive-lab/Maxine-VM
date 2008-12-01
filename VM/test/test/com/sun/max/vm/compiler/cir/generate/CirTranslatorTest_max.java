@@ -32,9 +32,7 @@ public class CirTranslatorTest_max extends CompilerTest_max {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_max.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_max.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

@@ -38,9 +38,7 @@ public class AMD64JITTest_stackManipulations extends JITTest_stackManipulations 
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_stackManipulations.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_stackManipulations.class);
-        // $JUnit-END$
         //return new AMD64JITTestSetup(suite);
         return new AMD64TranslatorTestSetup(suite);
     }

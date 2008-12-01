@@ -27,9 +27,7 @@ public class CirOptimizerTest_binaryArithmetic extends BytecodeTest_binaryArithm
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_binaryArithmetic.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_binaryArithmetic.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

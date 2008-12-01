@@ -34,13 +34,13 @@ public final class AutoTest {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
-        suite.addTestSuite(MethodAnnotationsTest.class);
         suite.addTest(test.com.sun.max.collect.AllTests.suite());
         suite.addTest(test.com.sun.max.io.AllTests.suite());
         suite.addTest(test.com.sun.max.program.option.AllTests.suite());
         suite.addTest(test.com.sun.max.lang.AllTests.suite());
         suite.addTest(test.com.sun.max.profile.AllTests.suite());
         suite.addTest(test.com.sun.max.util.AllTests.suite());
+        suite.addTestSuite(MethodAnnotationsTest.class);
         return suite;
     }
 }
