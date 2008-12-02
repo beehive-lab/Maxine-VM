@@ -50,6 +50,11 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
 
         private static InjectedFieldActor[] _injectedFieldActors = new InjectedFieldActor[0];
 
+        static {
+            Classes.initialize(InjectedReferenceFieldActor.class);
+            Classes.initialize(InjectedLongFieldActor.class);
+        }
+
         private Static() {
         }
 
