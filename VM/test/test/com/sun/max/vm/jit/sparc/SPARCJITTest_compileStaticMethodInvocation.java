@@ -38,9 +38,7 @@ public class SPARCJITTest_compileStaticMethodInvocation extends JITTest_compileS
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileStaticMethodInvocation.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileStaticMethodInvocation.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

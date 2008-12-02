@@ -37,9 +37,7 @@ public class CirOptimizerTest_word extends CompilerTestCase<CirMethod> {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_word.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_word.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

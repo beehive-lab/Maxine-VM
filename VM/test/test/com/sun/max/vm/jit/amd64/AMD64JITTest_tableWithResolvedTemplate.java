@@ -38,9 +38,7 @@ public class AMD64JITTest_tableWithResolvedTemplate extends JITTest_tableWithRes
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_tableWithResolvedTemplate.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_tableWithResolvedTemplate.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

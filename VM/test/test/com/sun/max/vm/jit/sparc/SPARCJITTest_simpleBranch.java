@@ -38,9 +38,7 @@ public class SPARCJITTest_simpleBranch extends JITTest_simpleBranch {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_simpleBranch.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_simpleBranch.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

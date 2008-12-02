@@ -38,9 +38,7 @@ public class SPARCJITTest_tableWithInitializedStaticFieldAccessTemplate extends 
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_tableWithInitializedStaticFieldAccessTemplate.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_tableWithInitializedStaticFieldAccessTemplate.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

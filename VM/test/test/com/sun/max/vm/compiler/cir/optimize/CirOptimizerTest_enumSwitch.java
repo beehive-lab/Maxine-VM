@@ -27,9 +27,7 @@ public class CirOptimizerTest_enumSwitch extends CompilerTest_enumSwitch {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_enumSwitch.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_enumSwitch.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

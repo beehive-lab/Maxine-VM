@@ -38,9 +38,7 @@ public class SPARCJITTest_compileJDKTest extends JITTest_compileJDKTest {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileJDKTest.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileJDKTest.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

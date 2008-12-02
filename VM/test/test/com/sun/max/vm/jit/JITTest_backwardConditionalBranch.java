@@ -204,8 +204,7 @@ public abstract class JITTest_backwardConditionalBranch extends JitCompilerTestC
     }
 
     private void traceCompiledMethod(final TargetMethod targetMethod) {
-        targetMethod.traceBundle(INDENT_WRITER);
-        disassemble(targetMethod);
+        traceBundleAndDisassemble(targetMethod);
     }
 
     /**

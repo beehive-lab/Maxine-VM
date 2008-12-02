@@ -27,9 +27,7 @@ public class CirTranslatorTest_large extends CompilerTest_large {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_large.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_large.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

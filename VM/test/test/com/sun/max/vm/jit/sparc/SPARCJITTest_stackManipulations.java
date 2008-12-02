@@ -38,9 +38,7 @@ public class SPARCJITTest_stackManipulations extends JITTest_stackManipulations 
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_stackManipulations.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_stackManipulations.class);
-        // $JUnit-END$
         return new SPARCTranslatorTestSetup(suite);
     }
 }

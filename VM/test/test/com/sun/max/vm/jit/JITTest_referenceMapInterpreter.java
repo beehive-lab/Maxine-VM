@@ -23,12 +23,11 @@ package test.com.sun.max.vm.jit;
 import java.io.*;
 
 import test.com.sun.max.vm.compiler.*;
-import util.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.template.source.*;
+import com.sun.max.vm.type.*;
 
 public class JITTest_referenceMapInterpreter extends JitCompilerTestCase {
 
@@ -42,8 +41,8 @@ public class JITTest_referenceMapInterpreter extends JitCompilerTestCase {
     }
 
     public void test_call_main() {
-        final JitTargetMethod method = compileMethod(HelloWorld.class, "main");
-        Trace.stream().printf("%s:%n%s", method.classMethodActor().toString(), method.referenceMapsToString());
+        final JitTargetMethod method = compileMethod("perform_call_main", SignatureDescriptor.fromJava(Void.TYPE, PrintStream.class));
+        traceBundleAndDisassemble(method);
     }
 
     @Override
@@ -55,6 +54,7 @@ public class JITTest_referenceMapInterpreter extends JitCompilerTestCase {
             InitializedBytecodeTemplateSource.class,
             InstrumentedBytecodeSource.class,
             ResolvedFieldAccessTemplateSource.class,
+            ResolvedInvokeTemplateSource.class,
             InitializedStaticFieldAccessTemplateSource.class};
     }
 

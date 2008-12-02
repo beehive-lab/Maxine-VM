@@ -50,4 +50,9 @@ public class AMD64JITTestSetup extends AMD64TranslatorTestSetup implements JITTe
     public JitCompiler newJitCompiler(TemplateTable templateTable) {
         return new AMD64JitCompiler(VMConfiguration.target(), templateTable);
     }
+
+    @Override
+    public boolean disassembleCompiledMethods() {
+        return true;
+    }
 }

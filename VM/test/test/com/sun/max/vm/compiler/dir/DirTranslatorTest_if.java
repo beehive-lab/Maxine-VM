@@ -27,9 +27,7 @@ public class DirTranslatorTest_if extends BytecodeTest_if {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_if.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_if.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

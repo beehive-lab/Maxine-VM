@@ -37,9 +37,7 @@ public class DirTranslatorTest_snippets extends CompilerTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_snippets.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_snippets.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite); // This performs the test
     }
 

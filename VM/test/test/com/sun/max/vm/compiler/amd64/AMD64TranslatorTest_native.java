@@ -31,9 +31,7 @@ public class AMD64TranslatorTest_native extends BytecodeTest_native {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AMD64TranslatorTest_native.class.getSimpleName());
-        suite.addTestSuite(AMD64TranslatorTest_native.class);
-        return new AMD64TranslatorTestSetup(suite);
+        return new AMD64TranslatorTestSetup(new TestSuite(AMD64TranslatorTest_native.class));
     }
 
     public AMD64TranslatorTest_native(String name) {

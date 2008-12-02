@@ -29,7 +29,7 @@ import com.sun.max.vm.type.*;
  * A simple test to print the output produced by the compiler for the
  * sequence aload_0, getfield, ireturn, so as to compare with what
  * a template-based JIT could do.
- * 
+ *
  * @author Laurent Daynes
  */
 public class JITTest_unresolvedGetField extends CompilerTestCase<TargetMethod> {
@@ -54,7 +54,6 @@ public class JITTest_unresolvedGetField extends CompilerTestCase<TargetMethod> {
         final TargetMethod method = compileMethod("perform_visitor", SignatureDescriptor.create(int.class, UnresolvedAtCompileTime.class));
         disassemble(method);
     }
-
 }
 
 

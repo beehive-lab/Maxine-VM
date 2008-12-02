@@ -27,9 +27,7 @@ public class CirOptimizerTest_switch extends BytecodeTest_switch {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_switch.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_switch.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

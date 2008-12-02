@@ -27,9 +27,7 @@ public class AMD64EirTranslatorTest_binaryLogic extends BytecodeTest_binaryLogic
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64EirTranslatorTest_binaryLogic.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(AMD64EirTranslatorTest_binaryLogic.class);
-        //$JUnit-END$
         return new AMD64EirTranslatorTestSetup(suite);
     }
 
