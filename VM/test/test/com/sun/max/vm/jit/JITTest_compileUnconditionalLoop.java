@@ -23,7 +23,6 @@ package test.com.sun.max.vm.jit;
 import test.com.sun.max.vm.compiler.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.template.source.*;
 import com.sun.max.vm.type.*;
@@ -44,8 +43,6 @@ public class JITTest_compileUnconditionalLoop extends JitCompilerTestCase {
     }
 
     public void test_perform_loop() {
-        Trace.on(1);
-        Trace.line(1, "\nCompile test_perform_loop");
         final TargetMethod targetMethod = compileMethod("perform_loop", SignatureDescriptor.create("()V"));
         new BytecodeConfirmation(targetMethod.classMethodActor()) {
             @Override

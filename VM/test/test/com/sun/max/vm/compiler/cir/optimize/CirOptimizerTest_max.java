@@ -36,9 +36,7 @@ public class CirOptimizerTest_max extends CompilerTest_max {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_max.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_max.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

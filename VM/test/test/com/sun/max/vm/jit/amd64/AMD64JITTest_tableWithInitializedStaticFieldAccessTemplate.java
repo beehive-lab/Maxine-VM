@@ -38,9 +38,7 @@ public class AMD64JITTest_tableWithInitializedStaticFieldAccessTemplate extends 
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_tableWithInitializedStaticFieldAccessTemplate.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_tableWithInitializedStaticFieldAccessTemplate.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

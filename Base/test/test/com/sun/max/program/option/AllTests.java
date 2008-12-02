@@ -40,6 +40,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        return MaxTestCase.createSuite(new Package(), true);
+        return new TestCaseClassSet(new Package()).toTestSuite();
     }
 }

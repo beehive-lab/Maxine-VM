@@ -36,11 +36,7 @@ public class SPARCTranslatorTest_snippets extends CompilerTestCase {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCTranslatorTest_snippets.class.getSimpleName());
-        //$JUnit-BEGIN$
-        suite.addTestSuite(SPARCTranslatorTest_snippets.class);
-        //$JUnit-END$
-        return new SPARCTranslatorTestSetup(suite); // This performs the test
+        return new SPARCTranslatorTestSetup(new TestSuite(SPARCTranslatorTest_snippets.class)); // This performs the test
     }
 
     public SPARCTranslatorTest_snippets(String name) {

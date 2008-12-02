@@ -38,9 +38,7 @@ public class SPARCJITTest_compileMethodWithFieldAccess extends JITTest_compileMe
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileMethodWithFieldAccess.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileMethodWithFieldAccess.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

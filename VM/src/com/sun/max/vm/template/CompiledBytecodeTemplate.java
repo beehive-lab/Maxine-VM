@@ -114,6 +114,6 @@ public final class CompiledBytecodeTemplate implements BytecodeInfo {
 
     @Override
     public String toString() {
-        return "template " + bytecode() + " (" + initialized() + resolved() + instrumented() + " )";
+        return "template " + bytecode() + " (initialized=" + initialized() + ", resolved=" + resolved() + ", instrumented=" + instrumented() + ")";
     }
 }

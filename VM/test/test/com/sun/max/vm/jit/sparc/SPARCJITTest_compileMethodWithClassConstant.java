@@ -38,9 +38,7 @@ public class SPARCJITTest_compileMethodWithClassConstant extends JITTest_compile
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileMethodWithClassConstant.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileMethodWithClassConstant.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

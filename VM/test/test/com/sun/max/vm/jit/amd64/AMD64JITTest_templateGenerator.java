@@ -38,9 +38,7 @@ public class AMD64JITTest_templateGenerator extends JITTest_templateGenerator {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_templateGenerator.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_templateGenerator.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

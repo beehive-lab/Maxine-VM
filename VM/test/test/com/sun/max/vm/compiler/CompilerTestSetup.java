@@ -83,10 +83,6 @@ public abstract class CompilerTestSetup<Method_Type extends IrMethod> extends Te
     protected void chainedSetUp() {
         _javaPrototype = createJavaPrototype();
         _javaPrototype.vmConfiguration().initializeSchemes(Phase.RUNNING);
-
-        Trace.line(1, "Host VM configuration:\n" + MaxineVM.host().configuration());
-        Trace.line(1, "Target VM configuration:\n" + MaxineVM.target().configuration());
-
         compilerScheme().compileSnippets();
     }
 

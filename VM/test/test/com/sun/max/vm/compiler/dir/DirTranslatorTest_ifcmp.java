@@ -27,9 +27,7 @@ public class DirTranslatorTest_ifcmp extends BytecodeTest_ifcmp {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_ifcmp.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_ifcmp.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

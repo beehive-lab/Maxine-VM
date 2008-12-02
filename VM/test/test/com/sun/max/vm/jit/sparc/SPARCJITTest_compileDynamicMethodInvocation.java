@@ -38,9 +38,7 @@ public class SPARCJITTest_compileDynamicMethodInvocation extends JITTest_compile
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileDynamicMethodInvocation.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileDynamicMethodInvocation.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

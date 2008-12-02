@@ -1,6 +1,0 @@
--Dsun.reflect.noInflation=false
--Dsun.reflect.inflationThreshold=1000000
--Dsun.misc.ProxyGenerator.saveGeneratedFiles=true
--Xmx8g
--Xms2g
--Xss2m

@@ -27,9 +27,7 @@ public class CirOptimizerTest_neg extends BytecodeTest_neg {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_neg.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_neg.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

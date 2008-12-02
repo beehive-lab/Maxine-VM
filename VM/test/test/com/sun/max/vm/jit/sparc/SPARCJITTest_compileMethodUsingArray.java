@@ -38,9 +38,7 @@ public class SPARCJITTest_compileMethodUsingArray extends JITTest_compileMethodU
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileMethodUsingArray.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileMethodUsingArray.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }
