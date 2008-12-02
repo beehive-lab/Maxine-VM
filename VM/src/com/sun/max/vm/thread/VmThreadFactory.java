@@ -20,52 +20,56 @@
  */
 package com.sun.max.vm.thread;
 
-import java.lang.reflect.*;
-
-import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 
 /**
- * A factory that permits subclasses of VmThread to be created for, e.g. GuestVM.
- * The choice of class is controlled by a system property and is defined at image-build-time.
+ * A factory that permits subclasses of VmThread to be created. To create instances of a {@code VmThread} subclass,
+ * the {@link #VMTHREAD_FACTORY_CLASS_PROPERTY_NAME} property needs to be defined at image build time.
  *
  * @author Mick Jordan
+ * @author Doug Simon
  */
 public class VmThreadFactory {
 
-    private static final String VMTHREADCLASS_PROPERTY_NAME = "max.vmthreadclass";
-    private static Constructor<?> _vmThreadConstructor;
+    /**
+     * The name of the system property specifying a subclass of {@link VmThreadFactory} that is
+     * to be instantiated and used at runtime to create VmThread instances. If not specified,
+     * then a default factory is used that simply creates plain VmThread instances.
+     */
+    public static final String VMTHREAD_FACTORY_CLASS_PROPERTY_NAME = "max.vmthread.factory.class";
+
+    private static final VmThreadFactory _instance;
 
     static {
-        checkVmThreadClass();
-    }
-
-    @PROTOTYPE_ONLY
-    private static void checkVmThreadClass() {
-        final String vmThreadClassName = System.getProperty(VMTHREADCLASS_PROPERTY_NAME);
-        if (vmThreadClassName != null) {
+        final String factoryClassName = System.getProperty(VMTHREAD_FACTORY_CLASS_PROPERTY_NAME);
+        if (factoryClassName == null) {
+            _instance = new VmThreadFactory();
+        } else {
             try {
-                final Class<?> vmThreadClass = Class.forName(vmThreadClassName);
-                final Class[] partypes = new Class[1];
-                partypes[0] = Class.forName("java.lang.Thread");
-                _vmThreadConstructor = vmThreadClass.getConstructor(partypes);
-            } catch (Throwable e) {
-                ProgramError.unexpected("Error instantiating max.vmthreadclass " + vmThreadClassName, e);
+                _instance = (VmThreadFactory) Class.forName(factoryClassName).newInstance();
+            } catch (Exception exception) {
+                throw ProgramError.unexpected("Error instantiating " + factoryClassName, exception);
             }
         }
     }
 
-    public static VmThread create(Thread thread) {
-        if (_vmThreadConstructor == null) {
-            return new VmThread(thread);
-        }
-        final Object[] arglist = new Object[1];
-        arglist[0] = thread;
-        try {
-            return (VmThread) _vmThreadConstructor.newInstance(arglist);
-        } catch (Exception e) {
-            ProgramError.unexpected(e);
-            return null;
-        }
+    /**
+     * Subclasses override this method to instantiate objects of a VmThread subclass.
+     *
+     * @param javaThread the Java thread object to which the VM thread object is bound
+     * @return a VmThread object implementing the VM specific semantics of the given Java thread
+     */
+    protected VmThread newVmThread(Thread javaThread) {
+        return new VmThread(javaThread);
+    }
+
+    /**
+     * Creates a VmThread object bound to a given Java thread object.
+     *
+     * @param javaThread the Java thread object to which the VM thread object is bound
+     * @return a VmThread object implementing the VM specific semantics of the given Java thread
+     */
+    public static VmThread create(Thread javaThread) {
+        return _instance.newVmThread(javaThread);
     }
 }
