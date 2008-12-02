@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.template.source.*;
 
 /**
- * Playing with Stack manipulation routines for a template generator that can be used either by a simpe JIT or an interpreter.
+ * Playing with Stack manipulation routines for a template generator that can be used either by a simple JIT or an interpreter.
  *
  * @author Laurent Daynes
  */
@@ -195,8 +195,7 @@ public class JITTest_stackManipulations extends CompilerTestCase<TargetMethod> {
     }
 
     public void test_h1() {
-        final TargetMethod method1 = compileMethod(JITTest_stackManipulations.class, "getHashcCode1");
-        disassemble(method1);
+        compileMethod(JITTest_stackManipulations.class, "getHashcCode1");
     }
 /*
     public void test_stack() {
@@ -210,7 +209,6 @@ public class JITTest_stackManipulations extends CompilerTestCase<TargetMethod> {
     }
 
     public void test_pushInt() {
-        Trace.on(1);
           // Make sure the JavaStack is initialized in the target so that its static final variable can fold when compiling the template generators.
         initializeClassInTarget(JavaStack.class);
 
@@ -229,7 +227,6 @@ public class JITTest_stackManipulations extends CompilerTestCase<TargetMethod> {
     }
 
     public void test_popInt() {
-        Trace.on(1);
 
         // Make sure the JavaStack is initialized in the target so that its static final variable can fold when compiling the template generators.
         initializeClassInTarget(JavaStack.class);

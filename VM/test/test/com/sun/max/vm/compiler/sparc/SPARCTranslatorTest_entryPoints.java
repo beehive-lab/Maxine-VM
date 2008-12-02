@@ -33,11 +33,7 @@ public class SPARCTranslatorTest_entryPoints extends CompilerTest_entryPoints {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCTranslatorTest_entryPoints.class.getSimpleName());
-        // $JUnit-BEGIN$
-        suite.addTestSuite(SPARCTranslatorTest_entryPoints.class);
-        // $JUnit-END$
-        return new SPARCTranslatorTestSetup(suite);
+        return new SPARCTranslatorTestSetup(new TestSuite(SPARCTranslatorTest_entryPoints.class));
     }
 
     public SPARCTranslatorTest_entryPoints(String name) {

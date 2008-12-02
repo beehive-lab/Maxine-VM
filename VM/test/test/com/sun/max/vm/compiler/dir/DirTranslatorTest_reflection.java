@@ -37,9 +37,7 @@ public class DirTranslatorTest_reflection extends CompilerTest_reflection<CirMet
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_reflection.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_reflection.class);
-        // $JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

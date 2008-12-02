@@ -38,9 +38,7 @@ public class AMD64JITTest_resolvedGetField extends JITTest_resolvedGetField {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_resolvedGetField.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_resolvedGetField.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

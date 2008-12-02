@@ -37,9 +37,7 @@ public class CirOptimizerTest_snippets extends CompilerTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_snippets.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_snippets.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite); // This performs the test
     }
 

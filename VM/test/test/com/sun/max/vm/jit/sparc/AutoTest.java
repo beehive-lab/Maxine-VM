@@ -34,6 +34,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new SPARCJITTestSetup(MaxTestCase.createSuite(new Package(), true));
+        return new SPARCJITTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
     }
 }

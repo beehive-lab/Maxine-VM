@@ -38,9 +38,7 @@ public class SPARCJITTest_tableWithResolvedTemplate extends JITTest_tableWithRes
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_tableWithResolvedTemplate.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_tableWithResolvedTemplate.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

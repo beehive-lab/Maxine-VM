@@ -38,9 +38,7 @@ public class AMD64JITTest_referenceMapInterpreter extends JITTest_referenceMapIn
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_referenceMapInterpreter.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_referenceMapInterpreter.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

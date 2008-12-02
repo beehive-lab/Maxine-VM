@@ -32,9 +32,7 @@ public class SPARCEirTranslatorTest_jdk_System extends JdkTest_System<CirMethod>
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_jdk_System.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_jdk_System.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

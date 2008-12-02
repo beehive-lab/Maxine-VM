@@ -32,9 +32,7 @@ public class DirTranslatorTest_strengthReduction extends CompilerTest_strengthRe
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_strengthReduction.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_strengthReduction.class);
-        // $JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

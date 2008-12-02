@@ -27,9 +27,7 @@ public class SPARCEirTranslatorTest_binaryLogic extends BytecodeTest_binaryLogic
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_binaryLogic.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_binaryLogic.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

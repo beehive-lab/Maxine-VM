@@ -38,9 +38,7 @@ public class SPARCJITTest_backwardConditionalBranch extends JITTest_backwardCond
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_backwardConditionalBranch.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_backwardConditionalBranch.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

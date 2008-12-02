@@ -38,9 +38,7 @@ public class SPARCJITTest_compileConstantOperandPush extends JITTest_compileCons
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileConstantOperandPush.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileConstantOperandPush.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

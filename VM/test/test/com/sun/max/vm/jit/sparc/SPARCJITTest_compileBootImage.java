@@ -38,9 +38,7 @@ public class SPARCJITTest_compileBootImage extends JITTest_compileBootImage {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileBootImage.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileBootImage.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

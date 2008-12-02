@@ -37,9 +37,7 @@ public class CirOptimizerTest_regressions extends CompilerTest_regressions<CirMe
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_regressions.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_regressions.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

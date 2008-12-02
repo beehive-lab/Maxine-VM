@@ -20,15 +20,7 @@
  */
 package com.sun.max.ide;
 
-import java.lang.reflect.*;
-import java.util.*;
-
 import junit.framework.*;
-
-import com.sun.max.*;
-import com.sun.max.lang.*;
-import com.sun.max.lang.Arrays;
-import com.sun.max.program.*;
 
 /**
  * To pass command line arguments to a JUnit test, set the system property "max.test.arguments" on the VM command line or
@@ -81,83 +73,5 @@ public class MaxTestCase extends TestCase {
 
     public static void setProgramArguments(String[] args) {
         _programArguments = args.clone();
-    }
-
-    /**
-     * @see #createSuite(MaxPackage, boolean, boolean, Class...)
-     */
-    public static TestSuite createSuite(MaxPackage maxPackage, boolean addClasses, Class... lastTests) {
-        return createSuite(maxPackage, addClasses, false, lastTests);
-    }
-
-    public static TestSuite createAutoTestSuite(MaxPackage maxPackage, boolean scanSubPackages, Class... lastTests) {
-        final TestSuite suite = new TestSuite(maxPackage.name());
-        final Set<Class<? extends TestCase>> testClasses = new LinkedHashSet<Class<? extends TestCase>>();
-        addTests(maxPackage, testClasses, lastTests);
-        if (scanSubPackages) {
-            final Classpath systemClasspath = Classpath.fromSystem();
-            for (MaxPackage subPackage : maxPackage.getTransitiveSubPackages(systemClasspath)) {
-                try {
-                    Class.forName(subPackage.name() +  ".AutoTest");
-                } catch (ClassNotFoundException e) {
-                    addTests(subPackage, testClasses, lastTests);
-                }
-            }
-        }
-        for (Class<? extends TestCase> testClass : testClasses) {
-            suite.addTestSuite(testClass);
-        }
-        return suite;
-    }
-
-    /**
-     * Creates a JUnit test suite for a given package and populates it with all the classes in that package that
-     * subclass {@link TestCase} if {@code addClasses == true}.
-     *
-     *
-     * @param maxPackage the package to create a test suite for
-     * @param addClasses specifies if the package(s) are to be scanned for tests
-     * @param scanSubPackages specifies if the sub-packages of {@code maxPackage} should be processed
-     * @param lastTests adds these tests to the end of the suite. This is useful to run long running tests last.
-     * @return
-     */
-    public static TestSuite createSuite(MaxPackage maxPackage, boolean addClasses, boolean scanSubPackages, Class... lastTests) {
-        final TestSuite suite = new TestSuite(maxPackage.name());
-        if (addClasses) {
-            final Set<Class<? extends TestCase>> testClasses = new LinkedHashSet<Class<? extends TestCase>>();
-            addTests(maxPackage, testClasses, lastTests);
-            if (scanSubPackages) {
-                for (MaxPackage subPackage : maxPackage.getTransitiveSubPackages(Classpath.fromSystem())) {
-                    addTests(subPackage, testClasses, lastTests);
-                }
-            }
-            for (Class<? extends TestCase> testClass : testClasses) {
-                suite.addTestSuite(testClass);
-            }
-        }
-        return suite;
-    }
-
-    /**
-     * Adds all the classes in {@code javaPackage} that subclass {@link TestCase} to {@code suite}.
-     *
-     * @param lastTests adds these tests to the end of the suite
-     */
-    public static void addTests(MaxPackage maxPackage, Set<Class<? extends TestCase>> testClasses, Class... lastTests) {
-        final PackageLoader packageLoader = new PackageLoader(maxPackage.getClass().getClassLoader(), Classpath.fromSystem());
-        for (Class javaClass : packageLoader.load(maxPackage, false)) {
-            if (!Modifier.isAbstract(javaClass.getModifiers()) &&  TestCase.class.isAssignableFrom(javaClass) && !Arrays.contains(lastTests, javaClass)) {
-                final Class<Class<? extends TestCase>> type = null;
-                testClasses.add(StaticLoophole.cast(type, javaClass));
-            }
-        }
-        for (Class javaClass : lastTests) {
-            if (!Modifier.isAbstract(javaClass.getModifiers()) &&  TestCase.class.isAssignableFrom(javaClass)) {
-                final Class<Class<? extends TestCase>> type = null;
-                testClasses.add(StaticLoophole.cast(type, javaClass));
-            } else {
-                ProgramWarning.message("explicitly specified class is not a valid JUnit test class: " + javaClass);
-            }
-        }
     }
 }

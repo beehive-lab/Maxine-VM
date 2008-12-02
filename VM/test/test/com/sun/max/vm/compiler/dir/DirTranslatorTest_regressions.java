@@ -37,9 +37,7 @@ public class DirTranslatorTest_regressions extends CompilerTest_regressions<CirM
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_regressions.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_regressions.class);
-        // $JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

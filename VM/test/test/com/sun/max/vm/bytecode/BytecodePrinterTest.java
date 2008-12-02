@@ -41,9 +41,7 @@ public class BytecodePrinterTest extends MaxTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(BytecodePrinterTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(BytecodePrinterTest.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

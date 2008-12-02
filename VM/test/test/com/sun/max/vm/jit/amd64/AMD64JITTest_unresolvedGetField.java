@@ -38,9 +38,7 @@ public class AMD64JITTest_unresolvedGetField extends JITTest_unresolvedGetField 
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_unresolvedGetField.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_unresolvedGetField.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }

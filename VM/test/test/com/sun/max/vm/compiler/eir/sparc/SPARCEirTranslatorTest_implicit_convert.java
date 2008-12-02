@@ -27,9 +27,7 @@ public class SPARCEirTranslatorTest_implicit_convert extends BytecodeTest_implic
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_implicit_convert.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_implicit_convert.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

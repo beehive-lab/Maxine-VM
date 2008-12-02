@@ -27,9 +27,7 @@ public class CirOptimizerTest_ifcmp extends BytecodeTest_ifcmp {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_ifcmp.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_ifcmp.class);
-        //$JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

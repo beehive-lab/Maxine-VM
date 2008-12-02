@@ -27,9 +27,7 @@ public class SPARCEirTranslatorTest_ifcmp extends BytecodeTest_ifcmp {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_ifcmp.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_ifcmp.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 
