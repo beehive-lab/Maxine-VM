@@ -57,7 +57,7 @@ import com.sun.max.vm.type.*;
 public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapScheme, CellVisitor {
 
     public boolean isGcThread(Thread thread) {
-        return thread == _collectorThread;
+        return thread instanceof StopTheWorldDaemon;
     }
 
     public int adjustedCardTableShift() {
