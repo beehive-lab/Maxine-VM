@@ -95,6 +95,8 @@ public class MaxineTester {
     private static final Option<String> _autoTestFilter = _options.newStringOption("auto-test-filter", null,
                     "A pattern for selecting which auto-tests are run. If absent, all auto-tests on the class path are run. " +
                     "Otherwise only those whose name contains this value as a substring are run.");
+    private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
+                    "Stop execution as soon a non-zero exit value will be the results of the tests.");
 
     private static String _javaConfigAlias = null;
 
@@ -286,7 +288,6 @@ public class MaxineTester {
             final boolean includeSlowTests = System.getProperty(INCLUDE_SLOW_TESTS_PROPERTY) != null;
 
             final Set<String> failedTestNames = loadFailedTests(failedFile);
-            parseAutoTestResults(failedFile, false, failedTestNames);
             final Runner runner = new OldTestClassRunner(test) {
                 @Override
                 public void run(RunNotifier notifier) {
@@ -362,7 +363,7 @@ public class MaxineTester {
      * @param passed specifies if the file list tests that passed or failed
      * @param testNames if non-null, then all test names parsed from the file are added to this set
      */
-    private static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> testNames) {
+    static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> testNames) {
         try {
             final BufferedReader reader = new BufferedReader(new FileReader(resultsFile));
             String line;
@@ -381,12 +382,20 @@ public class MaxineTester {
     }
 
     /**
+     * Determines if {@linkplain #_failFast fail fast} has been requested and at least one unexpected failure has
+     * occurred.
+     */
+    static boolean stopTesting() {
+        return _failFast.getValue() && reportTestResults(null) != 0;
+    }
+
+    /**
      * Runs all the auto-tests available on the class path. An auto-test is a class whose unqualified name is "AutoTest"
      * that resides in a sub-package of the {@code test.com.sun.max} package. These classes are assumed to contain one
      * or more JUnit tests that can be run via {@link JUnitCore}.
      */
     private static void runAutoTests() {
-        if (_skipAutoTestsOption.getValue()) {
+        if (_skipAutoTestsOption.getValue() || stopTesting()) {
             return;
         }
         final File outputDir = new File(_outputDir.getValue(), "auto-tests");
@@ -405,9 +414,9 @@ public class MaxineTester {
             }
         }.run(Classpath.fromSystem());
 
-        final ExecutorService autoTesterService = Executors.newFixedThreadPool(ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
+        final int availableProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+        final ExecutorService autoTesterService = Executors.newFixedThreadPool(availableProcessors);
         final CompletionService<Void> autoTesterCompletionService = new ExecutorCompletionService<Void>(autoTesterService);
-
         for (final String autoTest : autoTests) {
             autoTesterCompletionService.submit(new Runnable() {
                 public void run() {
@@ -431,6 +440,10 @@ public class MaxineTester {
      * @param autoTest the auto-test to run
      */
     private static void runAutoTest(final File outputDir, String autoTest) {
+        if (stopTesting()) {
+            return;
+        }
+
         final File outputFile = getOutputFile(outputDir, autoTest, null);
         final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
         final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
@@ -473,10 +486,14 @@ public class MaxineTester {
 
         synchronized (out()) {
             out.writeTo(out());
+            out().flush();
         }
     }
 
     private static void runJavaTesterTests() {
+        if (stopTesting()) {
+            return;
+        }
         final List<String> javaTesterConfigs = _javaTesterConfigs.getValue();
 
         final ExecutorService javaTesterService = Executors.newFixedThreadPool(_javaTesterConcurrency.getValue());
@@ -486,7 +503,6 @@ public class MaxineTester {
                 public void run() {
                     runJavaTesterTests(config);
                 }
-
             }, null);
         }
 
@@ -515,6 +531,9 @@ public class MaxineTester {
     }
 
     private static void runJavaTesterTests(String config) {
+        if (stopTesting()) {
+            return;
+        }
         final File imageDir = new File(_outputDir.getValue(), config);
 
         PrintStream out = out();
@@ -575,6 +594,9 @@ public class MaxineTester {
     }
 
     private static void runOutputTest(File outputDir, File imageDir, Class mainClass) {
+        if (stopTesting()) {
+            return;
+        }
         out().print(left50("Running " + mainClass.getName() + ": "));
         final File javaOutput = getOutputFile(outputDir, "JVM_" + mainClass.getSimpleName(), null);
 
@@ -861,13 +883,16 @@ public class MaxineTester {
 
     private static void traceExec(File workingDir, String[] command) {
         if (Trace.hasLevel(2)) {
-            if (workingDir == null) {
-                Trace.line(2, "Executing process in current directory");
-            } else {
-                Trace.line(2, "Executing process in directory: " + workingDir);
-            }
-            for (String c : command) {
-                Trace.line(2, "    " + c);
+            final PrintStream stream = Trace.stream();
+            synchronized (stream) {
+                if (workingDir == null) {
+                    stream.println("Executing process in current directory");
+                } else {
+                    stream.println("Executing process in directory: " + workingDir);
+                }
+                for (String c : command) {
+                    stream.println("    " + c);
+                }
             }
         }
     }
