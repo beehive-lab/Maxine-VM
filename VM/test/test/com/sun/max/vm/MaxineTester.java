@@ -188,18 +188,22 @@ public class MaxineTester {
      *
      * @param testName the unique name of the test
      * @param failure a failure message or null if the test passed
-     * @param expectedFailure <code>true</code> if this test was expected to fail.
+     * @param expectedFailure {@code true} if this test was expected to fail.
+     * @return {@code true} if the result (pass or fail) of the test matches the expected result, {@code false} otherwise
      */
-    private static void addTestResult(String testName, String failure, boolean expectedFailure) {
+    private static boolean addTestResult(String testName, String failure, boolean expectedFailure) {
         if (expectedFailure && failure == null) {
             _unexpectedPasses.put(testName, failure);
+            return false;
         } else if (!expectedFailure && failure != null) {
             _unexpectedFailures.put(testName, failure);
+            return false;
         }
+        return true;
     }
 
-    private static void addTestResult(String testName, String failure) {
-        addTestResult(testName, failure, MaxineTesterConfiguration.isExpectedFailure(testName, null));
+    private static boolean addTestResult(String testName, String failure) {
+        return addTestResult(testName, failure, MaxineTesterConfiguration.isExpectedFailure(testName, null));
     }
 
     /**
@@ -210,6 +214,10 @@ public class MaxineTester {
      *         attempts to generate an image and the number of auto-tests subprocesses that failed with an exception
      */
     private static int reportTestResults(PrintStream out) {
+        if (out != null) {
+            out.println();
+            out.println("MaxineTester Summary:");
+        }
         int failedImages = 0;
         for (Map.Entry<String, File> entry : _generatedImages.entrySet()) {
             if (entry.getValue() == null) {
@@ -232,18 +240,22 @@ public class MaxineTester {
             if (!_unexpectedFailures.isEmpty()) {
                 out.println("Unexpected failures:");
                 for (Map.Entry<String, String> entry : _unexpectedFailures.entrySet()) {
-                    out.println(entry.getKey() + "  " + entry.getValue());
+                    out.println("  " + entry.getKey() + "  " + entry.getValue());
                 }
             }
             if (!_unexpectedPasses.isEmpty()) {
                 out.println("Unexpected passes:");
                 for (String testName : _unexpectedPasses.keySet()) {
-                    out.println(testName);
+                    out.println("  " + testName);
                 }
             }
         }
 
-        return _unexpectedFailures.size() + _unexpectedPasses.size() + failedImages + failedAutoTests;
+        final int exitCode = _unexpectedFailures.size() + _unexpectedPasses.size() + failedImages + failedAutoTests;
+        if (out != null) {
+            out.println("Exit code: " + exitCode);
+        }
+        return exitCode;
     }
 
     /**
@@ -256,9 +268,11 @@ public class MaxineTester {
         private static Set<String> loadFailedTests(File file) {
             if (file.exists()) {
                 System.out.println("Only running the tests listed in " + file.getAbsolutePath());
-                final Set<String> failedTestNames = new HashSet<String>();
-                parseAutoTestResults(file, false, failedTestNames);
-                return failedTestNames;
+                try {
+                    return new HashSet<String>(Iterables.toCollection(Files.readLines(file)));
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
             }
             return null;
         }
@@ -361,21 +375,19 @@ public class MaxineTester {
      *
      * @param resultsFile the file to parse
      * @param passed specifies if the file list tests that passed or failed
-     * @param testNames if non-null, then all test names parsed from the file are added to this set
+     * @param unexpectedResults if non-null, then all unexpected test results are added to this set
      */
-    static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> testNames) {
+    static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> unexpectedResults) {
         try {
-            final BufferedReader reader = new BufferedReader(new FileReader(resultsFile));
-            String line;
-            while ((line = reader.readLine()) != null) {
+            final Sequence<String> lines = Files.readLines(resultsFile);
+            for (String line : lines) {
                 final String testName = line;
                 final boolean expectedFailure = MaxineTesterConfiguration.isExpectedFailure(testName, null);
-                addTestResult(testName, passed ? null : "failed", expectedFailure);
-                if (testNames != null) {
-                    testNames.add(testName);
+                final boolean expectedResult = addTestResult(testName, passed ? null : "failed", expectedFailure);
+                if (unexpectedResults != null && !expectedResult) {
+                    unexpectedResults.add("unexpectedly "  + (passed ? "passed" : "failed") + testName);
                 }
             }
-            reader.close();
         } catch (IOException ioException) {
             out().println("could not read '" + resultsFile.getAbsolutePath() + "': " + ioException);
         }
@@ -463,9 +475,9 @@ public class MaxineTester {
         final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
         out.print("JUnit auto-test: Stopped " + autoTest);
 
-        final Set<String> failedTestNames = new HashSet<String>();
-        parseAutoTestResults(passedFile, true, null);
-        parseAutoTestResults(failedFile, false, failedTestNames);
+        final Set<String> unexpectedResults = new HashSet<String>();
+        parseAutoTestResults(passedFile, true, unexpectedResults);
+        parseAutoTestResults(failedFile, false, unexpectedResults);
 
         if (exitValue != 0) {
             if (exitValue == PROCESS_TIMEOUT) {
@@ -477,10 +489,10 @@ public class MaxineTester {
         }
         final long runTime = System.currentTimeMillis() - start;
         out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
-        for (String testName : failedTestNames) {
-            out.println("    failed " + testName);
+        for (String unexpectedResult : unexpectedResults) {
+            out.println("    " + unexpectedResult);
         }
-        if (!failedTestNames.isEmpty()) {
+        if (!unexpectedResults.isEmpty()) {
             out.println("    see: " + outputFile.getAbsolutePath());
         }
 
@@ -685,7 +697,7 @@ public class MaxineTester {
 
     }
 
-    private static final Pattern TEST_BEGIN_LINE = Pattern.compile("\\d+: +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
+    private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +\\S+\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
 
     private static JavaTesterResult parseJavaTesterOutputFile(String config, File outputFile) {
         String nextTestOption = null;
@@ -733,7 +745,7 @@ public class MaxineTester {
                 }
                 if (lastTest != null) {
                     addTestResult(lastTest, "never returned a result");
-                    failedLines.append(lastTest + " failed: never returned a result");
+                    failedLines.append("\t" + lastTest + ": crashed or hung the VM");
                 }
                 if (failedLines.isEmpty()) {
                     return new JavaTesterResult("no failures", nextTestOption);
