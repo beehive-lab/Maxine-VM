@@ -24,7 +24,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -165,8 +164,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
         _jitCompiler = vmConfiguration.jitScheme();
     }
 
-    NanoTimer _compilationTimer;
-
     /**
      * This method initializes the adaptive compilation system, either at prototyping time or
      * at VM startup time. This implementation creates daemon threads to handle asynchronous
@@ -193,10 +190,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
             } else {
                 _defaultRecompilationThreshold0 = _thresholdOption.getValue();
                 setMode(Mode.MIXED);
-            }
-
-            if (VerboseVMOption.verboseCompilation()) {
-                _compilationTimer = new NanoTimer();
             }
 
             // only use one compilation thread after starting

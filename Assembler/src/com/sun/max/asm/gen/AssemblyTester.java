@@ -24,7 +24,6 @@ import java.io.*;
 import java.lang.management.*;
 import java.util.*;
 import java.util.Arrays;
-import java.util.Map.*;
 import java.util.concurrent.*;
 
 import com.sun.max.asm.*;
@@ -35,8 +34,6 @@ import com.sun.max.io.Streams.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.util.*;
-import com.sun.max.util.Timer;
-import com.sun.max.util.Timer.*;
 
 /**
  * A test framework for assemblers and disassemblers.
@@ -588,23 +585,12 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         // Process legal test cases
         final ArgumentListIterator argumentLists = new ArgumentListIterator(template, TestCaseLegality.LEGAL);
         ProgramError.check(argumentLists.hasNext(), "no test cases were generated for template: " + template);
-        final Timer<String> timer = new Timer<String>();
         final File binaryFile;
         final PushbackInputStream externalInputStream;
         if (testingExternally) {
-            final File sourceFile = timer.time("src", new Timer.ComputationWithException<File, IOException>(IOException.class) {
-                @Override
-                public File run() throws IOException {
-                    return createExternalSourceFile(template, argumentLists);
-                }
-            });
+            final File sourceFile =  createExternalSourceFile(template, argumentLists);
             temporaryFiles.append(sourceFile);
-            binaryFile = timer.time("gas", new Timer.ComputationWithException<File, IOException>(IOException.class) {
-                @Override
-                public File run() throws IOException {
-                    return createExternalBinaryFile(sourceFile);
-                }
-            });
+            binaryFile =  createExternalBinaryFile(sourceFile);
             temporaryFiles.append(binaryFile);
             externalInputStream = new PushbackInputStream(new BufferedInputStream(new FileInputStream(binaryFile)));
             if (!findStart(externalInputStream)) {
@@ -620,29 +606,18 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
         for (final ArgumentListIterator iterator = new ArgumentListIterator(template, TestCaseLegality.LEGAL); iterator.hasNext();) {
             final IndexedSequence<Argument> argumentList = iterator.next();
             final Assembler assembler = createTestAssembler();
-            final byte[] internalResult = timer.time("asm", new Timer.ComputationWithException<byte[], AssemblyException>(AssemblyException.class) {
-                @Override
-                public byte[] run() throws AssemblyException {
-                    assembly().assemble(assembler, template, argumentList);
-                    return assembler.toByteArray();
-                }
-            });
+            assembly().assemble(assembler, template, argumentList);
+            final byte[] internalResult = assembler.toByteArray();
             if (Trace.hasLevel(3)) {
                 Trace.line(3, "assembleInternally[" + testCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList) + " = " + DisassembledInstruction.toHexString(internalResult));
             }
             if (_components.contains(AssemblyTestComponent.DISASSEMBLER) && template.isDisassemblable() &&
                     !findExcludedDisassemblerTestArgument(template.parameters(), argumentList)) {
-                timer.time("dis", new ComputationWithException<Object, AssemblyException>(AssemblyException.class) {
-                    @Override
-                    public byte[] run() throws AssemblyException {
-                        try {
-                            testDisassembler(template, argumentList, internalResult);
-                        } catch (IOException e) {
-                            throw new AssemblyException(e.toString());
-                        }
-                        return new byte[0];
-                    }
-                });
+                try {
+                    testDisassembler(template, argumentList, internalResult);
+                } catch (IOException e) {
+                    throw new AssemblyException(e.toString());
+                }
             }
 
             if (testingExternally && !findExcludedExternalTestArgument(template.parameters(), argumentList)) {
@@ -685,13 +660,7 @@ public abstract class AssemblyTester<Template_Type extends Template, Disassemble
             }
         }
 
-        final MapFunction<Entry<String, Long>, String> f = new MapFunction<Entry<String, Long>, String>() {
-            public String map(Entry<String, Long> from) {
-                return from.getKey() + "=" + from.getValue() + "ms";
-            }
-
-        };
-        Trace.line(2, "template: " + template + "  [" + testCaseNumber + " test cases, timings: " + Sequence.Static.toString(timer.flatTimes(), f, ", ") +
+        Trace.line(2, "template: " + template + "  [" + testCaseNumber + " test cases, timings: " +
                         ", " + illegalTestCaseNumber + " illegal test cases]");
         for (String message : uniqueExceptionMessages) {
             Trace.line(2, "    caught expected IllegalArgumentException: " + message);

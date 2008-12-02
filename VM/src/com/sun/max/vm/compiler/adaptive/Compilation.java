@@ -145,20 +145,12 @@ class Compilation implements Future<TargetMethod> {
         try {
             if (VerboseVMOption.verboseCompilation()) {
                 Log.println(compiler.name() + ": Compiling " + _methodState.classMethodActor().qualifiedName());
-                if (this._adaptiveCompilationScheme._compilationTimer != null) {
-                    // The _compilationTimer field will still be null if this compilation occurs while it is being initialized
-                    this._adaptiveCompilationScheme._compilationTimer.startNewComputation();
-                }
             }
             targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(_methodState.classMethodActor(), compilationDirective));
             if (VerboseVMOption.verboseCompilation()) {
                 Log.print(compiler.name() + ": Compiled  " + _methodState.classMethodActor().qualifiedName() + " @ ");
                 Log.print(targetMethod.codeStart());
                 Log.print("{length=" + targetMethod.codeLength() + "}");
-                if (this._adaptiveCompilationScheme._compilationTimer != null) {
-                    final long time = this._adaptiveCompilationScheme._compilationTimer.stop();
-                    Log.print(" (" + (time / 1000000) + " msecs)");
-                }
                 Log.println();
             }
         } finally {

@@ -23,8 +23,8 @@ package com.sun.max.vm.heap.sequential.semiSpace;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.profile.*;
-import com.sun.max.profile.Metrics.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
@@ -33,7 +33,6 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -117,12 +116,12 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private final SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner(this, _pointerIndexGripVerifier);
 
     // Create timing facilities.
-    private final Timer _clearTimer = GlobalMetrics.newTimer("Clear", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _gcTimer = GlobalMetrics.newTimer("GC", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _rootScanTimer = GlobalMetrics.newTimer("Roots scan", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _bootHeapScanTimer = GlobalMetrics.newTimer("Boot heap scan", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _codeScanTimer = GlobalMetrics.newTimer("Code scan", Clock.SYSTEM_MILLISECONDS);
-    private final Timer _copyTimer = GlobalMetrics.newTimer("Copy", Clock.SYSTEM_MILLISECONDS);
+    private final Timer _clearTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
+    private final Timer _gcTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
+    private final Timer _rootScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
+    private final Timer _bootHeapScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
+    private final Timer _codeScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
+    private final Timer _copyTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
 
     // Descriptive names, useful for debugging
     private static final String TO_SPACE_DESCRIPTION = "Heap-To";
@@ -147,27 +146,27 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
-                _gcTimer.restart();
+                _gcTimer.start();
 
-                _clearTimer.restart();
+                _clearTimer.start();
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
                 _clearTimer.stop();
 
                 if (Heap.traceGCRootScanning()) {
                     Log.println("Scanning roots...");
                 }
-                _rootScanTimer.restart();
+                _rootScanTimer.start();
                 _heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
                 _rootScanTimer.stop();
 
                 if (Heap.traceGC()) {
                     Log.println("Scanning boot heap...");
                 }
-                _bootHeapScanTimer.restart();
+                _bootHeapScanTimer.start();
                 scanBootHeap();
                 _bootHeapScanTimer.stop();
 
-                _codeScanTimer.restart();
+                _codeScanTimer.start();
                 scanCode();
                 _codeScanTimer.stop();
 
@@ -175,7 +174,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                     Log.println("Moving reachable...");
                 }
 
-                _copyTimer.restart();
+                _copyTimer.start();
                 moveReachableObjects();
                 _copyTimer.stop();
                 _gcTimer.stop();
@@ -192,20 +191,20 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                 if (Heap.traceGC()) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("clear & initialize: ");
-                    Log.print(_clearTimer.getMilliSeconds());
+                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_clearTimer));
                     Log.print("   root scan: ");
-                    Log.print(_rootScanTimer.getMilliSeconds());
+                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_rootScanTimer));
                     Log.print("   boot heap scan: ");
-                    Log.print(_bootHeapScanTimer.getMilliSeconds());
+                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_bootHeapScanTimer));
                     Log.print("   code scan: ");
-                    Log.print(_codeScanTimer.getMilliSeconds());
+                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_codeScanTimer));
                     Log.print("   copy: ");
-                    Log.print(_copyTimer.getMilliSeconds());
+                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_copyTimer));
                     Log.println();
                     Log.print("GC <");
                     Log.print(_numberOfGarbageCollectionInvocations);
                     Log.print("> ");
-                    Log.print(_gcTimer.getMilliSeconds());
+                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_gcTimer));
                     Log.println(" (ms)");
 
                     Log.println();
@@ -233,22 +232,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer _allocationMarkPointer;
 
-    @PROTOTYPE_ONLY
-    private void protectTimer(Metrics.Timer timer) {
-        JavaMonitorManager.prototypeBindStickyMonitor(timer);
-        JavaMonitorManager.prototypeBindStickyMonitor(timer.counter());
-    }
-
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (MaxineVM.isPrototyping()) {
-            protectTimer(_clearTimer);
-            protectTimer(_gcTimer);
-            protectTimer(_rootScanTimer);
-            protectTimer(_bootHeapScanTimer);
-            protectTimer(_codeScanTimer);
-            protectTimer(_copyTimer);
-        } else if (phase == MaxineVM.Phase.PRISTINE) {
+        if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize();
 
             _fromSpace.setSize(size);
