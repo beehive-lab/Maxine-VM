@@ -231,7 +231,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         @Override
         public void monitorEnter() {
             final VmThread currentThread = VmThread.current();
-            if (MaxineVM.hostOrTarget().configuration().heapScheme().isGcThread(currentThread)) {
+            if (currentThread.isGCThread()) {
                 if (currentThread.waitingCondition() == null) {
                     // This is the GC thread creating its private waiting condition variable.
                     // This done at vm boot so no deadlock risk.

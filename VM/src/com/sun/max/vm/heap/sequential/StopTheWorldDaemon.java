@@ -24,7 +24,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -129,13 +128,13 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
 
     private static final Pointer.Predicate _isNotGCOrCurrentThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
-            return vmThreadLocals != VmThread.current().vmThreadLocals() && !Heap.isGcThread(VmThread.current(vmThreadLocals));
+            return vmThreadLocals != VmThread.current().vmThreadLocals() && !VmThread.current(vmThreadLocals).isGCThread();
         }
     };
 
     private static final Pointer.Predicate _isGCThread = new Pointer.Predicate() {
         public boolean evaluate(Pointer vmThreadLocals) {
-            return Heap.isGcThread(VmThread.current(vmThreadLocals));
+            return VmThread.current(vmThreadLocals).isGCThread();
         }
     };
 
