@@ -184,12 +184,12 @@ public class MaxineTester {
      *
      * @param testName the unique name of the test
      * @param failure a failure message or null if the test passed
-     * @param expected <code>true</code> if this test was expected to fail.
+     * @param expectedFailure <code>true</code> if this test was expected to fail.
      */
-    private static void addTestResult(String testName, String failure, boolean expected) {
-        if (expected && failure == null) {
+    private static void addTestResult(String testName, String failure, boolean expectedFailure) {
+        if (expectedFailure && failure == null) {
             _unexpectedPasses.put(testName, failure);
-        } else if (!expected && failure != null) {
+        } else if (!expectedFailure && failure != null) {
             _unexpectedFailures.put(testName, failure);
         }
     }
@@ -641,8 +641,10 @@ public class MaxineTester {
 
                     final Matcher matcher = TEST_BEGIN_LINE.matcher(line);
                     if (matcher.matches()) {
+                        if (lastTest != null) {
+                            addTestResult(lastTest, null);
+                        }
                         lastTest = matcher.group(1);
-                        addTestResult(lastTest, null);
                         final String nextTestNumber = matcher.group(2);
                         final String endTestNumber = matcher.group(3);
                         if (!nextTestNumber.equals(endTestNumber)) {
@@ -655,6 +657,9 @@ public class MaxineTester {
                         failedLines.append(line); // found a line with "failed"--probably a failed test
                         addTestResult(lastTest, line);
                     } else if (line.startsWith("Done: ")) {
+                        if (lastTest != null) {
+                            addTestResult(lastTest, null);
+                        }
                         lastTest = null;
                         // found the terminating line indicating how many tests passed
                         if (failedLines.isEmpty()) {
