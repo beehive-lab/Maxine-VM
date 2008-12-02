@@ -23,8 +23,8 @@ package com.sun.max.vm.heap.sequential.noGC;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.profile.*;
-import com.sun.max.profile.Metrics.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.code.*;
@@ -107,31 +107,31 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
             TeleHeapInfo.beforeGarbageCollection();
             VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
-            _gcTimer.restart();
+            _gcTimer.start();
 
-            _clearTimer.restart();
+            _clearTimer.start();
             _clearTimer.stop();
 
             if (Heap.traceGCRootScanning()) {
                 Log.println("Scanning roots...");
             }
-            _rootScanTimer.restart();
+            _rootScanTimer.start();
             _rootScanTimer.stop();
 
             if (Heap.traceGC()) {
                 Log.println("Scanning boot heap...");
             }
-            _bootHeapScanTimer.restart();
+            _bootHeapScanTimer.start();
             _bootHeapScanTimer.stop();
 
-            _codeScanTimer.restart();
+            _codeScanTimer.start();
             _codeScanTimer.stop();
 
             if (Heap.traceGC()) {
                 Log.println("Moving reachable...");
             }
 
-            _copyTimer.restart();
+            _copyTimer.start();
             _copyTimer.stop();
             _gcTimer.stop();
 
@@ -144,20 +144,20 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
             if (Heap.traceGC()) {
                 final boolean lockDisabledSafepoints = Log.lock();
                 Log.print("clear & initialize: ");
-                Log.print(_clearTimer.getMilliSeconds());
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(_clearTimer));
                 Log.print("   root scan: ");
-                Log.print(_rootScanTimer.getMilliSeconds());
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(_rootScanTimer));
                 Log.print("   boot heap scan: ");
-                Log.print(_bootHeapScanTimer.getMilliSeconds());
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(_bootHeapScanTimer));
                 Log.print("   code scan: ");
-                Log.print(_codeScanTimer.getMilliSeconds());
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(_codeScanTimer));
                 Log.print("   copy: ");
-                Log.print(_copyTimer.getMilliSeconds());
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(_copyTimer));
                 Log.println();
                 Log.print("GC <");
                 Log.print(_numberOfGarbageCollectionInvocations);
                 Log.print("> ");
-                Log.print(_gcTimer.getMilliSeconds());
+                Log.print(TimerUtil.getLastElapsedMilliSeconds(_gcTimer));
                 Log.println(" (ms)");
 
                 Log.print("--After GC--   bytes copied: ");
