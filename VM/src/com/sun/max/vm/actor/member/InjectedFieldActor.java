@@ -22,7 +22,6 @@ package com.sun.max.vm.actor.member;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -31,7 +30,7 @@ import com.sun.max.vm.value.*;
  * Support for injecting fields into JDK classes. The actor for such fields is denoted by having a
  * {@link AttributeHolder#INJECTED} attribute in its {@link FieldActor#flags() flags}.
  * <p>
- * 
+ *
  * @author Doug Simon
  */
 public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
@@ -49,14 +48,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
 
     public static final class Static {
 
-        private static InjectedFieldActor[] _injectedFieldActors;
-        static {
-            if (MaxineVM.isPrototyping()) {
-                _injectedFieldActors = new InjectedFieldActor[0];
-                Classes.initialize(InjectedReferenceFieldActor.class);
-                Classes.initialize(InjectedLongFieldActor.class);
-            }
-        }
+        private static InjectedFieldActor[] _injectedFieldActors = new InjectedFieldActor[0];
 
         private Static() {
         }
@@ -73,15 +65,12 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
 
         /**
          * Appends the injected fields (if any) for a given class.
-         * 
-         * @param staticFields
-         *                specifies if {@code fieldActors} contains only static fields or only dynamic fields
-         * @param fieldActors
-         *                the fields explicitly declared for the class (e.g. in a class file). This sequence will have
-         *                one or more fields appended to it if {@code holder} denotes a class for which there are
-         *                injected fields
-         * @param holder
-         *                the holder of {@code fieldActors}
+         *
+         * @param staticFields specifies if {@code fieldActors} contains only static fields or only dynamic fields
+         * @param fieldActors the fields explicitly declared for the class (e.g. in a class file). This sequence will
+         *            have one or more fields appended to it if {@code holder} denotes a class for which there are
+         *            injected fields
+         * @param holder the holder of {@code fieldActors}
          * @return the result of appending the injected fields (if any) to {@code fieldActors}
          */
         public static FieldActor[] injectFieldActors(boolean staticFields, FieldActor[] fieldActors, TypeDescriptor holder) {
