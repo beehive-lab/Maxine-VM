@@ -32,7 +32,6 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * A pseudo heap for limited unit testing on the prototype host,
@@ -46,7 +45,7 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
         super(vmConfiguration);
     }
 
-    public boolean isGcThread(VmThread vmThread) {
+    public boolean isGcThread(Thread thread) {
         return false;
     }
 

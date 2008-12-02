@@ -37,7 +37,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 
@@ -68,8 +67,8 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
         }
     }
 
-    public boolean isGcThread(VmThread vmThread) {
-        return vmThread.javaThread() instanceof StopTheWorldDaemon;
+    public boolean isGcThread(Thread thread) {
+        return thread instanceof StopTheWorldDaemon;
     }
 
     public int adjustedCardTableShift() {

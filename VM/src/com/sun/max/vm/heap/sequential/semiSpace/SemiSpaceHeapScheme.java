@@ -38,7 +38,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 
@@ -57,8 +56,8 @@ import com.sun.max.vm.type.*;
  */
 public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapScheme, CellVisitor {
 
-    public boolean isGcThread(VmThread vmThread) {
-        return vmThread.serial() == _threadId;
+    public boolean isGcThread(Thread thread) {
+        return thread == _collectorThread;
     }
 
     public int adjustedCardTableShift() {
@@ -228,7 +227,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion(TO_SPACE_DESCRIPTION);
     private Address _top;
     private volatile Address _allocationMark;
-    private long _threadId;
 
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer _allocationMarkPointer;
@@ -273,7 +271,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             TeleHeapInfo.registerMemoryRegions(_toSpace, _fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
             _collectorThread = new StopTheWorldDaemon("GC", _collect);
-            _threadId = VmThread.fromJava(_collectorThread).serial();
         }
     }
 
