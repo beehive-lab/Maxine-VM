@@ -431,10 +431,7 @@ function run_maxinetester() {
 gate_help="run the tests used to validate a push to the stable Maxine repository"
 
 function run_gate() {
-    if $verbose ; then
-        trace_flag="-trace=2"
-    fi
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester $trace_flag -java-config-alias=optopt -java-executable="${jvm}" "$@"
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optopt -java-executable="${jvm}" "$@"
 }
 
 #=======================================
