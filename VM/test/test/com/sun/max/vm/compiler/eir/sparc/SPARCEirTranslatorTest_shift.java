@@ -27,9 +27,7 @@ public class SPARCEirTranslatorTest_shift extends BytecodeTest_shift {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_shift.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_shift.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

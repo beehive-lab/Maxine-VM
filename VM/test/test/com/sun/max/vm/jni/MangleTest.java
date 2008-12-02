@@ -113,10 +113,15 @@ public class MangleTest extends MaxTestCase {
     }
 
     private void mangleAndDemangle(Class declaringClass) {
-        final String headerFile = javah(declaringClass);
+        String headerFile = null;
+        boolean headerFileGenerated = false;
         try {
             for (Method method : declaringClass.getDeclaredMethods()) {
                 if (Modifier.isNative(method.getModifiers()) && method.getAnnotation(C_FUNCTION.class) == null) {
+                    if (!headerFileGenerated) {
+                        headerFile = javah(declaringClass);
+                        headerFileGenerated = true;
+                    }
                     final String mangled = mangleAndDemangle(method);
                     if (headerFile != null && !headerFile.contains(mangled)) {
                         if (containedByTopLevelClass(method)) {
@@ -177,12 +182,17 @@ public class MangleTest extends MaxTestCase {
         mangleAndDemangle(LocalClass.InnerClass.class);
 
         mangleAndDemangle(MakeStackVariable.class);
+    }
 
+    public void test_max() {
         // Maxine classes
         new ClassSearch() {
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
                 if (isArchiveEntry || className.endsWith("package-info")) {
+                    return true;
+                }
+                if (!className.startsWith(new com.sun.max.Package().name())) {
                     return true;
                 }
                 if (className.startsWith(new com.sun.max.asm.Package().name())) {

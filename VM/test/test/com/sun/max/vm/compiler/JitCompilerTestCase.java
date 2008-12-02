@@ -123,15 +123,17 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
 
     @Override
     protected JitTargetMethod compileMethod(final ClassMethodActor classMethodActor) {
-        Trace.line(1, "Compiling " + classMethodActor.name());
+        Trace.line(2, "Compiling " + classMethodActor.name());
         return MaxineVM.usingTarget(new Function<JitTargetMethod>() {
             public JitTargetMethod call() {
                 try {
                     final JitTargetMethod method = compiler().compile(classMethodActor, CompilationDirective.DEFAULT);
                     assertNotNull(method);
-                    traceBundleAndDisassemble(method);
-                    Trace.line(1);
-                    Trace.line(1);
+                    if (jitTestSetup().disassembleCompiledMethods()) {
+                        traceBundleAndDisassemble(method);
+                        Trace.line(1);
+                        Trace.line(1);
+                    }
                     return method;
                 } catch (AssertionError e) {
                     throw ProgramError.unexpected("assertion failure while compiling: " + classMethodActor, e);

@@ -33,9 +33,7 @@ public class CirOptimizerTest_reflection extends CompilerTest_reflection<CirMeth
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_reflection.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_reflection.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

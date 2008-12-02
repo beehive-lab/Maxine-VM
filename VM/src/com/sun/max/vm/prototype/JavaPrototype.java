@@ -289,8 +289,10 @@ public class JavaPrototype extends Prototype {
         MaxineVM.setTarget(new MaxineVM(vmConfiguration));
         vmConfiguration.loadAndInstantiateSchemes();
 
-        Trace.line(1, "Host VM configuration:\n" + MaxineVM.host().configuration());
-        Trace.line(1, "Target VM configuration:\n" + MaxineVM.target().configuration());
+        Trace.line(1, "Host VM configuration:");
+        Trace.line(1, MaxineVM.host().configuration());
+        Trace.line(1, "Target VM configuration:");
+        Trace.line(1, MaxineVM.target().configuration());
         Trace.line(1, "JDK: " + System.getProperty("java.version"));
         Trace.line(1);
 

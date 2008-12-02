@@ -30,9 +30,7 @@ public class DirTranslatorTest_comparisons extends CompilerTest_comparisons {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(DirTranslatorTest_comparisons.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(DirTranslatorTest_comparisons.class);
-        //$JUnit-END$
         return new DirTranslatorTestSetup(suite);
     }
 

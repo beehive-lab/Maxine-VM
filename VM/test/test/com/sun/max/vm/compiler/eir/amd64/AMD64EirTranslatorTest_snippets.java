@@ -37,9 +37,7 @@ public class AMD64EirTranslatorTest_snippets extends CompilerTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64EirTranslatorTest_snippets.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(AMD64EirTranslatorTest_snippets.class);
-        //$JUnit-END$
         return new AMD64EirTranslatorTestSetup(suite); // This performs the test
     }
 

@@ -34,11 +34,7 @@ public class AMD64TranslatorTest_entryPoints extends CompilerTest_entryPoints {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AMD64TranslatorTest_entryPoints.class.getSimpleName());
-        // $JUnit-BEGIN$
-        suite.addTestSuite(AMD64TranslatorTest_entryPoints.class);
-        // $JUnit-END$
-        return new AMD64TranslatorTestSetup(suite);
+        return new AMD64TranslatorTestSetup(new TestSuite(AMD64TranslatorTest_entryPoints.class));
     }
 
     public AMD64TranslatorTest_entryPoints(String name) {

@@ -27,9 +27,7 @@ public class CirTranslatorTest_ifcmp extends BytecodeTest_ifcmp {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_ifcmp.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_ifcmp.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 

@@ -27,9 +27,7 @@ public class SPARCEirTranslatorTest_getstatic extends BytecodeTest_getstatic {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_getstatic.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_getstatic.class);
-        // $JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

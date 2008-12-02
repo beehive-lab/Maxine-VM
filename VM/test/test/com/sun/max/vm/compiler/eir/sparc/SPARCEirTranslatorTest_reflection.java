@@ -33,9 +33,7 @@ public class SPARCEirTranslatorTest_reflection extends CompilerTest_reflection<C
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_reflection.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_reflection.class);
-        // $JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

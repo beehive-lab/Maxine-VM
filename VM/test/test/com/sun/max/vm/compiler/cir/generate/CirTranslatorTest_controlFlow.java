@@ -27,9 +27,7 @@ public class CirTranslatorTest_controlFlow extends CompilerTest_controlFlow {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirTranslatorTest_controlFlow.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(CirTranslatorTest_controlFlow.class);
-        //$JUnit-END$
         return new CirTranslatorTestSetup(suite);
     }
 
