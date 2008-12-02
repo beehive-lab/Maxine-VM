@@ -26,7 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
-import com.sun.max.profile.Metrics.Timer;
+import com.sun.max.util.timer.Timer;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.eir.*;

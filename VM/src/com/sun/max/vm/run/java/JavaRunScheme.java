@@ -67,12 +67,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         super(vmConfiguration);
     }
 
-    @PROTOTYPE_ONLY
-    private StaticTuple getStaticTuple(Class javaClass) {
-        final ClassActor classLoaderClassActor = ClassActor.fromJava(ClassLoader.class);
-        return (StaticTuple) classLoaderClassActor.staticTuple();
-    }
-
     /**
      * Some static fields from the {@code java.lang.ClassLoader} class cannot be
      * carried over during prototyping time. This method will reset them to fresh
@@ -80,7 +74,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     @PROTOTYPE_ONLY
     private void resetClassLoaderStaticFields() {
-        final StaticTuple staticTuple = getStaticTuple(ClassLoader.class);
+        final ClassActor classLoaderClassActor = ClassActor.fromJava(ClassLoader.class);
+        final StaticTuple staticTuple = (StaticTuple) classLoaderClassActor.staticTuple();
         staticTuple.resetField("bootstrapClassPath", false); // JDK1.6.0_02 has it, later versions may not have it
         staticTuple.resetField("scl", true);
         staticTuple.resetField("sclSet", true);

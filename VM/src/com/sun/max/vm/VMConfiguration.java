@@ -36,7 +36,6 @@ import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
@@ -165,9 +164,6 @@ public final class VMConfiguration {
 
     @CONSTANT_WHEN_NOT_ZERO
     private CompilationScheme _compilationScheme = null;
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private ProfilingScheme _profilingScheme = null;
 
     @INLINE
     public CompilationScheme compilationScheme() {
@@ -316,8 +312,6 @@ public final class VMConfiguration {
             // no JIT, always using the optimizing compiler
             _jitScheme = _compilerScheme;
         }
-        _profilingScheme = new ProfilingScheme(this);
-        _vmSchemes.append(_profilingScheme);
 
         _compilationScheme = new AdaptiveCompilationScheme(this);
         _vmSchemes.append(_compilationScheme);

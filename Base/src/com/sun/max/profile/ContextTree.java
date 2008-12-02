@@ -20,6 +20,8 @@
  */
 package com.sun.max.profile;
 
+import com.sun.max.util.timer.*;
+
 /**
  * This class represents a context in which profiling is performed. Typically,
  * a profiling context is thread-specific, meaning that it collects metrics such as
@@ -33,7 +35,7 @@ public class ContextTree {
         protected final long _id;
         protected Node _sibling;
         protected Node _child;
-        protected Metrics.Timer _timer;
+        protected Timer _timer;
 
         public Node(long id) {
             this._id = id;
@@ -54,7 +56,7 @@ public class ContextTree {
             Node child = findChild(id);
             if (child == null) {
                 child = new Node(id);
-                child._timer = new Metrics.Timer(clock);
+                child._timer = new SingleUseTimer(clock);
                 child._sibling = _child;
                 _child = child;
             }
