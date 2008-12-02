@@ -23,7 +23,6 @@ package com.sun.max.vm.stack.sparc;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.type.*;
 
 /**
   * Utility class that provides functionality common to all SPARC stack frame layout.
