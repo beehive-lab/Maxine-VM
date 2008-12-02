@@ -34,6 +34,8 @@ import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
 
+import sun.management.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
@@ -96,6 +98,26 @@ public class MaxineTester {
 
     private static String _javaConfigAlias = null;
 
+    public static void main(String[] args) {
+        try {
+            _options.parseArguments(args);
+            _javaConfigAlias = _javaConfigAliasOption.getValue();
+            if (_javaConfigAlias != null) {
+                ProgramError.check(MaxineTesterConfiguration._imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
+            }
+            final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
+            makeDirectory(outputDir);
+            Trace.on(_traceOption.getValue());
+            runAutoTests();
+            buildJavaRunSchemeAndRunOutputTests();
+            runJavaTesterTests();
+            System.exit(reportTestResults(out()));
+        } catch (Throwable throwable) {
+            throwable.printStackTrace(err());
+            System.exit(-1);
+        }
+    }
+
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
         @Override
         protected PrintStream initialValue() {
@@ -153,26 +175,6 @@ public class MaxineTester {
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            _options.parseArguments(args);
-            _javaConfigAlias = _javaConfigAliasOption.getValue();
-            if (_javaConfigAlias != null) {
-                ProgramError.check(MaxineTesterConfiguration._imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
-            }
-            final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
-            makeDirectory(outputDir);
-            Trace.on(_traceOption.getValue());
-            runAutoTests();
-            buildJavaRunSchemeAndRunOutputTests();
-            runJavaTesterTests();
-            System.exit(reportTestResults());
-        } catch (Throwable throwable) {
-            throwable.printStackTrace(err());
-            System.exit(-1);
-        }
-    }
-
     /**
      * A map from test names to a string describing a test failure or null if a test passed.
      */
@@ -198,31 +200,44 @@ public class MaxineTester {
         addTestResult(testName, failure, MaxineTesterConfiguration.isExpectedFailure(testName, null));
     }
 
-    private static int reportTestResults() {
+    /**
+     * Summarizes the collected test results.
+     *
+     * @param out where the summary should be printed. This value can be null if only the return value is of interest.
+     * @return an integer that is the total of all the unexpected passes, the unexpected failures, the number of failed
+     *         attempts to generate an image and the number of auto-tests subprocesses that failed with an exception
+     */
+    private static int reportTestResults(PrintStream out) {
         int failedImages = 0;
         for (Map.Entry<String, File> entry : _generatedImages.entrySet()) {
             if (entry.getValue() == null) {
-                out().println("Failed building image for configuration '" + entry.getKey() + "'");
+                if (out != null) {
+                    out.println("Failed building image for configuration '" + entry.getKey() + "'");
+                }
                 failedImages++;
             }
         }
 
         int failedAutoTests = 0;
         for (String autoTest : _autoTestsWithExceptions) {
-            out().println("Non-zero exit status for'" + autoTest + "'");
+            if (out != null) {
+                out.println("Non-zero exit status for'" + autoTest + "'");
+            }
             failedAutoTests++;
         }
 
-        if (!_unexpectedFailures.isEmpty()) {
-            out().println("Unexpected failures:");
-            for (Map.Entry<String, String> entry : _unexpectedFailures.entrySet()) {
-                out().println(entry.getKey() + "  " + entry.getValue());
+        if (out != null) {
+            if (!_unexpectedFailures.isEmpty()) {
+                out.println("Unexpected failures:");
+                for (Map.Entry<String, String> entry : _unexpectedFailures.entrySet()) {
+                    out.println(entry.getKey() + "  " + entry.getValue());
+                }
             }
-        }
-        if (!_unexpectedPasses.isEmpty()) {
-            out().println("Unexpected passes:");
-            for (String testName : _unexpectedPasses.keySet()) {
-                out().println(testName);
+            if (!_unexpectedPasses.isEmpty()) {
+                out.println("Unexpected passes:");
+                for (String testName : _unexpectedPasses.keySet()) {
+                    out.println(testName);
+                }
             }
         }
 
@@ -375,7 +390,6 @@ public class MaxineTester {
             return;
         }
         final File outputDir = new File(_outputDir.getValue(), "auto-tests");
-        final PrintStream out = out();
 
         final String filter = _autoTestFilter.getValue();
         final Set<String> autoTests = new TreeSet<String>();
@@ -391,44 +405,74 @@ public class MaxineTester {
             }
         }.run(Classpath.fromSystem());
 
-        for (String autoTest : autoTests) {
-            final File outputFile = getOutputFile(outputDir, autoTest, null);
-            final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
-            final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
+        final ExecutorService autoTesterService = Executors.newFixedThreadPool(ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors());
+        final CompletionService<Void> autoTesterCompletionService = new ExecutorCompletionService<Void>(autoTesterService);
 
-            String[] systemProperties = null;
-            if (_slowAutoTestsOption.getValue()) {
-                systemProperties = new String[] {JUnitTestRunner.INCLUDE_SLOW_TESTS_PROPERTY};
-            }
-
-            final String[] javaArgs = buildJavaArgs(JUnitTestRunner.class, null, new String[] {autoTest, passedFile.getName(), failedFile.getName()}, systemProperties);
-            final String[] command = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
-
-            out.println("JUnit auto-test: Started " + autoTest);
-            final long start = System.currentTimeMillis();
-            final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
-            out.print("JUnit auto-test: Stopped " + autoTest);
-
-            final Set<String> failedTestNames = new HashSet<String>();
-            parseAutoTestResults(passedFile, true, null);
-            parseAutoTestResults(failedFile, false, failedTestNames);
-
-            if (exitValue != 0) {
-                if (exitValue == PROCESS_TIMEOUT) {
-                    out().print(" (timed out)");
-                } else {
-                    out().print(" (exit value == " + exitValue + ")");
+        for (final String autoTest : autoTests) {
+            autoTesterCompletionService.submit(new Runnable() {
+                public void run() {
+                    runAutoTest(outputDir, autoTest);
                 }
-                _autoTestsWithExceptions.append(autoTest);
+
+            }, null);
+        }
+        autoTesterService.shutdown();
+        try {
+            autoTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * autoTests.size(), TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Runs a single {@linkplain #runAutoTests() auto-test}.
+     *
+     * @param outputDir where the result logs of the auto-test are to be placed
+     * @param autoTest the auto-test to run
+     */
+    private static void runAutoTest(final File outputDir, String autoTest) {
+        final File outputFile = getOutputFile(outputDir, autoTest, null);
+        final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
+        final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
+
+        String[] systemProperties = null;
+        if (_slowAutoTestsOption.getValue()) {
+            systemProperties = new String[] {JUnitTestRunner.INCLUDE_SLOW_TESTS_PROPERTY};
+        }
+
+        final String[] javaArgs = buildJavaArgs(JUnitTestRunner.class, null, new String[] {autoTest, passedFile.getName(), failedFile.getName()}, systemProperties);
+        final String[] command = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
+
+        final ByteArrayPrintStream out = new ByteArrayPrintStream();
+
+        out.println("JUnit auto-test: Started " + autoTest);
+        final long start = System.currentTimeMillis();
+        final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
+        out.print("JUnit auto-test: Stopped " + autoTest);
+
+        final Set<String> failedTestNames = new HashSet<String>();
+        parseAutoTestResults(passedFile, true, null);
+        parseAutoTestResults(failedFile, false, failedTestNames);
+
+        if (exitValue != 0) {
+            if (exitValue == PROCESS_TIMEOUT) {
+                out.print(" (timed out)");
+            } else {
+                out.print(" (exit value == " + exitValue + ")");
             }
-            final long runTime = System.currentTimeMillis() - start;
-            out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
-            for (String testName : failedTestNames) {
-                out().println("    failed " + testName);
-            }
-            if (!failedTestNames.isEmpty()) {
-                out().println("    see: " + outputFile.getAbsolutePath());
-            }
+            _autoTestsWithExceptions.append(autoTest);
+        }
+        final long runTime = System.currentTimeMillis() - start;
+        out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
+        for (String testName : failedTestNames) {
+            out.println("    failed " + testName);
+        }
+        if (!failedTestNames.isEmpty()) {
+            out.println("    see: " + outputFile.getAbsolutePath());
+        }
+
+        synchronized (out()) {
+            out.writeTo(out());
         }
     }
 
@@ -437,7 +481,6 @@ public class MaxineTester {
 
         final ExecutorService javaTesterService = Executors.newFixedThreadPool(_javaTesterConcurrency.getValue());
         final CompletionService<Void> javaTesterCompletionService = new ExecutorCompletionService<Void>(javaTesterService);
-        int submitted = 0;
         for (final String config : javaTesterConfigs) {
             javaTesterCompletionService.submit(new Runnable() {
                 public void run() {
@@ -445,17 +488,14 @@ public class MaxineTester {
                 }
 
             }, null);
-            submitted++;
         }
 
-        for (int i = 0; i < submitted; ++i) {
-            try {
-                javaTesterCompletionService.take();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
         javaTesterService.shutdown();
+        try {
+            javaTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * javaTesterConfigs.size(), TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
