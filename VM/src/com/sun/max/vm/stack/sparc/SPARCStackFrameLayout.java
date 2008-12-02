@@ -55,9 +55,9 @@ public class SPARCStackFrameLayout {
      * This save area always must exist at %sp plus a BIAS of 2047 (0x7ff).
      * @see STACK_BIAS
      */
-    public static final int SAVED_AREA = 16 * Kind.WORD.size();
+    public static final int SAVED_AREA = 16 * Word.size();
 
-    public static final int ARGUMENT_SLOTS = 6 * Kind.WORD.size();
+    public static final int ARGUMENT_SLOTS = 6 * Word.size();
 
     public static int minStackFrameSize() {
         return SAVED_AREA + ARGUMENT_SLOTS;

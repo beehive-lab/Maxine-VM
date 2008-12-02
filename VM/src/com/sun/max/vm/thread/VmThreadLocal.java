@@ -239,7 +239,7 @@ public enum VmThreadLocal {
     }
 
     VmThreadLocal(Kind kind) {
-        assert kind.size() == Kind.WORD.size();
+        assert kind.size() == Word.size();
         _kind = kind;
     }
 
