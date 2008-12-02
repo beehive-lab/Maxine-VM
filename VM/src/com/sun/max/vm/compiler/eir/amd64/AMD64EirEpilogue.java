@@ -63,8 +63,8 @@ public final class AMD64EirEpilogue extends EirEpilogue<AMD64EirInstructionVisit
                     if (frameSize == 0) {
                         asm.push(newRipRegister);
                     } else {
-                        assert frameSize >= Kind.WORD.size();
-                        final int offsetToNewRip = frameSize - Kind.WORD.size();
+                        assert frameSize >= Word.size();
+                        final int offsetToNewRip = frameSize - Word.size();
                         asm.mov(offsetToNewRip, framePointer.indirect(), newRipRegister);
                         if (offsetToNewRip > 0) {
                             asm.addq(framePointer, offsetToNewRip);
