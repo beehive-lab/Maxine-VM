@@ -44,9 +44,7 @@ import com.sun.max.vm.prototype.PrototypeClassLoader;
  */
 public class TestTeleVM {
     
-    // Should be the TELE library
-    private static final String _INSPECTOR_LIBRARY_NAME = "inspector";
-
+    private static final String _TELE_LIBRARY_NAME = "tele";
     private static TeleVM _teleVM = null;
     
     public final static TeleVM create(boolean advanceToEntry) {
@@ -56,7 +54,7 @@ public class TestTeleVM {
         classpathPrefix = classpathPrefix.prepend(bootJar.getAbsolutePath());
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         PrototypeClassLoader.setClasspath(classpath);        
-        Prototype.loadLibrary(_INSPECTOR_LIBRARY_NAME);
+        Prototype.loadLibrary(_TELE_LIBRARY_NAME);
         final File bootImageFile = BinaryImageGenerator.getDefaultBootImageFilePath();       
         final Classpath sourcepath = JavaProject.getSourcePath(true);        
         final File projectDirectory = JavaProject.findVcsProjectDirectory();        
