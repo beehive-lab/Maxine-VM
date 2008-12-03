@@ -23,7 +23,6 @@ package test.com.sun.max.vm;
 import java.io.*;
 import java.text.*;
 import java.util.*;
-import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
@@ -472,7 +471,7 @@ public class MaxineTester {
             systemProperties = new String[] {JUnitTestRunner.INCLUDE_SLOW_TESTS_PROPERTY};
         }
 
-        final String[] javaArgs = buildJavaArgs(JUnitTestRunner.class, null, new String[] {autoTest, passedFile.getName(), failedFile.getName()}, systemProperties);
+        final String[] javaArgs = buildJavaArgs(JUnitTestRunner.class, javaVMArgs(), new String[] {autoTest, passedFile.getName(), failedFile.getName()}, systemProperties);
         final String[] command = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
 
         final ByteArrayPrintStream out = new ByteArrayPrintStream();
@@ -622,7 +621,7 @@ public class MaxineTester {
         out().print(left50("Running " + mainClass.getName() + ": "));
         final File javaOutput = getOutputFile(outputDir, "JVM_" + mainClass.getSimpleName(), null);
 
-        final String[] args = buildJavaArgs(mainClass, null, null, null);
+        final String[] args = buildJavaArgs(mainClass, javaVMArgs(), null, null);
         final int javaExitValue = runJavaVM(mainClass, args, imageDir, javaOutput, _javaRunTimeOut.getValue());
         for (String config : _maxvmConfigList.getValue()) {
             runMaxineVMOutputTest(config, outputDir, imageDir, mainClass, javaOutput, javaExitValue);
@@ -807,8 +806,7 @@ public class MaxineTester {
         }
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final String[] imageArguments = appendArgs(new String[] {"-output-dir=" + imageDir, "-trace=1"}, generatorArguments);
-        final String[] vmOptions = new String[] {"-Xss2m", "-Xms1G", "-Xmx2G"};
-        String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, vmOptions, imageArguments, null);
+        String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, javaVMArgs(), imageArguments, null);
         javaArgs = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
         final File outputFile = getOutputFile(imageDir, "IMAGEGEN", imageConfig);
 
@@ -870,10 +868,17 @@ public class MaxineTester {
         return result;
     }
 
+    private static String[] javaVMArgs() {
+        final String value = _javaVMArgs.getValue();
+        if (value == null) {
+            return null;
+        }
+        final String javaVMArgs = value.trim();
+        return javaVMArgs.split("\\s+");
+    }
+
     private static String[] buildJavaArgs(Class javaMainClass, String[] vmArguments, String[] javaArguments, String[] systemProperties) {
         final LinkedList<String> cmd = new LinkedList<String>();
-        final String javaVMArgs = _javaVMArgs.getValue().trim();
-        cmd.addAll(Arrays.asList(javaVMArgs.split("\\s+")));
         cmd.add("-classpath");
         cmd.add(System.getProperty("java.class.path"));
         if (vmArguments != null) {
@@ -918,9 +923,11 @@ public class MaxineTester {
                 } else {
                     stream.println("Executing process in directory: " + workingDir);
                 }
+                stream.print("Command line:");
                 for (String c : command) {
-                    stream.println("    " + c);
+                    stream.print(" " + c);
                 }
+                stream.println();
             }
         }
     }
