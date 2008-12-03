@@ -23,6 +23,7 @@ package test.com.sun.max.vm;
 import java.io.*;
 import java.text.*;
 import java.util.*;
+import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
@@ -65,6 +66,8 @@ public class MaxineTester {
                     "timing out and killing it.");
     private static final Option<String> _javaExecutable = _options.newStringOption("java-executable", "java",
                     "The name of or full path to the Java VM executable to use. This must be a JDK 6 or greater VM.");
+    private static final Option<String> _javaVMArgs = _options.newStringOption("java-vm-args", "-d64 -Xmx1g",
+                    "The VM options to be used when running the Java VM.");
     private static final Option<Integer> _javaTesterTimeOut = _options.newIntegerOption("java-tester-timeout", 50,
                     "The number of seconds to wait for the in-target Java tester tests to complete before " +
                     "timing out and killing it.");
@@ -869,7 +872,8 @@ public class MaxineTester {
 
     private static String[] buildJavaArgs(Class javaMainClass, String[] vmArguments, String[] javaArguments, String[] systemProperties) {
         final LinkedList<String> cmd = new LinkedList<String>();
-        cmd.add("-d64");
+        final String javaVMArgs = _javaVMArgs.getValue().trim();
+        cmd.addAll(Arrays.asList(javaVMArgs.split("\\s+")));
         cmd.add("-classpath");
         cmd.add(System.getProperty("java.class.path"));
         if (vmArguments != null) {
