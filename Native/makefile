@@ -24,7 +24,7 @@
 
 include platform/platform.mk
 
-all : prototype substrate launch inspector javatest
+all : prototype substrate launch tele javatest
 
 prototype : build/$(OS)/prototype/makefile
 	(cd build/$(OS)/prototype; gmake all)
@@ -35,8 +35,8 @@ substrate : build/$(OS)/substrate/makefile
 launch : substrate build/$(OS)/launch/makefile
 	(cd build/$(OS)/launch; gmake all)
 	
-inspector : build/$(OS)/inspector/makefile
-	(cd build/$(OS)/inspector; gmake all)
+tele : build/$(OS)/tele/makefile
+	(cd build/$(OS)/tele; gmake all)
  
 javatest : build/$(OS)/javatest/makefile
 	(cd build/$(OS)/javatest; gmake all)
@@ -53,9 +53,9 @@ build/$(OS)/launch/makefile : launch/launch.mk
 	mkdir -p build/$(OS)/launch
 	cp -f launch/launch.mk build/$(OS)/launch/makefile
  
-build/$(OS)/inspector/makefile : inspector/inspector.mk
-	mkdir -p build/$(OS)/inspector
-	cp -f inspector/inspector.mk build/$(OS)/inspector/makefile
+build/$(OS)/tele/makefile : tele/tele.mk
+	mkdir -p build/$(OS)/tele
+	cp -f tele/tele.mk build/$(OS)/tele/makefile
 
 build/$(OS)/javatest/makefile : javatest/javatest.mk
 	mkdir -p build/$(OS)/javatest
@@ -66,5 +66,5 @@ clean :
 
 platform :
 	echo $(PLATFORM)
-.PHONY: clean prototype substrate launch inspector javatest platform
+.PHONY: clean prototype substrate launch tele javatest platform
 
