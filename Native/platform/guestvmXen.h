@@ -26,6 +26,7 @@
 #if os_GUESTVMXEN
     typedef void *guestvmXen_Thread;
     extern void *guestvmXen_create_thread_with_stack(char *name, void (*function)(void *), void *stack, unsigned long stacksize, int priority, void *data);
+    extern void *guestvmXen_alloc_thread_stack(unsigned long stacksize);
     extern void* guestvmXen_get_current(void);
     extern int guestvmXen_thread_join(guestvmXen_Thread);
     typedef void *guestvmXen_monitor_t;
