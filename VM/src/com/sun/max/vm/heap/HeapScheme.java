@@ -32,9 +32,16 @@ import com.sun.max.vm.thread.*;
 public interface HeapScheme extends VMScheme {
 
     /**
+     * Determines whether a given thread belongs to the garbage collector. This method is only called outside of
+     * the garbage collector and so it is safe for the implementation to use the complete Java language semantics
+     * including {@code instanceof}.
+     *
+     * This method is only called from a {@link VmThread} constructor. Subsequent tests for whether a given {@code VmThread}
+     * instance is a GC thread should use the {@link VmThread#isGCThread()} method directly.
+     *
      * @return whether a thread belongs to the GC (or otherwise it belongs to the mutator)
      */
-    boolean isGcThread(VmThread vmThread);
+    boolean isGcThread(Thread thread);
 
     /**
      * If the heap implementation uses an adjusted card table,

@@ -55,12 +55,14 @@ public final class VirtualMemory {
         return Pointer.fromLong(nativeMapFileIn31BitSpace(size, fd, fileOffset.toLong()));
     }
 
-    private static native Pointer nativeAllocate(Size size);
+    @C_FUNCTION
+    private static native Pointer virtualMemory_nativeAllocate(Size size);
 
     public static Pointer allocate(Size size) {
-        return nativeAllocate(size);
+        return virtualMemory_nativeAllocate(size);
     }
 
+    @C_FUNCTION
     private static native Pointer nativeAllocateIn31BitSpace(Size size);
 
     /**
@@ -77,8 +79,6 @@ public final class VirtualMemory {
         return nativeAllocateMemoryAtFixedAddress(pointer, size);
     }
 
-
-
     @C_FUNCTION
     static native boolean nativeAllocateMemoryAtFixedAddress(Address pointer, Size size);
 
@@ -92,6 +92,7 @@ public final class VirtualMemory {
         return nativeAllocateAtFixedAddress(address, size);
     }
 
+    @C_FUNCTION
     private static native Pointer nativeReserve(Size size);
 
     public static Pointer reserve(Size size) {
@@ -107,7 +108,7 @@ public final class VirtualMemory {
         return nativeGetEndOfCodeRegion();
     }
 
-
+    @C_FUNCTION
     private static native boolean nativeRelease(Address start, Size size);
 
     public static boolean release(Address start, Size size) {

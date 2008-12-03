@@ -27,7 +27,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.profile.*;
 
 /**
  * This interface represents a compilation system that coordinations compilation and
@@ -122,7 +121,6 @@ public interface CompilationScheme extends VMScheme {
      */
     boolean isCompiling();
 
-
     /**
      * This method makes a {@code MethodState} object for the specified class method actor, if it does not
      * already exist.
@@ -131,6 +129,22 @@ public interface CompilationScheme extends VMScheme {
      * @return an object representing the compilation state for the specified method
      */
     MethodState makeMethodState(ClassMethodActor classMethodActor);
+
+    /**
+     * Adds a compilation observer to this compilation scheme. The observer will be notified before and after each
+     * compilation.
+     * @param observer the observer to add to this compilation scheme.
+     *
+     */
+    void addObserver(CompilationObserver observer);
+
+    /**
+     * Removes a compilation observer from this compilation scheme. The observer will no longer be notified
+     * before and after each compilation.
+     * @param observer the observer to remove from this compilation scheme.
+     *
+     */
+    void removeObserver(CompilationObserver observer);
 
     /**
      * This class provides a facade for the {@code CompilationScheme} interface, simplifying usage. It provides a number
@@ -152,23 +166,6 @@ public interface CompilationScheme extends VMScheme {
          * @return an address representing the entrypoint to the compiled code of the specified method
          */
         public static Address compile(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint, CompilationDirective compilationDirective) {
-            if (ProfilingScheme.isProfiling()) {
-                if (classMethodActor.methodState() == null) {
-                    final int bytecodeSize = classMethodActor.codeAttribute().code().length;
-                    ProfilingScheme.recordBytecodeSize(bytecodeSize);
-
-                    final Address addr = VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compilationDirective).getEntryPoint(callEntryPoint).asAddress();
-
-                    assert classMethodActor.methodState() != null;
-                    assert classMethodActor.methodState().currentTargetMethod(compilationDirective) != null;
-
-                    final int targetcodeSize = classMethodActor.methodState().currentTargetMethod(compilationDirective).codeLength();
-                    ProfilingScheme.recordTargetcodeSize(targetcodeSize);
-                    ProfilingScheme.recordTargetcodeSizePerByteCode(targetcodeSize * 10 / bytecodeSize);
-                    return addr;
-                }
-            }
-
             return VMConfiguration.target().compilationScheme().synchronousCompile(classMethodActor, compilationDirective).getEntryPoint(callEntryPoint).asAddress();
 
         }

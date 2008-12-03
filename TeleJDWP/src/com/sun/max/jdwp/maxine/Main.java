@@ -73,7 +73,7 @@ public class Main {
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
         PrototypeClassLoader.setClasspath(classpath);
 
-        Prototype.loadLibrary("inspector");
+        Prototype.loadLibrary("tele");
 
         final Classpath sourcepath = JavaProject.getSourcePath(true);
         checkClasspath(sourcepath);

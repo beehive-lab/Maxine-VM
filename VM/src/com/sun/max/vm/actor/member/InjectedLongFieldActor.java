@@ -46,10 +46,8 @@ public class InjectedLongFieldActor extends LongFieldActor implements InjectedFi
     /**
      * Creates an actor for an injected long field.
      *
-     * @param holder
-     *                the class into which the field is injected
-     * @param name
-     *                the name used to derive a synthetic name for the field
+     * @param holder the class into which the field is injected
+     * @param name the name used to derive a synthetic name for the field
      */
     @PROTOTYPE_ONLY
     public InjectedLongFieldActor(Class holder, String name) {

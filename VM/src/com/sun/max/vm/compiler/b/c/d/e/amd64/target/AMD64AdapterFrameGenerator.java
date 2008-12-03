@@ -248,7 +248,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
             //                                             adapterFrameSize
             // where "oarg" is an overflow argument and "jarg" is an argument from the caller's java stack.
             // save the caller's RBP
-            final int wordSize =  Kind.WORD.size();
+            final int wordSize =  Word.size();
             // Adapter frame includes space for save the jited-callee's frame pointer (RBP)
             final short adapterFrameSize = (short) optimizedABI().overflowArgumentsSize(parameterLocations);
             // Allocate space on the stack (adapted parameters + caller's frame pointer)
@@ -282,7 +282,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
         }
 
         private void emitDynamicTrampolineAdapter(Label methodEntryPoint) {
-            final byte wordSize =  (byte) Kind.WORD.size();
+            final byte wordSize =  (byte) Word.size();
             assembler().enter((short) 0, (byte) 0);
             assembler().call(methodEntryPoint);
             // Restore caller's frame pointer.
@@ -443,7 +443,7 @@ public abstract class AMD64AdapterFrameGenerator extends AdapterFrameGenerator<A
         @Override
         void adapt(Kind kind, int optoCompilerStackOffset32, int jitStackOffset32) {
             // Add word size to take into account the slot used by the RIP of the caller
-            stackCopy(kind, _adapterFrameSize + optoCompilerStackOffset32 + Kind.WORD.size() /* = source */, jitStackOffset32 /* = dest */);
+            stackCopy(kind, _adapterFrameSize + optoCompilerStackOffset32 + Word.size() /* = source */, jitStackOffset32 /* = dest */);
         }
     }
 }
