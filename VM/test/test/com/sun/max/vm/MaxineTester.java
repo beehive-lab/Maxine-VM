@@ -73,6 +73,10 @@ public class MaxineTester {
     private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 50,
                     "The number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
+    private static final Option<Boolean> _skipOutputTests = _options.newBooleanOption("skip-output-tests", false,
+                    "Skip running of the output tests.");
+    private static final Option<Boolean> _skipJavaTesterTests = _options.newBooleanOption("skip-java-tester-tests", false,
+                    "Skip running of the Java Tester tests.");
     private static final Option<Integer> _traceOption = _options.newIntegerOption("trace", 0,
                     "The tracing level for building the images and running the tests.");
     private static final Option<Boolean> _skipImageGen = _options.newBooleanOption("skip-image-gen", false,
@@ -88,9 +92,9 @@ public class MaxineTester {
     private static final Option<Integer> _autoTestTimeOut = _options.newIntegerOption("auto-test-timeout", 300,
                     "The number of seconds to wait for a JUnit auto-test to complete before " +
                     "timing out and killing it.");
-    private static final Option<Boolean> _skipAutoTestsOption = _options.newBooleanOption("skip-auto-tests", false,
+    private static final Option<Boolean> _skipAutoTests = _options.newBooleanOption("skip-auto-tests", false,
                     "Skip running of the JUnit auto-test classes found on the class path.");
-    private static final Option<Boolean> _slowAutoTestsOption = _options.newBooleanOption("slow-auto-tests", false,
+    private static final Option<Boolean> _slowAutoTests = _options.newBooleanOption("slow-auto-tests", false,
                     "Include auto-tests known to be slow.");
     private static final Option<String> _autoTestFilter = _options.newStringOption("auto-test-filter", null,
                     "A pattern for selecting which auto-tests are run. If absent, all auto-tests on the class path are run. " +
@@ -407,7 +411,7 @@ public class MaxineTester {
      * or more JUnit tests that can be run via {@link JUnitCore}.
      */
     private static void runAutoTests() {
-        if (_skipAutoTestsOption.getValue() || stopTesting()) {
+        if (_skipAutoTests.getValue() || stopTesting()) {
             return;
         }
         final File outputDir = new File(_outputDir.getValue(), "auto-tests");
@@ -461,7 +465,7 @@ public class MaxineTester {
         final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
 
         String[] systemProperties = null;
-        if (_slowAutoTestsOption.getValue()) {
+        if (_slowAutoTests.getValue()) {
             systemProperties = new String[] {JUnitTestRunner.INCLUDE_SLOW_TESTS_PROPERTY};
         }
 
@@ -503,7 +507,7 @@ public class MaxineTester {
     }
 
     private static void runJavaTesterTests() {
-        if (stopTesting()) {
+        if (stopTesting() || _skipJavaTesterTests.getValue()) {
             return;
         }
         final List<String> javaTesterConfigs = _javaTesterConfigs.getValue();
@@ -589,6 +593,9 @@ public class MaxineTester {
     }
 
     private static void buildJavaRunSchemeAndRunOutputTests() {
+        if (_skipOutputTests.getValue() || stopTesting()) {
+            return;
+        }
         final String config = _javaConfigAlias == null ? "java" : _javaConfigAlias;
         final File outputDir = new File(_outputDir.getValue(), "java");
         final File imageDir = new File(_outputDir.getValue(), config);
@@ -697,11 +704,12 @@ public class MaxineTester {
 
     }
 
-    private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +\\S+\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
+    private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
 
     private static JavaTesterResult parseJavaTesterOutputFile(String config, File outputFile) {
         String nextTestOption = null;
         String lastTest = null;
+        String lastTestNumber = null;
         try {
             final BufferedReader reader = new BufferedReader(new FileReader(outputFile));
             final AppendableSequence<String> failedLines = new ArrayListSequence<String>();
@@ -718,9 +726,10 @@ public class MaxineTester {
                         if (lastTest != null) {
                             addTestResult(lastTest, null);
                         }
-                        lastTest = matcher.group(1);
-                        final String nextTestNumber = matcher.group(2);
-                        final String endTestNumber = matcher.group(3);
+                        lastTestNumber = matcher.group(1);
+                        lastTest = matcher.group(2);
+                        final String nextTestNumber = matcher.group(3);
+                        final String endTestNumber = matcher.group(4);
                         if (!nextTestNumber.equals(endTestNumber)) {
                             nextTestOption = "-XX:TesterStart=" + nextTestNumber;
                         } else {
@@ -730,11 +739,14 @@ public class MaxineTester {
                     } else if (line.contains("failed")) {
                         failedLines.append(line); // found a line with "failed"--probably a failed test
                         addTestResult(lastTest, line);
+                        lastTest = null;
+                        lastTestNumber = null;
                     } else if (line.startsWith("Done: ")) {
                         if (lastTest != null) {
                             addTestResult(lastTest, null);
                         }
                         lastTest = null;
+                        lastTestNumber = null;
                         // found the terminating line indicating how many tests passed
                         if (failedLines.isEmpty()) {
                             assert nextTestOption == null;
@@ -745,7 +757,7 @@ public class MaxineTester {
                 }
                 if (lastTest != null) {
                     addTestResult(lastTest, "never returned a result");
-                    failedLines.append("\t" + lastTest + ": crashed or hung the VM");
+                    failedLines.append("\t" + lastTestNumber + ": crashed or hung the VM");
                 }
                 if (failedLines.isEmpty()) {
                     return new JavaTesterResult("no failures", nextTestOption);
