@@ -327,8 +327,8 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     }
 
     @INLINE
-    public boolean isGcThread(VmThread vmThread) {
-        return vmThread.javaThread() instanceof BeltwayStopTheWorldDaemon;
+    public boolean isGcThread(Thread thread) {
+        return thread instanceof BeltwayStopTheWorldDaemon;
     }
 
     /**

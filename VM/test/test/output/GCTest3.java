@@ -180,7 +180,7 @@ public class GCTest3 {
         Node2 tempTree;
         int i = 0;
         System.out.println("Garbage Collector Test");
-        while (i < 40) {
+        while (i < 30) {
             System.out.println(" Stretching memory with a binary tree of depth " + kStretchTreeDepth);
 
             // Stretch the memory space quickly

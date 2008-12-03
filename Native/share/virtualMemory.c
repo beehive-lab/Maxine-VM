@@ -60,6 +60,7 @@
 
 #define PROT                (PROT_EXEC | PROT_READ | PROT_WRITE)
 
+/* map file calls may block so must be JNI functions */
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
     return (Address) mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
 }
@@ -82,13 +83,14 @@ jboolean virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd
     return ((Address)mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset) == address);
 }
 
-JNIEXPORT Address JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeAllocate(JNIEnv *env, jclass c, Size size) {
+/* simple mapped memory, no need for JNI*/
+Address virtualMemory_nativeAllocate(Size size) {
+#if !os_GUESTVMXEN
     return (Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0);
+#endif
 }
 
-JNIEXPORT Address JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeAllocateIn31BitSpace(JNIEnv *env, jclass c, Size size) {
+Address nativeAllocateIn31BitSpace(Size size) {
 #if os_LINUX
     return (Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0);
 #else
@@ -109,16 +111,13 @@ Address virtualMemory_reserve(Size size) {
 	return addr;
 }
 
-JNIEXPORT Address JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeReserve(JNIEnv *env, jclass c, Size size) {
+Address nativeReserve(Size size) {
     return virtualMemory_reserve(size);
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeRelease(JNIEnv *env, jclass c, Address start, Size size) {
+jboolean nativeRelease(Address start, Size size) {
     return (munmap((void *) start, (size_t) size) == 0);
 }
-
 
 #endif // GUESTVMXEN
 

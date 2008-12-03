@@ -95,8 +95,11 @@ thread_Specifics *thread_createSegments(int id, Size stackSize) {
     thread_Specifics *threadSpecifics = calloc(1, sizeof(thread_Specifics));
     threadSpecifics->id = id;
 
-#if (os_LINUX || os_DARWIN || os_GUESTVMXEN)
+#if (os_LINUX || os_DARWIN)
     threadSpecifics->stackBase = (Address) malloc(stackSize);
+    threadSpecifics->stackSize = stackSize;
+#  elif os_GUESTVMXEN
+    threadSpecifics->stackBase = (Address) guestvmXen_alloc_thread_stack(stackSize);
     threadSpecifics->stackSize = stackSize;
 #endif
 

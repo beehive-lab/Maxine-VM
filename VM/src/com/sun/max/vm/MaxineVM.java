@@ -34,7 +34,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.host.*;
-import com.sun.max.vm.profile.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -98,7 +97,6 @@ public final class MaxineVM {
 
     public void setPhase(Phase phase) {
         _phase = phase;
-        ProfilingScheme.setPhaseTimeStamp(phase);
     }
 
     @INLINE

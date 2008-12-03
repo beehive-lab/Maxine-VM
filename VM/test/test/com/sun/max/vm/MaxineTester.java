@@ -34,6 +34,8 @@ import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
 
+import sun.management.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.io.Streams.*;
@@ -71,6 +73,10 @@ public class MaxineTester {
     private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 50,
                     "The number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
+    private static final Option<Boolean> _skipOutputTests = _options.newBooleanOption("skip-output-tests", false,
+                    "Skip running of the output tests.");
+    private static final Option<Boolean> _skipJavaTesterTests = _options.newBooleanOption("skip-java-tester-tests", false,
+                    "Skip running of the Java Tester tests.");
     private static final Option<Integer> _traceOption = _options.newIntegerOption("trace", 0,
                     "The tracing level for building the images and running the tests.");
     private static final Option<Boolean> _skipImageGen = _options.newBooleanOption("skip-image-gen", false,
@@ -86,15 +92,37 @@ public class MaxineTester {
     private static final Option<Integer> _autoTestTimeOut = _options.newIntegerOption("auto-test-timeout", 300,
                     "The number of seconds to wait for a JUnit auto-test to complete before " +
                     "timing out and killing it.");
-    private static final Option<Boolean> _skipAutoTestsOption = _options.newBooleanOption("skip-auto-tests", false,
+    private static final Option<Boolean> _skipAutoTests = _options.newBooleanOption("skip-auto-tests", false,
                     "Skip running of the JUnit auto-test classes found on the class path.");
-    private static final Option<Boolean> _slowAutoTestsOption = _options.newBooleanOption("slow-auto-tests", false,
+    private static final Option<Boolean> _slowAutoTests = _options.newBooleanOption("slow-auto-tests", false,
                     "Include auto-tests known to be slow.");
     private static final Option<String> _autoTestFilter = _options.newStringOption("auto-test-filter", null,
                     "A pattern for selecting which auto-tests are run. If absent, all auto-tests on the class path are run. " +
                     "Otherwise only those whose name contains this value as a substring are run.");
+    private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
+                    "Stop execution as soon a non-zero exit value will be the results of the tests.");
 
     private static String _javaConfigAlias = null;
+
+    public static void main(String[] args) {
+        try {
+            _options.parseArguments(args);
+            _javaConfigAlias = _javaConfigAliasOption.getValue();
+            if (_javaConfigAlias != null) {
+                ProgramError.check(MaxineTesterConfiguration._imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
+            }
+            final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
+            makeDirectory(outputDir);
+            Trace.on(_traceOption.getValue());
+            runAutoTests();
+            buildJavaRunSchemeAndRunOutputTests();
+            runJavaTesterTests();
+            System.exit(reportTestResults(out()));
+        } catch (Throwable throwable) {
+            throwable.printStackTrace(err());
+            System.exit(-1);
+        }
+    }
 
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
         @Override
@@ -153,26 +181,6 @@ public class MaxineTester {
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            _options.parseArguments(args);
-            _javaConfigAlias = _javaConfigAliasOption.getValue();
-            if (_javaConfigAlias != null) {
-                ProgramError.check(MaxineTesterConfiguration._imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
-            }
-            final File outputDir = new File(_outputDir.getValue()).getAbsoluteFile();
-            makeDirectory(outputDir);
-            Trace.on(_traceOption.getValue());
-            runAutoTests();
-            buildJavaRunSchemeAndRunOutputTests();
-            runJavaTesterTests();
-            System.exit(reportTestResults());
-        } catch (Throwable throwable) {
-            throwable.printStackTrace(err());
-            System.exit(-1);
-        }
-    }
-
     /**
      * A map from test names to a string describing a test failure or null if a test passed.
      */
@@ -184,49 +192,74 @@ public class MaxineTester {
      *
      * @param testName the unique name of the test
      * @param failure a failure message or null if the test passed
-     * @param expected <code>true</code> if this test was expected to fail.
+     * @param expectedFailure {@code true} if this test was expected to fail.
+     * @return {@code true} if the result (pass or fail) of the test matches the expected result, {@code false} otherwise
      */
-    private static void addTestResult(String testName, String failure, boolean expected) {
-        if (expected && failure == null) {
+    private static boolean addTestResult(String testName, String failure, boolean expectedFailure) {
+        if (expectedFailure && failure == null) {
             _unexpectedPasses.put(testName, failure);
-        } else if (!expected && failure != null) {
+            return false;
+        } else if (!expectedFailure && failure != null) {
             _unexpectedFailures.put(testName, failure);
+            return false;
         }
+        return true;
     }
 
-    private static void addTestResult(String testName, String failure) {
-        addTestResult(testName, failure, MaxineTesterConfiguration.isExpectedFailure(testName, null));
+    private static boolean addTestResult(String testName, String failure) {
+        return addTestResult(testName, failure, MaxineTesterConfiguration.isExpectedFailure(testName, null));
     }
 
-    private static int reportTestResults() {
+    /**
+     * Summarizes the collected test results.
+     *
+     * @param out where the summary should be printed. This value can be null if only the return value is of interest.
+     * @return an integer that is the total of all the unexpected passes, the unexpected failures, the number of failed
+     *         attempts to generate an image and the number of auto-tests subprocesses that failed with an exception
+     */
+    private static int reportTestResults(PrintStream out) {
+        if (out != null) {
+            out.println();
+            out.println("MaxineTester Summary:");
+        }
         int failedImages = 0;
         for (Map.Entry<String, File> entry : _generatedImages.entrySet()) {
             if (entry.getValue() == null) {
-                out().println("Failed building image for configuration '" + entry.getKey() + "'");
+                if (out != null) {
+                    out.println("Failed building image for configuration '" + entry.getKey() + "'");
+                }
                 failedImages++;
             }
         }
 
         int failedAutoTests = 0;
         for (String autoTest : _autoTestsWithExceptions) {
-            out().println("Non-zero exit status for'" + autoTest + "'");
+            if (out != null) {
+                out.println("Non-zero exit status for'" + autoTest + "'");
+            }
             failedAutoTests++;
         }
 
-        if (!_unexpectedFailures.isEmpty()) {
-            out().println("Unexpected failures:");
-            for (Map.Entry<String, String> entry : _unexpectedFailures.entrySet()) {
-                out().println(entry.getKey() + "  " + entry.getValue());
+        if (out != null) {
+            if (!_unexpectedFailures.isEmpty()) {
+                out.println("Unexpected failures:");
+                for (Map.Entry<String, String> entry : _unexpectedFailures.entrySet()) {
+                    out.println("  " + entry.getKey() + "  " + entry.getValue());
+                }
             }
-        }
-        if (!_unexpectedPasses.isEmpty()) {
-            out().println("Unexpected passes:");
-            for (String testName : _unexpectedPasses.keySet()) {
-                out().println(testName);
+            if (!_unexpectedPasses.isEmpty()) {
+                out.println("Unexpected passes:");
+                for (String testName : _unexpectedPasses.keySet()) {
+                    out.println("  " + testName);
+                }
             }
         }
 
-        return _unexpectedFailures.size() + _unexpectedPasses.size() + failedImages + failedAutoTests;
+        final int exitCode = _unexpectedFailures.size() + _unexpectedPasses.size() + failedImages + failedAutoTests;
+        if (out != null) {
+            out.println("Exit code: " + exitCode);
+        }
+        return exitCode;
     }
 
     /**
@@ -239,9 +272,11 @@ public class MaxineTester {
         private static Set<String> loadFailedTests(File file) {
             if (file.exists()) {
                 System.out.println("Only running the tests listed in " + file.getAbsolutePath());
-                final Set<String> failedTestNames = new HashSet<String>();
-                parseAutoTestResults(file, false, failedTestNames);
-                return failedTestNames;
+                try {
+                    return new HashSet<String>(Iterables.toCollection(Files.readLines(file)));
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
             }
             return null;
         }
@@ -271,7 +306,6 @@ public class MaxineTester {
             final boolean includeSlowTests = System.getProperty(INCLUDE_SLOW_TESTS_PROPERTY) != null;
 
             final Set<String> failedTestNames = loadFailedTests(failedFile);
-            parseAutoTestResults(failedFile, false, failedTestNames);
             final Runner runner = new OldTestClassRunner(test) {
                 @Override
                 public void run(RunNotifier notifier) {
@@ -345,24 +379,30 @@ public class MaxineTester {
      *
      * @param resultsFile the file to parse
      * @param passed specifies if the file list tests that passed or failed
-     * @param testNames if non-null, then all test names parsed from the file are added to this set
+     * @param unexpectedResults if non-null, then all unexpected test results are added to this set
      */
-    private static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> testNames) {
+    static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> unexpectedResults) {
         try {
-            final BufferedReader reader = new BufferedReader(new FileReader(resultsFile));
-            String line;
-            while ((line = reader.readLine()) != null) {
+            final Sequence<String> lines = Files.readLines(resultsFile);
+            for (String line : lines) {
                 final String testName = line;
                 final boolean expectedFailure = MaxineTesterConfiguration.isExpectedFailure(testName, null);
-                addTestResult(testName, passed ? null : "failed", expectedFailure);
-                if (testNames != null) {
-                    testNames.add(testName);
+                final boolean expectedResult = addTestResult(testName, passed ? null : "failed", expectedFailure);
+                if (unexpectedResults != null && !expectedResult) {
+                    unexpectedResults.add("unexpectedly "  + (passed ? "passed" : "failed") + testName);
                 }
             }
-            reader.close();
         } catch (IOException ioException) {
             out().println("could not read '" + resultsFile.getAbsolutePath() + "': " + ioException);
         }
+    }
+
+    /**
+     * Determines if {@linkplain #_failFast fail fast} has been requested and at least one unexpected failure has
+     * occurred.
+     */
+    static boolean stopTesting() {
+        return _failFast.getValue() && reportTestResults(null) != 0;
     }
 
     /**
@@ -371,11 +411,10 @@ public class MaxineTester {
      * or more JUnit tests that can be run via {@link JUnitCore}.
      */
     private static void runAutoTests() {
-        if (_skipAutoTestsOption.getValue()) {
+        if (_skipAutoTests.getValue() || stopTesting()) {
             return;
         }
         final File outputDir = new File(_outputDir.getValue(), "auto-tests");
-        final PrintStream out = out();
 
         final String filter = _autoTestFilter.getValue();
         final Set<String> autoTests = new TreeSet<String>();
@@ -391,71 +430,104 @@ public class MaxineTester {
             }
         }.run(Classpath.fromSystem());
 
-        for (String autoTest : autoTests) {
-            final File outputFile = getOutputFile(outputDir, autoTest, null);
-            final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
-            final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
-
-            String[] systemProperties = null;
-            if (_slowAutoTestsOption.getValue()) {
-                systemProperties = new String[] {JUnitTestRunner.INCLUDE_SLOW_TESTS_PROPERTY};
-            }
-
-            final String[] javaArgs = buildJavaArgs(JUnitTestRunner.class, null, new String[] {autoTest, passedFile.getName(), failedFile.getName()}, systemProperties);
-            final String[] command = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
-
-            out.println("JUnit auto-test: Started " + autoTest);
-            final long start = System.currentTimeMillis();
-            final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
-            out.print("JUnit auto-test: Stopped " + autoTest);
-
-            final Set<String> failedTestNames = new HashSet<String>();
-            parseAutoTestResults(passedFile, true, null);
-            parseAutoTestResults(failedFile, false, failedTestNames);
-
-            if (exitValue != 0) {
-                if (exitValue == PROCESS_TIMEOUT) {
-                    out().print(" (timed out)");
-                } else {
-                    out().print(" (exit value == " + exitValue + ")");
+        final int availableProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
+        final ExecutorService autoTesterService = Executors.newFixedThreadPool(availableProcessors);
+        final CompletionService<Void> autoTesterCompletionService = new ExecutorCompletionService<Void>(autoTesterService);
+        for (final String autoTest : autoTests) {
+            autoTesterCompletionService.submit(new Runnable() {
+                public void run() {
+                    runAutoTest(outputDir, autoTest);
                 }
-                _autoTestsWithExceptions.append(autoTest);
+
+            }, null);
+        }
+        autoTesterService.shutdown();
+        try {
+            autoTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * autoTests.size(), TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Runs a single {@linkplain #runAutoTests() auto-test}.
+     *
+     * @param outputDir where the result logs of the auto-test are to be placed
+     * @param autoTest the auto-test to run
+     */
+    private static void runAutoTest(final File outputDir, String autoTest) {
+        if (stopTesting()) {
+            return;
+        }
+
+        final File outputFile = getOutputFile(outputDir, autoTest, null);
+        final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
+        final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
+
+        String[] systemProperties = null;
+        if (_slowAutoTests.getValue()) {
+            systemProperties = new String[] {JUnitTestRunner.INCLUDE_SLOW_TESTS_PROPERTY};
+        }
+
+        final String[] javaArgs = buildJavaArgs(JUnitTestRunner.class, null, new String[] {autoTest, passedFile.getName(), failedFile.getName()}, systemProperties);
+        final String[] command = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
+
+        final ByteArrayPrintStream out = new ByteArrayPrintStream();
+
+        out.println("JUnit auto-test: Started " + autoTest);
+        final long start = System.currentTimeMillis();
+        final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
+        out.print("JUnit auto-test: Stopped " + autoTest);
+
+        final Set<String> unexpectedResults = new HashSet<String>();
+        parseAutoTestResults(passedFile, true, unexpectedResults);
+        parseAutoTestResults(failedFile, false, unexpectedResults);
+
+        if (exitValue != 0) {
+            if (exitValue == PROCESS_TIMEOUT) {
+                out.print(" (timed out)");
+            } else {
+                out.print(" (exit value == " + exitValue + ")");
             }
-            final long runTime = System.currentTimeMillis() - start;
-            out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
-            for (String testName : failedTestNames) {
-                out().println("    failed " + testName);
-            }
-            if (!failedTestNames.isEmpty()) {
-                out().println("    see: " + outputFile.getAbsolutePath());
-            }
+            _autoTestsWithExceptions.append(autoTest);
+        }
+        final long runTime = System.currentTimeMillis() - start;
+        out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
+        for (String unexpectedResult : unexpectedResults) {
+            out.println("    " + unexpectedResult);
+        }
+        if (!unexpectedResults.isEmpty()) {
+            out.println("    see: " + outputFile.getAbsolutePath());
+        }
+
+        synchronized (out()) {
+            out.writeTo(out());
+            out().flush();
         }
     }
 
     private static void runJavaTesterTests() {
+        if (stopTesting() || _skipJavaTesterTests.getValue()) {
+            return;
+        }
         final List<String> javaTesterConfigs = _javaTesterConfigs.getValue();
 
         final ExecutorService javaTesterService = Executors.newFixedThreadPool(_javaTesterConcurrency.getValue());
         final CompletionService<Void> javaTesterCompletionService = new ExecutorCompletionService<Void>(javaTesterService);
-        int submitted = 0;
         for (final String config : javaTesterConfigs) {
             javaTesterCompletionService.submit(new Runnable() {
                 public void run() {
                     runJavaTesterTests(config);
                 }
-
             }, null);
-            submitted++;
         }
 
-        for (int i = 0; i < submitted; ++i) {
-            try {
-                javaTesterCompletionService.take();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
         javaTesterService.shutdown();
+        try {
+            javaTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * javaTesterConfigs.size(), TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -475,6 +547,9 @@ public class MaxineTester {
     }
 
     private static void runJavaTesterTests(String config) {
+        if (stopTesting()) {
+            return;
+        }
         final File imageDir = new File(_outputDir.getValue(), config);
 
         PrintStream out = out();
@@ -518,6 +593,9 @@ public class MaxineTester {
     }
 
     private static void buildJavaRunSchemeAndRunOutputTests() {
+        if (_skipOutputTests.getValue() || stopTesting()) {
+            return;
+        }
         final String config = _javaConfigAlias == null ? "java" : _javaConfigAlias;
         final File outputDir = new File(_outputDir.getValue(), "java");
         final File imageDir = new File(_outputDir.getValue(), config);
@@ -535,6 +613,9 @@ public class MaxineTester {
     }
 
     private static void runOutputTest(File outputDir, File imageDir, Class mainClass) {
+        if (stopTesting()) {
+            return;
+        }
         out().print(left50("Running " + mainClass.getName() + ": "));
         final File javaOutput = getOutputFile(outputDir, "JVM_" + mainClass.getSimpleName(), null);
 
@@ -623,11 +704,12 @@ public class MaxineTester {
 
     }
 
-    private static final Pattern TEST_BEGIN_LINE = Pattern.compile("\\d+: +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
+    private static final Pattern TEST_BEGIN_LINE = Pattern.compile("(\\d+): +(\\S+)\\s+next: '-XX:TesterStart=(\\d+)', end: '-XX:TesterEnd=(\\d+)'");
 
     private static JavaTesterResult parseJavaTesterOutputFile(String config, File outputFile) {
         String nextTestOption = null;
         String lastTest = null;
+        String lastTestNumber = null;
         try {
             final BufferedReader reader = new BufferedReader(new FileReader(outputFile));
             final AppendableSequence<String> failedLines = new ArrayListSequence<String>();
@@ -641,10 +723,13 @@ public class MaxineTester {
 
                     final Matcher matcher = TEST_BEGIN_LINE.matcher(line);
                     if (matcher.matches()) {
-                        lastTest = matcher.group(1);
-                        addTestResult(lastTest, null);
-                        final String nextTestNumber = matcher.group(2);
-                        final String endTestNumber = matcher.group(3);
+                        if (lastTest != null) {
+                            addTestResult(lastTest, null);
+                        }
+                        lastTestNumber = matcher.group(1);
+                        lastTest = matcher.group(2);
+                        final String nextTestNumber = matcher.group(3);
+                        final String endTestNumber = matcher.group(4);
                         if (!nextTestNumber.equals(endTestNumber)) {
                             nextTestOption = "-XX:TesterStart=" + nextTestNumber;
                         } else {
@@ -654,8 +739,14 @@ public class MaxineTester {
                     } else if (line.contains("failed")) {
                         failedLines.append(line); // found a line with "failed"--probably a failed test
                         addTestResult(lastTest, line);
-                    } else if (line.startsWith("Done: ")) {
                         lastTest = null;
+                        lastTestNumber = null;
+                    } else if (line.startsWith("Done: ")) {
+                        if (lastTest != null) {
+                            addTestResult(lastTest, null);
+                        }
+                        lastTest = null;
+                        lastTestNumber = null;
                         // found the terminating line indicating how many tests passed
                         if (failedLines.isEmpty()) {
                             assert nextTestOption == null;
@@ -666,7 +757,7 @@ public class MaxineTester {
                 }
                 if (lastTest != null) {
                     addTestResult(lastTest, "never returned a result");
-                    failedLines.append(lastTest + " failed: never returned a result");
+                    failedLines.append("\t" + lastTestNumber + ": crashed or hung the VM");
                 }
                 if (failedLines.isEmpty()) {
                     return new JavaTesterResult("no failures", nextTestOption);
@@ -816,13 +907,16 @@ public class MaxineTester {
 
     private static void traceExec(File workingDir, String[] command) {
         if (Trace.hasLevel(2)) {
-            if (workingDir == null) {
-                Trace.line(2, "Executing process in current directory");
-            } else {
-                Trace.line(2, "Executing process in directory: " + workingDir);
-            }
-            for (String c : command) {
-                Trace.line(2, "    " + c);
+            final PrintStream stream = Trace.stream();
+            synchronized (stream) {
+                if (workingDir == null) {
+                    stream.println("Executing process in current directory");
+                } else {
+                    stream.println("Executing process in directory: " + workingDir);
+                }
+                for (String c : command) {
+                    stream.println("    " + c);
+                }
             }
         }
     }

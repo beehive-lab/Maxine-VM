@@ -25,7 +25,7 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.profile.*;
-import com.sun.max.profile.Metrics.Timer;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 
 /**
@@ -36,18 +36,18 @@ import com.sun.max.vm.*;
 public class HeapTimer {
 
     // HashMap that holds all timing facilities per collection
-    private static AppendableIndexedSequence<Map<String, Metrics.Timer>> _timers;
+    private static AppendableIndexedSequence<Map<String, SingleUseTimer>> _timers;
     private static String[] _timersLabels;
     private static Clock _clockType;
 
     public HeapTimer(String[] timers, Clock clockType) {
         _timersLabels = timers;
         _clockType = clockType;
-        _timers = new ArrayListSequence<Map<String, Metrics.Timer>>();
+        _timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
     }
 
     public HeapTimer() {
-        _timers = new ArrayListSequence<Map<String, Metrics.Timer>>();
+        _timers = new ArrayListSequence<Map<String, SingleUseTimer>>();
     }
 
     public static void initializeTimers(Clock clockType, String... timers) {
@@ -56,58 +56,38 @@ public class HeapTimer {
     }
 
     public static void addCollectionProfiling() {
-        final Map<String, Metrics.Timer> newTimerBuffer = initializeTimers();
+        final Map<String, SingleUseTimer> newTimerBuffer = initializeTimers();
         _timers.append(newTimerBuffer);
-        resetTimers();
     }
 
-    private static Map<String, Metrics.Timer> initializeTimers() {
-        final Map<String, Metrics.Timer> timerBuffer = new Hashtable<String, Metrics.Timer>();
+    private static Map<String, SingleUseTimer> initializeTimers() {
+        final Map<String, SingleUseTimer> timerBuffer = new Hashtable<String, SingleUseTimer>();
         for (int i = 0; i < _timersLabels.length; i++) {
-            final Timer timer = new Metrics.Timer(_clockType);
+            final SingleUseTimer timer = new SingleUseTimer(_clockType);
             timerBuffer.put(_timersLabels[i], timer);
         }
         return timerBuffer;
     }
 
     public static void startTimers() {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
         for (int i = 0; i < _timersLabels.length; i++) {
             timerBuffer.get(_timersLabels[i]).start();
         }
     }
 
-    public static void resetTimers() {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.last();
-        for (int i = 0; i < _timersLabels.length; i++) {
-            timerBuffer.get(_timersLabels[i]).reset();
-        }
-    }
-
-    public static void restartTimers() {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.last();
-        for (int i = 0; i < _timersLabels.length; i++) {
-            timerBuffer.get(_timersLabels[i]).restart();
-        }
-    }
-
-    public static void restartTimer(String timer) {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.last();
-        timerBuffer.get(timer).restart();
-    }
-
     public static void stopTimer(String timer) {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
         timerBuffer.get(timer).stop();
     }
 
     public static void startTimer(String timer) {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
         timerBuffer.get(timer).start();
     }
 
     public static void stopTimers() {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.last();
+        final Map<String, SingleUseTimer> timerBuffer = _timers.last();
         for (int i = 0; i < _timersLabels.length; i++) {
             timerBuffer.get(_timersLabels[i]).stop();
         }
@@ -119,7 +99,7 @@ public class HeapTimer {
     }
 
     public static void printCollection(int collectionNum) {
-        final Map<String, Metrics.Timer> timerBuffer = _timers.get(collectionNum);
+        final Map<String, SingleUseTimer> timerBuffer = _timers.get(collectionNum);
         Log.print("Collection: ");
         Log.println(collectionNum);
         for (int i = 0; i < _timersLabels.length; i++) {
@@ -134,10 +114,10 @@ public class HeapTimer {
         }
     }
 
-    public static void printTimer(String timerName, Metrics.Timer timer) {
+    public static void printTimer(String timerName, SingleUseTimer timer) {
         Log.print(timerName);
         Log.print(": ");
-        Log.print(timer.getMilliSeconds());
+        Log.print(TimerUtil.getLastElapsedMilliSeconds(timer));
         Log.println(" msecs.");
     }
 

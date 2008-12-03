@@ -141,6 +141,7 @@ public class MaxineTesterConfiguration {
         test.output.GCTest6.class,
         test.output.HelloWorldReflect.class,
         test.output.JREJarLoadTest.class,
+        test.output.FileReader.class,
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,

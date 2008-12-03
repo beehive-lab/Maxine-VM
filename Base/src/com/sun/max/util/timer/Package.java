@@ -18,43 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.actor.member;
+package com.sun.max.util.timer;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.*;
 
 /**
- * Definition of {@code long} fields injected into JDK classes.
+ * @see MaxPackage
  *
- * @author Doug Simon
+ * @author Ben L. Titzer
  */
-public class InjectedLongFieldActor extends LongFieldActor implements InjectedFieldActor<LongValue> {
-
-    public TypeDescriptor holderTypeDescriptor() {
-        return _holder;
+public class Package extends BasePackage {
+    public Package() {
+        super();
     }
-
-    public LongValue readInjectedValue(Reference reference) {
-        return LongValue.ZERO;
-    }
-
-    private final TypeDescriptor _holder;
-
-    /**
-     * Creates an actor for an injected long field.
-     *
-     * @param holder the class into which the field is injected
-     * @param name the name used to derive a synthetic name for the field
-     */
-    @PROTOTYPE_ONLY
-    public InjectedLongFieldActor(Class holder, String name) {
-        super(SymbolTable.makeSymbol("_$injected$" + name),
-              ACC_SYNTHETIC + ACC_PRIVATE + INJECTED);
-        _holder = JavaTypeDescriptor.forJavaClass(holder);
-        Static.registerInjectedFieldActor(this);
-    }
-
 }
