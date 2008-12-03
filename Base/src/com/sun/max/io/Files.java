@@ -133,6 +133,21 @@ public final class Files {
         }
     }
 
+    public static void readLines(File file, AppendableSequence<String> lines) throws IOException {
+        final BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            lines.append(line);
+        }
+        reader.close();
+    }
+
+    public static Sequence<String> readLines(File file) throws IOException {
+        final AppendableSequence<String> lines = new ArrayListSequence<String>();
+        readLines(file, lines);
+        return lines;
+    }
+
     public static char[] toChars(File file) throws IOException {
         int length = (int) file.length();
         if (length > Integer.MAX_VALUE) {
@@ -161,7 +176,7 @@ public final class Files {
      * if it is different. If the file does not exist, a new file is created with {@code content} surrounded
      * by the specified delimiters. If the file exists and does not currently have the specified delimiters, an
      * IOException is thrown.
-     * 
+     *
      * @return true if the file was modified or created
      */
     public static boolean updateGeneratedContent(File file, ReadableSource content, String start, String end) throws IOException {
