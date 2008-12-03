@@ -389,7 +389,7 @@ public class MaxineTester {
                 final boolean expectedFailure = MaxineTesterConfiguration.isExpectedFailure(testName, null);
                 final boolean expectedResult = addTestResult(testName, passed ? null : "failed", expectedFailure);
                 if (unexpectedResults != null && !expectedResult) {
-                    unexpectedResults.add("unexpectedly "  + (passed ? "passed" : "failed") + testName);
+                    unexpectedResults.add("unexpectedly "  + (passed ? "passed " : "failed ") + testName);
                 }
             }
         } catch (IOException ioException) {
