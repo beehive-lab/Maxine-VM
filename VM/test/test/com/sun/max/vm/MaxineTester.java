@@ -816,7 +816,7 @@ public class MaxineTester {
             copyBinary(imageDir, mapLibraryName("jvm"));
             copyBinary(imageDir, mapLibraryName("javatest"));
             copyBinary(imageDir, mapLibraryName("prototype"));
-            copyBinary(imageDir, mapLibraryName("inspector"));
+            copyBinary(imageDir, mapLibraryName("tele"));
             _generatedImages.put(imageConfig, imageDir);
             return true;
         } else if (exitValue == PROCESS_TIMEOUT) {
