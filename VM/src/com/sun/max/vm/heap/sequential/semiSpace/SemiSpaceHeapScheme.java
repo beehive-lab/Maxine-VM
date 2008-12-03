@@ -237,8 +237,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
             _fromSpace.setSize(size);
             _toSpace.setSize(size);
-            _fromSpace.setStart(VirtualMemory.allocate(size));
-            _toSpace.setStart(VirtualMemory.allocate(size));
+            _fromSpace.setStart(/*Virtual*/Memory.allocate(size));
+            _toSpace.setStart(/*Virtual*/Memory.allocate(size));
 
             if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
                 Log.print("Could not allocate object heap of size ");
