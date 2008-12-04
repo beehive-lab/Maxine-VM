@@ -169,6 +169,14 @@ public class MaxineTesterConfiguration {
         test.hotpath.HP_series.class // 333
     );
 
+    static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
+        test.output.FloatNanTest.class,
+        test.output.JavacTest.class,
+        test.output.GCTest4.class,
+        test.output.SafepointWhileInNative.class,
+        _expectedAutoTestFailures
+    );
+
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
 
@@ -221,6 +229,11 @@ public class MaxineTesterConfiguration {
                     return _expectedJitFailuresSolarisSPARCV9.contains(testName);
                 }
                 return _expectedFailuresSolarisSPARCV9.contains(testName);
+            }
+        } else if (platform.operatingSystem() == OperatingSystem.DARWIN) {
+            final ProcessorKind processorKind = platform.processorKind();
+            if (processorKind.processorModel() == ProcessorModel.AMD64) {
+                return _expectedFailuresDarwinAMD64.contains(testName);
             }
         }
         return false;
