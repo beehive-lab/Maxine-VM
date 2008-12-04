@@ -53,6 +53,10 @@ import com.sun.max.vm.prototype.*;
  */
 public final class MaxineInspector {
 
+    private static final int TRACE_VALUE = 1;
+
+    private static final String _tracePrefix = "[MaxineInspector] ";
+
     private static final String _TELE_LIBRARY_NAME = "tele";
 
     private static final OptionSet _options = new OptionSet();
@@ -122,7 +126,7 @@ public final class MaxineInspector {
     private static void createAndShowGUI() {
         TeleVM teleVM = null;
         try {
-            Trace.begin(1, "starting Inspector");
+            Trace.begin(TRACE_VALUE, _tracePrefix + "Initializing");
 
             // Configure the prototype class loader gets the class files used to build the image
             Classpath classpathPrefix = Classpath.EMPTY;
@@ -221,7 +225,7 @@ public final class MaxineInspector {
                 ObjectInspector.Manager.make(_inspection);
                 _inspection.refreshAll(false);
             }
-            Trace.end(1, "Inspector ready");
+            Trace.end(TRACE_VALUE, _tracePrefix + "Initializing");
 
 
             _inspection.setVisible(true);

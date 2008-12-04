@@ -55,8 +55,14 @@ public class Inspection extends JFrame {
 
     private static final int TRACE_VALUE = 2;
 
+    /**
+     * @return a string suitable for tagging all trace lines; mention the thread if it isn't the AWT event handler.
+     */
     private String tracePrefix() {
-        return "[Inspector] ";
+        if (java.awt.EventQueue.isDispatchThread()) {
+            return "[Inspector] ";
+        }
+        return "[Inspector: " + Thread.currentThread().getName() + "] ";
     }
 
     private final String _inspectorName = "Maxine Inspector";
@@ -207,7 +213,7 @@ public class Inspection extends JFrame {
             _keyBindingMap = keyBindingMap;
             for (InspectorAction inspectorAction : _actionsWithKeyBindings) {
                 final KeyStroke keyStroke = keyBindingMap.get(inspectorAction.getClass());
-                Trace.line(2, "Binding " + keyStroke + " to " + inspectorAction);
+                Trace.line(TRACE_VALUE, "Binding " + keyStroke + " to " + inspectorAction);
                 inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
             }
         }
@@ -562,7 +568,7 @@ public class Inspection extends JFrame {
                 if (config != null) {
                     final String command = config.replaceAll("\\$file", javaSourceFile.getAbsolutePath()).replaceAll("\\$line", String.valueOf(lineNumber));
                     try {
-                        Trace.line(1, "Opening file by executing " + command);
+                        Trace.line(1, tracePrefix() + "Opening file by executing " + command);
                         Runtime.getRuntime().exec(command);
                     } catch (IOException ioException) {
                         throw new InspectorError("Error opening file by executing " + command, ioException);
@@ -578,7 +584,7 @@ public class Inspection extends JFrame {
                         final int port = Integer.parseInt(portString);
                         final Socket fileViewer = new Socket(hostname, port);
                         final String command = javaSourceFile.getAbsolutePath() + "|" + lineNumber;
-                        Trace.line(1, "Opening file via localhost:" + portString);
+                        Trace.line(1,  tracePrefix() + "Opening file via localhost:" + portString);
                         final OutputStream fileViewerStream = fileViewer.getOutputStream();
                         fileViewerStream.write(command.getBytes());
                         fileViewerStream.flush();
@@ -635,6 +641,8 @@ public class Inspection extends JFrame {
         return _scrollPane.getVisibleRect();
     }
 
+    private final InspectorMenuBar _menuBar;
+
     public Point getLocation(Component component) {
         final Point result = new Point();
         Component c = component;
@@ -673,8 +681,8 @@ public class Inspection extends JFrame {
         _desktopPane.setPreferredSize(_geometry.inspectorFramePrefSize());
         setLocation(_geometry.inspectorFrameDefaultLocation());
         _inspectionActions = new InspectionActions(this);
-        setJMenuBar(InspectorMenuBar.create(_inspectionActions));
-
+        _menuBar = new InspectorMenuBar(_inspectionActions);
+        setJMenuBar(_menuBar);
         pack();
     }
 
@@ -717,21 +725,18 @@ public class Inspection extends JFrame {
     /**
      * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
      */
-    void processStateChange(State newState) {
-        _vmState = newState;
-        final long epoch = teleProcess().epoch();
-        Trace.line(TRACE_VALUE, tracePrefix() + "process state notification: (" + newState + ", " + epoch + ")");
-        switch(newState) {
+    private void processStateChange(StateTransitionEvent e) {
+        Trace.begin(TRACE_VALUE, tracePrefix() + "process " + e);
+        _vmState = e.newState();
+        _menuBar.setState(_vmState);
+        switch(_vmState) {
             case STOPPED:
-                updateAfterVMStopped(epoch);
-                getJMenuBar().setBackground(InspectorStyle.SunBlue3);
+                updateAfterVMStopped(e.epoch());
                 break;
             case RUNNING:
-                getJMenuBar().setBackground(InspectorStyle.SunGreen3);
                 break;
             case TERMINATED:
                 Trace.line(1, tracePrefix() + " - VM process terminated");
-                getJMenuBar().setBackground(Color.RED);
                 // Give all process-sensitive views a chance to shut down
                 for (InspectionListener listener : _inspectionListeners.clone()) {
                     listener.vmProcessTerminated();
@@ -739,12 +744,23 @@ public class Inspection extends JFrame {
                 // Clear any possibly misleading view state.
                 focus().clearAll();
                 // Be sure all process-sensitive actions are disabled.
-                _inspectionActions.refresh(epoch, false);
+                _inspectionActions.refresh(e.epoch(), false);
                 informationMessage("The maxvm Process has terminated", "Process Terminated");
                 break;
         }
-        _inspectionActions.refresh(epoch, true);
+        _inspectionActions.refresh(e.epoch(), true);
+        Trace.end(TRACE_VALUE, tracePrefix() + "process " + e);
     }
+
+    /**
+     * Preemptively assume that the {@link TeleVM} is running without waiting for notification.
+     */
+    void assumeRunning() {
+        Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
+        _vmState = State.RUNNING;
+        _menuBar.setState(_vmState);
+    }
+
 
     /**
      * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
@@ -753,13 +769,15 @@ public class Inspection extends JFrame {
     private final class ProcessStateListener implements StateTransitionListener {
         public void handleStateTransition(final StateTransitionEvent e) {
             if (java.awt.EventQueue.isDispatchThread()) {
-                processStateChange(e.newState());
+                processStateChange(e);
             } else {
+                Trace.begin(TRACE_VALUE, tracePrefix() + "scheduled " + e);
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
-                        processStateChange(e.newState());
+                        processStateChange(e);
                     }
                 });
+                Trace.end(TRACE_VALUE, tracePrefix() + "scheduled " + e);
             }
         }
     }
