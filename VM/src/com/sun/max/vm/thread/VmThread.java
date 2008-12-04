@@ -131,7 +131,7 @@ public class VmThread {
     private Pointer _vmThreadLocals = Pointer.zero();
 
     @INSPECTED
-    private final String _name;
+    private String _name;
 
     @INSPECTED
     private final long _serial;
@@ -230,6 +230,10 @@ public class VmThread {
 
     public String getName() {
         return _name;
+    }
+
+    public void setName(String name) {
+        _name = name;
     }
 
     private JavaMonitor _protectedMonitor;
