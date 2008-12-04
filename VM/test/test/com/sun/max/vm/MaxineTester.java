@@ -576,11 +576,11 @@ public class MaxineTester {
     }
 
     private static String fileRef(File file) {
-//        final String basePath = new File(_outputDir.getValue()).getAbsolutePath() + File.separator;
-//        final String path = file.getAbsolutePath();
-//        if (path.startsWith(basePath)) {
-//            return "file:" + path.substring(basePath.length());
-//        }
+        final String basePath = new File(_outputDir.getValue()).getAbsolutePath() + File.separator;
+        final String path = file.getAbsolutePath();
+        if (path.startsWith(basePath)) {
+            return "file:" + path.substring(basePath.length());
+        }
         return file.getAbsolutePath();
     }
 
