@@ -41,7 +41,7 @@ public class InspectionSettings {
     private static final int TRACE_VALUE = 2;
 
     private String tracePrefix() {
-        return "[Inspector] ";
+        return "[InspectionSettings] ";
     }
 
     /**

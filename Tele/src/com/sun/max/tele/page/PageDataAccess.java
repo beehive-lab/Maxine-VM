@@ -31,6 +31,12 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  */
 public class PageDataAccess extends DataAccessAdapter {
+    
+    private static final int TRACE_VALUE = 1;
+
+    protected String  tracePrefix() {
+        return "[PageDataAccess] ";
+    }
 
     private final TeleIO _teleIO;
     private final int _indexShift;
@@ -94,7 +100,7 @@ public class PageDataAccess extends DataAccessAdapter {
             page = new Page(_teleIO, index);
             _indexToPage.put(index, page);
             if ((_indexToPage.length() % 1000) == 0) {
-                Trace.line(1, "Memory cache: " + _indexToPage.length() + " pages");
+                Trace.line(TRACE_VALUE, tracePrefix() + "Memory cache: " + _indexToPage.length() + " pages");
             }
         }
         return page;

@@ -303,6 +303,17 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
     }
 
     // Debugger interaction
+
+    public Color vmStoppedBackgroundColor() {
+        return SunBlue3;
+    }
+    public Color vmRunningBackgroundColor() {
+        return SunGreen3;
+    }
+    public Color vmTerminatedBackgroundColor() {
+        return Color.red;
+    }
+
     private static final Dimension _debugTagIconSize = new Dimension(16, 12);
 
     public Color debugSelectedCodeBorderColor() {

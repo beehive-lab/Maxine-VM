@@ -23,7 +23,7 @@ package com.sun.max.tele;
 import com.sun.max.tele.debug.*;
 
 /**
- * Convenience methods for all local objects that refer to something in a tele VM.
+ * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter

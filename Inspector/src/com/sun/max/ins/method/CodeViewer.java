@@ -41,6 +41,7 @@ import com.sun.max.vm.stack.*;
  * - maintaining a cache that maps row->stackFrame for the thread of current focus
  * - tracking which rows are "active", i.e. have some frame at that location for the thread of current focus
  * - an action, attached to a toolbar button, that scrolls to the next active row
+ * - a "search" function that causes a separate toolbar to appear that permits regexp row-based searching.
  *
  * @author Michael Van De Vanter
  */
@@ -176,7 +177,6 @@ public abstract class CodeViewer extends InspectorPanel {
         parent().frame().pack();
         _searchToolBar = null;
         _searchMatchingRows = null;
-        // do some kind of update in case there were display effects.
     }
 
     private void setFocusAtNextSearchMatch() {
