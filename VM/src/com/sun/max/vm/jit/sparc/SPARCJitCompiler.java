@@ -343,7 +343,6 @@ public class SPARCJitCompiler extends JitCompiler {
 
             @Override
             Pointer returnInstructionPointer(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
-
                 // The RIP is the top slot in the caller save
                 // area, so we have to remove a stack slot to the computed size.
                 final int dispToRip = offsetToTopOfFrame(targetMethod) -  JitStackFrameLayout.STACK_SLOT_SIZE;
