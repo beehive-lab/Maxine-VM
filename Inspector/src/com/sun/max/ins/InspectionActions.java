@@ -932,7 +932,6 @@ public class InspectionActions extends InspectionHolder implements Prober{
                 MemoryInspector.create(inspection(), _address);
             } else {
                 new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Inspect memory at address...", "Inspect") {
-
                     @Override
                     public void entered(Address address) {
                         MemoryInspector.create(inspection(), address);
@@ -2283,6 +2282,37 @@ public class InspectionActions extends InspectionHolder implements Prober{
         return _setBytecodeBreakpointAtMethodEntryByKey;
     }
 
+    final class SetWatchpointAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Set watchpoint...";
+
+        SetWatchpointAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        }
+
+        @Override
+        protected void procedure() {
+            new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Set word watch point at address...", "Watch") {
+                @Override
+                public void entered(Address address) {
+                    final Address start = address;
+                    final Size size = Size.fromInt(Word.size());
+                    teleProcess().watchpointFactory().makeWatchpoint(new RuntimeMemoryRegion(start, size));
+                }
+            };
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess()  && focus().codeLocation().hasTargetCodeLocation());
+        }
+    }
+
+    private final SetWatchpointAction _setWatchpoint = new SetWatchpointAction(null);
+
+    public final SetWatchpointAction setWatchpoint() {
+        return _setWatchpoint;
+    }
 
     /**
      * Action:  pause the running {@link TeleVM}.

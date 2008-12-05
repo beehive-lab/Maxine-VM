@@ -156,6 +156,9 @@ public final class InspectorMenuBar extends InspectionHolder {
         menu.add(_actions.viewBreakpoints());
         menu.addSeparator();
         menu.add(_actions.toggleBytecodeBreakpoint());
+        menu.addSeparator();
+        menu.add(_actions.setWatchpoint());
+        menu.addSeparator();
         menu.add(_actions.debugPause());
         return menu;
     }

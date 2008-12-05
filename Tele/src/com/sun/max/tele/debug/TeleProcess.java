@@ -68,6 +68,12 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         return _targetBreakpointFactory;
     }
 
+    private final TeleWatchpoint.Factory _watchpointFactory;
+
+    public TeleWatchpoint.Factory watchpointFactory() {
+        return _watchpointFactory;
+    }
+
     public static final String[] NO_COMMAND_LINE_ARGUMENTS = {};
 
     private Pointer _commandLineBuffer;
@@ -279,6 +285,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         super(teleVM);
         _platform = platform;
         _targetBreakpointFactory = new TeleTargetBreakpoint.Factory(this);
+        _watchpointFactory = new TeleWatchpoint.Factory(this);
         _controller = new TeleProcessController(this);
 
         final String programPath = programFile.getAbsolutePath();
@@ -689,4 +696,9 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
      * @return the number of bytes written to {@code address} or -1 if there was an error while trying to write the data
      */
     protected abstract int write0(byte[] buffer, int offset, int length, Address address);
+    
+    protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
+        return false;
+    }
+
 }
