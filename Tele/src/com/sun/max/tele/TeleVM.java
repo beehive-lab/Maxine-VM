@@ -372,7 +372,7 @@ public abstract class TeleVM implements VMAccess {
 		}
 		return memoryRegion;
 	}
-	
+
 	/**
 	 * @param address a memory location in the {@link TeleVM}.
 	 * @return whether the location is either in the object heap, the code
@@ -541,7 +541,7 @@ public abstract class TeleVM implements VMAccess {
 	 * Gets a canonical local {@link ClassActor} for the named class, creating
 	 * one if needed by loading the class from the classpath using the
 	 * {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER}.
-	 * 
+	 *
 	 * @param name
 	 *            the name of a class
 	 * @return Local {@link ClassActor} corresponding to the class, possibly
@@ -577,7 +577,7 @@ public abstract class TeleVM implements VMAccess {
 	 * {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER} from either the
 	 * classpath, or if not found on the classpath, by copying the classfile
 	 * from the {@link TeleVM}.
-	 * 
+	 *
 	 * @param classActorReference
 	 *            A {@link ClassActor} in the {@link TeleVM}.
 	 * @return Local, equivalent {@link ClassActor}, possibly created by
@@ -613,7 +613,7 @@ public abstract class TeleVM implements VMAccess {
 	 * the {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER} from either the
 	 * classpath, or if not found on the classpath, by copying the classfile
 	 * from the {@link TeleVM}.
-	 * 
+	 *
 	 * @param objectReference
 	 *            An {@link Object} in the {@link TeleVM}.
 	 * @return Local {@link ClassActor} representing the type of the object.
@@ -749,7 +749,7 @@ public abstract class TeleVM implements VMAccess {
 	 * have changed.
 	 */
 	public void updateLoadableTypeDescriptorsFromClasspath() {
-		final Set<TypeDescriptor> typesOnClasspath = new HashSet<TypeDescriptor>();
+		final Set<TypeDescriptor> typesOnClasspath = new TreeSet<TypeDescriptor>();
 		Trace.begin(1, "searching classpath for class files");
 		new ClassSearch() {
 			@Override
@@ -862,16 +862,16 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Updates all cached information about the state of the running VM.
 	 */
-	public synchronized void refresh() {		
+	public synchronized void refresh() {
 		if (_teleClassRegistry == null) {
 			// Must delay creation/initialization of the {@link TeleClassRegistry} until after
 			// we hit the first execution breakpoint; otherwise addresses won't have been relocated.
 			// This depends on the {@TeleHeapManager} already existing.
-			_teleClassRegistry = new TeleClassRegistry(this);	
+			_teleClassRegistry = new TeleClassRegistry(this);
 			// Can only fully initialize the {@link TeleHeapManager} once
 			// the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
 			_teleHeapManager.initialize();
-		}		
+		}
 		refreshReferences();
 		if (_areTeleRootsValid) {
 			_teleHeapManager.refresh();
@@ -893,7 +893,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Uses the configured {@linkplain #sourcepath() source path} to search for
 	 * a source file corresponding to a given class actor.
-	 * 
+	 *
 	 * @param classActor
 	 *            the class for which a source file is to be found
 	 * @return the source file corresponding to {@code classActor} or null if so
@@ -942,7 +942,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Tries to find a JDWP ObjectProvider that represents the object that is
 	 * referenced by the parameter.
-	 * 
+	 *
 	 * @param reference
 	 *            a reference to the object that should be represented as a JDWP
 	 *            ObjectProvider
@@ -1151,7 +1151,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a single step has been completed.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that did the single step
 	 * @param location
@@ -1168,7 +1168,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a breakpoint has been hit.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that hit the breakpoint
 	 * @param location
@@ -1185,7 +1185,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a thread has started.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that has started
 	 */
@@ -1198,7 +1198,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a thread has died.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that has died
 	 */
@@ -1226,7 +1226,7 @@ public abstract class TeleVM implements VMAccess {
 	 * call entry point of a method. Does ignore the suspendAll parameter, there
 	 * will always be all threads suspended when the breakpoint is hit. TODO:
 	 * Fix the limitations for breakpoints.
-	 * 
+	 *
 	 * @param codeLocation
 	 *            specifies the code location at which the breakpoint should be
 	 *            set
@@ -1339,7 +1339,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Reads a value of a certain kind from the Maxine VM process.
-	 * 
+	 *
 	 * @param kind
 	 *            the type of the value that should be read
 	 * @param pointer
@@ -1382,7 +1382,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Converts a value as seen by the Maxine VM to a value as seen by the JDWP
 	 * server.
-	 * 
+	 *
 	 * @param value
 	 *            the value as seen by the Maxine VM
 	 * @return the value as seen by the JDWP server
@@ -1423,7 +1423,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Converts a JDWP value object to a Maxine value object.
-	 * 
+	 *
 	 * @param vmValue
 	 *            the value as seen by the JDWP server
 	 * @return a newly created value as seen by the Maxine VM
@@ -1481,7 +1481,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Looks up a JDWP reference type object based on a Java class object.
-	 * 
+	 *
 	 * @param klass
 	 *            the class object whose JDWP reference type should be looked up
 	 * @return a JDWP reference type representing the Java class
@@ -1508,7 +1508,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Converts a value kind as seen by the Maxine world to a VMValue type as
 	 * seen by the VM interface used by the JDWP server.
-	 * 
+	 *
 	 * @param kind
 	 *            the Maxine kind value
 	 * @return the type as seen by the JDWP server
