@@ -24,6 +24,9 @@ import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.thread.*;
 
@@ -245,4 +248,27 @@ final class JDK_java_lang_Thread {
     private Thread.State getState() {
         return thisVMThread().state();
     }
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private static ReferenceFieldActor _nameFieldActor;
+
+    @INLINE
+    private static ReferenceFieldActor nameFieldActor() {
+        if (_nameFieldActor == null) {
+            _nameFieldActor = (ReferenceFieldActor) ClassActor.fromJava(Thread.class).findFieldActor(SymbolTable.makeSymbol("name"));
+        }
+        return _nameFieldActor;
+    }
+
+    /**
+     * Sets the name of the the thread, also updating the name in the corresponding VmThread.
+     * @param name new name for thread
+     */
+    @SUBSTITUTE
+    private void setName(String name) {
+        checkAccess();
+        thisVMThread().setName(name);
+        nameFieldActor().writeObject(this, name.toCharArray());
+    }
+
 }

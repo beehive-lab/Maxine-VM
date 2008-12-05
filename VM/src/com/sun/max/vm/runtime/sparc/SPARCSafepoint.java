@@ -94,6 +94,8 @@ public final class SPARCSafepoint extends Safepoint {
     public static final int TRAP_STATE_SIZE;
     public static final int TRAP_NUMBER_OFFSET;
     public static final int TRAP_SP_OFFSET;
+    public static final int TRAP_CALL_ADDRESS_OFFSET;
+
     public static final int TRAP_LATCH_OFFSET;
 
     static {
@@ -104,6 +106,8 @@ public final class SPARCSafepoint extends Safepoint {
         TRAP_LATCH_OFFSET = Word.size();
         // Offset to %o6 in trap state.
         TRAP_SP_OFFSET = Word.size() * (globalRegisterWords + (O6.value() - O0.value()));
+        // Offset to %o7 in trap state
+        TRAP_CALL_ADDRESS_OFFSET = TRAP_SP_OFFSET + Word.size();
         TRAP_NUMBER_OFFSET = Word.size() * (globalRegisterWords + outRegisterWords + floatingPointRegisterWords + stateRegisters);
         TRAP_STATE_SIZE = TRAP_NUMBER_OFFSET + Word.size();
     }
@@ -178,5 +182,9 @@ public final class SPARCSafepoint extends Safepoint {
     @Override
     public int getTrapNumber(Pointer trapState) {
         return trapState.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
+    }
+
+    public Pointer getCallAddressRegister(Pointer trapState) {
+        return trapState.readWord(TRAP_CALL_ADDRESS_OFFSET).asPointer();
     }
 }
