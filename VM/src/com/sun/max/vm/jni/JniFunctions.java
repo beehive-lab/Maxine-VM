@@ -106,6 +106,7 @@ public final class JniFunctions {
         final byte[] bytes = new byte[length];
         Memory.readBytes(buffer, length, bytes);
         try {
+            // TODO: find out whether already dottified class names should be rejected by this function
             final Object[] arguments = {dottify(CString.utf8ToJava(slashifiedName)), bytes, 0, length};
             Object cl = classLoader.get();
             if (cl == null) {
