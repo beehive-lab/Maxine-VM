@@ -69,7 +69,9 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     public abstract MethodInspector.CodeKind codeKind();
+
     public abstract String codeViewerKindName();
+
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
     public void updateThreadFocus(TeleNativeThread teleNativeThread) {

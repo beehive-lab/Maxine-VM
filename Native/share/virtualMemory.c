@@ -109,8 +109,7 @@ Address virtualMemory_reserve(Size size) {
 	return addr;
 }
 
-JNIEXPORT Address JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeReserve(JNIEnv *env, jclass c, Size size) {
+Address nativeReserve(Size size) {
     return virtualMemory_reserve(size);
 }
 
