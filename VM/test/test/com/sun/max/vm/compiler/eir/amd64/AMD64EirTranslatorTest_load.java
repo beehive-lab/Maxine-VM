@@ -27,9 +27,7 @@ public class AMD64EirTranslatorTest_load extends BytecodeTest_load {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64EirTranslatorTest_load.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(AMD64EirTranslatorTest_load.class);
-        //$JUnit-END$
         return new AMD64EirTranslatorTestSetup(suite);
     }
 

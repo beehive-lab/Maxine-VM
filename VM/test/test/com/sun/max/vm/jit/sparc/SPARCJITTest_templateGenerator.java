@@ -38,9 +38,7 @@ public class SPARCJITTest_templateGenerator extends JITTest_templateGenerator {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_templateGenerator.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_templateGenerator.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

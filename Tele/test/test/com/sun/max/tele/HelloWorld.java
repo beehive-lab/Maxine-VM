@@ -18,27 +18,11 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.sparc;
-
-import junit.framework.*;
-import test.com.sun.max.vm.compiler.*;
-
-import com.sun.max.vm.compiler.target.*;
+package test.com.sun.max.tele;
 
 
-public class SPARCTranslatorTest_referencedMethod extends CompilerTestCase<TargetMethod> {
-
+public class HelloWorld {
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(SPARCTranslatorTest_referencedMethod.suite());
-    }
-
-    public static Test suite() {
-        final TestSuite suite = new TestSuite(SPARCTranslatorTest_referencedMethod.class.getSimpleName());
-        suite.addTestSuite(SPARCTranslatorTest_referencedMethod.class);
-        return new SPARCTranslatorTestSetup(suite);
-    }
-
-    public SPARCTranslatorTest_referencedMethod(String name) {
-        super(name);
+        System.out.println("Hello World!");
     }
 }

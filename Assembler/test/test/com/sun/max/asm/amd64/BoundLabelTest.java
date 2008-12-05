@@ -51,9 +51,7 @@ public class BoundLabelTest extends MaxTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(BoundLabelTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(BoundLabelTest.class);
-        //$JUnit-END$
         return suite;
     }
 

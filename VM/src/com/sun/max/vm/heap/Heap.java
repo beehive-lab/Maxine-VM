@@ -26,7 +26,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.thread.*;
 
 /**
  * The dynamic Java object heap.
@@ -147,8 +146,11 @@ public final class Heap {
         return VMConfiguration.hostOrTarget().heapScheme();
     }
 
-    public static boolean isGcThread(VmThread vmThread) {
-        return heapScheme().isGcThread(vmThread);
+    /**
+     * @see HeapScheme#isGcThread(Thread)
+     */
+    public static boolean isGcThread(Thread thread) {
+        return heapScheme().isGcThread(thread);
     }
 
     public static void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {

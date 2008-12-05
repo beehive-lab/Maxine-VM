@@ -47,9 +47,7 @@ public class RawDisassemblerTest extends AssemblerTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(RawDisassemblerTest.class.getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(RawDisassemblerTest.class);
-        //$JUnit-END$
         return suite;
     }
 

@@ -27,9 +27,7 @@ public class CirOptimizerTest_putfield extends BytecodeTest_putfield {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(CirOptimizerTest_putfield.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(CirOptimizerTest_putfield.class);
-        // $JUnit-END$
         return new CirOptimizerTestSetup(suite);
     }
 

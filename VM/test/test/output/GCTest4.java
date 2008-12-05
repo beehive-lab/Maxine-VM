@@ -23,7 +23,7 @@ package test.output;
 public class GCTest4 {
 
     public static void main(String[] args) {
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 50; i++) {
             System.out.println("Iteration " + i + "...");
             createList();
         }
@@ -35,7 +35,7 @@ public class GCTest4 {
         final Node1 start = new Node1("0");
         Node1 previous = start;
         final int length = 10000;
-        for (int i = 0; i < length; i++) {
+        for (int i = 1; i < length; i++) {
             final Node1 temp = new Node1(String.valueOf(i));
             previous.setNext(temp);
             previous = temp;
@@ -49,7 +49,7 @@ public class GCTest4 {
             node = node._next;
             len++;
         }
-        assert len == length + 1;
+        assert len == length;
     }
 
     public static void printList(Node1 start) {

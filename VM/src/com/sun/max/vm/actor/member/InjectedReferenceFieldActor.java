@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
@@ -53,11 +52,9 @@ public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implemen
 
     /**
      * Creates an actor for an injected long field.
-     * 
-     * @param holder
-     *                the class into which the field is injected
-     * @param fieldType
-     *                the type of the field (the name of the field is derived from this value)
+     *
+     * @param holder the class into which the field is injected
+     * @param fieldType the type of the field (the name of the field is derived from this value)
      */
     @PROTOTYPE_ONLY
     public InjectedReferenceFieldActor(Class holder, Class<T> fieldType) {
@@ -81,111 +78,69 @@ public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implemen
     /**
      * A field of type {@link ClassActor} injected into {@link Class}.
      */
-    public static final InjectedReferenceFieldActor<ClassActor> Class_classActor = createClass_classActor();
-
-    private static InjectedReferenceFieldActor<ClassActor> createClass_classActor() {
-        if (MaxineVM.isPrototyping()) {
-            return new InjectedReferenceFieldActor<ClassActor>(Class.class, ClassActor.class) {
-                @Override
-                public ReferenceValue readInjectedValue(Reference reference) {
-                    final Class javaClass = (Class) reference.toJava();
-                    return ReferenceValue.from(ClassActor.fromJava(javaClass));
-                }
-            };
+    public static final InjectedReferenceFieldActor<ClassActor> Class_classActor = new InjectedReferenceFieldActor<ClassActor>(Class.class, ClassActor.class) {
+        @Override
+        public ReferenceValue readInjectedValue(Reference reference) {
+            final Class javaClass = (Class) reference.toJava();
+            return ReferenceValue.from(ClassActor.fromJava(javaClass));
         }
-        return Class_classActor;
-    }
+    };
 
     /**
      * A field of type {@link ClassRegistry} injected into {@link ClassLoader}.
      */
-    public static final InjectedReferenceFieldActor<ClassRegistry> ClassLoader_classRegistry = createClassLoader_classRegistry();
-
-    private static InjectedReferenceFieldActor<ClassRegistry> createClassLoader_classRegistry() {
-        if (MaxineVM.isPrototyping()) {
-            return new InjectedReferenceFieldActor<ClassRegistry>(ClassLoader.class, ClassRegistry.class) {
-                @Override
-                public ReferenceValue readInjectedValue(Reference reference) {
-                    assert reference.toJava() instanceof ClassLoader;
-                    return ReferenceValue.from(ClassRegistry.vmClassRegistry());
-                }
-            };
+    public static final InjectedReferenceFieldActor<ClassRegistry> ClassLoader_classRegistry = new InjectedReferenceFieldActor<ClassRegistry>(ClassLoader.class, ClassRegistry.class) {
+        @Override
+        public ReferenceValue readInjectedValue(Reference reference) {
+            assert reference.toJava() instanceof ClassLoader;
+            return ReferenceValue.from(ClassRegistry.vmClassRegistry());
         }
-        return ClassLoader_classRegistry;
-    }
+    };
 
     /**
      * A field of type {@link VmThread} injected into {@link Thread}.
      */
-    public static final InjectedReferenceFieldActor<VmThread> Thread_vmThread = createThread_vmThread();
-
-    private static InjectedReferenceFieldActor<VmThread> createThread_vmThread() {
-        if (MaxineVM.isPrototyping()) {
-            return new InjectedReferenceFieldActor<VmThread>(Thread.class, VmThread.class) {
-                @Override
-                public ReferenceValue readInjectedValue(Reference reference) {
-                    assert reference.toJava() instanceof Thread;
-                    return ReferenceValue.from(VmThread.main());
-                }
-            };
+    public static final InjectedReferenceFieldActor<VmThread> Thread_vmThread = new InjectedReferenceFieldActor<VmThread>(Thread.class, VmThread.class) {
+        @Override
+        public ReferenceValue readInjectedValue(Reference reference) {
+            assert reference.toJava() instanceof Thread;
+            return ReferenceValue.from(VmThread.main());
         }
-        return Thread_vmThread;
-    }
+    };
 
     /**
      * A field of type {@link FieldActor} injected into {@link Field}.
      */
-    public static final InjectedReferenceFieldActor<FieldActor> Field_fieldActor = createField_fieldActor();
-
-    private static InjectedReferenceFieldActor<FieldActor> createField_fieldActor() {
-        if (MaxineVM.isPrototyping()) {
-            return new InjectedReferenceFieldActor<FieldActor>(Field.class, FieldActor.class) {
-                @Override
-                public ReferenceValue readInjectedValue(Reference reference) {
-                    final Object object = reference.toJava();
-                    assert object instanceof Field;
-                    return ReferenceValue.from(FieldActor.fromJava((Field) object));
-                }
-            };
+    public static final InjectedReferenceFieldActor<FieldActor> Field_fieldActor = new InjectedReferenceFieldActor<FieldActor>(Field.class, FieldActor.class) {
+        @Override
+        public ReferenceValue readInjectedValue(Reference reference) {
+            final Object object = reference.toJava();
+            assert object instanceof Field;
+            return ReferenceValue.from(FieldActor.fromJava((Field) object));
         }
-        return Field_fieldActor;
-    }
+    };
 
     /**
      * A field of type {@link MethodActor} injected into {@link Method}.
      */
-    public static final InjectedReferenceFieldActor<MethodActor> Method_methodActor = createMethod_methodActor();
-
-    private static InjectedReferenceFieldActor<MethodActor> createMethod_methodActor() {
-        if (MaxineVM.isPrototyping()) {
-            return new InjectedReferenceFieldActor<MethodActor>(Method.class, MethodActor.class) {
-                @Override
-                public ReferenceValue readInjectedValue(Reference reference) {
-                    final Object object = reference.toJava();
-                    assert object instanceof Method;
-                    return ReferenceValue.from(MethodActor.fromJava((Method) object));
-                }
-            };
+    public static final InjectedReferenceFieldActor<MethodActor> Method_methodActor = new InjectedReferenceFieldActor<MethodActor>(Method.class, MethodActor.class) {
+        @Override
+        public ReferenceValue readInjectedValue(Reference reference) {
+            final Object object = reference.toJava();
+            assert object instanceof Method;
+            return ReferenceValue.from(MethodActor.fromJava((Method) object));
         }
-        return Method_methodActor;
-    }
+    };
 
     /**
      * A field of type {@link MethodActor} injected into {@link Constructor}.
      */
-    public static final InjectedReferenceFieldActor<MethodActor> Constructor_methodActor = createConstructor_methodActor();
-
-    private static InjectedReferenceFieldActor<MethodActor> createConstructor_methodActor() {
-        if (MaxineVM.isPrototyping()) {
-            return new InjectedReferenceFieldActor<MethodActor>(Constructor.class, MethodActor.class) {
-                @Override
-                public ReferenceValue readInjectedValue(Reference reference) {
-                    final Object object = reference.toJava();
-                    assert object instanceof Constructor;
-                    return ReferenceValue.from(MethodActor.fromJavaConstructor((Constructor) object));
-                }
-            };
+    public static final InjectedReferenceFieldActor<MethodActor> Constructor_methodActor = new InjectedReferenceFieldActor<MethodActor>(Constructor.class, MethodActor.class) {
+        @Override
+        public ReferenceValue readInjectedValue(Reference reference) {
+            final Object object = reference.toJava();
+            assert object instanceof Constructor;
+            return ReferenceValue.from(MethodActor.fromJavaConstructor((Constructor) object));
         }
-        return Constructor_methodActor;
-    }
+    };
 }

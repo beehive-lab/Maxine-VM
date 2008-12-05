@@ -30,9 +30,7 @@ public class SPARCEirTranslatorTest_comparisons extends CompilerTest_comparisons
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_comparisons.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_comparisons.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

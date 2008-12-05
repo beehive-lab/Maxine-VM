@@ -53,7 +53,7 @@ import com.sun.max.vm.prototype.*;
  */
 public final class MaxineInspector {
 
-    private static final String _INSPECTOR_LIBRARY_NAME = "inspector";
+    private static final String _TELE_LIBRARY_NAME = "tele";
 
     private static final OptionSet _options = new OptionSet();
 
@@ -136,7 +136,7 @@ public final class MaxineInspector {
             final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
             PrototypeClassLoader.setClasspath(classpath);
 
-            Prototype.loadLibrary(_INSPECTOR_LIBRARY_NAME);
+            Prototype.loadLibrary(_TELE_LIBRARY_NAME);
             final File bootImageFile = _bootImage.getValue();
 
             Classpath sourcepath = JavaProject.getSourcePath(true);

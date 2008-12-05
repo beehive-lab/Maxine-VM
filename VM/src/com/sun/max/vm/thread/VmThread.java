@@ -131,7 +131,7 @@ public class VmThread {
     private Pointer _vmThreadLocals = Pointer.zero();
 
     @INSPECTED
-    private final String _name;
+    private String _name;
 
     @INSPECTED
     private final long _serial;
@@ -232,6 +232,10 @@ public class VmThread {
         return _name;
     }
 
+    public void setName(String name) {
+        _name = name;
+    }
+
     private JavaMonitor _protectedMonitor;
 
     @INLINE
@@ -278,7 +282,17 @@ public class VmThread {
      */
     private final JniHandles _jniHandles;
 
+    private final boolean _isGCThread;
+
+    /**
+     * Determines if this thread is owned by the garbage collector.
+     */
+    public final boolean isGCThread() {
+        return _isGCThread;
+    }
+
     public VmThread(Thread javaThread) {
+        _isGCThread = Heap.isGcThread(javaThread);
         _waitingCondition = new ConditionVariable();
         synchronized (VmThread.class) {
             _serial = _counter++;

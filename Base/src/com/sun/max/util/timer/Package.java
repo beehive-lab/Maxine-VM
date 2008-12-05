@@ -18,9 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.util.timer;
+
+import com.sun.max.*;
+
 /**
- * Tests generating various prototypes and images.
+ * @see MaxPackage
  *
- * @author Doug Simon
+ * @author Ben L. Titzer
  */
-package test.com.sun.max.vm.prototype;
+public class Package extends BasePackage {
+    public Package() {
+        super();
+    }
+}

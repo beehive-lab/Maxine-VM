@@ -39,10 +39,8 @@ public final class AllTests {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(InternalTest.class);
         suite.addTestSuite(RawDisassemblerAndExternalTest.class);
-        //$JUnit-END$
         return suite;
     }
 

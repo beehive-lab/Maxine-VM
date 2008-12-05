@@ -43,6 +43,7 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.sparc.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.stack.sparc.*;
@@ -334,15 +335,24 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 break;
             }
         }
-
         Pointer callerInstructionPointer;
         // Only the top most frame can still be in its caller's register window, in this case, we need to find the return address from the O7 register.
         // However, the stack frame at a trampoline call may look like a top frame because
         // the trampoline's return address is patched into the entry point of the method invoked via the trampoline.
         // In that case, we still need to get the caller address from the stack. Testing if we're in the top frame filters out these trampoline call.
         if (inCallerRegisterWindow && isTopFrame) {
-            // In that case, the return pointer can only be found in the FRAMELESS_CALL_INSTRUCTION_ADDRESS register.
-            callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(targetMethod.abi()).asPointer();
+            if (purpose.equals(Purpose.INSPECTING)) {
+                // In that case, the return pointer can only be found in the FRAMELESS_CALL_INSTRUCTION_ADDRESS register.
+                callerInstructionPointer = stackFrameWalker.readFramelessCallAddressRegister(targetMethod.abi()).asPointer();
+            } else {
+                // When purpose is other than inspecting, this situation can only occur when we trapped in a prologue (e.g.,
+                // when banging the stack).
+                // We can fish for the caller's instruction pointer in the trapped state, which is located at the
+                // top of the callee stack.
+                final SPARCSafepoint safepoint = (SPARCSafepoint) VMConfiguration.hostOrTarget().safepoint();
+                final Pointer trapState = STACK_BIAS.SPARC_V9.unbias(stackFrameWalker.stackPointer()).minus(SPARCSafepoint.TRAP_STATE_SIZE);
+                callerInstructionPointer = safepoint.getCallAddressRegister(trapState);
+            }
         } else {
             callerInstructionPointer = SPARCStackFrameLayout.getCallerPC(stackFrameWalker);
         }

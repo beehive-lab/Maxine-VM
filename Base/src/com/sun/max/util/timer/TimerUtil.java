@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,17 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.prototype;
+package com.sun.max.util.timer;
 
-import com.sun.max.*;
+import com.sun.max.profile.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Doug Simon
+ * This class offers various utilities for composing and using timers.
+ *
+ * @author Ben L. Titzer
  */
-public class Package extends MaxPackage {
-    public Package() {
-        super();
+public class TimerUtil {
+    public static void time(Runnable runnable, Timer timer) {
+        timer.start();
+        runnable.run();
+        timer.stop();
+    }
+
+    public static long timeElapsed(Runnable runnable, Timer timer) {
+        timer.start();
+        runnable.run();
+        timer.stop();
+        return timer.getLastElapsedTime();
+    }
+
+    public static long timeElapsed(Runnable runnable, Clock clock) {
+        return timeElapsed(runnable, new SingleUseTimer(clock));
+    }
+
+    public static long getLastElapsedMilliSeconds(Timer timer) {
+        return (1000 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
     }
 }

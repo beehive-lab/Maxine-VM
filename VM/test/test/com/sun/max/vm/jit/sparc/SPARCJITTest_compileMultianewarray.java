@@ -38,9 +38,7 @@ public class SPARCJITTest_compileMultianewarray extends JITTest_compileMultianew
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_compileMultianewarray.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_compileMultianewarray.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

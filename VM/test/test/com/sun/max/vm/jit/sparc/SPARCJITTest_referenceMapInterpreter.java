@@ -38,9 +38,7 @@ public class SPARCJITTest_referenceMapInterpreter extends JITTest_referenceMapIn
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCJITTest_referenceMapInterpreter.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(SPARCJITTest_referenceMapInterpreter.class);
-        // $JUnit-END$
         return new SPARCJITTestSetup(suite);
     }
 }

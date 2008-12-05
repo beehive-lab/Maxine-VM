@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,22 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.prototype;
+package com.sun.max.util.timer;
 
-import junit.framework.*;
+import com.sun.max.profile.*;
 
-import com.sun.max.ide.*;
+/**
+ * This class implements a simple timer that requires no synchronization or thread-local data structures.
+ * It supports a single-use, one-at-a-time approach to timing tasks, and does not support nested tasks.
+ *
+ * @author Ben L. Titzer
+ */
+public class SingleUseTimer implements Timer {
+    private long _start;
+    private long _last;
+    private final Clock _clock;
 
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class AutoTest {
-    private AutoTest() {
+    public SingleUseTimer(Clock clock) {
+        this._clock = clock;
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AutoTest.suite());
+    public void start() {
+        _start = _clock.getTicks();
     }
 
-    public static Test suite() {
-        return MaxTestCase.createSuite(new Package(), true);
+    public void stop() {
+        _last = _clock.getTicks() - _start;
+    }
+
+    public Clock getClock() {
+        return _clock;
+    }
+
+    public long getLastElapsedTime() {
+        return _last;
+    }
+
+    public long getLastNestedTime() {
+        return 0;
     }
 }

@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import com.sun.max.lang.*;
 import com.sun.max.profile.Metrics.*;
+import com.sun.max.util.timer.*;
 
 public class GlobalMetrics {
 
@@ -61,9 +62,9 @@ public class GlobalMetrics {
         return getCounter(name);
     }
 
-    public static Metrics.Timer newTimer(String name, Clock clock) {
+    public static TimerMetric newTimer(String name, Clock clock) {
         if (name == null) {
-            return new Metrics.Timer(clock);
+            return new TimerMetric(new MultiThreadTimer(clock));
         }
         return getTimer(name, clock);
     }
@@ -83,10 +84,10 @@ public class GlobalMetrics {
         return counter;
     }
 
-    static synchronized Metrics.Timer getTimer(String name, Clock clock) {
-        Metrics.Timer timer = getMetric(name, Metrics.Timer.class);
+    static synchronized TimerMetric getTimer(String name, Clock clock) {
+        TimerMetric timer = getMetric(name, TimerMetric.class);
         if (timer == null) {
-            timer = setMetric(name, Metrics.Timer.class, new Metrics.Timer(clock));
+            timer = setMetric(name, TimerMetric.class, new TimerMetric(new MultiThreadTimer(clock)));
         }
         return timer;
     }

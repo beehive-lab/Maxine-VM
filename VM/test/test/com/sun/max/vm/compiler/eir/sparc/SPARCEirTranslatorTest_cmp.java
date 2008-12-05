@@ -28,9 +28,7 @@ public class SPARCEirTranslatorTest_cmp extends BytecodeTest_cmp {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(SPARCEirTranslatorTest_cmp.class.getSimpleName());
-        //$JUnit-BEGIN$
         suite.addTestSuite(SPARCEirTranslatorTest_cmp.class);
-        //$JUnit-END$
         return new SPARCEirTranslatorTestSetup(suite);
     }
 

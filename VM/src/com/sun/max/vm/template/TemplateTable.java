@@ -78,6 +78,7 @@ public class TemplateTable {
             final Bytecode bytecode = template.bytecode();
             final int index = bytecode.ordinal();
             final TemplateChooser tc = _templateChoosers[index];
+
             if (tc == null) {
                 _templateChoosers[index] = new SingleChoiceTemplateChooser(template);
             } else {

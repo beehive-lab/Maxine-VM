@@ -279,7 +279,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
     protected ClassMethodActor getClassMethodActor(Class javaClass, String methodName, SignatureDescriptor signature) {
         final ClassMethodActor classMethodActor = ClassActor.fromJava(javaClass).findClassMethodActor(makeSymbol(methodName), signature);
         if (classMethodActor == null) {
-            fail();
+            fail("No such method: " + javaClass.getName() + "." + methodName + signature);
         }
         return classMethodActor;
     }
@@ -292,7 +292,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
             thisClass = thisClass.getSuperclass();
         } while (classMethodActor == null && thisClass != null);
         if (classMethodActor == null) {
-            fail();
+            fail("No such method: " + javaClass.getName() + "." + methodName);
         }
         return classMethodActor;
     }
@@ -749,7 +749,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
      * the compiled code. If a disassembler is not available for the code, then only the metadata is traced.
      * The trace is sent to the standard {@linkplain Trace#stream() trace stream}.
      */
-    protected void traceBundleAndDisassemble(TargetMethod targetMethod) {
+    public void traceBundleAndDisassemble(TargetMethod targetMethod) {
         targetMethod.traceBundle(INDENT_WRITER);
         INDENT_WRITER.println("Reference Maps:");
         INDENT_WRITER.indent();

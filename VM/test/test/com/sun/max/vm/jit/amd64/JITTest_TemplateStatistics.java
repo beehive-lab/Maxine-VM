@@ -37,9 +37,7 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(JITTest_TemplateStatistics.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(JITTest_TemplateStatistics.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 
@@ -61,7 +59,7 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
                 }
                 if (numStopPositions > 0) {
                     final TargetMethod targetTemplate = template.targetMethod();
-                    Trace.line(1, targetTemplate.name() + " comprises #"  + numStopPositions + "stop positions (#direct calls: " + targetTemplate.numberOfDirectCalls() +
+                    Trace.stream().println(targetTemplate.name() + " comprises #"  + numStopPositions + "stop positions (#direct calls: " + targetTemplate.numberOfDirectCalls() +
                                     ", #indirect calls " + targetTemplate.numberOfIndirectCalls() + ")");
 
                 }
@@ -72,32 +70,31 @@ public class JITTest_TemplateStatistics extends TemplateTableTestCase {
     }
 
     public void test_countStopPositions() {
-        Trace.on(1);
         final int [] stopPositionsHistogram = new int [100];
         final TemplateTable templateTable = new TemplateTable(TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES);
         for (Class templateSource : TemplateTableConfiguration.OPTIMIZED_TEMPLATE_SOURCES) {
             final int maxSopOffset = countStopPositions(templateTable, templateSource, stopPositionsHistogram);
-            Trace.line(1, "Max stop positions for template sources " + templateSource.getCanonicalName() + " " + maxSopOffset);
-            Trace.line(1, "--------------------------------------------------------------------------------------------------------------------------\n");
+            Trace.stream().println("Max stop positions for template sources " + templateSource.getCanonicalName() + " " + maxSopOffset);
+            Trace.stream().println("--------------------------------------------------------------------------------------------------------------------------\n");
         }
         printHistogram("Histogram of stop positions", "stop positions",  "templates", stopPositionsHistogram);
     }
 
 
     private void printHistogram(String title, String indexTitle, String valueTitle, int [] histogram) {
-        Trace.line(1, title);
-        Trace.line(1, "# " + indexTitle + ", # " + valueTitle);
+        Trace.stream().println(title);
+        Trace.stream().println("# " + indexTitle + ", # " + valueTitle);
         final int last =  histogram.length - 1;
         int totalNonNullValue = -histogram[0];
         for (int i = 0; i < last; i++) {
             if (histogram[i] > 0) {
-                Trace.line(1, i + ", " +  histogram[i]);
+                Trace.stream().println(i + ", " +  histogram[i]);
                 totalNonNullValue += histogram[i];
             }
         }
         if (histogram[last] > 0) {
-            Trace.line(1, ">= " + last + ", " +  histogram[last]);
+            Trace.stream().println(">= " + last + ", " +  histogram[last]);
         }
-        Trace.line(1, "Total # " + valueTitle + " with " + indexTitle + " : " + totalNonNullValue);
+        Trace.stream().println("Total # " + valueTitle + " with " + indexTitle + " : " + totalNonNullValue);
     }
 }

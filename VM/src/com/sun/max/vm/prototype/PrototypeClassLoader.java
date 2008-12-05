@@ -278,7 +278,7 @@ public final class PrototypeClassLoader extends ClassLoader {
                         Trace.line(1, "Ignoring prototype only type: " + javaType);
                         return null;
                     }
-                    if (isOmittedType(JavaTypeDescriptor.getDescriptorForTupleType(javaType))) {
+                    if (isOmittedType(JavaTypeDescriptor.forJavaClass(javaType))) {
                         Trace.line(1, "Ignoring explicitly omitted type: " + javaType);
                         return null;
                     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,23 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.eir.amd64;
+package com.sun.max.util.timer;
 
-import junit.framework.*;
+import com.sun.max.profile.*;
 
-import com.sun.max.ide.*;
+/**
+ * This class implements a timer that handles multiple threads using the same timer.
+ *
+ * @author Ben L. Titzer
+ */
+public class MultiThreadTimer implements Timer {
 
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class NoAutoTest {
-    private NoAutoTest() {
+    private final Clock _clock;
+
+    private ThreadLocal<SingleThreadTimer> _threadLocal = new ThreadLocal<SingleThreadTimer>() {
+        @Override
+        public SingleThreadTimer initialValue() {
+            return new SingleThreadTimer(_clock);
+        }
+    };
+
+    public MultiThreadTimer(Clock clock) {
+        this._clock = clock;
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(NoAutoTest.suite());
+    public void start() {
+        getTimer().start();
     }
 
-    public static Test suite() {
-        final TestSuite suite = MaxTestCase.createSuite(new Package(), true, AMD64EirTranslatorTest_max.class);
-        return new AMD64EirTranslatorTestSetup(suite);
+    public void stop() {
+        getTimer().stop();
+    }
+
+    public Clock getClock() {
+        return _clock;
+    }
+
+    public long getLastElapsedTime() {
+        return getTimer().getLastElapsedTime();
+    }
+
+    public long getLastNestedTime() {
+        return getTimer().getLastNestedTime();
+    }
+
+    private SingleThreadTimer getTimer() {
+        return _threadLocal.get();
     }
 }

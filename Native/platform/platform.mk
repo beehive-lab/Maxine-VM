@@ -23,8 +23,8 @@ ifeq ($(LIB), prototype)
     TARGET := PROTOTYPE
 endif
 
-ifeq ($(LIB), inspector)
-    TARGET := INSPECTOR
+ifeq ($(LIB), tele)
+    TARGET := TELE
 endif
 
 ifeq ($(LIB), jvm)
@@ -43,7 +43,7 @@ endif
 HOSTOS = $(shell uname -s)
 # TARGETOS is the platform we are compiling for (usually the same as HOSTOS)
 # Set TARGETOS explicitly to cross-compile for a different target 
-# (required for GuestVM/Xen when building inspector)
+# (required for GuestVM/Xen when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
 
 ifeq ($(TARGETOS),Darwin)

@@ -38,9 +38,7 @@ public class AMD64JITTest_compileArithmeticOp extends JITTest_compileArithmeticO
 
     public static Test suite() {
         final TestSuite suite = new TestSuite(AMD64JITTest_compileArithmeticOp.class.getSimpleName());
-        // $JUnit-BEGIN$
         suite.addTestSuite(AMD64JITTest_compileArithmeticOp.class);
-        // $JUnit-END$
         return new AMD64JITTestSetup(suite);
     }
 }
