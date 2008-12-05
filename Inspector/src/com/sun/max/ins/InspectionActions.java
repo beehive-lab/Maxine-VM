@@ -2657,6 +2657,12 @@ public class InspectionActions extends InspectionHolder implements Prober{
         InspectJavaFrameDescriptorAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
+            focus().addListener(new InspectionFocusAdapter() {
+                @Override
+                public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+                    refresh(teleProcess().epoch(), false);
+                }
+            });
         }
 
         @Override

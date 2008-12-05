@@ -48,7 +48,7 @@ import com.sun.max.vm.value.*;
  *
  *
  * ATTENTION: All the methods annotated by {@link JNI_FUNCTION} must appear in the exact same order as specified in
- * jni.h (and jni.c), see the functions at the bottom).
+ * jni.h (and jni.c), see the functions at the bottom.
  *
  * @see JniNativeInterface
  *
@@ -95,14 +95,19 @@ public final class JniFunctions {
         return -1;
     }
 
+    private static final Class[] _defineClassParameterTypes = {String.class, byte[].class, int.class, int.class};
+
     @JNI_FUNCTION
     private static JniHandle DefineClass(Pointer env, Pointer name, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
         final byte[] bytes = new byte[length];
         Memory.readBytes(buffer, length, bytes);
-        final Class[] parameterTypes = {String.class, byte[].class, int.class, int.class};
         try {
             final Object[] arguments = {CString.utf8ToJava(name), bytes, 0, length};
-            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(classLoader.get(), "defineClass", parameterTypes, arguments));
+            Object cl = classLoader.get();
+            if (cl == null) {
+                cl = VmClassLoader.VM_CLASS_LOADER;
+            }
+            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", _defineClassParameterTypes, arguments));
         } catch (Utf8Exception utf8Exception) {
             throw classFormatError("Invalid class name");
         } catch (NoSuchMethodException noSuchMethodException) {
