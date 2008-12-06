@@ -36,7 +36,7 @@ import com.sun.max.vm.reference.*;
  * this built-in is a lvalue (i.e. something that can be assigned to), then the compiler must ensure the variable is
  * allocated on the stack. Otherwise, it must make a copy of the rvalue (i.e. a constant) and ensure the copy is
  * allocated on the stack.
- * 
+ *
  * @author Doug Simon
  */
 public class MakeStackVariable extends SpecialBuiltin {
@@ -125,12 +125,23 @@ public class MakeStackVariable extends SpecialBuiltin {
         }
 
         /**
+         * Gets the offset of the variable identified by this key in the frame a given method.
+         *
+         * @return the offset of this variable in the compiled version of {@code classMethodActor} or null if the method
+         *         has not been compiled
+         */
+        public Integer offset(ClassMethodActor classMethodActor) {
+            return _stackOffsetPerTargetMethod.get(classMethodActor);
+        }
+
+        /**
          * Gets the address of the variable identified by this key in the frame a given compiled method.
-         * 
-         * @param namedVariablesBasePointer the stack frame address that is the base for all stack variable's accessed via this mechanism
+         *
+         * @param namedVariablesBasePointer the stack frame address that is the base for all stack variable's accessed
+         *            via this mechanism
          */
         public Address address(TargetMethod targetMethod, Pointer namedVariablesBasePointer) {
-            final Integer offset = _stackOffsetPerTargetMethod.get(targetMethod.classMethodActor());
+            final Integer offset = offset(targetMethod.classMethodActor());
             assert offset != null;
             return namedVariablesBasePointer.plus(offset);
         }
@@ -149,32 +160,32 @@ public class MakeStackVariable extends SpecialBuiltin {
      * only live (i.e. a stack frame inspector can rely on it to read the value of the stack variable) at certain points
      * in the method. Specifically, it's valid only when either the address returned by the built-in is live or
      * {@code value} is live. For example:
-     * 
+     *
      * <pre>
      *     1:    makeStackVariable(42, key1);
      * </pre>
-     * 
+     *
      * In this code, {@code key1} is invalid immediately after the machine code sequence generated for line 1.
      * <p>
      * In this code sequence:
-     * 
+     *
      * <pre>
      *     1:    long v = 42;
      *     2:    makeStackVariable(v, key1);
      *     3:    foo(v);
      * </pre>
-     * 
+     *
      * {@code key1} is only guaranteed to be valid in line 3 (assuming there are no further uses of {@code v}).
      * <p>
      * In the following sequence, {@code key1} is valid in lines 3 and 4.
-     * 
+     *
      * <pre>
      *     1:    long v = 42;
      *     2:    Address vAlias = makeStackVariable(v, key1);
      *     3:    foo(v);
      *     4:    bar(vAlias);
      * </pre>
-     * 
+     *
      * @param value
      *                a value that is to be stack resident. If {@code value} is a lvalue, then the register allocator
      *                guarantees that it will be allocated on the stack. Otherwise, a stack slot is allocated and
