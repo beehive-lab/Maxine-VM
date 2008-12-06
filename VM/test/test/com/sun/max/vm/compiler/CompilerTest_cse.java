@@ -20,41 +20,33 @@
  */
 package test.com.sun.max.vm.compiler;
 
+import com.sun.max.program.*;
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.value.*;
 
 /**
- * Translates almost all of the packages in the project to test the translator.
+ * Test whether strength reduction takes place and
+ * whether the resulting expressions still compute as expected.
  *
  * @author Bernd Mathiske
  */
-public abstract class CompilerTest_max<Method_Type extends IrMethod> extends CompilerTestCase<Method_Type> {
+public abstract class CompilerTest_cse<Method_Type extends IrMethod> extends CompilerTestCase<Method_Type> {
 
-    public CompilerTest_max(String name) {
+    public CompilerTest_cse(String name) {
         super(name);
     }
 
-    /**
-     * Stub testing takes too long when compiling so many classes which prevents the auto-tests from completing in a timely manner.
-     */
-    @Override
-    protected boolean shouldTestStubs() {
-        return false;
+    private static int m(int a, int b) {
+        final int c = a + b;
+        final int d = a + b;
+        return c * d;
     }
 
-    public void test_1() {
-        compileMethod(Trap.class, "nativeInitialize");
+    public void test_intMinus() {
+        Trace.on(3);
+        final Method_Type compiledMethod = compileMethod(CompilerTest_cse.class, "m");
+        final Value result = execute(compiledMethod, IntValue.from(2), IntValue.from(3));
+        assertEquals(result.asInt(), 25);
     }
 
-    public void test_basePackages() {
-        compilePackages(CompilerTestSetup.javaPrototype().basePackages());
-    }
-
-    public void test_vmPackages() {
-        compilePackages(CompilerTestSetup.javaPrototype().vmPackages());
-    }
-
-    public void test_asmPackages() {
-        compilePackages(CompilerTestSetup.javaPrototype().asmPackages());
-    }
 }

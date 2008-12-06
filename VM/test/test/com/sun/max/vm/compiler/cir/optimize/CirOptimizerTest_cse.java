@@ -18,43 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler;
+package test.com.sun.max.vm.compiler.cir.optimize;
 
-import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.runtime.*;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.*;
+
+import com.sun.max.vm.compiler.cir.*;
 
 /**
- * Translates almost all of the packages in the project to test the translator.
- *
  * @author Bernd Mathiske
  */
-public abstract class CompilerTest_max<Method_Type extends IrMethod> extends CompilerTestCase<Method_Type> {
+public class CirOptimizerTest_cse extends CompilerTest_cse<CirMethod> {
 
-    public CompilerTest_max(String name) {
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(CirOptimizerTest_cse.class.getSimpleName());
+        // $JUnit-BEGIN$
+        suite.addTestSuite(CirOptimizerTest_cse.class);
+        // $JUnit-END$
+        return new CirOptimizerTestSetup(suite);
+    }
+
+    public CirOptimizerTest_cse(String name) {
         super(name);
     }
 
-    /**
-     * Stub testing takes too long when compiling so many classes which prevents the auto-tests from completing in a timely manner.
-     */
-    @Override
-    protected boolean shouldTestStubs() {
-        return false;
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(CirOptimizerTest_cse.suite());
     }
 
-    public void test_1() {
-        compileMethod(Trap.class, "nativeInitialize");
-    }
-
-    public void test_basePackages() {
-        compilePackages(CompilerTestSetup.javaPrototype().basePackages());
-    }
-
-    public void test_vmPackages() {
-        compilePackages(CompilerTestSetup.javaPrototype().vmPackages());
-    }
-
-    public void test_asmPackages() {
-        compilePackages(CompilerTestSetup.javaPrototype().asmPackages());
-    }
 }
