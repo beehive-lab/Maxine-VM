@@ -30,6 +30,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A mechanism for forcing a value onto the stack and obtaining the address of the stack slot. If the first parameter to
@@ -142,7 +143,7 @@ public class MakeStackVariable extends SpecialBuiltin {
          */
         public Address address(TargetMethod targetMethod, Pointer namedVariablesBasePointer) {
             final Integer offset = offset(targetMethod.classMethodActor());
-            assert offset != null;
+            FatalError.check(offset != null, "Could not find offset of stack variable");
             return namedVariablesBasePointer.plus(offset);
         }
 
