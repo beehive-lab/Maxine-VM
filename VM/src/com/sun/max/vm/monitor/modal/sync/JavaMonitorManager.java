@@ -51,6 +51,7 @@ import com.sun.max.vm.thread.*;
  * JavaMonitor. Therefore a post-GC call is required to afterGarbageCollection().
  *
  * @author Simon Wilkinson
+ * @author Mick Jordan
  */
 public class JavaMonitorManager {
 
@@ -65,6 +66,7 @@ public class JavaMonitorManager {
     private static final int _UNBOUNDLIST_GROW_QTY_DEFAULT = 50;  // default
     private static int _unBoundListGrowQty = _UNBOUNDLIST_GROW_QTY_DEFAULT;
     private static int _numberOfUnboundMonitors = 0;
+    private static int _unBoundMonitorsHwm;
     private static ManagedMonitor _unboundList;
     private static ManagedMonitor[] _bindableMonitors = new ManagedMonitor[0];
     private static ManagedMonitor[] _stickyMonitors = new ManagedMonitor[0];
@@ -106,6 +108,7 @@ public class JavaMonitorManager {
                 addToUnboundList(monitor);
                 prototypeAddToBindableMonitors(monitor);
             }
+            _unBoundMonitorsHwm = unBoundListImageQty;
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
             Mutex.initialize();
             ConditionVariable.initialize();
@@ -214,7 +217,8 @@ public class JavaMonitorManager {
                 if (_numberOfUnboundMonitors < _UNBOUNDLIST_MIN_QTY) {
                     System.gc();
                 }
-                if (_numberOfUnboundMonitors < _UNBOUNDLIST_MIN_QTY) {
+                // If we didn't free up enough such that we are at least midway between min and hwm, expand
+                if (_numberOfUnboundMonitors < (_unBoundMonitorsHwm - _UNBOUNDLIST_MIN_QTY) / 2) {
                     expandUnboundList();
                 }
                 monitor = takeFromUnboundList();
@@ -262,6 +266,7 @@ public class JavaMonitorManager {
             newAllBindable[i] = _bindableMonitors[i];
         }
         _bindableMonitors = newAllBindable;
+        _unBoundMonitorsHwm = newAllBindable.length;
         ManagedMonitor monitor = newUnboundList;
         while (monitor != null) {
             newUnboundList = monitor.next();

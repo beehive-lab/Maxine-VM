@@ -21,6 +21,7 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.thread.*;
 
@@ -91,6 +92,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
         _ownerThread = owner;
         _recursionCount = lockQty;
         _ownerAcquired = false;
+        _bindingProtection = BindingProtection.PROTECTED;
     }
 
     @Override
@@ -98,6 +100,7 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
         _ownerThread = null;
         _recursionCount = 0;
         _ownerAcquired = true;
+        _bindingProtection = BindingProtection.UNPROTECTED;
     }
 
     @Override
