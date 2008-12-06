@@ -20,7 +20,6 @@
  */
 package test.com.sun.max.vm.compiler;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.value.*;
 
@@ -43,7 +42,6 @@ public abstract class CompilerTest_cse<Method_Type extends IrMethod> extends Com
     }
 
     public void test_intMinus() {
-        Trace.on(3);
         final Method_Type compiledMethod = compileMethod(CompilerTest_cse.class, "m");
         final Value result = execute(compiledMethod, IntValue.from(2), IntValue.from(3));
         assertEquals(result.asInt(), 25);
