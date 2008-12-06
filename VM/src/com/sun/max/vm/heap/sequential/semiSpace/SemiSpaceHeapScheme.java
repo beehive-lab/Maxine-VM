@@ -125,6 +125,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     // Descriptive names, useful for debugging
     private static final String TO_SPACE_DESCRIPTION = "Heap-To";
     private static final String FROM_SPACE_DESCRIPTION = "Heap-From";
+    private static final String MEMORY_SOURCE = "max.vm.semispace.virtual";
 
     // The heart of the collector.
     // Performs the actual Garbage Collection
@@ -237,8 +238,16 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
             _fromSpace.setSize(size);
             _toSpace.setSize(size);
-            _fromSpace.setStart(/*Virtual*/Memory.allocate(size));
-            _toSpace.setStart(/*Virtual*/Memory.allocate(size));
+
+            boolean useVirtual = false;
+            final String memorySource = System.getProperty(MEMORY_SOURCE);
+            if (memorySource != null) {
+                useVirtual = true;
+            }
+            final Pointer fromStart = useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size);
+            final Pointer toStart = useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size);
+            _fromSpace.setStart(fromStart);
+            _toSpace.setStart(toStart);
 
             if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
                 Log.print("Could not allocate object heap of size ");
