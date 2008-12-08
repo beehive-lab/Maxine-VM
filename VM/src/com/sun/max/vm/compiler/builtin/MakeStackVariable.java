@@ -20,9 +20,11 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
+import java.io.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -74,6 +76,7 @@ public class MakeStackVariable extends SpecialBuiltin {
 
         private StackVariable(String name) {
             _name = name;
+            _stackVariables.append(this);
         }
 
         public static StackVariable create(String name) {
@@ -84,6 +87,8 @@ public class MakeStackVariable extends SpecialBuiltin {
          * Must not use identity hashing, because the inspector needs to have the same view as the target VM on this:
          */
         private final Map<ClassMethodActor, Integer> _stackOffsetPerTargetMethod = new HashMap<ClassMethodActor, Integer>();
+
+        private static final AppendableSequence<StackVariable> _stackVariables = new ArrayListSequence<StackVariable>();
 
         @PROTOTYPE_ONLY
         private static class ConflictDetectionMap extends HashMap<ClassMethodActor,  List<StackVariable>> {
@@ -112,6 +117,17 @@ public class MakeStackVariable extends SpecialBuiltin {
 
         @PROTOTYPE_ONLY
         private static final ConflictDetectionMap _conflictDetectionMap = new ConflictDetectionMap();
+
+        @PROTOTYPE_ONLY
+        public static void dump(PrintStream out) {
+            out.println("== Stack variables ==");
+            for (StackVariable stackVariable : _stackVariables) {
+                out.println("   Stack variable: " + stackVariable);
+                for (Map.Entry<ClassMethodActor, Integer> entry : stackVariable._stackOffsetPerTargetMethod.entrySet()) {
+                    out.println("     " + entry.getKey().name() + " -> " + entry.getValue());
+                }
+            }
+        }
 
         /**
          * Records the frame-based offset of the variable identified by this key in the frame of a given compiled method.
