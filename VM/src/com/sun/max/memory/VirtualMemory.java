@@ -62,6 +62,10 @@ public final class VirtualMemory {
         return virtualMemory_nativeAllocate(size);
     }
 
+    public static void deallocate(Address pointer, Size size) {
+        nativeRelease(pointer, size);
+    }
+
     @C_FUNCTION
     private static native Pointer nativeAllocateIn31BitSpace(Size size);
 
