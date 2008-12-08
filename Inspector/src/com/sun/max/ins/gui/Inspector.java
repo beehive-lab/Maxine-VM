@@ -291,8 +291,11 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
     }
 
-    public boolean isVisible() {
-        return _frame.isVisible();
+    /**
+     * @return whether the inspector's view can be seen on the screen.
+     */
+    public boolean isShowing() {
+        return _frame.isShowing();
     }
 
     public void moveToFront() {

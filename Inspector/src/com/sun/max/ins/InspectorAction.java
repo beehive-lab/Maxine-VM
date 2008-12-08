@@ -37,7 +37,7 @@ import com.sun.max.program.*;
 public abstract class InspectorAction extends AbstractAction implements Prober {
 
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     private String tracePrefix() {
         return "[InspectorAction] ";
@@ -94,6 +94,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     public void redisplay() {
     }
 
+
     private final Object _actionTracer  = new Object() {
         @Override
         public String toString() {
@@ -104,6 +105,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     public void perform() {
         synchronized (_inspection) {
             Trace.begin(TRACE_VALUE, _actionTracer);
+            final long startTimeMillis = System.currentTimeMillis();
             _inspection.setBusy(true);
             if (_runsVM) {
                 _inspection.assumeRunning();
@@ -116,7 +118,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
                 ThrowableDialog.showLater(throwable, _inspection, "Error while performing \"" + name() + "\"");
             } finally {
                 _inspection.setCurrentAction(null);
-                Trace.end(TRACE_VALUE, _actionTracer);
+                Trace.end(TRACE_VALUE, _actionTracer, startTimeMillis);
                 _inspection.setBusy(false);
             }
         }
