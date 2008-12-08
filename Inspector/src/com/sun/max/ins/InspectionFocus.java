@@ -48,7 +48,7 @@ public class InspectionFocus extends InspectionHolder {
     private static final int TRACE_VALUE = 2;
 
     private String tracePrefix() {
-        return "[Inspector] ";
+        return "[InspectionFocus] ";
     }
 
     public InspectionFocus(Inspection inspection) {
@@ -58,12 +58,12 @@ public class InspectionFocus extends InspectionHolder {
     private IdentityHashSet<ViewFocusListener> _listeners = new IdentityHashSet<ViewFocusListener>();
 
     public void addListener(ViewFocusListener listener) {
-        Trace.line(TRACE_VALUE, tracePrefix() + "adding focus listener: " + listener);
+        Trace.line(TRACE_VALUE, tracePrefix() + "adding listener: " + listener);
         _listeners.add(listener);
     }
 
     public void removeListener(ViewFocusListener listener) {
-        Trace.line(TRACE_VALUE, tracePrefix() + " removing focus listener: " + listener);
+        Trace.line(TRACE_VALUE, tracePrefix() + " removing listener: " + listener);
         _listeners.remove(listener);
     }
 

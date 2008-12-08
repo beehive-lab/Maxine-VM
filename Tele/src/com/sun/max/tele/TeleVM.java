@@ -56,14 +56,13 @@ import com.sun.max.program.Classpath;
 import com.sun.max.program.Problem;
 import com.sun.max.program.ProgramError;
 import com.sun.max.program.Trace;
-import com.sun.max.tele.debug.OSExecutionRequestException;
 import com.sun.max.tele.debug.InvalidProcessRequestException;
+import com.sun.max.tele.debug.OSExecutionRequestException;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint;
 import com.sun.max.tele.debug.TeleMessenger;
 import com.sun.max.tele.debug.TeleNativeThread;
 import com.sun.max.tele.debug.TeleProcess;
 import com.sun.max.tele.debug.VMTeleMessenger;
-import com.sun.max.tele.debug.TeleProcess.State;
 import com.sun.max.tele.debug.TeleProcess.StateTransitionEvent;
 import com.sun.max.tele.debug.TeleProcess.StateTransitionListener;
 import com.sun.max.tele.debug.darwin.DarwinTeleVM;
@@ -144,6 +143,12 @@ import com.sun.max.vm.value.WordValue;
  * @author Thomas Wuerthinger
  */
 public abstract class TeleVM implements VMAccess {
+    
+    private static final int TRACE_VALUE = 2;
+    
+    protected String  tracePrefix() {
+        return "[TeleVM: " + Thread.currentThread().getName() + "] ";
+    }
 
 	private static final Logger LOGGER = Logger.getLogger(TeleVM.class
 			.getName());
@@ -750,7 +755,7 @@ public abstract class TeleVM implements VMAccess {
 	 */
 	public void updateLoadableTypeDescriptorsFromClasspath() {
 		final Set<TypeDescriptor> typesOnClasspath = new TreeSet<TypeDescriptor>();
-		Trace.begin(1, "searching classpath for class files");
+		Trace.begin(TRACE_VALUE, tracePrefix() + "searching classpath for class files");
 		new ClassSearch() {
 			@Override
 			protected boolean visitClass(String className) {
@@ -763,7 +768,7 @@ public abstract class TeleVM implements VMAccess {
 				return true;
 			}
 		}.run(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
-		Trace.end(1, "searching classpath for class files ["
+		Trace.end(TRACE_VALUE, tracePrefix() + "searching classpath for class files ["
 				+ typesOnClasspath.size() + " types found]");
 		_typesOnClasspath = typesOnClasspath;
 	}
@@ -863,6 +868,7 @@ public abstract class TeleVM implements VMAccess {
 	 * Updates all cached information about the state of the running VM.
 	 */
 	public synchronized void refresh() {
+	    Trace.begin(TRACE_VALUE, tracePrefix() + "refresh");
 		if (_teleClassRegistry == null) {
 			// Must delay creation/initialization of the {@link TeleClassRegistry} until after
 			// we hit the first execution breakpoint; otherwise addresses won't have been relocated.
@@ -877,6 +883,7 @@ public abstract class TeleVM implements VMAccess {
 			_teleHeapManager.refresh();
 			_teleClassRegistry.refresh();
 		}
+		Trace.end(TRACE_VALUE, tracePrefix() + "refresh");
 	}
 
 	public ReferenceValue createReferenceValue(Reference value) {
@@ -1115,25 +1122,27 @@ public abstract class TeleVM implements VMAccess {
 	private StateTransitionListener _model = new StateTransitionListener() {
 
 		public void handleStateTransition(StateTransitionEvent event) {
-			if (event.newState() == State.TERMINATED) {
-				fireVMDiedEvent();
-			} else if (event.newState() == State.STOPPED
-					&& !_listeners.isEmpty()) {
-
-				final Sequence<TeleNativeThread> breakpointThreads = event
-						.breakpointThreads();
-				for (TeleNativeThread t : breakpointThreads) {
-					fireBreakpointEvent(t, t.getFrames()[0].getLocation());
-				}
-
-				if (event.singleStepThread() != null) {
-					fireSingleStepEvent(event.singleStepThread(), event
-							.singleStepThread().getFrames()[0].getLocation());
-				}
-
-			} else if (event.newState() == State.RUNNING) {
-				LOGGER.info("VM continued to RUN!");
-			}
+            Trace.begin(TRACE_VALUE, tracePrefix() + "handling " + event);
+            switch(event.newState()) {
+                case TERMINATED:
+                    fireVMDiedEvent();
+                    break;
+                case STOPPED:
+                    if (!_listeners.isEmpty()) {
+                        final Sequence<TeleNativeThread> breakpointThreads = event.breakpointThreads();
+                        for (TeleNativeThread t : breakpointThreads) {
+                            fireBreakpointEvent(t, t.getFrames()[0].getLocation());
+                        }                        
+                        if (event.singleStepThread() != null) {
+                            fireSingleStepEvent(event.singleStepThread(), event.singleStepThread().getFrames()[0].getLocation());
+                        }
+                    }
+                    break;
+                case RUNNING:
+                    LOGGER.info("VM continued to RUN!");
+                    break;
+            }
+            Trace.end(TRACE_VALUE, tracePrefix() + "handling " + event);
 		}
 	};
 
@@ -1251,8 +1260,7 @@ public abstract class TeleVM implements VMAccess {
 				.method();
 		this.teleProcess().targetBreakpointFactory().makeBreakpoint(
 				tma.getCurrentJavaTargetMethod().callEntryPoint(), false);
-		Trace.line(1, "Breakpoint set at: "
-				+ tma.getCurrentJavaTargetMethod().callEntryPoint());
+		Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + tma.getCurrentJavaTargetMethod().callEntryPoint());
 	}
 
 	@Override
