@@ -108,14 +108,15 @@ public class FloatNanTest {
     }
 
     public static void foo(double x) {
-        System.out.println((x / x) <= 0.0);
-        System.out.println((x / x) >= 0.0);
-        System.out.println((x / x) == 0.0);
-        System.out.println((x / x) < 0.0);
-        System.out.println((x / x) > 0.0);
-        System.out.println((x / x) != 0.0);
-        System.out.println((x / x) == Double.NaN);
-        System.out.println(x / x);
+        System.out.println("x = " + x);
+        System.out.println("(x / x) <= 0.0 ? " + ((x / x) <= 0.0));
+        System.out.println("(x / x) >= 0.0 ? = " + ((x / x) >= 0.0));
+        System.out.println("(x / x) == 0.0 ? = " + ((x / x) == 0.0));
+        System.out.println("(x / x) < 0.0 ? = " + ((x / x) < 0.0));
+        System.out.println("(x / x) > 0.0) ? = " + ((x / x) > 0.0));
+        System.out.println("(x / x) != 0.0 ? = " + ((x / x) != 0.0));
+        System.out.println("(x / x) == Double.NaN ? = " + ((x / x) == Double.NaN));
+        System.out.println("x / x = " + x / x);
         System.out.println(convertDoubleToInt(x / x));
     }
 
@@ -133,7 +134,10 @@ public class FloatNanTest {
         isnantest(0.0f);
         isnantest(0.75f);
         foo(0.0);
-        System.out.println("Hello World!");
+        System.out.println("Double.NaN > 0 ? = " + (Double.NaN > 0));
+        System.out.println("Double.NaN < 0 ? = " + (Double.NaN < 0));
+        System.out.println("Double.NaN >= 0 ? = " + (Double.NaN >= 0));
+        System.out.println("Double.NaN <= 0 ? = " + (Double.NaN <= 0));
         System.out.println(run(0.0));
         System.out.println(run(1.0));
         System.out.println(run1(0.0));
