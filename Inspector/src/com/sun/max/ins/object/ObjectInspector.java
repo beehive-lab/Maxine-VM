@@ -473,20 +473,22 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     @Override
     public synchronized void refreshView(long epoch, boolean force) {
-        final Pointer newOrigin = _teleObject.getCurrentOrigin();
-        if (!newOrigin.equals(_currentObjectOrigin)) {
-            // The object has been relocated in memory
-            _currentObjectOrigin = newOrigin;
-            reconstructView();
-        } else {
-            if (_objectHeaderInspector != null) {
-                _objectHeaderInspector.refresh(epoch, force);
+        if (isShowing()) {
+            final Pointer newOrigin = _teleObject.getCurrentOrigin();
+            if (!newOrigin.equals(_currentObjectOrigin)) {
+                // The object has been relocated in memory
+                _currentObjectOrigin = newOrigin;
+                reconstructView();
+            } else {
+                if (_objectHeaderInspector != null) {
+                    _objectHeaderInspector.refresh(epoch, force);
+                }
+                for (ValueLabel valueLabel : valueLabels()) {
+                    valueLabel.refresh(epoch, force);
+                }
             }
-            for (ValueLabel valueLabel : valueLabels()) {
-                valueLabel.refresh(epoch, force);
-            }
+            super.refreshView(epoch, force);
         }
-        super.refreshView(epoch, force);
     }
 
 

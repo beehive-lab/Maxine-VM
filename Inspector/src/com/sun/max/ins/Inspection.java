@@ -726,7 +726,12 @@ public class Inspection extends JFrame {
      * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
      */
     private void processStateChange(StateTransitionEvent e) {
-        Trace.begin(TRACE_VALUE, tracePrefix() + "process " + e);
+        Tracer tracer = null;
+        if (Trace.hasLevel(1)) {
+            tracer = new Tracer("process " + e);
+        }
+        Trace.begin(1, tracer);
+        final long startTimeMillis = System.currentTimeMillis();
         _vmState = e.newState();
         _menuBar.setState(_vmState);
         switch(_vmState) {
@@ -749,7 +754,7 @@ public class Inspection extends JFrame {
                 break;
         }
         _inspectionActions.refresh(e.epoch(), true);
-        Trace.end(TRACE_VALUE, tracePrefix() + "process " + e);
+        Trace.end(1, tracer, startTimeMillis);
     }
 
     /**
@@ -771,13 +776,17 @@ public class Inspection extends JFrame {
             if (java.awt.EventQueue.isDispatchThread()) {
                 processStateChange(e);
             } else {
-                Trace.begin(TRACE_VALUE, tracePrefix() + "scheduled " + e);
+                Tracer tracer = null;
+                if (Trace.hasLevel(TRACE_VALUE)) {
+                    tracer = new Tracer("scheduled " + e);
+                }
+                Trace.begin(TRACE_VALUE, tracer);
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
                         processStateChange(e);
                     }
                 });
-                Trace.end(TRACE_VALUE, tracePrefix() + "scheduled " + e);
+                Trace.end(TRACE_VALUE, tracer);
             }
         }
     }
@@ -925,10 +934,16 @@ public class Inspection extends JFrame {
      */
     public synchronized void refreshAll(boolean force) {
         final long epoch = teleProcess().epoch();
+        Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : _inspectionListeners.clone()) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "refreshView: " + listener);
+            if (Trace.hasLevel(TRACE_VALUE)) {
+                tracer = new Tracer("refresh: " + listener);
+            }
+            Trace.begin(TRACE_VALUE, tracer);
+            final long startTimeMillis = System.currentTimeMillis();
             listener.vmStateChanged(epoch, force);
+            Trace.end(TRACE_VALUE, tracer, startTimeMillis);
         }
         _inspectionActions.refresh(epoch, force);
     }
@@ -946,6 +961,7 @@ public class Inspection extends JFrame {
         _inspectionActions.redisplay();
     }
 
+    private final Tracer _threadTracer = new Tracer("refresh thread state");
     /**
      * Determines what happened in {@link TeleVM} execution that just concluded.
      * Then updates all view state as needed.
@@ -956,6 +972,8 @@ public class Inspection extends JFrame {
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set
 
+        Trace.begin(TRACE_VALUE, _threadTracer);
+        final long startTimeMillis = System.currentTimeMillis();
         final IterableWithLength<TeleNativeThread> deadThreads = teleProcess().deadThreads();
         final IterableWithLength<TeleNativeThread> startedThreads = teleProcess().startedThreads();
         if (deadThreads.length() != 0 || startedThreads.length() != 0) {
@@ -974,6 +992,7 @@ public class Inspection extends JFrame {
                 listener.threadStateChanged(currentThread);
             }
         }
+        Trace.end(TRACE_VALUE, _threadTracer, startTimeMillis);
         try {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
@@ -1088,4 +1107,26 @@ public class Inspection extends JFrame {
             inspector.setSize(w, h);
         }
     }
+
+    /**
+     * An object that delays evaluation of a trace message for controller actions.
+     */
+    private class Tracer {
+
+        private final String _message;
+
+        /**
+         * An object that delays evaluation of a trace message.
+         * @param message identifies what is being traced
+         */
+        public Tracer(String message) {
+            _message = message;
+        }
+
+        @Override
+        public String toString() {
+            return tracePrefix() + _message;
+        }
+    }
+
 }
