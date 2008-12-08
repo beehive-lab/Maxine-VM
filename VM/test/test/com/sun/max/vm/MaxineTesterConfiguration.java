@@ -37,6 +37,7 @@ public class MaxineTesterConfiguration {
     static final Class[] _outputTestClasses = {
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
+        test.output.ExitCode.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
         test.output.Recursion.class,

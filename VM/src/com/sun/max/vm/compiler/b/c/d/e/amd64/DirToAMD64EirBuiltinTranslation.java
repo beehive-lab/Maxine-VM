@@ -508,14 +508,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue b = dirToEirValue(dirArguments[1]);
         final EirVariable flag = createEirVariable(Kind.INT);
                                                                      // a,b:    0,1    0,0     1,0    0,nan
-        addInstruction(new XOR_I64(eirBlock(), result, result));     // result:  0      0       0      0
-        addInstruction(new XOR_I64(eirBlock(), flag, flag));         // flag:    0      0       0      0
         addInstruction(new COMISS(eirBlock(), a, b));                //
-        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      0
-        addInstruction(new SETP(eirBlock(), result));                // result:  0      0       0      1
-        addInstruction(new CMOVP_I32(eirBlock(), flag, result));     // flag:    1      0       0      1
+        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      1
         addInstruction(new SETNBE(eirBlock(), result));              // result:  0      0       1      0
         addInstruction(new SUB_I64(eirBlock(), result, flag));       // result: -1      0       1     -1
+        addInstruction(new MOVSX_I8(eirBlock(), result, result));
     }
 
     @Override
@@ -524,15 +521,17 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
         final EirVariable flag = createEirVariable(Kind.INT);
-                                                                     // a,b:    0,1    0,0     1,0    0,nan
-        addInstruction(new XOR_I64(eirBlock(), result, result));     // result:  0      0       0      0
-        addInstruction(new XOR_I64(eirBlock(), flag, flag));         // flag:    0      0       0      0
+        // TODO: is there a way to compute this using only two temporaries?
+        final EirVariable nan = createEirVariable(Kind.INT);
+        // this code computes result = (isGreater + 2 * isNan - isLessThan)
         addInstruction(new COMISS(eirBlock(), a, b));                //
+        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      1
         addInstruction(new SETNBE(eirBlock(), result));              // result:  0      0       1      0
-        addInstruction(new SETP(eirBlock(), flag));                  // flag:    0      0       0      1
-        addInstruction(new CMOVP_I32(eirBlock(), result, flag));     // result:  0      0       1      1
-        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      0
-        addInstruction(new SUB_I64(eirBlock(), result, flag));       // result: -1      0       1      1
+        addInstruction(new SETP(eirBlock(), nan));                   // flag:    0      0       0      1
+        addInstruction(new ADD_I32(eirBlock(), result, nan));        // flag:    0      0       0      1
+        addInstruction(new ADD_I32(eirBlock(), result, nan));        // flag:    0      0       0      1
+        addInstruction(new SUB_I32(eirBlock(), result, flag));       // result: -1      0       1     -1
+        addInstruction(new MOVSX_I8(eirBlock(), result, result));
     }
 
     @Override
@@ -542,14 +541,11 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue b = dirToEirValue(dirArguments[1]);
         final EirVariable flag = createEirVariable(Kind.INT);
                                                                      // a,b:    0,1    0,0     1,0    0,nan
-        addInstruction(new XOR_I64(eirBlock(), result, result));     // result:  0      0       0      0
-        addInstruction(new XOR_I64(eirBlock(), flag, flag));         // flag:    0      0       0      0
         addInstruction(new COMISD(eirBlock(), a, b));                //
-        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      0
-        addInstruction(new SETP(eirBlock(), result));                // result:  0      0       0      1
-        addInstruction(new CMOVP_I32(eirBlock(), flag, result));     // flag:    1      0       0      1
+        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      1
         addInstruction(new SETNBE(eirBlock(), result));              // result:  0      0       1      0
         addInstruction(new SUB_I64(eirBlock(), result, flag));       // result: -1      0       1     -1
+        addInstruction(new MOVSX_I8(eirBlock(), result, result));
     }
 
     @Override
@@ -558,15 +554,16 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
         final EirValue a = dirToEirValue(dirArguments[0]);
         final EirValue b = dirToEirValue(dirArguments[1]);
         final EirVariable flag = createEirVariable(Kind.INT);
-                                                                     // a,b:    0,1    0,0     1,0    0,nan
-        addInstruction(new XOR_I64(eirBlock(), result, result));     // result:  0      0       0      0
-        addInstruction(new XOR_I64(eirBlock(), flag, flag));         // flag:    0      0       0      0
+        final EirVariable nan = createEirVariable(Kind.INT);
+        // this code computes result = (isGreater + 2 * isNan - isLessThan)
         addInstruction(new COMISD(eirBlock(), a, b));                //
+        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      1
         addInstruction(new SETNBE(eirBlock(), result));              // result:  0      0       1      0
-        addInstruction(new SETP(eirBlock(), flag));                  // flag:    0      0       0      1
-        addInstruction(new CMOVP_I32(eirBlock(), result, flag));     // result:  0      0       1      1
-        addInstruction(new SETB(eirBlock(), flag));                  // flag:    1      0       0      0
-        addInstruction(new SUB_I64(eirBlock(), result, flag));       // result: -1      0       1      1
+        addInstruction(new SETP(eirBlock(), nan));                   // flag:    0      0       0      1
+        addInstruction(new ADD_I32(eirBlock(), result, nan));        // flag:    0      0       0      1
+        addInstruction(new ADD_I32(eirBlock(), result, nan));        // flag:    0      0       0      1
+        addInstruction(new SUB_I32(eirBlock(), result, flag));       // result: -1      0       1     -1
+        addInstruction(new MOVSX_I8(eirBlock(), result, result));
     }
 
     private abstract class Conversion {

@@ -22,10 +22,10 @@ package test.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (0f, -0.1f) = false; (78.00f, 78.001f) = true
+ * @Runs: -1.0f = false; 1.0f = false; 0.0f = false
  */
-public class BC_fcmp {
-    public static boolean test(float a, float b) {
-        return a < b;
+public class BC_fcmp04 {
+    public static boolean test(float a) {
+        return (a / a) <= 0.0f;
     }
 }
