@@ -93,15 +93,17 @@ public class VMThreadLocalsPanel extends InspectorPanel {
     }
 
     public final void refresh(long epoch, boolean force) {
-        int index = 0;
-        for (String name : VmThreadLocal.NAMES) {
-            if (_values.isValid(name)) {
-                final long value = _values.get(name);
-                _valueInspectors[index].setValue(new WordValue(Address.fromLong(value)));
-            } else {
-                _valueInspectors[index].setValue(VoidValue.VOID);
+        if (isShowing()) {
+            int index = 0;
+            for (String name : VmThreadLocal.NAMES) {
+                if (_values.isValid(name)) {
+                    final long value = _values.get(name);
+                    _valueInspectors[index].setValue(new WordValue(Address.fromLong(value)));
+                } else {
+                    _valueInspectors[index].setValue(VoidValue.VOID);
+                }
+                index++;
             }
-            index++;
         }
     }
 
