@@ -100,7 +100,6 @@ public final class VirtualMemory {
     }
 
 
-
     @C_FUNCTION
     static native Address nativeGetEndOfCodeRegion();
 

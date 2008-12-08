@@ -45,7 +45,6 @@ public class CallNative extends JavaOperator {
         return _signatureDescriptor.getResultKind();
     }
 
-
     @Override
     public void acceptVisitor(CirVisitor visitor) {
         visitor.visitHCirOperator(this);

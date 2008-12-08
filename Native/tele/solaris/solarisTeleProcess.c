@@ -21,8 +21,6 @@
 /*
  * @author Bernd Mathiske
  */
-
-
 #include "log.h"
 #include "jni.h"
 
@@ -191,8 +189,12 @@ ThreadState_t lwpStatusToThreadState(const lwpstatus_t *lwpStatus) {
     c_ASSERT((lwpStatus->pr_flags & PR_STOPPED) != 0);
 
     ThreadState_t result = TS_SUSPENDED;
-    if (why == PR_FAULTED && what == FLTBPT){
-        result = TS_BREAKPOINT;
+    if (why == PR_FAULTED) {
+        if (what == FLTBPT){
+            result = TS_BREAKPOINT;
+        } else if (what == FLTWATCH) {
+            result = TS_WATCHPOINT;
+        }
     }
     return result;
 }
@@ -301,4 +303,22 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
 
     Pdestroy_agent(ph);
     return error;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeActivateWatchpoint(JNIEnv *env, jclass c, jlong processHandle, jlong address, jlong size) {
+    struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
+    prwatch_t w;
+    w.pr_vaddr = address;
+    w.pr_size = size;
+    w.pr_wflags = WA_WRITE | WA_TRAPAFTER;
+    w.pr_pad = 0;
+
+    int error = Psetwapt(ph, &w);
+    if (error != 0) {
+        log_println("could not set watch point - error: %d", error);
+        return false;
+    }
+    proc_Psync(ph);
+    return true;
 }

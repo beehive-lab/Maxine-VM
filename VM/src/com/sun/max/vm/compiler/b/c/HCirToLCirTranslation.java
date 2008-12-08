@@ -45,11 +45,11 @@ public class HCirToLCirTranslation {
 
         @Override
         public void visitCall(CirCall call) {
-            final CirValue proc = call.procedure();
-            if (proc instanceof JavaOperator) {
-                final JavaOperator op = (JavaOperator) proc;
+            final CirValue procedure = call.procedure();
+            if (procedure instanceof JavaOperator) {
+                final JavaOperator operator = (JavaOperator) procedure;
                 final HCirOperatorLoweringVisitor visitor = new HCirOperatorLoweringVisitor(call, _methodTranslation.variableFactory(), _methodTranslation.cirGenerator().compilerScheme());
-                op.acceptVisitor(visitor);
+                operator.acceptVisitor(visitor);
             }
         }
 
@@ -61,13 +61,13 @@ public class HCirToLCirTranslation {
     public static final class Verifier extends CirVisitor {
         @Override
         public void visitCall(CirCall call) {
-            final CirValue op = call.procedure();
-            assert op instanceof CirClosure ||
-                   op instanceof JavaOperator ||
-                   op instanceof CirBlock ||
-                   op instanceof CirVariable ||
-                   op instanceof CirSwitch
-               : "invalid operator in HCIR " + (op instanceof CirBuiltin ? ((CirBuiltin) op).builtin() : op);
+            final CirValue procedure = call.procedure();
+            assert procedure instanceof CirClosure ||
+                   procedure instanceof JavaOperator ||
+                   procedure instanceof CirBlock ||
+                   procedure instanceof CirVariable ||
+                   procedure instanceof CirSwitch
+               : "invalid operator in HCIR " + (procedure instanceof CirBuiltin ? ((CirBuiltin) procedure).builtin() : procedure);
         }
     }
 
