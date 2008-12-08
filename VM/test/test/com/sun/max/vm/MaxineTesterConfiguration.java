@@ -37,6 +37,8 @@ public class MaxineTesterConfiguration {
     static final Class[] _outputTestClasses = {
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
+        test.output.ExitCode.class,
+        test.output.FloatNanTest.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
         test.output.Recursion.class,
@@ -53,7 +55,6 @@ public class MaxineTesterConfiguration {
         test.output.JREJarLoadTest.class,
         test.output.FileReader.class,
         test.output.ZipFileReader.class,
-        test.output.FloatNanTest.class,
         test.output.JavacTest.class,
     };
 
@@ -95,7 +96,6 @@ public class MaxineTesterConfiguration {
     };
 
     static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
-        test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         _expectedAutoTestFailures
     );

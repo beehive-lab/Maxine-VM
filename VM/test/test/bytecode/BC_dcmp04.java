@@ -22,10 +22,10 @@ package test.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (0d, -0.1d) = false; (78.00d, 78.001d) = true
+ * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
  */
-public class BC_dcmp {
-    public static boolean test(double a, double b) {
-        return a < b;
+public class BC_dcmp04 {
+    public static boolean test(double a) {
+        return (a / a) <= 0.0;
     }
 }
