@@ -27,7 +27,6 @@ import javax.swing.*;
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 
 /**
  * Base class for all "actions" in the Inspector that can be bound to menus, buttons, and keystrokes.
@@ -41,7 +40,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     private static final int TRACE_VALUE = 2;
 
     private String tracePrefix() {
-        return "[Inspector] ";
+        return "[InspectorAction] ";
     }
 
     private final Inspection _inspection;
@@ -95,12 +94,19 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     public void redisplay() {
     }
 
+    private final Object _actionTracer  = new Object() {
+        @Override
+        public String toString() {
+            return tracePrefix() + name();
+        }
+    };
+
     public void perform() {
         synchronized (_inspection) {
-            Trace.begin(TRACE_VALUE, tracePrefix() + "action:  " + name());
+            Trace.begin(TRACE_VALUE, _actionTracer);
             _inspection.setBusy(true);
             if (_runsVM) {
-                _inspection.processStateChange(State.RUNNING);
+                _inspection.assumeRunning();
             }
             try {
                 procedure();
@@ -110,7 +116,7 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
                 ThrowableDialog.showLater(throwable, _inspection, "Error while performing \"" + name() + "\"");
             } finally {
                 _inspection.setCurrentAction(null);
-                Trace.end(TRACE_VALUE, tracePrefix() + "action:  " + name());
+                Trace.end(TRACE_VALUE, _actionTracer);
                 _inspection.setBusy(false);
             }
         }

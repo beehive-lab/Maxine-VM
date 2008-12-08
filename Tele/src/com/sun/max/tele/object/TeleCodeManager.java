@@ -38,6 +38,11 @@ import com.sun.max.vm.reference.Reference;
 public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
 
     private static final int TRACE_VALUE = 1;
+    
+    @Override
+    protected String  tracePrefix() {
+        return "[TeleCodeManager] ";
+    }
 
 	private static TeleCodeManager _teleCodeManager;
 	
@@ -66,6 +71,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
 	 * Lazy initialization; try to keep data reading out of constructor.
 	 */
 	private void initialize() {
+	    Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
 		final Reference bootCodeRegionReference = teleVM().fields().Code_bootCodeRegion.readReference(teleVM());
 		_teleBootCodeRegion = (TeleCodeRegion) TeleObject.make(teleVM(), bootCodeRegionReference);
 		
@@ -76,7 +82,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
 		for (int i = 0; i < codeRegionReferences.length; i++) {
 			_teleCodeRegions[i] = (TeleCodeRegion) TeleObject.make(teleVM(), codeRegionReferences[i]);
 		}
-		Trace.line(TRACE_VALUE, "Initialized TeleCodeManager, contains " + _teleCodeRegions.length + " regions");			
+		Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + _teleCodeRegions.length + " regions");			
 	}
 	
 	public void refresh(long processEpoch) {

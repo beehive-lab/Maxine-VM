@@ -42,6 +42,7 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
 
@@ -49,7 +50,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
 
     @Override
     protected String  tracePrefix() {
-        return "[" + Thread.currentThread().getName() + "] ";
+        return "[TeleProcess: " + Thread.currentThread().getName() + "] ";
     }
 
     private TeleNativeThread _lastSingleStepThread;
@@ -231,15 +232,15 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         }
 
         private void execute(TeleEventRequest request, boolean isNested) {
-            if (!isNested && _state != STOPPED && _state != null) {
+            if (!isNested && _state != STOPPED) {
                 ProgramWarning.message(tracePrefix() + "Cannot execute \"" + request + "\" unless process state is " + STOPPED);
             } else {
                 try {
                     _lastSingleStepThread = null;
                     Trace.begin(TRACE_VALUE, tracePrefix() + "executing request: " + request);
+                    updateState(RUNNING);
                     request.execute();
                     Trace.end(TRACE_VALUE, tracePrefix() + "executing request: " + request);
-                    updateState(RUNNING);
                 } catch (OSExecutionRequestException executionRequestException) {
                     executionRequestException.printStackTrace();
                     return;
@@ -324,7 +325,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         STOPPED, RUNNING, TERMINATED
     }
 
-    protected State _state;
+    protected State _state = STOPPED;
 
     /**
      * Gets the current state of this process.
@@ -351,12 +352,14 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         private State _newState;
         private Sequence<TeleNativeThread> _breakpointThreads;
         private TeleNativeThread _singleStepThread;
+        private long _epoch;
 
-        private StateTransitionEvent(State oldState, State newState, Sequence<TeleNativeThread> breakpointThreads, TeleNativeThread singleStepThread) {
+        private StateTransitionEvent(State oldState, State newState, Sequence<TeleNativeThread> breakpointThreads, TeleNativeThread singleStepThread, long epoch) {
             _oldState = oldState;
             _newState = newState;
             _breakpointThreads = breakpointThreads;
             _singleStepThread = singleStepThread;
+            _epoch = epoch;
         }
 
         public TeleNativeThread singleStepThread() {
@@ -370,8 +373,21 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         public State oldState() {
             return _oldState;
         }
+        
         public State newState() {
             return _newState;
+        }
+        
+        /**
+         * @return the process epoch at the time of the state transition.
+         */
+        public long epoch() {
+            return _epoch;
+        }
+        
+        @Override
+        public String toString() {
+            return _oldState.name() + "-->" + _newState.name() + "(" + _epoch + ")";
         }
     }
 
@@ -415,7 +431,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         final State oldState = _state;
         if (oldState != newState) {
             _state = newState;
-            notifyStateChange(new StateTransitionEvent(oldState, newState, breakpointThreads, singleStepThread));
+            notifyStateChange(new StateTransitionEvent(oldState, newState, breakpointThreads, singleStepThread, epoch()));
         }
     }
 
@@ -554,7 +570,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         _startedThreads.clear();
         _deadThreads.clear();
         _deadThreads.addAll(_threadMap.values());
-        Trace.line(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
+        Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         for (TeleNativeThread thread : threads) {
 
             // Refresh the thread
@@ -580,7 +596,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
             thread.refresh(-1);
             Trace.line(TRACE_VALUE, "    "  + thread + " DEAD");
         }
-
+        Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         _threadMap = newThreadMap;
         _instructionPointers = newInstructionPointers;
     }
