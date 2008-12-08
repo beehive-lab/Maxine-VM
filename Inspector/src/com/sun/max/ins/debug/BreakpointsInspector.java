@@ -506,48 +506,50 @@ public final class BreakpointsInspector extends UniqueInspector {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        // Check for current and added breakpoints
-        // Initially assume all deleted
-        for (BreakpointData breakpointData : _breakpoints) {
-            breakpointData.markDeleted(true);
-        }
-        // add new and mark previous as not deleted
-        for (TeleTargetBreakpoint breakpoint : teleProcess().targetBreakpointFactory().breakpoints(true)) {
-            final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.address());
-            if (breakpointData == null) {
-                // new breakpoint in {@link TeleVM} since last refresh
-                _breakpoints.add(new TargetBreakpointData(breakpoint));
-                final BreakpointTableModel breakpointTableModel = (BreakpointTableModel) _table.getModel();
-                breakpointTableModel.fireTableDataChanged();
-            } else {
-                // mark as not deleted
-                breakpointData.markDeleted(false);
+        if (isShowing()) {
+            // Check for current and added breakpoints
+            // Initially assume all deleted
+            for (BreakpointData breakpointData : _breakpoints) {
+                breakpointData.markDeleted(true);
             }
-        }
-        for (TeleBytecodeBreakpoint breakpoint : teleVM().bytecodeBreakpointFactory().breakpoints()) {
-            final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.key());
-            if (breakpointData == null) {
-                // new breakpoint since last refresh
-                _breakpoints.add(new BytecodeBreakpointData(breakpoint));
-                final BreakpointTableModel breakpointTableModel = (BreakpointTableModel) _table.getModel();
-                breakpointTableModel.fireTableDataChanged();
-            } else {
-                // mark as not deleted
-                breakpointData.markDeleted(false);
+            // add new and mark previous as not deleted
+            for (TeleTargetBreakpoint breakpoint : teleProcess().targetBreakpointFactory().breakpoints(true)) {
+                final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.address());
+                if (breakpointData == null) {
+                    // new breakpoint in {@link TeleVM} since last refresh
+                    _breakpoints.add(new TargetBreakpointData(breakpoint));
+                    final BreakpointTableModel breakpointTableModel = (BreakpointTableModel) _table.getModel();
+                    breakpointTableModel.fireTableDataChanged();
+                } else {
+                    // mark as not deleted
+                    breakpointData.markDeleted(false);
+                }
             }
-        }
-        // now remove the breakpoints that are still marked as deleted
-        final Iterator iter = _breakpoints.iterator();
-        while (iter.hasNext()) {
-            final BreakpointData breakpointData = (BreakpointData) iter.next();
-            if (breakpointData.isDeleted()) {
-                iter.remove();
+            for (TeleBytecodeBreakpoint breakpoint : teleVM().bytecodeBreakpointFactory().breakpoints()) {
+                final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.key());
+                if (breakpointData == null) {
+                    // new breakpoint since last refresh
+                    _breakpoints.add(new BytecodeBreakpointData(breakpoint));
+                    final BreakpointTableModel breakpointTableModel = (BreakpointTableModel) _table.getModel();
+                    breakpointTableModel.fireTableDataChanged();
+                } else {
+                    // mark as not deleted
+                    breakpointData.markDeleted(false);
+                }
             }
+            // now remove the breakpoints that are still marked as deleted
+            final Iterator iter = _breakpoints.iterator();
+            while (iter.hasNext()) {
+                final BreakpointData breakpointData = (BreakpointData) iter.next();
+                if (breakpointData.isDeleted()) {
+                    iter.remove();
+                }
+            }
+            final BreakpointTableModel breakpointTableModel = (BreakpointTableModel) _table.getModel();
+            breakpointTableModel.fireTableDataChanged();
+            updateSelectedBreakpoint(focus().breakpoint());
+            super.refreshView(epoch, force);
         }
-        final BreakpointTableModel breakpointTableModel = (BreakpointTableModel) _table.getModel();
-        breakpointTableModel.fireTableDataChanged();
-        updateSelectedBreakpoint(focus().breakpoint());
-        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {

@@ -33,6 +33,7 @@ import com.sun.max.ins.*;
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public interface InspectorFrame extends Prober {
 
@@ -54,7 +55,10 @@ public interface InspectorFrame extends Prober {
 
     void setVisible(boolean visible);
 
-    boolean isVisible();
+    /**
+     * @return whether the frame that holds the Inspector can be seen on the screen.
+     */
+    boolean isShowing();
 
     void moveToFront();
 
