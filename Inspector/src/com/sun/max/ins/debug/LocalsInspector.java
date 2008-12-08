@@ -111,50 +111,52 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        // First, refresh stack frame information.
-        Pointer stackPointer = null;
-        final Sequence<StackFrame> frames = _teleNativeThread.frames();
-        for (StackFrame stackFrame : frames) {
-            if (stackFrame instanceof JitStackFrame) {
-                final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;
-                if (_jitStackFrame.isSameFrame(jitStackFrame)) {
-                    stackPointer = jitStackFrame.stackPointer();
-                    break;
+        if (isShowing()) {
+            // First, refresh stack frame information.
+            Pointer stackPointer = null;
+            final Sequence<StackFrame> frames = _teleNativeThread.frames();
+            for (StackFrame stackFrame : frames) {
+                if (stackFrame instanceof JitStackFrame) {
+                    final JitStackFrame jitStackFrame = (JitStackFrame) stackFrame;
+                    if (_jitStackFrame.isSameFrame(jitStackFrame)) {
+                        stackPointer = jitStackFrame.stackPointer();
+                        break;
+                    }
                 }
             }
-        }
-        if (stackPointer == null) {
-            // stack frame is inactive, remove it.
-            frame().dispose();
-            return;
-        }
+            if (stackPointer == null) {
+                // stack frame is inactive, remove it.
+                frame().dispose();
+                return;
+            }
 
-        for (int  localVarIndex = 0; localVarIndex < _locals.length; localVarIndex++) {
-            final Word localVar = readlocalVariable(localVarIndex);
-            _locals[localVarIndex].setValue(new WordValue(localVar));
-        }
+            for (int  localVarIndex = 0; localVarIndex < _locals.length; localVarIndex++) {
+                final Word localVar = readlocalVariable(localVarIndex);
+                _locals[localVarIndex].setValue(new WordValue(localVar));
+            }
 
-        // Update top of stack now (do it once the tos label has been cleared)
-        final int stackDepth = _jitStackFrame.operandStackDepth();
-        final int tos = topOfStack(stackDepth);
-        if (tos != topOfStack(_stackDepth)) {
-            clearTosLabel();
-            _stackDepth = stackDepth;
-            setTosLabel();
-            if (!_showAll) {
-                for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
-                    final WordValueLabel label = _stack[stackSlotIndex];
-                    label.setValue(WordValue.ZERO);
+            // Update top of stack now (do it once the tos label has been cleared)
+            final int stackDepth = _jitStackFrame.operandStackDepth();
+            final int tos = topOfStack(stackDepth);
+            if (tos != topOfStack(_stackDepth)) {
+                clearTosLabel();
+                _stackDepth = stackDepth;
+                setTosLabel();
+                if (!_showAll) {
+                    for (int stackSlotIndex = tos; stackSlotIndex  < _stack.length; stackSlotIndex++) {
+                        final WordValueLabel label = _stack[stackSlotIndex];
+                        label.setValue(WordValue.ZERO);
+                    }
                 }
             }
+            final int end = _showAll ? _stack.length : tos;
+            for (int stackSlotIndex = 0; stackSlotIndex <  end; stackSlotIndex++) {
+                final Word stackItem = readStackSlot(stackSlotIndex);
+                final WordValueLabel label = _stack[stackSlotIndex];
+                label.setValue(new WordValue(stackItem));
+            }
+            super.refreshView(epoch, force);
         }
-        final int end = _showAll ? _stack.length : tos;
-        for (int stackSlotIndex = 0; stackSlotIndex <  end; stackSlotIndex++) {
-            final Word stackItem = readStackSlot(stackSlotIndex);
-            final WordValueLabel label = _stack[stackSlotIndex];
-            label.setValue(new WordValue(stackItem));
-        }
-        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {

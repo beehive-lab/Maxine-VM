@@ -169,6 +169,8 @@ public class TeleClassRegistry extends TeleVMHolder {
      * Adds information to the registry about any newly loaded classes in the {@link TeleVM}.
      */
     public void refresh() {	
+        Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
+        final long startTimeMillis = System.currentTimeMillis();
     	final Reference teleClassInfoStaticTupleReference = teleVM().fields().TeleClassInfo_classActorCount.staticTupleReference(teleVM());
 		final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActorCount.fieldActor().offset());    	
     	final int remoteLoadedClassCount = teleVM().teleProcess().dataAccess().readInt(loadedClassCountPointer);    	
@@ -182,6 +184,7 @@ public class TeleClassRegistry extends TeleVMHolder {
     	}
     	Trace.line(TRACE_VALUE, tracePrefix() + " refreshed: static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount));   
     	_dynamicallyLoadedClassCount = remoteLoadedClassCount;
+    	Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
     }
     
     /**

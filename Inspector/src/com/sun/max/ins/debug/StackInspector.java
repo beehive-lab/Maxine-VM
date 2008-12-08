@@ -285,7 +285,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if ((isVisible() && _stateChanged) || force) {
+        if ((isShowing() && _stateChanged) || force) {
             // It is worth checking if we are in the same method and the frame is the same, which case
             // the state has not really changed, which can be a significant optimization for deep stacks
             final Sequence<StackFrame> frames = _teleNativeThread.frames();

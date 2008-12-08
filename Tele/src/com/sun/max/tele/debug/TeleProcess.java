@@ -556,6 +556,8 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     }
 
     private void refreshThreads() {
+        Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
+        final long startTimeMillis = System.currentTimeMillis();
     	_epoch++;
         final AppendableSequence<TeleNativeThread> threads = new ArrayListSequence<TeleNativeThread>(_threadMap.size());
         gatherThreads(threads);
@@ -570,7 +572,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         _startedThreads.clear();
         _deadThreads.clear();
         _deadThreads.addAll(_threadMap.values());
-        Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
+
         for (TeleNativeThread thread : threads) {
 
             // Refresh the thread
@@ -596,7 +598,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
             thread.refresh(-1);
             Trace.line(TRACE_VALUE, "    "  + thread + " DEAD");
         }
-        Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
+        Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:", startTimeMillis);
         _threadMap = newThreadMap;
         _instructionPointers = newInstructionPointers;
     }
