@@ -1835,136 +1835,136 @@ public class JavaTesterRunScheme extends AbstractTester {
                 case 435:
                     JavaTesterTests.test_threads_Thread_join03();
                     break;
-                case 418:
+                case 436:
                     JavaTesterTests.test_threads_Thread_join04();
                     break;
-                case 419:
+                case 437:
                     JavaTesterTests.test_threads_Thread_new01();
                     break;
-                case 420:
+                case 438:
                     JavaTesterTests.test_threads_Thread_new02();
                     break;
-                case 421:
+                case 439:
                     JavaTesterTests.test_threads_Thread_setPriority01();
                     break;
-                case 422:
+                case 440:
                     JavaTesterTests.test_threads_Thread_sleep01();
                     break;
-                case 423:
+                case 441:
                     JavaTesterTests.test_threads_Thread_start01();
                     break;
-                case 424:
+                case 442:
                     JavaTesterTests.test_threads_Thread_yield01();
                     break;
-                case 425:
+                case 443:
                     JavaTesterTests.test_micro_BC_invokevirtual2();
                     break;
-                case 426:
+                case 444:
                     JavaTesterTests.test_micro_BigDoubleParams02();
                     break;
-                case 427:
+                case 445:
                     JavaTesterTests.test_micro_BigFloatParams01();
                     break;
-                case 428:
+                case 446:
                     JavaTesterTests.test_micro_BigFloatParams02();
                     break;
-                case 429:
+                case 447:
                     JavaTesterTests.test_micro_BigIntParams01();
                     break;
-                case 430:
+                case 448:
                     JavaTesterTests.test_micro_BigIntParams02();
                     break;
-                case 431:
+                case 449:
                     JavaTesterTests.test_micro_BigLongParams02();
                     break;
-                case 432:
+                case 450:
                     JavaTesterTests.test_micro_BigMixedParams01();
                     break;
-                case 433:
+                case 451:
                     JavaTesterTests.test_micro_BigMixedParams02();
                     break;
-                case 434:
+                case 452:
                     JavaTesterTests.test_micro_BigMixedParams03();
                     break;
-                case 435:
+                case 453:
                     JavaTesterTests.test_micro_BigObjectParams01();
                     break;
-                case 436:
+                case 454:
                     JavaTesterTests.test_micro_BigObjectParams02();
                     break;
-                case 437:
+                case 455:
                     JavaTesterTests.test_micro_BigParamsAlignment();
                     break;
-                case 438:
+                case 456:
                     JavaTesterTests.test_micro_Bubblesort();
                     break;
-                case 439:
+                case 457:
                     JavaTesterTests.test_micro_Fibonacci();
                     break;
-                case 440:
+                case 458:
                     JavaTesterTests.test_micro_InvokeVirtual_01();
                     break;
-                case 441:
+                case 459:
                     JavaTesterTests.test_micro_InvokeVirtual_02();
                     break;
-                case 442:
+                case 460:
                     JavaTesterTests.test_micro_LoopSwitch01();
                     break;
-                case 443:
+                case 461:
                     JavaTesterTests.test_micro_StrangeFrames();
                     break;
-                case 444:
+                case 462:
                     JavaTesterTests.test_micro_String_format01();
                     break;
-                case 445:
+                case 463:
                     JavaTesterTests.test_micro_String_format02();
                     break;
-                case 446:
+                case 464:
                     JavaTesterTests.test_micro_VarArgs_String01();
                     break;
-                case 447:
+                case 465:
                     JavaTesterTests.test_micro_VarArgs_boolean01();
                     break;
-                case 448:
+                case 466:
                     JavaTesterTests.test_micro_VarArgs_byte01();
                     break;
-                case 449:
+                case 467:
                     JavaTesterTests.test_micro_VarArgs_char01();
                     break;
-                case 450:
+                case 468:
                     JavaTesterTests.test_micro_VarArgs_double01();
                     break;
-                case 451:
+                case 469:
                     JavaTesterTests.test_micro_VarArgs_float01();
                     break;
-                case 452:
+                case 470:
                     JavaTesterTests.test_micro_VarArgs_int01();
                     break;
-                case 453:
+                case 471:
                     JavaTesterTests.test_micro_VarArgs_long01();
                     break;
-                case 454:
+                case 472:
                     JavaTesterTests.test_micro_VarArgs_short01();
                     break;
-                case 455:
+                case 473:
                     JavaTesterTests.test_jvmni_JVM_ArrayCopy01();
                     break;
-                case 456:
+                case 474:
                     JavaTesterTests.test_jvmni_JVM_GetClassContext01();
                     break;
-                case 457:
+                case 475:
                     JavaTesterTests.test_jvmni_JVM_GetFreeMemory01();
                     break;
-                case 458:
+                case 476:
                     JavaTesterTests.test_jvmni_JVM_GetMaxMemory01();
                     break;
-                case 459:
+                case 477:
                     JavaTesterTests.test_jvmni_JVM_GetTotalMemory01();
                     break;
-                case 460:
+                case 478:
                     JavaTesterTests.test_jvmni_JVM_IsNaN01();
                     break;
-                case 461:
+                case 479:
                     JavaTesterTests.test_jni_JNI_OverflowArguments();
             }
         }
