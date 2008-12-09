@@ -506,7 +506,7 @@ public final class BreakpointsInspector extends UniqueInspector {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if (isShowing()) {
+        if (isShowing() || force) {
             // Check for current and added breakpoints
             // Initially assume all deleted
             for (BreakpointData breakpointData : _breakpoints) {

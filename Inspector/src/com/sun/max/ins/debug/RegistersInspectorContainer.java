@@ -128,7 +128,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if (isShowing()) {
+        if (isShowing() || force) {
             if (_threadSetNeedsUpdate) {
                 // Mark all inspectors for possible deletion if their thread is no longer active
                 for (RegistersInspector registersInspector : this) {

@@ -40,6 +40,13 @@ public class InspectionSettings {
 
     private static final int TRACE_VALUE = 2;
 
+    private static final String BOOT_VERSION_KEY = "version";
+    private static final String BOOT_ID_KEY = "id";
+    private static final String COMPONENT_X_KEY = "x";
+    private static final String COMPONENT_Y_KEY = "y";
+    private static final String COMPONENT_HEIGHT_KEY = "height";
+    private static final String COMPONENT_WIDTH_KEY = "width";
+
     private String tracePrefix() {
         return "[InspectionSettings] ";
     }
@@ -164,14 +171,14 @@ public class InspectionSettings {
         final TeleVM teleVM = inspection.teleVM();
         _bootimageClient = new AbstractSaveSettingsListener("bootimage", null) {
             public void saveSettings(SaveSettingsEvent settings) {
-                settings.save("version", String.valueOf(teleVM.bootImage().header()._version));
-                settings.save("id", String.valueOf(teleVM.bootImage().header()._randomID));
+                settings.save(BOOT_VERSION_KEY, String.valueOf(teleVM.bootImage().header()._version));
+                settings.save(BOOT_ID_KEY, String.valueOf(teleVM.bootImage().header()._randomID));
             }
         };
 
         addSaveSettingsListener(_bootimageClient);
-        final int version = get(_bootimageClient, "version", OptionTypes.INT_TYPE, 0);
-        final int randomID = get(_bootimageClient, "id", OptionTypes.INT_TYPE, 0);
+        final int version = get(_bootimageClient, BOOT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
+        final int randomID = get(_bootimageClient, BOOT_ID_KEY, OptionTypes.INT_TYPE, 0);
         _bootImageChanged = version != teleVM.bootImage().header()._version || randomID != teleVM.bootImage().header()._randomID;
         _bootimageClient.saveSettings(new SaveSettingsEvent(_bootimageClient, _properties));
         _saver = new Saver();
@@ -204,15 +211,15 @@ public class InspectionSettings {
         _clients.remove(saveSettingsListener.name());
     }
 
-    public void refreshComponentClient(SaveSettingsListener saveSettingsListener) {
+    private void refreshComponentClient(SaveSettingsListener saveSettingsListener) {
         final Component component = saveSettingsListener.component();
         if (component != null) {
             final Rectangle oldBounds = component.getBounds();
             final Rectangle newBounds = new Rectangle(
-                            get(saveSettingsListener, "x", OptionTypes.INT_TYPE, oldBounds.x),
-                            get(saveSettingsListener, "y", OptionTypes.INT_TYPE, oldBounds.y),
-                            get(saveSettingsListener, "width", OptionTypes.INT_TYPE, oldBounds.width),
-                            get(saveSettingsListener, "height", OptionTypes.INT_TYPE, oldBounds.height));
+                            get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x),
+                            get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y),
+                            get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
+                            get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
             if (!newBounds.equals(oldBounds)) {
                 component.setBounds(newBounds);
             }
@@ -321,20 +328,20 @@ public class InspectionSettings {
             final Component component = saveSettingsListener.component();
             if (component != null) {
                 final Rectangle bounds = component.getBounds();
-                saveSettingsEvent.save("x", bounds.x);
-                saveSettingsEvent.save("y", bounds.y);
-                saveSettingsEvent.save("width", bounds.width);
-                saveSettingsEvent.save("height", bounds.height);
+                saveSettingsEvent.save(COMPONENT_X_KEY, bounds.x);
+                saveSettingsEvent.save(COMPONENT_Y_KEY, bounds.y);
+                saveSettingsEvent.save(COMPONENT_WIDTH_KEY, bounds.width);
+                saveSettingsEvent.save(COMPONENT_HEIGHT_KEY, bounds.height);
             }
         }
+        _properties.putAll(newProperties);
         try {
             final FileWriter fileWriter = new FileWriter(_settingsFile);
-            newProperties.store(fileWriter, null);
+            _properties.store(fileWriter, null);
             fileWriter.close();
         } catch (IOException ioException) {
             ProgramWarning.message(tracePrefix() + "Error while saving settings to " + _settingsFile + ": " + ioException.getMessage());
         }
-        _properties.clear();
-        _properties.putAll(newProperties);
+
     }
 }
