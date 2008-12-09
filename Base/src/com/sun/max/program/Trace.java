@@ -95,11 +95,17 @@ public final class Trace {
         });
     }
 
+    /**
+     * Dynamically sets tracing level, causing trace commands at this or lower levels to produce output.
+     */
     public static void on(int level) {
         assert level >= 0;
         _level = level;
     }
 
+    /**
+     * Dynamically turns tracing on for all levels.
+     */
     public static void on() {
         on(Integer.MAX_VALUE);
     }
@@ -112,20 +118,32 @@ public final class Trace {
     @INSPECTED
     private static transient int _level;
 
+    /**
+     * Dynamically sets the current tracing level to the greater of the current level or the specified new level.
+     */
     public static void atLeast(int level) {
         if (level > _level) {
             _level = level;
         }
     }
 
+    /**
+     * Dynamically turns tracing off by setting current level to zero.
+     */
     public static void off() {
         _level = 0;
     }
 
+    /**
+     * @return current tracing level, which must equal or exceed the level specified by trace commands for output to be produced.
+     */
     public static int level() {
         return _level;
     }
 
+    /**
+     * Does the current tracing level equal or exceed the specified level.
+     */
     public static boolean hasLevel(int requiredLevel) {
         _count++;
         return _level >= requiredLevel && _count >= _threshold;
@@ -160,6 +178,9 @@ public final class Trace {
         }
     }
 
+    /**
+     * Prints a newline on trace output if tracing is globally enabled and current tracing level is at least the level required.
+     */
     public static void line(int requiredLevel) {
         if (_ENABLED) {
             _traceCalls.increment();
@@ -171,6 +192,9 @@ public final class Trace {
         }
     }
 
+    /**
+     * Prints a line of trace output if tracing is globally enabled and if current tracing level is at least the level required.
+     */
     public static void line(int requiredLevel, Object message) {
         if (_ENABLED) {
             _traceCalls.increment();
@@ -183,6 +207,9 @@ public final class Trace {
         }
     }
 
+    /**
+     * Prints a "BEGIN" line of trace output if tracing is globally enabled and if current tracing level is at least the level required; increases indentation.
+     */
     public static void begin(int requiredLevel, Object message) {
         if (_ENABLED) {
             _traceCalls.increment();
@@ -197,18 +224,40 @@ public final class Trace {
         }
     }
 
+    /**
+     * Prints an "END" line of trace output if tracing is globally enabled and if current tracing level is at least the level required; decreases indentation.
+     */
     public static void end(int requiredLevel, Object message) {
+        end(requiredLevel, message, 0);
+    }
+
+    /**
+     * Prints an "END" line of trace output if tracing is globally enabled and if current tracing level is at least the level required; decreases indentation;
+     * appends a timing message, expressed in milliseconds, if a non-zero starting time is supplied.
+     * @param requiredLevel
+     * @param message
+     * @param startTimeMillis a starting time, output from {@link System#currentTimeMillis()}; no timing message appears if zero.
+     */
+    public static void end(int requiredLevel, Object message, long startTimeMillis) {
         if (_ENABLED) {
             _traceCalls.increment();
             if (hasLevel(requiredLevel)) {
+                final long endTimeMillis = System.currentTimeMillis();
                 _tracePrints.increment();
                 _indentation--;
                 // It's quite possible for indentation to go negative in a multithreaded environment
                 //assert _indentation >= 0;
                 printPrefix(requiredLevel);
                 _stream.print("END:   ");
-                _stream.println(message);
-                _stream.flush();
+                if (startTimeMillis > 0) {
+                    _stream.print(message);
+                    _stream.print("  (");
+                    _stream.print(endTimeMillis - startTimeMillis);
+                    _stream.println("ms)");
+                } else {
+                    _stream.println(message);
+                    _stream.flush();
+                }
             }
         }
     }

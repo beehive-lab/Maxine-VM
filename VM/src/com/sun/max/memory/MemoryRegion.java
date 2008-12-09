@@ -20,6 +20,7 @@
  */
 package com.sun.max.memory;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -33,6 +34,7 @@ public interface MemoryRegion {
     /**
      * @return address of the first location in the region.
      */
+    @INLINE(override = true)
     Address start();
 
     /**

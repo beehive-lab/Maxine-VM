@@ -48,7 +48,7 @@ import com.sun.max.vm.value.*;
  *
  *
  * ATTENTION: All the methods annotated by {@link JNI_FUNCTION} must appear in the exact same order as specified in
- * jni.h (and jni.c), see the functions at the bottom).
+ * jni.h (and jni.c), see the functions at the bottom.
  *
  * @see JniNativeInterface
  *
@@ -95,27 +95,34 @@ public final class JniFunctions {
         return -1;
     }
 
+    private static String dottify(String slashifiedName) {
+        return slashifiedName.replace('/', '.');
+    }
+
+    private static final Class[] _defineClassParameterTypes = {String.class, byte[].class, int.class, int.class};
+
     @JNI_FUNCTION
-    private static JniHandle DefineClass(Pointer env, Pointer name, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
+    private static JniHandle DefineClass(Pointer env, Pointer slashifiedName, JniHandle classLoader, Pointer buffer, int length) throws ClassFormatError {
         final byte[] bytes = new byte[length];
         Memory.readBytes(buffer, length, bytes);
-        final Class[] parameterTypes = {String.class, byte[].class, int.class, int.class};
         try {
-            final Object[] arguments = {CString.utf8ToJava(name), bytes, 0, length};
-            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(classLoader.get(), "defineClass", parameterTypes, arguments));
+            // TODO: find out whether already dottified class names should be rejected by this function
+            final Object[] arguments = {dottify(CString.utf8ToJava(slashifiedName)), bytes, 0, length};
+            Object cl = classLoader.get();
+            if (cl == null) {
+                cl = VmClassLoader.VM_CLASS_LOADER;
+            }
+            return JniHandles.createLocalHandle(WithoutAccessCheck.invokeVirtual(cl, "defineClass", _defineClassParameterTypes, arguments));
         } catch (Utf8Exception utf8Exception) {
             throw classFormatError("Invalid class name");
         } catch (NoSuchMethodException noSuchMethodException) {
-            throw ProgramError.unexpected();
+            throw ProgramError.unexpected(noSuchMethodException);
         } catch (IllegalAccessException illegalAccessException) {
-            throw ProgramError.unexpected();
+            throw ProgramError.unexpected(illegalAccessException);
         } catch (InvocationTargetException invocationTargetException) {
-            throw ProgramError.unexpected();
+            VmThread.fromJniEnv(env).setPendingException(invocationTargetException.getTargetException());
+            return JniHandle.zero();
         }
-    }
-
-    private static String dottify(String slashifiedName) {
-        return slashifiedName.replace('/', '.');
     }
 
     private static Class findClass(ClassLoader classLoader, String slashifiedName) throws ClassNotFoundException {
@@ -1880,6 +1887,7 @@ public final class JniFunctions {
         final String s = ((String) string.get()).substring(start, start + length);
         final byte[] utf = Utf8.stringToUtf8(s);
         Memory.writeBytes(utf, utf.length, buffer);
+        buffer.setByte(utf.length, (byte) 0); // zero termination
     }
 
     @JNI_FUNCTION

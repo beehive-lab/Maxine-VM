@@ -25,7 +25,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.sparc.*;
 import com.sun.max.asm.sparc.complete.*;
@@ -112,7 +111,6 @@ public final class SPARCSafepoint extends Safepoint {
         TRAP_STATE_SIZE = TRAP_NUMBER_OFFSET + Word.size();
     }
 
-    @INLINE(override = true)
     @Override
     public GPR latchRegister() {
         return LATCH_REGISTER;

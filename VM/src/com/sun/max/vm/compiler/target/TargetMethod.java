@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.target;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
@@ -33,6 +34,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
@@ -287,11 +289,42 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return _compressedJavaFrameDescriptors;
     }
 
-    public TargetJavaFrameDescriptor getJavaFrameDescriptor(int index) {
-        return TargetJavaFrameDescriptor.get(this, index);
+    /**
+     * Gets the frame descriptor corresponding to a given stop index.
+     *
+     * @param stopIndex a value between 0 and {@link #numberOfStopPositions()}
+     * @return the frame descriptor at {@code stopIndex} or null if there is no frame descriptors in this target method
+     */
+    public TargetJavaFrameDescriptor getJavaFrameDescriptor(int stopIndex) {
+        return TargetJavaFrameDescriptor.get(this, stopIndex);
     }
 
-    public TargetJavaFrameDescriptor getPrecedingJavaFrameDescriptor(Address instructionPointer) {
+    /**
+     * Gets the bytecode locations for the inlining chain rooted at a given instruction pointer. The first bytecode
+     * location in the returned sequence is the one at the closest position less or equal to the position denoted by
+     * {@code instructionPointer}.
+     *
+     * @param instructionPointer a pointer to an instruction within this method
+     * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
+     *         no bytecode location can be determined for {@code instructionPointer}.
+     */
+    public Iterator<BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
+        final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
+        if (targetFrameDescriptor != null) {
+            return targetFrameDescriptor.bytecodeLocations();
+        }
+        return null;
+    }
+
+    /**
+     * Gets the frame descriptor at or before a given instruction pointer. The returned frame descriptor is the one at
+     * the closest position less or equal to the position denoted by {@code instructionPointer}.
+     *
+     * @param instructionPointer a pointer to an instruction within this method
+     * @return the frame descriptor closest to the position denoted by {@code instructionPointer} or null if not frame
+     *         descriptor can be determined for {@code instructionPointer}
+     */
+    public TargetJavaFrameDescriptor getJavaFrameDescriptorFor(Pointer instructionPointer) {
         if (_stopPositions == null) {
             return null;
         }

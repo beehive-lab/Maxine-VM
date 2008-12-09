@@ -263,7 +263,7 @@ public class MaxineTester {
     private static int reportTestResults(PrintStream out) {
         if (out != null) {
             out.println();
-            out.println("MaxineTester Summary:");
+            out.println("== Summary ==");
         }
         int failedImages = 0;
         for (Map.Entry<String, File> entry : _generatedImages.entrySet()) {
@@ -287,13 +287,13 @@ public class MaxineTester {
             if (!_unexpectedFailures.isEmpty()) {
                 out.println("Unexpected failures:");
                 for (Map.Entry<String, String> entry : _unexpectedFailures.entrySet()) {
-                    out.println("  " + entry.getKey() + "  " + entry.getValue());
+                    out.println("  " + entry.getKey() + " " + entry.getValue());
                 }
             }
             if (!_unexpectedPasses.isEmpty()) {
                 out.println("Unexpected passes:");
-                for (String testName : _unexpectedPasses.keySet()) {
-                    out.println("  " + testName);
+                for (String unexpectedPass : _unexpectedPasses.keySet()) {
+                    out.println("  " + unexpectedPass);
                 }
             }
         }
@@ -519,6 +519,7 @@ public class MaxineTester {
         final PrintStream out = out();
 
         out.println("JUnit auto-test: Started " + autoTest);
+        out.flush();
         final long start = System.currentTimeMillis();
         final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
         out.print("JUnit auto-test: Stopped " + autoTest);
@@ -576,11 +577,11 @@ public class MaxineTester {
     }
 
     private static String fileRef(File file) {
-//        final String basePath = new File(_outputDir.getValue()).getAbsolutePath() + File.separator;
-//        final String path = file.getAbsolutePath();
-//        if (path.startsWith(basePath)) {
-//            return "file:" + path.substring(basePath.length());
-//        }
+        final String basePath = new File(_outputDir.getValue()).getAbsolutePath() + File.separator;
+        final String path = file.getAbsolutePath();
+        if (path.startsWith(basePath)) {
+            return "file:" + path.substring(basePath.length());
+        }
         return file.getAbsolutePath();
     }
 
@@ -692,14 +693,14 @@ public class MaxineTester {
                 addTestResult(mainClass.getName(), String.format("timed out", maxineExitValue, javaExitValue), expected);
             } else {
                 final boolean expected = printFailed(mainClass, config);
-                addTestResult(mainClass.getName(), String.format("bad exit value [received %d, expected %d; see %s and %s]", maxineExitValue, javaExitValue, fileRef(javaOutput), fileRef(maxvmOutput)), expected);
+                addTestResult(mainClass.getName(), String.format("bad exit value [received %d, expected %d; see %s and %s ]", maxineExitValue, javaExitValue, fileRef(javaOutput), fileRef(maxvmOutput)), expected);
             }
         } else if (compareFiles(javaOutput, maxvmOutput)) {
             final boolean expected = printSuccess(mainClass, config);
             addTestResult(mainClass.getName(), null, expected);
         } else {
             final boolean expected = printFailed(mainClass, config);
-            addTestResult(mainClass.getName(), String.format("output did not match [compare %s with %s]", fileRef(javaOutput), fileRef(maxvmOutput)), expected);
+            addTestResult(mainClass.getName(), String.format("output did not match [compare %s with %s ]", fileRef(javaOutput), fileRef(maxvmOutput)), expected);
         }
     }
 

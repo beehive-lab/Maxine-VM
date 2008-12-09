@@ -83,7 +83,8 @@ public class AdaptiveMethodState extends MethodState {
      *
      * @return any currently pending compilation
      */
-    @INLINE Compilation currentCompilation(CompilationDirective compilationDirective) {
+    @INLINE
+    final Compilation currentCompilation(CompilationDirective compilationDirective) {
         return _currentCompilations[compilationDirective.ordinal()];
     }
 

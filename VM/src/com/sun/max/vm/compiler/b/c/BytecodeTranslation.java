@@ -234,7 +234,6 @@ public class BytecodeTranslation extends BytecodeVisitor {
         normalContinuation.setBody(_currentCall);
     }
 
-
     protected void callAndPush(CirRoutine cirRoutine, CirValue... regularArguments) {
         final Kind resultKind = cirRoutine.resultKind();
         if (resultKind == Kind.VOID) {

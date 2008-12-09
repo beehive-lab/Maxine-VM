@@ -125,6 +125,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     // Descriptive names, useful for debugging
     private static final String TO_SPACE_DESCRIPTION = "Heap-To";
     private static final String FROM_SPACE_DESCRIPTION = "Heap-From";
+    private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
+
 
     // The heart of the collector.
     // Performs the actual Garbage Collection
@@ -237,8 +239,12 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
             _fromSpace.setSize(size);
             _toSpace.setSize(size);
-            _fromSpace.setStart(/*Virtual*/Memory.allocate(size));
-            _toSpace.setStart(/*Virtual*/Memory.allocate(size));
+
+            final boolean useVirtual = _virtualAllocOption.isPresent();
+            final Pointer fromStart = useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size);
+            final Pointer toStart = useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size);
+            _fromSpace.setStart(fromStart);
+            _toSpace.setStart(toStart);
 
             if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
                 Log.print("Could not allocate object heap of size ");
@@ -417,14 +423,19 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _outOfMemory = true;
             return false;
         }
-        Memory.deallocate(_fromSpace.start());
+        final boolean useVirtual = _virtualAllocOption.isPresent();
+        if (useVirtual) {
+            VirtualMemory.deallocate(_fromSpace.start(), _fromSpace.size());
+        } else {
+            Memory.deallocate(_fromSpace.start());
+        }
         final Size size = Size.min(_fromSpace.size().times(2), Heap.maxSize());
         if (Heap.verbose()) {
             Log.print("New heap size: ");
             Log.println(size.toLong());
         }
         _fromSpace.setSize(size);
-        _fromSpace.setStart(Memory.allocate(size));
+        _fromSpace.setStart(useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size));
         if (_fromSpace.size().isZero()) {
             _outOfMemory = true;
             return false;

@@ -40,6 +40,7 @@ import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -93,10 +94,11 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
     }
 
     public void test_jni_function_entryPoints() {
-        final StaticMethodActor[] jniFunctionActors = JniNativeInterface.jniFunctionActors();
+        final CriticalMethod[] jniFunctions = JniNativeInterface.jniFunctions();
         final CompilerScheme compiler = VMConfiguration.target().compilerScheme();
-        for (StaticMethodActor m : jniFunctionActors) {
-            final TargetMethod targetMethod = (TargetMethod) compiler.compile(m, CompilationDirective.DEFAULT);
+        for (CriticalMethod m : jniFunctions) {
+            final ClassMethodActor classMethodActor = m.classMethodActor();
+            final TargetMethod targetMethod = (TargetMethod) compiler.compile(classMethodActor, CompilationDirective.DEFAULT);
             final Pointer entryPoint = targetMethod.getEntryPoint(CallEntryPoint.C_ENTRY_POINT).asPointer();
             assert targetMethod.abi().callEntryPoint().equals(CallEntryPoint.C_ENTRY_POINT);
             assert entryPoint.equals(targetMethod.codeStart());

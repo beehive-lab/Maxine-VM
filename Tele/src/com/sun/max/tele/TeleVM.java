@@ -56,14 +56,13 @@ import com.sun.max.program.Classpath;
 import com.sun.max.program.Problem;
 import com.sun.max.program.ProgramError;
 import com.sun.max.program.Trace;
-import com.sun.max.tele.debug.OSExecutionRequestException;
 import com.sun.max.tele.debug.InvalidProcessRequestException;
+import com.sun.max.tele.debug.OSExecutionRequestException;
 import com.sun.max.tele.debug.TeleBytecodeBreakpoint;
 import com.sun.max.tele.debug.TeleMessenger;
 import com.sun.max.tele.debug.TeleNativeThread;
 import com.sun.max.tele.debug.TeleProcess;
 import com.sun.max.tele.debug.VMTeleMessenger;
-import com.sun.max.tele.debug.TeleProcess.State;
 import com.sun.max.tele.debug.TeleProcess.StateTransitionEvent;
 import com.sun.max.tele.debug.TeleProcess.StateTransitionListener;
 import com.sun.max.tele.debug.darwin.DarwinTeleVM;
@@ -144,6 +143,12 @@ import com.sun.max.vm.value.WordValue;
  * @author Thomas Wuerthinger
  */
 public abstract class TeleVM implements VMAccess {
+    
+    private static final int TRACE_VALUE = 2;
+    
+    protected String  tracePrefix() {
+        return "[TeleVM: " + Thread.currentThread().getName() + "] ";
+    }
 
 	private static final Logger LOGGER = Logger.getLogger(TeleVM.class
 			.getName());
@@ -372,7 +377,7 @@ public abstract class TeleVM implements VMAccess {
 		}
 		return memoryRegion;
 	}
-	
+
 	/**
 	 * @param address a memory location in the {@link TeleVM}.
 	 * @return whether the location is either in the object heap, the code
@@ -541,7 +546,7 @@ public abstract class TeleVM implements VMAccess {
 	 * Gets a canonical local {@link ClassActor} for the named class, creating
 	 * one if needed by loading the class from the classpath using the
 	 * {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER}.
-	 * 
+	 *
 	 * @param name
 	 *            the name of a class
 	 * @return Local {@link ClassActor} corresponding to the class, possibly
@@ -577,7 +582,7 @@ public abstract class TeleVM implements VMAccess {
 	 * {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER} from either the
 	 * classpath, or if not found on the classpath, by copying the classfile
 	 * from the {@link TeleVM}.
-	 * 
+	 *
 	 * @param classActorReference
 	 *            A {@link ClassActor} in the {@link TeleVM}.
 	 * @return Local, equivalent {@link ClassActor}, possibly created by
@@ -613,7 +618,7 @@ public abstract class TeleVM implements VMAccess {
 	 * the {@link PrototypeClassLoader#PROTOTYPE_CLASS_LOADER} from either the
 	 * classpath, or if not found on the classpath, by copying the classfile
 	 * from the {@link TeleVM}.
-	 * 
+	 *
 	 * @param objectReference
 	 *            An {@link Object} in the {@link TeleVM}.
 	 * @return Local {@link ClassActor} representing the type of the object.
@@ -749,8 +754,8 @@ public abstract class TeleVM implements VMAccess {
 	 * have changed.
 	 */
 	public void updateLoadableTypeDescriptorsFromClasspath() {
-		final Set<TypeDescriptor> typesOnClasspath = new HashSet<TypeDescriptor>();
-		Trace.begin(1, "searching classpath for class files");
+		final Set<TypeDescriptor> typesOnClasspath = new TreeSet<TypeDescriptor>();
+		Trace.begin(TRACE_VALUE, tracePrefix() + "searching classpath for class files");
 		new ClassSearch() {
 			@Override
 			protected boolean visitClass(String className) {
@@ -763,7 +768,7 @@ public abstract class TeleVM implements VMAccess {
 				return true;
 			}
 		}.run(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.classpath());
-		Trace.end(1, "searching classpath for class files ["
+		Trace.end(TRACE_VALUE, tracePrefix() + "searching classpath for class files ["
 				+ typesOnClasspath.size() + " types found]");
 		_typesOnClasspath = typesOnClasspath;
 	}
@@ -822,32 +827,36 @@ public abstract class TeleVM implements VMAccess {
 	private boolean _areTeleRootsValid = true;
 
 	/**
-	 * Identifies the most recent GC for which the local copy of the inspection
+	 * Identifies the most recent GC for which the local copy of the tele root
 	 * table in the {@link TeleVM} is valid.
 	 */
-	private long _inspectorCollectionEpoch;
+	private long _cachedCollectionEpoch;
+	
+	private Tracer _refreshReferencesTracer = new Tracer("refresh references");
 
 	/**
 	 * Refreshes the values that describe {@link TeleVM} state such as the
 	 * current GC epoch.
 	 */
 	private void refreshReferences() {
-		final long teleRootEpoch = fields().TeleHeapInfo_rootEpoch
-				.readLong(this);
-		final long teleCollectionEpoch = fields().TeleHeapInfo_collectionEpoch
-				.readLong(this);
+        Trace.begin(TRACE_VALUE, _refreshReferencesTracer);
+        final long startTimeMillis = System.currentTimeMillis();
+		final long teleRootEpoch = fields().TeleHeapInfo_rootEpoch.readLong(this);
+		final long teleCollectionEpoch = fields().TeleHeapInfo_collectionEpoch.readLong(this);
 		if (teleCollectionEpoch != teleRootEpoch) {
-			assert teleCollectionEpoch != _inspectorCollectionEpoch;
+		    // A GC is in progress, local cache is out of date by definition but can't update yet
+			assert teleCollectionEpoch != _cachedCollectionEpoch;
 			_areTeleRootsValid = false;
-			return;
+		} else if (teleCollectionEpoch == _cachedCollectionEpoch) {
+		    // GC not in progress, local cache is up to date
+		    assert _areTeleRootsValid;
+		} else {
+		    // GC not in progress, local cache is out of date
+		    gripScheme().refresh();
+		    _cachedCollectionEpoch = teleCollectionEpoch;
+		    _areTeleRootsValid = true;
 		}
-		if (teleCollectionEpoch == _inspectorCollectionEpoch) {
-			assert _areTeleRootsValid;
-			return;
-		}
-		gripScheme().refresh();
-		_inspectorCollectionEpoch = teleCollectionEpoch;
-		_areTeleRootsValid = true;
+		Trace.end(TRACE_VALUE, _refreshReferencesTracer, startTimeMillis);
 	}
 
 	public void fireThreadEvents() {
@@ -858,25 +867,30 @@ public abstract class TeleVM implements VMAccess {
 			fireThreadStartedEvent(thread);
 		}
 	}
+	
+	private final Tracer _refreshTracer = new Tracer("refresh");
 
 	/**
 	 * Updates all cached information about the state of the running VM.
 	 */
-	public synchronized void refresh() {		
+	public synchronized void refresh() {
+	    Trace.begin(TRACE_VALUE, _refreshTracer);
+	    final long startTimeMillis = System.currentTimeMillis();
 		if (_teleClassRegistry == null) {
 			// Must delay creation/initialization of the {@link TeleClassRegistry} until after
 			// we hit the first execution breakpoint; otherwise addresses won't have been relocated.
 			// This depends on the {@TeleHeapManager} already existing.
-			_teleClassRegistry = new TeleClassRegistry(this);	
+			_teleClassRegistry = new TeleClassRegistry(this);
 			// Can only fully initialize the {@link TeleHeapManager} once
 			// the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
 			_teleHeapManager.initialize();
-		}		
+		}
 		refreshReferences();
 		if (_areTeleRootsValid) {
 			_teleHeapManager.refresh();
 			_teleClassRegistry.refresh();
 		}
+		Trace.end(TRACE_VALUE, _refreshTracer, startTimeMillis);
 	}
 
 	public ReferenceValue createReferenceValue(Reference value) {
@@ -893,7 +907,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Uses the configured {@linkplain #sourcepath() source path} to search for
 	 * a source file corresponding to a given class actor.
-	 * 
+	 *
 	 * @param classActor
 	 *            the class for which a source file is to be found
 	 * @return the source file corresponding to {@code classActor} or null if so
@@ -942,7 +956,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Tries to find a JDWP ObjectProvider that represents the object that is
 	 * referenced by the parameter.
-	 * 
+	 *
 	 * @param reference
 	 *            a reference to the object that should be represented as a JDWP
 	 *            ObjectProvider
@@ -1115,25 +1129,27 @@ public abstract class TeleVM implements VMAccess {
 	private StateTransitionListener _model = new StateTransitionListener() {
 
 		public void handleStateTransition(StateTransitionEvent event) {
-			if (event.newState() == State.TERMINATED) {
-				fireVMDiedEvent();
-			} else if (event.newState() == State.STOPPED
-					&& !_listeners.isEmpty()) {
-
-				final Sequence<TeleNativeThread> breakpointThreads = event
-						.breakpointThreads();
-				for (TeleNativeThread t : breakpointThreads) {
-					fireBreakpointEvent(t, t.getFrames()[0].getLocation());
-				}
-
-				if (event.singleStepThread() != null) {
-					fireSingleStepEvent(event.singleStepThread(), event
-							.singleStepThread().getFrames()[0].getLocation());
-				}
-
-			} else if (event.newState() == State.RUNNING) {
-				LOGGER.info("VM continued to RUN!");
-			}
+            Trace.begin(TRACE_VALUE, tracePrefix() + "handling " + event);
+            switch(event.newState()) {
+                case TERMINATED:
+                    fireVMDiedEvent();
+                    break;
+                case STOPPED:
+                    if (!_listeners.isEmpty()) {
+                        final Sequence<TeleNativeThread> breakpointThreads = event.breakpointThreads();
+                        for (TeleNativeThread t : breakpointThreads) {
+                            fireBreakpointEvent(t, t.getFrames()[0].getLocation());
+                        }                        
+                        if (event.singleStepThread() != null) {
+                            fireSingleStepEvent(event.singleStepThread(), event.singleStepThread().getFrames()[0].getLocation());
+                        }
+                    }
+                    break;
+                case RUNNING:
+                    LOGGER.info("VM continued to RUN!");
+                    break;
+            }
+            Trace.end(TRACE_VALUE, tracePrefix() + "handling " + event);
 		}
 	};
 
@@ -1151,7 +1167,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a single step has been completed.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that did the single step
 	 * @param location
@@ -1168,7 +1184,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a breakpoint has been hit.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that hit the breakpoint
 	 * @param location
@@ -1185,7 +1201,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a thread has started.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that has started
 	 */
@@ -1198,7 +1214,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Informs all listeners that a thread has died.
-	 * 
+	 *
 	 * @param thread
 	 *            the thread that has died
 	 */
@@ -1226,7 +1242,7 @@ public abstract class TeleVM implements VMAccess {
 	 * call entry point of a method. Does ignore the suspendAll parameter, there
 	 * will always be all threads suspended when the breakpoint is hit. TODO:
 	 * Fix the limitations for breakpoints.
-	 * 
+	 *
 	 * @param codeLocation
 	 *            specifies the code location at which the breakpoint should be
 	 *            set
@@ -1251,8 +1267,7 @@ public abstract class TeleVM implements VMAccess {
 				.method();
 		this.teleProcess().targetBreakpointFactory().makeBreakpoint(
 				tma.getCurrentJavaTargetMethod().callEntryPoint(), false);
-		Trace.line(1, "Breakpoint set at: "
-				+ tma.getCurrentJavaTargetMethod().callEntryPoint());
+		Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + tma.getCurrentJavaTargetMethod().callEntryPoint());
 	}
 
 	@Override
@@ -1339,7 +1354,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Reads a value of a certain kind from the Maxine VM process.
-	 * 
+	 *
 	 * @param kind
 	 *            the type of the value that should be read
 	 * @param pointer
@@ -1382,7 +1397,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Converts a value as seen by the Maxine VM to a value as seen by the JDWP
 	 * server.
-	 * 
+	 *
 	 * @param value
 	 *            the value as seen by the Maxine VM
 	 * @return the value as seen by the JDWP server
@@ -1423,7 +1438,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Converts a JDWP value object to a Maxine value object.
-	 * 
+	 *
 	 * @param vmValue
 	 *            the value as seen by the JDWP server
 	 * @return a newly created value as seen by the Maxine VM
@@ -1481,7 +1496,7 @@ public abstract class TeleVM implements VMAccess {
 
 	/**
 	 * Looks up a JDWP reference type object based on a Java class object.
-	 * 
+	 *
 	 * @param klass
 	 *            the class object whose JDWP reference type should be looked up
 	 * @return a JDWP reference type representing the Java class
@@ -1508,7 +1523,7 @@ public abstract class TeleVM implements VMAccess {
 	/**
 	 * Converts a value kind as seen by the Maxine world to a VMValue type as
 	 * seen by the VM interface used by the JDWP server.
-	 * 
+	 *
 	 * @param kind
 	 *            the Maxine kind value
 	 * @return the type as seen by the JDWP server
@@ -1663,4 +1678,25 @@ public abstract class TeleVM implements VMAccess {
 		}
 		return result;
 	}
+	
+    /**
+     * An object that delays evaluation of a trace message for controller actions.     
+     */
+    private class Tracer {
+        
+        private final String _message;
+        
+        /**
+         * An object that delays evaluation of a trace message.
+         * @param message identifies what is being traced
+         */
+        public Tracer(String message) {
+            _message = message;
+        }
+        
+        @Override
+        public String toString() {
+            return tracePrefix() + _message;
+        }
+    }
 }

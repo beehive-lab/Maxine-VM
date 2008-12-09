@@ -72,6 +72,10 @@ import com.sun.max.vm.VMConfiguration;
  * @author Michael Van De Vanter
  */
 public final class TeleDisassembler {
+    
+    private static final int TRACE_VALUE = 1;
+        
+    private static final String _tracePrefix = "[TeleDisassembler] ";
 
     private TeleDisassembler() {
     }
@@ -80,9 +84,9 @@ public final class TeleDisassembler {
         final Thread thread = new Thread() {
             @Override
             public void run() {
-                Trace.begin(1, "initializing disassembler");
+                Trace.begin(TRACE_VALUE, _tracePrefix + "initializing");
                 createDisassembler(teleVM, Address.zero(), null);
-                Trace.end(1, "initializing disassembler");
+                Trace.end(TRACE_VALUE, _tracePrefix + "initializing");
             }
         };
         thread.start();
