@@ -36,12 +36,12 @@ public abstract class ArraySetSnippet extends BuiltinsSnippet {
     }
 
     @Override
-    public boolean isFoldable(IrValue[] arguments) {
+    public final boolean isFoldable(IrValue[] arguments) {
         return false;
     }
 
     public static final class SetByte extends ArraySetSnippet {
-        // We use 'int' vor the 'value' parameter, because only thus it acts as either 'byte' and 'boolean'
+        // We use 'int' for the 'value' parameter, because only thus it acts as either 'byte' and 'boolean'
         @SNIPPET
         @INLINE
         public static void setByte(Object array, int index, int value) {

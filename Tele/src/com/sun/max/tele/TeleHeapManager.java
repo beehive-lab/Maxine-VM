@@ -48,7 +48,9 @@ import com.sun.max.vm.reference.Reference;
  *
  */
 public class TeleHeapManager extends TeleVMHolder {
-
+    
+    private static final int TRACE_VALUE = 2;
+    
 	private static TeleHeapManager _teleHeapManager;
 	
 	public static final TeleHeapManager make(TeleVM teleVM) {
@@ -102,6 +104,8 @@ public class TeleHeapManager extends TeleVMHolder {
 	 */
 	public void refresh() {
 		if (isInitialized()) {
+            Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
+		    final long startTimeMillis = System.currentTimeMillis();
 			_updatingHeapMemoryRegions = true;
 			final Reference runtimeHeapRegionsArrayReference = teleVM().fields().TeleHeapInfo_memoryRegions.readReference(teleVM());
 			if (!runtimeHeapRegionsArrayReference.isZero()) {
@@ -115,6 +119,8 @@ public class TeleHeapManager extends TeleVMHolder {
 				}
 			}
 			_updatingHeapMemoryRegions = false;
+	         Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
+
 		}
 	}
 	

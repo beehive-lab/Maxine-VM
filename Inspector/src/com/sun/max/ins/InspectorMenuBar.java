@@ -22,64 +22,72 @@ package com.sun.max.ins;
 
 import javax.swing.*;
 
+import com.sun.max.tele.*;
+import com.sun.max.tele.debug.TeleProcess.*;
+
 /**
- * MenuBar for the Inspection.
+ * MenuBar for the Inspection; shows {@link TeleVM} state with background color.
  *
  * @author Michael Van De Vanter
  */
-public final class InspectorMenuBar extends InspectionHolder {
-
-    // Note (mlvdv); this could all be made static.
-
-    public static JMenuBar create(InspectionActions actions) {
-        final InspectorMenuBar inspectionMenuBar = new InspectorMenuBar(actions);
-        return inspectionMenuBar.create();
-    }
+public final class InspectorMenuBar extends JMenuBar {
 
     private final InspectionActions _actions;
 
-    private InspectorMenuBar(InspectionActions actions) {
-        super(actions.inspection());
+    public InspectorMenuBar(InspectionActions actions) {
+        super();
         _actions = actions;
+        add(createInspectionMenu());
+        add(createClassMenu());
+        add(createObjectMenu());
+        add(createMemoryMenu());
+        add(createMethodMenu());
+        if (_actions.inspection().hasProcess()) {
+            add(createDebugMenu());
+        }
+        add(createViewMenu());
+        add(createJavaMenu());
+        add(createTestMenu());
+        add(createHelpMenu());
     }
 
-    private JMenuBar create() {
-        final JMenuBar menuBar = new JMenuBar();
-        menuBar.add(createInspectionMenu());
-        menuBar.add(createClassMenu());
-        menuBar.add(createObjectMenu());
-        menuBar.add(createMemoryMenu());
-        menuBar.add(createMethodMenu());
-        if (_actions.inspection().hasProcess()) {
-            menuBar.add(createDebugMenu());
+    /**
+     * Change the appearance to reflect the current state of the {@link TeleVM}.
+     */
+    public void setState(State state) {
+        switch (state) {
+            case STOPPED:
+                setBackground(_actions.style().vmStoppedBackgroundColor());
+                break;
+            case RUNNING:
+                setBackground(_actions.style().vmRunningBackgroundColor());
+                break;
+            case TERMINATED:
+                setBackground(_actions.style().vmTerminatedBackgroundColor());
+                break;
         }
-        menuBar.add(createViewMenu());
-        menuBar.add(createJavaMenu());
-        menuBar.add(createTestMenu());
-        menuBar.add(createHelpMenu());
-        return menuBar;
     }
 
     private JMenu createInspectionMenu() {
-        final JMenu inspectionMenu = new JMenu("Inspector");
+        final JMenu menu = new JMenu("Inspector");
         if (MaxineInspector.suspendingBeforeRelocating()) {
-            inspectionMenu.add(_actions.relocateBootImage());
-            inspectionMenu.addSeparator();
+            menu.add(_actions.relocateBootImage());
+            menu.addSeparator();
         }
-        inspectionMenu.add(_actions.setInspectorTraceLevel());
-        inspectionMenu.add(_actions.changeInterpreterUseLevel());
-        inspectionMenu.add(_actions.setTransportDebugLevel());
-        inspectionMenu.add(_actions.runFileCommands());
-        inspectionMenu.add(_actions.updateClasspathTypes());
-        inspectionMenu.addSeparator();
-        inspectionMenu.add(_actions.refreshAll());
-        inspectionMenu.addSeparator();
-        inspectionMenu.add(_actions.closeAll());
-        inspectionMenu.addSeparator();
-        inspectionMenu.add(_actions.preferences());
-        inspectionMenu.addSeparator();
-        inspectionMenu.add(_actions.quit());
-        return inspectionMenu;
+        menu.add(_actions.setInspectorTraceLevel());
+        menu.add(_actions.changeInterpreterUseLevel());
+        menu.add(_actions.setTransportDebugLevel());
+        menu.add(_actions.runFileCommands());
+        menu.add(_actions.updateClasspathTypes());
+        menu.addSeparator();
+        menu.add(_actions.refreshAll());
+        menu.addSeparator();
+        menu.add(_actions.closeAll());
+        menu.addSeparator();
+        menu.add(_actions.preferences());
+        menu.addSeparator();
+        menu.add(_actions.quit());
+        return menu;
     }
 
     private JMenu createClassMenu() {
@@ -156,6 +164,9 @@ public final class InspectorMenuBar extends InspectionHolder {
         menu.add(_actions.viewBreakpoints());
         menu.addSeparator();
         menu.add(_actions.toggleBytecodeBreakpoint());
+        menu.addSeparator();
+        menu.add(_actions.setWatchpoint());
+        menu.addSeparator();
         menu.add(_actions.debugPause());
         return menu;
     }

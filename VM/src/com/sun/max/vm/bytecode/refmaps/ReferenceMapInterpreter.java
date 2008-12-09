@@ -361,7 +361,7 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
      * Ensures that the frames for all basic blocks are completely initialized and performs interpretation iteratively
      * if necessary until they are.
      * <p>
-     * If {@link #performsAllocation()} returns true for this interpreter, then this method is guaranteed not to perform
+     * If {@link #performsAllocation()} returns false for this interpreter, then this method is guaranteed not to perform
      * any allocation.
      *
      * @param context the interpretation context for a method

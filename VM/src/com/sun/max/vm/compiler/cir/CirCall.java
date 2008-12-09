@@ -121,10 +121,6 @@ public final class CirCall extends CirNode {
         }
     }
 
-    public void clearJavaFrameDescriptor() {
-        _javaFrameDescriptor = null;
-    }
-
     public void assign(CirCall call) {
         _procedure = call._procedure;
         _arguments = call._arguments;

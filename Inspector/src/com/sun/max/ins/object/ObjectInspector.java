@@ -123,33 +123,39 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     // Preferences
 
+    private static final String SHOW_HEADER_PREFERENCE = "showHeader";
+    private static final String SHOW_ADDRESSES_PREFERENCE = "showAddresses";
+    private static final String SHOW_OFFSETS_PREFERENCE = "showOffsets";
+    private static final String SHOW_FIELD_TYPES_PREFERENCE = "showFieldTypes";
+    private static final String SHOW_MEMORY_REGIONS_PREFERENCE = "showMemoryRegions";
+
     public static class Preferences {
         private final Inspection _inspection;
         boolean _showHeader;
         boolean _showAddresses;
         boolean _showOffsets;
-        boolean _showFieldType;
-        boolean _showMemoryRegion;
+        boolean _showFieldTypes;
+        boolean _showMemoryRegions;
 
         Preferences(Inspection inspection) {
             _inspection = inspection;
             final InspectionSettings settings = inspection.settings();
             final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("objectInspectorPrefs", null) {
                 public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                    saveSettingsEvent.save("showHeader", _showHeader);
-                    saveSettingsEvent.save("showAddresses", _showAddresses);
-                    saveSettingsEvent.save("showOffsets", _showOffsets);
-                    saveSettingsEvent.save("showFieldType", _showFieldType);
-                    saveSettingsEvent.save("showMemoryRegion",  _showMemoryRegion);
+                    saveSettingsEvent.save(SHOW_HEADER_PREFERENCE, _showHeader);
+                    saveSettingsEvent.save(SHOW_ADDRESSES_PREFERENCE, _showAddresses);
+                    saveSettingsEvent.save(SHOW_OFFSETS_PREFERENCE, _showOffsets);
+                    saveSettingsEvent.save(SHOW_FIELD_TYPES_PREFERENCE, _showFieldTypes);
+                    saveSettingsEvent.save(SHOW_MEMORY_REGIONS_PREFERENCE,  _showMemoryRegions);
                 }
             };
             settings.addSaveSettingsListener(saveSettingsListener);
 
-            _showHeader = settings.get(saveSettingsListener, "showHeader", OptionTypes.BOOLEAN_TYPE, true);
-            _showAddresses = settings.get(saveSettingsListener, "showAddresses", OptionTypes.BOOLEAN_TYPE, false);
-            _showOffsets = settings.get(saveSettingsListener, "showOffsets", OptionTypes.BOOLEAN_TYPE, true);
-            _showFieldType = settings.get(saveSettingsListener, "showFieldType", OptionTypes.BOOLEAN_TYPE, true);
-            _showMemoryRegion = settings.get(saveSettingsListener, "showMemoryRegion", OptionTypes.BOOLEAN_TYPE, false);
+            _showHeader = settings.get(saveSettingsListener, SHOW_HEADER_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+            _showAddresses = settings.get(saveSettingsListener, SHOW_ADDRESSES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
+            _showOffsets = settings.get(saveSettingsListener, SHOW_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+            _showFieldTypes = settings.get(saveSettingsListener, SHOW_FIELD_TYPES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+            _showMemoryRegions = settings.get(saveSettingsListener, SHOW_MEMORY_REGIONS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
         }
 
         /**
@@ -178,13 +184,13 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             alwaysShowTupleTypeCheckBox.setOpaque(true);
             alwaysShowTupleTypeCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
             alwaysShowTupleTypeCheckBox.setToolTipText("Display types in tuples?");
-            alwaysShowTupleTypeCheckBox.setSelected(_showFieldType);
+            alwaysShowTupleTypeCheckBox.setSelected(_showFieldTypes);
 
             final JCheckBox alwaysShowMemoryRegionCheckBox = new JCheckBox("Region");
             alwaysShowMemoryRegionCheckBox.setOpaque(true);
             alwaysShowMemoryRegionCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
             alwaysShowMemoryRegionCheckBox.setToolTipText("Display memory region in tuples?");
-            alwaysShowMemoryRegionCheckBox.setSelected(_showMemoryRegion);
+            alwaysShowMemoryRegionCheckBox.setSelected(_showMemoryRegions);
 
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
@@ -196,9 +202,9 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                     } else if (source == alwaysShowOffsetsCheckBox) {
                         _showOffsets = alwaysShowOffsetsCheckBox.isSelected();
                     } else if (source == alwaysShowTupleTypeCheckBox) {
-                        _showFieldType = alwaysShowTupleTypeCheckBox.isSelected();
+                        _showFieldTypes = alwaysShowTupleTypeCheckBox.isSelected();
                     } else if (source == alwaysShowMemoryRegionCheckBox) {
-                        _showMemoryRegion = alwaysShowMemoryRegionCheckBox.isSelected();
+                        _showMemoryRegions = alwaysShowMemoryRegionCheckBox.isSelected();
                     }
                     _inspection.settings().save();
                 }
@@ -279,8 +285,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private final JCheckBoxMenuItem _showHeaderMenuCheckBox;
     private final JCheckBoxMenuItem _showAddressesMenuCheckBox;
     private final JCheckBoxMenuItem _showOffsetsMenuCheckBox;
-    private final JCheckBoxMenuItem _showTypeMenuCheckBox;
-    private final JCheckBoxMenuItem _showMemoryRegionMenuCheckBox;
+    private final JCheckBoxMenuItem _showTypesMenuCheckBox;
+    private final JCheckBoxMenuItem _showMemoryRegionsMenuCheckBox;
 
     private ObjectHeaderInspector _objectHeaderInspector;
 
@@ -311,14 +317,14 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 reconstructView();
             }
         });
-        _showTypeMenuCheckBox = new JCheckBoxMenuItem("Display tuple types", preferences._showFieldType);
-        _showTypeMenuCheckBox.addActionListener(new ActionListener() {
+        _showTypesMenuCheckBox = new JCheckBoxMenuItem("Display tuple types", preferences._showFieldTypes);
+        _showTypesMenuCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 reconstructView();
             }
         });
-        _showMemoryRegionMenuCheckBox = new JCheckBoxMenuItem("Display memory region", preferences._showMemoryRegion);
-        _showMemoryRegionMenuCheckBox.addActionListener(new ActionListener() {
+        _showMemoryRegionsMenuCheckBox = new JCheckBoxMenuItem("Display memory regions", preferences._showMemoryRegions);
+        _showMemoryRegionsMenuCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 reconstructView();
             }
@@ -334,8 +340,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         frame().menu().add(_showHeaderMenuCheckBox);
         frame().menu().add(_showAddressesMenuCheckBox);
         frame().menu().add(_showOffsetsMenuCheckBox);
-        frame().menu().add(_showTypeMenuCheckBox);
-        frame().menu().add(_showMemoryRegionMenuCheckBox);
+        frame().menu().add(_showTypesMenuCheckBox);
+        frame().menu().add(_showMemoryRegionsMenuCheckBox);
         frame().menu().add(new InspectorAction(inspection(), "Object Display Prefs..") {
             @Override
             public void procedure() {
@@ -408,15 +414,15 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     /**
      * @return whether to display the "Type" column for headers and tuples
      */
-    public boolean showType() {
-        return _showTypeMenuCheckBox.getState();
+    public boolean showTypes() {
+        return _showTypesMenuCheckBox.getState();
     }
 
     /**
      * @return whether to display the "Region" column for headers and tuples
      */
-    public boolean showMemoryRegion() {
-        return _showMemoryRegionMenuCheckBox.getState();
+    public boolean showMemoryRegions() {
+        return _showMemoryRegionsMenuCheckBox.getState();
     }
 
 
@@ -431,10 +437,10 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         if (showOffsets()) {
             result++;
         }
-        if (showType()) {
+        if (showTypes()) {
             result++;
         }
-        if (showMemoryRegion()) {
+        if (showMemoryRegions()) {
             result++;
         }
         return result;
@@ -451,7 +457,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         if (showOffsets()) {
             result++;
         }
-        if (showMemoryRegion()) {
+        if (showMemoryRegions()) {
             result++;
         }
         return result;
@@ -473,20 +479,22 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     @Override
     public synchronized void refreshView(long epoch, boolean force) {
-        final Pointer newOrigin = _teleObject.getCurrentOrigin();
-        if (!newOrigin.equals(_currentObjectOrigin)) {
-            // The object has been relocated in memory
-            _currentObjectOrigin = newOrigin;
-            reconstructView();
-        } else {
-            if (_objectHeaderInspector != null) {
-                _objectHeaderInspector.refresh(epoch, force);
+        if (isShowing() || force) {
+            final Pointer newOrigin = _teleObject.getCurrentOrigin();
+            if (!newOrigin.equals(_currentObjectOrigin)) {
+                // The object has been relocated in memory
+                _currentObjectOrigin = newOrigin;
+                reconstructView();
+            } else {
+                if (_objectHeaderInspector != null) {
+                    _objectHeaderInspector.refresh(epoch, force);
+                }
+                for (ValueLabel valueLabel : valueLabels()) {
+                    valueLabel.refresh(epoch, force);
+                }
             }
-            for (ValueLabel valueLabel : valueLabels()) {
-                valueLabel.refresh(epoch, force);
-            }
+            super.refreshView(epoch, force);
         }
-        super.refreshView(epoch, force);
     }
 
 
@@ -515,7 +523,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             if (showOffsets()) {
                 fieldsPanel.add(new LocationLabel.AsOffset(inspection(), fieldActor.offset(), _currentObjectOrigin));                           // Field position
             }
-            if (showType()) {
+            if (showTypes()) {
                 fieldsPanel.add(new ClassActorLabel(inspection(), fieldActor.descriptor()));                                                              // Field type
             }
             fieldsPanel.add(new FieldActorLabel(inspection(), fieldActor));                                                                                     // Field name
@@ -551,7 +559,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             valueLabels.append(valueLabel);
             fieldsPanel.add(valueLabel);                                                                                                                                     // Field value
 
-            if (showMemoryRegion()) {
+            if (showMemoryRegions()) {
                 final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
                     @Override
                     public Value fetchValue() {
@@ -612,7 +620,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 });
             }
             panel.add(valueLabels.last());
-            if (showMemoryRegion()) {
+            if (showMemoryRegions()) {
                 final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
                     @Override
                     public Value fetchValue() {

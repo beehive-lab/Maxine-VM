@@ -128,7 +128,7 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if (_threadSetNeedsUpdate) {
+        if (_threadSetNeedsUpdate || force) {
             // Mark all stack inspectors for possible deletion if their thread is no longer active
             for (StackInspector stackInspector : this) {
                 stackInspector.setMarked(true);

@@ -126,10 +126,12 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        _integerRegisterPanel.refresh(epoch, force);
-        _stateRegisterPanel.refresh(epoch, force);
-        _floatingPointRegisterPanel.refresh(epoch, force);
-        super.refreshView(epoch, force);
+        if (isShowing() || force) {
+            _integerRegisterPanel.refresh(epoch, force);
+            _stateRegisterPanel.refresh(epoch, force);
+            _floatingPointRegisterPanel.refresh(epoch, force);
+            super.refreshView(epoch, force);
+        }
     }
 
     public void viewConfigurationChanged(long epoch) {

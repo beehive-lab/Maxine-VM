@@ -153,6 +153,9 @@ public final class Files {
         if (length > Integer.MAX_VALUE) {
             throw new IOException("file is too big to read into an array: " + file);
         }
+        if (length == 0) {
+            return new char[0];
+        }
         final Reader fileReader = new BufferedReader(new FileReader(file), length);
         char[] chars = new char[length];
         try {

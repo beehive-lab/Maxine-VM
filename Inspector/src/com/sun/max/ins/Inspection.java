@@ -55,8 +55,14 @@ public class Inspection extends JFrame {
 
     private static final int TRACE_VALUE = 2;
 
+    /**
+     * @return a string suitable for tagging all trace lines; mention the thread if it isn't the AWT event handler.
+     */
     private String tracePrefix() {
-        return "[Inspector] ";
+        if (java.awt.EventQueue.isDispatchThread()) {
+            return "[Inspector] ";
+        }
+        return "[Inspector: " + Thread.currentThread().getName() + "] ";
     }
 
     private final String _inspectorName = "Maxine Inspector";
@@ -207,7 +213,7 @@ public class Inspection extends JFrame {
             _keyBindingMap = keyBindingMap;
             for (InspectorAction inspectorAction : _actionsWithKeyBindings) {
                 final KeyStroke keyStroke = keyBindingMap.get(inspectorAction.getClass());
-                Trace.line(2, "Binding " + keyStroke + " to " + inspectorAction);
+                Trace.line(TRACE_VALUE, "Binding " + keyStroke + " to " + inspectorAction);
                 inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
             }
         }
@@ -235,20 +241,26 @@ public class Inspection extends JFrame {
         return _preferences;
     }
 
+    private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
+    private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
+    private static final String DEBUG_MODE_PREFERENCE = "debugMode";
+    private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
+
+
     public class Preferences extends AbstractSaveSettingsListener {
         public Preferences() {
             super("inspection", Inspection.this);
         }
 
         public void saveSettings(SaveSettingsEvent settings) {
-            settings.save("keyBindings", keyBindingMap().name());
-            settings.save("investigateWordValues", _investigateWordValues);
-            settings.save("debugMode", debugMode().name());
-            settings.save("externalViewer", _externalViewerType.name());
+            settings.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
+            settings.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
+            settings.save(DEBUG_MODE_PREFERENCE, debugMode().name());
+            settings.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = _externalViewerConfig.get(externalViewerType);
                 if (config != null) {
-                    settings.save("externalViewer." + externalViewerType.name(), config);
+                    settings.save(EXTERNAL_VIEWER_PREFERENCE  + "." + externalViewerType.name(), config);
                 }
             }
         }
@@ -256,8 +268,8 @@ public class Inspection extends JFrame {
         void initialize() {
             try {
                 _settings.addSaveSettingsListener(this);
-                if (_settings.containsKey(this, "keyBindings")) {
-                    final String keyBindingsName = _settings.get(this, "keyBindings", OptionTypes.STRING_TYPE, null);
+                if (_settings.containsKey(this, KEY_BINDINGS_PREFERENCE)) {
+                    final String keyBindingsName = _settings.get(this, KEY_BINDINGS_PREFERENCE, OptionTypes.STRING_TYPE, null);
 
                     final KeyBindingMap keyBindingMap = KeyBindingMap.ALL.get(keyBindingsName);
                     if (keyBindingMap != null) {
@@ -274,9 +286,9 @@ public class Inspection extends JFrame {
                     default:
                         break;
                 }
-                _debugMode = _settings.get(this, "debugMode", new OptionTypes.EnumType<DebugMode>(DebugMode.class), defaultDebugMode);
-                _investigateWordValues = _settings.get(this, "investigateWordValues", OptionTypes.BOOLEAN_TYPE, true);
-                _externalViewerType = _settings.get(this, "externalViewer", new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
+                _debugMode = _settings.get(this, DEBUG_MODE_PREFERENCE, new OptionTypes.EnumType<DebugMode>(DebugMode.class), defaultDebugMode);
+                _investigateWordValues = _settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+                _externalViewerType = _settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
                 for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                     final String config = _settings.get(this, "externalViewer." + externalViewerType.name(), OptionTypes.STRING_TYPE, null);
                     _externalViewerConfig.put(externalViewerType, config);
@@ -562,7 +574,7 @@ public class Inspection extends JFrame {
                 if (config != null) {
                     final String command = config.replaceAll("\\$file", javaSourceFile.getAbsolutePath()).replaceAll("\\$line", String.valueOf(lineNumber));
                     try {
-                        Trace.line(1, "Opening file by executing " + command);
+                        Trace.line(1, tracePrefix() + "Opening file by executing " + command);
                         Runtime.getRuntime().exec(command);
                     } catch (IOException ioException) {
                         throw new InspectorError("Error opening file by executing " + command, ioException);
@@ -578,7 +590,7 @@ public class Inspection extends JFrame {
                         final int port = Integer.parseInt(portString);
                         final Socket fileViewer = new Socket(hostname, port);
                         final String command = javaSourceFile.getAbsolutePath() + "|" + lineNumber;
-                        Trace.line(1, "Opening file via localhost:" + portString);
+                        Trace.line(1,  tracePrefix() + "Opening file via localhost:" + portString);
                         final OutputStream fileViewerStream = fileViewer.getOutputStream();
                         fileViewerStream.write(command.getBytes());
                         fileViewerStream.flush();
@@ -635,6 +647,8 @@ public class Inspection extends JFrame {
         return _scrollPane.getVisibleRect();
     }
 
+    private final InspectorMenuBar _menuBar;
+
     public Point getLocation(Component component) {
         final Point result = new Point();
         Component c = component;
@@ -673,8 +687,8 @@ public class Inspection extends JFrame {
         _desktopPane.setPreferredSize(_geometry.inspectorFramePrefSize());
         setLocation(_geometry.inspectorFrameDefaultLocation());
         _inspectionActions = new InspectionActions(this);
-        setJMenuBar(InspectorMenuBar.create(_inspectionActions));
-
+        _menuBar = new InspectorMenuBar(_inspectionActions);
+        setJMenuBar(_menuBar);
         pack();
     }
 
@@ -717,21 +731,23 @@ public class Inspection extends JFrame {
     /**
      * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
      */
-    void processStateChange(State newState) {
-        _vmState = newState;
-        final long epoch = teleProcess().epoch();
-        Trace.line(TRACE_VALUE, tracePrefix() + "process state notification: (" + newState + ", " + epoch + ")");
-        switch(newState) {
+    private void processStateChange(StateTransitionEvent e) {
+        Tracer tracer = null;
+        if (Trace.hasLevel(1)) {
+            tracer = new Tracer("process " + e);
+        }
+        Trace.begin(1, tracer);
+        final long startTimeMillis = System.currentTimeMillis();
+        _vmState = e.newState();
+        _menuBar.setState(_vmState);
+        switch(_vmState) {
             case STOPPED:
-                updateAfterVMStopped(epoch);
-                getJMenuBar().setBackground(InspectorStyle.SunBlue3);
+                updateAfterVMStopped(e.epoch());
                 break;
             case RUNNING:
-                getJMenuBar().setBackground(InspectorStyle.SunGreen3);
                 break;
             case TERMINATED:
                 Trace.line(1, tracePrefix() + " - VM process terminated");
-                getJMenuBar().setBackground(Color.RED);
                 // Give all process-sensitive views a chance to shut down
                 for (InspectionListener listener : _inspectionListeners.clone()) {
                     listener.vmProcessTerminated();
@@ -739,12 +755,23 @@ public class Inspection extends JFrame {
                 // Clear any possibly misleading view state.
                 focus().clearAll();
                 // Be sure all process-sensitive actions are disabled.
-                _inspectionActions.refresh(epoch, false);
+                _inspectionActions.refresh(e.epoch(), false);
                 informationMessage("The maxvm Process has terminated", "Process Terminated");
                 break;
         }
-        _inspectionActions.refresh(epoch, true);
+        _inspectionActions.refresh(e.epoch(), true);
+        Trace.end(1, tracer, startTimeMillis);
     }
+
+    /**
+     * Preemptively assume that the {@link TeleVM} is running without waiting for notification.
+     */
+    void assumeRunning() {
+        Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
+        _vmState = State.RUNNING;
+        _menuBar.setState(_vmState);
+    }
+
 
     /**
      * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
@@ -753,13 +780,19 @@ public class Inspection extends JFrame {
     private final class ProcessStateListener implements StateTransitionListener {
         public void handleStateTransition(final StateTransitionEvent e) {
             if (java.awt.EventQueue.isDispatchThread()) {
-                processStateChange(e.newState());
+                processStateChange(e);
             } else {
+                Tracer tracer = null;
+                if (Trace.hasLevel(TRACE_VALUE)) {
+                    tracer = new Tracer("scheduled " + e);
+                }
+                Trace.begin(TRACE_VALUE, tracer);
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
-                        processStateChange(e.newState());
+                        processStateChange(e);
                     }
                 });
+                Trace.end(TRACE_VALUE, tracer);
             }
         }
     }
@@ -907,10 +940,16 @@ public class Inspection extends JFrame {
      */
     public synchronized void refreshAll(boolean force) {
         final long epoch = teleProcess().epoch();
+        Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : _inspectionListeners.clone()) {
-            Trace.line(TRACE_VALUE, tracePrefix() + "refreshView: " + listener);
+            if (Trace.hasLevel(TRACE_VALUE)) {
+                tracer = new Tracer("refresh: " + listener);
+            }
+            Trace.begin(TRACE_VALUE, tracer);
+            final long startTimeMillis = System.currentTimeMillis();
             listener.vmStateChanged(epoch, force);
+            Trace.end(TRACE_VALUE, tracer, startTimeMillis);
         }
         _inspectionActions.refresh(epoch, force);
     }
@@ -928,6 +967,7 @@ public class Inspection extends JFrame {
         _inspectionActions.redisplay();
     }
 
+    private final Tracer _threadTracer = new Tracer("refresh thread state");
     /**
      * Determines what happened in {@link TeleVM} execution that just concluded.
      * Then updates all view state as needed.
@@ -938,6 +978,8 @@ public class Inspection extends JFrame {
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set
 
+        Trace.begin(TRACE_VALUE, _threadTracer);
+        final long startTimeMillis = System.currentTimeMillis();
         final IterableWithLength<TeleNativeThread> deadThreads = teleProcess().deadThreads();
         final IterableWithLength<TeleNativeThread> startedThreads = teleProcess().startedThreads();
         if (deadThreads.length() != 0 || startedThreads.length() != 0) {
@@ -956,6 +998,7 @@ public class Inspection extends JFrame {
                 listener.threadStateChanged(currentThread);
             }
         }
+        Trace.end(TRACE_VALUE, _threadTracer, startTimeMillis);
         try {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
@@ -1070,4 +1113,26 @@ public class Inspection extends JFrame {
             inspector.setSize(w, h);
         }
     }
+
+    /**
+     * An object that delays evaluation of a trace message for controller actions.
+     */
+    private class Tracer {
+
+        private final String _message;
+
+        /**
+         * An object that delays evaluation of a trace message.
+         * @param message identifies what is being traced
+         */
+        public Tracer(String message) {
+            _message = message;
+        }
+
+        @Override
+        public String toString() {
+            return tracePrefix() + _message;
+        }
+    }
+
 }

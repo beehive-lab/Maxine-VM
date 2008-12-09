@@ -75,7 +75,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             final Belt matureSpaceBeforeAllocation = beltwayHeapSchemeBA2.getBeltManager().getBeltBeforeLastAllocation(beltwayHeapSchemeBA2.getMatureSpace());
             final Belt matureSpaceReserve = beltwayHeapSchemeBA2.getBeltManager().getRemainingOverlappingBelt(beltwayHeapSchemeBA2.getMatureSpace());
             matureSpaceReserve.setExpandable(true);
-            matureSpaceReserve.setStopAddress(matureSpaceEnd);
+            matureSpaceReserve.setEnd(matureSpaceEnd);
 
             if (Heap.verbose()) {
                 Log.print("matureSpaceBeforeAllocation start: ");
@@ -150,7 +150,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
                 beltwayHeapSchemeBA2.fillLastTLAB();
             }
 
-            matureSpaceReserve.setStopAddress(matureSpaceReserve.getAllocationMark());
+            matureSpaceReserve.setEnd(matureSpaceReserve.getAllocationMark());
 
             if (Heap.verbose()) {
                 Log.print("matureSpaceBeforeAllocation start: ");
@@ -168,7 +168,7 @@ public class BeltwayBA2Collector extends BeltwayCollector {
             }
 
             beltwayHeapSchemeBA2.getMatureSpace().resetAllocationMark();
-            beltwayHeapSchemeBA2.getMatureSpace().setStopAddress(matureSpaceEnd);
+            beltwayHeapSchemeBA2.getMatureSpace().setEnd(matureSpaceEnd);
             if (Heap.verbose()) {
                 Log.print("Mature Space Start: ");
                 Log.println(beltwayHeapSchemeBA2.getMatureSpace().start());

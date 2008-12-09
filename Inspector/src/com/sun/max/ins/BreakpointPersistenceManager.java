@@ -92,6 +92,18 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
         _inspection.settings().save();
     }
 
+    // Keys used for making data persistent
+    private static final String TARGET_BREAKPOINT_KEY = "targetBreakpoint";
+    private static final String BYTECODE_BREAKPOINT_KEY = "bytecodeBreakpoint";
+    private static final String ADDRESS_KEY = "address";
+    private static final String CONDITION_KEY = "condition";
+    private static final String COUNT_KEY = "count";
+    private static final String ENABLED_KEY = "enabled";
+    private static final String METHOD_HOLDER_KEY = "method.holder";
+    private static final String METHOD_NAME_KEY = "method.name";
+    private static final String METHOD_SIGNATURE_KEY = "method.signature";
+    private static final String POSITION_KEY = "position";
+
     public void saveSettings(SaveSettingsEvent settings) {
         saveTargetCodeBreakpoints(settings);
         saveBytecodeBreakpoints(settings);
@@ -99,26 +111,26 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
 
     private void saveTargetCodeBreakpoints(SaveSettingsEvent settings) {
         final IterableWithLength<TeleTargetBreakpoint> targetBreakpoints = _inspection.teleVM().teleProcess().targetBreakpointFactory().breakpoints(true);
-        settings.save("targetBreakpoints", targetBreakpoints.length());
+        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.length());
         int index = 0;
         for (TeleTargetBreakpoint breakpoint : targetBreakpoints) {
-            final String prefix = "targetBreakpoint" + index++;
-            settings.save(prefix + ".address", breakpoint.address().toLong());
-            settings.save(prefix + ".enabled", breakpoint.enabled());
+            final String prefix = TARGET_BREAKPOINT_KEY + index++;
+            settings.save(prefix + "." + ADDRESS_KEY, breakpoint.address().toLong());
+            settings.save(prefix + "." + ENABLED_KEY, breakpoint.enabled());
             final BreakpointCondition condition = breakpoint.condition();
             if (condition != null) {
-                settings.save(prefix + ".condition", condition.toString());
+                settings.save(prefix + "." + CONDITION_KEY, condition.toString());
             }
         }
     }
 
     private void loadTargetCodeBreakpoints(final InspectionSettings settings) {
-        final int numberOfBreakpoints = settings.get(this, "targetBreakpoints", OptionTypes.INT_TYPE, 0);
+        final int numberOfBreakpoints = settings.get(this, TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, OptionTypes.INT_TYPE, 0);
         for (int i = 0; i < numberOfBreakpoints; i++) {
-            final String prefix = "targetBreakpoint" + i;
-            final Address address = Address.fromLong(settings.get(this, prefix + ".address", OptionTypes.LONG_TYPE, null));
-            final boolean enabled = settings.get(this, prefix + ".enabled", OptionTypes.BOOLEAN_TYPE, null);
-            final String condition = settings.get(this, prefix + ".condition", OptionTypes.STRING_TYPE, null);
+            final String prefix = TARGET_BREAKPOINT_KEY + i;
+            final Address address = Address.fromLong(settings.get(this, prefix + "." + ADDRESS_KEY, OptionTypes.LONG_TYPE, null));
+            final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, null);
+            final String condition = settings.get(this, prefix + "." + CONDITION_KEY, OptionTypes.STRING_TYPE, null);
             if (_inspection.teleVM().teleCodeManager().contains(address)) {
                 try {
                     final TeleTargetBreakpoint teleBreakpoint = _inspection.teleVM().teleProcess().targetBreakpointFactory().makeBreakpoint(address, false);
@@ -140,29 +152,29 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
     private void saveBytecodeBreakpoints(SaveSettingsEvent settings) {
         int index;
         final Sequence<TeleBytecodeBreakpoint> bytecodeBreakpoints = _inspection.teleVM().bytecodeBreakpointFactory().breakpoints();
-        settings.save("bytecodeBreakpoints", bytecodeBreakpoints.length());
+        settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, bytecodeBreakpoints.length());
         index = 0;
         for (TeleBytecodeBreakpoint breakpoint : bytecodeBreakpoints) {
-            final String prefix = "bytecodeBreakpoint" + index++;
+            final String prefix = BYTECODE_BREAKPOINT_KEY + index++;
             final TeleBytecodeBreakpoint.Key key = breakpoint.key();
-            settings.save(prefix + ".method.holder", key.holder().string());
-            settings.save(prefix + ".method.name", key.name().string());
-            settings.save(prefix + ".method.signature", key.signature().string());
-            settings.save(prefix + ".position", key.position());
-            settings.save(prefix + ".enabled", breakpoint.enabled());
+            settings.save(prefix + "." + METHOD_HOLDER_KEY, key.holder().string());
+            settings.save(prefix + "." + METHOD_NAME_KEY, key.name().string());
+            settings.save(prefix + "." + METHOD_SIGNATURE_KEY, key.signature().string());
+            settings.save(prefix + "." + POSITION_KEY, key.position());
+            settings.save(prefix + "." + ENABLED_KEY, breakpoint.enabled());
         }
     }
 
     private void loadBytecodeBreakpoints(final InspectionSettings settings) {
-        final int numberOfBreakpoints = settings.get(this, "bytecodeBreakpoints", OptionTypes.INT_TYPE, 0);
+        final int numberOfBreakpoints = settings.get(this, BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, OptionTypes.INT_TYPE, 0);
         for (int i = 0; i < numberOfBreakpoints; i++) {
-            final String prefix = "bytecodeBreakpoint" + i;
-            final TypeDescriptor holder = JavaTypeDescriptor.parseTypeDescriptor(settings.get(this, prefix + ".method.holder", OptionTypes.STRING_TYPE, null));
-            final Utf8Constant name = PoolConstantFactory.makeUtf8Constant(settings.get(this, prefix + ".method.name", OptionTypes.STRING_TYPE, null));
-            final SignatureDescriptor signature = SignatureDescriptor.create(settings.get(this, prefix + ".method.signature", OptionTypes.STRING_TYPE, null));
+            final String prefix = BYTECODE_BREAKPOINT_KEY + i;
+            final TypeDescriptor holder = JavaTypeDescriptor.parseTypeDescriptor(settings.get(this, prefix + "." + METHOD_HOLDER_KEY, OptionTypes.STRING_TYPE, null));
+            final Utf8Constant name = PoolConstantFactory.makeUtf8Constant(settings.get(this, prefix + "." + METHOD_NAME_KEY, OptionTypes.STRING_TYPE, null));
+            final SignatureDescriptor signature = SignatureDescriptor.create(settings.get(this, prefix + "." + METHOD_SIGNATURE_KEY, OptionTypes.STRING_TYPE, null));
             final MethodKey methodKey = new DefaultMethodKey(holder, name, signature);
-            final int bytecodePosition = settings.get(this, prefix + ".position", OptionTypes.INT_TYPE, 0);
-            final boolean enabled = settings.get(this, prefix + ".enabled", OptionTypes.BOOLEAN_TYPE, true);
+            final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
+            final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
 
             final TeleBytecodeBreakpoint breakpoint = _inspection.teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition), false);
             breakpoint.setEnabled(enabled);

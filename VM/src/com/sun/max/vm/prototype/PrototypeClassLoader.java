@@ -51,12 +51,22 @@ public final class PrototypeClassLoader extends ClassLoader {
      * Adds a class that must not be loaded into the VM class registry. Calling {@link #loadClass(String, boolean)} for
      * this class will return null.
      *
-     * @param javaClass
+     * @param javaClass the class to be omitted
      */
     public static void omitClass(Class javaClass) {
-        final TypeDescriptor typeDescriptor = JavaTypeDescriptor.getDescriptorForTupleType(javaClass);
-        ProgramError.check(!ClassRegistry.vmClassRegistry().contains(typeDescriptor), "Cannot omit a class already in VM class registry: " + javaClass);
-        _omittedClasses.add(javaClass.getName());
+        omitClass(JavaTypeDescriptor.getDescriptorForTupleType(javaClass));
+    }
+
+    /**
+     * Adds a class that must not be loaded into the VM class registry. Calling {@link #loadClass(String, boolean)} for
+     * this class will return null.
+     *
+     * @param typeDescriptor the type descriptor for the class to be omitted
+     */
+    public static void omitClass(TypeDescriptor typeDescriptor) {
+        final String className = typeDescriptor.toJavaString();
+        ProgramError.check(!ClassRegistry.vmClassRegistry().contains(typeDescriptor), "Cannot omit a class already in VM class registry: " + className);
+        _omittedClasses.add(className);
     }
 
     /**

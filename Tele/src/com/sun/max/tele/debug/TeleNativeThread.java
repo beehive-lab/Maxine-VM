@@ -92,6 +92,11 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         BREAKPOINT("Breakpoint"),
 
         /**
+         * A thread is suspended at a watchpoint.
+         */
+        WATCHPOINT("Watchpoint"),
+
+        /**
          * Denotes that a thread is suspended for some reason other than {@link #MONITOR_WAIT}, {@link #NOTIFY_WAIT},
          * {@link #JOIN_WAIT}, {@link #SLEEPING} or {@link #BREAKPOINT}.
          */

@@ -719,19 +719,325 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void test_bytecode_BC_dcmp() {
-        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp");
+    static void test_bytecode_BC_dcmp01() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp01");
         String runString = null;
         try {
         // test(0.0,-0.1) == false
             runString = "test(0.0,-0.1)";
-            if (false != test.bytecode.BC_dcmp.test(0.0, -0.1)) {
+            if (false != test.bytecode.BC_dcmp01.test(0.0, -0.1)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // test(78.0,78.001) == true
             runString = "test(78.0,78.001)";
-            if (true != test.bytecode.BC_dcmp.test(78.0, 78.001)) {
+            if (true != test.bytecode.BC_dcmp01.test(78.0, 78.001)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp02() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp02");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_dcmp02.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_dcmp02.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp02.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-0.0) == false
+            runString = "test(-0.0)";
+            if (false != test.bytecode.BC_dcmp02.test(-0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp03() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp03");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_dcmp03.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_dcmp03.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp03.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-0.0) == false
+            runString = "test(-0.0)";
+            if (false != test.bytecode.BC_dcmp03.test(-0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp04() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp04");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_dcmp04.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_dcmp04.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp04.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-0.0) == false
+            runString = "test(-0.0)";
+            if (false != test.bytecode.BC_dcmp04.test(-0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp05() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp05");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_dcmp05.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_dcmp05.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp05.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp06() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp06");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_dcmp06.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_dcmp06.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp06.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp07() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp07");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_dcmp07.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_dcmp07.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp07.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp08() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp08");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_dcmp08.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_dcmp08.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp08.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp09() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp09");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_dcmp09.test(-1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_dcmp09.test(1.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_dcmp09.test(0.0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_dcmp10() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_dcmp10");
+        String runString = null;
+        try {
+        // test(0) == false
+            runString = "test(0)";
+            if (false != test.bytecode.BC_dcmp10.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.bytecode.BC_dcmp10.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == true
+            runString = "test(2)";
+            if (true != test.bytecode.BC_dcmp10.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == false
+            runString = "test(3)";
+            if (false != test.bytecode.BC_dcmp10.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == true
+            runString = "test(4)";
+            if (true != test.bytecode.BC_dcmp10.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == true
+            runString = "test(5)";
+            if (true != test.bytecode.BC_dcmp10.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == false
+            runString = "test(6)";
+            if (false != test.bytecode.BC_dcmp10.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == false
+            runString = "test(7)";
+            if (false != test.bytecode.BC_dcmp10.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(8) == false
+            runString = "test(8)";
+            if (false != test.bytecode.BC_dcmp10.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -1137,19 +1443,307 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void test_bytecode_BC_fcmp() {
-        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp");
+    static void test_bytecode_BC_fcmp01() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp01");
         String runString = null;
         try {
         // test(0.0,-0.1) == false
             runString = "test(0.0,-0.1)";
-            if (false != test.bytecode.BC_fcmp.test(0.0f, -0.1f)) {
+            if (false != test.bytecode.BC_fcmp01.test(0.0f, -0.1f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
         // test(78.0,78.001) == true
             runString = "test(78.0,78.001)";
-            if (true != test.bytecode.BC_fcmp.test(78.0f, 78.001f)) {
+            if (true != test.bytecode.BC_fcmp01.test(78.0f, 78.001f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp02() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp02");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_fcmp02.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_fcmp02.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp02.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp03() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp03");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_fcmp03.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_fcmp03.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp03.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp04() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp04");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_fcmp04.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_fcmp04.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp04.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp05() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp05");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_fcmp05.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_fcmp05.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp05.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp06() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp06");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_fcmp06.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_fcmp06.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp06.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp07() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp07");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_fcmp07.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_fcmp07.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp07.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp08() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp08");
+        String runString = null;
+        try {
+        // test(-1.0) == true
+            runString = "test(-1.0)";
+            if (true != test.bytecode.BC_fcmp08.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == true
+            runString = "test(1.0)";
+            if (true != test.bytecode.BC_fcmp08.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp08.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp09() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp09");
+        String runString = null;
+        try {
+        // test(-1.0) == false
+            runString = "test(-1.0)";
+            if (false != test.bytecode.BC_fcmp09.test(-1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1.0) == false
+            runString = "test(1.0)";
+            if (false != test.bytecode.BC_fcmp09.test(1.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(0.0) == false
+            runString = "test(0.0)";
+            if (false != test.bytecode.BC_fcmp09.test(0.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_bytecode_BC_fcmp10() {
+        JavaTesterRunScheme.begin("test.bytecode.BC_fcmp10");
+        String runString = null;
+        try {
+        // test(0) == false
+            runString = "test(0)";
+            if (false != test.bytecode.BC_fcmp10.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == true
+            runString = "test(1)";
+            if (true != test.bytecode.BC_fcmp10.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == true
+            runString = "test(2)";
+            if (true != test.bytecode.BC_fcmp10.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == false
+            runString = "test(3)";
+            if (false != test.bytecode.BC_fcmp10.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == true
+            runString = "test(4)";
+            if (true != test.bytecode.BC_fcmp10.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(5) == true
+            runString = "test(5)";
+            if (true != test.bytecode.BC_fcmp10.test(5)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6) == false
+            runString = "test(6)";
+            if (false != test.bytecode.BC_fcmp10.test(6)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(7) == false
+            runString = "test(7)";
+            if (false != test.bytecode.BC_fcmp10.test(7)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(8) == false
+            runString = "test(8)";
+            if (false != test.bytecode.BC_fcmp10.test(8)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
@@ -14788,6 +15382,22 @@ public class JavaTesterTests {
         // test(0) == false
             runString = "test(0)";
             if (false != test.threads.Thread_join03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_threads_Thread_join04() {
+        JavaTesterRunScheme.begin("test.threads.Thread_join04");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.threads.Thread_join04.test(0)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

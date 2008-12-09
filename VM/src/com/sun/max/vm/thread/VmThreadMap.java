@@ -268,7 +268,7 @@ public final class VmThreadMap {
      * The {@code IDMap} class manages thread ids and a mapping between thread ids and
      * the corresponding {@code VmThread} instance.
      */
-    private class IDMap {
+    private final class IDMap {
         private int _nextID;
         private int[] _freeList;
         private VmThread[] _vmThreads;

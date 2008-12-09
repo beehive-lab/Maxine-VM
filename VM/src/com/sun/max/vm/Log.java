@@ -441,6 +441,17 @@ public final class Log {
             }
         }
         @Override
+        public void print(Object object) {
+            if (MaxineVM.isPrototyping()) {
+                super.print(object);
+            } else {
+                final String string = String.valueOf(object);
+                final boolean lockDisabledSafepoints = Log.lock();
+                printString(string);
+                Log.unlock(lockDisabledSafepoints);
+            }
+        }
+        @Override
         public void print(int i) {
             if (MaxineVM.isPrototyping()) {
                 super.print(i);
@@ -610,6 +621,19 @@ public final class Log {
                 Log.unlock(lockDisabledSafepoints);
             }
         }
+        @Override
+        public void println(Object object) {
+            if (MaxineVM.isPrototyping()) {
+                super.println(object);
+            } else {
+                final String string = String.valueOf(object);
+                final boolean lockDisabledSafepoints = Log.lock();
+                printString(string);
+                log_print_newline();
+                Log.unlock(lockDisabledSafepoints);
+            }
+        }
+
         public void println(Word word) {
             if (MaxineVM.isPrototyping()) {
                 super.println(word.toHexString());

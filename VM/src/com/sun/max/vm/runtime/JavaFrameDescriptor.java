@@ -21,6 +21,7 @@
 package com.sun.max.vm.runtime;
 
 import java.security.*;
+import java.util.*;
 import java.util.Arrays;
 
 import sun.reflect.*;
@@ -75,6 +76,37 @@ public class JavaFrameDescriptor<Slot_Type> {
 
     public final BytecodeLocation bytecodeLocation() {
         return _bytecodeLocation;
+    }
+
+    /**
+     * Gets an iterator over all the bytecode locations denoted by this Java frame descriptor. The first element
+     * produced by the return iterator is the {@linkplain #bytecodeLocation() bytecode location} for this frame
+     * descriptor, the next is the bytecode location for this frame descriptor's {@linkplain #parent() parent} and so
+     * on.
+     */
+    public Iterator<BytecodeLocation> bytecodeLocations() {
+        return new Iterator<BytecodeLocation>() {
+            JavaFrameDescriptor<Slot_Type> _next = JavaFrameDescriptor.this;
+            @Override
+            public boolean hasNext() {
+                return _next != null;
+            }
+
+            @Override
+            public BytecodeLocation next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                final BytecodeLocation bytecodeLocation = _next._bytecodeLocation;
+                _next = _next._parent;
+                return bytecodeLocation;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     private final Slot_Type[] _locals;
