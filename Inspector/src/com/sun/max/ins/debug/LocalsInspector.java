@@ -111,7 +111,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if (isShowing()) {
+        if (isShowing() || force) {
             // First, refresh stack frame information.
             Pointer stackPointer = null;
             final Sequence<StackFrame> frames = _teleNativeThread.frames();

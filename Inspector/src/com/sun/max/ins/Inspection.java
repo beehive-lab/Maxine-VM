@@ -241,20 +241,26 @@ public class Inspection extends JFrame {
         return _preferences;
     }
 
+    private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
+    private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
+    private static final String DEBUG_MODE_PREFERENCE = "debugMode";
+    private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
+
+
     public class Preferences extends AbstractSaveSettingsListener {
         public Preferences() {
             super("inspection", Inspection.this);
         }
 
         public void saveSettings(SaveSettingsEvent settings) {
-            settings.save("keyBindings", keyBindingMap().name());
-            settings.save("investigateWordValues", _investigateWordValues);
-            settings.save("debugMode", debugMode().name());
-            settings.save("externalViewer", _externalViewerType.name());
+            settings.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
+            settings.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
+            settings.save(DEBUG_MODE_PREFERENCE, debugMode().name());
+            settings.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = _externalViewerConfig.get(externalViewerType);
                 if (config != null) {
-                    settings.save("externalViewer." + externalViewerType.name(), config);
+                    settings.save(EXTERNAL_VIEWER_PREFERENCE  + "." + externalViewerType.name(), config);
                 }
             }
         }
@@ -262,8 +268,8 @@ public class Inspection extends JFrame {
         void initialize() {
             try {
                 _settings.addSaveSettingsListener(this);
-                if (_settings.containsKey(this, "keyBindings")) {
-                    final String keyBindingsName = _settings.get(this, "keyBindings", OptionTypes.STRING_TYPE, null);
+                if (_settings.containsKey(this, KEY_BINDINGS_PREFERENCE)) {
+                    final String keyBindingsName = _settings.get(this, KEY_BINDINGS_PREFERENCE, OptionTypes.STRING_TYPE, null);
 
                     final KeyBindingMap keyBindingMap = KeyBindingMap.ALL.get(keyBindingsName);
                     if (keyBindingMap != null) {
@@ -280,9 +286,9 @@ public class Inspection extends JFrame {
                     default:
                         break;
                 }
-                _debugMode = _settings.get(this, "debugMode", new OptionTypes.EnumType<DebugMode>(DebugMode.class), defaultDebugMode);
-                _investigateWordValues = _settings.get(this, "investigateWordValues", OptionTypes.BOOLEAN_TYPE, true);
-                _externalViewerType = _settings.get(this, "externalViewer", new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
+                _debugMode = _settings.get(this, DEBUG_MODE_PREFERENCE, new OptionTypes.EnumType<DebugMode>(DebugMode.class), defaultDebugMode);
+                _investigateWordValues = _settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
+                _externalViewerType = _settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
                 for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                     final String config = _settings.get(this, "externalViewer." + externalViewerType.name(), OptionTypes.STRING_TYPE, null);
                     _externalViewerConfig.put(externalViewerType, config);

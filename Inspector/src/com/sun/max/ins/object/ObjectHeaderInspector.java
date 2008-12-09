@@ -68,12 +68,12 @@ class ObjectHeaderInspector extends InspectorPanel {
         if (_parent.showOffsets()) {
             addLabel(new LocationLabel.AsOffset(inspection, hubReferenceOffset, origin));
         }
-        if (_parent.showType()) {
+        if (_parent.showTypes()) {
             addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass())));
         }
         addLabel(new TextLabel(inspection(), "hub"));
         addLabel(new WordValueLabel(inspection(), ValueMode.REFERENCE, teleHub.getCurrentOrigin()));
-        if (_parent.showMemoryRegion()) {
+        if (_parent.showMemoryRegions()) {
             final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
                 @Override
                 public Value fetchValue() {
@@ -93,14 +93,14 @@ class ObjectHeaderInspector extends InspectorPanel {
         if (_parent.showOffsets()) {
             addLabel(new LocationLabel.AsOffset(inspection(), miscWordOffset, origin));
         }
-        if (_parent.showType()) {
+        if (_parent.showTypes()) {
             addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.WORD));
         }
         addLabel(new TextLabel(inspection(), "misc"));
         final ValueLabel miscValueLabel = new MiscWordLabel(inspection(), teleObject);
         addLabel(miscValueLabel);
         valueLabels.append(miscValueLabel);
-        if (_parent.showMemoryRegion()) {
+        if (_parent.showMemoryRegions()) {
             addLabel(new PlainLabel(inspection(), ""));
         }
 
@@ -114,13 +114,13 @@ class ObjectHeaderInspector extends InspectorPanel {
             if (_parent.showOffsets()) {
                 addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
-            if (_parent.showType()) {
+            if (_parent.showTypes()) {
                 addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
             }
             addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes
             addLabel(new DataLabel.IntAsDecimal(inspection(), teleArrayObject.getLength()));
-            if (_parent.showMemoryRegion()) {
+            if (_parent.showMemoryRegions()) {
                 addLabel(new PlainLabel(inspection(), ""));
             }
         } else if (teleObject instanceof TeleHybridObject) {
@@ -131,13 +131,13 @@ class ObjectHeaderInspector extends InspectorPanel {
             if (_parent.showOffsets()) {
                 addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
-            if (_parent.showType()) {
+            if (_parent.showTypes()) {
                 addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
             }
             addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes
             addLabel(new DataLabel.IntAsDecimal(inspection(), teleHybridObject.readArrayLength()));
-            if (_parent.showMemoryRegion()) {
+            if (_parent.showMemoryRegions()) {
                 addLabel(new PlainLabel(inspection(), ""));
             }
         }

@@ -376,7 +376,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if (isShowing()) {
+        if (isShowing() || force) {
             if (epoch > _epoch || force) {
                 final MemoryRegionTableModel model = (MemoryRegionTableModel) _table.getModel();
                 model.refresh();
