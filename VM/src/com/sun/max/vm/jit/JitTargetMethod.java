@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.jit;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
@@ -111,8 +113,9 @@ public abstract class JitTargetMethod extends TargetMethod {
     }
 
     @Override
-    public TargetJavaFrameDescriptor getPrecedingJavaFrameDescriptor(Address instructionPointer) {
-        return null;
+    public Iterator<BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
+        final BytecodeLocation bytecodeLocation = new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
+        return Iterators.iterator(new BytecodeLocation[] {bytecodeLocation});
     }
 
     /**

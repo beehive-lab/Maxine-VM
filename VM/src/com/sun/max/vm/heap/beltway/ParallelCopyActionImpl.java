@@ -65,7 +65,7 @@ public class ParallelCopyActionImpl implements Action {
             final Grip toGrip = Grip.fromOrigin(toOrigin);
             if ((Layout.compareAndSwapForwardGrip(fromOrigin, forwardGripValue, toGrip)) != forwardGripValue) {
                 //Debug.println("Conflict in CAS forward Grip");
-                VmThread.current().getTLAB().undoLastAlocation();
+                VmThread.current().getTLAB().undoLastAllocation();
                 return Layout.readForwardGrip(fromOrigin);
             }
             return toGrip;

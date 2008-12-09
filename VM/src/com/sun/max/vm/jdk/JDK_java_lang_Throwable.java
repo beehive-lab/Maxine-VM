@@ -123,18 +123,17 @@ final class JDK_java_lang_Throwable {
     }
 
     private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame) {
-        TargetJavaFrameDescriptor javaFrameDescriptor = targetMethod.getPrecedingJavaFrameDescriptor(stackFrame.instructionPointer());
-        if (javaFrameDescriptor == null) {
+        final Iterator<BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+        if (bytecodeLocations == null) {
             addDefaultStackTraceElement(result, targetMethod.classMethodActor(), -1);
         } else {
-            do {
-                final BytecodeLocation bytecodeLocation = javaFrameDescriptor.bytecodeLocation();
+            while (bytecodeLocations.hasNext()) {
+                final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
                 final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
                 if (classMethodActor.isApplicationVisible()) {
                     addDefaultStackTraceElement(result, classMethodActor, bytecodeLocation.sourceLineNumber());
                 }
-                javaFrameDescriptor = javaFrameDescriptor.parent();
-            } while (javaFrameDescriptor != null);
+            }
         }
     }
 

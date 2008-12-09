@@ -21,14 +21,15 @@
 package com.sun.max.vm.jdk;
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import sun.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -77,33 +78,24 @@ final class JDK_sun_reflect_Reflection {
                 return true;
             }
 
-            // ATTENTION: We assume here that the JIT does not produce JavaFrameDescriptors and it does not inline any methods.
-            if (targetMethod instanceof JitTargetMethod) {
+            final Iterator<BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            if (bytecodeLocations == null) {
                 if (_realFramesToSkip == 0) {
                     _result = targetMethod.classMethodActor();
                     return false;
                 }
                 _realFramesToSkip--;
             } else {
-                TargetJavaFrameDescriptor javaFrameDescriptor = targetMethod.getPrecedingJavaFrameDescriptor(stackFrame.instructionPointer());
-                if (javaFrameDescriptor == null) {
-                    if (_realFramesToSkip == 0) {
-                        _result = targetMethod.classMethodActor();
-                        return false;
-                    }
-                    _realFramesToSkip--;
-                } else {
-                    do {
-                        final MethodActor classMethodActor = javaFrameDescriptor.bytecodeLocation().classMethodActor().original();
-                        if (!classMethodActor.isWrapper() && !classMethodActor.holder().isGenerated()) {
-                            if (_realFramesToSkip == 0) {
-                                _result = classMethodActor;
-                                return false;
-                            }
-                            _realFramesToSkip--;
+                while (bytecodeLocations.hasNext()) {
+                    final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+                    final MethodActor classMethodActor = bytecodeLocation.classMethodActor().original();
+                    if (!classMethodActor.isWrapper() && !classMethodActor.holder().isGenerated()) {
+                        if (_realFramesToSkip == 0) {
+                            _result = classMethodActor;
+                            return false;
                         }
-                        javaFrameDescriptor = javaFrameDescriptor.parent();
-                    } while (javaFrameDescriptor != null);
+                        _realFramesToSkip--;
+                    }
                 }
             }
             return true;

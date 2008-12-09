@@ -89,7 +89,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     protected final BeltwayCardRegion _cardRegion = new BeltwayCardRegion();
 
     @INLINE
-    public int adjustedCardTableShift() {
+    public final int adjustedCardTableShift() {
         return BeltwayCardRegion.CARD_SHIFT;
     }
 
@@ -162,18 +162,15 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         return _heapRootsScanner;
     }
 
-    @INLINE
     public final BeltwaySequentialHeapRootsScanner getRootScannerUpdater() {
         _heapRootsScanner.setBeltwayPointerIndexVisitor(pointerIndexGripUpdater());
         return _heapRootsScanner;
     }
 
-    @INLINE
     public final BeltwayHeapVerifier getVerifier() {
         return _heapVerifier;
     }
 
-    @INLINE
     protected Size calculateHeapSize() {
         Size size = Heap.initialSize();
         if (Heap.maxSize().greaterThan(size)) {
@@ -308,17 +305,17 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     }
 
     @INLINE
-    public Pointer gcBumpAllocate(RuntimeMemoryRegion belt, Size size) {
+    public final Pointer gcBumpAllocate(RuntimeMemoryRegion belt, Size size) {
         return _beltManager.gcBumpAllocate((Belt) belt, size);
     }
 
     @INLINE
-    public Pointer gcSynchAllocate(RuntimeMemoryRegion belt, Size size) {
+    public final Pointer gcSynchAllocate(RuntimeMemoryRegion belt, Size size) {
         return _beltManager.gcAllocate((Belt) belt, size);
     }
 
     @INLINE
-    public Pointer gcAllocate(RuntimeMemoryRegion belt, Size size) {
+    public final Pointer gcAllocate(RuntimeMemoryRegion belt, Size size) {
         if (BeltwayConfiguration._useGCTlabs) {
             return gcTlabAllocate(belt, size);
         }
@@ -326,7 +323,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
     }
 
-    @INLINE
     public boolean isGcThread(Thread thread) {
         return thread instanceof BeltwayStopTheWorldDaemon;
     }
@@ -338,12 +334,10 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
      * @param size The size of the allocation.
      * @return the pointer to the address in which we can allocate. If null, a GC should be triggered.
      */
-    @INLINE
     private Pointer allocateSlowPath(Belt belt, Size size) {
         return _beltManager.allocate(belt, size);
     }
 
-    @INLINE
     protected Pointer bumpAllocateSlowPath(Belt belt, Size size) {
         final Pointer pointer = _beltManager.bumpAllocate(belt, size);
         if (pointer.isZero()) {
@@ -352,16 +346,9 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         return pointer;
     }
 
-    @Override
     @INLINE
     @NO_SAFEPOINTS("TODO")
-    public Pointer allocate(Size size) {
-        return Pointer.zero();
-    }
-
-    @INLINE
-    @NO_SAFEPOINTS("TODO")
-    public Pointer heapAllocate(Belt belt, Size size) {
+    public final Pointer heapAllocate(Belt belt, Size size) {
         final Pointer pointer = allocateSlowPath(belt, size);
         if (pointer.equals(Pointer.zero())) {
             if (belt.getIndex() == (BeltwayConfiguration.getNumberOfBelts() - 1)) {
@@ -377,7 +364,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
     @INLINE
     @NO_SAFEPOINTS("TODO")
-    public Pointer tlabAllocate(Belt belt, Size size) {
+    public final Pointer tlabAllocate(Belt belt, Size size) {
         final VmThread thread = VmThread.current();
         final TLAB tlab = thread.getTLAB();
 
@@ -415,7 +402,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
     }
 
-    @INLINE
     public Pointer gcTlabAllocate(RuntimeMemoryRegion gcRegion, Size size) {
         final VmThread thread = VmThread.current();
         final TLAB tlab = thread.getTLAB();
@@ -463,8 +449,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
     }
 
-    @INLINE
-    public Size calculateTLABSize(Size size) {
+    public final Size calculateTLABSize(Size size) {
         Size defaultSize;
         defaultSize = BeltwayConfiguration.TLAB_SIZE;
         if (_inGC) {
@@ -478,8 +463,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         return newSize;
     }
 
-    @INLINE
-    public void initializeFirstTLAB(Belt belt, TLAB tlab, Size size) {
+    public final void initializeFirstTLAB(Belt belt, TLAB tlab, Size size) {
         //Debug.println("Try to set initial Tlabs");
         final Size newSize = calculateTLABSize(size);
         final Size allocSize = newSize.asPointer().minusWords(1).asSize();
@@ -493,8 +477,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         }
     }
 
-    @INLINE
-    public void initializeFirstGCTLAB(RuntimeMemoryRegion gcRegion, TLAB tlab, Size size) {
+    public final void initializeFirstGCTLAB(RuntimeMemoryRegion gcRegion, TLAB tlab, Size size) {
         //Debug.println("Try to set initial GC TLAB");
         final Size newSize = calculateTLABSize(size);
         final Size allocSize = newSize.asPointer().minusWords(1).asSize();
@@ -517,12 +500,12 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     }
 
     @INLINE
-    public void initializeTLAB(TLAB tlab, Pointer newTLABAddress, Size size) {
+    public final void initializeTLAB(TLAB tlab, Pointer newTLABAddress, Size size) {
         tlab.initializeTLAB(newTLABAddress.asAddress(), newTLABAddress.asAddress(), size);
     }
 
     @INLINE
-    public Pointer allocateTLAB(Belt belt, Size size) {
+    public final Pointer allocateTLAB(Belt belt, Size size) {
         Pointer pointer = heapAllocate(belt, size);
         if (pointer != Pointer.zero()) {
             if (VMConfiguration.hostOrTarget().debugging()) {
@@ -537,7 +520,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     }
 
     @INLINE
-    public Pointer gcAllocateTLAB(RuntimeMemoryRegion gcRegion, Size size) {
+    public final Pointer gcAllocateTLAB(RuntimeMemoryRegion gcRegion, Size size) {
         Pointer pointer = gcSynchAllocate(gcRegion, size);
         if (!pointer.isZero()) {
             if (VMConfiguration.hostOrTarget().debugging()) {
@@ -551,17 +534,14 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     }
 
     @INLINE
-    public Pointer allocate(RuntimeMemoryRegion to, Size size) {
+    public final Pointer allocate(RuntimeMemoryRegion to, Size size) {
         return null;
     }
 
-    @INLINE
     protected synchronized boolean minorCollect(Size size) {
-
         return false;
     }
 
-    @INLINE
     protected synchronized boolean majorCollect(Size size) {
         return false;
     }
@@ -588,7 +568,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     @INLINE
     @NO_SAFEPOINTS("TODO")
     @Override
-    public Object createArray(DynamicHub dynamicHub, int length) {
+    public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
         final Pointer cell = allocate(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
@@ -601,12 +581,11 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     @INLINE
     @NO_SAFEPOINTS("TODO")
     @Override
-    public Object createTuple(Hub hub) {
+    public final Object createTuple(Hub hub) {
         final Pointer cell = allocate(hub.tupleSize());
         return Cell.plantTuple(cell, hub);
     }
 
-    @INLINE
     @NO_SAFEPOINTS("TODO")
     public <Hybrid_Type extends Hybrid> Hybrid_Type createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize();
@@ -616,7 +595,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         return UnsafeLoophole.cast(type, Cell.plantHybrid(cell, size, hub));
     }
 
-    @INLINE
     @NO_SAFEPOINTS("TODO")
     @Override
     public <Hybrid_Type extends Hybrid> Hybrid_Type expandHybrid(Hybrid_Type hybrid, int length) {
@@ -625,7 +603,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);
     }
 
-    @INLINE
     @NO_SAFEPOINTS("TODO")
     @Override
     public Object clone(Object object) {

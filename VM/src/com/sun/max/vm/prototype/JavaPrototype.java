@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.prototype;
 
+import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -213,6 +214,14 @@ public class JavaPrototype extends Prototype {
         if (System.getProperty("max.allow.all.core.packages") == null) {
             // Don't want the static Map fields initialized
             PrototypeClassLoader.omitClass(java.lang.reflect.Proxy.class);
+
+            try {
+                //
+                PrototypeClassLoader.omitClass(Class.forName(File.class.getName() + "$LazyInitialization", false, File.class.getClassLoader()));
+            } catch (ClassNotFoundException classNotFoundException) {
+                // This just means that this class is not present in the host JDK
+            }
+
 
             // LogManager and FileSystemPreferences have many side effects
             // that we do not wish to account for before running the target VM.

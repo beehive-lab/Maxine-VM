@@ -441,7 +441,6 @@ public class CompiledPrototype extends Prototype {
         add(BootImage.getRunMethodActor(VmThread.class), null, vmEntryPoint);
         add(BootImage.getRunMethodActor(runScheme.getClass()), null, vmEntryPoint);
 
-        addMethods(null, JniNativeInterface.jniFunctionActors(), vmEntryPoint);
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, _imageMethodActors, vmEntryPoint);
 

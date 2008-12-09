@@ -59,11 +59,11 @@ while [ "${1:0:1}" = "-" ]; do
             ;;
         -jvm_args_prefix )
             shift
-            jvm_args_prefix=$1
+            jvm_args_prefix="$jvm_args_prefix $1"
             ;;
         -jvm_args_suffix )
             shift
-            jvm_args_suffix=$1
+            jvm_args_suffix="$jvm_args_suffix $1"
             ;;
         -junit4 )
             shift
