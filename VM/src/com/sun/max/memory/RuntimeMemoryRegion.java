@@ -32,7 +32,7 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     protected Address _mark;
 
     @INLINE
-    public Address start() {
+    public final Address start() {
         return _start;
     }
 
@@ -49,6 +49,10 @@ public class RuntimeMemoryRegion implements MemoryRegion {
 
     public void setSize(Size size) {
         _size = size;
+    }
+
+    public void setEnd(Address end) {
+        _size = end.minus(_start).asSize();
     }
 
     @INSPECTED
@@ -107,8 +111,9 @@ public class RuntimeMemoryRegion implements MemoryRegion {
     public String toString() {
         return "[" + _start.toHexString() + " - " + end().minus(1).toHexString() + "]";
     }
-    public Address getAllocationMark() {
+
+    @INLINE
+    public final Address getAllocationMark() {
         return _mark;
     }
-
 }

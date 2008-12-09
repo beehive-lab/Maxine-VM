@@ -184,7 +184,6 @@ public final class JniNativeInterface {
         }
     }
 
-    @PROTOTYPE_ONLY
     public static void checkInvariants() {
         check(JniFunctionWrapper.savedLastJavaCallerFramePointer());
         check(JniFunctionWrapper.savedLastJavaCallerInstructionPointer());

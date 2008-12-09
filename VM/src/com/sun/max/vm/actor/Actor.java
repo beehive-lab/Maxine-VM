@@ -392,7 +392,7 @@ public abstract class Actor {
     }
 
     @INLINE
-    public void beUnsafe() {
+    public final void beUnsafe() {
         _flags |= UNSAFE;
     }
 
