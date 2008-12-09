@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.instrument;
 
-import com.sun.max.annotate.*;
 import com.sun.max.vm.profile.*;
 
 /**
@@ -55,16 +54,6 @@ public class LocationCounter extends Counter {
 
     public LocationCounter(int pos) {
         this(pos, pos);
-    }
-
-    /**
-     * Increment the counter. Note that this operation is not atomic, and thus could
-     * lose some updates in a multithreaded environment.
-     */
-    @Override
-    @INLINE
-    public final void increment() {
-        _count++;
     }
 
     /**

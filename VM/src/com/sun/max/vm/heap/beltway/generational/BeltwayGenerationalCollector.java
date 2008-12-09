@@ -144,7 +144,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 }
                 throw BeltwayHeapScheme._outOfMemoryError;
             }
-            beltwayHeapSchemeGen.getEdenSpace().setStopAddress(beltwayHeapSchemeGen.getEdenSpace().getAllocationMark());
+            beltwayHeapSchemeGen.getEdenSpace().setEnd(beltwayHeapSchemeGen.getEdenSpace().getAllocationMark());
             if (Heap.verbose()) {
                 Log.println("Scan roots ");
             }
@@ -210,7 +210,7 @@ public class BeltwayGenerationalCollector extends BeltwayCollector {
                 Log.println("Reset Eden Space ");
             }
             beltwayHeapSchemeGen.getEdenSpace().resetAllocationMark();
-            beltwayHeapSchemeGen.getEdenSpace().setStopAddress(beltwayHeapSchemeGen.getToSpace().start());
+            beltwayHeapSchemeGen.getEdenSpace().setEnd(beltwayHeapSchemeGen.getToSpace().start());
             beltwayHeapSchemeGen.getEdenSpace().setExpandable(false);
             TeleHeapInfo.afterGarbageCollection();
             if (Heap.verbose()) {

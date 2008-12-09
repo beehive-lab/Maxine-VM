@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
@@ -36,6 +35,7 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.trampoline.*;
@@ -111,7 +111,6 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         return MethodID.fromMethodActor(dynamicMethodActor);
     }
 
-    @INLINE(override = true)
     public void staticTrampoline() {
         throw new UnsupportedOperationException();
     }
@@ -149,8 +148,9 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
     }
 
     @Override
+    @INLINE(override = true)
     public void fakeCall(Address returnAddress) {
-        Problem.unimplemented();
+        FatalError.unexpected("must be implemented");
     }
 
 }
