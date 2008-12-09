@@ -59,7 +59,7 @@ public final class BeltManager {
 
     @INLINE
     public void matchStartAllocationMark(Belt belt) {
-        belt.setStartAddress(belt.getAllocationMark());
+        belt.setStart(belt.getAllocationMark());
     }
 
 
@@ -67,11 +67,11 @@ public final class BeltManager {
         final Address oldFromSpaceStart = from.start();
         final Address oldFromSpaceStop = from.end();
         final Address oldAllocationMark = from.getAllocationMark();
-        from.setStartAddress(to.start());
-        from.setStopAddress(to.end());
+        from.setStart(to.start());
+        from.setEnd(to.end());
         from.setAllocationMark(to.getAllocationMark());
-        to.setStartAddress(oldFromSpaceStart);
-        to.setStopAddress(oldFromSpaceStop);
+        to.setStart(oldFromSpaceStart);
+        to.setEnd(oldFromSpaceStop);
         to.setAllocationMark(oldAllocationMark);
 
     }
@@ -79,8 +79,8 @@ public final class BeltManager {
     @INLINE
     private void initializeFirstBelt() {
         final Size size = calculateBeltSize(0);
-        _belts.get(0).setStartAddress(BeltwayHeapSchemeConfiguration.getApplicationHeapStartAddress());
-        _belts.get(0).setStopAddress(_belts.get(0).start().plus(size));
+        _belts.get(0).setStart(BeltwayHeapSchemeConfiguration.getApplicationHeapStartAddress());
+        _belts.get(0).setEnd(_belts.get(0).start().plus(size));
         _belts.get(0).setIndex(0);
         _belts.get(0).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(0));
         _belts.get(0).resetAllocationMark();
@@ -92,8 +92,8 @@ public final class BeltManager {
         initializeFirstBelt();
         int i;
         for (i = 1; i < BeltwayConfiguration.getNumberOfBelts() - 1; i++) {
-            _belts.get(i).setStartAddress(_belts.get(i - 1).end());
-            _belts.get(i).setStopAddress(_belts.get(i).start().plus(calculateBeltSize(i)));
+            _belts.get(i).setStart(_belts.get(i - 1).end());
+            _belts.get(i).setEnd(_belts.get(i).start().plus(calculateBeltSize(i)));
             _belts.get(i).setIndex(i);
             _belts.get(i).resetAllocationMark();
             _belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
@@ -102,8 +102,8 @@ public final class BeltManager {
         // Because of the alignment the last belt will be a little bit smaller
         // than the previous ones, as it has to stop at the belt's boundaries
         if (i < BeltwayConfiguration.getNumberOfBelts()) {
-            _belts.get(i).setStartAddress(_belts.get(i - 1).end());
-            _belts.get(i).setStopAddress(_belts.get(0).start().plus(BeltwayConfiguration.getMaxHeapSize().asAddress()));
+            _belts.get(i).setStart(_belts.get(i - 1).end());
+            _belts.get(i).setEnd(_belts.get(0).start().plus(BeltwayConfiguration.getMaxHeapSize().asAddress()));
             _belts.get(i).setFramePercentageOfUsableMemory(BeltwayConfiguration.getPercentOfUsableMemoryPerBelt(i));
             _belts.get(i).setIndex(i);
             _belts.get(i).resetAllocationMark();
@@ -158,22 +158,22 @@ public final class BeltManager {
 
     @INLINE
     public Belt getBeltBeforeLastAllocation(Belt from) {
-        from.setStopAddress(from.getAllocationMarkSnapshot().asAddress());
+        from.setEnd(from.getAllocationMarkSnapshot().asAddress());
         return from;
     }
 
     @INLINE
     public Belt getCustomBelt(Address startAddress, Address stopAddress, Address allocationMark) {
-        _tempBelt.setStartAddress(startAddress);
-        _tempBelt.setStopAddress(stopAddress);
+        _tempBelt.setStart(startAddress);
+        _tempBelt.setEnd(stopAddress);
         _tempBelt.setAllocationMark(allocationMark);
         return _tempBelt;
     }
 
     @INLINE
     public Belt getRemainingOverlappingBelt(Belt from) {
-        _tempBelt.setStartAddress(from.getPrevAllocationMark());
-        _tempBelt.setStopAddress(from.end());
+        _tempBelt.setStart(from.getPrevAllocationMark());
+        _tempBelt.setEnd(from.end());
         _tempBelt.setAllocationMark(from.getAllocationMark());
         return _tempBelt;
     }
@@ -186,7 +186,7 @@ public final class BeltManager {
     @INLINE
     public static Belt getApplicationHeap() {
         _applicationHeap.setStart(BeltwayConfiguration.getApplicationHeapStartAddress());
-        _applicationHeap.setStopAddress(BeltwayConfiguration.getApplicationHeapEndAddress());
+        _applicationHeap.setEnd(BeltwayConfiguration.getApplicationHeapEndAddress());
         return _applicationHeap;
     }
 

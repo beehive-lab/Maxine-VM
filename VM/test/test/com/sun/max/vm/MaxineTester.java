@@ -693,14 +693,14 @@ public class MaxineTester {
                 addTestResult(mainClass.getName(), String.format("timed out", maxineExitValue, javaExitValue), expected);
             } else {
                 final boolean expected = printFailed(mainClass, config);
-                addTestResult(mainClass.getName(), String.format("bad exit value [received %d, expected %d; see %s and %s]", maxineExitValue, javaExitValue, fileRef(javaOutput), fileRef(maxvmOutput)), expected);
+                addTestResult(mainClass.getName(), String.format("bad exit value [received %d, expected %d; see %s and %s ]", maxineExitValue, javaExitValue, fileRef(javaOutput), fileRef(maxvmOutput)), expected);
             }
         } else if (compareFiles(javaOutput, maxvmOutput)) {
             final boolean expected = printSuccess(mainClass, config);
             addTestResult(mainClass.getName(), null, expected);
         } else {
             final boolean expected = printFailed(mainClass, config);
-            addTestResult(mainClass.getName(), String.format("output did not match [compare %s with %s]", fileRef(javaOutput), fileRef(maxvmOutput)), expected);
+            addTestResult(mainClass.getName(), String.format("output did not match [compare %s with %s ]", fileRef(javaOutput), fileRef(maxvmOutput)), expected);
         }
     }
 

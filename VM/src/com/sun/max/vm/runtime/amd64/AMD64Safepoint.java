@@ -22,7 +22,6 @@ package com.sun.max.vm.runtime.amd64;
 
 import static com.sun.max.asm.amd64.AMD64GeneralRegister64.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
 import com.sun.max.program.*;
@@ -91,7 +90,6 @@ public final class AMD64Safepoint extends Safepoint {
         super(vmConfiguration);
     }
 
-    @INLINE(override = true)
     @Override
     public AMD64GeneralRegister64 latchRegister() {
         return LATCH_REGISTER;

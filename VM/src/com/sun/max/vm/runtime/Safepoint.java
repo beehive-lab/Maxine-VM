@@ -209,7 +209,6 @@ public abstract class Safepoint {
         MemoryBarrier.loadStore();
     }
 
-    @INLINE(override = true)
     public abstract Symbol latchRegister();
 
     protected abstract byte[] createCode();

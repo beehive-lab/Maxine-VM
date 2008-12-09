@@ -24,11 +24,14 @@ import static com.sun.max.vm.jni.JniFunctionWrapper.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
@@ -483,23 +486,23 @@ public abstract class StackFrameWalker {
                 // native frame
                 continue;
             }
-            final TargetJavaFrameDescriptor javaFrameDescriptor = targetMethod.getPrecedingJavaFrameDescriptor(stackFrame.instructionPointer());
-            if (javaFrameDescriptor == null) {
+            final Iterator<BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            if (bytecodeLocations == null) {
                 appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
             } else {
-                appendInlinedFrameDescriptors(result, javaFrameDescriptor, invisibleFrames);
+                appendCallers(result, bytecodeLocations, invisibleFrames);
             }
         }
         return result;
     }
 
-    private static void appendInlinedFrameDescriptors(AppendableSequence<ClassMethodActor> result, TargetJavaFrameDescriptor javaFrameDescriptor, boolean invisibleFrames) {
-        // this recursive method appends inlined frame descriptors to the frame list (i.e. parent first)
-        final TargetJavaFrameDescriptor parentFrameDescriptor = javaFrameDescriptor.parent();
-        if (parentFrameDescriptor != null) {
-            appendInlinedFrameDescriptors(result, parentFrameDescriptor, invisibleFrames);
+    private static void appendCallers(AppendableSequence<ClassMethodActor> result, Iterator<BytecodeLocation> bytecodeLocations, boolean invisibleFrames) {
+        // this recursive method appends inlined bytecode locations to the frame list (i.e. parent first)
+        if (bytecodeLocations.hasNext()) {
+            final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+            appendCallers(result, bytecodeLocations, invisibleFrames);
+            appendClassMethodActor(result, bytecodeLocation.classMethodActor(), invisibleFrames);
         }
-        appendClassMethodActor(result, javaFrameDescriptor.bytecodeLocation().classMethodActor(), invisibleFrames);
     }
 
     private static void appendClassMethodActor(final AppendableSequence<ClassMethodActor> result, final ClassMethodActor classMethodActor, boolean invisibleFrames) {

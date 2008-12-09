@@ -34,10 +34,8 @@ import com.sun.max.vm.heap.beltway.*;
  */
 public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
-    private Address _allocationMark;
     private Address _endAllocationMark;
     private Address _previousAllocationMark;
-    private Pointer _allocationMarkPointer;
     private Address _nextTLAB = Address.zero();
     private Address _startScavengeAddress = Address.zero();
     private Address _stopScavengeAddress = Address.zero();
@@ -50,25 +48,25 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     public TLAB() {
         super();
-        _allocationMark = start();
+        _mark = start();
     }
 
     public TLAB(Address start, Size size) {
         super(start, size);
-        _allocationMark = start();
+        _mark = start();
 
     }
 
     public TLAB(Size size) {
         super(size);
-        _allocationMark = start();
+        _mark = start();
         setDescription("TLAB");
     }
 
     public void initializeTLAB(Address newAddress) {
         setStart(newAddress);
         setSize(BeltwayHeapSchemeConfiguration.TLAB_SIZE);
-        _allocationMark = newAddress;
+        _mark = newAddress;
         if (VMConfiguration.hostOrTarget().debugging()) {
             _endAllocationMark = end().asPointer().minusWords(4);
         } else {
@@ -85,7 +83,7 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
         // Add one word in case of debugging, because we pass the parameter of the start
         // address without the taking account the debug word
         setSize(size);
-        _allocationMark = allocationMark;
+        _mark = allocationMark;
         _previousAllocationMark = allocationMark;
         if (VMConfiguration.hostOrTarget().debugging()) {
             _endAllocationMark = end().asPointer().minusWords(4);
@@ -98,18 +96,18 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     }
 
-    public void undoLastAlocation() {
-        _allocationMark = _previousAllocationMark;
+    public void undoLastAllocation() {
+        _mark = _previousAllocationMark;
     }
 
     @INLINE
     public final void resetTLAB() {
-        _allocationMark = Address.zero();
+        _mark = Address.zero();
     }
 
     @INLINE
     public final void setAllocationMark(Address allocationMark) {
-        _allocationMark = allocationMark;
+        _mark = allocationMark;
     }
 
     @INLINE
@@ -123,18 +121,13 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     }
 
     @INLINE
-    public final void setAllocationMarkPointer(Pointer allocationMarkPointer) {
-        _allocationMarkPointer = allocationMarkPointer;
-    }
-
-    @INLINE
     public final  boolean isSet() {
-        return !_allocationMark.isZero();
+        return !_mark.isZero();
     }
 
     @INLINE
     public final void unSet() {
-        _allocationMark = Address.zero();
+        _mark = Address.zero();
     }
 
     @INLINE
@@ -184,9 +177,9 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
 
     @INLINE
     @Override
-    public Pointer allocate(Size size) {
+    public final Pointer allocate(Size size) {
         Pointer cell;
-        final Pointer oldAllocationMark = _allocationMark.asPointer();
+        final Pointer oldAllocationMark = _mark.asPointer();
         if (VMConfiguration.hostOrTarget().debugging()) {
             cell = oldAllocationMark.plusWords(1);
         } else {
@@ -198,25 +191,14 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
             fillTLAB();
             return Pointer.zero();
         }
-        _allocationMark = end;
-        _previousAllocationMark = _allocationMark;
+        _mark = end;
+        _previousAllocationMark = _mark;
         return cell;
     }
 
     @Override
     @INLINE
-    public Address getAllocationMark() {
-        return _allocationMark;
-    }
-
-    @INLINE
-    public final Pointer getAllocationMarkPointer() {
-        return _allocationMarkPointer;
-    }
-
-    @Override
-    @INLINE
-    public Pointer allocate(RuntimeMemoryRegion space, Size size) {
+    public final Pointer allocate(RuntimeMemoryRegion space, Size size) {
         return null;
     }
 
@@ -226,11 +208,11 @@ public class TLAB extends RuntimeMemoryRegion implements Allocator {
     }
 
     @INLINE
-    public  final void fillTLAB() {
-        final Size fillingSize = _endAllocationMark.minus(_allocationMark).asPointer().asSize();
+    public final void fillTLAB() {
+        final Size fillingSize = _endAllocationMark.minus(_mark).asPointer().asSize();
         _endAllocationMark = end();
-        Cell.plantArray(_allocationMark.asPointer().plusWords(1), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), fillingSize.toInt());
-        _allocationMark = end();
+        Cell.plantArray(_mark.asPointer().plusWords(1), PrimitiveClassActor.BYTE_ARRAY_CLASS_ACTOR.dynamicHub(), fillingSize.toInt());
+        _mark = end();
     }
 
     public Pointer compareAndSwapScavengePointer(Pointer suspectedValue, Pointer newValue) {

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.runtime.ia32;
 
-import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.asm.ia32.*;
 import com.sun.max.asm.ia32.complete.*;
@@ -39,7 +38,6 @@ public final class IA32Safepoint extends Safepoint {
         super(vmConfiguration);
     }
 
-    @INLINE(override = true)
     @Override
     public IA32GeneralRegister32 latchRegister() {
         return null;

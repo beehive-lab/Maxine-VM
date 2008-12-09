@@ -37,6 +37,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -271,6 +272,8 @@ public final class PrototypeGenerator {
                     graphTimer.stop();
 
                     Code.bootCodeRegion().trim();
+
+                    JniNativeInterface.checkInvariants();
 
                     return graphPrototype;
                 }
