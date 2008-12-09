@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2008 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,40 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
-
-import com.sun.max.tele.debug.*;
+package test.output;
 
 /**
- * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
+ * A simple program to test the output code of System.exit().
  *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
+ * @author Ben L. Titzer
  */
-public abstract class TeleVMHolder {
-
-    private final TeleVM _teleVM;
-
-    public TeleVM teleVM() {
-        return _teleVM;
+public class ExitCode {
+    public static void main(String[] args) {
+        int code = 10;
+        if (args.length > 0) {
+            code = Integer.parseInt(args[0]);
+        }
+        System.out.println("Exiting with code = " + code);
+        System.exit(code);
     }
-
-    public TeleProcess teleProcess() {
-        return _teleVM.teleProcess();
-    }
-    
-    private final String _tracePrefix;
-
-    /**
-     * @return default prefix text for trace messages; identifies the class being traced.
-     */
-    protected String tracePrefix() {
-        return _tracePrefix;
-    }
-
-    protected TeleVMHolder(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "]";
-    }
-
 }

@@ -519,6 +519,7 @@ public class MaxineTester {
         final PrintStream out = out();
 
         out.println("JUnit auto-test: Started " + autoTest);
+        out.flush();
         final long start = System.currentTimeMillis();
         final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
         out.print("JUnit auto-test: Stopped " + autoTest);

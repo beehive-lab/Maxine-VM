@@ -18,40 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
-
-import com.sun.max.tele.debug.*;
+/*
+ * @Harness: java
+ * @Runs: 0 = true
+ */
+package test.threads;
 
 /**
- * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
+ * This tests a bug where a GC erroneously collects the java.lang.Thread inflated monitor
+ * causing the join to never return.
  *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
+ * @author Mick Jordan
  */
-public abstract class TeleVMHolder {
+public class Thread_join04 implements Runnable {
 
-    private final TeleVM _teleVM;
-
-    public TeleVM teleVM() {
-        return _teleVM;
+    public static boolean test(int i) throws InterruptedException {
+        final Thread thread = new Thread(new Thread_join04());
+        thread.start();
+        thread.join();
+        return true;
     }
 
-    public TeleProcess teleProcess() {
-        return _teleVM.teleProcess();
-    }
-    
-    private final String _tracePrefix;
+    public void run() {
+        try {
+            Thread.sleep(200);
+            System.gc();
+        } catch (InterruptedException ex) {
 
-    /**
-     * @return default prefix text for trace messages; identifies the class being traced.
-     */
-    protected String tracePrefix() {
-        return _tracePrefix;
-    }
-
-    protected TeleVMHolder(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "]";
+        }
     }
 
 }

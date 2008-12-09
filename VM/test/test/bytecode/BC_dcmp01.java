@@ -18,40 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package test.bytecode;
 
-import com.sun.max.tele.debug.*;
-
-/**
- * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
- *
- * @author Bernd Mathiske
- * @author Michael Van De Vanter
+/*
+ * @Harness: java
+ * @Runs: (0d, -0.1d) = false; (78.00d, 78.001d) = true
  */
-public abstract class TeleVMHolder {
-
-    private final TeleVM _teleVM;
-
-    public TeleVM teleVM() {
-        return _teleVM;
+public class BC_dcmp01 {
+    public static boolean test(double a, double b) {
+        return a < b;
     }
-
-    public TeleProcess teleProcess() {
-        return _teleVM.teleProcess();
-    }
-    
-    private final String _tracePrefix;
-
-    /**
-     * @return default prefix text for trace messages; identifies the class being traced.
-     */
-    protected String tracePrefix() {
-        return _tracePrefix;
-    }
-
-    protected TeleVMHolder(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "]";
-    }
-
 }

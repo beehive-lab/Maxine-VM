@@ -184,6 +184,11 @@ public interface InspectorStyle {
     Color sourcecodeBackgroundColor();
 
     // Debugger interaction
+
+    Color vmStoppedBackgroundColor();
+    Color vmRunningBackgroundColor();
+    Color vmTerminatedBackgroundColor();
+
     Color debugSelectedCodeBorderColor();
 
     Border debugDefaultTagBorder();

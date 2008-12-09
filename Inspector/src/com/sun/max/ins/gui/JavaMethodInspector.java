@@ -301,7 +301,7 @@ public class JavaMethodInspector extends MethodInspector {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if (isVisible()) {
+        if (isShowing()) {
             _teleClassMethodActor.refreshView();
             if (_classMethodMenuItems != null) {
                 _classMethodMenuItems.refresh(epoch, force);

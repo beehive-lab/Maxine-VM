@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
+import com.sun.max.program.Trace;
 import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -30,8 +31,22 @@ import com.sun.max.unsafe.*;
  *
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public final class TeleProcessController {
+    
+    private static final int TRACE_VALUE = 2;
+    
+    private static final String RUN_TO_INSTRUCTION = "runToInstruction";
+    private static final String TERMINATE = "terminate";
+    private static final String PAUSE = "pause";
+    private static final String RESUME = "resume";
+    private static final String SINGLE_STEP = "singleStep";
+    private static final String STEP_OVER = "stepOver";
+    
+    private String  tracePrefix() {
+        return "[TeleProcessController: " + Thread.currentThread().getName() + "] ";
+    }
 
     TeleProcessController(TeleProcess teleProcess) {
         _teleProcess = teleProcess;
@@ -45,6 +60,9 @@ public final class TeleProcessController {
     public TeleProcess teleProcess() {
         return _teleProcess;
     }
+    
+    private final Object _runToInstructionScheduleTracer = new Tracer(RUN_TO_INSTRUCTION, "schedule");
+    private final Object _runToInstructionPerformTracer = new Tracer(RUN_TO_INSTRUCTION, "perform");
 
     /**
      * Resumes a process to make it run until a given destination instruction. All breakpoints encountered between the
@@ -55,9 +73,11 @@ public final class TeleProcessController {
      * @throws OSExecutionRequestException
      */
     public void runToInstruction(final Address instructionPointer, final boolean synchronous, final boolean disableBreakpoints) throws OSExecutionRequestException, InvalidProcessRequestException {
-        final TeleEventRequest request = new TeleEventRequest("runToInstruction", null) {
+        Trace.begin(TRACE_VALUE, _runToInstructionScheduleTracer);
+        final TeleEventRequest request = new TeleEventRequest(RUN_TO_INSTRUCTION, null) {
             @Override
             public void execute() throws OSExecutionRequestException {
+                Trace.begin(TRACE_VALUE, _runToInstructionPerformTracer);
                 final Factory breakpointFactory = _teleProcess.targetBreakpointFactory();
 
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
@@ -76,23 +96,41 @@ public final class TeleProcessController {
                     breakpoint.activate();
                 }
                 teleProcess().resume();
+                Trace.end(TRACE_VALUE, _runToInstructionPerformTracer);
             }
         };
         teleProcess().scheduleRequest(request, synchronous);
+        Trace.end(TRACE_VALUE, _runToInstructionScheduleTracer);
     }
+
+    
+    private final Object _terminatePerformTracer = new Tracer(TERMINATE, "perform");
 
     public void terminate() throws Exception {
+        Trace.begin(TRACE_VALUE, _terminatePerformTracer);
         teleProcess().terminate();
+        Trace.end(TRACE_VALUE, _terminatePerformTracer);
     }
 
+    
+    private final Object _pausePerformTracer = new Tracer(PAUSE, "perform");
+    
     public void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
+        Trace.begin(TRACE_VALUE, _pausePerformTracer);
         teleProcess().pause();
+        Trace.end(TRACE_VALUE, _pausePerformTracer);
     }
+    
+    
+    private final Object _resumeScheduleTracer = new Tracer(RESUME, "schedule");
+    private final Object _resumePerformTracer = new Tracer(RESUME, "perform");
 
     public void resume(final boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
-        final TeleEventRequest request = new TeleEventRequest("resume", null) {
+        Trace.begin(TRACE_VALUE, _resumeScheduleTracer);
+        final TeleEventRequest request = new TeleEventRequest(RESUME, null) {
             @Override
             public void execute() throws OSExecutionRequestException {
+                Trace.begin(TRACE_VALUE, _resumePerformTracer);
                 for (TeleNativeThread thread : teleProcess().threads()) {
                     thread.evadeBreakpoint();
                 }
@@ -100,32 +138,49 @@ public final class TeleProcessController {
                     _teleProcess.targetBreakpointFactory().activateAll();
                 }
                 teleProcess().resume();
+                Trace.end(TRACE_VALUE, _resumePerformTracer);
             }
         };
         teleProcess().scheduleRequest(request, synchronous);
+        Trace.end(TRACE_VALUE, _resumeScheduleTracer);
     }
+    
+    
+    private final Object _singleStepScheduleTracer = new Tracer(SINGLE_STEP, "schedule");   
+    private final Object _singleStepPerformTracer = new Tracer(SINGLE_STEP, "perform");
 
     public void singleStep(final TeleNativeThread thread, boolean isSynchronous) throws InvalidProcessRequestException, OSExecutionRequestException    {
-        final TeleEventRequest request = new TeleEventRequest("singleStep", thread) {
+        Trace.begin(TRACE_VALUE, _singleStepScheduleTracer);
+        final TeleEventRequest request = new TeleEventRequest(SINGLE_STEP, thread) {
             @Override
             public void execute() throws OSExecutionRequestException {
+                Trace.begin(TRACE_VALUE, _singleStepPerformTracer);
                 teleProcess().performSingleStep(thread);
+                Trace.end(TRACE_VALUE, _singleStepPerformTracer);
             }
         };
         teleProcess().scheduleRequest(request, isSynchronous);
+        Trace.end(TRACE_VALUE, _singleStepScheduleTracer);
     }
 
+    
+    private final Object _stepOverScheduleTracer = new Tracer(STEP_OVER, "schedule");   
+    private final Object _stepOverPerformTracer = new Tracer(STEP_OVER, "perform");
+
     public void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
-        final TeleEventRequest request = new TeleEventRequest("stepOver", thread) {
+        Trace.begin(TRACE_VALUE, _stepOverScheduleTracer);
+        final TeleEventRequest request = new TeleEventRequest(STEP_OVER, thread) {
 
             private Pointer _oldInstructionPointer;
             private Pointer _oldReturnAddress;
 
             @Override
             public void execute() throws OSExecutionRequestException {
+                Trace.begin(TRACE_VALUE, _stepOverPerformTracer);
                 _oldInstructionPointer = thread.instructionPointer();
                 _oldReturnAddress = thread.getReturnAddress();
                 teleProcess().performSingleStep(thread);
+                Trace.end(TRACE_VALUE, _stepOverPerformTracer);
             }
 
             @Override
@@ -143,6 +198,7 @@ public final class TeleProcessController {
             }
         };
         teleProcess().scheduleRequest(request, synchronous);
+        Trace.end(TRACE_VALUE, _stepOverScheduleTracer);
     }
 
     /**
@@ -180,5 +236,28 @@ public final class TeleProcessController {
         }
         // Stepped over a normal, non-call instruction:
         return null;
+    }
+    
+    /**
+     * An object that delays evaluation of a trace message for controller actions.     
+     */
+    private class Tracer {
+        
+        private final String _processAction;
+        private final String _controllerAction;
+        
+        /**
+         * An object that delays evaluation of a trace message.
+         * @param processAction the name of the process action being requested
+         * @param controllerAction the step being taken by the controller
+         */
+        public Tracer(String processAction, String controllerAction) {
+            _processAction = processAction;
+            _controllerAction = controllerAction;
+        }
+        @Override
+        public String toString() {
+            return tracePrefix() + _controllerAction + " " + _processAction;
+        }
     }
 }
