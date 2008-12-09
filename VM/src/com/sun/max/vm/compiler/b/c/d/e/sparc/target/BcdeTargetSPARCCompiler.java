@@ -214,12 +214,13 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 ProgramError.unknownCase();
             }
         }
-        // Jit to Opt adapter frame exploit the use of register windows by optimized code to leave the frame pointer of the jited caller in its local register and
-        // save the return address in another one (SAVED_CALLER_ADDRESS).
+        // Jit to Opt adapter frame exploit the use of register windows by optimized code to leave the frame pointer
+        //  of the jited caller in its local register and save the return address in another one (SAVED_CALLER_ADDRESS).
         // This avoids writing these to the stack then reloading them.
-        // The saving of the return address register takes place at the JIT entry point, so that by the first instruction of the adapter, the return address is in SAVED_CALLER_ADDRESS.
-        // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found in SAVED_CALLER_ADDRESS.
-        // The caller frame pointer is always in the local register defined by the JIT abi (_jitFramePointer).
+        // The saving of the return address register takes place at the JIT entry point, so that by the first instruction
+        // of the adapter, the return address is in SAVED_CALLER_ADDRESS.
+        // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found
+        // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (_jitFramePointer).
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, _jitFramePointer).asPointer();
         final Pointer callerStackPointer;
