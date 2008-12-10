@@ -143,9 +143,9 @@ import com.sun.max.vm.value.WordValue;
  * @author Thomas Wuerthinger
  */
 public abstract class TeleVM implements VMAccess {
-    
+
     private static final int TRACE_VALUE = 2;
-    
+
     protected String  tracePrefix() {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
@@ -740,7 +740,8 @@ public abstract class TeleVM implements VMAccess {
 		if (_typesOnClasspath == null) {
 			updateLoadableTypeDescriptorsFromClasspath();
 		}
-		return Iterables.join(typeDescriptors, _typesOnClasspath);
+		typeDescriptors.addAll(_typesOnClasspath);
+		return typeDescriptors;
 	}
 
 	private Set<TypeDescriptor> _typesOnClasspath;
@@ -831,7 +832,7 @@ public abstract class TeleVM implements VMAccess {
 	 * table in the {@link TeleVM} is valid.
 	 */
 	private long _cachedCollectionEpoch;
-	
+
 	private Tracer _refreshReferencesTracer = new Tracer("refresh references");
 
 	/**
@@ -867,7 +868,7 @@ public abstract class TeleVM implements VMAccess {
 			fireThreadStartedEvent(thread);
 		}
 	}
-	
+
 	private final Tracer _refreshTracer = new Tracer("refresh");
 
 	/**
@@ -1139,7 +1140,7 @@ public abstract class TeleVM implements VMAccess {
                         final Sequence<TeleNativeThread> breakpointThreads = event.breakpointThreads();
                         for (TeleNativeThread t : breakpointThreads) {
                             fireBreakpointEvent(t, t.getFrames()[0].getLocation());
-                        }                        
+                        }
                         if (event.singleStepThread() != null) {
                             fireSingleStepEvent(event.singleStepThread(), event.singleStepThread().getFrames()[0].getLocation());
                         }
@@ -1678,14 +1679,14 @@ public abstract class TeleVM implements VMAccess {
 		}
 		return result;
 	}
-	
+
     /**
-     * An object that delays evaluation of a trace message for controller actions.     
+     * An object that delays evaluation of a trace message for controller actions.
      */
     private class Tracer {
-        
+
         private final String _message;
-        
+
         /**
          * An object that delays evaluation of a trace message.
          * @param message identifies what is being traced
@@ -1693,7 +1694,7 @@ public abstract class TeleVM implements VMAccess {
         public Tracer(String message) {
             _message = message;
         }
-        
+
         @Override
         public String toString() {
             return tracePrefix() + _message;
