@@ -401,24 +401,17 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
             final TextLabel framePointerLabel = new TextLabel(_inspection, "Frame pointer:");
             final TextLabel stackPointerLabel = new TextLabel(_inspection, "Stack pointer:");
-            Pointer framePointer = javaStackFrame.framePointer();
-            Pointer stackPointer = javaStackFrame.stackPointer();
+            final Pointer framePointer = javaStackFrame.framePointer();
+            final Pointer stackPointer = javaStackFrame.stackPointer();
             final STACK_BIAS bias = javaStackFrame.bias();
-            if (bias.isFramePointerBiased()) {
-                framePointerLabel.setToolTipText(String.format("[0x%s + STACK_BIAS]", framePointer.toHexString()));
-                framePointer = bias.unbias(framePointer);
-            }
-            if (bias.isStackPointerBiased()) {
-                stackPointerLabel.setToolTipText(String.format("[0x%s + STACK_BIAS]", stackPointer.toHexString()));
-                stackPointer =  bias.unbias(stackPointer);
-            }
 
             header.add(framePointerLabel);
-            header.add(new DataLabel.AddressAsHex(_inspection,  framePointer));
+            header.add(new DataLabel.BiasedStackAddressAsHex(_inspection, framePointer, bias));
             header.add(stackPointerLabel);
-            header.add(new DataLabel.AddressAsHex(_inspection,  stackPointer));
+            header.add(new DataLabel.BiasedStackAddressAsHex(_inspection, stackPointer, bias));
             header.add(new TextLabel(_inspection, "Instruction pointer:"));
             header.add(_instructionPointerLabel);
+
 
             SpringUtilities.makeCompactGrid(header, 2);
 

@@ -25,6 +25,7 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.stack.*;
 
 /**
  * A selectable, lightweight, label for basic kinds of data
@@ -272,10 +273,12 @@ public abstract class DataLabel extends InspectorLabel {
      * A label that displays a memory address in hex; if a base address
      * is specified, then a ToolTip displays the offset from the base.
      */
-    public static final class AddressAsHex extends DataLabel {
-
-        private Address _address;
+    public static class AddressAsHex extends DataLabel {
+        protected Address _address;
         private final Address _origin;
+
+        public void changeBiasState() {
+        }
 
         public AddressAsHex(Inspection inspection, Address address) {
             this(inspection, address, null);
@@ -295,10 +298,24 @@ public abstract class DataLabel extends InspectorLabel {
                             menu.add(inspection().actions().inspectMemory(_address, null));
                             menu.add(inspection().actions().inspectMemoryWords(_address, null));
                             menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                            break;
                         }
+                        case MouseEvent.BUTTON2: {
+                            changeBiasState();
+                            break;
+                        }
+
                     }
                 }
             });
+            redisplay();
+        }
+
+        protected AddressAsHex(Inspection inspection, Address address, Address origin, InspectorMouseClickAdapter mouseListener) {
+            super(inspection, address.toHexString());
+            _address = address;
+            _origin = origin;
+            addMouseListener(mouseListener);
             redisplay();
         }
 
@@ -315,16 +332,53 @@ public abstract class DataLabel extends InspectorLabel {
             updateText();
         }
 
+        protected String toolTipText() {
+            if (_origin == null) {
+                return null;
+            }
+            final long position = _address.minus(_origin).toLong();
+            return "AsPosition: " + position + ", " +  "0x" + Long.toHexString(position);
+        }
+
         private void updateText() {
             setText(_address.toHexString());
-            if (_origin == null) {
-                setToolTipText(null);
+            setToolTipText(toolTipText());
+        }
+    }
+
+    public static final class BiasedStackAddressAsHex extends AddressAsHex {
+        boolean _biased;
+        final STACK_BIAS _bias;
+        public BiasedStackAddressAsHex(Inspection inspection, Address address, STACK_BIAS bias) {
+            super(inspection, address, null);
+            _bias = bias;
+            _biased = true;
+        }
+
+        private boolean useBias() {
+            return _bias != null && !_bias.equals(STACK_BIAS.NONE);
+        }
+        @Override
+        public void changeBiasState() {
+            if (!useBias()) {
+                return;
+            }
+            if (_biased) {
+                _biased = false;
+                setValue(_bias.unbias(_address.asPointer()));
             } else {
-                final long position = _address.minus(_origin).toLong();
-                setToolTipText("AsPosition: " + position + ", " +  "0x" + Long.toHexString(position));
+                _biased = true;
+                setValue(_bias.bias(_address.asPointer()));
             }
         }
 
+        @Override
+        protected String toolTipText() {
+            if (useBias()) {
+                return _biased ? "Biased" : "Unbiased";
+            }
+            return null;
+        }
     }
 
     /**
