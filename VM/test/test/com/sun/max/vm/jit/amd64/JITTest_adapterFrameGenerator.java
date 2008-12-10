@@ -28,6 +28,7 @@ import test.com.sun.max.vm.compiler.amd64.*;
 
 import com.sun.max.asm.*;
 import com.sun.max.asm.amd64.*;
+import com.sun.max.asm.dis.*;
 import com.sun.max.asm.dis.amd64.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -74,10 +75,10 @@ public class JITTest_adapterFrameGenerator extends CompilerTestCase {
         assert methodEntryPoint.position() % 8 == 0;
         final AMD64Disassembler disassembler = new AMD64Disassembler(0L, null);
         final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
-
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false);
         try {
             while (bufferedInputStream.available() > 0) {
-                disassembler.print(Trace.stream(), disassembler.scanOne(bufferedInputStream));
+                disassemblyPrinter.print(disassembler, Trace.stream(), disassembler.scanOne(bufferedInputStream));
             }
         } catch (Throwable throwable) {
             System.err.println("could not disassemble any further: " + throwable);

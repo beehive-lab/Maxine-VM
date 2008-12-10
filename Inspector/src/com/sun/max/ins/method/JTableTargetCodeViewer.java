@@ -736,38 +736,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                         final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
                         if (javaFrameDescriptor != null) {
                             final BytecodeLocation bytecodeLocation = javaFrameDescriptor.bytecodeLocation();
-                            final int[] calleeIndex = {0};
-                            final ConstantPool constantPool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
-                            final BytecodeAdapter adapter = new BytecodeAdapter() {
-                                private void setCallee(int index) {
-                                    if (calleeIndex[0] != 0) {
-                                        inspection().errorMessage("more than one callee for bytecode location " + bytecodeLocation, "Target Code Viewer");
-                                    }
-                                    calleeIndex[0] = index;
-                                }
-                                @Override
-                                protected void invokestatic(int index) {
-                                    setCallee(index);
-                                }
-                                @Override
-                                protected void invokespecial(int index) {
-                                    setCallee(index);
-                                }
-                                @Override
-                                protected void invokevirtual(int index) {
-                                    setCallee(index);
-                                }
-                                @Override
-                                protected void invokeinterface(int index, int count) {
-                                    setCallee(index);
-                                }
-                            };
-
-                            final BytecodeScanner bytecodeScanner = new BytecodeScanner(adapter);
                             try {
-                                bytecodeScanner.scanInstruction(bytecodeLocation.getBytecodeBlock());
-                                if (calleeIndex[0] != 0) {
-                                    final MethodRefConstant methodRef = constantPool.methodAt(calleeIndex[0]);
+                                final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                                if (methodRef != null) {
+                                    final ConstantPool constantPool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
                                     final String name = methodRef.name(constantPool).string();
                                     _calleeNames[row] = name;
                                     _calleeSignatures[row] = methodRef.holder(constantPool).toJavaString() + "." + name + methodRef.signature(constantPool).toJavaString(false, true);

@@ -34,6 +34,8 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -68,11 +70,22 @@ public final class Disassemble {
         return null;
     }
 
-    public static void disassemble(OutputStream out, byte[] code, ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder) {
+    /**
+     * Prints a textual disassembly of some given machine code.
+     *
+     * @param out where to print the disassembly
+     * @param code the machine code to be disassembled and printed
+     * @param processorKind the kind of the processor on which {@code code} executes
+     * @param startAddress the address at which {@code code} is located
+     * @param inlineDataDecoder used to decode any inline date in {@code code}
+     * @param disassemblyPrinter the printer utility to use for the printing. If {@code null}, then a new instance of
+     *            {@link DisassemblyPrinter} is created and used.
+     */
+    public static void disassemble(OutputStream out, byte[] code, ProcessorKind processorKind, Address startAddress, InlineDataDecoder inlineDataDecoder, DisassemblyPrinter disassemblyPrinter) {
         final Disassembler disassembler = createDisassembler(processorKind, startAddress, inlineDataDecoder);
         final BufferedInputStream stream = new BufferedInputStream(new ByteArrayInputStream(code));
         try {
-            disassembler.scanAndPrint(stream, out);
+            disassembler.scanAndPrint(stream, out, disassemblyPrinter);
         } catch (IOException ioException) {
             ProgramError.unexpected();
         } catch (AssemblyException assemblyException) {
@@ -80,9 +93,31 @@ public final class Disassemble {
         }
     }
 
-    public static void disassemble(OutputStream out, TargetMethod targetMethod) {
+    /**
+     * Prints a textual disassembly the code in a target method.
+     *
+     * @param out where to print the disassembly
+     * @param targetMethod the target method whose code is to be disassembled
+     */
+    public static void disassemble(OutputStream out, final TargetMethod targetMethod) {
         final ProcessorKind processorKind = targetMethod.compilerScheme().vmConfiguration().platform().processorKind();
-        disassemble(out, targetMethod.code(), processorKind, targetMethod.codeStart(), InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors()));
+        final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(targetMethod.encodedInlineDataDescriptors());
+        final Pointer startAddress = targetMethod.codeStart();
+        final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
+            @Override
+            protected String disassembledObjectString(Disassembler disassembler, DisassembledObject disassembledObject) {
+                final String string = super.disassembledObjectString(disassembler, disassembledObject);
+                if (string.startsWith("call ")) {
+                    final BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
+                    final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                    if (methodRef != null) {
+                        final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                        return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                    }
+                }
+                return string;
+            }
+        };
+        disassemble(out, targetMethod.code(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
     }
-
 }
