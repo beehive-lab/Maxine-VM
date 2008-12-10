@@ -169,6 +169,7 @@ public class MaxineTesterConfiguration {
         test.reflect.Array_get02.class,
         test.reflect.Array_get03.class,
         test.reflect.Array_getBoolean01.class,
+        test.output.ExitCode.class,
         test.hotpath.HP_series.class // 333
     );
 
