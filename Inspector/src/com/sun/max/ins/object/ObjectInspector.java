@@ -128,6 +128,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private static final String SHOW_OFFSETS_PREFERENCE = "showOffsets";
     private static final String SHOW_FIELD_TYPES_PREFERENCE = "showFieldTypes";
     private static final String SHOW_MEMORY_REGIONS_PREFERENCE = "showMemoryRegions";
+    private static final String HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE = "hideNullArrayElements";
 
     public static class Preferences {
         private final Inspection _inspection;
@@ -136,6 +137,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         boolean _showOffsets;
         boolean _showFieldTypes;
         boolean _showMemoryRegions;
+        boolean _hideNullArrayElements;
 
         Preferences(Inspection inspection) {
             _inspection = inspection;
@@ -147,6 +149,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                     saveSettingsEvent.save(SHOW_OFFSETS_PREFERENCE, _showOffsets);
                     saveSettingsEvent.save(SHOW_FIELD_TYPES_PREFERENCE, _showFieldTypes);
                     saveSettingsEvent.save(SHOW_MEMORY_REGIONS_PREFERENCE,  _showMemoryRegions);
+                    saveSettingsEvent.save(HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE,  _hideNullArrayElements);
                 }
             };
             settings.addSaveSettingsListener(saveSettingsListener);
@@ -156,6 +159,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             _showOffsets = settings.get(saveSettingsListener, SHOW_OFFSETS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
             _showFieldTypes = settings.get(saveSettingsListener, SHOW_FIELD_TYPES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
             _showMemoryRegions = settings.get(saveSettingsListener, SHOW_MEMORY_REGIONS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
+            _hideNullArrayElements = settings.get(saveSettingsListener, HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE, OptionTypes.BOOLEAN_TYPE, false);
         }
 
         /**
@@ -192,6 +196,12 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             alwaysShowMemoryRegionCheckBox.setToolTipText("Display memory region in tuples?");
             alwaysShowMemoryRegionCheckBox.setSelected(_showMemoryRegions);
 
+            final JCheckBox hideNullArrayElementsCheckBox = new JCheckBox("Hide null array elements");
+            hideNullArrayElementsCheckBox.setOpaque(true);
+            hideNullArrayElementsCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
+            hideNullArrayElementsCheckBox.setToolTipText("Hide null elements in arrays?");
+            hideNullArrayElementsCheckBox.setSelected(_hideNullArrayElements);
+
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
                     final Object source = e.getItemSelectable();
@@ -205,6 +215,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                         _showFieldTypes = alwaysShowTupleTypeCheckBox.isSelected();
                     } else if (source == alwaysShowMemoryRegionCheckBox) {
                         _showMemoryRegions = alwaysShowMemoryRegionCheckBox.isSelected();
+                    } else if (source == hideNullArrayElementsCheckBox) {
+                        _hideNullArrayElements = hideNullArrayElementsCheckBox.isSelected();
                     }
                     _inspection.settings().save();
                 }
@@ -214,20 +226,32 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             alwaysShowOffsetsCheckBox.addItemListener(itemListener);
             alwaysShowTupleTypeCheckBox.addItemListener(itemListener);
             alwaysShowMemoryRegionCheckBox.addItemListener(itemListener);
+            hideNullArrayElementsCheckBox.addItemListener(itemListener);
+
+            final JPanel contentPanel = new JPanel();
+            contentPanel.add(new TextLabel(_inspection, "Show:  "));
+            contentPanel.add(alwaysShowHeaderCheckBox);
+            contentPanel.add(alwaysShowAddressesCheckBox);
+            contentPanel.add(alwaysShowOffsetsCheckBox);
+            contentPanel.add(alwaysShowTupleTypeCheckBox);
+            contentPanel.add(alwaysShowMemoryRegionCheckBox);
+
+
+            final JPanel upperPanel = new JPanel(new BorderLayout());
+            upperPanel.setOpaque(true);
+            upperPanel.setBackground(_inspection.style().defaultBackgroundColor());
+            upperPanel.add(contentPanel, BorderLayout.WEST);
+
+            final JPanel lowerPanel = new JPanel();
+            lowerPanel.add(hideNullArrayElementsCheckBox);
 
             final JPanel panel = new JPanel(new BorderLayout());
             panel.setOpaque(true);
             panel.setBackground(_inspection.style().defaultBackgroundColor());
+            panel.add(upperPanel, BorderLayout.NORTH);
+            panel.add(lowerPanel, BorderLayout.SOUTH);
 
-            final JPanel content = new JPanel();
-            content.add(new TextLabel(_inspection, "Show:  "));
-            content.add(alwaysShowHeaderCheckBox);
-            content.add(alwaysShowAddressesCheckBox);
-            content.add(alwaysShowOffsetsCheckBox);
-            content.add(alwaysShowTupleTypeCheckBox);
-            content.add(alwaysShowMemoryRegionCheckBox);
 
-            panel.add(content, BorderLayout.WEST);
             return panel;
         }
 
@@ -287,6 +311,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private final JCheckBoxMenuItem _showOffsetsMenuCheckBox;
     private final JCheckBoxMenuItem _showTypesMenuCheckBox;
     private final JCheckBoxMenuItem _showMemoryRegionsMenuCheckBox;
+    private final JCheckBoxMenuItem _hideNullArrayElementsMenuCheckBox;
 
     private ObjectHeaderInspector _objectHeaderInspector;
 
@@ -329,6 +354,12 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 reconstructView();
             }
         });
+        _hideNullArrayElementsMenuCheckBox = new JCheckBoxMenuItem("Hide null array elements", preferences._hideNullArrayElements);
+        _hideNullArrayElementsMenuCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
         _objectInspectors.add(this);
     }
 
@@ -342,6 +373,9 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         frame().menu().add(_showOffsetsMenuCheckBox);
         frame().menu().add(_showTypesMenuCheckBox);
         frame().menu().add(_showMemoryRegionsMenuCheckBox);
+        if (!(_teleObject instanceof TeleTupleObject)) {
+            frame().menu().add(_hideNullArrayElementsMenuCheckBox);
+        }
         frame().menu().add(new InspectorAction(inspection(), "Object Display Prefs..") {
             @Override
             public void procedure() {
@@ -416,6 +450,10 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
      */
     public boolean showTypes() {
         return _showTypesMenuCheckBox.getState();
+    }
+
+    public boolean hideNullArrayElements() {
+        return _hideNullArrayElementsMenuCheckBox.getState();
     }
 
     /**
@@ -590,45 +628,47 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         panel.setBackground(style().defaultBackgroundColor());
         for (int i = 0; i < length; i++) {
             final int index = startIndex + i;
-            if (showAddresses()) {
-                panel.add(new LocationLabel.AsAddressWithOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
-            }
-            if (showOffsets()) {
-                panel.add(new LocationLabel.AsOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
-            }
-            panel.add(new LocationLabel.AsIndex(inspection(), indexPrefix, i, startOffset + (i * size), _currentObjectOrigin));
-            if (kind == Kind.REFERENCE) {
-                valueLabels.append(new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE) {
-                    @Override
-                    public Value fetchValue() {
-                        return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                    }
-                });
-            } else if (kind == Kind.WORD) {
-                valueLabels.append(new WordValueLabel(inspection(), wordValueMode) {
-                    @Override
-                    public Value fetchValue() {
-                        return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                    }
-                });
-            } else {
-                valueLabels.append(new PrimitiveValueLabel(inspection(), kind) {
-                    @Override
-                    public Value fetchValue() {
-                        return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                    }
-                });
-            }
-            panel.add(valueLabels.last());
-            if (showMemoryRegions()) {
-                final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
-                    @Override
-                    public Value fetchValue() {
-                        return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                    }
-                };
-                valueLabels.append(memoryRegionValueLabel);
-                panel.add(memoryRegionValueLabel);
+            if (!hideNullArrayElements() || !teleVM().getElementValue(kind, _teleObject.reference(), index).isZero()) {
+                if (showAddresses()) {
+                    panel.add(new LocationLabel.AsAddressWithOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
+                }
+                if (showOffsets()) {
+                    panel.add(new LocationLabel.AsOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
+                }
+                panel.add(new LocationLabel.AsIndex(inspection(), indexPrefix, i, startOffset + (i * size), _currentObjectOrigin));
+                if (kind == Kind.REFERENCE) {
+                    valueLabels.append(new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE) {
+                        @Override
+                        public Value fetchValue() {
+                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                        }
+                    });
+                } else if (kind == Kind.WORD) {
+                    valueLabels.append(new WordValueLabel(inspection(), wordValueMode) {
+                        @Override
+                        public Value fetchValue() {
+                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                        }
+                    });
+                } else {
+                    valueLabels.append(new PrimitiveValueLabel(inspection(), kind) {
+                        @Override
+                        public Value fetchValue() {
+                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                        }
+                    });
+                }
+                panel.add(valueLabels.last());
+                if (showMemoryRegions()) {
+                    final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
+                        @Override
+                        public Value fetchValue() {
+                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                        }
+                    };
+                    valueLabels.append(memoryRegionValueLabel);
+                    panel.add(memoryRegionValueLabel);
+                }
             }
         }
         SpringUtilities.makeCompactGrid(panel, numberOfArrayColumns());
