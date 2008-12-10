@@ -317,6 +317,21 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
+     * Gets the bytecode location for a given instruction pointer.
+     *
+     * @param instructionPointer a pointer to an instruction within this method
+     * @return the bytecode location {@code instructionPointer}. This will be null if no bytecode location can be
+     *         determined for {@code instructionPointer}.
+     */
+    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer) {
+        final Iterator<BytecodeLocation> bytecodeLocationsFor = getBytecodeLocationsFor(instructionPointer);
+        if (bytecodeLocationsFor != null && bytecodeLocationsFor.hasNext()) {
+            return bytecodeLocationsFor.next();
+        }
+        return null;
+    }
+
+    /**
      * Gets the frame descriptor at or before a given instruction pointer. The returned frame descriptor is the one at
      * the closest position less or equal to the position denoted by {@code instructionPointer}.
      *
@@ -827,6 +842,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         final IndentWriter writer = new IndentWriter(new OutputStreamWriter(byteArrayOutputStream));
         writer.println("target method: " + this);
         traceBundle(writer);
+        writer.flush();
         if (MaxineVM.isPrototyping()) {
             Disassemble.disassemble(byteArrayOutputStream, this);
         }
