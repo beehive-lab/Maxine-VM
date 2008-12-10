@@ -89,8 +89,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private CirContinuation makeExceptionContinuation(BlockState dispatcherState) {
-        final CirCall call = new CirCall(dispatcherState.cirBlock());
-        _methodTranslation.noteBlockCall(call);
+        final CirCall call = _methodTranslation.newCirCall(dispatcherState.cirBlock());
         final CirVariable throwable = _methodTranslation.stackVariableFactory().makeVariable(Kind.REFERENCE, 0, currentLocation());
         final CirContinuation continuation = new CirContinuation(throwable);
         continuation.setBody(call);
@@ -109,8 +108,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private CirContinuation getBlockContinuation(int address) {
-        final CirCall call = new CirCall(_methodTranslation.getBlockStateAt(address).cirBlock());
-        _methodTranslation.noteBlockCall(call);
+        final CirCall call = _methodTranslation.newCirCall(_methodTranslation.getBlockStateAt(address).cirBlock());
         final CirContinuation continuation = new CirContinuation();
         continuation.setBody(call);
         return continuation;

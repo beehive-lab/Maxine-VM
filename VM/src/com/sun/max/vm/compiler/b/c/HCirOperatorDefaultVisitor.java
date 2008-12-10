@@ -136,9 +136,4 @@ public class HCirOperatorDefaultVisitor extends HCirOperatorVisitor {
     public void visit(Split op) {
         visitDefault(op);
     }
-
-//    @Override
-//    public void visit(Lowerable op) {
-//        visitDefault(op);
-//    }
 }
