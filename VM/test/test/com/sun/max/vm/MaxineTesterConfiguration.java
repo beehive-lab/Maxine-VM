@@ -123,6 +123,7 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
         test.threads.Thread_join04.class,
         test.hotpath.HP_series.class, // 333
+        test.output.ExitCode.class,
         _expectedAutoTestFailures
     );
 
