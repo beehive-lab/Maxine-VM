@@ -234,7 +234,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             if (currentThread.isGCThread()) {
                 if (currentThread.waitingCondition() == null) {
                     // This is the GC thread creating its private waiting condition variable.
-                    // This done at vm boot so no deadlock risk.
+                    // This done at VM boot so no deadlock risk.
                 } else if (_elideForDeadlockStackTrace) {
                     // Pretend the GC thread has acquired the lock so that we can allocate if necessary while dumping its stack.
                     return;

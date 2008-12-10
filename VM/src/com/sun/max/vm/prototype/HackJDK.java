@@ -22,13 +22,18 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 import java.lang.reflect.*;
+import java.lang.reflect.Proxy;
+import java.net.*;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
 import java.util.regex.*;
 
 import sun.misc.*;
+import sun.util.calendar.*;
 
+import com.sun.max.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -113,98 +118,96 @@ public final class HackJDK {
         return innerClass;
     }
 
-    /**
-     * Utility function to lookup a field given the name of the class and the name of the field.
-     *
-     * @param holderName the name of the class that contains the field
-     * @param name the name of the field
-     */
-    private static Field f(String holderName, String name) {
-        try {
-            final Class holder = Class.forName(holderName);
-            return holder.getDeclaredField(name);
-        } catch (ClassNotFoundException classNotFoundException) {
-            ProgramWarning.message("class not found: " + holderName);
-            return null;
-        } catch (NoSuchFieldException noSuchFieldException) {
-            ProgramWarning.message("field not found: " + holderName + "." + name);
-            return null;
-        }
+    private static Class c(String className) {
+        return Classes.forName(className);
     }
 
     /**
-     * Utility function to lookup a field given the class and the name of the field.
-     *
-     * @param holder the class that contains the field
-     * @param name the name of the field as a string
+     * Utility class for gathering fields.
      */
-    private static Field f(Class holder, String name) {
-        try {
-            return holder.getDeclaredField(name);
-        } catch (NoSuchFieldException noSuchFieldException) {
-            ProgramWarning.message("field not found: " + holder.getName() + "." + name);
-            return null;
+    static class FieldSet extends HashSet<Field> {
+        public FieldSet(Object... classesOrFieldNames) {
+            Class c = null;
+            for (Object o : classesOrFieldNames) {
+                if (o instanceof Class) {
+                    c = (Class) o;
+                } else {
+                    assert c != null;
+                    final String name = (String) o;
+                    try {
+                        add(c.getDeclaredField(name));
+                    } catch (NoSuchFieldException noSuchFieldException) {
+                        ProgramWarning.message("field not found: " + c.getName() + "." + name);
+                    }
+                }
+            }
+        }
+
+        public void add(Class holder, String... fieldNames) {
+            for (String name : fieldNames) {
+                try {
+                    add(holder.getDeclaredField(name));
+                } catch (NoSuchFieldException noSuchFieldException) {
+                    ProgramWarning.message("field not found: " + holder.getName() + "." + name);
+                }
+            }
         }
     }
 
     /**
      * A set of all the transient fields in the initialized JDK that should be preserved.
      */
-    private static final Set<Field> _preservedTransientFields = Sets.from(
-        f(AbstractList.class, "modCount"),
-        f(AbstractMap.class, "keySet"), f(AbstractMap.class, "values"),
-        f(ArrayList.class, "elementData"),
-        f(BitSet.class, "wordsInUse"), f(BitSet.class, "sizeIsSticky"),
-        f(BasicPermission.class, "wildcard"), f(BasicPermission.class, "path"), f(BasicPermission.class, "exitVM"),
-        f(c(Collections.class, "CheckedMap"), "entrySet"),
-        f(c(Collections.class, "SingletonMap"), "keySet"), f(c(Collections.class, "SingletonMap"), "entrySet"), f(c(Collections.class, "SingletonMap"), "values"),
-        f(c(Collections.class, "SynchronizedMap"), "keySet"), f(c(Collections.class, "SynchronizedMap"), "entrySet"), f(c(Collections.class, "SynchronizedMap"), "values"),
-        f(c(Collections.class, "UnmodifiableMap"), "keySet"), f(c(Collections.class, "UnmodifiableMap"), "entrySet"), f(c(Collections.class, "UnmodifiableMap"), "values"),
-        f(Constructor.class, "signature"),
-        f(EnumMap.class, "keyType"),
-        f(EnumMap.class, "keyUniverse"),
-        f(EnumMap.class, "size"),
-        f(EnumMap.class, "vals"),
-        f(Field.class, "signature"),
-        f(IdentityHashMap.class, "table"), f(IdentityHashMap.class, "modCount"), f(IdentityHashMap.class, "threshold"), f(IdentityHashMap.class, "entrySet"),
-        f(HashMap.class, "table"), f(HashMap.class, "size"), f(HashMap.class, "modCount"), f(HashMap.class, "entrySet"),
-        f(Hashtable.class, "table"), f(Hashtable.class, "count"), f(Hashtable.class, "modCount"),
-        f(Hashtable.class, "keySet"), f(Hashtable.class, "entrySet"), f(Hashtable.class, "values"),
-        f(HashSet.class, "map"),
-        f(LinkedList.class, "header"), f(LinkedList.class, "size"),
-        f(Method.class, "signature"),
-        f(Pattern.class, "compiled"), f(Pattern.class, "normalizedPattern"), f(Pattern.class, "root"), f(Pattern.class, "matchRoot"),
-        f(Pattern.class, "buffer"), f(Pattern.class, "groupNodes"), f(Pattern.class, "temp"), f(Pattern.class, "capturingGroupCount"),
-        f(Pattern.class, "localCount"), f(Pattern.class, "cursor"), f(Pattern.class, "patternLength"),
-        f(TreeMap.class, "root"), f(TreeMap.class, "size"), f(TreeMap.class, "modCount"),
-        f(TreeMap.class, "entrySet"),
-        f(TreeMap.class, "navigableKeySet"), f(TreeMap.class, "descendingMap"),
-        f(WeakHashMap.class, "entrySet"),
-        f(ConcurrentHashMap.class, "keySet"), f(ConcurrentHashMap.class, "entrySet"), f(ConcurrentHashMap.class, "values"),
-        f(c(ConcurrentHashMap.class, "Segment"), "count"), f(c(ConcurrentHashMap.class, "Segment"), "modCount"),
-        f(c(ConcurrentHashMap.class, "Segment"), "threshold"), f(c(ConcurrentHashMap.class, "Segment"), "table"),
-        f(LinkedHashMap.class, "header")
+    private static final FieldSet _preservedTransientFields = new FieldSet(
+        AbstractList.class, "modCount",
+        AbstractMap.class, "keySet", "values",
+        ArrayList.class, "elementData",
+        BitSet.class, "wordsInUse", "sizeIsSticky",
+        BasicPermission.class, "wildcard", "path", "exitVM",
+        c(Collections.class, "CheckedMap"), "entrySet",
+        c(Collections.class, "SingletonMap"), "keySet", "entrySet", "values",
+        c(Collections.class, "SynchronizedMap"), "keySet", "entrySet", "values",
+        c(Collections.class, "UnmodifiableMap"), "keySet", "entrySet", "values",
+        Constructor.class, "signature",
+        EnumMap.class, "keyType", "keyUniverse", "size", "vals",
+        Field.class, "signature",
+        IdentityHashMap.class, "table", "modCount", "threshold", "entrySet",
+        HashMap.class, "table", "size", "modCount", "entrySet",
+        Hashtable.class, "table", "count", "modCount", "keySet", "entrySet", "values",
+        HashSet.class, "map",
+        LinkedList.class, "header", "size",
+        Method.class, "signature",
+        Pattern.class, "compiled", "normalizedPattern", "root", "matchRoot", "buffer", "groupNodes", "temp", "capturingGroupCount", "localCount", "cursor", "patternLength",
+        TreeMap.class, "root", "size", "modCount", "entrySet", "navigableKeySet", "descendingMap",
+        WeakHashMap.class, "entrySet",
+        ConcurrentHashMap.class, "keySet", "entrySet", "values",
+        c(ConcurrentHashMap.class, "Segment"), "count", "modCount", "threshold", "table",
+        LinkedHashMap.class, "header",
+        Locale.class, "hashCodeValue",
+        ZoneInfo.class, "dirty", "lastRule",
+        LinkedBlockingQueue.class, "head", "last",
+        Permissions.class, "permsMap", "hasUnresolved",
+        File.class, "prefixLength",
+        URL.class, "query", "path", "userInfo", "hostAddress", "handler",
+        c(AbstractQueuedSynchronizer.class, "ConditionObject"), "firstWaiter", "lastWaiter",
+        AbstractOwnableSynchronizer.class, "exclusiveOwnerThread",
+        AbstractQueuedSynchronizer.class, "head", "tail"
     );
 
     /**
      * A set of all the transient fields in the initialized JDK that should be omitted.
      */
-    private static final Set<Field> _omittedTransientFields = Sets.from(
-        f(Class.class, "cachedConstructor"), f(Class.class, "newInstanceCallerCache"), f(Class.class, "name"),
-        f(Class.class, "declaredFields"), f(Class.class, "publicFields"),
-        f(Class.class, "declaredMethods"), f(Class.class, "publicMethods"),
-        f(Class.class, "declaredConstructors"), f(Class.class, "publicConstructors"),
-        f(Class.class, "declaredPublicFields"), f(Class.class, "declaredPublicMethods"),
-        f(Class.class, "genericInfo"),
-        f(Class.class, "enumConstants"), f(Class.class, "enumConstantDirectory"),
-        f(Class.class, "annotations"), f(Class.class, "declaredAnnotations"),
-        f(Class.class, "classRedefinedCount"), f(Class.class, "lastRedefinedCount"),
-        f(Field.class, "genericInfo"), f(Field.class, "declaredAnnotations"),
-        f(EnumMap.class, "entrySet"),
-        f(Constructor.class, "genericInfo"), f(Constructor.class, "declaredAnnotations"),
-        f(Method.class, "genericInfo"), f(Method.class, "declaredAnnotations"),
-        f(java.lang.Package.class, "loader"), f(java.lang.Package.class, "packageInfo"),
-        f(java.lang.ref.Reference.class, "discovered")
+    private static final Set<Field> _omittedTransientFields = new FieldSet(
+        Class.class, "cachedConstructor", "newInstanceCallerCache", "name", "declaredFields", "publicFields",
+                     "declaredMethods", "publicMethods", "declaredConstructors", "publicConstructors",
+                     "declaredPublicFields", "declaredPublicMethods", "genericInfo",
+                     "enumConstants", "enumConstantDirectory", "annotations", "declaredAnnotations",
+                     "classRedefinedCount", "lastRedefinedCount",
+        Field.class, "genericInfo", "declaredAnnotations",
+        EnumMap.class, "entrySet",
+        Constructor.class, "genericInfo", "declaredAnnotations",
+        Method.class, "genericInfo", "declaredAnnotations",
+        java.lang.Package.class, "loader", "packageInfo",
+        java.lang.ref.Reference.class, "discovered"
     );
 
     /**
@@ -228,6 +231,10 @@ public final class HackJDK {
      */
     public static void checkForUnknownTransientField(Field field) {
         if ((field.getModifiers() & Modifier.TRANSIENT) != 0 && !_knownTransientFields.contains(field)) {
+            if (MaxPackage.isMaxClass(field.getDeclaringClass())) {
+                // The 'transient' keyword is used in Maxine class to mean don't copy the field's value into the boot image
+                return;
+            }
             if (!_unknownTransientFields.contains(field)) {
                 _unknownTransientFields.add(field);
                 ProgramWarning.message("unknown transient field: " + field);
@@ -242,33 +249,23 @@ public final class HackJDK {
      *
      * @see com.sun.max.vm.jdk.JDK_java_lang_reflect_Field
      */
-    private static final Set<Field> _omittedNonTransientFields = Sets.from(
-        f(Constructor.class, "constructorAccessor"),
-        f(Field.class, "fieldAccessor"), f(Field.class, "overrideFieldAccessor"),
-        f(Method.class, "methodAccessor"),
+    private static final FieldSet _omittedNonTransientFields = new FieldSet(
+        Constructor.class, "constructorAccessor",
+        Field.class, "fieldAccessor", "overrideFieldAccessor",
+        Method.class, "methodAccessor",
 
         // We need to copy the main thread but not most of it's state
-        f(Thread.class, "parkBlocker"),
-        f(Thread.class, "blocker"),
+        Thread.class, "parkBlocker", "blocker",
 
-        f("java.lang.ref.Finalizer", "unfinalized"),
-        f("java.lang.ref.Finalizer", "queue"),
-        f("java.lang.ref.Finalizer", "lock"),
+        c("java.lang.ref.Finalizer"), "unfinalized", "queue", "lock",
 
-        f("java.lang.ref.Reference", "pending"),
-        f("java.lang.ref.Reference", "lock"),
+        c("java.lang.ref.Reference"), "pending", "lock",
 
-        f(Thread.class, "threadLocals"),
-        f(Thread.class, "inheritableThreadLocals"),
-
-        f(VM.class, "booted"),
-        f(VM.class, "finalRefCount"),
-        f(VM.class, "peakFinalRefCount"),
+        Thread.class, "threadLocals", "inheritableThreadLocals",
+        VM.class, "booted", "finalRefCount", "peakFinalRefCount",
 
         // If Proxy is allowed in the image, we don't want these fields.
-        f(Proxy.class, "constructorParams"),
-        f(Proxy.class, "loaderToCache"),
-        f(Proxy.class, "proxyClasses")
+        Proxy.class, "constructorParams", "loaderToCache", "proxyClasses"
     );
 
     /**

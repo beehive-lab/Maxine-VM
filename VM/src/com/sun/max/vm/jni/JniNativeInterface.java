@@ -34,7 +34,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.CompilationScheme.*;
+import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * This class provides static functions for accessing the C data structure holding
@@ -50,7 +51,7 @@ public final class JniNativeInterface {
     }
 
     @PROTOTYPE_ONLY
-    private static StaticMethodActor[] getJniFunctionActors() {
+    private static CriticalMethod[] getJniFunctions() {
         final StaticMethodActor[] jniFunctionActors = Arrays.filter(ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), new Predicate<StaticMethodActor>() {
             public boolean evaluate(StaticMethodActor staticMethodActor) {
                 return staticMethodActor.isJniFunction();
@@ -59,7 +60,13 @@ public final class JniNativeInterface {
 
         checkAgainstJniHeaderFile(jniFunctionActors);
 
-        return jniFunctionActors;
+        final CriticalMethod[] jniFunctions = Arrays.map(jniFunctionActors, CriticalMethod.class, new MapFunction<StaticMethodActor, CriticalMethod>() {
+            public CriticalMethod map(StaticMethodActor staticMethodActor) {
+                return new CriticalMethod(staticMethodActor, CallEntryPoint.C_ENTRY_POINT);
+            }
+        });
+
+        return jniFunctions;
     }
 
     @PROTOTYPE_ONLY
@@ -123,24 +130,17 @@ public final class JniNativeInterface {
         ProgramError.check(jniFunctionNames.length() == jniFunctionActors.length);
     }
 
-    private static final StaticMethodActor[] _jniFunctionActors;
-    static {
-        if (MaxineVM.isPrototyping()) {
-            _jniFunctionActors = getJniFunctionActors();
-        } else {
-            throw ProgramError.unexpected();
-        }
-    }
+    private static final CriticalMethod[] _jniFunctions = getJniFunctions();
 
-    public static StaticMethodActor[] jniFunctionActors() {
-        return _jniFunctionActors;
+    public static CriticalMethod[] jniFunctions() {
+        return _jniFunctions;
     }
 
     private static Pointer _pointer = Pointer.zero();
 
     public static Pointer pointer() {
         if (_pointer.isZero()) {
-            _pointer = Memory.mustAllocate(_jniFunctionActors.length * Word.size());
+            _pointer = Memory.mustAllocate(_jniFunctions.length * Word.size());
         }
         return _pointer;
     }
@@ -148,7 +148,7 @@ public final class JniNativeInterface {
     /**
      * Patches the {@link #_pointer} array for certain JNI functions that are implemented in C for
      * portability reasons (i.e. handling of varargs).
-     * 
+     *
      * {@link #_pointer} is implicitly passed down to the implementing C function by means of its 'JNIEnv' parameter.
      */
     @C_FUNCTION
@@ -159,11 +159,34 @@ public final class JniNativeInterface {
      * Must be called at VM startup, relying on having as few other features working as possible at that moment.
      */
     public static void initialize() {
-        for (int i = 0; i < _jniFunctionActors.length; i++) {
-            final Word functionPointer = Static.getCriticalEntryPoint(_jniFunctionActors[i], CallEntryPoint.C_ENTRY_POINT);
+        for (int i = 0; i < _jniFunctions.length; i++) {
+            final Word functionPointer = _jniFunctions[i].address();
             pointer().setWord(i, functionPointer);
         }
         nativeInitializeJniInterface(pointer());
+        if (VMConfiguration.hostOrTarget().buildLevel() == BuildLevel.DEBUG) {
+            checkInvariants();
+        }
     }
 
+    private static void check(StackVariable stackVariable) {
+        for (CriticalMethod jniFunction : _jniFunctions) {
+            final ClassMethodActor classMethodActor = jniFunction.classMethodActor();
+            final Integer offset = stackVariable.offset(classMethodActor);
+            if (offset == null) {
+                Log.print("The offset of stack variable ");
+                Log.print(stackVariable);
+                Log.print(" in ");
+                Log.printMethodActor(jniFunction.classMethodActor(), false);
+                Log.println(" has not been recorded.");
+                FatalError.unexpected("The offset for a stack variable has not been recorded");
+            }
+        }
+    }
+
+    public static void checkInvariants() {
+        check(JniFunctionWrapper.savedLastJavaCallerFramePointer());
+        check(JniFunctionWrapper.savedLastJavaCallerInstructionPointer());
+        check(JniFunctionWrapper.savedLastJavaCallerStackPointer());
+    }
 }

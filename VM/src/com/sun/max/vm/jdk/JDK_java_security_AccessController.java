@@ -21,11 +21,13 @@
 package com.sun.max.vm.jdk;
 
 import java.security.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -134,25 +136,23 @@ final class JDK_java_security_AccessController {
                 // native frame
                 return true;
             }
-            TargetJavaFrameDescriptor javaFrameDescriptor = targetMethod.getPrecedingJavaFrameDescriptor(stackFrame.instructionPointer());
-            if (javaFrameDescriptor == null) {
+            final Iterator<BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            if (bytecodeLocations == null) {
                 final ProtectionDomain protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 if (protectionDomain != null) {
                     _result.append(protectionDomain);
                 }
             } else {
-                do {
-                    // TODO: construction and inspection of java frame descriptors might be expensive
-                    // consider a lighter weight version that only returns the classMethodActor stack
-                    final MethodActor classMethodActor = javaFrameDescriptor.bytecodeLocation().classMethodActor();
+                while (bytecodeLocations.hasNext()) {
+                    final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
+                    final MethodActor classMethodActor = bytecodeLocation.classMethodActor();
                     if (classMethodActor.isApplicationVisible()) {
-                        final ProtectionDomain protectionDomain = javaFrameDescriptor.bytecodeLocation().classMethodActor().holder().protectionDomain();
+                        final ProtectionDomain protectionDomain = bytecodeLocation.classMethodActor().holder().protectionDomain();
                         if (protectionDomain != null) {
                             _result.append(protectionDomain);
                         }
                     }
-                    javaFrameDescriptor = javaFrameDescriptor.parent();
-                } while (javaFrameDescriptor != null);
+                }
             }
             return true;
         }

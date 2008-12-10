@@ -129,7 +129,7 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        if (isVisible()) {
+        if (isShowing() || force) {
             if (_threadSetNeedsUpdate || force) {
                 // Mark all inspectors for possible deletion if their thread is no longer active
                 for (VmThreadLocalsInspector threadLocalsInspector : this) {
