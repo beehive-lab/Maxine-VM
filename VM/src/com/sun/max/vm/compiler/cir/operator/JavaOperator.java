@@ -228,69 +228,68 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
 
     public static final JavaOperator PROLOGUE = new JavaBuiltinOperator(SoftSafepoint.BUILTIN);
 
-    public static final JavaOperator LONG_COMPARE = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongCompare.BUILTIN, Snippet.LongCompare.SNIPPET);
+    public static final JavaOperator FLOAT_TO_INT = new JavaSnippetOperator(Snippet.ConvertFloatToInt.SNIPPET);
+    public static final JavaOperator FLOAT_TO_LONG = new JavaSnippetOperator(Snippet.ConvertFloatToLong.SNIPPET);
+    public static final JavaOperator FLOAT_TO_DOUBLE = new JavaBuiltinOperator(JavaBuiltin.ConvertFloatToDouble.BUILTIN);
+
     public static final JavaOperator FLOAT_COMPARE_L = new JavaBuiltinOperator(JavaBuiltin.FloatCompareL.BUILTIN);
     public static final JavaOperator FLOAT_COMPARE_G = new JavaBuiltinOperator(JavaBuiltin.FloatCompareG.BUILTIN);
+    public static final JavaOperator FLOAT_PLUS = new JavaBuiltinOperator(JavaBuiltin.FloatPlus.BUILTIN);
+    public static final JavaOperator FLOAT_MINUS = new JavaBuiltinOperator(JavaBuiltin.FloatMinus.BUILTIN);
+    public static final JavaOperator FLOAT_NEG = new JavaBuiltinOperator(JavaBuiltin.FloatNegated.BUILTIN);
+    public static final JavaOperator FLOAT_TIMES = new JavaBuiltinOperator(JavaBuiltin.FloatTimes.BUILTIN);
+    public static final JavaOperator FLOAT_DIVIDE = new JavaBuiltinOperator(JavaBuiltin.FloatDivided.BUILTIN);
+    public static final JavaOperator FLOAT_REMAINDER = new JavaBuiltinOrSnippetOperator(JavaBuiltin.FloatRemainder.BUILTIN, Snippet.FloatRemainder.SNIPPET);
+
+    public static final JavaOperator DOUBLE_TO_INT = new JavaSnippetOperator(Snippet.ConvertDoubleToInt.SNIPPET);
+    public static final JavaOperator DOUBLE_TO_LONG = new JavaSnippetOperator(Snippet.ConvertDoubleToLong.SNIPPET);
+    public static final JavaOperator DOUBLE_TO_FLOAT = new JavaBuiltinOperator(JavaBuiltin.ConvertDoubleToFloat.BUILTIN);
+
     public static final JavaOperator DOUBLE_COMPARE_L = new JavaBuiltinOperator(JavaBuiltin.DoubleCompareL.BUILTIN);
     public static final JavaOperator DOUBLE_COMPARE_G = new JavaBuiltinOperator(JavaBuiltin.DoubleCompareG.BUILTIN);
 
-    public static final JavaOperator INT_PLUS = new JavaBuiltinOperator(JavaBuiltin.IntPlus.BUILTIN);
-    public static final JavaOperator LONG_PLUS = new JavaBuiltinOperator(JavaBuiltin.LongPlus.BUILTIN);
-    public static final JavaOperator FLOAT_PLUS = new JavaBuiltinOperator(JavaBuiltin.FloatPlus.BUILTIN);
     public static final JavaOperator DOUBLE_PLUS = new JavaBuiltinOperator(JavaBuiltin.DoublePlus.BUILTIN);
-
-    public static final JavaOperator INT_MINUS = new JavaBuiltinOperator(JavaBuiltin.IntMinus.BUILTIN);
-    public static final JavaOperator LONG_MINUS = new JavaBuiltinOperator(JavaBuiltin.LongMinus.BUILTIN);
-    public static final JavaOperator FLOAT_MINUS = new JavaBuiltinOperator(JavaBuiltin.FloatMinus.BUILTIN);
     public static final JavaOperator DOUBLE_MINUS = new JavaBuiltinOperator(JavaBuiltin.DoubleMinus.BUILTIN);
-
-    public static final JavaOperator INT_NEG = new JavaBuiltinOperator(JavaBuiltin.IntNegated.BUILTIN);
-    public static final JavaOperator LONG_NEG = new JavaBuiltinOperator(JavaBuiltin.LongNegated.BUILTIN);
-    public static final JavaOperator FLOAT_NEG = new JavaBuiltinOperator(JavaBuiltin.FloatNegated.BUILTIN);
     public static final JavaOperator DOUBLE_NEG = new JavaBuiltinOperator(JavaBuiltin.DoubleNegated.BUILTIN);
-
-    public static final JavaOperator INT_TIMES = new JavaBuiltinOperator(JavaBuiltin.IntTimes.BUILTIN);
-    public static final JavaOperator LONG_TIMES = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongTimes.BUILTIN, Snippet.LongTimes.SNIPPET);
-    public static final JavaOperator FLOAT_TIMES = new JavaBuiltinOperator(JavaBuiltin.FloatTimes.BUILTIN);
     public static final JavaOperator DOUBLE_TIMES = new JavaBuiltinOperator(JavaBuiltin.DoubleTimes.BUILTIN);
-
-    public static final JavaOperator INT_AND = new JavaBuiltinOperator(JavaBuiltin.IntAnd.BUILTIN);
-    public static final JavaOperator LONG_AND = new JavaBuiltinOperator(JavaBuiltin.LongAnd.BUILTIN);
-    public static final JavaOperator INT_OR = new JavaBuiltinOperator(JavaBuiltin.IntOr.BUILTIN);
-    public static final JavaOperator LONG_OR = new JavaBuiltinOperator(JavaBuiltin.LongOr.BUILTIN);
-    public static final JavaOperator INT_XOR = new JavaBuiltinOperator(JavaBuiltin.IntXor.BUILTIN);
-    public static final JavaOperator LONG_XOR = new JavaBuiltinOperator(JavaBuiltin.LongXor.BUILTIN);
-
-    public static final JavaOperator INT_DIVIDE = new JavaBuiltinOperator(JavaBuiltin.IntDivided.BUILTIN);
-    public static final JavaOperator LONG_DIVIDE = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongDivided.BUILTIN, Snippet.LongDivided.SNIPPET);
-    public static final JavaOperator FLOAT_DIVIDE = new JavaBuiltinOperator(JavaBuiltin.FloatDivided.BUILTIN);
     public static final JavaOperator DOUBLE_DIVIDE = new JavaBuiltinOperator(JavaBuiltin.DoubleDivided.BUILTIN);
-
-    public static final JavaOperator INT_REMAINDER = new JavaBuiltinOperator(JavaBuiltin.IntRemainder.BUILTIN);
-    public static final JavaOperator LONG_REMAINDER = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongRemainder.BUILTIN, Snippet.LongRemainder.SNIPPET);
-    public static final JavaOperator FLOAT_REMAINDER = new JavaBuiltinOrSnippetOperator(JavaBuiltin.FloatRemainder.BUILTIN, Snippet.FloatRemainder.SNIPPET);
     public static final JavaOperator DOUBLE_REMAINDER = new JavaBuiltinOrSnippetOperator(JavaBuiltin.DoubleRemainder.BUILTIN, Snippet.DoubleRemainder.SNIPPET);
 
-    public static final JavaOperator F2I = new JavaSnippetOperator(Snippet.ConvertFloatToInt.SNIPPET);
-    public static final JavaOperator F2L = new JavaSnippetOperator(Snippet.ConvertFloatToLong.SNIPPET);
-    public static final JavaOperator D2I = new JavaSnippetOperator(Snippet.ConvertDoubleToInt.SNIPPET);
-    public static final JavaOperator D2L = new JavaSnippetOperator(Snippet.ConvertDoubleToLong.SNIPPET);
-    public static final JavaOperator I2B = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToByte.BUILTIN);
-    public static final JavaOperator I2C = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToChar.BUILTIN);
-    public static final JavaOperator I2S = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToShort.BUILTIN);
-    public static final JavaOperator I2L = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToLong.BUILTIN);
-    public static final JavaOperator I2F = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToFloat.BUILTIN);
-    public static final JavaOperator I2D = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToDouble.BUILTIN);
-    public static final JavaOperator L2I = new JavaBuiltinOperator(JavaBuiltin.ConvertLongToInt.BUILTIN);
-    public static final JavaOperator L2F = new JavaBuiltinOperator(JavaBuiltin.ConvertLongToFloat.BUILTIN);
-    public static final JavaOperator L2D = new JavaBuiltinOperator(JavaBuiltin.ConvertLongToDouble.BUILTIN);
-    public static final JavaOperator F2D = new JavaBuiltinOperator(JavaBuiltin.ConvertFloatToDouble.BUILTIN);
-    public static final JavaOperator D2F = new JavaBuiltinOperator(JavaBuiltin.ConvertDoubleToFloat.BUILTIN);
+    public static final JavaOperator INT_TO_BYTE = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToByte.BUILTIN);
+    public static final JavaOperator INT_TO_CHAR = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToChar.BUILTIN);
+    public static final JavaOperator INT_TO_SHORT = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToShort.BUILTIN);
+    public static final JavaOperator INT_TO_LONG = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToLong.BUILTIN);
+    public static final JavaOperator INT_TO_FLOAT = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToFloat.BUILTIN);
+    public static final JavaOperator INT_TO_DOUBLE = new JavaBuiltinOperator(JavaBuiltin.ConvertIntToDouble.BUILTIN);
 
+    public static final JavaOperator INT_NEG = new JavaBuiltinOperator(JavaBuiltin.IntNegated.BUILTIN);
+    public static final JavaOperator INT_PLUS = new JavaBuiltinOperator(JavaBuiltin.IntPlus.BUILTIN);
+    public static final JavaOperator INT_TIMES = new JavaBuiltinOperator(JavaBuiltin.IntTimes.BUILTIN);
+    public static final JavaOperator INT_MINUS = new JavaBuiltinOperator(JavaBuiltin.IntMinus.BUILTIN);
+    public static final JavaOperator INT_DIVIDE = new JavaBuiltinOperator(JavaBuiltin.IntDivided.BUILTIN);
+    public static final JavaOperator INT_REMAINDER = new JavaBuiltinOperator(JavaBuiltin.IntRemainder.BUILTIN);
+    public static final JavaOperator INT_AND = new JavaBuiltinOperator(JavaBuiltin.IntAnd.BUILTIN);
+    public static final JavaOperator INT_OR = new JavaBuiltinOperator(JavaBuiltin.IntOr.BUILTIN);
+    public static final JavaOperator INT_XOR = new JavaBuiltinOperator(JavaBuiltin.IntXor.BUILTIN);
     public static final JavaOperator INT_SHIFT_LEFT = new JavaBuiltinOperator(JavaBuiltin.IntShiftedLeft.BUILTIN);
-    public static final JavaOperator LONG_SHIFT_LEFT = new JavaBuiltinOperator(JavaBuiltin.LongShiftedLeft.BUILTIN);
     public static final JavaOperator INT_SIGNED_SHIFT_RIGHT = new JavaBuiltinOperator(JavaBuiltin.IntSignedShiftedRight.BUILTIN);
-    public static final JavaOperator LONG_SIGNED_SHIFT_RIGHT = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongSignedShiftedRight.BUILTIN, Snippet.LongSignedShiftedRight.SNIPPET);
     public static final JavaOperator INT_UNSIGNED_SHIFT_RIGHT = new JavaBuiltinOperator(JavaBuiltin.IntUnsignedShiftedRight.BUILTIN);
+
+    public static final JavaOperator LONG_TO_INT = new JavaBuiltinOperator(JavaBuiltin.ConvertLongToInt.BUILTIN);
+    public static final JavaOperator LONG_TO_FLOAT = new JavaBuiltinOperator(JavaBuiltin.ConvertLongToFloat.BUILTIN);
+    public static final JavaOperator LONG_TO_DOUBLE = new JavaBuiltinOperator(JavaBuiltin.ConvertLongToDouble.BUILTIN);
+
+    public static final JavaOperator LONG_COMPARE = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongCompare.BUILTIN, Snippet.LongCompare.SNIPPET);
+    public static final JavaOperator LONG_PLUS = new JavaBuiltinOperator(JavaBuiltin.LongPlus.BUILTIN);
+    public static final JavaOperator LONG_MINUS = new JavaBuiltinOperator(JavaBuiltin.LongMinus.BUILTIN);
+    public static final JavaOperator LONG_NEG = new JavaBuiltinOperator(JavaBuiltin.LongNegated.BUILTIN);
+    public static final JavaOperator LONG_TIMES = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongTimes.BUILTIN, Snippet.LongTimes.SNIPPET);
+    public static final JavaOperator LONG_DIVIDE = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongDivided.BUILTIN, Snippet.LongDivided.SNIPPET);
+    public static final JavaOperator LONG_REMAINDER = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongRemainder.BUILTIN, Snippet.LongRemainder.SNIPPET);
+    public static final JavaOperator LONG_AND = new JavaBuiltinOperator(JavaBuiltin.LongAnd.BUILTIN);
+    public static final JavaOperator LONG_OR = new JavaBuiltinOperator(JavaBuiltin.LongOr.BUILTIN);
+    public static final JavaOperator LONG_XOR = new JavaBuiltinOperator(JavaBuiltin.LongXor.BUILTIN);
+    public static final JavaOperator LONG_SHIFT_LEFT = new JavaBuiltinOperator(JavaBuiltin.LongShiftedLeft.BUILTIN);
+    public static final JavaOperator LONG_SIGNED_SHIFT_RIGHT = new JavaBuiltinOrSnippetOperator(JavaBuiltin.LongSignedShiftedRight.BUILTIN, Snippet.LongSignedShiftedRight.SNIPPET);
     public static final JavaOperator LONG_UNSIGNED_SHIFT_RIGHT = new JavaBuiltinOperator(JavaBuiltin.LongUnsignedShiftedRight.BUILTIN);
 }
