@@ -2222,7 +2222,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         protected void procedure() {
             final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for bytecode method entry breakpoint...", "Select");
             if (typeDescriptor != null) {
-                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method rntry breakpoint", "Set Breakpoint");
+                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0), false);
                 }
