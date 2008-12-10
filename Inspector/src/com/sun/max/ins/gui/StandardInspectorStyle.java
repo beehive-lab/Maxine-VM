@@ -311,6 +311,26 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
 
     // Debugger interaction
+
+    private static final Color _vmTerminatedBackgroundColor = new Color(240, 128, 128);  // X11 "LIghtCoral"
+
+    @Override
+    public Color vmStoppedBackgroundColor() {
+        return SunBlue3;
+    }
+    @Override
+    public Color vmStoppedinGCBackgroundColor() {
+        return SunYellow3;
+    }
+    @Override
+    public Color vmRunningBackgroundColor() {
+        return SunGreen3;
+    }
+    @Override
+    public Color vmTerminatedBackgroundColor() {
+        return _vmTerminatedBackgroundColor;
+    }
+
     private static final Color _debugSelectionBorderColor = Color.BLUE;
     private static final Color _debugBreakpointBorderColor = Color.ORANGE;
     private static final Color _debugIPTextColor = Color.RED;

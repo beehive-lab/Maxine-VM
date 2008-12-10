@@ -20,10 +20,11 @@
  */
 package com.sun.max.ins;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 
 /**
  * MenuBar for the Inspection; shows {@link TeleVM} state with background color.
@@ -54,19 +55,11 @@ public final class InspectorMenuBar extends JMenuBar {
     /**
      * Change the appearance to reflect the current state of the {@link TeleVM}.
      */
-    public void setState(State state) {
-        switch (state) {
-            case STOPPED:
-                setBackground(_actions.style().vmStoppedBackgroundColor());
-                break;
-            case RUNNING:
-                setBackground(_actions.style().vmRunningBackgroundColor());
-                break;
-            case TERMINATED:
-                setBackground(_actions.style().vmTerminatedBackgroundColor());
-                break;
-        }
+    public void setStateColor(Color color) {
+        setBackground(color);
     }
+
+
 
     private JMenu createInspectionMenu() {
         final JMenu menu = new JMenu("Inspector");

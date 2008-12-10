@@ -65,7 +65,41 @@ public class Inspection extends JFrame {
         return "[Inspector: " + Thread.currentThread().getName() + "] ";
     }
 
-    private final String _inspectorName = "Maxine Inspector";
+    private static final String _inspectorName = "Maxine Inspector";
+
+    /**
+     * Constants specifying the state of the Inspection and {@link TeleVM}, if present.
+     * These are a superset of {@link TeleProcess.State}.
+     */
+    public enum InspectionState {
+
+        /**
+         * Inspection state when there is and has been no process associated with the session.
+         */
+        NO_PROCESS,
+
+        /**
+         * Inspection state when there is a {@link TeleVM} process and it is currently stopped, but not in a GC.
+         */
+        STOPPED,
+
+        /**
+         * Inspection state when there is a {@link TeleVM} process and it is currently stopped in a GC.
+         */
+        STOPPED_IN_GC,
+
+        /**
+         * Inspection state when there is a {@link TeleVM} process and it is currently running.
+         */
+        RUNNING,
+
+        /**
+         * Inspection state when there was a {@link TeleVM} process that has terminated.
+         */
+        TERMINATED;
+    }
+
+    private InspectionState _inspectionState = InspectionState.NO_PROCESS;
 
     private final TeleVM _teleVM;
 
@@ -75,6 +109,8 @@ public class Inspection extends JFrame {
     public TeleVM teleVM() {
         return _teleVM;
     }
+
+    private final String _bootImageFileName;
 
     private final TeleProcess _teleProcess;
 
@@ -90,7 +126,7 @@ public class Inspection extends JFrame {
      * @return Is the Inspector in debugging mode with a legitimate process?
      */
     public boolean hasProcess() {
-        return !(_teleProcess instanceof NoTeleProcess) && _vmState != State.TERMINATED;
+        return !(_inspectionState == InspectionState.NO_PROCESS || _inspectionState == InspectionState.TERMINATED);
     }
 
     private final  TeleProcessController _processController;
@@ -663,9 +699,14 @@ public class Inspection extends JFrame {
     }
 
     public Inspection(TeleVM teleVM, InspectorStyle style, InspectorGeometry geometry) throws IOException {
-        super(MaxineInspector.class.getSimpleName() + ": " + teleVM.bootImageFile().getAbsolutePath());
+        super(_inspectorName);
         _teleVM = teleVM;
+        _bootImageFileName = _teleVM.bootImageFile().getAbsolutePath().toString();
         _teleProcess = _teleVM.teleProcess();
+        if (!(_teleProcess instanceof NoTeleProcess)) {
+            _vmState = State.STOPPED;
+            _inspectionState = InspectionState.STOPPED;
+        }
         _processController = _teleProcess.controller();
         _teleVMTrace = new TeleVMTrace(teleVM);
         _nameDisplay = new InspectorNameDisplay(this);
@@ -709,10 +750,20 @@ public class Inspection extends JFrame {
                 }
             }
         });
+        updateTitle();
         pack();
     }
 
-    private State _vmState = State.STOPPED;
+    /**
+     * Updates the string appearing the outermost window frame: program name, process state, bootimage filename.
+     *
+     */
+    private void updateTitle() {
+        setTitle(_inspectorName + ": (" + _inspectionState + ") " + _bootImageFileName);
+        repaint();
+    }
+
+    private State _vmState = null;
 
     /**
      *  Note that there is a delay, as well as a
@@ -738,14 +789,20 @@ public class Inspection extends JFrame {
      * queue might initiate new action sequences when the {@link TeleVM}
      * has actually stopped, but before the Inspector receives notification.
      *
-     * @return {@link #vmState} == RUNNING.
+     * @return VM state == {@link State#STOPPED}.
      */
     public boolean isVMRunning() {
         return _vmState == State.RUNNING;
     }
 
+    /**
+     * Is the {@link TeleVM} available to start running, as of the most recent
+     * state update?
+     *
+     * @return VM state == {@link State#STOPPED}.
+     */
     public boolean isVMReady() {
-        return hasProcess() && _vmState == State.STOPPED;
+        return _vmState == State.STOPPED;
     }
 
     /**
@@ -759,14 +816,24 @@ public class Inspection extends JFrame {
         Trace.begin(1, tracer);
         final long startTimeMillis = System.currentTimeMillis();
         _vmState = e.newState();
-        _menuBar.setState(_vmState);
         switch(_vmState) {
             case STOPPED:
+                if (_teleVM.isInGC()) {
+                    _menuBar.setStateColor(style().vmStoppedinGCBackgroundColor());
+                    _inspectionState = InspectionState.STOPPED_IN_GC;
+                } else {
+                    _menuBar.setStateColor(style().vmStoppedBackgroundColor());
+                    _inspectionState = InspectionState.STOPPED;
+                }
                 updateAfterVMStopped(e.epoch());
                 break;
             case RUNNING:
+                _menuBar.setStateColor(style().vmRunningBackgroundColor());
+                _inspectionState = InspectionState.RUNNING;
                 break;
             case TERMINATED:
+                _menuBar.setStateColor(style().vmTerminatedBackgroundColor());
+                _inspectionState = InspectionState.TERMINATED;
                 Trace.line(1, tracePrefix() + " - VM process terminated");
                 // Give all process-sensitive views a chance to shut down
                 for (InspectionListener listener : _inspectionListeners.clone()) {
@@ -776,9 +843,9 @@ public class Inspection extends JFrame {
                 focus().clearAll();
                 // Be sure all process-sensitive actions are disabled.
                 _inspectionActions.refresh(e.epoch(), false);
-                informationMessage("The maxvm Process has terminated", "Process Terminated");
                 break;
         }
+        updateTitle();
         _inspectionActions.refresh(e.epoch(), true);
         Trace.end(1, tracer, startTimeMillis);
     }
@@ -789,7 +856,8 @@ public class Inspection extends JFrame {
     void assumeRunning() {
         Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
         _vmState = State.RUNNING;
-        _menuBar.setState(_vmState);
+        _inspectionState = InspectionState.RUNNING;
+        _menuBar.setStateColor(style().vmRunningBackgroundColor());
     }
 
 
