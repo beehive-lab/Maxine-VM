@@ -25,20 +25,22 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.ir.*;
 
 /**
- * A basic block is a control flow unit,
- * a linear sequence of operations without explicit intermittent control flow change.
+ * A basic block is a control flow unit, a linear sequence of operations without any control flow.
  *
  * @author Bernd Mathiske
  */
 public class BirBlock implements IrBlock {
 
     private BytecodeBlock _bytecodeBlock;
+    private IrBlock.Role _role;
+    private GrowableDeterministicSet<BirBlock> _predecessors = new LinkedIdentityHashSet<BirBlock>();
+    private GrowableDeterministicSet<BirBlock> _successors = new LinkedIdentityHashSet<BirBlock>();
+    private boolean _hasSafepoint;
 
     public BytecodeBlock bytecodeBlock() {
         return _bytecodeBlock;
     }
 
-    private IrBlock.Role _role;
 
     public IrBlock.Role role() {
         return _role;
@@ -50,8 +52,6 @@ public class BirBlock implements IrBlock {
             haveSafepoint();
         }
     }
-
-    private boolean _hasSafepoint;
 
     public boolean hasSafepoint() {
         return _hasSafepoint;
@@ -71,7 +71,6 @@ public class BirBlock implements IrBlock {
         return _bytecodeBlock.start() * _bytecodeBlock.end();
     }
 
-    private GrowableDeterministicSet<BirBlock> _predecessors = new LinkedIdentityHashSet<BirBlock>();
 
     public void addPredecessor(BirBlock predecessor) {
         _predecessors.add(predecessor);
@@ -81,7 +80,6 @@ public class BirBlock implements IrBlock {
         return _predecessors;
     }
 
-    private GrowableDeterministicSet<BirBlock> _successors = new LinkedIdentityHashSet<BirBlock>();
 
     public void addSuccessor(BirBlock successor) {
         _successors.add(successor);

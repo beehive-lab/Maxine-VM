@@ -46,8 +46,6 @@ public class BirToCirMethodTranslation {
     private final LocalVariableFactory _localVariableFactory;
     private final StackVariableFactory _stackVariableFactory;
 
-    private final AppendableSequence<CirCall> _blockCalls = new LinkSequence<CirCall>();
-
     private final CirClosure _rootClosure;
 
     public CirVariable[] createParameters(Kind[] parameterKinds) {
@@ -63,9 +61,6 @@ public class BirToCirMethodTranslation {
         return parameters;
     }
 
-    private static long _numberOfTranslations = 0;
-
-    private final AppendableSequence<BlockState> _blockStates;
     private final BlockState[] _blockStateMap;
 
     private final Sequence<BirBlock> _birExceptionDispatchers;
@@ -81,13 +76,11 @@ public class BirToCirMethodTranslation {
         _localVariableFactory = new LocalVariableFactory(_variableFactory, birMethod.maxLocals(), parameters);
         _stackVariableFactory = new StackVariableFactory(_variableFactory, birMethod.maxStack());
 
-        _blockStates = new ArrayListSequence<BlockState>(birMethod.blocks().length());
         _blockStateMap = new BlockState[birMethod.code().length];
         final AppendableSequence<BirBlock> birExceptionDispatchers = new LinkSequence<BirBlock>();
         for (BirBlock birBlock : birMethod.blocks()) {
             if (birBlock.isReachable()) {
                 final BlockState blockState = new BlockState(birBlock);
-                _blockStates.append(blockState);
                 for (int i = birBlock.bytecodeBlock().start(); i <= birBlock.bytecodeBlock().end(); i++) {
                     _blockStateMap[i] = blockState;
                 }
@@ -116,8 +109,7 @@ public class BirToCirMethodTranslation {
             }
         }
 
-        final CirCall rootCall = new CirCall(_blockStateMap[0].cirBlock());
-        noteBlockCall(rootCall);
+        final CirCall rootCall = newCirCall(_blockStateMap[0].cirBlock());
         _rootClosure = new CirClosure(rootCall, parameters);
     }
 
@@ -149,10 +141,6 @@ public class BirToCirMethodTranslation {
         return _rootClosure;
     }
 
-    Iterable<BlockState> blockStates() {
-        return _blockStates;
-    }
-
     BlockState getBlockStateAt(int bytecodeAddress) {
         return _blockStateMap[bytecodeAddress];
     }
@@ -164,10 +152,10 @@ public class BirToCirMethodTranslation {
         return _exceptionDispatcherBlockStateMap[opcodeAddress];
     }
 
-    public void noteBlockCall(CirCall call) {
-        _blockCalls.append(call);
-        final CirBlock block = (CirBlock) call.procedure();
+    public CirCall newCirCall(CirBlock block) {
+        final CirCall call = new CirCall(block);
         block.addCall(call);
+        return call;
     }
 
     public JavaFrame createFrame() {
