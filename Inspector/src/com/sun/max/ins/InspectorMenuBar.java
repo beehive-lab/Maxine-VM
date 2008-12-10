@@ -171,18 +171,16 @@ public final class InspectorMenuBar extends JMenuBar {
         return menu;
     }
 
-    private JMenu createViewMenu() {
+    public JMenu createViewMenu() {
         final JMenu menu = new JMenu("View");
         menu.add(_actions.viewBootImage());
-        if (_actions.inspection().hasProcess()) {
-            menu.add(_actions.viewMemoryRegions());
-            menu.add(_actions.viewThreads());
-            menu.add(_actions.viewVmThreadLocals());
-            menu.add(_actions.viewRegisters());
-            menu.add(_actions.viewStack());
-            menu.add(_actions.viewMethodCode());
-            menu.add(_actions.viewBreakpoints());
-        }
+        menu.add(_actions.viewMemoryRegions());
+        menu.add(_actions.viewThreads());
+        menu.add(_actions.viewVmThreadLocals());
+        menu.add(_actions.viewRegisters());
+        menu.add(_actions.viewStack());
+        menu.add(_actions.viewMethodCode());
+        menu.add(_actions.viewBreakpoints());
         return menu;
     }
 

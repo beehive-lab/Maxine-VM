@@ -649,6 +649,8 @@ public class Inspection extends JFrame {
 
     private final InspectorMenuBar _menuBar;
 
+    private final InspectorMenu _viewMenu;
+
     public Point getLocation(Component component) {
         final Point result = new Point();
         Component c = component;
@@ -688,7 +690,25 @@ public class Inspection extends JFrame {
         setLocation(_geometry.inspectorFrameDefaultLocation());
         _inspectionActions = new InspectionActions(this);
         _menuBar = new InspectorMenuBar(_inspectionActions);
+        _viewMenu = new InspectorMenu();
+        _viewMenu.add(_inspectionActions.viewBootImage());
+        _viewMenu.add(_inspectionActions.viewMemoryRegions());
+        _viewMenu.add(_inspectionActions.viewThreads());
+        _viewMenu.add(_inspectionActions.viewVmThreadLocals());
+        _viewMenu.add(_inspectionActions.viewRegisters());
+        _viewMenu.add(_inspectionActions.viewStack());
+        _viewMenu.add(_inspectionActions.viewMethodCode());
+        _viewMenu.add(_inspectionActions.viewBreakpoints());
         setJMenuBar(_menuBar);
+
+        _desktopPane.addMouseListener(new InspectorMouseClickAdapter(this) {
+            @Override
+            public void procedure(final MouseEvent mouseEvent) {
+                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                    _viewMenu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                }
+            }
+        });
         pack();
     }
 
