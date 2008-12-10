@@ -118,6 +118,11 @@ public abstract class JitTargetMethod extends TargetMethod {
         return Iterators.iterator(new BytecodeLocation[] {bytecodeLocation});
     }
 
+    @Override
+    public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer) {
+        return new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
+    }
+
     /**
      * Gets the bytecode position for a machine code instruction address.
      *

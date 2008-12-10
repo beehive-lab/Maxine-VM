@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.bytecode;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -127,40 +126,56 @@ public final class BytecodeLocation {
         return _classMethodActor.holder().sourceFileName();
     }
 
-    private class DeclaredCalleeFinder extends BytecodeAdapter {
-        private final ConstantPool _constantPool = _classMethodActor.holder().constantPool();
-        MethodActor _declaredCallee;
+    class MethodRefFinder extends BytecodeAdapter {
+        final ConstantPool _constantPool = _classMethodActor.holder().constantPool();
+        int _methodRefIndex = -1;
 
         @Override
         protected void invokestatic(int index) {
-            _declaredCallee = _constantPool.classMethodAt(index).resolveStatic(_constantPool, index);
+            _methodRefIndex = index;
         }
 
         @Override
         protected void invokespecial(int index) {
-            _declaredCallee = _constantPool.classMethodAt(index).resolveVirtual(_constantPool, index);
+            _methodRefIndex = index;
         }
 
         @Override
         protected void invokevirtual(int index) {
-            _declaredCallee = _constantPool.classMethodAt(index).resolveVirtual(_constantPool, index);
+            _methodRefIndex = index;
         }
 
         @Override
         protected void invokeinterface(int index, int count) {
-            _declaredCallee = _constantPool.interfaceMethodAt(index).resolve(_constantPool, index);
+            _methodRefIndex = index;
+        }
+
+        public MethodRefConstant methodRef() {
+            if (_methodRefIndex != -1) {
+                return _constantPool.methodAt(_methodRefIndex);
+            }
+            return null;
+        }
+        public MethodActor methodActor() {
+            if (_methodRefIndex != -1) {
+                final MethodRefConstant methodRef = _constantPool.methodAt(_methodRefIndex);
+                return methodRef.resolve(_constantPool, _methodRefIndex);
+            }
+            return null;
         }
     }
 
-    public MethodActor getDeclaredCallee() {
-        final DeclaredCalleeFinder declaredCalleeFinder = new DeclaredCalleeFinder();
-        final BytecodeScanner bytecodeScanner = new BytecodeScanner(declaredCalleeFinder);
-        try {
-            bytecodeScanner.scanInstruction(classMethodActor().codeAttribute().code(), position());
-        } catch (Throwable throwable) {
-            ProgramError.unexpected("could not scan byte code", throwable);
-        }
-        return declaredCalleeFinder._declaredCallee;
+    public MethodActor getCalleeMethodActor() {
+        final MethodRefFinder methodRefFinder = new MethodRefFinder();
+        final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefFinder);
+        bytecodeScanner.scanInstruction(classMethodActor().codeAttribute().code(), position());
+        return methodRefFinder.methodActor();
     }
 
+    public MethodRefConstant getCalleeMethodRef() {
+        final MethodRefFinder methodRefFinder = new MethodRefFinder();
+        final BytecodeScanner bytecodeScanner = new BytecodeScanner(methodRefFinder);
+        bytecodeScanner.scanInstruction(classMethodActor().codeAttribute().code(), position());
+        return methodRefFinder.methodRef();
+    }
 }

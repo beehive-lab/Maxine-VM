@@ -62,7 +62,7 @@ public final class AMD64Deoptimization extends Deoptimization {
             assert _currentCallSaveAreaPosition == 0;
 
             // First, subtract the call's arguments (which JIT code would have popped from the stack by now):
-            final MethodActor callee = javaFrameDescriptor.bytecodeLocation().getDeclaredCallee();
+            final MethodActor callee = javaFrameDescriptor.bytecodeLocation().getCalleeMethodActor();
             if (!callee.isStatic()) {
                 // Remove receiver argument slot:
                 numberOfStackSlots--;
