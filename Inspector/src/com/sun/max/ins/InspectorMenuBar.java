@@ -20,10 +20,11 @@
  */
 package com.sun.max.ins;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.TeleProcess.*;
 
 /**
  * MenuBar for the Inspection; shows {@link TeleVM} state with background color.
@@ -54,19 +55,11 @@ public final class InspectorMenuBar extends JMenuBar {
     /**
      * Change the appearance to reflect the current state of the {@link TeleVM}.
      */
-    public void setState(State state) {
-        switch (state) {
-            case STOPPED:
-                setBackground(_actions.style().vmStoppedBackgroundColor());
-                break;
-            case RUNNING:
-                setBackground(_actions.style().vmRunningBackgroundColor());
-                break;
-            case TERMINATED:
-                setBackground(_actions.style().vmTerminatedBackgroundColor());
-                break;
-        }
+    public void setStateColor(Color color) {
+        setBackground(color);
     }
+
+
 
     private JMenu createInspectionMenu() {
         final JMenu menu = new JMenu("Inspector");
@@ -171,18 +164,16 @@ public final class InspectorMenuBar extends JMenuBar {
         return menu;
     }
 
-    private JMenu createViewMenu() {
+    public JMenu createViewMenu() {
         final JMenu menu = new JMenu("View");
         menu.add(_actions.viewBootImage());
-        if (_actions.inspection().hasProcess()) {
-            menu.add(_actions.viewMemoryRegions());
-            menu.add(_actions.viewThreads());
-            menu.add(_actions.viewVmThreadLocals());
-            menu.add(_actions.viewRegisters());
-            menu.add(_actions.viewStack());
-            menu.add(_actions.viewMethodCode());
-            menu.add(_actions.viewBreakpoints());
-        }
+        menu.add(_actions.viewMemoryRegions());
+        menu.add(_actions.viewThreads());
+        menu.add(_actions.viewVmThreadLocals());
+        menu.add(_actions.viewRegisters());
+        menu.add(_actions.viewStack());
+        menu.add(_actions.viewMethodCode());
+        menu.add(_actions.viewBreakpoints());
         return menu;
     }
 
