@@ -409,22 +409,22 @@ public class BytecodeToHCirTranslation extends BytecodeTranslation {
 
     @Override
     protected void f2i() {
-        stackCall(JavaOperator.F2I);
+        stackCall(JavaOperator.FLOAT_TO_INT);
     }
 
     @Override
     protected void f2l() {
-        stackCall(JavaOperator.F2L);
+        stackCall(JavaOperator.FLOAT_TO_LONG);
     }
 
     @Override
     protected void d2i() {
-        stackCall(JavaOperator.D2I);
+        stackCall(JavaOperator.DOUBLE_TO_INT);
     }
 
     @Override
     protected void d2l() {
-        stackCall(JavaOperator.D2L);
+        stackCall(JavaOperator.DOUBLE_TO_LONG);
     }
 
     @Override
@@ -450,17 +450,17 @@ public class BytecodeToHCirTranslation extends BytecodeTranslation {
 
     @Override
     protected void i2b() {
-        stackCall(JavaOperator.I2B);
+        stackCall(JavaOperator.INT_TO_BYTE);
     }
 
     @Override
     protected void i2c() {
-        stackCall(JavaOperator.I2C);
+        stackCall(JavaOperator.INT_TO_CHAR);
     }
 
     @Override
     protected void i2s() {
-        stackCall(JavaOperator.I2S);
+        stackCall(JavaOperator.INT_TO_SHORT);
     }
 
     @Override
@@ -565,42 +565,42 @@ public class BytecodeToHCirTranslation extends BytecodeTranslation {
 
     @Override
     protected void i2l() {
-        stackCall(JavaOperator.I2L);
+        stackCall(JavaOperator.INT_TO_LONG);
     }
 
     @Override
     protected void i2f() {
-        stackCall(JavaOperator.I2F);
+        stackCall(JavaOperator.INT_TO_FLOAT);
     }
 
     @Override
     protected void i2d() {
-        stackCall(JavaOperator.I2D);
+        stackCall(JavaOperator.INT_TO_DOUBLE);
     }
 
     @Override
     protected void l2i() {
-        stackCall(JavaOperator.L2I);
+        stackCall(JavaOperator.LONG_TO_INT);
     }
 
     @Override
     protected void l2f() {
-        stackCall(JavaOperator.L2F);
+        stackCall(JavaOperator.LONG_TO_FLOAT);
     }
 
     @Override
     protected void l2d() {
-        stackCall(JavaOperator.L2D);
+        stackCall(JavaOperator.LONG_TO_DOUBLE);
     }
 
     @Override
     protected void f2d() {
-        stackCall(JavaOperator.F2D);
+        stackCall(JavaOperator.FLOAT_TO_DOUBLE);
     }
 
     @Override
     protected void d2f() {
-        stackCall(JavaOperator.D2F);
+        stackCall(JavaOperator.DOUBLE_TO_FLOAT);
     }
 
     @Override
