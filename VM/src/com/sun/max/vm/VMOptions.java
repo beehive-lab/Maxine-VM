@@ -363,7 +363,6 @@ public final class VMOptions {
                     _earlyVMExitRequested = true;
                 }
             }
-            System.getProperties().list(Log.out);
         }
         return noErrorFound;
     }
