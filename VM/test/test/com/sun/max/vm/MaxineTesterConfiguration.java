@@ -103,6 +103,7 @@ public class MaxineTesterConfiguration {
     static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
+        test.output.ExitCode.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
         test.output.Recursion.class,
@@ -121,7 +122,9 @@ public class MaxineTesterConfiguration {
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
+        test.threads.Thread_join04.class,
         test.hotpath.HP_series.class, // 333
+        test.output.ExitCode.class,
         _expectedAutoTestFailures
     );
 
@@ -162,10 +165,12 @@ public class MaxineTesterConfiguration {
         test.lang.Object_notify01.class,
         test.lang.Object_notifyAll01.class,
         test.lang.Object_wait01.class,
+        test.threads.Thread_join04.class,
         test.reflect.Array_get01.class,
         test.reflect.Array_get02.class,
         test.reflect.Array_get03.class,
         test.reflect.Array_getBoolean01.class,
+        test.output.ExitCode.class,
         test.hotpath.HP_series.class // 333
     );
 

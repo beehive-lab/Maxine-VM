@@ -295,34 +295,6 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
         return inlineData.size();
     }
 
-    private static final String SPACE = "   ";
-    private static final int NUMBER_OF_INSTRUCTION_CHARS = 48;
-
-    private void printHeading(PrintStream stream, int nOffsetChars, int nLabelChars)  {
-        String s = Strings.padLengthWithSpaces("Address", (addressWidth().numberOfBytes() * 2) + 2) + SPACE;
-        s += Strings.padLengthWithSpaces("+", nOffsetChars) + SPACE;
-        s += Strings.padLengthWithSpaces(":", nLabelChars + 1) + SPACE;
-        s += Strings.padLengthWithSpaces("Instruction", NUMBER_OF_INSTRUCTION_CHARS) + SPACE;
-        s += "Bytes";
-        stream.println(s);
-        stream.println(Strings.times('-', s.length()));
-    }
-
-    private boolean _isHeadingEnabled;
-
-    public void enableHeading() {
-        _isHeadingEnabled = true;
-    }
-
-    public void disableHeading() {
-        _isHeadingEnabled = false;
-    }
-
-    public String addressString(DisassembledObject disassembledObject) {
-        final String format = "0x%0" + addressWidth().numberOfBytes() + "X";
-        return String.format(format, disassembledObject.startAddress().asLong());
-    }
-
     /**
      * The start address of the instruction stream decoded by this disassembler.
      */
@@ -330,42 +302,17 @@ public abstract class Disassembler<Template_Type extends Template, DisassembledI
         return _startAddress;
     }
 
-    /**
-     * Prints a disassembly for a given sequence of disassembled objects.
-     *
-     * @param outputStream the stream to which the disassembly wil be printed
-     * @param disassembledObjects the disassembled objects to be printed
-     * @param addressMapper an object that can provide symbol names/label for (global) addresses
-     */
-    public void print(OutputStream outputStream, Sequence<DisassembledObject> disassembledObjects) throws IOException {
-        final PrintStream stream = outputStream instanceof PrintStream ? (PrintStream) outputStream : new PrintStream(outputStream);
-        final int nOffsetChars = Integer.toString(disassembledObjects.last().startPosition()).length();
-        final int nLabelChars = _addressMapper.maximumLabelNameLength();
-        if (_isHeadingEnabled) {
-            printHeading(stream, nOffsetChars, nLabelChars);
-        }
-        for (DisassembledObject disassembledObject : disassembledObjects) {
-            stream.print(addressString(disassembledObject));
-            stream.print(SPACE);
-            stream.printf("%0" + nOffsetChars + "d", disassembledObject.startPosition());
-            stream.print(SPACE);
-            final DisassembledLabel label = _addressMapper.labelAt(disassembledObject.startAddress());
-            if (label != null) {
-                stream.print(Strings.padLengthWithSpaces(label.name(), nLabelChars) + ":");
-            } else {
-                stream.print(Strings.spaces(nLabelChars) + " ");
-            }
-            stream.print(SPACE);
-            stream.print(Strings.padLengthWithSpaces(disassembledObject.toString(_addressMapper), NUMBER_OF_INSTRUCTION_CHARS));
-            stream.print(SPACE);
-            stream.print(DisassembledInstruction.toHexString(disassembledObject.bytes()));
-            stream.println();
-        }
+    public void scanAndPrint(BufferedInputStream bufferedInputStream, OutputStream outputStream) throws IOException, AssemblyException {
+        scanAndPrint(bufferedInputStream, outputStream, new DisassemblyPrinter(false));
     }
 
-    public void scanAndPrint(BufferedInputStream bufferedInputStream, OutputStream outputStream) throws IOException, AssemblyException {
-        final IndexedSequence<DisassembledObject> disassembledObjects = scan(bufferedInputStream);
-        print(outputStream, disassembledObjects);
+    public void scanAndPrint(BufferedInputStream bufferedInputStream, OutputStream outputStream, DisassemblyPrinter printer) throws IOException, AssemblyException {
+        if (printer == null) {
+            scanAndPrint(bufferedInputStream, outputStream);
+        } else {
+            final IndexedSequence<DisassembledObject> disassembledObjects = scan(bufferedInputStream);
+            printer.print(this, outputStream, disassembledObjects);
+        }
     }
 
     public enum AbstractionPreference {

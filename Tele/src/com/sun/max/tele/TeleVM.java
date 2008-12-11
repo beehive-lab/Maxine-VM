@@ -143,9 +143,9 @@ import com.sun.max.vm.value.WordValue;
  * @author Thomas Wuerthinger
  */
 public abstract class TeleVM implements VMAccess {
-    
+
     private static final int TRACE_VALUE = 2;
-    
+
     protected String  tracePrefix() {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
@@ -411,7 +411,7 @@ public abstract class TeleVM implements VMAccess {
 		if (!heapOrCodeContains(p)) {
 			return false;
 		}
-		if (!_areTeleRootsValid) {
+		if (! areReferencesValid()) {
 			if (_teleHeapManager.dynamicHeapContains(origin)) {
 				return false;
 			}
@@ -449,7 +449,7 @@ public abstract class TeleVM implements VMAccess {
 	}
 
 	public boolean isValidGrip(Grip grip) {
-		if (!_areTeleRootsValid) {
+		if (!areReferencesValid()) {
 			final TeleGrip teleGrip = (TeleGrip) grip;
 			if (teleGrip instanceof MutableTeleGrip) {
 				return false;
@@ -740,7 +740,8 @@ public abstract class TeleVM implements VMAccess {
 		if (_typesOnClasspath == null) {
 			updateLoadableTypeDescriptorsFromClasspath();
 		}
-		return Iterables.join(typeDescriptors, _typesOnClasspath);
+		typeDescriptors.addAll(_typesOnClasspath);
+		return typeDescriptors;
 	}
 
 	private Set<TypeDescriptor> _typesOnClasspath;
@@ -824,14 +825,28 @@ public abstract class TeleVM implements VMAccess {
 		return false;
 	}
 
-	private boolean _areTeleRootsValid = true;
+	private boolean _isInGC = false;
+	
+	/**
+	 * @return whether a GC is underway in the {@link TeleVM}.
+	 */
+	public boolean isInGC() {
+	    return _isInGC;
+	}
+	
+	/**
+	 * @return whether {@link Reference}s to memory in the {@link TeleVM} are reliable.
+	 */
+	private boolean areReferencesValid() {
+	    return ! _isInGC;
+	}
 
 	/**
 	 * Identifies the most recent GC for which the local copy of the tele root
 	 * table in the {@link TeleVM} is valid.
 	 */
 	private long _cachedCollectionEpoch;
-	
+
 	private Tracer _refreshReferencesTracer = new Tracer("refresh references");
 
 	/**
@@ -846,15 +861,15 @@ public abstract class TeleVM implements VMAccess {
 		if (teleCollectionEpoch != teleRootEpoch) {
 		    // A GC is in progress, local cache is out of date by definition but can't update yet
 			assert teleCollectionEpoch != _cachedCollectionEpoch;
-			_areTeleRootsValid = false;
+			_isInGC = true;
 		} else if (teleCollectionEpoch == _cachedCollectionEpoch) {
 		    // GC not in progress, local cache is up to date
-		    assert _areTeleRootsValid;
+		    assert ! _isInGC;
 		} else {
 		    // GC not in progress, local cache is out of date
 		    gripScheme().refresh();
 		    _cachedCollectionEpoch = teleCollectionEpoch;
-		    _areTeleRootsValid = true;
+		    _isInGC = false;
 		}
 		Trace.end(TRACE_VALUE, _refreshReferencesTracer, startTimeMillis);
 	}
@@ -867,7 +882,7 @@ public abstract class TeleVM implements VMAccess {
 			fireThreadStartedEvent(thread);
 		}
 	}
-	
+
 	private final Tracer _refreshTracer = new Tracer("refresh");
 
 	/**
@@ -886,7 +901,7 @@ public abstract class TeleVM implements VMAccess {
 			_teleHeapManager.initialize();
 		}
 		refreshReferences();
-		if (_areTeleRootsValid) {
+		if (areReferencesValid()) {
 			_teleHeapManager.refresh();
 			_teleClassRegistry.refresh();
 		}
@@ -1139,7 +1154,7 @@ public abstract class TeleVM implements VMAccess {
                         final Sequence<TeleNativeThread> breakpointThreads = event.breakpointThreads();
                         for (TeleNativeThread t : breakpointThreads) {
                             fireBreakpointEvent(t, t.getFrames()[0].getLocation());
-                        }                        
+                        }
                         if (event.singleStepThread() != null) {
                             fireSingleStepEvent(event.singleStepThread(), event.singleStepThread().getFrames()[0].getLocation());
                         }
@@ -1678,14 +1693,14 @@ public abstract class TeleVM implements VMAccess {
 		}
 		return result;
 	}
-	
+
     /**
-     * An object that delays evaluation of a trace message for controller actions.     
+     * An object that delays evaluation of a trace message for controller actions.
      */
     private class Tracer {
-        
+
         private final String _message;
-        
+
         /**
          * An object that delays evaluation of a trace message.
          * @param message identifies what is being traced
@@ -1693,7 +1708,7 @@ public abstract class TeleVM implements VMAccess {
         public Tracer(String message) {
             _message = message;
         }
-        
+
         @Override
         public String toString() {
             return tracePrefix() + _message;

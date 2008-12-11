@@ -186,6 +186,7 @@ public interface InspectorStyle {
     // Debugger interaction
 
     Color vmStoppedBackgroundColor();
+    Color vmStoppedinGCBackgroundColor();
     Color vmRunningBackgroundColor();
     Color vmTerminatedBackgroundColor();
 

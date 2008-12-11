@@ -237,22 +237,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
     /**
      * Action:  closes all open inspectors.
      */
-    final class CloseAllAction extends InspectorAction {
-
-        private static final String DEFAULT_TITLE = "Close all views";
-
-        CloseAllAction(String title) {
-            super(inspection(), title == null ? DEFAULT_TITLE : title);
-        }
-
-        @Override
-        protected void procedure() {
-            inspection().desktopPane().removeAll();
-            inspection().repaint();
-        }
-    }
-
-    private final InspectorAction _closeAll = new CloseAllAction(null);
+    private final InspectorAction _closeAll = inspection().getDeleteInspectorsAction(Predicate.Static.alwaysTrue(Inspector.class), "Close all views");
 
     /**
      * @return an Action that closes all open inspectors.
@@ -2222,7 +2207,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         protected void procedure() {
             final TypeDescriptor typeDescriptor = TypeSearchDialog.show(inspection(), "Class for bytecode method entry breakpoint...", "Select");
             if (typeDescriptor != null) {
-                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method rntry breakpoint", "Set Breakpoint");
+                final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
                     teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0), false);
                 }
