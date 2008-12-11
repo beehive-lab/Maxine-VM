@@ -317,11 +317,11 @@ is divided into following sections:
                 ===================
             -->
     <target depends="init" name="deps-jar" unless="no.deps">
-        <ant antfile="${project.MaxineAssembler}/build.xml" inheritall="false" target="jar"/>
-        <ant antfile="${project.MaxineBase}/build.xml" inheritall="false" target="jar"/>
-        <ant antfile="${project.MaxineProvider}/build.xml" inheritall="false" target="jar"/>
-        <ant antfile="${project.MaxineTele}/build.xml" inheritall="false" target="jar"/>
-        <ant antfile="${project.MaxineVM}/build.xml" inheritall="false" target="jar"/>
+        <ant antfile="${project.Assembler}/build.xml" inheritall="false" target="jar"/>
+        <ant antfile="${project.Base}/build.xml" inheritall="false" target="jar"/>
+        <ant antfile="${project.Tele}/build.xml" inheritall="false" target="jar"/>
+        <ant antfile="${project.VM}/build.xml" inheritall="false" target="jar"/>
+        <ant antfile="${project.VMDI}/build.xml" inheritall="false" target="jar"/>
     </target>
     <target depends="init,-check-automatic-build,-clean-after-automatic-build" name="-verify-automatic-build"/>
     <target depends="init" name="-check-automatic-build">
@@ -636,11 +636,11 @@ is divided into following sections:
                 ===============
             -->
     <target depends="init" name="deps-clean" unless="no.deps">
-        <ant antfile="${project.MaxineAssembler}/build.xml" inheritall="false" target="clean"/>
-        <ant antfile="${project.MaxineBase}/build.xml" inheritall="false" target="clean"/>
-        <ant antfile="${project.MaxineProvider}/build.xml" inheritall="false" target="clean"/>
-        <ant antfile="${project.MaxineTele}/build.xml" inheritall="false" target="clean"/>
-        <ant antfile="${project.MaxineVM}/build.xml" inheritall="false" target="clean"/>
+        <ant antfile="${project.Assembler}/build.xml" inheritall="false" target="clean"/>
+        <ant antfile="${project.Base}/build.xml" inheritall="false" target="clean"/>
+        <ant antfile="${project.Tele}/build.xml" inheritall="false" target="clean"/>
+        <ant antfile="${project.VM}/build.xml" inheritall="false" target="clean"/>
+        <ant antfile="${project.VMDI}/build.xml" inheritall="false" target="clean"/>
     </target>
     <target depends="init" name="-do-clean">
         <delete dir="${build.dir}"/>

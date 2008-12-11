@@ -12,7 +12,7 @@
         </data>
         <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">
             <reference>
-                <foreign-project>MaxineBase</foreign-project>
+                <foreign-project>Base</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>build.xml</script>
                 <target>jar</target>
@@ -20,7 +20,7 @@
                 <id>jar</id>
             </reference>
             <reference>
-                <foreign-project>MaxineProvider</foreign-project>
+                <foreign-project>VMDI</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>build.xml</script>
                 <target>jar</target>
