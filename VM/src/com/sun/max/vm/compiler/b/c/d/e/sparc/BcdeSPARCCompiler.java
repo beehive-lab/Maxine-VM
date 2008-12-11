@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.platform.Platform.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.b.c.d.e.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -77,10 +76,4 @@ public class BcdeSPARCCompiler extends BcdeCompiler<SPARCEirGenerator> implement
     protected Class<? extends BuiltinVisitor> builtinTranslationClass() {
         return DirToSPARCEirBuiltinTranslation.class;
     }
-
-    @Override
-    public void fakeCall(Address returnAddress) {
-        Problem.unimplemented();
-    }
-
 }
