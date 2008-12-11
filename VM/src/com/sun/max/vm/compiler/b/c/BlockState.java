@@ -34,6 +34,8 @@ public class BlockState {
 
     private final BirBlock _birBlock;
     private AppendableSequence<CirBlock> _cirBlockList;
+    private JavaFrame _frame = null;
+    private JavaStack _stack = null;
 
     BlockState(BirBlock birBlock) {
         _birBlock = birBlock;
@@ -75,8 +77,6 @@ public class BlockState {
         _cirBlockList.append(cirBlock);
     }
 
-    private JavaFrame _frame = null;
-
     public JavaFrame frame() {
         return _frame;
     }
@@ -84,8 +84,6 @@ public class BlockState {
     public void setFrame(JavaFrame frame) {
         _frame = frame;
     }
-
-    private JavaStack _stack = null;
 
     public JavaStack stack() {
         return _stack;
