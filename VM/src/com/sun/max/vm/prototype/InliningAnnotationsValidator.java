@@ -30,7 +30,7 @@ import com.sun.max.vm.*;
 /**
  * A utility class for validating a given method with respect to usage of the {@link INLINE} and {@link NEVER_INLINE} annotations.
  * This check is expensive and so should only be performed when {@linkplain MaxineVM#isPrototyping() prototyping}.
- * 
+ *
  * @author Doug Simon
  */
 public final class InliningAnnotationsValidator {
@@ -100,7 +100,7 @@ public final class InliningAnnotationsValidator {
      * Finds the method in the class hierarchy that is immediately overridden by a given method. This search
      * excludes the interface hierarchy. Method M1 immediately overrides method M2 if there is no other
      * method M3 in the class hierarchy such that M3 overrides M2 and M1 overrides M3.
-     * 
+     *
      * @return {@code null} if there is no method overridden by {@code javaMethod} in the class hierarchy
      */
     private static Method overriddenMethod(Method javaMethod) {
@@ -134,7 +134,7 @@ public final class InliningAnnotationsValidator {
     }
 
     private static void check(boolean condition, String errorMessage) {
-        ProgramWarning.check(condition, errorMessage);
+        ProgramError.check(condition, errorMessage);
     }
 
     private static IdentityHashSet<Method> _checked = new IdentityHashSet<Method>();
