@@ -79,6 +79,15 @@ public class MakeStackVariable extends SpecialBuiltin {
             _stackVariables.append(this);
         }
 
+        /**
+         * Creates a new stack variable.
+         *
+         * NOTE: Stack variables can only be used in methods that will be compiled into the boot image. This
+         * obviates the need to synchronize {@link #offset(ClassMethodActor)} which is important as this
+         * method is called during stack frame walking. This constraint is enforced by annotating {@link #create(String)}
+         * with {@link PROTOTYPE_ONLY}.
+         */
+        @PROTOTYPE_ONLY
         public static StackVariable create(String name) {
             return new StackVariable(name);
         }
@@ -132,7 +141,8 @@ public class MakeStackVariable extends SpecialBuiltin {
         /**
          * Records the frame-based offset of the variable identified by this key in the frame of a given compiled method.
          */
-        public void record(TargetMethod targetMethod, int offset) {
+        @PROTOTYPE_ONLY
+        public synchronized void record(TargetMethod targetMethod, int offset) {
             final ClassMethodActor key = targetMethod.classMethodActor();
             if (MaxineVM.isPrototyping()) {
                 _conflictDetectionMap.check(key, this, offset);
