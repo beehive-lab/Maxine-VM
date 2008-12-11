@@ -34,14 +34,6 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestCaseClassSet(new Package()).toTestSuite();
-        suite.addTestSuite(LoadUnsafeBoxLibraryTest.class);
-        suite.addTestSuite(WordTest.class);
-        suite.addTestSuite(AddressTest.class);
-        suite.addTestSuite(SizeTest.class);
-        suite.addTestSuite(OffsetTest.class);
-        suite.addTestSuite(PointerTest.class);
-        suite.addTestSuite(MemoryTest.class);
-        return suite;
+        return new TestCaseClassSet(new Package()).toTestSuite();
     }
 }
