@@ -308,8 +308,10 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         }
         BytecodeBreakpointMessage.makeTargetBreakpoints(targetMethod);
 
-        for (Map.Entry<StackVariable, Integer> entry : emitter.namedStackVariableOffsets()) {
-            entry.getKey().record(targetMethod, entry.getValue());
+        if (MaxineVM.isPrototyping()) {
+            for (Map.Entry<StackVariable, Integer> entry : emitter.namedStackVariableOffsets()) {
+                entry.getKey().record(targetMethod, entry.getValue());
+            }
         }
 
         eirMethod.cleanupAfterEmitting();
