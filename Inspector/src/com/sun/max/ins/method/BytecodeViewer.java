@@ -118,7 +118,6 @@ public abstract class BytecodeViewer extends CodeViewer {
         return _bytecodeInstructions;
     }
 
-
     /**
      * Base class for bytecode viewers. TargetCode is optional, since a method may not yet be compiled, but may appear
      * and change as method is compiled and recompiled.
@@ -134,21 +133,6 @@ public abstract class BytecodeViewer extends CodeViewer {
         _teleConstantPool = teleCodeAttribute.getTeleConstantPool();
         _localConstantPool = _teleConstantPool.getTeleHolder().classActor().constantPool();
         _methodBytes = teleCodeAttribute.readBytecodes();
-        // ProgramWarning.check(Bytes.equals(_methodBytes, teleMethod.classMethodActor().codeAttribute().code()),
-        // "inconsistent bytecode");
-        final byte[] localMethodBytes = _teleClassMethodActor.classMethodActor().codeAttribute().code();
-        if (!Bytes.equals(_methodBytes, localMethodBytes)) {
-            // We're occasionally seeing a violation of the invariant that the bytecodes in the {@link TeleVM} for a particular
-            // method aren't the same as those associated with the same method in the Inspector.  So far, the
-            // difference shows up as some extra bytecodes at the end.
-            final ConstantPool constantPool = _teleClassMethodActor.getTeleHolder().classActor().constantPool();
-            System.out.println("BytecodeViewer bytecode comparison failure for: " + _teleClassMethodActor.classMethodActor().toString());
-            System.out.println("  Bytecodes from VM(" + _methodBytes.length + " bytes) =");
-            System.out.println(BytecodePrinter.toString(constantPool, new BytecodeBlock(_methodBytes)));
-            System.out.println("  Bytecodes loaded locally: " + localMethodBytes.length + " bytes) =");
-            System.out.println(BytecodePrinter.toString(constantPool, new BytecodeBlock(localMethodBytes)));
-            System.out.println();
-        }
         buildView();
         _rowToStackFrameInfo = new StackFrameInfo[_bytecodeInstructions.length()];
     }
