@@ -39,7 +39,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestCaseClassSet(new Package()).addToEnd(DirTranslatorTest_max.class, DirTranslatorTest_subtype.class).toTestSuite();
-        return new DirTranslatorTestSetup(suite);
+        return new DirTranslatorTestSetup(new TestCaseClassSet(new Package()).addToEnd(DirTranslatorTest_max.class, DirTranslatorTest_subtype.class).toTestSuite());
     }
 }

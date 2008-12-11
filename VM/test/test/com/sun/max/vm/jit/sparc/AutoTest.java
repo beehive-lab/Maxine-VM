@@ -34,6 +34,11 @@ public final class AutoTest {
     }
 
     public static Test suite() {
-        return new SPARCJITTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
+        return new SPARCJITTestSetup(new TestCaseClassSet(new Package()).toTestSuite()) {
+            @Override
+            public boolean disassembleCompiledMethods() {
+                return false;
+            }
+        };
     }
 }

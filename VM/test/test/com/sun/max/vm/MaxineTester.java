@@ -349,7 +349,7 @@ public class MaxineTester {
             final boolean includeSlowTests = System.getProperty(INCLUDE_SLOW_TESTS_PROPERTY) != null;
 
             final Set<String> failedTestNames = loadFailedTests(failedFile);
-            final Runner runner = new OldTestClassRunner(test) {
+            final Runner runner = new AllTests(testClass) {
                 @Override
                 public void run(RunNotifier notifier) {
                     final TestResult result = new TestResult() {
