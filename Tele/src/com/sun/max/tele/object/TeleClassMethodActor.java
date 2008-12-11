@@ -76,21 +76,6 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
         final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
         return (TeleCodeAttribute) TeleObject.make(teleVM(), codeAttributeReference);
     }
-    
-    /**
-     * @return  Java bytecodes for the {@link ClassMethod}, copied from the {@link TeleVM}.
-     */
-    @Deprecated
-    public final byte[] readBytecodes() {
-    	// TODO (mlvdv) obsolete.
-        final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
-        if (codeAttributeReference.isZero()) {
-            return null;
-        }
-        final Reference byteArrayReference = teleVM().fields().CodeAttribute_code.readReference(codeAttributeReference);
-        final TeleArrayObject teleByteArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), byteArrayReference);
-        return (byte[]) teleByteArrayObject.shallowCopy();
-    }
 
     /**
      * Cached history of compilation for this method in the tele VM.  Null means not initialized yet.
