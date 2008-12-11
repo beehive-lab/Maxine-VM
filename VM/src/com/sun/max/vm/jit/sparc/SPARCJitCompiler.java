@@ -343,7 +343,6 @@ public class SPARCJitCompiler extends JitCompiler {
 
             @Override
             Pointer returnInstructionPointer(StackFrameWalker stackFrameWalker, SPARCJitTargetMethod targetMethod) {
-
                 // The RIP is the top slot in the caller save
                 // area, so we have to remove a stack slot to the computed size.
                 final int dispToRip = offsetToTopOfFrame(targetMethod) -  JitStackFrameLayout.STACK_SLOT_SIZE;
@@ -442,7 +441,7 @@ public class SPARCJitCompiler extends JitCompiler {
         static byte [] createStubCode(VMConfiguration vmConfiguration) {
             try {
                 final SPARCAssembler asm =  SPARCAssembler.createAssembler(vmConfiguration.wordWidth());
-                // FIXME: the two nops are just to keep the invariant that the caller address is at 2 instructions after
+                // The two nops are just to keep the invariant that the caller address is at 2 instructions after
                 // the current pc. Thus we can use StackUnwindStub.start() as the address where to return to on an unwind.
                 asm.nop();
                 asm.nop();

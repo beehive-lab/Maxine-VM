@@ -214,12 +214,13 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 ProgramError.unknownCase();
             }
         }
-        // Jit to Opt adapter frame exploit the use of register windows by optimized code to leave the frame pointer of the jited caller in its local register and
-        // save the return address in another one (SAVED_CALLER_ADDRESS).
+        // Jit to Opt adapter frame exploit the use of register windows by optimized code to leave the frame pointer
+        //  of the jited caller in its local register and save the return address in another one (SAVED_CALLER_ADDRESS).
         // This avoids writing these to the stack then reloading them.
-        // The saving of the return address register takes place at the JIT entry point, so that by the first instruction of the adapter, the return address is in SAVED_CALLER_ADDRESS.
-        // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found in SAVED_CALLER_ADDRESS.
-        // The caller frame pointer is always in the local register defined by the JIT abi (_jitFramePointer).
+        // The saving of the return address register takes place at the JIT entry point, so that by the first instruction
+        // of the adapter, the return address is in SAVED_CALLER_ADDRESS.
+        // Thus, when in the entry point, the return address can be found in %o7, and when in the adapter it can be found
+        // in SAVED_CALLER_ADDRESS. The caller frame pointer is always in the local register defined by the JIT abi (_jitFramePointer).
         final Pointer optimizedEntryPoint = OPTIMIZED_ENTRY_POINT.in(targetMethod);
         final Pointer callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, _jitFramePointer).asPointer();
         final Pointer callerStackPointer;
@@ -362,12 +363,18 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
         final TargetMethod caller = stackFrameWalker.targetMethodFor(callerInstructionPointer);
         if (caller instanceof JitTargetMethod) {
             if (inCallerRegisterWindow) {
-                // FIXME: this is a gross hack to read the caller's frame pointer (it isn't in the standard frame pointer registers. The stackFrameWalker
-                // doesn't provide an API to obtain the value of arbitrary register and we cannot use the VMRegister class here for it wouldn't work when
-                // inspecting. So the hack here consists of forcing the walker to use the caller's ABI, which will set the frame pointer to the appropriate
-                // register. This works only because we're in the caller's register window.
-                stackFrameWalker.useABI(caller.abi());
-                callerFramePointer = stackFrameWalker.framePointer();
+                if (purpose.equals(Purpose.INSPECTING)) {
+                    // FIXME: this is a gross hack to read the caller's frame pointer (it isn't in the standard frame pointer registers.
+                    //The stackFrameWalker doesn't provide an API to obtain the value of arbitrary register and we cannot use the
+                    // VMRegister class here for it wouldn't work when inspecting. So the hack here consists of forcing the walker
+                    // to use the caller's ABI, which will set the frame pointer to the appropriate
+                    // register. This works only because we're in the caller's register window.
+                    stackFrameWalker.useABI(caller.abi());
+                    callerFramePointer = stackFrameWalker.framePointer();
+                } else {
+                    final Pointer savedRegisterWindow = STACK_BIAS.SPARC_V9.unbias(stackFrameWalker.stackPointer());
+                    callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
+                }
             } else {
                 final Pointer savedRegisterWindow = STACK_BIAS.SPARC_V9.unbias(callerStackPointer);
                 callerFramePointer = SPARCStackFrameLayout.getRegisterInSavedWindow(stackFrameWalker, savedRegisterWindow, GPR.L6).asPointer();
