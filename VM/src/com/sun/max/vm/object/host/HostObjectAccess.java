@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.*;
@@ -249,7 +250,14 @@ public final class HostObjectAccess {
         _objectMap.put(_mainThread.getThreadGroup(), threadGroup);
         _objectMap.put(threadGroup, threadGroup);
         _objectMap.put(MaxineVM.host(), MaxineVM.target());
-        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), new Properties());
+        final Properties systemProperies = new Properties();
+        for (String name : JDK_java_lang_System.REMEMBERED_PROPERTY_NAMES) {
+            final String value = System.getProperty(name);
+            if (value != null) {
+                systemProperies.setProperty(name, value);
+            }
+        }
+        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), systemProperies);
         try {
             _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.ApplicationShutdownHooks"), "hooks"), new IdentityHashMap<Thread, Thread>());
             _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.Shutdown"), "hooks"), new ArrayList<Runnable>());

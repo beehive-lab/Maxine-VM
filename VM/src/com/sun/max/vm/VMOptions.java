@@ -29,6 +29,8 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.VMOption.*;
+import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.object.host.*;
 
 /**
  * Basic VM argument handling.
@@ -310,6 +312,15 @@ public final class VMOptions {
         return true;
     }
 
+    /**
+     * This is a reference to the initial value of {@link System#props} when the VM starts up.
+     * The "magic" in {@link HostObjectAccess#hostToTarget(Object)} will ensure that this map
+     * only has the properties from the host specified by {@link JDK_java_lang_System#REMEMBERED_PROPERTY_NAMES}.
+     * The system properties parsed on the command line are stored in this map.
+     * This is required so that they are available before the System class is initialized.
+     */
+    public static final Properties _initialSystemProperties = System.getProperties();
+
     public static boolean parseStarting() {
         try {
             int index = 1;
@@ -319,7 +330,8 @@ public final class VMOptions {
                     index++;
                 } else {
                     if (argument.startsWith("-D")) {
-                        index++; // skip, handled later by parseSystemProperties()
+                        parseSystemProperty(_initialSystemProperties, argument);
+                        _argv.setWord(index, Word.zero());
                     } else {
                         final Pointer nextArg = _argv.getWord(index).asPointer();
                         final VMOption option = findVMOption(nextArg, _startingPhaseOptions);
@@ -351,31 +363,42 @@ public final class VMOptions {
                     _earlyVMExitRequested = true;
                 }
             }
+            System.getProperties().list(Log.out);
         }
         return noErrorFound;
     }
 
-    public static void parseSystemProperties(Properties properties) {
-        try {
-            for (int i = 1; i < _argumentStart; i++) {
-                final String argument = getArgumentString(i);
-                if (argument != null && argument.startsWith("-D")) {
-                    final int index = argument.indexOf('=');
-                    String name;
-                    String value = "";
-                    if (index < 0) {
-                        name = argument.substring(2); // chop off -D
-                    } else {
-                        name = argument.substring(2, index); // get the name of the option
-                        value = argument.substring(index + 1);
-                    }
-                    properties.setProperty(name, value);
-                    _argv.setWord(i, Word.zero());
-                }
-            }
-        } catch (Utf8Exception utf8Exception) {
-            error("UTF8 problem");
+    /**
+     * Adds any system properties specified on the command line to a given properties object.
+     * The command line properties override any properties in {@code properties} that have
+     * the same name.
+     *
+     * @param properties the object to which the command line properties are added
+     */
+    public static void addParsedSystemProperties(Properties properties) {
+        for (Map.Entry<Object, Object> entry : _initialSystemProperties.entrySet()) {
+            properties.setProperty((String) entry.getKey(), (String) entry.getValue());
         }
+    }
+
+    /**
+     * Parses a system property from command line argument that starts with "-D" and adds it
+     * to a given properties object.
+     *
+     * @param properties the object to which the command line property extracted from {@code argument} is added
+     * @param argument a command line argument that starts with "-D"
+     */
+    private static void parseSystemProperty(Properties properties, final String argument) {
+        final int index = argument.indexOf('=');
+        String name;
+        String value = "";
+        if (index < 0) {
+            name = argument.substring(2); // chop off -D
+        } else {
+            name = argument.substring(2, index); // get the name of the option
+            value = argument.substring(index + 1);
+        }
+        properties.setProperty(name, value);
     }
 
     public static String mainClassName() {

@@ -345,7 +345,11 @@ public final class JDK_java_lang_System {
         return ObjectAccess.makeHashCode(object);
     }
 
-    private static final String[] _rememberedPropertyNames = {
+    /**
+     * These are the properties that are to be remembered from the host VM on which the image was built.
+     */
+    @PROTOTYPE_ONLY
+    public static final String[] REMEMBERED_PROPERTY_NAMES = {
         "java.specification.version",
         "java.specification.name",
         "java.class.version",
@@ -354,16 +358,6 @@ public final class JDK_java_lang_System {
         "java.vendor.url.bug",
         "file.encoding.pkg",
     };
-
-    private static final String[] _rememberedPropertyValues = new String[_rememberedPropertyNames.length];
-
-    static {
-        if (MaxineVM.isPrototyping()) {
-            for (int i = 0; i < _rememberedPropertyNames.length; i++) {
-                _rememberedPropertyValues[i] = System.getProperty(_rememberedPropertyNames[i]);
-            }
-        }
-    }
 
     /**
      * Sets a property in the specified property set, if it has not already been set.
@@ -650,14 +644,9 @@ public final class JDK_java_lang_System {
     @SUBSTITUTE
     private static Properties initProperties(Properties properties) {
         // 1. parse any properties from command line
-        VMOptions.parseSystemProperties(properties);
+        VMOptions.addParsedSystemProperties(properties);
 
-        // 2. copy any properties remembered from host VM
-        for (int i = 0; i < _rememberedPropertyNames.length; i++) {
-            setIfAbsent(properties, _rememberedPropertyNames[i], _rememberedPropertyValues[i]);
-        }
-
-        // 3. set up basic Maxine configuration information
+        // 2. set up basic Maxine configuration information
         setIfAbsent(properties, "java.runtime.name", MaxineVM.name());
         setIfAbsent(properties, "java.runtime.version", MaxineVM.version());
 
@@ -689,10 +678,10 @@ public final class JDK_java_lang_System {
             setIfAbsent(properties, "sun.cpu.isalist", isaList);
         }
 
-        // 4. reinitialize java.lang.ProcessEnvironment with this process's environment
+        // 3. reinitialize java.lang.ProcessEnvironment with this process's environment
         ClassActor.fromJava(Classes.forName("java.lang.ProcessEnvironment")).callInitializer();
 
-        // 5. perform OS-specific initialization
+        // 4. perform OS-specific initialization
         switch (Platform.hostOrTarget().operatingSystem()) {
             case DARWIN:
                 setIfAbsent(properties, "os.name", "Mac OS X");
@@ -720,21 +709,21 @@ public final class JDK_java_lang_System {
                 break;
         }
 
-        // 6. set up user-specific information
+        // 5. set up user-specific information
         setIfAbsent(properties, "user.name", getenvUserName());
         setIfAbsent(properties, "user.home", getenvUserHomeDirectory());
         setIfAbsent(properties, "user.dir", getenvUserWorkingDirectory());
         setIfAbsent(properties, "user.timezone", "");
         setIfAbsent(properties, "java.java2d.fontpath", System.getenv("JAVA2D_FONTPATH"));
 
-        // 7. set up the java home
+        // 6. set up the java home
         String javaHome = properties.getProperty("java.home");
         if (javaHome == null) {
             javaHome = findJavaHome();
             setIfAbsent(properties, "java.home", javaHome);
         }
 
-        // 8. set up classpath and library path
+        // 7. set up classpath and library path
         String earlyNativeLibraryPath;
         if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.DARWIN) {
             earlyNativeLibraryPath = initDarwinPathProperties(properties, javaHome);
@@ -745,7 +734,7 @@ public final class JDK_java_lang_System {
         }
         setIfAbsent(properties, "java.library.path", getenvJavaLibraryPath());
 
-        // 9. set up the class path
+        // 8. set up the class path
         // N.B. -jar overrides any other classpath setting
         if (VMOptions.jarFile() == null) {
             String javaClassPath = _classpathOption.getValue();
@@ -757,13 +746,13 @@ public final class JDK_java_lang_System {
             properties.put("java.class.path", VMOptions.jarFile());
         }
 
-        // 10. load the native code for zip and java libraries
+        // 9. load the native code for zip and java libraries
         VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(earlyNativeLibraryPath);
 
-        // 11. initialize the file system with current runtime values as opposed to prototyping time values
+        // 10. initialize the file system with current runtime values as opposed to prototyping time values
         ClassActor.fromJava(File.class).callInitializer();
 
-        // 12. load the character encoding class
+        // 11. load the character encoding class
         final String sunJnuEncodingValue = properties.getProperty("sun.jnu.encoding");
         properties.remove("sun.jnu.encoding"); // Avoids endless recursion in the next statement
         Charset.isSupported(sunJnuEncodingValue); // We are only interested in the side effect: loading the char set if supported and initializing related JNU variables
