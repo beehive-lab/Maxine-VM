@@ -39,7 +39,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestCaseClassSet(new Package()).addToEnd(CirOptimizerTest_max.class, CirOptimizerTest_subtype.class).toTestSuite();
-        return new CirOptimizerTestSetup(suite);
+        return new CirOptimizerTestSetup(new TestCaseClassSet(new Package()).addToEnd(CirOptimizerTest_max.class, CirOptimizerTest_subtype.class).toTestSuite());
     }
 }

@@ -39,7 +39,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestCaseClassSet(new Package()).addToEnd(SPARCEirTranslatorTest_max.class, SPARCEirTranslatorTest_large.class, SPARCEirTranslatorTest_native.class, SPARCEirTranslatorTest_subtype.class).toTestSuite();
-        return new SPARCEirTranslatorTestSetup(suite);
+        return new SPARCEirTranslatorTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
     }
 }
