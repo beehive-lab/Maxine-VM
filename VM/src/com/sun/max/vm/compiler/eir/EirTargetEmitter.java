@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
@@ -301,7 +302,11 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     private Map<StackVariable, Integer> _namedStackVariables;
 
+    /**
+     * See {@link StackVariable#create(String)} for an explanation as to why this can only be called while prototyping.
+     */
     public void recordStackVariableOffset(StackVariable key, int offset) {
+        ProgramError.check(MaxineVM.isPrototyping());
         if (_namedStackVariables == null) {
             _namedStackVariables = new HashMap<StackVariable, Integer>();
         }
