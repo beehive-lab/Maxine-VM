@@ -22,9 +22,11 @@ package com.sun.max.vm.compiler.adaptive;
 
 import java.util.concurrent.*;
 
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * This class represents the state for the compilation of a single method, including the method to be compiled, that
@@ -100,6 +102,10 @@ class Compilation implements Future<TargetMethod> {
     public TargetMethod get() throws InterruptedException {
         if (!_done) {
             synchronized (_methodState) {
+                if (_compilingThread == Thread.currentThread()) {
+                    FatalError.unexpected("Compilation of " + _methodState.classMethodActor().format("%H.%n(%p)") + " is recursive");
+                }
+
                 // the method state object is used here as the condition variable
                 _methodState.wait();
                 return _methodState.currentTargetMethod(_compilationDirective);
