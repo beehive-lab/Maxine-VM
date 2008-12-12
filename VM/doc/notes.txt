@@ -1,0 +1,24 @@
+Necessary VM arguments
+----------------------
+When running com.sun.jvm.prototype.PrototypeGenerator you must specify
+this to the HotSpot/JDK runtime:
+
+-Dsun.reflect.noInflation=false -Dsun.reflect.InflationThreshold=10000000
+
+Otherwise the JDK's reflection framework will generate classes like e.g.
+"sun.reflect.GeneratedMethodAccessor1" without corresponding class file
+in the file system and thus they cannot be located by our PrototypeClassLoader.
+And then these classes will be missed when a class lookup occurs during
+prototype transitive closure scanning.
+
+Alas, there is no known more convenient way of setting 
+the above values early enough during HotSpot/JDK startup.
+Simply patching static variables using PrivilegedAccessor 
+(as e.g. in case of LibraryPath) does not do the trick here.
+Some reflection "inflation" already happens BEFORE
+we eventually get to execute our "main" method 
+and thus gain programmatic control. 
+By then, internal VM data structures of the host VM,
+i.e. its "SystemDictionary", have been affected
+and we do not wish to mess with that.
+
