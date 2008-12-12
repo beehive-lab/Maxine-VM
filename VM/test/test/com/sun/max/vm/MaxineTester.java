@@ -29,7 +29,6 @@ import java.util.regex.*;
 import junit.framework.*;
 
 import org.junit.internal.requests.*;
-import org.junit.internal.runners.*;
 import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
@@ -349,7 +348,7 @@ public class MaxineTester {
             final boolean includeSlowTests = System.getProperty(INCLUDE_SLOW_TESTS_PROPERTY) != null;
 
             final Set<String> failedTestNames = loadFailedTests(failedFile);
-            final Runner runner = new OldTestClassRunner(test) {
+            final Runner runner = new AllTests(testClass) {
                 @Override
                 public void run(RunNotifier notifier) {
                     final TestResult result = new TestResult() {
@@ -464,7 +463,7 @@ public class MaxineTester {
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
-                if (className.startsWith(new test.com.sun.max.Package().name()) && className.endsWith(".AutoTest")) {
+                if (className.endsWith(".AutoTest")) {
                     if (filter == null || className.contains(filter)) {
                         autoTests.add(className);
                     }

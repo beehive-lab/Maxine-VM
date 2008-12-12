@@ -36,7 +36,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestCaseClassSet(new Package()).toTestSuite();
-        return suite;
+        return new TestCaseClassSet(new Package()).toTestSuite();
     }
 }
