@@ -363,6 +363,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         scrollPane.setOpaque(true);
         scrollPane.setBackground(style().defaultBackgroundColor());
         add(scrollPane, BorderLayout.CENTER);
+
+        refresh(epoch, true);
+        JTableColumnResizer.adjustColumnPreferredWidths(_table);
     }
 
     @Override
