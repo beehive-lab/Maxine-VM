@@ -146,43 +146,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final OperandsRenderer _operandsRenderer;
     private final SourceLineRenderer _sourceLineRenderer;
 
-    /**
-     * Sets the minimum width of the columns based on the current values in the table model.
-     */
-    private Dimension setColumnSizes() {
-        // TODO (mlvdv) reduce min width of the TAG column
-        final int margin = _columnModel.getColumnMargin();
-        final int rowCount = _model.getRowCount();
-
-        int totalWidth = 0;
-        int totalHeight = 0;
-
-        for (int i = _columnModel.getColumnCount() - 1; i >= 0; --i) {
-            final TableColumn column = _columnModel.getColumn(i);
-
-            final int columnIndex = column.getModelIndex();
-
-            int width = 0;
-            int height = 0;
-
-            for (int row = rowCount - 1; row >= 0; --row) {
-                final TableCellRenderer renderer = _table.getCellRenderer(row, i);
-                final Object value = _model.getValueAt(row, columnIndex);
-                final Component c = renderer.getTableCellRendererComponent(_table, value, false, false, row, i);
-                final Dimension preferredSize = c.getPreferredSize();
-                width = Math.max(width, preferredSize.width);
-                height += preferredSize.height;
-            }
-
-            assert width > 0;
-            column.setMinWidth(width + margin);
-            totalWidth += column.getPreferredWidth();
-            totalHeight = Math.max(totalHeight, height);
-        }
-
-        return new Dimension(totalWidth, totalHeight);
-    }
-
     public JTableTargetCodeViewer(Inspection inspection, MethodInspector parent, TeleTargetRoutine teleTargetRoutine) {
         super(inspection, parent, teleTargetRoutine);
         _inspection = inspection;
@@ -220,9 +183,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _table.setColumnSelectionAllowed(true);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         _table.addMouseListener(new MyInspectorMouseClickAdapter(_inspection));
-
-        final Dimension preferredTableSize = setColumnSizes();
-        _table.setPreferredScrollableViewportSize(preferredTableSize);
 
         // Set up toolbar
         JButton button = new JButton(_inspection.actions().toggleTargetCodeBreakpoint());
@@ -295,6 +255,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         add(scrollPane, BorderLayout.CENTER);
 
         refresh(epoch, true);
+        JTableColumnResizer.adjustColumnPreferredWidths(_table);
     }
 
     @Override
@@ -429,7 +390,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     } else {
                         removeColumn(_columns[col]);
                     }
-                    setColumnSizes();
+                    JTableColumnResizer.adjustColumnPreferredWidths(_table);
                     refresh(teleVM().teleProcess().epoch(), true);
                 }
             };
