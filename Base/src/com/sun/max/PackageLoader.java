@@ -50,14 +50,14 @@ public class PackageLoader {
 
     /**
      * Loads classes under a given package.
-     * 
+     *
      * @param packageName the name of the package from which classes are loaded
      * @param recursive if true, then classes in sub-packages are loaded as well, otherwise only classes in the package
      *            denoted by {@code packageName} are loaded
      * @return the loaded classes
      */
     public Sequence<Class> load(final String packageName, final boolean recursive) {
-        Trace.line(_traceLevel, "PackageLoader.load: " + packageName);
+        Trace.line(_traceLevel, "loading: " + packageName);
         final AppendableSequence<Class> classes = new ArrayListSequence<Class>();
         final Set<String> classNames = new HashSet<String>();
         final ClassSearch classSearch = new ClassSearch() {
@@ -86,7 +86,7 @@ public class PackageLoader {
 
     /**
      * Loads classes under a given package.
-     * 
+     *
      * @param maxPackage the package from which classes are loaded
      * @param recursive if true, then classes in sub-packages are loaded as well, otherwise only classes in
      *            {@code maxPackage} are loaded

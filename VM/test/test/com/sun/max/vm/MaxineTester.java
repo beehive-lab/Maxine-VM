@@ -29,7 +29,6 @@ import java.util.regex.*;
 import junit.framework.*;
 
 import org.junit.internal.requests.*;
-import org.junit.internal.runners.*;
 import org.junit.runner.*;
 import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;

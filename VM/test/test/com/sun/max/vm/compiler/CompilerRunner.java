@@ -20,13 +20,11 @@
  */
 package test.com.sun.max.vm.compiler;
 
-import test.com.sun.max.vm.compiler.*;
 import java.io.*;
 import java.lang.reflect.*;
 
-import test.com.sun.max.vm.jit.*;
-
 import junit.framework.*;
+import test.com.sun.max.vm.jit.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
