@@ -464,7 +464,7 @@ public class MaxineTester {
         new ClassSearch() {
             @Override
             protected boolean visitClass(String className) {
-                if (className.startsWith(new test.com.sun.max.Package().name()) && className.endsWith(".AutoTest")) {
+                if (className.endsWith(".AutoTest")) {
                     if (filter == null || className.contains(filter)) {
                         autoTests.add(className);
                     }

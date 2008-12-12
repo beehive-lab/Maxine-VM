@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.compiler;
 
+import test.com.sun.max.vm.compiler.*;
 import java.io.*;
 import java.lang.reflect.*;
 
