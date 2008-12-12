@@ -31,7 +31,6 @@ import junit.framework.*;
 import org.junit.runner.*;
 
 import sun.reflect.*;
-import test.com.sun.max.vm.compiler.cir.generate.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;
@@ -482,7 +481,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
 
     protected void compilePackage(MaxPackage p) {
         Trace.begin(1, "compiling package: " + p.name());
-        for (Class javaType : CirTranslatorTestSetup.packageLoader().load(p, false)) {
+        for (Class javaType : CompilerTestSetup.packageLoader().load(p, false)) {
             compileClass(javaType);
         }
         Trace.end(1, "compiling package: " + p.name());
