@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.constant;
 
-import java.awt.*;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
@@ -91,7 +90,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
 
     private long _epoch = -1;
 
-    public static Component make(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
+    public static PoolConstantLabel make(Inspection inspection, int index, ConstantPool localConstantPool, TeleConstantPool teleConstantPool, Mode mode) {
         final Tag tag = localConstantPool.at(index).tag();
         PoolConstantLabel poolConstantLabel;
         switch (tag) {
@@ -166,18 +165,32 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         updateText();
     }
 
+    protected String _prefix = "";
+
+    public void setPrefix(String prefix) {
+        _prefix = prefix;
+        updateText();
+    }
+
+    private String _toolTipPrefix = "";
+
+    public void setToolTipPrefix(String toolTipPrefix) {
+        _toolTipPrefix = toolTipPrefix;
+        updateText();
+    }
+
     protected final void setJavapText(String kind, String name) {
-        setText("#" + Integer.toString(_index) + "; //" + kind + " " + name);
+        setText(_prefix + "#" + Integer.toString(_index) + "; //" + kind + " " + name);
     }
 
     protected final void setJavapToolTipText(String kind, String name) {
-        setToolTipText("#" + Integer.toString(_index) + "; //" + kind + " " + name);
+        setToolTipText(_toolTipPrefix + "#" + Integer.toString(_index) + "; //" + kind + " " + name);
     }
 
     protected final void setJavapResolvableToolTipText(String kind, String name) {
         final String resolution = _telePoolConstant == null ? inspection().nameDisplay().unavailableTeleData() :
             (isResolved() ? "Resolved" : "Unresolved");
-        setToolTipText("#" + Integer.toString(_index) + "; //" + kind + " " + name + " (" + resolution + ")");
+        setToolTipText(_toolTipPrefix + "#" + Integer.toString(_index) + "; //" + kind + " " + name + " (" + resolution + ")");
     }
 
     protected void showMenu(MouseEvent mouseEvent) {
@@ -221,7 +234,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Class", typeDescriptor.toJavaString(false));
                     break;
                 case TERSE:
-                    setText(typeDescriptor.toJavaString(false));
+                    setText(_prefix + typeDescriptor.toJavaString(false));
                     break;
                 default:
                     Problem.unimplemented();
@@ -264,7 +277,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Field",  fieldName);
                     break;
                 case TERSE:
-                    setText(fieldName);
+                    setText(_prefix + fieldName);
                     break;
                 default:
                     Problem.unimplemented();
@@ -323,7 +336,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Method",  methodName + "()");
                     break;
                 case TERSE:
-                    setText(methodName + "()");
+                    setText(_prefix + methodName + "()");
                     break;
                 default:
                     Problem.unimplemented();
@@ -377,7 +390,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("Method",  methodName + "()");
                     break;
                 case TERSE:
-                    setText(methodName + "()");
+                    setText(_prefix + methodName + "()");
                     break;
                 default:
                     Problem.unimplemented();
@@ -419,7 +432,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("", shortText);
                     break;
                 case TERSE:
-                    setText(shortText);
+                    setText(_prefix + shortText);
                     break;
                 default:
                     Problem.unimplemented();
@@ -445,7 +458,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                     setJavapText("", shortText);
                     break;
                 case TERSE:
-                    setText(shortText);
+                    setText(_prefix + shortText);
                     break;
                 default:
                     Problem.unimplemented();
@@ -467,10 +480,10 @@ public abstract class PoolConstantLabel extends InspectorLabel {
             final String text = localPoolConstant().valueString(localConstantPool());
             switch (mode()) {
                 case JAVAP:
-                    setText(text);
+                    setText(_prefix + text);
                     break;
                 case TERSE:
-                    setText(text);
+                    setText(_prefix + text);
                     break;
                 default:
                     Problem.unimplemented();

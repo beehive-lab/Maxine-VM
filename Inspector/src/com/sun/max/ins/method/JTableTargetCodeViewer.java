@@ -28,6 +28,7 @@ import javax.swing.table.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
+import com.sun.max.ins.constant.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.platform.*;
@@ -35,11 +36,8 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
-import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.target.*;
 
 /**
  * A table-based viewer for an (immutable) section of {@link TargetCode} in the {@link TeleVM}.
@@ -696,27 +694,21 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     private final class OperandsRenderer implements TableCellRenderer, Prober {
-        private WordValueLabel[] _wordValueLabels = new WordValueLabel[instructions().length()];
+        private InspectorLabel[] _wordValueLabels = new InspectorLabel[instructions().length()];
         private TargetCodeLabel _targetCodeLabel = new TargetCodeLabel(_inspection, "");
         private LiteralRenderer _literalRenderer = getLiteralRenderer(_inspection);
-        private String[] _calleeNames = new String[instructions().length()];
-        private String[] _calleeSignatures = new String[instructions().length()];
 
         public void refresh(long epoch, boolean force) {
-            for (WordValueLabel wordValueLabel : _wordValueLabels) {
+            for (InspectorLabel wordValueLabel : _wordValueLabels) {
                 if (wordValueLabel != null) {
                     wordValueLabel.refresh(epoch, force);
                 }
             }
         }
 
-        public Inspection inspection() {
-            return _inspection;
-        }
-
         @Override
         public void redisplay() {
-            for (WordValueLabel wordValueLabel : _wordValueLabels) {
+            for (InspectorLabel wordValueLabel : _wordValueLabels) {
                 if (wordValueLabel != null) {
                     wordValueLabel.redisplay();
                 }
@@ -724,64 +716,32 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             _targetCodeLabel.redisplay();
         }
 
-        public OperandsRenderer() {
-            for (int row = 0; row < instructions().length(); ++row) {
-                final TargetCodeInstruction targetCodeInstruction = targetCodeInstructionAt(row);
-
-                final TeleTargetRoutine teleTargetRoutine = teleTargetRoutine();
-                if (teleTargetRoutine instanceof TeleTargetMethod) {
-                    final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
-                    final int stopIndex = teleTargetMethod.getJavaStopIndex(targetCodeInstruction.address());
-                    if (stopIndex != -1) {
-                        final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
-                        if (javaFrameDescriptor != null) {
-                            final BytecodeLocation bytecodeLocation = javaFrameDescriptor.bytecodeLocation();
-                            try {
-                                final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
-                                if (methodRef != null) {
-                                    final ConstantPool constantPool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
-                                    final String name = methodRef.name(constantPool).string();
-                                    _calleeNames[row] = name;
-                                    _calleeSignatures[row] = methodRef.holder(constantPool).toJavaString() + "." + name + methodRef.signature(constantPool).toJavaString(false, true);
-                                }
-                            } catch (Throwable throwable) {
-                                inspection().errorMessage("could not scan byte code in " + bytecodeLocation + ": " + throwable, "Target Code Viewer");
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
-            WordValueLabel wordValueLabel = _wordValueLabels[row];
-            if (wordValueLabel == null) {
+            InspectorLabel inspectorLabel = _wordValueLabels[row];
+            if (inspectorLabel == null) {
                 final TargetCodeInstruction targetCodeInstruction = targetCodeInstructionAt(row);
                 final String text = targetCodeInstruction.operands();
                 if (targetCodeInstruction._targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction._targetAddress)) {
-                    wordValueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress.asWord());
-                    _wordValueLabels[row] = wordValueLabel;
+                    inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress.asWord());
+                    _wordValueLabels[row] = inspectorLabel;
                 } else if (targetCodeInstruction._literalSourceAddress != null) {
                     final Word word = teleVM().teleProcess().dataAccess().readWord(targetCodeInstruction._literalSourceAddress);
-                    wordValueLabel = _literalRenderer.render(inspection(), text, word);
-                    _wordValueLabels[row] = wordValueLabel;
+                    inspectorLabel = _literalRenderer.render(_inspection, text, word);
+                    _wordValueLabels[row] = inspectorLabel;
+                } else if (rowToCalleeIndex(row) >= 0) {
+                    final PoolConstantLabel poolConstantLabel = PoolConstantLabel.make(_inspection, rowToCalleeIndex(row), localConstantPool(), teleConstantPool(), PoolConstantLabel.Mode.TERSE);
+                    poolConstantLabel.setToolTipPrefix(text);
+                    inspectorLabel = poolConstantLabel;
+                    inspectorLabel.setForeground(getRowTextColor(row));
                 } else {
-                    final String calleeName = _calleeNames[row];
-                    if (calleeName == null) {
-                        _targetCodeLabel.setText(text);
-                        _targetCodeLabel.setToolTipText(null);
-                    } else {
-                        _targetCodeLabel.setText(calleeName + "()");
-                        _targetCodeLabel.setToolTipText(text + " # " +  _calleeSignatures[row]);
-                    }
-                    _targetCodeLabel.setForeground(getRowTextColor(row));
-                    _targetCodeLabel.setBackground(rowToBackgroundColor(row));
-                    return _targetCodeLabel;
+                    inspectorLabel = _targetCodeLabel;
+                    inspectorLabel.setText(text);
+                    inspectorLabel.setToolTipText(null);
+                    inspectorLabel.setForeground(getRowTextColor(row));
                 }
             }
-            wordValueLabel.setBackground(rowToBackgroundColor(row));
-            return wordValueLabel;
+            inspectorLabel.setBackground(rowToBackgroundColor(row));
+            return inspectorLabel;
         }
 
     }
