@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.adaptive;
 
 import java.util.concurrent.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
@@ -146,7 +145,7 @@ class Compilation implements Future<TargetMethod> {
         assert _methodState.currentCompilation(compilationDirective) == this;
         TargetMethod targetMethod = null;
 
-        this._adaptiveCompilationScheme.observeBeforeCompilation(this, compiler);
+        _adaptiveCompilationScheme.observeBeforeCompilation(this, compiler);
 
         try {
             if (VerboseVMOption.verboseCompilation()) {
@@ -162,25 +161,18 @@ class Compilation implements Future<TargetMethod> {
         } finally {
             _done = true;
 
-
-            if (targetMethod != null) {
-                // compilation succeeded and produced a target method
-                synchronized (_methodState) {
+            synchronized (_methodState) {
+                if (targetMethod != null) {
+                    // compilation succeeded and produced a target method
                     _methodState.setTargetMethod(targetMethod, compilationDirective);
-                    _methodState.setCurrentCompilation(null, compilationDirective);
-                    _methodState.notifyAll();
                 }
-            } else {
-                // the compilation did not succeed, but notify any waiters
-                synchronized (_methodState) {
-                    // notify any waiters
-                    _methodState.setCurrentCompilation(null, compilationDirective);
-                    _methodState.notifyAll();
-                }
+                _methodState.setCurrentCompilation(null, compilationDirective);
+                _methodState.notifyAll();
             }
-            this._adaptiveCompilationScheme.observeAfterCompilation(this, compiler, targetMethod);
-            synchronized (this._adaptiveCompilationScheme._completionLock) {
-                this._adaptiveCompilationScheme._completed++;
+
+            _adaptiveCompilationScheme.observeAfterCompilation(this, compiler, targetMethod);
+            synchronized (_adaptiveCompilationScheme._completionLock) {
+                _adaptiveCompilationScheme._completed++;
             }
         }
     }
