@@ -105,6 +105,7 @@ public class MaxineTesterConfiguration {
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.ExitCode.class,
+        test.output.GetResource.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
         test.output.Recursion.class,
