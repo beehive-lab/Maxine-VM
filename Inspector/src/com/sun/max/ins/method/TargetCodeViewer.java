@@ -110,6 +110,7 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
 
     /**
      * Map:  index into the sequence of target code instructions -> bytecode that compiled into code starting at this instruction, if known; else null.
+     * The bytecode location may be in a different method that was inlined.
      */
     private final BytecodeLocation[] _rowToBytecodeLocation;
 
@@ -186,7 +187,8 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
                 if (positionToStopIndex[instructionPosition] >= 0) {
                     // the row is at a stop point
                     _rowToBackGroundColor[row] = _rowToBackGroundColor[row].darker();
-                    _rowToCalleeIndex[row] = findCalleeIndex(bytecodePosition);
+                    // Now see if the bytecode is a call.
+                    _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodePosition);
                 }
             }
         } else {
@@ -201,7 +203,10 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
                         if (javaFrameDescriptor != null) {
                             final BytecodeLocation bytecodeLocation = javaFrameDescriptor.bytecodeLocation();
                             _rowToBytecodeLocation[row] = bytecodeLocation;
-                            _rowToCalleeIndex[row] = findCalleeIndex(bytecodeLocation.position());
+                            // TODO (mlvdv) only works for non-inlined calls
+                            if (bytecodeLocation.classMethodActor().equals(teleTargetMethod.classMethodActor())) {
+                                _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodeLocation.position());
+                            }
                         }
                     }
                 } else {
@@ -254,9 +259,9 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
      * @param bytecodePosition
      * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
      */
-    private int findCalleeIndex(int bytecodePosition) {
+    private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(_methodRefIndexFinder.reset());
-        bytecodeScanner.scanInstruction(_bytecodes, bytecodePosition);
+        bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
         return _methodRefIndexFinder.methodRefIndex();
     }
 
@@ -345,7 +350,7 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
 
     /**
      * @param row an index into the sequence of target code instructions
-     * @return the location of the bytecode instruction from which the target code starting here was compiled; null if unavailable.
+     * @return the location of the bytecode instruction (possibly inlined from a different method) from which the target code starting here was compiled; null if unavailable.
      */
     protected final BytecodeLocation rowToBytecodeLocation(int row) {
         return _rowToBytecodeLocation[row];
