@@ -304,9 +304,6 @@ public abstract class AssemblerGenerator<Template_Type extends Template> {
 
         final boolean printExampleInstruction = true;
         if (printExampleInstruction) {
-            if (template.serial() == 2399) {
-                System.console();
-            }
             final AppendableIndexedSequence<Argument> arguments = new ArrayListSequence<Argument>();
             final AddressMapper addressMapper = new AddressMapper();
             int parameterIndex = 0;
