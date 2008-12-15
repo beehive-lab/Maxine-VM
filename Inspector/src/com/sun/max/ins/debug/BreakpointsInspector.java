@@ -76,7 +76,7 @@ public final class BreakpointsInspector extends UniqueInspector {
         METHOD("Method", "Method containing breakpoint", 190),
         LOCATION("Locn", "Offset into method", 30),
         CONDITION("Condition", "Optional conditional spec.", 80),
-        TRIGGER_THREAD("Thread", "Thread currently stopped at breakpoint", 80);
+        TRIGGER_THREAD("Thread", "Name of thread currently stopped at breakpoint", 80);
 
         private final String _label;
         private final String _toolTipText;
@@ -152,7 +152,6 @@ public final class BreakpointsInspector extends UniqueInspector {
 
     private final class BreakpointJTable extends JTable {
 
-
         BreakpointJTable(TableModel model, TableColumnModel tableColumnModel) {
             super(model, tableColumnModel);
         }
@@ -164,11 +163,11 @@ public final class BreakpointsInspector extends UniqueInspector {
                 public String getToolTipText(MouseEvent mouseEvent) {
                     final Point p = mouseEvent.getPoint();
                     final int index = _columnModel.getColumnIndexAtX(p.x);
-                    return ColumnKind.VALUES.get(index).toolTipText();
+                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
                 }
             };
         }
-
     }
 
     private final class BreakpointColumnModel extends DefaultTableColumnModel {
