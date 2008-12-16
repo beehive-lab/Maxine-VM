@@ -82,7 +82,7 @@ public final class TeleProcessController {
 
                 // Create a temporary breakpoint if there is not already an enabled, non-persistent breakpoint for the target address:
                 TeleTargetBreakpoint breakpoint = breakpointFactory.getNonTransientBreakpointAt(instructionPointer);
-                if (breakpoint == null || !breakpoint.enabled()) {
+                if (breakpoint == null || !breakpoint.isEnabled()) {
                     breakpoint = breakpointFactory.makeBreakpoint(instructionPointer, true);
                 }
 

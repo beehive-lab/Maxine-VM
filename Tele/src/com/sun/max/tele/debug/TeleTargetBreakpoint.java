@@ -65,7 +65,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
     private boolean _activated;
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         return _enabled;
     }
 
@@ -303,7 +303,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
                         // - returns original code, then patch and forget
                         // - returns nothing - problem, should not happen
                     }
-                } else if (!breakpoint.enabled()) {
+                } else if (!breakpoint.isEnabled()) {
                     Problem.unimplemented("found disabled tele breakpoint at same ip as VM breakpoint");
                 }
             }

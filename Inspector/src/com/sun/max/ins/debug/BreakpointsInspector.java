@@ -705,7 +705,7 @@ public final class BreakpointsInspector extends UniqueInspector {
          * @return is this breakpoint currently enabled in the {@link TeleVM}?
          */
         boolean enabled() {
-            return teleBreakpoint().enabled();
+            return teleBreakpoint().isEnabled();
         }
 
         /**

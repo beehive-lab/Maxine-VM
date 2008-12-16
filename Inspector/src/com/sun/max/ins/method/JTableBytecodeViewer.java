@@ -635,7 +635,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             if (teleBytecodeBreakpoint != null) {
                 toolTipText.append(teleBytecodeBreakpoint);
                 toolTipText.append("; ");
-                if (teleBytecodeBreakpoint.enabled()) {
+                if (teleBytecodeBreakpoint.isEnabled()) {
                     setBorder(style().debugEnabledBytecodeBreakpointTagBorder());
                 } else {
                     setBorder(style().debugDisabledBytecodeBreakpointTagBorder());
@@ -645,7 +645,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
                     toolTipText.append(teleTargetBreakpoint);
                     toolTipText.append("; ");
-                    enabled = enabled || teleTargetBreakpoint.enabled();
+                    enabled = enabled || teleTargetBreakpoint.isEnabled();
                 }
                 if (enabled) {
                     setBorder(style().debugEnabledTargetBreakpointTagBorder());
