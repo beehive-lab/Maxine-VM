@@ -51,11 +51,14 @@ public abstract class TeleBreakpoint extends TeleVMHolder {
     }
 
     /**
-     * @return the location of the breakpoint in the tele VM, expressed in a standard, polymorphic format.
+     * @return the location of the breakpoint in the {@link TeleVM}, expressed in a standard, polymorphic format.
      */
     public abstract TeleCodeLocation teleCodeLocation();
 
-    public abstract boolean enabled();
+    /**
+     * @return is this breakpoint currently enabled in the {@link TeleVM}?
+     */
+    public abstract boolean isEnabled();
 
     /**
      * Updates the enabled state of this breakpoint. This method must not be called on a {@linkplain #isTransient() transient} breakpoint.
@@ -71,15 +74,15 @@ public abstract class TeleBreakpoint extends TeleVMHolder {
     public abstract BreakpointCondition condition();
 
     /**
-     * removes this breakpoint from the tele VM.
+     * Removes this breakpoint from the {@link TeleVM}.
      */
     public abstract void remove();
 
     /**
-     * Gets a string description of the attributes of this breakpoints.
+     * @return a string description of the attributes of this breakpoints.
      */
     public String attributesToString() {
-        final StringBuilder sb = new StringBuilder(enabled() ? "enabled " : "disabled ");
+        final StringBuilder sb = new StringBuilder(isEnabled() ? "enabled " : "disabled ");
         if (isTransient()) {
             sb.append("transient ");
         }
