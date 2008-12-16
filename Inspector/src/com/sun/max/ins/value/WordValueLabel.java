@@ -249,7 +249,7 @@ public class WordValueLabel extends ValueLabel {
                         _valueKind = ValueKind.INVALID_OBJECT_REFERENCE;
                     }
                 } else {
-                    final Address address = newValue.asWord().asAddress();
+                    final Address address = newValue.toWord().asAddress();
                     _teleNativeThread = teleVM().teleProcess().threadContaining(address);
                     if (_teleNativeThread != null) {
                         _valueKind = _valueMode == ValueMode.REFERENCE ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;

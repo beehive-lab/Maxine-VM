@@ -1151,7 +1151,7 @@ public final class BytecodeScanner {
     }
 
     public int scanInstruction(byte[] bytecode, int startAddress) {
-        return scanInstruction(new BytecodeBlock(bytecode, startAddress, bytecode.length - 1));
+        return scanInstruction(new BytecodeBlock(bytecode, startAddress, bytecode.length));
     }
 
     public void scan(BytecodeBlock bytecodeBlock) {

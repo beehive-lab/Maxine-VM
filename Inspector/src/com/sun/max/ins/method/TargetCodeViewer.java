@@ -260,6 +260,9 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
      * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
      */
     private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
+        if (bytecodePosition >= bytecodes.length) {
+            return -1;
+        }
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(_methodRefIndexFinder.reset());
         bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
         return _methodRefIndexFinder.methodRefIndex();
