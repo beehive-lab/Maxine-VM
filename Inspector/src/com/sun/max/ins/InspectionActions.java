@@ -2170,7 +2170,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
                 if (breakpoint == null) {
                     teleVM().bytecodeBreakpointFactory().makeBreakpoint(key, false);
                 } else {
-                    teleVM().bytecodeBreakpointFactory().removeBreakpoint(key);
+                    breakpoint.remove();
                 }
             }
         }

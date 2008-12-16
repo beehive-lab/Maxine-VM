@@ -35,7 +35,7 @@ import com.sun.max.vm.jit.amd64.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Breakpoints at bytecode beginnings.
+ * Breakpoints at the beginning of bytecode instructions.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -57,6 +57,9 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
         _teleCodeLocation = new TeleCodeLocation(teleVM, key);
     }
 
+    /**
+     * @return description of the bytecode location of this breakpoint.
+     */
     public Key key() {
         return _teleCodeLocation.key();
     }
@@ -100,6 +103,10 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
     }
 
+    /**
+     * Makes this breakpoint active in the {@link TeleVM} by locating all compilations and setting
+     * target code breakpoints at the corresponding location, if that can be determined.
+     */
     public void activate() {
         final Sequence<TeleTargetMethod> teleTargetMethods = TeleTargetMethod.get(teleVM(), key());
         if (teleTargetMethods.length() > 0) {
@@ -138,12 +145,13 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
             _teleTargetBreakpoints = null;
         }
         teleVM().messenger().cancelBytecodeBreakpoint(key(), key()._bytecodePosition);
+        teleVM().bytecodeBreakpointFactory().removeBreakpoint(key());
     }
 
     private boolean _enabled;
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         return _enabled;
     }
 
@@ -155,6 +163,7 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
             if (enabled) {
                 activate();
             }
+            // TODO (mlvdv) disable bytecode breakpoint
             return true;
         }
         return false;
@@ -172,7 +181,7 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
     }
 
     /**
-     * Describes the code position in the target VM,
+     * Describes a bytecode position in the {@link TeleVM},
      * i.e. indicates the exact method and byte code position.
      *
      * The method does not have to be compiled, nor even loaded yet.
@@ -181,6 +190,9 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         protected final int _bytecodePosition;
 
+        /**
+         * @return bytecode position in the method.
+         */
         public int position() {
             return _bytecodePosition;
         }
@@ -229,6 +241,9 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     }
 
+    /**
+     * Creates, tracks, and removes bytecode breakpoints from the {@link TeleVM}.
+     */
     public static class Factory extends TeleViewModel {
 
         private final TeleVM _teleVM;
@@ -240,7 +255,7 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
         private final VariableMapping<Key, TeleBytecodeBreakpoint> _breakpoints = HashMapping.createVariableEqualityMapping();
 
         /**
-         * @return All bytecode breakpoints that currently exist.
+         * @return all bytecode breakpoints that currently exist.
          */
         public synchronized Sequence<TeleBytecodeBreakpoint> breakpoints() {
             final AppendableSequence<TeleBytecodeBreakpoint> breakpoints = new LinkSequence<TeleBytecodeBreakpoint>();
@@ -250,6 +265,10 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
             return breakpoints;
         }
 
+        /**
+         * @param key description of a bytecode position in a method
+         * @return a breakpoint set at the position, null if none.
+         */
         public synchronized TeleBytecodeBreakpoint getBreakpoint(Key key) {
             return _breakpoints.get(key);
         }
@@ -261,6 +280,11 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
             return breakpoint;
         }
 
+        /**
+         * @param key description of a bytecode position in a method
+         * @param isTransient
+         * @return a possibly new, enabled bytecode breakpoint
+         */
         public synchronized TeleBytecodeBreakpoint makeBreakpoint(Key key, boolean isTransient) {
             TeleBytecodeBreakpoint breakpoint = getBreakpoint(key);
             if (breakpoint == null) {
@@ -270,12 +294,13 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
             return breakpoint;
         }
 
-        public synchronized void removeBreakpoint(Key key) {
-            final TeleBytecodeBreakpoint breakpoint = getBreakpoint(key);
-            if (breakpoint != null) {
-                breakpoint.remove();
-                _breakpoints.remove(key);
-            }
+        /**
+         * Removes a breakpoint at the described position, if one exists.
+         * @param key description of a bytecode position in a method
+         */
+        private synchronized void removeBreakpoint(Key key) {
+            _breakpoints.remove(key);
+            refreshView();
         }
     }
 }

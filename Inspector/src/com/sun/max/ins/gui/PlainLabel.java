@@ -39,6 +39,14 @@ public class PlainLabel extends InspectorLabel {
         redisplay();
     }
 
+    public void setValue(int n) {
+        setText(Integer.toString(n));
+    }
+
+    public void setValue(String text) {
+        setText(text);
+    }
+
     public final void refresh(long epoch, boolean force) {
         // No remote data to refresh
     }
