@@ -537,7 +537,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final TeleTargetBreakpoint teleTargetBreakpoint = getTargetBreakpointAtRow(row);
             if (teleTargetBreakpoint != null) {
                 toolTipText.append(teleTargetBreakpoint);
-                if (teleTargetBreakpoint.enabled()) {
+                if (teleTargetBreakpoint.isEnabled()) {
                     setBorder(style().debugEnabledTargetBreakpointTagBorder());
                 } else {
                     setBorder(style().debugDisabledTargetBreakpointTagBorder());
