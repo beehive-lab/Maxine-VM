@@ -135,16 +135,6 @@ public abstract class TypeDescriptor extends Descriptor {
         return makeTypeDescriptor(toString().substring(1));
     }
 
-    /**
-     * Note: this method does not visit parent class loaders!
-     *
-     * @param classLoader the class loader in whose registry to look for this type descriptor
-     * @return the matching type actor or null if none is registered with this class loader
-     */
-    public final synchronized ClassActor toClassActor(ClassLoader classLoader) {
-        return ClassRegistry.get(classLoader, this);
-    }
-
     public Kind toKind() {
         assert !(this instanceof AtomicTypeDescriptor);
         if (KindTypeDescriptor.isWord(this)) {
