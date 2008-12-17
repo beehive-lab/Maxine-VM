@@ -74,6 +74,9 @@ public class CompiledPrototype extends Prototype {
     private final VariableMapping<MethodActor, Link> _methodActors = new ChainedHashMapping<MethodActor, Link>();
     private final LinkedList<MethodActor> _worklist = new LinkedList<MethodActor>();
 
+    /**
+     * Methods that must be statically compiled in the boot image.
+     */
     private static final GrowableDeterministicSet<ClassMethodActor> _imageMethodActors = new LinkedIdentityHashSet<ClassMethodActor>();
 
     /**
@@ -442,6 +445,7 @@ public class CompiledPrototype extends Prototype {
         add(BootImage.getRunMethodActor(runScheme.getClass()), null, vmEntryPoint);
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
+        addMethods(null, ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, _imageMethodActors, vmEntryPoint);
 
         for (MethodActor methodActor : _imageInvocationStubMethodActors) {

@@ -53,17 +53,14 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             jvm=$1
             ;;
-        -jvm_args )
-            shift
-            jvm_args=$1
+        -J/p* )
+            jvm_args_prefix="$jvm_args_prefix ${1/-J\/p/}"
             ;;
-        -jvm_args_prefix )
-            shift
-            jvm_args_prefix="$jvm_args_prefix $1"
+        -J/a* )
+            jvm_args_suffix="$jvm_args_suffix ${1/-J\/a/}"
             ;;
-        -jvm_args_suffix )
-            shift
-            jvm_args_suffix="$jvm_args_suffix $1"
+        -J* )
+            jvm_args=${1/-J/}
             ;;
         -junit4 )
             shift
@@ -463,9 +460,9 @@ function showCommands() {
     echo " -java_home       specifies JDK installation directory (must be JDK 6 or later)"
     echo "                    (default: value of the JAVA_HOME environment variable)"
     echo " -jvm             specifies Java VM executable (default: bin/java under JAVA_HOME)"
-    echo " -jvm_args        specifies Java VM arguments (default: ${default_jvm_args})"
-    echo " -jvm_args_prefix prefix Java VM arguments"
-    echo " -jvm_args_suffix suffix Java VM arguments"
+    echo " -J<args>         specifies Java VM arguments (default: ${default_jvm_args})"
+    echo " -J/p<args>       prefix Java VM arguments"
+    echo " -J/a<args>       suffix Java VM arguments"
     echo " -maxine          specifies base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
     echo " -junit4          class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
