@@ -89,14 +89,17 @@ ifeq ($(TARGETOS),SunOS)
     ifeq ($a,amd64)
         ISA := amd64
         ARCH := amd64
+        ARCH_FLAG := "-m64"
         OTHER_CFLAGS := -Kpic %none
     else
     	ifeq ($a,sparcv9)
     		ISA := sparc
     		ARCH := v9
+            ARCH_FLAG := "-m64"
     	else
     	    ISA := sparc
     	    ARCH := v8
+            ARCH_FLAG := "-m32"
     	endif
         PLATFORM := $(OS)-$(ISA)$(ARCH)
     endif
@@ -153,9 +156,9 @@ endif
 ifeq ($(OS),solaris)
 	CC = cc -g
 	C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) 
-	CFLAGS =  -xc99 -errwarn -erroff=E_ARGUEMENT_MISMATCH -errtags -errfmt=error $(KPIG_FLAG) -xarch=$(ARCH) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
-	LINK_MAIN = cc -g -xarch=$(ARCH) -lc -lthread -ldl -o $(MAIN)
-	LINK_LIB = cc -g -G -xarch=$(ARCH) -lresolv -lc -lm -ldl -lthread -lrt -lproc
+	CFLAGS = -xc99 -errwarn -erroff=E_ARGUEMENT_MISMATCH -errtags -errfmt=error $(KPIG_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) $(OTHER_CFLAGS)
+	LINK_MAIN = cc -g $(ARCH_FLAG) -lc -lthread -ldl -o $(MAIN)
+	LINK_LIB = cc -g -G $(ARCH_FLAG) -lresolv -lc -lm -ldl -lthread -lrt -lproc
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so
 endif
