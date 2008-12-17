@@ -23,7 +23,7 @@ package com.sun.max.vm.bytecode;
 /**
  * Extends the notion of a {@linkplain BytecodePositionRange bytecode position range} to refer to a specific underlying
  * {@linkplain #code() code array}.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -48,7 +48,7 @@ public class BytecodeBlock extends BytecodePositionRange {
         assert _code.length > 0;
         assert start() >= 0;
         assert end() >= start();
-        assert end() < _code.length;
+        assert end() <= _code.length;
         return true;
     }
 

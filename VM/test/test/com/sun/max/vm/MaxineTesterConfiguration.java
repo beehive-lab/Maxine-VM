@@ -42,6 +42,7 @@ public class MaxineTesterConfiguration {
         test.output.GetResource.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
+        test.output.BlockingQueue.class,
         test.output.Recursion.class,
         test.output.StaticInitializers.class,
         test.output.LocalCatch.class,
@@ -98,6 +99,7 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
         test.output.JavacTest.class,
+        test.output.BlockingQueue.class,
         _expectedAutoTestFailures
     );
 
@@ -108,6 +110,7 @@ public class MaxineTesterConfiguration {
         test.output.GetResource.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
+        test.output.BlockingQueue.class,
         test.output.Recursion.class,
         test.output.StaticInitializers.class,
         test.output.LocalCatch.class,
@@ -135,6 +138,7 @@ public class MaxineTesterConfiguration {
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
         test.output.SafepointWhileInJava.class,
+        test.output.BlockingQueue.class,
         test.output.GetResource.class,
         test.output.Recursion.class,
         test.output.StaticInitializers.class,
@@ -182,6 +186,7 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
         test.output.GCTest4.class,
         test.output.SafepointWhileInNative.class,
+        test.output.BlockingQueue.class,
         _expectedAutoTestFailures
     );
 
