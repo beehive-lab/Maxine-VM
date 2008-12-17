@@ -243,7 +243,7 @@ public final class Machine {
 
         if (_teleVM != null) {
             final TypeDescriptor holderTypeDescriptor = fieldRef.holder(constantPool);
-            final ClassActor holder = holderTypeDescriptor.toClassActor(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
+            final ClassActor holder = ClassRegistry.get(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, holderTypeDescriptor);
             final String fieldName = fieldRef.name(constantPool).toString();
             final Kind kind = fieldRef.type(constantPool).toKind();
             final FieldActor fieldActor = holder.findStaticFieldActor(fieldName);
