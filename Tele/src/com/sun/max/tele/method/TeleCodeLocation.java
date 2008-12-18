@@ -29,7 +29,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.type.*;
 
 /**
- * Describes a location in the code:  target code, bytecode, source code, or some
+ * Describes a location in the code in the {@link TeleVM}:  target code, bytecode, source code, or some
  * combination that represents an equivalent location in each.  An instance may
  * not have all kinds of information.
  * A selection may be a contiguous sequence of instructions.
@@ -68,7 +68,7 @@ public class TeleCodeLocation extends TeleVMHolder {
     }
 
     /**
-     * Location expressed only in terms of a bytecode location in the tele VM.
+     * Location expressed only in terms of a bytecode location in the {@link TeleVM}.
      */
     public TeleCodeLocation(TeleVM teleVM, TeleClassMethodActor teleClassMethodActor, int position) {
         super(teleVM);
@@ -78,7 +78,7 @@ public class TeleCodeLocation extends TeleVMHolder {
     }
 
     /**
-     * Location expressed in terms of both a target code address and a bytecode location.
+     * Location expressed in terms of both a target code address  in the {@link TeleVM} and a bytecode location.
      */
     public TeleCodeLocation(TeleVM teleVM, Address targetCodeInstructionAddress, TeleClassMethodActor teleClassMethodActor, int position) {
         super(teleVM);
@@ -98,7 +98,7 @@ public class TeleCodeLocation extends TeleVMHolder {
     }
 
    /**
-     * Is there a target code representation for the code location.
+     * Is there a target code representation for the code location in the {@link TeleVM}.
      */
     public boolean hasTargetCodeLocation() {
         return !_targetCodeInstructionAddress.isZero();
@@ -181,7 +181,7 @@ public class TeleCodeLocation extends TeleVMHolder {
                         + (hasBytecodeLocation() ? (" " + _teleBytecodeLocation) : "") + " }";
     }
 
-    // Crude notion of equality for now; revisit when things get more insteresting.
+    // Crude notion of equality for now; revisit when things get more interesting.
     @Override
     public boolean equals(Object o) {
         if (o instanceof TeleCodeLocation) {
