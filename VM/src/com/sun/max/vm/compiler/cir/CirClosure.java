@@ -48,10 +48,24 @@ public class CirClosure extends CirProcedure {
     private CirCall _body;
     private final BytecodeLocation _location;
 
+    /**
+     * The value that must be used when passing a zero-length array as the value of {@code parameters} to
+     * {@link CirClosure#CirClosure(CirCall, CirVariable...)} and {@link #setParameters(CirVariable...)}.
+     */
+    public static final CirVariable[] NO_PARAMETERS = {};
+
     public CirClosure(BytecodeLocation location) {
         _location = location;
     }
 
+    /**
+     * Creates a closure for a given body and set of parameters.
+     *
+     * @param body the body of the closure
+     * @param parameters the parameters of the closure. If the closure has no parameters (i.e. {@code parameters.length
+     *            == 0} then the value of {@link CirClosure#NO_PARAMETERS} must be used to prevent unecessary creation of
+     *            zero-length {@link CirVariable} arrays.
+     */
     public CirClosure(CirCall body, CirVariable... parameters) {
         setParameters(parameters);
         _body = body;
@@ -81,7 +95,15 @@ public class CirClosure extends CirProcedure {
         return true;
     }
 
+    /**
+     * Sets the parameters of this closure.
+     *
+     * @param parameters the parameters of the closure. If the closure has no parameters (i.e. {@code parameters.length
+     *            == 0} then the value of {@link CirClosure#NO_PARAMETERS} must be used to prevent unecessary creation of
+     *            zero-length {@link CirVariable} arrays.
+     */
     public void setParameters(CirVariable... parameters) {
+        assert parameters.length > 0 || parameters == CirClosure.NO_PARAMETERS;
         _parameters = parameters;
     }
 

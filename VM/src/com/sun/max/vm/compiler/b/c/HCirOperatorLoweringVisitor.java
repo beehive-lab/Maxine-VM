@@ -49,25 +49,36 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * {@link HCirOperatorLoweringVisitor} defines how each {@link JavaOperator} maps to Cir
- * {@link Builtin} and {@link Snippet} calls.
+ * {@code HCirOperatorLoweringVisitor} defines how each {@link JavaOperator} maps to CIR {@link Builtin} and
+ * {@link Snippet} calls.
  *
- * For example: New(t, k, ek) =>
- *   resolve(guard, (lambda (classActor) . createTyple(classActor, k, ek)), ek)
+ * For example:
  *
- * avoiding replicating code for ek (by binding it to a temporary variable) as necessary.
+ * <pre>
+ *  New(t, cc, ce) =&gt; resolve(guard, (lambda (classActor) . createTyple(classActor, cc, ce)), ce)
+ * </pre>
+ *
+ * avoiding replicating code for ce (by binding it to a temporary variable) as necessary.
  *
  *
  * @author Yi Guo
  * @author Aziz Ghuloum
  */
-
 public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisitor {
     private final CirCall _call;
     private final BytecodeLocation _bytecodeLocation;
     private final CirVariableFactory _variableFactory;
-    private final CirValue _normalCont;
-    private final CirValue _exceptionCont;
+
+    /**
+     * The current normal continuation.
+     */
+    private final CirValue _cc;
+
+    /**
+     * The current exception continuation.
+     */
+    private final CirValue _ce;
+
     private final CirValue[] _arguments;
     private final CompilerScheme _compilerScheme;
 
@@ -77,41 +88,75 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         _compilerScheme = compilerScheme;
         _variableFactory = variableFactory;
         _arguments = call.arguments();
-        _normalCont = arguments()[arguments().length - 2];
-        _exceptionCont = arguments()[arguments().length - 1];
+        _cc = arguments()[arguments().length - 2];
+        _ce = arguments()[arguments().length - 1];
     }
 
-    private static CirClosure lambda(CirVariable parameter, CirCall body) {
-        if (parameter == null) {
-            return new CirClosure(body);
-        }
+    /**
+     * Creates a closure for a block of code with exactly one parameter.
+     *
+     * @param parameter the single parameter
+     * @param body the code to be parameterized in a closure
+     * @return a closure that parameterizes {@code body} with the single parameter {@code parameter}
+     */
+    private static CirClosure closure(CirVariable parameter, CirCall body) {
         return new CirClosure(body, parameter);
     }
 
-    private static CirContinuation lambda_k(CirVariable parameter, CirCall body) {
-        CirContinuation k;
-        if (parameter == null) {
-            k = new CirContinuation();
-        } else {
-            k = new CirContinuation(parameter);
-        }
+    /**
+     * Creates a continuation for a block of code with no parameters.
+     *
+     * @param body the code to be wrapped in a continuation
+     * @return a continuation that wraps {@code body}
+     */
+    private static CirContinuation cont(CirCall body) {
+        final CirContinuation k = new CirContinuation();
         k.setBody(body);
         return k;
     }
 
+    /**
+     * Creates a continuation for a block of code with exactly one parameter.
+     *
+     * @param parameter the single parameter
+     * @param body the code to be parameterized in a continuation
+     * @return a continuation that parameterizes {@code body} with the single parameter {@code parameter}
+     */
+    private static CirContinuation cont(CirVariable parameter, CirCall body) {
+        final CirContinuation k = new CirContinuation(parameter);
+        k.setBody(body);
+        return k;
+    }
+
+    /**
+     * Creates a {@linkplain CirCall CIR call} node.
+     *
+     * @param procedure the procedure to be called
+     * @param arguments the arguments of the call
+     * @return a {@link CirCall} node representing a call to {@code procedure} with arguments {@code arguments}
+     */
     private CirCall call(CirValue procedure, CirValue ... arguments) {
         final CirCall call =  new CirCall(procedure, arguments);
         call.setBytecodeLocation(_bytecodeLocation);
         return call;
     }
 
-    private CirCall nullCheckMaybe(CirValue object, CirCall call, CirValue exceptionContinuation, boolean canRaiseNullPointerException) {
+    /**
+     * Inserts a null check before a given CIR call if necessary.
+     *
+     * @param object the CIR node representing the object that must be null checked
+     * @param call the CIR call that is to be modified with a prepended null check
+     * @param exceptionContinuation
+     * @param canRaiseNullPointerException specifies whether the operation in {@code call} can raise a {@link NullPointerException}
+     * @return
+     */
+    private CirCall nullCheck(CirValue object, CirCall call, CirValue exceptionContinuation, boolean canRaiseNullPointerException) {
         if (!canRaiseNullPointerException) {
             return call;
         }
         if (object.kind() == Kind.REFERENCE) {
             return callWithFrameDescriptor(CirSnippet.get(Snippet.CheckNullPointer.SNIPPET), object,
-                                           lambda_k(null, call), exceptionContinuation);
+                                           cont(call), exceptionContinuation);
         }
         assert object.kind() == Kind.WORD;
         return call;
@@ -125,7 +170,7 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
     }
 
     private CirCall callWithFrameDescriptor(CirValue procedure, CirValue ... arguments) {
-        final CirCall call =  new CirCall();
+        final CirCall call = new CirCall();
         call.assign(_call);
         call.setProcedure(procedure);
         call.setArguments(arguments);
@@ -152,29 +197,29 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         if (operand.isResolved()) {
             final CirConstant fieldActor = CirConstant.fromObject(operand.fieldActor());
             final CirSnippet fieldRead = CirSnippet.get(FieldReadSnippet.selectSnippet(operand.fieldKind()));
-            _call.assign(call(lambda(ce,
-                            nullCheckMaybe(reference,
+            _call.assign(call(closure(ce,
+                            nullCheck(reference,
                                             callWithFrameDescriptor(fieldRead, reference, fieldActor,
-                                                           normalCont(),
+                                                           cc(),
                                                            readExceptionK),
                                            readExceptionK,
                                            operand.canRaiseNullPointerException())),
-                            exceptionCont()));
+                            ce()));
         } else {
             final ResolveInstanceFieldForReading resolveSnippet = ResolveInstanceFieldForReading.SNIPPET;
             final CirValue guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), resolveSnippet));
             final CirSnippet resolutionProcedure = CirSnippet.get(resolveSnippet);
             final CirVariable fieldActor = variableFactory().createTemporary(Kind.REFERENCE);
             final CirSnippet fieldRead = CirSnippet.get(FieldReadSnippet.selectSnippet(operand.fieldKind()));
-            _call.assign(call(lambda(ce,
+            _call.assign(call(closure(ce,
                             callWithFrameDescriptor(resolutionProcedure, guard,
-                                  lambda_k(fieldActor,
-                                           nullCheckMaybe(reference,
-                                                          callWithFrameDescriptor(fieldRead, reference, fieldActor, normalCont(), readExceptionK),
+                                  cont(fieldActor,
+                                           nullCheck(reference,
+                                                          callWithFrameDescriptor(fieldRead, reference, fieldActor, cc(), readExceptionK),
                                                           readExceptionK,
                                                           operand.canRaiseNullPointerException())),
                                  ce)),
-                            exceptionCont()));
+                            ce()));
         }
     }
 
@@ -190,12 +235,12 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
             final CirVariable staticTuple = variableFactory().createTemporary(Kind.REFERENCE);
             final CirSnippet fieldRead = CirSnippet.get(FieldReadSnippet.selectSnippet(operand.fieldKind()));
 
-            _call.assign(call(lambda(ce,
+            _call.assign(call(closure(ce,
                             callWithFrameDescriptor(readStaticTuple, fieldActor,
-                                            lambda_k(staticTuple,
+                                            cont(staticTuple,
                                                             callWithFrameDescriptor(fieldRead, staticTuple, fieldActor,
-                                                                            normalCont(), ce)), ce)),
-                                                                            exceptionCont()));
+                                                                            cc(), ce)), ce)),
+                                                                            ce()));
         } else {
             final ResolveStaticFieldForReading resolveSnippet = ResolveStaticFieldForReading.SNIPPET;
             final ResolutionGuard guard = operand.constantPool().makeResolutionGuard(operand.index(), resolveSnippet);
@@ -206,14 +251,14 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
             final CirVariable fieldActor = variableFactory().createTemporary(Kind.REFERENCE);
             final CirVariable staticTuple = variableFactory().createTemporary(Kind.REFERENCE);
 
-            _call.assign(call(lambda(ce,
+            _call.assign(call(closure(ce,
                             callWithFrameDescriptor(resolve, guardValue,
-                                            lambda_k(fieldActor,
+                                            cont(fieldActor,
                                                             callWithFrameDescriptor(readStaticTuple, fieldActor,
-                                                                            lambda_k(staticTuple,
+                                                                            cont(staticTuple,
                                                                                             callWithFrameDescriptor(fieldRead, staticTuple, fieldActor,
-                                                                                                            normalCont(), ce)), ce)), ce)),
-                                                                                                            exceptionCont()));
+                                                                                                            cc(), ce)), ce)), ce)),
+                                                                                                            ce()));
         }
     }
 
@@ -232,14 +277,14 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirValue guardValue = CirConstant.fromObject(guard);
         final CirVariable fieldActor = variableFactory().createTemporary(Kind.REFERENCE);
         final CirVariable staticTuple = variableFactory().createTemporary(Kind.REFERENCE);
-        _call.assign(call(lambda(ce,
+        _call.assign(call(closure(ce,
                              callWithFrameDescriptor(resolve, guardValue,
-                                       lambda_k(fieldActor,
+                                       cont(fieldActor,
                                                   callWithFrameDescriptor(readStaticTuple, fieldActor,
-                                                              lambda_k(staticTuple,
+                                                              cont(staticTuple,
                                                                      callWithFrameDescriptor(fieldWrite, staticTuple, fieldActor, value,
-                                                                                 normalCont(), ce)), ce)), ce)),
-                                                                                                            exceptionCont()));
+                                                                                 cc(), ce)), ce)), ce)),
+                                                                                                            ce()));
     }
 
 
@@ -256,7 +301,7 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
             final CirVariable callEntryPoint = variableFactory().createTemporary(Kind.WORD);
             _arguments[_arguments.length - 1] = ce;
             lCirCall = callWithFrameDescriptor(selectVirtualMethod, receiver, methodActor,
-                            lambda_k(callEntryPoint,
+                            cont(callEntryPoint,
                                 callWithFrameDescriptor(callEntryPoint, _arguments)),
                             ce);
             final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(_bytecodeLocation.classMethodActor());
@@ -278,17 +323,17 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
                 final CirValue[] argumentsCopy = new CirValue[_arguments.length];
                 System.arraycopy(_arguments, 0, argumentsCopy, 0, _arguments.length);
                 lCirCall =
-                    call(lambda(kvar,
+                    call(closure(kvar,
                            call(CirSnippet.get(MethodSelectionSnippet.ReadHub.SNIPPET), receiver,
-                             lambda_k(hub,
+                             cont(hub,
                                 call(CirSwitch.REFERENCE_EQUAL, hub, cachedHub,
-                                       lambda_k(null, callWithFrameDescriptor(targetCirMethod, argumentsCopy)),
-                                       lambda_k(null, lCirCall))),
+                                       cont(callWithFrameDescriptor(targetCirMethod, argumentsCopy)),
+                                       cont(lCirCall))),
                              ce)),
                         cont);
             }
 
-            lCirCall = call(lambda(ce, nullCheckMaybe(receiver, lCirCall, ce, true)), exceptionCont());
+            lCirCall = call(closure(ce, nullCheck(receiver, lCirCall, ce, true)), ce());
         } else {
             final ResolutionSnippet resolutionSnippet = ResolveVirtualMethod.SNIPPET;
             final CirConstant guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), resolutionSnippet));
@@ -297,18 +342,18 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
             final CirVariable methodActor = variableFactory().createTemporary(Kind.REFERENCE);
             final CirVariable callEntryPoint = variableFactory().createTemporary(Kind.WORD);
             _arguments[_arguments.length - 1] = ce;
-            lCirCall = call(lambda(ce,
-                            nullCheckMaybe(receiver, callWithFrameDescriptor(resolve,
+            lCirCall = call(closure(ce,
+                            nullCheck(receiver, callWithFrameDescriptor(resolve,
                             guard,
-                            lambda_k(methodActor,
+                            cont(methodActor,
                               callWithFrameDescriptor(selectVirtualMethod,
                                 receiver,
                                 methodActor,
-                                lambda_k(callEntryPoint,
+                                cont(callEntryPoint,
                                    callWithFrameDescriptor(callEntryPoint, _arguments)),
                                    ce)),
                             ce), ce, true)),
-                            exceptionCont());
+                            ce());
 
         }
         _call.assign(lCirCall);
@@ -325,31 +370,31 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirVariable callEntryPoint = variableFactory().createTemporary(Kind.WORD);
         if (operand.isResolved()) {
             final CirConstant methodActor = CirConstant.fromObject(operand.interfaceMethodActor());
-            lCirCall = call(lambda(ce,
-                            nullCheckMaybe(receiver, callWithFrameDescriptor(selectMethod,
+            lCirCall = call(closure(ce,
+                            nullCheck(receiver, callWithFrameDescriptor(selectMethod,
                             receiver,
                             methodActor,
-                            lambda_k(callEntryPoint,
+                            cont(callEntryPoint,
                               callWithFrameDescriptor(callEntryPoint, _arguments)),
                             ce), ce, true)),
-                            exceptionCont());
+                            ce());
         } else {
             final ResolutionSnippet resolutionSnippet = ResolveInterfaceMethod.SNIPPET;
             final CirConstant guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), resolutionSnippet));
             final CirSnippet resolve = CirSnippet.get(resolutionSnippet);
             final CirVariable methodActor = variableFactory().createTemporary(Kind.REFERENCE);
-            lCirCall = call(lambda(ce,
-                            nullCheckMaybe(receiver, callWithFrameDescriptor(resolve,
+            lCirCall = call(closure(ce,
+                            nullCheck(receiver, callWithFrameDescriptor(resolve,
                             guard,
-                            lambda_k(methodActor,
+                            cont(methodActor,
                               callWithFrameDescriptor(selectMethod,
                                    receiver,
                                    methodActor,
-                                   lambda_k(callEntryPoint,
+                                   cont(callEntryPoint,
                                       callWithFrameDescriptor(callEntryPoint, _arguments)),
                                    ce)),
                              ce), ce, true)),
-                            exceptionCont());
+                            ce());
         }
         _call.assign(lCirCall);
     }
@@ -366,13 +411,13 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirConstant guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), resolutionSnippet));
         final CirSnippet resolve = CirSnippet.get(resolutionSnippet);
         final CirVariable entryPoint = variableFactory().createTemporary(Kind.WORD);
-        lCirCall = call(lambda(ce,
-                        nullCheckMaybe(receiver, callWithFrameDescriptor(resolve,
+        lCirCall = call(closure(ce,
+                        nullCheck(receiver, callWithFrameDescriptor(resolve,
                         guard,
-                        lambda_k(entryPoint,
+                        cont(entryPoint,
                                callWithFrameDescriptor(entryPoint, _arguments)),
                         ce), ce, true)),
-                        exceptionCont());
+                        ce());
         _call.assign(lCirCall);
     }
 
@@ -387,13 +432,13 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirConstant guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), resolutionSnippet));
         final CirSnippet resolve = CirSnippet.get(resolutionSnippet);
         final CirVariable entryPoint = variableFactory().createTemporary(Kind.WORD);
-        lCirCall = call(lambda(ce,
+        lCirCall = call(closure(ce,
                           callWithFrameDescriptor(resolve,
                                guard,
-                               lambda_k(entryPoint,
+                               cont(entryPoint,
                                       callWithFrameDescriptor(entryPoint, _arguments)),
                                ce)),
-                         exceptionCont());
+                         ce());
         _call.assign(lCirCall);
     }
 
@@ -405,7 +450,7 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirSnippet checkCast = CirSnippet.get(Snippet.CheckCast.SNIPPET);
         if (operand.isResolved()) {
             final CirConstant classActor = CirConstant.fromObject(operand.classActor());
-            _call.assign(callWithFrameDescriptor(checkCast, classActor, objref, normalCont(), exceptionCont()));
+            _call.assign(callWithFrameDescriptor(checkCast, classActor, objref, cc(), ce()));
         } else {
             final CirExceptionContinuationParameter ce = variableFactory().createFreshExceptionContinuationParameter();
 
@@ -413,10 +458,10 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
             final CirSnippet resolve = CirSnippet.get(ResolveClass.SNIPPET);
             final CirVariable classActor = variableFactory().createTemporary(Kind.REFERENCE);
 
-            _call.assign(call(lambda(ce,
+            _call.assign(call(closure(ce,
                             callWithFrameDescriptor(resolve, guard,
-                                            lambda_k(classActor,
-                                                            callWithFrameDescriptor(checkCast, classActor, objref, normalCont(), ce)), ce)), exceptionCont()));
+                                            cont(classActor,
+                                                            callWithFrameDescriptor(checkCast, classActor, objref, cc(), ce)), ce)), ce()));
         }
     }
 
@@ -428,7 +473,7 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirSnippet instanceOf = CirSnippet.get(Snippet.InstanceOf.SNIPPET);
         if (operand.isResolved()) {
             final CirConstant classActor = CirConstant.fromObject(operand.classActor());
-            _call.assign(callWithFrameDescriptor(instanceOf, classActor, objref, normalCont(), exceptionCont()));
+            _call.assign(callWithFrameDescriptor(instanceOf, classActor, objref, cc(), ce()));
         } else {
             final CirExceptionContinuationParameter ce = variableFactory().createFreshExceptionContinuationParameter();
 
@@ -436,23 +481,30 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
             final CirSnippet resolve = CirSnippet.get(ResolveClass.SNIPPET);
             final CirVariable classActor = variableFactory().createTemporary(Kind.REFERENCE);
 
-            _call.assign(call(lambda(ce,
+            _call.assign(call(closure(ce,
                             callWithFrameDescriptor(resolve, guard,
-                                            lambda_k(classActor,
-                                                            callWithFrameDescriptor(instanceOf, classActor, objref, normalCont(), ce)), ce)), exceptionCont()));
+                                            cont(classActor,
+                                                            callWithFrameDescriptor(instanceOf, classActor, objref, cc(), ce)), ce)), ce()));
         }
     }
 
-    private CirValue normalCont() {
-        return _normalCont;
+    /**
+     * Gets the normal continuation for the current translation scope.
+     */
+    private CirValue cc() {
+        return _cc;
     }
 
-
-    private CirValue exceptionCont() {
-        return _exceptionCont;
+    /**
+     * Gets the exception continuation for the current translation scope.
+     */
+    private CirValue ce() {
+        return _ce;
     }
 
-
+    /**
+     * Gets the arguments for the current translation scope.
+     */
     private CirValue[] arguments() {
         return _arguments;
     }
@@ -461,20 +513,19 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         return _variableFactory;
     }
 
-
     @Override
     public void visit(ArrayLoad operator) {
         assert _arguments.length == 4;
         final CirValue array = _arguments[0];
         final CirValue index = _arguments[1];
-        final CirValue escapek = exceptionCont();
-        final CirValue k = normalCont();
+        final CirValue escapek = ce();
+        final CirValue k = cc();
 
         final CirSnippet snippet = CirSnippet.get(ArrayGetSnippet.getSnippet(operator.resultKind()));
         final CirVariable ec = variableFactory().createFreshExceptionContinuationParameter();
         final CirValue readExceptionK = operator.canRaiseNullPointerException() ? ec : CirValue.UNDEFINED;
-        _call.assign(call(lambda(ec,
-                            nullCheckMaybe(array,
+        _call.assign(call(closure(ec,
+                            nullCheck(array,
                               checkArrayIndex(array, index,
                                 callWithFrameDescriptor(operator.canRaiseNullPointerException(), snippet, array, index, k, readExceptionK),
                                 ec),
@@ -483,12 +534,9 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
                          escapek));
     }
 
-
     private CirCall checkArrayIndex(CirValue array, CirValue index, CirCall call, CirVariable ec) {
-        return callWithFrameDescriptor(CirSnippet.get(CheckArrayIndex.SNIPPET), array, index, lambda_k(null, call), ec);
+        return callWithFrameDescriptor(CirSnippet.get(CheckArrayIndex.SNIPPET), array, index, cont(call), ec);
     }
-
-
 
     @Override
     public void visit(New operator) {
@@ -502,11 +550,11 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirVariable classActor = _variableFactory.createTemporary(Kind.REFERENCE);
         final CirExceptionContinuationParameter ce = _variableFactory.createFreshExceptionContinuationParameter();
 
-        _call.assign(call(lambda(ce,
+        _call.assign(call(closure(ce,
                         callWithFrameDescriptor(resolve, guard,
-                              lambda_k(classActor,
-                                   callWithFrameDescriptor(createTuple, classActor, normalCont(), ce)), ce)),
-                        exceptionCont()));
+                              cont(classActor,
+                                   callWithFrameDescriptor(createTuple, classActor, cc(), ce)), ce)),
+                        ce()));
 
     }
 
@@ -523,29 +571,29 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirValue npeK = operand.canRaiseNullPointerException() ? ce : CirValue.UNDEFINED;
         if (operand.elementKind() == Kind.REFERENCE) {
             final CirSnippet arraysetTypeCheck = CirSnippet.get(Snippet.CheckReferenceArrayStore.SNIPPET);
-            _call.assign(call(lambda(ce,
-                            nullCheckMaybe(arrayRef,
+            _call.assign(call(closure(ce,
+                            nullCheck(arrayRef,
                                             callWithFrameDescriptor(CirSnippet.get(Snippet.CheckArrayIndex.SNIPPET), arrayRef, index,
-                                                 lambda_k(null,
+                                                 cont(null,
                                                     callWithFrameDescriptor(arraysetTypeCheck, arrayRef, value,
-                                                          lambda_k(null,
-                                                              callWithFrameDescriptor(arraystore, arrayRef, index, value, normalCont(), npeK)),
+                                                          cont(null,
+                                                              callWithFrameDescriptor(arraystore, arrayRef, index, value, cc(), npeK)),
                                                           ce)),
                                                  ce),
                                            npeK,
                                            operand.canRaiseNullPointerException())),
-                          exceptionCont()));
+                          ce()));
 
         } else {
-            _call.assign(call(lambda(ce,
-                                 nullCheckMaybe(arrayRef,
+            _call.assign(call(closure(ce,
+                                 nullCheck(arrayRef,
                                                  callWithFrameDescriptor(CirSnippet.get(Snippet.CheckArrayIndex.SNIPPET), arrayRef, index,
-                                                      lambda_k(null,
-                                                         callWithFrameDescriptor(arraystore, arrayRef, index, value, normalCont(), npeK)),
+                                                      cont(null,
+                                                         callWithFrameDescriptor(arraystore, arrayRef, index, value, cc(), npeK)),
                                                       ce),
                                                 npeK,
                                                 operand.canRaiseNullPointerException())),
-                             exceptionCont()));
+                             ce()));
         }
     }
 
@@ -562,15 +610,15 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
 
         final CirExceptionContinuationParameter ce = _variableFactory.createFreshExceptionContinuationParameter();
         final CirValue writeExceptionK = operand.canRaiseNullPointerException() ? ce : CirValue.UNDEFINED;
-        _call.assign(call(lambda(ce,
+        _call.assign(call(closure(ce,
                               callWithFrameDescriptor(resolve, guard,
-                                  lambda_k(fieldActor,
-                                       nullCheckMaybe(objectref,
-                                            callWithFrameDescriptor(fieldwrite, objectref, fieldActor, value, normalCont(), writeExceptionK),
+                                  cont(fieldActor,
+                                       nullCheck(objectref,
+                                            callWithFrameDescriptor(fieldwrite, objectref, fieldActor, value, cc(), writeExceptionK),
                                             writeExceptionK,
                                             operand.canRaiseNullPointerException())),
                                    ce)),
-                           exceptionCont()));
+                           ce()));
     }
 
     @Override
@@ -581,23 +629,23 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
 
         if (operand.elementKind() != Kind.REFERENCE) {
             final CirSnippet createArray = CirSnippet.get(NonFoldableSnippet.CreatePrimitiveArray.SNIPPET);
-            _call.assign(callWithFrameDescriptor(createArray, kind, count, normalCont(), exceptionCont()));
+            _call.assign(callWithFrameDescriptor(createArray, kind, count, cc(), ce()));
         } else {
             final CirSnippet createArray = CirSnippet.get(NonFoldableSnippet.CreateReferenceArray.SNIPPET);
             if (operand.isResolved()) {
                 final CirValue arrayClassActor = CirConstant.fromObject(operand.arrayClassActor());
                 _call.assign(callWithFrameDescriptor(createArray, arrayClassActor, count,
-                                    normalCont(), exceptionCont()));
+                                    cc(), ce()));
             } else {
                 final CirSnippet resolve = CirSnippet.get(ResolutionSnippet.ResolveArrayClass.SNIPPET);
                 final CirValue guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), ResolutionSnippet.ResolveArrayClass.SNIPPET));
                 final CirVariable arrayClassActor = variableFactory().createTemporary(Kind.REFERENCE);
                 final CirExceptionContinuationParameter ce = _variableFactory.createFreshExceptionContinuationParameter();
-                _call.assign(call(lambda(ce,
+                _call.assign(call(closure(ce,
                                     callWithFrameDescriptor(resolve, guard,
-                                         lambda_k(arrayClassActor,
+                                         cont(arrayClassActor,
                                                  callWithFrameDescriptor(createArray, arrayClassActor, count,
-                                                           normalCont(), ce)), ce)), exceptionCont()));
+                                                           cc(), ce)), ce)), ce()));
             }
         }
     }
@@ -620,27 +668,27 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
 
         if (operand.isResolved()) {
             arrayClassActor = CirConstant.fromObject(operand.arrayClassActor());
-            callBuilder = callWithFrameDescriptor(createArray, arrayClassActor, dimensionArray, normalCont(), ce);
+            callBuilder = callWithFrameDescriptor(createArray, arrayClassActor, dimensionArray, cc(), ce);
         } else {
             final CirSnippet resolve = CirSnippet.get(ResolutionSnippet.ResolveArrayClass.SNIPPET);
             final CirValue guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), ResolutionSnippet.ResolveArrayClass.SNIPPET));
             arrayClassActor = variableFactory().createTemporary(Kind.REFERENCE);
             callBuilder = callWithFrameDescriptor(resolve, guard,
-                                  lambda_k((CirVariable) arrayClassActor,
-                                                  callWithFrameDescriptor(createArray, arrayClassActor, dimensionArray, normalCont(), ce)), ce);
+                                  cont((CirVariable) arrayClassActor,
+                                                  callWithFrameDescriptor(createArray, arrayClassActor, dimensionArray, cc(), ce)), ce);
         }
 
         for (int i = 0; i < nDimensions; i++) {
             callBuilder = callWithFrameDescriptor(checkDimension, _arguments[i],
-                                lambda_k(null,
+                                cont(null,
                                     callWithFrameDescriptor(setDimensionArray, dimensionArray, CirConstant.fromInt(i), _arguments[i],
-                                         lambda_k(null,
+                                         cont(null,
                                                  callBuilder), ce)), ce);
         }
         callBuilder = callWithFrameDescriptor(createDimensionArray, CirConstant.fromObject(Kind.INT), CirConstant.fromInt(nDimensions),
-                            lambda_k(dimensionArray, callBuilder), ce);
+                            cont(dimensionArray, callBuilder), ce);
 
-        callBuilder = call(lambda(ce, callBuilder), exceptionCont());
+        callBuilder = call(closure(ce, callBuilder), ce());
 
         _call.assign(callBuilder);
     }
@@ -650,8 +698,8 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
     public void visit(ArrayLength operand) {
         assert _arguments.length == 3;
         final CirValue receiver = _arguments[0];
-        final CirValue npeK = operand.canRaiseNullPointerException() ? exceptionCont() : CirValue.UNDEFINED;
-        _call.assign(callWithFrameDescriptor(CirSnippet.get(ArrayGetSnippet.ReadLength.SNIPPET), receiver, normalCont(), npeK));
+        final CirValue npeK = operand.canRaiseNullPointerException() ? ce() : CirValue.UNDEFINED;
+        _call.assign(callWithFrameDescriptor(CirSnippet.get(ArrayGetSnippet.ReadLength.SNIPPET), receiver, cc(), npeK));
     }
 
 
@@ -662,9 +710,9 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirSnippet monitorEnter = CirSnippet.get(MonitorSnippet.MonitorEnter.SNIPPET);
         final CirExceptionContinuationParameter ce = _variableFactory.createFreshExceptionContinuationParameter();
 
-        _call.assign(call(lambda(ce,
-                        nullCheckMaybe(objref, callWithFrameDescriptor(monitorEnter, objref,
-                          normalCont(), ce), ce, true)), exceptionCont()));
+        _call.assign(call(closure(ce,
+                        nullCheck(objref, callWithFrameDescriptor(monitorEnter, objref,
+                          cc(), ce), ce, true)), ce()));
     }
 
 
@@ -675,9 +723,9 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirSnippet monitorExit = CirSnippet.get(MonitorSnippet.MonitorExit.SNIPPET);
         final CirExceptionContinuationParameter ce = _variableFactory.createFreshExceptionContinuationParameter();
 
-        _call.assign(call(lambda(ce,
-                        nullCheckMaybe(objref, callWithFrameDescriptor(monitorExit, objref,
-                          normalCont(), ce), ce, true)), exceptionCont()));
+        _call.assign(call(closure(ce,
+                        nullCheck(objref, callWithFrameDescriptor(monitorExit, objref,
+                          cc(), ce), ce, true)), ce()));
     }
 
 
@@ -688,17 +736,17 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         final CirSnippet mirror = CirSnippet.get(BuiltinsSnippet.GetMirror.SNIPPET);
         if (operand.isResolved()) {
             final CirValue classActor = CirConstant.fromObject(operand.classActor());
-            _call.assign(callWithFrameDescriptor(mirror, classActor, normalCont(), exceptionCont()));
+            _call.assign(callWithFrameDescriptor(mirror, classActor, cc(), ce()));
         } else {
             final ResolveClass resolveSnippet = ResolveClass.SNIPPET;
             final CirValue guard = CirConstant.fromObject(operand.constantPool().makeResolutionGuard(operand.index(), resolveSnippet));
             final CirSnippet resolve = CirSnippet.get(resolveSnippet);
             final CirVariable classActor = _variableFactory.createTemporary(Kind.REFERENCE);
             final CirExceptionContinuationParameter ce = _variableFactory.createFreshExceptionContinuationParameter();
-            _call.assign(call(lambda(ce,
+            _call.assign(call(closure(ce,
                                   callWithFrameDescriptor(resolve, guard,
-                                        lambda_k(classActor,
-                                            callWithFrameDescriptor(mirror, classActor, normalCont(), ce)), ce)), exceptionCont()));
+                                        cont(classActor,
+                                            callWithFrameDescriptor(mirror, classActor, cc(), ce)), ce)), ce()));
         }
     }
 
@@ -737,15 +785,15 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
             }
         }
 
-        assert normalCont() instanceof CirContinuation : normalCont();
-        final CirContinuation cont = (CirContinuation) normalCont();
+        assert cc() instanceof CirContinuation : cc();
+        final CirContinuation cont = (CirContinuation) cc();
         final CirCall body = cont.body();
 
         if (!callerIsCFunction) {
-            callBuilder = callWithFrameDescriptor(nativeCallEpilogue, localSpace, lambda_k(null, body), ce);
+            callBuilder = callWithFrameDescriptor(nativeCallEpilogue, localSpace, cont(body), ce);
         } else {
             if (localSpace != null) {
-                callBuilder = callWithFrameDescriptor(nativeCallEpilogueForC, localSpace, lambda_k(null, body), ce);
+                callBuilder = callWithFrameDescriptor(nativeCallEpilogueForC, localSpace, cont(body), ce);
             } else {
                 callBuilder = body;
             }
@@ -757,23 +805,23 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
         callBuilder = callWithFrameDescriptor(callEntryPoint, _arguments);
 
         if (!callerIsCFunction) {
-            callBuilder = callWithFrameDescriptor(nativeCallPrologue, lambda_k(localSpace, callBuilder), ce);
+            callBuilder = callWithFrameDescriptor(nativeCallPrologue, cont(localSpace, callBuilder), ce);
         } else {
             if (classMethodActor.isCFunction()) {
                 if (MaxineVM.isPrototyping()) {
                     if (!classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
-                        callBuilder = callWithFrameDescriptor(nativeCallPrologueForC, lambda_k(localSpace, callBuilder), ce);
+                        callBuilder = callWithFrameDescriptor(nativeCallPrologueForC, cont(localSpace, callBuilder), ce);
                     }
                 } else {
-                    callBuilder = callWithFrameDescriptor(nativeCallPrologueForC, lambda_k(localSpace, callBuilder), ce);
+                    callBuilder = callWithFrameDescriptor(nativeCallPrologueForC, cont(localSpace, callBuilder), ce);
                 }
             }
         }
 
-        callBuilder = call(lambda(ce,
+        callBuilder = call(closure(ce,
                                callWithFrameDescriptor(linkNativeMethod, CirConstant.fromObject(classMethodActor),
-                                        lambda_k(callEntryPoint,
-                                               callBuilder), ce)), exceptionCont());
+                                        cont(callEntryPoint,
+                                               callBuilder), ce)), ce());
         _call.assign(callBuilder);
     }
 

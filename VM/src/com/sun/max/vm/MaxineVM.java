@@ -29,6 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
@@ -37,6 +38,7 @@ import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 public final class MaxineVM {
 
@@ -312,6 +314,20 @@ public final class MaxineVM {
 
     public static boolean isRunning() {
         return host().phase() == Phase.RUNNING;
+    }
+
+    /**
+     * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
+     */
+    public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
+        return com.sun.max.Package.contains(typeDescriptor.toJavaString());
+    }
+
+    /**
+     * Determines if a given class actor denotes a class that is part of the Maxine code base.
+     */
+    public static boolean isMaxineClass(ClassActor classActor) {
+        return isMaxineClass(classActor.typeDescriptor());
     }
 
     private static int _exitCode = 0;
