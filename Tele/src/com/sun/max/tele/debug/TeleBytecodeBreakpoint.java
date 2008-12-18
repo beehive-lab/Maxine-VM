@@ -49,10 +49,12 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
         return _teleCodeLocation;
     }
 
-    // target breakpoints that were created in compilations of the method in the tele VM
+    /**
+     * target breakpoints that were created in compilations of the method in the {@link TeleVM}.
+     */
     private AppendableSequence<TeleTargetBreakpoint> _teleTargetBreakpoints;
 
-    public TeleBytecodeBreakpoint(TeleVM teleVM, Key key, boolean isTransient) {
+    private TeleBytecodeBreakpoint(TeleVM teleVM, Key key, boolean isTransient) {
         super(teleVM, isTransient);
         _teleCodeLocation = new TeleCodeLocation(teleVM, key);
     }
