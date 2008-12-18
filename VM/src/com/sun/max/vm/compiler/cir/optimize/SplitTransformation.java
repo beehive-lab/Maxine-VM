@@ -122,7 +122,7 @@ public final class SplitTransformation {
 
     private static CirClosure lambda(CirVariable arg, CirCall body) {
         if (arg == null) {
-            return new CirClosure(body);
+            return new CirClosure(body, CirClosure.NO_PARAMETERS);
         }
         return new CirClosure(body, arg);
     }

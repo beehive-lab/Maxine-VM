@@ -22,12 +22,12 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 /**
- * Marker indicating that a field is quasi 'final' for all practical purposes,
- * because it is only initialized once and only inspected after proper initialization.
- * That is, the value of the field will never be read before it is written.
- * It is up to the programmer to maintain this invariant!
- * 
- * The value regarded as constant may be null, 0, etc.
+ * Marker indicating that a field is immutable with respect to all reads of its value.
+ * That is, it is never updated after the first time it is read.
+ *
+ * <b>It is up to the programmer to maintain this invariant!</b>
+ *
+ * The value may be the dewfault value of the field's type (e.g. {@code null}, 0, etc).
  *
  * @author Bernd Mathiske
  */

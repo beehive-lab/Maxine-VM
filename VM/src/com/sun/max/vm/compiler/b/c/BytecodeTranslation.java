@@ -1261,7 +1261,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
         final CirCall successCall = new CirCall();
         successCont.setBody(successCall);
-        successCont.setParameters();
         _currentCall = successCall;
         completeInvocation(targetCirMethod, signatureDescriptor.getResultKind(), arguments);
         _currentCall.setProcedure(kBlock, currentLocation());
