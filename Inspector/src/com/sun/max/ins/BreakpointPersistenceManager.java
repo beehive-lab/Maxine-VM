@@ -87,7 +87,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
         return null;
     }
 
-    public void refreshView() {
+    public void refreshView(long epoch) {
         // Breakpoints in the {@link TeleVM} have changed.
         _inspection.settings().save();
     }

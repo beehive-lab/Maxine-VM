@@ -16,9 +16,9 @@ public class TeleWatchpoint {
     public TeleProcess teleProcess() {
         return _teleProcess;
     }
-    
+
     private final MemoryRegion _memoryRegion;
-    
+
     public MemoryRegion memoryRegion() {
         return _memoryRegion;
     }
@@ -27,7 +27,7 @@ public class TeleWatchpoint {
         _teleProcess = teleProcess;
         _memoryRegion = memoryRegion;
     }
-    
+
     public static class Factory extends TeleViewModel {
 
         private final TeleProcess _teleProcess;
@@ -44,7 +44,7 @@ public class TeleWatchpoint {
         public synchronized TeleWatchpoint createWatchpoint(MemoryRegion memoryRegion) {
             final TeleWatchpoint watchpoint = new TeleWatchpoint(_teleProcess, memoryRegion);
             _watchpoints.put(memoryRegion, watchpoint);
-            refreshView();
+            refreshView(_teleProcess.epoch());
             return watchpoint;
         }
 
@@ -52,7 +52,7 @@ public class TeleWatchpoint {
          * Creates a watchpoint that covers the given memoryRegion.
          * TODO: merge with existing watchpoints.
          */
-        public synchronized TeleWatchpoint makeWatchpoint(MemoryRegion memoryRegion) {            
+        public synchronized TeleWatchpoint makeWatchpoint(MemoryRegion memoryRegion) {
             final TeleWatchpoint watchpoint =  createWatchpoint(memoryRegion);
             if (_teleProcess.activateWatchpoint(watchpoint.memoryRegion())) {
                 return watchpoint;
