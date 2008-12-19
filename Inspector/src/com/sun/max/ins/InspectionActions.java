@@ -1803,6 +1803,47 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
 
     /**
+     * Action: removes all existing breakpoints in the {@link TeleVM}.
+     */
+    final class RemoveAllBreakpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Remove all breakpoints";
+
+        RemoveAllBreakpointsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
+            inspection().addInspectionListener(new InspectionListenerAdapter() {
+                @Override
+                public void breakpointSetChanged(long epoch) {
+                    refresh(epoch, true);
+                }
+            });
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setBreakpoint(null);
+            teleProcess().targetBreakpointFactory().removeAllBreakpoints();
+            teleVM().bytecodeBreakpointFactory().removeAllBreakpoints();
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess() && (teleVM().bytecodeBreakpointFactory().size() > 0  || teleProcess().targetBreakpointFactory().size(true) > 0));
+        }
+    }
+
+    private InspectorAction _removeAllBreakpoints = new RemoveAllBreakpointsAction(null);
+
+    /**
+     * @return an Action that will remove all breakpoints in the {@link TeleVM}.
+     */
+    public final InspectorAction removeAllBreakpoints() {
+        return _removeAllBreakpoints;
+    }
+
+
+    /**
      * Action: enables a specific  breakpoint in the {@link TeleVM}.
      */
     final class EnableBreakpointAction extends InspectorAction {
@@ -1823,7 +1864,14 @@ public class InspectionActions extends InspectionHolder implements Prober{
             _teleBreakpoint.setEnabled(true);
             inspection().refreshAll(false);
         }
+
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointFactory().size() > 0);
+        }
     }
+
 
     /**
      * @param surrogate for a breakpoint in the {@link TeleVM}.
@@ -1979,6 +2027,12 @@ public class InspectionActions extends InspectionHolder implements Prober{
                     refresh(teleProcess().epoch(), false);
                 }
             });
+            inspection().addInspectionListener(new InspectionListenerAdapter() {
+                @Override
+                public void breakpointSetChanged(long epoch) {
+                    refresh(epoch, true);
+                }
+            });
         }
 
         @Override
@@ -1992,7 +2046,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
+            setEnabled(inspection().hasProcess() && teleProcess().targetBreakpointFactory().size(true) > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
         }
     }
 
@@ -2016,10 +2070,10 @@ public class InspectionActions extends InspectionHolder implements Prober{
         RemoveAllTargetCodeBreakpointsAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title);
             _refreshableActions.append(this);
-            focus().addListener(new InspectionFocusAdapter() {
+            inspection().addInspectionListener(new InspectionListenerAdapter() {
                 @Override
-                public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleProcess().epoch(), false);
+                public void breakpointSetChanged(long epoch) {
+                    refresh(epoch, true);
                 }
             });
         }
@@ -2266,6 +2320,47 @@ public class InspectionActions extends InspectionHolder implements Prober{
     public final InspectorAction setBytecodeBreakpointAtMethodEntryByKey() {
         return _setBytecodeBreakpointAtMethodEntryByKey;
     }
+
+
+    /**
+     * Action: removes all existing bytecode breakpoints in the {@link TeleVM}.
+     */
+    final class RemoveAllBytecodeBreakpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Remove all bytecode breakpoints";
+
+        RemoveAllBytecodeBreakpointsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _refreshableActions.append(this);
+            inspection().addInspectionListener(new InspectionListenerAdapter() {
+                @Override
+                public void breakpointSetChanged(long epoch) {
+                    refresh(epoch, true);
+                }
+            });
+        }
+
+        @Override
+        protected void procedure() {
+            focus().setBreakpoint(null);
+            teleVM().bytecodeBreakpointFactory().removeAllBreakpoints();
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointFactory().size() > 0);
+        }
+    }
+
+    private InspectorAction _removeAllBytecodeBreakpoints = new RemoveAllBytecodeBreakpointsAction(null);
+
+    /**
+     * @return an Action that will remove all target code breakpoints in the {@link TeleVM}.
+     */
+    public final InspectorAction removeAllBytecodeBreakpoints() {
+        return _removeAllBytecodeBreakpoints;
+    }
+
 
     final class SetWatchpointAction extends InspectorAction {
 
