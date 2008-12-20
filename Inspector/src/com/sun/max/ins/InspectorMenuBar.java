@@ -143,24 +143,29 @@ public final class InspectorMenuBar extends JMenuBar {
         menu.add(_actions.debugReturnFromFrame());
         menu.add(_actions.debugRunToInstructionWithBreakpoints());
         menu.add(_actions.debugRunToInstruction());
+        menu.add(_actions.debugPause());
         menu.addSeparator();
-        menu.add(_actions.toggleTargetCodeBreakpoint());
-        menu.add(_actions.setTargetCodeLabelBreakpoints());
-        menu.add(_actions.removeTargetCodeLabelBreakpoints());
+        final JMenuItem viewBreakpointsMenuItem = new JMenuItem(_actions.viewBreakpoints());
+        viewBreakpointsMenuItem.setText("View Breakpoints");
+        menu.add(viewBreakpointsMenuItem);
         final JMenu methodEntryBreakpoints = new JMenu("Break at method entry");
         methodEntryBreakpoints.add(_actions.setTargetCodeBreakpointAtMethodEntriesByName());
         methodEntryBreakpoints.add(_actions.setBytecodeBreakpointAtMethodEntryByName());
         methodEntryBreakpoints.add(_actions.setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
+        menu.add(_actions.setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(_actions.removeAllBreakpoints());
+        menu.addSeparator();
+        menu.add(_actions.toggleTargetCodeBreakpoint());
+        menu.add(_actions.setTargetCodeLabelBreakpoints());
+        menu.add(_actions.removeTargetCodeLabelBreakpoints());
         menu.add(_actions.removeAllTargetCodeBreakpoints());
         menu.addSeparator();
-        menu.add(_actions.viewBreakpoints());
-        menu.addSeparator();
         menu.add(_actions.toggleBytecodeBreakpoint());
+        menu.add(_actions.removeAllBytecodeBreakpoints());
         menu.addSeparator();
         menu.add(_actions.setWatchpoint());
-        menu.addSeparator();
-        menu.add(_actions.debugPause());
+
         return menu;
     }
 

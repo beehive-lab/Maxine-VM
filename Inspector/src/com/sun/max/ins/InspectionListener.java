@@ -59,8 +59,9 @@ public interface InspectionListener {
 
     /**
      * Notifies that the set of breakpoints in the {@link TeleVM} has changed.
+     * @param epoch  current epoch of the VM process {@see TeleProcess#epoch()}.
      */
-    void breakpointSetChanged();
+    void breakpointSetChanged(long epoch);
 
     /**
      * Notifies that an important aspect of view style/parameters/configuration have changed,
