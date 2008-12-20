@@ -242,8 +242,6 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.util.zip", false); // needed to load classes from jar/zip files
         loadPackage("java.util.jar", false); // needed to load classes from jar files
         loadPackage("java.security", false); // needed to create a Thread
-        loadClass(sun.nio.cs.StreamEncoder.class);
-        loadClass(java.util.Arrays.class);
         loadClass(sun.misc.VM.class);
 
         // These classes need to be compiled and in the boot image in order to be able to run the optimizing compiler at
