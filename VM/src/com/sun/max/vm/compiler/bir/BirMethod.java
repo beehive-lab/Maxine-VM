@@ -108,6 +108,12 @@ public class BirMethod extends AbstractIrMethod {
                     writer.println(block.toString());
                 }
             }
+            if (!_exceptionDispatcherTable.isEmpty()) {
+                writer.println("Exception handlers:");
+                for (ExceptionHandlerEntry entry : _exceptionDispatcherTable) {
+                    writer.println(entry.toString());
+                }
+            }
         }
         return charArrayWriter.toString();
     }
