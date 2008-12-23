@@ -162,7 +162,7 @@ public abstract class ResolutionSnippet extends Snippet {
         public static final ResolveArrayClass SNIPPET = new ResolveArrayClass();
     }
 
-    public static final class ResolveTypeAndMakeInitialized extends ReferenceResolutionSnippet {
+    public static final class ResolveClassForNew extends ReferenceResolutionSnippet {
 
         @NEVER_INLINE
         private static void resolve(ReferenceResolutionGuard guard) {
@@ -179,14 +179,14 @@ public abstract class ResolutionSnippet extends Snippet {
 
         @SNIPPET
         @INLINE
-        public static Object resolveTypeAndMakeInitialized(ReferenceResolutionGuard guard) {
+        public static Object resolveClassForNew(ReferenceResolutionGuard guard) {
             if (guard.inlinedIsClear()) {
                 resolve(guard);
             }
             return guard.value();
         }
 
-        public static final ResolveTypeAndMakeInitialized SNIPPET = new ResolveTypeAndMakeInitialized();
+        public static final ResolveClassForNew SNIPPET = new ResolveClassForNew();
     }
 
 

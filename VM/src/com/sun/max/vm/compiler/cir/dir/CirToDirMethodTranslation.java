@@ -185,7 +185,7 @@ class CirToDirMethodTranslation {
             final CirMethod cirCompiledMethod = (CirMethod) cirValue;
             return new DirMethodValue(cirCompiledMethod.classMethodActor());
         }
-        if (cirValue instanceof CirValue.Undefined) {
+        if (cirValue == CirValue.UNDEFINED) {
             return DirValue.UNDEFINED;
         }
         throw ProgramError.unexpected("unexpected type of CirValue: " + cirValue);

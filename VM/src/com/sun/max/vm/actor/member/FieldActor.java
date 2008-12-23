@@ -195,7 +195,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
             if (isStatic()) {
                 // Static final field:
                 if (!holder().hasClassInitializer()) {
-                    // The field will have the value specified by a ConstantValue attribute. If
+                    // The field's value must come from a ConstantValue attribute. If
                     // no such attribute is present for this field, then it will have the
                     // default value for its type.
                     return true;

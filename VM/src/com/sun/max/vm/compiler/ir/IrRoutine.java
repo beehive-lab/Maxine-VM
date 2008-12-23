@@ -42,7 +42,8 @@ import com.sun.max.vm.type.*;
  */
 public abstract class IrRoutine {
 
-    protected MethodActor getFoldingMethodActor(Class holder, String name) { // TODO: check annotation: BUILTIN or SNIPPET
+    @PROTOTYPE_ONLY
+    protected MethodActor getFoldingMethodActor(Class holder, String name, boolean fatalIfMissing) {
         final String className = Naming.toClassName(name);
         final String methodName = Naming.toMethodName(className);
         final Method[] methods = holder.getDeclaredMethods();
@@ -55,6 +56,9 @@ public abstract class IrRoutine {
                 assert !method.isAnnotationPresent(SURROGATE.class);
                 return MethodActor.fromJava(method);
             }
+        }
+        if (fatalIfMissing) {
+            ProgramError.unexpected("Could not find method named '" + methodName + "' in " + className);
         }
         return null;
     }
@@ -69,12 +73,13 @@ public abstract class IrRoutine {
      */
     private static final Map<Class<? extends IrRoutine>, IrRoutine> _singletonInstances = new HashMap<Class<? extends IrRoutine>, IrRoutine>();
 
+    @PROTOTYPE_ONLY
     protected IrRoutine(Class foldingMethodHolder) {
         _name = Naming.toFieldName(getClass().getSimpleName());
         if (foldingMethodHolder != null) {
-            _foldingMethodActor = getFoldingMethodActor(foldingMethodHolder, _name);
+            _foldingMethodActor = getFoldingMethodActor(foldingMethodHolder, _name, true);
         } else {
-            _foldingMethodActor = getFoldingMethodActor(getClass(), _name);
+            _foldingMethodActor = getFoldingMethodActor(getClass(), _name, true);
         }
         _resultKind = _foldingMethodActor.descriptor().getResultKind();
         assert _singletonInstances.put(getClass(), this) == null;

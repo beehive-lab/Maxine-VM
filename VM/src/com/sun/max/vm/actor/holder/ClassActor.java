@@ -1454,6 +1454,12 @@ public abstract class ClassActor extends Actor {
      * See #2.17.5.
      */
     public void makeInitialized() {
+        if (MaxineVM.isPrototyping()) {
+            if (!MaxineVM.isMaxineClass(this)) {
+                Classes.initialize(mirror());
+            }
+            return;
+        }
         if (isInitializationRequired()) {
             if (_superClassActor != null) {
                 try {
