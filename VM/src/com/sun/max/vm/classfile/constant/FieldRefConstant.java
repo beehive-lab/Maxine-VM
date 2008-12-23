@@ -28,7 +28,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * #4.4.2.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -140,7 +140,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
 
         public String valueString(ConstantPool pool) {
-            return _fieldActor.descriptor().toJavaString(false) + " " + _fieldActor.holder().name() + _fieldActor.name();
+            return _fieldActor.format("%H.%n:%t");
         }
     }
 
