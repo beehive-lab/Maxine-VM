@@ -82,4 +82,10 @@ public final class IA32Safepoint extends Safepoint {
     public int getTrapNumber(Pointer trapState) {
         throw Problem.unimplemented();
     }
+
+    @Override
+    public void setTrapNumber(Pointer trapState, int trapNumber) {
+        throw Problem.unimplemented();
+    }
+
 }
