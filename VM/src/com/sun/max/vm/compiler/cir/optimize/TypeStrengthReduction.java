@@ -65,14 +65,14 @@ public class TypeStrengthReduction {
                 } else {
                     var = null;
                 }
-                classActor = ((InstanceOf) op).classActor();
+                classActor = ((InstanceOf) op).actor();
             } else if (call.procedure() instanceof CheckCast) {
                 if (call.arguments()[0] instanceof CirVariable) {
                     var = (CirVariable) call.arguments()[0];
                 } else {
                     var = null;
                 }
-                classActor = ((CheckCast) op).classActor();
+                classActor = ((CheckCast) op).actor();
             } else {
                 var = null;
                 classActor = null;

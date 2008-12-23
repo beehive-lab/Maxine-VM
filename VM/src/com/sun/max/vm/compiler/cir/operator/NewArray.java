@@ -20,64 +20,36 @@
  */
 package com.sun.max.vm.compiler.cir.operator;
 
-import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 
-public class NewArray extends JavaOperator {
-    private final Kind _elementKind;
-    private final int _index;
-    private final ConstantPool _constantPool;
+public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private ClassActor _elementClassActor;
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private ArrayClassActor _arrayClassActor;
+    private final Kind _primitiveElementKind;
 
     public NewArray(int atype) {
-        _elementKind = Kind.fromNewArrayTag(atype);
-        _elementClassActor = _elementKind.arrayClassActor();
-        _index = 0;
-        _constantPool = null;
-        _arrayClassActor = ArrayClassActor.forComponentClassActor(_elementClassActor);
+        super(null, 0, Kind.REFERENCE);
+        _primitiveElementKind = Kind.fromNewArrayTag(atype);
+        _actor = ArrayClassActor.forComponentClassActor(_primitiveElementKind.arrayClassActor());
     }
 
     public NewArray(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        _elementKind = Kind.REFERENCE;
-        final ClassConstant classConstant = constantPool.classAt(index);
-        if (classConstant.isResolvableWithoutClassLoading(_constantPool)) {
-            _elementClassActor = classConstant.resolve(constantPool, index);
-            _arrayClassActor =  ArrayClassActor.forComponentClassActor(_elementClassActor);
-        } else {
-            _elementClassActor = null;
-        }
+        super(constantPool, index, Kind.REFERENCE);
+        _primitiveElementKind = null;
     }
 
-    public boolean isResolved() {
-        return _arrayClassActor != null || _elementKind != Kind.REFERENCE;
-    }
-
-    public void resolve() {
-        if (!isResolved()) {
-            _elementClassActor = _constantPool.classAt(_index).resolve(_constantPool, _index);
-            _arrayClassActor =  ArrayClassActor.forComponentClassActor(_elementClassActor);
-        }
-    }
-
-    public Kind elementKind() {
-        return _elementKind;
-    }
-
-    @Override
-    public Kind resultKind() {
-        return Kind.REFERENCE;
+    /**
+     * Gets the primitive {@linkplain ClassActor#elementClassActor() element kind} of the array created by this
+     * operator. If this operator creates a reference array, then {@code null} is returned.
+     */
+    public Kind primitiveElementKind() {
+        return _primitiveElementKind;
     }
 
     @Override
@@ -90,24 +62,11 @@ public class NewArray extends JavaOperator {
         visitor.visit(this);
     }
 
-    public int index() {
-        return _index;
-    }
-
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
-
-    public ClassActor elementClassActor() {
-        return _elementClassActor;
-    }
-
-    public ArrayClassActor arrayClassActor() {
-        return _arrayClassActor;
-    }
     @Override
     public String toString() {
-        return "Newarray";
+        if (_primitiveElementKind != null) {
+            return "New" + Strings.capitalizeFirst(_primitiveElementKind.name().string(), true) + "Array";
+        }
+        return super.toString();
     }
 }

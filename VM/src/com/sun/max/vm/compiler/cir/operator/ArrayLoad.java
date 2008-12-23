@@ -42,11 +42,6 @@ public class ArrayLoad extends JavaOperator {
         visitor.visit(this);
     }
 
-    @Override
-    public String toString() {
-        return "Arrayload";
-    }
-
     private boolean _canRaiseNullPointerException = true;
 
     public void setCanRaiseNullPointerException(boolean flag) {
@@ -57,4 +52,8 @@ public class ArrayLoad extends JavaOperator {
         return _canRaiseNullPointerException;
     }
 
+    @Override
+    public String toString() {
+        return "ArrayLoad";
+    }
 }

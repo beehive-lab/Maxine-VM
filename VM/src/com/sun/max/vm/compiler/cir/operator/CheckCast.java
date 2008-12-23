@@ -23,51 +23,16 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 
-public class CheckCast extends JavaOperator {
-    private final int _index;
-    private final ConstantPool _constantPool;
-    private ClassActor _classActor;
+public class CheckCast extends JavaResolvableOperator<ClassActor> {
 
     public CheckCast(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        final ClassConstant classConstant = constantPool.classAt(index);
-        if (classConstant.isResolvableWithoutClassLoading(constantPool)) {
-            _classActor = classConstant.resolve(constantPool, index);
-        } else {
-            _classActor = null;
-        }
+        super(constantPool, index, Kind.VOID);
     }
-
-    public boolean isResolved() {
-        return _classActor != null;
-    }
-
-    public void resolve() {
-        _classActor = _constantPool.classAt(_index).resolve(_constantPool, _index);
-    }
-
-    @Override
-    public Kind resultKind() {
-        return Kind.VOID;
-    }
-
-    public int index() {
-        return _index;
-    }
-
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
-    public ClassActor classActor() {
-        return _classActor;
-    }
-
 
     @Override
     public void acceptVisitor(CirVisitor visitor) {
@@ -78,9 +43,4 @@ public class CheckCast extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
-    @Override
-    public String toString() {
-        return "<Checkcast_" + (isResolved() ? _classActor.toString() : _index + "") + ">";
-    }
-
 }

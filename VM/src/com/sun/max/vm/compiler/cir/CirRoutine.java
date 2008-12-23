@@ -39,6 +39,7 @@ public interface CirRoutine {
     String name();
 
     Kind resultKind();
+
     Kind[] parameterKinds();
 
     /**

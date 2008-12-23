@@ -23,43 +23,14 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
-import com.sun.max.vm.type.*;
 
 
-public class InvokeInterface extends JavaOperator {
-    private final ConstantPool _constantPool;
-    private final int _index;
-    private final Kind _returnKind;
-    private InterfaceMethodActor _interfaceMethodActor;
-
-
-    public boolean isResolved() {
-        return _interfaceMethodActor != null;
-    }
-    public void resolve() {
-        constantPool().interfaceMethodAt(index()).resolve(constantPool(), index());
-    }
-
-    public InterfaceMethodActor interfaceMethodActor() {
-        return _interfaceMethodActor;
-    }
+public class InvokeInterface extends JavaResolvableOperator<InterfaceMethodActor> {
 
     public InvokeInterface(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        _returnKind = constantPool.interfaceMethodAt(index).signature(constantPool).getResultKind();
-        final MethodRefConstant ref = constantPool.interfaceMethodAt(index);
-        if (ref.isResolved()) {
-            _interfaceMethodActor = (InterfaceMethodActor) ref.resolve(constantPool, index);
-        } else {
-            _interfaceMethodActor = null;
-        }
-    }
-
-    @Override
-    public Kind resultKind() {
-        return _returnKind;
+        super(constantPool, index, constantPool.interfaceMethodAt(index).signature(constantPool).getResultKind());
     }
 
     @Override
@@ -75,15 +46,5 @@ public class InvokeInterface extends JavaOperator {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
-    }
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-    public int index() {
-        return _index;
-    }
-    @Override
-    public String toString() {
-        return "Invokeinterface";
     }
 }
