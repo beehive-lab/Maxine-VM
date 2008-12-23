@@ -23,49 +23,15 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 
-public class PutField extends JavaOperator {
-    private FieldActor _fieldActor;
-    private final ConstantPool _constantPool;
-    private final int _index;
-    private final Kind _fieldKind;
+public class PutField extends JavaResolvableOperator<FieldActor> {
 
     public PutField(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        final FieldRefConstant ref = constantPool.fieldAt(index);
-        _fieldKind = ref.type(constantPool).toKind();
-
-        if (ref.isResolved() /*|| ref.isResolvableWithoutClassLoading(constantPool)*/) {
-            _fieldActor = ref.resolve(constantPool, index);
-        } else {
-            _fieldActor = null;
-        }
-    }
-
-
-    public boolean isResolved() {
-        return _fieldActor != null;
-    }
-
-    public void resolve() {
-        _fieldActor = constantPool().fieldAt(index()).resolve(constantPool(), index());
-    }
-
-    public FieldActor fieldActor() {
-        return _fieldActor;
-    }
-
-    public Kind fieldKind() {
-        return _fieldKind;
-    }
-
-    @Override
-    public Kind resultKind() {
-        return Kind.VOID;
+        super(constantPool, index, Kind.VOID);
     }
 
     @Override
@@ -78,20 +44,6 @@ public class PutField extends JavaOperator {
         visitor.visit(this);
     }
 
-
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
-
-    public int index() {
-        return _index;
-    }
-    @Override
-    public String toString() {
-        return "Putfield";
-    }
-
     private boolean _canRaiseNullPointerException = true;
     public void setCanRaiseNullPointerException(boolean flag) {
         _canRaiseNullPointerException = flag;
@@ -99,5 +51,4 @@ public class PutField extends JavaOperator {
     public boolean canRaiseNullPointerException() {
         return _canRaiseNullPointerException;
     }
-
 }

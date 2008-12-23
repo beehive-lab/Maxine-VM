@@ -41,10 +41,6 @@ public class ArrayStore extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
-    @Override
-    public String toString() {
-        return "ArrayStore";
-    }
 
     private boolean _canRaiseNullPointerException = true;
     public void setCanRaiseNullPointerException(boolean flag) {
@@ -54,4 +50,8 @@ public class ArrayStore extends JavaOperator {
         return _canRaiseNullPointerException;
     }
 
+    @Override
+    public String toString() {
+        return "ArrayStore:" + _elementKind;
+    }
 }

@@ -41,10 +41,6 @@ public class ArrayLength extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
-    @Override
-    public String toString() {
-        return "Arraylength";
-    }
 
     private boolean _canRaiseNullPointerException = true;
     public void setCanRaiseNullPointerException(boolean flag) {
@@ -54,4 +50,8 @@ public class ArrayLength extends JavaOperator {
         return _canRaiseNullPointerException;
     }
 
+    @Override
+    public String toString() {
+        return "ArrayLength";
+    }
 }

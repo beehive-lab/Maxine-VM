@@ -141,15 +141,15 @@ public class BirToCirMethodTranslation {
         return _rootClosure;
     }
 
-    BlockState getBlockStateAt(int bytecodeAddress) {
-        return _blockStateMap[bytecodeAddress];
+    BlockState getBlockStateAt(int bytecodePosition) {
+        return _blockStateMap[bytecodePosition];
     }
 
-    public BlockState getExceptionDispatcherState(int opcodeAddress) {
-        if (_exceptionDispatcherBlockStateMap == null || _exceptionDispatcherBlockStateMap.length <= opcodeAddress) {
+    public BlockState getExceptionDispatcherState(int opcodePosition) {
+        if (_exceptionDispatcherBlockStateMap == null || _exceptionDispatcherBlockStateMap.length <= opcodePosition) {
             return null;
         }
-        return _exceptionDispatcherBlockStateMap[opcodeAddress];
+        return _exceptionDispatcherBlockStateMap[opcodePosition];
     }
 
     public CirCall newCirCall(CirBlock block) {
