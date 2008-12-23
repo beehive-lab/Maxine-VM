@@ -20,13 +20,14 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
  *
  * @author Doug Simon
  */
-public interface MemberRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends ResolvableConstant<PoolConstant_Type> {
+public interface MemberRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends ResolvableConstant<PoolConstant_Type, MemberActor> {
 
     TypeDescriptor holder(ConstantPool pool);
 
