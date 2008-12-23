@@ -300,6 +300,7 @@ public final class BreakpointsInspector extends UniqueInspector {
             menu.addSeparator();
             menu.add(inspection().actions().removeBreakpoint());
             menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
+            menu.add(inspection().actions().removeAllBytecodeBreakpoints());
         }
 
         public Inspection inspection() {
@@ -328,8 +329,11 @@ public final class BreakpointsInspector extends UniqueInspector {
         methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
         menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(inspection().actions().removeAllBreakpoints());
         menu.addSeparator();
         menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
+        menu.addSeparator();
+        menu.add(inspection().actions().removeAllBytecodeBreakpoints());
         return menu;
     }
 
@@ -344,11 +348,12 @@ public final class BreakpointsInspector extends UniqueInspector {
         }
 
         public void addTo(InspectorMenu menu) {
-            menu.add(inspection().actions().removeBreakpoint(_breakpointData.teleBreakpoint(), "Remove at " + _breakpointData.shortName()));
+            final String shortName = _breakpointData.shortName();
+            menu.add(inspection().actions().removeBreakpoint(_breakpointData.teleBreakpoint(), "Remove: " + shortName));
             if (_breakpointData.enabled()) {
-                menu.add(inspection().actions().disableBreakpoint(_breakpointData.teleBreakpoint(), "Disable"));
+                menu.add(inspection().actions().disableBreakpoint(_breakpointData.teleBreakpoint(), "Disable: " + shortName));
             } else {
-                menu.add(inspection().actions().enableBreakpoint(_breakpointData.teleBreakpoint(), "Enable"));
+                menu.add(inspection().actions().enableBreakpoint(_breakpointData.teleBreakpoint(), "Enable: " + shortName));
             }
         }
 
@@ -557,7 +562,7 @@ public final class BreakpointsInspector extends UniqueInspector {
     }
 
     @Override
-    public void breakpointSetChanged() {
+    public void breakpointSetChanged(long epoch) {
         refreshView(true);
     }
 
