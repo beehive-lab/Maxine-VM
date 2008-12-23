@@ -109,7 +109,6 @@ public abstract class CirValue extends CirNode implements IrValue {
         return false;
     }
     public Value value() {
-        Log.println(this.toString());
         throw new IllegalArgumentException();
     }
 

@@ -29,15 +29,20 @@ import com.sun.max.vm.compiler.cir.variable.*;
 /**
  * Traverses a CIR graph,
  * visiting each node exactly once.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class CirTraversal extends CirVisitor {
 
-    protected final LinkedList<CirNode> _toDo = new LinkedList<CirNode>();
+    protected final LinkedList<CirNode> _toDo = new LinkedList<CirNode>() {
+        @Override
+        public boolean add(CirNode e) {
+            assert e != null;
+            return super.add(e);
+        }
+    };
 
     protected CirTraversal(CirNode graph) {
-        super();
         _toDo.add(graph);
     }
 

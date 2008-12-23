@@ -100,7 +100,7 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
         final Class<AppendableIndexedSequence<Builtin>> type = null;
         final AppendableIndexedSequence<Builtin> builtins = StaticLoophole.cast(type, _builtins);
         builtins.append(this);
-        _hostFoldingMethodActor = getFoldingMethodActor(getClass(), name());
+        _hostFoldingMethodActor = getFoldingMethodActor(getClass(), name(), false);
         assert _hostFoldingMethodActor == null || foldingMethodHolder == null || _hostFoldingMethodActor.holder() != ClassActor.fromJava(foldingMethodHolder);
     }
 
