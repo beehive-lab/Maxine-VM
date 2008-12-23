@@ -33,7 +33,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -147,7 +146,6 @@ public final class Trap {
 
             switch (trapNumber) {
                 case MEMORY_FAULT:
-Heap.collectGarbage(Size.fromInt(40));
                     handleMemoryFault(instructionPointer, stackPointer, framePointer, trapState, faultAddress);
                     break;
                 case STACK_FAULT:
@@ -161,7 +159,6 @@ Heap.collectGarbage(Size.fromInt(40));
                     Deoptimizer.deoptimizeTopFrame();
                     break;
                 case ARITHMETIC_EXCEPTION:
-Heap.collectGarbage(Size.fromInt(40));
                     // integer divide by zero
                     final ArithmeticException exception = new ArithmeticException();
                     Throw.raise(exception, stackPointer, framePointer, instructionPointer);
