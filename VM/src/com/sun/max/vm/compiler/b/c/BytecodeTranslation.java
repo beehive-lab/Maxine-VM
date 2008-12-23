@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.ExceptionThrower.Static.*;
 
 import java.lang.reflect.*;
 
@@ -29,27 +29,21 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
-import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
 import com.sun.max.vm.compiler.cir.operator.*;
-import com.sun.max.vm.compiler.cir.operator.Throw;
 import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.variable.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.FieldReadSnippet.*;
 import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -250,12 +244,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         if (cirRoutine.needsJavaFrameDescriptor()) {
             createJavaFrameDescriptor();
         }
-        final CirValue exceptionContinuation;
-        if (cirRoutine.mayThrowException()) {
-            exceptionContinuation = getCurrentExceptionContinuation();
-        } else {
-            exceptionContinuation = CirValue.UNDEFINED;
-        }
+        final CirValue exceptionContinuation = ExceptionThrower.Static.throwsAny(cirRoutine) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
         _currentCall.setArguments(Arrays.append(CirValue.class, regularArguments, normalContinuation, exceptionContinuation));
         _currentCall.setProcedure((CirProcedure) cirRoutine, currentLocation());
         _currentCall = new CirCall();
@@ -295,35 +284,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected void stackCall(Builtin builtin) {
         stackCall(CirBuiltin.get(builtin));
-    }
-
-    private void stackCall(Snippet snippet) {
-        stackCall(CirSnippet.get(snippet));
-    }
-
-    private void stackCall(Builtin builtin, Snippet snippet) {
-        if (_methodTranslation.cirGenerator().compilerScheme().isBuiltinImplemented(builtin)) {
-            stackCall(builtin);
-        } else {
-            stackCall(snippet);
-        }
-    }
-
-    private CirVariable callSnippet(Kind resultKind, Snippet snippet, CirValue... arguments) {
-        final CirVariable result = _methodTranslation.variableFactory().createTemporary(resultKind);
-        final CirContinuation continuation = new CirContinuation(result);
-        call(CirSnippet.get(snippet), arguments, continuation);
-        return result;
-    }
-
-    private CirVariable callResolutionSnippet(ResolutionSnippet snippet, int index) {
-        final ResolutionGuard guard = _constantPool.makeResolutionGuard(index, snippet);
-        return callSnippet(guard.kind(), snippet, CirConstant.fromObject(guard));
-    }
-
-    private void callSnippet(Snippet snippet, CirValue... arguments) {
-        final CirContinuation continuation = new CirContinuation();
-        call(CirSnippet.get(snippet), arguments, continuation);
     }
 
     protected boolean isEndOfBlock() {
@@ -393,53 +353,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         _currentCall.setProcedure(method, currentLocation());
         _currentCall = new CirCall();
         continuation.setBody(_currentCall);
-    }
-
-    /**
-     * Only activate this snippet if you are willing to implement explicit null pointer check elimination.
-     * @see Snippet.CheckNullPointer
-     */
-    private void implicitCheckNullPointer(CirVariable object) {
-        if (object.kind() == Kind.REFERENCE) {
-            callSnippet(Snippet.CheckNullPointer.SNIPPET, object);
-        } else {
-            // no null pointer check for WORD
-            assert object.kind() == Kind.WORD;
-        }
-    }
-
-    private void checkArrayIndex(CirVariable array, CirVariable index) {
-        callSnippet(Snippet.CheckArrayIndex.SNIPPET, array, index);
-    }
-
-    private void checkReferenceArrayStore(CirVariable array, CirVariable value) {
-        callSnippet(Snippet.CheckReferenceArrayStore.SNIPPET, array, value);
-    }
-
-    private void arrayLoad(ArrayGetSnippet snippet) {
-        final CirVariable index = pop(Kind.INT);
-        final CirVariable array = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(array);
-        checkArrayIndex(array, index);
-        callAndPush(snippet, array, index);
-    }
-
-    private void arrayStore(Kind kind, ArraySetSnippet snippet) {
-        final CirVariable value = pop(kind);
-        final CirVariable index = pop(Kind.INT);
-        final CirVariable array = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(array);
-        checkArrayIndex(array, index);
-        if (kind == Kind.REFERENCE) {
-            checkReferenceArrayStore(array, value);
-        }
-        callSnippet(snippet, array, index, value);
-    }
-
-    private void callMonitorSnippet(MonitorSnippet snippet) {
-        final CirVariable object = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(object);
-        callSnippet(snippet, object);
     }
 
     protected boolean areArgumentsMatchingSignatureDescriptor(CirValue[] arguments, SignatureDescriptor signatureDescriptor, TypeDescriptor receiverDescriptor) {
@@ -587,14 +500,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void sipush(int operand) {
         push(IntValue.from(operand));
-    }
-
-    private CirValue getClassActor(int index) {
-        final ClassConstant classConstant = _constantPool.classAt(index);
-        if (classConstant.isResolvableWithoutClassLoading(_constantPool)) {
-            return CirConstant.fromObject(_constantPool.classAt(index).resolve(_constantPool, index));
-        }
-        return callResolutionSnippet(ResolveClass.SNIPPET, index);
     }
 
     @Override
@@ -1187,216 +1092,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void vreturn() {
         _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter(), currentLocation());
         _currentCall.setArguments();
-    }
-
-    private CirVariable getStaticTuple(CirVariable fieldActor) {
-        return callSnippet(Kind.REFERENCE, BuiltinsSnippet.GetStaticTuple.SNIPPET, fieldActor);
-    }
-
-    private void generateFieldReadSnippetCall(int index, CirVariable fieldActor, CirVariable tuple) {
-        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
-        callAndPush(FieldReadSnippet.selectSnippet(kind), tuple, fieldActor);
-    }
-
-    private void generateFieldWriteSnippetCall(Kind kind, CirVariable tuple, CirVariable fieldActor, CirVariable value) {
-        switch (kind.asEnum()) {
-            case BYTE:
-                callAndPush(FieldWriteSnippet.WriteByte.SNIPPET, tuple, fieldActor, value);
-                break;
-            case BOOLEAN:
-                callAndPush(FieldWriteSnippet.WriteBoolean.SNIPPET, tuple, fieldActor, value);
-                break;
-            case SHORT:
-                callAndPush(FieldWriteSnippet.WriteShort.SNIPPET, tuple, fieldActor, value);
-                break;
-            case CHAR:
-                callAndPush(FieldWriteSnippet.WriteChar.SNIPPET, tuple, fieldActor, value);
-                break;
-            case INT:
-                callAndPush(FieldWriteSnippet.WriteInt.SNIPPET, tuple, fieldActor, value);
-                break;
-            case FLOAT:
-                callAndPush(FieldWriteSnippet.WriteFloat.SNIPPET, tuple, fieldActor, value);
-                break;
-            case LONG:
-                callAndPush(FieldWriteSnippet.WriteLong.SNIPPET, tuple, fieldActor, value);
-                break;
-            case DOUBLE:
-                callAndPush(FieldWriteSnippet.WriteDouble.SNIPPET, tuple, fieldActor, value);
-                break;
-            case WORD:
-                callAndPush(FieldWriteSnippet.WriteWord.SNIPPET, tuple, fieldActor, value);
-                break;
-            case REFERENCE:
-                callAndPush(FieldWriteSnippet.WriteReference.SNIPPET, tuple, fieldActor, value);
-                break;
-            default:
-                throw classFormatError("Fields cannot have type void");
-        }
-    }
-
-    private Hub getMostFrequentHub() {
-        final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(currentLocation().classMethodActor());
-        final Hub mostFrequentHub = (instrumentation == null)
-                                ? null
-                                : instrumentation.getMostFrequentlyUsedHub(currentLocation().position());
-        return mostFrequentHub;
-    }
-
-    private void invokevirtualWithGuardedInline(int index, final ClassMethodRefConstant classMethodRef, final SignatureDescriptor signatureDescriptor, final CirValue[] arguments,
-                    final CirVariable receiver, final Hub mostFrequentHub) {
-        final VirtualMethodActor declaredMethod = classMethodRef.resolveVirtual(_constantPool, index);
-        final CirVariable hub = callSnippet(Kind.REFERENCE, MethodSelectionSnippet.ReadHub.SNIPPET, receiver);
-        final CirValue cachedHub = new CirConstant(ReferenceValue.from(mostFrequentHub));
-
-        final Address entryPoint = mostFrequentHub.getWord(declaredMethod.vTableIndex()).asAddress();
-
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(entryPoint);
-        final CirMethod targetCirMethod = _methodTranslation.cirGenerator().createIrMethod(targetMethod.classMethodActor());
-        final CirContinuation successCont = new CirContinuation();
-        final CirContinuation failureCont = new CirContinuation();
-
-        _currentCall.setProcedure(CirSwitch.REFERENCE_EQUAL, currentLocation());
-        _currentCall.setArguments(hub, cachedHub, successCont, failureCont);
-
-        final CirCall kBlockCall = new CirCall();
-        final CirClosure kBlockClosure = new CirClosure(currentLocation());
-        kBlockClosure.setBody(kBlockCall);
-        final CirBlock kBlock = new CirBlock(kBlockClosure);
-
-        final CirCall successCall = new CirCall();
-        successCont.setBody(successCall);
-        _currentCall = successCall;
-        completeInvocation(targetCirMethod, signatureDescriptor.getResultKind(), arguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        final CirValue[] fkArguments = new CirValue[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            fkArguments[i] = arguments[i];
-        }
-
-        final CirCall failureCall = new CirCall();
-        failureCont.setBody(failureCall);
-        failureCont.setParameters();
-        _currentCall = failureCall;
-        final CirVariable methodActor = callResolutionSnippet(ResolveVirtualMethod.SNIPPET, index);
-        final CirVariable callEntryPoint = callSnippet(Kind.WORD, MethodSelectionSnippet.SelectVirtualMethod.SNIPPET, receiver, methodActor);
-        completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), fkArguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            final CirVariable result = _stack.push(signatureDescriptor.getResultKind(), currentLocation());
-            kBlockClosure.setParameters(result);
-        } else {
-            kBlockClosure.setParameters();
-        }
-        _currentCall = kBlockCall;
-    }
-
-    private void invokeinterfaceWithGuardedInline(int index, final InterfaceMethodRefConstant interfaceMethodRef, final SignatureDescriptor signatureDescriptor, final CirValue[] arguments,
-                    final CirVariable receiver, final Hub mostFrequentHub) {
-        final MethodActor methodActor1 = interfaceMethodRef.resolve(_constantPool, index);
-        final CirVariable hub = callSnippet(Kind.REFERENCE, MethodSelectionSnippet.ReadHub.SNIPPET, receiver);
-        final CirValue cachedHub = new CirConstant(ReferenceValue.from(mostFrequentHub));
-
-        final Address entryPoint;
-        if (methodActor1 instanceof VirtualMethodActor) {
-            final VirtualMethodActor declaredMethod = (VirtualMethodActor) methodActor1;
-            entryPoint = mostFrequentHub.getWord(declaredMethod.vTableIndex()).asAddress();
-        } else {
-            assert methodActor1 instanceof InterfaceMethodActor : "methoeActor not interface MethodActor";
-            final InterfaceMethodActor declaredMethod = (InterfaceMethodActor) methodActor1;
-            final InterfaceActor interfaceActor = (InterfaceActor) declaredMethod.holder();
-            final int interfaceIndex = mostFrequentHub.getITableIndex(interfaceActor.id());
-            entryPoint =  mostFrequentHub.getWord(interfaceIndex + declaredMethod.iIndexInInterface()).asAddress();
-        }
-
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(entryPoint);
-        final CirMethod targetCirMethod = _methodTranslation.cirGenerator().createIrMethod(targetMethod.classMethodActor());
-        final CirContinuation successCont = new CirContinuation();
-        final CirContinuation failureCont = new CirContinuation();
-
-        _currentCall.setProcedure(CirSwitch.REFERENCE_EQUAL, currentLocation());
-        _currentCall.setArguments(hub, cachedHub, successCont, failureCont);
-
-        final CirCall kBlockCall = new CirCall();
-        final CirClosure kBlockClosure = new CirClosure(currentLocation());
-        kBlockClosure.setBody(kBlockCall);
-        final CirBlock kBlock = new CirBlock(kBlockClosure);
-        _blockState.addCirBlock(kBlock);
-
-        final CirCall successCall = new CirCall();
-        successCont.setBody(successCall);
-        successCont.setParameters();
-        _currentCall = successCall;
-        completeInvocation(targetCirMethod, signatureDescriptor.getResultKind(), arguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        final CirValue[] fkArguments = new CirValue[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            fkArguments[i] = arguments[i];
-        }
-
-        final CirCall failureCall = new CirCall();
-        failureCont.setBody(failureCall);
-        failureCont.setParameters();
-        _currentCall = failureCall;
-
-        final CirValue methodActor = getInterfaceMethodActor(index, interfaceMethodRef);
-        final CirVariable callEntryPoint = callSnippet(Kind.WORD, MethodSelectionSnippet.SelectInterfaceMethod.SNIPPET, receiver, methodActor);
-        completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), fkArguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            final CirVariable result = _stack.push(signatureDescriptor.getResultKind(), currentLocation());
-            kBlockClosure.setParameters(result);
-        } else {
-            kBlockClosure.setParameters();
-        }
-        _currentCall = kBlockCall;
-    }
-
-    private CirValue getInterfaceMethodActor(int index, InterfaceMethodRefConstant interfaceMethodRef) {
-        if (interfaceMethodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            try {
-                return CirConstant.fromObject(interfaceMethodRef.resolve(_constantPool, index));
-            } catch (NoSuchMethodError noSuchMethodError) {
-                // this must be a @PROTOTYPE_ONLY method
-                // do nothing: dead code elimination will take care of this
-            }
-        }
-        return callResolutionSnippet(ResolveInterfaceMethod.SNIPPET, index);
-    }
-
-    private CirValue getInitializedClassActor(int index) {
-        final ClassConstant classConstant = _constantPool.classAt(index);
-        if (classConstant.isResolvableWithoutClassLoading(_constantPool)) {
-            final ClassActor classActor = classConstant.resolve(_constantPool, index);
-            if (classActor.isInitialized()) {
-                return CirConstant.fromObject(classActor);
-            }
-        }
-        return callResolutionSnippet(ResolveTypeAndMakeInitialized.SNIPPET, index);
     }
 
     @Override
@@ -2017,7 +1712,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final CirVariable localVariable = _frame.makeVariable(Kind.INT, index, currentLocation());
         final CirContinuation continuation = new CirContinuation(localVariable);
         final JavaOperator op = JavaOperator.INT_PLUS;
-        final CirValue exceptionContinuation = op.mayThrowException() ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
+        final CirValue exceptionContinuation = throwsAny(op) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
         _currentCall.setArguments(localVariable, CirConstant.fromInt(addend), continuation, exceptionContinuation);
         _currentCall.setProcedure(op, currentLocation());
         _currentCall = new CirCall();

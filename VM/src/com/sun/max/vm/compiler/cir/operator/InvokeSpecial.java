@@ -31,7 +31,7 @@ import com.sun.max.vm.compiler.cir.transform.*;
 public class InvokeSpecial extends JavaResolvableOperator<MethodActor> {
 
     public InvokeSpecial(ConstantPool constantPool, int index) {
-        super(constantPool, index, constantPool.classMethodAt(index).signature(constantPool).getResultKind());
+        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.classMethodAt(index).signature(constantPool).getResultKind());
     }
 
     @Override

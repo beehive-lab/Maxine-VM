@@ -31,7 +31,7 @@ import com.sun.max.vm.compiler.cir.transform.*;
 public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
 
     public InvokeStatic(ConstantPool constantPool, int index) {
-        super(constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
+        super(NONE, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
     }
 
     @Override

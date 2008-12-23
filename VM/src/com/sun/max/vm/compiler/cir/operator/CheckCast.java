@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class CheckCast extends JavaResolvableOperator<ClassActor> {
 
     public CheckCast(ConstantPool constantPool, int index) {
-        super(constantPool, index, Kind.VOID);
+        super(CLASS_CAST_EXCEPTION, constantPool, index, Kind.VOID);
     }
 
     @Override

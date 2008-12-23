@@ -34,7 +34,9 @@ import com.sun.max.vm.type.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class Builtin extends IrRoutine implements Comparable<Builtin> {
+public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, ExceptionThrower {
+
+    private int _thrownExceptions = ExceptionThrower.ANY;
 
     @CONSTANT
     private static IndexedSequence<Builtin> _builtins = new ArrayListSequence<Builtin>();
@@ -57,15 +59,9 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin> {
         return true;
     }
 
-    /**
-     * @return whether this builtin can be raise a run-time exception and thus requires an
-     * exception handler.  Builtins that cannot throw exceptions get a void exception handler.
-     */
-    private boolean _mayThrowException = true;
-    public boolean mayThrowException() {
-        return _mayThrowException;
+    public int thrownExceptions() {
+        return _thrownExceptions;
     }
-
 
     @PROTOTYPE_ONLY
     public static void registerMethod(ClassMethodActor classMethodActor) {
@@ -73,7 +69,7 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin> {
             final BUILTIN builtinAnnotation = classMethodActor.getAnnotation(BUILTIN.class);
             final Builtin builtin = BUILTIN.Static.get(builtinAnnotation.builtinClass());
             _classMethodActorToBuiltin.put(classMethodActor, builtin);
-            builtin._mayThrowException = builtinAnnotation.mayThrowException();
+            builtin._thrownExceptions = builtinAnnotation.thrownExceptions();
         }
     }
 

@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.cir.variable.*;
  * Transforms an HCir tree (containing high-level Cir operators) to the corresponding
  * LCir tree (containing builtins and snippets).  It first verifies that the HCir input
  * is well formed by applying the Verifier (below) then does the actual translation with
- * the help of {@link HCirOperatorLoweringVisitor} for Cir nodes of the form of a call
+ * the help of {@link HCirOperatorLowering} for Cir nodes of the form of a call
  * to an {@link JavaOperator}.
  *
  * @author Yi Guo
@@ -48,7 +48,7 @@ public class HCirToLCirTranslation {
             final CirValue procedure = call.procedure();
             if (procedure instanceof JavaOperator) {
                 final JavaOperator operator = (JavaOperator) procedure;
-                final HCirOperatorLoweringVisitor visitor = new HCirOperatorLoweringVisitor(call, _methodTranslation.variableFactory(), _methodTranslation.cirGenerator().compilerScheme());
+                final HCirOperatorLowering visitor = new HCirOperatorLowering(operator, call, _methodTranslation.variableFactory(), _methodTranslation.cirGenerator().compilerScheme());
                 operator.acceptVisitor(visitor);
             }
         }

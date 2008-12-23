@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 public class InstanceOf extends JavaResolvableOperator<ClassActor> {
 
     public InstanceOf(ConstantPool constantPool, int index) {
-        super(constantPool, index, Kind.BOOLEAN);
+        super(NONE, constantPool, index, Kind.BOOLEAN);
     }
 
     @Override

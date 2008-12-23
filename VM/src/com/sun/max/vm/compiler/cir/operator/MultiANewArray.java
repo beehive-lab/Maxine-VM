@@ -32,7 +32,7 @@ public class MultiANewArray extends JavaResolvableOperator<ArrayClassActor> {
     private final int _ndimension;
 
     public MultiANewArray(ConstantPool constantPool, int index, int dimensions) {
-        super(constantPool, index, Kind.REFERENCE);
+        super(NEGATIVE_ARRAY_SIZE_EXCEPTION, constantPool, index, Kind.REFERENCE);
         _ndimension = dimensions;
     }
 
