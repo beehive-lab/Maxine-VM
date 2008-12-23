@@ -20,12 +20,14 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import com.sun.max.vm.actor.*;
+
 
 /**
- * 
+ *
  * @author Doug Simon
  */
-public interface ResolvableConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends PoolConstant<PoolConstant_Type> {
+public interface ResolvableConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>, Actor_Type extends Actor> extends PoolConstant<PoolConstant_Type> {
 
     /**
      * Determines if this constant can be resolved without causing class loading.
@@ -34,5 +36,5 @@ public interface ResolvableConstant<PoolConstant_Type extends PoolConstant<PoolC
 
     boolean isResolved();
 
-    Object resolve(ConstantPool pool, int index);
+    Actor_Type resolve(ConstantPool pool, int index);
 }

@@ -95,6 +95,7 @@ public class CirTraceObserver extends IrTraceObserver {
                         final CirNode cirNode = (CirNode) context;
                         _out.println(cirNode.traceToString(false));
                     }
+                    _out.flush();
                 }
             }
         }
@@ -114,6 +115,7 @@ public class CirTraceObserver extends IrTraceObserver {
                         final CirNode cirNode = (CirNode) context;
                         _out.println(cirNode.traceToString(false));
                     }
+                    _out.flush();
                 }
             }
         }

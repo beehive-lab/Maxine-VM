@@ -20,8 +20,13 @@
  */
 package com.sun.max.vm.compiler.cir.operator;
 
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -78,6 +83,143 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         visitor.visit(this);
     }
 
+    @Override
+    public abstract String toString();
+
+    /**
+     * Base class for all the Java operators that have a resolvable constant pool entry.
+     *
+     * @author Doug Simon
+     */
+    abstract static class JavaResolvableOperator<Actor_Type extends Actor> extends JavaOperator {
+        /**
+         * The constant pool entry index.
+         */
+        protected final int _index;
+
+        /**
+         * The constant pool.
+         */
+        protected final ConstantPool _constantPool;
+
+        protected final Kind _resultKind;
+
+        @CONSTANT_WHEN_NOT_ZERO
+        protected Actor_Type _actor;
+
+        public JavaResolvableOperator(ConstantPool constantPool, int index, Kind resultKind) {
+            _constantPool = constantPool;
+            _index = index;
+            _resultKind = resultKind;
+            if (constantPool != null) {
+                final ResolvableConstant constant = constantPool.resolvableAt(index);
+                if (constant.isResolved()/* || constant.isResolvableWithoutClassLoading(constantPool)*/) {
+                    final Class<Actor_Type> type = null;
+                    _actor = StaticLoophole.cast(type, constant.resolve(constantPool, index));
+                }
+            }
+        }
+
+        /**
+         * Gets the constant pool containing the entry referenced by this operator.
+         */
+        public final ConstantPool constantPool() {
+            return _constantPool;
+        }
+
+        /**
+         * Gets the index of the constant pool entry referenced by this operator.
+         */
+        public final int index() {
+            return _index;
+        }
+
+        /**
+         * Gets the resolved actor object corresponding to the constant pool entry referenced by this operator.
+         * This method will return {@code null} if the entry has not been {@linkplain #isResolved() resolved}.
+         */
+        public final Actor_Type actor() {
+            return _actor;
+        }
+
+        /**
+         * Determines if the constant pool entry referenced by this operator has been resolved.
+         */
+        public final boolean isResolved() {
+            return _actor != null;
+        }
+
+        /**
+         * Resolves the constant pool entry referenced by this operator. The resolution only happens once.
+         */
+        public final void resolve() {
+            final Class<Actor_Type> type = null;
+            _actor = StaticLoophole.cast(type, _constantPool.resolvableAt(_index).resolve(_constantPool, _index));
+        }
+
+        public final Kind resultKind() {
+            return _resultKind;
+        }
+
+        /**
+         * Gets the kind of the field referenced by this operator.
+         *
+         * @throws VerifyError if this operator does not operate on a field
+         */
+        public final Kind fieldKind() {
+            return _constantPool.fieldAt(_index).type(_constantPool).toKind();
+        }
+
+        /**
+         * Determines if this operator includes a class initialization check.
+         */
+        public boolean requiresClassInitialization() {
+            return false;
+        }
+
+        /**
+         * Gets the class that must be initialized as a side effect of executing this operator.
+         */
+        private ClassActor classToBeInitialized() {
+            assert requiresClassInitialization() && _actor != null;
+            if (_actor instanceof MemberActor) {
+                return ((MemberActor) _actor).holder();
+            }
+            return (ClassActor) _actor;
+        }
+
+        /**
+         * Determines if the class to be initialized by this operator is indeed initialized. This must only be called
+         * for operators that included a {@linkplain #requiresClassInitialization() class initialization} check.
+         */
+        public final boolean isClassInitialized() {
+            assert requiresClassInitialization();
+            if (!isResolved()) {
+                return false;
+            }
+            return classToBeInitialized().isInitialized();
+        }
+
+        /**
+         * Ensures that the class to be initialized by this operator is indeed initialized.
+         * This must only be called for operators that included a {@linkplain #requiresClassInitialization() class initialization} check.
+         */
+        public final void initializeClass() {
+            assert requiresClassInitialization();
+            if (!isClassInitialized()) {
+                if (!isResolved()) {
+                    resolve();
+                }
+                classToBeInitialized().makeInitialized();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + ":" + _constantPool.at(_index).valueString(_constantPool);
+        }
+    }
+
     /**
      * This class is a work around for some non {@link JavaBuiltin} classes that can appear
      * in the CIR.   We list them here explicitly instead of allowing all builtins to be
@@ -131,6 +273,11 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         public boolean mayThrowException() {
             return _cirBuiltin.mayThrowException();
         }
+
+        @Override
+        public String toString() {
+            return _cirBuiltin.name();
+        }
     }
 
     /**
@@ -177,6 +324,10 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
             call.setProcedure(_snippet);
         }
 
+        @Override
+        public String toString() {
+            return _snippet.name();
+        }
     }
 
     /**
@@ -223,6 +374,11 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         @Override
         public boolean mayThrowException() {
             return _builtin.mayThrowException();
+        }
+
+        @Override
+        public String toString() {
+            return _builtin.name();
         }
     }
 

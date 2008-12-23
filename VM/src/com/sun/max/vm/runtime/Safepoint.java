@@ -294,4 +294,5 @@ public abstract class Safepoint {
     public abstract void setSafepointLatch(Pointer trapState, Pointer value);
     public abstract int getTrapNumber(Pointer trapState);
     public abstract Pointer getRegisterState(Pointer trapState);
+    public abstract void setTrapNumber(Pointer trapState, int trapNumber);
 }

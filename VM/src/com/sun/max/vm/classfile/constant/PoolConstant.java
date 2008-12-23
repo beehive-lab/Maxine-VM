@@ -177,9 +177,10 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
             return "classIndex=" + _classIndex + ",nameAndTypeIndex=" + _nameAndTypeIndex;
         }
         if (isFieldConstant()) {
-            return holder(pool).toJavaString(true) + "." + name(pool) + " " + type(pool).toJavaString(false);
+            return holder(pool).toJavaString(true) + '.' + name(pool) + ':' + type(pool).toJavaString(false);
         }
-        return holder(pool).toJavaString(true) + "." + name(pool) + signature(pool).toJavaString(false, true);
+        final SignatureDescriptor signature = signature(pool);
+        return holder(pool).toJavaString(true) + "." + name(pool) + signature.toJavaString(false, false) + ":" + signature.getResultDescriptor().toJavaString(false);
     }
 }
 
@@ -276,8 +277,8 @@ abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant
 
     public final String valueString(ConstantPool pool) {
         if (isFieldConstant()) {
-            return holder().toJavaString(true) + "." + name() + " " + type().toJavaString(false);
+            return holder().toJavaString(true) + '.' + name() + ':' + type().toJavaString(false);
         }
-        return holder().toJavaString(true) + "." + name() + signature().toJavaString(false, true);
+        return holder().toJavaString(true) + '.' + name() + signature().toJavaString(false, false) + '.' + signature().getResultDescriptor().toJavaString(false);
     }
 }

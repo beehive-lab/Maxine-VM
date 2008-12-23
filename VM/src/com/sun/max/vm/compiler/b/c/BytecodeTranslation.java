@@ -250,7 +250,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         if (cirRoutine.needsJavaFrameDescriptor()) {
             createJavaFrameDescriptor();
         }
-        final CirValue exceptionContinuation = cirRoutine.mayThrowException() ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
+        final CirValue exceptionContinuation;
+        if (cirRoutine.mayThrowException()) {
+            exceptionContinuation = getCurrentExceptionContinuation();
+        } else {
+            exceptionContinuation = CirValue.UNDEFINED;
+        }
         _currentCall.setArguments(Arrays.append(CirValue.class, regularArguments, normalContinuation, exceptionContinuation));
         _currentCall.setProcedure((CirProcedure) cirRoutine, currentLocation());
         _currentCall = new CirCall();

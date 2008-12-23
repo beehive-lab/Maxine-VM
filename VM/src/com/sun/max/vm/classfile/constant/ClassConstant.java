@@ -32,7 +32,7 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstant<ClassConstant>, PoolConstantKey<ClassConstant>, ResolvableConstant<ClassConstant> {
+public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstant<ClassConstant>, PoolConstantKey<ClassConstant>, ResolvableConstant<ClassConstant, ClassActor> {
 
     TypeDescriptor typeDescriptor();
 
