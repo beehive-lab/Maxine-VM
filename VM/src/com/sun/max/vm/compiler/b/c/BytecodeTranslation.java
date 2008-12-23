@@ -151,7 +151,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         // No control flow byte code has occurred,
         // so fall through to the adjacent basic block:
         _currentCall.setProcedure(getAdjacentContinuation(), null);
-        _currentCall.setArguments();
+        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     private void assign(CirVariable variable, CirValue value) {
@@ -275,7 +275,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void stackCall(CirRoutine cirRoutine) {
         final Kind[] parameterKinds = cirRoutine.parameterKinds();
         final int nRegularArguments = parameterKinds.length - 2;
-        final CirValue[] regularArguments = new CirVariable[nRegularArguments];
+        final CirValue[] regularArguments = CirClosure.newParameters(nRegularArguments);
         for (int i = nRegularArguments - 1; i >= 0; i--) {
             regularArguments[i] = pop(parameterKinds[i]);
         }
@@ -1012,7 +1012,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void goto_(int offset) {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
         _currentCall.setProcedure(getBranchContinuation(offset), currentLocation());
-        _currentCall.setArguments();
+        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     @Override
@@ -1028,7 +1028,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         final int nArguments = (numberOfCases * 2) + 2;
-        final CirValue[] arguments = new CirValue[nArguments];
+        final CirValue[] arguments = CirCall.newArguments(nArguments);
         arguments[0] = pop(Kind.INT);
         final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
@@ -1046,7 +1046,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
         final int nArguments = (numberOfCases * 2) + 2;
-        final CirValue[] arguments = new CirValue[nArguments];
+        final CirValue[] arguments = CirCall.newArguments(nArguments);
         arguments[0] = pop(Kind.INT);
         final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
@@ -1091,7 +1091,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void vreturn() {
         _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter(), currentLocation());
-        _currentCall.setArguments();
+        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     @Override
@@ -1199,7 +1199,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final InterfaceMethodRefConstant interfaceMethodRef = _constantPool.interfaceMethodAt(index);
         final SignatureDescriptor signatureDescriptor = interfaceMethodRef.signature(_constantPool);
         final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 3];
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 3);
         for (int i = parameterKinds.length - 1; i >= 0; i--) {
             arguments[i + 1] = _stack.pop();
         }
@@ -1214,7 +1214,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
         final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
         final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 3];
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 3);
         for (int i = parameterKinds.length - 1; i >= 0; i--) {
             arguments[i + 1] = _stack.pop();
         }
@@ -1239,7 +1239,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
         final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
         final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 2];
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 2);
         for (int i = parameterKinds.length - 1; i >= 0; i--) {
             arguments[i] = _stack.pop();
         }
@@ -1380,7 +1380,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void multianewarray(int index, int nDimensions) {
         final JavaOperator op = new MultiANewArray(_constantPool, index, nDimensions);
-        final CirVariable[] dimensions = new CirVariable[nDimensions];
+        final CirVariable[] dimensions = CirClosure.newParameters(nDimensions);
         for (int i = 1; i <= nDimensions; i++) {
             dimensions[nDimensions - i] = pop(Kind.INT);
         }
@@ -1416,7 +1416,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final CallNative op = new CallNative(_constantPool, nativeFunctionDescriptorIndex, _methodTranslation.classMethodActor());
         final SignatureDescriptor signatureDescriptor = op.signatureDescriptor();
         final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 2];
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 2);
         for (int i = parameterKinds.length - 1; i >= 0; i--) {
             arguments[i] = _stack.pop();
         }

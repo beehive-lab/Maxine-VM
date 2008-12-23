@@ -181,9 +181,9 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
                    ce);
     }
 
-    private CirCall callWithFrameDescriptor(CirValue procedure, CirValue ... arguments) {
+    private CirCall callWithFrameDescriptor(CirValue procedure, CirValue... arguments) {
         if (!throwsAny(_operator)) {
-            return new CirCall(procedure, arguments);
+            return new CirCall(procedure, arguments.length > 0 ? arguments : CirCall.NO_ARGUMENTS);
         }
         final CirCall call = new CirCall();
         call.setProcedure(procedure, _call.bytecodeLocation());
@@ -395,7 +395,7 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
                 final CirMethod targetCirMethod = operator.methodTranslation().cirGenerator().createIrMethod(targetMethod.classMethodActor());
                 final CirValue cachedHub = new CirConstant(ReferenceValue.from(mostFrequentHub));
                 final CirVariable hub = variableFactory().createTemporary(Kind.REFERENCE);
-                final CirValue[] argumentsCopy = new CirValue[_arguments.length];
+                final CirValue[] argumentsCopy = CirCall.newArguments(_arguments.length);
                 System.arraycopy(_arguments, 0, argumentsCopy, 0, _arguments.length);
                 lCirCall = call(
                                closure(

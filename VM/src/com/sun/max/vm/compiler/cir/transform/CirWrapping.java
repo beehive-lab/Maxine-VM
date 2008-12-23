@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.cir.variable.*;
 
 /**
  * Applies the transformation specified by the {@link WRAPPED} and {@link WRAPPER} annotations.
- * 
+ *
  * @author Doug Simon
  */
 public final class CirWrapping {
@@ -52,14 +52,14 @@ public final class CirWrapping {
         final CirVariable[] innerParameters = innerClosure.parameters();
         if (innerParameters.length != wrapperParameters.length) {
 
-            final CirVariable[] resultParameters = new CirVariable[innerParameters.length];
+            final CirVariable[] resultParameters = CirClosure.newParameters(innerParameters.length);
             final int wrapperNormalContinuationIndex = wrapperParameters.length - 2;
             final int resultNormalContinuationIndex = resultParameters.length - 2;
 
             Arrays.copy(wrapperParameters, 0, resultParameters, 0, wrapperNormalContinuationIndex);
             Arrays.copy(wrapperParameters, wrapperNormalContinuationIndex, resultParameters, resultNormalContinuationIndex, 2);
 
-            _extraArguments = new CirValue[innerParameters.length - wrapperParameters.length];
+            _extraArguments = CirCall.newArguments(innerParameters.length - wrapperParameters.length);
             for (int i = 0; i != _extraArguments.length; i++) {
                 final int resultParameterIndex = wrapperNormalContinuationIndex + i;
                 final CirVariable extraParameter = variableFactory.createFresh(innerParameters[resultParameterIndex]);
@@ -127,7 +127,7 @@ public final class CirWrapping {
     private void replaceWithCallToWrappedMethod(final CirCall call) {
         if (_extraArguments != null) {
             final CirValue[] oldArguments = call.arguments();
-            final CirValue[] newArguments = new CirValue[_innerClosure.parameters().length];
+            final CirValue[] newArguments = CirCall.newArguments(_innerClosure.parameters().length);
 
             final int oldNormalContinuationIndex = oldArguments.length - 2;
             final int newNormalContinuationIndex = newArguments.length - 2;

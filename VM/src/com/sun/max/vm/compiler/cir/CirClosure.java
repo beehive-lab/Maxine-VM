@@ -41,6 +41,10 @@ import com.sun.max.vm.type.*;
  */
 public class CirClosure extends CirProcedure {
 
+    public static CirVariable[] newParameters(int count) {
+        return count == 0 ? NO_PARAMETERS : new CirVariable[count];
+    }
+
     @Override
     public boolean isConstant() {
         return true;
@@ -155,7 +159,8 @@ public class CirClosure extends CirProcedure {
         }
         final CirBlock block = new CirBlock(body());
         CirFreeVariableSearch.applyClosureConversion(block.closure());
-        final CirValue[] arguments = Arrays.from(CirValue.class, block.closure().parameters());
+        final CirVariable[] parameters = block.closure().parameters();
+        final CirValue[] arguments = parameters.length > 0 ? Arrays.from(CirValue.class, parameters) : CirCall.NO_ARGUMENTS;
         setBody(new CirCall(block, arguments));
     }
 

@@ -46,7 +46,7 @@ public final class CirContinuation extends CirClosure {
 
     public CirContinuation() {
         super(null);
-        setParameters(CirClosure.NO_PARAMETERS);
+        setParameters(NO_PARAMETERS);
     }
 
     @Override
