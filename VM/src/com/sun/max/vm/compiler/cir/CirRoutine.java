@@ -99,7 +99,7 @@ public interface CirRoutine extends ExceptionThrower {
                 final Value result = evaluate(foldingMethodActor, cirArguments);
                 final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
                 if (result == VoidValue.VOID) {
-                    return new CirCall(normalContinuation);
+                    return new CirCall(normalContinuation, CirCall.NO_ARGUMENTS);
                 }
                 return new CirCall(normalContinuation, new CirConstant(result));
             } catch (InvocationTargetException invocationTargetException) {
@@ -112,7 +112,7 @@ public interface CirRoutine extends ExceptionThrower {
                 final Value result = evaluate(foldingConstructor, cirArguments);
                 final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
                 if (result == VoidValue.VOID) {
-                    return new CirCall(normalContinuation);
+                    return new CirCall(normalContinuation, CirCall.NO_ARGUMENTS);
                 }
                 return new CirCall(normalContinuation, new CirConstant(result));
             } catch (InvocationTargetException invocationTargetException) {

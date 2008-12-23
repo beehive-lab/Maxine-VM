@@ -65,7 +65,7 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
 
     public CirBlock(CirCall call) {
         _role = IrBlock.Role.NORMAL;
-        _closure = new CirClosure(call);
+        _closure = new CirClosure(call, CirClosure.NO_PARAMETERS);
     }
 
     public CirBlock(CirClosure closure) {
@@ -166,7 +166,7 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
             final CirFoldable foldable = (CirFoldable) procedure;
             final CirValue[] bodyArguments = _closure.body().arguments();
             final int n = bodyArguments.length;
-            final CirValue[] foldArguments = new CirValue[n];
+            final CirValue[] foldArguments = CirCall.newArguments(n);
             for (int i = 0; i < n; i++) {
                 if (bodyArguments[i].isConstant()) {
                     foldArguments[i] = bodyArguments[i];

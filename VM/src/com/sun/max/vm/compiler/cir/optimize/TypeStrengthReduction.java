@@ -109,7 +109,7 @@ public class TypeStrengthReduction {
                     if (op instanceof InstanceOf) {
                         call.assign(call(cont, CirConstant.fromInt(1)));
                     } else {
-                        call.assign(call(cont));
+                        call.assign(call(cont, CirCall.NO_ARGUMENTS));
                     }
                     st.append("  #reduced-true#");
                 } else {

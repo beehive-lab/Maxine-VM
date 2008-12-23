@@ -49,7 +49,7 @@ public class BirToCirMethodTranslation {
     private final CirClosure _rootClosure;
 
     public CirVariable[] createParameters(Kind[] parameterKinds) {
-        final CirVariable[] parameters = new CirVariable[parameterKinds.length + 2];
+        final CirVariable[] parameters = CirClosure.newParameters(parameterKinds.length + 2);
         int i = 0;
         final BytecodeLocation location = new BytecodeLocation(classMethodActor().compilee(), 0);
         while (i < parameterKinds.length) {

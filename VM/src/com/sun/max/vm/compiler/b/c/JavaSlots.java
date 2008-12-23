@@ -67,7 +67,7 @@ abstract class JavaSlots implements Cloneable {
     protected abstract int effectiveLength();
 
     public final CirValue[] makeDescriptor() {
-        final CirValue[] descriptor = new CirValue[effectiveLength()];
+        final CirValue[] descriptor = CirCall.newArguments(effectiveLength());
         for (int i = 0; i < descriptor.length; i++) {
             if (_slots[i] == null || _slots[i] instanceof FillerJavaStackSlot) {
                 descriptor[i] = CirValue.UNDEFINED;

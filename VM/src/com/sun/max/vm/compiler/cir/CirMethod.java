@@ -170,7 +170,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         // value now see an initialized object.
         final Value initializedObject = call.arguments()[0].value();
         uninitializedObject.setInitializedValue(initializedObject);
-        return new CirCall(getNormalContinuation(arguments));
+        return new CirCall(getNormalContinuation(arguments), CirCall.NO_ARGUMENTS);
     }
 
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {

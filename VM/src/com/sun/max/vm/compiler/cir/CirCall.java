@@ -44,6 +44,10 @@ public final class CirCall extends CirNode {
      */
     public static final CirValue[] NO_ARGUMENTS = {};
 
+    public static CirValue[] newArguments(int count) {
+        return count > 0 ? new CirValue[count] : NO_ARGUMENTS;
+    }
+
     private CirValue _procedure;
     private CirValue[] _arguments;
     private BytecodeLocation _bytecodeLocation;

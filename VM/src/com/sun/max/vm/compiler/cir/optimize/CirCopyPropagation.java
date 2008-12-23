@@ -81,7 +81,7 @@ public class CirCopyPropagation{
         final CirClosure proc = (CirClosure) call.procedure();
         final CirValue[] args = call.arguments();
         final CirVariable[] params = proc.parameters();
-        final CirValue[] subst = new CirValue[args.length];
+        final CirValue[] subst = CirCall.newArguments(args.length);
         assert params.length == args.length;
         for (int i = 0; i < params.length; i++) {
             if (params[i] instanceof CirContinuationVariable) {
