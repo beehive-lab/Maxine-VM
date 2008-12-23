@@ -170,13 +170,6 @@ public class AMD64InstructionEditor implements AssemblyInstructionEditor {
         _code[startPosition + 7] = (byte) (imm & 0xff);
     }
 
-    private int getImm64(int startPosition) {
-        int imm64 = 0;
-        imm64 |= getImm32(startPosition + 4) << 32;
-        imm64 |= getImm32(startPosition);
-        return imm64;
-    }
-
     public void fixDisplacement(WordWidth displacementWidth, boolean withIndex, int disp32) throws AssemblyException {
         if (displacementWidth != WordWidth.BITS_32) {
             throw new AssemblyException("Invalid offset width. Can't");

@@ -226,12 +226,6 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         traceAfterFindMethodActors(targetMethod, directCalls);
     }
 
-    private void traceFound(MethodActor methodActor) {
-        if (Trace.hasLevel(5)) {
-            Trace.line(5, "found: " + methodActor.format("%R %n(%P)"));
-        }
-    }
-
     private void traceBeforeFindMethodActors(TargetMethod targetMethod) {
         if (Trace.hasLevel(5)) {
             Trace.begin(5, "methodActorsReferencedByCalls: " + targetMethod.classMethodActor().format("%R %n(%P)"));

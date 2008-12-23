@@ -22,7 +22,6 @@ package com.sun.max.vm.heap.beltway;
 
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * This class is a generic Heap Scheme Configuration class.
@@ -38,8 +37,6 @@ public class BeltwayHeapSchemeConfiguration {
     public static final Size TLAB_SIZE = BeltwayCardRegion.cardSize().times(512).asSize();
     public static final Size GC_TLAB_SIZE = BeltwayCardRegion.cardSize().times(1).asSize();
     public static final int ALLIGNMENT = BeltwayCardRegion.cardSize().toInt();
-
-    private static HeapScheme _heapScheme;
 
     public BeltwayHeapSchemeConfiguration(Address applicationHeapStartAddress, Size applicationHeapMaxSize) {
         _applicationHeapStartAddress = applicationHeapStartAddress;
@@ -74,10 +71,5 @@ public class BeltwayHeapSchemeConfiguration {
     @INLINE
     public static Size getMaxHeapSize() {
         return _applicationHeapMaxSize;
-    }
-
-    @INLINE
-    public static void setHeapScheme(HeapScheme heapScheme) {
-        _heapScheme = heapScheme;
     }
 }

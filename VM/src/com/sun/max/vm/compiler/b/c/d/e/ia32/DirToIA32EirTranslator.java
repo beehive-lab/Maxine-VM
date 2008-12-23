@@ -35,10 +35,6 @@ public class DirToIA32EirTranslator extends IA32EirGenerator {
         super(eirGeneratorScheme);
     }
 
-    private DirToIA32EirMethodTranslation getMethodTranslation(EirMethod eirMethod, DirMethod dirMethod) {
-        return new DirToIA32EirMethodTranslation(this, eirMethod, dirMethod);
-    }
-
     @Override
     protected void generateIrMethod(EirMethod eirMethod, CompilationDirective compilationDirective) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();

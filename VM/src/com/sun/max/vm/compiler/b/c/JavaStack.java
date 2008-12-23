@@ -43,7 +43,7 @@ final class JavaStack extends JavaSlots {
         _slots[_stackPointer] = slot;
         _stackPointer++;
         if (kind == Kind.LONG || kind == Kind.DOUBLE) {
-            _slots[_stackPointer] = new FillerJavaStackSlot(kind);
+            _slots[_stackPointer] = new FillerJavaStackSlot();
             _stackPointer++;
         }
         return variable;

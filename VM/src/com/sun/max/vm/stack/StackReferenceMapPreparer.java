@@ -802,11 +802,6 @@ public final class StackReferenceMapPreparer {
     }
 
     @INLINE
-    private static int referenceMapWordIndex(final Pointer lowestStackSlot, Pointer slot) {
-        return (slot.minus(lowestStackSlot).toInt() / Word.size()) / Word.numberOfBits();
-    }
-
-    @INLINE
     private static int referenceMapBitIndex(final Pointer lowestStackSlot, Pointer slot) {
         return slot.minus(lowestStackSlot).toInt() / Word.size();
     }
