@@ -23,57 +23,18 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.type.*;
 
 
-public class InstanceOf extends JavaOperator {
-    private final int _index;
-    private final ConstantPool _constantPool;
-    private ClassActor _classActor;
+public class InstanceOf extends JavaResolvableOperator<ClassActor> {
 
     public InstanceOf(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        final ClassConstant classConstant = constantPool.classAt(index);
-        if (classConstant.isResolvableWithoutClassLoading(constantPool)) {
-            _classActor = classConstant.resolve(constantPool, index);
-        } else {
-            _classActor = null;
-        }
-    }
-
-    public boolean isResolved() {
-        return _classActor != null;
-    }
-
-    public void resolve() {
-        _classActor = _constantPool.classAt(_index).resolve(_constantPool, _index);
-    }
-
-    @Override
-    public Kind resultKind() {
-        return Kind.BOOLEAN;
-    }
-
-    public int index() {
-        return _index;
-    }
-
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
-    public ClassActor classActor() {
-        return _classActor;
+        super(constantPool, index, Kind.BOOLEAN);
     }
 
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
-    }
-
-    @Override
-    public String toString() {
-        return "<Instanceof_" + (isResolved() ? _classActor.toString() : _index + "") + ">";
     }
 }

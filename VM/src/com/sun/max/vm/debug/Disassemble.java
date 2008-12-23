@@ -109,10 +109,12 @@ public final class Disassemble {
                 final String string = super.disassembledObjectString(disassembler, disassembledObject);
                 if (string.startsWith("call ")) {
                     final BytecodeLocation bytecodeLocation = targetMethod.getBytecodeLocationFor(startAddress.plus(disassembledObject.startPosition()));
-                    final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
-                    if (methodRef != null) {
-                        final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
-                        return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                    if (bytecodeLocation != null) {
+                        final MethodRefConstant methodRef = bytecodeLocation.getCalleeMethodRef();
+                        if (methodRef != null) {
+                            final ConstantPool pool = bytecodeLocation.classMethodActor().codeAttribute().constantPool();
+                            return string + " [" + methodRef.holder(pool).toJavaString(false) + "." + methodRef.name(pool) + methodRef.signature(pool).toJavaString(false, false) + "]";
+                        }
                     }
                 }
                 return string;

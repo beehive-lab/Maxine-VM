@@ -41,8 +41,9 @@ public class MonitorEnter extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
+
     @Override
     public String toString() {
-        return "Monitorenter";
+        return "MonitorEnter";
     }
 }

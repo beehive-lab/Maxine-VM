@@ -182,6 +182,11 @@ public final class SPARCSafepoint extends Safepoint {
         return trapState.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
     }
 
+    @Override
+    public void setTrapNumber(Pointer trapState, int trapNumber) {
+        trapState.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
+    }
+
     public Pointer getCallAddressRegister(Pointer trapState) {
         return trapState.readWord(TRAP_CALL_ADDRESS_OFFSET).asPointer();
     }

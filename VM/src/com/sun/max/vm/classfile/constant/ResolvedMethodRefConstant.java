@@ -98,6 +98,6 @@ public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolCo
     }
 
     public final String valueString(ConstantPool pool) {
-        return _methodActor.format("%H.%n(%p)");
+        return _methodActor.format("%H.%n(%p):%r");
     }
 }

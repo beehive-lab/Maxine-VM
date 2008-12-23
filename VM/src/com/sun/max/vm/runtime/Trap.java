@@ -50,10 +50,14 @@ import com.sun.max.vm.thread.*;
 public final class Trap {
 
     /**
-     * The numeric identifiers for the traps that can be handled by the VM.
-     * Note that these do not correspond with the native signals.
+     * The numeric identifiers for the traps that can be handled by the VM. Note that these do not correspond with the
+     * native signals.
      *
-     * The values defined here must correspond to those of the same name defined in Native/substrate/trap.c.
+     * The values defined here (except for {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT}) must correspond to
+     * those of the same name defined in Native/substrate/trap.c.
+     *
+     * The {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT} values are used in
+     * {@link Trap#handleMemoryFault(Pointer, Pointer, Pointer, Pointer, Address)} to disambiguate a memory fault.
      */
     public static final class Number {
         public static final int MEMORY_FAULT = 0;
@@ -61,6 +65,14 @@ public final class Trap {
         public static final int ILLEGAL_INSTRUCTION = 2;
         public static final int ARITHMETIC_EXCEPTION = 3;
         public static final int ASYNC_INTERRUPT = 4;
+
+        // These last two numbers are only known by the Java code and are used to
+        public static final int NULL_POINTER_EXCEPTION = 5;
+        public static final int SAFEPOINT = 6;
+
+        public static boolean isImplicitException(int trapNumber) {
+            return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT;
+        }
     }
 
     private static VMOption _dumpStackOnTrap =
@@ -167,19 +179,19 @@ public final class Trap {
      * the trap, this method will return a reference to that runtime stub. Otherwise, this method returns {@code null},
      * indicating the trap occurred in native code.
      *
-     * @param trap the trap number
+     * @param trapNumber the trap number
      * @param trapState the trap state area on the stack
      * @param trapInstructionPointer the instruction pointer where the trap occurred
      * @return a reference to the {@code TargetMethod} containing the instruction pointer that caused the trap; {@code
      *         null} if neither a runtime stub nor a target method produced the trap
      */
-    private static Object checkTrapOrigin(int trap, Pointer trapState, Address trapInstructionPointer) {
+    private static Object checkTrapOrigin(int trapNumber, Pointer trapState, Address trapInstructionPointer) {
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
         final Pointer instructionPointer = safepoint.getInstructionPointer(trapState);
 
         if (_dumpStackOnTrap.isPresent()) {
             Log.print("Trap ");
-            Log.print(trap);
+            Log.print(trapNumber);
             Log.print(" @ ");
             Log.print(instructionPointer);
             Log.print(", trap instruction pointer: ");
@@ -197,14 +209,14 @@ public final class Trap {
         final RuntimeStub runtimeStub = Code.codePointerToRuntimeStub(instructionPointer);
         if (runtimeStub != null) {
             Log.print("Trap ");
-            Log.print(trap);
+            Log.print(trapNumber);
             Log.print(" in runtime stub @ ");
             return runtimeStub;
         }
 
         // this fault occurred in native code
         Log.print("Trap ");
-        Log.print(trap);
+        Log.print(trapNumber);
         Log.print(" in native code @ ");
         Log.println(instructionPointer);
 
@@ -213,7 +225,7 @@ public final class Trap {
 
     /**
      * Handle a memory fault for this thread. A memory fault can be caused by an implicit null pointer check,
-     * a segmentation fault, a safepoint being triggered, or an error in native code.
+     * a safepoint being triggered, or a segmentation fault in native code.
      *
      * @param instructionPointer the instruction pointer that caused the fault
      * @param stackPointer the stack pointer at the time of the fault
@@ -233,6 +245,7 @@ public final class Trap {
             // a safepoint has been triggered for this thread. run the specified procedure
             final Reference reference = VmThreadLocal.SAFEPOINT_PROCEDURE.getVariableReference(triggeredVmThreadLocals);
             final Safepoint.Procedure runnable = UnsafeLoophole.cast(reference.toJava());
+            safepoint.setTrapNumber(trapState, Number.SAFEPOINT);
             if (runnable != null) {
                 // run the procedure and then set the vm thread local to null
                 runnable.run(trapState);
@@ -244,6 +257,7 @@ public final class Trap {
                 VmThreadLocal.SAFEPOINT_PROCEDURE.setVariableReference(triggeredVmThreadLocals, null);
             }
         } else if (inJava(disabledVmThreadLocals)) {
+            safepoint.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
             final NullPointerException error = new NullPointerException();
             Throw.raise(error, stackPointer, framePointer, instructionPointer);
