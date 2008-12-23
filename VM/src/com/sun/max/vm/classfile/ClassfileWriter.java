@@ -342,12 +342,6 @@ public class ClassfileWriter {
             final String sourceFileName = classActor.sourceFileName();
 
             if (sourceFileName != null) {
-                class SourceFile extends Attribute {
-                    SourceFile() {
-                        super("SourceFile");
-                    }
-                }
-
                 _attributes.append(new Attribute("SourceFile") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {

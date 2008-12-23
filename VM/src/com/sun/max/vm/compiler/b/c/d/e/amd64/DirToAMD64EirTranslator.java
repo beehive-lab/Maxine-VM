@@ -37,10 +37,6 @@ public class DirToAMD64EirTranslator extends AMD64EirGenerator {
         super(eirGeneratorScheme);
     }
 
-    private DirToAMD64EirMethodTranslation getMethodTranslation(EirMethod eirMethod, DirMethod dirMethod) {
-        return new DirToAMD64EirMethodTranslation(this, eirMethod, dirMethod);
-    }
-
     @Override
     protected void generateIrMethod(EirMethod eirMethod, CompilationDirective compilationDirective) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();

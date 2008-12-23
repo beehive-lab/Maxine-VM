@@ -470,10 +470,6 @@ class CirToDirMethodTranslation {
         generateDirGoto(translation, t);
     }
 
-    private void translateBlockCall(Translation translation, CirBlock cirBlock, CirValue[] cirArguments) {
-
-    }
-
     private void translate(Translation translation) {
         final CirCall cirCall = translation._closure.body();
         final CirValue cirProcedure = cirCall.procedure();

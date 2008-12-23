@@ -111,8 +111,6 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
                     "Selects JIT only mode, with no recompilation.", MaxineVM.Phase.STARTING);
     private static final VMOption _optOption = new VMOption("-Xopt",
                     "Selects optimized only mode.", MaxineVM.Phase.STARTING);
-    private static final VMOption _mixedOption = new VMOption("-Xmixed",
-                    "Selects mixed mode, where methods are JITted and later reoptimized.", MaxineVM.Phase.STARTING);
     private static final VMIntOption _thresholdOption = new VMIntOption("-XX:RCT=", DEFAULT_RECOMPILATION_THRESHOLD,
                     "In mixed mode, sets the recompilation threshold for methods.", MaxineVM.Phase.STARTING);
     static final VMOption _gcOnCompileOption = new VMOption("-XX:GCOnCompilation",

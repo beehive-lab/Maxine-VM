@@ -35,13 +35,13 @@ import com.sun.max.vm.type.*;
  * A bytecode assembler. The bytecode instructions supported
  * by this assembler are a subset of the full JVM bytecode instruction
  * set. As extra instructions are needed, they will be added.
- * 
+ *
  * There is support for assembling forward branches (i.e.
  * branches whose target address is not known at the time the branch
  * instruction is assembled). Any use of such branches, requires
  * {@link #fixup()} to be called before the assembled code is
  * used.
- * 
+ *
  * @author Doug Simon
  * @author Bernd Mathiske
  */
@@ -49,7 +49,7 @@ public abstract class BytecodeAssembler {
 
     /**
      * A label is a place holder for the target address of a branch.
-     * 
+     *
      * If labels are used while assembling a method, then {@link BytecodeAssembler#fixup()}
      * must be called before the assembled code is used.
      */
@@ -100,7 +100,7 @@ public abstract class BytecodeAssembler {
 
         /**
          * Creates a placeholder for a forward branch instruction.
-         * 
+         *
          * @param opcodeAddress
          *                the address at which the instruction's opcode is located in the instruction stream
          * @param size
@@ -170,7 +170,7 @@ public abstract class BytecodeAssembler {
      * Adjusts the current stack height. Clients should call this to re-adjust the stack tdepth racking at
      * the beginning of basic blocks as this assembler only accurately tracks the stack depth within
      * a basic block.
-     * 
+     *
      * @param depth the new stack depth
      */
     public void setStack(int depth) {
@@ -359,13 +359,6 @@ public abstract class BytecodeAssembler {
     private void emitCPIndex2(int index) {
         assert (index & 0xffff) == index;
         emitOffset2(index);
-    }
-
-    /**
-     * Emits a 4-byte index into the constant pool.
-     */
-    private void emitCPIndex4(int index) {
-        emitOffset4(index);
     }
 
     public void branch(Bytecode opcode, int address) {
