@@ -22,6 +22,7 @@
 package com.sun.max.vm.compiler.cir.optimize;
 
 import com.sun.max.collect.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.operator.*;
@@ -122,11 +123,15 @@ public class EnvBasedInitializedAnalysis extends EnvBasedDFA<InitializedDomain.S
             }
             @Override
             public void visit(ArrayLoad op) {
-                op.setCanRaiseNullPointerException(!val(0).isInitialized());
+                if (val(0).isInitialized()) {
+                    op.removeThrownExceptions(ExceptionThrower.NULL_POINTER_EXCEPTION);
+                }
             }
             @Override
             public void visit(ArrayStore op) {
-                op.setCanRaiseNullPointerException(!val(0).isInitialized());
+                if (val(0).isInitialized()) {
+                    op.removeThrownExceptions(ExceptionThrower.NULL_POINTER_EXCEPTION);
+                }
             }
         }
 

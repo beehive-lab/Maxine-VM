@@ -48,16 +48,61 @@ import com.sun.max.vm.type.*;
  */
 public abstract class JavaOperator extends CirOperator implements CirRoutine {
 
-    @Override
-    public boolean mayThrowException() {
-        return true;
+    protected int _thrownExceptions;
+
+    /**
+     * Creates an object for the application of an operator that can initially raise any operation
+     * until subsequent analysis proves otherwise.
+     */
+    protected JavaOperator() {
+        this(ANY);
+    }
+
+    /**
+     * Creates an object for the application of an operator that is known a priori to only throw a specific exception.
+     * Subsequent analysis may be able to prove the exception is never thrown for this specific instance of the operator.
+     */
+    protected JavaOperator(int thrownExceptions) {
+        _thrownExceptions = thrownExceptions;
+    }
+
+    public final int thrownExceptions() {
+        return _thrownExceptions;
+    }
+
+    /**
+     * Sets the exception(s) that can be thrown by this operator, overriding any previously set exception(s).
+     *
+     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower}
+     */
+    public final void setThrownExceptions(int thrownExceptions) {
+        _thrownExceptions = thrownExceptions;
+    }
+
+    /**
+     * Adds one or more exceptions to the exceptions that can be thrown by this operator.
+     *
+     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower} that is added to the
+     *            current set of flags set for this operator
+     */
+    public final void addThrownExceptions(int thrownExceptions) {
+        _thrownExceptions |= thrownExceptions;
+    }
+
+    /**
+     * Removes one or more exceptions from the exceptions that can be thrown by this operator.
+     *
+     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower} that is removed from the
+     *            current set of flags set for this operator
+     */
+    public final void removeThrownExceptions(int thrownExceptions) {
+        _thrownExceptions &= ~thrownExceptions;
     }
 
     @Override
     public Kind[] parameterKinds() {
         throw Problem.unimplemented();
     }
-
 
     @Override
     public MethodActor foldingMethodActor() {
@@ -107,7 +152,8 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         @CONSTANT_WHEN_NOT_ZERO
         protected Actor_Type _actor;
 
-        public JavaResolvableOperator(ConstantPool constantPool, int index, Kind resultKind) {
+        public JavaResolvableOperator(int thrownExceptions, ConstantPool constantPool, int index, Kind resultKind) {
+            super(thrownExceptions);
             _constantPool = constantPool;
             _index = index;
             _resultKind = resultKind;
@@ -221,9 +267,9 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
     }
 
     /**
-     * This class is a work around for some non {@link JavaBuiltin} classes that can appear
+     * This class is a work around for some {@link JavaBuiltin} classes that can appear
      * in the CIR.   We list them here explicitly instead of allowing all builtins to be
-     * valid HCir operators.
+     * valid HCIR operators.
      *
      * @author Yi Guo
      * @author Aziz Ghuloum
@@ -237,6 +283,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         private final CirBuiltin _cirBuiltin;
 
         private JavaBuiltinOperator(Builtin builtin) {
+            super(builtin.thrownExceptions());
             _cirBuiltin = CirBuiltin.get(builtin);
         }
 
@@ -270,11 +317,6 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         }
 
         @Override
-        public boolean mayThrowException() {
-            return _cirBuiltin.mayThrowException();
-        }
-
-        @Override
         public String toString() {
             return _cirBuiltin.name();
         }
@@ -288,10 +330,11 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
      * @author Yi Guo
      * @author Aziz Ghuloum
      */
-    private static final class JavaSnippetOperator extends JavaOperator implements Lowerable {
+    static final class JavaSnippetOperator extends JavaOperator implements Lowerable {
         private final CirSnippet _snippet;
 
-        private JavaSnippetOperator(Snippet snippet) {
+        JavaSnippetOperator(Snippet snippet) {
+            super(NONE);
             _snippet = CirSnippet.get(snippet);
         }
 
@@ -340,6 +383,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         private final Builtin _builtin;
         private final Snippet _snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
+            super(builtin.thrownExceptions());
             _builtin = builtin;
             _snippet = snippet;
         }
@@ -369,11 +413,6 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         @Override
         public void acceptVisitor(HCirOperatorVisitor visitor) {
             visitor.visit(this);
-        }
-
-        @Override
-        public boolean mayThrowException() {
-            return _builtin.mayThrowException();
         }
 
         @Override

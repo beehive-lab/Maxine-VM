@@ -255,8 +255,8 @@ public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, 
     }
 
     @Override
-    public boolean mayThrowException() {
-        return _builtin.mayThrowException();
+    public int thrownExceptions() {
+        return _builtin.thrownExceptions();
     }
 
     @Override

@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.cir.transform.*;
 public class GetStatic extends JavaResolvableOperator<FieldActor> {
 
     public GetStatic(ConstantPool constantPool, int index) {
-        super(constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
+        super(NONE, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
     }
 
     @Override

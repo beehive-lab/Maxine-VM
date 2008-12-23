@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class New extends JavaResolvableOperator<ClassActor> {
 
     public New(ConstantPool constantPool, int index) {
-        super(constantPool, index, Kind.REFERENCE);
+        super(NONE, constantPool, index, Kind.REFERENCE);
     }
 
     @Override

@@ -33,7 +33,7 @@ public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
     private final BlockState _blockState;
 
     public InvokeVirtual(ConstantPool constantPool, int index, BirToCirMethodTranslation translation, BlockState blockState) {
-        super(constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
+        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
         _translation = translation;
         _blockState = blockState;
     }

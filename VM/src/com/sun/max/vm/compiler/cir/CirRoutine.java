@@ -24,6 +24,7 @@ import java.lang.reflect.*;
 
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.type.*;
@@ -34,7 +35,7 @@ import com.sun.max.vm.value.*;
  *
  * "To fold" is a generalization of "to constant-fold". It means "to evaluate", typically "to meta-evaluate".
  */
-public interface CirRoutine {
+public interface CirRoutine extends ExceptionThrower {
 
     String name();
 
@@ -55,12 +56,7 @@ public interface CirRoutine {
      */
     boolean needsJavaFrameDescriptor();
 
-    /**
-     * @return whether this operator can be raise a run-time exception and thus requires an
-     * exception handler.  Operators that cannot throw exceptions get a void exception handler.
-     */
-    boolean mayThrowException();
-
+    int thrownExceptions();
 
     public static final class Static {
         private Static() {

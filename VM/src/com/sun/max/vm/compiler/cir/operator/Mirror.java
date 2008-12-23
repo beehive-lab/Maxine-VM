@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class Mirror extends JavaResolvableOperator<ClassActor> {
 
     public Mirror(ConstantPool constantPool, int index) {
-        super(constantPool, index, Kind.REFERENCE);
+        super(NONE, constantPool, index, Kind.REFERENCE);
     }
 
     @Override

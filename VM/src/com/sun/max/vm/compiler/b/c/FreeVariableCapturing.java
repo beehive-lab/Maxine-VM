@@ -286,6 +286,11 @@ final class FreeVariableCapturing {
 
     private void addCanonicalArgumentsToCall(CirCall call, BlockInfo info) {
         final CirValue[] args = call.arguments();
+        if (args.length == 0 && info._freeVariables.isEmpty()) {
+            call.setArguments(CirCall.NO_ARGUMENTS);
+            return;
+        }
+
         final CirValue[] free = Sequence.Static.toArray(info._freeVariables, CirValue.class);
         final CirValue[] all = new CirValue[free.length + args.length];
         for (int i = 0; i < free.length; i++) {

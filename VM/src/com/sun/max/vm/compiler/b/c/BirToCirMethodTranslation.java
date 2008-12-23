@@ -153,7 +153,7 @@ public class BirToCirMethodTranslation {
     }
 
     public CirCall newCirCall(CirBlock block) {
-        final CirCall call = new CirCall(block);
+        final CirCall call = new CirCall(block, CirCall.NO_ARGUMENTS);
         block.addCall(call);
         return call;
     }

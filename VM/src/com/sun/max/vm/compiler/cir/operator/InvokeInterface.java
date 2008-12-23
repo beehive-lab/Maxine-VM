@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.cir.transform.*;
 public class InvokeInterface extends JavaResolvableOperator<InterfaceMethodActor> {
 
     public InvokeInterface(ConstantPool constantPool, int index) {
-        super(constantPool, index, constantPool.interfaceMethodAt(index).signature(constantPool).getResultKind());
+        super(NULL_POINTER_EXCEPTION | ANY, constantPool, index, constantPool.interfaceMethodAt(index).signature(constantPool).getResultKind());
     }
 
     @Override

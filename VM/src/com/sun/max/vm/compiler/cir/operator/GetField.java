@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.cir.transform.*;
 public class GetField extends JavaResolvableOperator<FieldActor> {
 
     public GetField(ConstantPool constantPool, int index) {
-        super(constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
+        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
     }
 
     @Override

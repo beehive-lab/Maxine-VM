@@ -23,16 +23,26 @@ package com.sun.max.vm.compiler.cir;
 import com.sun.max.lang.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.transform.*;
+import com.sun.max.vm.compiler.cir.variable.*;
 
 /**
- * Procedure application.
+ * A CIR call is an application of procedure.
  * <p>
- * In a {@link CirPrinter trace}, procedure application is indicated
- * by an argument list in parentheses.
+ * In a {@link CirPrinter trace}, procedure application is displayed as:
+ *
+ * <pre>
+ * procedure ( arguments... )
+ * </pre>
  *
  * @author Bernd Mathiske
  */
 public final class CirCall extends CirNode {
+
+    /**
+     * The value that must be used when passing a zero-length array as the value of {@code parameters} to
+     * {@link #CirCall(CirValue, CirValue...)} and {@link #setParameters(CirVariable...)}.
+     */
+    public static final CirValue[] NO_ARGUMENTS = {};
 
     private CirValue _procedure;
     private CirValue[] _arguments;
@@ -42,6 +52,13 @@ public final class CirCall extends CirNode {
     public CirCall() {
     }
 
+    /**
+     * Creates a CIR call node to represent application of a procedure.
+     *
+     * @param procedure the procedure being applied
+     * @param arguments the arguments of this procedure application. If {@code arguments.length == 0}, then the value of
+     *            {@code arguments} must be {@link #NO_ARGUMENTS}.
+     */
     public CirCall(CirValue procedure, CirValue... arguments) {
         setProcedure(procedure, null);
         setArguments(arguments);
@@ -71,7 +88,14 @@ public final class CirCall extends CirNode {
         return _procedure;
     }
 
+    /**
+     * Sets the arguments of this CIR call.
+     *
+     * @param arguments the arguments of this procedure application. If {@code arguments.length == 0}, then the value of
+     *            {@code arguments} must be {@link #NO_ARGUMENTS}.
+     */
     public void setArguments(CirValue... arguments) {
+        assert arguments.length > 0 || arguments == NO_ARGUMENTS;
         _arguments = arguments;
         assert arguments.getClass() == CirValue[].class;
     }
@@ -90,7 +114,12 @@ public final class CirCall extends CirNode {
     }
 
     public void removeArgument(int index) {
-        _arguments = Arrays.remove(CirValue.class, _arguments, index);
+        if (_arguments.length == 1) {
+            _arguments = NO_ARGUMENTS;
+        } else {
+            assert _arguments.length > 0;
+            _arguments = Arrays.remove(CirValue.class, _arguments, index);
+        }
     }
 
     /**

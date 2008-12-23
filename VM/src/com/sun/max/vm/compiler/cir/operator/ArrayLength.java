@@ -27,6 +27,10 @@ import com.sun.max.vm.type.*;
 
 public class ArrayLength extends JavaOperator {
 
+    public ArrayLength() {
+        super(NULL_POINTER_EXCEPTION);
+    }
+
     @Override
     public Kind resultKind() {
         return Kind.INT;

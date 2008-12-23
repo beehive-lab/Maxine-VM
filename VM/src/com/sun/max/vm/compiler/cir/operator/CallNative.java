@@ -32,6 +32,7 @@ public class CallNative extends JavaOperator {
     private final MethodActor _classMethodActor;
 
     public CallNative(ConstantPool constantPool, int nativeFunctionDescriptorIndex, MethodActor classMethodActor) {
+        super(ANY);
         _signatureDescriptor = SignatureDescriptor.create(constantPool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
         _classMethodActor = classMethodActor;
     }
