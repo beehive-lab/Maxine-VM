@@ -698,7 +698,7 @@ public final class HCirOperatorLoweringVisitor extends HCirOperatorDefaultVisito
     public void visit(ArrayLength operator) {
         assert _arguments.length == 3;
         final CirValue receiver = _arguments[0];
-        final CirValue npeK = operand.canRaiseNullPointerException() ? ce() : CirValue.UNDEFINED;
+        final CirValue npeK = operator.canRaiseNullPointerException() ? ce() : CirValue.UNDEFINED;
         _call.assign(callWithFrameDescriptor(CirSnippet.get(ArrayGetSnippet.ReadLength.SNIPPET), receiver, cc(), npeK));
     }
 
