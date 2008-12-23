@@ -65,7 +65,11 @@ public abstract class Actor {
     // VM-internal flags for classes:
     public static final int INNER_CLASS =    0x00100000;
     public static final int TEMPLATE =       0x00200000;
-    public static final int GENERATED =      0x00400000; // does not come from a class file
+
+    /**
+     * The flag value denoting that a class is not from a class file.
+     */
+    public static final int GENERATED = 0x00400000;
 
     // Common flags referring to fields in #4.5, Table #4.4:
     public static final int ACC_VOLATILE =   0x00000040;
@@ -341,6 +345,9 @@ public abstract class Actor {
         return (flags & TEMPLATE) != 0;
     }
 
+    /**
+     * Determines if a given flags value includes {@link #GENERATED}.
+     */
     @INLINE
     public static boolean isGenerated(int flags) {
         return (flags & GENERATED) != 0;

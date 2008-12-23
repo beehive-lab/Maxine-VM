@@ -119,12 +119,6 @@ public class VmThread {
 
     private  TLAB _tlab = new TLAB();
 
-    /**
-     * Gets the number of bytes that would be used to cover the usual case when allocating an alternate stack area.
-     */
-    @C_FUNCTION
-    private static native int nativeGetDefaultThreadSignalStackSize();
-
     private Address _guardPage = Address.zero();
 
     @CONSTANT
@@ -423,14 +417,6 @@ public class VmThread {
             return _mainVMThread;
         }
         return UnsafeLoophole.cast(VmThread.class, VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
-    }
-
-    @INLINE
-    private static Word currentNativeThread() {
-        if (MaxineVM.isPrototyping()) {
-            return Pointer.zero();
-        }
-        return NATIVE_THREAD.getConstantWord();
     }
 
     public static final Address TAG = Address.fromLong(0xbabacafecabafebaL);

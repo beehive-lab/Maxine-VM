@@ -29,11 +29,13 @@ import com.sun.max.vm.type.*;
 /**
  * A CIR closure is a procedure whose body is defined by a {@link CirCall CIR call}.
  * <p>
- * A closure has an array of parameters, which can be referred to
- * within the body of the call.
+ * A closure has an array of parameters, which can be referred to within the body of the call.
  * <p>
- * In the {@link CirPrinter trace} output a CirClosure shows up as
+ * In the {@link CirPrinter trace} output a CirClosure shows up as:
+ *
+ * <pre>
  * proc[parameters...] { body }
+ * </pre>
  *
  * @author Bernd Mathiske
  */
@@ -48,10 +50,23 @@ public class CirClosure extends CirProcedure {
     private CirCall _body;
     private final BytecodeLocation _location;
 
+    /**
+     * The value that must be used when passing a zero-length array as the value of {@code parameters} to
+     * {@link #CirClosure(CirCall, CirVariable...)} and {@link #setParameters(CirVariable...)}.
+     */
+    public static final CirVariable[] NO_PARAMETERS = {};
+
     public CirClosure(BytecodeLocation location) {
         _location = location;
     }
 
+    /**
+     * Creates a closure for a given body and set of parameters.
+     *
+     * @param body the body of the closure
+     * @param parameters the parameters of this closure. If {@code parameters.length == 0} then the value of {@code
+     *            parameters} must be {@link #NO_PARAMETERS}.
+     */
     public CirClosure(CirCall body, CirVariable... parameters) {
         setParameters(parameters);
         _body = body;
@@ -81,7 +96,14 @@ public class CirClosure extends CirProcedure {
         return true;
     }
 
+    /**
+     * Sets the parameters of this closure.
+     *
+     * @param parameters the parameters of this closure. If {@code parameters.length == 0} then the value of {@code
+     *            parameters} must be {@link #NO_PARAMETERS}.
+     */
     public void setParameters(CirVariable... parameters) {
+        assert parameters.length > 0 || parameters == CirClosure.NO_PARAMETERS;
         _parameters = parameters;
     }
 

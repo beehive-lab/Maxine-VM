@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
-import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -71,16 +70,6 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     protected BiasedLockModeHandler(ModeDelegate delegate) {
         super(delegate);
-    }
-
-    @C_FUNCTION
-    private static void safepointInNativeStub() {
-        FatalError.unexpected("code for safepointInNativeStub() is assembled");
-    }
-
-    @C_FUNCTION
-    private static void safepointInJavaStub() {
-        FatalError.unexpected("code for safepointInNativeStub() is assembled");
     }
 
     @Override

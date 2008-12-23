@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.eir;
 
 import com.sun.max.*;
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -41,8 +40,6 @@ public abstract class EirGenerator<EirGeneratorScheme_Type extends EirGeneratorS
     public EirABIsScheme eirABIsScheme() {
         return _eirABIsScheme;
     }
-
-    private Pool<EirRegister> _registerPool;
 
     private final WordWidth _wordWidth;
 

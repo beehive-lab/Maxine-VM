@@ -96,7 +96,18 @@ public abstract class ClassActor extends Actor {
                          TypeDescriptor outerClass,
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
-        checkProhibited(name);
+        if (MaxineVM.isPrototyping()) {
+            checkProhibited(name);
+            if (MaxineVM.isMaxineClass(typeDescriptor)) {
+                _initializationState = InitializationState.INITIALIZED;
+            } else {
+                _initializationState = InitializationState.VERIFIED;
+            }
+
+        } else {
+            _initializationState = InitializationState.PREPARED;
+        }
+
         _majorVersion = majorVersion;
         _minorVersion = minorVersion;
         _kind = kind;
@@ -134,6 +145,8 @@ public abstract class ClassActor extends Actor {
 
         _localStaticFieldActors = InjectedFieldActor.Static.injectFieldActors(true, Arrays.filter(fieldActors, Actor._staticPredicate), typeDescriptor);
         _localInstanceFieldActors = InjectedFieldActor.Static.injectFieldActors(false, Arrays.filter(fieldActors, Actor._dynamicPredicate), typeDescriptor);
+
+        _clinit = findLocalStaticMethodActor(SymbolTable.CLINIT);
 
         assignHolderToLocalFieldActors();
 
@@ -630,6 +643,11 @@ public abstract class ClassActor extends Actor {
         return null;
     }
 
+    /**
+     * The class initializer for this class or null if this class has not class initializer.
+     */
+    private final StaticMethodActor _clinit;
+
     @INSPECTED
     private final StaticMethodActor[] _localStaticMethodActors;
 
@@ -1001,6 +1019,7 @@ public abstract class ClassActor extends Actor {
         _prohibitedPackagePrefix = (prefix == null) ? null : prefix.name();
     }
 
+    @PROTOTYPE_ONLY
     private void checkProhibited(Utf8Constant typeName) {
         if (MaxineVM.isPrototyping()) {
             if (_prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
@@ -1365,13 +1384,19 @@ public abstract class ClassActor extends Actor {
         ERROR, PREPARED, VERIFIED, INITIALIZING, INITIALIZED
     }
 
-    private InitializationState _initializationState = MaxineVM.isPrototyping() ? InitializationState.INITIALIZED : InitializationState.PREPARED;
-    private Thread _initializingThread = null;
+    private InitializationState _initializationState;
+    private Thread _initializingThread;
+
+    /**
+     * Determines if this class actor has a parameterless static method named "<clinit>".
+     */
+    public final boolean hasClassInitializer() {
+        return _clinit != null;
+    }
 
     public void callInitializer() {
-        final StaticMethodActor clinit = findLocalStaticMethodActor(SymbolTable.CLINIT);
-        if (clinit != null) {
-            SpecialBuiltin.call(CompilationScheme.Static.compile(clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
+        if (_clinit != null) {
+            SpecialBuiltin.call(CompilationScheme.Static.compile(_clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
         }
         _initializationState = InitializationState.INITIALIZED;
     }
@@ -1422,10 +1447,7 @@ public abstract class ClassActor extends Actor {
         // we can do without the synchronized since INITIALIZED is a terminal state. So when seeing
         // INITIALIZED without synchronization, one can safely assume the class is indeed initialized.
         // If not INITIALIZED, the caller has to conservatively assume that it isn't initialized and  ignore potential optimization.
-
-        synchronized (this) {
-            return _initializationState == InitializationState.INITIALIZED;
-        }
+        return _initializationState == InitializationState.INITIALIZED;
     }
 
     /**

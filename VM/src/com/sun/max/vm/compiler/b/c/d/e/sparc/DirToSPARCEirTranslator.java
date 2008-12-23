@@ -36,10 +36,6 @@ public class DirToSPARCEirTranslator extends SPARCEirGenerator {
         super(eirGeneratorScheme);
     }
 
-    private DirToSPARCEirMethodTranslation getMethodTranslation(EirMethod eirMethod, DirMethod dirMethod) {
-        return new DirToSPARCEirMethodTranslation(this, eirMethod, dirMethod);
-    }
-
     @Override
     protected void generateIrMethod(EirMethod eirMethod, CompilationDirective compilationDirective) {
         final DirGeneratorScheme dirGeneratorScheme = (DirGeneratorScheme) compilerScheme();

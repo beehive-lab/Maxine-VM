@@ -24,7 +24,6 @@ import com.sun.max.lang.*;
 import com.sun.max.profile.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.variable.*;
-import com.sun.max.vm.type.*;
 
 /**
  * Aggregation of Java stack locations and a variable factory.
@@ -39,10 +38,6 @@ abstract class JavaSlots implements Cloneable {
     public abstract static class JavaStackSlot {
     }
     public static class FillerJavaStackSlot extends JavaStackSlot {
-        private final Kind _kind;
-        public FillerJavaStackSlot(Kind kind) {
-            _kind = kind;
-        }
     }
     public static class VariableJavaStackSlot extends JavaStackSlot {
         private final CirVariable _cirVariable;

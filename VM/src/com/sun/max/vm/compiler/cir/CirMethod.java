@@ -343,8 +343,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     @Override
-    public boolean mayThrowException() {
-        return true;
+    public int thrownExceptions() {
+        return ExceptionThrower.ANY;
     }
 
     public int count(final Builtin builtin, int defaultResult) {

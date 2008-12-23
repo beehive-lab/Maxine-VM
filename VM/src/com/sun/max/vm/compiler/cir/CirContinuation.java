@@ -20,16 +20,16 @@
  */
 package com.sun.max.vm.compiler.cir;
 
+import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 
 /**
  * A closure that is regarded as a continuation. Note that
- * {@link com.sun.max.vm.compiler.cir.optimize.CirConstantBlockArgumentsPropagation} depends on CirContinuations
+ * {@link CirConstantBlockArgumentsPropagation} depends on CirContinuations
  * being distinguishable from CirClosures.
- *
  * <p>
- * Continuations always have zero or one parameters. The single parameter
+ * Continuations always have zero or one parameter. The single parameter
  * will hold the "return value" from the call which is being continued.
  * <p>
  * In a {@link CirPrinter trace}, a continuation is printed as
@@ -46,7 +46,7 @@ public final class CirContinuation extends CirClosure {
 
     public CirContinuation() {
         super(null);
-        setParameters();
+        setParameters(CirClosure.NO_PARAMETERS);
     }
 
     @Override

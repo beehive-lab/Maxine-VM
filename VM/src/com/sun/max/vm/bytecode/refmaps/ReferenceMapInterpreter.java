@@ -538,10 +538,6 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
         return readByte() & 0xff;
     }
 
-    private int readSigned1() {
-        return readByte();
-    }
-
     private int readUnsigned2() {
         final int high = readByte() & 0xff;
         final int low = readByte() & 0xff;

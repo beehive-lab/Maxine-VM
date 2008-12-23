@@ -60,7 +60,7 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
 
     public CirBlock(IrBlock.Role role) {
         _role = role;
-        _closure = new CirClosure(new CirCall());
+        _closure = new CirClosure(new CirCall(), CirClosure.NO_PARAMETERS);
     }
 
     public CirBlock(CirCall call) {

@@ -79,7 +79,7 @@ jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
 command_args=$@
 
 # Ensure that the non-optional variables are set
-test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
+test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to a JDK 6 installation directory"; exit 1; }
 
 # Try to find the base directory of the Maxine code base by using the path of this script
 if [ -z "${maxine_dir}" ]; then
@@ -435,7 +435,7 @@ function run_gate() {
 # Main launcher
 #=======================================
 
-function showCommands() {
+function usage() {
     if [ -n "$1" ]; then
         echo $1
     fi
@@ -470,17 +470,17 @@ function showCommands() {
 }
 
 if [ -n "${unknown_option}" ]; then
-    showCommands "max: unknown global option '${unknown_option}'"
+    usage "max: unknown global option '${unknown_option}'"
     exit 255
 fi
 
 if $show_help ; then
-    showCommands ""
+    usage ""
     exit 0
 fi
 
 if [ -z "${command}" ]; then
-    showCommands ""
+    usage ""
     exit 0
 fi
 
@@ -489,7 +489,7 @@ shift
 
 command_type=`type -t ${run_command}`
 if [ "${command_type}" != "function" ]; then
-    showCommands "max: unknown command '${command}'"
+    usage "max: unknown command '${command}'"
     exit 255
 fi
 

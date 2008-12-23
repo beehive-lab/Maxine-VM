@@ -137,9 +137,6 @@ public final class WordValue extends Value<WordValue> {
         return _value.toString();
     }
 
-    private static final class AsBoxedJavaValue_ {
-    }
-
     // Substituted by asBoxedJavaValue_()
     @Override
     public Object asBoxedJavaValue() {

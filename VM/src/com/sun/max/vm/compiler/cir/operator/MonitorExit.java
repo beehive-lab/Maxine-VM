@@ -41,8 +41,9 @@ public class MonitorExit extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
+
     @Override
     public String toString() {
-        return "Monitorexit";
+        return "MonitorExit";
     }
 }
