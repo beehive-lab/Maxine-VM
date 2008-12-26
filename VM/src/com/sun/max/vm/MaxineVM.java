@@ -316,11 +316,16 @@ public final class MaxineVM {
         return host().phase() == Phase.RUNNING;
     }
 
+    private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
+    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = new test.com.sun.max.Package().name();
+
     /**
      * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
      */
     public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
-        return com.sun.max.Package.contains(typeDescriptor.toJavaString());
+        final String className = typeDescriptor.toJavaString();
+        return className.startsWith(MAXINE_CLASS_PACKAGE_PREFIX) ||
+             className.startsWith(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
     }
 
     /**

@@ -20,6 +20,8 @@
  */
 package test.com.sun.max.vm.compiler;
 
+import test.except.*;
+
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.runtime.*;
 
@@ -43,7 +45,7 @@ public abstract class CompilerTest_max<Method_Type extends IrMethod> extends Com
     }
 
     public void test_1() {
-        compileMethod(Trap.class, "nativeInitialize");
+        compileMethod(BC_arraylength.class, "test");
     }
 
     public void test_basePackages() {
