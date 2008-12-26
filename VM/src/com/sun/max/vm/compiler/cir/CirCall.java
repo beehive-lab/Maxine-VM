@@ -80,7 +80,6 @@ public final class CirCall extends CirNode {
      *            transfer instruction (including method invocations).
      */
     public void setProcedure(CirValue procedure, BytecodeLocation location) {
-        assert procedure != CirValue.UNDEFINED;
         _procedure = procedure;
         _bytecodeLocation = location;
     }

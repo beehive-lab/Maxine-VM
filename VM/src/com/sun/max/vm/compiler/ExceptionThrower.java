@@ -215,7 +215,7 @@ public interface ExceptionThrower {
          * @return {@code thrownExceptions == 0}
          */
         public static boolean isEmpty(int thrownExceptions) {
-            return thrownExceptions != 0;
+            return thrownExceptions == 0;
         }
     }
 }

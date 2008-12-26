@@ -345,7 +345,7 @@ class CirToDirMethodTranslation {
     private abstract class CallGenerator<CirProcedure_Type extends CirValue> {
         protected abstract DirInstruction createCallInstruction(DirVariable result, CirProcedure_Type cirProcedure, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor);
 
-        private void generateCall(Translation translation, CirProcedure_Type cirProcedure, CirValue[] cirArguments, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
+        void generateCall(Translation translation, CirProcedure_Type cirProcedure, CirValue[] cirArguments, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
             Translation cc;
             DirVariable result;
@@ -475,7 +475,9 @@ class CirToDirMethodTranslation {
         final CirValue cirProcedure = cirCall.procedure();
         final CirValue[] cirArguments = cirCall.arguments();
 
-        if (cirProcedure instanceof CirVariable) {
+        if (cirProcedure == CirValue.UNDEFINED) {
+System.console();
+        } else if (cirProcedure instanceof CirVariable) {
             if (cirProcedure instanceof CirNormalContinuationParameter) {
                 if (translation._cc == null) {
                     generateDirReturn(translation, cirArguments);

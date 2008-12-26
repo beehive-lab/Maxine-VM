@@ -23,22 +23,14 @@ package com.sun.max.vm.compiler.snippet;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 public abstract class ArrayGetSnippet extends BuiltinsSnippet {
 
     private ArrayGetSnippet() {
         super();
-    }
-
-    @Override
-    public final boolean isFoldable(IrValue[] arguments) {
-        final IrValue arrayObject = arguments[0];
-        return arrayObject.isConstant() && arrayObject.value() != ReferenceValue.NULL && super.isFoldable(arguments);
     }
 
     public static final class ReadLength extends ArrayGetSnippet {
