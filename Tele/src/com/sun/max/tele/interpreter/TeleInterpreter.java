@@ -48,7 +48,6 @@ import com.sun.max.vm.value.*;
 public final class TeleInterpreter {
 
     private final TeleVM _teleVM;
-    public static final Object _inspectionLock = new Object();
 
     private final Machine _machine;
     private Value _ret;

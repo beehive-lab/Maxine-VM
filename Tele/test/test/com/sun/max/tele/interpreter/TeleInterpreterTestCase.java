@@ -36,6 +36,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class TeleInterpreterTestCase extends TestCase {
 
+
     public TeleInterpreterTestCase() {
         super();
     }
@@ -81,8 +82,7 @@ public abstract class TeleInterpreterTestCase extends TestCase {
      */
     protected Value execute(String methodName, Value... args) {
         try {
-            final ClassMethodActor classMethodActor = getClassMethodActor(TeleInterpreterTestClass.class, methodName);
-            return TeleInterpreter.execute(null, classMethodActor, args);
+            return executeWithException(methodName, args);
         } catch (TeleInterpreterException teleInterpreterException) {
             fail(Exceptions.stackTraceAsString(teleInterpreterException));
             return null;

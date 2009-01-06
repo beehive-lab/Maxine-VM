@@ -26,7 +26,6 @@ import org.junit.runner.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.test.*;
 import com.sun.max.vm.value.*;
 
@@ -38,7 +37,7 @@ import com.sun.max.vm.value.*;
 @RunWith(org.junit.runners.AllTests.class)
 public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
 
-    private TeleVM _teleVM;
+    private static TeleVM _teleVM;
 
     public TeleInterpreterRemoteTest() {
     }
@@ -53,10 +52,8 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
 
     @Override
     protected final void setUp() throws Exception {
-        _teleVM = TeleVM.create(new Options());
-
-        synchronized (TeleInterpreter._inspectionLock) {
-            TeleInterpreter._inspectionLock.wait();
+        if (_teleVM == null) {
+            _teleVM = TeleVM.create(new Options());
         }
     }
 
