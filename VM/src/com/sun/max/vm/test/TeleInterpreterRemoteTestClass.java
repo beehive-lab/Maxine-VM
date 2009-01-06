@@ -25,18 +25,18 @@ package com.sun.max.vm.test;
 
 /**
  * A class on which to test the interpreter remotely.
- * 
+ *
  * @author Athul Acharya
  */
-public class InterpreterRemoteTestClass {
+public class TeleInterpreterRemoteTestClass {
 
-    protected InterpreterRemoteTestClass() { }
+    protected TeleInterpreterRemoteTestClass() { }
 
-    protected InterpreterRemoteTestClass(int y) {
+    protected TeleInterpreterRemoteTestClass(int y) {
         _y = y;
     }
 
-    protected InterpreterRemoteTestClass(String z) {
+    protected TeleInterpreterRemoteTestClass(String z) {
         _z = z;
     }
 
@@ -44,9 +44,9 @@ public class InterpreterRemoteTestClass {
 
     private static int _x = 0xdeadbeef;
 
-    private static InterpreterRemoteTestClass _i = new InterpreterRemoteTestClass();
+    private static TeleInterpreterRemoteTestClass _i = new TeleInterpreterRemoteTestClass();
 
-    private static InterpreterRemoteTestChildClass _ic = new InterpreterRemoteTestChildClass();
+    private static TeleInterpreterRemoteTestChildClass _ic = new TeleInterpreterRemoteTestChildClass();
 
     private static Object[] _array = new Object[2];
 
@@ -81,7 +81,7 @@ public class InterpreterRemoteTestClass {
         return _iarray[0][0];
     }
 
-    public static int getfield2(InterpreterRemoteTestClass i) { //for use from inspector
+    public static int getfield2(TeleInterpreterRemoteTestClass i) { //for use from inspector
         return i._y;
     }
 
@@ -93,33 +93,33 @@ public class InterpreterRemoteTestClass {
         return 3;
     }
 
-    public static int invokevirtual1(InterpreterRemoteTestClass i) { //for use from inspector
+    public static int invokevirtual1(TeleInterpreterRemoteTestClass i) { //for use from inspector
         return i.virtual_overriden(1, 2, 3);
     }
 
     public static int invokevirtual2() {
-        final InterpreterRemoteTestClass i = _i;
+        final TeleInterpreterRemoteTestClass i = _i;
         return i.virtual_overriden(1, 2, 3); //should return 3
     }
 
     public static int invokevirtual3() {
-        final InterpreterRemoteTestClass i = _ic;
+        final TeleInterpreterRemoteTestClass i = _ic;
         return i.virtual_overriden(1, 2, 3); //should return 6
     }
 
 
     public static int new1() {
-        final InterpreterRemoteTestClass i = new InterpreterRemoteTestClass();
+        final TeleInterpreterRemoteTestClass i = new TeleInterpreterRemoteTestClass();
         return i._y;
     }
 
     public static int new2() {
-        final InterpreterRemoteTestClass i = new InterpreterRemoteTestClass(0x80081355);
+        final TeleInterpreterRemoteTestClass i = new TeleInterpreterRemoteTestClass(0x80081355);
         return i._y;
     }
 
     public static int putfield() {
-        final InterpreterRemoteTestClass i = new InterpreterRemoteTestClass(0x80081355);
+        final TeleInterpreterRemoteTestClass i = new TeleInterpreterRemoteTestClass(0x80081355);
 
         i._y = 666;
         return i._y;
@@ -127,7 +127,7 @@ public class InterpreterRemoteTestClass {
 
     private static final String testString = new String("test");
 
-    public static InterpreterRemoteTestClass stringnew() {
-        return new InterpreterRemoteTestClass(testString);
+    public static TeleInterpreterRemoteTestClass stringnew() {
+        return new TeleInterpreterRemoteTestClass(testString);
     }
 }
