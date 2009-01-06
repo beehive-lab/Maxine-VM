@@ -703,7 +703,7 @@ public class Inspection extends JFrame {
         _teleVM = teleVM;
         _bootImageFileName = _teleVM.bootImageFile().getAbsolutePath().toString();
         _teleProcess = _teleVM.teleProcess();
-        if (!(_teleProcess instanceof NoTeleProcess)) {
+        if (!(_teleProcess instanceof ReadOnlyTeleProcess)) {
             _vmState = State.STOPPED;
             _inspectionState = InspectionState.STOPPED;
         }

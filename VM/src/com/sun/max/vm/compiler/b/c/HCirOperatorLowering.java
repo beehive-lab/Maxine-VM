@@ -847,7 +847,7 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
         } else {
             final CirSnippet createArray = CirSnippet.get(NonFoldableSnippet.CreateReferenceArray.SNIPPET);
             if (operator.isResolved()) {
-                final CirValue arrayClassActor = CirConstant.fromObject(operator.actor());
+                final CirValue arrayClassActor = CirConstant.fromObject(operator.arrayClassActor());
                 _call.assign(callWithFrameDescriptor(createArray, arrayClassActor, count,
                                     cc(), ce()));
             } else {

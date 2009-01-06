@@ -88,9 +88,6 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         @Override
         public void procedure() {
             inspection().viewSourceExternally(new BytecodeLocation(_teleClassMethodActor.classMethodActor(), 0));
-//            final ClassActor classActor = _teleJavaMethod.classActor();
-//            final File javaSourceFile = teleVM().findJavaSourceFile(_teleJavaMethod.classActor());
-//            JavaSourceInspector.inspect(inspection(), classActor, javaSourceFile);
         }
     }
 
@@ -156,8 +153,12 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
                 return;
             }
 
-            final Value returnValue = InspectorInterpreter.start(teleVM(), classMethodActor, arguments);
-            inspection().informationMessage("Method " + classMethodActor.name() + " returned " + returnValue.toString());
+            try {
+                final Value returnValue = TeleInterpreter.execute(teleVM(), classMethodActor, arguments);
+                inspection().informationMessage("Method " + classMethodActor.name() + " returned " + returnValue.toString());
+            } catch (TeleInterpreterException teleInterpreterException) {
+                throw new InspectorError(teleInterpreterException);
+            }
         }
     }
 

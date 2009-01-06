@@ -18,7 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.tele;
+
 /**
- * @author Athul Acharya
+ * Thrown to indicate that an operation is invalid because it would modify the tele VM and the tele VM is read-only.
+ *
+ * @author Doug Simon
  */
-package test.com.sun.max.ins.interpreter;
+public class TeleVMCannotBeModifiedError extends TeleError {
+
+    public TeleVMCannotBeModifiedError() {
+        super("");
+    }
+
+    public TeleVMCannotBeModifiedError(String message) {
+        super(message);
+    }
+}
+

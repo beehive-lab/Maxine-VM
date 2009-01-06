@@ -475,9 +475,7 @@ class CirToDirMethodTranslation {
         final CirValue cirProcedure = cirCall.procedure();
         final CirValue[] cirArguments = cirCall.arguments();
 
-        if (cirProcedure == CirValue.UNDEFINED) {
-System.console();
-        } else if (cirProcedure instanceof CirVariable) {
+        if (cirProcedure instanceof CirVariable) {
             if (cirProcedure instanceof CirNormalContinuationParameter) {
                 if (translation._cc == null) {
                     generateDirReturn(translation, cirArguments);

@@ -88,6 +88,11 @@ public final class BytecodeLocation {
         return _classMethodActor.qualifiedName() + "@" + _position;
     }
 
+    public StackTraceElement toStackTraceElement() {
+        final ClassActor holder = _classMethodActor.holder();
+        return new StackTraceElement(holder.name().string(), _classMethodActor.name().string(), holder.sourceFileName(), sourceLineNumber());
+    }
+
     /**
      * Gets a source position string for this bytecode location if the necessary
      * {@linkplain ClassActor#sourceFileName() source file} and

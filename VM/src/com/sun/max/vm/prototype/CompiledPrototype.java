@@ -632,6 +632,7 @@ public class CompiledPrototype extends Prototype {
         for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
             if (!_unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !_unlinkedMethods.contains(targetMethod.classMethodActor())) {
                 if (!targetMethod.linkDirectCalls()) {
+                    targetMethod.linkDirectCalls();
                     ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
                 }
             } else {

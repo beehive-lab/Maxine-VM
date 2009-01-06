@@ -21,7 +21,7 @@
 package com.sun.max.tele;
 
 import com.sun.max.lang.*;
-import com.sun.max.tele.debug.TeleNativeThread;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
@@ -77,12 +77,12 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
      * @return the native thread in the {@link TeleVM} with which this VM thread is associated.
      */
     public TeleNativeThread teleNativeThread() {
-    	for (TeleNativeThread teleNativeThread : teleProcess().threads()) {
-    		if (this.equals(teleNativeThread.teleVmThread())) {
-    			return teleNativeThread;
-    		}
-    	}
-    	return null;
+        for (TeleNativeThread teleNativeThread : teleProcess().threads()) {
+            if (this.equals(teleNativeThread.teleVmThread())) {
+                return teleNativeThread;
+            }
+        }
+        return null;
     }
 
     @Override

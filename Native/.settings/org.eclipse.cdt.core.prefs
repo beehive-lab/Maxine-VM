@@ -1,6 +1,11 @@
-#Thu Oct 23 15:05:31 PDT 2008
+#Sat Jan 03 22:56:23 PST 2009
 eclipse.preferences.version=1
-indexer/indexerId=org.eclipse.cdt.core.fastIndexer
+indexer/filesToParseUpFront=
+indexer/indexAllFiles=false
+indexer/indexerId=org.eclipse.cdt.core.domsourceindexer
+indexer/skipMacroReferences=false
+indexer/skipReferences=false
+indexer/skipTypeReferences=false
 indexerId=org.eclipse.cdt.core.fastIndexer
 instance/org.eclipse.core.net/org.eclipse.core.net.hasMigrated=true
 org.eclipse.cdt.core.formatter.alignment_for_arguments_in_method_invocation=16

@@ -131,6 +131,23 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         return ClassActor.fromJava(type).kind();
     }
 
+    public static Kind<?> fromBoxedClass(Class type) {
+        assert !type.isPrimitive();
+        if (MaxineVM.isPrototyping()) {
+            for (Kind kind : Kind.PRIMITIVE_JAVA_CLASSES) {
+                if (kind._boxedClass == type) {
+                    return kind;
+                }
+            }
+
+            if (Word.class.isAssignableFrom(type)) {
+                return Kind.WORD;
+            }
+            return Kind.REFERENCE;
+        }
+        return ClassActor.fromJava(type).kind();
+    }
+
     @INLINE
     public final Class<Value_Type> valueClass() {
         return _valueClass;

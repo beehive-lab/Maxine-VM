@@ -20,50 +20,28 @@
  */
 package com.sun.max.tele.method;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
 
-import com.sun.max.asm.AssemblyException;
-import com.sun.max.asm.InlineDataDecoder;
-import com.sun.max.asm.amd64.AMD64GeneralRegister64;
-import com.sun.max.asm.dis.DisassembledData;
-import com.sun.max.asm.dis.DisassembledInstruction;
-import com.sun.max.asm.dis.DisassembledLabel;
-import com.sun.max.asm.dis.DisassembledObject;
-import com.sun.max.asm.dis.Disassembler;
-import com.sun.max.asm.dis.amd64.AMD64DisassembledInstruction;
-import com.sun.max.asm.dis.amd64.AMD64Disassembler;
-import com.sun.max.asm.dis.ia32.IA32Disassembler;
-import com.sun.max.asm.dis.ppc.PPC32Disassembler;
-import com.sun.max.asm.dis.ppc.PPC64Disassembler;
-import com.sun.max.asm.dis.sparc.SPARC32Disassembler;
-import com.sun.max.asm.dis.sparc.SPARC64Disassembler;
-import com.sun.max.asm.dis.sparc.SPARCDisassembledInstruction;
-import com.sun.max.asm.gen.Immediate32Argument;
-import com.sun.max.asm.gen.ImmediateArgument;
-import com.sun.max.asm.gen.cisc.amd64.AMD64Template;
-import com.sun.max.asm.gen.cisc.x86.X86OffsetParameter;
-import com.sun.max.asm.gen.cisc.x86.X86Template;
-import com.sun.max.asm.gen.cisc.x86.X86TemplateContext;
-import com.sun.max.asm.gen.risc.sparc.SPARCTemplate;
-import com.sun.max.asm.sparc.GPR;
-import com.sun.max.asm.sparc.StateRegister;
-import com.sun.max.asm.sparc.complete.SPARCAssembler;
-import com.sun.max.collect.AppendableIndexedSequence;
-import com.sun.max.collect.ArrayListSequence;
-import com.sun.max.collect.IndexedSequence;
-import com.sun.max.lang.Endianness;
-import com.sun.max.lang.StaticLoophole;
-import com.sun.max.lang.WordWidth;
-import com.sun.max.platform.ProcessorKind;
-import com.sun.max.program.Problem;
-import com.sun.max.program.ProgramError;
-import com.sun.max.program.ProgramWarning;
-import com.sun.max.program.Trace;
-import com.sun.max.tele.TeleVM;
-import com.sun.max.unsafe.Address;
-import com.sun.max.vm.VMConfiguration;
+import com.sun.max.asm.*;
+import com.sun.max.asm.amd64.*;
+import com.sun.max.asm.dis.*;
+import com.sun.max.asm.dis.amd64.*;
+import com.sun.max.asm.dis.ia32.*;
+import com.sun.max.asm.dis.ppc.*;
+import com.sun.max.asm.dis.sparc.*;
+import com.sun.max.asm.gen.*;
+import com.sun.max.asm.gen.cisc.amd64.*;
+import com.sun.max.asm.gen.cisc.x86.*;
+import com.sun.max.asm.gen.risc.sparc.*;
+import com.sun.max.asm.sparc.*;
+import com.sun.max.asm.sparc.complete.*;
+import com.sun.max.collect.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
 /**
  * Disassembler for machine code in the target VM.
@@ -72,9 +50,9 @@ import com.sun.max.vm.VMConfiguration;
  * @author Michael Van De Vanter
  */
 public final class TeleDisassembler {
-    
+
     private static final int TRACE_VALUE = 1;
-        
+
     private static final String _tracePrefix = "[TeleDisassembler] ";
 
     private TeleDisassembler() {
@@ -94,8 +72,8 @@ public final class TeleDisassembler {
 
     public static IndexedSequence<TargetCodeInstruction> decode(TeleVM teleVM, Address codeStart, byte[] code, byte[] encodedInlineDataDescriptors) {
         final Disassembler disassembler = createDisassembler(teleVM, codeStart, InlineDataDecoder.createFrom(encodedInlineDataDescriptors));
-		final LoadLiteralParser literalParser = createLiteralParser(teleVM, disassembler, codeStart, code);
-		return create(codeStart, code, disassembler, literalParser);
+        final LoadLiteralParser literalParser = createLiteralParser(teleVM, disassembler, codeStart, code);
+        return create(codeStart, code, disassembler, literalParser);
     }
 
     private static Disassembler createDisassembler(final TeleVM teleVM, Address startAddress, InlineDataDecoder inlineDataDecoder) {
@@ -204,9 +182,9 @@ public final class TeleDisassembler {
         private static final int SET_LITERAL_BASE_INSTRUCTION;
 
         private static final int NOP_TEMPLATE;
-        
+
         private static final int FLUSHW_TEMPLATE;
-        
+
         /**
          * Offset to the rdpc instruction that sets the literal base from the flushw instruction of the trapStub.
          */
@@ -242,7 +220,7 @@ public final class TeleDisassembler {
             FLUSHW_TEMPLATE = flushwTemplate;
         }
 
-        private static boolean isTrapStub(byte [] code) throws IOException { 
+        private static boolean isTrapStub(byte [] code) throws IOException {
             if (code.length > TRAP_STUB_RDPC_OFFSET) {
                 final ByteArrayInputStream in = new ByteArrayInputStream(code, 0, code.length);
                 in.skip(8);
@@ -256,14 +234,14 @@ public final class TeleDisassembler {
             }
             return false;
         }
-        
+
         private static int searchLiteralBaseInstruction(int start, int end, byte [] code) {
             final int codeSize = ((end > code.length) ? code.length : end) - start;
             if (codeSize > 0) {
                 try {
                     final ByteArrayInputStream in = new ByteArrayInputStream(code, start, codeSize);
                     int baseOffset = start;
-                    int numInstructions = codeSize / 4;                   
+                    int numInstructions = codeSize / 4;
                     while (numInstructions > 0) {
                         if (ENDIANNESS.readInt(in) == SET_LITERAL_BASE_INSTRUCTION) {
                             return baseOffset;
@@ -282,7 +260,7 @@ public final class TeleDisassembler {
             }
             return -1;
         }
-        
+
         private static int literalBaseFromCodeStart(byte [] code) {
             assert code.length % 4 == 0;
             try {
@@ -366,16 +344,16 @@ public final class TeleDisassembler {
 
         IndexedSequence<DisassembledObject> disassembledObjects;
         try {
-        	final Class<IndexedSequence<DisassembledObject>> type = null;
+            final Class<IndexedSequence<DisassembledObject>> type = null;
             disassembledObjects = StaticLoophole.cast(type, disassembler.scan(new BufferedInputStream(new ByteArrayInputStream(code))));
         } catch (Throwable throwable) {
             ProgramWarning.message("Could not completely disassemble given code stream - trying partial disassembly instead [error: " + throwable + "]");
             final BufferedInputStream bufferedInputStream = new BufferedInputStream(new ByteArrayInputStream(code));
             final AppendableIndexedSequence<DisassembledObject> objects = new ArrayListSequence<DisassembledObject>();
             try {
-            	while (bufferedInputStream.available() > 0) {
-            		objects.append((DisassembledObject) disassembler.scanOne(bufferedInputStream).first());
-            	}
+                while (bufferedInputStream.available() > 0) {
+                    objects.append((DisassembledObject) disassembler.scanOne(bufferedInputStream).first());
+                }
             } catch (Throwable t) {
                 ProgramWarning.message("Only partially disassembled given code stream [error: " + t + "]");
             }
@@ -385,55 +363,55 @@ public final class TeleDisassembler {
         final AppendableIndexedSequence<TargetCodeInstruction> targetCodeInstructions = new ArrayListSequence<TargetCodeInstruction>(disassembledObjects.length());
 
         for (DisassembledObject disassembledObject : disassembledObjects) {
-        	final DisassembledLabel label = disassembler.addressMapper().labelAt(disassembledObject);
-        	final TargetCodeInstruction targetCodeInstruction;
-        	if (disassembledObject instanceof DisassembledInstruction) {
-        		final DisassembledInstruction disassembledInstruction = (DisassembledInstruction) disassembledObject;
+            final DisassembledLabel label = disassembler.addressMapper().labelAt(disassembledObject);
+            final TargetCodeInstruction targetCodeInstruction;
+            if (disassembledObject instanceof DisassembledInstruction) {
+                final DisassembledInstruction disassembledInstruction = (DisassembledInstruction) disassembledObject;
 
-        		final String operandsText = disassembledInstruction.operandsToString(disassembler.addressMapper());
-        		final Address targetAddress;
-        		final Address literalSourceAddress;
-        		if (disassembledInstruction.arguments().length() == 1 && disassembledInstruction.arguments().first() instanceof ImmediateArgument &&
-        				(operandsText.contains("+") || operandsText.contains("-"))) {
-        			targetAddress = Address.fromLong(disassembledInstruction.targetAddress().asLong());
-        			literalSourceAddress = null;
-        		} else if (literalParser.loadsLiteralData(disassembledInstruction)) {
-        			literalSourceAddress = literalParser.literalAddress(disassembledInstruction);
-        			targetAddress = null;
-        		} else {
-        			targetAddress = null;
-        			literalSourceAddress = null;
-        		}
-        		targetCodeInstruction = new TargetCodeInstruction(
-        				disassembledInstruction.mnemonic(),
-        				codeStart.plus(disassembledInstruction.startPosition()),
-        				disassembledInstruction.startPosition(),
-        				label == null ? null : label.name(),
-        						disassembledInstruction.bytes(),
-        						operandsText,
-        						targetAddress,
-        						literalSourceAddress);
-        	} else {
-        		final DisassembledData disassembledData = (DisassembledData) disassembledObject;
-        		final String operandsText = disassembledData.operandsToString(disassembler.addressMapper());
-        		final ImmediateArgument dataTargetAddress = disassembledData.targetAddress();
-        		final Address targetAddress;
-        		if (dataTargetAddress != null) {
-        			targetAddress = Address.fromLong(dataTargetAddress.asLong());
-        		} else {
-        			targetAddress = null;
-        		}
+                final String operandsText = disassembledInstruction.operandsToString(disassembler.addressMapper());
+                final Address targetAddress;
+                final Address literalSourceAddress;
+                if (disassembledInstruction.arguments().length() == 1 && disassembledInstruction.arguments().first() instanceof ImmediateArgument &&
+                                (operandsText.contains("+") || operandsText.contains("-"))) {
+                    targetAddress = Address.fromLong(disassembledInstruction.targetAddress().asLong());
+                    literalSourceAddress = null;
+                } else if (literalParser.loadsLiteralData(disassembledInstruction)) {
+                    literalSourceAddress = literalParser.literalAddress(disassembledInstruction);
+                    targetAddress = null;
+                } else {
+                    targetAddress = null;
+                    literalSourceAddress = null;
+                }
+                targetCodeInstruction = new TargetCodeInstruction(
+                                disassembledInstruction.mnemonic(),
+                                codeStart.plus(disassembledInstruction.startPosition()),
+                                disassembledInstruction.startPosition(),
+                                label == null ? null : label.name(),
+                                                disassembledInstruction.bytes(),
+                                                operandsText,
+                                                targetAddress,
+                                                literalSourceAddress);
+            } else {
+                final DisassembledData disassembledData = (DisassembledData) disassembledObject;
+                final String operandsText = disassembledData.operandsToString(disassembler.addressMapper());
+                final ImmediateArgument dataTargetAddress = disassembledData.targetAddress();
+                final Address targetAddress;
+                if (dataTargetAddress != null) {
+                    targetAddress = Address.fromLong(dataTargetAddress.asLong());
+                } else {
+                    targetAddress = null;
+                }
 
-        		targetCodeInstruction = new TargetCodeInstruction(disassembledData.mnemonic(),
-        				codeStart.plus(disassembledObject.startPosition()),
-        				disassembledObject.startPosition(),
-        				label == null ? null : label.name(),
-        						disassembledObject.bytes(),
-        						operandsText,
-        						targetAddress,
-        						null);
-        	}
-    		targetCodeInstructions.append(targetCodeInstruction);
+                targetCodeInstruction = new TargetCodeInstruction(disassembledData.mnemonic(),
+                                codeStart.plus(disassembledObject.startPosition()),
+                                disassembledObject.startPosition(),
+                                label == null ? null : label.name(),
+                                                disassembledObject.bytes(),
+                                                operandsText,
+                                                targetAddress,
+                                                null);
+            }
+            targetCodeInstructions.append(targetCodeInstruction);
         }
         return targetCodeInstructions;
     }

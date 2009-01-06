@@ -316,6 +316,12 @@ public abstract class ClassActor extends Actor {
         return _componentClassActor.elementClassActor();
     }
 
+    /**
+     * Gets the number of array dimensions represented by this class actor.
+     *
+     * @return the number of array dimensions represented by this class actor or {@code 0} if this class actor is not an
+     *         array class actor
+     */
     public final int numberOfDimensions() {
         if (_componentClassActor == null) {
             return 0;

@@ -258,7 +258,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
             breakpoint = breakpointFactory.getBreakpointAt(breakpointAddress);
         } catch (DataIOError dataIOError) {
-        	// This is a catch for problems getting accurate state for threads that are not at breakpoints
+            // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }
         if (breakpoint != null) {
             _state = BREAKPOINT;

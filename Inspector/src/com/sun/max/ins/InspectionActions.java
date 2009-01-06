@@ -121,8 +121,6 @@ public class InspectionActions extends InspectionHolder implements Prober{
      */
     public static final String SEARCH_ACTION = "Search";
 
-
-
     /**
      * Actions that are held and shared; they have state that will be refreshed.
      * This is particularly important for actions that enable/disable, depending on the inspection state.
@@ -285,7 +283,6 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         protected synchronized void procedure() {
-            assert MaxineInspector.suspendingBeforeRelocating();
             try {
                 teleVM().advanceToJavaEntryPoint();
             } catch (IOException ioException) {
@@ -380,7 +377,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
     private final InspectorAction _changeInterpreterUseLevel = new ChangeInterpreterUseLevelAction(null);
 
     /**
-     * @return an interactive action that permits changing the level at which the {@linkplain InspectorInterpreter interpreter}
+     * @return an interactive action that permits changing the level at which the {@linkplain TeleInterpreter interpreter}
      * will be used.
      */
     public final InspectorAction changeInterpreterUseLevel() {
@@ -445,7 +442,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         protected void procedure() {
             final String value = inspection().inputDialog("File name: ", FileCommands.defaultCommandFile());
             if (value != null && !value.equals("")) {
-                FileCommands.executeCommandsFromFile(inspection(), value);
+                FileCommands.executeCommandsFromFile(teleVM(), value);
             }
         }
     }

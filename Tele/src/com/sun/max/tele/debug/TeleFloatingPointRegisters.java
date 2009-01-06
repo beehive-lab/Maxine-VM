@@ -52,11 +52,11 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
         public int value() {
             return ordinal();
         }
-        
+
         @Override
         public String toString() {
-        	final int o = ordinal();
-        	final int regNum = o > 32 ? 32 + ((o-32) << 1) : o;
+            final int o = ordinal();
+            final int regNum = o > 32 ? 32 + ((o - 32) << 1) : o;
             return "F" + regNum;
         }
 

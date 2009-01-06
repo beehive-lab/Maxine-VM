@@ -179,7 +179,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public boolean isDeclaredInline(CompilerScheme compilerScheme) {
         if (compilee().isInline()) {
-            if ((compilee().flags() & INLINE_AFTER_SNIPPETS_ARE_COMPILED) != 0) {
+            if (compilee().isInlineAfterSnippetsAreCompiled()) {
                 return compilerScheme.areSnippetsCompiled();
             }
             return true;

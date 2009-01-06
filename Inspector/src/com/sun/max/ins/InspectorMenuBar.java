@@ -36,7 +36,6 @@ public final class InspectorMenuBar extends JMenuBar {
     private final InspectionActions _actions;
 
     public InspectorMenuBar(InspectionActions actions) {
-        super();
         _actions = actions;
         add(createInspectionMenu());
         add(createClassMenu());
@@ -59,11 +58,9 @@ public final class InspectorMenuBar extends JMenuBar {
         setBackground(color);
     }
 
-
-
     private JMenu createInspectionMenu() {
         final JMenu menu = new JMenu("Inspector");
-        if (MaxineInspector.suspendingBeforeRelocating()) {
+        if (!_actions.inspection().teleVM().isBootImageRelocated()) {
             menu.add(_actions.relocateBootImage());
             menu.addSeparator();
         }
