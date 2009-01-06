@@ -21,7 +21,6 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -204,11 +203,6 @@ public final class Heap {
 
     public static void runFinalization() {
         heapScheme().runFinalization();
-    }
-
-    @INLINE
-    public static <Object_Type> boolean flash(Object_Type object, Procedure<Object_Type> procedure) {
-        return heapScheme().flash(object, procedure);
     }
 
     @INLINE

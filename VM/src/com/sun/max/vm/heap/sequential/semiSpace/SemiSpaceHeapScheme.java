@@ -74,7 +74,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     }
 
     private int _numberOfGarbageCollectionInvocations = 0;
-    private int _numberOfGarbageTurnovers = 0;
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -215,7 +214,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                     Log.print("--After  GC--   size: ");
                     Log.println(_allocationMark.minus(_toSpace.start()).toInt());
                 }
-                _numberOfGarbageTurnovers++;
             } catch (Throwable throwable) {
                 FatalError.unexpected(throwable.toString() + " during GC");
             }
@@ -373,8 +371,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     public Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell); // Returns the pointer of the first object of the semispace.
-        // Doesn't matter what kind of object it is. Where does this
-        // pointer point now? Concerning the nature of the object?
         final Grip oldHubGrip = Layout.readHubGrip(origin); // Reads the hub-Grip of the previously retrieved object.
         // Grips are used for GC purpose.
         final Grip newHubGrip = mapGrip(oldHubGrip);
@@ -588,24 +584,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     }
 
     public void runFinalization() {
-    }
-
-    public long numberOfGarbageCollectionInvocations() {
-        return _numberOfGarbageCollectionInvocations;
-    }
-
-    public long numberOfGarbageTurnovers() {
-        return _numberOfGarbageTurnovers;
-    }
-
-    public <Object_Type> boolean flash(Object_Type object, com.sun.max.lang.Procedure<Object_Type> procedure) {
-        try {
-            Safepoint.disable();
-            procedure.run(object);
-        } finally {
-            Safepoint.enable();
-        }
-        return true;
     }
 
     @INLINE
