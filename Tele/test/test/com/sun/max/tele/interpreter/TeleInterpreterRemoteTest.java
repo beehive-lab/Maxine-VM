@@ -68,7 +68,7 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
 
     @Override
     protected Class defaultDeclaringClass() {
-        return InterpreterRemoteTestClass.class;
+        return TeleInterpreterRemoteTestClass.class;
     }
 
     @Override
