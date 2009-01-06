@@ -25,7 +25,7 @@ package com.sun.max.vm.compiler.ir;
  *
  * @author Bernd Mathiske
  */
-public interface IrBlock<Instruction_Type extends IrInstruction> {
+public interface IrBlock {
 
     public enum Role {
 
