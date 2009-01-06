@@ -21,7 +21,6 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -102,32 +101,6 @@ public interface HeapScheme extends VMScheme {
     Object clone(Object object);
 
     /**
-     * Prevent the GC from moving the object while executing the procedure. The procedure MUST NOT allocate any objects
-     * and it's runtime MUST be very, very brief.
-     *
-     * The implementation may disable safepoints temporarily during this call.
-     *
-     * Note to GC Implementors: this is an optional feature that does not have to be supported, but it is encouraged.
-     * For callers, it is less advantageous than pinning, but for implementors it poses less of a burden.
-     *
-     * Even if pinning is supported, flashing should still be provided as a backup strategy.
-     *
-     * If flashing is not supported, make flash() and always return false and declare
-     *
-     * @INLINE. Then all flashing client code will automatically be eliminated.
-     */
-    <Object_Type> boolean flash(Object_Type object, Procedure<Object_Type> procedure);
-
-    /**
-     * Note to GC implementors: you really don't need to implement pinning. It's an entirely optional/experimental
-     * feature. However, if present, there are parts of the JVM that will automatically take advantage of it.
-     *
-     * If pinning is not supported, make pin() and isPinned() always return false and declare
-     *
-     * @INLINE for both. Then all pinning client code will automatically be eliminated.
-     */
-
-    /**
      * Prevent the GC from moving the given object.
      *
      * Allocating very small amounts in the same thread before unpinning is strongly discouraged but not strictly
@@ -144,6 +117,12 @@ public interface HeapScheme extends VMScheme {
      * that wait for GC to happen. Indefinite pinning will create deadlock!
      *
      * Calling this method on an already pinned object has undefined consequences.
+     *
+     * Note to GC implementors: you really don't need to implement pinning. It's an entirely optional/experimental
+     * feature. However, if present, there are parts of the JVM that will automatically take advantage of it.
+     *
+     * If pinning is not supported, make pin() and isPinned() always return false and declare @INLINE for both.
+     * Then all pinning client code will automatically be eliminated.
      *
      * @return whether pinning succeeded - callers are supposed to have an alternative plan when it fails
      */
@@ -178,12 +157,6 @@ public interface HeapScheme extends VMScheme {
     Size reportFreeSpace();
 
     void runFinalization();
-
-    /**
-     * Returns a lower bound for how often exhaustive garbage removal has occurred so far.
-     * Conservatively always returning 0 is allowed, but not desirable.
-     */
-    long numberOfGarbageTurnovers();
 
     @INLINE
     void writeBarrier(Reference reference);
