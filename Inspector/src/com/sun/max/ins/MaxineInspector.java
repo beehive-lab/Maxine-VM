@@ -33,7 +33,6 @@ import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.vm.*;
 
@@ -75,10 +74,6 @@ public final class MaxineInspector {
             TeleDisassembler.initialize(teleVM);
 
             _inspection = new Inspection(teleVM, new StandardInspectorStyle(), new BasicInspectorGeometry());
-
-            synchronized (TeleInterpreter._inspectionLock) {
-                TeleInterpreter._inspectionLock.notify();
-            }
 
             _inspection.initialize();
 
