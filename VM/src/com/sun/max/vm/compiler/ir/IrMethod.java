@@ -61,12 +61,12 @@ public interface IrMethod {
     void cleanup();
 
     /**
-     * @return 'defaultResult' if not supported, otherwise whether the IR in this method references the given builtin
+     * @return {@code defaultResult} if not supported, otherwise whether the IR in this method references the given builtin
      */
     boolean contains(Builtin builtin, boolean defaultResult);
 
     /**
-     * @return 'defaultResult' if not supported, otherwise the count of occurrence of builtin in the IR in this method
+     * @return {@code defaultResult} if not supported, otherwise the count of occurrence of builtin in the IR in this method
      */
     int count(Builtin builtin, int defaultResult);
 

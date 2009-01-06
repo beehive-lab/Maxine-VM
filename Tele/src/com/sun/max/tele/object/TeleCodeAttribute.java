@@ -20,12 +20,13 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.tele.TeleVM;
-import com.sun.max.vm.reference.Reference;
+import com.sun.max.tele.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for an object of type {@link CodeAttribute} in the {@link TeleVM}.
- * 
+ *
  * @author Michael Van De Vanter
  *
  */
@@ -35,7 +36,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
     protected TeleCodeAttribute(TeleVM teleVM, Reference codeAttributeReference) {
         super(teleVM, codeAttributeReference);
     }
-    
+
     /**
      * Reads the Java bytecodes from the {@link TeleVM}.
      */
@@ -44,14 +45,14 @@ public class TeleCodeAttribute extends TeleTupleObject {
         final TeleArrayObject teleByteArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), byteArrayReference);
         return (byte[]) teleByteArrayObject.shallowCopy();
     }
-    
+
     /**
      * Gets the local surrogate for the {@link ConstantPool} associated with this code in the {@link TeleVM}.
      */
     public final TeleConstantPool getTeleConstantPool() {
-    	final Reference constantPoolReference = teleVM().fields().CodeAttribute_constantPool.readReference(reference());
-    	return (TeleConstantPool) TeleObject.make(teleVM(), constantPoolReference);
+        final Reference constantPoolReference = teleVM().fields().CodeAttribute_constantPool.readReference(reference());
+        return (TeleConstantPool) TeleObject.make(teleVM(), constantPoolReference);
     }
-    
-    
+
+
 }

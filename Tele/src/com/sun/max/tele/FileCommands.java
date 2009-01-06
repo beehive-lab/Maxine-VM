@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins;
+package com.sun.max.tele;
 
 import java.io.*;
 
@@ -33,12 +33,10 @@ import com.sun.max.vm.type.*;
  *
  * @author Mick Jordan
  */
-
 public class FileCommands {
     private static final String DEFAULT_COMMAND_FILE_PROPERTY = "max.ins.defaultcommandfile";
     private static final String USER_HOME_PROPERTY = "user.home";
     private static final String DEFAULT_COMMAND_FILE = ".max_ins_commands";
-    private static final String ACTION_NAME = "Execute commands from file...";
 
     private static String _defaultCommandFile;
     private static int _lineNumber;
@@ -55,14 +53,14 @@ public class FileCommands {
     }
 
     public static String actionName() {
-        return ACTION_NAME;
+        return "Execute commands from file...";
     }
 
     public static String defaultCommandFile() {
         return _defaultCommandFile;
     }
 
-    public static void executeCommandsFromFile(Inspection inspection, String filename) {
+    public static void executeCommandsFromFile(TeleVM teleVM, String filename) {
         _lineNumber = 0;
         BufferedReader bs = null;
         try {
@@ -77,13 +75,13 @@ public class FileCommands {
                     continue;
                 }
                 try {
-                    doCommand(inspection, line);
+                    doCommand(teleVM, line);
                 } catch (CommandException ex) {
-                    inspection.errorMessage("Command failed: " + ex.getMessage(), ACTION_NAME);
+                    throw new TeleError("Command failed: " + ex.getMessage());
                 }
             }
         } catch (IOException ex) {
-            inspection.errorMessage("Failed to open file: " + filename, ACTION_NAME);
+            throw new TeleError("Failed to open file: " + filename);
         } finally {
             if (bs != null) {
                 try {
@@ -94,23 +92,23 @@ public class FileCommands {
         }
     }
 
-    private static void doCommand(Inspection inspection, String line) throws CommandException {
+    private static void doCommand(TeleVM teleVM, String line) throws CommandException {
         final int index = line.indexOf(' ');
         final String command = (index < 0) ? line : line.substring(0, index);
         final String arguments = (index < 0) ? "" : line.substring(index + 1);
         if (command.equals("break")) {
-            doBreak(inspection, arguments);
+            doBreak(teleVM, arguments);
         }
     }
 
-    private static void doBreak(Inspection inspection, String arg) throws CommandException {
+    private static void doBreak(TeleVM teleVM, String arg) throws CommandException {
         final int index = arg.lastIndexOf('.');
         if (index < 0) {
             throw new CommandException("syntax error: class name missing");
         }
         final String className = arg.substring(0, index);
         final String methodSignature = arg.substring(index + 1);
-        final TeleClassActor teleClassActor = inspection.teleVM().teleClassRegistry().findTeleClassActorByType(JavaTypeDescriptor.getDescriptorForJavaString(className));
+        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActorByType(JavaTypeDescriptor.getDescriptorForJavaString(className));
         if (teleClassActor == null) {
             throw new CommandException("failed to find class: " + className + " (not qualified or misspelled?)");
         }

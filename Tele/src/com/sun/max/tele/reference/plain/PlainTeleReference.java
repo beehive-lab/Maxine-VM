@@ -20,15 +20,15 @@
  */
 package com.sun.max.tele.reference.plain;
 
+import com.sun.max.tele.grip.*;
 import com.sun.max.tele.reference.*;
-import com.sun.max.vm.grip.*;
 
 /**
  * @author Bernd Mathiske
  */
 public class PlainTeleReference extends TeleReference {
 
-    PlainTeleReference(Grip grip) {
+    PlainTeleReference(TeleGrip grip) {
         super(grip);
     }
 

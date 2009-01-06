@@ -40,7 +40,7 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public class TeleBytecodeBreakpoint extends TeleBreakpoint {
+public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     private TeleCodeLocation _teleCodeLocation;
 
@@ -326,7 +326,7 @@ public class TeleBytecodeBreakpoint extends TeleBreakpoint {
          * Removes all bytecode breakpoints.
          */
         public synchronized void removeAllBreakpoints() {
-            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint :_breakpoints.values()) {
+            for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : _breakpoints.values()) {
                 teleBytecodeBreakpoint.dispose();
             }
             _breakpoints.clear();

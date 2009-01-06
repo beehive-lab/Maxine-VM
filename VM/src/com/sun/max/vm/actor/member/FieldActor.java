@@ -134,11 +134,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
         return _kind.readValue(reference, _offset);
     }
 
-    public void writeValue(Object reference, Value_Type value) {
-        _kind.writeValue(reference, _offset, value);
-    }
-
-    public void writeErasedValue(Object reference, Value value) {
+    public void writeValue(Object reference, Value value) {
         _kind.writeErasedValue(reference, _offset, value);
     }
 

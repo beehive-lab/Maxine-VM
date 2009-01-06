@@ -27,6 +27,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -84,6 +85,10 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
             }
             for (Method method : javaClass.getDeclaredMethods()) {
                 _methodKeys.append(createMethodKey(SignatureDescriptor.create(method.getReturnType(), method.getParameterTypes()), holderTypeDescriptor, SymbolTable.makeSymbol(method.getName())));
+            }
+            final ClassActor classActor = ClassActor.fromJava(javaClass);
+            if (classActor.hasClassInitializer()) {
+                _methodKeys.append(createMethodKey(SignatureDescriptor.create(Void.TYPE), holderTypeDescriptor, SymbolTable.CLINIT));
             }
         } catch (Error error) {
             ProgramWarning.message("Error loading class " + className + ": " + error);

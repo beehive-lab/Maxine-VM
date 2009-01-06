@@ -20,8 +20,8 @@
  */
 package com.sun.max.tele.reference;
 
+import com.sun.max.tele.grip.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -33,5 +33,5 @@ public abstract class TeleReferenceScheme extends AbstractVMScheme implements Re
         super(vmConfiguration);
     }
 
-    public abstract Reference createReference(Grip grip);
+    public abstract Reference createReference(TeleGrip grip);
 }

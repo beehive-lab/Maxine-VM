@@ -25,7 +25,9 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -63,7 +65,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
      * @return Whether this method has bytecodes in the {@link TeleVM}.
      */
     public boolean hasCodeAttribute() {
-    	return getTeleCodeAttribute() != null;
+        return getTeleCodeAttribute() != null;
     }
 
     /**
@@ -74,26 +76,26 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
     public abstract TeleCodeAttribute getTeleCodeAttribute();
 
     /**
-	 * @return whether the method in the {@link TeleVM} had its {@link CodeAttribute}  substituted from another class.
-	 */
-	public boolean isSubstituted() {
-		return teleClassActorSubstitutedFrom() != null;
-	}
+     * @return whether the method in the {@link TeleVM} had its {@link CodeAttribute}  substituted from another class.
+     */
+    public boolean isSubstituted() {
+        return teleClassActorSubstitutedFrom() != null;
+    }
 
-	/**
-	 * Local surrogate for the {@link ClassActor} in the {@link TeleVM} from which a code substitution for this
-	 * method originated, null if the method has not been substituted.
-	 */
-	public TeleClassActor teleClassActorSubstitutedFrom() {
-		 TeleCodeAttribute teleCodeAttribute = getTeleCodeAttribute();
-		 if (teleCodeAttribute != null) {
-			 final TeleClassActor codeAttributeHolder = teleCodeAttribute.getTeleConstantPool().getTeleHolder();
-			 return codeAttributeHolder == getTeleHolder() ? null : codeAttributeHolder;
-		 }
-		 return null;
-	}
+    /**
+     * Local surrogate for the {@link ClassActor} in the {@link TeleVM} from which a code substitution for this
+     * method originated, null if the method has not been substituted.
+     */
+    public TeleClassActor teleClassActorSubstitutedFrom() {
+        final TeleCodeAttribute teleCodeAttribute = getTeleCodeAttribute();
+        if (teleCodeAttribute != null) {
+            final TeleClassActor codeAttributeHolder = teleCodeAttribute.getTeleConstantPool().getTeleHolder();
+            return codeAttributeHolder == getTeleHolder() ? null : codeAttributeHolder;
+        }
+        return null;
+    }
 
-	@Override
+    @Override
     public String maxineTerseRole() {
         return "MethodActor";
     }
@@ -120,8 +122,12 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
         for (int i = 0; i < args.length; i++) {
             realArgs[i] = teleVM().convertToValue(args[i]);
         }
-        final com.sun.max.vm.value.Value result = InspectorInterpreter.start(teleVM(), (ClassMethodActor) methodActor(), realArgs);
-        return teleVM().convertToVirtualMachineValue(result);
+        try {
+            final com.sun.max.vm.value.Value result = TeleInterpreter.execute(teleVM(), (ClassMethodActor) methodActor(), realArgs);
+            return teleVM().convertToVirtualMachineValue(result);
+        } catch (TeleInterpreterException teleInterpreterException) {
+            throw new TeleError(teleInterpreterException);
+        }
     }
 
     @Override

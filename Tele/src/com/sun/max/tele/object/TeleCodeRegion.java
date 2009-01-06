@@ -20,46 +20,46 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.tele.TeleVM;
-import com.sun.max.unsafe.Size;
-import com.sun.max.vm.reference.Reference;
+import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for a region of memory in the {@link TeleVM} used to allocate target code.
- * 
+ *
  * @author Michael Van De Vanter
  */
 public final class TeleCodeRegion extends TeleRuntimeMemoryRegion {
 
-	TeleCodeRegion(TeleVM teleVM, Reference codeRegionReference) {
-		super(teleVM, codeRegionReference);
-	}
-	
-	/**
-	 * @return whether this region is the code region contained in the boot image of the {@link TeleVM}.
-	 */
-	public boolean isBootCodeRegion() {
-		return this == teleVM().teleCodeManager().teleBootCodeRegion();
-	}
-	
-	@Override
-	public Size size() {
-		if (isBootCodeRegion()) {
-			// The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
-			// to the amount allocated within the region.  Other regions don't have this happen.
-			// Return the size allocated for the whole region, as recorded in the boot image.
-			return Size.fromInt(teleVM().bootImage().header()._bootCodeSize);
-		}
-		return super.size();
-	}
-	
-	/**
-	 * @return how much memory in region has been allocated to code, {@link Size#zero()) if memory for region not allocated.
-	 */
-	public Size allocatedSize() {
-		if (isAllocated()) {
-			return mark().minus(start()).asSize();
-		}
-		return Size.zero();
-	}
+    TeleCodeRegion(TeleVM teleVM, Reference codeRegionReference) {
+        super(teleVM, codeRegionReference);
+    }
+
+    /**
+     * @return whether this region is the code region contained in the boot image of the {@link TeleVM}.
+     */
+    public boolean isBootCodeRegion() {
+        return this == teleVM().teleCodeManager().teleBootCodeRegion();
+    }
+
+    @Override
+    public Size size() {
+        if (isBootCodeRegion()) {
+            // The explicit representation of the boot {@link CodeRegion} gets "trimmed" by setting its size
+            // to the amount allocated within the region.  Other regions don't have this happen.
+            // Return the size allocated for the whole region, as recorded in the boot image.
+            return Size.fromInt(teleVM().bootImage().header()._bootCodeSize);
+        }
+        return super.size();
+    }
+
+    /**
+     * @return how much memory in region has been allocated to code, {@link Size#zero()) if memory for region not allocated.
+     */
+    public Size allocatedSize() {
+        if (isAllocated()) {
+            return mark().minus(start()).asSize();
+        }
+        return Size.zero();
+    }
 }

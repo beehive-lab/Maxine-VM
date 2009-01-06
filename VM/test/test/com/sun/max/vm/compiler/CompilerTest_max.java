@@ -23,7 +23,6 @@ package test.com.sun.max.vm.compiler;
 import test.except.*;
 
 import com.sun.max.vm.compiler.ir.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Translates almost all of the packages in the project to test the translator.

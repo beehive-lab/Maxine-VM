@@ -29,14 +29,14 @@ import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 
-public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
+public class NewArray extends JavaResolvableOperator<ClassActor> {
 
     private final Kind _primitiveElementKind;
 
     public NewArray(int atype) {
         super(NEGATIVE_ARRAY_SIZE_EXCEPTION, null, 0, Kind.REFERENCE);
         _primitiveElementKind = Kind.fromNewArrayTag(atype);
-        _actor = ArrayClassActor.forComponentClassActor(_primitiveElementKind.arrayClassActor());
+        _actor = _primitiveElementKind.arrayClassActor().elementClassActor();
     }
 
     public NewArray(ConstantPool constantPool, int index) {
@@ -68,5 +68,12 @@ public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
             return "New" + Strings.capitalizeFirst(_primitiveElementKind.name().string(), true) + "Array";
         }
         return super.toString();
+    }
+
+    /**
+     * Gets the class actor for an array type whose component type is {@link #actor()}.
+     */
+    public ArrayClassActor arrayClassActor() {
+        return ArrayClassActor.forComponentClassActor(_actor);
     }
 }

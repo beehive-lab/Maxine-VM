@@ -94,7 +94,6 @@ public abstract class InspectorAction extends AbstractAction implements Prober {
     public void redisplay() {
     }
 
-
     private final Object _actionTracer  = new Object() {
         @Override
         public String toString() {

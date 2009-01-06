@@ -18,13 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.ins.interpreter;
+package test.com.sun.max.tele.interpreter;
 
 import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
@@ -32,15 +31,14 @@ import com.sun.max.vm.compiler.target.*;
 /**
  *  @author Athul Acharya
  */
-public class InterpreterTestSetup extends CompilerTestSetup<TargetMethod> {
-    public InterpreterTestSetup(Test test) {
+public class TeleInterpreterTestSetup extends CompilerTestSetup<TargetMethod> {
+    public TeleInterpreterTestSetup(Test test) {
         super(test);
     }
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        Trace.off();
-        return VMConfigurations.createPrototype(BuildLevel.DEBUG, Platform.host());
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host());
     }
 
     @Override

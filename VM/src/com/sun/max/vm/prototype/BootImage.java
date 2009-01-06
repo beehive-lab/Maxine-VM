@@ -580,7 +580,16 @@ public class BootImage {
         }
     }
 
-    public Pointer map(File file, boolean relocating) throws IOException {
+    /**
+     * Maps the heap and code sections of the boot image in a given file into memory.
+     *
+     * @param file the file containing the heap and code sections to map into memory
+     * @param relocate specifies if the mapped sections should be relocated according to the relocation data in {@code
+     *            file} after the mapping has occurred
+     * @return the address at which the heap and code sections in {@code file} were mapped
+     * @throws IOException if an IO error occurs while performing the memory mapping
+     */
+    public Pointer map(File file, boolean relocate) throws IOException {
         final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
 
         int fileOffset = _header.size() + _header._stringInfoSize;
@@ -596,7 +605,7 @@ public class BootImage {
         if (heap.isZero() || heap.toLong() == -1L) {
             throw new IOException("could not mmap boot heap and code");
         }
-        if (relocating) {
+        if (relocate) {
             Trace.line(1, "BEGIN: relocating heap");
             relocate(heap, relocationData);
             Trace.line(1, "END: relocating heap");

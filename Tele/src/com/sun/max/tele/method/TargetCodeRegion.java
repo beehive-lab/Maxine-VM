@@ -38,7 +38,7 @@ public class TargetCodeRegion extends RuntimeMemoryRegion {
     }
 
     public TargetCodeRegion(TeleTargetRoutine teleTargetRoutine, Address start, Size size) {
-        super(start, size);        
+        super(start, size);
         _teleTargetRoutine = teleTargetRoutine;
         setDescription("TeleTarget-" + _teleTargetRoutine.toString());
     }

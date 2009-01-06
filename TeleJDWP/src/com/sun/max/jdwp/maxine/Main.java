@@ -20,20 +20,44 @@
  */
 package com.sun.max.jdwp.maxine;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.logging.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import com.sun.max.ide.*;
-import com.sun.max.jdwp.handlers.*;
-import com.sun.max.jdwp.server.*;
-import com.sun.max.program.*;
-import com.sun.max.program.Classpath.*;
-import com.sun.max.program.option.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.grip.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.ide.JavaProject;
+import com.sun.max.jdwp.handlers.ArrayReferenceHandlers;
+import com.sun.max.jdwp.handlers.ArrayTypeHandlers;
+import com.sun.max.jdwp.handlers.ClassLoaderReferenceHandlers;
+import com.sun.max.jdwp.handlers.ClassObjectReferenceHandlers;
+import com.sun.max.jdwp.handlers.ClassTypeHandlers;
+import com.sun.max.jdwp.handlers.EventRequestHandlers;
+import com.sun.max.jdwp.handlers.JDWPSession;
+import com.sun.max.jdwp.handlers.MethodHandlers;
+import com.sun.max.jdwp.handlers.ObjectReferenceHandlers;
+import com.sun.max.jdwp.handlers.ReferenceTypeHandlers;
+import com.sun.max.jdwp.handlers.StackFrameHandlers;
+import com.sun.max.jdwp.handlers.StringReferenceHandlers;
+import com.sun.max.jdwp.handlers.ThreadGroupReferenceHandlers;
+import com.sun.max.jdwp.handlers.ThreadReferenceHandlers;
+import com.sun.max.jdwp.handlers.VirtualMachineHandlers;
+import com.sun.max.jdwp.server.JDWPServer;
+import com.sun.max.program.Classpath;
+import com.sun.max.program.Trace;
+import com.sun.max.program.Classpath.Entry;
+import com.sun.max.program.option.Option;
+import com.sun.max.program.option.OptionSet;
+import com.sun.max.tele.TeleVM;
+import com.sun.max.tele.TeleVM.Options;
+import com.sun.max.tele.grip.TeleGripScheme;
+import com.sun.max.vm.prototype.BinaryImageGenerator;
+import com.sun.max.vm.prototype.BootImageException;
+import com.sun.max.vm.prototype.Prototype;
+import com.sun.max.vm.prototype.PrototypeClassLoader;
 
 /**
  * Class containing the main function to startup the Maxine JDWP server. The server is listening for incoming
@@ -81,7 +105,12 @@ public class Main {
         final File bootImageFile = BinaryImageGenerator.getDefaultBootImageFilePath();
         TeleVM t = null;
         try {
-            t = TeleVM.createNewChild(bootImageFile, sourcepath, arguments, -1);
+            final Options options = new Options();
+            options._debugOption.setValue(Boolean.TRUE);
+            options._sourcepathOption.setValue(Arrays.asList(sourcepath.toStringArray()));
+            options._vmArguments.setValue(com.sun.max.lang.Arrays.toString(arguments, " "));
+            options._bootImageFileOption.setValue(bootImageFile);
+            t = TeleVM.create(options);
         } catch (BootImageException e) {
             LOGGER.severe("Exception occurred while creating TeleVM process: " + e.toString());
             System.exit(-1);
