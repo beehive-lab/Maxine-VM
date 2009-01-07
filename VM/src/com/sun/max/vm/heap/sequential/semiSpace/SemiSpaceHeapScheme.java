@@ -675,8 +675,22 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                 cell = cell.plusWords(1);
                 checkCellTag(cell);
             }
+
             final Pointer origin = Layout.cellToOrigin(cell);
             final Hub hub = checkHub(origin);
+
+            if (Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Verifying ");
+                Log.print(hub.classActor().name().string());
+                Log.print(" at ");
+                Log.print(cell);
+                Log.print(" [");
+                Log.print(Layout.size(origin).toInt());
+                Log.println(" bytes]");
+                Log.unlock(lockDisabledSafepoints);
+            }
+
             final SpecificLayout specificLayout = hub.specificLayout();
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);
