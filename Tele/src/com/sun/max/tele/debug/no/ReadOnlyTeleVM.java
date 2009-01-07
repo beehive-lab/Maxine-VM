@@ -35,15 +35,23 @@ import com.sun.max.vm.prototype.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class NoTeleMaxineVM extends TeleVM {
+public final class ReadOnlyTeleVM extends TeleVM {
 
-    private boolean _relocating;
+    private final boolean _relocate;
 
     private TeleMessenger _messenger = new NoVMInspectorMessenger();
 
-    public NoTeleMaxineVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, boolean relocating) throws BootImageException, IOException {
+    /**
+     * Creates a tele VM instance for inspecting a boot image without executing it.
+     *
+     * @param bootImageFile a file containing a boot image
+     * @param bootImage the metadata describing the boot image in {@code bootImageFile}
+     * @param sourcepath the source code path to search for class or interface definitions
+     * @param relocate specifies if the heap and code sections in the boot image are to be relocated
+     */
+    public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, boolean relocate) throws BootImageException {
         super(bootImageFile, bootImage, sourcepath, TeleProcess.NO_COMMAND_LINE_ARGUMENTS, -1);
-        _relocating = relocating;
+        _relocate = relocate;
     }
 
     @Override
@@ -52,21 +60,30 @@ public final class NoTeleMaxineVM extends TeleVM {
     }
 
     @Override
-    protected NoTeleProcess createTeleProcess(String[] commandLineArguments, int id) throws IOException {
-        return new NoTeleProcess(this, bootImage().vmConfiguration().platform(), programFile());
+    protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments, int id) {
+        return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration().platform(), programFile());
     }
 
     @Override
-    protected Pointer loadBootImage() throws IOException {
+    protected Pointer loadBootImage() throws BootImageException {
         if (bootImage().vmConfiguration().platform().operatingSystem() != OperatingSystem.GUESTVM) {
-            return bootImage().map(bootImageFile(), _relocating);
+            try {
+                return bootImage().map(bootImageFile(), _relocate);
+            } catch (IOException ioException) {
+                throw new BootImageException(ioException);
+            }
         }
         return null;
     }
 
     @Override
+    public boolean isReadOnly() {
+        return true;
+    }
+
+    @Override
     public boolean isBootImageRelocated() {
-        return _relocating;
+        return _relocate;
     }
 
     @Override

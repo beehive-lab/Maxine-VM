@@ -21,7 +21,6 @@
 package com.sun.max.tele.reference;
 
 import com.sun.max.tele.grip.*;
-import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
 
 /**
@@ -29,13 +28,13 @@ import com.sun.max.vm.reference.*;
  */
 public abstract class TeleReference extends Reference {
 
-    private final Grip _grip;
+    private final TeleGrip _grip;
 
-    public Grip grip() {
+    public TeleGrip grip() {
         return _grip;
     }
 
-    protected TeleReference(Grip grip) {
+    protected TeleReference(TeleGrip grip) {
         _grip = grip;
     }
 
@@ -48,14 +47,11 @@ public abstract class TeleReference extends Reference {
      * @return a non-zero integer uniquely identifying the referred-to object in the tele VM
      */
     public long makeOID() {
-        final TeleGrip teleGrip = (TeleGrip) _grip;
-        return teleGrip.makeOID();
+        return _grip.makeOID();
     }
 
     public boolean isLocal() {
-        // if we add a different kind of inspector grip, give it and direct grip a common parent (e.g. TeleGrip!)
-        // that has isLocal, and change this cast to the parent.
-        return _grip instanceof LocalTeleGrip;
+        return _grip.isLocal();
     }
 
     public static final TeleReference ZERO = new TeleReference(TeleGrip.ZERO) {};

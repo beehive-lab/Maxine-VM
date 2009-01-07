@@ -119,7 +119,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         initialize();
         return _codeSize;
     }
-    
+
     public String name() {
         return getClass().getSimpleName() + " for " + classMethodActor().simpleName();
     }

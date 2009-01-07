@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.ExceptionThrower.Static.*;
 
 import java.lang.reflect.*;
 
@@ -29,35 +29,54 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
-import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
+import com.sun.max.vm.compiler.cir.operator.*;
 import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.variable.*;
-import com.sun.max.vm.compiler.instrument.*;
 import com.sun.max.vm.compiler.snippet.*;
-import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.snippet.FieldReadSnippet.*;
+import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Byte code visitor that generates CIR constructs for one BirBlock
+ * A bytecode visitor that generates a HCIR tree for one BirBlock
  * in the context of a given BirToCirTranslation.
+ *
+ * A HCIR tree is a CIR tree with some restriction on what can appear in the operator position
+ * of a @{link CirCall}.  HCIR allows only the following types of operators:
+ *   1. {@link JavaBuiltin}
+ *   2. {@link CirClosure}
+ *   3. {@link CirBlock}
+ *   4. {@link CirVariable}
+ *   5. {@link CirSwitch}
+ *   6. {@link JavaOperator}
+ *
+ * Basically, only the operators and constructs that can be found in JVM bytecode can appear in
+ * HCIR.  Other builtins, snippets, or other CIR values are now allowed to appear here but are
+ * introduced in the lowering pass. (see {@link HCirToLCirTranslation})
+ *
+ * The rationale for this transformation is that there are a certain class of optimizations
+ * that can be applied more easily at the JVM operators level and would become harder or more
+ * cumbersome if the JVM bytecode is translated to a sequence of one or more snippets.  Examples
+ * of these optimizations include devirtualization (which is easier to recognize if expressed
+ * as an {@link InvokeVirtual} call instead of a sequence of {@link ReadHub}, {@link
+ * ResolutionSnippet}, {@link ReadInt}, and so on.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
+ * @author Yi Guo (HCIR)
+ * @author Aziz Ghuloum (HCIR)
  */
-public class BytecodeTranslation extends BytecodeVisitor {
+public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected final BlockState _blockState;
     protected final JavaFrame _frame;
@@ -132,7 +151,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
         // No control flow byte code has occurred,
         // so fall through to the adjacent basic block:
         _currentCall.setProcedure(getAdjacentContinuation(), null);
-        _currentCall.setArguments();
+        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     private void assign(CirVariable variable, CirValue value) {
@@ -225,7 +244,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
         if (cirRoutine.needsJavaFrameDescriptor()) {
             createJavaFrameDescriptor();
         }
-        final CirValue exceptionContinuation = cirRoutine.mayThrowException() ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
+        final CirValue exceptionContinuation = ExceptionThrower.Static.throwsAny(cirRoutine) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
         _currentCall.setArguments(Arrays.append(CirValue.class, regularArguments, normalContinuation, exceptionContinuation));
         _currentCall.setProcedure((CirProcedure) cirRoutine, currentLocation());
         _currentCall = new CirCall();
@@ -256,7 +275,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     protected void stackCall(CirRoutine cirRoutine) {
         final Kind[] parameterKinds = cirRoutine.parameterKinds();
         final int nRegularArguments = parameterKinds.length - 2;
-        final CirValue[] regularArguments = new CirVariable[nRegularArguments];
+        final CirValue[] regularArguments = CirClosure.newParameters(nRegularArguments);
         for (int i = nRegularArguments - 1; i >= 0; i--) {
             regularArguments[i] = pop(parameterKinds[i]);
         }
@@ -265,35 +284,6 @@ public class BytecodeTranslation extends BytecodeVisitor {
 
     protected void stackCall(Builtin builtin) {
         stackCall(CirBuiltin.get(builtin));
-    }
-
-    private void stackCall(Snippet snippet) {
-        stackCall(CirSnippet.get(snippet));
-    }
-
-    private void stackCall(Builtin builtin, Snippet snippet) {
-        if (_methodTranslation.cirGenerator().compilerScheme().isBuiltinImplemented(builtin)) {
-            stackCall(builtin);
-        } else {
-            stackCall(snippet);
-        }
-    }
-
-    private CirVariable callSnippet(Kind resultKind, Snippet snippet, CirValue... arguments) {
-        final CirVariable result = _methodTranslation.variableFactory().createTemporary(resultKind);
-        final CirContinuation continuation = new CirContinuation(result);
-        call(CirSnippet.get(snippet), arguments, continuation);
-        return result;
-    }
-
-    private CirVariable callResolutionSnippet(ResolutionSnippet snippet, int index) {
-        final ResolutionGuard guard = _constantPool.makeResolutionGuard(index, snippet);
-        return callSnippet(guard.kind(), snippet, CirConstant.fromObject(guard));
-    }
-
-    private void callSnippet(Snippet snippet, CirValue... arguments) {
-        final CirContinuation continuation = new CirContinuation();
-        call(CirSnippet.get(snippet), arguments, continuation);
     }
 
     protected boolean isEndOfBlock() {
@@ -365,53 +355,6 @@ public class BytecodeTranslation extends BytecodeVisitor {
         continuation.setBody(_currentCall);
     }
 
-    /**
-     * Only activate this snippet if you are willing to implement explicit null pointer check elimination.
-     * @see Snippet.CheckNullPointer
-     */
-    private void implicitCheckNullPointer(CirVariable object) {
-        if (object.kind() == Kind.REFERENCE) {
-            callSnippet(Snippet.CheckNullPointer.SNIPPET, object);
-        } else {
-            // no null pointer check for WORD
-            assert object.kind() == Kind.WORD;
-        }
-    }
-
-    private void checkArrayIndex(CirVariable array, CirVariable index) {
-        callSnippet(Snippet.CheckArrayIndex.SNIPPET, array, index);
-    }
-
-    private void checkReferenceArrayStore(CirVariable array, CirVariable value) {
-        callSnippet(Snippet.CheckReferenceArrayStore.SNIPPET, array, value);
-    }
-
-    private void arrayLoad(ArrayGetSnippet snippet) {
-        final CirVariable index = pop(Kind.INT);
-        final CirVariable array = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(array);
-        checkArrayIndex(array, index);
-        callAndPush(snippet, array, index);
-    }
-
-    private void arrayStore(Kind kind, ArraySetSnippet snippet) {
-        final CirVariable value = pop(kind);
-        final CirVariable index = pop(Kind.INT);
-        final CirVariable array = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(array);
-        checkArrayIndex(array, index);
-        if (kind == Kind.REFERENCE) {
-            checkReferenceArrayStore(array, value);
-        }
-        callSnippet(snippet, array, index, value);
-    }
-
-    private void callMonitorSnippet(MonitorSnippet snippet) {
-        final CirVariable object = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(object);
-        callSnippet(snippet, object);
-    }
-
     protected boolean areArgumentsMatchingSignatureDescriptor(CirValue[] arguments, SignatureDescriptor signatureDescriptor, TypeDescriptor receiverDescriptor) {
         final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
         final TypeDescriptor[] parameterDescriptors = signatureDescriptor.getParameterDescriptors();
@@ -469,22 +412,6 @@ public class BytecodeTranslation extends BytecodeVisitor {
     }
 
     // -----------------------------------------------------------------------------------------------------------------
-
-    @Override
-    protected void prologue() {
-        if (_blockState.birBlock().hasSafepoint()) {
-            if (MaxineVM.isPrototyping()) {
-                final C_FUNCTION cFunctionAnnotation = _methodTranslation.classMethodActor().getAnnotation(C_FUNCTION.class);
-                if (cFunctionAnnotation == null || !cFunctionAnnotation.isInterruptHandler()) {
-                    callAndPush(CirBuiltin.get(SafepointBuiltin.SoftSafepoint.BUILTIN));
-                }
-            } else {
-                if (_methodTranslation.classMethodActor().isCFunction()) {
-                    callAndPush(CirBuiltin.get(SafepointBuiltin.SoftSafepoint.BUILTIN));
-                }
-            }
-        }
-    }
 
     @Override
     protected void nop() {
@@ -575,21 +502,13 @@ public class BytecodeTranslation extends BytecodeVisitor {
         push(IntValue.from(operand));
     }
 
-    private CirValue getClassActor(int index) {
-        final ClassConstant classConstant = _constantPool.classAt(index);
-        if (classConstant.isResolvableWithoutClassLoading(_constantPool)) {
-            return CirConstant.fromObject(_constantPool.classAt(index).resolve(_constantPool, index));
-        }
-        return callResolutionSnippet(ResolveClass.SNIPPET, index);
-    }
-
     @Override
     protected void ldc(int index) {
         final Tag tag = _constantPool.tagAt(index);
         switch (tag) {
             case CLASS: {
-                final CirVariable mirror = callSnippet(Kind.REFERENCE, BuiltinsSnippet.GetMirror.SNIPPET, getClassActor(index));
-                push(mirror);
+                final JavaOperator op = new Mirror(_constantPool, index);
+                callAndPush(op);
                 break;
             }
             case INTEGER: {
@@ -759,46 +678,6 @@ public class BytecodeTranslation extends BytecodeVisitor {
     }
 
     @Override
-    protected void iaload() {
-        arrayLoad(ArrayGetSnippet.GetInt.SNIPPET);
-    }
-
-    @Override
-    protected void laload() {
-        arrayLoad(ArrayGetSnippet.GetLong.SNIPPET);
-    }
-
-    @Override
-    protected void faload() {
-        arrayLoad(ArrayGetSnippet.GetFloat.SNIPPET);
-    }
-
-    @Override
-    protected void daload() {
-        arrayLoad(ArrayGetSnippet.GetDouble.SNIPPET);
-    }
-
-    @Override
-    protected void aaload() {
-        arrayLoad(ArrayGetSnippet.GetReference.SNIPPET);
-    }
-
-    @Override
-    protected void baload() {
-        arrayLoad(ArrayGetSnippet.GetByte.SNIPPET);
-    }
-
-    @Override
-    protected void caload() {
-        arrayLoad(ArrayGetSnippet.GetChar.SNIPPET);
-    }
-
-    @Override
-    protected void saload() {
-        arrayLoad(ArrayGetSnippet.GetShort.SNIPPET);
-    }
-
-    @Override
     protected void istore(int index) {
         localStore(Kind.INT, index);
     }
@@ -921,46 +800,6 @@ public class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void astore_3() {
         localStoreReferenceOrWord(3);
-    }
-
-    @Override
-    protected void iastore() {
-        arrayStore(Kind.INT, ArraySetSnippet.SetInt.SNIPPET);
-    }
-
-    @Override
-    protected void lastore() {
-        arrayStore(Kind.LONG, ArraySetSnippet.SetLong.SNIPPET);
-    }
-
-    @Override
-    protected void fastore() {
-        arrayStore(Kind.FLOAT, ArraySetSnippet.SetFloat.SNIPPET);
-    }
-
-    @Override
-    protected void dastore() {
-        arrayStore(Kind.DOUBLE, ArraySetSnippet.SetDouble.SNIPPET);
-    }
-
-    @Override
-    protected void aastore() {
-        arrayStore(Kind.REFERENCE, ArraySetSnippet.SetReference.SNIPPET);
-    }
-
-    @Override
-    protected void bastore() {
-        arrayStore(Kind.INT, ArraySetSnippet.SetByte.SNIPPET);
-    }
-
-    @Override
-    protected void castore() {
-        arrayStore(Kind.CHAR, ArraySetSnippet.SetChar.SNIPPET);
-    }
-
-    @Override
-    protected void sastore() {
-        arrayStore(Kind.SHORT, ArraySetSnippet.SetShort.SNIPPET);
     }
 
     @Override
@@ -1100,298 +939,6 @@ public class BytecodeTranslation extends BytecodeVisitor {
     }
 
     @Override
-    protected void iadd() {
-        stackCall(JavaBuiltin.IntPlus.BUILTIN);
-    }
-
-    @Override
-    protected void ladd() {
-        stackCall(JavaBuiltin.LongPlus.BUILTIN);
-    }
-
-    @Override
-    protected void fadd() {
-        stackCall(JavaBuiltin.FloatPlus.BUILTIN);
-    }
-
-    @Override
-    protected void dadd() {
-        stackCall(JavaBuiltin.DoublePlus.BUILTIN);
-    }
-
-    @Override
-    protected void isub() {
-        stackCall(JavaBuiltin.IntMinus.BUILTIN);
-    }
-
-    @Override
-    protected void lsub() {
-        stackCall(JavaBuiltin.LongMinus.BUILTIN);
-    }
-
-    @Override
-    protected void fsub() {
-        stackCall(JavaBuiltin.FloatMinus.BUILTIN);
-    }
-
-    @Override
-    protected void dsub() {
-        stackCall(JavaBuiltin.DoubleMinus.BUILTIN);
-    }
-
-    @Override
-    protected void imul() {
-        stackCall(JavaBuiltin.IntTimes.BUILTIN);
-    }
-
-    @Override
-    protected void lmul() {
-        stackCall(JavaBuiltin.LongTimes.BUILTIN, Snippet.LongTimes.SNIPPET);
-    }
-
-    @Override
-    protected void fmul() {
-        stackCall(JavaBuiltin.FloatTimes.BUILTIN);
-    }
-
-    @Override
-    protected void dmul() {
-        stackCall(JavaBuiltin.DoubleTimes.BUILTIN);
-    }
-
-    @Override
-    protected void idiv() {
-        stackCall(JavaBuiltin.IntDivided.BUILTIN);
-    }
-
-    @Override
-    protected void ldiv() {
-        stackCall(JavaBuiltin.LongDivided.BUILTIN, Snippet.LongDivided.SNIPPET);
-    }
-
-    @Override
-    protected void fdiv() {
-        stackCall(JavaBuiltin.FloatDivided.BUILTIN);
-    }
-
-    @Override
-    protected void ddiv() {
-        stackCall(JavaBuiltin.DoubleDivided.BUILTIN);
-    }
-
-    @Override
-    protected void irem() {
-        stackCall(JavaBuiltin.IntRemainder.BUILTIN);
-    }
-
-    @Override
-    protected void lrem() {
-        stackCall(JavaBuiltin.LongRemainder.BUILTIN, Snippet.LongRemainder.SNIPPET);
-    }
-
-    @Override
-    protected void frem() {
-        stackCall(JavaBuiltin.FloatRemainder.BUILTIN, Snippet.FloatRemainder.SNIPPET);
-    }
-
-    @Override
-    protected void drem() {
-        stackCall(JavaBuiltin.DoubleRemainder.BUILTIN, Snippet.DoubleRemainder.SNIPPET);
-    }
-
-    @Override
-    protected void ineg() {
-        stackCall(JavaBuiltin.IntNegated.BUILTIN);
-    }
-
-    @Override
-    protected void lneg() {
-        stackCall(JavaBuiltin.LongNegated.BUILTIN);
-    }
-
-    @Override
-    protected void fneg() {
-        stackCall(JavaBuiltin.FloatNegated.BUILTIN);
-    }
-
-    @Override
-    protected void dneg() {
-        stackCall(JavaBuiltin.DoubleNegated.BUILTIN);
-    }
-
-    @Override
-    protected void ishl() {
-        stackCall(JavaBuiltin.IntShiftedLeft.BUILTIN);
-    }
-
-    @Override
-    protected void lshl() {
-        stackCall(JavaBuiltin.LongShiftedLeft.BUILTIN);
-    }
-
-    @Override
-    protected void ishr() {
-        stackCall(JavaBuiltin.IntSignedShiftedRight.BUILTIN);
-    }
-
-    @Override
-    protected void lshr() {
-        stackCall(JavaBuiltin.LongSignedShiftedRight.BUILTIN, Snippet.LongSignedShiftedRight.SNIPPET);
-    }
-
-    @Override
-    protected void iushr() {
-        stackCall(JavaBuiltin.IntUnsignedShiftedRight.BUILTIN);
-    }
-
-    @Override
-    protected void lushr() {
-        stackCall(JavaBuiltin.LongUnsignedShiftedRight.BUILTIN);
-    }
-
-    @Override
-    protected void iand() {
-        stackCall(JavaBuiltin.IntAnd.BUILTIN);
-    }
-
-    @Override
-    protected void land() {
-        stackCall(JavaBuiltin.LongAnd.BUILTIN);
-    }
-
-    @Override
-    protected void ior() {
-        stackCall(JavaBuiltin.IntOr.BUILTIN);
-    }
-
-    @Override
-    protected void lor() {
-        stackCall(JavaBuiltin.LongOr.BUILTIN);
-    }
-
-    @Override
-    protected void ixor() {
-        stackCall(JavaBuiltin.IntXor.BUILTIN);
-    }
-
-    @Override
-    protected void lxor() {
-        stackCall(JavaBuiltin.LongXor.BUILTIN);
-    }
-
-    @Override
-    protected void iinc(int index, int addend) {
-        final CirVariable localVariable = _frame.makeVariable(Kind.INT, index, currentLocation());
-        final CirContinuation continuation = new CirContinuation(localVariable);
-        _currentCall.setArguments(localVariable, CirConstant.fromInt(addend), continuation, getCurrentExceptionContinuation());
-        _currentCall.setProcedure(CirBuiltin.get(JavaBuiltin.IntPlus.BUILTIN), currentLocation());
-        _currentCall = new CirCall();
-        continuation.setBody(_currentCall);
-    }
-
-    @Override
-    protected void i2l() {
-        stackCall(JavaBuiltin.ConvertIntToLong.BUILTIN);
-    }
-
-    @Override
-    protected void i2f() {
-        stackCall(JavaBuiltin.ConvertIntToFloat.BUILTIN);
-    }
-
-    @Override
-    protected void i2d() {
-        stackCall(JavaBuiltin.ConvertIntToDouble.BUILTIN);
-    }
-
-    @Override
-    protected void l2i() {
-        stackCall(JavaBuiltin.ConvertLongToInt.BUILTIN);
-    }
-
-    @Override
-    protected void l2f() {
-        stackCall(JavaBuiltin.ConvertLongToFloat.BUILTIN);
-    }
-
-    @Override
-    protected void l2d() {
-        stackCall(JavaBuiltin.ConvertLongToDouble.BUILTIN);
-    }
-
-
-
-    @Override
-    protected void f2i() {
-        stackCall(Snippet.ConvertFloatToInt.SNIPPET);
-    }
-
-    @Override
-    protected void f2l() {
-        stackCall(Snippet.ConvertFloatToLong.SNIPPET);
-    }
-
-    @Override
-    protected void d2i() {
-        stackCall(Snippet.ConvertDoubleToInt.SNIPPET);
-    }
-
-    @Override
-    protected void d2l() {
-        stackCall(Snippet.ConvertDoubleToLong.SNIPPET);
-    }
-
-    @Override
-    protected void f2d() {
-        stackCall(JavaBuiltin.ConvertFloatToDouble.BUILTIN);
-    }
-
-    @Override
-    protected void d2f() {
-        stackCall(JavaBuiltin.ConvertDoubleToFloat.BUILTIN);
-    }
-
-    @Override
-    protected void i2b() {
-        stackCall(JavaBuiltin.ConvertIntToByte.BUILTIN);
-    }
-
-    @Override
-    protected void i2c() {
-        stackCall(JavaBuiltin.ConvertIntToChar.BUILTIN);
-    }
-
-    @Override
-    protected void i2s() {
-        stackCall(JavaBuiltin.ConvertIntToShort.BUILTIN);
-    }
-
-    @Override
-    protected void lcmp() {
-        stackCall(JavaBuiltin.LongCompare.BUILTIN, Snippet.LongCompare.SNIPPET);
-    }
-
-    @Override
-    protected void fcmpl() {
-        stackCall(JavaBuiltin.FloatCompareL.BUILTIN);
-    }
-
-    @Override
-    protected void fcmpg() {
-        stackCall(JavaBuiltin.FloatCompareG.BUILTIN);
-    }
-
-    @Override
-    protected void dcmpl() {
-        stackCall(JavaBuiltin.DoubleCompareL.BUILTIN);
-    }
-
-    @Override
-    protected void dcmpg() {
-        stackCall(JavaBuiltin.DoubleCompareG.BUILTIN);
-    }
-
-    @Override
     protected void ifeq(int offset) {
         zeroBranch(CirSwitch.INT_EQUAL, offset);
     }
@@ -1465,7 +1012,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     protected void goto_(int offset) {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
         _currentCall.setProcedure(getBranchContinuation(offset), currentLocation());
-        _currentCall.setArguments();
+        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     @Override
@@ -1481,7 +1028,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         final int nArguments = (numberOfCases * 2) + 2;
-        final CirValue[] arguments = new CirValue[nArguments];
+        final CirValue[] arguments = CirCall.newArguments(nArguments);
         arguments[0] = pop(Kind.INT);
         final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
@@ -1499,7 +1046,7 @@ public class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void lookupswitch(int defaultOffset, int numberOfCases) {
         final int nArguments = (numberOfCases * 2) + 2;
-        final CirValue[] arguments = new CirValue[nArguments];
+        final CirValue[] arguments = CirCall.newArguments(nArguments);
         arguments[0] = pop(Kind.INT);
         final BytecodeScanner scanner = bytecodeScanner();
         for (int i = 0; i < numberOfCases; i++) {
@@ -1544,485 +1091,12 @@ public class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void vreturn() {
         _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter(), currentLocation());
-        _currentCall.setArguments();
-    }
-
-    private CirVariable getStaticTuple(CirVariable fieldActor) {
-        return callSnippet(Kind.REFERENCE, BuiltinsSnippet.GetStaticTuple.SNIPPET, fieldActor);
-    }
-
-    private void generateFieldReadSnippetCall(int index, CirVariable fieldActor, CirVariable tuple) {
-        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
-        callAndPush(FieldReadSnippet.selectSnippet(kind), tuple, fieldActor);
-    }
-
-    private void generateFieldWriteSnippetCall(Kind kind, CirVariable tuple, CirVariable fieldActor, CirVariable value) {
-        switch (kind.asEnum()) {
-            case BYTE:
-                callAndPush(FieldWriteSnippet.WriteByte.SNIPPET, tuple, fieldActor, value);
-                break;
-            case BOOLEAN:
-                callAndPush(FieldWriteSnippet.WriteBoolean.SNIPPET, tuple, fieldActor, value);
-                break;
-            case SHORT:
-                callAndPush(FieldWriteSnippet.WriteShort.SNIPPET, tuple, fieldActor, value);
-                break;
-            case CHAR:
-                callAndPush(FieldWriteSnippet.WriteChar.SNIPPET, tuple, fieldActor, value);
-                break;
-            case INT:
-                callAndPush(FieldWriteSnippet.WriteInt.SNIPPET, tuple, fieldActor, value);
-                break;
-            case FLOAT:
-                callAndPush(FieldWriteSnippet.WriteFloat.SNIPPET, tuple, fieldActor, value);
-                break;
-            case LONG:
-                callAndPush(FieldWriteSnippet.WriteLong.SNIPPET, tuple, fieldActor, value);
-                break;
-            case DOUBLE:
-                callAndPush(FieldWriteSnippet.WriteDouble.SNIPPET, tuple, fieldActor, value);
-                break;
-            case WORD:
-                callAndPush(FieldWriteSnippet.WriteWord.SNIPPET, tuple, fieldActor, value);
-                break;
-            case REFERENCE:
-                callAndPush(FieldWriteSnippet.WriteReference.SNIPPET, tuple, fieldActor, value);
-                break;
-            default:
-                throw classFormatError("Fields cannot have type void");
-        }
-    }
-
-    @Override
-    protected void getstatic(int index) {
-        final FieldRefConstant fieldRef = _constantPool.fieldAt(index);
-        if (fieldRef.isResolvableWithoutClassLoading(_constantPool)) {
-            try {
-                final FieldActor fieldActor = fieldRef.resolve(_constantPool, index);
-                if (fieldActor.isFinal() && JavaTypeDescriptor.isPrimitive(fieldActor.descriptor()) && fieldActor.holder().isInitialized()) {
-                    // This can be transformed directly into a constant value if the field holder has been initialized
-                    Value fieldValue = null;
-                    if (MaxineVM.isPrototyping()) {
-                        final Field field = fieldActor.toJava();
-                        field.setAccessible(true);
-                        fieldValue = Value.fromBoxedJavaValue(field.get(null));
-                    } else {
-                        fieldValue = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
-                    }
-                    push(fieldValue);
-                    return;
-                }
-                // all other cases, fall off to general getstatic, including when failing reflective access.
-            } catch (LinkageError e) {
-            } catch (IllegalAccessException e) {
-            }
-        }
-        final CirVariable fieldActor = callResolutionSnippet(ResolveStaticFieldForReading.SNIPPET, index);
-        final CirVariable staticTuple = getStaticTuple(fieldActor);
-        generateFieldReadSnippetCall(index, fieldActor, staticTuple);
-    }
-
-    @Override
-    protected void putstatic(int index) {
-        final CirVariable fieldActor = callResolutionSnippet(ResolveStaticFieldForWriting.SNIPPET, index);
-        final CirVariable staticTuple = getStaticTuple(fieldActor);
-        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
-        final CirVariable value = pop(kind);
-        generateFieldWriteSnippetCall(kind, staticTuple, fieldActor, value);
-    }
-
-    @Override
-    protected void getfield(int index) {
-        final CirVariable fieldActor = callResolutionSnippet(ResolveInstanceFieldForReading.SNIPPET, index);
-        final CirVariable reference = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(reference);
-        generateFieldReadSnippetCall(index, fieldActor, reference);
-    }
-
-    @Override
-    protected void putfield(int index) {
-        final CirVariable fieldActor = callResolutionSnippet(ResolveInstanceFieldForWriting.SNIPPET, index);
-        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
-        final CirVariable value = pop(kind);
-        final CirVariable reference = pop(Kind.REFERENCE);
-        implicitCheckNullPointer(reference);
-        generateFieldWriteSnippetCall(kind, reference, fieldActor, value);
-    }
-
-    @Override
-    protected void invokevirtual(int index) {
-        final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 3];
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
-            arguments[i + 1] = _stack.pop();
-        }
-        final CirVariable receiver = popReferenceOrWord();
-        arguments[0] = receiver;
-
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(_constantPool));
-        implicitCheckNullPointer(receiver);
-
-        final Hub mostFrequentHub = getMostFrequentHub();
-
-        if (mostFrequentHub != null) {
-            invokevirtualWithGuardedInline(index, classMethodRef, signatureDescriptor, arguments, receiver, mostFrequentHub);
-        } else {
-            final CirVariable methodActor = callResolutionSnippet(ResolveVirtualMethod.SNIPPET, index);
-            final CirVariable callEntryPoint = callSnippet(Kind.WORD, MethodSelectionSnippet.SelectVirtualMethod.SNIPPET, receiver, methodActor);
-            completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), arguments);
-        }
-    }
-
-    private Hub getMostFrequentHub() {
-        final MethodInstrumentation instrumentation = VMConfiguration.target().compilationScheme().getMethodInstrumentation(currentLocation().classMethodActor());
-        final Hub mostFrequentHub = (instrumentation == null)
-                                ? null
-                                : instrumentation.getMostFrequentlyUsedHub(currentLocation().position());
-        return mostFrequentHub;
-    }
-
-    private void invokevirtualWithGuardedInline(int index, final ClassMethodRefConstant classMethodRef, final SignatureDescriptor signatureDescriptor, final CirValue[] arguments,
-                    final CirVariable receiver, final Hub mostFrequentHub) {
-        final VirtualMethodActor declaredMethod = classMethodRef.resolveVirtual(_constantPool, index);
-        final CirVariable hub = callSnippet(Kind.REFERENCE, MethodSelectionSnippet.ReadHub.SNIPPET, receiver);
-        final CirValue cachedHub = new CirConstant(ReferenceValue.from(mostFrequentHub));
-
-        final Address entryPoint = mostFrequentHub.getWord(declaredMethod.vTableIndex()).asAddress();
-
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(entryPoint);
-        final CirMethod targetCirMethod = _methodTranslation.cirGenerator().createIrMethod(targetMethod.classMethodActor());
-        final CirContinuation successCont = new CirContinuation();
-        final CirContinuation failureCont = new CirContinuation();
-
-        _currentCall.setProcedure(CirSwitch.REFERENCE_EQUAL, currentLocation());
-        _currentCall.setArguments(hub, cachedHub, successCont, failureCont);
-
-        final CirCall kBlockCall = new CirCall();
-        final CirClosure kBlockClosure = new CirClosure(currentLocation());
-        kBlockClosure.setBody(kBlockCall);
-        final CirBlock kBlock = new CirBlock(kBlockClosure);
-
-        final CirCall successCall = new CirCall();
-        successCont.setBody(successCall);
-        successCont.setParameters();
-        _currentCall = successCall;
-        completeInvocation(targetCirMethod, signatureDescriptor.getResultKind(), arguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        final CirValue[] fkArguments = new CirValue[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            fkArguments[i] = arguments[i];
-        }
-
-        final CirCall failureCall = new CirCall();
-        failureCont.setBody(failureCall);
-        failureCont.setParameters();
-        _currentCall = failureCall;
-        final CirVariable methodActor = callResolutionSnippet(ResolveVirtualMethod.SNIPPET, index);
-        final CirVariable callEntryPoint = callSnippet(Kind.WORD, MethodSelectionSnippet.SelectVirtualMethod.SNIPPET, receiver, methodActor);
-        completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), fkArguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            final CirVariable result = _stack.push(signatureDescriptor.getResultKind(), currentLocation());
-            kBlockClosure.setParameters(result);
-        } else {
-            kBlockClosure.setParameters();
-        }
-        _currentCall = kBlockCall;
-    }
-
-    private void invokeinterfaceWithGuardedInline(int index, final InterfaceMethodRefConstant interfaceMethodRef, final SignatureDescriptor signatureDescriptor, final CirValue[] arguments,
-                    final CirVariable receiver, final Hub mostFrequentHub) {
-        final MethodActor methodActor1 = interfaceMethodRef.resolve(_constantPool, index);
-        final CirVariable hub = callSnippet(Kind.REFERENCE, MethodSelectionSnippet.ReadHub.SNIPPET, receiver);
-        final CirValue cachedHub = new CirConstant(ReferenceValue.from(mostFrequentHub));
-
-        final Address entryPoint;
-        if (methodActor1 instanceof VirtualMethodActor) {
-            final VirtualMethodActor declaredMethod = (VirtualMethodActor) methodActor1;
-            entryPoint = mostFrequentHub.getWord(declaredMethod.vTableIndex()).asAddress();
-        } else {
-            assert methodActor1 instanceof InterfaceMethodActor : "methoeActor not interface MethodActor";
-            final InterfaceMethodActor declaredMethod = (InterfaceMethodActor) methodActor1;
-            final InterfaceActor interfaceActor = (InterfaceActor) declaredMethod.holder();
-            final int interfaceIndex = mostFrequentHub.getITableIndex(interfaceActor.id());
-            entryPoint =  mostFrequentHub.getWord(interfaceIndex + declaredMethod.iIndexInInterface()).asAddress();
-        }
-
-        final TargetMethod targetMethod = Code.codePointerToTargetMethod(entryPoint);
-        final CirMethod targetCirMethod = _methodTranslation.cirGenerator().createIrMethod(targetMethod.classMethodActor());
-        final CirContinuation successCont = new CirContinuation();
-        final CirContinuation failureCont = new CirContinuation();
-
-        _currentCall.setProcedure(CirSwitch.REFERENCE_EQUAL, currentLocation());
-        _currentCall.setArguments(hub, cachedHub, successCont, failureCont);
-
-        final CirCall kBlockCall = new CirCall();
-        final CirClosure kBlockClosure = new CirClosure(currentLocation());
-        kBlockClosure.setBody(kBlockCall);
-        final CirBlock kBlock = new CirBlock(kBlockClosure);
-        _blockState.addCirBlock(kBlock);
-
-        final CirCall successCall = new CirCall();
-        successCont.setBody(successCall);
-        successCont.setParameters();
-        _currentCall = successCall;
-        completeInvocation(targetCirMethod, signatureDescriptor.getResultKind(), arguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        final CirValue[] fkArguments = new CirValue[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            fkArguments[i] = arguments[i];
-        }
-
-        final CirCall failureCall = new CirCall();
-        failureCont.setBody(failureCall);
-        failureCont.setParameters();
-        _currentCall = failureCall;
-
-        final CirValue methodActor = getInterfaceMethodActor(index, interfaceMethodRef);
-        final CirVariable callEntryPoint = callSnippet(Kind.WORD, MethodSelectionSnippet.SelectInterfaceMethod.SNIPPET, receiver, methodActor);
-        completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), fkArguments);
-        _currentCall.setProcedure(kBlock, currentLocation());
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            _currentCall.setArguments(_stack.pop());
-        } else {
-            _currentCall.setArguments();
-        }
-
-        if (signatureDescriptor.getResultKind() != Kind.VOID) {
-            final CirVariable result = _stack.push(signatureDescriptor.getResultKind(), currentLocation());
-            kBlockClosure.setParameters(result);
-        } else {
-            kBlockClosure.setParameters();
-        }
-        _currentCall = kBlockCall;
-    }
-    @Override
-    protected void invokespecial(int index) {
-        final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 3];
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
-            arguments[i + 1] = _stack.pop();
-        }
-        final CirVariable receiver = popReferenceOrWord();
-        arguments[0] = receiver;
-
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(_constantPool));
-
-        final CirVariable callEntryPoint = callResolutionSnippet(ResolveSpecialMethod.SNIPPET, index);
-        implicitCheckNullPointer(receiver);
-        completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), arguments);
-    }
-
-    @Override
-    protected void invokestatic(int index) {
-        final SignatureDescriptor signatureDescriptor = _constantPool.classMethodAt(index).signature(_constantPool);
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 2];
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
-            arguments[i] = _stack.pop();
-        }
-
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
-
-        final CirVariable callEntryPoint = callResolutionSnippet(ResolveStaticMethod.SNIPPET, index);
-        completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), arguments);
-    }
-
-    /**
-     * @see Bytecode#CALLNATIVE
-     */
-    @Override
-    protected void callnative(int nativeFunctionDescriptorIndex) {
-        final SignatureDescriptor signatureDescriptor = SignatureDescriptor.create(_constantPool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 2];
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
-            arguments[i] = _stack.pop();
-        }
-
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
-
-        final MethodActor classMethodActor = _methodTranslation.classMethodActor();
-        final boolean callerIsCFunction = classMethodActor.isCFunction();
-
-        final CirVariable callEntryPoint = callSnippet(Kind.WORD, LinkNativeMethod.SNIPPET, CirConstant.fromObject(classMethodActor));
-        CirVariable vmThreadLocals = null;
-        if (!callerIsCFunction) {
-            vmThreadLocals = callSnippet(Kind.WORD, NativeCallPrologue.SNIPPET);
-        } else {
-            if (classMethodActor.isCFunction()) {
-                if (MaxineVM.isPrototyping()) {
-                    if (!classMethodActor.getAnnotation(C_FUNCTION.class).isInterruptHandler()) {
-                        vmThreadLocals = callSnippet(Kind.WORD, NativeCallPrologueForC.SNIPPET);
-                    }
-                } else {
-                    vmThreadLocals = callSnippet(Kind.WORD, NativeCallPrologueForC.SNIPPET);
-                }
-            }
-        }
-        completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), arguments);
-        if (!callerIsCFunction) {
-            callSnippet(NativeCallEpilogue.SNIPPET, vmThreadLocals);
-        } else {
-            if (vmThreadLocals != null) {
-                callSnippet(NativeCallEpilogueForC.SNIPPET, vmThreadLocals);
-            }
-        }
-    }
-
-    private CirValue getInterfaceMethodActor(int index, InterfaceMethodRefConstant interfaceMethodRef) {
-        if (interfaceMethodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            try {
-                return CirConstant.fromObject(interfaceMethodRef.resolve(_constantPool, index));
-            } catch (NoSuchMethodError noSuchMethodError) {
-                // this must be a @PROTOTYPE_ONLY method
-                // do nothing: dead code elimination will take care of this
-            }
-        }
-        return callResolutionSnippet(ResolveInterfaceMethod.SNIPPET, index);
-    }
-
-    @Override
-    protected void invokeinterface(int index, int countUnused) {
-        final InterfaceMethodRefConstant interfaceMethodRef = _constantPool.interfaceMethodAt(index);
-        final SignatureDescriptor signatureDescriptor = interfaceMethodRef.signature(_constantPool);
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = new CirValue[parameterKinds.length + 3];
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
-            arguments[i + 1] = _stack.pop();
-        }
-        final CirVariable receiver = popReferenceOrWord();
-        arguments[0] = receiver;
-
-        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, interfaceMethodRef.holder(_constantPool));
-
-        final Hub mostFrequentHub = getMostFrequentHub();
-        if (mostFrequentHub != null) {
-            invokeinterfaceWithGuardedInline(index, interfaceMethodRef, signatureDescriptor, arguments, receiver, mostFrequentHub);
-        } else {
-            final CirValue methodActor = getInterfaceMethodActor(index, interfaceMethodRef);
-            implicitCheckNullPointer(receiver);
-            final CirVariable callEntryPoint = callSnippet(Kind.WORD, MethodSelectionSnippet.SelectInterfaceMethod.SNIPPET, receiver, methodActor);
-            completeInvocation(callEntryPoint, signatureDescriptor.getResultKind(), arguments);
-        }
-    }
-
-    private CirValue getInitializedClassActor(int index) {
-        final ClassConstant classConstant = _constantPool.classAt(index);
-        if (classConstant.isResolvableWithoutClassLoading(_constantPool)) {
-            final ClassActor classActor = classConstant.resolve(_constantPool, index);
-            if (classActor.isInitialized()) {
-                return CirConstant.fromObject(classActor);
-            }
-        }
-        return callResolutionSnippet(ResolveTypeAndMakeInitialized.SNIPPET, index);
-    }
-
-    @Override
-    protected void new_(int index) {
-        callAndPush(NonFoldableSnippet.CreateTupleOrHybrid.SNIPPET, getInitializedClassActor(index));
-    }
-
-    @Override
-    protected void newarray(int tag) {
-        final CirVariable length = pop(Kind.INT);
-        callAndPush(NonFoldableSnippet.CreatePrimitiveArray.SNIPPET, CirConstant.fromObject(Kind.fromNewArrayTag(tag)), length);
-    }
-
-    @Override
-    protected void anewarray(int index) {
-        final ClassConstant classConstant = _constantPool.classAt(index);
-        CirValue arrayClassActor;
-        if (classConstant.isResolvableWithoutClassLoading(_constantPool)) {
-            arrayClassActor = CirConstant.fromObject(ArrayClassActor.forComponentClassActor(_constantPool.classAt(index).resolve(_constantPool, index)));
-        } else {
-            arrayClassActor = callResolutionSnippet(ResolveArrayClass.SNIPPET, index);
-        }
-        final CirVariable length = pop(Kind.INT);
-        callAndPush(NonFoldableSnippet.CreateReferenceArray.SNIPPET, arrayClassActor, length);
-    }
-
-    @Override
-    protected void arraylength() {
-        stackCall(ArrayGetSnippet.ReadLength.SNIPPET);
-    }
-
-    @Override
-    protected void athrow() {
-        assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        final CirVariable throwable = pop(Kind.REFERENCE);
-        _currentCall.setArguments(throwable);
-        _currentCall.setProcedure(getCurrentExceptionContinuation(), currentLocation());
-    }
-
-    @Override
-    protected void checkcast(int index) {
-        final CirValue classActor = getClassActor(index);
-        final CirVariable object = getReferenceOrWordTop();
-        callAndPush(Snippet.CheckCast.SNIPPET, classActor, object);
-    }
-
-    @Override
-    protected void instanceof_(int index) {
-        final CirValue classActor = getClassActor(index);
-        final CirVariable object = pop(Kind.REFERENCE);
-        callAndPush(Snippet.InstanceOf.SNIPPET, classActor, object);
-    }
-
-    @Override
-    protected void monitorenter() {
-        callMonitorSnippet(MonitorSnippet.MonitorEnter.SNIPPET);
-    }
-
-    @Override
-    protected void monitorexit() {
-        callMonitorSnippet(MonitorSnippet.MonitorExit.SNIPPET);
+        _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     @Override
     protected void wide() {
         // NOTE: we do not need to emit code for WIDE because BytecodeScanner automatically widens opcodes
-    }
-
-    @Override
-    protected void multianewarray(int index, int nDimensions) {
-        assert nDimensions >= 1 : "nDimensions < 1";
-        final CirValue arrayClassActor = getClassActor(index);
-
-        // At runtime, create an int array of length 'nDimensions':
-        final CirVariable lengths = callSnippet(Kind.REFERENCE, NonFoldableSnippet.CreatePrimitiveArray.SNIPPET, CirConstant.fromObject(Kind.INT), CirConstant.fromInt(nDimensions));
-
-        // At runtime, pop array lengths and assign them to array elements,
-        // in the ordering in which they were once pushed:
-        // and check they are greater than or equal to zero
-        for (int i = 1; i <= nDimensions; i++) {
-            final CirVariable length = pop(Kind.INT);
-            callSnippet(Snippet.CheckArrayDimension.SNIPPET, length);
-            callSnippet(ArraySetSnippet.SetInt.SNIPPET, lengths, CirConstant.fromInt(nDimensions - i), length);
-        }
-        callAndPush(NonFoldableSnippet.CreateMultiReferenceArray.SNIPPET, arrayClassActor, lengths);
     }
 
     @Override
@@ -2048,6 +1122,609 @@ public class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void breakpoint() {
         Problem.unimplemented();
+    }
+
+    @Override
+    protected void prologue() {
+        if (_blockState.birBlock().hasSafepoint()) {
+            if (MaxineVM.isPrototyping()) {
+                final C_FUNCTION cFunctionAnnotation = _methodTranslation.classMethodActor().getAnnotation(C_FUNCTION.class);
+                if (cFunctionAnnotation == null || !cFunctionAnnotation.isInterruptHandler()) {
+                    callAndPush(JavaOperator.PROLOGUE);
+                }
+            } else {
+                if (_methodTranslation.classMethodActor().isCFunction()) {
+                    callAndPush(JavaOperator.PROLOGUE);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void getfield(int index) {
+        final CirVariable reference = pop(Kind.REFERENCE);
+        final JavaOperator getField = new GetField(_constantPool, index);
+        callAndPush(getField, reference);
+    }
+
+    @Override
+    protected void putfield(int index) {
+        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
+        final CirVariable value = pop(kind);
+        final CirVariable reference = pop(Kind.REFERENCE);
+        final JavaOperator putfield = new PutField(_constantPool, index);
+        callAndPush(putfield, reference, value);
+    }
+
+    @Override
+    protected void putstatic(int index) {
+        final Kind kind = _constantPool.fieldAt(index).type(_constantPool).toKind();
+        final CirVariable value = pop(kind);
+        final JavaOperator putstatic = new PutStatic(_constantPool, index);
+        callAndPush(putstatic, value);
+    }
+
+    @Override
+    protected void getstatic(int index) {
+        final FieldRefConstant fieldRef = _constantPool.fieldAt(index);
+        if (fieldRef.isResolvableWithoutClassLoading(_constantPool)) {
+            try {
+                final FieldActor fieldActor = fieldRef.resolve(_constantPool, index);
+                if (fieldActor.isFinal() && JavaTypeDescriptor.isPrimitive(fieldActor.descriptor()) && fieldActor.holder().isInitialized()) {
+                    // This can be transformed directly into a constant value if the field holder has been initialized
+                    final Value fieldValue;
+                    if (MaxineVM.isPrototyping()) {
+                        final Field field = fieldActor.toJava();
+                        field.setAccessible(true);
+                        fieldValue = Value.fromBoxedJavaValue(field.get(null));
+                    } else {
+                        fieldValue = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
+                    }
+                    push(fieldValue);
+                    return;
+                }
+                // all other cases, fall off to general getstatic, including when failing reflective access.
+            } catch (LinkageError e) {
+                // do nothing.
+            } catch (IllegalAccessException e) {
+                // do nothing.
+            }
+        }
+        final JavaOperator getstatic = new GetStatic(_constantPool, index);
+        callAndPush(getstatic);
+    }
+
+    @Override
+    protected void invokeinterface(int index, int countUnused) {
+        final InterfaceMethodRefConstant interfaceMethodRef = _constantPool.interfaceMethodAt(index);
+        final SignatureDescriptor signatureDescriptor = interfaceMethodRef.signature(_constantPool);
+        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 3);
+        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+            arguments[i + 1] = _stack.pop();
+        }
+        final CirVariable receiver = popReferenceOrWord();
+        arguments[0] = receiver;
+        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, interfaceMethodRef.holder(_constantPool));
+        final JavaOperator invokeinterface = new InvokeInterface(_constantPool, index);
+        completeInvocation(invokeinterface, signatureDescriptor.getResultKind(), arguments);
+    }
+
+    private void invokeClassMethod(int index, JavaOperator op) {
+        final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
+        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
+        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 3);
+        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+            arguments[i + 1] = _stack.pop();
+        }
+        final CirVariable receiver = popReferenceOrWord();
+        arguments[0] = receiver;
+        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(_constantPool));
+        completeInvocation(op, signatureDescriptor.getResultKind(), arguments);
+    }
+
+    @Override
+    protected void invokevirtual(int index) {
+        invokeClassMethod(index, new InvokeVirtual(_constantPool, index, _methodTranslation, _blockState));
+    }
+
+    @Override
+    protected void invokespecial(int index) {
+        invokeClassMethod(index, new InvokeSpecial(_constantPool, index));
+    }
+
+    @Override
+    protected void invokestatic(int index) {
+        final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
+        final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
+        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 2);
+        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+            arguments[i] = _stack.pop();
+        }
+        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
+        final JavaOperator op = new InvokeStatic(_constantPool, index);
+        completeInvocation(op, signatureDescriptor.getResultKind(), arguments);
+    }
+
+    @Override
+    protected void checkcast(int index) {
+        final CirVariable object = getReferenceOrWordTop();
+        final JavaOperator checkcast = new CheckCast(_constantPool, index);
+        callAndPush(checkcast, object);
+    }
+
+    @Override
+    protected void instanceof_(int index) {
+        final CirVariable object = pop(Kind.REFERENCE);
+        final JavaOperator instanceofOp = new InstanceOf(_constantPool, index);
+        callAndPush(instanceofOp, object);
+    }
+
+    protected void arrayLoad(Kind kind) {
+        final CirVariable index = pop(Kind.INT);
+        final CirVariable array = pop(Kind.REFERENCE);
+        final JavaOperator op = new ArrayLoad(kind);
+        callAndPush(op, array, index);
+    }
+
+    @Override
+    protected void iaload() {
+        arrayLoad(Kind.INT);
+    }
+
+    @Override
+    protected void laload() {
+        arrayLoad(Kind.LONG);
+    }
+
+    @Override
+    protected void faload() {
+        arrayLoad(Kind.FLOAT);
+    }
+
+    @Override
+    protected void daload() {
+        arrayLoad(Kind.DOUBLE);
+    }
+
+    @Override
+    protected void aaload() {
+        arrayLoad(Kind.REFERENCE);
+    }
+
+    @Override
+    protected void baload() {
+        arrayLoad(Kind.BYTE);
+    }
+
+    @Override
+    protected void caload() {
+        arrayLoad(Kind.CHAR);
+    }
+
+    @Override
+    protected void saload() {
+        arrayLoad(Kind.SHORT);
+    }
+
+    @Override
+    protected void new_(int index) {
+        final JavaOperator newOp = new New(_constantPool, index);
+        callAndPush(newOp);
+    }
+
+    private void arrayStore(Kind kind) {
+        final JavaOperator arraystore = new ArrayStore(kind);
+        final CirVariable value = pop(kind);
+        final CirVariable index = pop(Kind.INT);
+        final CirVariable array = pop(Kind.REFERENCE);
+        callAndPush(arraystore, array, index, value);
+    }
+
+    @Override
+    protected void aastore() {
+        arrayStore(Kind.REFERENCE);
+    }
+
+    @Override
+    protected void bastore() {
+        arrayStore(Kind.BYTE);
+    }
+
+    @Override
+    protected void castore() {
+        arrayStore(Kind.CHAR);
+    }
+
+    @Override
+    protected void dastore() {
+        arrayStore(Kind.DOUBLE);
+    }
+
+    @Override
+    protected void fastore() {
+        arrayStore(Kind.FLOAT);
+    }
+
+    @Override
+    protected void lastore() {
+        arrayStore(Kind.LONG);
+    }
+
+    @Override
+    protected void iastore() {
+        arrayStore(Kind.INT);
+    }
+
+    @Override
+    protected void sastore() {
+        arrayStore(Kind.SHORT);
+    }
+
+    @Override
+    protected void newarray(int atag) {
+        final CirVariable count = pop(Kind.INT);
+        final JavaOperator newarray = new NewArray(atag);
+        callAndPush(newarray, count);
+    }
+
+    @Override
+    protected void anewarray(int index) {
+        final CirVariable count = pop(Kind.INT);
+        final JavaOperator newarray = new NewArray(_constantPool, index);
+        callAndPush(newarray, count);
+    }
+
+    @Override
+    protected void multianewarray(int index, int nDimensions) {
+        final JavaOperator op = new MultiANewArray(_constantPool, index, nDimensions);
+        final CirVariable[] dimensions = CirClosure.newParameters(nDimensions);
+        for (int i = 1; i <= nDimensions; i++) {
+            dimensions[nDimensions - i] = pop(Kind.INT);
+        }
+        callAndPush(op, dimensions);
+    }
+
+    @Override
+    protected void arraylength() {
+        final JavaOperator op = new ArrayLength();
+        final CirVariable arrayref = pop(Kind.REFERENCE);
+        callAndPush(op, arrayref);
+    }
+
+    @Override
+    protected void monitorenter() {
+        final JavaOperator op = new MonitorEnter();
+        final CirVariable objectref = pop(Kind.REFERENCE);
+        callAndPush(op, objectref);
+    }
+
+    @Override
+    protected void monitorexit() {
+        final JavaOperator op = new MonitorExit();
+        final CirVariable objectref = pop(Kind.REFERENCE);
+        callAndPush(op, objectref);
+    }
+
+    /**
+     * @see Bytecode#CALLNATIVE
+     */
+    @Override
+    protected void callnative(int nativeFunctionDescriptorIndex) {
+        final CallNative op = new CallNative(_constantPool, nativeFunctionDescriptorIndex, _methodTranslation.classMethodActor());
+        final SignatureDescriptor signatureDescriptor = op.signatureDescriptor();
+        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
+        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 2);
+        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+            arguments[i] = _stack.pop();
+        }
+
+        assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
+
+        completeInvocation(op, signatureDescriptor.getResultKind(), arguments);
+    }
+
+    @Override
+    protected void f2i() {
+        stackCall(JavaOperator.FLOAT_TO_INT);
+    }
+
+    @Override
+    protected void f2l() {
+        stackCall(JavaOperator.FLOAT_TO_LONG);
+    }
+
+    @Override
+    protected void d2i() {
+        stackCall(JavaOperator.DOUBLE_TO_INT);
+    }
+
+    @Override
+    protected void d2l() {
+        stackCall(JavaOperator.DOUBLE_TO_LONG);
+    }
+
+    @Override
+    protected void fcmpl() {
+        stackCall(JavaOperator.FLOAT_COMPARE_L);
+    }
+
+    @Override
+    protected void fcmpg() {
+        stackCall(JavaOperator.FLOAT_COMPARE_G);
+
+    }
+
+    @Override
+    protected void dcmpl() {
+        stackCall(JavaOperator.DOUBLE_COMPARE_L);
+    }
+
+    @Override
+    protected void dcmpg() {
+        stackCall(JavaOperator.DOUBLE_COMPARE_G);
+    }
+
+    @Override
+    protected void i2b() {
+        stackCall(JavaOperator.INT_TO_BYTE);
+    }
+
+    @Override
+    protected void i2c() {
+        stackCall(JavaOperator.INT_TO_CHAR);
+    }
+
+    @Override
+    protected void i2s() {
+        stackCall(JavaOperator.INT_TO_SHORT);
+    }
+
+    @Override
+    protected void irem() {
+        stackCall(JavaOperator.INT_REMAINDER);
+    }
+
+    @Override
+    protected void lrem() {
+        stackCall(JavaOperator.LONG_REMAINDER);
+    }
+
+    @Override
+    protected void frem() {
+        stackCall(JavaOperator.FLOAT_REMAINDER);
+    }
+
+    @Override
+    protected void drem() {
+        stackCall(JavaOperator.DOUBLE_REMAINDER);
+    }
+
+    @Override
+    protected void iadd() {
+        stackCall(JavaOperator.INT_PLUS);
+    }
+
+    @Override
+    protected void ladd() {
+        stackCall(JavaOperator.LONG_PLUS);
+    }
+
+    @Override
+    protected void fadd() {
+        stackCall(JavaOperator.FLOAT_PLUS);
+    }
+
+    @Override
+    protected void dadd() {
+        stackCall(JavaOperator.DOUBLE_PLUS);
+    }
+
+    @Override
+    protected void isub() {
+        stackCall(JavaOperator.INT_MINUS);
+    }
+
+    @Override
+    protected void lsub() {
+        stackCall(JavaOperator.LONG_MINUS);
+    }
+
+    @Override
+    protected void fsub() {
+        stackCall(JavaOperator.FLOAT_MINUS);
+    }
+
+    @Override
+    protected void dsub() {
+        stackCall(JavaOperator.DOUBLE_MINUS);
+    }
+
+    @Override
+    protected void imul() {
+        stackCall(JavaOperator.INT_TIMES);
+    }
+
+    @Override
+    protected void lmul() {
+        stackCall(JavaOperator.LONG_TIMES);
+    }
+
+    @Override
+    protected void fmul() {
+        stackCall(JavaOperator.FLOAT_TIMES);
+    }
+
+    @Override
+    protected void dmul() {
+        stackCall(JavaOperator.DOUBLE_TIMES);
+    }
+
+    @Override
+    protected void idiv() {
+        stackCall(JavaOperator.INT_DIVIDE);
+    }
+
+    @Override
+    protected void ldiv() {
+        stackCall(JavaOperator.LONG_DIVIDE);
+    }
+
+    @Override
+    protected void fdiv() {
+        stackCall(JavaOperator.FLOAT_DIVIDE);
+    }
+
+    @Override
+    protected void ddiv() {
+        stackCall(JavaOperator.DOUBLE_DIVIDE);
+    }
+
+    @Override
+    protected void i2l() {
+        stackCall(JavaOperator.INT_TO_LONG);
+    }
+
+    @Override
+    protected void i2f() {
+        stackCall(JavaOperator.INT_TO_FLOAT);
+    }
+
+    @Override
+    protected void i2d() {
+        stackCall(JavaOperator.INT_TO_DOUBLE);
+    }
+
+    @Override
+    protected void l2i() {
+        stackCall(JavaOperator.LONG_TO_INT);
+    }
+
+    @Override
+    protected void l2f() {
+        stackCall(JavaOperator.LONG_TO_FLOAT);
+    }
+
+    @Override
+    protected void l2d() {
+        stackCall(JavaOperator.LONG_TO_DOUBLE);
+    }
+
+    @Override
+    protected void f2d() {
+        stackCall(JavaOperator.FLOAT_TO_DOUBLE);
+    }
+
+    @Override
+    protected void d2f() {
+        stackCall(JavaOperator.DOUBLE_TO_FLOAT);
+    }
+
+    @Override
+    protected void lcmp() {
+        stackCall(JavaOperator.LONG_COMPARE);
+    }
+
+    @Override
+    protected void ishl() {
+        stackCall(JavaOperator.INT_SHIFT_LEFT);
+    }
+
+    @Override
+    protected void lshl() {
+        stackCall(JavaOperator.LONG_SHIFT_LEFT);
+    }
+
+    @Override
+    protected void ishr() {
+        stackCall(JavaOperator.INT_SIGNED_SHIFT_RIGHT);
+    }
+
+    @Override
+    protected void lshr() {
+        stackCall(JavaOperator.LONG_SIGNED_SHIFT_RIGHT);
+    }
+
+    @Override
+    protected void iushr() {
+        stackCall(JavaOperator.INT_UNSIGNED_SHIFT_RIGHT);
+    }
+
+    @Override
+    protected void lushr() {
+        stackCall(JavaOperator.LONG_UNSIGNED_SHIFT_RIGHT);
+    }
+
+    @Override
+    protected void iand() {
+        stackCall(JavaOperator.INT_AND);
+    }
+
+    @Override
+    protected void land() {
+        stackCall(JavaOperator.LONG_AND);
+    }
+
+    @Override
+    protected void ior() {
+        stackCall(JavaOperator.INT_OR);
+    }
+
+    @Override
+    protected void lor() {
+        stackCall(JavaOperator.LONG_OR);
+    }
+
+    @Override
+    protected void ixor() {
+        stackCall(JavaOperator.INT_XOR);
+    }
+
+    @Override
+    protected void lxor() {
+        stackCall(JavaOperator.LONG_XOR);
+    }
+
+    @Override
+    protected void ineg() {
+        stackCall(JavaOperator.INT_NEG);
+    }
+
+    @Override
+    protected void lneg() {
+        stackCall(JavaOperator.LONG_NEG);
+    }
+
+    @Override
+    protected void fneg() {
+        stackCall(JavaOperator.FLOAT_NEG);
+    }
+
+    @Override
+    protected void dneg() {
+        stackCall(JavaOperator.DOUBLE_NEG);
+    }
+
+    @Override
+    protected void iinc(int index, int addend) {
+        final CirVariable localVariable = _frame.makeVariable(Kind.INT, index, currentLocation());
+        final CirContinuation continuation = new CirContinuation(localVariable);
+        final JavaOperator op = JavaOperator.INT_PLUS;
+        final CirValue exceptionContinuation = throwsAny(op) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
+        _currentCall.setArguments(localVariable, CirConstant.fromInt(addend), continuation, exceptionContinuation);
+        _currentCall.setProcedure(op, currentLocation());
+        _currentCall = new CirCall();
+        continuation.setBody(_currentCall);
+    }
+
+    @Override
+    protected void athrow() {
+        assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
+        final CirVariable throwable = pop(Kind.REFERENCE);
+        _currentCall.setProcedure(new Throw(), currentLocation());
+        _currentCall.setArguments(throwable, CirValue.UNDEFINED, getCurrentExceptionContinuation());
     }
 
 }

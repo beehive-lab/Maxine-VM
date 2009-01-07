@@ -27,14 +27,13 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.eir.allocate.*;
-import com.sun.max.vm.compiler.ir.*;
 
 /**
  * @author Bernd Mathiske
  */
 public abstract class EirInstruction<EirInstructionVisitor_Type extends EirInstructionVisitor,
                                      EirTargetEmitter_Type extends EirTargetEmitter>
-                extends EirPosition implements IrInstruction {
+                extends EirPosition {
 
     public interface Procedure {
         void run(EirInstruction instruction);

@@ -31,7 +31,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  */
 public class PageDataAccess extends DataAccessAdapter {
-    
+
     private static final int TRACE_VALUE = 1;
 
     protected String  tracePrefix() {

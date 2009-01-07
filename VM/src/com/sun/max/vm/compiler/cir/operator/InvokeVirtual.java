@@ -24,45 +24,18 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
-import com.sun.max.vm.type.*;
 
 
-public class InvokeVirtual extends JavaOperator {
-    private final ConstantPool _constantPool;
-    private final int _index;
-    private final Kind _returnKind;
-    private VirtualMethodActor _virtualMethodActor;
+public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
     private final BirToCirMethodTranslation _translation;
     private final BlockState _blockState;
-    public boolean isResolved() {
-        return _virtualMethodActor != null;
-    }
-    public void resolve() {
-        constantPool().methodAt(index()).resolve(constantPool(), index());
-    }
-
-    public VirtualMethodActor virtualMethodActor() {
-        return _virtualMethodActor;
-    }
 
     public InvokeVirtual(ConstantPool constantPool, int index, BirToCirMethodTranslation translation, BlockState blockState) {
-        _constantPool = constantPool;
-        _index = index;
-        _returnKind = constantPool.methodAt(index).signature(constantPool).getResultKind();
+        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
         _translation = translation;
         _blockState = blockState;
-        final MethodRefConstant ref = constantPool.methodAt(index);
-        if (ref.isResolved()) {
-            _virtualMethodActor = (VirtualMethodActor) ref.resolve(constantPool, index);
-        } else {
-            _virtualMethodActor = null;
-        }
-    }
-
-    @Override
-    public Kind resultKind() {
-        return _returnKind;
     }
 
     @Override
@@ -79,21 +52,12 @@ public class InvokeVirtual extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-    public int index() {
-        return _index;
-    }
+
     public BirToCirMethodTranslation methodTranslation() {
         return _translation;
     }
+
     public BlockState blockState() {
         return _blockState;
-    }
-
-    @Override
-    public String toString() {
-        return "Invokevirtual <" + (isResolved() ? _virtualMethodActor : _index) + ">";
     }
 }

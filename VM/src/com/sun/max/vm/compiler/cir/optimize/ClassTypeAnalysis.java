@@ -41,7 +41,7 @@ public final class ClassTypeAnalysis extends DataflowDriver<Typeset> {
         @Override
         public void visit(New op) {
             if (op.isResolved()) {
-                driver().flowInto(domain().fromClassActor(op.classActor()), _vark);
+                driver().flowInto(domain().fromClassActor(op.actor()), _vark);
                 driver().flowInto(domain().fromInstanceOf(InterfaceActor.fromJava(Throwable.class)), _varek);
             } else {
                 visitDefault(op);
@@ -107,7 +107,7 @@ public final class ClassTypeAnalysis extends DataflowDriver<Typeset> {
                     _name.get((CirVariable) (call.arguments()[0])) != _name.get(var)) {
                     return set;
                 }
-                final ClassActor thisClassActor = ((InstanceOf) call.procedure()).classActor();
+                final ClassActor thisClassActor = ((InstanceOf) call.procedure()).actor();
 
                 if (comp == ValueComparator.NOT_EQUAL) {
                     // instanceof holds

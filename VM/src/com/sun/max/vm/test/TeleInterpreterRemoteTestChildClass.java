@@ -18,10 +18,12 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.ir;
+package com.sun.max.vm.test;
 
-/**
- * @author Bernd Mathiske
- */
-public interface IrInstruction {
+
+public class TeleInterpreterRemoteTestChildClass extends TeleInterpreterRemoteTestClass {
+    @Override
+    public int virtual_overriden(int a, int b, int c) {
+        return a + b + c;
+    }
 }

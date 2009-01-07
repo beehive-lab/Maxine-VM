@@ -248,20 +248,35 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 if (!trapState.isZero()) {
                     FatalError.check(!targetMethod.classMethodActor().isTrapStub(), "Cannot have a trap in the trapStub");
                     final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
-                    if (safepoint.getTrapNumber(trapState) == Trap.Number.STACK_FAULT) {
-                        // There's no need to deal with the any references in a frame that triggered a stack overflow.
-                        // The explicit stack banging code that causes a stack overflow trap is always in the
-                        // prologue which is guaranteed not to be in the scope of a local exception handler.
-                        // Thus, no GC roots need to be scanned in this frame.
-                        break;
+                    if (Trap.Number.isImplicitException(safepoint.getTrapNumber(trapState))) {
+                        final Address catchAddress = targetMethod.throwAddressToCatchAddress(safepoint.getInstructionPointer(trapState));
+                        if (catchAddress.isZero()) {
+                            // An implicit exception occurred but not in the scope of a local exception handler.
+                            // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
+                            break;
+                        }
+                        // TODO: Get address of safepoint instruction at exception dispatcher site and scan
+                        // the frame references based on its Java frame descriptor.
+                        Problem.unimplemented("Cannot reliably find safepoint at exception dispatcher site yet.");
                     }
                 } else {
                     if (targetMethod.classMethodActor().isTrapStub()) {
                         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
                         trapState = AMD64Safepoint.getTrapStateFromRipPointer(ripPointer);
                         stackFrameWalker.setTrapState(trapState);
-                        if (safepoint.getTrapNumber(trapState) != Trap.Number.STACK_FAULT) {
-                            // Only scan with references in registers for a caller that did not trap due to stack overflow - see comment above.
+                        if (Trap.Number.isImplicitException(safepoint.getTrapNumber(trapState))) {
+                            final Address catchAddress = targetMethod.throwAddressToCatchAddress(safepoint.getInstructionPointer(trapState));
+                            if (catchAddress.isZero()) {
+                                // An implicit exception occurred but not in the scope of a local exception handler.
+                                // Thus, execution will not resume in this frame and hence no GC roots need to be scanned.
+                            } else {
+                                // TODO: Get address of safepoint instruction at exception dispatcher site and scan
+                                // the register references based on its Java frame descriptor.
+                                Problem.unimplemented("Cannot reliably find safepoint at exception dispatcher site yet.");
+                                preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), catchAddress.asPointer());
+                            }
+                        } else {
+                            // Only scan with references in registers for a caller that did not trap due to an implicit exception.
                             // Find the register state and pass it to the preparer so that it can be covered with the appropriate reference map
                             final Pointer callerInstructionPointer = stackFrameWalker.readWord(ripPointer, 0).asPointer();
                             preparer.prepareRegisterReferenceMap(safepoint.getRegisterState(trapState), callerInstructionPointer);

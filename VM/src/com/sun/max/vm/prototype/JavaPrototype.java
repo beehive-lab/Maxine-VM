@@ -275,7 +275,7 @@ public class JavaPrototype extends Prototype {
     private static void initializeMaxClasses() {
         final ClassActor[] classActors = Arrays.from(ClassActor.class, ClassRegistry.vmClassRegistry());
         for (ClassActor classActor : classActors) {
-            if (com.sun.max.Package.contains(classActor.toJava())) {
+            if (MaxineVM.isMaxineClass(classActor)) {
                 Classes.initialize(classActor.toJava());
             }
         }

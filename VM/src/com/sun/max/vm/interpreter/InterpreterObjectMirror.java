@@ -38,7 +38,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Bernd Mathiske
  */
-class InterpreterObjectMirror implements ObjectMirror {
+public class InterpreterObjectMirror implements ObjectMirror {
     private final Object _object;
     private final ClassActor _classActor;
 
@@ -133,7 +133,7 @@ class InterpreterObjectMirror implements ObjectMirror {
             final ArrayClassActor arrayClassActor = (ArrayClassActor) _classActor;
             final ClassActor componentClassActor = arrayClassActor.componentClassActor();
             if (componentClassActor.kind().toStackKind() != kind.toStackKind()) {
-                throw new ArrayStoreException("cannot store a " + kind + " to an array of " + componentClassActor.kind());
+                throw new ArrayStoreException("cannot store a '" + kind + "' into an array of '" + componentClassActor.kind() + "'");
             }
             final Object javaBoxedValue = componentClassActor.kind().convert(value).asBoxedJavaValue();
             Array.set(_object, index, javaBoxedValue);

@@ -65,14 +65,14 @@ public class TypeStrengthReduction {
                 } else {
                     var = null;
                 }
-                classActor = ((InstanceOf) op).classActor();
+                classActor = ((InstanceOf) op).actor();
             } else if (call.procedure() instanceof CheckCast) {
                 if (call.arguments()[0] instanceof CirVariable) {
                     var = (CirVariable) call.arguments()[0];
                 } else {
                     var = null;
                 }
-                classActor = ((CheckCast) op).classActor();
+                classActor = ((CheckCast) op).actor();
             } else {
                 var = null;
                 classActor = null;
@@ -109,7 +109,7 @@ public class TypeStrengthReduction {
                     if (op instanceof InstanceOf) {
                         call.assign(call(cont, CirConstant.fromInt(1)));
                     } else {
-                        call.assign(call(cont));
+                        call.assign(call(cont, CirCall.NO_ARGUMENTS));
                     }
                     st.append("  #reduced-true#");
                 } else {

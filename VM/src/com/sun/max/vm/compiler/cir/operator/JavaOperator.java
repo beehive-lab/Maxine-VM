@@ -20,8 +20,13 @@
  */
 package com.sun.max.vm.compiler.cir.operator;
 
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -43,16 +48,61 @@ import com.sun.max.vm.type.*;
  */
 public abstract class JavaOperator extends CirOperator implements CirRoutine {
 
-    @Override
-    public boolean mayThrowException() {
-        return true;
+    protected int _thrownExceptions;
+
+    /**
+     * Creates an object for the application of an operator that can initially raise any operation
+     * until subsequent analysis proves otherwise.
+     */
+    protected JavaOperator() {
+        this(ANY);
+    }
+
+    /**
+     * Creates an object for the application of an operator that is known a priori to only throw a specific exception.
+     * Subsequent analysis may be able to prove the exception is never thrown for this specific instance of the operator.
+     */
+    protected JavaOperator(int thrownExceptions) {
+        _thrownExceptions = thrownExceptions;
+    }
+
+    public final int thrownExceptions() {
+        return _thrownExceptions;
+    }
+
+    /**
+     * Sets the exception(s) that can be thrown by this operator, overriding any previously set exception(s).
+     *
+     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower}
+     */
+    public final void setThrownExceptions(int thrownExceptions) {
+        _thrownExceptions = thrownExceptions;
+    }
+
+    /**
+     * Adds one or more exceptions to the exceptions that can be thrown by this operator.
+     *
+     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower} that is added to the
+     *            current set of flags set for this operator
+     */
+    public final void addThrownExceptions(int thrownExceptions) {
+        _thrownExceptions |= thrownExceptions;
+    }
+
+    /**
+     * Removes one or more exceptions from the exceptions that can be thrown by this operator.
+     *
+     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower} that is removed from the
+     *            current set of flags set for this operator
+     */
+    public final void removeThrownExceptions(int thrownExceptions) {
+        _thrownExceptions &= ~thrownExceptions;
     }
 
     @Override
     public Kind[] parameterKinds() {
         throw Problem.unimplemented();
     }
-
 
     @Override
     public MethodActor foldingMethodActor() {
@@ -78,10 +128,148 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         visitor.visit(this);
     }
 
+    @Override
+    public abstract String toString();
+
     /**
-     * This class is a work around for some non {@link JavaBuiltin} classes that can appear
+     * Base class for all the Java operators that have a resolvable constant pool entry.
+     *
+     * @author Doug Simon
+     */
+    abstract static class JavaResolvableOperator<Actor_Type extends Actor> extends JavaOperator {
+        /**
+         * The constant pool entry index.
+         */
+        protected final int _index;
+
+        /**
+         * The constant pool.
+         */
+        protected final ConstantPool _constantPool;
+
+        protected final Kind _resultKind;
+
+        @CONSTANT_WHEN_NOT_ZERO
+        protected Actor_Type _actor;
+
+        public JavaResolvableOperator(int thrownExceptions, ConstantPool constantPool, int index, Kind resultKind) {
+            super(thrownExceptions);
+            _constantPool = constantPool;
+            _index = index;
+            _resultKind = resultKind;
+            if (constantPool != null) {
+                final ResolvableConstant constant = constantPool.resolvableAt(index);
+                if (constant.isResolved()/* || constant.isResolvableWithoutClassLoading(constantPool)*/) {
+                    final Class<Actor_Type> type = null;
+                    _actor = StaticLoophole.cast(type, constant.resolve(constantPool, index));
+                }
+            }
+        }
+
+        /**
+         * Gets the constant pool containing the entry referenced by this operator.
+         */
+        public final ConstantPool constantPool() {
+            return _constantPool;
+        }
+
+        /**
+         * Gets the index of the constant pool entry referenced by this operator.
+         */
+        public final int index() {
+            return _index;
+        }
+
+        /**
+         * Gets the resolved actor object corresponding to the constant pool entry referenced by this operator.
+         * This method will return {@code null} if the entry has not been {@linkplain #isResolved() resolved}.
+         */
+        public final Actor_Type actor() {
+            return _actor;
+        }
+
+        /**
+         * Determines if the constant pool entry referenced by this operator has been resolved.
+         */
+        public final boolean isResolved() {
+            return _actor != null;
+        }
+
+        /**
+         * Resolves the constant pool entry referenced by this operator. The resolution only happens once.
+         */
+        public final void resolve() {
+            final Class<Actor_Type> type = null;
+            _actor = StaticLoophole.cast(type, _constantPool.resolvableAt(_index).resolve(_constantPool, _index));
+        }
+
+        public final Kind resultKind() {
+            return _resultKind;
+        }
+
+        /**
+         * Gets the kind of the field referenced by this operator.
+         *
+         * @throws VerifyError if this operator does not operate on a field
+         */
+        public final Kind fieldKind() {
+            return _constantPool.fieldAt(_index).type(_constantPool).toKind();
+        }
+
+        /**
+         * Determines if this operator includes a class initialization check.
+         */
+        public boolean requiresClassInitialization() {
+            return false;
+        }
+
+        /**
+         * Gets the class that must be initialized as a side effect of executing this operator.
+         */
+        private ClassActor classToBeInitialized() {
+            assert requiresClassInitialization() && _actor != null;
+            if (_actor instanceof MemberActor) {
+                return ((MemberActor) _actor).holder();
+            }
+            return (ClassActor) _actor;
+        }
+
+        /**
+         * Determines if the class to be initialized by this operator is indeed initialized. This must only be called
+         * for operators that included a {@linkplain #requiresClassInitialization() class initialization} check.
+         */
+        public final boolean isClassInitialized() {
+            assert requiresClassInitialization();
+            if (!isResolved()) {
+                return false;
+            }
+            return classToBeInitialized().isInitialized();
+        }
+
+        /**
+         * Ensures that the class to be initialized by this operator is indeed initialized.
+         * This must only be called for operators that included a {@linkplain #requiresClassInitialization() class initialization} check.
+         */
+        public final void initializeClass() {
+            assert requiresClassInitialization();
+            if (!isClassInitialized()) {
+                if (!isResolved()) {
+                    resolve();
+                }
+                classToBeInitialized().makeInitialized();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + ":" + _constantPool.at(_index).valueString(_constantPool);
+        }
+    }
+
+    /**
+     * This class is a work around for some {@link JavaBuiltin} classes that can appear
      * in the CIR.   We list them here explicitly instead of allowing all builtins to be
-     * valid HCir operators.
+     * valid HCIR operators.
      *
      * @author Yi Guo
      * @author Aziz Ghuloum
@@ -95,6 +283,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         private final CirBuiltin _cirBuiltin;
 
         private JavaBuiltinOperator(Builtin builtin) {
+            super(builtin.thrownExceptions());
             _cirBuiltin = CirBuiltin.get(builtin);
         }
 
@@ -128,8 +317,8 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         }
 
         @Override
-        public boolean mayThrowException() {
-            return _cirBuiltin.mayThrowException();
+        public String toString() {
+            return _cirBuiltin.name();
         }
     }
 
@@ -141,10 +330,11 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
      * @author Yi Guo
      * @author Aziz Ghuloum
      */
-    private static final class JavaSnippetOperator extends JavaOperator implements Lowerable {
+    static final class JavaSnippetOperator extends JavaOperator implements Lowerable {
         private final CirSnippet _snippet;
 
-        private JavaSnippetOperator(Snippet snippet) {
+        JavaSnippetOperator(Snippet snippet) {
+            super(NONE);
             _snippet = CirSnippet.get(snippet);
         }
 
@@ -177,6 +367,10 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
             call.setProcedure(_snippet);
         }
 
+        @Override
+        public String toString() {
+            return _snippet.name();
+        }
     }
 
     /**
@@ -189,6 +383,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         private final Builtin _builtin;
         private final Snippet _snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
+            super(builtin.thrownExceptions());
             _builtin = builtin;
             _snippet = snippet;
         }
@@ -221,8 +416,8 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         }
 
         @Override
-        public boolean mayThrowException() {
-            return _builtin.mayThrowException();
+        public String toString() {
+            return _builtin.name();
         }
     }
 

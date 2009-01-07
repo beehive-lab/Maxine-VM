@@ -28,7 +28,7 @@ import com.sun.max.vm.compiler.cir.*;
 /**
  * Reset all reachable blocks and then update their respective call count,
  * the number of times they are called from within the given CIR graph.
- * 
+ *
  * Use this after deflationary optimizations,
  * which potentially drop blocks and calls thereof.
  *

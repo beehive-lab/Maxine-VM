@@ -141,11 +141,11 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
             final Value matchValue = _comparisonKind.convert(match.toStackValue());
             if (_valueComparator.evaluate(tagValue, matchValue)) {
                 final CirValue branchContinuation = arguments[n + i];
-                return new CirCall(branchContinuation);
+                return new CirCall(branchContinuation, CirCall.NO_ARGUMENTS);
             }
         }
         final CirValue defaultContinuation = arguments[arguments.length - 1];
-        return new CirCall(defaultContinuation);
+        return new CirCall(defaultContinuation, CirCall.NO_ARGUMENTS);
     }
 
     public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
@@ -162,7 +162,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
 
     public CirCall reduce(CirOptimizer cirOptimizer, CirValue... arguments) {
         final CirValue defaultContinuation = arguments[arguments.length - 1];
-        return new CirCall(defaultContinuation);
+        return new CirCall(defaultContinuation, CirCall.NO_ARGUMENTS);
     }
 
     public static final CirSwitch INT_EQUAL = new CirSwitch(Kind.INT, ValueComparator.EQUAL, 1);

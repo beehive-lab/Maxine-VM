@@ -31,7 +31,7 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * Interactive support for the interpreter, originally packaged with {@link InspectorInterpreter}.
+ * Interactive support for the interpreter, originally packaged with {@link TeleInterpreter}.
  *
  * @author Athul Acharya
  */

@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.cir.variable.*;
  * we merge them into one parameter.
  *
  * This transformation assumes that CirBlockUpdating has just occurred and its results are still valid.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class CirBlockParameterMerging {
@@ -74,7 +74,7 @@ public final class CirBlockParameterMerging {
 
         // Remove redundant parameters from the parameter list:
         final int newParameterLength = parameters.length - numberOfRemovedParameters;
-        final CirVariable[] newParameters = new CirVariable[newParameterLength];
+        final CirVariable[] newParameters = CirClosure.newParameters(newParameterLength);
         int n = 0;
         for (int i = 0; i < parameters.length; i++) {
             if (isSurvivor[i]) {
@@ -86,7 +86,7 @@ public final class CirBlockParameterMerging {
         // Remove all call arguments that correspond to redundant parameters:
         for (CirCall call : block.calls()) {
             final CirValue[] arguments = call.arguments();
-            final CirValue[] newArguments = new CirValue[newParameterLength];
+            final CirValue[] newArguments = CirCall.newArguments(newParameterLength);
             n = 0;
             for (int i = 0; i < arguments.length; i++) {
                 if (isSurvivor[i]) {

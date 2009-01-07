@@ -18,7 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package test.com.sun.max.tele.interpreter;
+
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.*;
+
+import com.sun.max.platform.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
+
 /**
- * @author Athul Acharya
+ *  @author Athul Acharya
  */
-package test.com.sun.max.ins.interpreter;
+public class TeleInterpreterTestSetup extends CompilerTestSetup<TargetMethod> {
+    public TeleInterpreterTestSetup(Test test) {
+        super(test);
+    }
+
+    @Override
+    protected VMConfiguration createVMConfiguration() {
+        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host());
+    }
+
+    @Override
+    public TargetMethod translate(ClassMethodActor classMethodActor) {
+        return null;
+    }
+
+}

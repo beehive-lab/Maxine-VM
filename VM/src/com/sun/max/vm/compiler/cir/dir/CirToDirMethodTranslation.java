@@ -185,7 +185,7 @@ class CirToDirMethodTranslation {
             final CirMethod cirCompiledMethod = (CirMethod) cirValue;
             return new DirMethodValue(cirCompiledMethod.classMethodActor());
         }
-        if (cirValue instanceof CirValue.Undefined) {
+        if (cirValue == CirValue.UNDEFINED) {
             return DirValue.UNDEFINED;
         }
         throw ProgramError.unexpected("unexpected type of CirValue: " + cirValue);
@@ -345,7 +345,7 @@ class CirToDirMethodTranslation {
     private abstract class CallGenerator<CirProcedure_Type extends CirValue> {
         protected abstract DirInstruction createCallInstruction(DirVariable result, CirProcedure_Type cirProcedure, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor);
 
-        private void generateCall(Translation translation, CirProcedure_Type cirProcedure, CirValue[] cirArguments, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
+        void generateCall(Translation translation, CirProcedure_Type cirProcedure, CirValue[] cirArguments, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
             Translation cc;
             DirVariable result;
@@ -468,10 +468,6 @@ class CirToDirMethodTranslation {
         }
         final Translation t = makeTranslation(IrBlock.Role.NORMAL, cirClosure, cc, ce);
         generateDirGoto(translation, t);
-    }
-
-    private void translateBlockCall(Translation translation, CirBlock cirBlock, CirValue[] cirArguments) {
-
     }
 
     private void translate(Translation translation) {

@@ -18,18 +18,13 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.ins.interpreter;
-
-import com.sun.max.*;
+package test.com.sun.max.tele.interpreter;
 
 /**
- * @see MaxPackage
- * 
- * @author Athul Acharya
+ *  @author Athul Acharya
  */
-public class Package extends MaxPackage {
+public interface TeleInterpreterTestInterface {
 
-    public Package() {
-        super();
-    }
+    int interfacemethod(int a, int b);
+
 }

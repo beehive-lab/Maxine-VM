@@ -20,6 +20,7 @@
  */
 package com.sun.max.tele.method;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.bytecode.*;
 

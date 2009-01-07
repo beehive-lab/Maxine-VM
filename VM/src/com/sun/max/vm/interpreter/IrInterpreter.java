@@ -148,7 +148,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
             specificLayout.writeValue(kind, mirror, offset, arguments[2]);
             return;
         }
-        ProgramError.check(arguments.length == 4, "wrong number of arguments for PointerLoadBuiltin");
+        ProgramError.check(arguments.length == 4, "wrong number of arguments for PointerStoreBuiltin");
         ProgramError.check(arguments[1].asInt() == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid PointerLoadBuiltin array displacement");
         final int index = arguments[2].asInt();
         mirror.writeElement(kind, index, arguments[3]);

@@ -63,7 +63,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                     }
                     final PointerStoreBuiltin pointerStoreBuiltin = (PointerStoreBuiltin) builtin;
                     pointerStore(pointerStoreBuiltin.kind(), arguments);
-                    return new CirCall(normalContinuation);
+                    return new CirCall(normalContinuation, CirCall.NO_ARGUMENTS);
                 } catch (Throwable throwable) {
                     Problem.todo("catch only those exceptions that are caused by the interpreted CIR code");
                     final CirValue exceptionContinuation = cirArguments[cirArguments.length - 1];
@@ -135,7 +135,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
 
     @Override
     public Value execute(CirMethod cirMethod, Value... arguments) throws InvocationTargetException {
-        CirCall call = new CirCall(cirMethod, valuesToCirArguments(arguments));
+        CirCall call = new CirCall(cirMethod, arguments.length > 0 ? valuesToCirArguments(arguments) : CirCall.NO_ARGUMENTS);
         _cirOptimizer = new CirOptimizer(_cirGenerator, cirMethod, call, CirInliningPolicy.NONE);
 
         if (cirMethod.isNative()) {

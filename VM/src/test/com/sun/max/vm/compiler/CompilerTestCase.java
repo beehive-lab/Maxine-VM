@@ -717,8 +717,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         try {
             return executeWithException(method, arguments);
         } catch (InvocationTargetException invocationTargetException) {
-            invocationTargetException.printStackTrace();
-            fail();
+            fail(Exceptions.stackTraceAsString(invocationTargetException));
             return null;
         }
     }
@@ -727,8 +726,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         try {
             return executeWithReceiverAndException(method, arguments);
         } catch (InvocationTargetException invocationTargetException) {
-            invocationTargetException.printStackTrace();
-            fail();
+            fail(Exceptions.stackTraceAsString(invocationTargetException));
             return null;
         }
     }

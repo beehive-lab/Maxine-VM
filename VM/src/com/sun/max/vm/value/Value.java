@@ -143,6 +143,9 @@ public abstract class Value<Value_Type extends Value<Value_Type>> implements Cla
      * If you really need one, our canonical "boxed Java value type" for 'Word' is 'WordValue'.
      */
     public static Value fromBoxedJavaValue(Object boxedJavaValue) {
+        if (boxedJavaValue == null) {
+            return ReferenceValue.NULL;
+        }
         if (boxedJavaValue instanceof Byte) {
             final Byte box = (Byte) boxedJavaValue;
             return ByteValue.from(box.byteValue());
