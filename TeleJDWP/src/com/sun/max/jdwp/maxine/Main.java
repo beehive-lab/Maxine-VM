@@ -53,7 +53,6 @@ import com.sun.max.program.option.Option;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.tele.TeleVM;
 import com.sun.max.tele.TeleVM.Options;
-import com.sun.max.tele.grip.TeleGripScheme;
 import com.sun.max.vm.prototype.BinaryImageGenerator;
 import com.sun.max.vm.prototype.BootImageException;
 import com.sun.max.vm.prototype.Prototype;
@@ -114,9 +113,6 @@ public class Main {
         } catch (BootImageException e) {
             LOGGER.severe("Exception occurred while creating TeleVM process: " + e.toString());
             System.exit(-1);
-        } catch (IOException e) {
-            LOGGER.severe("Exception occurred while creating TeleVM process: " + e.toString());
-            System.exit(-1);
         }
         return t;
     }
@@ -158,10 +154,6 @@ public class Main {
             LOGGER.severe("Error creating TeleVM => exiting");
             return;
         }
-
-        // Set Tele VM in grip scheme.
-        final TeleGripScheme teleGripScheme = (TeleGripScheme) teleVM.maxineVM().configuration().gripScheme();
-        teleGripScheme.setTeleVM(teleVM);
 
         // Execute until entry point is reached.
         LOGGER.info("Starting TeleVM");

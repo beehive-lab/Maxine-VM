@@ -115,7 +115,7 @@ public abstract class TeleVM implements VMAccess {
      * @param options the options controlling specifics of the TeleVM instance to be created
      * @return a new TeleVM instance
      */
-    public static TeleVM create(Options options) throws BootImageException, IOException {
+    public static TeleVM create(Options options) throws BootImageException {
         HostObjectAccess.setMainThread(Thread.currentThread());
 
         final String logLevel = options._logLevelOption.getValue();
@@ -154,8 +154,12 @@ public abstract class TeleVM implements VMAccess {
         final String[] commandLineArguments = "".equals(value) ? new String[0] : value.split(" ");
 
         if (options._debugOption.getValue()) {
-            teleVM = TeleVM.createNewChild(bootImageFile, sourcepath, commandLineArguments, options._debuggeeIdOption.getValue());
-            teleVM.advanceToJavaEntryPoint();
+            teleVM = create(bootImageFile, sourcepath, commandLineArguments, options._debuggeeIdOption.getValue());
+            try {
+                teleVM.advanceToJavaEntryPoint();
+            } catch (IOException ioException) {
+                throw new BootImageException(ioException);
+            }
 
             final File commandFile = options._commandFileOption.getValue();
             if (commandFile != null && !commandFile.equals("")) {
@@ -163,11 +167,8 @@ public abstract class TeleVM implements VMAccess {
             }
 
         } else {
-            teleVM = TeleVM.createReadOnly(bootImageFile, sourcepath, !options._relocateOption.getValue());
+            teleVM = createReadOnly(bootImageFile, sourcepath, !options._relocateOption.getValue());
         }
-
-        final TeleGripScheme teleGripScheme = (TeleGripScheme) teleVM.maxineVM().configuration().gripScheme();
-        teleGripScheme.setTeleVM(teleVM);
 
         return teleVM;
     }
@@ -180,7 +181,17 @@ public abstract class TeleVM implements VMAccess {
         }
     }
 
-    private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath, boolean relocate) throws BootImageException, IOException {
+    /**
+     * Creates a tele VM instance that is read-only and is only useful for inspecting a boot image.
+     *
+     * @param bootImageFile the file containing the boot image
+     * @param sourcepath the source code path to search for class or interface definitions
+     * @param relocate specifies if the heap and code sections in the boot image are to be relocated
+     * @return
+     * @throws BootImageException
+     * @throws IOException
+     */
+    private static TeleVM createReadOnly(File bootImageFile, Classpath sourcepath, boolean relocate) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
         return new ReadOnlyTeleVM(bootImageFile, bootImage, sourcepath, relocate);
     }
@@ -253,9 +264,15 @@ public abstract class TeleVM implements VMAccess {
         return _teleProcess;
     }
 
-    protected abstract TeleProcess createTeleProcess(String[] commandLineArguments, int id) throws IOException;
+    protected abstract TeleProcess createTeleProcess(String[] commandLineArguments, int id);
 
-    protected abstract Pointer loadBootImage() throws IOException;
+    /**
+     * Gets a pointer to the boot image in the remote VM. This may require executing the remote VM up to the
+     * point where it loads or memory maps the boot image.
+     *
+     * @throws BootImageException if the address of the boot image could not be obtained
+     */
+    protected abstract Pointer loadBootImage() throws BootImageException;
 
     /**
      * Determines if this VM is read-only. The operations that try to write to the memory of a read-only VM
@@ -307,7 +324,7 @@ public abstract class TeleVM implements VMAccess {
 
     private int _interpreterUseLevel = 0;
 
-    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandlineArguments, int id) throws BootImageException, IOException {
+    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandlineArguments, int id) throws BootImageException {
         _bootImageFile = bootImageFile;
         _bootImage = bootImage;
         _sourcepath = sourcepath;
@@ -322,9 +339,12 @@ public abstract class TeleVM implements VMAccess {
 
         _teleProcess.addStateListener(_model);
         _javaProviderFactory = new JavaProviderFactory(this, null);
+
+        final TeleGripScheme teleGripScheme = (TeleGripScheme) _vm.configuration().gripScheme();
+        teleGripScheme.setTeleVM(this);
     }
 
-    private static TeleVM createNewChild(File bootImageFile, Classpath sourcepath, String[] commandlineArguments, int id) throws BootImageException, IOException {
+    private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments, int id) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
         TeleVM teleVM = null;
         switch (bootImage.vmConfiguration().platform().operatingSystem()) {
@@ -768,17 +788,14 @@ public abstract class TeleVM implements VMAccess {
     }
 
     public Reference cellToReference(Pointer cell) {
-        return originToReference(layoutScheme().generalLayout().cellToOrigin(
-                cell));
+        return originToReference(layoutScheme().generalLayout().cellToOrigin(cell));
     }
 
     public void advanceToJavaEntryPoint() throws IOException {
         _messenger.enable();
-        final Address startEntryPoint = bootImageStart().plus(
-                bootImage().header()._vmRunMethodOffset);
+        final Address startEntryPoint = bootImageStart().plus(bootImage().header()._vmRunMethodOffset);
         try {
-            teleProcess().controller().runToInstruction(startEntryPoint, true,
-                    false);
+            teleProcess().controller().runToInstruction(startEntryPoint, true, false);
         } catch (Exception exception) {
             throw new IOException(exception);
         }

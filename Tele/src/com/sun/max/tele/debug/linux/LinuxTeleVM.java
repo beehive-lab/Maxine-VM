@@ -37,7 +37,7 @@ public final class LinuxTeleVM extends TeleVM {
         return new LinuxTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments);
     }
 
-    private Pointer findHeap(String bootImageFileName) throws IOException {
+    private Pointer findHeap(String bootImageFileName) {
         FileReader fileReader = null;
         final LinuxTeleProcess linuxInferiorProcess = (LinuxTeleProcess) teleProcess();
         try {
@@ -46,24 +46,22 @@ public final class LinuxTeleVM extends TeleVM {
             while (true) {
                 final String line = bufferedReader.readLine();
                 if (line == null) {
+                    fileReader.close();
                     return Pointer.zero();
                 }
                 if (line.contains(bootImageFileName)) {
                     final String s = line.substring(0, line.indexOf('-'));
+                    fileReader.close();
                     return Pointer.fromLong(Long.parseLong(s, 16));
                 }
             }
         } catch (IOException ioException) {
             return Pointer.zero();
-        } finally {
-            if (fileReader != null) {
-                fileReader.close();
-            }
         }
     }
 
     @Override
-    protected Pointer loadBootImage() throws IOException {
+    protected Pointer loadBootImage() throws BootImageException {
         Pointer heap = Pointer.zero();
         final LinuxTeleProcess linuxInferiorProcess = (LinuxTeleProcess) teleProcess();
         try {
@@ -92,7 +90,7 @@ public final class LinuxTeleVM extends TeleVM {
         return heap;
     }
 
-    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int id) throws BootImageException, IOException {
+    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int id) throws BootImageException {
         super(bootImageFile, bootImage, sourcepath, commandLineArguments, id);
     }
 
