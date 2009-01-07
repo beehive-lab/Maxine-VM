@@ -277,7 +277,7 @@ public class MaxineTester {
         int failedAutoTests = 0;
         for (String autoTest : _autoTestsWithExceptions) {
             if (out != null) {
-                out.println("Non-zero exit status for'" + autoTest + "'");
+                out.println("Non-zero exit status for '" + autoTest + "'");
             }
             failedAutoTests++;
         }
