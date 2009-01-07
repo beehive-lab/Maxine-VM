@@ -38,6 +38,7 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public abstract class SignatureDescriptor extends Descriptor {
 
+
     /**
      * The only concrete subclass of {@link TypeDescriptor}.
      * Using a subclass hides the details of storing TypeDescriptors in a {@link ChainedHashMapping}.
@@ -333,4 +334,6 @@ public abstract class SignatureDescriptor extends Descriptor {
         }
         return sb.toString();
     }
+
+    public static final SignatureDescriptor VOID = create("()V");
 }

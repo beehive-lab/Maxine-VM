@@ -219,7 +219,7 @@ public abstract class PoolSet<PoolObject_Type extends PoolObject> implements Clo
      * @return an array of the objects in {@code poolSet}, ordered by their serial numbers
      */
     public static <PoolObject_Type extends PoolObject> PoolObject_Type[] toArray(PoolSet<PoolObject_Type> poolSet, Class<PoolObject_Type> elementType) {
-        final PoolObject_Type[] array = Arrays.create(elementType, poolSet.length());
+        final PoolObject_Type[] array = Arrays.newInstance(elementType, poolSet.length());
         int i = 0;
         for (PoolObject_Type element : poolSet) {
             array[i++] = element;

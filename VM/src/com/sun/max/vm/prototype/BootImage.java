@@ -80,7 +80,7 @@ public class BootImage {
                 public boolean evaluate(Field field) {
                     return field.getName().startsWith("_");
                 }
-            });
+            }, new Field[0]);
         }
 
         public abstract void check() throws BootImageException;

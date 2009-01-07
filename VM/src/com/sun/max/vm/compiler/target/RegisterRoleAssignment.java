@@ -58,7 +58,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
                     Class<FloatingPointRegister_Type> floatingPointRegisterType,
                     FloatingPointRegister_Type floatingPointReturn, FloatingPointRegister_Type floatingPointScratch,
                     IntegerRegister_Type callInstructionAddress, IntegerRegister_Type framelessCallInstructionAddress) {
-        _integerRegisters = Arrays.create(integerRegisterType, VMRegister.Role.VALUES.length());
+        _integerRegisters = Arrays.newInstance(integerRegisterType, VMRegister.Role.VALUES.length());
         _integerRegisters[VMRegister.Role.CPU_STACK_POINTER.ordinal()] = cpuStackPointer;
         _integerRegisters[VMRegister.Role.CPU_FRAME_POINTER.ordinal()] = cpuFramePointer;
         _integerRegisters[VMRegister.Role.ABI_STACK_POINTER.ordinal()] = abiStackPointer;
@@ -71,7 +71,7 @@ public final class RegisterRoleAssignment<IntegerRegister_Type extends Symbol, F
         _integerRegisters[VMRegister.Role.CALL_INSTRUCTION_ADDRESS.ordinal()] = callInstructionAddress;
         _integerRegisters[VMRegister.Role.FRAMELESS_CALL_INSTRUCTION_ADDRESS.ordinal()] = framelessCallInstructionAddress;
 
-        _floatingPointRegisters = Arrays.create(floatingPointRegisterType, VMRegister.Role.values().length);
+        _floatingPointRegisters = Arrays.newInstance(floatingPointRegisterType, VMRegister.Role.values().length);
         _floatingPointRegisters[VMRegister.Role.ABI_RETURN.ordinal()] = floatingPointReturn;
         _floatingPointRegisters[VMRegister.Role.ABI_RESULT.ordinal()] = floatingPointReturn;
         _floatingPointRegisters[VMRegister.Role.ABI_SCRATCH.ordinal()] = floatingPointScratch;

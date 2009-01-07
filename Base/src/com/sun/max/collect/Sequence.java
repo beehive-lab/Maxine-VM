@@ -164,7 +164,7 @@ public interface Sequence<Element_Type> extends IterableWithLength<Element_Type>
         }
 
         public static <Element_Type> Element_Type[] toArray(IterableWithLength<? extends Element_Type> sequence, Class<Element_Type> elementType) {
-            final Element_Type[] array = com.sun.max.lang.Arrays.create(elementType, sequence.length());
+            final Element_Type[] array = com.sun.max.lang.Arrays.newInstance(elementType, sequence.length());
             int i = 0;
             for (Element_Type element : sequence) {
                 array[i] = element;

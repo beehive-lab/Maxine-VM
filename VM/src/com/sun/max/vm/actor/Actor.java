@@ -66,6 +66,8 @@ public abstract class Actor {
     public static final int INNER_CLASS =    0x00100000;
     public static final int TEMPLATE =       0x00200000;
     public static final int GENERATED =      0x00400000; // does not come from a class file
+    public static final int FINALIZER =      0x00800000;
+    public static final int REFERENCE =      0x01000000;
 
     // Common flags referring to fields in #4.5, Table #4.4:
     public static final int ACC_VOLATILE =   0x00000040;
@@ -86,7 +88,6 @@ public abstract class Actor {
 
     // VM-internal flags for methods:
     public static final int WRAPPER =              0x00100000;
-    // see above            TEMPLATE =             0x00200000;
     public static final int CLASS_INITIALIZER =    0x00400000;
     public static final int INSTANCE_INITIALIZER = 0x00800000;
     public static final int C_FUNCTION =           0x01000000;
@@ -419,6 +420,16 @@ public abstract class Actor {
     @INLINE
     public static boolean noSafepoints(int flags) {
         return (flags & NO_SAFEPOINTS) != 0;
+    }
+
+    @INLINE
+    public static boolean isReferenceObject(int flags) {
+        return (flags & REFERENCE) != 0;
+    }
+
+    @INLINE
+    public static boolean hasFinalizer(int flags) {
+        return (flags & FINALIZER) != 0;
     }
 
     public static Predicate<Actor> _staticPredicate = new Predicate<Actor>() {

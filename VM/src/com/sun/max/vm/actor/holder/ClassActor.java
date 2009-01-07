@@ -72,6 +72,14 @@ public abstract class ClassActor extends Actor {
     public static final String NO_SOURCE_FILE_NAME = null;
     public static final EnclosingMethodInfo NO_ENCLOSING_METHOD_INFO = null;
 
+    public static final InterfaceActor[] NO_INTERFACES = new InterfaceActor[0];
+    public static final FieldActor[] NO_FIELDS = new FieldActor[0];
+    public static final MethodActor[] NO_METHODS = new MethodActor[0];
+    public static final StaticMethodActor[] NO_STATIC_METHODS = new StaticMethodActor[0];
+    public static final VirtualMethodActor[] NO_VIRTUAL_METHODS = new VirtualMethodActor[0];
+    public static final InterfaceMethodActor[] NO_INTERFACE_METHODS = new InterfaceMethodActor[0];
+    public static final TypeDescriptor[] NO_TYPE_DESCRIPTORS = new TypeDescriptor[0];
+
     public static interface IDMapping {
         int get(ClassLoader classLoader, String name);
     }
@@ -128,12 +136,12 @@ public abstract class ClassActor extends Actor {
 
         _localInterfaceActors = interfaceActors;
 
-        _localStaticMethodActors = Arrays.filter(methodActors, StaticMethodActor.class);
-        _localVirtualMethodActors = Arrays.filter(methodActors, VirtualMethodActor.class);
-        _localInterfaceMethodActors = Arrays.filter(methodActors, InterfaceMethodActor.class);
+        _localStaticMethodActors = Arrays.filter(methodActors, StaticMethodActor.class, NO_STATIC_METHODS);
+        _localVirtualMethodActors = Arrays.filter(methodActors, VirtualMethodActor.class, NO_VIRTUAL_METHODS);
+        _localInterfaceMethodActors = Arrays.filter(methodActors, InterfaceMethodActor.class, NO_INTERFACE_METHODS);
 
-        _localStaticFieldActors = InjectedFieldActor.Static.injectFieldActors(true, Arrays.filter(fieldActors, Actor._staticPredicate), typeDescriptor);
-        _localInstanceFieldActors = InjectedFieldActor.Static.injectFieldActors(false, Arrays.filter(fieldActors, Actor._dynamicPredicate), typeDescriptor);
+        _localStaticFieldActors = InjectedFieldActor.Static.injectFieldActors(true, Arrays.filter(fieldActors, Actor._staticPredicate, NO_FIELDS), typeDescriptor);
+        _localInstanceFieldActors = InjectedFieldActor.Static.injectFieldActors(false, Arrays.filter(fieldActors, Actor._dynamicPredicate, NO_FIELDS), typeDescriptor);
 
         assignHolderToLocalFieldActors();
 
@@ -191,6 +199,22 @@ public abstract class ClassActor extends Actor {
                 }
             };
         }
+    }
+
+    private StaticMethodActor[] filterStaticMethodActors(MethodActor[] methodActors) {
+        if (methodActors == null) {
+            return NO_STATIC_METHODS;
+        }
+        List<StaticMethodActor> list = null;
+        for (MethodActor m : methodActors) {
+            if (m instanceof StaticMethodActor) {
+                if (list == null) {
+                    list = new ArrayList<StaticMethodActor>();
+                }
+                list.add((StaticMethodActor) m);
+            }
+        }
+        return list == null ? NO_STATIC_METHODS : list.toArray(new StaticMethodActor[list.size()]);
     }
 
     private static int computeMaxVTableSize(ClassActor superClassActor, VirtualMethodActor[] localVirtualMethodActors) {
@@ -251,6 +275,16 @@ public abstract class ClassActor extends Actor {
     @INLINE
     public final boolean isHybridClassActor() {
         return this instanceof HybridClassActor;
+    }
+
+    @INLINE
+    public final boolean isReferenceObject() {
+        return isReferenceObject(flags());
+    }
+
+    @INLINE
+    public final boolean hasFinalizer() {
+        return hasFinalizer(flags());
     }
 
     @INSPECTED
