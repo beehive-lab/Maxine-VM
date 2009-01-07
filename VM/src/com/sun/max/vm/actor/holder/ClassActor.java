@@ -101,7 +101,15 @@ public abstract class ClassActor extends Actor {
             if (MaxineVM.isMaxineClass(typeDescriptor)) {
                 _initializationState = InitializationState.INITIALIZED;
             } else {
-                _initializationState = InitializationState.VERIFIED;
+                // TODO: At some point, it may be worth trying to put JDK classes into the image in the VERIFIED state
+                // so that their class initializers are run at the 'right time' (i.e. according to the JVM spec).
+                // This solves the issue of having to clear/re-initialize static fields at runtime whose values
+                // depend on the runtime context, not the image build time context.
+                // However, it also raises other issues such as what it means to have instances in existence for
+                // classes that will be re-initialized. Also, all code in the boot image will need to have
+                // the appropriate class initialization barriers (that would be required if the same code
+                // was compiled at runtime).
+                _initializationState = InitializationState.INITIALIZED;
             }
 
         } else {
@@ -1460,12 +1468,6 @@ public abstract class ClassActor extends Actor {
      * See #2.17.5.
      */
     public void makeInitialized() {
-        if (MaxineVM.isPrototyping()) {
-            if (!MaxineVM.isMaxineClass(this)) {
-                Classes.initialize(mirror());
-            }
-            return;
-        }
         if (isInitializationRequired()) {
             if (_superClassActor != null) {
                 try {
