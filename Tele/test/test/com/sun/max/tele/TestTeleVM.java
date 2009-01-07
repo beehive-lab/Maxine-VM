@@ -71,9 +71,6 @@ public class TestTeleVM {
         } catch (BootImageException e) {
             System.out.println("Failed to load boot image " + BinaryImageGenerator.getDefaultBootImageFilePath().toString());
             e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("IOException at startup");
-            e.printStackTrace();
         }
 
         return _teleVM;

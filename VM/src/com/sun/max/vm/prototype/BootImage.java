@@ -540,43 +540,47 @@ public class BootImage {
     }
 
     /**
-     * Used when reading a boot image from a file.
+     * Creates a BootImage object representing the information in a given boot image file.
      */
-    public BootImage(File file) throws IOException, BootImageException {
+    public BootImage(File file) throws BootImageException {
         _dataPrototype = null;
-        final FileInputStream fileInputStream = new FileInputStream(file);
         try {
-            _header = new Header(new DataInputStream(fileInputStream));
-            _header.check();
-            _stringInfo = new StringInfo(fileInputStream);
-            _stringInfo.check();
-            BootImageException.check(_header._stringInfoSize == _stringInfo.size(), "inconsistent string area size");
+            final FileInputStream fileInputStream = new FileInputStream(file);
+            try {
+                _header = new Header(new DataInputStream(fileInputStream));
+                _header.check();
+                _stringInfo = new StringInfo(fileInputStream);
+                _stringInfo.check();
+                BootImageException.check(_header._stringInfoSize == _stringInfo.size(), "inconsistent string area size");
 
-            final DataModel dataModel = new DataModel(_header.wordWidth(), _header.endianness(), _header.alignment());
-            final ProcessorKind processorKind = new ProcessorKind(_stringInfo.processorModel(), _stringInfo.instructionSet(), dataModel);
-            final Platform platform = new Platform(processorKind, _stringInfo.operatingSystem(), _header._pageSize);
-            _vmConfiguration = new VMConfiguration(_stringInfo.buildLevel(), platform,
-                            _stringInfo.gripPackage(),
-                            _stringInfo.referencePackage(),
-                            _stringInfo.layoutPackage(),
-                            _stringInfo.heapPackage(),
-                            _stringInfo.monitorPackage(),
-                            _stringInfo.compilerPackage(),
-                            _stringInfo.jitPackage(),
-                            _stringInfo.trampolinePackage(),
-                            _stringInfo.targetABIsPackage(),
-                            _stringInfo.runPackage());
-            _vmConfiguration.loadAndInstantiateSchemes();
+                final DataModel dataModel = new DataModel(_header.wordWidth(), _header.endianness(), _header.alignment());
+                final ProcessorKind processorKind = new ProcessorKind(_stringInfo.processorModel(), _stringInfo.instructionSet(), dataModel);
+                final Platform platform = new Platform(processorKind, _stringInfo.operatingSystem(), _header._pageSize);
+                _vmConfiguration = new VMConfiguration(_stringInfo.buildLevel(), platform,
+                                _stringInfo.gripPackage(),
+                                _stringInfo.referencePackage(),
+                                _stringInfo.layoutPackage(),
+                                _stringInfo.heapPackage(),
+                                _stringInfo.monitorPackage(),
+                                _stringInfo.compilerPackage(),
+                                _stringInfo.jitPackage(),
+                                _stringInfo.trampolinePackage(),
+                                _stringInfo.targetABIsPackage(),
+                                _stringInfo.runPackage());
+                _vmConfiguration.loadAndInstantiateSchemes();
 
-            fileInputStream.skip(_header._relocationDataSize);
-            final int padding = pagePaddingSize(_header.size() + _header._stringInfoSize + _header._relocationDataSize);
-            fileInputStream.skip(padding + _header._bootHeapSize + _header._bootCodeSize);
-            _trailer = new Trailer(_header, fileInputStream);
-            _trailer.check();
-        } catch (Utf8Exception utf8Exception) {
-            throw new BootImageException(utf8Exception);
-        } finally {
-            fileInputStream.close();
+                fileInputStream.skip(_header._relocationDataSize);
+                final int padding = pagePaddingSize(_header.size() + _header._stringInfoSize + _header._relocationDataSize);
+                fileInputStream.skip(padding + _header._bootHeapSize + _header._bootCodeSize);
+                _trailer = new Trailer(_header, fileInputStream);
+                _trailer.check();
+            } catch (Utf8Exception utf8Exception) {
+                throw new BootImageException(utf8Exception);
+            } finally {
+                fileInputStream.close();
+            }
+        } catch (IOException ioException) {
+            throw new BootImageException(ioException);
         }
     }
 

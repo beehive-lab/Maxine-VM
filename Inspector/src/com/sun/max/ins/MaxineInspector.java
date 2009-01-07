@@ -35,6 +35,7 @@ import com.sun.max.tele.TeleVM.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.prototype.*;
 
 /**
  * Maps a boot image into memory and opens an inspection window,
@@ -66,11 +67,10 @@ public final class MaxineInspector {
     private MaxineInspector() {
     }
 
-    private static void createAndShowGUI(Options options) {
+    private static void createAndShowGUI(TeleVM teleVM) {
         try {
             Trace.begin(TRACE_VALUE, _tracePrefix + "Initializing");
 
-            final TeleVM teleVM = TeleVM.create(options);
             TeleDisassembler.initialize(teleVM);
 
             _inspection = new Inspection(teleVM, new StandardInspectorStyle(), new BasicInspectorGeometry());
@@ -150,14 +150,15 @@ public final class MaxineInspector {
         JDialog.setDefaultLookAndFeelDecorated(true);
     }
 
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws BootImageException {
         initializeSwing();
+        final Options options = new Options();
+        Trace.addTo(options);
+        options.parseArguments(args);
+        final TeleVM teleVM = TeleVM.create(options);
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                final Options options = new Options();
-                Trace.addTo(options);
-                options.parseArguments(args);
-                createAndShowGUI(options);
+                createAndShowGUI(teleVM);
             }
         });
     }
