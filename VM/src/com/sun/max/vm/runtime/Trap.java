@@ -240,6 +240,10 @@ public final class Trap {
         final Pointer triggeredVmThreadLocals = VmThreadLocal.SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(disabledVmThreadLocals).asPointer();
         final Pointer safepointLatch = safepoint.getSafepointLatch(trapState);
 
+        if (VmThread.current().isGCThread()) {
+            FatalError.unexpected("Memory fault on a GC thread");
+        }
+
         // check to see if a safepoint has been triggered for this thread
         if (safepointLatch.equals(triggeredVmThreadLocals) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread. run the specified procedure
