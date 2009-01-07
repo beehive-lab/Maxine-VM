@@ -40,6 +40,22 @@ import com.sun.max.vm.type.*;
 public abstract class Hub extends Hybrid {
 
     private final Size _tupleSize;
+    private final Kind _elementKind;
+    private final SpecificLayout _specificLayout;
+    @INSPECTED
+    private final ClassActor _classActor;
+    private final Layout.Category _layoutCategory;
+    private BiasedLockEpoch _biasedLockEpoch = BiasedLockEpoch.init();
+    @CONSTANT_WHEN_NOT_ZERO
+    private static int _firstWordIndex;
+    private final int _iTableStartIndex;
+    private final int _iTableLength;
+    @INSPECTED
+    private final int _mTableStartIndex;
+    @INSPECTED
+    private final int _mTableLength;
+    @INSPECTED
+    private final int _referenceMapLength;
 
     /**
      * Indicate the "tuple cell size" for objects as follows.
@@ -54,14 +70,10 @@ public abstract class Hub extends Hybrid {
         return _tupleSize;
     }
 
-    private final Kind _elementKind;
-
     @INLINE
     public final Kind elementKind() {
         return _elementKind;
     }
-
-    private final SpecificLayout _specificLayout;
 
     @INLINE
     public final SpecificLayout specificLayout() {
@@ -72,15 +84,10 @@ public abstract class Hub extends Hybrid {
         return _specificLayout.gripScheme().dataModel().wordWidth();
     }
 
-    @INSPECTED
-    private final ClassActor _classActor;
-
     @INLINE
     public final ClassActor classActor() {
         return _classActor;
     }
-
-    private final Layout.Category _layoutCategory;
 
     @INLINE
     public final Layout.Category layoutCategory() {
@@ -112,9 +119,6 @@ public abstract class Hub extends Hybrid {
         }
         return divisor;
     }
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private static int _firstWordIndex;
 
     private static int getFirstWordIndex() {
         if (_firstWordIndex == 0) {
@@ -159,28 +163,18 @@ public abstract class Hub extends Hybrid {
         return _iTableStartIndex - vTableStartIndex();
     }
 
-    private final int _iTableStartIndex;
-
     public final int iTableStartIndex() {
         return _iTableStartIndex;
     }
-
-    private final int _iTableLength;
 
     public final int iTableLength() {
         return _iTableLength;
     }
 
-    @INSPECTED
-    private final int _mTableStartIndex;
-
     @INLINE
     public final int mTableStartIndex() {
         return _mTableStartIndex;
     }
-
-    @INSPECTED
-    private final int _mTableLength;
 
     @INLINE
     public final int mTableLength() {
@@ -195,16 +189,10 @@ public abstract class Hub extends Hybrid {
         return _referenceMapStartIndex;
     }
 
-    @INSPECTED
-    private final int _referenceMapLength;
-
     @INLINE
     public final int referenceMapLength() {
         return _referenceMapLength;
     }
-
-
-    private BiasedLockEpoch _biasedLockEpoch = BiasedLockEpoch.init();
 
     @INLINE
     public final BiasedLockEpoch biasedLockEpoch() {

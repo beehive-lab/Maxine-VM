@@ -58,6 +58,7 @@ public class MaxineTesterConfiguration {
         test.output.FileReader.class,
         test.output.ZipFileReader.class,
         test.output.JavacTest.class,
+        test.output.WeakReferenceTest.class,
     };
 
     static void addTestName(Object object, Set<String> testNames) {
@@ -100,6 +101,7 @@ public class MaxineTesterConfiguration {
     static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
         test.output.JavacTest.class,
         test.output.BlockingQueue.class,
+        test.output.WeakReferenceTest.class,
         _expectedAutoTestFailures
     );
 
@@ -127,9 +129,9 @@ public class MaxineTesterConfiguration {
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
+        test.output.WeakReferenceTest.class,
         test.threads.Thread_join04.class,
         test.hotpath.HP_series.class, // 333
-        test.output.ExitCode.class,
         _expectedAutoTestFailures
     );
 
@@ -157,6 +159,7 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
+        test.output.WeakReferenceTest.class,
         test.bytecode.BC_frem.class,  // 45
         test.except.Catch_NPE_03.class, // 202
         test.except.Catch_NPE_04.class, // 203

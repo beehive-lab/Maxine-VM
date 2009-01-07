@@ -79,23 +79,23 @@ public class JITTest_compileArithmeticOp extends JitCompilerTestCase {
     }
 
     public void test_int_op() {
-        compileMethod("perform_int_op", SignatureDescriptor.create("()V"));
+        compileMethod("perform_int_op", SignatureDescriptor.VOID);
     }
 
     public void test_idiv() {
-        compileMethod("perform_idiv", SignatureDescriptor.create("()V"));
+        compileMethod("perform_idiv", SignatureDescriptor.VOID);
     }
 
     public void test_iinc() {
-        compileMethod("perform_iinc", SignatureDescriptor.create("()V"));
+        compileMethod("perform_iinc", SignatureDescriptor.VOID);
     }
 
     public void test_floating_point_op() {
-        compileMethod("perform_floating_point_op", SignatureDescriptor.create("()V"));
+        compileMethod("perform_floating_point_op", SignatureDescriptor.VOID);
     }
 
     public void test_double_op() {
-        compileMethod("perform_double_op", SignatureDescriptor.create("()V"));
+        compileMethod("perform_double_op", SignatureDescriptor.VOID);
     }
 
 
