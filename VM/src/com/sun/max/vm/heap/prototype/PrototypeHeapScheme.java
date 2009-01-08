@@ -22,8 +22,6 @@ package com.sun.max.vm.heap.prototype;
 
 import java.lang.reflect.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -127,19 +125,6 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
 
     public void runFinalization() {
         ProgramError.unexpected();
-    }
-
-    public long numberOfGarbageCollectionInvocations() {
-        return 0L;
-    }
-
-    public long numberOfGarbageTurnovers() {
-        return 0L;
-    }
-
-    @INLINE
-    public <Object_Type> boolean flash(Object_Type object, Procedure<Object_Type> procedure) {
-        return false;
     }
 
     public boolean pin(Object object) {

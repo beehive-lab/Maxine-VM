@@ -43,7 +43,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         }
 
         private int _serial = 0;
-        private VariableSequence<DirVariable> [] _dirtyStacks = UnsafeLoophole.cast(Arrays.create(VariableSequence.class, KindEnum.VALUES.length()));
+        private VariableSequence<DirVariable> [] _dirtyStacks = UnsafeLoophole.cast(Arrays.newInstance(VariableSequence.class, KindEnum.VALUES.length()));
         private VariableSequence<DirVariable> dirtyStack(Kind kind) {
             return _dirtyStacks[kind.asEnum().ordinal()];
         }

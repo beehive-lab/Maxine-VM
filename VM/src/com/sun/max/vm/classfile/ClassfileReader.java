@@ -334,6 +334,9 @@ public class ClassfileReader {
 
     protected InterfaceActor[] readInterfaces() {
         final int nInterfaces = _classfileStream.readUnsigned2();
+        if (nInterfaces == 0) {
+            return ClassActor.NO_INTERFACES;
+        }
         final InterfaceActor[] interfaceActors = new InterfaceActor[nInterfaces];
         for (int i = 0; i < nInterfaces; i++) {
             interfaceActors[i] = resolveInterface(_classfileStream.readUnsigned2());
@@ -343,6 +346,10 @@ public class ClassfileReader {
 
     protected FieldActor[] readFields(boolean isInterface)  {
         final int nFields = _classfileStream.readUnsigned2();
+        if (nFields == 0) {
+            // save time and space for classes that have no fields
+            return ClassActor.NO_FIELDS;
+        }
         final FieldActor[] fieldActors = new FieldActor[nFields];
         int nextFieldIndex = 0;
 
@@ -640,6 +647,9 @@ public class ClassfileReader {
 
     protected MethodActor[] readMethods(boolean isInterface) {
         final int numberOfMethods = _classfileStream.readUnsigned2();
+        if (numberOfMethods == 0) {
+            return ClassActor.NO_METHODS;
+        }
         final MethodActor[] methodActors = new MethodActor[numberOfMethods];
         int nextMethodIndex = 0;
 
@@ -686,6 +696,12 @@ public class ClassfileReader {
 
                 if (descriptor.getNumberOfLocals() + (isStatic ? 0 : 1) > 255) {
                     throw classFormatError("Too many arguments in method signature: " + descriptor);
+                }
+
+                if (name.equals(SymbolTable.FINALIZE) && descriptor.equals(SignatureDescriptor.VOID) && (flags & ACC_STATIC) == 0) {
+                    // this class has a finalizer method implementation
+                    // (this bit will be cleared for java.lang.Object later)
+                    _flags |= FINALIZER;
                 }
 
                 CodeAttribute codeAttribute = null;
@@ -1120,6 +1136,24 @@ public class ClassfileReader {
             if (!attributeSize.equals(_classfileStream.getPosition().minus(startPosition))) {
                 throw classFormatError("Invalid attribute length for " + name + " attribute");
             }
+        }
+
+        // inherit the REFERENCE and FINALIZER bits from the superClassActor
+        if (superClassActor != null) {
+            if (superClassActor.isReferenceObject()) {
+                _flags |= Actor.REFERENCE;
+            }
+            if (superClassActor.hasFinalizer()) {
+                _flags |= Actor.FINALIZER;
+            }
+        } else {
+            // clear the finalizer bit for the java.lang.Object class; otherwise all classes would have it!
+            _flags &= ~Actor.FINALIZER;
+        }
+
+        // is this a Java Reference object class?
+        if (name.equals("java.lang.ref.Reference")) {
+            _flags |= Actor.REFERENCE;
         }
 
         // Ensure there are no trailing bytes

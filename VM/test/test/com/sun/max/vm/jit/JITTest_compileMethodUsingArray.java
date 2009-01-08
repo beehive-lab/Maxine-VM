@@ -34,7 +34,7 @@ public class JITTest_compileMethodUsingArray extends JitCompilerTestCase {
 
     void compileMethod(Kind kind) {
         final String methodName = methodNameFor(kind);
-        compileMethod(methodName, SignatureDescriptor.create("()V"));
+        compileMethod(methodName, SignatureDescriptor.VOID);
     }
 
     String methodNameFor(Kind kind) {

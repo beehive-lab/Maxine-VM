@@ -627,11 +627,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     }
 
     @Override
-    public <Object_Type> boolean flash(Object_Type object, Procedure<Object_Type> procedure) {
-        return false;
-    }
-
-    @Override
     public boolean pin(Object object) {
         return false;
     }
@@ -744,9 +739,4 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
             _scavengerTLABs[i] = new TLAB();
         }
     }
-
-    public long numberOfGarbageTurnovers() {
-        return 0;
-    }
-
 }

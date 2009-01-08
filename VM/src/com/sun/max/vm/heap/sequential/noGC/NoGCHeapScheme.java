@@ -326,19 +326,6 @@ public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme
     public void runFinalization() {
     }
 
-    public long numberOfGarbageCollectionInvocations() {
-        return _numberOfGarbageCollectionInvocations;
-    }
-
-    public long numberOfGarbageTurnovers() {
-        return 0;
-    }
-
-    public <Object_Type> boolean flash(Object_Type object, com.sun.max.lang.Procedure<Object_Type> procedure) {
-        procedure.run(object);
-        return true;
-    }
-
     @INLINE
     public boolean pin(Object object) {
         return true;

@@ -318,15 +318,16 @@ public class ArraysTest extends MaxTestCase {
     };
 
     public void test_filter() {
+        final Integer[] none = new Integer[0];
         final Integer[] int2Array = makeIntegerArray(2);
         // filter by numeric predicates
-        assertTrue(Arrays.equals(Arrays.filter(int2Array, _nonNegPred), int2Array));
-        assertFalse(Arrays.equals(Arrays.filter(int2Array, _posPred), int2Array));
+        assertTrue(Arrays.equals(Arrays.filter(int2Array, _nonNegPred, none), int2Array));
+        assertFalse(Arrays.equals(Arrays.filter(int2Array, _posPred, none), int2Array));
         // filter by class
-        assertTrue(Arrays.equals(Arrays.filter(int2Array, Integer.class), int2Array));
+        assertTrue(Arrays.equals(Arrays.filter(int2Array, Integer.class, none), int2Array));
         final Integer[] int3Array = makeIntegerArray(3);
         int3Array[2] = null;
-        assertTrue(Arrays.equals(Arrays.filter(int3Array, Integer.class), int2Array));
+        assertTrue(Arrays.equals(Arrays.filter(int3Array, Integer.class, none), int2Array));
     }
 
     public void test_verify() {

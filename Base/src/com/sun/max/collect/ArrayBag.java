@@ -61,7 +61,7 @@ public class ArrayBag<Key_Type, Value_Type> {
         }
         _map = map;
         final Class<Value_Type[]> arrayType = null;
-        _empty = StaticLoophole.cast(arrayType, Arrays.create(_valueType, 0));
+        _empty = StaticLoophole.cast(arrayType, Arrays.newInstance(_valueType, 0));
     }
 
     public Value_Type[] get(Key_Type key) {
@@ -79,11 +79,11 @@ public class ArrayBag<Key_Type, Value_Type> {
     public void add(Key_Type key, Value_Type value) {
         final Value_Type[] oldValues = _map.get(key);
         if (oldValues == null) {
-            final Value_Type[] newValues = Arrays.create(_valueType, 1);
+            final Value_Type[] newValues = Arrays.newInstance(_valueType, 1);
             newValues[0] = value;
             _map.put(key, newValues);
         } else if (!Arrays.contains(oldValues, value)) {
-            final Value_Type[] newValues = Arrays.create(_valueType, oldValues.length + 1);
+            final Value_Type[] newValues = Arrays.newInstance(_valueType, oldValues.length + 1);
             Arrays.copy(oldValues, newValues);
             newValues[oldValues.length] = value;
             _map.put(key, newValues);
@@ -98,7 +98,7 @@ public class ArrayBag<Key_Type, Value_Type> {
         if (oldValues.length == 1) {
             _map.remove(key);
         } else {
-            final Value_Type[] newValues = Arrays.create(_valueType, oldValues.length - 1);
+            final Value_Type[] newValues = Arrays.newInstance(_valueType, oldValues.length - 1);
             int i = 0;
             for (Value_Type v : oldValues) {
                 if (v != value) {
