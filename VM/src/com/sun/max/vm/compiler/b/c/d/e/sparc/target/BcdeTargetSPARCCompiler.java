@@ -310,7 +310,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
                 break;
             }
             case EXCEPTION_HANDLING: {
-                final Address throwAddress = isTopFrame ? instructionPointer : instructionPointer.minus(1);
+ //               final Address throwAddress = isTopFrame ? instructionPointer : instructionPointer.minus(1);
+                final Address throwAddress = instructionPointer;
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
                 if (!catchAddress.isZero()) {
                     final Throwable throwable = UnsafeLoophole.cast(StackUnwindingContext.class, context)._throwable;
