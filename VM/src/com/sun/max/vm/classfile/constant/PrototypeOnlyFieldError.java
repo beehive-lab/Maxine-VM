@@ -18,18 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.ins.interpreter;
+package com.sun.max.vm.classfile.constant;
 
-import com.sun.max.*;
+import java.lang.reflect.*;
+
+import com.sun.max.vm.*;
 
 /**
- * @see MaxPackage
- * 
- * @author Athul Acharya
+ * Thrown when a {@linkplain PoolConstant constant pool entry} for a
+ * {@linkplain MaxineVM#isPrototypeOnly(AccessibleObject) prototype-only field} is
+ * {@linkplain FieldRefConstant#resolve(ConstantPool, int) resolved}.
+ *
+ * @author Doug Simon
  */
-public class Package extends MaxPackage {
+public class PrototypeOnlyFieldError extends NoSuchMethodError {
 
-    public Package() {
-        super();
+    public PrototypeOnlyFieldError(String s) {
+        super(s);
     }
 }

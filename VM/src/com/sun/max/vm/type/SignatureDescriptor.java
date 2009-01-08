@@ -263,6 +263,10 @@ public abstract class SignatureDescriptor extends Descriptor {
         return parameterTypes;
     }
 
+    public Class getReturnType(ClassLoader classLoader) {
+        return _typeDescriptors[0].toJava(classLoader);
+    }
+
     public boolean parametersEqual(SignatureDescriptor other) {
         if (_typeDescriptors.length == other._typeDescriptors.length) {
             for (int i = 1; i != _typeDescriptors.length; ++i) {

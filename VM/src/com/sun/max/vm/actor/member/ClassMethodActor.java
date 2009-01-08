@@ -163,13 +163,15 @@ public abstract class ClassMethodActor extends MethodActor {
 
     private static boolean _traceJNI;
 
-    private static final VMOption _traceJNIOption = new VMOption("-XX:TraceJNI", "Trace JNI activity for debugging purposes.", MaxineVM.Phase.STARTING) {
-        @Override
-        public boolean parse(Pointer optionStart) {
-            _traceJNI = true;
-            return super.parse(optionStart);
-        }
-    };
+    static {
+        new VMOption("-XX:TraceJNI", "Trace JNI activity for debugging purposes.", MaxineVM.Phase.STARTING) {
+            @Override
+            public boolean parse(Pointer optionStart) {
+                _traceJNI = true;
+                return super.parse(optionStart);
+            }
+        };
+    }
 
     public boolean isDeclaredNeverInline() {
         return compilee().isNeverInline();
@@ -177,7 +179,7 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public boolean isDeclaredInline(CompilerScheme compilerScheme) {
         if (compilee().isInline()) {
-            if ((compilee().flags() & INLINE_AFTER_SNIPPETS_ARE_COMPILED) != 0) {
+            if (compilee().isInlineAfterSnippetsAreCompiled()) {
                 return compilerScheme.areSnippetsCompiled();
             }
             return true;
@@ -280,28 +282,6 @@ public abstract class ClassMethodActor extends MethodActor {
             protected void opcodeDecoded() {
                 final Bytecode currentOpcode = currentOpcode();
                 if (currentOpcode.is(JSR_OR_RET)) {
-                    bytecodeScanner().stop();
-                }
-            }
-        };
-        final BytecodeScanner scanner = new BytecodeScanner(visitor);
-        scanner.scan(new BytecodeBlock(code));
-        if (scanner.wasStopped()) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Determines if a given bytecode sequence contains only straight line code.
-     */
-    @PROTOTYPE_ONLY
-    private static boolean isStraightLineCode(byte[] code) {
-        final BytecodeVisitor visitor = new BytecodeAdapter() {
-            @Override
-            protected void opcodeDecoded() {
-                final Bytecode currentOpcode = currentOpcode();
-                if (currentOpcode.is(CONDITIONAL_BRANCH | UNCONDITIONAL_BRANCH | SWITCH)) {
                     bytecodeScanner().stop();
                 }
             }

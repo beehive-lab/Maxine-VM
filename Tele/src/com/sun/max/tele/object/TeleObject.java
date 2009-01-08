@@ -20,66 +20,32 @@
  */
 package com.sun.max.tele.object;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.reflect.*;
+import java.util.*;
 
-import sun.misc.Unsafe;
+import sun.misc.*;
 
-import com.sun.max.collect.GrowableMapping;
-import com.sun.max.collect.HashMapping;
-import com.sun.max.jdwp.vm.proxy.ObjectProvider;
-import com.sun.max.jdwp.vm.proxy.ReferenceTypeProvider;
-import com.sun.max.lang.StaticLoophole;
-import com.sun.max.memory.RuntimeMemoryRegion;
-import com.sun.max.program.Problem;
-import com.sun.max.program.Trace;
-import com.sun.max.tele.TeleError;
-import com.sun.max.tele.TeleVM;
-import com.sun.max.tele.TeleVMHolder;
-import com.sun.max.tele.TeleVmThread;
-import com.sun.max.tele.reference.TeleReference;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Size;
-import com.sun.max.unsafe.WithoutAccessCheck;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.actor.holder.ArrayClassActor;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.holder.DynamicHub;
-import com.sun.max.vm.actor.holder.InterfaceActor;
-import com.sun.max.vm.actor.holder.PrimitiveClassActor;
-import com.sun.max.vm.actor.holder.ReferenceClassActor;
-import com.sun.max.vm.actor.holder.StaticHub;
-import com.sun.max.vm.actor.holder.StaticTuple;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.FieldActor;
-import com.sun.max.vm.actor.member.InterfaceMethodActor;
-import com.sun.max.vm.actor.member.StaticMethodActor;
-import com.sun.max.vm.actor.member.VirtualMethodActor;
-import com.sun.max.vm.classfile.CodeAttribute;
-import com.sun.max.vm.classfile.constant.ClassConstant;
-import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
-import com.sun.max.vm.classfile.constant.ConstantPool;
-import com.sun.max.vm.classfile.constant.FieldRefConstant;
-import com.sun.max.vm.classfile.constant.InterfaceMethodRefConstant;
-import com.sun.max.vm.classfile.constant.PoolConstant;
-import com.sun.max.vm.classfile.constant.StringConstant;
-import com.sun.max.vm.classfile.constant.Utf8Constant;
-import com.sun.max.vm.code.CodeManager;
-import com.sun.max.vm.code.CodeRegion;
-import com.sun.max.vm.compiler.builtin.Builtin;
-import com.sun.max.vm.compiler.target.OptimizedTargetMethod;
-import com.sun.max.vm.jit.JitTargetMethod;
-import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.runtime.RuntimeStub;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.type.TypeDescriptor;
-import com.sun.max.vm.value.ObjectReferenceValue;
-import com.sun.max.vm.value.Value;
+import com.sun.max.collect.*;
+import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.lang.*;
+import com.sun.max.memory.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.reference.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jit.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * Canonical surrogate for a heap object in the tele VM.
@@ -234,15 +200,15 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
 
                     } else if (RuntimeStub.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleRuntimeStub(teleVM, reference);
-                        
+
                     } else if (CodeRegion.class.isAssignableFrom(javaClass)) {
-                    	teleObject = new TeleCodeRegion(teleVM, reference);
-                    	
+                        teleObject = new TeleCodeRegion(teleVM, reference);
+
                     } else if (CodeManager.class.isAssignableFrom(javaClass)) {
-                    	teleObject = new TeleCodeManager(teleVM, reference);
-                    	
+                        teleObject = new TeleCodeManager(teleVM, reference);
+
                     } else if (RuntimeMemoryRegion.class.isAssignableFrom(javaClass)) {
-                    	teleObject = new TeleRuntimeMemoryRegion(teleVM, reference);
+                        teleObject = new TeleRuntimeMemoryRegion(teleVM, reference);
 
                      // Other Maxine support
                     } else if (Kind.class.isAssignableFrom(javaClass)) {
@@ -257,10 +223,10 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
                        // ConstantPool and PoolConstants
                     } else if (ConstantPool.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleConstantPool(teleVM, reference);
-                        
+
                     } else if (CodeAttribute.class.isAssignableFrom(javaClass)) {
-                    	teleObject = new TeleCodeAttribute(teleVM, reference);
-                    	
+                        teleObject = new TeleCodeAttribute(teleVM, reference);
+
                     } else if (Utf8Constant.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleUtf8Constant(teleVM, reference);
 

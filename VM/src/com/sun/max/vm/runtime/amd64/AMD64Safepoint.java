@@ -143,4 +143,9 @@ public final class AMD64Safepoint extends Safepoint {
     public int getTrapNumber(Pointer trapState) {
         return trapState.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
     }
+
+    @Override
+    public void setTrapNumber(Pointer trapState, int trapNumber) {
+        trapState.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
+    }
 }

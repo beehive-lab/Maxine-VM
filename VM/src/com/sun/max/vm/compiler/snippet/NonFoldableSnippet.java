@@ -111,16 +111,18 @@ public abstract class NonFoldableSnippet extends Snippet {
         private static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
             final int length = lengths[index];
             final Object result = createNonNegativeSizeArray(arrayClassActor, length);
-            final int nextIndex = index + 1;
-            if (nextIndex < lengths.length) {
-                final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();
-                for (int i = 0; i < length; i++) {
-                    final Object subArray = createMultiReferenceArrayAtIndex(nextIndex, subArrayClassActor, lengths);
-                    if (MaxineVM.isPrototyping()) {
-                        final Object[] array = (Object[]) result;
-                        array[i] = subArray;
-                    } else {
-                        ArrayAccess.setObject(result, i, subArray);
+            if (length > 0) {
+                final int nextIndex = index + 1;
+                if (nextIndex < lengths.length) {
+                    final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();
+                    for (int i = 0; i < length; i++) {
+                        final Object subArray = createMultiReferenceArrayAtIndex(nextIndex, subArrayClassActor, lengths);
+                        if (MaxineVM.isPrototyping()) {
+                            final Object[] array = (Object[]) result;
+                            array[i] = subArray;
+                        } else {
+                            ArrayAccess.setObject(result, i, subArray);
+                        }
                     }
                 }
             }

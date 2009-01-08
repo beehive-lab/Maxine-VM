@@ -60,6 +60,10 @@ public abstract class TeleGrip extends Grip {
         return _nextOID++;
     }
 
+    public boolean isLocal() {
+        return false;
+    }
+
     public static final TeleGrip ZERO = new TeleGrip() {
         @Override
         public Reference makeReference(TeleReferenceScheme teleReferenceScheme) {

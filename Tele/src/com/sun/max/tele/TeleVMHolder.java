@@ -39,7 +39,7 @@ public abstract class TeleVMHolder {
     public TeleProcess teleProcess() {
         return _teleVM.teleProcess();
     }
-    
+
     private final String _tracePrefix;
 
     /**

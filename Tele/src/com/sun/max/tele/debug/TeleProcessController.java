@@ -20,7 +20,7 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.max.program.Trace;
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.TeleTargetBreakpoint.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -34,16 +34,16 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  */
 public final class TeleProcessController {
-    
+
     private static final int TRACE_VALUE = 2;
-    
+
     private static final String RUN_TO_INSTRUCTION = "runToInstruction";
     private static final String TERMINATE = "terminate";
     private static final String PAUSE = "pause";
     private static final String RESUME = "resume";
     private static final String SINGLE_STEP = "singleStep";
     private static final String STEP_OVER = "stepOver";
-    
+
     private String  tracePrefix() {
         return "[TeleProcessController: " + Thread.currentThread().getName() + "] ";
     }
@@ -60,7 +60,7 @@ public final class TeleProcessController {
     public TeleProcess teleProcess() {
         return _teleProcess;
     }
-    
+
     private final Object _runToInstructionScheduleTracer = new Tracer(RUN_TO_INSTRUCTION, "schedule");
     private final Object _runToInstructionPerformTracer = new Tracer(RUN_TO_INSTRUCTION, "perform");
 
@@ -103,7 +103,7 @@ public final class TeleProcessController {
         Trace.end(TRACE_VALUE, _runToInstructionScheduleTracer);
     }
 
-    
+
     private final Object _terminatePerformTracer = new Tracer(TERMINATE, "perform");
 
     public void terminate() throws Exception {
@@ -112,16 +112,16 @@ public final class TeleProcessController {
         Trace.end(TRACE_VALUE, _terminatePerformTracer);
     }
 
-    
+
     private final Object _pausePerformTracer = new Tracer(PAUSE, "perform");
-    
+
     public void pause() throws InvalidProcessRequestException, OSExecutionRequestException {
         Trace.begin(TRACE_VALUE, _pausePerformTracer);
         teleProcess().pause();
         Trace.end(TRACE_VALUE, _pausePerformTracer);
     }
-    
-    
+
+
     private final Object _resumeScheduleTracer = new Tracer(RESUME, "schedule");
     private final Object _resumePerformTracer = new Tracer(RESUME, "perform");
 
@@ -144,9 +144,9 @@ public final class TeleProcessController {
         teleProcess().scheduleRequest(request, synchronous);
         Trace.end(TRACE_VALUE, _resumeScheduleTracer);
     }
-    
-    
-    private final Object _singleStepScheduleTracer = new Tracer(SINGLE_STEP, "schedule");   
+
+
+    private final Object _singleStepScheduleTracer = new Tracer(SINGLE_STEP, "schedule");
     private final Object _singleStepPerformTracer = new Tracer(SINGLE_STEP, "perform");
 
     public void singleStep(final TeleNativeThread thread, boolean isSynchronous) throws InvalidProcessRequestException, OSExecutionRequestException    {
@@ -163,8 +163,8 @@ public final class TeleProcessController {
         Trace.end(TRACE_VALUE, _singleStepScheduleTracer);
     }
 
-    
-    private final Object _stepOverScheduleTracer = new Tracer(STEP_OVER, "schedule");   
+
+    private final Object _stepOverScheduleTracer = new Tracer(STEP_OVER, "schedule");
     private final Object _stepOverPerformTracer = new Tracer(STEP_OVER, "perform");
 
     public void stepOver(final TeleNativeThread thread, boolean synchronous, final boolean disableBreakpoints) throws InvalidProcessRequestException, OSExecutionRequestException {
@@ -237,15 +237,15 @@ public final class TeleProcessController {
         // Stepped over a normal, non-call instruction:
         return null;
     }
-    
+
     /**
-     * An object that delays evaluation of a trace message for controller actions.     
+     * An object that delays evaluation of a trace message for controller actions.
      */
     private class Tracer {
-        
+
         private final String _processAction;
         private final String _controllerAction;
-        
+
         /**
          * An object that delays evaluation of a trace message.
          * @param processAction the name of the process action being requested

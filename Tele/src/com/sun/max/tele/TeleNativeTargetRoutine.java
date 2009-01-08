@@ -80,9 +80,9 @@ public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleT
     public TargetCodeRegion targetCodeRegion() {
         return _targetCodeRegion;
     }
-    
+
     private final String _name;
-    
+
     public String name() {
         return _name;
     }

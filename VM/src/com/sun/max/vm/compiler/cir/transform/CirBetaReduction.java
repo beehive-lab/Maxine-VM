@@ -81,7 +81,8 @@ public abstract class CirBetaReduction {
                     final CirBlock block = new CirBlock(oldContinuation.body());
                     CirFreeVariableSearch.applyClosureConversion(block.closure());
                     for (CirContinuation newContinuation : newContinuations) {
-                        final CirValue[] arguments = Arrays.from(CirValue.class, block.closure().parameters());
+                        final CirVariable[] parameters = block.closure().parameters();
+                        final CirValue[] arguments = parameters.length > 0 ? Arrays.from(CirValue.class, parameters) : CirCall.NO_ARGUMENTS;
                         final CirCall newBlockCall = new CirCall(block, arguments);
                         newContinuation.setBody(newBlockCall);
                     }
@@ -91,7 +92,8 @@ public abstract class CirBetaReduction {
 
         private CirContinuation gatherContinuation(CirContinuation oldContinuation) {
             final CirContinuation newContinuation = (CirContinuation) oldContinuation.clone();
-            newContinuation.setParameters(oldContinuation.parameters().clone());
+            final CirVariable[] parameters = oldContinuation.parameters();
+            newContinuation.setParameters(parameters.length > 0 ? parameters.clone() : CirClosure.NO_PARAMETERS);
             _continuationsBag.add(oldContinuation, newContinuation);
             return newContinuation;
         }

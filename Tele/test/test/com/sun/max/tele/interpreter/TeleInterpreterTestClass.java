@@ -18,18 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.ins.interpreter;
+package test.com.sun.max.tele.interpreter;
 
 /**
  * A class on which to test the interpreter locally.
  * 
  * @author Athul Acharya
  */
-public class InterpreterTestClass {
+public class TeleInterpreterTestClass {
 
-    protected InterpreterTestClass() { }
+    protected TeleInterpreterTestClass() {
+    }
 
-    protected InterpreterTestClass(int y) {
+    protected TeleInterpreterTestClass(int y) {
         _y = y;
     }
 
@@ -61,11 +62,11 @@ public class InterpreterTestClass {
         return _x;
     }
 
-    public static int getfield(InterpreterTestClass i) {
+    public static int getfield(TeleInterpreterTestClass i) {
         return i._y;
     }
 
-    public static int putfield(InterpreterTestClass i) {
+    public static int putfield(TeleInterpreterTestClass i) {
         i._y = 4;
         return i._y;
     }
@@ -74,7 +75,7 @@ public class InterpreterTestClass {
         return _y;
     }
 
-    public static int invokevirtual1(InterpreterTestClass i) {
+    public static int invokevirtual1(TeleInterpreterTestClass i) {
         return i.return_y();
     }
 
@@ -82,7 +83,7 @@ public class InterpreterTestClass {
         return b + d + f;
     }
 
-    public static int invokevirtual2(InterpreterTestClass i) {
+    public static int invokevirtual2(TeleInterpreterTestClass i) {
         return i.virtual_argpad(1.0, 2, 3.0, 4, 5.0, 6);
     }
 
@@ -90,11 +91,11 @@ public class InterpreterTestClass {
         return 3;
     }
 
-    public static int invokevirtual3(InterpreterTestClass i) {
+    public static int invokevirtual3(TeleInterpreterTestClass i) {
         return i.virtual_overriden(1, 2, 3);
     }
 
-    public static int invokespecial_super(InterpreterTestChildClass i) {
+    public static int invokespecial_super(TeleInterpreterTestChildClass i) {
         return i.invokespecial_super(1, 2, 3);
     }
 
@@ -102,7 +103,7 @@ public class InterpreterTestClass {
         return a + (int) b;
     }
 
-    public static int invokespecial_private(InterpreterTestClass i) {
+    public static int invokespecial_private(TeleInterpreterTestClass i) {
         return i.special_private(2.3, 1);
     }
 
@@ -110,7 +111,7 @@ public class InterpreterTestClass {
         return getstatic();
     }
 
-    public static int invokeinterface(InterpreterTestInterface i) {
+    public static int invokeinterface(TeleInterpreterTestInterface i) {
         return i.interfacemethod(3, 6);
     }
 
@@ -175,12 +176,12 @@ public class InterpreterTestClass {
     }
 
     public static int checkcast(Object o) throws ClassCastException {
-        final InterpreterTestClass i = (InterpreterTestClass) o;
+        final TeleInterpreterTestClass i = (TeleInterpreterTestClass) o;
         return i._y;
     }
 
     public static boolean instanceof_(Object o) {
-        return o instanceof InterpreterTestClass;
+        return o instanceof TeleInterpreterTestClass;
     }
 
     public static int multianewarray() {
@@ -193,12 +194,12 @@ public class InterpreterTestClass {
     }
 
     public static int new1() {
-        final InterpreterTestClass i = new InterpreterTestClass();
+        final TeleInterpreterTestClass i = new TeleInterpreterTestClass();
         return i._y;
     }
 
     public static int new2() {
-        final InterpreterTestClass i = new InterpreterTestClass(0x80081355);
+        final TeleInterpreterTestClass i = new TeleInterpreterTestClass(0x80081355);
         return i._y;
     }
 

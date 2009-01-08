@@ -771,7 +771,7 @@ public class ClassfileReader {
                 if (MaxineVM.isPrototyping()) {
                     if (isClinit) {
                         // Class initializer's for all Maxine class are run while prototyping and do no need to be in the boot image
-                        if (com.sun.max.Package.contains(_classDescriptor.toJavaString())) {
+                        if (MaxineVM.isMaxineClass(_classDescriptor)) {
                             continue nextMethod;
                         }
                     }

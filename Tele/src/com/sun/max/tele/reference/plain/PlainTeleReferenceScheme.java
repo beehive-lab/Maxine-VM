@@ -48,7 +48,7 @@ public final class PlainTeleReferenceScheme extends TeleReferenceScheme {
     }
 
     @Override
-    public Reference createReference(Grip grip) {
+    public Reference createReference(TeleGrip grip) {
         return new PlainTeleReference(grip);
     }
 

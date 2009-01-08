@@ -98,9 +98,6 @@ public final class BinaryImageGenerator {
     private final Option<String> _methodTreeFileOption = _options.newStringOption("method-tree-file", DEFAULT_IMAGE_METHOD_TREE_FILE_NAME,
             "Specifies the name of the method tree file generated (if any).");
 
-    private final Option<File> _configFileOption = _options.newConfigOption("config", null,
-            "This option allows specifying a configuration file that contains values for all options.");
-
     private final Option<Boolean> _methodTraceOption = _options.newBooleanOption("methodTrace", false,
             "Activates method tracing instrumentation.");
     private final Option<Boolean> _testCallerJit = _options.newBooleanOption("test-caller-jit", false,

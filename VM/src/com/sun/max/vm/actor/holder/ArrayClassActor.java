@@ -37,10 +37,6 @@ import com.sun.max.vm.value.*;
  */
 public class ArrayClassActor<Value_Type extends Value<Value_Type>> extends ReferenceClassActor {
 
-    private ArrayLayout getSpecificLayout() {
-        return componentClassActor().kind().arrayLayout(Layout.layoutScheme());
-    }
-
     public static Utf8Constant arrayTypeName(ClassActor componentClassActor) {
         return SymbolTable.makeSymbol(componentClassActor + "[]");
     }

@@ -36,7 +36,6 @@ import com.sun.max.vm.bytecode.graft.BytecodeAssembler.*;
 public class BytecodeTransformer extends BytecodeAdapter {
 
     private final BytecodeAssembler _assembler;
-    private int _delta;
 
     public BytecodeTransformer(BytecodeAssembler assembler) {
         _assembler = assembler;

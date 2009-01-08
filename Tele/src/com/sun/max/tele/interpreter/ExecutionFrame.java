@@ -25,6 +25,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.value.*;
@@ -36,18 +37,33 @@ import com.sun.max.vm.value.*;
  */
 class ExecutionFrame {
 
-    private ClassMethodActor _method;
-    private int _bcp;
-    private Value[] _locals;
-    private Stack<Value> _operands;
-    private ExecutionFrame _previousFrame;
+    private final ClassMethodActor _method;
+    private int _currentOpcodePosition;
+    private int _currentBytePosition;
+    private final Value[] _locals;
+    private final Stack<Value> _operands;
+    private final ExecutionFrame _previousFrame;
+    private final byte[] _code;
 
     public ExecutionFrame(ExecutionFrame prev, ClassMethodActor method) {
         _method = method;
-        _bcp = -1;
         _locals = new Value[method.codeAttribute().maxLocals()];
         _operands = new Stack<Value>();
         _previousFrame = prev;
+        _code = method.codeAttribute().code();
+    }
+
+    /**
+     * Computes the number of frames on the call stack up to and including this frame.
+     */
+    public int depth() {
+        int depth = 1;
+        ExecutionFrame previousFrame = _previousFrame;
+        while (previousFrame != null) {
+            depth++;
+            previousFrame = previousFrame._previousFrame;
+        }
+        return depth;
     }
 
     public ExecutionFrame previousFrame() {
@@ -58,20 +74,62 @@ class ExecutionFrame {
         _locals[index] = value;
     }
 
-    public void incrementBCP(int amount) {
-        _bcp += amount;
+    public Bytecode readOpcode() {
+        _currentOpcodePosition = _currentBytePosition;
+        return Bytecode.from(readByte());
     }
 
-    public int bcp() {
-        return _bcp;
+    public byte readByte() {
+        try {
+            return _code[_currentBytePosition++];
+        } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
+            throw new VerifyError("Ran off end of code");
+        }
     }
 
-    public void setBCP(int bcp) {
-        _bcp = bcp;
+    public short readShort() {
+        final int high = readByte();
+        final int low = readByte() & 0xff;
+        return (short) ((high << 8) | low);
+    }
+
+    public int readInt() {
+        final int b3 = readByte() << 24;
+        final int b2 = (readByte() & 0xff) << 16;
+        final int b1 = (readByte() & 0xff) << 8;
+        final int b0 = readByte() & 0xff;
+        return b3 | b2 | b1 | b0;
+    }
+
+    public void skipBytes(int n) {
+        _currentBytePosition += n;
+    }
+
+    public void alignInstructionPosition() {
+        final int remainder = _currentBytePosition % 4;
+        if (remainder != 0) {
+            _currentBytePosition += 4 - remainder;
+        }
+    }
+
+    public void jump(int offset) {
+        _currentBytePosition = _currentOpcodePosition + offset;
+    }
+
+    public int currentOpcodePosition() {
+        return _currentOpcodePosition;
+    }
+
+    public int currentBytePosition() {
+        return _currentBytePosition;
+    }
+
+    public void setBytecodePosition(int bcp) {
+        _currentBytePosition = bcp;
     }
 
     public byte[] code() {
-        return _method.codeAttribute().code();
+        return _code;
     }
 
     public Value getLocal(int index) {
@@ -90,25 +148,39 @@ class ExecutionFrame {
         return _method;
     }
 
-    public class ExceptionHandlerTable {
-        Sequence<ExceptionHandlerEntry> _handlers;
+    public String toString() {
+        return _method.format("%H.%n(%p) @ " + _currentBytePosition);
+    }
 
-        public ExceptionHandlerTable() {
-            _handlers = method().codeAttribute().exceptionHandlerTable();
-        }
-
-        public ExceptionHandlerEntry findHandler(ClassActor exceptionClassActor, int codeOffset) {
-            for (ExceptionHandlerEntry handler : _handlers) {
+    /**
+     * Handles an exception at the current execution point in this frame by updating the {@linkplain #setBytecodePosition(int)
+     * instruction pointer} to the matching exception handler in this frame. If no matching exception handler is found
+     * for the current execution point and the given exception type, then the instruction pointer in this frame is left
+     * unmodified.
+     * <p>
+     * The current execution point is derived from the value of {@link ExecutionFrame#currentBytePosition()} which is now at the first
+     * byte passed the instruction currently being executed. That is, an instruction is completely decoded before any
+     * exceptions are thrown while executing it.
+     *
+     * @param throwableClassActor the type of the exception being thrown
+     * @return {@code true} if an exception handler was found, {@code false} otherwise
+     */
+    public boolean handleException(ClassActor throwableClassActor) {
+        final int bcp = _currentOpcodePosition;
+        final Sequence<ExceptionHandlerEntry> handlers = method().codeAttribute().exceptionHandlerTable();
+        for (ExceptionHandlerEntry handler : handlers) {
+            if (bcp >= handler.startPosition() && bcp < handler.endPosition()) {
                 if (handler.catchTypeIndex() == 0) {
-                    return handler;
+                    _currentBytePosition = handler.handlerPosition();
+                    return true;
                 }
-                if (codeOffset >= handler.startPosition() && codeOffset < handler.endPosition() &&
-                        constantPool().classAt(handler.catchTypeIndex()).resolve(constantPool(), handler.catchTypeIndex()).isAssignableFrom(exceptionClassActor)) {
-                    return handler;
+                final ClassActor catchType = constantPool().classAt(handler.catchTypeIndex()).resolve(constantPool(), handler.catchTypeIndex());
+                if (catchType.isAssignableFrom(throwableClassActor)) {
+                    _currentBytePosition = handler.handlerPosition();
+                    return true;
                 }
             }
-
-            return null;
         }
+        return false;
     }
 }

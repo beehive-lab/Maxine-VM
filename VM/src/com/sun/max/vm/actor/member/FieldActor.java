@@ -134,11 +134,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
         return _kind.readValue(reference, _offset);
     }
 
-    public void writeValue(Object reference, Value_Type value) {
-        _kind.writeValue(reference, _offset, value);
-    }
-
-    public void writeErasedValue(Object reference, Value value) {
+    public void writeValue(Object reference, Value value) {
         _kind.writeErasedValue(reference, _offset, value);
     }
 
@@ -182,32 +178,52 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
     }
 
     /**
-     * A field is regarded as "constant" if:
-     * - it is NOT declared in java.lang.System and
-     * - it is final or it has the {@link CONSTANT} annotation.
+     * Determines if the value read from this field will always be the same from this time on.
      *
-     * @return whether the addressed field will ever change its value for the given holder throughout this runtime activation
+     * @return {@code true} if this field will never change its value anytime it is read subsequent to calling this
+     *         method; {@code false} otherwise
      */
     public final boolean isConstant() {
         final ClassActor holder = holder();
-        if (holder.toJava() == System.class) {
-            // The fields 'in', 'out', 'err' are "fake final".
-            // HotSpot assigns to them via native methods!
-            // Therefore we must not treat them as constant.
-            // The remaining field in System is not final anyway, so:
-            return false;
+
+
+        if (isFinal()) {
+            if (isStatic()) {
+                // Static final field:
+                if (!holder().hasClassInitializer()) {
+                    // The field's value must come from a ConstantValue attribute. If
+                    // no such attribute is present for this field, then it will have the
+                    // default value for its type.
+                    return true;
+                }
+                if (MaxineVM.isPrototyping() && MaxineVM.isMaxineClass(holder())) {
+                    // The class initializers of all Maxine classes are run while prototyping and
+                    // the values they assign to static final fields are frozen in the boot image.
+                    return true;
+                }
+                // This is now a field in a class with a class initializer:
+                // before the class initializer is executed, the field's value is not guaranteed to be immutable.
+                return holder().isInitialized();
+            }
+
+            // Non-static final field:
+            return true;
         }
-        if (isFinal() || isConstant(flags())) {
+
+        if (isConstant(flags())) {
+            assert MaxineVM.isMaxineClass(holder()) : "@CONSTANT applied to field of non-Maxine class: " + this;
             if (MaxineVM.isPrototyping()) {
-                // All classes are fully loaded and initialized before compiling anything:
                 return true;
             }
-            // We have to be careful not to treat uninitialized fields as "constant":
             return !isStatic() || holder.isInitialized();
         }
         return false;
     }
 
+    /**
+     * Determines if the value read from this field will always be the same if it is a non-default value for this
+     * field's type.
+     */
     public boolean isConstantWhenNotZero() {
         return isConstantWhenNotZero(flags());
     }

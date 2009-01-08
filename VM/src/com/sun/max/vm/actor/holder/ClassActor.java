@@ -104,7 +104,26 @@ public abstract class ClassActor extends Actor {
                          TypeDescriptor outerClass,
                          EnclosingMethodInfo enclosingMethodInfo) {
         super(name, flags);
-        checkProhibited(name);
+        if (MaxineVM.isPrototyping()) {
+            checkProhibited(name);
+            if (MaxineVM.isMaxineClass(typeDescriptor)) {
+                _initializationState = InitializationState.INITIALIZED;
+            } else {
+                // TODO: At some point, it may be worth trying to put JDK classes into the image in the VERIFIED state
+                // so that their class initializers are run at the 'right time' (i.e. according to the JVM spec).
+                // This solves the issue of having to clear/re-initialize static fields at runtime whose values
+                // depend on the runtime context, not the image build time context.
+                // However, it also raises other issues such as what it means to have instances in existence for
+                // classes that will be re-initialized. Also, all code in the boot image will need to have
+                // the appropriate class initialization barriers (that would be required if the same code
+                // was compiled at runtime).
+                _initializationState = InitializationState.INITIALIZED;
+            }
+
+        } else {
+            _initializationState = InitializationState.PREPARED;
+        }
+
         _majorVersion = majorVersion;
         _minorVersion = minorVersion;
         _kind = kind;
@@ -142,6 +161,8 @@ public abstract class ClassActor extends Actor {
 
         _localStaticFieldActors = InjectedFieldActor.Static.injectFieldActors(true, Arrays.filter(fieldActors, Actor._staticPredicate, NO_FIELDS), typeDescriptor);
         _localInstanceFieldActors = InjectedFieldActor.Static.injectFieldActors(false, Arrays.filter(fieldActors, Actor._dynamicPredicate, NO_FIELDS), typeDescriptor);
+
+        _clinit = findLocalStaticMethodActor(SymbolTable.CLINIT);
 
         assignHolderToLocalFieldActors();
 
@@ -337,6 +358,12 @@ public abstract class ClassActor extends Actor {
         return _componentClassActor.elementClassActor();
     }
 
+    /**
+     * Gets the number of array dimensions represented by this class actor.
+     *
+     * @return the number of array dimensions represented by this class actor or {@code 0} if this class actor is not an
+     *         array class actor
+     */
     public final int numberOfDimensions() {
         if (_componentClassActor == null) {
             return 0;
@@ -663,6 +690,11 @@ public abstract class ClassActor extends Actor {
         } while (holder != null);
         return null;
     }
+
+    /**
+     * The class initializer for this class or null if this class has not class initializer.
+     */
+    private final StaticMethodActor _clinit;
 
     @INSPECTED
     private final StaticMethodActor[] _localStaticMethodActors;
@@ -1035,6 +1067,7 @@ public abstract class ClassActor extends Actor {
         _prohibitedPackagePrefix = (prefix == null) ? null : prefix.name();
     }
 
+    @PROTOTYPE_ONLY
     private void checkProhibited(Utf8Constant typeName) {
         if (MaxineVM.isPrototyping()) {
             if (_prohibitedPackagePrefix != null && !isArrayClassActor() && !InvocationStubGenerator.isGeneratedStubClassName(typeName.toString())) {
@@ -1399,13 +1432,19 @@ public abstract class ClassActor extends Actor {
         ERROR, PREPARED, VERIFIED, INITIALIZING, INITIALIZED
     }
 
-    private InitializationState _initializationState = MaxineVM.isPrototyping() ? InitializationState.INITIALIZED : InitializationState.PREPARED;
-    private Thread _initializingThread = null;
+    private InitializationState _initializationState;
+    private Thread _initializingThread;
+
+    /**
+     * Determines if this class actor has a parameterless static method named "<clinit>".
+     */
+    public final boolean hasClassInitializer() {
+        return _clinit != null;
+    }
 
     public void callInitializer() {
-        final StaticMethodActor clinit = findLocalStaticMethodActor(SymbolTable.CLINIT);
-        if (clinit != null) {
-            SpecialBuiltin.call(CompilationScheme.Static.compile(clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
+        if (_clinit != null) {
+            SpecialBuiltin.call(CompilationScheme.Static.compile(_clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
         }
         _initializationState = InitializationState.INITIALIZED;
     }
@@ -1456,10 +1495,7 @@ public abstract class ClassActor extends Actor {
         // we can do without the synchronized since INITIALIZED is a terminal state. So when seeing
         // INITIALIZED without synchronization, one can safely assume the class is indeed initialized.
         // If not INITIALIZED, the caller has to conservatively assume that it isn't initialized and  ignore potential optimization.
-
-        synchronized (this) {
-            return _initializationState == InitializationState.INITIALIZED;
-        }
+        return _initializationState == InitializationState.INITIALIZED;
     }
 
     /**

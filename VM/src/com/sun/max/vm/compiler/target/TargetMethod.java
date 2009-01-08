@@ -828,7 +828,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
 
     @Override
     public final String toString() {
-        return _classMethodActor.name().toString();
+        return _classMethodActor.format("%H.%n(%p)");
     }
 
     public final void trace(int level) {

@@ -59,7 +59,7 @@ public final class CirCheckCast extends CirSpecialSnippet {
         if (isConstantArgument(arguments, Parameter.classActor)) {
             final ClassActor classActor = (ClassActor) getConstantArgumentValue(arguments, Parameter.classActor).asObject();
             if (Word.class.isAssignableFrom(classActor.toJava())) {
-                return new CirCall(getNormalContinuation(arguments));
+                return new CirCall(getNormalContinuation(arguments), CirCall.NO_ARGUMENTS);
             }
         }
         return super.fold(cirOptimizer, arguments);

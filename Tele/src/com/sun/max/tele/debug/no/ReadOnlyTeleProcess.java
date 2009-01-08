@@ -24,7 +24,6 @@ import java.io.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
@@ -32,7 +31,7 @@ import com.sun.max.unsafe.*;
 /**
  * @author Bernd Mathiske
  */
-public final class NoTeleProcess extends TeleProcess {
+public final class ReadOnlyTeleProcess extends TeleProcess {
 
     private final DataAccess _dataAccess;
 
@@ -41,14 +40,14 @@ public final class NoTeleProcess extends TeleProcess {
         return _dataAccess;
     }
 
-    public NoTeleProcess(TeleVM teleVM, Platform platform, File programFile) {
+    public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) {
         super(teleVM, platform, programFile, NO_COMMAND_LINE_ARGUMENTS);
         _dataAccess = new StreamDataAccess(new MemoryDataStreamFactory(), platform.processorKind().dataModel());
     }
 
     @Override
     protected boolean gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        return true;
+        throw new TeleVMCannotBeModifiedError();
     }
 
     @Override
@@ -58,26 +57,26 @@ public final class NoTeleProcess extends TeleProcess {
 
     @Override
     protected int write0(byte[] buffer, int offset, int length, Address address) {
-        return _dataAccess.write(buffer, offset, length, address);
+        throw new TeleVMCannotBeModifiedError();
     }
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        throw Problem.unimplemented();
+        throw new TeleVMCannotBeModifiedError();
     }
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        throw Problem.unimplemented();
+        throw new TeleVMCannotBeModifiedError();
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        Problem.unimplemented();
+        throw new TeleVMCannotBeModifiedError();
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        throw Problem.unimplemented();
+        throw new TeleVMCannotBeModifiedError();
     }
 }

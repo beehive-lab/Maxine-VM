@@ -443,14 +443,6 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
 #endif
 }
 
-long nativeGetDefaultThreadSignalStackSize() {
-#if os_GUESTVMXEN
-	return 0;
-#else
-	return SIGSTKSZ;
-#endif
-}
-
 void nativeSetupAlternateSignalStack(Address base, long size) {
 	c_ASSERT(wordAlign(base) == base);
 #if log_THREADS

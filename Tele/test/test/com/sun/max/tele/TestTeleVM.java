@@ -20,82 +20,73 @@
  */
 package test.com.sun.max.tele;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
+import java.io.*;
+import java.util.*;
+import java.util.logging.*;
 
-import com.sun.max.ide.JavaProject;
-import com.sun.max.program.Classpath;
-import com.sun.max.tele.TeleVM;
-import com.sun.max.tele.grip.TeleGripScheme;
-import com.sun.max.tele.method.TeleDisassembler;
-import com.sun.max.vm.object.host.HostObjectAccess;
-import com.sun.max.vm.prototype.BinaryImageGenerator;
-import com.sun.max.vm.prototype.BootImageException;
-import com.sun.max.vm.prototype.Prototype;
-import com.sun.max.vm.prototype.PrototypeClassLoader;
+import com.sun.max.ide.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.TeleVM.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.prototype.*;
 
 
 /**
  * Creates a running {@link TeleVM}, suitable for testing.
- * 
+ *
  * @author Michael Van De Vanter
  */
 public class TestTeleVM {
-    
+
     private static final String _TELE_LIBRARY_NAME = "tele";
     private static TeleVM _teleVM = null;
-    
-    public final static TeleVM create(boolean advanceToEntry) {
-        final File bootJar = BinaryImageGenerator.getDefaultBootImageJarFilePath();                
+
+    public static TeleVM create() {
+        final Options options = new Options();
+
+        final File bootJar = BinaryImageGenerator.getDefaultBootImageJarFilePath();
         Classpath classpathPrefix = Classpath.EMPTY;
         // May want to add something later
         classpathPrefix = classpathPrefix.prepend(bootJar.getAbsolutePath());
         final Classpath classpath = Classpath.fromSystem().prepend(classpathPrefix);
-        PrototypeClassLoader.setClasspath(classpath);        
+        PrototypeClassLoader.setClasspath(classpath);
         Prototype.loadLibrary(_TELE_LIBRARY_NAME);
-        final File bootImageFile = BinaryImageGenerator.getDefaultBootImageFilePath();       
-        final Classpath sourcepath = JavaProject.getSourcePath(true);        
-        final File projectDirectory = JavaProject.findVcsProjectDirectory();        
-        final String[] commandLineArguments = {
-                        "-verbose:class",
-                        "-classpath",
-                        (projectDirectory.toString() + "/bin"),
-                        "test.com.sun.max.tele.HelloWorld"
-        };        
-        final int debuggeeId = -1;        
+        final File projectDirectory = JavaProject.findVcsProjectDirectory();
+        final String vmArguments =
+            "-verbose:class " +
+            "-classpath " +
+            projectDirectory.toString() + "/bin " +
+            "test.com.sun.max.tele.HelloWorld";
+
+        options._debugOption.setValue(Boolean.TRUE);
+        options._bootImageFileOption.setValue(BinaryImageGenerator.getDefaultBootImageFilePath());
+        options._sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(true).toStringArray()));
+        options._vmArguments.setValue(vmArguments);
+
         try {
-            _teleVM = TeleVM.createNewChild(bootImageFile, sourcepath, commandLineArguments, debuggeeId);
+            _teleVM = TeleVM.create(options);
             TeleDisassembler.initialize(_teleVM);
-            final TeleGripScheme teleGripScheme = (TeleGripScheme) _teleVM.maxineVM().configuration().gripScheme();
-            teleGripScheme.setTeleVM(_teleVM);
-            if (advanceToEntry) { 
-                _teleVM.advanceToJavaEntryPoint();
-            }
         } catch (BootImageException e) {
-            System.out.println("Failed to load boot image " + bootImageFile.toString());
-            e.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("IOException at startup");
+            System.out.println("Failed to load boot image " + BinaryImageGenerator.getDefaultBootImageFilePath().toString());
             e.printStackTrace();
         }
-        
-        return _teleVM;        
+
+        return _teleVM;
     }
-    
-    public final static void main(String[] argv) {
+
+    public static void main(String[] argv) {
         HostObjectAccess.setMainThread(Thread.currentThread());
         LogManager.getLogManager().getLogger("").setLevel(Level.ALL);
         System.out.println("creating VM");
-        final TeleVM teleVM = create(true);
+        final TeleVM teleVM = create();
         System.out.println("end creating VM");
         try {
-            
             teleVM.teleProcess().controller().resume(true, true);
-        } catch (Exception e) {            
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
 }

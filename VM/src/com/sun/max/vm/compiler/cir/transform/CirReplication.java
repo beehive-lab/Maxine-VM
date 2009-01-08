@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.cir.variable.*;
 
 /**
  * Deep CIR copying, preserving node sharing.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class CirReplication {
@@ -76,6 +76,9 @@ public final class CirReplication {
     }
 
     private CirValue[] replicateValues(CirValue[] originalValues, LinkedList<Replication> toDo) {
+        if (originalValues.length == 0) {
+            return CirCall.NO_ARGUMENTS;
+        }
         final CirValue[] valuesReplica = new CirValue[originalValues.length];
         for (int i = 0; i < originalValues.length; i++) {
             if (originalValues[i] != null) {
@@ -174,7 +177,7 @@ public final class CirReplication {
                     final CirClosure closureReplica = (CirClosure) originalClosure.clone();
                     final CirVariable[] originalParameters = originalClosure.parameters();
                     final int numberOfParameters = originalParameters.length;
-                    final CirVariable[] parameterReplicas = new CirVariable[numberOfParameters];
+                    final CirVariable[] parameterReplicas = CirClosure.newParameters(numberOfParameters);
                     closureReplica.setParameters(parameterReplicas);
                     for (int i = 0; i < numberOfParameters; i++) {
                         parameterReplicas[i] = replicateVariable(originalParameters[i]);

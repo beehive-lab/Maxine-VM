@@ -18,7 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.vm.classfile.constant;
+
+import java.lang.reflect.*;
+
+import com.sun.max.vm.*;
+
 /**
- * @author Athul Acharya
+ * Thrown when a {@linkplain PoolConstant constant pool entry} for a
+ * {@linkplain MaxineVM#isPrototypeOnly(AccessibleObject) prototype-only method} is
+ * {@linkplain MethodRefConstant#resolve(ConstantPool, int) resolved}.
+ *
+ * @author Doug Simon
  */
-package test.com.sun.max.ins.interpreter;
+public class PrototypeOnlyMethodError extends NoSuchMethodError {
+
+    public PrototypeOnlyMethodError(String s) {
+        super(s);
+    }
+}

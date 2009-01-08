@@ -22,6 +22,7 @@ package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jni.*;
@@ -51,7 +52,11 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
     @NEVER_INLINE
     private static LongFieldActor getHandleFieldActor(Class javaClass) {
         if (_handleFieldActor == null) {
-            _handleFieldActor =  (LongFieldActor) FieldActor.fromJava(Classes.getDeclaredField(javaClass, "handle", long.class));
+            try {
+                _handleFieldActor =  (LongFieldActor) FieldActor.fromJava(Classes.getDeclaredField(javaClass, "handle", long.class));
+            } catch (NoSuchFieldException e) {
+                ProgramError.unexpected(e);
+            }
         }
         return _handleFieldActor;
     }

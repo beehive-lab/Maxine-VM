@@ -29,7 +29,11 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
+import com.sun.max.vm.interpreter.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A pseudo grip scheme for limited unit testing on the prototype host, without bootstrapping the VM.
@@ -123,26 +127,72 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
         return UnsafeLoophole.gripToWord(grip).asPointer();
     }
 
-    private Object readField(Grip grip, int offset) {
+    private void setValue(Grip grip, int displacement, int index, Object boxedJavaValue) {
+        final Object object = toJava(grip);
+        final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout();
+        ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
+        final Value value = Value.fromBoxedJavaValue(boxedJavaValue);
+        mirror.writeElement(value.kind(), index, value);
+    }
+
+    private <T> T getValue(Grip grip, Class<T> type, int displacement, int index) {
+        final Object object = toJava(grip);
+        final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+        final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout();
+        ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
+        final Kind kind = Kind.fromJava(type);
+        final Class<T> castType = null;
+        return StaticLoophole.cast(castType, mirror.readElement(kind, index).asBoxedJavaValue());
+    }
+
+    private void writeValue(Grip grip, int offset, Object boxedJavaValue) {
         final Object object = toJava(grip);
         if (object instanceof StaticTuple) {
             final StaticTuple staticTuple = (StaticTuple) object;
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
             final Class javaClass = staticTuple.classActor().toJava();
             try {
-                return WithoutAccessCheck.getStaticField(javaClass, fieldActor.name().toString());
+                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name().toString(), boxedJavaValue);
             } catch (Throwable throwable) {
-                ProgramError.unexpected("could not access static field: " + fieldActor.name(), throwable);
+                ProgramError.unexpected("could not write field: " + fieldActor, throwable);
+            }
+        } else {
+            final Class javaClass = object.getClass();
+            final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(javaClass);
+            final FieldActor fieldActor = tupleClassActor.findInstanceFieldActor(offset);
+            WithoutAccessCheck.setInstanceField(object, fieldActor.name().toString(), boxedJavaValue);
+
+            final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+            final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout();
+
+            final Value value = Value.fromBoxedJavaValue(boxedJavaValue);
+            specificLayout.writeValue(value.kind(), mirror, offset, value);
+            return;
+        }
+    }
+
+    private <T> T readValue(Grip grip, Class<T> type, int offset) {
+        final Class<T> castType = null;
+        final Object object = toJava(grip);
+
+        if (object instanceof StaticTuple) {
+            final StaticTuple staticTuple = (StaticTuple) object;
+            final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
+            try {
+                return StaticLoophole.cast(castType, WithoutAccessCheck.getStaticField(staticTuple.classActor().toJava(), fieldActor.name().toString()));
+            } catch (Throwable throwable) {
+                ProgramError.unexpected("could not read field: " + fieldActor, throwable);
             }
         }
-        final Class javaClass = object.getClass();
-        final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(javaClass);
-        final FieldActor fieldActor = tupleClassActor.findInstanceFieldActor(offset);
-        try {
-            return WithoutAccessCheck.getInstanceField(object, fieldActor.name().toString());
-        } catch (Throwable throwable) {
-            throw ProgramError.unexpected("could not access field: " + fieldActor.name(), throwable);
-        }
+
+        final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
+        final ClassActor classActor = mirror.classActor();
+        final SpecificLayout specificLayout = classActor.dynamicHub().specificLayout();
+
+        final Kind kind = Kind.fromJava(type);
+        final Value value = specificLayout.readValue(kind, mirror, offset);
+        return StaticLoophole.cast(castType, value.asBoxedJavaValue());
     }
 
     public byte readByte(Grip grip, Offset offset) {
@@ -150,14 +200,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public byte readByte(Grip grip, int offset) {
-        final Byte result = (Byte) readField(grip, offset);
-        return result.byteValue();
+        return readValue(grip, byte.class, offset).byteValue();
     }
 
     public byte getByte(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final byte[] array = (byte[]) grip.toJava();
-        return array[index];
+        return getValue(grip, byte.class, displacement, index);
     }
 
     public boolean readBoolean(Grip grip, Offset offset) {
@@ -165,14 +212,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public boolean readBoolean(Grip grip, int offset) {
-        final Boolean result = (Boolean) readField(grip, offset);
-        return result.booleanValue();
+        return readValue(grip, boolean.class, offset).booleanValue();
     }
 
     public boolean getBoolean(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final boolean[] array = (boolean[]) grip.toJava();
-        return array[index];
+        return getValue(grip, boolean.class, displacement, index);
     }
 
     public short readShort(Grip grip, Offset offset) {
@@ -180,14 +224,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public short readShort(Grip grip, int offset) {
-        final Short result = (Short) readField(grip, offset);
-        return result.shortValue();
+        return readValue(grip, short.class, offset).shortValue();
     }
 
     public short getShort(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final short[] array = (short[]) grip.toJava();
-        return array[index];
+        return getValue(grip, short.class, displacement, index);
     }
 
     public char readChar(Grip grip, Offset offset) {
@@ -195,14 +236,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public char readChar(Grip grip, int offset) {
-        final Character result = (Character) readField(grip, offset);
-        return result.charValue();
+        return readValue(grip, char.class, offset).charValue();
     }
 
     public char getChar(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final char[] array = (char[]) grip.toJava();
-        return array[index];
+        return getValue(grip, char.class, displacement, index);
     }
 
     public int readInt(Grip grip, Offset offset) {
@@ -210,14 +248,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public int readInt(Grip grip, int offset) {
-        final Integer result = (Integer) readField(grip, offset);
-        return result.intValue();
+        return readValue(grip, int.class, offset).intValue();
     }
 
     public int getInt(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final int[] array = (int[]) grip.toJava();
-        return array[index];
+        return getValue(grip, int.class, displacement, index);
     }
 
     public float readFloat(Grip grip, Offset offset) {
@@ -225,14 +260,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public float readFloat(Grip grip, int offset) {
-        final Float result = (Float) readField(grip, offset);
-        return result.floatValue();
+        return readValue(grip, float.class, offset).floatValue();
     }
 
     public float getFloat(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final float[] array = (float[]) grip.toJava();
-        return array[index];
+        return getValue(grip, float.class, displacement, index);
     }
 
     public long readLong(Grip grip, Offset offset) {
@@ -240,14 +272,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public long readLong(Grip grip, int offset) {
-        final Long result = (Long) readField(grip, offset);
-        return result.longValue();
+        return readValue(grip, long.class, offset).longValue();
     }
 
     public long getLong(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final long[] array = (long[]) grip.toJava();
-        return array[index];
+        return getValue(grip, long.class, displacement, index);
     }
 
     public double readDouble(Grip grip, Offset offset) {
@@ -255,14 +284,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public double readDouble(Grip grip, int offset) {
-        final Double result = (Double) readField(grip, offset);
-        return result.doubleValue();
+        return readValue(grip, double.class, offset).doubleValue();
     }
 
     public double getDouble(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final double[] array = (double[]) grip.toJava();
-        return array[index];
+        return getValue(grip, double.class, displacement, index);
     }
 
     public Word readWord(Grip grip, Offset offset) {
@@ -270,13 +296,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public Word readWord(Grip grip, int offset) {
-        return (Word) readField(grip, offset);
+        return readValue(grip, Word.class, offset);
     }
 
     public Word getWord(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final Word[] array = (Word[]) grip.toJava();
-        return array[index];
+        return getValue(grip, Word.class, displacement, index);
     }
 
     public Grip readGrip(Grip grip, Offset offset) {
@@ -284,32 +308,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public Grip readGrip(Grip grip, int offset) {
-        return fromJava(readField(grip, offset));
+        return fromJava(readValue(grip, Object.class, offset));
     }
 
     public Grip getGrip(Grip grip, int displacement, int index) {
-        assert displacement == 0;
-        final Object[] array = (Object[]) toJava(grip);
-        return fromJava(array[index]);
-    }
-
-    private void writeField(Grip grip, int offset, Object value) {
-        final Object object = toJava(grip);
-        if (object instanceof StaticTuple) {
-            final StaticTuple staticTuple = (StaticTuple) object;
-            final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
-            final Class javaClass = staticTuple.classActor().toJava();
-            try {
-                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name().toString(), value);
-            } catch (Throwable throwable) {
-                ProgramError.unexpected("could not access static field: " + fieldActor.name(), throwable);
-            }
-        } else {
-            final Class javaClass = object.getClass();
-            final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(javaClass);
-            final FieldActor fieldActor = tupleClassActor.findInstanceFieldActor(offset);
-            WithoutAccessCheck.setInstanceField(object, fieldActor.name().toString(), value);
-        }
+        return fromJava(getValue(grip, Object.class, displacement, index));
     }
 
     public void writeByte(Grip grip, Offset offset, byte value) {
@@ -317,13 +320,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeByte(Grip grip, int offset, byte value) {
-        writeField(grip, offset, new Byte(value));
+        writeValue(grip, offset, Byte.valueOf(value));
     }
 
     public void setByte(Grip grip, int displacement, int index, byte value) {
-        assert displacement == 0;
-        final byte[] array = (byte[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Byte.valueOf(value));
     }
 
     public void writeBoolean(Grip grip, Offset offset, boolean value) {
@@ -331,13 +332,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeBoolean(Grip grip, int offset, boolean value) {
-        writeField(grip, offset, new Boolean(value));
+        writeValue(grip, offset, Boolean.valueOf(value));
     }
 
     public void setBoolean(Grip grip, int displacement, int index, boolean value) {
-        assert displacement == 0;
-        final boolean[] array = (boolean[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Boolean.valueOf(value));
     }
 
     public void writeShort(Grip grip, Offset offset, short value) {
@@ -345,13 +344,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeShort(Grip grip, int offset, short value) {
-        writeField(grip, offset, new Short(value));
+        writeValue(grip, offset, Short.valueOf(value));
     }
 
     public void setShort(Grip grip, int displacement, int index, short value) {
-        assert displacement == 0;
-        final short[] array = (short[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Short.valueOf(value));
     }
 
     public void writeChar(Grip grip, Offset offset, char value) {
@@ -359,13 +356,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeChar(Grip grip, int offset, char value) {
-        writeField(grip, offset, new Character(value));
+        writeValue(grip, offset, Character.valueOf(value));
     }
 
     public void setChar(Grip grip, int displacement, int index, char value) {
-        assert displacement == 0;
-        final char[] array = (char[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Character.valueOf(value));
     }
 
     public void writeInt(Grip grip, Offset offset, int value) {
@@ -373,13 +368,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeInt(Grip grip, int offset, int value) {
-        writeField(grip, offset, new Integer(value));
+        writeValue(grip, offset, Integer.valueOf(value));
     }
 
     public void setInt(Grip grip, int displacement, int index, int value) {
-        assert displacement == 0;
-        final int[] array = (int[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Integer.valueOf(value));
     }
 
     public void writeFloat(Grip grip, Offset offset, float value) {
@@ -387,13 +380,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeFloat(Grip grip, int offset, float value) {
-        writeField(grip, offset, new Float(value));
+        writeValue(grip, offset, Float.valueOf(value));
     }
 
     public void setFloat(Grip grip, int displacement, int index, float value) {
-        assert displacement == 0;
-        final float[] array = (float[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Float.valueOf(value));
     }
 
     public void writeLong(Grip grip, Offset offset, long value) {
@@ -401,13 +392,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeLong(Grip grip, int offset, long value) {
-        writeField(grip, offset, new Long(value));
+        writeValue(grip, offset, Long.valueOf(value));
     }
 
     public void setLong(Grip grip, int displacement, int index, long value) {
-        assert displacement == 0;
-        final long[] array = (long[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Long.valueOf(value));
     }
 
     public void writeDouble(Grip grip, Offset offset, double value) {
@@ -415,13 +404,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeDouble(Grip grip, int offset, double value) {
-        writeField(grip, offset, new Double(value));
+        writeValue(grip, offset, Double.valueOf(value));
     }
 
     public void setDouble(Grip grip, int displacement, int index, double value) {
-        assert displacement == 0;
-        final double[] array = (double[]) grip.toJava();
-        array[index] = value;
+        setValue(grip, displacement, index, Double.valueOf(value));
     }
 
     public void writeWord(Grip grip, Offset offset, Word value) {
@@ -430,13 +417,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
 
     public void writeWord(Grip grip, int offset, Word value) {
         final BoxedWord boxedWord = new BoxedWord(value); // avoiding word/grip kind mismatch
-        writeField(grip, offset, boxedWord);
+        writeValue(grip, offset, boxedWord);
     }
 
     public void setWord(Grip grip, int displacement, int index, Word value) {
-        assert displacement == 0;
-        final Word[] array = (Word[]) grip.toJava();
-        WordArray.set(array, index, value);
+        setValue(grip, displacement, index, new BoxedWord(value));
     }
 
     public void writeGrip(Grip grip, Offset offset, Grip value) {
@@ -444,13 +429,11 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeGrip(Grip grip, int offset, Grip value) {
-        writeField(grip, offset, value.toJava());
+        writeValue(grip, offset, value.toJava());
     }
 
     public void setGrip(Grip grip, int displacement, int index, Grip value) {
-        assert displacement == 0;
-        final Object[] array = (Object[]) toJava(grip);
-        array[index] = value.toJava();
+        setValue(grip, displacement, index, value.toJava());
     }
 
     public byte[] createPrototypeGrip(Address address) {
