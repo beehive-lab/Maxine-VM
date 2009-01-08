@@ -201,6 +201,72 @@ public final class Classes {
     }
 
     /**
+     * Performs method resolution as detailed in section 5.4.3.3 of the JVM specification except for the accessibility
+     * checks detailed in section 5.4.4.
+     *
+     * @param javaClass the class to start the resolution from
+     * @param returnType the return type of the method to resolve
+     * @param name the name of the method to resolve
+     * @param parameterTypes the parameter types of the method to resolve
+     * @return the resolved method
+     * @throws NoSuchMethodError if the method resolution fails
+     * @throws AbstractMethodError if the resolved method is abstract
+     */
+    public static Method resolveMethod(Class<?> javaClass, Class returnType, String name, Class... parameterTypes) {
+        if (!name.equals("<init>") && !name.equals("<clinit>")) {
+            Class<?> declaringClass = javaClass;
+            if (javaClass.isInterface()) {
+                try {
+                    return javaClass.getMethod(name, parameterTypes);
+                } catch (NoSuchMethodException e) {
+                    throw new NoSuchMethodError(e.getMessage());
+                }
+            }
+            do {
+                try {
+                    final Method method = getDeclaredMethod(declaringClass, returnType, name, parameterTypes);
+                    if (Modifier.isAbstract(method.getModifiers()) && !Modifier.isAbstract(declaringClass.getModifiers())) {
+                        throw new AbstractMethodError();
+                    }
+                    return method;
+                } catch (NoSuchMethodException e) {
+                    declaringClass = declaringClass.getSuperclass();
+                }
+            } while (declaringClass != null);
+        }
+        throw new NoSuchMethodError(returnType.getName() + " " + javaClass.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ", ") + ")");
+    }
+
+    /**
+     * Performs field resolution as detailed in section 5.4.3.2 of the JVM specification except for the accessibility
+     * checks detailed in section 5.4.4.
+     * @param javaClass the class to start the resolution from
+     * @param type the type of the field to resolve
+     * @param name the name of the field to resolve
+     *
+     * @return the resolved field
+     * @throws NoSuchFieldError if the field resolution fails
+     */
+    public static Field resolveField(Class<?> javaClass, Class type, String name) {
+        Class<?> declaringClass = javaClass;
+        do {
+            try {
+                return getDeclaredField(declaringClass, name, type);
+            } catch (NoSuchFieldException e) {
+                for (Class superInterface : javaClass.getInterfaces()) {
+                    try {
+                        return resolveField(superInterface, type, name);
+                    } catch (NoSuchFieldError noSuchFieldError) {
+                        // Ignore
+                    }
+                }
+                declaringClass = declaringClass.getSuperclass();
+            }
+        } while (declaringClass != null);
+        throw new NoSuchFieldError(type.getName() + " " + javaClass.getName() + "." + name);
+    }
+
+    /**
      * Gets the class or interface that declares the method, field or constructor represented by {@code member}.
      */
     public static Class<?> getDeclaringClass(AccessibleObject member) {
@@ -279,10 +345,10 @@ public final class Classes {
     }
 
     /**
-     * Similar to a call to {@link Class#getDeclaredMethod(String, Class...)} that must succeed with the addition that
+     * Similar to {@link Class#getDeclaredMethod(String, Class...)} except that
      * the search takes into account the return type.
      */
-    public static Method getDeclaredMethod(Class<?> clazz, Class returnType, String name, Class... parameterTypes) {
+    public static Method getDeclaredMethod(Class<?> clazz, Class returnType, String name, Class... parameterTypes)  throws NoSuchMethodException {
         for (Method javaMethod : clazz.getDeclaredMethods()) {
             if (javaMethod.getName().equals(name) && javaMethod.getReturnType().equals(returnType)) {
                 final Class[] declaredParameterTypes = javaMethod.getParameterTypes();
@@ -291,7 +357,7 @@ public final class Classes {
                 }
             }
         }
-        throw ProgramError.unexpected("could not find required method: " + returnType.getName() + " " + clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")");
+        throw new NoSuchMethodException(returnType.getName() + " " + clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")");
     }
 
     /**
@@ -328,13 +394,15 @@ public final class Classes {
     }
 
     /**
-     * A wrapper for a call to {@link Class#getDeclaredField(String)} that must succeed.
-     * Also checks that the field has an expected type.
+     * Similar to {@link Class#getDeclaredField(String)} except that the lookup takes into account a given field type.
      */
-    public static Field getDeclaredField(Class<?> clazz, String name, Class type) {
-        final Field field = getDeclaredField(clazz, name);
-        ProgramError.check(field.getType().equals(type));
-        return field;
+    public static Field getDeclaredField(Class<?> clazz, String name, Class type) throws NoSuchFieldException {
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.getName().equals(name) && field.getType().equals(type)) {
+                return field;
+            }
+        }
+        throw new NoSuchFieldException(type.getName() + " " + clazz.getName() + "." + name);
     }
 
     public static void main(Class<?> classToRun, String[] args) {

@@ -20,11 +20,11 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
+
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -89,6 +89,9 @@ public interface PoolConstant<PoolConstant_Type extends PoolConstant<PoolConstan
 //The rest of this file contains package-private abstract classes that provide most of the implementation
 //for the pool constant interfaces.
 
+/**
+ * An abstract class that implements the most basic parts of the {@link PoolConstant} interface.
+ */
 abstract class AbstractPoolConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> implements PoolConstant<PoolConstant_Type> {
 
     public abstract Tag tag();
@@ -105,6 +108,11 @@ abstract class AbstractPoolConstant<PoolConstant_Type extends PoolConstant<PoolC
     }
 }
 
+/**
+ * An abstract class that implements some of the functionality of a method or field entry in a constant pool
+ * that is in a completely unresolved state. That is, the references to the holder, name and signature of
+ * the field or method are indices to other constant pool entries.
+ */
 abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
 
     final int _classIndex;
@@ -147,21 +155,10 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
         return false;
     }
 
-    public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
+    public final boolean isResolvableWithoutClassLoading(ConstantPool pool) {
         final ClassConstant classConstant = pool.classAt(_classIndex);
         if (!classConstant.isResolvableWithoutClassLoading(pool)) {
             return false;
-        }
-        if (MaxineVM.isPrototyping()) {
-            try {
-                final Class<?> javaClass = Class.forName(classConstant.valueString(pool));
-                if (MaxineVM.isPrototypeOnly(javaClass)) {
-                    return false;
-                }
-
-            } catch (ClassNotFoundException classNotFoundException) {
-                return false;
-            }
         }
         return true;
     }
@@ -209,6 +206,13 @@ abstract class RefKey {
     public abstract int hashCode();
 }
 
+/**
+ * An abstract class that implements some of the functionality of a method or field entry in a constant pool that is in
+ * a partially resolved state. That is, the references to the holder, name and signature of the field or method are
+ * objects of type {@link ClassActor}, {@link Utf8Constant} and {@link Descriptor} respectively. That is, they are not
+ * indices to other constant pool entries and as such, this class (and it subclasses) are useful for constructing pool
+ * constants that don't rely on the existence of extra pool constants.
+ */
 abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends AbstractPoolConstant<PoolConstant_Type> implements MemberRefConstant<PoolConstant_Type> {
 
     final ClassActor _holder;

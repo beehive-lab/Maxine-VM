@@ -20,6 +20,10 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import java.lang.reflect.*;
+
+import com.sun.max.lang.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
@@ -27,7 +31,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * #4.4.2.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -125,17 +129,27 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
             return null;
         }
 
-        static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor descriptor) {
+        static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor signature) {
             if (!classActor.isInterfaceActor()) {
                 throw new IncompatibleClassChangeError();
             }
             final InterfaceActor interfaceActor = (InterfaceActor) classActor;
-            final MethodActor methodActor = findInterfaceMethodActor(interfaceActor, name, descriptor);
+            final MethodActor methodActor = findInterfaceMethodActor(interfaceActor, name, signature);
             if (methodActor != null) {
                 pool.updateAt(index, new Resolved(methodActor));
                 return methodActor;
             }
-            throw new NoSuchMethodError(classActor.javaSignature(true) + "." + name + descriptor);
+            final String errorMessage = classActor.javaSignature(true) + "." + name + signature;
+            if (MaxineVM.isPrototyping()) {
+                final Class<?> javaClass = classActor.toJava();
+                final Class[] parameterTypes = signature.getParameterTypes(javaClass.getClassLoader());
+                final Class returnType = signature.getReturnType(javaClass.getClassLoader());
+                final Method method = Classes.resolveMethod(javaClass, returnType, name.string(), parameterTypes);
+                if (MaxineVM.isPrototypeOnly(method)) {
+                    throw new PrototypeOnlyMethodError(errorMessage);
+                }
+            }
+            throw new NoSuchMethodError(errorMessage);
         }
 
         public MethodActor resolve(ConstantPool pool, int index) {

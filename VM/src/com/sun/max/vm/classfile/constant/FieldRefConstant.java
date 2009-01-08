@@ -20,7 +20,11 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import java.lang.reflect.*;
+
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
@@ -155,14 +159,24 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
             return Tag.FIELD_REF;
         }
 
-        static FieldActor resolve(ConstantPool pool, int index, ClassActor holder, Utf8Constant name, TypeDescriptor descriptor) {
-            final FieldActor fieldActor = holder.findFieldActor(name, descriptor);
+        static FieldActor resolve(ConstantPool pool, int index, ClassActor holder, Utf8Constant name, TypeDescriptor type) {
+            final FieldActor fieldActor = holder.findFieldActor(name, type);
             if (fieldActor != null) {
                 fieldActor.checkAccessBy(pool.holder());
                 pool.updateAt(index, new Resolved(fieldActor));
                 return fieldActor;
             }
-            throw new NoSuchFieldError(descriptor + " " + holder.javaSignature(true) + "." + name);
+            final String errorMessage = type + " " + holder.javaSignature(true) + "." + name;
+            if (MaxineVM.isPrototyping()) {
+                final Class<?> javaClass = holder.toJava();
+                final Class fieldType = type.toJava(javaClass.getClassLoader());
+                final Field field = Classes.resolveField(javaClass, fieldType, name.string());
+                if (MaxineVM.isPrototypeOnly(field)) {
+                    throw new PrototypeOnlyFieldError(errorMessage);
+                }
+            }
+
+            throw new NoSuchFieldError(errorMessage);
         }
 
         public FieldActor resolve(ConstantPool pool, int index) {
