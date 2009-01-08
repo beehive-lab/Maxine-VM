@@ -168,9 +168,8 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
                 }
                 final String packageName = line.substring(indx, line.indexOf(';'));
                 String className = file.getName();
-                indx = className.indexOf(".java");
-                if (indx >= 0) {
-                    className = className.substring(0, indx);
+                if (className.endsWith(".java")) {
+                    className = className.substring(0, className.length() - ".java".length());
                 }
                 // use the package name plus the name of the file to load the class.
                 return Class.forName(packageName + "." + className);

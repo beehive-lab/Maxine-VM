@@ -15391,22 +15391,6 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
-    static void test_threads_Thread_join04() {
-        JavaTesterRunScheme.begin("test.threads.Thread_join04");
-        String runString = null;
-        try {
-        // test(0) == true
-            runString = "test(0)";
-            if (true != test.threads.Thread_join04.test(0)) {
-                JavaTesterRunScheme.end(runString, false);
-                return;
-            }
-        } catch (Throwable t) {
-            JavaTesterRunScheme.end(runString, t);
-            return;
-        }
-        JavaTesterRunScheme.end(null, true);
-    }
     static void test_threads_Thread_new01() {
         JavaTesterRunScheme.begin("test.threads.Thread_new01");
         String runString = null;
