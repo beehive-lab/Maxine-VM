@@ -159,9 +159,15 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
             _resultKind = resultKind;
             if (constantPool != null) {
                 final ResolvableConstant constant = constantPool.resolvableAt(index);
-                if (constant.isResolved()/* || constant.isResolvableWithoutClassLoading(constantPool)*/) {
+                if (constant.isResolved() || constant.isResolvableWithoutClassLoading(constantPool)) {
                     final Class<Actor_Type> type = null;
-                    _actor = StaticLoophole.cast(type, constant.resolve(constantPool, index));
+                    try {
+                        _actor = StaticLoophole.cast(type, constant.resolve(constantPool, index));
+                    } catch (PrototypeOnlyFieldError prototypeOnlyFieldError) {
+                        // Suppress: will have to be dealt with when 'resolve()' is called
+                    } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
+                        // Suppress: will have to be dealt with when 'resolve()' is called
+                    }
                 }
             }
         }

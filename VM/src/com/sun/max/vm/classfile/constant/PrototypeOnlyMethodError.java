@@ -20,35 +20,20 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.type.*;
+import java.lang.reflect.*;
+
+import com.sun.max.vm.*;
 
 /**
- * Interface denoting a field or method entry in a constant pool.
+ * Thrown when a {@linkplain PoolConstant constant pool entry} for a
+ * {@linkplain MaxineVM#isPrototypeOnly(AccessibleObject) prototype-only method} is
+ * {@linkplain MethodRefConstant#resolve(ConstantPool, int) resolved}.
  *
  * @author Doug Simon
  */
-public interface MemberRefConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends ResolvableConstant<PoolConstant_Type, MemberActor> {
+public class PrototypeOnlyMethodError extends NoSuchMethodError {
 
-    /**
-     * Gets the descriptor of the class (i.e. holder) in which this method or field is declared. Note that the actual
-     * holder after resolution may be a super class of the class described by the descriptor returned by this method.
-     *
-     * @param pool the constant pool that maybe be required to convert a constant pool index to the holder's descriptor
-     */
-    TypeDescriptor holder(ConstantPool pool);
-
-    /**
-     * Gets the name of this field or method.
-     *
-     * @param pool the constant pool that maybe be required to convert a constant pool index to a name
-     */
-    Utf8Constant name(ConstantPool pool);
-
-    /**
-     * Gets the type of this field or signature of this method.
-     *
-     * @param pool the constant pool that maybe be required to convert a constant pool index to this field/method's type/signature.
-     */
-    Descriptor descriptor(ConstantPool pool);
+    public PrototypeOnlyMethodError(String s) {
+        super(s);
+    }
 }
