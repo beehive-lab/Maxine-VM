@@ -22,7 +22,7 @@
  * @Harness: java
  * @Runs: 0 = true
  */
-package test.threads;
+package test.output;
 
 /**
  * This tests a bug where a GC erroneously collects the java.lang.Thread inflated monitor
