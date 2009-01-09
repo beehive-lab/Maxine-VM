@@ -18,44 +18,22 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.prototype;
+package test.com.sun.max.tele.interpreter;
 
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
+import junit.framework.*;
 
-/**
- * @author Bernd Mathiske
- */
-public class PrototypeCompilerScheme extends AbstractCompiler {
+import com.sun.max.ide.*;
 
-    public PrototypeCompilerScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public final class NoAutoTest {
+    private NoAutoTest() {
     }
 
-    @Override
-    public IrGenerator irGenerator() {
-        throw ProgramError.unexpected();
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(NoAutoTest.suite());
     }
 
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.empty(IrGenerator.class);
+    public static Test suite() {
+        return new TeleInterpreterTestSetup(new TestCaseClassSet(new Package()).toTestSuite());
     }
-
-    @Override
-    public void compileSnippets() {
-    }
-
-    @Override
-    public boolean areSnippetsCompiled() {
-        return true;
-    }
-
-    @Override
-    public void fakeCall(Address returnAddress) {
-    }
-
 }

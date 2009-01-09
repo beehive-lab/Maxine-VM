@@ -33,6 +33,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
@@ -45,26 +47,22 @@ import com.sun.max.vm.value.*;
  * @author Athul Acharya
  * @author Doug Simon
  */
-public final class TeleInterpreter {
+public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
     private final TeleVM _teleVM;
 
-    private final Machine _machine;
+    private Machine _machine;
     private Value _ret;
 
-    private TeleInterpreter(TeleVM teleVM, ClassMethodActor classMethodActor, Value... args) {
+    public TeleInterpreter(TeleVM teleVM) {
         _teleVM = teleVM;
-        _machine = new Machine(teleVM);
-        _machine.pushFrame(classMethodActor);
-        int j = 0;
-        for (int i = 0; i < args.length; i++, j++) {
-            _machine.setLocal(j, args[i]);
-
-            if (args[i] instanceof DoubleValue || args[i] instanceof LongValue) {
-                j++;
-            }
-        }
     }
+
+    @Override
+    public Value execute(ActorIrMethod method, Value... arguments) throws InvocationTargetException {
+        return run(method.classMethodActor(), arguments);
+    }
+
 
     /**
      * Creates an interpreter instance and uses it to execute a given method with the given arguments.
@@ -76,7 +74,7 @@ public final class TeleInterpreter {
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
     public static Value execute(TeleVM teleVM, ClassMethodActor classMethodActor, Value... args) throws TeleInterpreterException {
-        return new TeleInterpreter(teleVM, classMethodActor, args).run();
+        return new TeleInterpreter(teleVM).run(classMethodActor, args);
     }
 
     /**
@@ -189,7 +187,18 @@ public final class TeleInterpreter {
         }
     }
 
-    public Value run() throws TeleInterpreterException {
+    private Value run(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
+
+        _machine = new Machine(_teleVM);
+        _machine.pushFrame(classMethodActor);
+        int j = 0;
+        for (int i = 0; i < arguments.length; i++, j++) {
+            _machine.setLocal(j, arguments[i]);
+            if (arguments[i].isCategory2()) {
+                j++;
+            }
+        }
+
         Bytecode code;
         MethodStatus status;
 
@@ -221,7 +230,7 @@ public final class TeleInterpreter {
         return _ret;
     }
 
-    public MethodStatus interpret(Bytecode opcode) throws TeleInterpreterException {
+    private MethodStatus interpret(Bytecode opcode) throws TeleInterpreterException {
         switch (opcode) {
             case NOP:                       // 0x00
                 break;
@@ -1632,7 +1641,7 @@ public final class TeleInterpreter {
             case RETURN: {                  // 0xB1;
                 final ExecutionFrame frame = _machine.popFrame();
                 if (frame == null) {
-                    _ret = null;
+                    _ret = VoidValue.VOID;
                     return MethodStatus.METHOD_END;
                 }
                 break;

@@ -732,6 +732,46 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
     }
 
     /**
+     * Executes a given method with {@code args}.
+     * The method to be executed is expected to raise an exception of type assignable to {@code expectedExceptionType}.
+     * If it does not, the test immediately {@linkplain #fail() fails}.
+     */
+    protected void executeWithExpectedException(final Method_Type method, Class<? extends Throwable> expectedExceptionType, Value... arguments) {
+        try {
+            executeWithException(method, arguments);
+            fail("expected " + expectedExceptionType.getName());
+        } catch (InvocationTargetException invocationTargetException) {
+            final Throwable exception = invocationTargetException.getCause();
+            if (exception == null) {
+                fail("expected " + expectedExceptionType.getName());
+            }
+            if (!expectedExceptionType.isAssignableFrom(exception.getClass())) {
+                fail("expected " + expectedExceptionType.getName() + " but got " + Exceptions.stackTraceAsString(exception));
+            }
+        }
+    }
+
+    /**
+     * Executes a given method with {@code args}.
+     * The method to be executed is expected to raise an exception of type assignable to {@code expectedExceptionType}.
+     * If it does not, the test immediately {@linkplain #fail() fails}.
+     */
+    protected void executeWithReceiverAndExpectedException(final Method_Type method, Class<? extends Throwable> expectedExceptionType, Value... arguments) {
+        try {
+            executeWithReceiverAndException(method, arguments);
+            fail("expected " + expectedExceptionType.getName());
+        } catch (InvocationTargetException invocationTargetException) {
+            final Throwable exception = invocationTargetException.getCause();
+            if (exception == null) {
+                fail("expected " + expectedExceptionType.getName());
+            }
+            if (!expectedExceptionType.isAssignableFrom(exception.getClass())) {
+                fail("expected " + expectedExceptionType.getName() + " but got " + Exceptions.stackTraceAsString(exception));
+            }
+        }
+    }
+
+    /**
      * Gets a disassembler for a given target method.
      *
      * @param targetMethod a compiled method whose {@linkplain TargetMethod#code() code} is to be disassembled

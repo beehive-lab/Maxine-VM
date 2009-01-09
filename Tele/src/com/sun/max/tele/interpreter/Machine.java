@@ -20,7 +20,10 @@
  */
 package com.sun.max.tele.interpreter;
 
+import java.lang.reflect.*;
 import java.util.*;
+
+import sun.misc.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -160,8 +163,26 @@ public final class Machine {
         return widenIfNecessary(constant);
     }
 
+    protected static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
+
+    private static Throwable toThrowable(ReferenceValue throwableReference) {
+        if (throwableReference instanceof TeleReferenceValue) {
+            final String throwableClassName = throwableReference.getClassActor().name().string();
+            try {
+                final Class<?> throwableClass = Class.forName(throwableClassName);
+                return (Throwable) _unsafe.allocateInstance(throwableClass);
+            } catch (ClassNotFoundException e) {
+                throw ProgramError.unexpected(e);
+            } catch (InstantiationException e) {
+                throw ProgramError.unexpected(e);
+            }
+        } else {
+            return (Throwable) throwableReference.asBoxedJavaValue();
+        }
+    }
+
     public TeleInterpreterException raiseException(ReferenceValue throwableReference) throws TeleInterpreterException {
-        throw new TeleInterpreterException(throwableReference, this);
+        throw new TeleInterpreterException(toThrowable(throwableReference), this);
     }
 
     public TeleInterpreterException raiseException(Throwable throwable) throws TeleInterpreterException {
@@ -403,16 +424,13 @@ public final class Machine {
 
         if (method.isNative()) {
             final Value[] arguments = new Value[numberOfParameters];
-
-            System.err.println("Attempting to invoke native method: " + method.format("%r %H.%n(%p)"));
             invertOperands(argumentStack, arguments);
-
             try {
                 push(widenIfNecessary(method.invoke(arguments)));
-            } catch (Exception e) {
-                System.err.println("Bailing -- couldn't invoke native method");
-                e.printStackTrace();
-                System.exit(-1);
+            } catch (InvocationTargetException e) {
+                throw new TeleInterpreterException(e.getCause(), this);
+            } catch (IllegalAccessException e) {
+                throw new TeleInterpreterException(e, this);
             }
         } else if (method.isInstanceInitializer()) {
             argumentStack.pop(); // drop the existing receiver
@@ -422,8 +440,12 @@ public final class Machine {
             try {
                 final Reference result = Reference.fromJava(method.invokeConstructor(arguments).asObject());
                 push(toReferenceValue(result));
-            } catch (Throwable throwable) {
-                throw new TeleInterpreterException(throwable, this);
+            } catch (InvocationTargetException e) {
+                throw new TeleInterpreterException(e.getCause(), this);
+            } catch (IllegalAccessException e) {
+                throw new TeleInterpreterException(e, this);
+            } catch (InstantiationException e) {
+                throw new TeleInterpreterException(e, this);
             }
         } else if (method.codeAttribute() == null || Word.class.isAssignableFrom(method.holder().toJava())) {
             if (method.isStatic()) {
@@ -438,8 +460,10 @@ public final class Machine {
                         result = toReferenceValue(Reference.fromJava(result.asObject()));
                     }
                     push(widenIfNecessary(result));
-                } catch (Throwable throwable) {
-                    throw new TeleInterpreterException(throwable, this);
+                } catch (InvocationTargetException e) {
+                    throw new TeleInterpreterException(e.getCause(), this);
+                } catch (IllegalAccessException e) {
+                    throw new TeleInterpreterException(e, this);
                 }
             }
         } else {
@@ -460,7 +484,6 @@ public final class Machine {
 
     public ClassActor resolveClassReference(short constantPoolIndex) {
         final ConstantPool constantPool = _currentThread.frame().constantPool();
-
         return constantPool.classAt(constantPoolIndex).resolve(constantPool, constantPoolIndex);
     }
 }

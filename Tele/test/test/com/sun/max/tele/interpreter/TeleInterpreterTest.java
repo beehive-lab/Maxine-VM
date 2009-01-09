@@ -58,7 +58,7 @@ public class TeleInterpreterTest extends TeleInterpreterTestCase {
 
     @Override
     protected TeleVM teleVM() {
-        return  null;
+        return null;
     }
 
     public void test_aastore_iastore_aaload_iaload() {

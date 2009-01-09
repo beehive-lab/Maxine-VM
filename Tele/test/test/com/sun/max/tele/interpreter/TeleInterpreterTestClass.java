@@ -22,7 +22,7 @@ package test.com.sun.max.tele.interpreter;
 
 /**
  * A class on which to test the interpreter locally.
- * 
+ *
  * @author Athul Acharya
  */
 public class TeleInterpreterTestClass {
@@ -47,8 +47,8 @@ public class TeleInterpreterTestClass {
     }
 
     public static int aastore_iastore_aaload_iaload(int[][] a, int[] b) {
-        a[1] = b;
         b[0] = 10;
+        a[1] = b;
         return a[0][0] + a[1][0];
     }
 

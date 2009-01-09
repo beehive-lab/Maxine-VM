@@ -162,14 +162,9 @@ public abstract class BytecodeTest_misc<Method_Type extends IrMethod> extends Co
                 confirmPresence();
             }
         };
-        Value result = executeWithReceiver(method, ReferenceValue.from(new Integer(345)));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(new Integer(345)));
         assertTrue(result.asInt() == 345);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(new Float(345)));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ClassCastException);
-        }
+        executeWithReceiverAndExpectedException(method, ClassCastException.class, ReferenceValue.from(new Float(345)));
     }
 
     private boolean perform_checkcast2(Object x) {

@@ -18,44 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.prototype;
+package test.com.sun.max.tele.interpreter;
 
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
+import junit.framework.*;
+import test.com.sun.max.vm.jdk.*;
 
-/**
- * @author Bernd Mathiske
- */
-public class PrototypeCompilerScheme extends AbstractCompiler {
+import com.sun.max.vm.compiler.cir.*;
 
-    public PrototypeCompilerScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+public class TeleInterpreterTest_jdk_System extends JdkTest_System<CirMethod> {
+
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(TeleInterpreterTest_jdk_System.class.getSimpleName());
+        suite.addTestSuite(TeleInterpreterTest_jdk_System.class);
+        return new TeleInterpreterTestSetup(suite);
     }
 
-    @Override
-    public IrGenerator irGenerator() {
-        throw ProgramError.unexpected();
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(TeleInterpreterTest_jdk_System.suite());
     }
 
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.empty(IrGenerator.class);
-    }
-
-    @Override
-    public void compileSnippets() {
-    }
-
-    @Override
-    public boolean areSnippetsCompiled() {
-        return true;
-    }
-
-    @Override
-    public void fakeCall(Address returnAddress) {
+    public TeleInterpreterTest_jdk_System(String name) {
+        super(name);
     }
 
 }

@@ -20,8 +20,6 @@
  */
 package test.com.sun.max.vm.compiler.bytecode;
 
-import java.lang.reflect.*;
-
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.vm.compiler.ir.*;
@@ -48,14 +46,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         };
         final int[] array = new int[3];
         array[1] = 123;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(1));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(1));
         assertTrue(result.asInt() == 123);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(3));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(3));
     }
 
     private long perform_laload(long[] array, int index) {
@@ -72,14 +65,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         };
         final long[] array = new long[3];
         array[1] = 234;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(1));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(1));
         assertTrue(result.asLong() == 234);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(3));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(3));
     }
 
     private float perform_faload(float[] array, int index) {
@@ -96,14 +84,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         };
         final float[] array = new float[3];
         array[2] = 3234;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(2));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(2));
         assertTrue(result.asFloat() == 3234);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(-1));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(-1));
     }
 
 
@@ -122,14 +105,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         final double[] array = new double[5];
         final double x = 54353.232;
         array[1] = x;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(1));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(1));
         assertTrue(result.asDouble() == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(50));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(50));
     }
 
     private Object perform_aaload(Object[] array, int index) {
@@ -147,14 +125,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         };
         final Object[] array = new Object[5];
         array[0] = this;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(0));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(0));
         assertTrue(result.asObject() == this);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(5));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5));
     }
 
 
@@ -173,14 +146,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         final byte[] array = new byte[5];
         final byte x = 112;
         array[2] = x;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(2));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(2));
         assertTrue(result.asByte() == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(7));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(7));
     }
 
 
@@ -198,14 +166,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         };
         final boolean[] array = new boolean[5];
         array[2] = true;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(2));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(2));
         assertTrue(result.asBoolean());
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(7));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(7));
     }
 
 
@@ -224,14 +187,9 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         final char[] array = new char[5];
         final char x = 'x';
         array[3] = x;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(3));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(3));
         assertTrue(result.asChar() == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(5));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5));
     }
 
 
@@ -250,13 +208,8 @@ public abstract class BytecodeTest_arrayLoad<Method_Type extends IrMethod> exten
         final short[] array = new short[100];
         final short x = 32;
         array[55] = x;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(55));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(55));
         assertTrue(result.asShort() == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(101));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(101));
     }
 }

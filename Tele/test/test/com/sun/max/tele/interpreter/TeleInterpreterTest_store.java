@@ -18,44 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.prototype;
+package test.com.sun.max.tele.interpreter;
 
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.ir.*;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.bytecode.*;
 
-/**
- * @author Bernd Mathiske
- */
-public class PrototypeCompilerScheme extends AbstractCompiler {
+import com.sun.max.vm.compiler.cir.*;
 
-    public PrototypeCompilerScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration);
+public class TeleInterpreterTest_store extends BytecodeTest_store<CirMethod> {
+
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(TeleInterpreterTest_store.class.getSimpleName());
+        suite.addTestSuite(TeleInterpreterTest_store.class);
+        return new TeleInterpreterTestSetup(suite);
     }
 
-    @Override
-    public IrGenerator irGenerator() {
-        throw ProgramError.unexpected();
+    public TeleInterpreterTest_store(String name) {
+        super(name);
     }
 
-    public Sequence<IrGenerator> irGenerators() {
-        return Sequence.Static.empty(IrGenerator.class);
-    }
-
-    @Override
-    public void compileSnippets() {
-    }
-
-    @Override
-    public boolean areSnippetsCompiled() {
-        return true;
-    }
-
-    @Override
-    public void fakeCall(Address returnAddress) {
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(TeleInterpreterTest_store.suite());
     }
 
 }

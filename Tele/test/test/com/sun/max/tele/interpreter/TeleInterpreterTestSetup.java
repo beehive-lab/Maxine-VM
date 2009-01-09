@@ -24,26 +24,40 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.platform.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.interpreter.*;
 
 /**
  *  @author Athul Acharya
  */
-public class TeleInterpreterTestSetup extends CompilerTestSetup<TargetMethod> {
+public class TeleInterpreterTestSetup extends CompilerTestSetup<ActorIrMethod> {
+
+    @Override
+    protected IrInterpreter<ActorIrMethod> createInterpreter() {
+        return new TeleInterpreter(null);
+    }
+
+    public TeleInterpreterTestSetup(Test test, TeleVM teleVM) {
+        super(test);
+    }
+
     public TeleInterpreterTestSetup(Test test) {
         super(test);
     }
 
     @Override
     protected VMConfiguration createVMConfiguration() {
-        return VMConfigurations.createStandard(BuildLevel.DEBUG, Platform.host());
+        return VMConfigurations.createPrototype(BuildLevel.DEBUG, Platform.host());
     }
 
+
     @Override
-    public TargetMethod translate(ClassMethodActor classMethodActor) {
-        return null;
+    public ActorIrMethod translate(ClassMethodActor classMethodActor) {
+        return new ActorIrMethod(classMethodActor);
     }
 
 }

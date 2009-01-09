@@ -135,8 +135,13 @@ public class InterpreterObjectMirror implements ObjectMirror {
             if (componentClassActor.kind().toStackKind() != kind.toStackKind()) {
                 throw new ArrayStoreException("cannot store a '" + kind + "' into an array of '" + componentClassActor.kind() + "'");
             }
-            final Object javaBoxedValue = componentClassActor.kind().convert(value).asBoxedJavaValue();
-            Array.set(_object, index, javaBoxedValue);
+            if (_object instanceof Object[]) {
+                final Object[] objectArray = (Object[]) _object;
+                objectArray[index] = value.asObject();
+            } else {
+                final Object javaBoxedValue = componentClassActor.kind().convert(value).asBoxedJavaValue();
+                Array.set(_object, index, javaBoxedValue);
+            }
         }
     }
 
