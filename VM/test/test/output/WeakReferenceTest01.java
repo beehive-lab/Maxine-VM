@@ -27,7 +27,7 @@ import java.lang.ref.*;
  *
  * @author Ben L. Titzer
  */
-public class WeakReferenceTest {
+public class WeakReferenceTest01 {
     public static void main(String[] args) {
         // test basic weak reference behavior
         final WeakReference<String> w1 = new WeakReference<String>("alive");
@@ -39,7 +39,6 @@ public class WeakReferenceTest {
         final ReferenceQueue<String> queue = new ReferenceQueue<String>();
         final WeakReference<String> w3 = new WeakReference<String>(new String("alive"), queue);
         test(w3);
-        System.out.println(queue.poll() == w3);
     }
 
     private static void test(final WeakReference<? extends Object> w1) {
