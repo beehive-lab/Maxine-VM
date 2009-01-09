@@ -56,6 +56,7 @@ public abstract class Hub extends Hybrid {
     private final int _mTableLength;
     @INSPECTED
     private final int _referenceMapLength;
+    private final boolean _isSpecialReference;
 
     /**
      * Indicate the "tuple cell size" for objects as follows.
@@ -199,6 +200,11 @@ public abstract class Hub extends Hybrid {
         return _biasedLockEpoch;
     }
 
+    @INLINE
+    public final boolean isSpecialReference() {
+        return _isSpecialReference;
+    }
+
     public void setBiasedLockEpoch(BiasedLockEpoch biasedLockEpoch) {
         _biasedLockEpoch = biasedLockEpoch;
     }
@@ -240,6 +246,7 @@ public abstract class Hub extends Hybrid {
         _mTableLength = 1;
         _referenceMapStartIndex = _mTableStartIndex + _mTableLength;
         _referenceMapLength = referenceMap.numberOfOffsets();
+        _isSpecialReference = false;
     }
 
     /**
@@ -267,6 +274,7 @@ public abstract class Hub extends Hybrid {
         _mTableLength = getMinCollisionFreeDivisor(superClassActorSerials);
         _referenceMapStartIndex = _mTableStartIndex + _mTableLength;
         _referenceMapLength = referenceMap.numberOfOffsets();
+        _isSpecialReference = classActor.isSpecialReference();
     }
 
     protected final Hub expand() {
