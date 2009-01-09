@@ -54,11 +54,6 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     Address codeStart();
 
     /**
-     * @return length of code for this routine in the {@link TeleVM} in bytes.
-     */
-    Size codeSize();
-
-    /**
      * @return target address at which this code is entered from a call (which may not be the same as the
      *         {@linkplain #codeStart() start address})
      */

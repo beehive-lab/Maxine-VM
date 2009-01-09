@@ -30,10 +30,6 @@ public final class BoxedMethodID extends MethodID implements UnsafeBox {
 
     protected long _nativeWord;
 
-    public BoxedMethodID(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedMethodID(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

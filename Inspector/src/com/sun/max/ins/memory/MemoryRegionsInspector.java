@@ -540,7 +540,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
                 _startLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
                     @Override
                     public Value fetchValue() {
-                        return WordValue.from(MemoryRegionDisplay.this.start().asWord());
+                        return WordValue.from(MemoryRegionDisplay.this.start());
                     }
                 };
             }
@@ -554,7 +554,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
                 _endLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
                     @Override
                     public Value fetchValue() {
-                        return WordValue.from(MemoryRegionDisplay.this.end().asWord());
+                        return WordValue.from(MemoryRegionDisplay.this.end());
                     }
                 };
             }

@@ -745,7 +745,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 final TargetCodeInstruction targetCodeInstruction = targetCodeInstructionAt(row);
                 final String text = targetCodeInstruction.operands();
                 if (targetCodeInstruction._targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction._targetAddress)) {
-                    inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress.asWord());
+                    inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (targetCodeInstruction._literalSourceAddress != null) {
                     final Word word = teleVM().teleProcess().dataAccess().readWord(targetCodeInstruction._literalSourceAddress);

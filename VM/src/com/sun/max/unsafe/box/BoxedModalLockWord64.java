@@ -30,10 +30,6 @@ public final class BoxedModalLockWord64 extends ModalLockWord64 implements Unsaf
 
     protected long _nativeWord;
 
-    public BoxedModalLockWord64(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedModalLockWord64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

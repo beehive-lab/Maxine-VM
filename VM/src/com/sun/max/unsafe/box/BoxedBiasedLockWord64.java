@@ -30,10 +30,6 @@ public final class BoxedBiasedLockWord64 extends BiasedLockWord64 implements Uns
 
     protected long _nativeWord;
 
-    public BoxedBiasedLockWord64(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedBiasedLockWord64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

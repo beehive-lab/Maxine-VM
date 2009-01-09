@@ -61,7 +61,7 @@ public final class WordValue extends Value<WordValue> {
         return _value.isAllOnes();
     }
 
-    public static final WordValue ZERO = new WordValue(Word.zero().asWord());
+    public static final WordValue ZERO = new WordValue(Word.zero());
 
     @Override
     public boolean equals(Object other) {

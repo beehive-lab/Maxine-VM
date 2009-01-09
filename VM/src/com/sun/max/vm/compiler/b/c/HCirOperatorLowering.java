@@ -56,11 +56,10 @@ import com.sun.max.vm.value.*;
  * For example:
  *
  * <pre>
- *  New(t, cc, ce) =&gt; resolve(guard, (lambda (classActor) . createTyple(classActor, cc, ce)), ce)
+ *  New(t, cc, ce) =&gt; resolve(guard, (closure[classActor] . createTuple(classActor, cc, ce)), ce)
  * </pre>
  *
  * avoiding replicating code for ce (by binding it to a temporary variable) as necessary.
- *
  *
  * @author Yi Guo
  * @author Aziz Ghuloum

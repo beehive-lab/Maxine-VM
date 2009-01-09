@@ -49,21 +49,19 @@ public abstract class Word {
     /**
      * ATTENTION: all (non-strict) subclasses of 'Word' must be registered here for class loading to work properly.
      */
+    @PROTOTYPE_ONLY
     public static Class[] getSubclasses() {
-        if (Word.isBoxed()) {
-            return new Class[]{
-                Address.class, Offset.class, Pointer.class, Size.class, Word.class,
-                BoxedAddress.class, BoxedOffset.class, BoxedPointer.class, BoxedSize.class, BoxedWord.class,
-                MemberID.class, FieldID.class, MethodID.class,
-                BoxedFieldID.class, BoxedMethodID.class,
-                JniHandle.class, Handle.class,
-                ModalLockWord64.class, HashableLockWord64.class, LightweightLockWord64.class, ThinLockWord64.class, BiasedLockWord64.class,
-                BoxedModalLockWord64.class, BoxedHashableLockWord64.class, BoxedLightweightLockWord64.class, BoxedThinLockWord64.class, BoxedBiasedLockWord64.class,
-                BiasedLockEpoch.class, BoxedBiasedLockEpoch64.class,
-                InflatedMonitorLockWord64.class, BoxedInflatedMonitorLockWord64.class
-            };
-        }
-        throw ProgramError.unexpected();
+        return new Class[]{
+            Address.class, Offset.class, Pointer.class, Size.class, Word.class,
+            BoxedAddress.class, BoxedOffset.class, BoxedPointer.class, BoxedSize.class, BoxedWord.class,
+            MemberID.class, FieldID.class, MethodID.class,
+            BoxedFieldID.class, BoxedMethodID.class,
+            JniHandle.class, Handle.class,
+            ModalLockWord64.class, HashableLockWord64.class, LightweightLockWord64.class, ThinLockWord64.class, BiasedLockWord64.class,
+            BoxedModalLockWord64.class, BoxedHashableLockWord64.class, BoxedLightweightLockWord64.class, BoxedThinLockWord64.class, BoxedBiasedLockWord64.class,
+            BiasedLockEpoch.class, BoxedBiasedLockEpoch64.class,
+            InflatedMonitorLockWord64.class, BoxedInflatedMonitorLockWord64.class
+        };
     }
 
     protected Word() {
@@ -113,69 +111,93 @@ public abstract class Word {
     }
 
     @INLINE
-    public final Word asWord() {
-        if (Word.isBoxed()) {
-            final UnsafeBox box = (UnsafeBox) this;
-            return new BoxedWord(box.nativeWord());
-        }
-        return this;
-    }
-
-    @INLINE
     public final JniHandle asJniHandle() {
         return UnsafeLoophole.castWord(JniHandle.class, this);
     }
 
     @INLINE
     public final Address asAddress() {
-        if (Word.isBoxed()) {
-            final UnsafeBox box = (UnsafeBox) this;
-            return new BoxedAddress(box.nativeWord());
+        if (this instanceof BoxedAddress) {
+            return (BoxedAddress) this;
         }
+        final UnsafeBox box = (UnsafeBox) this;
+        return BoxedAddress.from(box.nativeWord());
+    }
+
+    @SURROGATE
+    @INLINE
+    public final Address asAddress_() {
         return UnsafeLoophole.castWord(Address.class, this);
     }
 
     @INLINE
     public final Offset asOffset() {
-        if (Word.isBoxed()) {
-            final UnsafeBox box = (UnsafeBox) this;
-            return new BoxedOffset(box.nativeWord());
+        if (this instanceof BoxedOffset) {
+            return (BoxedOffset) this;
         }
+        final UnsafeBox box = (UnsafeBox) this;
+        return BoxedOffset.from(box.nativeWord());
+    }
+
+    @SURROGATE
+    @INLINE
+    public final Offset asOffset_() {
         return UnsafeLoophole.castWord(Offset.class, this);
     }
 
     @INLINE
     public final Size asSize() {
-        if (Word.isBoxed()) {
-            final UnsafeBox box = (UnsafeBox) this;
-            return new BoxedSize(box.nativeWord());
+        if (this instanceof BoxedSize) {
+            return (BoxedSize) this;
         }
+        final UnsafeBox box = (UnsafeBox) this;
+        return BoxedSize.from(box.nativeWord());
+    }
+
+    @SURROGATE
+    @INLINE
+    public final Size asSize_() {
         return UnsafeLoophole.castWord(Size.class, this);
     }
 
     @INLINE
     public final Pointer asPointer() {
-        if (Word.isBoxed()) {
-            final UnsafeBox box = (UnsafeBox) this;
-            return new BoxedPointer(box.nativeWord());
+        if (this instanceof BoxedPointer) {
+            return (BoxedPointer) this;
         }
+        final UnsafeBox box = (UnsafeBox) this;
+        return BoxedPointer.from(box.nativeWord());
+    }
+
+    @SURROGATE
+    @INLINE
+    public final Pointer asPointer_() {
         return UnsafeLoophole.castWord(Pointer.class, this);
     }
 
     @PROTOTYPE_ONLY
     public final <Word_Type extends Word> Word_Type as(Class<Word_Type> wordType) {
-        if (Word.isBoxed()) {
-            if (wordType.isInstance(this)) {
-                return wordType.cast(this);
-            }
-            try {
-                final Constructor constructor = UnsafeBox.Static.getBoxedType(wordType).getConstructor(UnsafeBox.class);
-                return wordType.cast(constructor.newInstance((UnsafeBox) this));
-            } catch (Throwable throwable) {
-                ProgramError.unexpected();
-            }
+        if (wordType.isInstance(this)) {
+            return wordType.cast(this);
         }
-        return UnsafeLoophole.castWord(wordType, this);
+        if (Pointer.class.isAssignableFrom(wordType)) {
+            return wordType.cast(asPointer());
+        }
+        if (Size.class.isAssignableFrom(wordType)) {
+            return wordType.cast(asSize());
+        }
+        if (Address.class.isAssignableFrom(wordType)) {
+            return wordType.cast(asAddress());
+        }
+        if (Offset.class.isAssignableFrom(wordType)) {
+            return wordType.cast(asOffset());
+        }
+        try {
+            final Constructor constructor = UnsafeBox.Static.getBoxedType(wordType).getConstructor(UnsafeBox.class);
+            return wordType.cast(constructor.newInstance((UnsafeBox) this));
+        } catch (Throwable throwable) {
+            throw ProgramError.unexpected();
+        }
     }
 
     public final String toHexString() {

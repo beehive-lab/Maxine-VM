@@ -134,7 +134,7 @@ public final class MemoryWordInspector extends Inspector {
         private String _registerDisplayText;
 
         RegisterAddressLabel(Inspection inspection, int line, Address address) {
-            super(inspection, WordValueLabel.ValueMode.WORD, address.asWord());
+            super(inspection, WordValueLabel.ValueMode.WORD, address);
             _line = line;
             updateText();
         }

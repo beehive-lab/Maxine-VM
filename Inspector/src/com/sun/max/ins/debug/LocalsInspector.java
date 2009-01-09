@@ -218,7 +218,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     private void initPanelView() {
         final JitTargetMethod targetMethod = _jitStackFrame.targetMethod();
-        final Word callEntryPoint = targetMethod.codeStart().asWord();
+        final Word callEntryPoint = targetMethod.codeStart();
         final WordValueLabel header = new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, callEntryPoint);
         // header.setToolTipText(_jitStackFrame.targetMethod().name());
         _localsPanel.add(new Space(4));

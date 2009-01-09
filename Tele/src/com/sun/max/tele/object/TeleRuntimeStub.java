@@ -38,7 +38,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTargetRoutine  {
+public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTargetRoutine  {
 
     /**
      * Gets a {@code TeleTargetMethod} instance representing the {@link RuntimeStub} in the tele VM that contains a

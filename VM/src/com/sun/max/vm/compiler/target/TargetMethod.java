@@ -507,6 +507,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return _codeStart;
     }
 
+    @PROTOTYPE_ONLY
     public final void setCodeStart(Pointer codeStart) {
         _codeStart = codeStart;
     }

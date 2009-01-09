@@ -178,7 +178,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     }
 
      /**
-     * Set a target breakpoint in the current compilation in the {@link TeleVM}, null if no compilation.
+     * Sets a target breakpoint in the current compilation in the {@link TeleVM}, null if no compilation.
      */
     public TeleTargetBreakpoint setTargetBreakpointAtEntry() {
         // TODO (mlvdv)  Deprecate, support only for specified compilations, not the "current" one.

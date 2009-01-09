@@ -40,12 +40,12 @@ public abstract class Address extends Word {
 
     @INLINE
     public static Address zero() {
-        return fromInt(0);
+        return Word.isBoxed() ? BoxedAddress.ZERO : fromInt(0);
     }
 
     @INLINE
     public static Address max() {
-        return fromLong(-1L);
+        return Word.isBoxed() ? BoxedAddress.MAX : fromLong(-1L);
     }
 
     /**
@@ -60,7 +60,7 @@ public abstract class Address extends Word {
         if (Word.isBoxed()) {
             final long longValue = value;
             final long n = longValue & 0xffffffffL;
-            return new BoxedAddress(n);
+            return BoxedAddress.from(n);
         }
         if (Word.width() == WordWidth.BITS_64) {
             final long longValue = value;
@@ -81,7 +81,7 @@ public abstract class Address extends Word {
     public static Address fromInt(int value) {
         if (Word.isBoxed()) {
             final long n = value;
-            return new BoxedAddress(n);
+            return BoxedAddress.from(n);
         }
         if (Word.width() == WordWidth.BITS_64) {
             final long n = value;
@@ -93,7 +93,7 @@ public abstract class Address extends Word {
     @INLINE
     public static Address fromLong(long value) {
         if (Word.isBoxed()) {
-            return new BoxedAddress(value);
+            return BoxedAddress.from(value);
         }
         if (Word.width() == WordWidth.BITS_64) {
             return UnsafeLoophole.longToWord(Address.class, value);
@@ -162,7 +162,7 @@ public abstract class Address extends Word {
         return 0;
     }
 
-    @INLINE(override = true)
+    @INLINE
     public final boolean equals(int other) {
         if (Word.isBoxed()) {
             return toLong() == other;

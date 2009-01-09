@@ -542,12 +542,9 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     /**
      * Updates the field of an object or class from the tele VM.
      *
-     * @param teleObject
-     *            surrogate for a tuple in the tele VM. This will be a static tuple if the field is static.
-     * @param tuple
-     *            the local object to be updated in the host VM. This value is ignored if the field is static.
-     * @param fieldActor
-     *            the field to be copied/updated
+     * @param teleObject surrogate for a tuple in the tele VM. This will be a static tuple if the field is static.
+     * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
+     * @param fieldActor the field to be copied/updated
      */
     protected static final void copyField(DeepCopyContext context, final TeleObject teleObject, final Object newTuple, final FieldActor fieldActor) throws TeleError {
         if (context.include(context.level(), fieldActor)) {

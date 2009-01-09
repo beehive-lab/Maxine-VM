@@ -2168,7 +2168,9 @@ public class InspectionActions extends InspectionHolder implements Prober{
                                 for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
                                     teleTargetBreakpoint = teleTargetMethod.setTargetBreakpointAtEntry();
                                 }
-                                focus().setBreakpoint(teleTargetBreakpoint);
+                                if (teleTargetBreakpoint != null) {
+                                    focus().setBreakpoint(teleTargetBreakpoint);
+                                }
                             }
                         }
                     }
