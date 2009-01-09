@@ -45,7 +45,7 @@ public class TupleReferenceMap {
         ClassActor c = classActor;
         do {
             for (FieldActor dynamicFieldActor : c.localInstanceFieldActors()) {
-                if (dynamicFieldActor.kind() == Kind.REFERENCE) {
+                if (dynamicFieldActor.kind() == Kind.REFERENCE && !dynamicFieldActor.isSpecialReference()) {
                     _offsets.append(dynamicFieldActor.offset());
                 }
             }

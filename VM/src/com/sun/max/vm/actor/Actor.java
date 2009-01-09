@@ -63,10 +63,10 @@ public abstract class Actor {
     public static final int ACC_ANNOTATION = 0x00002000;
 
     // VM-internal flags for classes:
-    public static final int INNER_CLASS =    0x00100000;
-    public static final int TEMPLATE =       0x00200000;
-    public static final int FINALIZER =      0x00800000;
-    public static final int REFERENCE =      0x01000000;
+    public static final int INNER_CLASS =       0x00100000;
+    public static final int TEMPLATE =          0x00200000;
+    public static final int FINALIZER =         0x00800000;
+    public static final int SPECIAL_REFERENCE = 0x01000000;
 
     /**
      * The flag value denoting that a class is not from a class file.
@@ -430,8 +430,8 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isReferenceObject(int flags) {
-        return (flags & REFERENCE) != 0;
+    public static boolean isSpecialReference(int flags) {
+        return (flags & SPECIAL_REFERENCE) != 0;
     }
 
     @INLINE

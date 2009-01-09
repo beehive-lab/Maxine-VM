@@ -299,8 +299,8 @@ public abstract class ClassActor extends Actor {
     }
 
     @INLINE
-    public final boolean isReferenceObject() {
-        return isReferenceObject(flags());
+    public final boolean isSpecialReference() {
+        return isSpecialReference(flags());
     }
 
     @INLINE
