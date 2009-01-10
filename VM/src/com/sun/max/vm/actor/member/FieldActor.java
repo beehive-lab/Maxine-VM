@@ -233,6 +233,11 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
         return descriptor().toJavaString(qualified) + ' ' + qualified;
     }
 
+    @INLINE
+    public final boolean isSpecialReference() {
+        return isSpecialReference(flags());
+    }
+
     public String jniSignature() {
         return descriptor().toString();
     }

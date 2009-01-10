@@ -1140,8 +1140,8 @@ public class ClassfileReader {
 
         // inherit the REFERENCE and FINALIZER bits from the superClassActor
         if (superClassActor != null) {
-            if (superClassActor.isReferenceObject()) {
-                _flags |= Actor.REFERENCE;
+            if (superClassActor.isSpecialReference()) {
+                _flags |= Actor.SPECIAL_REFERENCE;
             }
             if (superClassActor.hasFinalizer()) {
                 _flags |= Actor.FINALIZER;
@@ -1153,7 +1153,16 @@ public class ClassfileReader {
 
         // is this a Java Reference object class?
         if (name.equals("java.lang.ref.Reference")) {
-            _flags |= Actor.REFERENCE;
+            _flags |= Actor.SPECIAL_REFERENCE;
+            // find the "referent" field and mark it as a special reference too.
+            for (int i = 0; i < fieldActors.length; i++) {
+                final FieldActor fieldActor = fieldActors[i];
+                if (fieldActor instanceof ReferenceFieldActor && fieldActor.name().equals("referent")) {
+                    // replace the field actor with a new one that has the flag set
+                    fieldActors[i] = new ReferenceFieldActor(fieldActor.name(), fieldActor.descriptor(), fieldActor.flags() | Actor.SPECIAL_REFERENCE);
+                    break;
+                }
+            }
         }
 
         // Ensure there are no trailing bytes
