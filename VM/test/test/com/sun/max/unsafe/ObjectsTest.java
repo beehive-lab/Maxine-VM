@@ -20,8 +20,6 @@
  */
 package test.com.sun.max.unsafe;
 
-import java.util.*;
-
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
 
@@ -54,12 +52,5 @@ public class ObjectsTest extends MaxTestCase {
     private static final class C {
         String _f1;
         Integer _f2;
-    }
-
-    public void test_getClasses() {
-        final Class[] classes = Objects.getClasses("abc", 1, new HashMap());
-        assertTrue(classes[0] == String.class);
-        assertTrue(classes[1] == Integer.class);
-        assertTrue(classes[2] == HashMap.class);
     }
 }

@@ -201,23 +201,6 @@ public final class AMD64EirCPU extends EirCPU<AMD64EirCPU> {
         write(register, new WordValue(word));
     }
 
-    /**
-     * Emulates the side effect of calling a constructor whereby every location referring to the
-     * uninitialized object needs to be replaced with the initialized object. On the target
-     * machine, all these locations will be referencing the same heap object so the side effect
-     * will happen automatically.
-     */
-    @Override
-    public void replaceUninitializedValue(Value uninitializedValue, Value initializedValue) {
-        for (AMD64EirRegister register : AMD64EirRegister.General.VALUES) {
-            final Value value = _generalRegisterContents[register.ordinal()];
-            if (uninitializedValue.equals(value)) {
-                _generalRegisterContents[register.ordinal()] = initializedValue;
-            }
-        }
-        stack().replaceUninitializedValue(uninitializedValue, initializedValue);
-    }
-
     // Tracing
 
     /**

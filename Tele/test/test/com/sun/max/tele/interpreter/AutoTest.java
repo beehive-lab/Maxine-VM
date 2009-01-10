@@ -18,32 +18,34 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.hotpath.compiler;
+package test.com.sun.max.tele.interpreter;
 
-import java.lang.reflect.*;
+import junit.framework.*;
 
-import sun.misc.*;
+import com.sun.max.ide.*;
 
-import com.sun.max.program.*;
-import com.sun.max.vm.*;
-
-
-public class UnsafeAccess {
-    private static Unsafe _unsafe;
-    static {
-        Field field;
-        try {
-            field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            _unsafe = (Unsafe) field.get(null);
-        } catch (Throwable e) {
-            ProgramError.unexpected();
-        }
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public final class AutoTest {
+    private AutoTest() {
     }
 
-    public static Object allocateInstance(Class<?> cls) throws InstantiationException {
-        ProgramError.check(MaxineVM.isPrototyping());
-        _unsafe.ensureClassInitialized(cls);
-        return _unsafe.allocateInstance(cls);
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(AutoTest.suite());
+    }
+
+    public static Test suite() {
+        final TestCaseClassSet testCaseClassSet = new TestCaseClassSet(new Package());
+        testCaseClassSet.addToEnd(TeleInterpreterTest_subtype.class);
+
+        // Causes infinite regress in interpreter
+        testCaseClassSet.remove(TeleInterpreterTest_jdk_System.class);
+
+        // Uses native builtins that can't be interpreted
+        testCaseClassSet.remove(TeleInterpreterTest_native.class);
+
+        // Can't create a TeleVM with '-d' option (yet)
+        testCaseClassSet.remove(TeleInterpreterRemoteTest.class);
+
+        return new TeleInterpreterTestSetup(testCaseClassSet.toTestSuite());
     }
 }

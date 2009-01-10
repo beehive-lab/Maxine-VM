@@ -36,7 +36,6 @@ import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -157,7 +156,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         assert _classMethodActor.isInstanceInitializer();
         final Constructor javaConstructor = _classMethodActor.toJavaConstructor();
         final CirConstant uninitializedObject = (CirConstant) arguments[0];
-        assert uninitializedObject.value().asObject() instanceof UninitializedObject;
 
         final CirValue[] constructorArguments = Arrays.subArray(arguments, 1);
         final CirCall call = CirRoutine.Static.fold(javaConstructor, constructorArguments);
@@ -165,11 +163,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
             return call;
         }
 
-        // Make the "magic" update to the CIR value containing the previously
-        // uninitialized object so that other CIR variables referring to this
-        // value now see an initialized object.
         final Value initializedObject = call.arguments()[0].value();
-        uninitializedObject.setInitializedValue(initializedObject);
+        Objects.copy(initializedObject.asObject(), uninitializedObject.value().asObject());
         return new CirCall(getNormalContinuation(arguments), CirCall.NO_ARGUMENTS);
     }
 

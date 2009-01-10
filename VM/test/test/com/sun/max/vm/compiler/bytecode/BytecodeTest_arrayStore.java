@@ -140,9 +140,12 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final Object[] array = new String[5];
         final int index = 4;
         final Object x = "x";
-        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.from(x));
+        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
+        result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.NULL);
+        assertTrue(result == VoidValue.VOID);
+        assertTrue(array[index] == null);
         executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5), ReferenceValue.from(x));
         executeWithReceiverAndExpectedException(method, ArrayStoreException.class, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.from(new Object()));
     }

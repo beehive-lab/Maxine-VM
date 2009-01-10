@@ -20,21 +20,18 @@
  */
 package com.sun.max.vm.compiler.cir;
 
-import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.cir.transform.*;
-import com.sun.max.vm.interpreter.*;
-import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
  * A manifest Java value.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
 public final class CirConstant extends CirValue {
 
-    private Value _value;
+    private final Value _value;
 
     public CirConstant(Value value) {
         super(value.kind());
@@ -56,12 +53,6 @@ public final class CirConstant extends CirValue {
     @Override
     public Value value() {
         return _value;
-    }
-
-    @PROTOTYPE_ONLY
-    public void setInitializedValue(Value value) {
-        assert _value.kind() == Kind.REFERENCE && _value.asObject() instanceof UninitializedObject;
-        _value = value;
     }
 
     public static CirConstant fromInt(int n) {

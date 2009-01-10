@@ -22,6 +22,7 @@ package com.sun.max.tele.object;
 
 import java.lang.reflect.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
@@ -85,7 +86,7 @@ public abstract class TeleHybridObject extends TeleObject {
         final ClassActor classActor = classActorForType();
         final Class<?> javaClass = classActor.toJava();
         try {
-            final Object protoHybridObject =  _unsafe.allocateInstance(javaClass);
+            final Object protoHybridObject =  Objects.allocateInstance(javaClass);
             ClassActor holderClassActor = classActor;
             // The tuple part
             do {

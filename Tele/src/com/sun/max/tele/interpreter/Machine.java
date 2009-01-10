@@ -23,8 +23,6 @@ package com.sun.max.tele.interpreter;
 import java.lang.reflect.*;
 import java.util.*;
 
-import sun.misc.*;
-
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -163,18 +161,19 @@ public final class Machine {
         return widenIfNecessary(constant);
     }
 
-    protected static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
-
-    private static Throwable toThrowable(ReferenceValue throwableReference) {
+    /**
+     * Converts a given reference to an object to a {@link Throwable} instance.
+     *
+     * @param teleVM the tele VM to be used if {@code throwableReference} is a reference in a tele VM's address space
+     * @param throwableReference the reference to be converted to a {@code Throwable instance}
+     * @return a {@code Throwable instance} converted from {@code throwableReference}
+     */
+    private static Throwable toThrowable(TeleVM teleVM, ReferenceValue throwableReference) {
         if (throwableReference instanceof TeleReferenceValue) {
-            final String throwableClassName = throwableReference.getClassActor().name().string();
             try {
-                final Class<?> throwableClass = Class.forName(throwableClassName);
-                return (Throwable) _unsafe.allocateInstance(throwableClass);
-            } catch (ClassNotFoundException e) {
-                throw ProgramError.unexpected(e);
-            } catch (InstantiationException e) {
-                throw ProgramError.unexpected(e);
+                return (Throwable) TeleObject.make(teleVM, throwableReference.asReference()).deepCopy();
+            } catch (Exception e1) {
+                throw ProgramError.unexpected("Could not make a local copy of a remote Throwable", e1);
             }
         } else {
             return (Throwable) throwableReference.asBoxedJavaValue();
@@ -182,7 +181,7 @@ public final class Machine {
     }
 
     public TeleInterpreterException raiseException(ReferenceValue throwableReference) throws TeleInterpreterException {
-        throw new TeleInterpreterException(toThrowable(throwableReference), this);
+        throw new TeleInterpreterException(toThrowable(_teleVM, throwableReference), this);
     }
 
     public TeleInterpreterException raiseException(Throwable throwable) throws TeleInterpreterException {
@@ -257,7 +256,7 @@ public final class Machine {
         } else {
             final ConstantPool cp = _currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
-            fieldActor.writeValue(fieldActor.holder().staticTuple(), value);
+            fieldActor.writeValue(fieldActor.holder().staticTuple(), fieldActor.kind().convert(value));
         }
     }
 
@@ -289,7 +288,8 @@ public final class Machine {
             if (value instanceof TeleReferenceValue) {
                 fieldActor.writeValue(instance, TeleReferenceValue.from(_teleVM, makeLocalReference((TeleReference) value.asReference())));
             } else {
-                fieldActor.writeValue(instance, value);
+                final Value val = fieldActor.kind().convert(value);
+                fieldActor.writeValue(instance, val);
             }
         }
     }
@@ -432,39 +432,35 @@ public final class Machine {
             } catch (IllegalAccessException e) {
                 throw new TeleInterpreterException(e, this);
             }
-        } else if (method.isInstanceInitializer()) {
-            argumentStack.pop(); // drop the existing receiver
-            final Value[] arguments = new Value[--numberOfParameters];
-
+//        } else if (method.isInstanceInitializer()) {
+//            final Value uninitializedObject = argumentStack.pop();
+//            final Value[] arguments = new Value[--numberOfParameters];
+//
+//            invertOperands(argumentStack, arguments);
+//            try {
+//                final Reference result = Reference.fromJava(method.invokeConstructor(arguments).asObject());
+//                push(toReferenceValue(result));
+//            } catch (InvocationTargetException e) {
+//                throw new TeleInterpreterException(e.getCause(), this);
+//            } catch (IllegalAccessException e) {
+//                throw new TeleInterpreterException(e, this);
+//            } catch (InstantiationException e) {
+//                throw new TeleInterpreterException(e, this);
+//            }
+        } else if (method.codeAttribute() == null || Word.class.isAssignableFrom(method.holder().toJava())) {
+            final Value[] arguments = new Value[numberOfParameters];
             invertOperands(argumentStack, arguments);
+
             try {
-                final Reference result = Reference.fromJava(method.invokeConstructor(arguments).asObject());
-                push(toReferenceValue(result));
+                Value result = method.invoke(arguments);
+                if (result.kind() == Kind.REFERENCE) {
+                    result = toReferenceValue(Reference.fromJava(result.asObject()));
+                }
+                push(widenIfNecessary(result));
             } catch (InvocationTargetException e) {
                 throw new TeleInterpreterException(e.getCause(), this);
             } catch (IllegalAccessException e) {
                 throw new TeleInterpreterException(e, this);
-            } catch (InstantiationException e) {
-                throw new TeleInterpreterException(e, this);
-            }
-        } else if (method.codeAttribute() == null || Word.class.isAssignableFrom(method.holder().toJava())) {
-            if (method.isStatic()) {
-                Problem.unimplemented();
-            } else {
-                final Value[] arguments = new Value[numberOfParameters];
-                invertOperands(argumentStack, arguments);
-
-                try {
-                    Value result = method.invoke(arguments);
-                    if (result.kind() == Kind.REFERENCE) {
-                        result = toReferenceValue(Reference.fromJava(result.asObject()));
-                    }
-                    push(widenIfNecessary(result));
-                } catch (InvocationTargetException e) {
-                    throw new TeleInterpreterException(e.getCause(), this);
-                } catch (IllegalAccessException e) {
-                    throw new TeleInterpreterException(e, this);
-                }
             }
         } else {
             final ExecutionFrame newFrame = _currentThread.pushFrame(method);

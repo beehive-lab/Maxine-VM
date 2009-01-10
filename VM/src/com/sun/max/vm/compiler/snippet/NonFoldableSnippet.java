@@ -23,11 +23,12 @@ package com.sun.max.vm.compiler.snippet;
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -52,7 +53,11 @@ public abstract class NonFoldableSnippet extends Snippet {
         @SNIPPET
         public static Object createTupleOrHybrid(ClassActor classActor) {
             if (MaxineVM.isPrototyping()) {
-                return new UninitializedObject(classActor);
+                try {
+                    return Objects.allocateInstance(classActor.toJava());
+                } catch (InstantiationException instantiationException) {
+                    throw ProgramError.unexpected(instantiationException);
+                }
             }
             if (classActor.isHybridClassActor()) {
                 return Heap.createHybrid(classActor.dynamicHub());
