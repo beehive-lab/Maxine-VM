@@ -473,8 +473,6 @@ public abstract class EirCPU<EirCPU_Type extends EirCPU<EirCPU_Type>> {
         }
     }
 
-    public abstract void replaceUninitializedValue(Value uninitializedValue, Value initializedValue);
-
     // Tracing
 
     protected static String valueToString(Value value) {

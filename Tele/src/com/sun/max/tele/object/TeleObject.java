@@ -23,8 +23,6 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 import java.util.*;
 
-import sun.misc.*;
-
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
@@ -69,8 +67,6 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
      * Map from OID to TeleObject.
      */
     private static final GrowableMapping<Long, TeleObject> _oidToTeleObject = HashMapping.createEqualityMapping();
-
-    protected static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
 
     // TODO (mlvdv)  TeleObject weak references
     /**

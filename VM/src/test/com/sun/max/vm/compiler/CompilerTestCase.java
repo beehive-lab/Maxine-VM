@@ -662,12 +662,17 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         return false;
     }
 
+    protected ReferenceValue newInstance(ClassActor classActor) throws InstantiationException {
+        return ReferenceValue.from(Objects.allocateInstance(classActor.toJava()));
+    }
+
     /**
      * Executes a given compiled method on an interpreter for the compiler's IR.
      *
      * @param method the compiled method to execute
      * @param arguments the arguments (including the receiver for a non-static method). If {@code method} is a
-     *            constructor, then a new instance of {@link UninitializedObject} is prepended to the arguments
+     *            constructor, then a {@linkplain #newInstance(ClassActor) new uninitialized instance} is prepended to
+     *            the arguments
      * @return the result of the execution which will be a newly created and initalized object of the appropriate type
      *         if {@code method} is a constructor
      */
@@ -679,7 +684,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                     try {
                         final ClassMethodActor classMethodActor = method.classMethodActor();
                         final boolean isConstructor = classMethodActor.isInstanceInitializer();
-                        final Value[] executeArguments = isConstructor ? Arrays.prepend(arguments, ReferenceValue.from(new UninitializedObject(classMethodActor.holder()))) : arguments;
+                        final Value[] executeArguments = isConstructor ? Arrays.prepend(arguments, newInstance(classMethodActor.holder())) : arguments;
                         final Kind[] parameterKinds = classMethodActor.descriptor().getParameterKinds();
                         int argumentIndex = arguments.length - 1;
                         int parameterIndex = parameterKinds.length - 1;

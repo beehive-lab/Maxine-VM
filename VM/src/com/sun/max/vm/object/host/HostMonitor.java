@@ -20,35 +20,18 @@
  */
 package com.sun.max.vm.object.host;
 
-import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.locks.*;
 
 import sun.misc.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
 
 @PROTOTYPE_ONLY
 public final class HostMonitor {
 
-    private static final Unsafe _unsafe;
-
-    static {
-        Unsafe unsafeObject = null;
-        try {
-            // try to read the private field of the unsafe class.
-            for (Field field : Unsafe.class.getDeclaredFields()) {
-                if (field.getName().equals("theUnsafe")) {
-                    field.setAccessible(true);
-                    unsafeObject = (Unsafe) field.get(null);
-                }
-            }
-        } catch (Throwable throwable) {
-            ProgramError.unexpected();
-        }
-        _unsafe = unsafeObject;
-    }
+    protected static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
 
     private HostMonitor() {
     }

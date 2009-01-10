@@ -175,6 +175,10 @@ public class TeleInterpreterTestClass {
         }
     }
 
+    public static int athrow6() throws Exception {
+        throw new Exception();
+    }
+
     public static int checkcast(Object o) throws ClassCastException {
         final TeleInterpreterTestClass i = (TeleInterpreterTestClass) o;
         return i._y;

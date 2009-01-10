@@ -494,7 +494,6 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         final Value[] arguments = new Value[argumentLocations.length - 1];
 
         final Value uninitializedValue = cpu().read(parameterKinds[0], argumentLocations[0]);
-        assert uninitializedValue.asObject() instanceof UninitializedObject;
 
         for (int i = 1; i < argumentLocations.length; i++) {
             arguments[i - 1] = cpu().read(parameterKinds[i], argumentLocations[i]);
@@ -502,7 +501,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
         try {
             final Value initializedValue = classMethodActor.invokeConstructor(arguments);
-            cpu().replaceUninitializedValue(uninitializedValue, initializedValue);
+            Objects.copy(initializedValue.asObject(), uninitializedValue.asObject());
         } catch (InstantiationException e) {
             ProgramError.unexpected("error calling " + classMethodActor, e);
         } catch (IllegalAccessException e) {
