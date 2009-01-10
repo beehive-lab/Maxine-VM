@@ -101,7 +101,7 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
      * @param classes the classes to add
      */
     public TestCaseClassSet addToEnd(Class... classes) {
-        for (int i = classes.length - 1; i >= 0; --i) {
+        for (int i = 0; i < classes.length; ++i) {
             final Class c = classes[i];
             if (isJUnitTestCaseClass(c)) {
                 remove(c);
