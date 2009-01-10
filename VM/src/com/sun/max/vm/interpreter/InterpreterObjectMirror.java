@@ -135,8 +135,13 @@ public class InterpreterObjectMirror implements ObjectMirror {
             if (componentClassActor.kind().toStackKind() != kind.toStackKind()) {
                 throw new ArrayStoreException("cannot store a '" + kind + "' into an array of '" + componentClassActor.kind() + "'");
             }
-            final Object javaBoxedValue = componentClassActor.kind().convert(value).asBoxedJavaValue();
-            Array.set(_object, index, javaBoxedValue);
+            if (_object instanceof Object[]) {
+                final Object[] objectArray = (Object[]) _object;
+                objectArray[index] = value.asObject();
+            } else {
+                final Object javaBoxedValue = componentClassActor.kind().convert(value).asBoxedJavaValue();
+                Array.set(_object, index, javaBoxedValue);
+            }
         }
     }
 
@@ -146,8 +151,8 @@ public class InterpreterObjectMirror implements ObjectMirror {
         final FieldActor fieldActor = tupleClassActor.findInstanceFieldActor(offset);
         final Field field = fieldActor.toJava();
         field.setAccessible(true);
+        final TypeDescriptor fieldDescriptor = fieldActor.descriptor();
         try {
-            final TypeDescriptor fieldDescriptor = fieldActor.descriptor();
             if (KindTypeDescriptor.isWord(fieldDescriptor)) {
                 final Class<Class<? extends Word>> type = null;
                 final Word word = value.toWord().as(StaticLoophole.cast(type, field.getType()));
@@ -155,8 +160,10 @@ public class InterpreterObjectMirror implements ObjectMirror {
             } else {
                 field.set(_object, fieldActor.kind().convert(value).asBoxedJavaValue());
             }
-        } catch (Throwable throwable) {
-            ProgramError.unexpected("could not set field: " + field, throwable);
+        } catch (IllegalArgumentException e) {
+            throw ProgramError.unexpected(e);
+        } catch (IllegalAccessException e) {
+            throw ProgramError.unexpected(e);
         }
     }
 

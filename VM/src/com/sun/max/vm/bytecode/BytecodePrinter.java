@@ -144,7 +144,11 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     protected void printImmediate(int immediate) {
-        _writer.print(" " + immediate);
+        printImmediate(" ", immediate);
+    }
+
+    protected void printImmediate(String prefix, int immediate) {
+        _writer.print(prefix + immediate);
     }
 
     protected void printConstant(int index) {
@@ -1082,11 +1086,12 @@ public class BytecodePrinter extends BytecodeVisitor {
     public void tableswitch(int defaultOffset, int lowMatch, int highMatch, int numberOfCases) {
         prolog();
         printOpcode();
-        printImmediate(defaultOffset);
-        printImmediate(lowMatch);
-        printImmediate(highMatch);
+        printImmediate(" default:", currentOpcodePosition() + defaultOffset);
+        printImmediate(" low:", lowMatch);
+        printImmediate(" high:", highMatch);
         for (int i = 0; i < numberOfCases; i++) {
-            printImmediate(bytecodeScanner().readSwitchOffset());
+            final int key = lowMatch + i;
+            printImmediate(" " + key + ":", currentOpcodePosition() + bytecodeScanner().readSwitchOffset());
         }
         epilog();
     }
@@ -1095,10 +1100,10 @@ public class BytecodePrinter extends BytecodeVisitor {
     public void lookupswitch(int defaultOffset, int numberOfCases) {
         prolog();
         printOpcode();
-        printImmediate(defaultOffset);
+        printImmediate(" default:", currentOpcodePosition() + defaultOffset);
         for (int i = 0; i < numberOfCases; i++) {
             printImmediate(bytecodeScanner().readSwitchCase());
-            printImmediate(bytecodeScanner().readSwitchOffset());
+            printImmediate(":", currentOpcodePosition() + bytecodeScanner().readSwitchOffset());
         }
         epilog();
     }

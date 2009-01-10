@@ -24,8 +24,11 @@ import junit.framework.*;
 
 import org.junit.runner.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
+import com.sun.max.tele.interpreter.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.test.*;
 import com.sun.max.vm.value.*;
 
@@ -50,17 +53,14 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
         junit.textui.TestRunner.run(TeleInterpreterRemoteTest.class);
     }
 
-    @Override
-    protected final void setUp() throws Exception {
-        if (_teleVM == null) {
-            _teleVM = TeleVM.create(new Options());
-        }
-    }
-
     public static Test suite() {
         final TestSuite suite = new TestSuite(TeleInterpreterRemoteTest.class.getSimpleName());
         suite.addTestSuite(TeleInterpreterRemoteTest.class);
-        return suite;
+        return new TeleInterpreterTestSetup(suite);
+    }
+
+    protected TeleInterpreter createInterpreter() {
+        return new TeleInterpreter(teleVM());
     }
 
     @Override
@@ -70,6 +70,16 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
 
     @Override
     protected TeleVM teleVM() {
+        synchronized (getClass()) {
+            if (_teleVM == null) {
+                try {
+                    _teleVM = TeleVM.create(new Options());
+                    _teleVM.refresh();
+                } catch (BootImageException e) {
+                    throw ProgramError.unexpected(e);
+                }
+            }
+        }
         return _teleVM;
     }
 

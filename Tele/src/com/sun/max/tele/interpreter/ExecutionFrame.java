@@ -42,32 +42,28 @@ class ExecutionFrame {
     private int _currentBytePosition;
     private final Value[] _locals;
     private final Stack<Value> _operands;
-    private final ExecutionFrame _previousFrame;
+    private final ExecutionFrame _callersFrame;
     private final byte[] _code;
+    private final int _depth;
 
-    public ExecutionFrame(ExecutionFrame prev, ClassMethodActor method) {
+    public ExecutionFrame(ExecutionFrame callersFrame, ClassMethodActor method) {
         _method = method;
         _locals = new Value[method.codeAttribute().maxLocals()];
         _operands = new Stack<Value>();
-        _previousFrame = prev;
+        _callersFrame = callersFrame;
         _code = method.codeAttribute().code();
+        _depth = callersFrame == null ? 1 : callersFrame._depth + 1;
     }
 
     /**
      * Computes the number of frames on the call stack up to and including this frame.
      */
     public int depth() {
-        int depth = 1;
-        ExecutionFrame previousFrame = _previousFrame;
-        while (previousFrame != null) {
-            depth++;
-            previousFrame = previousFrame._previousFrame;
-        }
-        return depth;
+        return _depth;
     }
 
-    public ExecutionFrame previousFrame() {
-        return _previousFrame;
+    public ExecutionFrame callersFrame() {
+        return _callersFrame;
     }
 
     public void setLocal(int index, Value value) {

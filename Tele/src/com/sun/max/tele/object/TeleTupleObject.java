@@ -22,6 +22,7 @@ package com.sun.max.tele.object;
 
 import java.lang.reflect.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.vm.actor.holder.*;
@@ -66,7 +67,7 @@ public class TeleTupleObject extends TeleObject {
         final ClassActor classActor = classActorForType();
         final Class<?> javaClass = classActor.toJava();
         try {
-            final Object newTupleObject = _unsafe.allocateInstance(javaClass);
+            final Object newTupleObject = Objects.allocateInstance(javaClass);
             ClassActor holderClassActor = classActor;
             do {
                 for (FieldActor fieldActor : holderClassActor.localInstanceFieldActors()) {
@@ -97,7 +98,7 @@ public class TeleTupleObject extends TeleObject {
         final ClassActor classActor = classActorForType();
         final Class<?> javaClass = classActor.toJava();
         try {
-            final Object newTuple = _unsafe.allocateInstance(javaClass);
+            final Object newTuple = Objects.allocateInstance(javaClass);
             context.register(this, newTuple);
             ClassActor holderClassActor = classActor;
             do {

@@ -21,21 +21,23 @@
 package test.com.sun.max.tele.interpreter;
 
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
-import junit.framework.*;
+
+import java.lang.reflect.*;
+
+import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.value.*;
 
 /**
  *
  * @author Doug Simon
  */
-public abstract class TeleInterpreterTestCase extends TestCase {
-
+public abstract class TeleInterpreterTestCase extends CompilerTestCase<ActorIrMethod> {
 
     public TeleInterpreterTestCase() {
         super();
@@ -45,17 +47,17 @@ public abstract class TeleInterpreterTestCase extends TestCase {
         super(name);
     }
 
-    protected ClassMethodActor getClassMethodActor(Class javaClass, String methodName) {
-        Class thisClass = javaClass;
+    protected ActorIrMethod getIrMethod(String methodName) {
+        Class thisClass = defaultDeclaringClass();
         ClassMethodActor classMethodActor;
         do {
             classMethodActor = ClassActor.fromJava(thisClass).findLocalClassMethodActor(makeSymbol(methodName));
             thisClass = thisClass.getSuperclass();
         } while (classMethodActor == null && thisClass != null);
         if (classMethodActor == null) {
-            fail("No such method: " + javaClass.getName() + "." + methodName);
+            fail("No such method: " + defaultDeclaringClass().getName() + "." + methodName);
         }
-        return classMethodActor;
+        return new ActorIrMethod(classMethodActor);
     }
 
     protected abstract Class defaultDeclaringClass();
@@ -63,44 +65,33 @@ public abstract class TeleInterpreterTestCase extends TestCase {
     protected abstract TeleVM teleVM();
 
     /**
-     * Executes the first method found in {@link #defaultDeclaringClass()} named {@code methodName} with {@code args}.
+     * Executes the first method found in {@link #defaultDeclaringClass()} named {@code methodName} with {@code arguments}.
      *
      * @return the result of the execution
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
-    protected Value executeWithException(String methodName, Value... args) throws TeleInterpreterException {
-        final ClassMethodActor classMethodActor = getClassMethodActor(defaultDeclaringClass(), methodName);
-        return TeleInterpreter.execute(teleVM(), classMethodActor, args);
+    protected Value executeWithException(String methodName, Value... arguments) throws InvocationTargetException {
+        final ActorIrMethod method = getIrMethod(methodName);
+        return executeWithException(method, arguments);
     }
 
     /**
-     * Executes the first method found in {@link #defaultDeclaringClass()} named {@code methodName} with {@code args}.
+     * Executes the first method found in {@link #defaultDeclaringClass()} named {@code methodName} with {@code arguments}.
      * The method to be executed is not expected to raise an exception and if it does, the test immediately
      * {@linkplain #fail() fails}.
      *
      * @return the result of the execution
      */
-    protected Value execute(String methodName, Value... args) {
-        try {
-            return executeWithException(methodName, args);
-        } catch (TeleInterpreterException teleInterpreterException) {
-            fail(Exceptions.stackTraceAsString(teleInterpreterException));
-            return null;
-        }
+    protected Value execute(String methodName, Value... arguments) {
+        return execute(getIrMethod(methodName), arguments);
     }
 
     /**
-     * Executes the first method found in {@link #defaultDeclaringClass()} named {@code methodName} with {@code args}.
+     * Executes the first method found in {@link #defaultDeclaringClass()} named {@code methodName} with {@code arguments}.
      * The method to be executed is expected to raise an exception of type assignable to {@code expectedExceptionType}.
      * If it does not, the test immediately {@linkplain #fail() fails}.
      */
-    protected void executeWithExpectedException(String methodName, Class<? extends Throwable> expectedExceptionType, Value... args) {
-        try {
-            final ClassMethodActor classMethodActor = getClassMethodActor(TeleInterpreterTestClass.class, methodName);
-            TeleInterpreter.execute(teleVM(), classMethodActor, args);
-            fail("expected " + expectedExceptionType.getName());
-        } catch (TeleInterpreterException teleInterpreterException) {
-            assertTrue(expectedExceptionType.isAssignableFrom(teleInterpreterException.throwableType()));
-        }
+    protected void executeWithExpectedException(String methodName, Class<? extends Throwable> expectedExceptionType, Value... arguments) {
+        executeWithExpectedException(getIrMethod(methodName), expectedExceptionType, arguments);
     }
 }

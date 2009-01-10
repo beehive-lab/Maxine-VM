@@ -127,12 +127,12 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
         return UnsafeLoophole.gripToWord(grip).asPointer();
     }
 
-    private void setValue(Grip grip, int displacement, int index, Object boxedJavaValue) {
+    private void setValue(Grip grip, int displacement, int index, Object wordOrBoxedJavaValue) {
         final Object object = toJava(grip);
         final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
         final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout();
         ProgramError.check(displacement == ((ArrayLayout) specificLayout).getElementOffsetFromOrigin(0).toInt(), "invalid array displacement");
-        final Value value = Value.fromBoxedJavaValue(boxedJavaValue);
+        final Value value = wordOrBoxedJavaValue instanceof Word ? WordValue.from((Word) wordOrBoxedJavaValue) : Value.fromBoxedJavaValue(wordOrBoxedJavaValue);
         mirror.writeElement(value.kind(), index, value);
     }
 
@@ -146,27 +146,23 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
         return StaticLoophole.cast(castType, mirror.readElement(kind, index).asBoxedJavaValue());
     }
 
-    private void writeValue(Grip grip, int offset, Object boxedJavaValue) {
+    private void writeValue(Grip grip, int offset, Object wordOrBoxedJavaValue) {
         final Object object = toJava(grip);
         if (object instanceof StaticTuple) {
             final StaticTuple staticTuple = (StaticTuple) object;
             final FieldActor fieldActor = staticTuple.findStaticFieldActor(offset);
             final Class javaClass = staticTuple.classActor().toJava();
             try {
-                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name().toString(), boxedJavaValue);
+                WithoutAccessCheck.setStaticField(javaClass, fieldActor.name().toString(), wordOrBoxedJavaValue);
             } catch (Throwable throwable) {
                 ProgramError.unexpected("could not write field: " + fieldActor, throwable);
             }
         } else {
-            final Class javaClass = object.getClass();
-            final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(javaClass);
-            final FieldActor fieldActor = tupleClassActor.findInstanceFieldActor(offset);
-            WithoutAccessCheck.setInstanceField(object, fieldActor.name().toString(), boxedJavaValue);
-
             final InterpreterObjectMirror mirror = new InterpreterObjectMirror(object);
             final SpecificLayout specificLayout = mirror.classActor().dynamicHub().specificLayout();
 
-            final Value value = Value.fromBoxedJavaValue(boxedJavaValue);
+
+            final Value value = wordOrBoxedJavaValue instanceof Word ? WordValue.from((Word) wordOrBoxedJavaValue) : Value.fromBoxedJavaValue(wordOrBoxedJavaValue);
             specificLayout.writeValue(value.kind(), mirror, offset, value);
             return;
         }
@@ -416,8 +412,7 @@ public final class PrototypeGripScheme extends AbstractVMScheme implements GripS
     }
 
     public void writeWord(Grip grip, int offset, Word value) {
-        final BoxedWord boxedWord = new BoxedWord(value); // avoiding word/grip kind mismatch
-        writeValue(grip, offset, boxedWord);
+        writeValue(grip, offset, value);
     }
 
     public void setWord(Grip grip, int displacement, int index, Word value) {

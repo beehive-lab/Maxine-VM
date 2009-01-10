@@ -58,7 +58,7 @@ public class TeleInterpreterTest extends TeleInterpreterTestCase {
 
     @Override
     protected TeleVM teleVM() {
-        return  null;
+        return null;
     }
 
     public void test_aastore_iastore_aaload_iaload() {
@@ -176,6 +176,10 @@ public class TeleInterpreterTest extends TeleInterpreterTestCase {
         executeWithExpectedException("athrow5", Exception.class, ReferenceValue.from(new Exception("test")));
     }
 
+    public void test_athrow6() {
+        executeWithExpectedException("athrow6", Exception.class);
+    }
+
     public void test_checkcast1() {
         final Value ret = execute("checkcast", ReferenceValue.from(new TeleInterpreterTestClass(1)));
         assertTrue(ret.asInt() == 1);
@@ -192,17 +196,17 @@ public class TeleInterpreterTest extends TeleInterpreterTestCase {
 
     public void test_instanceof1() {
         final Value ret = execute("instanceof_", ReferenceValue.from(new TeleInterpreterTestClass()));
-        assertTrue(ret.asInt() == 1);
+        assertTrue(ret.asBoolean() == true);
     }
 
     public void test_instanceof2() {
         final Value ret = execute("instanceof_", ReferenceValue.from(new TeleInterpreterTestChildClass()));
-        assertTrue(ret.asInt() == 1);
+        assertTrue(ret.asBoolean() == true);
     }
 
     public void test_instanceof3() {
         final Value ret = execute("instanceof_", ReferenceValue.from(new Integer(2)));
-        assertTrue(ret.asInt() == 0);
+        assertTrue(ret.asBoolean() == false);
     }
 
     public void test_multianewarray() {

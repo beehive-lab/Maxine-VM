@@ -34,6 +34,11 @@ import com.sun.max.vm.bytecode.*;
  */
 class ExecutionThread {
 
+    /**
+     * The maximum frame depth for a thread.
+     */
+    public static final int STACK_SIZE = 1000;
+
     private ExecutionFrame _frame;
     //private int _prio;
     //private ThreadType _threadType;
@@ -46,11 +51,14 @@ class ExecutionThread {
 
     public ExecutionFrame pushFrame(ClassMethodActor method) {
         _frame = new ExecutionFrame(_frame, method);
+        if (_frame.depth() > STACK_SIZE) {
+            throw new StackOverflowError();
+        }
         return _frame;
     }
 
     public ExecutionFrame popFrame() {
-        _frame = _frame.previousFrame();
+        _frame = _frame.callersFrame();
         return _frame;
     }
 
@@ -80,7 +88,7 @@ class ExecutionThread {
                 return true;
             }
 
-            frame = frame.previousFrame();
+            frame = frame.callersFrame();
         }
         return false;
     }
@@ -91,11 +99,23 @@ class ExecutionThread {
         while (frame != null) {
             final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
             printStream.println("\tat " + bytecodeLocation.toStackTraceElement());
-            frame = frame.previousFrame();
+            frame = frame.callersFrame();
         }
         if (executionException.getCause() != null) {
             printStream.print("Caused by: ");
             executionException.getCause().printStackTrace(printStream);
         }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+        ExecutionFrame frame = _frame;
+        while (frame != null) {
+            final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
+            sb.append(String.format("%n%s [bci:%d]", bytecodeLocation.toStackTraceElement(), frame.currentOpcodePosition()));
+            frame = frame.callersFrame();
+        }
+        return sb.toString();
     }
 }

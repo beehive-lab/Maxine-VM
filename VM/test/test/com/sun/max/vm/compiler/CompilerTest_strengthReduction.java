@@ -20,8 +20,6 @@
  */
 package test.com.sun.max.vm.compiler;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -270,12 +268,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_intDividedBy() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "intDividedBy0");
         assertFalse(compiledMethod.contains(JavaBuiltin.IntDivided.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, IntValue.from(99));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, IntValue.from(99));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "int0DividedBy");
         assertFalse(compiledMethod.contains(JavaBuiltin.IntDivided.BUILTIN, false));
@@ -312,12 +305,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_longDividedBy() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "longDividedBy0");
         assertFalse(compiledMethod.contains(JavaBuiltin.LongDivided.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, LongValue.from(99L));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, LongValue.from(99L));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "long0DividedBy");
         assertFalse(compiledMethod.contains(JavaBuiltin.LongDivided.BUILTIN, false));
@@ -354,12 +342,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_addressDividedByAddress() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressDividedByAddress0");
         assertFalse(compiledMethod.contains(AddressBuiltin.DividedByAddress.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, new WordValue(Address.fromInt(99)));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, new WordValue(Address.fromInt(99)));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressZeroDividedByAddress");
         assertFalse(compiledMethod.contains(AddressBuiltin.DividedByAddress.BUILTIN, false));
@@ -396,12 +379,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_addressDividedByInt() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressDividedByInt0");
         assertFalse(compiledMethod.contains(AddressBuiltin.DividedByInt.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, new WordValue(Address.fromInt(99)));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, new WordValue(Address.fromInt(99)));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressZeroDividedByInt");
         assertFalse(compiledMethod.contains(AddressBuiltin.DividedByInt.BUILTIN, false));
@@ -442,12 +420,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_intRemainder() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "intRemainder0");
         assertFalse(compiledMethod.contains(JavaBuiltin.IntRemainder.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, IntValue.from(99));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, IntValue.from(99));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "int0Remainder");
         assertFalse(compiledMethod.contains(JavaBuiltin.IntRemainder.BUILTIN, false));
@@ -493,12 +466,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_longRemainder() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "longRemainder0");
         assertFalse(compiledMethod.contains(JavaBuiltin.LongRemainder.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, LongValue.from(99L));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, LongValue.from(99L));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "long0Remainder");
         assertFalse(compiledMethod.contains(JavaBuiltin.LongRemainder.BUILTIN, false));
@@ -540,12 +508,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_addressRemainderByAddress() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressRemainderByAddress0");
         assertFalse(compiledMethod.contains(AddressBuiltin.RemainderByAddress.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, new WordValue(Address.fromInt(99)));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, new WordValue(Address.fromInt(99)));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressZeroRemainderByAddress");
         assertFalse(compiledMethod.contains(AddressBuiltin.RemainderByAddress.BUILTIN, false));
@@ -582,12 +545,7 @@ public abstract class CompilerTest_strengthReduction<Method_Type extends IrMetho
     public void test_addressRemainderByInt() {
         Method_Type compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressRemainderByInt0");
         assertFalse(compiledMethod.contains(AddressBuiltin.RemainderByInt.BUILTIN, false));
-        try {
-            executeWithException(compiledMethod, new WordValue(Address.fromInt(99)));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArithmeticException);
-        }
+        executeWithExpectedException(compiledMethod, ArithmeticException.class, new WordValue(Address.fromInt(99)));
 
         compiledMethod = compileMethod(CompilerTest_strengthReduction.class, "addressZeroRemainderByInt");
         assertFalse(compiledMethod.contains(AddressBuiltin.RemainderByInt.BUILTIN, false));

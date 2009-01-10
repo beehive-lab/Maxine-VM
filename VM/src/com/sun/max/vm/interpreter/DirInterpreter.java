@@ -23,6 +23,7 @@ package com.sun.max.vm.interpreter;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
@@ -83,17 +84,6 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
             }
         }
 
-        public int rebind(DirValue oldValue, DirValue newValue) {
-            int rebound = 0;
-            for (Map.Entry<DirVariable, DirValue> entry : _bindings.entrySet()) {
-                if (entry.getValue() == oldValue) {
-                    entry.setValue(newValue);
-                    ++rebound;
-                }
-            }
-            return rebound;
-        }
-
         public Environment() {
         }
 
@@ -134,15 +124,11 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
         private int _instructionIndex = 0;
         private DirBlock _block;
         private final Environment _environment;
-        private DirValue _initReceiver;
 
         Evaluator(DirMethod dirMethod, DirValue[] arguments) {
             _dirMethod = dirMethod;
             _block = dirMethod.blocks().first();
             _environment = new Environment(dirMethod.parameters(), arguments);
-            if (dirMethod.classMethodActor().isInstanceInitializer()) {
-                _initReceiver = arguments[0];
-            }
         }
 
         private void jump(DirBlock block) {
@@ -273,16 +259,12 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
             assert classMethodActor.isInstanceInitializer();
             final DirValue[] arguments = dirMethodCall.arguments();
             final DirValue uninitializedObject = _environment.lookup(arguments[0]);
-            assert uninitializedObject.value().asObject() instanceof UninitializedObject;
 
             try {
                 final Value[] valueArguments = _environment.lookupValues(com.sun.max.lang.Arrays.subArray(arguments, 1));
                 final Value initializedObject = classMethodActor.invokeConstructor(valueArguments);
+                Objects.copy(initializedObject.asObject(), uninitializedObject.value().asObject());
                 _environment.bind(dirMethodCall.result(), new DirConstant(VoidValue.VOID));
-                final int rebound = _environment.rebind(uninitializedObject, new DirConstant(initializedObject));
-                if (rebound == 0 || _initReceiver == uninitializedObject) {
-                    _initReceiver = new DirConstant(initializedObject);
-                }
             } catch (InstantiationException e) {
                 ProgramError.unexpected("error calling " + classMethodActor, e);
             } catch (IllegalAccessException e) {
@@ -330,11 +312,6 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
         }
         final DirValue[] executeArguments = valuesToDirValues(arguments);
         final Evaluator evaluator = new Evaluator(dirMethod, executeArguments);
-        final Value result = evaluator.run();
-        if (dirMethod.classMethodActor().isInstanceInitializer()) {
-            // The receiver of <init> has been initialized and is represented by a new object
-            arguments[0] = evaluator._initReceiver.value();
-        }
-        return result;
+        return evaluator.run();
     }
 }

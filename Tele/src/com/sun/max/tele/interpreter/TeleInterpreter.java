@@ -33,6 +33,8 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.ir.*;
+import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
@@ -45,26 +47,23 @@ import com.sun.max.vm.value.*;
  * @author Athul Acharya
  * @author Doug Simon
  */
-public final class TeleInterpreter {
+public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
     private final TeleVM _teleVM;
 
-    private final Machine _machine;
-    private Value _ret;
+    private Machine _machine;
+    private Value _returnValue;
+    private int _instructionsExecuted;
 
-    private TeleInterpreter(TeleVM teleVM, ClassMethodActor classMethodActor, Value... args) {
+    public TeleInterpreter(TeleVM teleVM) {
         _teleVM = teleVM;
-        _machine = new Machine(teleVM);
-        _machine.pushFrame(classMethodActor);
-        int j = 0;
-        for (int i = 0; i < args.length; i++, j++) {
-            _machine.setLocal(j, args[i]);
-
-            if (args[i] instanceof DoubleValue || args[i] instanceof LongValue) {
-                j++;
-            }
-        }
     }
+
+    @Override
+    public Value execute(ActorIrMethod method, Value... arguments) throws InvocationTargetException {
+        return run(method.classMethodActor(), arguments);
+    }
+
 
     /**
      * Creates an interpreter instance and uses it to execute a given method with the given arguments.
@@ -76,7 +75,7 @@ public final class TeleInterpreter {
      * @throws TeleInterpreterException if an uncaught exception occurs during execution of the method
      */
     public static Value execute(TeleVM teleVM, ClassMethodActor classMethodActor, Value... args) throws TeleInterpreterException {
-        return new TeleInterpreter(teleVM, classMethodActor, args).run();
+        return new TeleInterpreter(teleVM).run(classMethodActor, args);
     }
 
     /**
@@ -189,9 +188,21 @@ public final class TeleInterpreter {
         }
     }
 
-    public Value run() throws TeleInterpreterException {
+    private Value run(ClassMethodActor classMethodActor, Value... arguments) throws TeleInterpreterException {
+
+        _machine = new Machine(_teleVM);
+        _machine.pushFrame(classMethodActor);
+        int j = 0;
+        for (int i = 0; i < arguments.length; i++, j++) {
+            _machine.setLocal(j, arguments[i]);
+            if (arguments[i].isCategory2()) {
+                j++;
+            }
+        }
+
         Bytecode code;
         MethodStatus status;
+        _instructionsExecuted = 0;
 
         while (true) {
             code = _machine.readOpcode();
@@ -200,7 +211,7 @@ public final class TeleInterpreter {
 
             try {
                 status = interpret(code);
-                if (status == MethodStatus.METHOD_END || status == MethodStatus.METHOD_ABORT) {
+                if (status == MethodStatus.METHOD_END) {
                     break;
                 }
             } catch (TeleInterpreterException executionException) {
@@ -211,17 +222,23 @@ public final class TeleInterpreter {
                 }
             } catch (Throwable throwable) {
                 throw new TeleInterpreterException(throwable, _machine);
+            } finally {
+                _instructionsExecuted++;
             }
         }
 
-        if (_ret instanceof TeleReferenceValue) {
-            _ret = TeleReferenceValue.from(_teleVM, _machine.makeLocalReference((TeleReference) _ret.asReference()));
+        if (_returnValue instanceof TeleReferenceValue) {
+            _returnValue = TeleReferenceValue.from(_teleVM, _machine.makeLocalReference((TeleReference) _returnValue.asReference()));
         }
 
-        return _ret;
+        final Kind resultKind = classMethodActor.resultKind();
+        if (resultKind.toStackKind() == Kind.INT) {
+            _returnValue = resultKind.convert(_returnValue);
+        }
+        return _returnValue;
     }
 
-    public MethodStatus interpret(Bytecode opcode) throws TeleInterpreterException {
+    private MethodStatus interpret(Bytecode opcode) throws TeleInterpreterException {
         switch (opcode) {
             case NOP:                       // 0x00
                 break;
@@ -528,10 +545,18 @@ public final class TeleInterpreter {
                     _machine.raiseException(new ArrayIndexOutOfBoundsException());
                 }
 
-                final byte val = Layout.getByte(array, index);
+                final IntValue val;
+
+                if (_machine.toReferenceValue(array).getClassActor() == PrimitiveClassActor.BOOLEAN_ARRAY_CLASS_ACTOR) {
+                    final boolean booleanVal = Layout.getBoolean(array, index);
+                    val = booleanVal ? IntValue.ONE : IntValue.ZERO;
+                } else {
+                    final byte byteVal = Layout.getByte(array, index);
+                    val = IntValue.from(byteVal);
+                }
 
                 // Push value to operand stack
-                _machine.push(IntValue.from(val));
+                _machine.push(val);
                 break;
             }
 
@@ -1570,15 +1595,13 @@ public final class TeleInterpreter {
                 final int defawlt = _machine.readInt();
                 final int low     = _machine.readInt();
                 final int high    = _machine.readInt();
-                final int numberOfCases = (high - low) + 1;
 
                 if (index < low || index > high) {
                     _machine.jump(defawlt);
-                    _machine.skipBytes(numberOfCases * 4);
                 } else {
-                    _machine.skipBytes(index * 4);
+                    final int jumpTableIndex = index - low;
+                    _machine.skipBytes(jumpTableIndex * 4);
                     final int offset = _machine.readInt();
-                    _machine.skipBytes((numberOfCases - index - 1) * 4);
                     _machine.jump(offset);
                 }
 
@@ -1597,7 +1620,6 @@ public final class TeleInterpreter {
                     final int offset = _machine.readInt();
                     if (value == key) {
                         _machine.jump(offset);
-                        _machine.skipBytes((nPairs - i - 1) * 8);
                         foundMatch = true;
                         break;
                     }
@@ -1621,7 +1643,7 @@ public final class TeleInterpreter {
 
                 //if this was the topmost frame on the stack
                 if (frame == null) {
-                    _ret = result;
+                    _returnValue = result;
                     return MethodStatus.METHOD_END;
                 }
 
@@ -1632,7 +1654,7 @@ public final class TeleInterpreter {
             case RETURN: {                  // 0xB1;
                 final ExecutionFrame frame = _machine.popFrame();
                 if (frame == null) {
-                    _ret = null;
+                    _returnValue = VoidValue.VOID;
                     return MethodStatus.METHOD_END;
                 }
                 break;
@@ -1701,7 +1723,8 @@ public final class TeleInterpreter {
                 final short cpIndex = _machine.readShort();
 
                 try {
-                    ClassMethodActor methodActor = (ClassMethodActor) _machine.resolveMethod(cpIndex);
+                    final ClassMethodActor resolveMethod = (ClassMethodActor) _machine.resolveMethod(cpIndex);
+                    ClassMethodActor methodActor = resolveMethod;
                     final Value value = _machine.peek(methodActor.descriptor().getNumberOfParameters() + 1);
                     if (value instanceof ReferenceValue) {
                         final ReferenceValue receiver = (ReferenceValue) value;
@@ -1715,6 +1738,10 @@ public final class TeleInterpreter {
                     }
 
                     if (methodActor == null) {
+                        final ReferenceValue receiver = (ReferenceValue) value;
+                        final ClassActor dynamicClass = receiver.getClassActor();
+
+                        methodActor = dynamicClass.findVirtualMethodActor(methodActor);
                         _machine.raiseException(new AbstractMethodError());
                     } else if (methodActor.isAbstract()) {
                         _machine.raiseException(new AbstractMethodError());
@@ -1805,8 +1832,13 @@ public final class TeleInterpreter {
             /*========================================================================*/
 
             case NEW: {                      // 0xBB;
-                _machine.readShort();
-                _machine.push(_machine.toReferenceValue(Reference.fromJava(new Object())));
+                final short cpIndex = _machine.readShort();
+                final ClassActor classActor = _machine.resolveClassReference(cpIndex);
+                try {
+                    _machine.push(ReferenceValue.from(Objects.allocateInstance(classActor.toJava())));
+                } catch (InstantiationException instantiationException) {
+                    _machine.raiseException(instantiationException);
+                }
                 break;
             }
             case NEWARRAY: {                // 0xBC;
@@ -2045,7 +2077,6 @@ public final class TeleInterpreter {
     public static enum MethodStatus {
         METHOD_END,
         METHOD_CONTINUE,
-        METHOD_ABORT,
     }
 
     private static Object createMultiDimensionArray(ClassActor arrayClassActor, int lengthIndex, int[] lengths) {

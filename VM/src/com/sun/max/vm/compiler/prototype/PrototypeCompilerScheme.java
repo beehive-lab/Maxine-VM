@@ -42,22 +42,20 @@ public class PrototypeCompilerScheme extends AbstractCompiler {
     }
 
     public Sequence<IrGenerator> irGenerators() {
-        throw ProgramError.unexpected();
+        return Sequence.Static.empty(IrGenerator.class);
     }
 
     @Override
     public void compileSnippets() {
-        ProgramError.unexpected();
     }
 
     @Override
     public boolean areSnippetsCompiled() {
-        throw ProgramError.unexpected();
+        return true;
     }
 
     @Override
     public void fakeCall(Address returnAddress) {
-        throw ProgramError.unexpected();
     }
 
 }

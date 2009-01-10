@@ -18,32 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.hotpath.compiler;
+package test.com.sun.max.tele.interpreter;
 
-import java.lang.reflect.*;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.bytecode.*;
 
-import sun.misc.*;
+public class TeleInterpreterTest_misc extends BytecodeTest_misc {
 
-import com.sun.max.program.*;
-import com.sun.max.vm.*;
-
-
-public class UnsafeAccess {
-    private static Unsafe _unsafe;
-    static {
-        Field field;
-        try {
-            field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            _unsafe = (Unsafe) field.get(null);
-        } catch (Throwable e) {
-            ProgramError.unexpected();
-        }
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(TeleInterpreterTest_misc.suite());
     }
 
-    public static Object allocateInstance(Class<?> cls) throws InstantiationException {
-        ProgramError.check(MaxineVM.isPrototyping());
-        _unsafe.ensureClassInitialized(cls);
-        return _unsafe.allocateInstance(cls);
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(TeleInterpreterTest_misc.class.getSimpleName());
+        suite.addTestSuite(TeleInterpreterTest_misc.class);
+        return new TeleInterpreterTestSetup(suite);
     }
+
+    public TeleInterpreterTest_misc(String name) {
+        super(name);
+    }
+
 }

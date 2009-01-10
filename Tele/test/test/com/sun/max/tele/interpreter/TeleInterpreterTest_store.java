@@ -18,41 +18,27 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.interpreter;
+package test.com.sun.max.tele.interpreter;
 
-import com.sun.max.vm.actor.holder.*;
+import junit.framework.*;
+import test.com.sun.max.vm.compiler.bytecode.*;
 
-/**
- * A type used when interpreting an IR to representing an object that has
- * been allocated but not yet initialized.
- *
- * @author Doug Simon
- */
-public final class UninitializedObject {
+import com.sun.max.vm.compiler.cir.*;
 
-    private static int _nextSerial;
+public class TeleInterpreterTest_store extends BytecodeTest_store<CirMethod> {
 
-    private final ClassActor _classActor;
-
-    private final int _serial;
-
-    /**
-     * Creates an object representing an uninitialized instance of a given type.
-     */
-    public UninitializedObject(ClassActor classActor) {
-        _classActor = classActor;
-        _serial = ++_nextSerial;
+    public static Test suite() {
+        final TestSuite suite = new TestSuite(TeleInterpreterTest_store.class.getSimpleName());
+        suite.addTestSuite(TeleInterpreterTest_store.class);
+        return new TeleInterpreterTestSetup(suite);
     }
 
-    /**
-     * Gets the type of the uninitialized instance represented by this object.
-     */
-    public ClassActor classActor() {
-        return _classActor;
+    public TeleInterpreterTest_store(String name) {
+        super(name);
     }
 
-    @Override
-    public String toString() {
-        return "uninitialized:" + classActor().javaSignature(false) + "@" + _serial;
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(TeleInterpreterTest_store.suite());
     }
+
 }

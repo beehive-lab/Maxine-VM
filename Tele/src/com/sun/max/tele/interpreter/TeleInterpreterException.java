@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.interpreter;
 
-import com.sun.max.tele.value.*;
+import java.lang.reflect.*;
+
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.value.*;
 
@@ -32,18 +33,12 @@ import com.sun.max.vm.value.*;
  *
  * @author Doug Simon
  */
-public class TeleInterpreterException extends Exception {
+public class TeleInterpreterException extends InvocationTargetException {
 
     private final ReferenceValue _throwableReference;
 
-    public TeleInterpreterException(ReferenceValue throwableReference, Machine machine) {
-        super(throwableReference instanceof TeleReferenceValue ? throwableReference.getClassActor().name().string() : throwableReference.asBoxedJavaValue().toString());
-        _throwableReference = throwableReference;
-        initStackTrace(machine);
-    }
-
     public TeleInterpreterException(Throwable throwable, Machine machine) {
-        super(throwable.getMessage(), throwable);
+        super(throwable, throwable.getMessage());
         _throwableReference = ReferenceValue.from(throwable);
         initStackTrace(machine);
     }
@@ -62,13 +57,22 @@ public class TeleInterpreterException extends Exception {
             setStackTrace(new StackTraceElement[0]);
         } else {
             int i = 0;
-            final StackTraceElement[] stackTrace = new StackTraceElement[frame.depth()];
+            final int depth = frame.depth();
+            final StackTraceElement[] stackTrace = new StackTraceElement[depth];
             while (frame != null) {
                 final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
                 stackTrace[i++] = bytecodeLocation.toStackTraceElement();
-                frame = frame.previousFrame();
+                frame = frame.callersFrame();
             }
             setStackTrace(stackTrace);
         }
+    }
+
+    /**
+     * Returns the value of calling {@link #toString()} on the {@link #getCause() wrapped} exception.
+     */
+    @Override
+    public String toString() {
+        return getCause().toString();
     }
 }
