@@ -432,21 +432,6 @@ public final class Machine {
             } catch (IllegalAccessException e) {
                 throw new TeleInterpreterException(e, this);
             }
-//        } else if (method.isInstanceInitializer()) {
-//            final Value uninitializedObject = argumentStack.pop();
-//            final Value[] arguments = new Value[--numberOfParameters];
-//
-//            invertOperands(argumentStack, arguments);
-//            try {
-//                final Reference result = Reference.fromJava(method.invokeConstructor(arguments).asObject());
-//                push(toReferenceValue(result));
-//            } catch (InvocationTargetException e) {
-//                throw new TeleInterpreterException(e.getCause(), this);
-//            } catch (IllegalAccessException e) {
-//                throw new TeleInterpreterException(e, this);
-//            } catch (InstantiationException e) {
-//                throw new TeleInterpreterException(e, this);
-//            }
         } else if (method.codeAttribute() == null || Word.class.isAssignableFrom(method.holder().toJava())) {
             final Value[] arguments = new Value[numberOfParameters];
             invertOperands(argumentStack, arguments);
