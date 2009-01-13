@@ -52,7 +52,7 @@ public /* final (uncomment this to activate the optimization) */ class CirCreate
     }
 
     @Override
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         return inline(cirOptimizer, arguments, NO_JAVA_FRAME_DESCRIPTOR);
     }
 
