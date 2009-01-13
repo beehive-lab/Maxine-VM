@@ -44,7 +44,7 @@ public final class CirResolveStaticMethod extends CirSpecialSnippet {
     }
 
     @Override
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         final EntrypointResolutionGuard guard = (EntrypointResolutionGuard) getConstantArgumentValue(arguments, Parameter.guard).asObject();
         final ConstantPool constantPool = guard.constantPool();
         final StaticMethodActor selectedMethod = ResolutionSnippet.ResolveStaticMethod.quasiFold(constantPool, guard.constantPoolIndex());

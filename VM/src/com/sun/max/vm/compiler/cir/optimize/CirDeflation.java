@@ -48,7 +48,7 @@ public class CirDeflation {
 
     /**
      * A utility class for encapsulating a transformation that deflates a CIR graph rooted by a {@link CirCall}.
-     * This class is used to run a transformation that the caller of {@link #apply()} has guaranteed will deflate the graph.
+     * This class is used to run a transformation that the caller of {@link #apply()} believes will deflate the graph.
      * The purpose of this class is that it provides support for tracing the CIR graph before and after the
      * transformation.
      *
@@ -65,12 +65,18 @@ public class CirDeflation {
 
         abstract Transformation description();
         abstract String target();
-        abstract void run();
+        abstract boolean run();
 
-        final void apply() {
+        /**
+         * Applies the deflating transformation implemented by this object.
+         *
+         * @return {@code true} if the deflation succeeded, {@code false} otherwise
+         */
+        final boolean apply() {
             _optimizer.notifyBeforeTransformation(_call, description());
-            run();
+            final boolean result = run();
             _optimizer.notifyAfterTransformation(_call, description());
+            return result;
         }
     }
 
@@ -89,8 +95,13 @@ public class CirDeflation {
         }
 
         @Override
-        public void run() {
-            _call.assign(_foldable.fold(_optimizer, _arguments));
+        public boolean run() {
+            try {
+                _call.assign(_foldable.fold(_optimizer, _arguments));
+                return true;
+            } catch (CirFoldingException cirFoldingException) {
+                return false;
+            }
         }
 
         @Override
@@ -114,8 +125,9 @@ public class CirDeflation {
         }
 
         @Override
-        public void run() {
+        public boolean run() {
             _call.assign(_builtin.reduce(_optimizer, _arguments));
+            return true;
         }
 
         @Override
@@ -126,15 +138,13 @@ public class CirDeflation {
 
     private boolean reduceCallByFoldable(CirCall call, CirFoldable foldable, CirValue[] arguments) {
         if (foldable.isFoldable(_optimizer, arguments)) {
-            new Folding(call, foldable, arguments).apply();
-            return true;
+            return new Folding(call, foldable, arguments).apply();
         }
 
         if (foldable instanceof CirBuiltin) {
             final CirBuiltin builtin = (CirBuiltin) foldable;
             if (builtin.isReducible(_optimizer, arguments)) {
-                new Reducing(call, builtin, arguments).apply();
-                return true;
+                return new Reducing(call, builtin, arguments).apply();
             }
         }
         return false;
