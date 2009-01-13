@@ -46,6 +46,7 @@ import com.sun.max.jdwp.handlers.ThreadGroupReferenceHandlers;
 import com.sun.max.jdwp.handlers.ThreadReferenceHandlers;
 import com.sun.max.jdwp.handlers.VirtualMachineHandlers;
 import com.sun.max.jdwp.server.JDWPServer;
+import com.sun.max.jdwp.vm.proxy.VMAccess;
 import com.sun.max.program.Classpath;
 import com.sun.max.program.Trace;
 import com.sun.max.program.Classpath.Entry;
@@ -165,14 +166,17 @@ public class Main {
         }
         LOGGER.info("Start point reached");
 
+        final VMAccess vmAccess = teleVM.vmAccess();
+
         // For increasing the speed of the call later on.
-        teleVM.getAllReferenceTypes();
-        teleVM.getAllReferenceTypes();
+        vmAccess.getAllReferenceTypes();
+        vmAccess.getAllReferenceTypes();
 
         LOGGER.info("Creating JDWP server");
         final JDWPServer server = new JDWPServer();
 
-        final JDWPSession session = new JDWPSession(teleVM);
+
+        final JDWPSession session = new JDWPSession(vmAccess);
 
         new ArrayReferenceHandlers(session).registerWith(server.commandHandlerRegistry());
         new ArrayTypeHandlers(session).registerWith(server.commandHandlerRegistry());
