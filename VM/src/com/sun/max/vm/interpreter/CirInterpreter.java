@@ -71,7 +71,11 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 }
             }
         }
-        return cirBuiltin.fold(_cirOptimizer, cirArguments);
+        try {
+            return cirBuiltin.fold(_cirOptimizer, cirArguments);
+        } catch (CirFoldingException cirFoldingException) {
+            return CirRoutine.Static.createExceptionCall(cirFoldingException.getCause(), cirArguments);
+        }
     }
 
     private final CirVariableFactory _variableFactory = new CirVariableFactory();
@@ -91,7 +95,11 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             }
             if (procedure instanceof CirMethod) {
                 final CirMethod method = (CirMethod) procedure;
-                call = method.fold(_cirOptimizer, arguments);
+                try {
+                    call = method.fold(_cirOptimizer, arguments);
+                } catch (CirFoldingException cirFoldingException) {
+                    call = CirRoutine.Static.createExceptionCall(cirFoldingException.getCause(), arguments);
+                }
             } else if (procedure instanceof CirBuiltin) {
                 call = foldBuiltin((CirBuiltin) procedure, arguments);
             } else if (procedure instanceof CirBlock) {
@@ -112,7 +120,12 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 ProgramError.unexpected("call to variable other than continuation parameter: " + procedure);
             } else if (procedure instanceof CirSwitch) {
                 final CirSwitch method = (CirSwitch) procedure;
-                call = method.fold(_cirOptimizer, arguments);
+                try {
+                    call = method.fold(_cirOptimizer, arguments);
+                } catch (CirFoldingException cirFoldingException) {
+                    // Folding a CirSwitch should never fail
+                    throw ProgramError.unexpected(cirFoldingException);
+                }
             } else {
                 assert procedure instanceof CirClosure;
                 final CirClosure closure = CirReplication.apply((CirClosure) procedure);
@@ -146,10 +159,6 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
             call = new CirCall(cirMethod.copyClosure(), valuesToCirArguments(arguments));
         }
         final CirValue result = evaluate(call);
-        if (cirMethod.classMethodActor().isInstanceInitializer()) {
-            // The receiver of <init> has been initialized and is represented by a new object
-            arguments[0] = call.arguments()[0].value();
-        }
         if (result instanceof CirConstant) {
             final CirConstant cirConstant = (CirConstant) result;
             return cirMethod.resultKind().convert(cirConstant.value());

@@ -144,8 +144,10 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                 final Class<?> javaClass = classActor.toJava();
                 final Class[] parameterTypes = signature.getParameterTypes(javaClass.getClassLoader());
                 final Class returnType = signature.getReturnType(javaClass.getClassLoader());
-                final Method method = Classes.resolveMethod(javaClass, returnType, name.string(), parameterTypes);
-                if (MaxineVM.isPrototypeOnly(method)) {
+                final AccessibleObject member = name.equals(SymbolTable.INIT) ?
+                    Classes.getDeclaredConstructor(javaClass, parameterTypes) :
+                    Classes.resolveMethod(javaClass, returnType, name.string(), parameterTypes);
+                if (MaxineVM.isPrototypeOnly(member)) {
                     throw new PrototypeOnlyMethodError(errorMessage);
                 }
             }

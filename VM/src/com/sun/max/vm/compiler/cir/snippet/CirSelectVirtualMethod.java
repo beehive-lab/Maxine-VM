@@ -74,7 +74,7 @@ public final class CirSelectVirtualMethod extends CirSpecialSnippet {
     }
 
     @Override
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
         assert arguments.length == Parameter.VALUES.length();
         if (isConstantArgument(arguments, Parameter.declaredVirtualMethodActor)) {
@@ -85,6 +85,9 @@ public final class CirSelectVirtualMethod extends CirSpecialSnippet {
             if (isConstantArgument(arguments, Parameter.receiver)) {
                 assert ((CirConstant) arguments[Parameter.receiver.ordinal()]).kind() != Kind.WORD;
                 final Object receiver = getConstantArgumentValue(arguments, Parameter.receiver).asObject();
+                if (receiver == null) {
+                    throw new CirFoldingException(new NullPointerException());
+                }
                 final VirtualMethodActor selectedMethod = MethodSelectionSnippet.SelectVirtualMethod.quasiFold(receiver, declaredMethod);
                 return new CirCall(getNormalContinuation(arguments), builtinOrMethod(selectedMethod, cirGenerator));
             }

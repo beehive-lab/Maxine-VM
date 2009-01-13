@@ -39,10 +39,6 @@ public abstract class CirSpecialSnippet extends CirSnippet {
         register();
     }
 
-    protected CirCall createExceptionCall(Throwable throwable, CirValue[] arguments) {
-        return CirRoutine.Static.createExceptionCall(throwable, arguments);
-    }
-
     protected CirProcedure builtinOrMethod(ClassMethodActor classMethodActor, CirGenerator cirGenerator) {
         if (classMethodActor.isBuiltin()) {
             return CirBuiltin.get(Builtin.get(classMethodActor));
