@@ -18,22 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.com.sun.max.vm.compiler.cir.optimize;
+package com.sun.max.vm.compiler.cir.optimize;
 
-import junit.framework.*;
+import java.lang.reflect.*;
 
-import com.sun.max.ide.*;
+/**
+ * A checked exception that wraps an exception thrown when
+ * {@linkplain CirFoldable#fold(CirOptimizer, com.sun.max.vm.compiler.cir.CirValue...) folding} a
+ * {@linkplain CirFoldable foldable} CIR node. In general, a foldable CIR node should be able to determine whether is
+ * will fold without an exception for a given set of arguments. However, guaranteeing this may make the test too
+ * expensive for the common case. For example, a CIR node may indicate that it is foldable if a given set of arguments
+ * are all constants even the folding may also fail if one of those arguments is null. Testing for null adds more time
+ * to the common case (e.g. the CIR node for an {@code arraylength} operation) where the arguments do not contain a null
+ * value.
+ *
+ * @author Doug Simon
+ */
+public class CirFoldingException extends InvocationTargetException {
 
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class AutoTest {
-    private AutoTest() {
-    }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AutoTest.suite());
-    }
-
-    public static Test suite() {
-        return new CirOptimizerTestSetup(new TestCaseClassSet(new Package()).addToEnd(CirOptimizerTest_max.class, CirOptimizerTest_subtype.class).toTestSuite());
+    public CirFoldingException(Throwable cause) {
+        super(cause);
     }
 }

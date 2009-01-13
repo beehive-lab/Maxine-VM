@@ -55,7 +55,7 @@ public final class CirCheckCast extends CirSpecialSnippet {
     }
 
     @Override
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         if (isConstantArgument(arguments, Parameter.classActor)) {
             final ClassActor classActor = (ClassActor) getConstantArgumentValue(arguments, Parameter.classActor).asObject();
             if (Word.class.isAssignableFrom(classActor.toJava())) {

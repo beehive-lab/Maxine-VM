@@ -45,6 +45,9 @@ public abstract class MethodSelectionSnippet extends Snippet {
          * Meta-evaluates only up to the dynamic method actor, not all the way to the target method's entry point.
          */
         public static VirtualMethodActor quasiFold(Object receiver, VirtualMethodActor declaredMethod) {
+            if (receiver == null) {
+                throw new NullPointerException();
+            }
             if (declaredMethod.isPrivate()) {
                 return declaredMethod;
             }

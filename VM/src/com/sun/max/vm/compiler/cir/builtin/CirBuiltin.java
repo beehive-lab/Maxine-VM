@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.compiler.cir.builtin;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -85,7 +83,7 @@ public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, 
         }
 
         @Override
-        public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+        public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
             if (cirOptimizer.cirGenerator().isCrossCompiling() && _builtin.isHostFoldable(withoutContinuations(arguments))) {
                 return CirRoutine.Static.fold(_builtin.hostFoldingMethodActor(), arguments);
             }
@@ -158,7 +156,7 @@ public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, 
                 try {
                     final Value result = CirRoutine.Static.evaluate(methodActor, arguments);
                     return !result.isZero();
-                } catch (InvocationTargetException invocationTargetException) {
+                } catch (CirFoldingException cirFoldingException) {
                     return false;
                 }
             }
@@ -250,7 +248,7 @@ public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, 
         return _builtin.isFoldable(withoutContinuations(arguments));
     }
 
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         return CirRoutine.Static.fold(foldingMethodActor(), arguments);
     }
 
