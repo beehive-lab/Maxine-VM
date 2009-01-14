@@ -128,7 +128,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
                         return;
                     }
 
-                    teleVM().refresh();
+                    teleVM().refresh(_epoch);
                     refreshThreads();
                     final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
                     teleVM().fireJDWPThreadEvents();
