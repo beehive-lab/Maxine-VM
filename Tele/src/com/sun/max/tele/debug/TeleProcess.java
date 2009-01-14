@@ -131,7 +131,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
                     teleVM().refresh();
                     refreshThreads();
                     final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
-                    teleVM().fireThreadEvents();
+                    teleVM().fireJDWPThreadEvents();
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
 
                     for (TeleNativeThread thread : teleProcess().threads()) {
