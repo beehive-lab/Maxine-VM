@@ -84,21 +84,21 @@ public final class TeleHeapManager extends TeleVMHolder {
     /**
      * Lazy initialization; try to keep data reading out of constructor.
      */
-    public void initialize() {
-        Trace.begin(1, tracePrefix() + " initializing");
+    public void initialize(long processEpoch) {
+        Trace.begin(1, tracePrefix() + "initializing");
         final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
         _teleBootHeapRegion = (TeleRuntimeMemoryRegion) TeleObject.make(teleVM(), bootHeapRegionReference);
-        refresh();
-        Trace.end(1, tracePrefix() + " initializing");
+        refresh(processEpoch);
+        Trace.end(1, tracePrefix() + "initializing");
     }
 
     private boolean _updatingHeapMemoryRegions = false;
 
     /**
      * Updates local cache of information about dynamically allocated heap regions in the {@link TeleVM}.
-     * During this update, calls to check heap containment are handled specially.
+     * During this update, any method calls to check heap containment are handled specially.
      */
-    public void refresh() {
+    public void refresh(long processEpoch) {
         if (isInitialized()) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
             final long startTimeMillis = System.currentTimeMillis();
