@@ -893,8 +893,9 @@ public abstract class TeleVM {
 
     /**
      * Updates all cached information about the state of the running VM.
+     *
      */
-    public synchronized void refresh() {
+    public synchronized void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, _refreshTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (_teleClassRegistry == null) {
@@ -904,12 +905,13 @@ public abstract class TeleVM {
             _teleClassRegistry = new TeleClassRegistry(this);
             // Can only fully initialize the {@link TeleHeapManager} once
             // the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
-            _teleHeapManager.initialize();
+            _teleHeapManager.initialize(processEpoch);
         }
         refreshReferences();
         if (areReferencesValid()) {
-            _teleHeapManager.refresh();
-            _teleClassRegistry.refresh();
+            _teleHeapManager.refresh(processEpoch);
+            _teleClassRegistry.refresh(processEpoch);
+            TeleObject.staticRefresh(processEpoch);
         }
         Trace.end(TRACE_VALUE, _refreshTracer, startTimeMillis);
     }

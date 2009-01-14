@@ -55,7 +55,7 @@ public class TeleClassRegistry extends TeleVMHolder {
 
     private static final Logger LOGGER = Logger.getLogger(TeleClassRegistry.class.getName());
 
-    private static final int TRACE_VALUE = 3;
+    private static final int TRACE_VALUE = 2;
 
     // TODO (mlvdv)  Generalize to map either  (TypeDescriptor, ClassLoader) -> ClassActor Reference *or*  TypeDescriptor -> ClassActor Reference*
     private final Map<TypeDescriptor, Reference> _typeDescriptorToClassActorReference = new HashMap<TypeDescriptor, Reference>();
@@ -151,7 +151,7 @@ public class TeleClassRegistry extends TeleVMHolder {
     /**
      * Adds information to the registry about any newly loaded classes in the {@link TeleVM}.
      */
-    public void refresh() {
+    public void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, tracePrefix() + "refreshing");
         final long startTimeMillis = System.currentTimeMillis();
         final Reference teleClassInfoStaticTupleReference = teleVM().fields().TeleClassInfo_classActorCount.staticTupleReference(teleVM());
@@ -165,9 +165,8 @@ public class TeleClassRegistry extends TeleVMHolder {
             addToRegistry(classActorReference);
             index++;
         }
-        Trace.line(TRACE_VALUE, tracePrefix() + " refreshed: static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount));
         _dynamicallyLoadedClassCount = remoteLoadedClassCount;
-        Trace.end(TRACE_VALUE, tracePrefix() + "refreshing", startTimeMillis);
+        Trace.end(TRACE_VALUE, tracePrefix() + "refreshing:  static=" + _preLoadedClassCount + ", dynamic=" + remoteLoadedClassCount + ", new=" + (remoteLoadedClassCount - _dynamicallyLoadedClassCount), startTimeMillis);
     }
 
     /**

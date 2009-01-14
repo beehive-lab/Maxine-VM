@@ -51,7 +51,7 @@ public abstract class TeleVMHolder {
 
     protected TeleVMHolder(TeleVM teleVM) {
         _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "]";
+        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
 }
