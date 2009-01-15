@@ -26,7 +26,6 @@ import java.util.*;
 
 import sun.misc.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
