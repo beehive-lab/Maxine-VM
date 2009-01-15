@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler;
 
 import com.sun.max.*;
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -35,7 +34,6 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.trampoline.*;
@@ -146,11 +144,4 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
     public boolean isBuiltinImplemented(Builtin builtin) {
         return true;
     }
-
-    @Override
-    @INLINE(override = true)
-    public void fakeCall(Address returnAddress) {
-        FatalError.unexpected("must be implemented");
-    }
-
 }

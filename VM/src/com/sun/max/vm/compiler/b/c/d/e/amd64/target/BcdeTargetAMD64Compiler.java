@@ -398,18 +398,4 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     public StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable) {
         return new StackUnwindingContext(throwable);
     }
-
-    /**
-     * Inserts one slot between the current frame (which lacks a return address) and the parent frame.
-     * Puts the given return address into that slot.
-     * This "completes" a trap stub frame.
-     */
-    @INLINE
-    @Override
-    public void fakeCall(Address returnAddress) {
-        final Pointer stackPointer = VMRegister.getAbiFramePointer().minusWords(1);
-        VMRegister.setAbiFramePointer(stackPointer);
-        final Pointer returnAddressPointer = stackPointer.plus(Current.targetMethod().frameSize());
-        returnAddressPointer.setWord(returnAddress);
-    }
 }

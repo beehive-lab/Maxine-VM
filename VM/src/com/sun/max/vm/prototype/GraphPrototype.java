@@ -207,7 +207,6 @@ public class GraphPrototype extends Prototype {
         Class c = javaClass;
         do {
             for (Field field : c.getDeclaredFields()) {
-                HackJDK.checkForUnknownTransientField(field);
                 if (!isStatic(field) && isReferenceField(field) && !HackJDK.isOmittedField(field) && !MaxineVM.isPrototypeOnly(field)) {
                     field.setAccessible(true);
                     dynamicReferenceFields.append(field);

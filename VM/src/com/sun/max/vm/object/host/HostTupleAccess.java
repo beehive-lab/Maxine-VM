@@ -74,7 +74,6 @@ public final class HostTupleAccess {
             }
             try {
                 final Field field = fieldActor.holder().toJava().getDeclaredField(fieldActor.name().toString());
-                HackJDK.checkForUnknownTransientField(field);
                 if (!HackJDK.isOmittedField(field)) {
                     field.setAccessible(true);
                     try {

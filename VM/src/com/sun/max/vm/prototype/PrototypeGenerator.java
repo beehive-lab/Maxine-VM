@@ -235,7 +235,6 @@ public final class PrototypeGenerator {
      * @return the final graph prototype of the VM
      */
     public GraphPrototype createGraphPrototype(final boolean tree) {
-        HackJDK.checkVMFlags();
         final JavaPrototype javaPrototype = createJavaPrototype(true);
         try {
             javaPrototype.loadCoreJavaPackages();
