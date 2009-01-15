@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.prototype;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -53,9 +52,4 @@ public class PrototypeCompilerScheme extends AbstractCompiler {
     public boolean areSnippetsCompiled() {
         return true;
     }
-
-    @Override
-    public void fakeCall(Address returnAddress) {
-    }
-
 }
