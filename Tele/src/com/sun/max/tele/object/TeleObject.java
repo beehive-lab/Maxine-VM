@@ -46,15 +46,24 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Canonical surrogate for a heap object in the tele VM.
+ * Canonical surrogate for a heap object in the {@link TeleVM}.
  *
- * This class and its subclasses play the role of typed wrappers for References to heap objects in the tele VM,
+ * This class and its subclasses play the role of typed wrappers for References to heap objects in the {@link TeleVM},
  * encapsulating implementation details for working with those objects remotely.
  *
  * @author Michael Van De Vanter
  */
 public abstract class TeleObject extends TeleVMHolder implements ObjectProvider {
 
+    private static final int TRACE_VALUE = 2;
+
+    private static String staticTracePrefix() {
+        return "[TeleObject] ";
+    }
+
+    /**
+     * Controls tracing for object copying.
+     */
     protected static final int COPY_TRACE_VALUE = 4;
 
     /**
@@ -76,12 +85,12 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
      *
      * Returns null for the distinguished zero {@link Reference}.
      *
-     * Care is taken to avoid I/O with the tele VM during synchronized
+     * Care is taken to avoid I/O with the {@link TeleVM} during synchronized
      * access to the canonicalization map.  There is a small exception
      * to this for {@link TeleTargetMethod}.
      *
      * @param teleVM the tele VM in which the object resides
-     * @param reference a Java object in the tele VM
+     * @param reference a Java object in the {@link TeleVM}
      * @return canonical local surrogate for the object
      */
     public static TeleObject make(TeleVM teleVM, Reference reference) {
@@ -96,7 +105,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
         if (teleObject != null) {
             return teleObject;
         }
-        // Keep all the tele VM traffic outside of synchronization.
+        // Keep all the {@link TeleVM} traffic outside of synchronization.
         if (!teleVM.isValidOrigin(reference.toOrigin())) {
             return null;
         }
@@ -304,12 +313,36 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
         return _oidToTeleObject.get(id);
     }
 
+    private static int _lastTeleObjectCount = 0;
+
+    // TODO (mlvdv)  probably need a non-static manager class to get rid of some of the non-uniformity here.
+    public static void staticRefresh(long processEpoch) {
+        Trace.begin(TRACE_VALUE, staticTracePrefix() + "refreshing");
+        final long startTimeMillis = System.currentTimeMillis();
+        for (TeleObject teleObject : _referenceToTeleObject.values()) {
+            teleObject.refresh(processEpoch);
+        }
+        final int currentTeleObjectCount = _referenceToTeleObject.length();
+        final StringBuilder sb = new StringBuilder(100);
+        sb.append(staticTracePrefix());
+        sb.append("refreshing, count=").append(Integer.toString(currentTeleObjectCount));
+        final int newCount = currentTeleObjectCount - _lastTeleObjectCount;
+        if (newCount > 0) {
+            sb.append("  new=" + newCount);
+        }
+        Trace.end(TRACE_VALUE, staticTracePrefix() + sb.toString(), startTimeMillis);
+        _lastTeleObjectCount = currentTeleObjectCount;
+    }
+
     // The static factory method ensures synchronized TeleObjects creation
     protected TeleObject(TeleVM teleVM, Reference reference) {
         super(teleVM);
         _reference = (TeleReference) reference;
         _oid = _reference.makeOID();
         _referenceToTeleObject.put(reference, this);
+    }
+
+    protected void refresh(long processEpoch) {
     }
 
     private final TeleReference _reference;
@@ -322,7 +355,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     }
 
     /**
-     * @return current absolute location of the beginning of the object's memory allocation in the tele VM,
+     * @return current absolute location of the beginning of the object's memory allocation in the {@link TeleVM},
      * subject to relocation by GC.
      */
     public Pointer getCurrentCell() {
@@ -330,7 +363,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     }
 
     /**
-     * @return the current size of memory allocated for the object in the tele VM.
+     * @return the current size of memory allocated for the object in the {@link TeleVM}.
      */
     public Size getCurrentSize() {
         return classActorForType().dynamicTupleSize();
@@ -338,7 +371,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
 
     /**
      * @return current absolute location of the object's origin (not necessarily beginning of memory)
-     *  in the tele VM, subject to relocation by GC
+     *  in the {@link TeleVM}, subject to relocation by GC
      */
     public Pointer getCurrentOrigin() {
         return _reference.toOrigin();
@@ -347,7 +380,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     private final long _oid;
 
     /**
-     * @return a number that uniquely identifies this object in the tele VM for the duration of the inspection
+     * @return a number that uniquely identifies this object in the {@link TeleVM} for the duration of the inspection
      */
     public long getOID() {
         return _oid;
@@ -396,7 +429,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
 
     /**
      * @return local {@link ClassActor}, equivalent to the one in the teleVM that describes the type
-     * of this object in the tele VM.
+     * of this object in the {@link TeleVM}.
      * Note that in the singular instance of {@link StaticTuple} this does not correspond to the actual type of the
      * object, which is an exceptional Maxine object that has no ordinary Java type; it returns in this case
      * the type of the class that the tuple helps implement.
@@ -406,7 +439,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     }
 
     /**
-     * return local surrogate for the{@link ClassMethodActor} associated with this object in the tele VM, either
+     * return local surrogate for the{@link ClassMethodActor} associated with this object in the {@link TeleVM}, either
      * because it is a {@link ClassMethodActor} or because it is a class closely associated with a method that refers to
      * a {@link ClassMethodActor}. Null otherwise.
      */
@@ -416,8 +449,8 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
 
     /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that
-     *            describes a field in this object in the tele VM
-     * @return contents of the designated field in this object in the tele VM
+     *            describes a field in this object in the {@link TeleVM}
+     * @return contents of the designated field in this object in the {@link TeleVM}
      */
     public abstract Value readFieldValue(FieldActor fieldActor);
 
@@ -536,9 +569,9 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     }
 
     /**
-     * Updates the field of an object or class from the tele VM.
+     * Updates the field of an object or class from the {@link TeleVM}.
      *
-     * @param teleObject surrogate for a tuple in the tele VM. This will be a static tuple if the field is static.
+     * @param teleObject surrogate for a tuple in the {@link TeleVM}. This will be a static tuple if the field is static.
      * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
      * @param fieldActor the field to be copied/updated
      */
@@ -573,7 +606,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     }
 
     /**
-     * Updates the static fields of a specified local class from the tele VM.
+     * Updates the static fields of a specified local class from the {@link TeleVM}.
      */
     public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);

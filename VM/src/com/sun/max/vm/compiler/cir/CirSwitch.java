@@ -131,7 +131,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
         visitor.visitSwitch(this);
     }
 
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         final CirConstant tag = (CirConstant) arguments[0];
         final Value tagValue = _comparisonKind.convert(tag.toStackValue());
         final int n = numberOfMatches();

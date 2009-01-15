@@ -26,6 +26,7 @@ import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -172,7 +173,11 @@ public class BirToCirTranslator extends CirGenerator {
         final CirVariableFactory variableFactory = new CirVariableFactory();
         final CirClosure cirClosure = new CirClosure(null);
         cirClosure.setParameters(variableFactory.normalContinuationParameter(), variableFactory.exceptionContinuationParameter());
-        cirClosure.setBody(CirRoutine.Static.fold(cirMethod, cirClosure.parameters()));
+        try {
+            cirClosure.setBody(CirRoutine.Static.fold(cirMethod, cirClosure.parameters()));
+        } catch (CirFoldingException cirFoldingException) {
+            throw ProgramError.unexpected("Error while folding " + cirMethod.classMethodActor(), cirFoldingException);
+        }
         cirMethod.setGenerated(cirClosure);
     }
 

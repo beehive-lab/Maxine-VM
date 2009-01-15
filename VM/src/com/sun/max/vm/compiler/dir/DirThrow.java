@@ -24,7 +24,7 @@ import com.sun.max.vm.compiler.dir.transform.*;
 
 /**
  * Explicit exception throwing.
- * 
+ *
  * @author Hiroshi Yamauchi
  * @author Bernd Mathiske
  */
@@ -33,7 +33,6 @@ public class DirThrow extends DirInstruction {
     final DirValue _throwable;
 
     public DirThrow(DirValue throwable) {
-        super();
         _throwable = throwable;
     }
 

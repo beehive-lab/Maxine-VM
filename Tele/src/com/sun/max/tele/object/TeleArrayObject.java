@@ -126,7 +126,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     @Override
     public VMValue getValue(int i) {
-        return teleVM().convertToVirtualMachineValue(readElementValue(i));
+        return teleVM().maxineValueToJDWPValue(readElementValue(i));
     }
 
     @Override

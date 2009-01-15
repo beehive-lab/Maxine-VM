@@ -72,7 +72,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TeleVM implements VMAccess {
+public abstract class TeleVM {
 
     private static final int TRACE_VALUE = 2;
 
@@ -198,12 +198,28 @@ public abstract class TeleVM implements VMAccess {
 
     private static final Logger LOGGER = Logger.getLogger(TeleVM.class.getName());
 
-    private TeleNativeThread _registeredSingleStepThread;
-    private TeleNativeThread _registeredStepOutThread;
 
-    // Factory for creating fake object providers that represent Java objects
-    // living in the JDWP server.
-    private JavaProviderFactory _javaProviderFactory;
+    /**
+     * An object that delays evaluation of a trace message for controller actions.
+     */
+    private class Tracer {
+
+        private final String _message;
+
+        /**
+         * An object that delays evaluation of a trace message.
+         * @param message identifies what is being traced
+         */
+        public Tracer(String message) {
+            _message = message;
+        }
+
+        @Override
+        public String toString() {
+            return tracePrefix() + _message;
+        }
+    }
+
 
     private static VMPackage getInspectorGripPackage(VMPackage gripPackage) {
         final MaxPackage vmGripRootPackage = new com.sun.max.vm.grip.Package();
@@ -337,8 +353,11 @@ public abstract class TeleVM implements VMAccess {
 
         _teleHeapManager = TeleHeapManager.make(this);
 
-        _teleProcess.addStateListener(_model);
-        _javaProviderFactory = new JavaProviderFactory(this, null);
+        // Provide access to JDWP server
+        _jdwpAccess = new VMAccessImpl();
+        _teleProcess.addStateListener(_jdwpStateModel);
+        _javaThreadGroupProvider = new ThreadGroupProviderImpl(this, true);
+        _nativeThreadGroupProvider = new ThreadGroupProviderImpl(this, false);
 
         final TeleGripScheme teleGripScheme = (TeleGripScheme) _vm.configuration().gripScheme();
         teleGripScheme.setTeleVM(this);
@@ -870,21 +889,13 @@ public abstract class TeleVM implements VMAccess {
         Trace.end(TRACE_VALUE, _refreshReferencesTracer, startTimeMillis);
     }
 
-    public void fireThreadEvents() {
-        for (TeleNativeThread thread : _teleProcess.deadThreads()) {
-            fireThreadDiedEvent(thread);
-        }
-        for (TeleNativeThread thread : _teleProcess.startedThreads()) {
-            fireThreadStartedEvent(thread);
-        }
-    }
-
     private final Tracer _refreshTracer = new Tracer("refresh");
 
     /**
      * Updates all cached information about the state of the running VM.
+     *
      */
-    public synchronized void refresh() {
+    public synchronized void refresh(long processEpoch) {
         Trace.begin(TRACE_VALUE, _refreshTracer);
         final long startTimeMillis = System.currentTimeMillis();
         if (_teleClassRegistry == null) {
@@ -894,12 +905,13 @@ public abstract class TeleVM implements VMAccess {
             _teleClassRegistry = new TeleClassRegistry(this);
             // Can only fully initialize the {@link TeleHeapManager} once
             // the {@TeleClassRegistry} is fully initialized, otherwise there's a cycle.
-            _teleHeapManager.initialize();
+            _teleHeapManager.initialize(processEpoch);
         }
         refreshReferences();
         if (areReferencesValid()) {
-            _teleHeapManager.refresh();
-            _teleClassRegistry.refresh();
+            _teleHeapManager.refresh(processEpoch);
+            _teleClassRegistry.refresh(processEpoch);
+            TeleObject.staticRefresh(processEpoch);
         }
         Trace.end(TRACE_VALUE, _refreshTracer, startTimeMillis);
     }
@@ -939,208 +951,112 @@ public abstract class TeleVM implements VMAccess {
         return _bytecodeBreakpointFactory;
     }
 
-    @Override
-    public StringProvider createString(String s) {
-        final VMValue value = createJavaObjectValue(s, String.class);
-        assert value.asProvider() != null : "Must be a provider value object";
-        assert value.asProvider() instanceof StringProvider : "Must be a String provider object";
-        return (StringProvider) value.asProvider();
+    //
+    // Code from here to end of file supports the Maxine JDWP server
+    //
+
+   /**
+     * Provides access to the {@linkTeleVM} from a JDWP server.
+     */
+    private final VMAccess _jdwpAccess;
+
+    /**
+     * @return access to the {@link TeleVM} for the JDWP server.
+     * @see com.sun.max.jdwp.maxine.Main
+     */
+    public final VMAccess vmAccess() {
+        return _jdwpAccess;
     }
 
-    @Override
-    public void dispose() {
-        // TODO: Consider implementing disposal of the VM when told so by a JDWP
-        // command.
-        LOGGER.warning("Asked to DISPOSE VM, doing nothing");
+    public void fireJDWPThreadEvents() {
+        for (TeleNativeThread thread : _teleProcess.deadThreads()) {
+            fireJDWPThreadDiedEvent(thread);
+        }
+        for (TeleNativeThread thread : _teleProcess.startedThreads()) {
+            fireJDWPThreadStartedEvent(thread);
+        }
     }
 
-    @Override
-    public void exit(int code) {
-        // TODO: Consider implementing exiting the VM when told so by a JDWP
-        // command.
-        LOGGER.warning("Asked to EXIT VM, doing nothing");
+    private final VariableSequence<VMListener> _jdwpListeners = new ArrayListSequence<VMListener>();
+
+    /**
+     * Informs all JDWP listeners that the VM died.
+     */
+    private void fireJDWPVMDiedEvent() {
+        LOGGER.info("VM EVENT: VM died");
+        for (VMListener listener : _jdwpListeners) {
+            listener.vmDied();
+        }
     }
 
     /**
-     * Tries to find a JDWP ObjectProvider that represents the object that is
-     * referenced by the parameter.
+     * Informs all JDWP listeners that a single step has been completed.
      *
-     * @param reference
-     *            a reference to the object that should be represented as a JDWP
-     *            ObjectProvider
-     * @return a JDWP ObjectProvider object or null, if no object is found at
-     *         the address specified by the reference
+     * @param thread the thread that did the single step
+     * @param location the code location onto which the thread just stepped
      */
-    private ObjectProvider findObject(Reference reference) {
-        if (isValidOrigin(reference.toOrigin())) {
-            return TeleObject.make(this, reference);
-        }
-        return null;
-    }
-
-    @Override
-    public ReferenceTypeProvider[] getAllReferenceTypes() {
-        return _teleClassRegistry.teleClassActors();
-    }
-
-    @Override
-    public ThreadProvider[] getAllThreads() {
-        final ThreadProvider[] threadProviders = new ThreadProvider[allThreads().length()];
-        return Iterables.toCollection(allThreads()).toArray(threadProviders);
-    }
-
-    @Override
-    public ReferenceTypeProvider[] getReferenceTypesBySignature(String signature) {
-
-        // Always fake the Object type. This means that calls to all methods of
-        // the Object class will be reflectively delegated to the Object class
-        // that lives
-        // on the Tele side not to the Object class in the VM.
-        if (signature.equals("Ljava/lang/Object;")) {
-            return new ReferenceTypeProvider[] {getReferenceType(Object.class)};
-        }
-
-        // Try to find a matching class actor that lives within the VM based on
-        // the signature.
-        final AppendableSequence<ReferenceTypeProvider> result = new LinkSequence<ReferenceTypeProvider>();
-        for (TypeDescriptor td : _teleClassRegistry.typeDescriptors()) {
-            if (td.toString().equals(signature)) {
-                final TeleClassActor tca = _teleClassRegistry.findTeleClassActorByType(td);
-
-                // Do not include array types, there should always be faked in
-                // order to be able to call newInstance on them. Arrays that are
-                // created this way then do
-                // not really live within the VM, but on the JDWP server side.
-                if (!(tca instanceof TeleArrayClassActor)) {
-                    result.append(tca);
-                }
-            }
-        }
-
-        // If no class living in the VM was found, try to lookup Java class
-        // known to the JDWP server. If such a class is found, then a JDWP
-        // reference type is faked for it.
-        if (result.length() == 0) {
-            try {
-                final Class klass = JavaTypeDescriptor.resolveToJavaClass(
-                        JavaTypeDescriptor.parseTypeDescriptor(signature), getClass().getClassLoader());
-                result.append(_javaProviderFactory.getReferenceTypeProvider(klass));
-            } catch (NoClassDefFoundError e) {
-                LOGGER.log(Level.SEVERE,
-                        "Error while looking up class based on signature", e);
-            }
-        }
-
-        return Sequence.Static.toArray(result, ReferenceTypeProvider.class);
-    }
-
-    @Override
-    public void resume() {
-
-        if (teleProcess().state() == TeleProcess.State.STOPPED) {
-
-            if (_registeredSingleStepThread != null) {
-
-                // There has been a thread registered for performing a single
-                // step => perform single step instead of resume.
-                try {
-                    LOGGER.info("Doing single step instead of resume!");
-                    teleProcess().controller().singleStep(
-                            _registeredSingleStepThread, false);
-                } catch (OSExecutionRequestException e) {
-                    LOGGER.log(
-                                    Level.SEVERE,
-                                    "Unexpected error while performing a single step in the VM",
-                                    e);
-                } catch (InvalidProcessRequestException e) {
-                    LOGGER.log(
-                                    Level.SEVERE,
-                                    "Unexpected error while performing a single step in the VM",
-                                    e);
-                }
-
-                _registeredSingleStepThread = null;
-
-            } else if (_registeredStepOutThread != null
-                    && _registeredStepOutThread.getReturnAddress() != null) {
-
-                // There has been a thread registered for performing a step out
-                // => perform a step out instead of resume.
-                final Address returnAddress = _registeredStepOutThread.getReturnAddress();
-                assert returnAddress != null;
-                try {
-                    teleProcess().controller().runToInstruction(returnAddress,
-                            false, true);
-                } catch (OSExecutionRequestException e) {
-                    LOGGER.log(
-                                    Level.SEVERE,
-                                    "Unexpected error while performing a run-to-instruction in the VM",
-                                    e);
-                } catch (InvalidProcessRequestException e) {
-                    LOGGER.log(
-                                    Level.SEVERE,
-                                    "Unexpected error while performing a run-to-instruction in the VM",
-                                    e);
-                }
-
-                _registeredStepOutThread = null;
-
-            } else {
-
-                // Nobody registered for special commands => resume the Vm.
-                try {
-                    LOGGER.info("Client tried to resume the VM!");
-                    teleProcess().controller().resume(false, false);
-                } catch (OSExecutionRequestException e) {
-                    LOGGER.log(Level.SEVERE,
-                            "Unexpected error while resuming the VM", e);
-                } catch (InvalidProcessRequestException e) {
-                    LOGGER.log(Level.SEVERE,
-                            "Unexpected error while resuming the VM", e);
-                }
-            }
-        } else {
-            LOGGER.severe("Client tried to resume the VM, but tele process is not in stopped state!");
+    private void fireJDWPSingleStepEvent(ThreadProvider thread, CodeLocation location) {
+        LOGGER.info("VM EVENT: Single step was made at thread " + thread
+                + " to location " + location);
+        for (VMListener listener : _jdwpListeners) {
+            listener.singleStepMade(thread, location);
         }
     }
 
-    @Override
-    public void suspend() {
-
-        if (teleProcess().state() == TeleProcess.State.RUNNING) {
-            LOGGER.info("Pausing VM...");
-            try {
-                teleProcess().controller().pause();
-            } catch (OSExecutionRequestException e) {
-                LOGGER.log(Level.SEVERE,
-                        "Unexpected error while pausing the VM", e);
-            } catch (InvalidProcessRequestException e) {
-                LOGGER.log(Level.SEVERE,
-                        "Unexpected error while pausing the VM", e);
-            }
-        } else {
-            LOGGER.warning("Suspend called while VM not running!");
+    /**
+     * Informs all JDWP listeners that a breakpoint has been hit.
+     *
+     * @param thread the thread that hit the breakpoint
+     * @param location the code location at which the breakpoint was hit
+     */
+    private void fireJDWPBreakpointEvent(ThreadProvider thread, CodeLocation location) {
+        LOGGER.info("VM EVENT: Breakpoint hit at thread " + thread
+                + " at location " + location);
+        for (VMListener listener : _jdwpListeners) {
+            listener.breakpointHit(thread, location);
         }
     }
 
-    private Set<CodeLocation> _locations = new HashSet<CodeLocation>();
+    /**
+     * Informs all JDWP listeners that a thread has started.
+     *
+     * @param thread the thread that has started
+     */
+    private void fireJDWPThreadStartedEvent(ThreadProvider thread) {
+        LOGGER.info("VM EVENT: Thread started: " + thread);
+        for (VMListener listener : _jdwpListeners) {
+            listener.threadStarted(thread);
+        }
+    }
 
-    private StateTransitionListener _model = new StateTransitionListener() {
+    /**
+     * Informs all JDWP listeners that a thread has died.
+     *
+     * @param thread the thread that has died
+     */
+    private void fireJDWPThreadDiedEvent(ThreadProvider thread) {
+        LOGGER.info("VM EVENT: Thread died: " + thread);
+        for (VMListener listener : _jdwpListeners) {
+            listener.threadDied(thread);
+        }
+    }
+
+    private StateTransitionListener _jdwpStateModel = new StateTransitionListener() {
 
         public void handleStateTransition(StateTransitionEvent event) {
             Trace.begin(TRACE_VALUE, tracePrefix() + "handling " + event);
             switch(event.newState()) {
                 case TERMINATED:
-                    fireVMDiedEvent();
+                    fireJDWPVMDiedEvent();
                     break;
                 case STOPPED:
-                    if (!_listeners.isEmpty()) {
+                    if (!_jdwpListeners.isEmpty()) {
                         final Sequence<TeleNativeThread> breakpointThreads = event.breakpointThreads();
-                        for (TeleNativeThread t : breakpointThreads) {
-                            fireBreakpointEvent(t, t.getFrames()[0].getLocation());
+                        for (TeleNativeThread teleNativeThread : breakpointThreads) {
+                            fireJDWPBreakpointEvent(teleNativeThread, teleNativeThread.getFrames()[0].getLocation());
                         }
                         if (event.singleStepThread() != null) {
-                            fireSingleStepEvent(event.singleStepThread(), event.singleStepThread().getFrames()[0].getLocation());
+                            fireJDWPSingleStepEvent(event.singleStepThread(), event.singleStepThread().getFrames()[0].getLocation());
                         }
                     }
                     break;
@@ -1151,194 +1067,6 @@ public abstract class TeleVM implements VMAccess {
             Trace.end(TRACE_VALUE, tracePrefix() + "handling " + event);
         }
     };
-
-    private VariableSequence<VMListener> _listeners = new ArrayListSequence<VMListener>();
-
-    /**
-     * Informs all listeners that the VM died.
-     */
-    private void fireVMDiedEvent() {
-        LOGGER.info("VM EVENT: VM died");
-        for (VMListener l : _listeners) {
-            l.vmDied();
-        }
-    }
-
-    /**
-     * Informs all listeners that a single step has been completed.
-     *
-     * @param thread the thread that did the single step
-     * @param location the code location onto which the thread just stepped
-     */
-    private void fireSingleStepEvent(ThreadProvider thread,
-            CodeLocation location) {
-        LOGGER.info("VM EVENT: Single step was made at thread " + thread
-                + " to location " + location);
-        for (VMListener l : _listeners) {
-            l.singleStepMade(thread, location);
-        }
-    }
-
-    /**
-     * Informs all listeners that a breakpoint has been hit.
-     *
-     * @param thread the thread that hit the breakpoint
-     * @param location the code location at which the breakpoint was hit
-     */
-    private void fireBreakpointEvent(ThreadProvider thread,
-            CodeLocation location) {
-        LOGGER.info("VM EVENT: Breakpoint hit at thread " + thread
-                + " at location " + location);
-        for (VMListener l : _listeners) {
-            l.breakpointHit(thread, location);
-        }
-    }
-
-    /**
-     * Informs all listeners that a thread has started.
-     *
-     * @param thread the thread that has started
-     */
-    private void fireThreadStartedEvent(ThreadProvider thread) {
-        LOGGER.info("VM EVENT: Thread started: " + thread);
-        for (VMListener l : _listeners) {
-            l.threadStarted(thread);
-        }
-    }
-
-    /**
-     * Informs all listeners that a thread has died.
-     *
-     * @param thread the thread that has died
-     */
-    private void fireThreadDiedEvent(ThreadProvider thread) {
-        LOGGER.info("VM EVENT: Thread died: " + thread);
-        for (VMListener l : _listeners) {
-            l.threadDied(thread);
-        }
-
-    }
-
-    @Override
-    public void addListener(VMListener l) {
-        _listeners.append(l);
-    }
-
-    @Override
-    public void removeListener(VMListener l) {
-        _listeners.remove(Sequence.Static.indexOfIdentical(_listeners, l));
-    }
-
-    /**
-     * Sets a breakpoint at the specified code location. This function currently has the following severe limitations:
-     * Always sets the breakpoint at the call entry point of a method. Does ignore the suspendAll parameter, there will
-     * always be all threads suspended when the breakpoint is hit.
-     *
-     * TODO: Fix the limitations for breakpoints.
-     *
-     * @param codeLocation specifies the code location at which the breakpoint should be set
-     * @param suspendAll if true, all threads should be suspended when the breakpoint is hit
-     */
-    @Override
-    public void addBreakpoint(CodeLocation codeLocation, boolean suspendAll) {
-
-        // For now ignore duplicates
-        if (_locations.contains(codeLocation)) {
-            return;
-        }
-
-        assert codeLocation.method() instanceof TeleClassMethodActor : "Only tele method actors allowed here";
-
-        assert !_locations.contains(codeLocation);
-        _locations.add(codeLocation);
-        assert _locations.contains(codeLocation);
-        final TeleClassMethodActor tma = (TeleClassMethodActor) codeLocation.method();
-        teleProcess().targetBreakpointFactory().makeBreakpoint(
-                tma.getCurrentJavaTargetMethod().callEntryPoint(), false);
-        Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + tma.getCurrentJavaTargetMethod().callEntryPoint());
-    }
-
-    @Override
-    public void removeBreakpoint(CodeLocation l) {
-        final TeleClassMethodActor tma = (TeleClassMethodActor) l.method();
-        teleProcess().targetBreakpointFactory().removeBreakpointAt(
-                tma.getCurrentJavaTargetMethod().callEntryPoint());
-        assert _locations.contains(l);
-        _locations.remove(l);
-        assert !_locations.contains(l);
-    }
-
-    private final ThreadGroupProvider _javaThreads = new ThreadGroupProviderImpl(
-            true);
-    private final ThreadGroupProvider _nativeThreads = new ThreadGroupProviderImpl(
-            false);
-
-    /**
-     * Class representing a thread group used for logical grouping in the JDWP
-     * protocol. Currently we only distinguish between Java and native threads.
-     */
-    private class ThreadGroupProviderImpl implements ThreadGroupProvider {
-
-        private final boolean _containsJavaThreads;
-
-        public ThreadGroupProviderImpl(boolean b) {
-            _containsJavaThreads = b;
-        }
-
-        @Override
-        public String getName() {
-            return _containsJavaThreads ? "Java Threads" : "Native Threads";
-        }
-
-        @Override
-        public ThreadGroupProvider getParent() {
-            return null;
-        }
-
-        @Override
-        public ThreadProvider[] getThreadChildren() {
-            final AppendableSequence<ThreadProvider> result = new LinkSequence<ThreadProvider>();
-            for (TeleNativeThread t : allThreads()) {
-                if (t.isJava() == _containsJavaThreads) {
-                    result.append(t);
-                }
-            }
-
-            return Sequence.Static.toArray(result, ThreadProvider.class);
-        }
-
-        @Override
-        public ThreadGroupProvider[] getThreadGroupChildren() {
-            return new ThreadGroupProvider[0];
-        }
-
-        @Override
-        public ReferenceTypeProvider getReferenceType() {
-            assert false : "No reference type for thread groups available!";
-            return null;
-        }
-
-    };
-
-    /**
-     * @return Thread group that should be used to logically group Java threads.
-     */
-    public ThreadGroupProvider javaThreads() {
-        return _javaThreads;
-    }
-
-    /**
-     * @return Thread group that should be used to logically group native
-     *         threads.
-     */
-    public ThreadGroupProvider nativeThreads() {
-        return _nativeThreads;
-    }
-
-    @Override
-    public ThreadGroupProvider[] getThreadGroups() {
-        return new ThreadGroupProvider[] {_javaThreads, _nativeThreads};
-    }
 
     /**
      * Reads a value of a certain kind from the Maxine VM process.
@@ -1378,136 +1106,64 @@ public abstract class TeleVM implements VMAccess {
     }
 
     /**
-     * Converts a value as seen by the Maxine VM to a value as seen by the JDWP
-     * server.
+     * Tries to find a JDWP ObjectProvider that represents the object that is
+     * referenced by the parameter.
      *
-     * @param value
-     *            the value as seen by the Maxine VM
-     * @return the value as seen by the JDWP server
+     * @param reference
+     *            a reference to the object that should be represented as a JDWP
+     *            ObjectProvider
+     * @return a JDWP ObjectProvider object or null, if no object is found at
+     *         the address specified by the reference
      */
-    public VMValue convertToVirtualMachineValue(Value value) {
-        switch (value.kind().asEnum()) {
-            case BOOLEAN:
-                return createBooleanValue(value.asBoolean());
-            case BYTE:
-                return createByteValue(value.asByte());
-            case CHAR:
-                return createCharValue(value.asChar());
-            case DOUBLE:
-                return createDoubleValue(value.asDouble());
-            case FLOAT:
-                return createFloatValue(value.asFloat());
-            case INT:
-                return createIntValue(value.asInt());
-            case LONG:
-                return createLongValue(value.asLong());
-            case REFERENCE:
-                return createObjectProviderValue(findObject(value.asReference()));
-            case SHORT:
-                return createShortValue(value.asShort());
-            case VOID:
-                return getVoidValue();
-            case WORD:
-                final Word word = value.asWord();
-                LOGGER.warning("Tried to convert a word, this is not implemented yet! (word="
-                            + word + ")");
-                return getVoidValue();
+    private ObjectProvider findObject(Reference reference) {
+        if (isValidOrigin(reference.toOrigin())) {
+            return TeleObject.make(this, reference);
+        }
+        return null;
+    }
+
+    public TeleTargetRoutine findTeleTargetRoutine(Address address) {
+        // No routine can start at 0
+        if (address.isZero()) {
+            return null;
         }
 
-        throw new IllegalArgumentException("Unkown kind: " + value.kind());
+        TeleTargetRoutine result = teleCodeRegistry().get(
+                TeleTargetRoutine.class, address);
+        if (result == null) {
+            LOGGER.info("No target method found for address " + address
+                    + ", trying to create new one");
+            result = TeleTargetMethod.make(this, address);
+        }
+        return result;
     }
+
+    private final ThreadGroupProvider _javaThreadGroupProvider;
 
     /**
-     * Converts a JDWP value object to a Maxine value object.
-     *
-     * @param vmValue
-     *            the value as seen by the JDWP server
-     * @return a newly created value as seen by the Maxine VM
+     * @return Thread group that should be used to logically group Java threads in the {@link TeleVM}.
      */
-    public Value convertToValue(VMValue vmValue) {
-        if (vmValue.isVoid()) {
-            return VoidValue.VOID;
-        } else if (vmValue.asBoolean() != null) {
-            return BooleanValue.from(vmValue.asBoolean());
-        } else if (vmValue.asByte() != null) {
-            return ByteValue.from(vmValue.asByte());
-        } else if (vmValue.asChar() != null) {
-            return CharValue.from(vmValue.asChar());
-        } else if (vmValue.asDouble() != null) {
-            return DoubleValue.from(vmValue.asDouble());
-        } else if (vmValue.asFloat() != null) {
-            return FloatValue.from(vmValue.asFloat());
-        } else if (vmValue.asInt() != null) {
-            return IntValue.from(vmValue.asInt());
-        } else if (vmValue.asLong() != null) {
-            return LongValue.from(vmValue.asLong());
-        } else if (vmValue.asShort() != null) {
-            return ShortValue.from(vmValue.asShort());
-        } else if (vmValue.asProvider() != null) {
-            final Provider p = vmValue.asProvider();
-            if (p instanceof TeleObject) {
-                return TeleReferenceValue.from(this, ((TeleObject) p).getReference());
-            }
-            throw new IllegalArgumentException(
-                    "Could not convert the provider object " + p
-                            + " to a reference!");
-
-        }
-        throw new IllegalArgumentException("Unknown VirtualMachineValue type!");
+    public ThreadGroupProvider javaThreadGroupProvider() {
+        return _javaThreadGroupProvider;
     }
 
-    public void registerSingleStepThread(TeleNativeThread teleNativeThread) {
+    private final ThreadGroupProvider _nativeThreadGroupProvider;
 
-        if (_registeredSingleStepThread != null) {
-            LOGGER.warning("Overwriting registered single step thread! "
-                    + _registeredSingleStepThread);
-        }
-        _registeredSingleStepThread = teleNativeThread;
-
-    }
-
-    public void registerStepOutThread(TeleNativeThread teleNativeThread) {
-        if (_registeredStepOutThread != null) {
-            LOGGER.warning("Overwriting registered step out thread! "
-                    + _registeredStepOutThread);
-        }
-        _registeredStepOutThread = teleNativeThread;
-    }
-
-    /**
-     * Looks up a JDWP reference type object based on a Java class object.
-     *
-     * @param klass
-     *            the class object whose JDWP reference type should be looked up
-     * @return a JDWP reference type representing the Java class
+   /**
+     * @return Thread group that should be used to logically group native threads.
      */
-    public ReferenceTypeProvider getReferenceType(Class klass) {
-        ReferenceTypeProvider referenceTypeProvider = null;
-
-        // Always fake the Object class, otherwise try to find a class in the
-        // Maxine VM that matches the signature.
-        if (!klass.equals(Object.class)) {
-            referenceTypeProvider = _teleClassRegistry.findTeleClassActorByClass(klass);
-        }
-
-        // If no class was found within the Maxine VM, create a faked reference
-        // type object.
-        if (referenceTypeProvider == null) {
-            LOGGER.info("Creating Java provider for class " + klass);
-            referenceTypeProvider = _javaProviderFactory.getReferenceTypeProvider(klass);
-        }
-        return referenceTypeProvider;
+    public ThreadGroupProvider nativeThreadGroupProvider() {
+        return _nativeThreadGroupProvider;
     }
 
     /**
      * Converts a value kind as seen by the Maxine world to a VMValue type as
      * seen by the VM interface used by the JDWP server.
      *
-     * @param kind
-     *            the Maxine kind value
+     * @param kind the Maxine kind value
      * @return the type as seen by the JDWP server
      */
-    public static Type toVirtualMachineType(Kind kind) {
+    public static Type maxineKindToJDWPType(Kind kind) {
 
         final KindEnum e = kind.asEnum();
         switch (e) {
@@ -1539,143 +1195,434 @@ public abstract class TeleVM implements VMAccess {
                 + " cannot be resolved to a virtual machine value type");
     }
 
-    @Override
-    public VMValue createBooleanValue(boolean b) {
-        return createJavaObjectValue(b, Boolean.TYPE);
-    }
-
-    @Override
-    public VMValue createByteValue(byte b) {
-        return createJavaObjectValue(b, Byte.TYPE);
-    }
-
-    @Override
-    public VMValue createCharValue(char c) {
-        return createJavaObjectValue(c, Character.TYPE);
-    }
-
-    @Override
-    public VMValue createDoubleValue(double d) {
-        return createJavaObjectValue(d, Double.TYPE);
-    }
-
-    @Override
-    public VMValue createFloatValue(float f) {
-        return createJavaObjectValue(f, Float.TYPE);
-    }
-
-    @Override
-    public VMValue createIntValue(int i) {
-        return createJavaObjectValue(i, Integer.TYPE);
-    }
-
-    @Override
-    public VMValue createJavaObjectValue(Object o, Class expectedClass) {
-        return VMValueImpl.fromJavaObject(o, this, expectedClass);
-    }
-
-    @Override
-    public VMValue createLongValue(long l) {
-        return VMValueImpl.fromJavaObject(l, this, Long.TYPE);
-    }
-
-    @Override
-    public VMValue createObjectProviderValue(ObjectProvider p) {
-        return createJavaObjectValue(p, null);
-    }
-
-    @Override
-    public VMValue createShortValue(short s) {
-        return VMValueImpl.fromJavaObject(s, this, Short.TYPE);
-    }
-
-    @Override
-    public VMValue getVoidValue() {
-        return VMValueImpl.VOID_VALUE;
-    }
-
-    @Override
-    public byte[] accessMemory(long start, int length) {
-        final byte[] result = new byte[length];
-        final Address address = Address.fromLong(start);
-        teleProcess().dataAccess().read(address, result, 0, length);
-        return result;
-    }
-
-    @Override
-    public String[] getClassPath() {
-        return classpath().toStringArray();
-    }
-
-    @Override
-    public String[] getBootClassPath() {
-        return Classpath.bootClassPath().toStringArray();
-    }
-
-    @Override
-    public String getName() {
-        return MaxineVM.name();
-    }
-
-    @Override
-    public String getVersion() {
-        return MaxineVM.version();
-    }
-
-    @Override
-    public String getDescription() {
-        return "VM description";
-    }
-
-    @Override
-    public CodeLocation createCodeLocation(MethodProvider method,
-            long position, boolean isMachineCode) {
-        return new CodeLocationImpl(method, position, isMachineCode);
-    }
-
-    public TeleTargetRoutine findTeleTargetRoutine(Address address) {
-        // No routine can start at 0
-        if (address.isZero()) {
-            return null;
+    /**
+     * Converts a value as seen by the Maxine VM to a value as seen by the JDWP
+     * server.
+     *
+     * @param value   the value as seen by the Maxine VM
+     * @return the value as seen by the JDWP server
+     */
+    public VMValue maxineValueToJDWPValue(Value value) {
+        switch (value.kind().asEnum()) {
+            case BOOLEAN:
+                return _jdwpAccess.createBooleanValue(value.asBoolean());
+            case BYTE:
+                return _jdwpAccess.createByteValue(value.asByte());
+            case CHAR:
+                return _jdwpAccess.createCharValue(value.asChar());
+            case DOUBLE:
+                return _jdwpAccess.createDoubleValue(value.asDouble());
+            case FLOAT:
+                return _jdwpAccess.createFloatValue(value.asFloat());
+            case INT:
+                return _jdwpAccess.createIntValue(value.asInt());
+            case LONG:
+                return _jdwpAccess.createLongValue(value.asLong());
+            case REFERENCE:
+                return _jdwpAccess.createObjectProviderValue(findObject(value.asReference()));
+            case SHORT:
+                return _jdwpAccess.createShortValue(value.asShort());
+            case VOID:
+                return _jdwpAccess.getVoidValue();
+            case WORD:
+                final Word word = value.asWord();
+                LOGGER.warning("Tried to convert a word, this is not implemented yet! (word="
+                            + word + ")");
+                return _jdwpAccess.getVoidValue();
         }
 
-        TeleTargetRoutine result = teleCodeRegistry().get(
-                TeleTargetRoutine.class, address);
-        if (result == null) {
-            LOGGER.info("No target method found for address " + address
-                    + ", trying to create new one");
-            result = TeleTargetMethod.make(this, address);
-        }
-        return result;
-    }
-
-    @Override
-    public TargetMethodAccess[] findTargetMethods(long[] addresses) {
-        final TargetMethodAccess[] result = new TargetMethodAccess[addresses.length];
-        for (int i = 0; i < addresses.length; i++) {
-            result[i] = findTeleTargetRoutine(Address.fromLong(addresses[i]));
-        }
-        return result;
+        throw new IllegalArgumentException("Unkown kind: " + value.kind());
     }
 
     /**
-     * An object that delays evaluation of a trace message for controller actions.
+     * Converts a JDWP value object to a Maxine value object.
+     *
+     * @param vmValue  the value as seen by the JDWP server
+     * @return a newly created value as seen by the Maxine VM
      */
-    private class Tracer {
+    public Value jdwpValueToMaxineValue(VMValue vmValue) {
+        if (vmValue.isVoid()) {
+            return VoidValue.VOID;
+        } else if (vmValue.asBoolean() != null) {
+            return BooleanValue.from(vmValue.asBoolean());
+        } else if (vmValue.asByte() != null) {
+            return ByteValue.from(vmValue.asByte());
+        } else if (vmValue.asChar() != null) {
+            return CharValue.from(vmValue.asChar());
+        } else if (vmValue.asDouble() != null) {
+            return DoubleValue.from(vmValue.asDouble());
+        } else if (vmValue.asFloat() != null) {
+            return FloatValue.from(vmValue.asFloat());
+        } else if (vmValue.asInt() != null) {
+            return IntValue.from(vmValue.asInt());
+        } else if (vmValue.asLong() != null) {
+            return LongValue.from(vmValue.asLong());
+        } else if (vmValue.asShort() != null) {
+            return ShortValue.from(vmValue.asShort());
+        } else if (vmValue.asProvider() != null) {
+            final Provider p = vmValue.asProvider();
+            if (p instanceof TeleObject) {
+                return TeleReferenceValue.from(this, ((TeleObject) p).getReference());
+            }
+            throw new IllegalArgumentException(
+                    "Could not convert the provider object " + p
+                            + " to a reference!");
+        }
+        throw new IllegalArgumentException("Unknown VirtualMachineValue type!");
+    }
 
-        private final String _message;
+    private TeleNativeThread _registeredSingleStepThread;
+
+    public void registerSingleStepThread(TeleNativeThread teleNativeThread) {
+        if (_registeredSingleStepThread != null) {
+            LOGGER.warning("Overwriting registered single step thread! "
+                    + _registeredSingleStepThread);
+        }
+        _registeredSingleStepThread = teleNativeThread;
+    }
+
+    private TeleNativeThread _registeredStepOutThread;
+
+    public void registerStepOutThread(TeleNativeThread teleNativeThread) {
+        if (_registeredStepOutThread != null) {
+            LOGGER.warning("Overwriting registered step out thread! "
+                    + _registeredStepOutThread);
+        }
+        _registeredStepOutThread = teleNativeThread;
+    }
+
+    /**
+     * Provides access to a {@link TeleVM} by a JDWP server.
+     * Not fully implemented
+     *
+     * @author Thomas Wuerthinger
+     * @author Michael Van De Vanter
+     */
+    private final class VMAccessImpl implements VMAccess {
+
+        // Factory for creating fake object providers that represent Java objects
+        // living in the JDWP server.
+        private final JavaProviderFactory _javaProviderFactory;
+
+        private final Set<CodeLocation> _breakpointLocations = new HashSet<CodeLocation>();
+
+        public VMAccessImpl() {
+            _javaProviderFactory = new JavaProviderFactory(this, null);
+        }
+
+        public void dispose() {
+            // TODO: Consider implementing disposal of the VM when told so by a JDWP
+            // command.
+            LOGGER.warning("Asked to DISPOSE VM, doing nothing");
+        }
+
+        public void suspend() {
+
+            if (teleProcess().state() == TeleProcess.State.RUNNING) {
+                LOGGER.info("Pausing VM...");
+                try {
+                    teleProcess().controller().pause();
+                } catch (OSExecutionRequestException osExecutionRequestException) {
+                    LOGGER.log(Level.SEVERE,
+                            "Unexpected error while pausing the VM", osExecutionRequestException);
+                } catch (InvalidProcessRequestException invalidProcessRequestException) {
+                    LOGGER.log(Level.SEVERE,
+                            "Unexpected error while pausing the VM", invalidProcessRequestException);
+                }
+            } else {
+                LOGGER.warning("Suspend called while VM not running!");
+            }
+        }
+
+
+        public void resume() {
+
+            if (teleProcess().state() == TeleProcess.State.STOPPED) {
+
+                if (_registeredSingleStepThread != null) {
+
+                    // There has been a thread registered for performing a single
+                    // step => perform single step instead of resume.
+                    try {
+                        LOGGER.info("Doing single step instead of resume!");
+                        teleProcess().controller().singleStep(_registeredSingleStepThread, false);
+                    } catch (OSExecutionRequestException osExecutionRequestException) {
+                        LOGGER.log(
+                                        Level.SEVERE,
+                                        "Unexpected error while performing a single step in the VM",
+                                        osExecutionRequestException);
+                    } catch (InvalidProcessRequestException e) {
+                        LOGGER.log(
+                                        Level.SEVERE,
+                                        "Unexpected error while performing a single step in the VM",
+                                        e);
+                    }
+
+                    _registeredSingleStepThread = null;
+
+                } else if (_registeredStepOutThread != null
+                        && _registeredStepOutThread.getReturnAddress() != null) {
+
+                    // There has been a thread registered for performing a step out
+                    // => perform a step out instead of resume.
+                    final Address returnAddress = _registeredStepOutThread.getReturnAddress();
+                    assert returnAddress != null;
+                    try {
+                        teleProcess().controller().runToInstruction(returnAddress, false, true);
+                    } catch (OSExecutionRequestException osExecutionRequestException) {
+                        LOGGER.log(
+                                        Level.SEVERE,
+                                        "Unexpected error while performing a run-to-instruction in the VM",
+                                        osExecutionRequestException);
+                    } catch (InvalidProcessRequestException invalidProcessRequestException) {
+                        LOGGER.log(
+                                        Level.SEVERE,
+                                        "Unexpected error while performing a run-to-instruction in the VM",
+                                        invalidProcessRequestException);
+                    }
+
+                    _registeredStepOutThread = null;
+
+                } else {
+
+                    // Nobody registered for special commands => resume the Vm.
+                    try {
+                        LOGGER.info("Client tried to resume the VM!");
+                        teleProcess().controller().resume(false, false);
+                    } catch (OSExecutionRequestException e) {
+                        LOGGER.log(Level.SEVERE,
+                                "Unexpected error while resuming the VM", e);
+                    } catch (InvalidProcessRequestException e) {
+                        LOGGER.log(Level.SEVERE,
+                                "Unexpected error while resuming the VM", e);
+                    }
+                }
+            } else {
+                LOGGER.severe("Client tried to resume the VM, but tele process is not in stopped state!");
+            }
+        }
+
+        public void exit(int code) {
+            // TODO: Consider implementing exiting the VM when told so by a JDWP command.
+            LOGGER.warning("Asked to EXIT VM, doing nothing");
+        }
+
+        public void addListener(VMListener listener) {
+            _jdwpListeners.append(listener);
+        }
+
+        public void removeListener(VMListener listener) {
+            _jdwpListeners.remove(Sequence.Static.indexOfIdentical(_jdwpListeners, listener));
+        }
 
         /**
-         * An object that delays evaluation of a trace message.
-         * @param message identifies what is being traced
+         * Sets a breakpoint at the specified code location. This function currently has the following severe limitations:
+         * Always sets the breakpoint at the call entry point of a method. Does ignore the suspendAll parameter, there will
+         * always be all threads suspended when the breakpoint is hit.
+         *
+         * TODO: Fix the limitations for breakpoints.
+         *
+         * @param codeLocation specifies the code location at which the breakpoint should be set
+         * @param suspendAll if true, all threads should be suspended when the breakpoint is hit
          */
-        public Tracer(String message) {
-            _message = message;
+        public void addBreakpoint(CodeLocation codeLocation, boolean suspendAll) {
+
+            // For now ignore duplicates
+            if (_breakpointLocations.contains(codeLocation)) {
+                return;
+            }
+
+            assert codeLocation.method() instanceof TeleClassMethodActor : "Only tele method actors allowed here";
+
+            assert !_breakpointLocations.contains(codeLocation);
+            _breakpointLocations.add(codeLocation);
+            assert _breakpointLocations.contains(codeLocation);
+            final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
+            teleProcess().targetBreakpointFactory().makeBreakpoint(
+                    teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint(), false);
+            Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
         }
 
-        @Override
-        public String toString() {
-            return tracePrefix() + _message;
+        public void removeBreakpoint(CodeLocation codeLocation) {
+            final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
+            teleProcess().targetBreakpointFactory().removeBreakpointAt(
+                    teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            assert _breakpointLocations.contains(codeLocation);
+            _breakpointLocations.remove(codeLocation);
+            assert !_breakpointLocations.contains(codeLocation);
+        }
+
+        public byte[] accessMemory(long start, int length) {
+            final byte[] result = new byte[length];
+            final Address address = Address.fromLong(start);
+            teleProcess().dataAccess().read(address, result, 0, length);
+            return result;
+        }
+
+        public VMValue createBooleanValue(boolean b) {
+            return createJavaObjectValue(b, Boolean.TYPE);
+        }
+
+        public VMValue createByteValue(byte b) {
+            return createJavaObjectValue(b, Byte.TYPE);
+        }
+
+        public VMValue createCharValue(char c) {
+            return createJavaObjectValue(c, Character.TYPE);
+        }
+
+        public CodeLocation createCodeLocation(MethodProvider method, long position, boolean isMachineCode) {
+            return new CodeLocationImpl(method, position, isMachineCode);
+        }
+
+        public VMValue createDoubleValue(double d) {
+            return createJavaObjectValue(d, Double.TYPE);
+        }
+
+        public VMValue createFloatValue(float f) {
+            return createJavaObjectValue(f, Float.TYPE);
+        }
+
+        public VMValue createIntValue(int i) {
+            return createJavaObjectValue(i, Integer.TYPE);
+        }
+
+        public VMValue createJavaObjectValue(Object o, Class expectedClass) {
+            return VMValueImpl.fromJavaObject(o, this, expectedClass);
+        }
+
+        public VMValue createLongValue(long l) {
+            return VMValueImpl.fromJavaObject(l, this, Long.TYPE);
+        }
+
+        public VMValue createObjectProviderValue(ObjectProvider p) {
+            return createJavaObjectValue(p, null);
+        }
+
+        public VMValue createShortValue(short s) {
+            return VMValueImpl.fromJavaObject(s, this, Short.TYPE);
+        }
+
+        public StringProvider createString(String s) {
+            final VMValue vmValue = createJavaObjectValue(s, String.class);
+            assert vmValue.asProvider() != null : "Must be a provider value object";
+            assert vmValue.asProvider() instanceof StringProvider : "Must be a String provider object";
+            return (StringProvider) vmValue.asProvider();
+        }
+
+        public TargetMethodAccess[] findTargetMethods(long[] addresses) {
+            final TargetMethodAccess[] result = new TargetMethodAccess[addresses.length];
+            for (int i = 0; i < addresses.length; i++) {
+                result[i] = findTeleTargetRoutine(Address.fromLong(addresses[i]));
+            }
+            return result;
+        }
+
+        public ReferenceTypeProvider[] getAllReferenceTypes() {
+            return _teleClassRegistry.teleClassActors();
+        }
+
+        public ThreadProvider[] getAllThreads() {
+            final ThreadProvider[] threadProviders = new ThreadProvider[allThreads().length()];
+            return Iterables.toCollection(allThreads()).toArray(threadProviders);
+        }
+
+        public String[] getBootClassPath() {
+            return Classpath.bootClassPath().toStringArray();
+        }
+
+        public String[] getClassPath() {
+            return classpath().toStringArray();
+        }
+
+        public String getDescription() {
+            return "VM description";
+        }
+
+        public String getName() {
+            return MaxineVM.name();
+        }
+
+        /**
+         * Looks up a JDWP reference type object based on a Java class object.
+         *
+         * @param klass
+         *            the class object whose JDWP reference type should be looked up
+         * @return a JDWP reference type representing the Java class
+         */
+        public ReferenceTypeProvider getReferenceType(Class klass) {
+            ReferenceTypeProvider referenceTypeProvider = null;
+
+            // Always fake the Object class, otherwise try to find a class in the
+            // Maxine VM that matches the signature.
+            if (!klass.equals(Object.class)) {
+                referenceTypeProvider = _teleClassRegistry.findTeleClassActorByClass(klass);
+            }
+
+            // If no class was found within the Maxine VM, create a faked reference
+            // type object.
+            if (referenceTypeProvider == null) {
+                LOGGER.info("Creating Java provider for class " + klass);
+                referenceTypeProvider = _javaProviderFactory.getReferenceTypeProvider(klass);
+            }
+            return referenceTypeProvider;
+        }
+
+        public ReferenceTypeProvider[] getReferenceTypesBySignature(String signature) {
+
+            // Always fake the Object type. This means that calls to all methods of
+            // the Object class will be reflectively delegated to the Object class
+            // that lives
+            // on the Tele side not to the Object class in the VM.
+            if (signature.equals("Ljava/lang/Object;")) {
+                return new ReferenceTypeProvider[] {getReferenceType(Object.class)};
+            }
+
+            // Try to find a matching class actor that lives within the VM based on
+            // the signature.
+            final AppendableSequence<ReferenceTypeProvider> result = new LinkSequence<ReferenceTypeProvider>();
+            for (TypeDescriptor typeDescriptor : _teleClassRegistry.typeDescriptors()) {
+                if (typeDescriptor.toString().equals(signature)) {
+                    final TeleClassActor teleClassActor = _teleClassRegistry.findTeleClassActorByType(typeDescriptor);
+
+                    // Do not include array types, there should always be faked in
+                    // order to be able to call newInstance on them. Arrays that are
+                    // created this way then do
+                    // not really live within the VM, but on the JDWP server side.
+                    if (!(teleClassActor instanceof TeleArrayClassActor)) {
+                        result.append(teleClassActor);
+                    }
+                }
+            }
+
+            // If no class living in the VM was found, try to lookup Java class
+            // known to the JDWP server. If such a class is found, then a JDWP
+            // reference type is faked for it.
+            if (result.length() == 0) {
+                try {
+                    final Class klass = JavaTypeDescriptor.resolveToJavaClass(
+                            JavaTypeDescriptor.parseTypeDescriptor(signature), getClass().getClassLoader());
+                    result.append(_javaProviderFactory.getReferenceTypeProvider(klass));
+                } catch (NoClassDefFoundError noClassDefFoundError) {
+                    LOGGER.log(Level.SEVERE,
+                            "Error while looking up class based on signature", noClassDefFoundError);
+                }
+            }
+
+            return Sequence.Static.toArray(result, ReferenceTypeProvider.class);
+        }
+
+        public ThreadGroupProvider[] getThreadGroups() {
+            return new ThreadGroupProvider[] {_javaThreadGroupProvider, _nativeThreadGroupProvider};
+        }
+
+        public String getVersion() {
+            return MaxineVM.version();
+        }
+
+        public VMValue getVoidValue() {
+            return VMValueImpl.VOID_VALUE;
         }
     }
+
 }

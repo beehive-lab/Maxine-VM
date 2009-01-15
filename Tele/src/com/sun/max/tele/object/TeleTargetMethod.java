@@ -386,6 +386,6 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
     @Override
     public ReferenceTypeProvider getReferenceType() {
-        return teleVM().getReferenceType(getClass());
+        return teleVM().vmAccess().getReferenceType(getClass());
     }
 }

@@ -27,7 +27,7 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a  {@link ClassLoader} in the Target VM.
+ * Canonical surrogate for a  {@link ClassLoader} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  *
@@ -54,6 +54,6 @@ public class TeleClassLoader extends TeleTupleObject implements ClassLoaderProvi
 
     @Override
     public ReferenceTypeProvider[] visibleClasses() {
-        return teleVM().getAllReferenceTypes();
+        return teleVM().vmAccess().getAllReferenceTypes();
     }
 }

@@ -357,14 +357,14 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
         @Override
         public VMValue getValue(ObjectProvider object) {
-            return teleVM().createLongValue(((TeleObject) object).getReference().toOrigin().asAddress().toLong());
+            return teleVM().vmAccess().createLongValue(((TeleObject) object).getReference().toOrigin().asAddress().toLong());
         }
     };
 
     private final FieldProvider _fakeHubField = new FakeFieldProvider("hub", VMValue.Type.PROVIDER, "Lcom/sun/max/vm/actor/holder/Hub;") {
         @Override
         public VMValue getValue(ObjectProvider object) {
-            return teleVM().convertToVirtualMachineValue(TeleReferenceValue.from(teleVM(), ((TeleObject) object).getTeleHub().getReference()));
+            return teleVM().maxineValueToJDWPValue(TeleReferenceValue.from(teleVM(), ((TeleObject) object).getTeleHub().getReference()));
         }
     };
 
@@ -372,7 +372,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
         @Override
         public VMValue getValue(ObjectProvider object) {
-            return teleVM().createLongValue(((TeleObject) object).getMiscWord().asAddress().toLong());
+            return teleVM().vmAccess().createLongValue(((TeleObject) object).getMiscWord().asAddress().toLong());
         }
     };
 
@@ -466,7 +466,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
     }
 
     public Type getType() {
-        return TeleVM.toVirtualMachineType(classActor().kind());
+        return TeleVM.maxineKindToJDWPType(classActor().kind());
     }
 
     public int majorVersion() {

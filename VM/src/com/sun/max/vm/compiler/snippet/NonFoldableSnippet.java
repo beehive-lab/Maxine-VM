@@ -154,7 +154,6 @@ public abstract class NonFoldableSnippet extends Snippet {
      * Implements 'throw'.
      */
     public static final class RaiseThrowable extends NonFoldableSnippet {
-        // Checkstyle: stop parameter assignment check
         @SNIPPET
         public static void raiseThrowable(Throwable throwable) throws Throwable {
             if (MaxineVM.isPrototyping()) {
@@ -162,7 +161,6 @@ public abstract class NonFoldableSnippet extends Snippet {
             }
             Throw.raise(throwable);
         }
-        // CheckStyle: resume parameter assignment check
         public static final RaiseThrowable SNIPPET = new RaiseThrowable();
     }
 }

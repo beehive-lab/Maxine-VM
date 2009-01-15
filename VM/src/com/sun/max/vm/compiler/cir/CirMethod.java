@@ -20,9 +20,6 @@
  */
 package com.sun.max.vm.compiler.cir;
 
-import java.lang.reflect.*;
-
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -38,7 +35,6 @@ import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.ir.observer.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * CIR representation of Java methods.
@@ -51,7 +47,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     private final Kind[] _parameterKinds;
 
     public CirMethod(ClassMethodActor classMethodActor) {
-        super();
         _classMethodActor = classMethodActor;
         // Append a kind each for the normal continuation and for the exception continuation:
         _parameterKinds = Arrays.append(classMethodActor.getParameterKinds(), Kind.REFERENCE, Kind.REFERENCE);
@@ -62,7 +57,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     public MethodActor foldingMethodActor() {
-        ProgramError.check(!classMethodActor().isInstanceInitializer(), "constructors do not have a folding method");
         return _classMethodActor.compilee();
     }
 
@@ -127,12 +121,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return new CirCall(normalContinuation, result);
     }
 
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         if (MaxineVM.isPrototyping()) {
-            if (_classMethodActor.isInstanceInitializer()) {
-                return foldConstructor(cirOptimizer, arguments);
-            }
-
             // This happens when interpreting a CIR method with the CirInterpreter
             if (!isFoldable(cirOptimizer, arguments)) {
                 return CirRoutine.Static.fold(this, arguments);
@@ -149,23 +139,6 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
             return inline(cirOptimizer, arguments, NO_JAVA_FRAME_DESCRIPTOR);
         }
         return CirRoutine.Static.fold(this, arguments);
-    }
-
-    @PROTOTYPE_ONLY
-    private CirCall foldConstructor(CirOptimizer cirOptimizer, CirValue... arguments) {
-        assert _classMethodActor.isInstanceInitializer();
-        final Constructor javaConstructor = _classMethodActor.toJavaConstructor();
-        final CirConstant uninitializedObject = (CirConstant) arguments[0];
-
-        final CirValue[] constructorArguments = Arrays.subArray(arguments, 1);
-        final CirCall call = CirRoutine.Static.fold(javaConstructor, constructorArguments);
-        if (call.procedure() == getExceptionContinuation(arguments)) {
-            return call;
-        }
-
-        final Value initializedObject = call.arguments()[0].value();
-        Objects.copy(initializedObject.asObject(), uninitializedObject.value().asObject());
-        return new CirCall(getNormalContinuation(arguments), CirCall.NO_ARGUMENTS);
     }
 
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {

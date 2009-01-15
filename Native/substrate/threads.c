@@ -217,11 +217,11 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread_with_stack("java_thread",
-		thread_runJava,
+    	(void (*)(void *)) thread_runJava,
 		(void*) threadSpecifics->stackBase,
 	    threadSpecifics->stackSize,
 		priority,
-		threadSpecifics);
+		(void*) threadSpecifics);
 #elif (os_LINUX || os_DARWIN)
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);

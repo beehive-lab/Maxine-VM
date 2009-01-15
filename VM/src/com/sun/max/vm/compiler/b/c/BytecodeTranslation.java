@@ -1723,6 +1723,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void athrow() {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
         final CirVariable throwable = pop(Kind.REFERENCE);
+        createJavaFrameDescriptor();
         _currentCall.setProcedure(new Throw(), currentLocation());
         _currentCall.setArguments(throwable, CirValue.UNDEFINED, getCurrentExceptionContinuation());
     }
