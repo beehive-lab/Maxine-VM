@@ -35,7 +35,6 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-import com.sun.max.vm.interpret.InterpretedTargetMethod;
 /**
  * Canonical surrogate for a heap object in the {@link TeleVM}.
  *
