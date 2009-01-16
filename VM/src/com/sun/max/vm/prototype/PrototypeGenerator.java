@@ -37,6 +37,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.interpret.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
@@ -89,6 +90,8 @@ public final class PrototypeGenerator {
             "Specifies the compiler scheme for the target.");
     private final Option<MaxPackage> _jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), DynamicCompilerScheme.class,
             "Specifies the JIT scheme for the target.");
+    private final Option<MaxPackage> _interpreterScheme = schemeOption("interpreter", new com.sun.max.vm.interpret.Package(), InterpreterScheme.class,
+            "Specifies the interpreter scheme for the target.");
     private final Option<MaxPackage> _trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
             "Specifies the dynamic trampoline scheme for the target.");
     private final Option<MaxPackage> _targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
@@ -135,6 +138,7 @@ public final class PrototypeGenerator {
         _monitorScheme.setDefaultValue(defaultConfiguration.monitorPackage());
         _compilerScheme.setDefaultValue(defaultConfiguration.compilerPackage());
         _jitScheme.setDefaultValue(defaultConfiguration.jitPackage());
+        _interpreterScheme.setDefaultValue(defaultConfiguration.interpreterPackage());
         _trampolineScheme.setDefaultValue(defaultConfiguration.trampolinePackage());
         _targetABIsScheme.setDefaultValue(defaultConfiguration.targetABIsPackage());
         _runScheme.setDefaultValue(defaultConfiguration.runPackage());
@@ -154,7 +158,7 @@ public final class PrototypeGenerator {
         return new VMConfiguration(_buildLevel.getValue(), platform,
                                     vm(_gripScheme), vm(_referenceScheme),
                                     vm(_layoutScheme), vm(_heapScheme),
-                                    vm(_monitorScheme), vm(_compilerScheme), vm(_jitScheme), vm(_trampolineScheme), vm(_targetABIsScheme),
+                                    vm(_monitorScheme), vm(_compilerScheme), vm(_jitScheme), vm(_interpreterScheme), vm(_trampolineScheme), vm(_targetABIsScheme),
                                     vm(_runScheme));
     }
 

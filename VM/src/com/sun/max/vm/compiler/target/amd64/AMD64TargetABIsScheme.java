@@ -57,6 +57,13 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
                         RAX, R11, R14,
                         AMD64XMMRegister.class, XMM0, XMM15);
 
+    private static final RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister> _interpreterRoleAssignment =
+        new RegisterRoleAssignment<AMD64GeneralRegister64, AMD64XMMRegister>(AMD64GeneralRegister64.class,
+                        RSP, RBP,
+                        RSP, RBP,
+                        RAX, R11, R14,
+                        AMD64XMMRegister.class, XMM0, XMM15);
+
     private static final IndexedSequence<AMD64GeneralRegister64> _integerParameterRegisters = new ArraySequence<AMD64GeneralRegister64>(RDI, RSI, RDX, RCX, R8, R9);
     private static final IndexedSequence<AMD64XMMRegister> _floatingPointParameterRegisters = new ArraySequence<AMD64XMMRegister>(XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7);
 
@@ -72,7 +79,8 @@ public final class AMD64TargetABIsScheme extends TargetABIsScheme<AMD64GeneralRe
         super(vmConfiguration,
                         createAMD64TargetABI(_nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, vmConfiguration),
                         createAMD64TargetABI(_jitRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT, vmConfiguration),
-                        createAMD64TargetABI(_optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, vmConfiguration));
+                        createAMD64TargetABI(_optimizedJavaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, vmConfiguration),
+                        createAMD64TargetABI(_interpreterRoleAssignment, CallEntryPoint.INTERPRETER_ENTRY_POINT, vmConfiguration));
     }
 
     private static int stackFrameAlignment(VMConfiguration vmConfiguration) {

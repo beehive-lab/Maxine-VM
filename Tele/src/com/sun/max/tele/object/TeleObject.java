@@ -45,6 +45,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
+import com.sun.max.vm.interpret.InterpretedTargetMethod;
 /**
  * Canonical surrogate for a heap object in the {@link TeleVM}.
  *
@@ -197,6 +198,9 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
                         teleObject = new TeleReferenceClassActor(teleVM, reference);
 
                         // Maxine code management
+                    } else if (InterpretedTargetMethod.class.isAssignableFrom(javaClass)) {
+                        teleObject = new TeleInterpretedTargetMethod(teleVM, reference);
+
                     } else if (JitTargetMethod.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleJitTargetMethod(teleVM, reference);
 

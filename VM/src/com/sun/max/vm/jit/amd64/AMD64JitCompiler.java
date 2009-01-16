@@ -66,6 +66,10 @@ public class AMD64JitCompiler extends JitCompiler {
         return _targetGenerator;
     }
 
+    public TemplateTable peekTemplateTable() {
+        return _targetGenerator.templateTable();
+    }
+
     private static final byte ENTER = (byte) 0xC8;
     private static final byte LEAVE = (byte) 0xC9;
     private static final byte POP_RBP = (byte) 0x5D;

@@ -25,6 +25,7 @@ import static com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.template.generate.*;
 import com.sun.max.vm.type.*;
@@ -100,6 +101,14 @@ public class TemplateTable {
     }
 
     public CompiledBytecodeTemplate get(Bytecode bytecode, Kind kind, TemplateChooser.Selector selector) {
+
+        if (_templateChoosers.length <= bytecode.ordinal()) {
+            Log.println("To big: " + bytecode.ordinal() + " " + _templateChoosers.length);
+        }
+        if (_templateChoosers[bytecode.ordinal()] == null) {
+            Log.println("Null: " + bytecode.ordinal());
+        }
+
         final TemplateChooser templateChooser = _templateChoosers[bytecode.ordinal()];
         assert templateChooser != null : "no template chooser for " + bytecode;
         final CompiledBytecodeTemplate template = templateChooser.select(kind, selector);
