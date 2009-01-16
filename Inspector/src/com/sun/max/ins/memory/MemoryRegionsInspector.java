@@ -244,12 +244,13 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
                 public String getToolTipText(MouseEvent mouseEvent) {
                     final Point p = mouseEvent.getPoint();
                     final int index = _columnModel.getColumnIndexAtX(p.x);
-                    return ColumnKind.VALUES.get(index).toolTipText();
+                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
                 }
             };
         }
-
     }
+
     private final class MemoryRegionColumnModel extends DefaultTableColumnModel {
 
         private final Preferences _preferences;
@@ -539,7 +540,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
                 _startLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
                     @Override
                     public Value fetchValue() {
-                        return WordValue.from(MemoryRegionDisplay.this.start().asWord());
+                        return WordValue.from(MemoryRegionDisplay.this.start());
                     }
                 };
             }
@@ -553,7 +554,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
                 _endLabel = new WordValueLabel(inspection(), ValueMode.WORD) {
                     @Override
                     public Value fetchValue() {
-                        return WordValue.from(MemoryRegionDisplay.this.end().asWord());
+                        return WordValue.from(MemoryRegionDisplay.this.end());
                     }
                 };
             }

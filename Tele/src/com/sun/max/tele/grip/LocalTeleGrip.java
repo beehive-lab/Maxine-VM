@@ -53,6 +53,10 @@ public class LocalTeleGrip extends TeleGrip {
         return _object.toString();
     }
 
+    public boolean isLocal() {
+        return true;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (other instanceof LocalTeleGrip) {

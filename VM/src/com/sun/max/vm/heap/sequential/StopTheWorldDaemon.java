@@ -132,12 +132,6 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private static final Pointer.Predicate _isGCThread = new Pointer.Predicate() {
-        public boolean evaluate(Pointer vmThreadLocals) {
-            return VmThread.current(vmThreadLocals).isGCThread();
-        }
-    };
-
     private final Runnable _gcRequest = new Runnable() {
         public void run() {
             synchronized (VmThreadMap.ACTIVE) {

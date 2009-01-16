@@ -56,7 +56,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
      */
     public IdentitySet(Class<Element_Type> elementType) {
         _elementType = elementType;
-        _table = com.sun.max.lang.Arrays.create(elementType, 16);
+        _table = com.sun.max.lang.Arrays.newInstance(elementType, 16);
         setThreshold();
     }
 
@@ -71,13 +71,13 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
             throw new IllegalArgumentException();
         }
         _elementType = elementType;
-        _table = com.sun.max.lang.Arrays.create(elementType, initialCapacity);
+        _table = com.sun.max.lang.Arrays.newInstance(elementType, initialCapacity);
         setThreshold();
     }
 
     private void grow() {
         final Element_Type[] oldTable = _table;
-        _table = com.sun.max.lang.Arrays.create(_elementType, Math.max(_table.length * 2, 1));
+        _table = com.sun.max.lang.Arrays.newInstance(_elementType, Math.max(_table.length * 2, 1));
         setThreshold();
         _numberOfElements = 0;
         for (int i = 0; i < oldTable.length; i++) {
@@ -132,7 +132,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
     }
 
     public Iterator<Element_Type> iterator() {
-        final Element_Type[] array = com.sun.max.lang.Arrays.create(_elementType, numberOfElements());
+        final Element_Type[] array = com.sun.max.lang.Arrays.newInstance(_elementType, numberOfElements());
         int j = 0;
         for (int i = 0; i < _table.length; i++) {
             final Element_Type element = _table[i];

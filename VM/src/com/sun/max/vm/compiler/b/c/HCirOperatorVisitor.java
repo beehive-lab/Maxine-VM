@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.cir.optimize.*;
 
 /**
  * {@link HCirOperatorVisitor} defines general purpose visitor for visiting
- * {@link JavaOperator}s.  See {@link HCirOperatorLoweringVisitor} for a
+ * {@link JavaOperator}s.  See {@link HCirOperatorLowering} for a
  * usage example.
  *
  * @author Yi Guo

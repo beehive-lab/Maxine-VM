@@ -23,7 +23,7 @@ package com.sun.max.tele.debug.solaris;
 import java.io.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.memory.MemoryRegion;
+import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -134,9 +134,9 @@ public final class SolarisTeleProcess extends TeleProcess {
     protected int write0(byte[] buffer, int offset, int length, Address address) {
         return nativeWriteBytes(_processHandle, address.toLong(), buffer, offset, length);
     }
-    
+
     private native boolean nativeActivateWatchpoint(long processHandle, long start, long size);
-    
+
     @Override
     protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
         return nativeActivateWatchpoint(_processHandle, memoryRegion.start().toLong(), memoryRegion.size().toLong());

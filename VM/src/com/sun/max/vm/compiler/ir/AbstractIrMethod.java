@@ -61,7 +61,7 @@ public abstract class AbstractIrMethod implements IrMethod {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + ": " + _classMethodActor;
+        return _classMethodActor.format("%H.%n(%p)");
     }
 
     public boolean contains(final Builtin builtin, boolean defaultResult) {

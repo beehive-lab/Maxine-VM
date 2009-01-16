@@ -28,15 +28,12 @@ import com.sun.max.vm.type.*;
 
 
 public class CallNative extends JavaOperator {
-    private final int _index;
-    private final ConstantPool _constantPool;
     private final SignatureDescriptor _signatureDescriptor;
     private final MethodActor _classMethodActor;
 
     public CallNative(ConstantPool constantPool, int nativeFunctionDescriptorIndex, MethodActor classMethodActor) {
-        _index = nativeFunctionDescriptorIndex;
-        _constantPool = constantPool;
-        _signatureDescriptor = SignatureDescriptor.create(_constantPool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
+        super(ANY);
+        _signatureDescriptor = SignatureDescriptor.create(constantPool.utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
         _classMethodActor = classMethodActor;
     }
 
@@ -55,14 +52,6 @@ public class CallNative extends JavaOperator {
         visitor.visit(this);
     }
 
-    public int index() {
-        return _index;
-    }
-
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
     public SignatureDescriptor signatureDescriptor() {
         return _signatureDescriptor;
     }
@@ -72,6 +61,6 @@ public class CallNative extends JavaOperator {
     }
     @Override
     public String toString() {
-        return "Callnative";
+        return "CallNative:" + _classMethodActor.name();
     }
 }

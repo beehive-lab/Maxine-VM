@@ -20,23 +20,17 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.collect.IndexedSequence;
-import com.sun.max.jdwp.vm.data.MachineCodeInstruction;
-import com.sun.max.jdwp.vm.data.MachineCodeInstructionArray;
-import com.sun.max.jdwp.vm.proxy.MethodProvider;
-import com.sun.max.tele.TeleCodeRegistry;
-import com.sun.max.tele.TeleTargetRoutine;
-import com.sun.max.tele.TeleVM;
-import com.sun.max.tele.debug.TeleTargetBreakpoint;
-import com.sun.max.tele.method.TargetCodeInstruction;
-import com.sun.max.tele.method.TargetCodeRegion;
-import com.sun.max.tele.method.TeleDisassembler;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Size;
-import com.sun.max.vm.bytecode.BytecodeInfo;
-import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.runtime.RuntimeStub;
-import com.sun.max.vm.value.WordValue;
+import com.sun.max.collect.*;
+import com.sun.max.jdwp.vm.data.*;
+import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.value.*;
 
 /**
  * Canonical surrogate for a {@linkplain RuntimeStub runtime stub} in the {@link TeleVM}.
@@ -44,7 +38,7 @@ import com.sun.max.vm.value.WordValue;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTargetRoutine  {
+public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTargetRoutine  {
 
     /**
      * Gets a {@code TeleTargetMethod} instance representing the {@link RuntimeStub} in the tele VM that contains a
@@ -66,7 +60,7 @@ public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTar
         if (teleTargetRoutine != null) {
             if (teleTargetRoutine instanceof TeleRuntimeStub) {
                 // known stub
-                teleRuntimeStub =(TeleRuntimeStub) teleTargetRoutine;
+                teleRuntimeStub = (TeleRuntimeStub) teleTargetRoutine;
             } else {
                 // known native or Java method
                 teleRuntimeStub = null;
@@ -108,7 +102,7 @@ public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTar
         super(teleVM, runtimeStubReference);
         _runtimeStub = (RuntimeStub) deepCopy();
         _targetCodeRegion = new TargetCodeRegion(this, _runtimeStub.start(), _runtimeStub.size());
-       _teleRoutine = new TeleRoutine() {
+        _teleRoutine = new TeleRoutine() {
             public String getUniqueName() {
                 return  _runtimeStub.getClass().getSimpleName() + _runtimeStub;
             }
@@ -119,7 +113,7 @@ public class TeleRuntimeStub  extends TeleRuntimeMemoryRegion implements TeleTar
     public String name() {
         return _runtimeStub.name();
     }
-    
+
     public TeleClassMethodActor getTeleClassMethodActor() {
         return null;
     }

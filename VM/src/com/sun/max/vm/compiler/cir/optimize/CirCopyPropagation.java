@@ -81,7 +81,7 @@ public class CirCopyPropagation{
         final CirClosure proc = (CirClosure) call.procedure();
         final CirValue[] args = call.arguments();
         final CirVariable[] params = proc.parameters();
-        final CirValue[] subst = new CirValue[args.length];
+        final CirValue[] subst = CirCall.newArguments(args.length);
         assert params.length == args.length;
         for (int i = 0; i < params.length; i++) {
             if (params[i] instanceof CirContinuationVariable) {
@@ -103,18 +103,23 @@ public class CirCopyPropagation{
         }
 
         if (finalLength != params.length) {
-            final CirValue[] nargs = new CirValue[finalLength];
-            final CirVariable[] nparams = new CirVariable[finalLength];
-            int j = 0;
-            for (int i = 0; i < params.length; i++) {
-                if (subst[i] == null) {
-                    nargs[j] = args[i];
-                    nparams[j] = params[i];
-                    j++;
+            if (finalLength == 0) {
+                proc.setParameters(CirClosure.NO_PARAMETERS);
+                call.setArguments(CirCall.NO_ARGUMENTS);
+            } else {
+                final CirValue[] nargs = new CirValue[finalLength];
+                final CirVariable[] nparams = new CirVariable[finalLength];
+                int j = 0;
+                for (int i = 0; i < params.length; i++) {
+                    if (subst[i] == null) {
+                        nargs[j] = args[i];
+                        nparams[j] = params[i];
+                        j++;
+                    }
                 }
+                proc.setParameters(nparams);
+                call.setArguments(nargs);
             }
-            proc.setParameters(nparams);
-            call.setArguments(nargs);
         }
     }
 

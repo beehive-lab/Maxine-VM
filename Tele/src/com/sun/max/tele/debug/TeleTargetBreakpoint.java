@@ -65,7 +65,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
     private boolean _activated;
 
     @Override
-    public boolean enabled() {
+    public boolean isEnabled() {
         return _enabled;
     }
 
@@ -179,8 +179,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         private final Map<Long, TeleTargetBreakpoint> _transientBreakpoints = new HashMap<Long, TeleTargetBreakpoint>();
 
         /**
-         * Gets all the {@linkplain TeleBreakpoint#isTransient() persistent} target code breakpoints that currently exist
-         * in the tele VM.
+         * @return all the {@linkplain TeleBreakpoint#isTransient() persistent} target code breakpoints that currently exist
+         * in the {@link TeleVM}..
          *
          * @param omitTransientBreakpoints specifies whether or not {@linkplain TeleBreakpoint#isTransient()}
          */
@@ -190,21 +190,21 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
             }
             return Iterables.join(Iterables.toIterableWithLength(_breakpoints.values()), Iterables.toIterableWithLength(_transientBreakpoints.values()));
         }
-        
+
         /**
          * @param omitTransientBreakpoints specifies whether or not {@linkplain TeleBreakpoint#isTransient()}
-         * @return the number of existing target breakpoints in he {@link TeleVM}.
+         * @return the number of existing target breakpoints in the {@link TeleVM}.
          */
         public synchronized int size(boolean omitTransientBreakpoints) {
             int result = _breakpoints.size();
             if (!omitTransientBreakpoints) {
-                result += _transientBreakpoints.size();       
+                result += _transientBreakpoints.size();
             }
             return result;
         }
 
         /**
-         * Gets a target code breakpoint set at a specified address in the tele VM, if it exists, null otherwise. If
+         * Gets a target code breakpoint set at a specified address in the {@link TeleVM}, if it exists, null otherwise. If
          * there is both a {@linkplain TeleBreakpoint#isTransient() non-transient} and
          * {@linkplain TeleBreakpoint#isTransient() transient} breakpoint set at {@code address}, then the
          * non-transient breakpoint is returned.
@@ -219,7 +219,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
         /**
          * Gets the {@linkplain TeleBreakpoint#isTransient() transient} target code breakpoint set at a specified
-         * address in the tele VM, if it exists, null otherwise.
+         * address in the {@link TeleVM}, if it exists, null otherwise.
          */
         public synchronized TeleTargetBreakpoint getTransientBreakpointAt(Address address) {
             return _transientBreakpoints.get(address.toLong());
@@ -227,7 +227,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
         /**
          * Gets the {@linkplain TeleBreakpoint#isTransient() non-transient} target code breakpoint set at a specified
-         * address in the tele VM, if it exists, null otherwise.
+         * address in the {@link TeleVM}., if it exists, null otherwise.
          */
         public synchronized TeleTargetBreakpoint getNonTransientBreakpointAt(Address address) {
             return _breakpoints.get(address.toLong());
@@ -248,7 +248,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
             if (!isTransient) {
                 final TeleTargetBreakpoint oldBreakpoint = _breakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
-                refreshView();
+                refreshView(_teleProcess.epoch());
             } else {
                 final TeleTargetBreakpoint oldBreakpoint = _transientBreakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;
@@ -303,18 +303,18 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
                         // - returns original code, then patch and forget
                         // - returns nothing - problem, should not happen
                     }
-                } else if (!breakpoint.enabled()) {
+                } else if (!breakpoint.isEnabled()) {
                     Problem.unimplemented("found disabled tele breakpoint at same ip as VM breakpoint");
                 }
             }
         }
 
         /**
-         * Removes the breakpoint, if it exists, at specified target code address in the teleVM.
+         * Removes the breakpoint, if it exists, at specified target code address in the {@link TeleVM}.
          */
         public synchronized void removeBreakpointAt(Address address) {
             _breakpoints.remove(address.toLong());
-            refreshView();
+            refreshView(_teleProcess.epoch());
         }
 
         /**
@@ -322,7 +322,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         public synchronized void removeAllBreakpoints() {
             _breakpoints.clear();
-            refreshView();
+            refreshView(_teleProcess.epoch());
         }
 
         /**

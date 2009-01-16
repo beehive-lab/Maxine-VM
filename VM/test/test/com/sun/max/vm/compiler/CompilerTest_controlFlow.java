@@ -21,8 +21,6 @@
 
 package test.com.sun.max.vm.compiler;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
@@ -203,12 +201,7 @@ public abstract class CompilerTest_controlFlow<Method_Type extends IrMethod> ext
 
     public void test_inlinedIfThenThrow() {
         final Method_Type method = compileMethod("inlinedIfThenThrow", SignatureDescriptor.create(void.class, int.class));
-        try {
-            executeWithReceiverAndException(method, IntValue.from(5));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ClassFormatError);
-        }
+        executeWithReceiverAndExpectedException(method, ClassFormatError.class, IntValue.from(5));
         executeWithReceiver(method, IntValue.from(11));
     }
 

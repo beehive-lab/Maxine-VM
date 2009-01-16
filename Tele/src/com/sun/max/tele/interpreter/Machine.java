@@ -20,11 +20,11 @@
  */
 package com.sun.max.tele.interpreter;
 
+import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.interpreter.ExecutionFrame.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.tele.value.*;
@@ -32,10 +32,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -59,6 +57,13 @@ public final class Machine {
         activate(mainThread);
     }
 
+    public ReferenceValue toReferenceValue(Reference reference) {
+        if (_teleVM == null) {
+            return ObjectReferenceValue.from(reference.toJava());
+        } else {
+            return _teleVM.createReferenceValue(reference);
+        }
+    }
 
     public ExecutionFrame pushFrame(ClassMethodActor method) {
         return _currentThread.pushFrame(method);
@@ -81,27 +86,16 @@ public final class Machine {
         return _currentThread.frame().method();
     }
 
-    public void incrementBCP(int amount) {
-        _currentThread.frame().incrementBCP(amount);
+    public ExecutionThread currentThread() {
+        return _currentThread;
     }
 
-    public void setBCP(int bcp) {
-        _currentThread.frame().setBCP(bcp);
+    public void jump(int offset) {
+        _currentThread.frame().jump(offset);
     }
 
-    public int getBCP() {
-        return _currentThread.frame().bcp();
-    }
-
-    public Bytecode nextInstruction() {
-        final ExecutionFrame currentFrame = _currentThread.frame();
-        int bcp;
-        byte[] code;
-
-        currentFrame.incrementBCP(1);
-        bcp = currentFrame.bcp();
-        code = currentFrame.code();
-        return Bytecode.from(code[bcp]);
+    public Bytecode readOpcode() {
+        return _currentThread.frame().readOpcode();
     }
 
     public void setLocal(int index, Value value) {
@@ -129,45 +123,28 @@ public final class Machine {
         return operands.elementAt(operands.size() - n);
     }
 
-    public byte getInlinedParameterByte(int offset) {
-        final ExecutionFrame currentFrame = _currentThread.frame();
-        final int bcp = currentFrame.bcp();
-        final byte[] code = currentFrame.code();
-
-        return code[bcp + offset];
+    public byte readByte() {
+        return _currentThread.frame().readByte();
     }
 
-    public short getInlinedParameterShort(int offset) {
-        final ExecutionFrame currentFrame = _currentThread.frame();
-        final int bcp = currentFrame.bcp();
-        final byte[] code = currentFrame.code();
-
-        return (short) (code[bcp + offset] << 8 | code[bcp + offset + 1] & 0xff);
+    public short readShort() {
+        return _currentThread.frame().readShort();
     }
 
-    public int getInlinedParameterInt(int offset) {
-        final ExecutionFrame currentFrame = _currentThread.frame();
-        final int bcp = currentFrame.bcp();
-        final byte[] code = currentFrame.code();
-
-        return code[bcp + offset]             << 24
-            | (code[bcp + offset + 1] & 0xFF) << 16
-            | (code[bcp + offset + 2] & 0xFF) << 8
-            | (code[bcp + offset + 3] & 0xFF);
+    public int readInt() {
+        return _currentThread.frame().readInt();
     }
 
-    //NOTE: this method accesses by absolute index rather than an offset from bcp!
-    public int getInlinedParameterIntN(int index) {
-        final byte[] code = _currentThread.frame().code();
+    public void skipBytes(int n) {
+        _currentThread.frame().skipBytes(n);
+    }
 
-        return code[index]             << 24
-            | (code[index + 1] & 0xFF) << 16
-            | (code[index + 2] & 0xFF) << 8
-            | (code[index + 3] & 0xFF);
+    public void alignInstructionPosition() {
+        _currentThread.frame().alignInstructionPosition();
     }
 
     public Value widenIfNecessary(Value value) {
-        if (value instanceof ByteValue || value instanceof ShortValue || value instanceof CharValue || value instanceof BooleanValue) {
+        if (value.kind().toStackKind() == Kind.INT) {
             return IntValue.from(value.toInt());
         }
 
@@ -178,59 +155,53 @@ public final class Machine {
         Value constant = _currentThread.frame().constantPool().valueAt(cpIndex);
 
         if (constant instanceof ObjectReferenceValue) {
-            constant = TeleReferenceValue.from(_teleVM, Reference.fromJava(constant.unboxObject()));
+            constant = toReferenceValue(Reference.fromJava(constant.unboxObject()));
         }
 
         return widenIfNecessary(constant);
     }
 
-    public static class InterpretedException extends Exception { };
+    /**
+     * Converts a given reference to an object to a {@link Throwable} instance.
+     *
+     * @param teleVM the tele VM to be used if {@code throwableReference} is a reference in a tele VM's address space
+     * @param throwableReference the reference to be converted to a {@code Throwable instance}
+     * @return a {@code Throwable instance} converted from {@code throwableReference}
+     */
+    private static Throwable toThrowable(TeleVM teleVM, ReferenceValue throwableReference) {
+        if (throwableReference instanceof TeleReferenceValue) {
+            try {
+                return (Throwable) TeleObject.make(teleVM, throwableReference.asReference()).deepCopy();
+            } catch (Exception e1) {
+                throw ProgramError.unexpected("Could not make a local copy of a remote Throwable", e1);
+            }
+        } else {
+            return (Throwable) throwableReference.asBoxedJavaValue();
+        }
+    }
+
+    public TeleInterpreterException raiseException(ReferenceValue throwableReference) throws TeleInterpreterException {
+        throw new TeleInterpreterException(toThrowable(_teleVM, throwableReference), this);
+    }
+
+    public TeleInterpreterException raiseException(Throwable throwable) throws TeleInterpreterException {
+        throw new TeleInterpreterException(throwable, this);
+    }
 
     /**
-     * Used to throw runtime exceptions from within the VM.
-     * Pushes the exception onto the stack and throws its own
-     * RuntimeException, which reaches the handler in
-     * Interpreter.interpreterLoop().
+     * Looks for an exception handler in the current execution scope that handles a given exception. If one is found,
+     * the execution context is adjusted appropriately so that execution will resume at the discovered handler.
+     * If no handler is found, the execution context is not modified.
+     *
+     * @param throwableReference the reference value representing the exception to be handled
+     * @return {@code true} if an appropriate exception handler was found, {@code false} otherwise
      */
-    public void throwException(ReferenceValue t) throws InterpretedException {
-        push(t);
-        throw new InterpretedException();
-    }
-
-    public void throwException(Throwable t) throws InterpretedException {
-        throwException(ReferenceValue.from(t));
-    }
-
-    public boolean handleException(ReferenceValue t) {
-        //there was a commented out println here, but now i understand: i am driving a mercedes.
-        ExecutionFrame frame = _currentThread.frame();
-
-        while (frame != null) {
-            final ExceptionHandlerTable table = frame.new ExceptionHandlerTable();
-            final ExceptionHandlerEntry handler = table.findHandler(t.getClassActor(), frame.bcp());
-
-            if (handler != null) {
-                setBCP(handler.handlerPosition() - 1); // will get incremented
-                push(t);
-                return true;
-            }
-
-            frame = _currentThread.popFrame();
+    public boolean handleException(ReferenceValue throwableReference) {
+        if (_currentThread.handleException(throwableReference.getClassActor())) {
+            push(throwableReference);
+            return true;
         }
-
-        //well we're out of options..
         return false;
-    }
-
-    public void printStackTrace() {
-        ExecutionFrame frame = _currentThread.frame();
-
-        System.err.println("Interpreter stack trace:");
-
-        while (frame != null) {
-            System.err.println(frame.method().holder().name() + "." + frame.method().name() + "()");
-            frame = frame.previousFrame();
-        }
     }
 
     public int depth() {
@@ -240,38 +211,36 @@ public final class Machine {
     public Value getStatic(short cpIndex) {
         final ConstantPool constantPool = _currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
-
         if (_teleVM != null) {
-            final TypeDescriptor holderTypeDescriptor = fieldRef.holder(constantPool);
-            final ClassActor holder = holderTypeDescriptor.toClassActor(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
-            final String fieldName = fieldRef.name(constantPool).toString();
-            final Kind kind = fieldRef.type(constantPool).toKind();
-            final FieldActor fieldActor = holder.findStaticFieldActor(fieldName);
-
-            final TeleClassActor teleClassActor = _teleVM.teleClassRegistry().findTeleClassActorByType(holderTypeDescriptor);
+            final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
+            final TeleClassActor teleClassActor = _teleVM.teleClassRegistry().findTeleClassActorByType(fieldActor.holder().typeDescriptor());
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 
-            if (kind == Kind.BOOLEAN) {
-                return IntValue.from(staticTupleReference.readBoolean(fieldActor.offset()) ? 1 : 0);
-            } else if (kind == Kind.BYTE) {
-                return IntValue.from(staticTupleReference.readByte(fieldActor.offset()));
-            } else if (kind == Kind.CHAR) {
-                return IntValue.from(staticTupleReference.readChar(fieldActor.offset()));
-            } else if (kind == Kind.DOUBLE) {
-                return DoubleValue.from(staticTupleReference.readDouble(fieldActor.offset()));
-            } else if (kind == Kind.FLOAT) {
-                return FloatValue.from(staticTupleReference.readFloat(fieldActor.offset()));
-            } else if (kind == Kind.INT) {
-                return IntValue.from(staticTupleReference.readInt(fieldActor.offset()));
-            } else if (kind == Kind.LONG) {
-                return LongValue.from(staticTupleReference.readLong(fieldActor.offset()));
-            } else if (kind == Kind.REFERENCE) {
-                return _teleVM.createReferenceValue(_teleVM.wordToReference(staticTupleReference.readWord(fieldActor.offset())));
-            } else if (kind == Kind.SHORT) {
-                return IntValue.from(staticTupleReference.readShort(fieldActor.offset()));
-            } else if (kind == Kind.WORD) {
-                return new WordValue(staticTupleReference.readWord(fieldActor.offset()));
+            switch (fieldActor.kind().asEnum()) {
+                case BOOLEAN:
+                case BYTE:
+                case CHAR:
+                case SHORT:
+                case INT: {
+                    final int intValue = fieldActor.kind().readValue(staticTupleReference, fieldActor.offset()).toInt();
+                    return IntValue.from(intValue);
+                }
+                case FLOAT: {
+                    return FloatValue.from(staticTupleReference.readFloat(fieldActor.offset()));
+                }
+                case LONG: {
+                    return LongValue.from(staticTupleReference.readLong(fieldActor.offset()));
+                }
+                case DOUBLE: {
+                    return DoubleValue.from(staticTupleReference.readDouble(fieldActor.offset()));
+                }
+                case WORD: {
+                    return new WordValue(staticTupleReference.readWord(fieldActor.offset()));
+                }
+                case REFERENCE: {
+                    return _teleVM.createReferenceValue(_teleVM.wordToReference(staticTupleReference.readWord(fieldActor.offset())));
+                }
             }
         } else {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
@@ -287,44 +256,26 @@ public final class Machine {
         } else {
             final ConstantPool cp = _currentThread.frame().constantPool();
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
-
-            fieldActor.writeErasedValue(fieldActor.holder().staticTuple(), value);
+            fieldActor.writeValue(fieldActor.holder().staticTuple(), fieldActor.kind().convert(value));
         }
     }
 
     public Value getField(Reference instance, short cpIndex) {
         final ConstantPool constantPool = _currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
+        final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
+        final Kind kind = fieldActor.kind();
 
-        if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
-            final Kind kind = fieldRef.type(constantPool).toKind();
-            final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-
-            if (kind == Kind.BOOLEAN) {
-                return IntValue.from(instance.readBoolean(fieldActor.offset()) ? 1 : 0);
-            } else if (kind == Kind.BYTE) {
-                return IntValue.from(instance.readByte(fieldActor.offset()));
-            } else if (kind == Kind.CHAR) {
-                return IntValue.from(instance.readChar(fieldActor.offset()));
-            } else if (kind == Kind.DOUBLE) {
-                return DoubleValue.from(instance.readDouble(fieldActor.offset()));
-            } else if (kind == Kind.FLOAT) {
-                return FloatValue.from(instance.readFloat(fieldActor.offset()));
-            } else if (kind == Kind.INT) {
-                return IntValue.from(instance.readInt(fieldActor.offset()));
-            } else if (kind == Kind.LONG) {
-                return LongValue.from(instance.readLong(fieldActor.offset()));
-            } else if (kind == Kind.REFERENCE) {
-                return _teleVM.createReferenceValue(_teleVM.wordToReference(instance.readWord(fieldActor.offset())));
-            } else if (kind == Kind.SHORT) {
-                return IntValue.from(instance.readShort(fieldActor.offset()));
-            } else if (kind == Kind.WORD) {
-                return new WordValue(instance.readWord(fieldActor.offset()));
-            }
+        if (kind.isExtendedPrimitiveValue()) {
+            return widenIfNecessary(fieldActor.readValue(instance));
         } else {
-            return widenIfNecessary(fieldRef.resolve(constantPool, cpIndex).readValue(instance));
+            assert kind == Kind.REFERENCE;
+            if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
+                return _teleVM.createReferenceValue(_teleVM.wordToReference(instance.readWord(fieldActor.offset())));
+            } else {
+                return fieldActor.readValue(instance);
+            }
         }
-        throw ProgramError.unexpected();
     }
 
     public void putField(Object instance, short cpIndex, Value value) {
@@ -335,9 +286,10 @@ public final class Machine {
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
 
             if (value instanceof TeleReferenceValue) {
-                fieldActor.writeErasedValue(instance, TeleReferenceValue.from(_teleVM, makeLocalReference((TeleReference) value.asReference())));
+                fieldActor.writeValue(instance, TeleReferenceValue.from(_teleVM, makeLocalReference((TeleReference) value.asReference())));
             } else {
-                fieldActor.writeErasedValue(instance, value);
+                final Value val = fieldActor.kind().convert(value);
+                fieldActor.writeValue(instance, val);
             }
         }
     }
@@ -454,7 +406,7 @@ public final class Machine {
         }
     }
 
-    public void invokeMethod(ClassMethodActor method) throws InterpretedException {
+    public void invokeMethod(ClassMethodActor method) throws TeleInterpreterException {
         final ExecutionFrame oldFrame = _currentThread.frame();
         final Stack<Value> argumentStack = new Stack<Value>();
         final Stack<Value> oldOperands = oldFrame.stack();
@@ -472,44 +424,28 @@ public final class Machine {
 
         if (method.isNative()) {
             final Value[] arguments = new Value[numberOfParameters];
-
-            System.err.println("Attempting to invoke native method: " + method.format("%r %H.%n(%p)"));
             invertOperands(argumentStack, arguments);
-
             try {
                 push(widenIfNecessary(method.invoke(arguments)));
-            } catch (Exception e) {
-                System.err.println("Bailing -- couldn't invoke native method");
-                e.printStackTrace();
-                System.exit(-1);
-            }
-        } else if (method.isInstanceInitializer()) {
-            argumentStack.pop(); // drop the existing receiver
-            final Value[] arguments = new Value[--numberOfParameters];
-
-            invertOperands(argumentStack, arguments);
-            try {
-                final Reference result = Reference.fromJava(method.invokeConstructor(arguments).asObject());
-                push(TeleReferenceValue.from(_teleVM, result));
-            } catch (Throwable throwable) {
-                throwException(throwable);
+            } catch (InvocationTargetException e) {
+                throw new TeleInterpreterException(e.getCause(), this);
+            } catch (IllegalAccessException e) {
+                throw new TeleInterpreterException(e, this);
             }
         } else if (method.codeAttribute() == null || Word.class.isAssignableFrom(method.holder().toJava())) {
-            if (method.isStatic()) {
-                Problem.unimplemented();
-            } else {
-                final Value[] arguments = new Value[numberOfParameters];
-                invertOperands(argumentStack, arguments);
+            final Value[] arguments = new Value[numberOfParameters];
+            invertOperands(argumentStack, arguments);
 
-                try {
-                    Value result = method.invoke(arguments);
-                    if (result.kind() == Kind.REFERENCE) {
-                        result = TeleReferenceValue.from(_teleVM, Reference.fromJava(result.asObject()));
-                    }
-                    push(widenIfNecessary(result));
-                } catch (Throwable throwable) {
-                    throwException(throwable);
+            try {
+                Value result = method.invoke(arguments);
+                if (result.kind() == Kind.REFERENCE) {
+                    result = toReferenceValue(Reference.fromJava(result.asObject()));
                 }
+                push(widenIfNecessary(result));
+            } catch (InvocationTargetException e) {
+                throw new TeleInterpreterException(e.getCause(), this);
+            } catch (IllegalAccessException e) {
+                throw new TeleInterpreterException(e, this);
             }
         } else {
             final ExecutionFrame newFrame = _currentThread.pushFrame(method);
@@ -529,7 +465,6 @@ public final class Machine {
 
     public ClassActor resolveClassReference(short constantPoolIndex) {
         final ConstantPool constantPool = _currentThread.frame().constantPool();
-
         return constantPool.classAt(constantPoolIndex).resolve(constantPool, constantPoolIndex);
     }
 }

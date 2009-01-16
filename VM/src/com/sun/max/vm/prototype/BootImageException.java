@@ -20,22 +20,26 @@
  */
 package com.sun.max.vm.prototype;
 
-
+/**
+ * Thrown to indicate a problem occurred when loading, saving or verifying the validity of a boot image.
+ *
+ * @author Doug Simon
+ */
 public class BootImageException extends Exception {
 
-    BootImageException() {
+    public BootImageException() {
         super();
     }
 
-    BootImageException(String message) {
+    public BootImageException(String message) {
         super(message);
     }
 
-    BootImageException(String message, Throwable cause) {
+    public BootImageException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    BootImageException(Throwable cause) {
+    public BootImageException(Throwable cause) {
         super(cause);
     }
 

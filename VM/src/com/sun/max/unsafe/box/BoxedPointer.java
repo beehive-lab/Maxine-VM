@@ -36,16 +36,43 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
     // ATTENTION: this field name must match the corresponding declaration in "pointer.c"!
     private long _nativeWord;
 
-    public BoxedPointer(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
+    public static final BoxedPointer ZERO = new BoxedPointer(0);
+    public static final BoxedPointer MAX = new BoxedPointer(-1L);
+
+    private static final class Cache {
+        private Cache() {
+        }
+
+        static final int HIGHEST_VALUE = 1000000;
+
+        static final BoxedPointer[] _cache = new BoxedPointer[HIGHEST_VALUE + 1];
+
+        static {
+            for (int i = 0; i < _cache.length; i++) {
+                _cache[i] = new BoxedPointer(i);
+            }
+        }
     }
 
-    public BoxedPointer(long value) {
+    public static BoxedPointer from(long value) {
+        if (value == 0) {
+            return ZERO;
+        }
+        if (value >= 0 && value <= Cache.HIGHEST_VALUE) {
+            return Cache._cache[(int) value];
+        }
+        if (value == -1L) {
+            return MAX;
+        }
+        return new BoxedPointer(value);
+    }
+
+    private BoxedPointer(long value) {
         _nativeWord = value;
     }
 
-    public BoxedPointer(int value) {
-        _nativeWord = value & BoxedWord.INT_MASK;
+    public static BoxedPointer from(int value) {
+        return from(value & BoxedWord.INT_MASK);
     }
 
     public long nativeWord() {
@@ -54,22 +81,22 @@ public final class BoxedPointer extends Pointer implements UnsafeBox {
 
     @Override
     protected Pointer dividedByAddress(Address divisor) {
-        return new BoxedAddress(_nativeWord).dividedByAddress(divisor).asPointer();
+        return BoxedAddress.from(_nativeWord).dividedByAddress(divisor).asPointer();
     }
 
     @Override
     protected Pointer dividedByInt(int divisor) {
-        return new BoxedAddress(_nativeWord).dividedByInt(divisor).asPointer();
+        return BoxedAddress.from(_nativeWord).dividedByInt(divisor).asPointer();
     }
 
     @Override
     protected Pointer remainderByAddress(Address divisor) {
-        return new BoxedAddress(_nativeWord).remainderByAddress(divisor).asPointer();
+        return BoxedAddress.from(_nativeWord).remainderByAddress(divisor).asPointer();
     }
 
     @Override
     protected int remainderByInt(int divisor) {
-        return new BoxedAddress(_nativeWord).remainderByInt(divisor);
+        return BoxedAddress.from(_nativeWord).remainderByInt(divisor);
     }
 
     private static native byte nativeReadByteAtLongOffset(long pointer, long offset);

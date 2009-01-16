@@ -25,6 +25,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
+import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
@@ -507,6 +508,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return _codeStart;
     }
 
+    @PROTOTYPE_ONLY
     public final void setCodeStart(Pointer codeStart) {
         _codeStart = codeStart;
     }
@@ -826,14 +828,33 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         }
     }
 
+    /**
+     * Traces the {@linkplain #compressedJavaFrameDescriptors() frame descriptors} for the compiled code represented by this object.
+     *
+     * @param writer where the trace is written
+     */
+    public final void traceFrameDescriptors(IndentWriter writer) {
+        if (_compressedJavaFrameDescriptors != null) {
+            writer.println("Frame Descriptors: ");
+            writer.indent();
+            final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(_compressedJavaFrameDescriptors);
+            for (int stopIndex = 0; stopIndex < frameDescriptors.length(); ++stopIndex) {
+                final TargetJavaFrameDescriptor frameDescriptor = frameDescriptors.get(stopIndex);
+                final int stopPosition = stopPosition(stopIndex);
+                writer.println(stopPosition + ": " + frameDescriptor);
+            }
+            writer.outdent();
+        }
+    }
+
     @Override
     public final String toString() {
-        return _classMethodActor.name().toString();
+        return _classMethodActor.format("%H.%n(%p)");
     }
 
     public final void trace(int level) {
         if (Trace.hasLevel(level)) {
-            Trace.line(level, this.traceToString());
+            Trace.line(level, traceToString());
         }
     }
 

@@ -217,11 +217,11 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread_with_stack("java_thread",
-		thread_runJava,
+    	(void (*)(void *)) thread_runJava,
 		(void*) threadSpecifics->stackBase,
 	    threadSpecifics->stackSize,
 		priority,
-		threadSpecifics);
+		(void*) threadSpecifics);
 #elif (os_LINUX || os_DARWIN)
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);
@@ -440,14 +440,6 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
     guestvmXen_set_priority((void *) nativeThread, priority);
 #else
     log_println("nativeSetPriority %d ignored!", priority);
-#endif
-}
-
-long nativeGetDefaultThreadSignalStackSize() {
-#if os_GUESTVMXEN
-	return 0;
-#else
-	return SIGSTKSZ;
 #endif
 }
 

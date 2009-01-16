@@ -23,65 +23,20 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 
-public class New extends JavaOperator {
-    private final int _index;
-    private final ConstantPool _constantPool;
-    private ClassActor _classActor;
+public class New extends JavaResolvableOperator<ClassActor> {
 
     public New(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        final ClassConstant classConstant = constantPool.classAt(index);
-        if (classConstant.isResolved() || classConstant.isResolvableWithoutClassLoading(constantPool)) {
-            _classActor = classConstant.resolve(constantPool, index);
-        } else {
-            _classActor = null;
-        }
-    }
-
-    public boolean isResolved() {
-        return _classActor != null;
-    }
-
-    public void resolve() {
-        _classActor = _constantPool.classAt(_index).resolve(_constantPool, _index);
-    }
-
-    public boolean isClassInitialized() {
-        if (!isResolved()) {
-            return false;
-        }
-        return _classActor.isInitialized();
-    }
-
-    public void initializeClass() {
-        if (!isClassInitialized()) {
-            if (!isResolved()) {
-                resolve();
-            }
-            _classActor.makeInitialized();
-        }
+        super(NONE, constantPool, index, Kind.REFERENCE);
     }
 
     @Override
-    public Kind resultKind() {
-        return Kind.REFERENCE;
-    }
-
-    public int index() {
-        return _index;
-    }
-
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
-    public ClassActor classActor() {
-        return _classActor;
+    public boolean requiresClassInitialization() {
+        return true;
     }
 
     @Override
@@ -92,9 +47,5 @@ public class New extends JavaOperator {
     @Override
     public void acceptVisitor(CirVisitor visitor) {
         visitor.visitHCirOperator(this);
-    }
-    @Override
-    public String toString() {
-        return "<New_" + (isResolved() ? _classActor.toString() : _index + "") + ">";
     }
 }

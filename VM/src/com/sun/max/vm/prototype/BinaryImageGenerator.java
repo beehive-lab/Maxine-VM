@@ -74,12 +74,10 @@ public final class BinaryImageGenerator {
     private final OptionSet _options = new OptionSet();
 
     private final Option<Boolean> _treeOption = _options.newBooleanOption("tree", false,
-            "Selects whether the binary image generator will create a tree file " +
-            "that can be used to help diagnose space leaks.");
+            "Create a file showing the connectivity of objects in the image.");
 
     private final Option<Boolean> _statsOption = _options.newBooleanOption("stats", false,
-            "Selects whether the binary image generator will create a statistics file " +
-            "that contains information about the number and size of each type of object in the image.");
+            "Create a file detailing the number and size of each type of object in the image.");
 
     private final Option<File> _outputDirectoryOption = _options.newFileOption("output-dir", getDefaultOutputDirectory(),
             "Selects the output directory for the binary image generator.");
@@ -99,9 +97,6 @@ public final class BinaryImageGenerator {
 
     private final Option<String> _methodTreeFileOption = _options.newStringOption("method-tree-file", DEFAULT_IMAGE_METHOD_TREE_FILE_NAME,
             "Specifies the name of the method tree file generated (if any).");
-
-    private final Option<File> _configFileOption = _options.newConfigOption("config", null,
-            "This option allows specifying a configuration file that contains values for all options.");
 
     private final Option<Boolean> _methodTraceOption = _options.newBooleanOption("methodTrace", false,
             "Activates method tracing instrumentation.");

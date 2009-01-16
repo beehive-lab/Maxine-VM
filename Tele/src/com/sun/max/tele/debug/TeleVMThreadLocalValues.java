@@ -38,9 +38,9 @@ import com.sun.max.vm.thread.*;
  */
 public class TeleVMThreadLocalValues {
 
-	private final Map<String, Long> _values = new LinkedHashMap<String, Long>(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.dividedBy(Word.size()).toInt());
+    private final Map<String, Long> _values = new LinkedHashMap<String, Long>(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.dividedBy(Word.size()).toInt());
 
-	private final Safepoint.State _safepointState;
+    private final Safepoint.State _safepointState;
 
     public TeleVMThreadLocalValues(Safepoint.State safepointState) {
         for (String name : VmThreadLocal.NAMES) {
@@ -50,46 +50,46 @@ public class TeleVMThreadLocalValues {
     }
 
     boolean refresh(DataAccess dataAccess, StackScanner stackScanner) {
-    	if (_start.isZero()) {
-    		final Pointer vmThreadLocals = stackScanner.vmThreadLocals();
-    		if (!vmThreadLocals.isZero()) {
-    			_start = dataAccess.readWord(vmThreadLocals, _safepointState.offset()).asPointer();
-    		}
-    	}
-    	if (!_start.isZero()) {
-    		final Word tag = dataAccess.readWord(_start, VmThreadLocal.TAG.offset());
-    		if (tag.equals(VmThread.TAG)) {
-    			refresh(dataAccess);
-    			return true;
-    		}
-    	}
-    	invalidate();
-    	return false;
+        if (_start.isZero()) {
+            final Pointer vmThreadLocals = stackScanner.vmThreadLocals();
+            if (!vmThreadLocals.isZero()) {
+                _start = dataAccess.readWord(vmThreadLocals, _safepointState.offset()).asPointer();
+            }
+        }
+        if (!_start.isZero()) {
+            final Word tag = dataAccess.readWord(_start, VmThreadLocal.TAG.offset());
+            if (tag.equals(VmThread.TAG)) {
+                refresh(dataAccess);
+                return true;
+            }
+        }
+        invalidate();
+        return false;
     }
 
     private void refresh(DataAccess dataAccess) {
-    	int offset = 0;
-		for (String name : VmThreadLocal.NAMES) {
-    		if (offset != 0 || _safepointState != State.TRIGGERED) {
-    			try {
-					final Word value = dataAccess.readWord(_start, offset);
-    				_values.put(name, value.asAddress().toLong());
-    			} catch (DataIOError dataIOError) {
-    				ProgramError.unexpected("Could not read value of " + name + " from safepoints-" + _safepointState.name().toLowerCase() + " VM thread locals");
-    			}
-    		}
-    		offset += Word.size();
-    	}
+        int offset = 0;
+        for (String name : VmThreadLocal.NAMES) {
+            if (offset != 0 || _safepointState != State.TRIGGERED) {
+                try {
+                    final Word value = dataAccess.readWord(_start, offset);
+                    _values.put(name, value.asAddress().toLong());
+                } catch (DataIOError dataIOError) {
+                    ProgramError.unexpected("Could not read value of " + name + " from safepoints-" + _safepointState.name().toLowerCase() + " VM thread locals");
+                }
+            }
+            offset += Word.size();
+        }
     }
 
     /**
      * Invalidates the values represented by this object.
      */
     void invalidate() {
-    	_start = Address.zero();
-		for (Map.Entry<String, Long> entry : _values.entrySet()) {
-			entry.setValue(null);
-		}
+        _start = Address.zero();
+        for (Map.Entry<String, Long> entry : _values.entrySet()) {
+            entry.setValue(null);
+        }
     }
 
     /**
@@ -97,7 +97,7 @@ public class TeleVMThreadLocalValues {
      * associated thread stack.
      */
     public boolean isValid() {
-    	return !_start.isZero();
+        return !_start.isZero();
     }
 
     /**
@@ -118,7 +118,7 @@ public class TeleVMThreadLocalValues {
      * Gets the value of a given thread local variable.
      */
     public long get(VmThreadLocal threadLocalVariable) {
-    	final String name = VmThreadLocal.NAMES.get(threadLocalVariable.index());
+        final String name = VmThreadLocal.NAMES.get(threadLocalVariable.index());
         return _values.get(name);
     }
 
@@ -129,7 +129,7 @@ public class TeleVMThreadLocalValues {
      * in the safepoints-triggered VM thread locals).
      */
     public boolean isValid(String name) {
-    	assert _values.containsKey(name) : "Unknown VM thread local: " + name;
+        assert _values.containsKey(name) : "Unknown VM thread local: " + name;
         return _values.get(name) != null;
     }
 
@@ -137,7 +137,7 @@ public class TeleVMThreadLocalValues {
      * Gets the value of a named thread local variable.
      */
     public long get(String name) {
-    	assert _values.containsKey(name) : "Unknown VM thread local: " + name;
+        assert _values.containsKey(name) : "Unknown VM thread local: " + name;
         return _values.get(name);
     }
 
@@ -145,38 +145,38 @@ public class TeleVMThreadLocalValues {
         return isValid() && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER) == 0 && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C) == 0;
     }
 
-	@Override
-	public String toString() {
-		return _values.toString();
-	}
+    @Override
+    public String toString() {
+        return _values.toString();
+    }
 
-	private Address _start = Address.zero();
+    private Address _start = Address.zero();
 
-	/**
-	 * Gets the base of address of the VM thread locals represented by this object.
-	 *
-	 * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
-	 */
-	public Address start() {
-		return _start;
-	}
+    /**
+     * Gets the base of address of the VM thread locals represented by this object.
+     *
+     * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
+     */
+    public Address start() {
+        return _start;
+    }
 
-	/**
-	 * Gets the end of address of the VM thread locals represented by this object.
-	 *
-	 * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
-	 */
-	public Address end() {
-		if (_start.isZero()) {
-			return _start;
-		}
-		return _start.plus(size());
-	}
+    /**
+     * Gets the end of address of the VM thread locals represented by this object.
+     *
+     * @return {@link Address#zero()} if the VM thread locals represented by this object are invalid
+     */
+    public Address end() {
+        if (_start.isZero()) {
+            return _start;
+        }
+        return _start.plus(size());
+    }
 
-	public Size size() {
-		if (_start.isZero()) {
-			return Size.zero();
-		}
-		return VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE;
-	}
+    public Size size() {
+        if (_start.isZero()) {
+            return Size.zero();
+        }
+        return VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE;
+    }
 }

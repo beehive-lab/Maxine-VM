@@ -187,8 +187,10 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
                 if (positionToStopIndex[instructionPosition] >= 0) {
                     // the row is at a stop point
                     _rowToBackGroundColor[row] = _rowToBackGroundColor[row].darker();
-                    // Now see if the bytecode is a call.
-                    _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodePosition);
+                    if (bytecodePosition < _bytecodes.length) {
+                        // Now see if the bytecode is a call.
+                        _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodePosition);
+                    }
                 }
             }
         } else {
@@ -260,6 +262,9 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
      * @return if a call instruction, the index into the constant pool of the called {@link MethodRefConstant}; else -1.
      */
     private int findCalleeIndex(byte[] bytecodes, int bytecodePosition) {
+        if (bytecodePosition >= bytecodes.length) {
+            return -1;
+        }
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(_methodRefIndexFinder.reset());
         bytecodeScanner.scanInstruction(bytecodes, bytecodePosition);
         return _methodRefIndexFinder.methodRefIndex();

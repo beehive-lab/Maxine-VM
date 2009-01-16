@@ -258,7 +258,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             final Pointer breakpointAddress = breakpointAddressFromInstructionPointer();
             breakpoint = breakpointFactory.getBreakpointAt(breakpointAddress);
         } catch (DataIOError dataIOError) {
-        	// This is a catch for problems getting accurate state for threads that are not at breakpoints
+            // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }
         if (breakpoint != null) {
             _state = BREAKPOINT;
@@ -496,7 +496,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
             for (LocalVariableTable.Entry entry : _classMethodActor.codeAttribute().localVariableTable().entries()) {
                 final Value curValue = getValueImpl(entry.slot());
-                vmValues[entry.slot()] = teleProcess().teleVM().convertToVirtualMachineValue(curValue);
+                vmValues[entry.slot()] = teleProcess().teleVM().maxineValueToJDWPValue(curValue);
 
                 if (curValue.kind() == Kind.REFERENCE) {
                     values[entry.slot()] = curValue.asReference().toOrigin().toLong();
@@ -579,7 +579,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
         @Override
         public CodeLocation getLocation() {
-            return teleProcess().teleVM().createCodeLocation(teleProcess().teleVM().teleClassRegistry().findTeleMethodActor(_classMethodActor), _position, false);
+            return teleProcess().teleVM().vmAccess().createCodeLocation(teleProcess().teleVM().teleClassRegistry().findTeleMethodActor(_classMethodActor), _position, false);
         }
 
         public long getInstructionPointer() {
@@ -746,7 +746,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
         if (_suspendCount == 0) {
             LOGGER.info("Asked to RESUME THREAD " + this + " we are resuming silently the whole VM for now");
-            teleProcess().teleVM().resume();
+            teleProcess().teleVM().vmAccess().resume();
         }
     }
 
@@ -772,12 +772,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     @Override
     public ReferenceTypeProvider getReferenceType() {
-        return this.teleProcess().teleVM().getReferenceType(getClass());
+        return this.teleProcess().teleVM().vmAccess().getReferenceType(getClass());
     }
 
     @Override
     public ThreadGroupProvider getThreadGroup() {
-        return isJava() ? this.teleProcess().teleVM().javaThreads() : this.teleProcess().teleVM().nativeThreads();
+        return isJava() ? this.teleProcess().teleVM().javaThreadGroupProvider() : this.teleProcess().teleVM().nativeThreadGroupProvider();
     }
 
     @Override
@@ -794,7 +794,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     @Override
     public VMAccess getVM() {
-        return teleProcess().teleVM();
+        return teleProcess().teleVM().vmAccess();
     }
 
     @Override

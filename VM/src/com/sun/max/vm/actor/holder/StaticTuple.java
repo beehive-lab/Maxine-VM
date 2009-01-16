@@ -58,7 +58,7 @@ public final class StaticTuple {
         for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
             final Value constantValue = fieldActor.constantValue();
             if (constantValue != null) {
-                fieldActor.writeErasedValue(staticTuple, constantValue);
+                fieldActor.writeValue(staticTuple, constantValue);
             }
         }
         return staticTuple;

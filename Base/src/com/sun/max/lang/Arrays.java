@@ -37,7 +37,7 @@ public final class Arrays {
 
     }
 
-    public static <Element_Type> Element_Type[] create(Class<Element_Type> elementType, int length) {
+    public static <Element_Type> Element_Type[] newInstance(Class<Element_Type> elementType, int length) {
         final Object array = Array.newInstance(elementType, length);
         final Class<Element_Type[]> arrayType = null;
         return StaticLoophole.cast(arrayType, array);
@@ -60,7 +60,7 @@ public final class Arrays {
             }
             length = count;
         }
-        final Element_Type[] result = Arrays.create(elementType, length);
+        final Element_Type[] result = Arrays.newInstance(elementType, length);
         final Iterator<Element_Type> iterator = elements.iterator();
         for (int i = 0; i != result.length; ++i) {
             result[i] = iterator.next();
@@ -69,7 +69,7 @@ public final class Arrays {
     }
 
     public static <Element_Type> Element_Type[] from(Class<Element_Type> elementType, Element_Type[] elements) {
-        final Element_Type[] result = Arrays.create(elementType, elements.length);
+        final Element_Type[] result = Arrays.newInstance(elementType, elements.length);
         for (int i = 0; i != result.length; ++i) {
             result[i] = elements[i];
         }
@@ -275,7 +275,7 @@ public final class Arrays {
         if (array == null) {
             return additionalElements;
         }
-        final Element_Type[] result = create(resultElementType, array.length + additionalElements.length);
+        final Element_Type[] result = newInstance(resultElementType, array.length + additionalElements.length);
         System.arraycopy(array, 0, result, 0, array.length);
         System.arraycopy(additionalElements, 0, result, array.length, additionalElements.length);
         return result;
@@ -283,11 +283,11 @@ public final class Arrays {
 
     public static <Element_Type> Element_Type[] insert(Class<Element_Type> resultElementType, Element_Type[] array, int index, Element_Type element) {
         if (array == null) {
-            final Element_Type[] result = create(resultElementType, 1);
+            final Element_Type[] result = newInstance(resultElementType, 1);
             result[index] = element;
             return result;
         }
-        final Element_Type[] result = create(resultElementType, array.length + 1);
+        final Element_Type[] result = newInstance(resultElementType, array.length + 1);
         if (index > 0) {
             System.arraycopy(array, 0, result, 0, index);
         }
@@ -300,7 +300,7 @@ public final class Arrays {
 
     public static  <Element_Type> Element_Type[] remove(Class<Element_Type> resultElementType, Element_Type[] array, int index) {
         final int newLength = array.length - 1;
-        final Element_Type[] result = create(resultElementType, newLength);
+        final Element_Type[] result = newInstance(resultElementType, newLength);
         System.arraycopy(array, 0, result, 0, index);
         if (index < newLength) {
             System.arraycopy(array, index + 1, result, index, newLength - index);
@@ -336,22 +336,40 @@ public final class Arrays {
         return n;
     }
 
-    public static <Element_Type, Result_Type extends Element_Type> Result_Type[] filter(Element_Type[] array, Class<Result_Type> resultType) {
-        final List<Element_Type> result = new ArrayList<Element_Type>();
+    public static <Element_Type, Result_Type extends Element_Type> Result_Type[] filter(Element_Type[] array, Class<Result_Type> resultType, Result_Type[] none) {
+        if (array.length == 0) {
+            return none;
+        }
+        List<Element_Type> result = null;
         for (int i = 0; i < array.length; i++) {
             if (resultType.isInstance(array[i])) {
+                if (result == null) {
+                    result = new ArrayList<Element_Type>();
+                }
                 result.add(array[i]);
             }
         }
-        return result.toArray(create(resultType, result.size()));
+        if (result == null) {
+            return none;
+        }
+        return result.toArray(newInstance(resultType, result.size()));
     }
 
-    public static <Element_Type> Element_Type[] filter(Element_Type[] array, Predicate<? super Element_Type> predicate) {
-        final List<Element_Type> result = new ArrayList<Element_Type>();
+    public static <Element_Type> Element_Type[] filter(Element_Type[] array, Predicate<? super Element_Type> predicate, Element_Type[] none) {
+        if (array.length == 0) {
+            return none;
+        }
+        List<Element_Type> result = null;
         for (int i = 0; i < array.length; i++) {
             if (predicate.evaluate(array[i])) {
+                if (result == null) {
+                    result = new ArrayList<Element_Type>();
+                }
                 result.add(array[i]);
             }
+        }
+        if (result == null) {
+            return none;
         }
         final Class<Element_Type[]> arrayType = null;
         final Element_Type[] space = StaticLoophole.cast(arrayType, Array.newInstance(array.getClass().getComponentType(), result.size()));
@@ -377,7 +395,7 @@ public final class Arrays {
     }
 
     public static <From_Type, To_Type> To_Type[] map(From_Type[] from, Class<To_Type> toType, MapFunction<From_Type, To_Type> mapFunction) {
-        final To_Type[] to = create(toType, from.length);
+        final To_Type[] to = newInstance(toType, from.length);
         for (int i = 0; i < from.length; i++) {
             to[i] = mapFunction.map(from[i]);
         }
@@ -438,7 +456,7 @@ public final class Arrays {
         for (ElementSub_Type[] array : arrays) {
             totalLength += array.length;
         }
-        final ElementSuper_Type[] result = create(elementSuperType, totalLength);
+        final ElementSuper_Type[] result = newInstance(elementSuperType, totalLength);
         int index = 0;
         for (ElementSub_Type[] array : arrays) {
             System.arraycopy(array, 0, result, index, array.length);

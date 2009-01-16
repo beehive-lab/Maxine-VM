@@ -35,7 +35,7 @@ public final class BoxedMemory {
 
     public static Pointer allocate(Size size) {
         final UnsafeBox box = (UnsafeBox) size;
-        return new BoxedPointer(nativeAllocate(box.nativeWord()));
+        return BoxedPointer.from(nativeAllocate(box.nativeWord()));
     }
 
 
@@ -44,7 +44,7 @@ public final class BoxedMemory {
     public static Pointer reallocate(Pointer block, Size size) {
         final UnsafeBox blockBox = (UnsafeBox) block;
         final UnsafeBox sizeBox = (UnsafeBox) size;
-        return new BoxedPointer(nativeReallocate(blockBox.nativeWord(), sizeBox.nativeWord()));
+        return BoxedPointer.from(nativeReallocate(blockBox.nativeWord(), sizeBox.nativeWord()));
     }
 
 

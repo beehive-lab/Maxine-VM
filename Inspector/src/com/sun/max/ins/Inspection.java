@@ -703,7 +703,7 @@ public class Inspection extends JFrame {
         _teleVM = teleVM;
         _bootImageFileName = _teleVM.bootImageFile().getAbsolutePath().toString();
         _teleProcess = _teleVM.teleProcess();
-        if (!(_teleProcess instanceof NoTeleProcess)) {
+        if (!(_teleProcess instanceof ReadOnlyTeleProcess)) {
             _vmState = State.STOPPED;
             _inspectionState = InspectionState.STOPPED;
         }
@@ -888,10 +888,10 @@ public class Inspection extends JFrame {
     /**
      * Handles reported breakpoint changes in the {@link TeleVM}.
      */
-    private void processBreakpointChange() {
+    private void processBreakpointChange(long epoch) {
         Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state notification");
         for (InspectionListener listener : _inspectionListeners.clone()) {
-            listener.breakpointSetChanged();
+            listener.breakpointSetChanged(epoch);
         }
     }
 
@@ -900,13 +900,13 @@ public class Inspection extends JFrame {
      * Ensures that the event is handled only on the current AWT event  thread.
      */
     private final class BreakpointListener implements TeleViewModel.Listener {
-        public void refreshView() {
+        public void refreshView(final long epoch) {
             if (java.awt.EventQueue.isDispatchThread()) {
-                processBreakpointChange();
+                processBreakpointChange(epoch);
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
-                        processBreakpointChange();
+                        processBreakpointChange(epoch);
                     }
                 });
             }

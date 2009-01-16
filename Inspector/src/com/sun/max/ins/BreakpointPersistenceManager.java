@@ -87,7 +87,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
         return null;
     }
 
-    public void refreshView() {
+    public void refreshView(long epoch) {
         // Breakpoints in the {@link TeleVM} have changed.
         _inspection.settings().save();
     }
@@ -116,7 +116,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
         for (TeleTargetBreakpoint breakpoint : targetBreakpoints) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
             settings.save(prefix + "." + ADDRESS_KEY, breakpoint.address().toLong());
-            settings.save(prefix + "." + ENABLED_KEY, breakpoint.enabled());
+            settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             final BreakpointCondition condition = breakpoint.condition();
             if (condition != null) {
                 settings.save(prefix + "." + CONDITION_KEY, condition.toString());
@@ -161,7 +161,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
             settings.save(prefix + "." + METHOD_NAME_KEY, key.name().string());
             settings.save(prefix + "." + METHOD_SIGNATURE_KEY, key.signature().string());
             settings.save(prefix + "." + POSITION_KEY, key.position());
-            settings.save(prefix + "." + ENABLED_KEY, breakpoint.enabled());
+            settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
         }
     }
 

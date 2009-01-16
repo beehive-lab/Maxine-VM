@@ -29,6 +29,7 @@ public class ArrayLoad extends JavaOperator {
     private final Kind _kind;
 
     public ArrayLoad(Kind kind) {
+        super(NULL_POINTER_EXCEPTION | ARRAY_INDEX_OUT_OF_BOUNDS_EXCEPTION);
         _kind = kind;
     }
 
@@ -44,17 +45,6 @@ public class ArrayLoad extends JavaOperator {
 
     @Override
     public String toString() {
-        return "Arrayload";
+        return "ArrayLoad";
     }
-
-    private boolean _canRaiseNullPointerException = true;
-
-    public void setCanRaiseNullPointerException(boolean flag) {
-        _canRaiseNullPointerException = flag;
-    }
-
-    public boolean canRaiseNullPointerException() {
-        return _canRaiseNullPointerException;
-    }
-
 }

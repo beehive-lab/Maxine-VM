@@ -29,7 +29,7 @@ import com.sun.max.unsafe.box.*;
 /**
  * Offsets from addresses or pointers. Unlike an 'Address', an 'Offset' can be negative. Both types have the identical
  * number of bits used for representation. However, 'Offset' uses twos complement, whereas 'Address' is simply unsigned.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class Offset extends Word {
@@ -39,7 +39,7 @@ public abstract class Offset extends Word {
 
     @INLINE
     public static Offset zero() {
-        return fromInt(0);
+        return Word.isBoxed() ? BoxedOffset.ZERO : fromInt(0);
     }
 
     @INLINE
@@ -50,7 +50,7 @@ public abstract class Offset extends Word {
     @INLINE
     public static Offset fromInt(int value) {
         if (Word.isBoxed()) {
-            return new BoxedOffset(value);
+            return BoxedOffset.from(value);
         }
         if (Word.width() == WordWidth.BITS_64) {
             final long n = value;
@@ -62,7 +62,7 @@ public abstract class Offset extends Word {
     @INLINE
     public static Offset fromLong(long value) {
         if (Word.isBoxed()) {
-            return new BoxedOffset(value);
+            return BoxedOffset.from(value);
         }
         if (Word.width() == WordWidth.BITS_64) {
             return UnsafeLoophole.longToWord(Offset.class, value);

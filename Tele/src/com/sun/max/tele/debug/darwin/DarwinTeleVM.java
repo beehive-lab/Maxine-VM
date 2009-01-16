@@ -40,16 +40,16 @@ public final class DarwinTeleVM extends TeleVM {
     private static native long nativeLoadBootHeap(long childPID, long task, long mappingSize);
 
     @Override
-    protected Pointer loadBootImage() throws IOException {
+    protected Pointer loadBootImage() throws BootImageException {
         final DarwinTeleProcess darwinTeleProcess = (DarwinTeleProcess) teleProcess();
         final long heap = nativeLoadBootHeap(darwinTeleProcess.pid(), darwinTeleProcess.task(), bootImage().header()._bootHeapSize + bootImage().header()._bootCodeSize);
         if (heap == 0L) {
-            throw new IOException("Could not trace remote process up to image mapping.");
+            throw new BootImageException("Could not trace remote process up to image mapping.");
         }
         return Pointer.fromLong(heap);
     }
 
-    public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int id) throws BootImageException, IOException {
+    public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int id) throws BootImageException {
         super(bootImageFile, bootImage, sourcepath, commandLineArguments, id);
     }
 

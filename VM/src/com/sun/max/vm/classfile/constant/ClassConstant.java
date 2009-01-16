@@ -27,12 +27,12 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Constant pool entries referencing a class, #4.4.1.
+ * Interface denoting a class entry in a constant pool.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstant<ClassConstant>, PoolConstantKey<ClassConstant>, ResolvableConstant<ClassConstant> {
+public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstant<ClassConstant>, PoolConstantKey<ClassConstant>, ResolvableConstant<ClassConstant, ClassActor> {
 
     TypeDescriptor typeDescriptor();
 

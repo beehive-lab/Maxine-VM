@@ -74,6 +74,9 @@ public class CompiledPrototype extends Prototype {
     private final VariableMapping<MethodActor, Link> _methodActors = new ChainedHashMapping<MethodActor, Link>();
     private final LinkedList<MethodActor> _worklist = new LinkedList<MethodActor>();
 
+    /**
+     * Methods that must be statically compiled in the boot image.
+     */
     private static final GrowableDeterministicSet<ClassMethodActor> _imageMethodActors = new LinkedIdentityHashSet<ClassMethodActor>();
 
     /**
@@ -442,6 +445,7 @@ public class CompiledPrototype extends Prototype {
         add(BootImage.getRunMethodActor(runScheme.getClass()), null, vmEntryPoint);
 
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
+        addMethods(null, ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, _imageMethodActors, vmEntryPoint);
 
         for (MethodActor methodActor : _imageInvocationStubMethodActors) {
@@ -503,8 +507,8 @@ public class CompiledPrototype extends Prototype {
         final long initialNumberOfCompilations = numberOfCompilations();
 
 
-        final ExecutorService compileService = Executors.newFixedThreadPool(_numberOfCompilerThreads);
-        final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compileService);
+        final ExecutorService compilationService = Executors.newFixedThreadPool(_numberOfCompilerThreads);
+        final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);
         final CompilationScheme compilationScheme = vmConfiguration().compilationScheme();
 
         while (true) {
@@ -536,6 +540,7 @@ public class CompiledPrototype extends Prototype {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException executionException) {
+                compilationService.shutdownNow();
                 ProgramError.unexpected(executionException.getCause());
             }
             ++_totalCompilations;
@@ -544,7 +549,7 @@ public class CompiledPrototype extends Prototype {
             }
         }
 
-        compileService.shutdown();
+        compilationService.shutdown();
         final long newCompilations = numberOfCompilations() - initialNumberOfCompilations;
         Trace.end(1, "new compilations: " + newCompilations);
         if (newCompilations == 0) {
@@ -627,6 +632,7 @@ public class CompiledPrototype extends Prototype {
         for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
             if (!_unlinkedClasses.contains(targetMethod.classMethodActor().holder()) && !_unlinkedMethods.contains(targetMethod.classMethodActor())) {
                 if (!targetMethod.linkDirectCalls()) {
+                    targetMethod.linkDirectCalls();
                     ProgramError.unexpected("did not link all direct calls in method: " + targetMethod);
                 }
             } else {

@@ -24,7 +24,7 @@ import com.sun.max.MaxPackage;
 
 
 /**
- * @author Michael Van De Vanter
+ * @author Athul Acharya
  */
 public class Package extends MaxPackage {
 

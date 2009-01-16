@@ -121,7 +121,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
             if (phase == MaxineVM.Phase.PROTOTYPING) {
-                innerInitialize();
+                extendImage();
             }
         }
         super.initialize(phase);
@@ -148,10 +148,14 @@ public class ExtendImageRunScheme extends JavaRunScheme {
 
     @Override
     public void run() {
-        if (_tester != null) {
-            _tester.run();
-        } else {
+        // The JavaTesterRunScheme no longer overrides run.
+        // Instead it checks whether  to run tests in the STARTING
+        // phase of the initialize method.
+        if (_tester == null || VMOptions.parseMain(false)) {
             super.run();
+        } else {
+            initializeBasicFeatures();
+            _tester.initialize(MaxineVM.Phase.STARTING);
         }
     }
 
@@ -163,7 +167,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void innerInitialize() {
+    private void extendImage() {
         final String mainClass = System.getProperty(MAINCLASS_PROPERTY_NAME);
         final String fileList = System.getProperty(SPECFILE_PROPERTY_NAME);
 
@@ -272,7 +276,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void forceClass(String className, boolean isMain) {
+    protected void forceClass(String className, boolean isMain) {
         Trace.line(1, "extending image with class " + className);
         JavaPrototype.javaPrototype().loadClass(className);
         if (isMain) {
@@ -290,7 +294,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void forceClassInit(String className) {
+    protected void forceClassInit(String className) {
         forceClass(className, false);
         Trace.line(1, "initializing class " + className);
         try {
@@ -301,13 +305,13 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void forceLoadPackage(String packageName) {
+    protected void forceLoadPackage(String packageName) {
         Trace.line(1, "extending image with classes in package " + packageName);
         JavaPrototype.javaPrototype().loadPackage(packageName, false);
     }
 
     @PROTOTYPE_ONLY
-    private void forceCompileMethod(String forceMethodName) {
+    protected void forceCompileMethod(String forceMethodName) {
         final int ix = forceMethodName.lastIndexOf('.');
         if (ix < 0) {
             ProgramError.unexpected(forceMethodName + " not correct format");
@@ -330,7 +334,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void forceConstructorStubs(final String className) {
+    protected void forceConstructorStubs(final String className) {
         try {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
             for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
@@ -346,7 +350,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void forceInvocationStub(String forceMethodName) {
+    protected void forceInvocationStub(String forceMethodName) {
         final int ix = forceMethodName.lastIndexOf('.');
         if (ix < 0) {
             ProgramError.unexpected(forceMethodName + " not correct format");
@@ -370,7 +374,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void doCallMethod(String argument) {
+    protected void doCallMethod(String argument) {
         final int ix = argument.lastIndexOf('.');
         if (ix < 0) {
             ProgramError.unexpected(argument + " not correct format");
@@ -389,7 +393,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void doSetProperty(String argument) {
+    protected void doSetProperty(String argument) {
         final int ix = argument.lastIndexOf('=');
         String propertyName;
         String propertyValue = "";
@@ -403,7 +407,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void doReinitClass(String argument) {
+    protected void doReinitClass(String argument) {
         final String className = argument;
         try {
             final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
@@ -416,14 +420,14 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void doResetLauncher() {
+    protected void doResetLauncher() {
         _resetLauncher = true;
         Trace.line(1, "arranging to reset sun.misc.Launcher prior to main");
         forceCompileMethod("sun.misc.Launcher.<clinit>");
     }
 
     @PROTOTYPE_ONLY
-    private void doResetField(String argument) {
+    protected void doResetField(String argument) {
         final int ix = argument.lastIndexOf('.');
         if (ix < 0) {
             ProgramError.unexpected(argument + " not correct format");
@@ -441,7 +445,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void doImageFile(String argument) {
+    protected void doImageFile(String argument) {
         String pathName = argument;
         String asName = argument;
         final int ix = argument.lastIndexOf(' ');
@@ -463,7 +467,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void putImageFile(File file, File asFile) {
+    protected void putImageFile(File file, File asFile) {
         try {
             String path = asFile.getPath();
             if (asFile.isAbsolute() || _imageFSPrefix.equals("")) {
@@ -479,7 +483,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void putDirectory(File dir, File asFile) {
+    protected void putDirectory(File dir, File asFile) {
         final String[] files = dir.list();
         for (String path : files) {
             final File child = new File(dir, path);
@@ -492,7 +496,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         }
     }
     @PROTOTYPE_ONLY
-    private void doImagefsPrefix(String argument) {
+    protected void doImagefsPrefix(String argument) {
         final int last = argument.length() - 1;
         if (argument.charAt(last) == File.separatorChar) {
             _imageFSPrefix = argument.substring(0, last);

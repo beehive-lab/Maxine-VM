@@ -27,6 +27,7 @@ import com.sun.max.vm.type.*;
 public class ArrayStore extends JavaOperator {
     private Kind _elementKind;
     public ArrayStore(Kind elementKind) {
+        super(NULL_POINTER_EXCEPTION | ARRAY_INDEX_OUT_OF_BOUNDS_EXCEPTION | (elementKind == Kind.REFERENCE ? ARRAY_STORE_EXCEPTION : 0));
         _elementKind = elementKind;
     }
     public Kind elementKind() {
@@ -43,15 +44,6 @@ public class ArrayStore extends JavaOperator {
     }
     @Override
     public String toString() {
-        return "ArrayStore";
+        return "ArrayStore:" + _elementKind;
     }
-
-    private boolean _canRaiseNullPointerException = true;
-    public void setCanRaiseNullPointerException(boolean flag) {
-        _canRaiseNullPointerException = flag;
-    }
-    public boolean canRaiseNullPointerException() {
-        return _canRaiseNullPointerException;
-    }
-
 }

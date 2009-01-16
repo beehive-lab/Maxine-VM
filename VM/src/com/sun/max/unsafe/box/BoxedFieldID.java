@@ -30,10 +30,6 @@ public final class BoxedFieldID extends FieldID implements UnsafeBox {
 
     protected long _nativeWord;
 
-    public BoxedFieldID(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedFieldID(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * @author Michael Van De Vanter
+ * @author Athul Acharya
  */
 package test.com.sun.max.tele.interpreter;

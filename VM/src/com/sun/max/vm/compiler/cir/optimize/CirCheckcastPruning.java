@@ -34,7 +34,7 @@ import com.sun.max.vm.compiler.snippet.Snippet.*;
  * even though our generic typing does not seem to explicitly request them at the source code level.
  * Here need to filter these unwanted bytecodes out
  * to effectively produce no-operation type casts.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class CirCheckcastPruning extends CirVisitor {
@@ -44,7 +44,7 @@ public final class CirCheckcastPruning extends CirVisitor {
 
     /**
      * Prune the application of {@link CheckCast} in the subsequent CirCall, if any.
-     * 
+     *
      * @param value the continuation to be pruned
      */
     public static void apply(CirValue value) {
@@ -68,7 +68,7 @@ public final class CirCheckcastPruning extends CirVisitor {
         }
         final CirValue[] arguments = call.arguments();
         call.setProcedure(CirMethod.getNormalContinuation(arguments), call.bytecodeLocation());
-        call.setArguments();
+        call.setArguments(CirCall.NO_ARGUMENTS);
         call.setJavaFrameDescriptor(null);
     }
 

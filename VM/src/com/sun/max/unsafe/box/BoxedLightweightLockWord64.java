@@ -30,10 +30,6 @@ public final class BoxedLightweightLockWord64 extends LightweightLockWord64 impl
 
     protected long _nativeWord;
 
-    public BoxedLightweightLockWord64(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedLightweightLockWord64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

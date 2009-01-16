@@ -342,12 +342,6 @@ public class ClassfileWriter {
             final String sourceFileName = classActor.sourceFileName();
 
             if (sourceFileName != null) {
-                class SourceFile extends Attribute {
-                    SourceFile() {
-                        super("SourceFile");
-                    }
-                }
-
                 _attributes.append(new Attribute("SourceFile") {
                     @Override
                     protected void writeData(ClassfileWriter cf) throws IOException {
@@ -448,9 +442,6 @@ public class ClassfileWriter {
 
         @Override
         protected void write(ClassfileWriter cf) throws IOException {
-            if (_actor.name().string().equals("nativeJoin")) {
-                System.console();
-            }
             cf.writeUnsigned2(classfileFlags());
             cf.writeUnsigned2(cf.indexOfUtf8(_actor.name()));
             cf.writeUnsigned2(cf.indexOfUtf8(_actor.descriptor()));
@@ -688,7 +679,8 @@ public class ClassfileWriter {
 
         if (javapOption.getValue()) {
             for (String className : classNameToClassfileMap.keySet()) {
-                final String[] javapArgs = {"-verbose", "-private", "-classpath", outputDirectoryOption.getValue().getPath(), className};
+                final Classpath cp = Classpath.fromSystem().prepend(outputDirectoryOption.getValue().getPath());
+                final String[] javapArgs = {"-verbose", "-private", "-bootclasspath", cp.toString(), className};
                 ToolChain.javap(javapArgs);
             }
         }

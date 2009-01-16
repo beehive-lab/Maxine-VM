@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -119,7 +120,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
             return this;
         }
 
-        static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor descriptor) {
+        static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor signature) {
             if (classActor.isInterfaceActor()) {
                 throw new IncompatibleClassChangeError();
             }
@@ -128,7 +129,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
             // because we created Miranda methods for the TupleClassActor.
             // If we did not come across any of those above,
             // then there isn't any matching interface method either.
-            final MethodActor classMethodActor = classActor.findClassMethodActor(name, descriptor);
+            final MethodActor classMethodActor = classActor.findClassMethodActor(name, signature);
             if (classMethodActor != null) {
                 if (classMethodActor.isAbstract() && !classActor.isAbstract()) {
                     throw new AbstractMethodError();
@@ -138,7 +139,19 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                 pool.updateAt(index, new Resolved(classMethodActor));
                 return classMethodActor;
             }
-            throw new NoSuchMethodError(classActor.javaSignature(true) + "." + name + descriptor);
+            final String errorMessage = classActor.javaSignature(true) + "." + name + signature;
+            if (MaxineVM.isPrototyping()) {
+                final Class<?> javaClass = classActor.toJava();
+                final Class[] parameterTypes = signature.getParameterTypes(javaClass.getClassLoader());
+                final Class returnType = signature.getReturnType(javaClass.getClassLoader());
+                final AccessibleObject member = name.equals(SymbolTable.INIT) ?
+                    Classes.getDeclaredConstructor(javaClass, parameterTypes) :
+                    Classes.resolveMethod(javaClass, returnType, name.string(), parameterTypes);
+                if (MaxineVM.isPrototypeOnly(member)) {
+                    throw new PrototypeOnlyMethodError(errorMessage);
+                }
+            }
+            throw new NoSuchMethodError(errorMessage);
         }
 
         public MethodActor resolve(ConstantPool pool, int index) {
@@ -220,31 +233,6 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         @Override
         boolean isFieldConstant() {
             return false;
-        }
-
-        @Override
-        public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-            final ClassConstant classConstant = pool.classAt(_classIndex);
-            if (!classConstant.isResolvableWithoutClassLoading(pool)) {
-                return false;
-            }
-            if (MaxineVM.isPrototyping()) {
-                try {
-                    final Class<?> javaClass = Class.forName(classConstant.valueString(pool));
-                    if (MaxineVM.isPrototypeOnly(javaClass)) {
-                        return false;
-                    }
-                    final Method method = javaClass.getDeclaredMethod(name(pool).string(), signature(pool).getParameterTypes(javaClass.getClassLoader()));
-                    if (MaxineVM.isPrototypeOnly(method)) {
-                        return false;
-                    }
-                } catch (ClassNotFoundException classNotFoundException) {
-                    return false;
-                } catch (NoSuchMethodException noSuchMethodException) {
-                    return true;
-                }
-            }
-            return true;
         }
     }
 }

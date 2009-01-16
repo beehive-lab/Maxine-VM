@@ -76,7 +76,7 @@ public final class BreakpointsInspector extends UniqueInspector {
         METHOD("Method", "Method containing breakpoint", 190),
         LOCATION("Locn", "Offset into method", 30),
         CONDITION("Condition", "Optional conditional spec.", 80),
-        TRIGGER_THREAD("Thread", "Thread currently stopped at breakpoint", 80);
+        TRIGGER_THREAD("Thread", "Name of thread currently stopped at breakpoint", 80);
 
         private final String _label;
         private final String _toolTipText;
@@ -152,7 +152,6 @@ public final class BreakpointsInspector extends UniqueInspector {
 
     private final class BreakpointJTable extends JTable {
 
-
         BreakpointJTable(TableModel model, TableColumnModel tableColumnModel) {
             super(model, tableColumnModel);
         }
@@ -164,11 +163,11 @@ public final class BreakpointsInspector extends UniqueInspector {
                 public String getToolTipText(MouseEvent mouseEvent) {
                     final Point p = mouseEvent.getPoint();
                     final int index = _columnModel.getColumnIndexAtX(p.x);
-                    return ColumnKind.VALUES.get(index).toolTipText();
+                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
                 }
             };
         }
-
     }
 
     private final class BreakpointColumnModel extends DefaultTableColumnModel {
@@ -301,6 +300,7 @@ public final class BreakpointsInspector extends UniqueInspector {
             menu.addSeparator();
             menu.add(inspection().actions().removeBreakpoint());
             menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
+            menu.add(inspection().actions().removeAllBytecodeBreakpoints());
         }
 
         public Inspection inspection() {
@@ -329,8 +329,11 @@ public final class BreakpointsInspector extends UniqueInspector {
         methodEntryBreakpoints.add(inspection().actions().setBytecodeBreakpointAtMethodEntryByKey());
         menu.add(methodEntryBreakpoints);
         menu.add(inspection().actions().setTargetCodeBreakpointAtObjectInitializer());
+        menu.add(inspection().actions().removeAllBreakpoints());
         menu.addSeparator();
         menu.add(inspection().actions().removeAllTargetCodeBreakpoints());
+        menu.addSeparator();
+        menu.add(inspection().actions().removeAllBytecodeBreakpoints());
         return menu;
     }
 
@@ -345,11 +348,12 @@ public final class BreakpointsInspector extends UniqueInspector {
         }
 
         public void addTo(InspectorMenu menu) {
-            menu.add(inspection().actions().removeBreakpoint(_breakpointData.teleBreakpoint(), "Remove at " + _breakpointData.shortName()));
+            final String shortName = _breakpointData.shortName();
+            menu.add(inspection().actions().removeBreakpoint(_breakpointData.teleBreakpoint(), "Remove: " + shortName));
             if (_breakpointData.enabled()) {
-                menu.add(inspection().actions().disableBreakpoint(_breakpointData.teleBreakpoint(), "Disable"));
+                menu.add(inspection().actions().disableBreakpoint(_breakpointData.teleBreakpoint(), "Disable: " + shortName));
             } else {
-                menu.add(inspection().actions().enableBreakpoint(_breakpointData.teleBreakpoint(), "Enable"));
+                menu.add(inspection().actions().enableBreakpoint(_breakpointData.teleBreakpoint(), "Enable: " + shortName));
             }
         }
 
@@ -558,7 +562,7 @@ public final class BreakpointsInspector extends UniqueInspector {
     }
 
     @Override
-    public void breakpointSetChanged() {
+    public void breakpointSetChanged(long epoch) {
         refreshView(true);
     }
 
@@ -706,7 +710,7 @@ public final class BreakpointsInspector extends UniqueInspector {
          * @return is this breakpoint currently enabled in the {@link TeleVM}?
          */
         boolean enabled() {
-            return teleBreakpoint().enabled();
+            return teleBreakpoint().isEnabled();
         }
 
         /**
