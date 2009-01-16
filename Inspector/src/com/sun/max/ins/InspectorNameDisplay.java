@@ -203,6 +203,7 @@ public final class InspectorNameDisplay extends InspectionHolder {
         return teleMethodActor.isSubstituted() ? " substituted from " + teleMethodActor.teleClassActorSubstitutedFrom().getName() : "";
     }
 
+
     /**
      * E.g. "Element.foo()[0]"
      */

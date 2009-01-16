@@ -56,7 +56,7 @@ typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
-extern void threads_initialize();
+extern void threads_initialize(void);
 
 #define STACK_GUARD_PAGES 2
 
@@ -70,13 +70,14 @@ typedef struct {
     Address refMapArea;
     Address stackYellowZone;
     Address stackRedZone;
+    Address stackBlueZone;
 } thread_Specifics;
 
-extern thread_Specifics *thread_currentSpecifics();
+extern thread_Specifics *thread_currentSpecifics(void);
 
 /**
  * For debugging purposes:
  */
-extern void *thread_self();
+extern void *thread_self(void);
 
 #endif /*__threads_h__*/

@@ -34,6 +34,7 @@ import com.sun.max.vm.compiler.adaptive.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.interpret.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
@@ -162,6 +163,20 @@ public final class VMConfiguration {
         return _jitScheme;
     }
 
+    private final VMPackage _interpreterPackage;
+
+    public VMPackage interpreterPackage() {
+        return _interpreterPackage;
+    }
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private InterpreterScheme _interpreterScheme = null;
+
+    @INLINE
+    public InterpreterScheme interpreterScheme() {
+        return _interpreterScheme;
+    }
+
     @CONSTANT_WHEN_NOT_ZERO
     private CompilationScheme _compilationScheme = null;
 
@@ -244,7 +259,7 @@ public final class VMConfiguration {
     }
 
     public VMConfiguration(BuildLevel buildLevel, Platform platform, VMPackage gripPackage, VMPackage referencePackage, VMPackage layoutPackage, VMPackage heapPackage,
-        VMPackage monitorPackage, VMPackage compilerPackage, VMPackage jitPackage, VMPackage trampolinePackage, VMPackage targetABIsPackage, VMPackage runPackage) {
+        VMPackage monitorPackage, VMPackage compilerPackage, VMPackage jitPackage, VMPackage interpreterPackage, VMPackage trampolinePackage, VMPackage targetABIsPackage, VMPackage runPackage) {
         _buildLevel = buildLevel;
         _platform = platform;
         _gripPackage = gripPackage;
@@ -254,6 +269,7 @@ public final class VMConfiguration {
         _monitorPackage = monitorPackage;
         _compilerPackage = compilerPackage;
         _jitPackage = jitPackage;
+        _interpreterPackage = interpreterPackage;
         _trampolinePackage = trampolinePackage;
         _targetABIsPackage = targetABIsPackage;
         _runPackage = runPackage;
@@ -271,9 +287,10 @@ public final class VMConfiguration {
             final int offsetToJitEntryPoint = 0;
             final int offsetToVtableEntryPoint = offsetToOptimizedEntryPoint;
             final int offsetToCEntryPoint = 0;
-            _offsetsToCallEntryPoints = new int[]{offsetToVtableEntryPoint,  offsetToJitEntryPoint, offsetToOptimizedEntryPoint, offsetToCEntryPoint};
+            final int offsetToInterpreterEntryPoint = 0;
+            _offsetsToCallEntryPoints = new int[]{offsetToVtableEntryPoint,  offsetToJitEntryPoint, offsetToOptimizedEntryPoint, offsetToCEntryPoint, offsetToInterpreterEntryPoint};
             // Callees have the same entry point as their caller, except for C_ENTRY_POINT, which has the C_OPTIMIZED_ENTRY_POINT
-            _offsetsToCalleeEntryPoints = new int[]{offsetToVtableEntryPoint,  offsetToJitEntryPoint, offsetToOptimizedEntryPoint, offsetToOptimizedEntryPoint};
+            _offsetsToCalleeEntryPoints = new int[]{offsetToVtableEntryPoint,  offsetToJitEntryPoint, offsetToOptimizedEntryPoint, offsetToOptimizedEntryPoint, offsetToInterpreterEntryPoint};
         }
     }
 
@@ -312,6 +329,7 @@ public final class VMConfiguration {
             // no JIT, always using the optimizing compiler
             _jitScheme = _compilerScheme;
         }
+        _interpreterScheme = loadAndInstantiateScheme(_interpreterPackage, InterpreterScheme.class, this);
 
         _compilationScheme = new AdaptiveCompilationScheme(this);
         _vmSchemes.append(_compilationScheme);

@@ -123,4 +123,5 @@ public interface DynamicCompilerScheme extends VMScheme {
     void advance(StackFrameWalker stackFrameWalker, Word instructionPointer, Word stackPointer, Word framePointer); // TODO: could advance() be moved to a FrameKind abstraction?
 
     StackUnwindingContext makeStackUnwindingContext(Word stackPointer, Word framePointer, Throwable throwable);
+
 }

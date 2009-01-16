@@ -189,6 +189,12 @@ char *signalName(int signal) {
 }
 #endif
 
+static void blueZoneTrap(thread_Specifics *threadSpecifics) {
+#if os_GUESTVMXEN
+	guestvmXen_blue_zone_trap(threadSpecifics);
+#endif
+}
+
 static int isInGuardZone(Address address, Address zoneBegin) {
     /* return true if the address is in the zone, or is within N pages of the zone */
     return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * getPageSize());
@@ -212,6 +218,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     int trapNumber = getTrapNumber(signal);
     Word *stackPointer = (Word *)getStackPointer(ucontext);
 
+
     if (isInGuardZone((Address)stackPointer, threadSpecifics->stackYellowZone)) {
         /* if the stack pointer is in the yellow zone, assume this is a stack fault */
         unprotectPage(threadSpecifics->stackYellowZone);
@@ -219,6 +226,10 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackRedZone)) {
         /* if the stack pointer is in the red zone, (we shouldn't be alive) */
         log_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
+    } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackBlueZone)) {
+    	/* need to map more of the stack? */
+    	blueZoneTrap(threadSpecifics);
+    	return;
     } else if (stackPointer == 0) {
         /* if the stack pointer is zero, (we shouldn't be alive) */
         log_exit(-19, "SIGSEGV: (stack pointer is zero)");
