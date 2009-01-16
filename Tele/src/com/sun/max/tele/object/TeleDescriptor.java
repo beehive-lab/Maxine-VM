@@ -26,7 +26,7 @@ import com.sun.max.vm.type.*;
 
 
 /**
- * Canonical surrogate for a  {@link Descriptor} in the Target VM.
+ * Canonical surrogate for a  {@link Descriptor} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  *
@@ -43,7 +43,7 @@ public abstract class TeleDescriptor extends TeleTupleObject {
     public String string() {
         if (_string == null) {
             final Reference stringReference = teleVM().fields().Descriptor_string.readReference(reference());
-            final TeleString teleString = (TeleString) TeleObject.make(teleVM(), stringReference);
+            final TeleString teleString = (TeleString) makeTeleObject(stringReference);
             _string = teleString.getString();
         }
         return _string;

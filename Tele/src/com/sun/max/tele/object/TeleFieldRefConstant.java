@@ -26,7 +26,7 @@ import com.sun.max.vm.reference.*;
 
 
 /**
- * Inspector's canonical surrogate for an object of type {@link FieldRefConstant} in the tele VM.
+ * Inspector's canonical surrogate for an object of type {@link FieldRefConstant} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -42,7 +42,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
     }
 
      /**
-     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Resolved} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Resolved} in the {@link TeleVM}.
      *
      * @author Michael Van De Vanter
      */
@@ -58,11 +58,11 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
         }
 
         /**
-         * @return surrogate for the {@FieldActor} in the teleVM to which the constant was resolved
+         * @return surrogate for the {@FieldActor} in the {@link TeleVM} to which the constant was resolved
          */
         public TeleFieldActor getTeleFieldActor() {
             final Reference fieldActorReference = teleVM().fields().FieldRefConstant$Resolved_fieldActor.readReference(reference());
-            return (TeleFieldActor) TeleObject.make(teleVM(), fieldActorReference);
+            return (TeleFieldActor) makeTeleObject(fieldActorReference);
         }
 
         @Override
@@ -73,7 +73,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the {@link TeleVM}.
      *
      * @author Michael Van De Vanter
      */
@@ -96,7 +96,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link FieldRefConstant.Unresolved} in the {@link TeleVM}.
      *
      * @author Michael Van De Vanter
      */

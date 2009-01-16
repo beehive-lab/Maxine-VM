@@ -101,6 +101,7 @@ public class TeleClassRegistry extends TeleVMHolder {
     public TeleClassRegistry(TeleVM teleVM) {
         super(teleVM);
         Trace.begin(1, tracePrefix() + " initializing");
+        final long startTimeMillis = System.currentTimeMillis();
         int count = 0;
         try {
             final Reference classRegistryReference = teleVM().bootClassRegistryReference();
@@ -145,7 +146,7 @@ public class TeleClassRegistry extends TeleVMHolder {
             throw new TeleError("could not build inspector type registry", throwable);
         }
         _preLoadedClassCount = count;
-        Trace.end(1, tracePrefix() + " initializing (" + _preLoadedClassCount + " pre-loaded entries)");
+        Trace.end(1, tracePrefix() + " initializing (" + _preLoadedClassCount + " pre-loaded entries)", startTimeMillis);
     }
 
     /**
@@ -176,7 +177,7 @@ public class TeleClassRegistry extends TeleVMHolder {
     public TeleClassActor findTeleClassActorByID(int id) {
         final Reference classActorReference = _idToClassActorReference.get(id);
         if (classActorReference != null && !classActorReference.isZero()) {
-            return (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+            return (TeleClassActor) makeTeleObject(classActorReference);
         }
         return null;
     }
@@ -191,7 +192,7 @@ public class TeleClassRegistry extends TeleVMHolder {
             // Class hasn't been loaded yet by the inspectee.
             return null;
         }
-        return (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+        return (TeleClassActor) makeTeleObject(classActorReference);
     }
 
     /**
@@ -204,7 +205,7 @@ public class TeleClassRegistry extends TeleVMHolder {
             // Class hasn't been loaded yet by the inspectee.
             return null;
         }
-        return (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+        return (TeleClassActor) makeTeleObject(classActorReference);
     }
 
     /**
@@ -221,7 +222,7 @@ public class TeleClassRegistry extends TeleVMHolder {
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[_idToClassActorReference.size()];
         int index = 0;
         for (Reference classActorReference : _idToClassActorReference.values()) {
-            result[index++] = (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+            result[index++] = (TeleClassActor) makeTeleObject(classActorReference);
         }
         return result;
     }

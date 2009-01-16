@@ -86,10 +86,11 @@ public final class TeleHeapManager extends TeleVMHolder {
      */
     public void initialize(long processEpoch) {
         Trace.begin(1, tracePrefix() + "initializing");
+        final long startTimeMillis = System.currentTimeMillis();
         final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
-        _teleBootHeapRegion = (TeleRuntimeMemoryRegion) TeleObject.make(teleVM(), bootHeapRegionReference);
+        _teleBootHeapRegion = (TeleRuntimeMemoryRegion) makeTeleObject(bootHeapRegionReference);
         refresh(processEpoch);
-        Trace.end(1, tracePrefix() + "initializing");
+        Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
     }
 
     private boolean _updatingHeapMemoryRegions = false;
@@ -105,13 +106,13 @@ public final class TeleHeapManager extends TeleVMHolder {
             _updatingHeapMemoryRegions = true;
             final Reference runtimeHeapRegionsArrayReference = teleVM().fields().TeleHeapInfo_memoryRegions.readReference(teleVM());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
-                final TeleArrayObject teleArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), runtimeHeapRegionsArrayReference);
+                final TeleArrayObject teleArrayObject = (TeleArrayObject) makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
                 if (_teleHeapRegions.length != heapRegionReferences.length) {
                     _teleHeapRegions = new TeleRuntimeMemoryRegion[heapRegionReferences.length];
                 }
                 for (int i = 0; i < heapRegionReferences.length; i++) {
-                    _teleHeapRegions[i] = (TeleRuntimeMemoryRegion) TeleObject.make(teleVM(), heapRegionReferences[i]);
+                    _teleHeapRegions[i] = (TeleRuntimeMemoryRegion) makeTeleObject(heapRegionReferences[i]);
                 }
             }
             _updatingHeapMemoryRegions = false;

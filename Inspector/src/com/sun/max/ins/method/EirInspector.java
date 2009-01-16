@@ -38,7 +38,7 @@ public final class EirInspector extends IrInspector<EirInspector> {
 
     private EirInspector(Inspection inspection, Residence residence, Reference eirMethodReference) {
         super(inspection, residence, eirMethodReference);
-        final TeleObject teleEirMethod = TeleObject.make(teleVM(), eirMethodReference);
+        final TeleObject teleEirMethod = teleVM().makeTeleObject(eirMethodReference);
         _eirMethod = teleEirMethod == null ? null : (EirMethod) teleEirMethod.deepCopy();
         if (!EirMethod.class.isInstance(_eirMethod)) {
             throw new InspectorError("unsupported EIR");

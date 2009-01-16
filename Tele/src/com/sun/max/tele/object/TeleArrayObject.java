@@ -104,7 +104,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
             final Value value = readElementValue(index);
             final Object newJavaValue;
             if (componentKind == Kind.REFERENCE) {
-                final TeleObject teleValueObject = TeleObject.make(teleVM(), value.asReference());
+                final TeleObject teleValueObject = makeTeleObject(value.asReference());
                 if (teleValueObject == null) {
                     newJavaValue = null;
                 } else {

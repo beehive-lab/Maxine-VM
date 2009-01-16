@@ -21,6 +21,8 @@
 package com.sun.max.tele;
 
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
@@ -36,10 +38,6 @@ public abstract class TeleVMHolder {
         return _teleVM;
     }
 
-    public TeleProcess teleProcess() {
-        return _teleVM.teleProcess();
-    }
-
     private final String _tracePrefix;
 
     /**
@@ -52,6 +50,21 @@ public abstract class TeleVMHolder {
     protected TeleVMHolder(TeleVM teleVM) {
         _teleVM = teleVM;
         _tracePrefix = "[" + getClass().getSimpleName() + "] ";
+    }
+
+    /**
+     * @return the process associated with this VM.
+     */
+    public TeleProcess teleProcess() {
+        return _teleVM.teleProcess();
+    }
+
+    /**
+     * @param reference an object in the r{@link TeleVM}
+     * @return canonical local surrogate for the remote object.
+     */
+    public TeleObject makeTeleObject(Reference reference) {
+        return _teleVM.makeTeleObject(reference);
     }
 
 }

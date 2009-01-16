@@ -26,7 +26,7 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 /**
-* Canonical surrogate for an object of type {@link Field} in the tele VM.
+* Canonical surrogate for an object of type {@link Field} in the {@link TeleVM}.
 *
 * @author Michael Van De Vanter
 */
@@ -39,12 +39,12 @@ public class TeleField extends TeleTupleObject {
     }
 
     /**
-     * @return the local instance of {@link Field} equivalent to this object in the tele VM.
+     * @return the local instance of {@link Field} equivalent to this object in the {@link TeleVM}.
      */
     public Field toJava() {
         if (_field == null) {
             final Reference fieldActorReference = teleVM().fields().Field_fieldActor.readReference(reference());
-            final TeleFieldActor teleFieldActor = (TeleFieldActor) TeleObject.make(teleVM(), fieldActorReference);
+            final TeleFieldActor teleFieldActor = (TeleFieldActor) makeTeleObject(fieldActorReference);
             _field = teleFieldActor.fieldActor().toJava();
         }
         return _field;

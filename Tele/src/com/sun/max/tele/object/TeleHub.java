@@ -26,7 +26,7 @@ import com.sun.max.vm.reference.*;
 
 
 /**
- * Inspector's canonical surrogate for an object of type {@link Hub} in the tele VM.
+ * Inspector's canonical surrogate for an object of type {@link Hub} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  *
@@ -40,18 +40,18 @@ public abstract class TeleHub extends TeleHybridObject {
     private TeleClassActor _teleClassActor = null;
 
     /**
-     * @return surrogate for the {@ClassActor} in the tele VM that contains this {@link Hub}, i.e. for the type that this hub helps implement
+     * @return surrogate for the {@ClassActor} in the {@link TeleVM} that contains this {@link Hub}, i.e. for the type that this hub helps implement
      */
     public TeleClassActor getTeleClassActor() {
         if (_teleClassActor == null) {
             final Reference classActorReference = teleVM().fields().Hub_classActor.readReference(reference());
-            _teleClassActor = (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+            _teleClassActor = (TeleClassActor) makeTeleObject(classActorReference);
         }
         return _teleClassActor;
     }
 
     /**
-     * @return local {@link Hub} corresponding to this {@link Hub} in the tele VM.
+     * @return local {@link Hub} corresponding to this {@link Hub} in the {@link TeleVM}.
      */
     public abstract Hub hub();
 

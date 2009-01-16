@@ -74,7 +74,7 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
     @Override
     public TeleCodeAttribute getTeleCodeAttribute() {
         final Reference codeAttributeReference = teleVM().fields().ClassMethodActor_codeAttribute.readReference(reference());
-        return (TeleCodeAttribute) TeleObject.make(teleVM(), codeAttributeReference);
+        return (TeleCodeAttribute) makeTeleObject(codeAttributeReference);
     }
 
     /**
@@ -109,10 +109,10 @@ public abstract class TeleClassMethodActor extends TeleMethodActor implements Me
             if (numberOfCompilations != _teleTargetMethodHistory.length) {
                 _teleTargetMethodHistory = new TeleTargetMethod[numberOfCompilations];
                 final Reference targetMethodHistoryArrayReference = teleVM().fields().MethodState_targetMethodHistory.readReference(methodStateReference);
-                final TeleArrayObject teleTargetMethodHistoryArray = (TeleArrayObject) TeleObject.make(teleVM(), targetMethodHistoryArrayReference);
+                final TeleArrayObject teleTargetMethodHistoryArray = (TeleArrayObject) makeTeleObject(targetMethodHistoryArrayReference);
                 for (int i = 0; i <= numberOfCompilations - 1; i++) {
                     final Reference targetMethodReference = teleTargetMethodHistoryArray.readElementValue(i).asReference();
-                    _teleTargetMethodHistory[i] = (TeleTargetMethod) TeleObject.make(teleVM(), targetMethodReference);
+                    _teleTargetMethodHistory[i] = (TeleTargetMethod) makeTeleObject(targetMethodReference);
                 }
             }
         }

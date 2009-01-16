@@ -238,7 +238,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         if (enableVmThreadLocalValues.isValid()) {
             final Long threadLocalValue = enableVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
             final Reference vmThreadReference = _teleProcess.teleVM().wordToReference(Address.fromLong(threadLocalValue));
-            _teleVmThread = (TeleVmThread) TeleObject.make(_teleProcess.teleVM(), vmThreadReference);
+            _teleVmThread = (TeleVmThread) _teleProcess.teleVM().makeTeleObject(vmThreadReference);
         } else {
             _teleVmThread = null;
         }

@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Canonical surrogate for an object implemented as a {@link Tuple} in the tele VM,
+ * Canonical surrogate for an object implemented as a {@link Tuple} in the {@link TeleVM},
  * one of the three kinds of low level Maxine heap implementation objects.
  *
  * @author Michael Van De Vanter
@@ -57,7 +57,7 @@ public class TeleTupleObject extends TeleObject {
         final Class<?> javaClass = classActorForType().toJava();
         if (IrMethod.class.isAssignableFrom(javaClass)) {
             final Reference classMethodActorReference = teleVM().fields().IrMethod_classMethodActor(javaClass.asSubclass(IrMethod.class)).readReference(reference());
-            return (TeleClassMethodActor) TeleObject.make(teleVM(), classMethodActorReference);
+            return (TeleClassMethodActor) makeTeleObject(classMethodActorReference);
         }
         return null;
     }

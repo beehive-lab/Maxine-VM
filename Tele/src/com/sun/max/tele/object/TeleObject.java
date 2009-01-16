@@ -23,25 +23,15 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
-import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -55,291 +45,18 @@ import com.sun.max.vm.value.*;
  */
 public abstract class TeleObject extends TeleVMHolder implements ObjectProvider {
 
-    private static final int TRACE_VALUE = 2;
-
-    private static String staticTracePrefix() {
-        return "[TeleObject] ";
-    }
-
     /**
      * Controls tracing for object copying.
      */
     protected static final int COPY_TRACE_VALUE = 4;
 
     /**
-     * Map: Reference to {@link Object}s in the target VM --> canonical local {@link TeleObject} that represents the
-     * object in the target VM. Relies on References being canonical and GC-safe.
+     * The factory method {@link TeleObjectManager#make(Reference)} ensures synchronized TeleObjects creation.
      */
-    private static final GrowableMapping<Reference, TeleObject> _referenceToTeleObject = HashMapping.createIdentityMapping();
-
-    /**
-     * Map from OID to TeleObject.
-     */
-    private static final GrowableMapping<Long, TeleObject> _oidToTeleObject = HashMapping.createEqualityMapping();
-
-    // TODO (mlvdv)  TeleObject weak references
-    /**
-     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the teleVM. Special subclasses are
-     * created for Maxine implementation objects of special interest, and for other objects for which special treatment
-     * is desired.
-     *
-     * Returns null for the distinguished zero {@link Reference}.
-     *
-     * Care is taken to avoid I/O with the {@link TeleVM} during synchronized
-     * access to the canonicalization map.  There is a small exception
-     * to this for {@link TeleTargetMethod}.
-     *
-     * @param teleVM the tele VM in which the object resides
-     * @param reference a Java object in the {@link TeleVM}
-     * @return canonical local surrogate for the object
-     */
-    public static TeleObject make(TeleVM teleVM, Reference reference) {
-        assert reference != null;
-        if (reference.isZero()) {
-            return null;
-        }
-        TeleObject teleObject = null;
-        synchronized (_referenceToTeleObject) {
-            teleObject = _referenceToTeleObject.get(reference);
-        }
-        if (teleObject != null) {
-            return teleObject;
-        }
-        // Keep all the {@link TeleVM} traffic outside of synchronization.
-        if (!teleVM.isValidOrigin(reference.toOrigin())) {
-            return null;
-        }
-
-        final Reference hubReference = teleVM.wordToReference(teleVM.layoutScheme().generalLayout().readHubReferenceAsWord(reference));
-        final Reference classActorReference = teleVM.fields().Hub_classActor.readReference(hubReference);
-        final ClassActor classActor = teleVM.makeClassActor(classActorReference);
-
-        // Must check for the static tuple case first; it doesn't follow the usual rules
-        final Reference hubhubReference = teleVM.wordToReference(teleVM.layoutScheme().generalLayout().readHubReferenceAsWord(hubReference));
-        final Reference hubClassActorReference = teleVM.fields().Hub_classActor.readReference(hubhubReference);
-        final ClassActor hubClassActor = teleVM.makeClassActor(hubClassActorReference);
-        final Class hubJavaClass = hubClassActor.toJava();  // the class of this object's hub
-        if (StaticHub.class.isAssignableFrom(hubJavaClass)) {
-            teleObject = new TeleStaticTuple(teleVM, reference);
-            synchronized (_referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-                    teleObject = new TeleStaticTuple(teleVM, reference);
-                }
-            }
-        } else if (classActor.isArrayClassActor()) {
-            synchronized (_referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-                    teleObject = new TeleArrayObject(teleVM, reference);
-                }
-            }
-        } else if (classActor.isHybridClassActor()) {
-            final Class javaClass = classActor.toJava();
-            synchronized (_referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-                    if (DynamicHub.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleDynamicHub(teleVM, reference);
-                    } else if (StaticHub.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleStaticHub(teleVM, reference);
-                    } else {
-                        Problem.error("invalid hybrid implementation type");
-                    }
-                }
-            }
-        } else if (classActor.isTupleClassActor()) {
-            final Class javaClass = classActor.toJava(); // the class of this object
-            synchronized (_referenceToTeleObject) {
-                // Check map again, just in case there's a race
-                teleObject = _referenceToTeleObject.get(reference);
-                if (teleObject == null) {
-
-                    // Some common Java classes
-                    if (String.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleString(teleVM, reference);
-
-                    } else if (Enum.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleEnum(teleVM, reference);
-
-                    } else if (ClassLoader.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleClassLoader(teleVM, reference);
-
-                        // Maxine Actors
-                    } else if (FieldActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleFieldActor(teleVM, reference);
-
-                    } else if (VirtualMethodActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleVirtualMethodActor(teleVM, reference);
-
-                    } else if (StaticMethodActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleStaticMethodActor(teleVM, reference);
-
-                    } else if (InterfaceMethodActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleInterfaceMethodActor(teleVM, reference);
-
-                    } else if (InterfaceActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleInterfaceActor(teleVM, reference);
-
-                    } else if (VmThread.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleVmThread(teleVM, reference);
-
-                    } else if (PrimitiveClassActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TelePrimitiveClassActor(teleVM, reference);
-
-                    } else if (ArrayClassActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleArrayClassActor(teleVM, reference);
-
-                    } else if (ReferenceClassActor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleReferenceClassActor(teleVM, reference);
-
-                        // Maxine code management
-                    } else if (JitTargetMethod.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleJitTargetMethod(teleVM, reference);
-
-                    } else if (OptimizedTargetMethod.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleOptimizedTargetMethod(teleVM, reference);
-
-                    } else if (RuntimeStub.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleRuntimeStub(teleVM, reference);
-
-                    } else if (CodeRegion.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleCodeRegion(teleVM, reference);
-
-                    } else if (CodeManager.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleCodeManager(teleVM, reference);
-
-                    } else if (RuntimeMemoryRegion.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleRuntimeMemoryRegion(teleVM, reference);
-
-                     // Other Maxine support
-                    } else if (Kind.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleKind(teleVM, reference);
-
-                    } else if (ObjectReferenceValue.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleObjectReferenceValue(teleVM, reference);
-
-                    } else if (Builtin.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleBuiltin(teleVM, reference);
-
-                       // ConstantPool and PoolConstants
-                    } else if (ConstantPool.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleConstantPool(teleVM, reference);
-
-                    } else if (CodeAttribute.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleCodeAttribute(teleVM, reference);
-
-                    } else if (Utf8Constant.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleUtf8Constant(teleVM, reference);
-
-                    } else if (StringConstant.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleStringConstant(teleVM, reference);
-
-                    } else if (ClassConstant.Resolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleClassConstant.Resolved(teleVM, reference);
-
-                    } else if (ClassConstant.Unresolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleClassConstant.Unresolved(teleVM, reference);
-
-                    } else if (FieldRefConstant.Resolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleFieldRefConstant.Resolved(teleVM, reference);
-
-                    } else if (FieldRefConstant.Unresolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleFieldRefConstant.Unresolved(teleVM, reference);
-
-                    } else if (FieldRefConstant.UnresolvedIndices.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleFieldRefConstant.UnresolvedIndices(teleVM, reference);
-
-                    } else if (ClassMethodRefConstant.Resolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleClassMethodRefConstant.Resolved(teleVM, reference);
-
-                    } else if (ClassMethodRefConstant.Unresolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleClassMethodRefConstant.Unresolved(teleVM, reference);
-
-                    } else if (ClassMethodRefConstant.UnresolvedIndices.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleClassMethodRefConstant.UnresolvedIndices(teleVM, reference);
-
-                    } else if (InterfaceMethodRefConstant.Resolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleInterfaceMethodRefConstant.Resolved(teleVM, reference);
-
-                    } else if (InterfaceMethodRefConstant.Unresolved.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleInterfaceMethodRefConstant.Unresolved(teleVM, reference);
-
-                    } else if (InterfaceMethodRefConstant.UnresolvedIndices.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleInterfaceMethodRefConstant.UnresolvedIndices(teleVM, reference);
-
-                    } else if (PoolConstant.class.isAssignableFrom(javaClass)) {
-                        // General PoolConstant, not handled specially
-                        teleObject = new TelePoolConstant(teleVM, reference);
-
-                        // java.lang.reflect objects
-                    } else if (Class.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleClass(teleVM, reference);
-
-                    } else if (Constructor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleConstructor(teleVM, reference);
-
-                    } else if (Field.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleField(teleVM, reference);
-
-                    } else if (Method.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleMethod(teleVM, reference);
-
-                    } else if (TypeDescriptor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleTypeDescriptor(teleVM, reference);
-
-                    } else if (SignatureDescriptor.class.isAssignableFrom(javaClass)) {
-                        teleObject = new TeleSignatureDescriptor(teleVM, reference);
-
-                        // all other object instances
-                    } else {
-                        teleObject = new TeleTupleObject(teleVM, reference);
-                    }
-                }
-            }
-        } else {
-            Problem.error("invalid object implementation type");
-        }
-
-        _oidToTeleObject.put(teleObject.getOID(), teleObject);
-        assert _oidToTeleObject.containsKey(teleObject.getOID());
-        return teleObject;
-    }
-
-    public static TeleObject lookupObject(long id) {
-        return _oidToTeleObject.get(id);
-    }
-
-    private static int _lastTeleObjectCount = 0;
-
-    // TODO (mlvdv)  probably need a non-static manager class to get rid of some of the non-uniformity here.
-    public static void staticRefresh(long processEpoch) {
-        Trace.begin(TRACE_VALUE, staticTracePrefix() + "refreshing");
-        final long startTimeMillis = System.currentTimeMillis();
-        for (TeleObject teleObject : _referenceToTeleObject.values()) {
-            teleObject.refresh(processEpoch);
-        }
-        final int currentTeleObjectCount = _referenceToTeleObject.length();
-        final StringBuilder sb = new StringBuilder(100);
-        sb.append(staticTracePrefix());
-        sb.append("refreshing, count=").append(Integer.toString(currentTeleObjectCount));
-        final int newCount = currentTeleObjectCount - _lastTeleObjectCount;
-        if (newCount > 0) {
-            sb.append("  new=" + newCount);
-        }
-        Trace.end(TRACE_VALUE, staticTracePrefix() + sb.toString(), startTimeMillis);
-        _lastTeleObjectCount = currentTeleObjectCount;
-    }
-
-    // The static factory method ensures synchronized TeleObjects creation
     protected TeleObject(TeleVM teleVM, Reference reference) {
         super(teleVM);
         _reference = (TeleReference) reference;
         _oid = _reference.makeOID();
-        _referenceToTeleObject.put(reference, this);
     }
 
     protected void refresh(long processEpoch) {
@@ -348,7 +65,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     private final TeleReference _reference;
 
     /**
-     * @return canonical reference to this object in the teleVM
+     * @return canonical reference to this object in the {@link teleVM}
      */
     public TeleReference reference() {
         return _reference;
@@ -415,7 +132,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     public TeleHub getTeleHub() {
         if (_teleHub == null) {
             final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout().readHubReferenceAsWord(_reference));
-            _teleHub = (TeleHub) make(teleVM(), hubReference);
+            _teleHub = (TeleHub) makeTeleObject(hubReference);
         }
         return _teleHub;
     }
@@ -584,7 +301,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
                     final Value value = teleObject.readFieldValue(fieldActor);
                     final Object newJavaValue;
                     if (fieldActor.kind() == Kind.REFERENCE) {
-                        final TeleObject teleFieldReferenceObject = TeleObject.make(teleObject.teleVM(), value.asReference());
+                        final TeleObject teleFieldReferenceObject = teleObject.teleVM().makeTeleObject(value.asReference());
                         if (teleFieldReferenceObject == null) {
                             newJavaValue = null;
                         } else {

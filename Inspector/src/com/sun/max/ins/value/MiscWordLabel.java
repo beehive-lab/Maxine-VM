@@ -137,7 +137,7 @@ public final class MiscWordLabel extends ValueLabel {
                     if (javaMonitorReference.isZero()) {
                         setToolTipText("InflatedMonitorLockWord64:  bound, monitor=null");
                     } else {
-                        _teleJavaMonitor = TeleObject.make(teleVM(), javaMonitorReference);
+                        _teleJavaMonitor = teleVM().makeTeleObject(javaMonitorReference);
                         final String name = _teleJavaMonitor.classActorForType().qualifiedName();
                         setToolTipText("InflatedMonitorLockWord64:  bound, monitor=" + name);
                     }

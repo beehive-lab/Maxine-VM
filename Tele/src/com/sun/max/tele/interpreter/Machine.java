@@ -39,29 +39,28 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * The Interpreter's interface to the VM.  Encapsulates all the state of the VM.
+ * The Interpreter's interface to {@link TeleVM}.  Encapsulates all the state of the VM.
  * Can run without VM for testing.
  *
  * @author Athul Acharya
  */
-public final class Machine {
+public final class Machine extends TeleVMHolder{
 
-    private TeleVM _teleVM;
     private ExecutionThread _currentThread;
 
 
     Machine(TeleVM teleVM) {
+        super(teleVM);
         final ExecutionThread mainThread = newThread(java.lang.Thread.NORM_PRIORITY, ExecutionThread.ThreadType.NORMAL_THREAD);
         //JavaThreads.initialize(mainThread);
-        _teleVM = teleVM;
         activate(mainThread);
     }
 
     public ReferenceValue toReferenceValue(Reference reference) {
-        if (_teleVM == null) {
+        if (teleVM() == null) {
             return ObjectReferenceValue.from(reference.toJava());
         } else {
-            return _teleVM.createReferenceValue(reference);
+            return teleVM().createReferenceValue(reference);
         }
     }
 
@@ -164,14 +163,14 @@ public final class Machine {
     /**
      * Converts a given reference to an object to a {@link Throwable} instance.
      *
-     * @param teleVM the tele VM to be used if {@code throwableReference} is a reference in a tele VM's address space
+     * @param teleVM the tele VM to be used if {@code throwableReference} is a reference in a {@link TeleVM}'s address space
      * @param throwableReference the reference to be converted to a {@code Throwable instance}
      * @return a {@code Throwable instance} converted from {@code throwableReference}
      */
     private static Throwable toThrowable(TeleVM teleVM, ReferenceValue throwableReference) {
         if (throwableReference instanceof TeleReferenceValue) {
             try {
-                return (Throwable) TeleObject.make(teleVM, throwableReference.asReference()).deepCopy();
+                return (Throwable) teleVM.makeTeleObject(throwableReference.asReference()).deepCopy();
             } catch (Exception e1) {
                 throw ProgramError.unexpected("Could not make a local copy of a remote Throwable", e1);
             }
@@ -181,7 +180,7 @@ public final class Machine {
     }
 
     public TeleInterpreterException raiseException(ReferenceValue throwableReference) throws TeleInterpreterException {
-        throw new TeleInterpreterException(toThrowable(_teleVM, throwableReference), this);
+        throw new TeleInterpreterException(toThrowable(teleVM(), throwableReference), this);
     }
 
     public TeleInterpreterException raiseException(Throwable throwable) throws TeleInterpreterException {
@@ -211,9 +210,9 @@ public final class Machine {
     public Value getStatic(short cpIndex) {
         final ConstantPool constantPool = _currentThread.frame().constantPool();
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
-        if (_teleVM != null) {
+        if (teleVM() != null) {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-            final TeleClassActor teleClassActor = _teleVM.teleClassRegistry().findTeleClassActorByType(fieldActor.holder().typeDescriptor());
+            final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByType(fieldActor.holder().typeDescriptor());
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 
@@ -239,7 +238,7 @@ public final class Machine {
                     return new WordValue(staticTupleReference.readWord(fieldActor.offset()));
                 }
                 case REFERENCE: {
-                    return _teleVM.createReferenceValue(_teleVM.wordToReference(staticTupleReference.readWord(fieldActor.offset())));
+                    return teleVM().createReferenceValue(teleVM().wordToReference(staticTupleReference.readWord(fieldActor.offset())));
                 }
             }
         } else {
@@ -251,7 +250,7 @@ public final class Machine {
     }
 
     public void putStatic(short cpIndex, Value value) {
-        if (_teleVM != null) {
+        if (teleVM() != null) {
             ProgramError.unexpected("Cannot run putstatic remotely!");
         } else {
             final ConstantPool cp = _currentThread.frame().constantPool();
@@ -271,7 +270,7 @@ public final class Machine {
         } else {
             assert kind == Kind.REFERENCE;
             if (instance instanceof TeleReference && !((TeleReference) instance).isLocal()) {
-                return _teleVM.createReferenceValue(_teleVM.wordToReference(instance.readWord(fieldActor.offset())));
+                return teleVM().createReferenceValue(teleVM().wordToReference(instance.readWord(fieldActor.offset())));
             } else {
                 return fieldActor.readValue(instance);
             }
@@ -286,7 +285,7 @@ public final class Machine {
             final FieldActor fieldActor = cp.fieldAt(cpIndex).resolve(cp, cpIndex);
 
             if (value instanceof TeleReferenceValue) {
-                fieldActor.writeValue(instance, TeleReferenceValue.from(_teleVM, makeLocalReference((TeleReference) value.asReference())));
+                fieldActor.writeValue(instance, TeleReferenceValue.from(teleVM(), makeLocalReference((TeleReference) value.asReference())));
             } else {
                 final Value val = fieldActor.kind().convert(value);
                 fieldActor.writeValue(instance, val);
@@ -379,10 +378,10 @@ public final class Machine {
             return remoteReference;
         }
 
-        final ClassActor remoteReferenceClassActor = _teleVM.makeClassActorForTypeOf(remoteReference);
+        final ClassActor remoteReferenceClassActor = teleVM().makeClassActorForTypeOf(remoteReference);
 
         if (remoteReferenceClassActor.typeDescriptor().equals(JavaTypeDescriptor.STRING)) {
-            return Reference.fromJava(_teleVM.getString(remoteReference));
+            return Reference.fromJava(teleVM().getString(remoteReference));
         } else if (remoteReferenceClassActor.isArrayClassActor() && remoteReferenceClassActor.componentClassActor().isPrimitiveClassActor()) {
             final int arrayLength = Layout.readArrayLength(remoteReference);
             return Reference.fromJava(readRemoteArray(remoteReference, arrayLength, remoteReferenceClassActor.componentClassActor().typeDescriptor()));
@@ -400,7 +399,7 @@ public final class Machine {
                 final TeleReferenceValue inspectorReferenceArgument = (TeleReferenceValue) arguments[i];
                 final TeleReference reference = (TeleReference) inspectorReferenceArgument.asReference();
                 if (!reference.isLocal()) {
-                    arguments[i] = TeleReferenceValue.from(_teleVM, makeLocalReference(reference));
+                    arguments[i] = TeleReferenceValue.from(teleVM(), makeLocalReference(reference));
                 }
             }
         }

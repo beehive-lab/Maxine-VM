@@ -43,14 +43,14 @@ public abstract class IrInspector<IrInspector_Type extends IrInspector> extends 
         super(inspection, residence, irMethodReference);
         _irMethodReference = irMethodReference;
         final Reference classMethodActorReference =  teleVM().fields().IrMethod_classMethodActor(teleVM().makeClassActorForTypeOf(_irMethodReference).toJava().asSubclass(IrMethod.class)).readReference(irMethodReference());
-        _teleClassMethodActor = (TeleClassMethodActor) TeleObject.make(inspection.teleVM(), classMethodActorReference);
+        _teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
     }
 
     protected IrInspector(Inspection inspection, Residence residence, Reference irMethodReference, Value subject) {
         super(inspection, residence, subject);
         _irMethodReference = irMethodReference;
         final Reference classMethodActorReference =  teleVM().fields().IrMethod_classMethodActor(teleVM().makeClassActorForTypeOf(_irMethodReference).toJava().asSubclass(IrMethod.class)).readReference(irMethodReference());
-        _teleClassMethodActor = (TeleClassMethodActor) TeleObject.make(inspection.teleVM(), classMethodActorReference);
+        _teleClassMethodActor = (TeleClassMethodActor) teleVM().makeTeleObject(classMethodActorReference);
     }
 
 }
