@@ -26,7 +26,7 @@ import com.sun.max.tele.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link Method} in the tele VM.
+ * Canonical surrogate for an object of type {@link Method} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -39,12 +39,12 @@ public class TeleMethod extends TeleTupleObject {
     }
 
     /**
-     * @return the local instance of {@link Method} equivalent to this object in the tele VM.
+     * @return the local instance of {@link Method} equivalent to this object in the {@link TeleVM}.
      */
     public Method toJava() {
         if (_method == null) {
             final Reference methodActorReference = teleVM().fields().Method_methodActor.readReference(reference());
-            final TeleMethodActor teleMethodActor = (TeleMethodActor) TeleObject.make(teleVM(), methodActorReference);
+            final TeleMethodActor teleMethodActor = (TeleMethodActor) makeTeleObject(methodActorReference);
             _method = teleMethodActor.methodActor().toJava();
         }
         return _method;

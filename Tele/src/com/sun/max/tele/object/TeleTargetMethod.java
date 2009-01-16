@@ -76,7 +76,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
             final Reference targetMethodReference = teleVM.methods().Code_codePointerToTargetMethod.interpret(new WordValue(instructionPointer)).asReference();
             // Possible that the address points to an unallocated area of a code region.
             if (targetMethodReference != null && !targetMethodReference.isZero()) {
-                teleTargetMethod = (TeleTargetMethod) TeleObject.make(teleVM, targetMethodReference);  // Constructor will add to register.
+                teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);  // Constructor will add to register.
             }
         }
         return teleTargetMethod;
@@ -88,10 +88,10 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
         final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
         final Reference targetMethodArrayReference = teleVM.methods().Code_methodKeyToTargetMethods.interpret(TeleReferenceValue.from(methodKey)).asReference();
-        final TeleArrayObject teleTargetMethodArrayObject = (TeleArrayObject) TeleObject.make(teleVM, targetMethodArrayReference);
+        final TeleArrayObject teleTargetMethodArrayObject = (TeleArrayObject) teleVM.makeTeleObject(targetMethodArrayReference);
         if (teleTargetMethodArrayObject != null) {
             for (Reference targetMethodReference : (Reference []) teleTargetMethodArrayObject.shallowCopy()) {
-                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) TeleObject.make(teleVM, targetMethodReference);
+                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);
                 result.append(teleTargetMethod);
             }
         }
@@ -143,7 +143,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     public TeleClassMethodActor getTeleClassMethodActor() {
         if (_teleClassMethodActor == null) {
             final Reference classMethodActorReference = teleVM().fields().TargetMethod_classMethodActor.readReference(reference());
-            _teleClassMethodActor = (TeleClassMethodActor) TeleObject.make(teleVM(), classMethodActorReference);
+            _teleClassMethodActor = (TeleClassMethodActor) makeTeleObject(classMethodActorReference);
         }
         return _teleClassMethodActor;
     }
@@ -173,7 +173,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
             return Address.zero();
         }
         final Reference callEntryPointReference = TeleInstanceReferenceFieldAccess.readPath(reference(), teleVM().fields().TargetMethod_abi, teleVM().fields().TargetABI_callEntryPoint);
-        final TeleObject teleCallEntryPoint = TeleObject.make(teleVM(), callEntryPointReference);
+        final TeleObject teleCallEntryPoint = makeTeleObject(callEntryPointReference);
         if (teleCallEntryPoint == null) {
             return codeStart;
         }
@@ -187,10 +187,10 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         if (_instructions == null) {
             final Reference codeReference = teleVM().fields().TargetMethod_code.readReference(reference());
             if (!codeReference.isZero()) {
-                final TeleArrayObject teleCode = (TeleArrayObject) TeleObject.make(teleVM(), codeReference);
+                final TeleArrayObject teleCode = (TeleArrayObject) makeTeleObject(codeReference);
                 final byte[] code = (byte[]) teleCode.shallowCopy();
                 final Reference encodedInlineDataDescriptorsReference = teleVM().fields().TargetMethod_encodedInlineDataDescriptors.readReference(reference());
-                final TeleArrayObject teleEncodedInlineDataDescriptors = (TeleArrayObject) TeleObject.make(teleVM(), encodedInlineDataDescriptorsReference);
+                final TeleArrayObject teleEncodedInlineDataDescriptors = (TeleArrayObject) makeTeleObject(encodedInlineDataDescriptorsReference);
                 final byte[] encodedInlineDataDescriptors = teleEncodedInlineDataDescriptors == null ? null : (byte[]) teleEncodedInlineDataDescriptors.shallowCopy();
 
                 _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, encodedInlineDataDescriptors);
@@ -276,7 +276,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     public int[] getStopPositions() {
         if (_stopPositions == null) {
             final Reference intArrayReference = teleVM().fields().TargetMethod_stopPositions.readReference(reference());
-            final TeleArrayObject teleIntArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), intArrayReference);
+            final TeleArrayObject teleIntArrayObject = (TeleArrayObject) makeTeleObject(intArrayReference);
             if (teleIntArrayObject == null) {
                 return null;
             }
@@ -319,7 +319,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     public TargetJavaFrameDescriptor getJavaFrameDescriptor(int stopIndex) {
         if (_javaFrameDescriptors == null) {
             final Reference byteArrayReference = teleVM().fields().TargetMethod_compressedJavaFrameDescriptors.readReference(reference());
-            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), byteArrayReference);
+            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
             if (teleByteArrayObject == null) {
                 return null;
             }
@@ -345,7 +345,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     public TargetABI getAbi() {
         if (_abi == null) {
             final Reference abiReference = teleVM().fields().TargetMethod_abi.readReference(reference());
-            final TeleObject teleTargetABI = TeleObject.make(teleVM(), abiReference);
+            final TeleObject teleTargetABI = makeTeleObject(abiReference);
             if (teleTargetABI != null) {
                 _abi = (TargetABI) teleTargetABI.deepCopy();
             }

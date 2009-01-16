@@ -39,16 +39,11 @@ public abstract class InspectorLabel extends JTextField implements TextSearchabl
 
     private final Inspection _inspection;
 
+    /**
+     * @return the {@link Inspection} session in which this label is participating.
+     */
     public final Inspection inspection() {
         return _inspection;
-    }
-
-    public final InspectorStyle style() {
-        return _inspection.style();
-    }
-
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
     }
 
     public InspectorLabel(Inspection inspection) {
@@ -59,6 +54,20 @@ public abstract class InspectorLabel extends JTextField implements TextSearchabl
         super(text);
         _inspection = inspection;
         setEditable(false);
+    }
+
+    /**
+     * @return the current {@link InspectorStyle} being followed for visual display parameters.
+     */
+    public final InspectorStyle style() {
+        return _inspection.style();
+    }
+
+    /**
+     * @return the VM being inspected in this session
+     */
+    public final TeleVM teleVM() {
+        return _inspection.teleVM();
     }
 
     @Override

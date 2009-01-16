@@ -25,7 +25,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant} in the tele VM.
+ * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -41,7 +41,7 @@ public abstract class TeleInterfaceMethodRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant.Resolved} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant.Resolved} in the {@link TeleVM}.
      *
      * @author Michael Van De Vanter
      */
@@ -59,12 +59,12 @@ public abstract class TeleInterfaceMethodRefConstant extends TelePoolConstant {
         }
 
         /**
-         * @return surrogate for the {@InterfaceMethodActor} in the teleVM to which the constant was resolved
+         * @return surrogate for the {@InterfaceMethodActor} in the {@link TeleVM} to which the constant was resolved
          */
         public TeleInterfaceMethodActor getTeleInterfaceMethodActor() {
             if (_teleInterfaceMethodActor == null) {
                 final Reference methodActorReference = teleVM().fields().ResolvedMethodRefConstant_methodActor.readReference(reference());
-                _teleInterfaceMethodActor = (TeleInterfaceMethodActor) TeleObject.make(teleVM(), methodActorReference);
+                _teleInterfaceMethodActor = (TeleInterfaceMethodActor) makeTeleObject(methodActorReference);
             }
             return _teleInterfaceMethodActor;
         }
@@ -77,7 +77,7 @@ public abstract class TeleInterfaceMethodRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant.Unresolved} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant.Unresolved} in the {@link TeleVM}.
      *
      * @author Michael Van De Vanter
      */
@@ -100,7 +100,7 @@ public abstract class TeleInterfaceMethodRefConstant extends TelePoolConstant {
     }
 
     /**
-     * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant.UnresolvedIndices} in the tele VM.
+     * Inspector's canonical surrogate for an object of type {@link InterfaceMethodRefConstant.UnresolvedIndices} in the {@link TeleVM}.
      *
      * @author Michael Van De Vanter
      */

@@ -42,7 +42,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      */
     public final byte[] readBytecodes() {
         final Reference byteArrayReference = teleVM().fields().CodeAttribute_code.readReference(reference());
-        final TeleArrayObject teleByteArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), byteArrayReference);
+        final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
         return (byte[]) teleByteArrayObject.shallowCopy();
     }
 
@@ -51,7 +51,7 @@ public class TeleCodeAttribute extends TeleTupleObject {
      */
     public final TeleConstantPool getTeleConstantPool() {
         final Reference constantPoolReference = teleVM().fields().CodeAttribute_constantPool.readReference(reference());
-        return (TeleConstantPool) TeleObject.make(teleVM(), constantPoolReference);
+        return (TeleConstantPool) makeTeleObject(constantPoolReference);
     }
 
 

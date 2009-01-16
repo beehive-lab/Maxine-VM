@@ -69,7 +69,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
             // An address, previously unknown in the registry, in the target VM code regions.
             final Reference runtimeStubReference =  teleVM.methods().Code_codePointerToRuntimeStub.interpret(new WordValue(instructionPointer)).asReference();
             if (runtimeStubReference != null && !runtimeStubReference.isZero()) {
-                teleRuntimeStub = (TeleRuntimeStub) TeleObject.make(teleVM, runtimeStubReference);
+                teleRuntimeStub = (TeleRuntimeStub) teleVM.makeTeleObject(runtimeStubReference);
             }
         }
         return teleRuntimeStub;

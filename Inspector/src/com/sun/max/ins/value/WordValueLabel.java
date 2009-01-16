@@ -165,7 +165,7 @@ public class WordValueLabel extends ValueLabel {
                         switch (_valueKind) {
                             case OBJECT_REFERENCE:
                             case OBJECT_REFERENCE_TEXT: {
-                                final TeleObject teleObject = TeleObject.make(teleVM(), teleVM().wordToReference(value().toWord()));
+                                final TeleObject teleObject = teleVM().makeTeleObject(teleVM().wordToReference(value().toWord()));
                                 final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
                                 if (teleClassMethodActor != null) {
                                     // Add method-related menu items
@@ -242,7 +242,7 @@ public class WordValueLabel extends ValueLabel {
                     final TeleReference reference = (TeleReference) teleVM().wordToReference(newValue.toWord());
 
                     try {
-                        _teleObject = TeleObject.make(teleVM(), reference);
+                        _teleObject = teleVM().makeTeleObject(reference);
                     } catch (Throwable throwable) {
                         // If we don't catch this the views will not be updated at all.
                         _teleObject = null;
@@ -622,7 +622,7 @@ public class WordValueLabel extends ValueLabel {
             case OBJECT_REFERENCE:
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
-                final TeleObject teleObject = TeleObject.make(teleVM(), teleVM().wordToReference(value.toWord()));
+                final TeleObject teleObject = teleVM().makeTeleObject(teleVM().wordToReference(value.toWord()));
                 action = inspection().actions().inspectObject(teleObject, null);
                 break;
             }

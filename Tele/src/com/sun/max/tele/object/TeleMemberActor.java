@@ -26,7 +26,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Inspector's surrogate for an object of type {@link MemberActor} in the tele VM.
+ * Inspector's surrogate for an object of type {@link MemberActor} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -37,15 +37,15 @@ public abstract class TeleMemberActor extends TeleActor {
     }
 
     /**
-     * @return surrogate for the {@link ClassActor} object in the tele VM that contains this member
+     * @return surrogate for the {@link ClassActor} object in the {@link TeleVM} that contains this member
      */
     public TeleClassActor getTeleHolder() {
         final Reference classActorReference = teleVM().fields().MemberActor_holder.readReference(reference());
-        return (TeleClassActor) TeleObject.make(teleVM(), classActorReference);
+        return (TeleClassActor) makeTeleObject(classActorReference);
     }
 
     /**
-     * @return index of this member in the {@link ClassActor} in the teleVM that holds this member
+     * @return index of this member in the {@link ClassActor} in the {@link TeleVM} that holds this member
      */
     public int getMemberIndex() {
         return teleVM().fields().MemberActor_memberIndex.readInt(reference());

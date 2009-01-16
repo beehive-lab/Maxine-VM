@@ -49,7 +49,7 @@ public final class DirInspector extends IrInspector<DirInspector> {
 
     private DirInspector(Inspection inspection, Residence residence, Reference dirMethodReference) {
         super(inspection, residence, dirMethodReference);
-        final TeleObject teleDirMethod = TeleObject.make(teleVM(), dirMethodReference);
+        final TeleObject teleDirMethod = teleVM().makeTeleObject(dirMethodReference);
         _dirMethod = teleDirMethod == null ? null : (DirMethod) teleDirMethod.deepCopy();
         createFrame(null);
         setLocationRelativeToMouse();

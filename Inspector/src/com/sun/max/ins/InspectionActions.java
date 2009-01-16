@@ -1182,7 +1182,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
                     final Pointer pointer = address.asPointer();
                     if (teleVM().isValidOrigin(pointer)) {
                         final Reference objectReference = teleVM().originToReference(pointer);
-                        final TeleObject teleObject = TeleObject.make(teleVM(), objectReference);
+                        final TeleObject teleObject = teleVM().makeTeleObject(objectReference);
                         focus().setHeapObject(teleObject);
                     } else {
                         inspection().errorMessage("heap object not found at 0x"  + address.toHexString());
@@ -1247,7 +1247,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             final String input = inspection().inputDialog("Inspect heap object by ID..", "");
             try {
                 final long oid = Long.parseLong(input);
-                final TeleObject teleObject = TeleObject.lookupObject(oid);
+                final TeleObject teleObject = teleVM().lookupObject(oid);
                 if (teleObject != null) {
                     focus().setHeapObject(teleObject);
                 } else {
@@ -1281,7 +1281,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         protected void procedure() {
-            final TeleObject teleBootClassRegistry = TeleObject.make(teleVM(), teleVM().bootClassRegistryReference());
+            final TeleObject teleBootClassRegistry = teleVM().makeTeleObject(teleVM().bootClassRegistryReference());
             focus().setHeapObject(teleBootClassRegistry);
         }
     }

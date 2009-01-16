@@ -351,6 +351,7 @@ public abstract class TeleVM {
         _fields = new TeleFields(this);
         _methods = new TeleMethods(this);
 
+        _teleObjectManager = TeleObjectManager.make(this);
         _teleHeapManager = TeleHeapManager.make(this);
 
         // Provide access to JDWP server
@@ -639,7 +640,7 @@ public abstract class TeleVM {
             // Not loaded and not available on local classpath; load by copying
             // classfile from the {@link TeleVM}.
             final Reference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
-            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) TeleObject.make(this, byteArrayReference);
+            final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
             TeleError.check(teleByteArrayObject != null,
                     "could not find class actor: " + name);
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
@@ -707,6 +708,20 @@ public abstract class TeleVM {
             default:
                 throw ProgramError.unexpected("unknown array kind");
         }
+    }
+
+    private final TeleObjectManager _teleObjectManager;
+
+    /**
+     * @param reference an object in the {@link TeleVM}
+     * @return a canonical local surrogate for the object
+     */
+    public TeleObject makeTeleObject(Reference reference) {
+        return _teleObjectManager.make(reference);
+    }
+
+    public TeleObject lookupObject(long id) {
+        return _teleObjectManager.lookupObject(id);
     }
 
     private TeleCodeManager _teleCodeManager;
@@ -911,7 +926,7 @@ public abstract class TeleVM {
         if (areReferencesValid()) {
             _teleHeapManager.refresh(processEpoch);
             _teleClassRegistry.refresh(processEpoch);
-            TeleObject.staticRefresh(processEpoch);
+            _teleObjectManager.refresh(processEpoch);
         }
         Trace.end(TRACE_VALUE, _refreshTracer, startTimeMillis);
     }
@@ -1117,7 +1132,7 @@ public abstract class TeleVM {
      */
     private ObjectProvider findObject(Reference reference) {
         if (isValidOrigin(reference.toOrigin())) {
-            return TeleObject.make(this, reference);
+            return makeTeleObject(reference);
         }
         return null;
     }

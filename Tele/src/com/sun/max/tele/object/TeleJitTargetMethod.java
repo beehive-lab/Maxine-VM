@@ -38,14 +38,14 @@ public class TeleJitTargetMethod extends TeleTargetMethod{
     @Override
     public int[] bytecodeToTargetCodePositionMap() {
         final Reference intArrayReference = teleVM().fields().JitTargetMethod_bytecodeToTargetCodePositionMap.readReference(reference());
-        final TeleArrayObject teleIntArray = (TeleArrayObject) TeleObject.make(teleVM(), intArrayReference);
+        final TeleArrayObject teleIntArray = (TeleArrayObject) makeTeleObject(intArrayReference);
         return teleIntArray == null ? null : (int[]) teleIntArray.shallowCopy();
     }
 
     @Override
     public BytecodeInfo[] bytecodeInfos() {
         final Reference infoArrayReference = teleVM().fields().JitTargetMethod_bytecodeInfos.readReference(reference());
-        final TeleArrayObject teleBytecodeInfoArray = (TeleArrayObject) TeleObject.make(teleVM(), infoArrayReference);
+        final TeleArrayObject teleBytecodeInfoArray = (TeleArrayObject) makeTeleObject(infoArrayReference);
         return teleBytecodeInfoArray == null ? null : (BytecodeInfo[]) teleBytecodeInfoArray.deepCopy();
     }
 

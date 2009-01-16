@@ -46,7 +46,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
 
     public static TeleCodeManager make(TeleVM teleVM) {
         if (_teleCodeManager ==  null) {
-            _teleCodeManager = (TeleCodeManager) TeleObject.make(teleVM, teleVM.fields().Code_codeManager.readReference(teleVM));
+            _teleCodeManager = (TeleCodeManager) teleVM.makeTeleObject(teleVM.fields().Code_codeManager.readReference(teleVM));
             _teleCodeManager.initialize();
         }
         return _teleCodeManager;
@@ -70,17 +70,18 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
      */
     private void initialize() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
+        final long startTimeMillis = System.currentTimeMillis();
         final Reference bootCodeRegionReference = teleVM().fields().Code_bootCodeRegion.readReference(teleVM());
-        _teleBootCodeRegion = (TeleCodeRegion) TeleObject.make(teleVM(), bootCodeRegionReference);
+        _teleBootCodeRegion = (TeleCodeRegion) makeTeleObject(bootCodeRegionReference);
 
         final Reference runtimeCodeRegionsArrayReference = teleVM().fields().CodeManager_runtimeCodeRegions.readReference(reference());
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) TeleObject.make(teleVM(), runtimeCodeRegionsArrayReference);
+        final TeleArrayObject teleArrayObject = (TeleArrayObject) makeTeleObject(runtimeCodeRegionsArrayReference);
         final Reference[] codeRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
         _teleCodeRegions = new TeleCodeRegion[codeRegionReferences.length];
         for (int i = 0; i < codeRegionReferences.length; i++) {
-            _teleCodeRegions[i] = (TeleCodeRegion) TeleObject.make(teleVM(), codeRegionReferences[i]);
+            _teleCodeRegions[i] = (TeleCodeRegion) makeTeleObject(codeRegionReferences[i]);
         }
-        Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + _teleCodeRegions.length + " regions");
+        Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + _teleCodeRegions.length + " regions", startTimeMillis);
     }
 
     public void refresh(long processEpoch) {
