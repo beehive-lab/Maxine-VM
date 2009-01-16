@@ -114,6 +114,7 @@ public final class BootImageInspector extends UniqueInspector<BootImageInspector
         addInfo("compilation scheme:", new JavaNameLabel(inspection(), vmConfiguration.compilationScheme().name(), vmConfiguration.compilationScheme().getClass().getName()));
         addInfo("optimizing compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.compilerScheme().name(), vmConfiguration.compilerScheme().getClass().getName()));
         addInfo("JIT compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.jitScheme().name(), vmConfiguration.jitScheme().getClass().getName()));
+        addInfo("interpreter scheme:", new JavaNameLabel(inspection(), vmConfiguration.interpreterScheme().name(), vmConfiguration.interpreterScheme().getClass().getName()));
         addInfo("trampoline scheme:", new JavaNameLabel(inspection(), vmConfiguration.trampolineScheme().name(), vmConfiguration.trampolineScheme().getClass().getName()));
         addInfo("target ABIs scheme:", new JavaNameLabel(inspection(), vmConfiguration.targetABIsScheme().name(), vmConfiguration.targetABIsScheme().getClass().getName()));
         addInfo("run scheme:", new JavaNameLabel(inspection(), vmConfiguration.runScheme().name(), vmConfiguration.runScheme().getClass().getName()));

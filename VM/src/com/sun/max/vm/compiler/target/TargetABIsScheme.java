@@ -50,13 +50,21 @@ public abstract class TargetABIsScheme<IntegerRegister_Type extends Symbol, Floa
         return _optimizedJavaABI;
     }
 
+    private final TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> _interpreterABI;
+
+    public TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> interpreterABI() {
+        return _interpreterABI;
+    }
+
     protected TargetABIsScheme(VMConfiguration vmConfiguration,
                                TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> nativeABI,
                                TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> jitABI,
-                               TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> optimizedJavaABI) {
+                               TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> optimizedJavaABI,
+                               TargetABI<IntegerRegister_Type, FloatingPointRegister_Type> interpreterABI) {
         super(vmConfiguration);
         _nativeABI = nativeABI;
         _jitABI = jitABI;
         _optimizedJavaABI = optimizedJavaABI;
+        _interpreterABI = interpreterABI;
     }
 }

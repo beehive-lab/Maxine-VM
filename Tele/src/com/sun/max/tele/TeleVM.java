@@ -176,7 +176,7 @@ public abstract class TeleVM implements VMAccess {
 				.gripPackage()),
 				new com.sun.max.tele.reference.plain.Package(), b
 						.layoutPackage(), b.heapPackage(), b.monitorPackage(),
-				b.compilerPackage(), b.jitPackage(), b.trampolinePackage(), b
+				b.compilerPackage(), b.jitPackage(), b.interpreterPackage(), b.trampolinePackage(), b
 						.targetABIsPackage(), b.runPackage());
 		vmConfiguration.loadAndInstantiateSchemes();
 
@@ -826,14 +826,14 @@ public abstract class TeleVM implements VMAccess {
 	}
 
 	private boolean _isInGC = false;
-	
+
 	/**
 	 * @return whether a GC is underway in the {@link TeleVM}.
 	 */
 	public boolean isInGC() {
 	    return _isInGC;
 	}
-	
+
 	/**
 	 * @return whether {@link Reference}s to memory in the {@link TeleVM} are reliable.
 	 */

@@ -119,7 +119,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         initialize();
         return _codeSize;
     }
-    
+
     public String name() {
         return getClass().getSimpleName() + " for " + classMethodActor().simpleName();
     }
@@ -170,7 +170,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     // Update all the fields that require reading from VM; do it lazily, as per TeleObject notes.
     // Note exception made for this class in the constructor.
     private void initialize() {
-        if (_codeStart == null) {
+        if (_codeStart == null  || _codeStart.isZero()) {
             _codeStart = teleVM().fields().TargetMethod_codeStart.readWord(reference()).asPointer();
             final Reference code = teleVM().fields().TargetMethod_code.readReference(reference());
             _codeSize = Size.fromInt(Layout.byteArrayLayout().readLength(code));

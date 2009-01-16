@@ -130,6 +130,7 @@ public final class InspectorMenuBar extends JMenuBar {
         menu.add(sub);
         menu.add(_actions.viewMethodCodeByAddress());
         menu.add(_actions.viewNativeCodeByAddress());
+        menu.add(_actions.viewRuntimeStubByAddress());
         return menu;
     }
 

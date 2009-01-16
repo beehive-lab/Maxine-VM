@@ -322,6 +322,7 @@ public class BootImage {
         public final String _monitorPackageName;
         public final String _compilerPackageName;
         public final String _jitPackageName;
+        public final String _interpreterPackageName;
         public final String _trampolinePackageName;
         public final String _targetABIsPackageName;
         public final String _runPackageName;
@@ -373,6 +374,13 @@ public class BootImage {
             return (VMPackage) MaxPackage.fromName(_jitPackageName);
         }
 
+        public VMPackage interpreterPackage() {
+            if (_interpreterPackageName == null) {
+                return null;
+            }
+            return (VMPackage) MaxPackage.fromName(_interpreterPackageName);
+        }
+
         public VMPackage trampolinePackage() {
             return (VMPackage) MaxPackage.fromName(_trampolinePackageName);
         }
@@ -399,6 +407,7 @@ public class BootImage {
             _monitorPackageName = Utf8.readString(inputStream);
             _compilerPackageName = Utf8.readString(inputStream);
             _jitPackageName =  Utf8.readString(inputStream);
+            _interpreterPackageName = Utf8.readString(inputStream);
             _trampolinePackageName = Utf8.readString(inputStream);
             _targetABIsPackageName = Utf8.readString(inputStream);
             _runPackageName = Utf8.readString(inputStream);
@@ -423,6 +432,8 @@ public class BootImage {
             } else {
                 _jitPackageName = vmConfiguration.jitPackage().name();
             }
+            _interpreterPackageName = vmConfiguration.interpreterPackage().name();
+
             _trampolinePackageName = vmConfiguration.trampolinePackage().name();
             _targetABIsPackageName = vmConfiguration.targetABIsPackage().name();
             _runPackageName = vmConfiguration.runPackage().name();
@@ -446,6 +457,7 @@ public class BootImage {
             checkPackage(_monitorPackageName);
             checkPackage(_compilerPackageName);
             checkPackage(_jitPackageName);
+            checkPackage(_interpreterPackageName);
             checkPackage(_trampolinePackageName);
             checkPackage(_targetABIsPackageName);
             checkPackage(_runPackageName);
@@ -563,6 +575,7 @@ public class BootImage {
                             _stringInfo.monitorPackage(),
                             _stringInfo.compilerPackage(),
                             _stringInfo.jitPackage(),
+                            _stringInfo.interpreterPackage(),
                             _stringInfo.trampolinePackage(),
                             _stringInfo.targetABIsPackage(),
                             _stringInfo.runPackage());

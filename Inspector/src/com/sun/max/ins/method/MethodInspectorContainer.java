@@ -79,6 +79,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
             menu.add(sub);
             menu.add(inspection().actions().viewMethodCodeByAddress());
             menu.add(inspection().actions().viewNativeCodeByAddress());
+            menu.add(inspection().actions().viewRuntimeStubByAddress());
         }
 
         public Inspection inspection() {

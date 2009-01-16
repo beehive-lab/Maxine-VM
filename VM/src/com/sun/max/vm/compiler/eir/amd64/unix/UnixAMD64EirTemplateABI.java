@@ -26,6 +26,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.interpret.dt.amd64.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -47,6 +48,13 @@ public class UnixAMD64EirTemplateABI extends UnixAMD64EirJavaABI {
                             VMRegister.Role.ABI_FRAME_POINTER, bp);
         initTargetABI(new TargetABI<AMD64GeneralRegister64, AMD64XMMRegister>(originalTargetABI, registerRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT));
         makeUnallocatable(AMD64EirRegister.General.RBP);
+
+        // TODO (Simon W): Need a better way of specializing the template ABI for a generated interpreter.
+        if (vmConfiguration.interpreterPackage() instanceof com.sun.max.vm.interpret.dt.amd64.Package) {
+            for (AMD64EirRegister.General reg : AMD64DtInterpreterABI.unallocatableToTemplateABI()) {
+                makeUnallocatable(reg);
+            }
+        }
     }
 
     private final PoolSet<AMD64EirRegister> _calleeSavedRegisters = PoolSet.noneOf(AMD64EirRegister.General.pool());

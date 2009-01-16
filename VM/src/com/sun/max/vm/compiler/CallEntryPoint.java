@@ -65,7 +65,12 @@ public enum CallEntryPoint {
      * {@linkplain C_FUNCTION VM entry point}. These methods have no adapter frame and are always compiled with the
      * optimizing compiler.
      */
-    C_ENTRY_POINT;
+    C_ENTRY_POINT,
+
+    /**
+     * Denotes the entry address used by the interpreter when making a call.
+     */
+    INTERPRETER_ENTRY_POINT;
 
     public static final IndexedSequence<CallEntryPoint> VALUES = new ArraySequence<CallEntryPoint>(values());
 

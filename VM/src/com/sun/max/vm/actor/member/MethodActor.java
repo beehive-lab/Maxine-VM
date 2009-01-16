@@ -150,6 +150,11 @@ public abstract class MethodActor extends MemberActor {
         return isNeverInline(flags());
     }
 
+    @INLINE
+    public final boolean isInterpretOnly() {
+        return isInterpretOnly(flags());
+    }
+
     public final boolean isApplicationVisible() {
         return !(isNative() || isWrapper() || holder().isGenerated());
     }

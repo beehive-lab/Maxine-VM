@@ -45,7 +45,7 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
     @CONSTANT_WHEN_NOT_ZERO
     private TemplateTable _templateTable;
 
-    protected TemplateTable templateTable() {
+    public TemplateTable templateTable() {
         return _templateTable;
     }
 

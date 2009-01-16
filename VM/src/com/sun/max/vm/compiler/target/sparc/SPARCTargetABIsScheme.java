@@ -68,6 +68,6 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
         super(vmConfiguration,
                         // FIXME: cannot model SPARC / Solaris native  -- see comment above
                         createSPARC64TargetABI(_nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, _incomingIntegerParameterRegisters, _outgoingIntegerParameterRegisters, null, false, false),
-              jitABI, optimizedJavaABI);
+              jitABI, optimizedJavaABI, null);
     }
 }

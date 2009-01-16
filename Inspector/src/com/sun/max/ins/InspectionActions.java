@@ -1485,6 +1485,47 @@ public class InspectionActions extends InspectionHolder implements Prober{
         return _viewMethodCodeByAddress;
     }
 
+    /**
+     * Action:  displays in the {@MethodInspector} the method whose target code contains
+     * an interactively specified address.
+     */
+    final class ViewRuntimeStubByAddressAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View runtime stub code containing target code address...";
+
+        public ViewRuntimeStubByAddressAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        }
+
+        @Override
+        protected void procedure() {
+            new AddressInputDialog(inspection(), teleVM().bootImageStart(), "View runtime stub code containing target code address...", "View Code") {
+
+                @Override
+                public boolean isValidInput(Address address) {
+                    return TeleRuntimeStub.make(teleVM(), address) != null;
+                }
+
+                @Override
+                public void entered(Address address) {
+                    focus().setCodeLocation(new TeleCodeLocation(teleVM(), address), false);
+                }
+            };
+        }
+
+    }
+
+    private final InspectorAction _viewRuntimeStubByAddress = new ViewRuntimeStubByAddressAction(null);
+
+    /**
+     * @return an interactive action that displays in the {@link MethodInspector} the method whose
+     * target code contains the specified address in the {@link TeleVM}.
+     */
+    public final InspectorAction viewRuntimeStubByAddress() {
+        return _viewRuntimeStubByAddress;
+    }
+
+
 
     /**
      * Action:  displays in the {@MethodInspector} the method code containing the current code selection.

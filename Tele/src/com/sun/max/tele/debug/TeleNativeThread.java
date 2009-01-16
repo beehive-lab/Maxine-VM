@@ -283,6 +283,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
         final TeleVM teleVM = _teleProcess.teleVM();
         final Sequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
+        //if (frames.isEmpty()) return; // DELETEME
         assert !frames.isEmpty();
         if (_frames != null && frames.length() == _frames.length()) {
             _framesChanged = false;

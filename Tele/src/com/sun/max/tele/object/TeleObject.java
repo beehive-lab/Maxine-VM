@@ -71,6 +71,7 @@ import com.sun.max.vm.code.CodeManager;
 import com.sun.max.vm.code.CodeRegion;
 import com.sun.max.vm.compiler.builtin.Builtin;
 import com.sun.max.vm.compiler.target.OptimizedTargetMethod;
+import com.sun.max.vm.interpret.InterpretedTargetMethod;
 import com.sun.max.vm.jit.JitTargetMethod;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.runtime.RuntimeStub;
@@ -226,6 +227,9 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
                         teleObject = new TeleReferenceClassActor(teleVM, reference);
 
                         // Maxine code management
+                    } else if (InterpretedTargetMethod.class.isAssignableFrom(javaClass)) {
+                        teleObject = new TeleInterpretedTargetMethod(teleVM, reference);
+
                     } else if (JitTargetMethod.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleJitTargetMethod(teleVM, reference);
 
@@ -234,13 +238,13 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
 
                     } else if (RuntimeStub.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleRuntimeStub(teleVM, reference);
-                        
+
                     } else if (CodeRegion.class.isAssignableFrom(javaClass)) {
                     	teleObject = new TeleCodeRegion(teleVM, reference);
-                    	
+
                     } else if (CodeManager.class.isAssignableFrom(javaClass)) {
                     	teleObject = new TeleCodeManager(teleVM, reference);
-                    	
+
                     } else if (RuntimeMemoryRegion.class.isAssignableFrom(javaClass)) {
                     	teleObject = new TeleRuntimeMemoryRegion(teleVM, reference);
 
@@ -257,10 +261,10 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
                        // ConstantPool and PoolConstants
                     } else if (ConstantPool.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleConstantPool(teleVM, reference);
-                        
+
                     } else if (CodeAttribute.class.isAssignableFrom(javaClass)) {
                     	teleObject = new TeleCodeAttribute(teleVM, reference);
-                    	
+
                     } else if (Utf8Constant.class.isAssignableFrom(javaClass)) {
                         teleObject = new TeleUtf8Constant(teleVM, reference);
 
