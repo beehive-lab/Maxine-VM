@@ -84,7 +84,7 @@ Boolean condition_wait(Condition condition, Mutex mutex) {
         }
 #   elif os_GUESTVMXEN
         error = guestvmXen_condition_wait(*condition, *mutex, 0);
-        if (error == ETIMEDOUT) {
+        if (error == 1) {
             return false;
         }
 #   endif
@@ -130,8 +130,8 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
             }
 #       elif os_GUESTVMXEN
             error = guestvmXen_condition_wait(*condition, *mutex, &ts);
-            if (error == ETIMEDOUT) {
-                return true;
+            if (error == 1) {
+                return false;
             }
 #       else
 #           error
