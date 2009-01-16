@@ -91,7 +91,7 @@ public final class CirSelectInterfaceMethod extends CirSpecialSnippet {
     }
 
     @Override
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         assert arguments.length == Parameter.VALUES.length();
         final InterfaceMethodActor declaredMethod = (InterfaceMethodActor) getConstantArgumentValue(arguments, Parameter.declaredMethod).asObject();
         VirtualMethodActor selectedMethod = null;
@@ -100,7 +100,7 @@ public final class CirSelectInterfaceMethod extends CirSpecialSnippet {
             try {
                 selectedMethod = MethodSelectionSnippet.SelectInterfaceMethod.quasiFold(receiver, declaredMethod);
             } catch (LinkageError error) {
-                return createExceptionCall(error, arguments);
+                throw new CirFoldingException(error);
             }
         } else if (declaredMethod.holder().toJava() == Accessor.class) {
             selectedMethod = findAccessorMethodActor(declaredMethod, cirOptimizer.inliningPolicy().accessorClass());

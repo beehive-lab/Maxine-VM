@@ -49,7 +49,7 @@ public class BirToCirMethodTranslation {
     private final CirClosure _rootClosure;
 
     public CirVariable[] createParameters(Kind[] parameterKinds) {
-        final CirVariable[] parameters = new CirVariable[parameterKinds.length + 2];
+        final CirVariable[] parameters = CirClosure.newParameters(parameterKinds.length + 2);
         int i = 0;
         final BytecodeLocation location = new BytecodeLocation(classMethodActor().compilee(), 0);
         while (i < parameterKinds.length) {
@@ -141,19 +141,19 @@ public class BirToCirMethodTranslation {
         return _rootClosure;
     }
 
-    BlockState getBlockStateAt(int bytecodeAddress) {
-        return _blockStateMap[bytecodeAddress];
+    BlockState getBlockStateAt(int bytecodePosition) {
+        return _blockStateMap[bytecodePosition];
     }
 
-    public BlockState getExceptionDispatcherState(int opcodeAddress) {
-        if (_exceptionDispatcherBlockStateMap == null || _exceptionDispatcherBlockStateMap.length <= opcodeAddress) {
+    public BlockState getExceptionDispatcherState(int opcodePosition) {
+        if (_exceptionDispatcherBlockStateMap == null || _exceptionDispatcherBlockStateMap.length <= opcodePosition) {
             return null;
         }
-        return _exceptionDispatcherBlockStateMap[opcodeAddress];
+        return _exceptionDispatcherBlockStateMap[opcodePosition];
     }
 
     public CirCall newCirCall(CirBlock block) {
-        final CirCall call = new CirCall(block);
+        final CirCall call = new CirCall(block, CirCall.NO_ARGUMENTS);
         block.addCall(call);
         return call;
     }

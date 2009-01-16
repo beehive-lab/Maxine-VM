@@ -26,7 +26,6 @@ import java.io.*;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.*;
 
 /**
  * Operations for sequentially scanning data items in a class file. Any IO exceptions that occur during scanning
@@ -257,7 +256,6 @@ public class ClassfileStream {
 
     public Address getPosition() {
         // Prevent sharing by reference of _position when not bootstrapped:
-        assert !MaxineVM.isPrototyping() || _position.asAddress() != _position;
         return _position.asAddress();
     }
 

@@ -53,17 +53,14 @@ while [ "${1:0:1}" = "-" ]; do
             shift
             jvm=$1
             ;;
-        -jvm_args )
-            shift
-            jvm_args=$1
+        -J/p* )
+            jvm_args_prefix="$jvm_args_prefix ${1/-J\/p/}"
             ;;
-        -jvm_args_prefix )
-            shift
-            jvm_args_prefix="$jvm_args_prefix $1"
+        -J/a* )
+            jvm_args_suffix="$jvm_args_suffix ${1/-J\/a/}"
             ;;
-        -jvm_args_suffix )
-            shift
-            jvm_args_suffix="$jvm_args_suffix $1"
+        -J* )
+            jvm_args=${1/-J/}
             ;;
         -junit4 )
             shift
@@ -82,7 +79,7 @@ jvm_args="$jvm_args_prefix $jvm_args $jvm_args_suffix"
 command_args=$@
 
 # Ensure that the non-optional variables are set
-test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to JDK installation directory"; exit 1; }
+test -n "${JAVA_HOME}" || { echo "JAVA_HOME must be set to a JDK 6 installation directory"; exit 1; }
 
 # Try to find the base directory of the Maxine code base by using the path of this script
 if [ -z "${maxine_dir}" ]; then
@@ -438,7 +435,7 @@ function run_gate() {
 # Main launcher
 #=======================================
 
-function showCommands() {
+function usage() {
     if [ -n "$1" ]; then
         echo $1
     fi
@@ -463,9 +460,9 @@ function showCommands() {
     echo " -java_home       specifies JDK installation directory (must be JDK 6 or later)"
     echo "                    (default: value of the JAVA_HOME environment variable)"
     echo " -jvm             specifies Java VM executable (default: bin/java under JAVA_HOME)"
-    echo " -jvm_args        specifies Java VM arguments (default: ${default_jvm_args})"
-    echo " -jvm_args_prefix prefix Java VM arguments"
-    echo " -jvm_args_suffix suffix Java VM arguments"
+    echo " -J<args>         specifies Java VM arguments (default: ${default_jvm_args})"
+    echo " -J/p<args>       prefix Java VM arguments"
+    echo " -J/a<args>       suffix Java VM arguments"
     echo " -maxine          specifies base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
     echo " -junit4          class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
@@ -473,17 +470,17 @@ function showCommands() {
 }
 
 if [ -n "${unknown_option}" ]; then
-    showCommands "max: unknown global option '${unknown_option}'"
+    usage "max: unknown global option '${unknown_option}'"
     exit 255
 fi
 
 if $show_help ; then
-    showCommands ""
+    usage ""
     exit 0
 fi
 
 if [ -z "${command}" ]; then
-    showCommands ""
+    usage ""
     exit 0
 fi
 
@@ -492,7 +489,7 @@ shift
 
 command_type=`type -t ${run_command}`
 if [ "${command_type}" != "function" ]; then
-    showCommands "max: unknown command '${command}'"
+    usage "max: unknown command '${command}'"
     exit 255
 fi
 

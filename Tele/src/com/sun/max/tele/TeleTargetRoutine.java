@@ -41,7 +41,7 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     TargetCodeRegion targetCodeRegion();
 
     TeleRoutine teleRoutine();
-    
+
     /**
      * @return a name assigned in the Tele layer for identification purposes.
      */
@@ -52,11 +52,6 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
      *         may differ from the designated {@linkplain #callEntryPoint() entry point} of the code.
      */
     Address codeStart();
-
-    /**
-     * @return length of code for this routine in the {@link TeleVM} in bytes.
-     */
-    Size codeSize();
 
     /**
      * @return target address at which this code is entered from a call (which may not be the same as the

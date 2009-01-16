@@ -26,6 +26,7 @@ import java.util.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 
 /**
@@ -198,7 +199,11 @@ public class CirPrinter extends CirVisitor {
             _method = null;
             printClosure("{" + method.getQualifiedName(), method.closure());
         } else {
-            print(method.getQualifiedName());
+            if (method instanceof CirSnippet) {
+                print(method.name());
+            } else {
+                print(method.getQualifiedName());
+            }
         }
         println();
     }

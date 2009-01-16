@@ -93,7 +93,7 @@ public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
     }
 
     @Override
-    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) {
+    public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
         if (isConstantArgument(arguments, FieldReadParameter.fieldActor)) {
             final FieldActor fieldActor = (FieldActor) getConstantArgumentValue(arguments, FieldReadParameter.fieldActor).asObject();
             if (fieldActor.isConstant()) {

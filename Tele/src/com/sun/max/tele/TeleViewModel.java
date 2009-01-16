@@ -28,7 +28,7 @@ import com.sun.max.collect.*;
 public class TeleViewModel {
 
     public interface Listener {
-        void refreshView();
+        void refreshView(long epoch);
     }
 
     protected TeleViewModel() {
@@ -40,9 +40,9 @@ public class TeleViewModel {
         _listeners.add(listener);
     }
 
-    public void refreshView() {
+    public void refreshView(long epoch) {
         for (Listener listener : _listeners) {
-            listener.refreshView();
+            listener.refreshView(epoch);
         }
     }
 }

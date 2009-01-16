@@ -36,6 +36,6 @@ public interface CirFoldable {
 
     boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments);
 
-    CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments);
+    CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException;
 
 }

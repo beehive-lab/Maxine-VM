@@ -128,10 +128,10 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
                         return;
                     }
 
-                    teleVM().refresh();
+                    teleVM().refresh(_epoch);
                     refreshThreads();
                     final Sequence<TeleTargetBreakpoint> deactivatedBreakpoints = targetBreakpointFactory().deactivateAll();
-                    teleVM().fireThreadEvents();
+                    teleVM().fireJDWPThreadEvents();
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
 
                     for (TeleNativeThread thread : teleProcess().threads()) {
@@ -373,18 +373,18 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
         public State oldState() {
             return _oldState;
         }
-        
+
         public State newState() {
             return _newState;
         }
-        
+
         /**
          * @return the process epoch at the time of the state transition.
          */
         public long epoch() {
             return _epoch;
         }
-        
+
         @Override
         public String toString() {
             return _oldState.name() + "-->" + _newState.name() + "(" + _epoch + ")";
@@ -558,7 +558,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     private void refreshThreads() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         final long startTimeMillis = System.currentTimeMillis();
-    	_epoch++;
+        _epoch++;
         final AppendableSequence<TeleNativeThread> threads = new ArrayListSequence<TeleNativeThread>(_threadMap.size());
         gatherThreads(threads);
 
@@ -637,17 +637,17 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
     public final TeleNativeThread primordialThread() {
         return _primordialThread;
     }
-    
+
     /**
      * Gets the thread whose stack contains the memory location, null if none.
      */
     public final TeleNativeThread threadContaining(Address address) {
-    	for (TeleNativeThread thread : _threadMap.values()) {
-    		if (thread.stack().contains(address)) {
-    			return thread;
-    		}
-    	}
-    	return null;
+        for (TeleNativeThread thread : _threadMap.values()) {
+            if (thread.stack().contains(address)) {
+                return thread;
+            }
+        }
+        return null;
     }
 
     public final int pageSize() {
@@ -714,7 +714,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
      * @return the number of bytes written to {@code address} or -1 if there was an error while trying to write the data
      */
     protected abstract int write0(byte[] buffer, int offset, int length, Address address);
-    
+
     protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
         return false;
     }

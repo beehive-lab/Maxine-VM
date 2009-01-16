@@ -45,7 +45,7 @@ public abstract class InspectionListenerAdapter implements InspectionListener {
     public void threadStateChanged(TeleNativeThread teleNativeThread) {
     }
 
-    public void breakpointSetChanged() {
+    public void breakpointSetChanged(long epoch) {
     }
 
     public void viewConfigurationChanged(long epoch) {

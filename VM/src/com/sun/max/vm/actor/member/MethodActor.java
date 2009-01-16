@@ -336,6 +336,18 @@ public abstract class MethodActor extends MemberActor {
         return false;
     }
 
+    /**
+     * Invokes the method represented by this method actor with the given parameter values.
+     *
+     * This is akin to the standard Java reflective method {@linkplain Method#invoke(Object, Object...) invocation}
+     * except that the parameter values are boxed in {@link Value} objects and the
+     * receiver object for a non-static method is in element 0 of {@code argumentValues} (as opposed to
+     * being a separate parameter).
+     *
+     * This method throws the same exceptions as {@link Method#invoke(Object, Object...)}.
+     *
+     * @param argumentValues the values to be passed as the arguments of the invocation
+     */
     public Value invoke(Value... argumentValues) throws InvocationTargetException, IllegalAccessException {
         assert !isInstanceInitializer();
         if (MaxineVM.isPrototyping()) {
@@ -357,6 +369,17 @@ public abstract class MethodActor extends MemberActor {
         return stub.invoke(argumentValues);
     }
 
+    /**
+     * Invokes the method represented by this method actor with the given parameter values.
+     *
+     * This is akin to the standard Java reflective constructor {@linkplain Constructor#newInstance(Object...)
+     * invocation} except that the parameter values are boxed in {@link Value} objects.
+     *
+     * This method throws the same exceptions as {@link Constructor#newInstance(Object...)}.
+     *
+     * @param argumentValues the values to be passed as the arguments of the invocation. Note that this does not include
+     *            the uninitialized object as it is created by this invocation.
+     */
     public Value invokeConstructor(Value... argumentValues) throws InvocationTargetException, IllegalAccessException, InstantiationException {
         assert isInstanceInitializer();
         final GeneratedConstructorStub stub = UnsafeLoophole.cast(makeInvocationStub());

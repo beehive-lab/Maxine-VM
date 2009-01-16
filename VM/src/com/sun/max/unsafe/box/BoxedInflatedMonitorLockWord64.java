@@ -30,10 +30,6 @@ public final class BoxedInflatedMonitorLockWord64 extends InflatedMonitorLockWor
 
     protected long _nativeWord;
 
-    public BoxedInflatedMonitorLockWord64(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedInflatedMonitorLockWord64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

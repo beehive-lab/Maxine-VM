@@ -55,26 +55,7 @@ import com.sun.max.vm.type.*;
  */
 public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapScheme, CellVisitor {
 
-    public boolean isGcThread(Thread thread) {
-        return thread instanceof StopTheWorldDaemon;
-    }
-
-    public int adjustedCardTableShift() {
-        return -1;
-    }
-
-    public int auxiliarySpaceSize(int bootImageSize) {
-        return 0;
-    }
-
-    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
-    }
-
-    public void initializeVmThread(Pointer vmThreadLocals) {
-    }
-
-    private int _numberOfGarbageCollectionInvocations = 0;
-    private int _numberOfGarbageTurnovers = 0;
+    private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -108,11 +89,41 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         }
     };
 
+    private final SpecialReferenceManager.GripForwarder _gripForwarder = new SpecialReferenceManager.GripForwarder() {
+        public boolean isReachable(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (_fromSpace.contains(origin)) {
+                final Grip forwardGrip = Layout.readForwardGrip(origin);
+                if (forwardGrip.isZero()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        public Grip getForwardGrip(Grip grip) {
+            final Pointer origin = grip.toOrigin();
+            if (_fromSpace.contains(origin)) {
+                return Layout.readForwardGrip(origin);
+            }
+            return grip;
+        }
+    };
+
     // The Sequential Heap Root Scanner is actually the "thread crawler" which will identify the
     // roots out of the threads' stacks. Here we create one for the actual scanning (_heapRootsScanner)
     // and one for the verification (_heapRootsVerifier)
     private final SequentialHeapRootsScanner _heapRootsScanner = new SequentialHeapRootsScanner(this, _pointerIndexGripUpdater);
     private final SequentialHeapRootsScanner _heapRootsVerifier = new SequentialHeapRootsScanner(this, _pointerIndexGripVerifier);
+
+    private StopTheWorldDaemon _collectorThread;
+
+    private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion("Heap-From");
+    private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion("Heap-To");
+    private Address _top;
+    private volatile Address _allocationMark;
+
+    @CONSTANT_WHEN_NOT_ZERO
+    private Pointer _allocationMarkPointer;
 
     // Create timing facilities.
     private final Timer _clearTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
@@ -121,12 +132,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private final Timer _bootHeapScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
     private final Timer _codeScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
     private final Timer _copyTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
+    private final Timer _weakRefTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
 
-    // Descriptive names, useful for debugging
-    private static final String TO_SPACE_DESCRIPTION = "Heap-To";
-    private static final String FROM_SPACE_DESCRIPTION = "Heap-From";
-    private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
-
+    private int _numberOfGarbageCollectionInvocations = 0;
 
     // The heart of the collector.
     // Performs the actual Garbage Collection
@@ -178,6 +186,10 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                 _copyTimer.start();
                 moveReachableObjects();
                 _copyTimer.stop();
+
+                _weakRefTimer.start();
+                SpecialReferenceManager.processDiscoveredSpecialReferences(_gripForwarder);
+                _weakRefTimer.stop();
                 _gcTimer.stop();
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
@@ -201,6 +213,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                     Log.print(TimerUtil.getLastElapsedMilliSeconds(_codeScanTimer));
                     Log.print("   copy: ");
                     Log.print(TimerUtil.getLastElapsedMilliSeconds(_copyTimer));
+                    Log.print("   weak refs: ");
+                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_weakRefTimer));
                     Log.println();
                     Log.print("GC <");
                     Log.print(_numberOfGarbageCollectionInvocations);
@@ -215,22 +229,11 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                     Log.print("--After  GC--   size: ");
                     Log.println(_allocationMark.minus(_toSpace.start()).toInt());
                 }
-                _numberOfGarbageTurnovers++;
             } catch (Throwable throwable) {
                 FatalError.unexpected(throwable.toString() + " during GC");
             }
         }
     };
-
-    private StopTheWorldDaemon _collectorThread;
-
-    private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion(FROM_SPACE_DESCRIPTION);
-    private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion(TO_SPACE_DESCRIPTION);
-    private Address _top;
-    private volatile Address _allocationMark;
-
-    @CONSTANT_WHEN_NOT_ZERO
-    private Pointer _allocationMarkPointer;
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
@@ -285,6 +288,25 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         _allocationMark = _toSpace.start();
         _top = _toSpace.end();
     }
+
+    public boolean isGcThread(Thread thread) {
+        return thread instanceof StopTheWorldDaemon;
+    }
+
+    public int adjustedCardTableShift() {
+        return -1;
+    }
+
+    public int auxiliarySpaceSize(int bootImageSize) {
+        return 0;
+    }
+
+    public void initializeAuxiliarySpace(Pointer primordialVmThreadLocals, Pointer auxiliarySpace) {
+    }
+
+    public void initializeVmThread(Pointer vmThreadLocals) {
+    }
+
 
     private Size immediateFreeSpace() {
         return _top.minus(_allocationMark).asSize();
@@ -373,8 +395,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     public Pointer visitCell(Pointer cell) {
         final Pointer origin = Layout.cellToOrigin(cell); // Returns the pointer of the first object of the semispace.
-        // Doesn't matter what kind of object it is. Where does this
-        // pointer point now? Concerning the nature of the object?
         final Grip oldHubGrip = Layout.readHubGrip(origin); // Reads the hub-Grip of the previously retrieved object.
         // Grips are used for GC purpose.
         final Grip newHubGrip = mapGrip(oldHubGrip);
@@ -385,6 +405,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         final SpecificLayout specificLayout = hub.specificLayout();
         if (specificLayout.isTupleLayout()) {
             TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripUpdater);
+            if (hub.isSpecialReference()) {
+                SpecialReferenceManager.discoverSpecialReference(Grip.fromOrigin(origin));
+            }
             return cell.plus(hub.tupleSize());
         }
         if (specificLayout.isHybridLayout()) {
@@ -406,11 +429,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         }
     }
 
-
     private void scanBootHeap() {
         Heap.bootHeapRegion().visitCells(this);
     }
-
 
     private void scanCode() {
         Code.visitCells(this);
@@ -590,24 +611,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     public void runFinalization() {
     }
 
-    public long numberOfGarbageCollectionInvocations() {
-        return _numberOfGarbageCollectionInvocations;
-    }
-
-    public long numberOfGarbageTurnovers() {
-        return _numberOfGarbageTurnovers;
-    }
-
-    public <Object_Type> boolean flash(Object_Type object, com.sun.max.lang.Procedure<Object_Type> procedure) {
-        try {
-            Safepoint.disable();
-            procedure.run(object);
-        } finally {
-            Safepoint.enable();
-        }
-        return true;
-    }
-
     @INLINE
     public boolean pin(Object object) {
         return false;
@@ -675,8 +678,22 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
                 cell = cell.plusWords(1);
                 checkCellTag(cell);
             }
+
             final Pointer origin = Layout.cellToOrigin(cell);
             final Hub hub = checkHub(origin);
+
+            if (Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Verifying ");
+                Log.print(hub.classActor().name().string());
+                Log.print(" at ");
+                Log.print(cell);
+                Log.print(" [");
+                Log.print(Layout.size(origin).toInt());
+                Log.println(" bytes]");
+                Log.unlock(lockDisabledSafepoints);
+            }
+
             final SpecificLayout specificLayout = hub.specificLayout();
             if (specificLayout.isTupleLayout()) {
                 TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);

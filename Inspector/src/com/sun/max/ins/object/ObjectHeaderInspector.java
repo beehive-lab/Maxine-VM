@@ -78,7 +78,7 @@ class ObjectHeaderInspector extends InspectorPanel {
                 @Override
                 public Value fetchValue() {
                     final TeleHub hub = _teleObject.getTeleHub();
-                    return WordValue.from(hub.getCurrentOrigin().asWord());
+                    return WordValue.from(hub.getCurrentOrigin());
                 }
             };
             addLabel(memoryRegionValueLabel);

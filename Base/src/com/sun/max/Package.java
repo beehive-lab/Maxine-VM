@@ -31,19 +31,4 @@ public class Package extends BasePackage {
     }
 
     private static final String PACKAGE_NAME = new Package().name();
-
-    /**
-     * Determines if a given class is part of the Maxine code base.
-     */
-    public static boolean contains(Class javaClass) {
-        return contains(javaClass.getName());
-    }
-
-    /**
-     * Determines if a given class is part of the Maxine code base.
-     */
-    public static boolean contains(String javaClassName) {
-        return javaClassName.startsWith(PACKAGE_NAME);
-    }
-
 }

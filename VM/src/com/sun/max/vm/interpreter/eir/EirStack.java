@@ -181,16 +181,4 @@ public class EirStack {
     public void writeWord(Address address, Word value) {
         write(address, new WordValue(value));
     }
-
-    /**
-     * @see EirCPU#replaceUninitializedValue(Value, Value)
-     */
-    public void replaceUninitializedValue(Value uninitializedValue, Value initializedValue) {
-        for (int i = 0; i != _slots.size(); ++i) {
-            if (uninitializedValue.equals(_slots.get(i))) {
-                _slots.set(i, initializedValue);
-            }
-        }
-    }
-
 }

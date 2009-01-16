@@ -149,12 +149,13 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
                 public String getToolTipText(MouseEvent mouseEvent) {
                     final Point p = mouseEvent.getPoint();
                     final int index = _columnModel.getColumnIndexAtX(p.x);
-                    return ColumnKind.VALUES.get(index).toolTipText();
+                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
                 }
             };
         }
-
     }
+
 
     private final class ThreadsColumnModel extends DefaultTableColumnModel {
 

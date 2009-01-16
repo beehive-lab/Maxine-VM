@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.cir;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
@@ -109,7 +108,6 @@ public abstract class CirValue extends CirNode implements IrValue {
         return false;
     }
     public Value value() {
-        Log.println(this.toString());
         throw new IllegalArgumentException();
     }
 

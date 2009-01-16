@@ -144,7 +144,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
 
     @Override
     protected JitTargetMethod compileMethod(String methodName) {
-        return compileMethod(methodName, SignatureDescriptor.create("()V"));
+        return compileMethod(methodName, SignatureDescriptor.VOID);
     }
 
     @Override

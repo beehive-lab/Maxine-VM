@@ -186,7 +186,7 @@ public final class CirBytecodeReader {
         return new BytecodeLocation(classMethodActor, pc);
     }
 
-    private static final CirVariable[] NO_PARAMETERS = {};
+    private static final CirVariable[] NO_PARAMETERS = CirClosure.NO_PARAMETERS;
 
     private <Node_Type extends CirNode> Node_Type[] pop(Node_Type[] values) {
         for (int i = values.length - 1; i >= 0; --i) {
@@ -251,15 +251,15 @@ public final class CirBytecodeReader {
         }
 
         final BytecodeLocation bytecodeLocation = readBytecodeLocation();
-        final CirValue[] locals = pop(new CirValue[readUnsignedInt()]);
-        final CirValue[] stackSlots = pop(new CirValue[readUnsignedInt()]);
+        final CirValue[] locals = pop(CirCall.newArguments(readUnsignedInt()));
+        final CirValue[] stackSlots = pop(CirCall.newArguments(readUnsignedInt()));
 
         return new CirJavaFrameDescriptor(popJavaFrameDescriptor(numberOfJavaFrameDescriptors - 1), bytecodeLocation, locals, stackSlots);
     }
 
     private CirCall readCall(int count) {
         final CirCall call = new CirCall();
-        call.setArguments(pop(new CirValue[count]));
+        call.setArguments(pop(CirCall.newArguments(count)));
         call.setJavaFrameDescriptor(popJavaFrameDescriptor(readUnsignedInt()));
         call.setProcedure((CirValue) pop(), readBytecodeLocation());
         return call;
@@ -411,7 +411,7 @@ public final class CirBytecodeReader {
                 }
                 case CLOSURE: {
                     final int count = readUnsignedInt();
-                    push(readClosure(pop(new CirVariable[count]), (CirCall) pop()));
+                    push(readClosure(count == 0 ? NO_PARAMETERS : pop(new CirVariable[count]), (CirCall) pop()));
                     break;
                 }
                 case CLOSURE_0: {

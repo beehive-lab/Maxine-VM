@@ -56,7 +56,7 @@ public final class JniNativeInterface {
             public boolean evaluate(StaticMethodActor staticMethodActor) {
                 return staticMethodActor.isJniFunction();
             }
-        });
+        }, new StaticMethodActor[0]);
 
         checkAgainstJniHeaderFile(jniFunctionActors);
 

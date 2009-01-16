@@ -43,7 +43,7 @@ public class JITTest_compileUnconditionalLoop extends JitCompilerTestCase {
     }
 
     public void test_perform_loop() {
-        final TargetMethod targetMethod = compileMethod("perform_loop", SignatureDescriptor.create("()V"));
+        final TargetMethod targetMethod = compileMethod("perform_loop", SignatureDescriptor.VOID);
         new BytecodeConfirmation(targetMethod.classMethodActor()) {
             @Override
             public void goto_(int offset) {

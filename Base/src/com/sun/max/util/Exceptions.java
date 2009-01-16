@@ -20,6 +20,8 @@
  */
 package com.sun.max.util;
 
+import java.io.*;
+
 import com.sun.max.program.*;
 
 /**
@@ -87,5 +89,14 @@ public final class Exceptions {
             throw (RuntimeException) exception;
         }
         throw ProgramError.unexpected(exception);
+    }
+
+    /**
+     * Gets the stack trace for a given exception as a string.
+     */
+    public static String stackTraceAsString(Throwable throwable) {
+        final StringWriter stringWriter = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(stringWriter));
+        return stringWriter.getBuffer().toString();
     }
 }

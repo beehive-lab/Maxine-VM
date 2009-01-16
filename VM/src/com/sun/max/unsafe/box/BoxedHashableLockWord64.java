@@ -30,10 +30,6 @@ public final class BoxedHashableLockWord64 extends HashableLockWord64 implements
 
     protected long _nativeWord;
 
-    public BoxedHashableLockWord64(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedHashableLockWord64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

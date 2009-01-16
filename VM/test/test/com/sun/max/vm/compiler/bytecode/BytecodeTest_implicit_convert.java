@@ -39,10 +39,7 @@ public abstract class BytecodeTest_implicit_convert<Method_Type extends IrMethod
     public void test_byteToInt() {
         assertTrue(perform_byteToInt((byte) -1) == -1);
         final Method_Type method = compileMethod("perform_byteToInt", SignatureDescriptor.create(int.class, byte.class));
-        Value result = execute(method, ByteValue.from((byte) -1));
-        assertTrue(result.asInt() == -1);
-        result = execute(method, ByteValue.from((byte) -1));
+        final Value result = execute(method, ByteValue.from((byte) -1));
         assertTrue(result.asInt() == -1);
     }
-
 }

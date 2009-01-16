@@ -22,6 +22,7 @@ package com.sun.max.unsafe;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.unsafe.box.*;
 
 /**
  * Use this type rather than Address to remark that you are referring to the size of something. A "size" is always
@@ -41,7 +42,7 @@ public abstract class Size extends Address {
 
     @INLINE
     public static Size zero() {
-        return fromInt(0);
+        return Word.isBoxed() ? BoxedSize.ZERO : fromInt(0);
     }
 
     public static final Size K = Size.fromInt(Ints.K);

@@ -20,19 +20,27 @@
  */
 package com.sun.max.vm.classfile.constant;
 
+import com.sun.max.vm.actor.*;
 
 /**
- * 
+ * Interface denoting a class, field or method entry in a constant pool that can be resolved to produce an {@link Actor}.
+ *
  * @author Doug Simon
  */
-public interface ResolvableConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>> extends PoolConstant<PoolConstant_Type> {
+public interface ResolvableConstant<PoolConstant_Type extends PoolConstant<PoolConstant_Type>, Actor_Type extends Actor> extends PoolConstant<PoolConstant_Type> {
 
     /**
      * Determines if this constant can be resolved without causing class loading.
      */
     boolean isResolvableWithoutClassLoading(ConstantPool pool);
 
+    /**
+     * Determines if this entry has already been resolved.
+     */
     boolean isResolved();
 
-    Object resolve(ConstantPool pool, int index);
+    /**
+     * Resolves this entry to the relevant {@link Actor} object.
+     */
+    Actor_Type resolve(ConstantPool pool, int index) throws LinkageError;
 }

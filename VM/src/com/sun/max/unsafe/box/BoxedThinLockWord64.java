@@ -30,10 +30,6 @@ public final class BoxedThinLockWord64 extends ThinLockWord64 implements UnsafeB
 
     protected long _nativeWord;
 
-    public BoxedThinLockWord64(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedThinLockWord64(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

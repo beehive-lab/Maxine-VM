@@ -20,7 +20,11 @@
  */
 package com.sun.max.tele.interpreter;
 
+import java.io.*;
+
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 
 /**
  * Instances of this class contain the execution state of a single thread in the system.
@@ -29,6 +33,11 @@ import com.sun.max.vm.actor.member.*;
  * @author Athul Acharya
  */
 class ExecutionThread {
+
+    /**
+     * The maximum frame depth for a thread.
+     */
+    public static final int STACK_SIZE = 1000;
 
     private ExecutionFrame _frame;
     //private int _prio;
@@ -42,11 +51,14 @@ class ExecutionThread {
 
     public ExecutionFrame pushFrame(ClassMethodActor method) {
         _frame = new ExecutionFrame(_frame, method);
+        if (_frame.depth() > STACK_SIZE) {
+            throw new StackOverflowError();
+        }
         return _frame;
     }
 
     public ExecutionFrame popFrame() {
-        _frame = _frame.previousFrame();
+        _frame = _frame.callersFrame();
         return _frame;
     }
 
@@ -59,4 +71,51 @@ class ExecutionThread {
         VM_THREAD,
     }
 
+    /**
+     * Handles an exception at the current execution point in this thread by updating the call stack and instruction
+     * pointer to a matching exception handler in this thread's current call stack. If no matching exception handler is
+     * found for the current execution point and the given exception type, then the call stack and instruction pointer
+     * in this thread are left unmodified.
+     *
+     * @param throwableClassActor
+     * @return {@code true} if an exception handler was found, {@code false} otherwise
+     */
+    public boolean handleException(ClassActor throwableClassActor) {
+        ExecutionFrame frame = _frame;
+        while (frame != null) {
+            if (frame.handleException(throwableClassActor)) {
+                _frame = frame;
+                return true;
+            }
+
+            frame = frame.callersFrame();
+        }
+        return false;
+    }
+
+    public void printStackTrace(PrintStream printStream, TeleInterpreterException executionException) {
+        ExecutionFrame frame = _frame;
+        printStream.println(executionException.getMessage());
+        while (frame != null) {
+            final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
+            printStream.println("\tat " + bytecodeLocation.toStackTraceElement());
+            frame = frame.callersFrame();
+        }
+        if (executionException.getCause() != null) {
+            printStream.print("Caused by: ");
+            executionException.getCause().printStackTrace(printStream);
+        }
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+        ExecutionFrame frame = _frame;
+        while (frame != null) {
+            final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
+            sb.append(String.format("%n%s [bci:%d]", bytecodeLocation.toStackTraceElement(), frame.currentOpcodePosition()));
+            frame = frame.callersFrame();
+        }
+        return sb.toString();
+    }
 }

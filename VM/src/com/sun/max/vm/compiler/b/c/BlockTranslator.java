@@ -42,7 +42,7 @@ final class BlockTranslator {
     }
 
     private void scanBlock(BlockState blockState) {
-        final BytecodeTranslation visitor = new BytecodeToHCirTranslation(blockState, _translation);
+        final BytecodeTranslation visitor = new BytecodeTranslation(blockState, _translation);
         final BytecodeScanner bytecodeScanner = new BytecodeScanner(visitor);
         try {
             bytecodeScanner.scan(blockState.birBlock().bytecodeBlock());

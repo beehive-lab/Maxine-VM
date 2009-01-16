@@ -149,8 +149,6 @@ public final class Throw {
 
         if (_dumpStackOnThrowOption.isPresent()) {
             throwable.printStackTrace(Log.out);
-            Log.println("Complete unfiltered stack trace:");
-            stackDumpWithException(throwable);
         }
         Safepoint.disable();
         raise(throwable, VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer(), VMRegister.getInstructionPointer());

@@ -23,9 +23,9 @@ package com.sun.max.vm.interpreter;
 import java.lang.reflect.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.program.option.Option;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -205,32 +205,6 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
             }
         }
 
-        @Deprecated
-        private void executeConstructor(final MethodActor methodActor) {
-            try {
-                final Value[] arguments =  _state.popMany(methodActor.descriptor().getParameterKinds());
-                // The NEW bytecode instruction pushes an UnitializedObject on the execution stack, this is usually
-                // followed by a DUP instruction. Replace these UninitializedObjects with initialized references.
-                final Value uninitializedValue = _state.pop(Kind.REFERENCE);
-                assert uninitializedValue.asObject() instanceof UninitializedObject;
-                // Sometimes a NEW bytecode instruction is not followed by a DUP, check for this case below.
-                final Value originalUnitializedValue = _state.peek(Kind.REFERENCE);
-                if (originalUnitializedValue instanceof ReferenceValue &&
-                    originalUnitializedValue.asObject() instanceof UninitializedObject) {
-                    _state.pop(Kind.REFERENCE);
-                }
-                final Value result = methodActor.invokeConstructor(arguments);
-                _state.push(toStackValue(result));
-            } catch (IllegalAccessException e) {
-                ProgramError.unexpected(e);
-            } catch (InvocationTargetException e) {
-                catchException(e.getTargetException());
-            } catch (InstantiationException e) {
-                // TODO: Verify if e.getCause() is the proper exception to handle.
-                catchException(e.getCause());
-            }
-        }
-
         private void execute(final MethodActor methodActor) {
 
             try {
@@ -256,7 +230,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
             final ClassActor classActor = classConstant.resolve(constantPool(), index);
             Object reference = null;
             try {
-                reference = UnsafeAccess.allocateInstance(classActor.toJava());
+                reference = Objects.allocateInstance(classActor.toJava());
             } catch (InstantiationException e) {
                 ProgramError.unexpected();
                 return;

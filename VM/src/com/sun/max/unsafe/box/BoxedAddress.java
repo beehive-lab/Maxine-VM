@@ -25,29 +25,56 @@ import com.sun.max.unsafe.*;
 
 /**
  * Boxed version of Address.
- * 
+ *
  * @see Address
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class BoxedAddress extends Address implements UnsafeBox {
 
     private long _nativeWord;
 
-    public BoxedAddress(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
+    public static final BoxedAddress ZERO = new BoxedAddress(0);
+    public static final BoxedAddress MAX = new BoxedAddress(-1L);
+
+    private static final class Cache {
+        private Cache() {
+        }
+
+        static final int HIGHEST_VALUE = 1000;
+
+        static final BoxedAddress[] _cache = new BoxedAddress[HIGHEST_VALUE + 1];
+
+        static {
+            for (int i = 0; i < _cache.length; i++) {
+                _cache[i] = new BoxedAddress(i);
+            }
+        }
     }
 
-    public BoxedAddress(long value) {
+    public static BoxedAddress from(long value) {
+        if (value == 0) {
+            return ZERO;
+        }
+        if (value >= 0 && value <= Cache.HIGHEST_VALUE) {
+            return Cache._cache[(int) value];
+        }
+        if (value == -1L) {
+            return MAX;
+        }
+        return new BoxedAddress(value);
+    }
+
+    public static BoxedAddress from(int value) {
+        return from(value & BoxedWord.INT_MASK);
+    }
+
+    private BoxedAddress(long value) {
         if (Word.width() == WordWidth.BITS_64) {
             _nativeWord = value;
         } else {
             _nativeWord = value & BoxedWord.INT_MASK;
         }
-    }
-
-    public BoxedAddress(int value) {
-        _nativeWord = value & BoxedWord.INT_MASK;
     }
 
     public long nativeWord() {

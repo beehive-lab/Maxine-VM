@@ -79,11 +79,6 @@ public final class VMConfigurations {
         }
     }
 
-    @PROTOTYPE_ONLY
-    private static VMPackage defaultMonitorPackage() {
-        return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
-    }
-
     private static VMPackage defaultHeapPackage() {
         return new com.sun.max.vm.heap.sequential.semiSpace.Package();
     }

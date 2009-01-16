@@ -267,7 +267,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
     public void threadStateChanged(TeleNativeThread teleNativeThread) {
     }
 
-    public void breakpointSetChanged() {
+    public void breakpointSetChanged(long epoch) {
     }
 
     public void vmProcessTerminated() {

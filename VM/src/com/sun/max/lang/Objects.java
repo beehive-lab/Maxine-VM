@@ -24,7 +24,6 @@ import java.lang.reflect.*;
 
 import sun.misc.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -40,21 +39,34 @@ public final class Objects {
     private Objects() {
     }
 
-    private static void copyFields(Class javaClass, Object fromObject, Object toObject) {
-        try {
-            Class c = javaClass;
-            while (c != null) {
-                for (Field field : c.getDeclaredFields()) {
-                    if ((field.getModifiers() & Modifier.STATIC) == 0) {
-                        field.setAccessible(true);
+    private static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
+
+    /**
+     * Copies the values of the instance fields in one object to another object.
+     *
+     * @param fromObject the object from which the field values are to be copied
+     * @param toObject the object to which the field values are to be copied
+     */
+    public static void copy(Object fromObject, Object toObject) {
+        assert fromObject.getClass() == toObject.getClass();
+        Class c = fromObject.getClass();
+        while (c != null) {
+            for (Field field : c.getDeclaredFields()) {
+                if ((field.getModifiers() & Modifier.STATIC) == 0) {
+                    field.setAccessible(true);
+                    try {
                         final Object value = field.get(fromObject);
                         field.set(toObject, value);
+                    } catch (IllegalArgumentException illegalArgumentException) {
+                        // This should never occur
+                        throw ProgramError.unexpected(illegalArgumentException);
+                    } catch (IllegalAccessException illegalAccessException) {
+                        // This should never occur
+                        throw ProgramError.unexpected(illegalAccessException);
                     }
                 }
-                c = c.getSuperclass();
             }
-        } catch (Throwable throwable) {
-            ProgramError.unexpected(throwable);
+            c = c.getSuperclass();
         }
     }
 
@@ -72,9 +84,8 @@ public final class Objects {
             }
             if (t instanceof CloneNotSupportedException) {
                 try {
-                    final Unsafe unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
-                    final Object result = unsafe.allocateInstance(object.getClass());
-                    copyFields(object.getClass(), object, result);
+                    final Object result = _unsafe.allocateInstance(object.getClass());
+                    copy(object, result);
                     return StaticLoophole.cast(type, result);
                 } catch (Throwable throwable2) {
                     t = throwable2;
@@ -85,12 +96,18 @@ public final class Objects {
         return Heap.clone(object);
     }
 
-    public static Class[] getClasses(Object... objects) {
-        return Arrays.map(objects, Class.class, new MapFunction<Object, Class>() {
-            public Class map(Object object) {
-                return object.getClass();
-            }
-        });
+    /**
+     * Creates a new instance of a given class without calling any constructors. This call also ensures that {@code javaClass}
+     * has been initialized.
+     *
+     * @param javaClass the class to construct an instance of
+     * @return an uninitialized of {@code javaClass}
+     * @throws InstantiationException if the instantiation fails for any of the reasons described
+     *             {@linkplain InstantiationException here}
+     */
+    public static Object allocateInstance(Class<?> javaClass) throws InstantiationException {
+        _unsafe.ensureClassInitialized(javaClass);
+        return _unsafe.allocateInstance(javaClass);
     }
 
 }

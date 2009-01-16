@@ -918,20 +918,6 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         }
 
         /**
-         * Determines if {@code subClass} has a super class whose type descriptor matches {@code superClassDescriptor}.
-         */
-        private boolean isSuperClassOf(TypeDescriptor superClassDescriptor, ClassActor subClass) {
-            ClassActor superClassActor = subClass.superClassActor();
-            while (superClassActor != null) {
-                if (superClassActor.typeDescriptor().equals(superClassDescriptor)) {
-                    return true;
-                }
-                superClassActor = superClassActor.superClassActor();
-            }
-            return false;
-        }
-
-        /**
          * Verifies that a non-static field access does not violate {@code protected} access control semantics.
          *
          * @param object the type of the object whose field is being accessed. The caller has already guaranteed that

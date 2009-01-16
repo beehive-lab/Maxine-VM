@@ -89,7 +89,7 @@ public abstract class CompilerTest_reflection<Method_Type extends IrMethod> exte
         final Method_Type compiledMethod = compileMethod(classMethodActor);
         if (!(compiledMethod instanceof TargetMethod)) {
             final Value result2 = execute(compiledMethod);
-            assertEquals(result2.asObject(), instance);
+            assertEquals(instance, result2.asObject());
         }
     }
 

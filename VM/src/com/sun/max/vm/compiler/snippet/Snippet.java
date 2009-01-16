@@ -75,7 +75,21 @@ public abstract class Snippet extends IrRoutine {
             }
         }
     }
+
     // Miscellaneous Snippets:
+
+    public static final class InitializeClass extends Snippet {
+        @SNIPPET
+        @INLINE
+        public static void initializeClass(ClassActor classActor) {
+            if (MaxineVM.isPrototyping()) {
+                classActor.makeInitialized();
+            } else if (!classActor.isInitialized()) {
+                classActor.makeInitialized();
+            }
+        }
+        public static final InitializeClass SNIPPET = new InitializeClass();
+    }
 
     public static final class CheckCast extends Snippet {
         @SNIPPET

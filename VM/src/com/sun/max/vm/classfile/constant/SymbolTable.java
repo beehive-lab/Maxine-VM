@@ -26,7 +26,7 @@ import com.sun.max.vm.*;
 
 /**
  * Implementation of symbol and String interning, the latter of which is a Java language requirement.
- * 
+ *
  * @author Doug Simon
  */
 public final class SymbolTable {
@@ -75,6 +75,7 @@ public final class SymbolTable {
 
     public static final Utf8Constant INIT = makeSymbol("<init>");
     public static final Utf8Constant CLINIT = makeSymbol("<clinit>");
+    public static final Utf8Constant FINALIZE = makeSymbol("finalize");
 
     public static int length() {
         return _symbolTable.length();

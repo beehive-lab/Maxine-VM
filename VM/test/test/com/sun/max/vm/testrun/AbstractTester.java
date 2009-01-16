@@ -51,8 +51,6 @@ public abstract class AbstractTester extends JavaRunScheme {
     protected static int _testCount;
     protected static int _verbose = 2;
 
-    private static VMIntOption _verboseLevel = new VMIntOption("-XX:TesterVerbose", 2,
-                    "The Java tester verbosity level.", MaxineVM.Phase.STARTING);
     private static VMIntOption _startOption  = new VMIntOption("-XX:TesterStart=", -1,
                     "The number of the first test to run.", MaxineVM.Phase.STARTING);
     private static VMIntOption _endOption  = new VMIntOption("-XX:TesterEnd=", -1,

@@ -24,22 +24,42 @@ import com.sun.max.unsafe.*;
 
 /**
  * Boxed version of Offset.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class BoxedOffset extends Offset implements UnsafeBox {
 
     private long _nativeWord;
 
-    public BoxedOffset(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
+    public static final BoxedOffset ZERO = new BoxedOffset(0);
+
+    private static final class Cache {
+        private Cache() {
+        }
+
+        static final int LOWEST_VALUE = -100;
+        static final int HIGHEST_VALUE = 1000;
+
+        static final BoxedOffset[] _cache = new BoxedOffset[(HIGHEST_VALUE - LOWEST_VALUE) + 1];
+
+        static {
+            for (int i = 0; i < _cache.length; i++) {
+                _cache[i] = new BoxedOffset(i + LOWEST_VALUE);
+            }
+        }
     }
 
-    public BoxedOffset(long value) {
-        _nativeWord = value;
+    public static BoxedOffset from(long value) {
+        if (value == 0) {
+            return ZERO;
+        }
+        if (value >= Cache.LOWEST_VALUE && value <= Cache.HIGHEST_VALUE) {
+            return Cache._cache[(int) value - Cache.LOWEST_VALUE];
+        }
+        return new BoxedOffset(value);
     }
 
-    public BoxedOffset(int value) {
+    private BoxedOffset(long value) {
         _nativeWord = value;
     }
 

@@ -20,12 +20,13 @@
  */
 package com.sun.max.tele.method;
 
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.bytecode.*;
 
 
 /**
- * Describes a bytecode location in the tele VM.
+ * Describes a bytecode location in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */

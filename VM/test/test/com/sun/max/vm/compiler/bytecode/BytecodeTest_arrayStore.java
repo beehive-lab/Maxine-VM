@@ -20,8 +20,6 @@
  */
 package test.com.sun.max.vm.compiler.bytecode;
 
-import java.lang.reflect.*;
-
 import test.com.sun.max.vm.compiler.*;
 
 import com.sun.max.vm.compiler.ir.*;
@@ -49,15 +47,10 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final int[] array = new int[5];
         final int index = 1;
         final int x = 123;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), IntValue.from(x));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), IntValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(5), IntValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getTargetException() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5), IntValue.from(x));
     }
 
     private void perform_lastore(long[] array, int index, long value) {
@@ -78,15 +71,10 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
             final int index = 1;
             final long x = 123;
 
-            Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), LongValue.from(x));
+            final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), LongValue.from(x));
             assertTrue(result == VoidValue.VOID);
             assertTrue(array[index] == x);
-            try {
-                result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(-1), LongValue.from(x));
-                fail();
-            } catch (InvocationTargetException invocationTargetException) {
-                assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-            }
+            executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(-1), LongValue.from(x));
         } finally {
            // Trace.on(1);
         }
@@ -108,15 +96,10 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final float[] array = new float[5];
         final int index = 0;
         final float x = 23434;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), FloatValue.from(x));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), FloatValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(7), FloatValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(7), FloatValue.from(x));
     }
 
     private void perform_dastore(double[] array, int index, double value) {
@@ -135,15 +118,10 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final double[] array = new double[5];
         final int index = 4;
         final double x = 12123.8245;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), DoubleValue.from(x));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), DoubleValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(5), DoubleValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5), DoubleValue.from(x));
     }
 
     private void perform_aastore(Object[] array, int index, Object value) {
@@ -165,18 +143,11 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(5), ReferenceValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.from(new Object()));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayStoreException);
-        }
+        result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.NULL);
+        assertTrue(result == VoidValue.VOID);
+        assertTrue(array[index] == null);
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5), ReferenceValue.from(x));
+        executeWithReceiverAndExpectedException(method, ArrayStoreException.class, ReferenceValue.from(array), IntValue.from(index), ReferenceValue.from(new Object()));
     }
 
     private void perform_bastore_byte(byte[] array, int index, byte value) {
@@ -195,15 +166,10 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final byte[] array = new byte[5];
         final int index = 3;
         final byte x = 55;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ByteValue.from(x));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ByteValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(-2), ByteValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(-2), ByteValue.from(x));
     }
 
     private void perform_bastore_boolean(boolean[] array, int index, boolean value) {
@@ -222,15 +188,10 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final boolean[] array = new boolean[5];
         final int index = 2;
         final boolean x = true;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), BooleanValue.from(x));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), BooleanValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(5), BooleanValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5), BooleanValue.from(x));
     }
 
     private void perform_castore(char[] array, int index, char value) {
@@ -249,15 +210,10 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final char[] array = new char[5];
         final int index = 1;
         final char x = 'x';
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), CharValue.from(x));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), CharValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(10), CharValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(10), CharValue.from(x));
     }
 
     private void perform_sastore(short[] array, int index, short value) {
@@ -276,14 +232,9 @@ public abstract class BytecodeTest_arrayStore<Method_Type extends IrMethod> exte
         final short[] array = new short[5];
         final int index = 1;
         final short x = 22;
-        Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ShortValue.from(x));
+        final Value result = executeWithReceiver(method, ReferenceValue.from(array), IntValue.from(index), ShortValue.from(x));
         assertTrue(result == VoidValue.VOID);
         assertTrue(array[index] == x);
-        try {
-            result = executeWithReceiverAndException(method, ReferenceValue.from(array), IntValue.from(5), ShortValue.from(x));
-            fail();
-        } catch (InvocationTargetException invocationTargetException) {
-            assertTrue(invocationTargetException.getCause() instanceof ArrayIndexOutOfBoundsException);
-        }
+        executeWithReceiverAndExpectedException(method, ArrayIndexOutOfBoundsException.class, ReferenceValue.from(array), IntValue.from(5), ShortValue.from(x));
     }
 }

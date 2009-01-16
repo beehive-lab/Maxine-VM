@@ -29,6 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
@@ -37,6 +38,7 @@ import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 public final class MaxineVM {
 
@@ -312,6 +314,25 @@ public final class MaxineVM {
 
     public static boolean isRunning() {
         return host().phase() == Phase.RUNNING;
+    }
+
+    private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
+    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = new test.com.sun.max.Package().name();
+
+    /**
+     * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
+     */
+    public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
+        final String className = typeDescriptor.toJavaString();
+        return className.startsWith(MAXINE_CLASS_PACKAGE_PREFIX) ||
+             className.startsWith(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
+    }
+
+    /**
+     * Determines if a given class actor denotes a class that is part of the Maxine code base.
+     */
+    public static boolean isMaxineClass(ClassActor classActor) {
+        return isMaxineClass(classActor.typeDescriptor());
     }
 
     private static int _exitCode = 0;

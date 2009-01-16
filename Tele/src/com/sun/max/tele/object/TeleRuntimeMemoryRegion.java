@@ -20,87 +20,85 @@
  */
 package com.sun.max.tele.object;
 
-import com.sun.max.memory.MemoryRegion;
-import com.sun.max.memory.RuntimeMemoryRegion;
-import com.sun.max.tele.TeleVM;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Size;
-import com.sun.max.vm.reference.Reference;
+import com.sun.max.memory.*;
+import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.reference.*;
 
 /**
  * Canonical surrogate for objects in the {@link TeleVM} that represent a region of memory.
- * 
+ *
  * @author Michael Van De Vanter
  */
 public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRegion {
-		
-	TeleRuntimeMemoryRegion(TeleVM teleVM, Reference runtimeMemoryRegionReference) {
-		super(teleVM, runtimeMemoryRegionReference);
-	}
-	
-	/**
-	 * Reads from the {@link TeleVM} the start field of the {@link RuntimeMemoryRegion}.
-	 */
-	private Address readStart() {
-	       return teleVM().fields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();       
-	}
-	
-	public Address start() {
-		// No caching for now
-		Address start = readStart();
-		if (start.isZero() && this == teleVM().teleHeapManager().teleBootHeapRegion()) {
-			// Ugly special case:  the start field of the static that defines the boot heap region
-			// is set at zero in the boot image, only set to the real value when the VM starts running.
-			// Lie about it.
-			start = teleVM().bootImageStart();
-		}
-		return start;
-	}
-	
-	/**
-	 * @return whether memory has been allocated yet in the {@link TeleVM} for this region.
-	 */
-	public boolean isAllocated() {
-		return ! start().isZero();
-	}
 
-	/**
-	 * Reads from the {@link TeleVM} the mark field of the {@link RuntimeMemoryRegion}.
-	 */
-	public Address mark() {
-		return teleVM().fields().RuntimeMemoryRegion_mark.readWord(reference()).asAddress();       
-	}
-	
-	/**
-	 * @return how much memory in region has been allocated to objects, {@link Size#zero()) if memory for region not allocated.
-	 */
-	public Size allocatedSize() {
-		if (isAllocated()) {
-			final Address mark = mark();
-			if (!mark.isZero()) {
-				return mark.minus(start()).asSize();
-			}
-		}
-		return Size.zero();
-	}
-	
-	/**
-	 * Reads from the {@link TeleVM} the size field of the {@link RuntimeMemoryRegion}.
-	 */
-	public Size size() {
-		return teleVM().fields().RuntimeMemoryRegion_size.readWord(reference()).asSize();       
-	}
+    TeleRuntimeMemoryRegion(TeleVM teleVM, Reference runtimeMemoryRegionReference) {
+        super(teleVM, runtimeMemoryRegionReference);
+    }
+
+    /**
+     * Reads from the {@link TeleVM} the start field of the {@link RuntimeMemoryRegion}.
+     */
+    private Address readStart() {
+        return teleVM().fields().RuntimeMemoryRegion_start.readWord(reference()).asAddress();
+    }
+
+    public Address start() {
+        // No caching for now
+        Address start = readStart();
+        if (start.isZero() && this == teleVM().teleHeapManager().teleBootHeapRegion()) {
+            // Ugly special case:  the start field of the static that defines the boot heap region
+            // is set at zero in the boot image, only set to the real value when the VM starts running.
+            // Lie about it.
+            start = teleVM().bootImageStart();
+        }
+        return start;
+    }
+
+    /**
+     * @return whether memory has been allocated yet in the {@link TeleVM} for this region.
+     */
+    public boolean isAllocated() {
+        return !start().isZero();
+    }
+
+    /**
+     * Reads from the {@link TeleVM} the mark field of the {@link RuntimeMemoryRegion}.
+     */
+    public Address mark() {
+        return teleVM().fields().RuntimeMemoryRegion_mark.readWord(reference()).asAddress();
+    }
+
+    /**
+     * @return how much memory in region has been allocated to objects, {@link Size#zero()) if memory for region not allocated.
+     */
+    public Size allocatedSize() {
+        if (isAllocated()) {
+            final Address mark = mark();
+            if (!mark.isZero()) {
+                return mark.minus(start()).asSize();
+            }
+        }
+        return Size.zero();
+    }
+
+    /**
+     * Reads from the {@link TeleVM} the size field of the {@link RuntimeMemoryRegion}.
+     */
+    public Size size() {
+        return teleVM().fields().RuntimeMemoryRegion_size.readWord(reference()).asSize();
+    }
 
     public Address end() {
         return start().plus(size());
     }
-    
+
     public String description() {
-    	final Reference descriptionStringReference = teleVM().fields().RuntimeMemoryRegion_description.readReference(reference());
-    	final TeleString teleString = (TeleString) TeleObject.make(teleVM(), descriptionStringReference);
-    	return teleString.getString();
+        final Reference descriptionStringReference = teleVM().fields().RuntimeMemoryRegion_description.readReference(reference());
+        final TeleString teleString = (TeleString) TeleObject.make(teleVM(), descriptionStringReference);
+        return teleString.getString();
     }
-   
+
 
     public boolean contains(Address address) {
         return address.greaterEqual(start()) && address.lessThan(end());
@@ -108,12 +106,12 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
 
     public boolean overlaps(MemoryRegion memoryRegion) {
         final Address start = start();
-		final Address end = end();
-		return (start.greaterEqual(memoryRegion.start()) && start.lessThan(memoryRegion.end())) ||
-               (end.greaterEqual(memoryRegion.start()) && end.lessThan(memoryRegion.end()));
+        final Address end = end();
+        return start.greaterEqual(memoryRegion.start()) && start.lessThan(memoryRegion.end()) ||
+            end.greaterEqual(memoryRegion.start()) && end.lessThan(memoryRegion.end());
     }
 
     public boolean sameAs(MemoryRegion otherMemoryRegion) {
-    	  return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
+        return otherMemoryRegion != null && start().equals(otherMemoryRegion.start()) && size().equals(otherMemoryRegion.size());
     }
 }

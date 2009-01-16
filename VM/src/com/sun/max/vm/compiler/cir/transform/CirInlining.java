@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.cir.transform;
 import java.util.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.CirTraceObserver.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
@@ -66,6 +67,7 @@ public final class CirInlining {
                     try {
                         call.assign(method.inline(_optimizer, arguments, call.javaFrameDescriptor()));
                     } catch (Error error) {
+                        Trace.stream().flush();
                         System.err.println("while inlining " + method.classMethodActor());
                         throw error;
                     }

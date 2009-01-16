@@ -24,7 +24,7 @@ import com.sun.max.vm.compiler.dir.transform.*;
 
 /**
  * Safepoint instruction with Java frame descriptor.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class DirSafepoint extends DirInstruction {
@@ -36,7 +36,6 @@ public final class DirSafepoint extends DirInstruction {
     }
 
     public DirSafepoint(DirJavaFrameDescriptor javaFrameDescriptor) {
-        super();
         _javaFrameDescriptor = javaFrameDescriptor;
     }
 

@@ -23,49 +23,14 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
-import com.sun.max.vm.type.*;
 
 
-public class GetField extends JavaOperator {
-    private FieldActor _fieldActor;
-    private final ConstantPool _constantPool;
-    private final int _index;
-    private final Kind _fieldKind;
+public class GetField extends JavaResolvableOperator<FieldActor> {
 
     public GetField(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        final FieldRefConstant ref = constantPool.fieldAt(index);
-        _fieldKind = ref.type(constantPool).toKind();
-
-        if (ref.isResolved() /*|| ref.isResolvableWithoutClassLoading(constantPool)*/) {
-            _fieldActor = ref.resolve(constantPool, index);
-        } else {
-            _fieldActor = null;
-        }
-    }
-
-
-    public boolean isResolved() {
-        return _fieldActor != null;
-    }
-
-    public void resolve() {
-        _fieldActor = constantPool().fieldAt(index()).resolve(constantPool(), index());
-    }
-
-    public FieldActor fieldActor() {
-        return _fieldActor;
-    }
-
-    public Kind fieldKind() {
-        return _fieldKind;
-    }
-
-    @Override
-    public Kind resultKind() {
-        return _fieldKind;
+        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
     }
 
     @Override
@@ -76,20 +41,6 @@ public class GetField extends JavaOperator {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
-    }
-
-
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-
-
-    public int index() {
-        return _index;
-    }
-    @Override
-    public String toString() {
-        return "Getfield";
     }
 
     private boolean _canRaiseNullPointerException = true;

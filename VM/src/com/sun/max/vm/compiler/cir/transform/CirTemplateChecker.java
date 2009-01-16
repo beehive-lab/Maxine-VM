@@ -52,7 +52,6 @@ import com.sun.max.vm.runtime.VMRegister.*;
 public final class CirTemplateChecker extends CirVisitor {
 
     private final MethodActor _classMethodActor;
-    private final CirDepthFirstTraversal _depthFirstTraversal;
 
     /**
      * Maps a closure/block/call to a stop instruction reachable from the node.
@@ -61,9 +60,8 @@ public final class CirTemplateChecker extends CirVisitor {
 
     private boolean _changed;
 
-    private CirTemplateChecker(CirDepthFirstTraversal depthFirstTraversal, MethodActor classMethodActor) {
+    private CirTemplateChecker(MethodActor classMethodActor) {
         _classMethodActor = classMethodActor;
-        _depthFirstTraversal = depthFirstTraversal;
     }
 
     /**
@@ -188,7 +186,7 @@ public final class CirTemplateChecker extends CirVisitor {
         cirGenerator.notifyBeforeTransformation(cirMethod, cirMethod, TEMPLATE_CHECKING);
         final DefaultBlockSet blockSet = new DefaultBlockSet();
         final CirDepthFirstTraversal depthFirstTraversal = new CirDepthFirstTraversal(blockSet);
-        final CirTemplateChecker checker = new CirTemplateChecker(depthFirstTraversal, cirMethod.classMethodActor());
+        final CirTemplateChecker checker = new CirTemplateChecker(cirMethod.classMethodActor());
         do {
             checker._changed = false;
             depthFirstTraversal.run(closure, checker);

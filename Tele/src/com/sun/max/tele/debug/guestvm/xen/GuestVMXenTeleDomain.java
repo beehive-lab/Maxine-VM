@@ -81,12 +81,12 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize) {
         GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idToThread(threadId);
         if (thread == null) {
-        	/* Need to align and skip over the guard page at the base of the stack.
-        	 * N.B. "base" is low address (i.e., actually the end of the stack!).
-        	 */
-        	final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
-        	final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
-        	final long adjStackSize = stackSize - (stackBottom - stackBase);
+            /* Need to align and skip over the guard page at the base of the stack.
+             * N.B. "base" is low address (i.e., actually the end of the stack!).
+             */
+            final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
+            final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
+            final long adjStackSize = stackSize - (stackBottom - stackBase);
             thread = new GuestVMXenNativeThread(this, threadId, stackBottom, adjStackSize);
         } else {
             thread.setMarked(false);
@@ -98,8 +98,8 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     private static long pageAlign(long address, int pageSize) {
-        long alignment = pageSize - 1;
-        return ((long)(address + alignment) & ~alignment);
+        final long alignment = pageSize - 1;
+        return (long) (address + alignment) & ~alignment;
 
     }
 

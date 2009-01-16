@@ -30,10 +30,6 @@ public final class BoxedJniHandle extends JniHandle implements UnsafeBox {
 
     protected long _nativeWord;
 
-    public BoxedJniHandle(UnsafeBox unsafeBox) {
-        _nativeWord = unsafeBox.nativeWord();
-    }
-
     public BoxedJniHandle(Word word) {
         final UnsafeBox unsafeBox = (UnsafeBox) word;
         _nativeWord = unsafeBox.nativeWord();

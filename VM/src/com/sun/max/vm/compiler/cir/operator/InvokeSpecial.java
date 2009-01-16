@@ -24,43 +24,14 @@ package com.sun.max.vm.compiler.cir.operator;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
+import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
-import com.sun.max.vm.type.*;
 
 
-public class InvokeSpecial extends JavaOperator {
-    private final ConstantPool _constantPool;
-    private final int _index;
-    private final Kind _returnKind;
-    private MethodActor _methodActor;
-
-    public boolean isResolved() {
-        return _methodActor != null;
-    }
-
-    public void resolve() {
-        constantPool().classMethodAt(index()).resolve(constantPool(), index());
-    }
-
-    public MethodActor methodActor() {
-        return _methodActor;
-    }
+public class InvokeSpecial extends JavaResolvableOperator<MethodActor> {
 
     public InvokeSpecial(ConstantPool constantPool, int index) {
-        _constantPool = constantPool;
-        _index = index;
-        _returnKind = constantPool.classMethodAt(index).signature(constantPool).getResultKind();
-        final MethodRefConstant ref = constantPool.classMethodAt(index);
-        if (ref.isResolved()) {
-            _methodActor = ref.resolve(constantPool, index);
-        } else {
-            _methodActor = null;
-        }
-    }
-
-    @Override
-    public Kind resultKind() {
-        return _returnKind;
+        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.classMethodAt(index).signature(constantPool).getResultKind());
     }
 
     @Override
@@ -76,15 +47,5 @@ public class InvokeSpecial extends JavaOperator {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
-    }
-    public ConstantPool constantPool() {
-        return _constantPool;
-    }
-    public int index() {
-        return _index;
-    }
-    @Override
-    public String toString() {
-        return "Invokespecial <" + (isResolved() ? _methodActor : _index) + ">";
     }
 }

@@ -23,11 +23,12 @@ package com.sun.max.vm.compiler.snippet;
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.interpreter.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
@@ -52,7 +53,11 @@ public abstract class NonFoldableSnippet extends Snippet {
         @SNIPPET
         public static Object createTupleOrHybrid(ClassActor classActor) {
             if (MaxineVM.isPrototyping()) {
-                return new UninitializedObject(classActor);
+                try {
+                    return Objects.allocateInstance(classActor.toJava());
+                } catch (InstantiationException instantiationException) {
+                    throw ProgramError.unexpected(instantiationException);
+                }
             }
             if (classActor.isHybridClassActor()) {
                 return Heap.createHybrid(classActor.dynamicHub());
@@ -111,16 +116,18 @@ public abstract class NonFoldableSnippet extends Snippet {
         private static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
             final int length = lengths[index];
             final Object result = createNonNegativeSizeArray(arrayClassActor, length);
-            final int nextIndex = index + 1;
-            if (nextIndex < lengths.length) {
-                final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();
-                for (int i = 0; i < length; i++) {
-                    final Object subArray = createMultiReferenceArrayAtIndex(nextIndex, subArrayClassActor, lengths);
-                    if (MaxineVM.isPrototyping()) {
-                        final Object[] array = (Object[]) result;
-                        array[i] = subArray;
-                    } else {
-                        ArrayAccess.setObject(result, i, subArray);
+            if (length > 0) {
+                final int nextIndex = index + 1;
+                if (nextIndex < lengths.length) {
+                    final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();
+                    for (int i = 0; i < length; i++) {
+                        final Object subArray = createMultiReferenceArrayAtIndex(nextIndex, subArrayClassActor, lengths);
+                        if (MaxineVM.isPrototyping()) {
+                            final Object[] array = (Object[]) result;
+                            array[i] = subArray;
+                        } else {
+                            ArrayAccess.setObject(result, i, subArray);
+                        }
                     }
                 }
             }
@@ -147,7 +154,6 @@ public abstract class NonFoldableSnippet extends Snippet {
      * Implements 'throw'.
      */
     public static final class RaiseThrowable extends NonFoldableSnippet {
-        // Checkstyle: stop parameter assignment check
         @SNIPPET
         public static void raiseThrowable(Throwable throwable) throws Throwable {
             if (MaxineVM.isPrototyping()) {
@@ -155,7 +161,6 @@ public abstract class NonFoldableSnippet extends Snippet {
             }
             Throw.raise(throwable);
         }
-        // CheckStyle: resume parameter assignment check
         public static final RaiseThrowable SNIPPET = new RaiseThrowable();
     }
 }

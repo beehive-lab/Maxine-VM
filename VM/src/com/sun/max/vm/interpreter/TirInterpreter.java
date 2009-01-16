@@ -23,6 +23,7 @@ package com.sun.max.vm.interpreter;
 import java.lang.reflect.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -247,7 +248,7 @@ public class TirInterpreter extends IrInterpreter<TirTree> {
             try {
                 if (call.method() == _createTupleOrHybridMethodActor) {
                     final ClassActor classActor = (ClassActor) arguments[0].asObject();
-                    result = ObjectReferenceValue.from(UnsafeAccess.allocateInstance(classActor.toJava()));
+                    result = ObjectReferenceValue.from(Objects.allocateInstance(classActor.toJava()));
                 } else {
                     result = call.method().invoke(arguments);
                 }

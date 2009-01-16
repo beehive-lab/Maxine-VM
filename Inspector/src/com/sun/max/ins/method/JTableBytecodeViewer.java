@@ -55,49 +55,71 @@ public class JTableBytecodeViewer extends BytecodeViewer {
      * kind.  The visibility of them, however, may be changed by the user.
      */
     private enum ColumnKind {
-        TAG("Tag", true) {
+        TAG("Tag", "Tags:  IP, stack return, breakpoints", true, 20) {
             @Override
             public boolean canBeMadeInvisible() {
                 return false;
             }
         },
-        POSITION("Pos.", true),
-        INSTRUCTION("Instr.", true),
-        OPERAND1("Operand 1", true),
-        OPERAND2("Operand 2", true),
-        SOURCE_LINE("Line", true),
-        BYTES("Bytes", false);
+        NUMBER("No.", "Index of instruction in the method", false, 15),
+        POSITION("Pos.", "Position in bytes of bytecode instruction start", true, 15),
+        INSTRUCTION("Instr.", "Instruction mnemonic", true, -1),
+        OPERAND1("Operand 1", "Instruction operand 1", true, -1),
+        OPERAND2("Operand 2", "Instruction operand 2", true, -1),
+        SOURCE_LINE("Line", "Line number in source code (may be approximate)", true, -1),
+        BYTES("Bytes", "Instruction bytes", false, -1);
 
         private final String _label;
+        private final String _toolTipText;
         private final boolean _defaultVisibility;
+        private final int _minWidth;
 
-        private ColumnKind(String label, boolean defaultVisibility) {
+        private ColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
             _label = label;
+            _toolTipText = toolTipText;
             _defaultVisibility = defaultVisibility;
+            _minWidth = minWidth;
             assert defaultVisibility || canBeMadeInvisible();
         }
 
+        /**
+         * @return text to appear in the column header
+         */
         public String label() {
             return _label;
         }
 
-        @Override
-        public String toString() {
-            return _label;
+        /**
+         * @return text to appear in the column header's toolTip, null if none specified
+         */
+        public String toolTipText() {
+            return _toolTipText;
         }
 
         /**
-         * Determines if this column kind can be made invisible.
+         * @return whether this column kind should be allowed to be made invisible.
          */
         public boolean canBeMadeInvisible() {
             return true;
         }
 
         /**
-         * Determines if this column should be visible by default.
+         * @return whether this column should be visible by default.
          */
         public boolean defaultVisibility() {
             return _defaultVisibility;
+        }
+
+        /**
+         * @return minimum width allowed for this column when resized by user; -1 if none specified.
+         */
+        public int minWidth() {
+            return _minWidth;
+        }
+
+        @Override
+        public String toString() {
+            return _label;
         }
 
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
@@ -209,62 +231,14 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final TableColumn[] _columns;
     private PoolConstantLabel.Mode _operandDisplayMode;
 
-    /**
-     * Sets the minimum width of the columns based on the current values in the table model.
-     */
-    private Dimension setColumnSizes() {
-        // TODO (mlvdv) reduce min width of the TAG column
-        final int margin = _columnModel.getColumnMargin();
-        final int rowCount = _model.getRowCount();
-
-        int totalWidth = 0;
-        int totalHeight = 0;
-
-        for (int i = _columnModel.getColumnCount() - 1; i >= 0; --i) {
-            final TableColumn column = _columnModel.getColumn(i);
-
-            final int columnIndex = column.getModelIndex();
-
-            int width = 0;
-            int height = 0;
-
-            for (int row = rowCount - 1; row >= 0; --row) {
-                final TableCellRenderer renderer = _table.getCellRenderer(row, i);
-                final Object value = _model.getValueAt(row, columnIndex);
-                final Component c = renderer.getTableCellRendererComponent(_table, value, false, false, row, i);
-                final Dimension preferredSize = c.getPreferredSize();
-                width = Math.max(width, preferredSize.width);
-                height += preferredSize.height;
-            }
-
-            assert width > 0;
-            column.setMinWidth(width + margin);
-            totalWidth += column.getPreferredWidth();
-            totalHeight = Math.max(totalHeight, height);
-        }
-
-        return new Dimension(totalWidth, totalHeight);
-    }
-
     public JTableBytecodeViewer(Inspection inspection, MethodInspector parent, TeleClassMethodActor teleClassMethodActor, TeleTargetMethod teleTargetMethod) {
         super(inspection, parent, teleClassMethodActor, teleTargetMethod);
         _inspection = inspection;
         _model = new MyTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new MyTableColumnModel();
-        _table = new JTable(_model, _columnModel) {
-            @Override
-            public void paintChildren(Graphics g) {
-                super.paintChildren(g);
-                final int row = getSelectedRow();
-                if (row >= 0) {
-                    g.setColor(style().debugSelectedCodeBorderColor());
-                    g.drawRect(0, row * _table.getRowHeight(row), getWidth() - 1, _table.getRowHeight(row) - 1);
-                }
-            }
-        };
+        _table = new MyTable(_model, _columnModel);
         _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
-
         createView(teleVM().teleProcess().epoch());
     }
 
@@ -283,9 +257,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _table.setColumnSelectionAllowed(true);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         _table.addMouseListener(new MyInspectorMouseClickAdapter(_inspection));
-
-        final Dimension preferredTableSize = setColumnSizes();
-        _table.setPreferredScrollableViewportSize(preferredTableSize);
 
         // Set up toolbar
         // TODO (mlvdv) implement remaining debugging controls in Bytecode view
@@ -453,6 +424,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             switch (ColumnKind.VALUES.get(col)) {
                 case TAG:
                     return null;
+                case NUMBER:
+                    return row;
                 case POSITION:
                     return new Integer(instruction._position);
                 case INSTRUCTION:
@@ -475,6 +448,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             switch (ColumnKind.VALUES.get(col)) {
                 case TAG:
                     return Object.class;
+                case NUMBER:
+                    return Integer.class;
                 case POSITION:
                     return Integer.class;
                 case INSTRUCTION:
@@ -489,7 +464,36 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     throw new RuntimeException("Column out of range: " + col);
             }
         }
+    }
 
+    private final class MyTable extends JTable {
+
+        MyTable(TableModel model, TableColumnModel tableColumnModel) {
+            super(model, tableColumnModel);
+        }
+
+        @Override
+        public void paintChildren(Graphics g) {
+            super.paintChildren(g);
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                g.setColor(style().debugSelectedCodeBorderColor());
+                g.drawRect(0, row * _table.getRowHeight(row), getWidth() - 1, _table.getRowHeight(row) - 1);
+            }
+        }
+
+        @Override
+        protected JTableHeader createDefaultTableHeader() {
+            return new JTableHeader(_columnModel) {
+                @Override
+                public String getToolTipText(MouseEvent mouseEvent) {
+                    final Point p = mouseEvent.getPoint();
+                    final int index = _columnModel.getColumnIndexAtX(p.x);
+                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
+                }
+            };
+        }
     }
 
     private final class MyTableColumnModel extends DefaultTableColumnModel {
@@ -507,11 +511,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     } else {
                         removeColumn(_columns[col]);
                     }
-                    setColumnSizes();
+                    JTableColumnResizer.adjustColumnPreferredWidths(_table);
                     refresh(teleVM().teleProcess().epoch(), true);
                 }
             };
             createColumn(ColumnKind.TAG, new TagRenderer());
+            createColumn(ColumnKind.NUMBER, new NumberRenderer());
             createColumn(ColumnKind.POSITION, new PositionRenderer());
             createColumn(ColumnKind.INSTRUCTION, new InstructionRenderer());
             createColumn(ColumnKind.OPERAND1, new OperandRenderer());
@@ -524,6 +529,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             final int col = columnKind.ordinal();
             _columns[col] = new TableColumn(col, 0, renderer, null);
             _columns[col].setHeaderValue(columnKind.label());
+            _columns[col].setMinWidth(columnKind.minWidth());
             if (_preferences.isVisible(columnKind)) {
                 addColumn(_columns[col]);
             }
@@ -541,8 +547,6 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private Color getSpecialRowTextColor(int row) {
         return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : null);
     }
-
-
 
     /**
      * @return the default color to be used for all text labels on the row
@@ -631,7 +635,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             if (teleBytecodeBreakpoint != null) {
                 toolTipText.append(teleBytecodeBreakpoint);
                 toolTipText.append("; ");
-                if (teleBytecodeBreakpoint.enabled()) {
+                if (teleBytecodeBreakpoint.isEnabled()) {
                     setBorder(style().debugEnabledBytecodeBreakpointTagBorder());
                 } else {
                     setBorder(style().debugDisabledBytecodeBreakpointTagBorder());
@@ -641,7 +645,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 for (TeleTargetBreakpoint teleTargetBreakpoint : teleTargetBreakpoints) {
                     toolTipText.append(teleTargetBreakpoint);
                     toolTipText.append("; ");
-                    enabled = enabled || teleTargetBreakpoint.enabled();
+                    enabled = enabled || teleTargetBreakpoint.isEnabled();
                 }
                 if (enabled) {
                     setBorder(style().debugEnabledTargetBreakpointTagBorder());
@@ -657,6 +661,21 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         public String getSearchableText() {
             return "";
+        }
+    }
+
+    private final class NumberRenderer extends PlainLabel implements TableCellRenderer {
+
+        public NumberRenderer() {
+            super(_inspection, "");
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            setValue(row);
+            setToolTipText("Instruction no. " + row + "in method");
+            setBackground(getRowBackgroundColor(row));
+            setForeground(getRowTextColor(row));
+            return this;
         }
     }
 

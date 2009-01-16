@@ -61,7 +61,7 @@ public final class WordValue extends Value<WordValue> {
         return _value.isAllOnes();
     }
 
-    public static final WordValue ZERO = new WordValue(Word.zero().asWord());
+    public static final WordValue ZERO = new WordValue(Word.zero());
 
     @Override
     public boolean equals(Object other) {
@@ -135,9 +135,6 @@ public final class WordValue extends Value<WordValue> {
     @Override
     public String toString() {
         return _value.toString();
-    }
-
-    private static final class AsBoxedJavaValue_ {
     }
 
     // Substituted by asBoxedJavaValue_()
