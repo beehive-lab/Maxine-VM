@@ -149,12 +149,16 @@ public final class VmThreadMap {
             final int count = _vmThreadStartCount;
             final Word nativeThread = VmThread.nativeThreadCreate(id, stackSize, priority);
             if (nativeThread.isZero()) {
-                vmThread.beTerminated();
-                FatalError.unexpected("nativeThreadCreate() failed");
+                /* This means that we did not create the native thread at all so there is nothing to
+                 * terminate. Most likely we ran out of memory allocating the stack, so we throw
+                 * an out of memory exception. There is a small possibility that the failure was in the
+                 * actual OS thread creation but that would require a way to disambiguate.
+                 */
+                throw new OutOfMemoryError("unable to create new native thread");
             }
             if (!waitForThreadStartup(count)) {
                 vmThread.beTerminated();
-                FatalError.unexpected("waitForThreadStartup() failed");
+                throw new InternalError("waitForThreadStartup() failed");
             }
             return nativeThread;
         }

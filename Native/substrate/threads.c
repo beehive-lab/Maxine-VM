@@ -93,17 +93,40 @@ thread_Specifics *thread_currentSpecifics() {
 
 thread_Specifics *thread_createSegments(int id, Size stackSize) {
     thread_Specifics *threadSpecifics = calloc(1, sizeof(thread_Specifics));
+    if (threadSpecifics == NULL) {
+    	return NULL;
+    }
     threadSpecifics->id = id;
 
+#if os_SOLARIS
+    // stack is allocated as part of Solaris thread creation
+#else
 #if (os_LINUX || os_DARWIN)
     threadSpecifics->stackBase = (Address) malloc(stackSize);
-    threadSpecifics->stackSize = stackSize;
 #  elif os_GUESTVMXEN
     threadSpecifics->stackBase = (Address) guestvmXen_alloc_thread_stack(stackSize);
-    threadSpecifics->stackSize = stackSize;
 #endif
-
+    if (threadSpecifics->stackBase == 0) {
+    	free(threadSpecifics);
+    	threadSpecifics = NULL;
+    } else {
+        threadSpecifics->stackSize = stackSize;
+    }
+#endif
     return threadSpecifics;
+}
+
+/*
+ * The blue zone is a page that is much closer to the base of the stack that is optionally protected.
+ * This can be used, e.g., to determine the actual stack size needed by a thread, or to avoid
+ * reserving actual real memory until it is needed.
+ */
+void initBlueZone(thread_Specifics *threadSpecifics) {
+#if os_GUESTVMXEN
+	guestvmXen_init_blue_zone(threadSpecifics);
+#else
+	threadSpecifics->stackBlueZone = threadSpecifics->stackYellowZone;
+#endif
 }
 
 void thread_initSegments(thread_Specifics *threadSpecifics) {
@@ -146,12 +169,13 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     current += getPageSize();
     threadSpecifics->stackYellowZone = current;
     current += getPageSize();
+    initBlueZone(threadSpecifics);
 
 #if log_THREADS
     int id = threadSpecifics->id;
     log_println("thread %3d: stackBase = %p", id, threadSpecifics->stackBase);
     log_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(threadSpecifics->stackBase));
-    log_println("thread %3d: stackSize = %d", id, threadSpecifics->stackSize);
+    log_println("thread %3d: stackSize = %d (0x%x)", id, threadSpecifics->stackSize, threadSpecifics->stackSize);
     log_println("thread %3d: stackBottom = %p", id, stackBottom);
     log_println("thread %3d: triggeredVmThreadLocals = %p", id, threadSpecifics->triggeredVmThreadLocals);
     log_println("thread %3d: enabledVmThreadLocals   = %p", id, threadSpecifics->enabledVmThreadLocals);
@@ -159,6 +183,7 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     log_println("thread %3d: refMapArea = %p", id, threadSpecifics->refMapArea);
     log_println("thread %3d: redZone    = %p", id, threadSpecifics->stackRedZone);
     log_println("thread %3d: yellowZone = %p", id, threadSpecifics->stackYellowZone);
+    log_println("thread %3d: blueZone   = %p", id, threadSpecifics->stackBlueZone);
     log_println("thread %3d: current    = %p", id, current);
     log_println("thread %3d: endOfStack = %p", id, threadSpecifics->stackBase + threadSpecifics->stackSize);
 #endif
@@ -175,7 +200,7 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
 
     protectPage(threadSpecifics->stackRedZone);
     protectPage(threadSpecifics->stackYellowZone);
-}
+ }
 
 void tryUnprotectPage(Address address) {
     if (address != (Address) 0) {
@@ -193,6 +218,11 @@ void thread_destroySegments(thread_Specifics *threadSpecifics) {
     /* the stack is free'd by the pthreads library. */
 #endif
 }
+
+/*
+ * OS-specific thread creation, including allocation of the thread locals area and the stack.
+ * Returns 0 in the case of failure.
+ */
 static Thread thread_create(jint id, Size stackSize, int priority) {
     Thread thread;
 #if !os_GUESTVMXEN
@@ -210,6 +240,9 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 
     /* create the native thread locals and allocate stack if necessary */
     thread_Specifics *threadSpecifics = thread_createSegments(id, stackSize);
+    if (threadSpecifics == NULL) {
+    	return (Thread) 0;
+    }
 
 #if log_THREADS
     log_println("thread_create: stack base %lx", threadSpecifics->stackBase);

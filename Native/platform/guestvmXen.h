@@ -50,6 +50,8 @@
     extern int guestvmXen_protectPage(unsigned long address);
     extern int guestvmXen_unProtectPage(unsigned long address);
     extern void guestvmXen_set_javaId(guestvmXen_Thread, int id);
+    extern void guestvmXen_init_blue_zone(void *threadSpecifics);
+    extern void guestvmXen_blue_zone_trap(void *threadSpecifics);
 
 
     typedef unsigned int guestvmXen_SpecificsKey;
