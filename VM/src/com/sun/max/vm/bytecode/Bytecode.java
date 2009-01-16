@@ -417,7 +417,7 @@ public enum Bytecode implements BytecodeInfo {
      * Determines if this bytecode can be present in a well formed class file.
      */
     public final boolean isLegalInClassfile() {
-        return !(this == XXXUNUSEDXXX || ordinal() >= BREAKPOINT.ordinal());
+        return this == XXXUNUSEDXXX || ordinal() >= BREAKPOINT.ordinal();
     }
 
     /**
