@@ -40,7 +40,8 @@ public abstract class DtInterpreterTemplateSet {
         _maxFrameSlots = templateTable.maxFrameSlots();
         _templates = new HashSet<CompiledBytecodeTemplate>();
         for (Bytecode bytecode : Bytecode.VALUES) {
-            if (bytecode.isLegalInClassfile() && !exclude(bytecode)) {
+            // isLegalInClassfile is named wrongly!
+            if (!bytecode.isLegalInClassfile() && !exclude(bytecode)) {
                 _templates.add(templateTable.get(bytecode));
             }
         }
