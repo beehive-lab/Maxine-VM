@@ -292,7 +292,7 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     protected void flash() {
-        _parent.frame().flash();
+        _parent.frame().flash(style().frameBorderFlashColor());
     }
 
 

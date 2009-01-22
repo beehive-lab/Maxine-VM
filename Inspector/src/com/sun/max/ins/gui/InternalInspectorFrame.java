@@ -142,8 +142,8 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
         }
     }
 
-    public void flash() {
-        InspectorFrame.Static.flash(this);
+    public void flash(Color borderFlashColor) {
+        InspectorFrame.Static.flash(this, borderFlashColor);
     }
 
     @Override

@@ -18,35 +18,36 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package com.sun.max.ins;
 
+import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 
 /**
- * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
+ * Convenience methods for classes holding various parts of the interactive inspection session.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class AbstractTeleVMHolder implements TeleVMHolder{
-
-    private final TeleVM _teleVM;
-
-    public final TeleVM teleVM() {
-        return _teleVM;
-    }
-
-    private final String _tracePrefix;
+public interface InspectionHolder extends TeleVMHolder {
 
     /**
-     * @return default prefix text for trace messages; identifies the class being traced.
+     * @return holder of the interactive inspection state for the session
      */
-    protected String tracePrefix() {
-        return _tracePrefix;
-    }
+    Inspection inspection();
 
-    protected AbstractTeleVMHolder(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
-    }
+    /**
+     * @return visual specifications for user interaction during the session
+     */
+    InspectorStyle style();
 
+    /**
+     * @return information about the user focus of attention in the view state.
+     */
+    InspectionFocus focus();
+
+    /**
+     * @return access to {@link InspectorAction}s of general use.
+     */
+    InspectionActions actions();
 }

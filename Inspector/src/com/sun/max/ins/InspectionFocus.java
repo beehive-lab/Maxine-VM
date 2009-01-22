@@ -47,10 +47,6 @@ public class InspectionFocus extends AbstractInspectionHolder {
 
     private static final int TRACE_VALUE = 2;
 
-    private String tracePrefix() {
-        return "[InspectionFocus] ";
-    }
-
     public InspectionFocus(Inspection inspection) {
         super(inspection);
     }

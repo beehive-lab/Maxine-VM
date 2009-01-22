@@ -29,7 +29,7 @@ import com.sun.max.tele.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class AbstractInspectionHolder {
+public abstract class AbstractInspectionHolder extends AbstractTeleVMHolder implements InspectionHolder{
 
     private final Inspection _inspection;
 
@@ -38,13 +38,6 @@ public abstract class AbstractInspectionHolder {
      */
     public final Inspection inspection() {
         return _inspection;
-    }
-
-    /**
-     * @return local surrogate for for the remote ("tele") VM being inspected in the session
-     */
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
     }
 
     /**
@@ -69,6 +62,7 @@ public abstract class AbstractInspectionHolder {
     }
 
     protected AbstractInspectionHolder(Inspection inspection) {
+        super(inspection.teleVM());
         _inspection = inspection;
     }
 
