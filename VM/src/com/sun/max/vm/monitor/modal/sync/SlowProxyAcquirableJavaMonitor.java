@@ -25,18 +25,10 @@ import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A slow-but-correct implementation of Java monitors.
- *
- * Monitor state is maintained in the JavaMonitor object, and protected by the mutex.
- * The mutex is not used for 'monitorEnter' blocking, rather, blocking threads wait on the
- * _blockingVar condition variable. This allows monitor ownership to be a deterministic Java-side property.
- * (Hence the current thread can easily acquire a monitor for another thread, which is necessary
- * for biased locking etc.)
- *
- * Wait and notify are implemented via a per-monitor waiting list, and a per-thread condition variable,
- * on which a thread suspends itself. We need a per-thread condition to implement single thread notification.
+ * An alternative, less efficient implementation of ProxyAcquirableJavaMonitor.
  *
  * @author Simon Wilkinson
+ * @see ProxyAcquirableJavaMonitor
  */
 final class SlowProxyAcquirableJavaMonitor extends AbstractJavaMonitor {
 

@@ -30,6 +30,10 @@ import com.sun.max.vm.monitor.modal.modehandlers.observer.ObserverModeHandler.*;
 import com.sun.max.vm.monitor.modal.schemes.*;
 
 /**
+ * A modal monitor scheme that transitions between thin locks and inflated monitors.
+ * An extra pass-through 'Observer' mode is defined at the top of the lock-mode hierarchy,
+ * which allows {@link MonitorObserver MonitorObservers} to be notified of monitor events.
+ *
  * @author Simon Wilkinson
  */
 public class ObserverThinInflatedMonitorScheme extends ModalMonitorScheme {
