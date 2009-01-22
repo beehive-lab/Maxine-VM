@@ -47,15 +47,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     private InspectorFrame _frame;
 
-    private final String _tracePrefix;
-
-    /**
-     * @return default prefix text for trace messages; identifies the class being traced.
-     */
-    protected String tracePrefix() {
-        return _tracePrefix;
-    }
-
     /**
      * @return the window system frame in which the Inspector displays its view
      */
@@ -161,7 +152,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     protected Inspector(Inspection inspection, Residence residence) {
         super(inspection);
         _residence = residence;
-        _tracePrefix = "[" + getClass().getSimpleName() + "]";
     }
 
     /**
@@ -319,7 +309,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     public void highlight() {
         moveToFront();
         setSelected();
-        _frame.flash();
+        _frame.flash(style().frameBorderFlashColor());
     }
 
     /**
@@ -329,7 +319,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         moveToFront();
         if (!isSelected()) {
             setSelected();
-            _frame.flash();
+            _frame.flash(style().frameBorderFlashColor());
         }
     }
 

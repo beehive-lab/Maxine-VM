@@ -35,20 +35,9 @@ import com.sun.max.tele.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class InspectorLabel extends JTextField implements TextSearchable, Prober {
+public abstract class InspectorLabel extends JTextField implements InspectionHolder, TextSearchable, Prober {
 
     private final Inspection _inspection;
-
-    /**
-     * @return the {@link Inspection} session in which this label is participating.
-     */
-    public final Inspection inspection() {
-        return _inspection;
-    }
-
-    public InspectorLabel(Inspection inspection) {
-        this(inspection, null);
-    }
 
     public InspectorLabel(Inspection inspection, String text) {
         super(text);
@@ -56,16 +45,26 @@ public abstract class InspectorLabel extends JTextField implements TextSearchabl
         setEditable(false);
     }
 
-    /**
-     * @return the current {@link InspectorStyle} being followed for visual display parameters.
-     */
+    public InspectorLabel(Inspection inspection) {
+        this(inspection, null);
+    }
+
+    public final Inspection inspection() {
+        return _inspection;
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
 
-    /**
-     * @return the VM being inspected in this session
-     */
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    public final InspectionActions actions() {
+        return _inspection.actions();
+    }
+
     public final TeleVM teleVM() {
         return _inspection.teleVM();
     }

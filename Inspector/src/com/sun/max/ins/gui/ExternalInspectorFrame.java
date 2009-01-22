@@ -121,8 +121,8 @@ public final class ExternalInspectorFrame extends JFrame implements InspectorFra
         Problem.unimplemented();
     }
 
-    public void flash() {
-        InspectorFrame.Static.flash(this);
+    public void flash(Color borderFlashColor) {
+        InspectorFrame.Static.flash(this, borderFlashColor);
     }
 
     public void replaceFrameCloseAction(InspectorAction action) {

@@ -20,33 +20,18 @@
  */
 package com.sun.max.tele;
 
-
 /**
  * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class AbstractTeleVMHolder implements TeleVMHolder{
-
-    private final TeleVM _teleVM;
-
-    public final TeleVM teleVM() {
-        return _teleVM;
-    }
-
-    private final String _tracePrefix;
+public interface TeleVMHolder {
 
     /**
-     * @return default prefix text for trace messages; identifies the class being traced.
+     * @return the instance of {@link TeleVM} being managed
+     * by this code.
      */
-    protected String tracePrefix() {
-        return _tracePrefix;
-    }
-
-    protected AbstractTeleVMHolder(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
-    }
+    TeleVM teleVM();
 
 }

@@ -78,7 +78,7 @@ public interface InspectorFrame extends Prober {
 
     void setSelected();
 
-    void flash();
+    void flash(Color borderFlashColor);
 
     void invalidate();
 
@@ -198,7 +198,7 @@ public interface InspectorFrame extends Prober {
         private Static() {
         }
 
-        public static void flash(InspectorFrame inspectorFrame) {
+        public static void flash(InspectorFrame inspectorFrame, Color borderFlashColor) {
             Component pane = inspectorFrame.getContentPane();
             if (pane instanceof JScrollPane) {
                 final JScrollPane scrollPane = (JScrollPane) pane;
@@ -206,7 +206,7 @@ public interface InspectorFrame extends Prober {
             }
             final Graphics g = pane.getGraphics();
             g.setPaintMode();
-            g.setColor(inspectorFrame.inspector().inspection().style().frameBorderFlashColor());
+            g.setColor(borderFlashColor);
             for (int i = 0; i < 5; i++) {
                 g.drawRect(i, i, pane.getWidth() - (i * 2), pane.getHeight() - (i * 2));
             }
