@@ -116,7 +116,7 @@ public class TeleNativeStack extends FixedMemoryRegion {
             _size = size;
             _thread = thread;
             _teleVM = _thread.teleProcess().teleVM();
-            _dataAccess = _teleVM.teleProcess().dataAccess();
+            _dataAccess = _teleVM.dataAccess();
 
         }
 

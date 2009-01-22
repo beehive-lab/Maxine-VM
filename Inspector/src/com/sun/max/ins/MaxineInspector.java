@@ -84,7 +84,7 @@ public final class MaxineInspector {
                     // Choose an arbitrary thread as the "current" thread. If the inspector is
                     // creating the process to be debugged (as opposed to attaching to it), then there
                     // should only be one thread.
-                    final IterableWithLength<TeleNativeThread> threads = _inspection.teleProcess().threads();
+                    final IterableWithLength<TeleNativeThread> threads = _inspection.teleVM().threads();
                     TeleNativeThread nonJavaThread = null;
                     for (TeleNativeThread thread : threads) {
                         if (thread.isJava()) {

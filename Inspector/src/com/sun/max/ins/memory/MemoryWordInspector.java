@@ -234,7 +234,7 @@ public final class MemoryWordInspector extends Inspector {
 
     @Override
     public synchronized void refreshView(long epoch, boolean force) {
-        final DataAccess dataAccess = teleProcess().dataAccess();
+        final DataAccess dataAccess = teleVM().dataAccess();
         for (int i = 0; i < _numberOfWords; i++) {
             final Address address = _address.plus(i * _wordSize);
             try {

@@ -41,6 +41,8 @@ import com.sun.max.vm.value.*;
  */
 public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
+    private final Factory _factory;
+
     private final TeleProcess _teleProcess;
 
     private final TeleCodeLocation _teleCodeLocation;
@@ -88,24 +90,26 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
     @Override
     public void remove() {
-        teleProcess().targetBreakpointFactory().removeBreakpointAt(address());
+        _factory.removeBreakpointAt(address());
     }
 
     /**
      * Creates a breakpoint for a given target code address.
      *
      * @param teleProcess the tele process context of the breakpoint
+     * @param factory the factory responsible for managing these breakpoints
      * @param address the address at which the breakpoint is to be created
      * @param originalCode the target code at {@code address} that will be overwritten by the breakpoint
      *            instruction. If this value is null, then the code will be read from {@code address}.
      * @param isTransient specifies if the created breakpoint is to be deleted when a process execution stops or an
      *            inspection session finishes
      */
-    private TeleTargetBreakpoint(TeleProcess teleProcess, Address address, byte[] originalCode, boolean isTransient) {
+    private TeleTargetBreakpoint(TeleProcess teleProcess, Factory factory, Address address, byte[] originalCode, boolean isTransient) {
         super(teleProcess.teleVM(), isTransient);
         _teleProcess = teleProcess;
+        _factory = factory;
         _teleCodeLocation = new TeleCodeLocation(teleVM(), address);
-        _originalCode = originalCode == null ? teleProcess.dataAccess().readFully(address, teleProcess.targetBreakpointFactory().codeSize()) : originalCode;
+        _originalCode = originalCode == null ? teleProcess.dataAccess().readFully(address, _factory.codeSize()) : originalCode;
     }
 
     /**
@@ -129,7 +133,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
      * Patches the target code at this breakpoint's address with platform dependent instruction(s) implementing a breakpoint.
      */
     public void activate() {
-        _teleProcess.dataAccess().writeBytes(address(), _teleProcess.targetBreakpointFactory().code());
+        _teleProcess.dataAccess().writeBytes(address(), _factory.code());
         _activated = true;
     }
 
@@ -244,7 +248,7 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          * @return the created breakpoint
          */
         public synchronized TeleTargetBreakpoint createBreakpoint(Address address, byte[] originalCode, boolean isTransient) {
-            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(_teleProcess, address, originalCode, isTransient);
+            final TeleTargetBreakpoint breakpoint = new TeleTargetBreakpoint(_teleProcess, this, address, originalCode, isTransient);
             if (!isTransient) {
                 final TeleTargetBreakpoint oldBreakpoint = _breakpoints.put(address.toLong(), breakpoint);
                 assert oldBreakpoint == null;

@@ -40,7 +40,7 @@ public abstract class TeleActor extends TeleTupleObject {
      */
     public String readName() {
         final Reference utf8ConstantReference = teleVM().fields().Actor_name.readReference(reference());
-        final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) makeTeleObject(utf8ConstantReference);
+        final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleVM().makeTeleObject(utf8ConstantReference);
         return teleUtf8Constant.getString();
     }
 

@@ -41,7 +41,7 @@ import com.sun.max.vm.bytecode.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public final class InspectorNameDisplay extends InspectionHolder {
+public final class InspectorNameDisplay extends AbstractInspectionHolder {
 
     public InspectorNameDisplay(Inspection inspection) {
         super(inspection);

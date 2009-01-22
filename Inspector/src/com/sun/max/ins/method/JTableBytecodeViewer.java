@@ -239,7 +239,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _columnModel = new MyTableColumnModel();
         _table = new MyTable(_model, _columnModel);
         _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
-        createView(teleVM().teleProcess().epoch());
+        createView(teleVM().epoch());
     }
 
     @Override
@@ -512,7 +512,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(teleVM().teleProcess().epoch(), true);
+                    refresh(teleVM().epoch(), true);
                 }
             };
             createColumn(ColumnKind.TAG, new TagRenderer());

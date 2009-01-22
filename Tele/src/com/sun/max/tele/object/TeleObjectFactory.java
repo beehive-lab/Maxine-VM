@@ -50,20 +50,20 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleObjectManager extends TeleVMHolder{
+public final class TeleObjectFactory extends AbstractTeleVMHolder{
 
     private static final int TRACE_VALUE = 2;
 
-    private static TeleObjectManager _teleObjectManager;
+    private static TeleObjectFactory _teleObjectFactory;
 
     /**
      * @return the singleton manager for instances of {@link TeleObject}.
      */
-    public static TeleObjectManager make(TeleVM teleVM) {
-        if (_teleObjectManager == null) {
-            _teleObjectManager = new TeleObjectManager(teleVM);
+    public static TeleObjectFactory make(TeleVM teleVM) {
+        if (_teleObjectFactory == null) {
+            _teleObjectFactory = new TeleObjectFactory(teleVM);
         }
-        return _teleObjectManager;
+        return _teleObjectFactory;
     }
 
     // TODO (mlvdv)  TeleObject weak references
@@ -86,7 +86,7 @@ public final class TeleObjectManager extends TeleVMHolder{
      */
     private final Map<Class, Constructor> _classToTeleTupleObjectConstructor = new HashMap<Class, Constructor>();
 
-    private TeleObjectManager(TeleVM teleVM) {
+    private TeleObjectFactory(TeleVM teleVM) {
         super(teleVM);
         Trace.begin(1, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
@@ -259,7 +259,7 @@ public final class TeleObjectManager extends TeleVMHolder{
             }
             javaClass = javaClass.getSuperclass();
         }
-        ProgramError.unexpected("TeleObjectManager failed to find constructor for class" + classActor.toJava());
+        ProgramError.unexpected("TeleObjectFactory failed to find constructor for class" + classActor.toJava());
         return null;
     }
 

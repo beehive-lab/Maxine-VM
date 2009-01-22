@@ -108,7 +108,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
         _columnModel = new ThreadsColumnModel();
         _table = new ThreadJTable(_model, _columnModel);
         createFrame(null);
-        refreshView(inspection.teleVM().teleProcess().epoch(), true);
+        refreshView(inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(_table);
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -186,13 +186,13 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
 
         @Override
         public int getRowCount() {
-            return teleVM().allThreads().length();
+            return teleVM().threads().length();
         }
 
         @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (TeleNativeThread teleNativeThread : teleVM().allThreads()) {
+            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
                 if (count == row) {
                     return teleNativeThread;
                 }
@@ -366,7 +366,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
      */
     private void updateThreadFocus(TeleNativeThread selectedThread) {
         int row = 0;
-        for (TeleNativeThread teleNativeThread : teleVM().allThreads()) {
+        for (TeleNativeThread teleNativeThread : teleVM().threads()) {
             if (teleNativeThread == selectedThread) {
                 if (_table.getSelectedRow() != row) {
                     _table.setRowSelectionInterval(row, row);

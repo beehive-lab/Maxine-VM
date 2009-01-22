@@ -27,7 +27,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleVMTrace extends TeleVMHolder {
+public final class TeleVMTrace extends AbstractTeleVMHolder {
 
     public TeleVMTrace(TeleVM teleVM) {
         super(teleVM);

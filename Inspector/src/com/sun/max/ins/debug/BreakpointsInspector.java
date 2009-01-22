@@ -517,7 +517,7 @@ public final class BreakpointsInspector extends UniqueInspector {
                 breakpointData.markDeleted(true);
             }
             // add new and mark previous as not deleted
-            for (TeleTargetBreakpoint breakpoint : teleProcess().targetBreakpointFactory().breakpoints(true)) {
+            for (TeleTargetBreakpoint breakpoint : teleVM().targetBreakpoints()) {
                 final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.address());
                 if (breakpointData == null) {
                     // new breakpoint in {@link TeleVM} since last refresh
@@ -529,7 +529,7 @@ public final class BreakpointsInspector extends UniqueInspector {
                     breakpointData.markDeleted(false);
                 }
             }
-            for (TeleBytecodeBreakpoint breakpoint : teleVM().bytecodeBreakpointFactory().breakpoints()) {
+            for (TeleBytecodeBreakpoint breakpoint : teleVM().bytecodeBreakpoints()) {
                 final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.key());
                 if (breakpointData == null) {
                     // new breakpoint since last refresh
@@ -742,7 +742,7 @@ public final class BreakpointsInspector extends UniqueInspector {
          * @return the thread in the {@link TeleVM}, if any, that is currently stopped at this breakpoint.
          */
         TeleNativeThread triggerThread() {
-            for (TeleNativeThread thread : teleBreakpoint().teleProcess().threads()) {
+            for (TeleNativeThread thread : teleVM().threads()) {
                 if (thread.breakpoint() == teleBreakpoint()) {
                     return thread;
                 }

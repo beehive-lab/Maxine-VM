@@ -151,7 +151,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
     @Override
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (_instructions == null) {
-            final byte[] code = teleVM().teleProcess().dataAccess().readFully(codeStart(), codeSize().toInt());
+            final byte[] code = teleVM().dataAccess().readFully(codeStart(), codeSize().toInt());
             _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, null);
         }
         return _instructions;
@@ -159,13 +159,13 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
 
 
     public TeleTargetBreakpoint setTargetBreakpointAtEntry() {
-        return teleVM().teleProcess().targetBreakpointFactory().makeBreakpoint(callEntryPoint(), false);
+        return teleVM().makeTargetBreakpoint(callEntryPoint());
     }
 
     public void setTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {
-                teleVM().teleProcess().targetBreakpointFactory().makeBreakpoint(targetCodeInstruction.address(), false);
+                teleVM().makeTargetBreakpoint(targetCodeInstruction.address());
             }
         }
     }
@@ -173,7 +173,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
     public void removeTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {
-                teleVM().teleProcess().targetBreakpointFactory().removeBreakpointAt(targetCodeInstruction.address());
+                teleVM().removeTargetBreakpoint(targetCodeInstruction.address());
             }
         }
     }

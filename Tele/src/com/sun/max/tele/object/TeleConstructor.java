@@ -44,7 +44,7 @@ public final class TeleConstructor extends TeleTupleObject {
     public Constructor toJava() {
         if (_constructor == null) {
             final Reference methodActorReference = teleVM().fields().Constructor_methodActor.readReference(reference());
-            final TeleMethodActor teleMethodActor = (TeleMethodActor) makeTeleObject(methodActorReference);
+            final TeleMethodActor teleMethodActor = (TeleMethodActor) teleVM().makeTeleObject(methodActorReference);
             if (teleMethodActor != null) {
                 _constructor = teleMethodActor.methodActor().toJavaConstructor();
             }

@@ -57,7 +57,7 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
         if (stackInspectorContainer == null) {
             Trace.begin(1, "[StackInspector] initializing");
             stackInspectorContainer = new StackInspectorContainer(inspection, Residence.INTERNAL);
-            for (TeleNativeThread thread : inspection.teleVM().teleProcess().threads()) {
+            for (TeleNativeThread thread : inspection.teleVM().threads()) {
                 stackInspectorContainer.add(new StackInspector(inspection, thread, stackInspectorContainer.residence(), stackInspectorContainer));
             }
             Trace.end(1, "[StackInspector] initializing");
@@ -133,7 +133,7 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
             for (StackInspector stackInspector : this) {
                 stackInspector.setMarked(true);
             }
-            for (TeleNativeThread thread : teleVM().teleProcess().threads()) {
+            for (TeleNativeThread thread : teleVM().threads()) {
                 final UniqueInspector.Key<StackInspector> key = UniqueInspector.Key.create(StackInspector.class, LongValue.from(thread.id()));
                 final StackInspector stackInspector = UniqueInspector.find(inspection(), key);
                 if (stackInspector == null) {

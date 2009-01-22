@@ -432,7 +432,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
                     @Override
                     public Value fetchValue() {
                         try {
-                            return new WordValue(teleVM().teleProcess().dataAccess().readWord(slotBase, offset));
+                            return new WordValue(teleVM().dataAccess().readWord(slotBase, offset));
                         } catch (DataIOError e) {
                             return VoidValue.VOID;
                         }
@@ -453,11 +453,11 @@ public class StackInspector extends UniqueInspector<StackInspector> {
             _showSlotAddresses.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    refresh(teleProcess().epoch(), true);
+                    refresh(teleVM().epoch(), true);
                 }
             });
 
-            refresh(teleProcess().epoch(), true);
+            refresh(teleVM().epoch(), true);
 
             add(header, BorderLayout.NORTH);
             final JScrollPane slotsScrollPane = new JScrollPane(slotsPanel);

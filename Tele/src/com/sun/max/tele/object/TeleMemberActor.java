@@ -41,7 +41,7 @@ public abstract class TeleMemberActor extends TeleActor {
      */
     public TeleClassActor getTeleHolder() {
         final Reference classActorReference = teleVM().fields().MemberActor_holder.readReference(reference());
-        return (TeleClassActor) makeTeleObject(classActorReference);
+        return (TeleClassActor) teleVM().makeTeleObject(classActorReference);
     }
 
     /**

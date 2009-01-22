@@ -86,7 +86,7 @@ public class VMThreadLocalsPanel extends InspectorPanel {
             ++index;
             offset += Word.size();
         }
-        refresh(teleVM().teleProcess().epoch(), true);
+        refresh(teleVM().epoch(), true);
         SpringUtilities.makeCompactGrid(valuePanel, valuePanel.getComponentCount() / 2, 2, 0, 0, 5, 1);
 
         add(new JScrollPane(valuePanel), BorderLayout.CENTER);

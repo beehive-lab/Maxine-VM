@@ -95,7 +95,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
 
     public String description() {
         final Reference descriptionStringReference = teleVM().fields().RuntimeMemoryRegion_description.readReference(reference());
-        final TeleString teleString = (TeleString) makeTeleObject(descriptionStringReference);
+        final TeleString teleString = (TeleString) teleVM().makeTeleObject(descriptionStringReference);
         return teleString.getString();
     }
 

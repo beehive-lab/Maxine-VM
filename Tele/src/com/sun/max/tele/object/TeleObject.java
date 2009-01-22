@@ -43,7 +43,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleObject extends TeleVMHolder implements ObjectProvider {
+public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectProvider {
 
     /**
      * Controls tracing for object copying.
@@ -51,7 +51,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     protected static final int COPY_TRACE_VALUE = 4;
 
     /**
-     * The factory method {@link TeleObjectManager#make(Reference)} ensures synchronized TeleObjects creation.
+     * The factory method {@link TeleObjectFactory#make(Reference)} ensures synchronized TeleObjects creation.
      */
     protected TeleObject(TeleVM teleVM, Reference reference) {
         super(teleVM);
@@ -132,7 +132,7 @@ public abstract class TeleObject extends TeleVMHolder implements ObjectProvider 
     public TeleHub getTeleHub() {
         if (_teleHub == null) {
             final Reference hubReference = teleVM().wordToReference(teleVM().layoutScheme().generalLayout().readHubReferenceAsWord(_reference));
-            _teleHub = (TeleHub) makeTeleObject(hubReference);
+            _teleHub = (TeleHub) teleVM().makeTeleObject(hubReference);
         }
         return _teleHub;
     }

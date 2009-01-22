@@ -163,7 +163,7 @@ public final class MemoryInspector extends Inspector {
         final byte[] bytes = new byte[_numberOfBytesPerGroup];
         for (int i = 0; i < _numberOfGroups; i++) {
             final Address address = _address.plus(i * _numberOfBytesPerGroup);
-            teleVM().teleProcess().dataAccess().readFully(address, bytes);
+            teleVM().dataAccess().readFully(address, bytes);
             _memoryLabels[i].setText(byteGroupToString(bytes));
             _memoryLabels[i].setToolTipText(address.toHexString());
             switch (_numberOfBytesPerGroup) {

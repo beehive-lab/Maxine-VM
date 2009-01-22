@@ -36,7 +36,7 @@ import com.sun.max.vm.jni.*;
  *
  * @author Michael Van De Vanter
  */
-public class TeleCodeRegistry extends TeleVMHolder {
+public class TeleCodeRegistry extends AbstractTeleVMHolder {
 
     public TeleCodeRegistry(TeleVM teleVM) {
         super(teleVM);

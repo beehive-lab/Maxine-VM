@@ -44,7 +44,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Athul Acharya
  */
-public final class Machine extends TeleVMHolder{
+public final class Machine extends AbstractTeleVMHolder{
 
     private ExecutionThread _currentThread;
 

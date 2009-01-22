@@ -41,7 +41,7 @@ import com.sun.max.vm.stack.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class Inspector extends InspectionHolder implements InspectionListener, ViewFocusListener {
+public abstract class Inspector extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
     private static final int TRACE_VALUE = 2;
 
@@ -202,7 +202,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
                 break;
         }
         frame().setTitle(getTextForTitle());
-        createView(teleProcess().epoch());
+        createView(teleVM().epoch());
         _frame.pack();
         updateSize();
         switch (_residence) {
@@ -243,7 +243,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
      * @param force suspend caching behavior; read state unconditionally.
      */
     protected final synchronized void refreshView(boolean force) {
-        refreshView(teleProcess().epoch(), force);
+        refreshView(teleVM().epoch(), force);
     }
 
     /**
@@ -252,7 +252,7 @@ public abstract class Inspector extends InspectionHolder implements InspectionLi
      * configuration of the view changes enough to require creating a new one.
      */
     protected synchronized void reconstructView() {
-        createView(teleProcess().epoch());
+        createView(teleVM().epoch());
         frame().pack();
         updateSize();
     }

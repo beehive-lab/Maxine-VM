@@ -44,7 +44,7 @@ public final class TeleUtf8Constant extends TelePoolConstant {
     public String getString() {
         if (_string == null) {
             final Reference stringReference = teleVM().fields().Utf8Constant_string.readReference(reference());
-            final TeleString teleString = (TeleString) makeTeleObject(stringReference);
+            final TeleString teleString = (TeleString) teleVM().makeTeleObject(stringReference);
             _string = teleString.getString();
         }
         return _string;

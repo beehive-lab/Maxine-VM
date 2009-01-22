@@ -177,7 +177,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new MyTableColumnModel();
         _table = new MyTable(_model, _columnModel);
-        createView(teleVM().teleProcess().epoch());
+        createView(teleVM().epoch());
     }
 
     @Override
@@ -437,7 +437,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(teleVM().teleProcess().epoch(), true);
+                    refresh(teleVM().epoch(), true);
                 }
             };
 
@@ -748,7 +748,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (targetCodeInstruction._literalSourceAddress != null) {
-                    final Word word = teleVM().teleProcess().dataAccess().readWord(targetCodeInstruction._literalSourceAddress);
+                    final Word word = teleVM().dataAccess().readWord(targetCodeInstruction._literalSourceAddress);
                     inspectorLabel = _literalRenderer.render(_inspection, text, word);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (rowToCalleeIndex(row) >= 0) {

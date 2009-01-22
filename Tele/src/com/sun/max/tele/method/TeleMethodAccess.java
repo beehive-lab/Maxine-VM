@@ -38,7 +38,7 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class TeleMethodAccess extends TeleVMHolder {
+public abstract class TeleMethodAccess extends AbstractTeleVMHolder {
 
     private static MethodActor findMethodActor(Class holder, String name, SignatureDescriptor signature) {
         final ClassActor classActor = PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.mustMakeClassActor(JavaTypeDescriptor.forJavaClass(holder));

@@ -60,7 +60,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
      *
      * @author Michael Van De Vanter
      */
-    public static final class Manager extends InspectionHolder {
+    public static final class Manager extends AbstractInspectionHolder {
 
         private Manager(Inspection inspection) {
             super(inspection);

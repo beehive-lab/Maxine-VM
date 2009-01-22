@@ -43,7 +43,7 @@ import com.sun.max.vm.reference.*;
  * @author Michael Van De Vanter
  *
  */
-public final class TeleHeapManager extends TeleVMHolder {
+public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     private static final int TRACE_VALUE = 2;
 
@@ -88,7 +88,7 @@ public final class TeleHeapManager extends TeleVMHolder {
         Trace.begin(1, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
         final Reference bootHeapRegionReference = teleVM().fields().Heap_bootHeapRegion.readReference(teleVM());
-        _teleBootHeapRegion = (TeleRuntimeMemoryRegion) makeTeleObject(bootHeapRegionReference);
+        _teleBootHeapRegion = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(bootHeapRegionReference);
         refresh(processEpoch);
         Trace.end(1, tracePrefix() + "initializing", startTimeMillis);
     }
@@ -106,13 +106,13 @@ public final class TeleHeapManager extends TeleVMHolder {
             _updatingHeapMemoryRegions = true;
             final Reference runtimeHeapRegionsArrayReference = teleVM().fields().TeleHeapInfo_memoryRegions.readReference(teleVM());
             if (!runtimeHeapRegionsArrayReference.isZero()) {
-                final TeleArrayObject teleArrayObject = (TeleArrayObject) makeTeleObject(runtimeHeapRegionsArrayReference);
+                final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeHeapRegionsArrayReference);
                 final Reference[] heapRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
                 if (_teleHeapRegions.length != heapRegionReferences.length) {
                     _teleHeapRegions = new TeleRuntimeMemoryRegion[heapRegionReferences.length];
                 }
                 for (int i = 0; i < heapRegionReferences.length; i++) {
-                    _teleHeapRegions[i] = (TeleRuntimeMemoryRegion) makeTeleObject(heapRegionReferences[i]);
+                    _teleHeapRegions[i] = (TeleRuntimeMemoryRegion) teleVM().makeTeleObject(heapRegionReferences[i]);
                 }
             }
             _updatingHeapMemoryRegions = false;

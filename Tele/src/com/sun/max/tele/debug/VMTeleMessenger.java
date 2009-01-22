@@ -31,7 +31,7 @@ import com.sun.max.vm.tele.*;
  *
  * @author Bernd Mathiske
  */
-public final class VMTeleMessenger extends TeleVMHolder implements TeleMessenger {
+public final class VMTeleMessenger extends AbstractTeleVMHolder implements TeleMessenger {
 
     private final MaxineMessenger _maxineMessenger;
 
@@ -44,27 +44,27 @@ public final class VMTeleMessenger extends TeleVMHolder implements TeleMessenger
 
     public void enable() {
         _infoPointer = teleVM().bootImageStart().plus(teleVM().bootImage().header()._messengerInfoOffset);
-        teleProcess().dataAccess().writeWord(_infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
+        teleVM().dataAccess().writeWord(_infoPointer, Address.fromInt(1)); // setting to non-zero indicates enabling
     }
 
     public boolean activate() {
         if (!_maxineMessenger.isActivated()) {
-            final Pointer info = teleProcess().dataAccess().readWord(_infoPointer).asPointer();
+            final Pointer info = teleVM().dataAccess().readWord(_infoPointer).asPointer();
 
-            final Size dataSize = teleProcess().dataAccess().getWord(info, 0, 0).asSize();
+            final Size dataSize = teleVM().dataAccess().getWord(info, 0, 0).asSize();
 
             // Note that in/out are crossed over.
-            final Pointer inData = teleProcess().dataAccess().getWord(info, 0, 2).asPointer();
+            final Pointer inData = teleVM().dataAccess().getWord(info, 0, 2).asPointer();
             if (inData.isZero()) {
                 return false;
             }
 
             // Note that in/out are crossed over.
-            final Pointer outData = teleProcess().dataAccess().getWord(info, 0, 1).asPointer();
+            final Pointer outData = teleVM().dataAccess().getWord(info, 0, 1).asPointer();
             if (outData.isZero()) {
                 return false;
             }
-            _maxineMessenger.activate(teleProcess().dataAccess(), inData, outData, dataSize.toInt());
+            _maxineMessenger.activate(teleVM().dataAccess(), inData, outData, dataSize.toInt());
         }
         return true;
     }

@@ -44,7 +44,7 @@ public final class TeleRoots {
         _wordArrayLayout = _teleVM.layoutScheme().wordArrayLayout();
     }
 
-    // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the {@link TeleVM}, assuming that the 
+    // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the {@link TeleVM}, assuming that the
     // static tuple of the class will not be relocated because it is in the boot image.
     private Pointer _teleRootsPointer = Pointer.zero();
 
@@ -55,7 +55,7 @@ public final class TeleRoots {
         if (_teleRootsPointer.isZero()) {
             _teleRootsPointer = _teleVM.fields().TeleHeapInfo_roots.staticTupleReference(_teleVM).toOrigin().plus(_teleVM.fields().TeleHeapInfo_roots.fieldActor().offset());
         }
-        return _teleGripScheme.createTemporaryRemoteTeleGrip(_teleVM.teleProcess().dataAccess().readWord(_teleRootsPointer).asAddress());
+        return _teleGripScheme.createTemporaryRemoteTeleGrip(_teleVM.dataAccess().readWord(_teleRootsPointer).asAddress());
     }
 
     /**

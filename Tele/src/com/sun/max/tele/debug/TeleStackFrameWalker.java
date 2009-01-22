@@ -52,7 +52,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         _teleVM = teleVM;
         _teleNativeThread = teleNativeThread;
         _teleEnabledVmThreadLocalValues = teleNativeThread.stack().enabledVmThreadLocalValues();
-        _dataAccess = teleVM.teleProcess().dataAccess();
+        _dataAccess = teleVM.dataAccess();
         _cpuInstructionPointer = teleNativeThread.instructionPointer();
         _cpuStackPointer = teleNativeThread.stackPointer();
         _cpuFramePointer = teleNativeThread.framePointer();
