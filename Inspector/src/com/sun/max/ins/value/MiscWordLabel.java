@@ -111,7 +111,7 @@ public final class MiscWordLabel extends ValueLabel {
                 final int hashcode = biasedLockWord.getHashcode();
                 final int recursion = biasedLockWord.getRecursionCount();
                 final int ownerThreadID = BiasedLockModeHandler.decodeBiasOwnerThreadID(biasedLockWord);
-                final TeleNativeThread thread = teleVM().teleProcess().idToThread(ownerThreadID);
+                final TeleNativeThread thread = teleVM().getThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 final int biasEpoch = biasedLockWord.getEpoch().toInt();
                 setText("BiasedLock(" + recursion + "): " + hexString);
@@ -122,7 +122,7 @@ public final class MiscWordLabel extends ValueLabel {
                 final int hashcode = thinLockWord.getHashcode();
                 final int recursionCount = thinLockWord.getRecursionCount();
                 final int ownerThreadID = ThinLockModeHandler.decodeLockOwnerThreadID(thinLockWord);
-                final TeleNativeThread thread = teleVM().teleProcess().idToThread(ownerThreadID);
+                final TeleNativeThread thread = teleVM().getThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 setText("ThinLock(" + recursionCount + "): " + hexString);
                 setToolTipText("ThinLockWord64:  recursion=" + recursionCount +   ";  thread=" +

@@ -37,7 +37,6 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleProcess.*;
-import com.sun.max.tele.debug.no.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -112,27 +111,11 @@ public class Inspection extends JFrame {
 
     private final String _bootImageFileName;
 
-    private final TeleProcess _teleProcess;
-
-    protected TeleProcess teleProcess() {
-        return _teleProcess;
-    }
-
-    protected TeleProcessController controller() {
-        return _teleProcess.controller();
-    }
-
     /**
      * @return Is the Inspector in debugging mode with a legitimate process?
      */
     public boolean hasProcess() {
         return !(_inspectionState == InspectionState.NO_PROCESS || _inspectionState == InspectionState.TERMINATED);
-    }
-
-    private final  TeleProcessController _processController;
-
-    protected TeleProcessController processController() {
-        return _processController;
     }
 
     /**
@@ -702,12 +685,10 @@ public class Inspection extends JFrame {
         super(_inspectorName);
         _teleVM = teleVM;
         _bootImageFileName = _teleVM.bootImageFile().getAbsolutePath().toString();
-        _teleProcess = _teleVM.teleProcess();
-        if (!(_teleProcess instanceof ReadOnlyTeleProcess)) {
-            _vmState = State.STOPPED;
+        if (!(teleVM().isReadOnly())) {
+            _presumedState = State.STOPPED;
             _inspectionState = InspectionState.STOPPED;
         }
-        _processController = _teleProcess.controller();
         _teleVMTrace = new TeleVMTrace(teleVM);
         _nameDisplay = new InspectorNameDisplay(this);
         _style = style;
@@ -763,21 +744,17 @@ public class Inspection extends JFrame {
         repaint();
     }
 
-    private State _vmState = null;
-
     /**
      *  Note that there is a delay, as well as a
      * gap in the AWT event queue between the actual change in the
-     * {@link TeleProcess} and the receipt of notification by the
+     * {@link TeleVM} process state and the receipt of notification by the
      * Inspector. This value may not always agree with what's reported by
-     * {@link TeleProcess#state()}.
+     * {@link TeleVM#state()}.
      *
      * @return the presumed state of the {@link TeleVM} as of the
      * most recent update, subject to quantum and other effects.
      */
-    public State vmState() {
-        return _vmState;
-    }
+    private State _presumedState = null;
 
     /**
      * Is the {@link TeleVM} running, as of the most recent state update?
@@ -785,14 +762,14 @@ public class Inspection extends JFrame {
      * queue, between the stopping of the {@link TeleVM} and the receipt of
      * notification by the Inspector (when running asynchronous), so this
      * value may not always agree with what's reported by
-     * {@link TeleProcess#state()}.  In particular, the AWT event
+     * {@link TeleVM#state()}.  In particular, the AWT event
      * queue might initiate new action sequences when the {@link TeleVM}
      * has actually stopped, but before the Inspector receives notification.
      *
      * @return VM state == {@link State#STOPPED}.
      */
     public boolean isVMRunning() {
-        return _vmState == State.RUNNING;
+        return _presumedState == State.RUNNING;
     }
 
     /**
@@ -802,7 +779,7 @@ public class Inspection extends JFrame {
      * @return VM state == {@link State#STOPPED}.
      */
     public boolean isVMReady() {
-        return _vmState == State.STOPPED;
+        return _presumedState == State.STOPPED;
     }
 
     /**
@@ -815,8 +792,8 @@ public class Inspection extends JFrame {
         }
         Trace.begin(1, tracer);
         final long startTimeMillis = System.currentTimeMillis();
-        _vmState = e.newState();
-        switch(_vmState) {
+        _presumedState = e.newState();
+        switch(_presumedState) {
             case STOPPED:
                 if (_teleVM.isInGC()) {
                     _menuBar.setStateColor(style().vmStoppedinGCBackgroundColor());
@@ -855,7 +832,7 @@ public class Inspection extends JFrame {
      */
     void assumeRunning() {
         Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
-        _vmState = State.RUNNING;
+        _presumedState = State.RUNNING;
         _inspectionState = InspectionState.RUNNING;
         _menuBar.setStateColor(style().vmRunningBackgroundColor());
     }
@@ -919,13 +896,11 @@ public class Inspection extends JFrame {
     void initialize() throws IOException {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
-        _inspectionActions.refresh(teleProcess().epoch(), true);
+        _inspectionActions.refresh(teleVM().epoch(), true);
         //Listen for process state changes
-        _teleProcess.addStateListener(new ProcessStateListener());
+        teleVM().addStateListener(new ProcessStateListener());
         // Listen for changes in breakpoints
-        final BreakpointListener breakpointListener = new BreakpointListener();
-        teleVM().teleProcess().targetBreakpointFactory().addListener(breakpointListener);
-        teleVM().bytecodeBreakpointFactory().addListener(breakpointListener);
+        teleVM().addBreakpointListener(new BreakpointListener());
     }
 
     private InspectorAction _currentAction = null;
@@ -1027,7 +1002,7 @@ public class Inspection extends JFrame {
      * @param force suspend caching behavior; reload state unconditionally.
      */
     public synchronized void refreshAll(boolean force) {
-        final long epoch = teleProcess().epoch();
+        final long epoch = teleVM().epoch();
         Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : _inspectionListeners.clone()) {
@@ -1047,7 +1022,7 @@ public class Inspection extends JFrame {
      * may have changed; forces state reload from the {@link TeleVM}.
      */
     public synchronized void updateViewConfiguration() {
-        final long epoch = teleProcess().epoch();
+        final long epoch = teleVM().epoch();
         for (InspectionListener listener : _inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
             listener.viewConfigurationChanged(epoch);
@@ -1061,20 +1036,20 @@ public class Inspection extends JFrame {
      * Then updates all view state as needed.
      */
     public void updateAfterVMStopped(long epoch) {
-        assert teleProcess().state() == State.STOPPED;
+        assert _teleVM.state() == State.STOPPED;
         setBusy(true);
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set
 
         Trace.begin(TRACE_VALUE, _threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final IterableWithLength<TeleNativeThread> deadThreads = teleProcess().deadThreads();
-        final IterableWithLength<TeleNativeThread> startedThreads = teleProcess().startedThreads();
+        final IterableWithLength<TeleNativeThread> deadThreads = teleVM().recentlyDiedThreads();
+        final IterableWithLength<TeleNativeThread> startedThreads = teleVM().recentlyCreatedThreads();
         if (deadThreads.length() != 0 || startedThreads.length() != 0) {
             for (InspectionListener listener : listeners) {
                 listener.threadSetChanged(epoch);
             }
-            for (TeleNativeThread teleNativeThread : teleVM().allThreads()) {
+            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
                 for (InspectionListener listener : listeners) {
                     listener.threadStateChanged(teleNativeThread);
                 }
@@ -1091,7 +1066,7 @@ public class Inspection extends JFrame {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
             boolean atBreakpoint = false;
-            for (TeleNativeThread teleNativeThread : teleVM().allThreads()) {
+            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
                 if (teleNativeThread.breakpoint() != null) {
                     focus().setThread(teleNativeThread);
                     atBreakpoint = true;
@@ -1163,13 +1138,9 @@ public class Inspection extends JFrame {
      * Saves any persistent state, then shuts down {@link TeleVM} process and inspection.
      */
     public void quit() {
+        settings().quit();
         try {
-            settings().quit();
-            if (hasProcess()) {
-                teleVM().teleProcess().controller().terminate();
-            }
-        } catch (Throwable throwable) {
-            ProgramWarning.message("error during shutdown - but we quit anyway: " + throwable);
+            teleVM().terminate();
         } finally {
             Trace.line(1, tracePrefix() + " exiting, Goodbye");
             System.exit(0);

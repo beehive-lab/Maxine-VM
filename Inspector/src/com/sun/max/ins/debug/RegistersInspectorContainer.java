@@ -52,7 +52,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
         if (registersInspectorContainer == null) {
             Trace.begin(1, "[RegistersInspector] initializing");
             registersInspectorContainer = new RegistersInspectorContainer(inspection, Residence.INTERNAL);
-            for (TeleNativeThread thread : inspection.teleVM().teleProcess().threads()) {
+            for (TeleNativeThread thread : inspection.teleVM().threads()) {
                 registersInspectorContainer.add(new RegistersInspector(inspection, thread, registersInspectorContainer));
             }
             Trace.end(1, "[RegistersInspector] initializing");
@@ -134,7 +134,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
                 for (RegistersInspector registersInspector : this) {
                     registersInspector.setMarked(true);
                 }
-                for (TeleNativeThread thread : teleVM().teleProcess().threads()) {
+                for (TeleNativeThread thread : teleVM().threads()) {
                     final UniqueInspector.Key<RegistersInspector> key = UniqueInspector.Key.create(RegistersInspector.class, LongValue.from(thread.id()));
                     final RegistersInspector registersInspector = UniqueInspector.find(inspection(), key);
                     if (registersInspector == null) {

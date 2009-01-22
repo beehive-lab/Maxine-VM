@@ -60,7 +60,7 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
      * @return the name assigned to the thread in the {@link TeleVM}; may change dynamically.
      */
     public String name() {
-        if (teleProcess().epoch() > _epoch) {
+        if (teleVM().epoch() > _epoch) {
             final Reference nameReference = teleVM().fields().VmThread_name.readReference(reference());
             if (_nameReference == null || !nameReference.equals(_nameReference)) {
                 // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
@@ -68,7 +68,7 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
                 _nameReference = nameReference;
                 _name = teleVM().getString(_nameReference);
             }
-            _epoch = teleProcess().epoch();
+            _epoch = teleVM().epoch();
         }
         return _name;
     }
@@ -77,7 +77,7 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
      * @return the native thread in the {@link TeleVM} with which this VM thread is associated.
      */
     public TeleNativeThread teleNativeThread() {
-        for (TeleNativeThread teleNativeThread : teleProcess().threads()) {
+        for (TeleNativeThread teleNativeThread : teleVM().threads()) {
             if (this.equals(teleNativeThread.teleVmThread())) {
                 return teleNativeThread;
             }

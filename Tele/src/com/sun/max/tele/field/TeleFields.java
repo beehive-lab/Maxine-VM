@@ -64,7 +64,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public class TeleFields extends TeleVMHolder {
+public class TeleFields extends AbstractTeleVMHolder {
 
     public TeleFields(TeleVM teleVM) {
         super(teleVM);

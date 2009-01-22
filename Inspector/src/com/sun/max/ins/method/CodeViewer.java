@@ -73,7 +73,7 @@ public abstract class CodeViewer extends InspectorPanel {
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
     public void updateThreadFocus(TeleNativeThread teleNativeThread) {
-        final long epoch = teleVM().teleProcess().epoch();
+        final long epoch = teleVM().epoch();
         updateCaches(epoch, false);
     }
 

@@ -81,7 +81,7 @@ public final class LinuxTeleVM extends TeleVM {
         } finally {
             if (heap.isZero()) {
                 try {
-                    teleProcess().controller().terminate();
+                    terminate();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

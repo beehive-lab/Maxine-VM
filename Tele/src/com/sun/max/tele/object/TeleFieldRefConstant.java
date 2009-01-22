@@ -62,7 +62,7 @@ public abstract class TeleFieldRefConstant extends TelePoolConstant {
          */
         public TeleFieldActor getTeleFieldActor() {
             final Reference fieldActorReference = teleVM().fields().FieldRefConstant$Resolved_fieldActor.readReference(reference());
-            return (TeleFieldActor) makeTeleObject(fieldActorReference);
+            return (TeleFieldActor) teleVM().makeTeleObject(fieldActorReference);
         }
 
         @Override

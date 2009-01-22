@@ -43,7 +43,7 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public class TeleMethods extends TeleVMHolder {
+public class TeleMethods extends AbstractTeleVMHolder {
 
     public TeleMethods(TeleVM teleVM) {
         super(teleVM);

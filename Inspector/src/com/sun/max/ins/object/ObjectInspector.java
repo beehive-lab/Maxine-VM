@@ -68,7 +68,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
      *
      * @author Michael Van De Vanter
      */
-    public static final class Manager extends InspectionHolder {
+    public static final class Manager extends AbstractInspectionHolder {
 
         private Manager(Inspection inspection) {
             super(inspection);

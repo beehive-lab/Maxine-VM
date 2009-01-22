@@ -75,8 +75,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
         }
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the {@link TeleVM}.
-        _inspection.teleVM().teleProcess().targetBreakpointFactory().addListener(this);
-        _inspection.teleVM().bytecodeBreakpointFactory().addListener(this);
+        _inspection.teleVM().addBreakpointListener(this);
     }
 
     public String name() {
@@ -110,7 +109,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
     }
 
     private void saveTargetCodeBreakpoints(SaveSettingsEvent settings) {
-        final IterableWithLength<TeleTargetBreakpoint> targetBreakpoints = _inspection.teleVM().teleProcess().targetBreakpointFactory().breakpoints(true);
+        final IterableWithLength<TeleTargetBreakpoint> targetBreakpoints = _inspection.teleVM().targetBreakpoints();
         settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.length());
         int index = 0;
         for (TeleTargetBreakpoint breakpoint : targetBreakpoints) {
@@ -133,7 +132,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
             final String condition = settings.get(this, prefix + "." + CONDITION_KEY, OptionTypes.STRING_TYPE, null);
             if (_inspection.teleVM().teleCodeManager().contains(address)) {
                 try {
-                    final TeleTargetBreakpoint teleBreakpoint = _inspection.teleVM().teleProcess().targetBreakpointFactory().makeBreakpoint(address, false);
+                    final TeleTargetBreakpoint teleBreakpoint = _inspection.teleVM().makeTargetBreakpoint(address);
                     if (condition != null) {
                         teleBreakpoint.setCondition(new BreakpointCondition(_inspection.teleVM(), condition));
                     }
@@ -151,7 +150,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
 
     private void saveBytecodeBreakpoints(SaveSettingsEvent settings) {
         int index;
-        final Sequence<TeleBytecodeBreakpoint> bytecodeBreakpoints = _inspection.teleVM().bytecodeBreakpointFactory().breakpoints();
+        final Sequence<TeleBytecodeBreakpoint> bytecodeBreakpoints = _inspection.teleVM().bytecodeBreakpoints();
         settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, bytecodeBreakpoints.length());
         index = 0;
         for (TeleBytecodeBreakpoint breakpoint : bytecodeBreakpoints) {
@@ -176,7 +175,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
             final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
 
-            final TeleBytecodeBreakpoint breakpoint = _inspection.teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition), false);
+            final TeleBytecodeBreakpoint breakpoint = _inspection.teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
             breakpoint.setEnabled(enabled);
             if (enabled) {
                 breakpoint.activate();

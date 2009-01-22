@@ -34,7 +34,7 @@ import com.sun.max.util.*;
  *
  * @author Mick Jordan
  */
-public class BreakpointCondition extends TeleVMHolder {
+public class BreakpointCondition extends AbstractTeleVMHolder {
 
     private String _condition;
     private StreamTokenizer _streamTokenizer;
@@ -491,7 +491,7 @@ public class BreakpointCondition extends TeleVMHolder {
 
         @Override
         Expression evaluate() {
-            return new NumberExpression(teleProcess().dataAccess().readLong(_address));
+            return new NumberExpression(teleVM().dataAccess().readLong(_address));
         }
     }
 

@@ -317,7 +317,7 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
                 }
             }
 
-            for (TeleNativeThread thread : teleProcess().threads()) {
+            for (TeleNativeThread thread : teleVM().threads()) {
                 _sortedMemoryRegions.add(new StackRegionDisplay(thread.stack()));
             }
 

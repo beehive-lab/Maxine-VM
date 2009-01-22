@@ -34,7 +34,9 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.TeleViewModel.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.debug.TeleBytecodeBreakpoint.*;
 import com.sun.max.tele.debug.TeleProcess.*;
 import com.sun.max.tele.debug.darwin.*;
 import com.sun.max.tele.debug.guestvm.xen.*;
@@ -276,7 +278,7 @@ public abstract class TeleVM {
 
     private final TeleProcess _teleProcess;
 
-    public TeleProcess teleProcess() {
+    protected TeleProcess teleProcess() {
         return _teleProcess;
     }
 
@@ -351,7 +353,7 @@ public abstract class TeleVM {
         _fields = new TeleFields(this);
         _methods = new TeleMethods(this);
 
-        _teleObjectManager = TeleObjectManager.make(this);
+        _teleObjectFactory = TeleObjectFactory.make(this);
         _teleHeapManager = TeleHeapManager.make(this);
 
         // Provide access to JDWP server
@@ -418,6 +420,10 @@ public abstract class TeleVM {
         return vmConfiguration().monitorScheme();
     }
 
+    public DataAccess dataAccess() {
+        return _teleProcess.dataAccess();
+    }
+
     /**
      * @param address a memory location in the {@link TeleVM}.
      *
@@ -439,7 +445,7 @@ public abstract class TeleVM {
         if (memoryRegion == null) {
             memoryRegion = _teleCodeManager.regionContaining(address);
             if (memoryRegion == null) {
-                final TeleNativeThread thread = teleProcess().threadContaining(address);
+                final TeleNativeThread thread = getThread(address);
                 if (thread != null) {
                     memoryRegion = thread.stack();
                 }
@@ -454,7 +460,7 @@ public abstract class TeleVM {
      *         regions, or a stack region of the VM.
      */
     public boolean heapOrCodeOrStackContains(Address address) {
-        return heapOrCodeContains(address) || teleProcess().threadContaining(address) != null;
+        return heapOrCodeContains(address) || getThread(address) != null;
     }
 
     private RemoteTeleGrip createTemporaryRemoteTeleGrip(Word rawGrip) {
@@ -488,7 +494,7 @@ public abstract class TeleVM {
         }
         if (_bootImage.vmConfiguration().buildLevel() == BuildLevel.DEBUG) {
             try {
-                final Word tag = teleProcess().dataAccess().getWord(cell, 0, -1);
+                final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);
             } catch (DataIOError dataAccessError) {
                 return false;
@@ -553,7 +559,7 @@ public abstract class TeleVM {
     }
 
     public Reference readReference(Address pointer) {
-        return wordToReference(teleProcess().dataAccess().readWord(pointer));
+        return wordToReference(dataAccess().readWord(pointer));
     }
 
     public Reference readReference(Reference reference, int offset) {
@@ -562,7 +568,7 @@ public abstract class TeleVM {
     }
 
     public Reference getReference(Address pointer, int index) {
-        return wordToReference(teleProcess().dataAccess().getWord(pointer, 0,
+        return wordToReference(dataAccess().getWord(pointer, 0,
                 index));
     }
 
@@ -710,18 +716,18 @@ public abstract class TeleVM {
         }
     }
 
-    private final TeleObjectManager _teleObjectManager;
+    private final TeleObjectFactory _teleObjectFactory;
 
     /**
      * @param reference an object in the {@link TeleVM}
      * @return a canonical local surrogate for the object
      */
     public TeleObject makeTeleObject(Reference reference) {
-        return _teleObjectManager.make(reference);
+        return _teleObjectFactory.make(reference);
     }
 
     public TeleObject lookupObject(long id) {
-        return _teleObjectManager.lookupObject(id);
+        return _teleObjectFactory.lookupObject(id);
     }
 
     private TeleCodeManager _teleCodeManager;
@@ -825,34 +831,193 @@ public abstract class TeleVM {
         return originToReference(layoutScheme().generalLayout().cellToOrigin(cell));
     }
 
-    public void advanceToJavaEntryPoint() throws IOException {
-        _messenger.enable();
-        final Address startEntryPoint = bootImageStart().plus(bootImage().header()._vmRunMethodOffset);
-        try {
-            teleProcess().controller().runToInstruction(startEntryPoint, true, false);
-        } catch (Exception exception) {
-            throw new IOException(exception);
-        }
+    /**
+     * @return access to process commands
+     */
+    public final TeleProcessController controller() {
+        return _teleProcess.controller();
     }
 
     /**
-     * @return a collection of all current threads in the targetVM, ordered by
-     *         threadID.
+     * @return process state
      */
-    public IterableWithLength<TeleNativeThread> allThreads() {
+    public State state() {
+        return _teleProcess.state();
+    }
+
+    /**
+     * @param listener will be notified of changes to {@link TeleVM#state()}.
+     */
+    public void addStateListener(StateTransitionListener listener) {
+        _teleProcess.addStateListener(listener);
+    }
+
+    /**
+     * @return the number of discrete execution steps of the VM process since it was created.
+     */
+    public final long epoch() {
+        return _teleProcess.epoch();
+    }
+
+    /**
+     * @return a collection of all current threads in the VM, ordered by threadID.
+     */
+    public final IterableWithLength<TeleNativeThread> threads() {
         return _teleProcess.threads();
+    }
+
+    /**
+     * @return threads created since the previous {@link #epoch()}.
+     */
+    public final IterableWithLength<TeleNativeThread> recentlyCreatedThreads() {
+        return _teleProcess.recentlyCreatedThreads();
+    }
+
+    /**
+     * @return threads died since the previous {@link #epoch()}.
+     */
+    public final IterableWithLength<TeleNativeThread> recentlyDiedThreads() {
+        return _teleProcess.recentlyDiedThreads();
+    }
+
+    /**
+     * @param threadID
+     * @return the thread associated with the id, null if none exists.
+     */
+    public final TeleNativeThread getThread(long threadID) {
+        return _teleProcess.idToThread(threadID);
+    }
+
+    /**
+     * @param address an address in the VM
+     * @return thread whose stack contains the address, null if none.
+     */
+    public final TeleNativeThread getThread(Address address) {
+        return _teleProcess.threadContaining(address);
     }
 
     /**
      * @return Whether the thread is a known thread.
      */
-    public boolean isValidThread(TeleNativeThread thread) {
+    public final boolean isValidThread(TeleNativeThread thread) {
         for (TeleNativeThread teleNativeThread : _teleProcess.threads()) {
             if (thread == teleNativeThread) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * @param listener will be notified whenever breakpoints in VM change.
+     */
+    public final void addBreakpointListener(Listener listener) {
+        _teleProcess.targetBreakpointFactory().addListener(listener);
+        _bytecodeBreakpointFactory.addListener(listener);
+    }
+
+    /**
+     * @return all existing target code breakpoints in the VM, ignoring transients
+     */
+    public final IterableWithLength<TeleTargetBreakpoint> targetBreakpoints() {
+        return _teleProcess.targetBreakpointFactory().breakpoints(true);
+    }
+
+    /**
+     * @return the number of target code breakpoints in the VM, ignoring transients
+     */
+    public final int targetBreakpointCount() {
+        return _teleProcess.targetBreakpointFactory().size(true);
+    }
+
+    /**
+     * @param address a code address in the VM.
+     * @return a possibly new, non-transient, target code breakpoint
+     */
+    public final TeleTargetBreakpoint makeTargetBreakpoint(Address address) {
+        return _teleProcess.targetBreakpointFactory().makeBreakpoint(address, false);
+    }
+
+    /**
+     * @param address an address in the VM
+     * @return an ordinary, non-transient target code breakpoint at the address in VM, null if none exists.
+     */
+    public final TeleTargetBreakpoint getTargetBreakpoint(Address address) {
+        return _teleProcess.targetBreakpointFactory().getNonTransientBreakpointAt(address);
+    }
+
+    public final void removeTargetBreakpoint(Address address) {
+        _teleProcess.targetBreakpointFactory().removeBreakpointAt(address);
+    }
+
+   /**
+     * Removes all target code breakpoints.
+     */
+    public final void removeAllTargetBreakpoints() {
+        _teleProcess.targetBreakpointFactory().removeAllBreakpoints();
+    }
+
+    private final TeleBytecodeBreakpoint.Factory _bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(this);
+
+    /**
+     * @return all existing bytecode breakpoints in the VM
+     */
+    public final Sequence<TeleBytecodeBreakpoint> bytecodeBreakpoints() {
+        return _bytecodeBreakpointFactory.breakpoints();
+    }
+
+    /**
+     * @return the number of target code breakpoints in the VM, ignoring transients
+     */
+    public final int bytecodeBreakpointCount() {
+        return _bytecodeBreakpointFactory.size();
+    }
+
+    /**
+     * @param key description of a bytecode position in a method
+     * @return a possibly new, non-transient, enabled bytecode breakpoint
+     */
+    public final TeleBytecodeBreakpoint makeBytecodeBreakpoint(Key key) {
+        return _bytecodeBreakpointFactory.makeBreakpoint(key, false);
+    }
+
+    /**
+     * @param key description of a bytecode position in a method
+     * @return an ordinary, non-transient bytecode breakpoint, null if doesn't exist
+     */
+    public final TeleBytecodeBreakpoint getBytecodeBreakpoint(Key key) {
+        return _bytecodeBreakpointFactory.getBreakpoint(key);
+    }
+
+    /**
+     * Removes all bytecode breakpoints.
+     */
+    public final void removeAllBytecodeBreakpoints() {
+        _bytecodeBreakpointFactory.removeAllBreakpoints();
+    }
+
+    /**
+     * @param memoryRegion a memory region in the VM
+     * @return a possibly new memory watchpoint
+     */
+    public TeleWatchpoint makeWatchpoint(MemoryRegion memoryRegion) {
+        return _teleProcess.watchpointFactory().makeWatchpoint(memoryRegion);
+    }
+
+    /**
+     * @param level sets debugging trace level for the transport
+     * mechanism that communicates with the target VM.
+     */
+    public void setTransportDebugLevel(int level) {
+        _teleProcess.setTransportDebugLevel(level);
+    }
+
+    /**
+     * @return debugging trace level for the transport
+     * mechanism that communicates with the target VM.
+     */
+    public int transportDebugLevel() {
+        return _teleProcess.transportDebugLevel();
     }
 
     private boolean _isInGC = false;
@@ -926,9 +1091,30 @@ public abstract class TeleVM {
         if (areReferencesValid()) {
             _teleHeapManager.refresh(processEpoch);
             _teleClassRegistry.refresh(processEpoch);
-            _teleObjectManager.refresh(processEpoch);
+            _teleObjectFactory.refresh(processEpoch);
         }
         Trace.end(TRACE_VALUE, _refreshTracer, startTimeMillis);
+    }
+
+    public void advanceToJavaEntryPoint() throws IOException {
+        _messenger.enable();
+        final Address startEntryPoint = bootImageStart().plus(bootImage().header()._vmRunMethodOffset);
+        try {
+            controller().runToInstruction(startEntryPoint, true, false);
+        } catch (Exception exception) {
+            throw new IOException(exception);
+        }
+    }
+
+    /**
+     * Shuts down the VM process.
+     */
+    public void terminate() {
+        try {
+            _teleProcess.controller().terminate();
+        } catch (Throwable throwable) {
+            ProgramWarning.message("error during process termination: " + throwable);
+        }
     }
 
     public ReferenceValue createReferenceValue(Reference value) {
@@ -959,13 +1145,6 @@ public abstract class TeleVM {
         return _messenger;
     }
 
-    private final TeleBytecodeBreakpoint.Factory _bytecodeBreakpointFactory = new TeleBytecodeBreakpoint.Factory(
-            this);
-
-    public TeleBytecodeBreakpoint.Factory bytecodeBreakpointFactory() {
-        return _bytecodeBreakpointFactory;
-    }
-
     //
     // Code from here to end of file supports the Maxine JDWP server
     //
@@ -984,10 +1163,10 @@ public abstract class TeleVM {
     }
 
     public void fireJDWPThreadEvents() {
-        for (TeleNativeThread thread : _teleProcess.deadThreads()) {
+        for (TeleNativeThread thread : _teleProcess.recentlyDiedThreads()) {
             fireJDWPThreadDiedEvent(thread);
         }
-        for (TeleNativeThread thread : _teleProcess.startedThreads()) {
+        for (TeleNativeThread thread : _teleProcess.recentlyCreatedThreads()) {
             fireJDWPThreadStartedEvent(thread);
         }
     }
@@ -1093,14 +1272,11 @@ public abstract class TeleVM {
      */
     public Value readValue(Kind kind, Pointer pointer, int offset) {
 
-        final Reference reference = teleProcess().teleVM().originToReference(
-                pointer);
+        final Reference reference = originToReference(pointer);
 
         if (kind == Kind.REFERENCE) {
-            final Word word = teleProcess().dataAccess().readWord(pointer,
-                    offset);
-            return TeleReferenceValue.from(teleProcess().teleVM(),
-                    teleProcess().teleVM().wordToReference(word));
+            final Word word = dataAccess().readWord(pointer, offset);
+            return TeleReferenceValue.from(this, wordToReference(word));
         }
 
         final Value result = kind.readValue(reference, offset);
@@ -1333,10 +1509,10 @@ public abstract class TeleVM {
 
         public void suspend() {
 
-            if (teleProcess().state() == TeleProcess.State.RUNNING) {
+            if (state() == TeleProcess.State.RUNNING) {
                 LOGGER.info("Pausing VM...");
                 try {
-                    teleProcess().controller().pause();
+                    controller().pause();
                 } catch (OSExecutionRequestException osExecutionRequestException) {
                     LOGGER.log(Level.SEVERE,
                             "Unexpected error while pausing the VM", osExecutionRequestException);
@@ -1352,7 +1528,7 @@ public abstract class TeleVM {
 
         public void resume() {
 
-            if (teleProcess().state() == TeleProcess.State.STOPPED) {
+            if (state() == TeleProcess.State.STOPPED) {
 
                 if (_registeredSingleStepThread != null) {
 
@@ -1360,7 +1536,7 @@ public abstract class TeleVM {
                     // step => perform single step instead of resume.
                     try {
                         LOGGER.info("Doing single step instead of resume!");
-                        teleProcess().controller().singleStep(_registeredSingleStepThread, false);
+                        controller().singleStep(_registeredSingleStepThread, false);
                     } catch (OSExecutionRequestException osExecutionRequestException) {
                         LOGGER.log(
                                         Level.SEVERE,
@@ -1383,7 +1559,7 @@ public abstract class TeleVM {
                     final Address returnAddress = _registeredStepOutThread.getReturnAddress();
                     assert returnAddress != null;
                     try {
-                        teleProcess().controller().runToInstruction(returnAddress, false, true);
+                        controller().runToInstruction(returnAddress, false, true);
                     } catch (OSExecutionRequestException osExecutionRequestException) {
                         LOGGER.log(
                                         Level.SEVERE,
@@ -1403,7 +1579,7 @@ public abstract class TeleVM {
                     // Nobody registered for special commands => resume the Vm.
                     try {
                         LOGGER.info("Client tried to resume the VM!");
-                        teleProcess().controller().resume(false, false);
+                        controller().resume(false, false);
                     } catch (OSExecutionRequestException e) {
                         LOGGER.log(Level.SEVERE,
                                 "Unexpected error while resuming the VM", e);
@@ -1418,8 +1594,7 @@ public abstract class TeleVM {
         }
 
         public void exit(int code) {
-            // TODO: Consider implementing exiting the VM when told so by a JDWP command.
-            LOGGER.warning("Asked to EXIT VM, doing nothing");
+            terminate();
         }
 
         public void addListener(VMListener listener) {
@@ -1453,15 +1628,13 @@ public abstract class TeleVM {
             _breakpointLocations.add(codeLocation);
             assert _breakpointLocations.contains(codeLocation);
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            teleProcess().targetBreakpointFactory().makeBreakpoint(
-                    teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint(), false);
+            makeTargetBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
             Trace.line(TRACE_VALUE, tracePrefix() + "Breakpoint set at: " + teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
         }
 
         public void removeBreakpoint(CodeLocation codeLocation) {
             final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) codeLocation.method();
-            teleProcess().targetBreakpointFactory().removeBreakpointAt(
-                    teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
+            removeTargetBreakpoint(teleClassMethodActor.getCurrentJavaTargetMethod().callEntryPoint());
             assert _breakpointLocations.contains(codeLocation);
             _breakpointLocations.remove(codeLocation);
             assert !_breakpointLocations.contains(codeLocation);
@@ -1470,7 +1643,7 @@ public abstract class TeleVM {
         public byte[] accessMemory(long start, int length) {
             final byte[] result = new byte[length];
             final Address address = Address.fromLong(start);
-            teleProcess().dataAccess().read(address, result, 0, length);
+            dataAccess().read(address, result, 0, length);
             return result;
         }
 
@@ -1538,8 +1711,8 @@ public abstract class TeleVM {
         }
 
         public ThreadProvider[] getAllThreads() {
-            final ThreadProvider[] threadProviders = new ThreadProvider[allThreads().length()];
-            return Iterables.toCollection(allThreads()).toArray(threadProviders);
+            final ThreadProvider[] threadProviders = new ThreadProvider[threads().length()];
+            return Iterables.toCollection(threads()).toArray(threadProviders);
         }
 
         public String[] getBootClassPath() {

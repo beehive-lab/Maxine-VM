@@ -48,7 +48,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
     }
 
     public void setTeleVM(TeleVM teleVM) {
-        _dataAccess = teleVM.teleProcess().dataAccess();
+        _dataAccess = teleVM.dataAccess();
         _teleVM = teleVM;
         _teleRoots = new TeleRoots(this);
     }

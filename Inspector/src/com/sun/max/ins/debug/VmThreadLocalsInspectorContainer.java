@@ -52,7 +52,7 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
         if (threadLocalsInspectorContainer == null) {
             Trace.begin(1, "[VmThreadLocalsInspector] initializing");
             threadLocalsInspectorContainer = new VmThreadLocalsInspectorContainer(inspection, Residence.INTERNAL);
-            for (TeleNativeThread thread : inspection.teleVM().teleProcess().threads()) {
+            for (TeleNativeThread thread : inspection.teleVM().threads()) {
                 threadLocalsInspectorContainer.add(new VmThreadLocalsInspector(inspection, thread, threadLocalsInspectorContainer));
             }
             Trace.end(1, "[VmThreadLocalsInspector] initializing");
@@ -135,7 +135,7 @@ public final class VmThreadLocalsInspectorContainer extends TabbedInspector<VmTh
                 for (VmThreadLocalsInspector threadLocalsInspector : this) {
                     threadLocalsInspector.setMarked(true);
                 }
-                for (TeleNativeThread thread : teleVM().teleProcess().threads()) {
+                for (TeleNativeThread thread : teleVM().threads()) {
                     final UniqueInspector.Key<VmThreadLocalsInspector> key = UniqueInspector.Key.create(VmThreadLocalsInspector.class, LongValue.from(thread.id()));
                     final VmThreadLocalsInspector threadLocalsInspector = UniqueInspector.find(inspection(), key);
                     if (threadLocalsInspector == null) {

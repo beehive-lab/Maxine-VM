@@ -91,7 +91,7 @@ public final class TargetMethodMenuItems implements InspectorMenuItems {
         _inspectTargetMethodAction = new InspectTargetMethodAction();
         _viewTargetMethodCodeAction = new ViewTargetMethodCodeAction();
         _targetCodeBreakOnEntryAction = new TargetCodeBreakOnEntryAction();
-        refresh(_inspection.teleVM().teleProcess().epoch(), true);
+        refresh(_inspection.teleVM().epoch(), true);
     }
 
     public void addTo(InspectorMenu menu) {

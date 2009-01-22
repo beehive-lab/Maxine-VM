@@ -28,7 +28,7 @@ import com.sun.max.tele.method.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class TeleBreakpoint extends TeleVMHolder {
+public abstract class TeleBreakpoint extends AbstractTeleVMHolder {
 
     private final boolean _isTransient;
 

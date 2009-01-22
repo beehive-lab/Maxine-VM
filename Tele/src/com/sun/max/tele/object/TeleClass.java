@@ -43,7 +43,7 @@ public final class TeleClass extends TeleTupleObject implements ClassObjectProvi
      */
     public TeleClassActor getTeleClassActor() {
         final Reference classActorReference = teleVM().fields().Class_classActor.readReference(reference());
-        final TeleClassActor teleClassActor = (TeleClassActor) makeTeleObject(classActorReference);
+        final TeleClassActor teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         return teleClassActor;
     }
 

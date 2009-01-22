@@ -43,6 +43,7 @@ import com.sun.max.vm.type.*;
 public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
     private TeleCodeLocation _teleCodeLocation;
+    private final Factory _factory;
 
     @Override
     public TeleCodeLocation teleCodeLocation() {
@@ -54,9 +55,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
      */
     private AppendableSequence<TeleTargetBreakpoint> _teleTargetBreakpoints;
 
-    private TeleBytecodeBreakpoint(TeleVM teleVM, Key key, boolean isTransient) {
+    private TeleBytecodeBreakpoint(TeleVM teleVM, Factory factory, Key key, boolean isTransient) {
         super(teleVM, isTransient);
         _teleCodeLocation = new TeleCodeLocation(teleVM, key);
+        _factory = factory;
     }
 
     /**
@@ -91,17 +93,17 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         for (i = 0; i < teleTargetMethod.numberOfDirectCalls(); i++) {
             final Pointer callSite = teleTargetMethod.codeStart().plus(stopPositions[i]);
             final Pointer patchAddress = callSite.plus(makeDeoptimizer().directCallSize());
-            teleProcess().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
+            teleVM().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
         }
         for (; i < teleTargetMethod.numberOfIndirectCalls(); i++) {
             final Pointer callSite = teleTargetMethod.codeStart().plus(stopPositions[i]);
-            final byte firstInstructionByte = teleProcess().dataAccess().readByte(callSite);
+            final byte firstInstructionByte = teleVM().dataAccess().readByte(callSite);
             final Pointer patchAddress = callSite.plus(makeDeoptimizer().indirectCallSize(firstInstructionByte));
-            teleProcess().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
+            teleVM().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
         }
         for (; i < teleTargetMethod.numberOfSafepoints(); i++) {
             final Pointer safepoint = teleTargetMethod.codeStart().plus(stopPositions[i]);
-            teleProcess().dataAccess().writeBytes(safepoint, makeDeoptimizer().illegalInstruction());
+            teleVM().dataAccess().writeBytes(safepoint, makeDeoptimizer().illegalInstruction());
         }
     }
 
@@ -119,7 +121,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
                     final int targetCodePosition = bytecodeToTargetCodePositionMap[key()._bytecodePosition];
                     final Address targetAddress = teleTargetMethod.codeStart().plus(targetCodePosition);
-                    final TeleTargetBreakpoint teleTargetBreakpoint = teleProcess().targetBreakpointFactory().makeBreakpoint(targetAddress, false);
+                    final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpoint(targetAddress);
                     teleTargetBreakpoint.setEnabled(true);
                     _teleTargetBreakpoints.append(teleTargetBreakpoint);
                 } else {
@@ -142,7 +144,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
                     final int targetCodePosition = bytecodeToTargetCodePositionMap[key()._bytecodePosition];
                     final Address targetAddress = teleTargetMethod.codeStart().plus(targetCodePosition);
-                    teleProcess().targetBreakpointFactory().removeBreakpointAt(targetAddress);
+                    teleVM().removeTargetBreakpoint(targetAddress);
                     // Assume for now the whole VM is stopped; there will be races to be fixed otherwise, likely with an agent thread in the {@link TeleVM}.
                 }
             }
@@ -157,7 +159,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     @Override
     public void remove() {
         dispose();
-        teleVM().bytecodeBreakpointFactory().removeBreakpoint(key());
+        _factory.removeBreakpoint(key());
     }
 
     private boolean _enabled;
@@ -293,9 +295,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
         }
 
         private TeleBytecodeBreakpoint createBreakpoint(Key key, boolean persistent) {
-            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(_teleVM, key, false);
+            final TeleBytecodeBreakpoint breakpoint = new TeleBytecodeBreakpoint(_teleVM, this, key, false);
             _breakpoints.put(key, breakpoint);
-            refreshView(_teleVM.teleProcess().epoch());
+            refreshView(_teleVM.epoch());
             return breakpoint;
         }
 
@@ -319,7 +321,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
          */
         private synchronized void removeBreakpoint(Key key) {
             _breakpoints.remove(key);
-            refreshView(_teleVM.teleProcess().epoch());
+            refreshView(_teleVM.epoch());
         }
 
         /**
@@ -330,7 +332,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                 teleBytecodeBreakpoint.dispose();
             }
             _breakpoints.clear();
-            refreshView(_teleVM.teleProcess().epoch());
+            refreshView(_teleVM.epoch());
         }
     }
 }

@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
  * @author Michael Van De Vanter
  *
  */
-public class TeleCodeLocation extends TeleVMHolder {
+public class TeleCodeLocation extends AbstractTeleVMHolder {
     // TODO (mlvdv) TeleCodeLocation is a crude place holder; replace with subclasses
     // TODO (mlvdv) TeleCodeLocation: map among location kinds; handle ranges; handle source locations
 

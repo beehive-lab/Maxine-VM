@@ -72,7 +72,7 @@ public abstract class ValueLabel extends InspectorLabel {
      */
     protected final void initializeValue() {
         _value = fetchValue();
-        _epoch = teleVM().teleProcess().epoch();
+        _epoch = teleVM().epoch();
     }
 
     /**

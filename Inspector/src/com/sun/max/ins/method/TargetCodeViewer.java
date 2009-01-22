@@ -331,7 +331,7 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
      * Does the instruction address have a target code breakpoint set in the {@link TeleVM}.
      */
     protected TeleTargetBreakpoint getTargetBreakpointAtRow(int row) {
-        return teleVM().teleProcess().targetBreakpointFactory().getNonTransientBreakpointAt(targetCodeInstructionAt(row).address());
+        return teleVM().getTargetBreakpoint(targetCodeInstructionAt(row).address());
     }
 
     protected final Color rowToBackgroundColor(int row) {

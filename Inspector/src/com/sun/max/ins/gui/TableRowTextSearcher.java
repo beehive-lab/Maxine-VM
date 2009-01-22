@@ -37,7 +37,7 @@ import com.sun.max.ins.*;
  * @author Michael Van De Vanter
  * @see {@link java.util.regexp.Pattern}
  */
-public class TableRowTextSearcher extends InspectionHolder implements RowTextSearcher {
+public class TableRowTextSearcher extends AbstractInspectionHolder implements RowTextSearcher {
 
     private final JTable _table;
 

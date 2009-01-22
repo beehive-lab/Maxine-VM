@@ -78,7 +78,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     public LocalsInspector(Inspection inspection, Residence residence, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
         super(inspection, residence, LongValue.from(jitStackFrame.framePointer().toLong()));
         assert jitStackFrame.targetMethod().compilerScheme() == teleVM().vmConfiguration().jitScheme();
-        _dataAccess = teleProcess().dataAccess();
+        _dataAccess = teleVM().dataAccess();
         _teleNativeThread = teleNativeThread;
         _jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();

@@ -96,7 +96,7 @@ public final class ClassActorLabel extends InspectorLabel {
         setFont(style().javaClassNameFont());
         setForeground(style().javaNameColor());
         setBackground(style().javaNameBackgroundColor());
-        refresh(teleVM().teleProcess().epoch(), true);
+        refresh(teleVM().epoch(), true);
     }
 
     private TeleClassActor _teleClassActor;

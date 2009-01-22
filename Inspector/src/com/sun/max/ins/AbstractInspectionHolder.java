@@ -18,53 +18,58 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package com.sun.max.ins;
 
-import com.sun.max.tele.debug.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 
 /**
- * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
+ * Convenience methods for classes holding various parts of the interactive inspection session.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class TeleVMHolder {
+public abstract class AbstractInspectionHolder {
 
-    private final TeleVM _teleVM;
-
-    public TeleVM teleVM() {
-        return _teleVM;
-    }
-
-    private final String _tracePrefix;
+    private final Inspection _inspection;
 
     /**
-     * @return default prefix text for trace messages; identifies the class being traced.
+     * @return holder of the interactive inspection state for the session
      */
-    protected String tracePrefix() {
-        return _tracePrefix;
-    }
-
-    protected TeleVMHolder(TeleVM teleVM) {
-        _teleVM = teleVM;
-        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
+    public final Inspection inspection() {
+        return _inspection;
     }
 
     /**
-     * @return the process associated with this VM.
+     * @return local surrogate for for the remote ("tele") VM being inspected in the session
      */
-    public TeleProcess teleProcess() {
-        return _teleVM.teleProcess();
+    public final TeleVM teleVM() {
+        return _inspection.teleVM();
     }
 
     /**
-     * @param reference an object in the r{@link TeleVM}
-     * @return canonical local surrogate for the remote object.
+     * @return visual specifications for user interaction during the session
      */
-    public TeleObject makeTeleObject(Reference reference) {
-        return _teleVM.makeTeleObject(reference);
+    public final InspectorStyle style() {
+        return _inspection.style();
+    }
+
+    /**
+     * @return information about the user focus of attention in the view state.
+     */
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    /**
+     * @return access to {@link InspectorAction}s of general use.
+     */
+    public final InspectionActions actions() {
+        return _inspection.actions();
+    }
+
+    protected AbstractInspectionHolder(Inspection inspection) {
+        _inspection = inspection;
     }
 
 }

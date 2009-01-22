@@ -44,7 +44,7 @@ import com.sun.max.unsafe.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
+public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO {
 
     private static final int TRACE_VALUE = 2;
 
@@ -134,11 +134,11 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
                     teleVM().fireJDWPThreadEvents();
                     Trace.line(TRACE_VALUE, tracePrefix() + "Execution stopped: " + request);
 
-                    for (TeleNativeThread thread : teleProcess().threads()) {
+                    for (TeleNativeThread thread : threads()) {
                         final TeleTargetBreakpoint breakpoint = thread.breakpoint();
                         if (breakpoint != null) {
                             // Check conditional breakpoint:
-                            if (breakpoint.condition() != null && !breakpoint.condition().evaluate(teleProcess(), thread)) {
+                            if (breakpoint.condition() != null && !breakpoint.condition().evaluate(TeleProcess.this, thread)) {
                                 try {
                                     // Evade the breakpoint
                                     thread.evadeBreakpoint();
@@ -616,7 +616,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
      * Gets the set of all the threads that died in the epoch that completed last time this process stopped.
      * @return the set of dead threads
      */
-    public final IterableWithLength<TeleNativeThread> deadThreads() {
+    public final IterableWithLength<TeleNativeThread> recentlyDiedThreads() {
         return Iterables.toIterableWithLength(_deadThreads);
     }
 
@@ -624,7 +624,7 @@ public abstract class TeleProcess extends TeleVMHolder implements TeleIO {
      * Gets the set of all the threads that were started in the epoch that completed last time this process stopped.
      * @return the set of started threads
      */
-    public final IterableWithLength<TeleNativeThread> startedThreads() {
+    public final IterableWithLength<TeleNativeThread> recentlyCreatedThreads() {
         return Iterables.toIterableWithLength(_startedThreads);
     }
 

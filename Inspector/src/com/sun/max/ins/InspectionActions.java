@@ -112,7 +112,7 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  * @author Aritra Bandyopadhyay
  */
-public class InspectionActions extends InspectionHolder implements Prober{
+public class InspectionActions extends AbstractInspectionHolder implements Prober{
 
     private static final int TRACE_VALUE = 2;
 
@@ -140,10 +140,6 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
     public final void redisplay() {
         // non-op
-    }
-
-    private TeleProcessController teleProcessController() {
-        return inspection().controller();
     }
 
     private boolean isSynchronousMode() {
@@ -400,7 +396,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         protected void procedure() {
-            final int oldLevel = teleProcess().transportDebugLevel();
+            final int oldLevel = teleVM().transportDebugLevel();
             int newLevel = oldLevel;
             final String input = inspection().inputDialog(" (Set transport debug level, 0=none, 1=some, etc)", Integer.toString(oldLevel));
             try {
@@ -409,7 +405,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
-                teleProcess().setTransportDebugLevel(newLevel);
+                teleVM().setTransportDebugLevel(newLevel);
             }
         }
 
@@ -1775,7 +1771,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-                    refresh(teleProcess().epoch(), false);
+                    refresh(teleVM().epoch(), false);
                 }
             });
         }
@@ -1861,13 +1857,13 @@ public class InspectionActions extends InspectionHolder implements Prober{
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            teleProcess().targetBreakpointFactory().removeAllBreakpoints();
-            teleVM().bytecodeBreakpointFactory().removeAllBreakpoints();
+            teleVM().removeAllTargetBreakpoints();
+            teleVM().removeAllBytecodeBreakpoints();
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && (teleVM().bytecodeBreakpointFactory().size() > 0  || teleProcess().targetBreakpointFactory().size(true) > 0));
+            setEnabled(inspection().hasProcess() && (teleVM().bytecodeBreakpointCount() > 0  || teleVM().targetBreakpointCount() > 0));
         }
     }
 
@@ -1906,7 +1902,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointFactory().size() > 0);
+            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointCount() > 0);
         }
     }
 
@@ -1968,7 +1964,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleProcess().epoch(), false);
+                    refresh(teleVM().epoch(), false);
                 }
             });
         }
@@ -1977,12 +1973,12 @@ public class InspectionActions extends InspectionHolder implements Prober{
         protected void procedure() {
             final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!targetCodeInstructionAddress.isZero()) {
-                TeleTargetBreakpoint breakpoint = teleProcess().targetBreakpointFactory().getNonTransientBreakpointAt(targetCodeInstructionAddress);
+                TeleTargetBreakpoint breakpoint = teleVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
-                    breakpoint = teleProcess().targetBreakpointFactory().makeBreakpoint(targetCodeInstructionAddress, false);
+                    breakpoint = teleVM().makeTargetBreakpoint(targetCodeInstructionAddress);
                     focus().setBreakpoint(breakpoint);
                 } else {
-                    teleProcess().targetBreakpointFactory().removeBreakpointAt(targetCodeInstructionAddress);
+                    teleVM().removeTargetBreakpoint(targetCodeInstructionAddress);
                     focus().setBreakpoint(null);
                 }
             }
@@ -2017,7 +2013,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleProcess().epoch(), false);
+                    refresh(teleVM().epoch(), false);
                 }
             });
         }
@@ -2062,7 +2058,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleProcess().epoch(), false);
+                    refresh(teleVM().epoch(), false);
                 }
             });
             inspection().addInspectionListener(new InspectionListenerAdapter() {
@@ -2084,7 +2080,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleProcess().targetBreakpointFactory().size(true) > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
+            setEnabled(inspection().hasProcess() && teleVM().targetBreakpointCount() > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
         }
     }
 
@@ -2119,12 +2115,12 @@ public class InspectionActions extends InspectionHolder implements Prober{
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            teleProcess().targetBreakpointFactory().removeAllBreakpoints();
+            teleVM().removeAllTargetBreakpoints();
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleProcess().targetBreakpointFactory().size(true) > 0);
+            setEnabled(inspection().hasProcess() && teleVM().targetBreakpointCount() > 0);
         }
     }
 
@@ -2250,7 +2246,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleProcess().epoch(), false);
+                    refresh(teleVM().epoch(), false);
                 }
             });
         }
@@ -2260,9 +2256,9 @@ public class InspectionActions extends InspectionHolder implements Prober{
             final BytecodeLocation bytecodeLocation = focus().codeLocation().bytecodeLocation();
             if (bytecodeLocation != null) {
                 final TeleBytecodeBreakpoint.Key key = new TeleBytecodeBreakpoint.Key(bytecodeLocation);
-                final TeleBytecodeBreakpoint breakpoint = teleVM().bytecodeBreakpointFactory().getBreakpoint(key);
+                final TeleBytecodeBreakpoint breakpoint = teleVM().getBytecodeBreakpoint(key);
                 if (breakpoint == null) {
-                    teleVM().bytecodeBreakpointFactory().makeBreakpoint(key, false);
+                    teleVM().makeBytecodeBreakpoint(key);
                 } else {
                     breakpoint.remove();
                 }
@@ -2303,7 +2299,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             if (typeDescriptor != null) {
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
-                    teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0), false);
+                    teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
                 }
             }
         }
@@ -2341,7 +2337,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         protected void procedure() {
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
-                teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0), false);
+                teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
             }
         }
 
@@ -2383,12 +2379,12 @@ public class InspectionActions extends InspectionHolder implements Prober{
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            teleVM().bytecodeBreakpointFactory().removeAllBreakpoints();
+            teleVM().removeAllBytecodeBreakpoints();
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointFactory().size() > 0);
+            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointCount() > 0);
         }
     }
 
@@ -2417,7 +2413,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
                 public void entered(Address address) {
                     final Address start = address;
                     final Size size = Size.fromInt(Word.size());
-                    teleProcess().watchpointFactory().makeWatchpoint(new RuntimeMemoryRegion(start, size));
+                    teleVM().makeWatchpoint(new RuntimeMemoryRegion(start, size));
                 }
             };
         }
@@ -2449,7 +2445,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         @Override
         protected void procedure() {
             try {
-                teleProcessController().pause();
+                teleVM().controller().pause();
             } catch (Exception exception) {
                 inspection().errorMessage("Pause could not be initiated", exception.toString());
             }
@@ -2483,7 +2479,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         @Override
         protected void procedure() {
             try {
-                teleProcessController().resume(isSynchronousMode(), false);
+                teleVM().controller().resume(isSynchronousMode(), false);
             } catch (Exception exception) {
                 inspection().errorMessage("Run to instruction could not be performed.", exception.toString());
             }
@@ -2524,7 +2520,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    teleProcessController().runToInstruction(returnAddress, isSynchronousMode(), true);
+                    teleVM().controller().runToInstruction(returnAddress, isSynchronousMode(), true);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
                 }
@@ -2566,7 +2562,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    teleProcessController().runToInstruction(returnAddress, isSynchronousMode(), false);
+                    teleVM().controller().runToInstruction(returnAddress, isSynchronousMode(), false);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame could not be performed.", exception.toString());
                 }
@@ -2608,7 +2604,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    teleProcessController().runToInstruction(selectedAddress, isSynchronousMode(), true);
+                    teleVM().controller().runToInstruction(selectedAddress, isSynchronousMode(), true);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
@@ -2652,7 +2648,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    teleProcessController().runToInstruction(selectedAddress, isSynchronousMode(), false);
+                    teleVM().controller().runToInstruction(selectedAddress, isSynchronousMode(), false);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction could not be performed.", exception);
                 }
@@ -2694,7 +2690,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         public  void procedure() {
             final TeleNativeThread selectedThread = focus().thread();
             try {
-                teleProcessController().singleStep(selectedThread, isSynchronousMode());
+                teleVM().controller().singleStep(selectedThread, isSynchronousMode());
             } catch (Exception exception) {
                 inspection().errorMessage("Couldn't single step", exception.toString());
             }
@@ -2733,7 +2729,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
             try {
-                teleProcessController().stepOver(thread, isSynchronousMode(), true);
+                teleVM().controller().stepOver(thread, isSynchronousMode(), true);
             } catch (Exception exception) {
                 inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
             }
@@ -2773,7 +2769,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
             try {
-                teleProcessController().stepOver(thread, isSynchronousMode(), false);
+                teleVM().controller().stepOver(thread, isSynchronousMode(), false);
             } catch (Exception exception) {
                 inspection().errorMessage("Step over could not be performed.", exception.toString());
             }
@@ -2810,7 +2806,7 @@ public class InspectionActions extends InspectionHolder implements Prober{
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleProcess().epoch(), false);
+                    refresh(teleVM().epoch(), false);
                 }
             });
         }

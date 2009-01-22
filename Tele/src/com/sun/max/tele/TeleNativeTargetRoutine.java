@@ -36,7 +36,7 @@ import com.sun.max.vm.bytecode.*;
  *
  * @author Michael Van De Vanter
  */
-public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleTargetRoutine {
+public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implements TeleTargetRoutine {
 
     public static final Size DEFAULT_NATIVE_CODE_LENGTH = Size.fromInt(200);
 
@@ -115,20 +115,20 @@ public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleT
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (_instructions == null) {
-            final byte[] code = teleVM().teleProcess().dataAccess().readFully(codeStart(), codeSize().toInt());
+            final byte[] code = teleVM().dataAccess().readFully(codeStart(), codeSize().toInt());
             _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, null);
         }
         return _instructions;
     }
 
     public TeleTargetBreakpoint setTargetBreakpointAtEntry() {
-        return teleVM().teleProcess().targetBreakpointFactory().makeBreakpoint(callEntryPoint(), false);
+        return teleVM().makeTargetBreakpoint(callEntryPoint());
     }
 
     public void setTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {
-                teleVM().teleProcess().targetBreakpointFactory().makeBreakpoint(targetCodeInstruction.address(), false);
+                teleVM().makeTargetBreakpoint(targetCodeInstruction.address());
             }
         }
     }
@@ -136,7 +136,7 @@ public final class TeleNativeTargetRoutine extends TeleVMHolder implements TeleT
     public void removeTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {
-                teleVM().teleProcess().targetBreakpointFactory().removeBreakpointAt(targetCodeInstruction.address());
+                teleVM().removeTargetBreakpoint(targetCodeInstruction.address());
             }
         }
     }

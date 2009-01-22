@@ -142,7 +142,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 }
             }
         });
-        refresh(teleVM().teleProcess().epoch(), true);
+        refresh(teleVM().epoch(), true);
     }
 
     protected abstract void updateText();

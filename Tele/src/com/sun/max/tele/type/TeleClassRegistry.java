@@ -51,7 +51,7 @@ import com.sun.max.vm.value.*;
  * @author Athul Acharya
  * @author Michael Van De Vanter
  */
-public class TeleClassRegistry extends TeleVMHolder {
+public class TeleClassRegistry extends AbstractTeleVMHolder {
 
     private static final Logger LOGGER = Logger.getLogger(TeleClassRegistry.class.getName());
 
@@ -157,9 +157,9 @@ public class TeleClassRegistry extends TeleVMHolder {
         final long startTimeMillis = System.currentTimeMillis();
         final Reference teleClassInfoStaticTupleReference = teleVM().fields().TeleClassInfo_classActorCount.staticTupleReference(teleVM());
         final Pointer loadedClassCountPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActorCount.fieldActor().offset());
-        final int remoteLoadedClassCount = teleVM().teleProcess().dataAccess().readInt(loadedClassCountPointer);
+        final int remoteLoadedClassCount = teleVM().dataAccess().readInt(loadedClassCountPointer);
         final Pointer loadedClassActorsPointer = teleClassInfoStaticTupleReference.toOrigin().plus(teleVM().fields().TeleClassInfo_classActors.fieldActor().offset());
-        final Reference loadedClassActorsArrayReference = teleVM().wordToReference(teleVM().teleProcess().dataAccess().readWord(loadedClassActorsPointer));
+        final Reference loadedClassActorsArrayReference = teleVM().wordToReference(teleVM().dataAccess().readWord(loadedClassActorsPointer));
         int index = _dynamicallyLoadedClassCount;
         while (index < remoteLoadedClassCount) {
             final Reference classActorReference = teleVM().getElementValue(Kind.REFERENCE, loadedClassActorsArrayReference, index).asReference();
@@ -177,7 +177,7 @@ public class TeleClassRegistry extends TeleVMHolder {
     public TeleClassActor findTeleClassActorByID(int id) {
         final Reference classActorReference = _idToClassActorReference.get(id);
         if (classActorReference != null && !classActorReference.isZero()) {
-            return (TeleClassActor) makeTeleObject(classActorReference);
+            return (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         }
         return null;
     }
@@ -192,7 +192,7 @@ public class TeleClassRegistry extends TeleVMHolder {
             // Class hasn't been loaded yet by the inspectee.
             return null;
         }
-        return (TeleClassActor) makeTeleObject(classActorReference);
+        return (TeleClassActor) teleVM().makeTeleObject(classActorReference);
     }
 
     /**
@@ -205,7 +205,7 @@ public class TeleClassRegistry extends TeleVMHolder {
             // Class hasn't been loaded yet by the inspectee.
             return null;
         }
-        return (TeleClassActor) makeTeleObject(classActorReference);
+        return (TeleClassActor) teleVM().makeTeleObject(classActorReference);
     }
 
     /**
@@ -222,7 +222,7 @@ public class TeleClassRegistry extends TeleVMHolder {
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[_idToClassActorReference.size()];
         int index = 0;
         for (Reference classActorReference : _idToClassActorReference.values()) {
-            result[index++] = (TeleClassActor) makeTeleObject(classActorReference);
+            result[index++] = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         }
         return result;
     }

@@ -43,7 +43,7 @@ import com.sun.max.vm.stack.*;
  *
  * @author Michael Van De Vanter
  */
-public class InspectionFocus extends InspectionHolder {
+public class InspectionFocus extends AbstractInspectionHolder {
 
     private static final int TRACE_VALUE = 2;
 
@@ -289,7 +289,7 @@ public class InspectionFocus extends InspectionHolder {
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
             if (_memoryRegion != null) {
-                final TeleNativeThread teleNativeThread = teleVM().teleProcess().threadContaining(_memoryRegion.start());
+                final TeleNativeThread teleNativeThread = teleVM().getThread(_memoryRegion.start());
                 if (teleNativeThread != null) {
                     setThread(teleNativeThread);
                 }
@@ -337,7 +337,7 @@ public class InspectionFocus extends InspectionHolder {
         }
         if (teleBreakpoint != null) {
             TeleNativeThread threadAtBreakpoint = null;
-            for (TeleNativeThread teleNativeThread : teleVM().allThreads()) {
+            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
                 if (teleNativeThread.breakpoint() == teleBreakpoint) {
                     threadAtBreakpoint = teleNativeThread;
                     break;

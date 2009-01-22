@@ -117,7 +117,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         @Override
         public void procedure() {
             final MethodKey methodKey = new MethodActorKey(_teleClassMethodActor.classMethodActor());
-            teleVM().bytecodeBreakpointFactory().makeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0), false);
+            teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
         }
     }
 
@@ -176,7 +176,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         _invokeMethodAction = new InvokeMethodAction();
         _inspectClassMethodActorAction = new InspectClassMethodActorAction();
         _inspectSubstitutionSourceClassActorAction = new InspectSubstitutionSourceClassActorAction();
-        refresh(teleVM().teleProcess().epoch(), true);
+        refresh(teleVM().epoch(), true);
     }
 
     public void addTo(InspectorMenu menu) {

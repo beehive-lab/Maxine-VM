@@ -72,14 +72,14 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         Trace.begin(TRACE_VALUE, tracePrefix() + "initializing");
         final long startTimeMillis = System.currentTimeMillis();
         final Reference bootCodeRegionReference = teleVM().fields().Code_bootCodeRegion.readReference(teleVM());
-        _teleBootCodeRegion = (TeleCodeRegion) makeTeleObject(bootCodeRegionReference);
+        _teleBootCodeRegion = (TeleCodeRegion) teleVM().makeTeleObject(bootCodeRegionReference);
 
         final Reference runtimeCodeRegionsArrayReference = teleVM().fields().CodeManager_runtimeCodeRegions.readReference(reference());
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) makeTeleObject(runtimeCodeRegionsArrayReference);
+        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleVM().makeTeleObject(runtimeCodeRegionsArrayReference);
         final Reference[] codeRegionReferences = (Reference[]) teleArrayObject.shallowCopy();
         _teleCodeRegions = new TeleCodeRegion[codeRegionReferences.length];
         for (int i = 0; i < codeRegionReferences.length; i++) {
-            _teleCodeRegions[i] = (TeleCodeRegion) makeTeleObject(codeRegionReferences[i]);
+            _teleCodeRegions[i] = (TeleCodeRegion) teleVM().makeTeleObject(codeRegionReferences[i]);
         }
         Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + _teleCodeRegions.length + " regions", startTimeMillis);
     }

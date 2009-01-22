@@ -18,47 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.object;
-
-import com.sun.max.tele.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.reference.*;
+package com.sun.max.tele;
 
 
 /**
- * Inspector's canonical surrogate for an object of type {@link Hub} in the {@link TeleVM}.
+ * Convenience methods for all local objects that refer to something in a {@link TeleVM}.
  *
+ * @author Bernd Mathiske
  * @author Michael Van De Vanter
- *
  */
-public abstract class TeleHub extends TeleHybridObject {
+public abstract class AbstractTeleVMHolder {
 
-    protected TeleHub(TeleVM teleVM, Reference hubReference) {
-        super(teleVM, hubReference);
+    private final TeleVM _teleVM;
+
+    public final TeleVM teleVM() {
+        return _teleVM;
     }
 
-    private TeleClassActor _teleClassActor = null;
+    private final String _tracePrefix;
 
     /**
-     * @return surrogate for the {@ClassActor} in the {@link TeleVM} that contains this {@link Hub}, i.e. for the type that this hub helps implement
+     * @return default prefix text for trace messages; identifies the class being traced.
      */
-    public TeleClassActor getTeleClassActor() {
-        if (_teleClassActor == null) {
-            final Reference classActorReference = teleVM().fields().Hub_classActor.readReference(reference());
-            _teleClassActor = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
-        }
-        return _teleClassActor;
+    protected String tracePrefix() {
+        return _tracePrefix;
     }
 
-    /**
-     * @return local {@link Hub} corresponding to this {@link Hub} in the {@link TeleVM}.
-     */
-    public abstract Hub hub();
-
-    @Override
-    protected Object createDeepCopy(DeepCopyContext context) {
-        // Translate into local equivalent
-        return hub();
+    protected AbstractTeleVMHolder(TeleVM teleVM) {
+        _teleVM = teleVM;
+        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
     }
 
 }
