@@ -31,7 +31,7 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Provides basic services to allow subclasses to be managed by JavaMonitorManager.
+ * Base class for <code>JavaMonitor</code>'s managed by <code>JavaMonitorManager</code>.
  *
  * @author Simon Wilkinson
  */

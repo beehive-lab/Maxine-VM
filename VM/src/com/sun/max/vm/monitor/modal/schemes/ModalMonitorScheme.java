@@ -42,11 +42,15 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
 
-    /**
-     * Entry point into the fastest-path locking mode.
-     */
     private final MonitorSchemeEntry _entryHandler;
 
+    /**
+     * Constructs a ModalMonitorScheme, setting the fastest-path mode
+     * to entryHandler.
+     *
+     * @param vmConfiguration the build-time VM configuration
+     * @param entryHandler the fastest-path locking mode handler
+     */
     public ModalMonitorScheme(VMConfiguration vmConfiguration, MonitorSchemeEntry entryHandler) {
         super(vmConfiguration);
         _entryHandler = entryHandler;
@@ -72,14 +76,39 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
         JavaMonitorManager.initialize(phase);
     }
 
+    /**
+     * Returns the fastest-path mode handler.
+     *
+     * @return the fastest-path mode handler
+     */
     protected final MonitorSchemeEntry entryHandler() {
         return _entryHandler;
     }
 
+    /**
+     * Inspector support for decoding lock words.
+     *
+     * @author Simon Wilkinson
+     */
     public interface ModalLockWordDecoder {
+        /**
+         * Tests if the lockword is in the given mode.
+         *
+         * @param modalLockWord the lock word to test
+         * @param mode the mode to test
+         * @return true if the lockword is in the given mode; false otherwise
+         */
         boolean isLockWordInMode(ModalLockWord64 modalLockWord, Class<? extends ModalLockWord64> mode);
     }
 
+    /**
+     * Returns a new <code>ModalLockWordDecoder</code> that can decode
+     * lock words created by this <code>ModalMonitorScheme</code>.
+     *
+     * This should only be used for Inspector support.
+     *
+     * @return
+     */
     public abstract ModalLockWordDecoder getModalLockWordDecoder();
 
     @Override

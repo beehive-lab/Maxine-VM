@@ -32,23 +32,26 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Manages a pool of JavaMonitors and their binding and unbinding to objects.
- *
+ * Manages a pool of {@linkplain JavaMonitor JavaMonitors} and their binding and unbinding to objects.
+ * <p>
  * Binding can be performed at prototyping or runtime. If binding is performed at prototyping time then either a default
  * or specialized JavaMonitor can be used. If binding is performed at runtime then an unbound JavaMonitor is taken from
  * a free list.
- *
+ * <p>
  * Unbinding is performed at global safepoints. All unowned, unbindable, bound monitors are unbound. Writing of unbound
- * lockwords is delegated to an UnboundMiscWordWriter (most likely the inflated mode handler of the ModalMonitorScheme).
+ * lockwords is delegated to an {@linkplain UnboundMiscWordWriter UnboundMiscWordWriter} object (most likely the inflated mode handler of the ModalMonitorScheme).
  * This allows unbinding to be a transition to any other locking mode.
- *
+ * <p>
  * GC considerations:
- *
+ * <p>
  * 1) As all JavaMonitors are GC reachable, so are their bound objects (as this is just a field in the JavaMonitor). So
  * it is preferable to call beforeGarbageCollection() prior to GC, to unbind dead objects.
- *
+ * <p>
  * 2) If the GC moves a bound JavaMonitor, then the bound object's misc word must be updated to point to the moved
  * JavaMonitor. Therefore a post-GC call is required to afterGarbageCollection().
+ * <p>
+ * TODO: (Simon) The terminology of binding/unbinding/hard-binding needs tidying up. The naming conventions
+ * are not consistent and in places, misleading.
  *
  * @author Simon Wilkinson
  * @author Mick Jordan
@@ -76,6 +79,12 @@ public class JavaMonitorManager {
 
     private static boolean _gcDeadlockDetection = true;
 
+    /**
+     * Lockword rewriting for objects in the process of being unbound is delegated to an UnboundMiscWordWriter.
+     * This allows unbinding to transition a lock from 'inflated' to any other mode.
+     *
+     * @author Simon Wilkinson
+     */
     public interface UnboundMiscWordWriter {
         void writeUnboundMiscWord(Object object, Word preBindingMiscWord);
     }
@@ -86,6 +95,11 @@ public class JavaMonitorManager {
     @CONSTANT_WHEN_NOT_ZERO
     private static boolean _requireProxyAcquirableMonitors;
 
+    /**
+     * Performs any initialization necessary for the given phase.
+     *
+     * @param phase the current VM phase
+     */
     public static void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.PROTOTYPING) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
@@ -139,17 +153,38 @@ public class JavaMonitorManager {
         }
     }
 
+    /**
+     * Notifies the JavaMonitorManager that the current MonitorScheme requires
+     * all JavaMonitors to be proxy acquirable (i.e. they may be acquired by
+     * one thread on behalf of another).
+     *
+     * @param requireProxyAcquirableMonitors true if proxy acquirable monitors are required; false otherwise
+     * @see ProxyAcquirableJavaMonitor
+     */
     @PROTOTYPE_ONLY
     public static void setRequireProxyAcquirableMonitors(boolean requireProxyAcquirableMonitors) {
         _requireProxyAcquirableMonitors = requireProxyAcquirableMonitors;
     }
 
+    /**
+     * Binds the given monitor to the given object at VM image build time.
+     * The binding will never be unbound.
+     *
+     * @param object the object to bind
+     * @param monitor the monitor to bind
+     */
     @PROTOTYPE_ONLY
     public static void prototypeBindStickyMonitor(Object object, ManagedMonitor monitor) {
         monitor.setBoundObject(object);
         prototypeAddToStickyMonitors(monitor);
     }
 
+    /**
+     * Binds a {@link StandardJavaMonitor StandardJavaMonitor} to the given object at VM image build time.
+     * The binding will never be unbound.
+     *
+     * @param object the object to bind
+     */
     @PROTOTYPE_ONLY
     public static void prototypeBindStickyMonitor(Object object) {
         prototypeBindStickyMonitor(object, new StandardJavaMonitor());
@@ -208,6 +243,17 @@ public class JavaMonitorManager {
         _numberOfUnboundMonitors++;
     }
 
+    /**
+     * Binds a JavaMonitor to the given object.
+     * <p>
+     * Important: the binding is not two-way at this stage; the JavaMonitor
+     * points to the object, but the object does not know anything about the JavaMonitor.
+     * <p>
+     * TODO: 'bindMonitor' is a missing leading name. Refactor.
+     *
+     * @param object the object to bind a monitor to.
+     * @return the monitor that was bound
+     */
     public static JavaMonitor bindMonitor(Object object) {
         ManagedMonitor monitor;
         if (_inGlobalSafePoint) {
@@ -235,6 +281,15 @@ public class JavaMonitorManager {
         return monitor;
     }
 
+    /**
+     * Places the given JavaMonitor back into the free list.
+     * <p>
+     * Important: This should only be called for monitors that have
+     * failed to be two-way bound to an object.
+     * <p>
+     * TODO: 'unbindMonitor' is a missing leading name. Refactor.
+     * @param monitor the monitor to unbind.
+     */
     public static void unbindMonitor(JavaMonitor monitor) {
         final ManagedMonitor bindableMonitor = (ManagedMonitor) monitor;
         bindableMonitor.reset();
@@ -277,16 +332,31 @@ public class JavaMonitorManager {
         Safepoint.enable();
     }
 
+    /**
+     * Notifies the JavaMonitorManager that the current thread is in-flight to
+     * perform an operation on the given JavaMonitor. The JavaMonitor will
+     * not be unbound until the current thread calls this method with a different
+     * JavaMonitor, or the the thread terminates.
+     *
+     * @param monitor the monitor whose binding to protect
+     */
     public static void protectBinding(JavaMonitor monitor) {
         VmThread.current().setProtectedMonitor(monitor);
     }
 
+    /**
+     * Registers the given UnboundMiscWordWriter as the lock word rewriter
+     * for when unbinding objects from monitors.
+     *
+     * @param unbinder the lockword rewriter
+     */
     public static void registerMonitorUnbinder(UnboundMiscWordWriter unbinder) {
         _unboundMiscWordWriter = unbinder;
     }
 
     /**
-     * Must only be called on a global safepoint.
+     * Notifies the JavaMonitorManager that the VM is at a global safepoint, before
+     * garbage collection has started.
      */
     public static void beforeGarbageCollection() {
         _inGlobalSafePoint = true;
@@ -294,7 +364,8 @@ public class JavaMonitorManager {
     }
 
     /**
-     * Must only be called on a global safepoint.
+     * Notifies the JavaMonitorManager that the VM is at a global safepoint, after
+     * garbage collection has completed.
      */
     public static void afterGarbageCollection() {
         refreshAllBindings();
@@ -358,36 +429,121 @@ public class JavaMonitorManager {
         }
     }
 
+    /**
+     * Extends the JavaMonitor interface to allow a pool of JavaMonitors to be managed by JavaMonitorManager.
+     * <p>
+     * TODO: (Simon) The terminology of binding/unbinding/hard-binding needs tidying up. The naming conventions
+     * are not consistent and in places, misleading.
+     *
+     * @author Simon Wilkinson
+     */
     interface ManagedMonitor extends JavaMonitor {
 
+        /**
+         * Defines the binding status of a JavaMonitor.
+         *
+         * TODO: (Simon) The terminology of binding/unbinding/hard-binding needs tidying up. The naming conventions
+         * are not consistent and in places, misleading.
+         *
+         * @author Simon Wilkinson
+         */
         enum BindingProtection {
-            PRE_ACQUIRE, UNPROTECTED, PROTECTED
+            /**
+             * The JavaMonitor is in the free-list, or it is one-way bound to an object.
+             */
+            PRE_ACQUIRE,
+            /**
+             * The JavaMonitor is two-way bound to an object (hard-bound), but can be safely unbound.
+             */
+            UNPROTECTED,
+            /**
+             * The JavaMonitor is two-way bound to an object (hard-bound), but cannot be unbound.
+             */
+            PROTECTED
         }
 
+        /**
+         * Performs any native allocations necessary for this JavaMonitor.
+         */
         void allocate();
 
+        /**
+         * Returns this JavaMonitor's bound object.
+         *
+         * @return the bound object
+         */
         Object boundObject();
 
+        /**
+         * Refreshes the two-way binding of this JavaMonitor.
+         */
         void refreshBoundObject();
 
+        /**
+         * Sets this JavaMonitor's bound object. The binding is one-way, i.e.
+         * the JavaMonitor points to the object, but the object does not know anything about the JavaMonitor.
+         *
+         * @param object the object to bind
+         */
         void setBoundObject(Object object);
 
+        /**
+         * Tests if this JavaMonitor is one-way bound, i.e. the JavaMonitor points to the object.
+         *
+         * @return true if this JavaMonitor is one-way bound; false otherwise
+         */
         boolean isBound();
 
+        /**
+         * Tests if this JavaMonitor is two-way bound, i.e. the JavaMonitor points to the object.
+         *
+         * @return true if this JavaMonitor is two-way bound; false otherwise
+         */
         boolean isHardBound();
 
+        /**
+         * Tests if this JavaMonitor was two-way (hard) bound prior to GC.
+         *
+         * @return true if this JavaMonitor was two-way (hard) bound prior to GC
+         */
         boolean requiresPostGCRefresh();
 
+        /**
+         * Returns the BindingProtection for this JavaMonitor.
+         *
+         * @return the BindingProtection
+         */
         BindingProtection bindingProtection();
 
+        /**
+         * Sets the BindingProtection for this JavaMonitor.
+         *
+         * @param protection the BindingProtection to set
+         */
         void setBindingProtection(BindingProtection protection);
 
+        /**
+         * Sets this JavaMonitor to its default state.
+         */
         void reset();
 
+        /**
+         * Perform any pre-GC actions.
+         */
         void preGCPrepare();
 
+        /**
+         * Direct linked-list support. Returns the next monitor in the list.
+         *
+         * @return the next in the list
+         */
         ManagedMonitor next();
 
+        /**
+         * Direct linked-list support. Sets the next monitor in the list.
+         *
+         * @param monitor the next monitor
+         */
         void setNext(ManagedMonitor monitor);
 
         void dump();
