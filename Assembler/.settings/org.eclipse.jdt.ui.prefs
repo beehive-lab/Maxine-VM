@@ -1,4 +1,4 @@
-#Mon Jun 02 13:38:24 PDT 2008
+#Thu Jan 22 10:20:47 GMT 2009
 comment_clear_blank_lines=false
 comment_format_comments=true
 comment_format_header=true
@@ -13,7 +13,6 @@ eclipse.preferences.version=1
 editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
 formatter_profile=_MaxineJavaCodeStyle
 formatter_settings_version=11
-internal.default.compliance=default
 org.eclipse.jdt.ui.exception.name=e
 org.eclipse.jdt.ui.gettersetter.use.is=true
 org.eclipse.jdt.ui.ignorelowercasenames=true

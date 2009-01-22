@@ -37,6 +37,7 @@ import com.sun.max.vm.thread.*;
  *
  * Provides runtime entry point into the fastest-path mode.
  *
+ *
  * @author Simon Wilkinson
  */
 public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
