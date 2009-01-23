@@ -61,7 +61,7 @@ public class TeleCodeRegistry extends AbstractTeleVMHolder {
     }
 
     /**
-     * Gets the TeleTargetRoutine in this registry that contains a given tele VM address.
+     * Gets the TeleTargetRoutine in this registry that contains a given address inm the {@link TeleVM}.
      *
      * @param <TeleTargetRoutine_Type> the type of the requested TeleTargetRoutine
      * @param teleTargetRoutineType the {@link Class} instance representing {@code TeleTargetRoutine_Type}

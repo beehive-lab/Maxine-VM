@@ -46,7 +46,7 @@ public class TeleRuntimeMemoryRegion extends TeleTupleObject implements MemoryRe
     public Address start() {
         // No caching for now
         Address start = readStart();
-        if (start.isZero() && this == teleVM().teleHeapManager().teleBootHeapRegion()) {
+        if (start.isZero() && this == teleVM().teleBootHeapRegion()) {
             // Ugly special case:  the start field of the static that defines the boot heap region
             // is set at zero in the boot image, only set to the real value when the VM starts running.
             // Lie about it.

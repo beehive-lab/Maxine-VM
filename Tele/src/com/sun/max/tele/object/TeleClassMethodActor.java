@@ -25,7 +25,6 @@ import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.LineNumberTable.*;
@@ -37,22 +36,6 @@ import com.sun.max.vm.reference.*;
  * @author Michael Van De Vanter
  */
 public abstract class TeleClassMethodActor extends TeleMethodActor implements MethodProvider {
-
-    /**
-     * @param methodActor Local {@link MethodActor} object.
-     * @return Local {@link TeleClassMethodActor} representing the corresponding {@link MethodActor} in the {@link TeleVM},
-     *  null if unknown to the registry.
-     */
-    public static TeleClassMethodActor get(TeleVM teleVM, MethodActor methodActor) {
-        // TODO (mlvdv)  Discriminate based on ClassLoader
-        for (TargetCodeRegion targetCodeRegion : teleVM.teleCodeRegistry().targetCodeRegions()) {
-            final TeleClassMethodActor teleClassMethodActor = targetCodeRegion.teleTargetRoutine().getTeleClassMethodActor();
-            if (teleClassMethodActor.classMethodActor() == methodActor) {
-                return teleClassMethodActor;
-            }
-        }
-        return null;
-    }
 
     // Keep construction minimal for both performance and synchronization.
     protected TeleClassMethodActor(TeleVM teleVM, Reference classMethodActorReference) {

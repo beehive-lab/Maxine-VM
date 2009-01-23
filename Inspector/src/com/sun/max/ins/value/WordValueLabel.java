@@ -250,7 +250,7 @@ public class WordValueLabel extends ValueLabel {
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
-                    _teleNativeThread = teleVM().getThread(address);
+                    _teleNativeThread = teleVM().threadContaining(address);
                     if (_teleNativeThread != null) {
                         _valueKind = _valueMode == ValueMode.REFERENCE ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;
                     } else {
@@ -268,7 +268,7 @@ public class WordValueLabel extends ValueLabel {
                                     _valueKind = (_valueMode == ValueMode.CALL_RETURN_POINT) ? ValueKind.CALL_RETURN_POINT : ValueKind.CALL_RETURN_POINT;
                                 }
                             } else if (_valueMode == ValueMode.ITABLE_ENTRY) {
-                                final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(newValue.asWord().asAddress().toInt());
+                                final TeleClassActor teleClassActor = teleVM().findTeleClassActorByID(newValue.asWord().asAddress().toInt());
                                 if (teleClassActor != null) {
                                     _teleClassActor = teleClassActor;
                                     _valueKind = ValueKind.CLASS_ACTOR;
@@ -642,7 +642,7 @@ public class WordValueLabel extends ValueLabel {
             }
             case CLASS_ACTOR_ID:
             case CLASS_ACTOR: {
-                final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(value.asWord().asAddress().toInt());
+                final TeleClassActor teleClassActor = teleVM().findTeleClassActorByID(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
                     action = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor");
                 }
@@ -695,7 +695,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (teleVM().heapOrCodeOrStackContains(address)) {
+                    if (teleVM().contains(address)) {
                         action = inspection().actions().inspectMemory(address, null);
                     }
                     break;
@@ -734,7 +734,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (teleVM().heapOrCodeOrStackContains(address)) {
+                    if (teleVM().contains(address)) {
                         action = inspection().actions().inspectMemoryWords(address, null);
                     }
                     break;
