@@ -26,7 +26,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for a  {@link PrimitiveClassActor} in the Target VM.
+ * Canonical surrogate for a  {@link PrimitiveClassActor} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -45,9 +45,8 @@ public class TelePrimitiveClassActor extends TeleClassActor implements ClassProv
         return "PrimitiveClassActor";
     }
 
-    @Override
     public ClassProvider getSuperClass() {
-        return (ClassProvider) teleVM().teleClassRegistry().findTeleClassActor(this.classActor().superClassActor());
+        return (ClassProvider) teleVM().findTeleClassActorByType(this.classActor().superClassActor().typeDescriptor());
     }
 
 }

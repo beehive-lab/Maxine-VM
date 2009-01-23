@@ -38,8 +38,8 @@ public final class TeleCodeRegion extends TeleRuntimeMemoryRegion {
     /**
      * @return whether this region is the code region contained in the boot image of the {@link TeleVM}.
      */
-    public boolean isBootCodeRegion() {
-        return this == teleVM().teleCodeManager().teleBootCodeRegion();
+    private boolean isBootCodeRegion() {
+        return this == teleVM().teleBootCodeRegion();
     }
 
     @Override

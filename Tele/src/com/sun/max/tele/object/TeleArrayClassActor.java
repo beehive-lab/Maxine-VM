@@ -28,10 +28,10 @@ import com.sun.max.vm.reference.*;
 
 /**
  *
- * Class representing a reference to an array class in the target VM.
+ * Class representing a reference to an array class in the {@link TeleVM}.
  *
+ * @author Michael Van De Vanter
  * @author Thomas Wuerthinger
- *
  */
 public class TeleArrayClassActor extends TeleReferenceClassActor implements ArrayTypeProvider {
 
@@ -41,12 +41,10 @@ public class TeleArrayClassActor extends TeleReferenceClassActor implements Arra
         super(teleVM, referenceClassActorReference);
     }
 
-    @Override
     public ReferenceTypeProvider elementType() {
-        return teleVM().teleClassRegistry().findTeleClassActor(this.classActor().componentClassActor());
+        return teleVM().findTeleClassActorByType(this.classActor().componentClassActor().typeDescriptor());
     }
 
-    @Override
     public ArrayProvider newInstance(int length) {
         // TODO: Implement the creation of objects in the target VM.
         LOGGER.warning("New instance of length " + length + " requested for array " + this + ", returning null");

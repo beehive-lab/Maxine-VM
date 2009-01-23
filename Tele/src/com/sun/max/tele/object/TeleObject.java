@@ -327,7 +327,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActorByClass(javaClass);
+        final TeleClassActor teleClassActor = teleVM.findTeleClassActorByClass(javaClass);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
 
         Trace.begin(COPY_TRACE_VALUE, "Copying static fields of " + javaClass + "from VM");
@@ -340,14 +340,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
         }
     }
 
-
-
     public Reference getReference() {
         return this.reference();
     }
 
-    @Override
     public ReferenceTypeProvider getReferenceType() {
-        return teleVM().teleClassRegistry().findTeleClassActor(classActorForType());
+        return teleVM().findTeleClassActorByType(classActorForType().typeDescriptor());
     }
 }

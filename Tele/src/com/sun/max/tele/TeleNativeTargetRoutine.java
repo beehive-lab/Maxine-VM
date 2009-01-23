@@ -63,7 +63,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
      * or if known to be a Java method.
      */
     public static TeleNativeTargetRoutine make(TeleVM teleVM, Address address) {
-        return teleVM.teleCodeRegistry().get(TeleNativeTargetRoutine.class, address);
+        return teleVM.findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
     }
 
     private final TeleRoutine _teleRoutine;
@@ -96,7 +96,8 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         };
         _targetCodeRegion = new TargetCodeRegion(this, start, size);
         _name = name;
-        teleVM().teleCodeRegistry().add(this);
+        // Register so that it can be located by address.
+        teleVM().registerTeleTargetRoutine(this);
     }
 
     public Address codeStart() {

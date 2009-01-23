@@ -130,7 +130,7 @@ public final class TeleHeapManager extends AbstractTeleVMHolder {
 
     /**
      * @return surrogates for all {@link RuntimeMemoryRegion}s in the {@link Heap} of the {@link TeleVM}.
-     * Sorted in order of allocation.  Does not include the boot code region.
+     * Sorted in order of allocation.  Does not include the boot heap region.
      */
     public IndexedSequence<TeleRuntimeMemoryRegion> teleHeapRegions() {
         return new ArraySequence<TeleRuntimeMemoryRegion>(_teleHeapRegions);

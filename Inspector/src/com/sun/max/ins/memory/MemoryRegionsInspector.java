@@ -179,17 +179,14 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "MemoryRegionsInspector");
 
-    private final TeleCodeManager _teleCodeManager;
-
     private final HeapRegionDisplay _bootHeapRegionDisplay;
     private final CodeRegionDisplay _bootCodeRegionDisplay;
 
     private MemoryRegionsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
         Trace.begin(1, tracePrefix() + "initializing");
-        _teleCodeManager = teleVM().teleCodeManager();
-        _bootHeapRegionDisplay = new HeapRegionDisplay(teleVM().teleHeapManager().teleBootHeapRegion());
-        _bootCodeRegionDisplay = new CodeRegionDisplay(_teleCodeManager.teleBootCodeRegion(), -1);
+        _bootHeapRegionDisplay = new HeapRegionDisplay(teleVM().teleBootHeapRegion());
+        _bootCodeRegionDisplay = new CodeRegionDisplay(teleVM().teleBootCodeRegion(), -1);
         _heapScheme = teleVM().vmConfiguration().heapScheme();
         _heapSchemeName = _heapScheme.getClass().getSimpleName();
         _model = new MemoryRegionTableModel();
@@ -303,12 +300,12 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
             _sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
             _sortedMemoryRegions.add(_bootHeapRegionDisplay);
-            for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : teleVM().teleHeapManager().teleHeapRegions()) {
+            for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : teleVM().teleHeapRegions()) {
                 _sortedMemoryRegions.add(new HeapRegionDisplay(teleRuntimeMemoryRegion));
             }
 
             _sortedMemoryRegions.add(_bootCodeRegionDisplay);
-            final IndexedSequence<TeleCodeRegion> teleCodeRegions = _teleCodeManager.teleCodeRegions();
+            final IndexedSequence<TeleCodeRegion> teleCodeRegions = teleVM().teleCodeRegions();
             for (int index = 0; index < teleCodeRegions.length(); index++) {
                 final TeleCodeRegion teleCodeRegion = teleCodeRegions.get(index);
                 // Only display regions that have memory allocated to them, but that could be a view option.

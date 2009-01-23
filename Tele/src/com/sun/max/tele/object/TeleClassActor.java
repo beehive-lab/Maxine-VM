@@ -370,13 +370,11 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
 
     private final FieldProvider _fakeMiscField = new FakeFieldProvider("misc", VMValue.Type.LONG, JavaTypeDescriptor.LONG.toString()) {
 
-        @Override
         public VMValue getValue(ObjectProvider object) {
             return teleVM().vmAccess().createLongValue(((TeleObject) object).getMiscWord().asAddress().toLong());
         }
     };
 
-    @Override
     public FieldProvider[] getFields() {
         final List<TeleFieldActor> list = Sequence.Static.toList(this.getTeleFieldActors());
         final List<FieldProvider> result = new ArrayList<FieldProvider>();
@@ -390,12 +388,11 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         return result.toArray(resultArray);
     }
 
-    @Override
     public InterfaceProvider[] getImplementedInterfaces() {
         final IdentityHashSet<InterfaceActor> interfaces = classActor().getAllInterfaceActors();
         final AppendableSequence<InterfaceProvider> result = new LinkSequence<InterfaceProvider>();
         for (InterfaceActor interfaceActor : interfaces) {
-            final InterfaceProvider interfaceProvider = teleVM().teleClassRegistry().findTeleInterfaceActor(interfaceActor);
+            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) teleVM().findTeleClassActorByType(interfaceActor.typeDescriptor());
             if (interfaceProvider != this) {
                 result.append(interfaceProvider);
             }
@@ -403,22 +400,19 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         return Sequence.Static.toArray(result, InterfaceProvider.class);
     }
 
-    @Override
     public MethodProvider[] getMethods() {
         return Sequence.Static.toArray(this.getTeleMethodActors(), MethodProvider.class);
     }
 
-    @Override
     public ReferenceTypeProvider[] getNestedTypes() {
         final ClassActor[] actors = classActor().innerClassActors();
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[actors.length];
         for (int i = 0; i < actors.length; i++) {
-            result[i] = teleVM().teleClassRegistry().findTeleClassActor(actors[i]);
+            result[i] = teleVM().findTeleClassActorByType(actors[i].typeDescriptor());
         }
         return result;
     }
 
-    @Override
     public ObjectProvider[] getInstances() {
         // TODO: Implement this correctly.
         return null;

@@ -46,28 +46,22 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
      * If the instruction pointer is within a runtime stub but there is no {@code TeleRuntimeStub} instance existing
      * for it in the {@linkplain TeleCodeRegistry tele code registry}, then a new instance is created and returned.
      *
-     * @param instructionPointer an instruction pointer in the tele VM's address space
+     * @param address an instruction pointer in the tele VM's address space
      * @return {@code TeleRuntimeStub} instance representing the {@code RuntimeStub} containing {@code
      *         instructionPointer} or null if there is no {@code RuntimeStub} containing {@code instructionPointer}
      */
-    public static TeleRuntimeStub make(TeleVM teleVM, Address instructionPointer) {
-        assert instructionPointer != Address.zero();
+    public static TeleRuntimeStub make(TeleVM teleVM, Address address) {
+        assert address != Address.zero();
         if (!teleVM.isBootImageRelocated()) {
             return null;
         }
-        TeleRuntimeStub teleRuntimeStub = null;
-        final TeleTargetRoutine teleTargetRoutine = teleVM.teleCodeRegistry().get(TeleTargetRoutine.class, instructionPointer);
-        if (teleTargetRoutine != null) {
-            if (teleTargetRoutine instanceof TeleRuntimeStub) {
-                // known stub
-                teleRuntimeStub = (TeleRuntimeStub) teleTargetRoutine;
-            } else {
-                // known native or Java method
-                teleRuntimeStub = null;
-            }
-        } else if (teleVM.teleCodeManager().contains(instructionPointer)) {
-            // An address, previously unknown in the registry, in the target VM code regions.
-            final Reference runtimeStubReference =  teleVM.methods().Code_codePointerToRuntimeStub.interpret(new WordValue(instructionPointer)).asReference();
+        TeleRuntimeStub teleRuntimeStub = teleVM.findTeleTargetRoutine(TeleRuntimeStub.class, address);
+        if (teleRuntimeStub == null
+                        && teleVM.findTeleTargetRoutine(TeleTargetRoutine.class, address) == null
+                        && teleVM.containsInCode(address)) {
+            // Not a known runtime stub, and not some other kind of known target code, but in a code region
+            // See if the code manager in the VM knows about it.
+            final Reference runtimeStubReference =  teleVM.methods().Code_codePointerToRuntimeStub.interpret(new WordValue(address)).asReference();
             if (runtimeStubReference != null && !runtimeStubReference.isZero()) {
                 teleRuntimeStub = (TeleRuntimeStub) teleVM.makeTeleObject(runtimeStubReference);
             }
@@ -107,7 +101,8 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
                 return  _runtimeStub.getClass().getSimpleName() + _runtimeStub;
             }
         };
-        teleVM().teleCodeRegistry().add(this);
+        // Register so that it be located by address.
+        teleVM().registerTeleTargetRoutine(this);
     }
 
     public String name() {
@@ -148,7 +143,6 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
 
     private IndexedSequence<TargetCodeInstruction> _instructions;
 
-    @Override
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (_instructions == null) {
             final byte[] code = teleVM().dataAccess().readFully(codeStart(), codeSize().toInt());
@@ -178,7 +172,6 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
         }
     }
 
-    @Override
     public MachineCodeInstructionArray getTargetCodeInstructions() {
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
@@ -189,7 +182,6 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
         return new MachineCodeInstructionArray(result);
     }
 
-    @Override
     public MethodProvider getMethodProvider() {
         return this.getTeleClassMethodActor();
     }

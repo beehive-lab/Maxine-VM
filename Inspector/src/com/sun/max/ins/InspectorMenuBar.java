@@ -193,7 +193,6 @@ public final class InspectorMenuBar extends JMenuBar {
         final JMenu menu = new JMenu("Test");
         menu.add(_actions.listCodeRegistry());
         menu.add(_actions.listCodeRegistryToFile());
-        menu.add(_actions.disassembleAll());
         return menu;
     }
 

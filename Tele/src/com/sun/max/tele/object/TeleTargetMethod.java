@@ -48,32 +48,26 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
     /**
      * Gets a {@code TeleTargetMethod} instance representing the {@link TargetMethod} in the tele VM that contains a
-     * given instruction pointer. If the instruction pointer does not lie within a target method, then null is returned.
+     * given instruction pointer. If the instruction pointer's address does not lie within a target method, then null is returned.
      * If the instruction pointer is within a target method but there is no {@code TeleTargetMethod} instance existing
      * for it in the {@linkplain TeleCodeRegistry tele code registry}, then a new instance is created and returned.
      *
-     * @param instructionPointer an instruction pointer in the tele VM's address space
+     * @param address an instruction pointer in the tele VM's address space
      * @return {@code TeleTargetMethod} instance representing the {@code TargetMethod} containing {@code
      *         instructionPointer} or null if there is no {@code TargetMethod} containing {@code instructionPointer}
      */
-    public static TeleTargetMethod make(TeleVM teleVM, Address instructionPointer) {
-        assert instructionPointer != Address.zero();
+    public static TeleTargetMethod make(TeleVM teleVM, Address address) {
+        assert address != Address.zero();
         if (!teleVM.isBootImageRelocated()) {
             return null;
         }
-        TeleTargetMethod teleTargetMethod = null;
-        final TeleTargetRoutine teleTargetRoutine = teleVM.teleCodeRegistry().get(TeleTargetRoutine.class, instructionPointer);
-        if (teleTargetRoutine != null) {
-            if (teleTargetRoutine instanceof TeleTargetMethod) {
-                // known Java method
-                teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
-            } else {
-                // known native method or safepoint stub
-                teleTargetMethod = null;
-            }
-        } else if (teleVM.teleCodeManager().contains(instructionPointer)) {
-            // An address, previously unknown in the registry, in the target VM code regions.
-            final Reference targetMethodReference = teleVM.methods().Code_codePointerToTargetMethod.interpret(new WordValue(instructionPointer)).asReference();
+        TeleTargetMethod teleTargetMethod = teleVM.findTeleTargetRoutine(TeleTargetMethod.class, address);
+        if (teleTargetMethod == null
+                        && teleVM.findTeleTargetRoutine(TeleTargetRoutine.class, address) == null
+                        && teleVM.containsInCode(address)) {
+            // Not a known java target method, and not some other kind of known target code, but in a code region
+            // See if the code manager in the VM knows about it.
+            final Reference targetMethodReference = teleVM.methods().Code_codePointerToTargetMethod.interpret(new WordValue(address)).asReference();
             // Possible that the address points to an unallocated area of a code region.
             if (targetMethodReference != null && !targetMethodReference.isZero()) {
                 teleTargetMethod = (TeleTargetMethod) teleVM.makeTeleObject(targetMethodReference);  // Constructor will add to register.
@@ -159,7 +153,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         // A consequence is synchronized call to the registry from within a synchronized call to {@link TeleObject} construction.
         _targetCodeRegion = new TargetCodeRegion(this, start(), size());
         // Register every method compilation, so that they can be located by code address.
-        teleVM.teleCodeRegistry().add(this);
+        teleVM.registerTeleTargetRoutine(this);
     }
 
     /**

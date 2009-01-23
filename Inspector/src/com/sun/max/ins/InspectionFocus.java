@@ -285,7 +285,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
             if (_memoryRegion != null) {
-                final TeleNativeThread teleNativeThread = teleVM().getThread(_memoryRegion.start());
+                final TeleNativeThread teleNativeThread = teleVM().threadContaining(_memoryRegion.start());
                 if (teleNativeThread != null) {
                     setThread(teleNativeThread);
                 }

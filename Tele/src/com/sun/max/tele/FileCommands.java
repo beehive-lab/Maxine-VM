@@ -108,7 +108,7 @@ public class FileCommands {
         }
         final String className = arg.substring(0, index);
         final String methodSignature = arg.substring(index + 1);
-        final TeleClassActor teleClassActor = teleVM.teleClassRegistry().findTeleClassActorByType(JavaTypeDescriptor.getDescriptorForJavaString(className));
+        final TeleClassActor teleClassActor = teleVM.findTeleClassActorByType(JavaTypeDescriptor.getDescriptorForJavaString(className));
         if (teleClassActor == null) {
             throw new CommandException("failed to find class: " + className + " (not qualified or misspelled?)");
         }

@@ -21,7 +21,6 @@
 package com.sun.max.tele.type;
 
 import java.util.*;
-import java.util.logging.*;
 
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.lang.*;
@@ -32,7 +31,6 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -52,8 +50,6 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  */
 public class TeleClassRegistry extends AbstractTeleVMHolder {
-
-    private static final Logger LOGGER = Logger.getLogger(TeleClassRegistry.class.getName());
 
     private static final int TRACE_VALUE = 2;
 
@@ -225,31 +221,6 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
             result[index++] = (TeleClassActor) teleVM().makeTeleObject(classActorReference);
         }
         return result;
-    }
-
-    // TODO (JDWP)
-    public ReferenceTypeProvider findTeleClassActor(ClassActor classActor) {
-        return findTeleClassActorByType(classActor.typeDescriptor());
-    }
-
-    // TODO (JDWP)
-    public InterfaceProvider findTeleInterfaceActor(InterfaceActor interfaceActor) {
-        return (TeleInterfaceActor) findTeleClassActorByType(interfaceActor.typeDescriptor());
-    }
-
-    // TODO (JDWP)
-    public MethodProvider findTeleMethodActor(MethodActor methodActor) {
-        final TeleClassActor teleClassActor = findTeleClassActorByType(methodActor.holder().typeDescriptor());
-        if (teleClassActor != null) {
-            for (TeleMethodActor teleMethodActor : teleClassActor.getTeleMethodActors()) {
-                if (teleMethodActor.methodActor().equals(methodActor)) {
-                    return teleMethodActor;
-                }
-            }
-        }
-
-        LOGGER.warning("Could not find tele method for method actor: " + methodActor.name().toString() + ", holder=" + methodActor.holder().name().toString());
-        return null;
     }
 
     /**

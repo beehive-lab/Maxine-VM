@@ -115,9 +115,9 @@ public final class MaxineInspector {
             } else {
                 // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
                 // in the BootImageInspecor from crashing when there's no VM running (mlvdv)
-                if (teleVM.isBootImageRelocated()) {
-                    teleVM.teleCodeRegistry();
-                }
+//                if (teleVM.isBootImageRelocated()) {
+//                    teleVM.teleCodeRegistry();
+//                }
                 MethodInspector.Manager.make(_inspection);
                 ObjectInspector.Manager.make(_inspection);
                 _inspection.refreshAll(false);

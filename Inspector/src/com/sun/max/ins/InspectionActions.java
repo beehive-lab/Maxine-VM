@@ -986,7 +986,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryInspector.create(inspection(),  teleVM().teleCodeManager().teleBootCodeRegion().start());
+            MemoryInspector.create(inspection(),  teleVM().teleBootCodeRegion().start());
         }
     }
 
@@ -1116,7 +1116,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), teleVM().teleCodeManager().teleBootCodeRegion().start());
+            MemoryWordInspector.create(inspection(), teleVM().teleBootCodeRegion().start());
         }
     }
 
@@ -1171,7 +1171,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), teleVM().teleHeapManager().teleBootHeapRegion().start(), "Inspect heap object at address...", "Inspect") {
+            new AddressInputDialog(inspection(), teleVM().teleBootHeapRegion().start(), "Inspect heap object at address...", "Inspect") {
 
                 @Override
                 public void entered(Address address) {
@@ -1243,7 +1243,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final String input = inspection().inputDialog("Inspect heap object by ID..", "");
             try {
                 final long oid = Long.parseLong(input);
-                final TeleObject teleObject = teleVM().lookupObject(oid);
+                final TeleObject teleObject = teleVM().findObjectByOID(oid);
                 if (teleObject != null) {
                     focus().setHeapObject(teleObject);
                 } else {
@@ -1341,7 +1341,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 16);
-                    final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(serial);
+                    final TeleClassActor teleClassActor = teleVM().findTeleClassActorByID(serial);
                     if (teleClassActor == null) {
                         inspection().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
                     } else {
@@ -1382,7 +1382,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 10);
-                    final TeleClassActor teleClassActor = teleVM().teleClassRegistry().findTeleClassActorByID(serial);
+                    final TeleClassActor teleClassActor = teleVM().findTeleClassActorByID(serial);
                     if (teleClassActor == null) {
                         inspection().errorMessage("failed to find ClassActor for ID: " + serial);
                     } else {
@@ -2021,7 +2021,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetRoutine teleTargetRoutine = teleVM().teleCodeRegistry().get(TeleTargetRoutine.class, address);
+            final TeleTargetRoutine teleTargetRoutine = teleVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.setTargetCodeLabelBreakpoints();
             } else {
@@ -2072,7 +2072,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetRoutine teleTargetRoutine = teleVM().teleCodeRegistry().get(TeleTargetRoutine.class, address);
+            final TeleTargetRoutine teleTargetRoutine = teleVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.removeTargetCodeLabelBreakpoints();
             }
@@ -2199,7 +2199,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 if (classActor.localVirtualMethodActors() != null) {
                     for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
                         if (virtualMethodActor.name() == SymbolTable.INIT) {
-                            final TeleClassMethodActor teleClassMethodActor = TeleClassMethodActor.get(teleVM(), virtualMethodActor);
+                            final TeleClassMethodActor teleClassMethodActor = teleVM().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                             if (teleClassMethodActor != null) {
                                 TeleTargetBreakpoint teleTargetBreakpoint = null;
                                 for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
@@ -2871,7 +2871,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            teleVM().teleCodeRegistry().writeSummaryToStream(System.out);
+            teleVM().describeTeleTargetRoutines(System.out);
         }
     }
 
@@ -2919,7 +2919,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
-                teleVM().teleCodeRegistry().writeSummaryToStream(printStream);
+                teleVM().describeTeleTargetRoutines(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
                 inspection().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }
@@ -2934,79 +2934,5 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction listCodeRegistryToFile() {
         return _listCodeRegistryToFile;
     }
-
-
-    private Thread _disassembleAllThread;
-
-    /**
-     * Action: starts a background thread disassembling all compiled methods.
-     * Note(mlvdv):  this probably used to disassemble everything in the {@link TeleVM}, but
-     * it doesn't any more, since I made the cache of code regions lazily constructed.  If anybody
-     * needs it, I'll have a look.  11/11/08
-     */
-    final class DisassembleAllAction extends InspectorAction {
-
-        private static final String START_TEXT = "Start disassembling all methods";
-        private static final String STOP_TEXT = "Stop disassembling all methods";
-
-        DisassembleAllAction() {
-            super(inspection(), START_TEXT);
-        }
-
-        private void stopThread() {
-            synchronized (inspection()) {
-                _disassembleAllThread = null;
-                setName(START_TEXT);
-            }
-        }
-
-        @Override
-        protected void procedure() {
-            if (_disassembleAllThread == null) {
-                _disassembleAllThread = new Thread() {
-
-                    @Override
-                    public void run() {
-                        int n = 0;
-                        for (TargetCodeRegion targetCodeRegion : teleVM().teleCodeRegistry().targetCodeRegions()) {
-                            if (_disassembleAllThread == null) {
-                                return;
-                            }
-                            try {
-                                if (!(targetCodeRegion.teleTargetRoutine() instanceof TeleTargetMethod)) {
-                                    continue;
-                                }
-                                final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) targetCodeRegion.teleTargetRoutine();
-                                teleTargetMethod.getInstructions();
-                            } catch (Throwable throwable) {
-                                System.err.println(throwable);
-                            }
-                            if (n % 100 == 0) {
-                                System.out.println("disassembling: " + n);
-                            }
-                            n++;
-                        }
-                        stopThread();
-                        System.out.println("Done disassembling all methods: " + n);
-                    }
-                };
-                _disassembleAllThread.start();
-                setName(STOP_TEXT);
-            } else {
-                stopThread();
-            }
-        }
-
-    }
-
-    private InspectorAction _disassembleAll = new DisassembleAllAction();
-
-    /**
-     * @return an Action that will toggle on/off the background disassembling of all methods.
-     */
-    public final InspectorAction disassembleAll() {
-        return _disassembleAll;
-    }
-
 
 }
