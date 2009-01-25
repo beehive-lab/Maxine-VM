@@ -22,11 +22,9 @@ package com.sun.max.ins.object;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
@@ -38,6 +36,8 @@ import com.sun.max.vm.layout.*;
  * @author Michael Van De Vanter
  */
 public class TupleInspector extends ObjectInspector<TupleInspector> {
+
+    private ObjectFieldsPanel _objectFieldsPanel;
 
     private final InspectorMenuItems _classMethodInspectorMenuItems;
 
@@ -66,28 +66,17 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
         }
     }
 
-    private AppendableSequence<ValueLabel> _valueLabels = new LinkSequence<ValueLabel>();
-
-    @Override
-    public synchronized AppendableSequence<ValueLabel> valueLabels() {
-        return _valueLabels;
-    }
-
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        final JPanel fieldsPanel = createFieldsPanel(_valueLabels);
-        frame().getContentPane().add(new JScrollPane(fieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
-    }
-
-    public void viewConfigurationChanged(long epoch) {
-        _valueLabels = new ArrayListSequence<ValueLabel>();
-        reconstructView();
+        _objectFieldsPanel = new ObjectFieldsPanel(this, getFieldActors(), teleObject());
+        frame().getContentPane().add(new JScrollPane(_objectFieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
     }
 
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
+        _objectFieldsPanel.refresh(epoch, force);
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
         }
@@ -95,6 +84,5 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
             _targetMethodInspectorMenuItems.refresh(epoch, force);
         }
     }
-
 
 }

@@ -22,11 +22,11 @@ package com.sun.max.ins.object;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -43,6 +43,12 @@ import com.sun.max.vm.type.*;
 public class HubInspector extends ObjectInspector<HubInspector> {
 
     private final TeleHub _teleHub;
+
+    private ObjectFieldsPanel _fieldsPanel;
+    private ObjectArrayPanel _vTablePanel;
+    private ObjectArrayPanel _iTablePanel;
+    private ObjectArrayPanel _mTablePanel;
+    private ObjectArrayPanel _refMapPanel;
 
     /**
      * Non-null if the object is, or is associated with a ClassMethodActor.
@@ -64,13 +70,6 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         }
     }
 
-    private AppendableSequence<ValueLabel> _valueLabels = new ArrayListSequence<ValueLabel>();
-
-    @Override
-    public synchronized AppendableSequence<ValueLabel> valueLabels() {
-        return _valueLabels;
-    }
-
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
@@ -78,44 +77,49 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
-        panel.add(createFieldsPanel(_valueLabels));
+        _fieldsPanel = new ObjectFieldsPanel(this, getFieldActors(), teleObject());
+        panel.add(_fieldsPanel);
 
         final Hub hub = _teleHub.hub();
         if (hub.vTableLength() > 0) {
             final int vTableStartIndex = Hub.vTableStartIndex();
-            panel.add(createArrayPanel(_valueLabels, Kind.WORD,
-                                             teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
-                                             vTableStartIndex,
-                                             hub.vTableLength(),
-                                             "V",
-                                             WordValueLabel.ValueMode.CALL_ENTRY_POINT));
+            _vTablePanel = new ObjectArrayPanel(this, _teleHub, Kind.WORD,
+                            teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
+                            vTableStartIndex,
+                            hub.vTableLength(),
+                            "V",
+                            WordValueLabel.ValueMode.CALL_ENTRY_POINT);
+            panel.add(_vTablePanel);
         }
         if (hub.iTableLength() > 0) {
             final int iTableStartIndex = hub.iTableStartIndex();
-            panel.add(createArrayPanel(_valueLabels, Kind.WORD,
-                                             teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
-                                             iTableStartIndex,
-                                             hub.iTableLength(),
-                                             "I",
-                                             WordValueLabel.ValueMode.ITABLE_ENTRY));
+            _iTablePanel = new ObjectArrayPanel(this, _teleHub, Kind.WORD,
+                            teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
+                            iTableStartIndex,
+                            hub.iTableLength(),
+                            "I",
+                            WordValueLabel.ValueMode.ITABLE_ENTRY);
+            panel.add(_iTablePanel);
         }
         if (hub.mTableLength() > 0) {
             final int mTableStartIndex = teleVM().fields().Hub_mTableStartIndex.readInt(teleObject().reference());
-            panel.add(createArrayPanel(_valueLabels,
-                                             Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
-                                             mTableStartIndex,
-                                             teleVM().fields().Hub_mTableLength.readInt(teleObject().reference()),
-                                             "M",
-                                             WordValueLabel.ValueMode.WORD));
+            _mTablePanel = new ObjectArrayPanel(this, _teleHub, Kind.INT,
+                            teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
+                            mTableStartIndex,
+                            teleVM().fields().Hub_mTableLength.readInt(teleObject().reference()),
+                            "M",
+                            WordValueLabel.ValueMode.WORD);
+            panel.add(_mTablePanel);
         }
         if (hub.referenceMapLength() > 0) {
             final int referenceMapStartIndex = teleVM().fields().Hub_referenceMapStartIndex.readInt(teleObject().reference());
-            panel.add(createArrayPanel(_valueLabels,
-                                             Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
-                                             referenceMapStartIndex,
-                                             teleVM().fields().Hub_referenceMapLength.readInt(teleObject().reference()),
-                                             "R",
-                                             WordValueLabel.ValueMode.WORD));
+            _refMapPanel = new ObjectArrayPanel(this, _teleHub, Kind.INT,
+                            teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
+                            referenceMapStartIndex,
+                            teleVM().fields().Hub_referenceMapLength.readInt(teleObject().reference()),
+                            "R",
+                            WordValueLabel.ValueMode.WORD);
+            panel.add(_refMapPanel);
         }
 
         final JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -124,14 +128,22 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         frame().getContentPane().add(scrollPane);
     }
 
-    public void viewConfigurationChanged(long epoch) {
-        _valueLabels = new ArrayListSequence<ValueLabel>();
-        reconstructView();
-    }
-
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
+        _fieldsPanel.refresh(epoch, force);
+        if (_iTablePanel != null) {
+            _iTablePanel.refresh(epoch, force);
+        }
+        if (_vTablePanel != null) {
+            _vTablePanel.refresh(epoch, force);
+        }
+        if (_mTablePanel != null) {
+            _mTablePanel.refresh(epoch, force);
+        }
+        if (_refMapPanel != null) {
+            _refMapPanel.refresh(epoch, force);
+        }
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
         }
