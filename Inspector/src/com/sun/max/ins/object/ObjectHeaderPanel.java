@@ -41,16 +41,16 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-class ObjectHeaderInspector extends InspectorPanel {
+final class ObjectHeaderPanel extends InspectorPanel {
 
-    private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(20);
     private final TeleObject _teleObject;
-    private final ObjectInspector _parent;
+    private final ObjectInspector _objectInspector;
+    private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(20);
 
-    ObjectHeaderInspector(final Inspection inspection, final TeleObject teleObject, ObjectInspector parent, AppendableSequence<ValueLabel> valueLabels) {
+    ObjectHeaderPanel(final Inspection inspection, ObjectInspector objectInspector, final TeleObject teleObject) {
         super(inspection, new SpringLayout());
+        _objectInspector = objectInspector;
         _teleObject = teleObject;
-        _parent = parent;
 
         setOpaque(true);
         setBackground(style().defaultBackgroundColor());
@@ -62,18 +62,18 @@ class ObjectHeaderInspector extends InspectorPanel {
 
         final int hubReferenceOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
 
-        if (_parent.showAddresses()) {
+        if (_objectInspector.showAddresses()) {
             addLabel(new LocationLabel.AsAddressWithOffset(inspection, hubReferenceOffset, origin));
         }
-        if (_parent.showOffsets()) {
+        if (_objectInspector.showOffsets()) {
             addLabel(new LocationLabel.AsOffset(inspection, hubReferenceOffset, origin));
         }
-        if (_parent.showTypes()) {
+        if (_objectInspector.showTypes()) {
             addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass())));
         }
         addLabel(new TextLabel(inspection(), "hub"));
         addLabel(new WordValueLabel(inspection(), ValueMode.REFERENCE, teleHub.getCurrentOrigin()));
-        if (_parent.showMemoryRegions()) {
+        if (_objectInspector.showMemoryRegions()) {
             final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
                 @Override
                 public Value fetchValue() {
@@ -82,25 +82,23 @@ class ObjectHeaderInspector extends InspectorPanel {
                 }
             };
             addLabel(memoryRegionValueLabel);
-            valueLabels.append(memoryRegionValueLabel);
         }
 
         // Second line:  "misc" word
         final int miscWordOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
-        if (_parent.showAddresses()) {
+        if (_objectInspector.showAddresses()) {
             addLabel(new LocationLabel.AsAddressWithOffset(inspection(), miscWordOffset, origin));
         }
-        if (_parent.showOffsets()) {
+        if (_objectInspector.showOffsets()) {
             addLabel(new LocationLabel.AsOffset(inspection(), miscWordOffset, origin));
         }
-        if (_parent.showTypes()) {
+        if (_objectInspector.showTypes()) {
             addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.WORD));
         }
         addLabel(new TextLabel(inspection(), "misc"));
         final ValueLabel miscValueLabel = new MiscWordLabel(inspection(), teleObject);
         addLabel(miscValueLabel);
-        valueLabels.append(miscValueLabel);
-        if (_parent.showMemoryRegions()) {
+        if (_objectInspector.showMemoryRegions()) {
             addLabel(new PlainLabel(inspection(), ""));
         }
 
@@ -108,45 +106,47 @@ class ObjectHeaderInspector extends InspectorPanel {
         final int arrayLengthOffset = teleVM().layoutScheme().arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
         if (teleObject instanceof TeleArrayObject) {
             final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject;
-            if (_parent.showAddresses()) {
+            if (_objectInspector.showAddresses()) {
                 addLabel(new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin));
             }
-            if (_parent.showOffsets()) {
+            if (_objectInspector.showOffsets()) {
                 addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
-            if (_parent.showTypes()) {
+            if (_objectInspector.showTypes()) {
                 addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
             }
             addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes
             addLabel(new DataLabel.IntAsDecimal(inspection(), teleArrayObject.getLength()));
-            if (_parent.showMemoryRegions()) {
+            if (_objectInspector.showMemoryRegions()) {
                 addLabel(new PlainLabel(inspection(), ""));
             }
         } else if (teleObject instanceof TeleHybridObject) {
             final TeleHybridObject teleHybridObject = (TeleHybridObject) teleObject;
-            if (_parent.showAddresses()) {
+            if (_objectInspector.showAddresses()) {
                 addLabel(new LocationLabel.AsAddressWithOffset(inspection(), arrayLengthOffset, origin));
             }
-            if (_parent.showOffsets()) {
+            if (_objectInspector.showOffsets()) {
                 addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
-            if (_parent.showTypes()) {
+            if (_objectInspector.showTypes()) {
                 addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
             }
             addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes
             addLabel(new DataLabel.IntAsDecimal(inspection(), teleHybridObject.readArrayLength()));
-            if (_parent.showMemoryRegions()) {
+            if (_objectInspector.showMemoryRegions()) {
                 addLabel(new PlainLabel(inspection(), ""));
             }
         }
-        final int columns = parent.numberOfTupleColumns();
+        final int columns = objectInspector.numberOfTupleColumns();
         SpringUtilities.makeCompactGrid(this, getComponentCount() / columns, columns, 0, 0, 10, 2);
     }
 
     public void refresh(long epoch, boolean force) {
-        // Handled by parent via {@link ObjectInspector#valueLabels()}.
+        for (InspectorLabel inspectorLabel : _labels) {
+            inspectorLabel.refresh(epoch, force);
+        }
     }
 
     private void addLabel(InspectorLabel inspectorLabel) {

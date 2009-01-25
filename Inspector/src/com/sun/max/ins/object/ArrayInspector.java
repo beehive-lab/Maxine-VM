@@ -22,9 +22,9 @@ package com.sun.max.ins.object;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -42,6 +42,8 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
     private final ArrayClassActor _arrayClassActor;
     private final int _length;
 
+    private ObjectArrayPanel _objectArrayPanel;
+
     ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
         super(inspection, residence, teleObject);
         _teleArrayObject = (TeleArrayObject) teleObject;
@@ -50,26 +52,20 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
         createFrame(null);
     }
 
-    private AppendableSequence<ValueLabel> _valueLabels = new ArrayListSequence<ValueLabel>();
-
-    @Override
-    protected synchronized AppendableSequence<ValueLabel> valueLabels() {
-        return _valueLabels;
-    }
-
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
         final Kind kind = _arrayClassActor.componentClassActor().kind();
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
-        final JPanel elementsPanel = createArrayPanel(_valueLabels, kind, _arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt(), 0, _length, "", valueMode);
-        elementsPanel.setBackground(style().defaultBackgroundColor());
-        frame().getContentPane().add(new JScrollPane(elementsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        //final JPanel elementsPanel = createArrayPanel(_valueLabels, kind, _arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt(), 0, _length, "", valueMode);
+        _objectArrayPanel = new ObjectArrayPanel(this, _teleArrayObject, kind, _arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt(), 0, _length, "", valueMode);
+        frame().getContentPane().add(new JScrollPane(_objectArrayPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
     }
 
-    public void viewConfigurationChanged(long epoch) {
-        _valueLabels = new ArrayListSequence<ValueLabel>();
-        reconstructView();
+    @Override
+    public void refreshView(long epoch, boolean force) {
+        super.refreshView(epoch, force);
+        _objectArrayPanel.refresh(epoch, force);
     }
 
 }
