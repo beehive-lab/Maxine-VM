@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
+import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
@@ -41,73 +42,70 @@ import com.sun.max.vm.value.*;
  */
 public class ObjectFieldsPanel extends InspectorPanel {
 
-    private final ObjectInspector _objectInspector;
-    private final TeleObject _teleObject;
-    private final Iterable<FieldActor> _fieldActors;
     private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(20);
 
-    ObjectFieldsPanel(ObjectInspector objectInspector, Iterable<FieldActor> fieldActors, TeleObject teleObject) {
+    ObjectFieldsPanel(final ObjectInspector objectInspector, Iterable<FieldActor> fieldActors) {
         super(objectInspector.inspection(), new SpringLayout());
-        _objectInspector = objectInspector;
-        _teleObject = teleObject;
-        _fieldActors = fieldActors;
+        final Inspection inspection = objectInspector.inspection();
         setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         setOpaque(true);
         setBackground(style().defaultBackgroundColor());
 
-        final Pointer objectOrigin = _teleObject.getCurrentOrigin();
-        final boolean isTeleActor = _teleObject instanceof TeleActor;
+        final TeleObject teleObject = objectInspector.teleObject();
+        final Pointer objectOrigin = teleObject.getCurrentOrigin();
+        final boolean isTeleActor = teleObject instanceof TeleActor;
 
-        for (final FieldActor fieldActor : _fieldActors) {
-            if (_objectInspector.showAddresses()) {
-                addLabel(new LocationLabel.AsAddressWithOffset(inspection(), fieldActor.offset(), objectOrigin));  // Field address
+        for (final FieldActor fieldActor : fieldActors) {
+            final int fieldOffset = fieldActor.offset();
+            if (objectInspector.showAddresses()) {
+                addLabel(new LocationLabel.AsAddressWithOffset(inspection, fieldOffset, objectOrigin));  // Field address
             }
-            if (_objectInspector.showOffsets()) {
-                addLabel(new LocationLabel.AsOffset(inspection(), fieldActor.offset(), objectOrigin));                           // Field position
+            if (objectInspector.showOffsets()) {
+                addLabel(new LocationLabel.AsOffset(inspection, fieldOffset, objectOrigin));                           // Field position
             }
-            if (_objectInspector.showTypes()) {
-                addLabel(new ClassActorLabel(inspection(), fieldActor.descriptor()));                                                              // Field type
+            if (objectInspector.showTypes()) {
+                addLabel(new ClassActorLabel(inspection, fieldActor.descriptor()));                                                              // Field type
             }
-            addLabel(new FieldActorLabel(inspection(), fieldActor));                                                                                     // Field name
+            addLabel(new FieldActorLabel(inspection, fieldActor));                                                                                     // Field name
 
             ValueLabel valueLabel;
             if (fieldActor.kind() == Kind.REFERENCE) {
-                valueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE) {
+                valueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE) {
                     @Override
                     public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
+                        return teleObject.readFieldValue(fieldActor);
                     }
                 };
             } else if (fieldActor.kind() == Kind.WORD) {
-                valueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD) {
+                valueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.WORD) {
                     @Override
                     public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
+                        return teleObject.readFieldValue(fieldActor);
                     }
                 };
             } else if (isTeleActor && fieldActor.name().toString().equals("_flags")) {
-                final TeleActor teleActor = (TeleActor) _teleObject;
-                valueLabel = new ActorFlagsValueLabel(inspection(), teleActor);
+                final TeleActor teleActor = (TeleActor) teleObject;
+                valueLabel = new ActorFlagsValueLabel(inspection, teleActor);
             } else {
-                valueLabel = new PrimitiveValueLabel(inspection(), fieldActor.kind()) {
+                valueLabel = new PrimitiveValueLabel(inspection, fieldActor.kind()) {
                     @Override
                     public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
+                        return teleObject.readFieldValue(fieldActor);
                     }
                 };
             }
             addLabel(valueLabel);                                                                                                                                     // Field value
 
-            if (_objectInspector.showMemoryRegions()) {
-                addLabel(new MemoryRegionValueLabel(inspection()) {
+            if (objectInspector.showMemoryRegions()) {
+                addLabel(new MemoryRegionValueLabel(inspection) {
                     @Override
                     public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
+                        return teleObject.readFieldValue(fieldActor);
                     }
                 });                                                                                                                 // memory region
             }
         }
-        final int columnCount = _objectInspector.numberOfTupleColumns();
+        final int columnCount = objectInspector.numberOfTupleColumns();
         SpringUtilities.makeCompactGrid(this, getComponentCount() / columnCount, columnCount, 0, 0, 0, 0);
     }
 

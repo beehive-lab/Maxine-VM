@@ -42,28 +42,21 @@ import com.sun.max.vm.type.*;
  */
 public class HubInspector extends ObjectInspector<HubInspector> {
 
-    private final TeleHub _teleHub;
-
     private ObjectFieldsPanel _fieldsPanel;
     private ObjectArrayPanel _vTablePanel;
     private ObjectArrayPanel _iTablePanel;
     private ObjectArrayPanel _mTablePanel;
     private ObjectArrayPanel _refMapPanel;
 
-    /**
-     * Non-null if the object is, or is associated with a ClassMethodActor.
-     */
-    private final TeleClassMethodActor _teleClassMethodActor;
-
     private final InspectorMenuItems _classMethodInspectorMenuItems;
 
     HubInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
         super(inspection, residence, teleObject);
-        _teleHub = (TeleHub) teleObject;
-        _teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
+        final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         createFrame(null);
-        if (_teleClassMethodActor != null) {
-            _classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), _teleClassMethodActor);
+        if (teleClassMethodActor != null) {
+            // the object is, or is associated with a ClassMethodActor.
+            _classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor);
             frame().add(_classMethodInspectorMenuItems);
         } else {
             _classMethodInspectorMenuItems = null;
@@ -77,14 +70,14 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
-        _fieldsPanel = new ObjectFieldsPanel(this, getFieldActors(), teleObject());
+        _fieldsPanel = new ObjectFieldsPanel(this, getFieldActors());
         panel.add(_fieldsPanel);
 
-        final Hub hub = _teleHub.hub();
+        final TeleHub teleHub = (TeleHub) teleObject();
+        final Hub hub = teleHub.hub();
         if (hub.vTableLength() > 0) {
             final int vTableStartIndex = Hub.vTableStartIndex();
-            _vTablePanel = new ObjectArrayPanel(this, _teleHub, Kind.WORD,
-                            teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
+            _vTablePanel = new ObjectArrayPanel(this, Kind.WORD, teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
                             vTableStartIndex,
                             hub.vTableLength(),
                             "V",
@@ -93,8 +86,7 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         }
         if (hub.iTableLength() > 0) {
             final int iTableStartIndex = hub.iTableStartIndex();
-            _iTablePanel = new ObjectArrayPanel(this, _teleHub, Kind.WORD,
-                            teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
+            _iTablePanel = new ObjectArrayPanel(this, Kind.WORD, teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
                             iTableStartIndex,
                             hub.iTableLength(),
                             "I",
@@ -103,8 +95,7 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         }
         if (hub.mTableLength() > 0) {
             final int mTableStartIndex = teleVM().fields().Hub_mTableStartIndex.readInt(teleObject().reference());
-            _mTablePanel = new ObjectArrayPanel(this, _teleHub, Kind.INT,
-                            teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
+            _mTablePanel = new ObjectArrayPanel(this, Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
                             mTableStartIndex,
                             teleVM().fields().Hub_mTableLength.readInt(teleObject().reference()),
                             "M",
@@ -113,8 +104,7 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         }
         if (hub.referenceMapLength() > 0) {
             final int referenceMapStartIndex = teleVM().fields().Hub_referenceMapStartIndex.readInt(teleObject().reference());
-            _refMapPanel = new ObjectArrayPanel(this, _teleHub, Kind.INT,
-                            teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
+            _refMapPanel = new ObjectArrayPanel(this, Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
                             referenceMapStartIndex,
                             teleVM().fields().Hub_referenceMapLength.readInt(teleObject().reference()),
                             "R",

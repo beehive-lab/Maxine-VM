@@ -27,6 +27,7 @@ import com.sun.max.gui.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -38,29 +39,26 @@ import com.sun.max.vm.value.*;
  */
 public class ObjectArrayPanel extends InspectorPanel {
 
-    private final ObjectInspector _objectInspector;
-    private final TeleObject _teleObject;
     private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(20);
 
-    ObjectArrayPanel(ObjectInspector objectInspector, TeleObject teleObject, final Kind kind, int startOffset, int startIndex, int length, String indexPrefix,
-                    WordValueLabel.ValueMode wordValueMode) {
+    ObjectArrayPanel(final ObjectInspector objectInspector, final Kind kind, int startOffset, int startIndex, int length, String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
         super(objectInspector.inspection(), new SpringLayout());
-        _objectInspector = objectInspector;
-        _teleObject = teleObject;
         setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         setOpaque(true);
         setBackground(style().defaultBackgroundColor());
 
+        final TeleObject teleObject = objectInspector.teleObject();
         final Pointer objectOrigin = teleObject.getCurrentOrigin();
+        final TeleReference objectReference = teleObject.reference();
         final int size = kind.size();
 
         for (int i = 0; i < length; i++) {
             final int index = startIndex + i;
-            if (!_objectInspector.hideNullArrayElements() || !teleVM().getElementValue(kind, _teleObject.reference(), index).isZero()) {
-                if (_objectInspector.showAddresses()) {
+            if (!objectInspector.hideNullArrayElements() || !teleVM().getElementValue(kind, objectReference, index).isZero()) {
+                if (objectInspector.showAddresses()) {
                     addLabel(new LocationLabel.AsAddressWithOffset(inspection(), startOffset + (i * size), objectOrigin));    // Array member address
                 }
-                if (_objectInspector.showOffsets()) {
+                if (objectInspector.showOffsets()) {
                     addLabel(new LocationLabel.AsOffset(inspection(), startOffset + (i * size), objectOrigin));                         // Array member position
                 }
                 addLabel(new LocationLabel.AsIndex(inspection(), indexPrefix, i, startOffset + (i * size), objectOrigin));      // Array member name
@@ -70,37 +68,37 @@ public class ObjectArrayPanel extends InspectorPanel {
                     valueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                            return teleVM().getElementValue(kind, objectReference, index);
                         }
                     };
                 } else if (kind == Kind.WORD) {
                     valueLabel = new WordValueLabel(inspection(), wordValueMode) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                            return teleVM().getElementValue(kind, objectReference, index);
                         }
                     };
                 } else {
                     valueLabel = new PrimitiveValueLabel(inspection(), kind) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                            return teleVM().getElementValue(kind, objectReference, index);
                         }
                     };
                 }
                 addLabel(valueLabel);                                                                                                   // Array member value
 
-                if (_objectInspector.showMemoryRegions()) {
+                if (objectInspector.showMemoryRegions()) {
                     addLabel(new MemoryRegionValueLabel(inspection()) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
+                            return teleVM().getElementValue(kind, objectReference, index);
                         }
                     });
                 }
             }
         }
-        SpringUtilities.makeCompactGrid(this, _objectInspector.numberOfArrayColumns());
+        SpringUtilities.makeCompactGrid(this, objectInspector.numberOfArrayColumns());
     }
 
     private void addLabel(InspectorLabel inspectorLabel) {
