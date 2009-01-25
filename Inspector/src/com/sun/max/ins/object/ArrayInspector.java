@@ -38,28 +38,27 @@ import com.sun.max.vm.type.*;
  */
 public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
 
-    private final TeleArrayObject _teleArrayObject;
-    private final ArrayClassActor _arrayClassActor;
-    private final int _length;
-
     private ObjectArrayPanel _objectArrayPanel;
 
     ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
         super(inspection, residence, teleObject);
-        _teleArrayObject = (TeleArrayObject) teleObject;
-        _arrayClassActor = (ArrayClassActor) teleObject.classActorForType();
-        _length = _teleArrayObject.getLength();
         createFrame(null);
     }
 
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        final Kind kind = _arrayClassActor.componentClassActor().kind();
+        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
+        final int length = teleArrayObject.getLength();
+        final ArrayClassActor arrayClassActor = (ArrayClassActor) teleObject().classActorForType();
+        final Kind kind = arrayClassActor.componentClassActor().kind();
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
-        //final JPanel elementsPanel = createArrayPanel(_valueLabels, kind, _arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt(), 0, _length, "", valueMode);
-        _objectArrayPanel = new ObjectArrayPanel(this, _teleArrayObject, kind, _arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt(), 0, _length, "", valueMode);
-        frame().getContentPane().add(new JScrollPane(_objectArrayPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        final int arrayOffsetFromOrigin = arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt();
+        _objectArrayPanel = new ObjectArrayPanel(this, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
+        final JScrollPane scrollPane = new JScrollPane(_objectArrayPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBackground(style().defaultBackgroundColor());
+        scrollPane.setOpaque(true);
+        frame().getContentPane().add(scrollPane);
     }
 
     @Override

@@ -40,7 +40,6 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     private ObjectFieldsPanel _objectFieldsPanel;
 
     private final InspectorMenuItems _classMethodInspectorMenuItems;
-
     private final InspectorMenuItems _targetMethodInspectorMenuItems;
 
     TupleInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
@@ -69,8 +68,11 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        _objectFieldsPanel = new ObjectFieldsPanel(this, getFieldActors(), teleObject());
-        frame().getContentPane().add(new JScrollPane(_objectFieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        _objectFieldsPanel = new ObjectFieldsPanel(this, getFieldActors());
+        final JScrollPane scrollPane = new JScrollPane(_objectFieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBackground(style().defaultBackgroundColor());
+        scrollPane.setOpaque(true);
+        frame().getContentPane().add(scrollPane);
     }
 
     @Override

@@ -58,7 +58,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     }
 
     /**
-     * Singleton manager;  no visible presence or direct user interaction at this time.
+     * Singleton factory;  no visible presence or direct user interaction at this time.
      */
     public static final class Factory extends AbstractInspectionHolder {
 
@@ -240,7 +240,6 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             panel.add(upperPanel, BorderLayout.NORTH);
             panel.add(lowerPanel, BorderLayout.SOUTH);
 
-
             return panel;
         }
 
@@ -280,13 +279,12 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     }
 
-
     private final TeleObject _teleObject;
 
     /**
      * @return local surrogate for the object being inspected in the {@link TeleVM}
      */
-    TeleObject teleObject() {
+    protected TeleObject teleObject() {
         return _teleObject;
     }
 
