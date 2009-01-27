@@ -604,7 +604,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable {
+    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             setOpaque(true);
             setBackground(getRowBackgroundColor(row));
@@ -662,6 +662,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public String getSearchableText() {
             return "";
         }
+
+        public void redisplay() {
+        }
+
+        public void refresh(long epoch, boolean force) {
+        }
     }
 
     private final class NumberRenderer extends PlainLabel implements TableCellRenderer {
@@ -716,7 +722,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class OperandRenderer implements  TableCellRenderer {
+    private final class OperandRenderer implements  TableCellRenderer, Prober {
 
         public OperandRenderer() {
         }
@@ -740,6 +746,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 renderer.setForeground(specialForegroundColor);
             }
             return renderer;
+        }
+
+        public void redisplay() {
+        }
+
+        public void refresh(long epoch, boolean force) {
         }
     }
 
@@ -790,19 +802,18 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     @Override
     protected void updateView(long epoch, boolean force) {
-        // No labels that need updating; operand labels are recreated when displayed.
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.refresh(epoch, force);
+        }
     }
 
     public void redisplay() {
-        for (int col = _columnModel.getColumnCount() - 1; col >= 0; --col) {
-            final TableCellRenderer renderer = _table.getCellRenderer(0, col);
-            if (renderer instanceof InspectorLabel) {
-                final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
-                inspectorLabel.redisplay();
-            }
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
         }
         invalidate();
         repaint();
     }
-
 }

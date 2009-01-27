@@ -20,14 +20,33 @@
  */
 package com.sun.max.tele.object;
 
+import java.util.*;
+
 import com.sun.max.tele.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.reference.*;
 
 public class TeleStaticTuple extends TeleTupleObject {
 
     protected TeleStaticTuple(TeleVM teleVM, Reference reference) {
         super(teleVM, reference);
+    }
+
+    @Override
+    public Set<FieldActor> getFieldActors() {
+        final Set<FieldActor> staticFieldActors = new HashSet<FieldActor>();
+        collectStaticFieldActors(classActorForType(), staticFieldActors);
+        return staticFieldActors;
+    }
+
+    private void collectStaticFieldActors(ClassActor classActor, Set<FieldActor> staticFieldActors) {
+        if (classActor != null) {
+            for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
+                staticFieldActors.add(fieldActor);
+            }
+            collectStaticFieldActors(classActor.superClassActor(), staticFieldActors);
+        }
     }
 
     @Override

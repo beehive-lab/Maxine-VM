@@ -23,6 +23,7 @@ package com.sun.max.ins.object;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -38,7 +39,7 @@ import com.sun.max.vm.type.*;
  */
 public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
 
-    private ObjectArrayPanel _objectArrayPanel;
+    private InspectorPanel _elementsPanel;
 
     ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
         super(inspection, residence, teleObject);
@@ -54,8 +55,8 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
         final Kind kind = arrayClassActor.componentClassActor().kind();
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final int arrayOffsetFromOrigin = arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt();
-        _objectArrayPanel = new ObjectArrayPanel(this, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
-        final JScrollPane scrollPane = new JScrollPane(_objectArrayPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        _elementsPanel = new JTableObjectArrayPanel(this, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
+        final JScrollPane scrollPane = new JScrollPane(_elementsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBackground(style().defaultBackgroundColor());
         scrollPane.setOpaque(true);
         frame().getContentPane().add(scrollPane);
@@ -64,7 +65,7 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
-        _objectArrayPanel.refresh(epoch, force);
+        _elementsPanel.refresh(epoch, force);
     }
 
 }

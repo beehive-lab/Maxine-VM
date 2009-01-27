@@ -508,7 +508,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable {
+    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             setOpaque(true);
             setBackground(rowToBackgroundColor(row));
@@ -551,6 +551,14 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         public String getSearchableText() {
             return "";
+        }
+
+        @Override
+        public void redisplay() {
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
         }
     }
 
@@ -684,6 +692,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     private final class SourceLineRenderer extends PlainLabel implements TableCellRenderer {
+
         private BytecodeLocation _lastBytecodeLocation;
         SourceLineRenderer() {
             super(JTableTargetCodeViewer.this.inspection(), null);
@@ -697,6 +706,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 }
             });
         }
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BytecodeLocation bytecodeLocation = rowToBytecodeLocation(row);
@@ -769,7 +779,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     }
 
-
     private final class BytesRenderer extends DataLabel.ByteArrayAsHex implements TableCellRenderer {
         BytesRenderer(Inspection inspection) {
             super(inspection, null);
@@ -785,17 +794,16 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void updateView(long epoch, boolean force) {
-        _operandsRenderer.refresh(epoch, force);
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.refresh(epoch, force);
+        }
     }
 
     public void redisplay() {
-        _operandsRenderer.redisplay();
-        for (int col = _columnModel.getColumnCount() - 1; col >= 0; --col) {
-            final TableCellRenderer renderer = _table.getCellRenderer(0, col);
-            if (renderer instanceof InspectorLabel) {
-                final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
-                inspectorLabel.redisplay();
-            }
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
         }
         invalidate();
         repaint();

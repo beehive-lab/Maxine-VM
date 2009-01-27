@@ -230,8 +230,8 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     private final class MemoryRegionJTable extends JTable {
 
-        MemoryRegionJTable(MemoryRegionTableModel memoryRegionTableModel, MemoryRegionColumnModel memoryRegionColumnModel) {
-            super(memoryRegionTableModel, memoryRegionColumnModel);
+        MemoryRegionJTable(TableModel tableModel, TableColumnModel tableColumnModel) {
+            super(tableModel, tableColumnModel);
         }
 
         @Override

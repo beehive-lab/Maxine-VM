@@ -42,7 +42,7 @@ import com.sun.max.vm.type.*;
  */
 public class HubInspector extends ObjectInspector<HubInspector> {
 
-    private ObjectFieldsPanel _fieldsPanel;
+    private InspectorPanel _fieldsPanel;
     private ObjectArrayPanel _vTablePanel;
     private ObjectArrayPanel _iTablePanel;
     private ObjectArrayPanel _mTablePanel;
@@ -70,8 +70,13 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
-        _fieldsPanel = new ObjectFieldsPanel(this, getFieldActors());
-        panel.add(_fieldsPanel);
+        _fieldsPanel = new JTableObjectFieldsPanel(this, teleObject().getFieldActors());
+        _fieldsPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+        final JScrollPane fieldsScrollPane = new JScrollPane(_fieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        fieldsScrollPane.setBackground(style().defaultBackgroundColor());
+        fieldsScrollPane.setOpaque(true);
+
+        panel.add(fieldsScrollPane);
 
         final TeleHub teleHub = (TeleHub) teleObject();
         final Hub hub = teleHub.hub();
