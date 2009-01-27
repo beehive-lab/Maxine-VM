@@ -35,7 +35,7 @@ import com.sun.max.unsafe.*;
 public abstract class LocationLabel extends InspectorLabel {
 
     protected int _value;
-    protected final Address _base;
+    protected Address _base;
     private long _epoch = -1;
 
     /**
@@ -111,6 +111,12 @@ public abstract class LocationLabel extends InspectorLabel {
 
     public final void setValue(int value) {
         _value = value;
+        updateText();
+    }
+
+    public final void setValue(int value, Address base) {
+        _value = value;
+        _base = base;
         updateText();
     }
 
@@ -244,9 +250,9 @@ public abstract class LocationLabel extends InspectorLabel {
      * menus is available with some useful commands.
      * The address does not update if contents at location get moved.
      */
-    public static final class AsIndex extends LocationLabel {
+    public static class AsIndex extends LocationLabel {
         private final String _prefix;
-        private final int _index;
+        private int _index;
 
         /**
          * A label that displays a memory location <base> + <offset> as "<prefix>[<index>]",
@@ -263,6 +269,13 @@ public abstract class LocationLabel extends InspectorLabel {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
             setBackground(style().decimalDataBackgroundColor());
+            updateText();
+        }
+
+        public void setValue(int index, int value, Address base) {
+            _index = index;
+            _value = value;
+            _base = base;
             updateText();
         }
 

@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.object;
 
+import java.util.*;
+
 import javax.swing.*;
 
 import com.sun.max.collect.*;
@@ -37,14 +39,17 @@ import com.sun.max.vm.value.*;
 
 /**
  * A panel that displays fields in a Maxine low level heap object (in tuples or hybrids).
+ * Being replaced by {@link TableObjectFieldsPanel}.
  *
  * @author Michael Van De Vanter
+ * @deprecated
  */
+@Deprecated
 public class ObjectFieldsPanel extends InspectorPanel {
 
     private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(20);
 
-    ObjectFieldsPanel(final ObjectInspector objectInspector, Iterable<FieldActor> fieldActors) {
+    ObjectFieldsPanel(final ObjectInspector objectInspector, Set<FieldActor> fieldActorSet) {
         super(objectInspector.inspection(), new SpringLayout());
         final Inspection inspection = objectInspector.inspection();
         setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
@@ -54,6 +59,15 @@ public class ObjectFieldsPanel extends InspectorPanel {
         final TeleObject teleObject = objectInspector.teleObject();
         final Pointer objectOrigin = teleObject.getCurrentOrigin();
         final boolean isTeleActor = teleObject instanceof TeleActor;
+
+        final FieldActor[] fieldActors = new FieldActor[fieldActorSet.size()];
+        fieldActorSet.toArray(fieldActors);
+        java.util.Arrays.sort(fieldActors, new Comparator<FieldActor>() {
+            public int compare(FieldActor a, FieldActor b) {
+                final Integer aOffset = a.offset();
+                return aOffset.compareTo(b.offset());
+            }
+        });
 
         for (final FieldActor fieldActor : fieldActors) {
             final int fieldOffset = fieldActor.offset();
@@ -66,7 +80,7 @@ public class ObjectFieldsPanel extends InspectorPanel {
             if (objectInspector.showTypes()) {
                 addLabel(new ClassActorLabel(inspection, fieldActor.descriptor()));                                                              // Field type
             }
-            addLabel(new FieldActorLabel(inspection, fieldActor));                                                                                     // Field name
+            addLabel(new FieldActorNameLabel(inspection, fieldActor));                                                                                     // Field name
 
             ValueLabel valueLabel;
             if (fieldActor.kind() == Kind.REFERENCE) {

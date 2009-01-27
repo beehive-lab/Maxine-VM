@@ -55,6 +55,8 @@ final class ObjectHeaderPanel extends InspectorPanel {
         setOpaque(true);
         setBackground(style().defaultBackgroundColor());
 
+
+
         final Address origin = teleObject.getCurrentOrigin();
 
         // First line:  pointer to hub

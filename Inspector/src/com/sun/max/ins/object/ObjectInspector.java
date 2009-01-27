@@ -389,6 +389,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         panel.setBackground(style().defaultBackgroundColor());
         if (_showHeaderMenuCheckBox.getState()) {
             _objectHeaderPanel = new ObjectHeaderPanel(inspection(), this, teleObject());
+            _objectHeaderPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
             panel.add(_objectHeaderPanel, BorderLayout.NORTH);
         }
         frame().setContentPane(panel);
@@ -533,7 +534,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
      *
      * @return a {@FieldActor} for every field in the object, sorted by offset.
      */
-    protected Iterable<FieldActor> getFieldActors() {
+    protected Collection<FieldActor> getFieldActors() {
         final TreeSet<FieldActor> fieldActors = new TreeSet<FieldActor>(new Comparator<FieldActor>() {
             public int compare(FieldActor a, FieldActor b) {
                 final Integer aOffset = a.offset();

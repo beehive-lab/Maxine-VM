@@ -121,7 +121,6 @@ public final class ClassActorLabel extends InspectorLabel {
 
     private void updateText() {
         if (_typeDescriptor == null) {
-            //_typeDescriptor = teleVM().referenceToClassActor(getClassActorReference()).typeDescriptor();
             _typeDescriptor = getTeleClassActor().classActor().typeDescriptor();
         }
         final Class javaType = _typeDescriptor.toJava(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);

@@ -30,14 +30,19 @@ import com.sun.max.vm.actor.member.*;
  * @author Michael Van De Vanter
  */
 
-public final class FieldActorLabel extends InspectorLabel {
+public class FieldActorNameLabel extends InspectorLabel {
 
-    private final FieldActor _fieldActor;
+    private FieldActor _fieldActor;
 
-    public FieldActorLabel(Inspection inspection, FieldActor fieldActor) {
+    public FieldActorNameLabel(Inspection inspection, FieldActor fieldActor) {
         super(inspection);
         _fieldActor = fieldActor;
         redisplay();
+    }
+
+    public void setValue(FieldActor fieldActor) {
+        _fieldActor = fieldActor;
+        updateText();
     }
 
     public void refresh(long epoch, boolean force) {
@@ -53,8 +58,13 @@ public final class FieldActorLabel extends InspectorLabel {
     }
 
     private void updateText() {
-        setText(_fieldActor.name().toString());
-        setToolTipText("Type: " + _fieldActor.descriptor().toJavaString(true) + " in " + _fieldActor.holder().qualifiedName());
+        if (_fieldActor == null) {
+            setText("");
+            setToolTipText("");
+        } else {
+            setText(_fieldActor.name().toString());
+            setToolTipText("Type: " + _fieldActor.descriptor().toJavaString(true) + " in " + _fieldActor.holder().qualifiedName());
+        }
     }
 
 }

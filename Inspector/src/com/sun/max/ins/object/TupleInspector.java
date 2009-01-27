@@ -32,12 +32,11 @@ import com.sun.max.vm.layout.*;
 /**
  * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} constructed using {@link TupleLayout}.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
 public class TupleInspector extends ObjectInspector<TupleInspector> {
 
-    private ObjectFieldsPanel _objectFieldsPanel;
+    private InspectorPanel _fieldsPanel;
 
     private final InspectorMenuItems _classMethodInspectorMenuItems;
     private final InspectorMenuItems _targetMethodInspectorMenuItems;
@@ -68,8 +67,9 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        _objectFieldsPanel = new ObjectFieldsPanel(this, getFieldActors());
-        final JScrollPane scrollPane = new JScrollPane(_objectFieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        _fieldsPanel = new JTableObjectFieldsPanel(this, teleObject().getFieldActors());
+        _fieldsPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+        final JScrollPane scrollPane = new JScrollPane(_fieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBackground(style().defaultBackgroundColor());
         scrollPane.setOpaque(true);
         frame().getContentPane().add(scrollPane);
@@ -78,7 +78,7 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
-        _objectFieldsPanel.refresh(epoch, force);
+        _fieldsPanel.refresh(epoch, force);
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
         }
