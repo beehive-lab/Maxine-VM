@@ -50,10 +50,10 @@ public class JTableObjectArrayPanel extends InspectorPanel {
      */
     private enum ArrayElementColumnKind {
         ADDRESS("Addr.", "Memory address of element", -1),
-        POSITION("Pos.", "Relative position of element (bytes)", 20),
-        NAME("Element", "Array element name", 20),
-        VALUE("Value", "Element value", 20),
-        REGION("Region", "Memory region pointed to by value", 20);
+        POSITION("Pos.", "Relative position of element (bytes)", 10),
+        NAME("Elem.", "Array element name", 10),
+        VALUE("Value", "Element value", 5),
+        REGION("Region", "Memory region pointed to by value", -1);
 
         private final String _columnLabel;
         private final String _toolTipText;
@@ -107,6 +107,9 @@ public class JTableObjectArrayPanel extends InspectorPanel {
     private final String _indexPrefix;
     private final WordValueLabel.ValueMode _wordValueMode;
 
+    private int[] _rowToElementMap;  // display row --> element index
+    private int _visibleElementCount = 0;  // number of array elements being displayed
+
     private final JTable _table;
     private final MyTableModel _model;
     private final MyTableColumnModel _columnModel;
@@ -125,6 +128,13 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         _arrayLength = length;
         _indexPrefix = indexPrefix;
         _wordValueMode = wordValueMode;
+
+        // Initialize map so that all elements will display
+        _rowToElementMap = new int[_arrayLength];
+        for (int index = 0; index < _arrayLength; index++) {
+            _rowToElementMap[index] = index;
+        }
+        _visibleElementCount = _arrayLength;
 
         _model = new MyTableModel();
         _columns = new TableColumn[ArrayElementColumnKind.VALUES.length()];
@@ -155,11 +165,11 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         }
 
         public int getRowCount() {
-            return _arrayLength;
+            return _visibleElementCount;
         }
 
         public Object getValueAt(int row, int col) {
-            return row;
+            return _rowToElementMap[row];
         }
 
         @Override
@@ -243,7 +253,9 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_startOffset + (row * _elementSize), _objectOrigin);
+
+            final int index = _rowToElementMap[row];
+            setValue(_startOffset + (index * _elementSize), _objectOrigin);
             return this;
         }
     }
@@ -255,7 +267,8 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_startOffset + (row * _elementSize), _objectOrigin);
+            final int index = _rowToElementMap[row];
+            setValue(_startOffset + (index * _elementSize), _objectOrigin);
             return this;
         }
     }
@@ -268,7 +281,8 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(row, _startOffset + (row * _elementSize), _objectOrigin);
+            final int index = _rowToElementMap[row];
+            setValue(index, _startOffset + (index * _elementSize), _objectOrigin);
             return this;
         }
     }
@@ -296,31 +310,32 @@ public class JTableObjectArrayPanel extends InspectorPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            InspectorLabel label = _labels[row];
+            final int index = _rowToElementMap[row];
+            InspectorLabel label = _labels[index];
             if (label == null) {
                 if (_elementKind == Kind.REFERENCE) {
                     label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + row);
+                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 } else if (_elementKind == Kind.WORD) {
                     label = new WordValueLabel(_inspection, _wordValueMode) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + row);
+                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 } else {
                     label = new PrimitiveValueLabel(_inspection, _elementKind) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + row);
+                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 }
-                _labels[row] = label;
+                _labels[index] = label;
             }
             return label;
         }
@@ -349,15 +364,16 @@ public class JTableObjectArrayPanel extends InspectorPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            InspectorLabel label = _labels[row];
+            final int index = _rowToElementMap[row];
+            InspectorLabel label = _labels[index];
             if (label == null) {
                 label = new MemoryRegionValueLabel(_inspection) {
                     @Override
                     public Value fetchValue() {
-                        return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + row);
+                        return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                     }
                 };
-                _labels[row] = label;
+                _labels[index] = label;
             }
             return label;
         }
@@ -380,6 +396,26 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         if (epoch > _lastRefreshEpoch || force) {
             _lastRefreshEpoch = epoch;
             _objectOrigin = _teleObject.getCurrentOrigin();
+            if (_objectInspector.hideNullArrayElements()) {
+                final int previousVisibleCount = _visibleElementCount;
+                _visibleElementCount = 0;
+                for (int index = 0; index < _arrayLength; index++) {
+                    if (!teleVM().getElementValue(_elementKind, _objectReference, index).isZero()) {
+                        _rowToElementMap[_visibleElementCount++] = index;
+                    }
+                }
+                if (previousVisibleCount != _visibleElementCount) {
+                    _model.fireTableDataChanged();
+                }
+            } else {
+                if (_visibleElementCount != _arrayLength) {
+                    // Previously hiding but no longer; reset map
+                    for (int index = 0; index < _arrayLength; index++) {
+                        _rowToElementMap[index] = index;
+                    }
+                    _visibleElementCount = _arrayLength;
+                }
+            }
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(epoch, force);
