@@ -56,6 +56,7 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final int arrayOffsetFromOrigin = arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt();
         _elementsPanel = new JTableObjectArrayPanel(this, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
+        _elementsPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         final JScrollPane scrollPane = new JScrollPane(_elementsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBackground(style().defaultBackgroundColor());
         scrollPane.setOpaque(true);
