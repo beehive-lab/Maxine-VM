@@ -195,7 +195,6 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
 
     // [tw] Warning: duplicated code!
-    @Override
     public MachineCodeInstructionArray getTargetCodeInstructions() {
         final IndexedSequence<TargetCodeInstruction> instructions = getInstructions();
         final MachineCodeInstruction[] result = new MachineCodeInstruction[instructions.length()];
