@@ -78,7 +78,7 @@ public class ObjectFieldsPanel extends InspectorPanel {
                 addLabel(new LocationLabel.AsOffset(inspection, fieldOffset, objectOrigin));                           // Field position
             }
             if (objectInspector.showTypes()) {
-                addLabel(new ClassActorLabel(inspection, fieldActor.descriptor()));                                                              // Field type
+                addLabel(new TypeLabel(inspection, fieldActor.descriptor()));                                                              // Field type
             }
             addLabel(new FieldActorNameLabel(inspection, fieldActor));                                                                                     // Field name
 

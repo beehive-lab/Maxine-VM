@@ -284,7 +284,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     /**
      * @return local surrogate for the object being inspected in the {@link TeleVM}
      */
-    protected TeleObject teleObject() {
+    TeleObject teleObject() {
         return _teleObject;
     }
 
@@ -308,7 +308,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private final JCheckBoxMenuItem _showMemoryRegionsMenuCheckBox;
     private final JCheckBoxMenuItem _hideNullArrayElementsMenuCheckBox;
 
-    private ObjectHeaderPanel _objectHeaderPanel;
+    private InspectorTable _objectHeaderTable;
 
     protected ObjectInspector(final Inspection inspection, Residence residence, final TeleObject teleObject) {
         super(inspection, residence, teleObject.reference());
@@ -320,7 +320,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         _showHeaderMenuCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (!_showHeaderMenuCheckBox.getState()) {
-                    _objectHeaderPanel = null;
+                    _objectHeaderTable = null;
                 }
                 reconstructView();
             }
@@ -388,9 +388,10 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
         if (_showHeaderMenuCheckBox.getState()) {
-            _objectHeaderPanel = new ObjectHeaderPanel(inspection(), this, teleObject());
-            _objectHeaderPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
-            panel.add(_objectHeaderPanel, BorderLayout.NORTH);
+            _objectHeaderTable = new ObjectHeaderTable(this);
+            _objectHeaderTable.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+            // Will add without column headers
+            panel.add(_objectHeaderTable, BorderLayout.NORTH);
         }
         frame().setContentPane(panel);
     }
@@ -517,8 +518,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 _currentObjectOrigin = newOrigin;
                 reconstructView();
             } else {
-                if (_objectHeaderPanel != null) {
-                    _objectHeaderPanel.refresh(epoch, force);
+                if (_objectHeaderTable != null) {
+                    _objectHeaderTable.refresh(epoch, force);
                 }
             }
             super.refreshView(epoch, force);

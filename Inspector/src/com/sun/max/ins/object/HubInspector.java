@@ -42,11 +42,11 @@ import com.sun.max.vm.type.*;
  */
 public class HubInspector extends ObjectInspector<HubInspector> {
 
-    private InspectorPanel _fieldsPanel;
-    private ObjectArrayPanel _vTablePanel;
-    private ObjectArrayPanel _iTablePanel;
-    private ObjectArrayPanel _mTablePanel;
-    private ObjectArrayPanel _refMapPanel;
+    private InspectorTable _fieldsTable;
+    private ArrayElementsTable _vTableTable;
+    private ArrayElementsTable _iTableTable;
+    private ArrayElementsTable _mTableTable;
+    private ArrayElementsTable _refMapTable;
 
     private final InspectorMenuItems _classMethodInspectorMenuItems;
 
@@ -70,9 +70,9 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
-        _fieldsPanel = new JTableObjectFieldsPanel(this, teleObject().getFieldActors());
-        _fieldsPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
-        final JScrollPane fieldsScrollPane = new JScrollPane(_fieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        _fieldsTable = new ObjectFieldsTable(this, teleObject().getFieldActors());
+        final JScrollPane fieldsScrollPane = new JScrollPane(_fieldsTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        fieldsScrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         fieldsScrollPane.setBackground(style().defaultBackgroundColor());
         fieldsScrollPane.setOpaque(true);
 
@@ -82,62 +82,80 @@ public class HubInspector extends ObjectInspector<HubInspector> {
         final Hub hub = teleHub.hub();
         if (hub.vTableLength() > 0) {
             final int vTableStartIndex = Hub.vTableStartIndex();
-            _vTablePanel = new ObjectArrayPanel(this, Kind.WORD, teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
+            _vTableTable = new ArrayElementsTable(this, Kind.WORD, teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
                             vTableStartIndex,
                             hub.vTableLength(),
                             "V",
                             WordValueLabel.ValueMode.CALL_ENTRY_POINT);
-            panel.add(_vTablePanel);
+            final JScrollPane vTableScrollPane = new JScrollPane(_vTableTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            vTableScrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+            vTableScrollPane.setBackground(style().defaultBackgroundColor());
+            vTableScrollPane.setOpaque(true);
+            panel.add(vTableScrollPane);
         }
         if (hub.iTableLength() > 0) {
             final int iTableStartIndex = hub.iTableStartIndex();
-            _iTablePanel = new ObjectArrayPanel(this, Kind.WORD, teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
+            _iTableTable = new ArrayElementsTable(this, Kind.WORD, teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
                             iTableStartIndex,
                             hub.iTableLength(),
                             "I",
                             WordValueLabel.ValueMode.ITABLE_ENTRY);
-            panel.add(_iTablePanel);
+            final JScrollPane iTableScrollPane = new JScrollPane(_iTableTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            iTableScrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+            iTableScrollPane.setBackground(style().defaultBackgroundColor());
+            iTableScrollPane.setOpaque(true);
+            panel.add(iTableScrollPane);
         }
         if (hub.mTableLength() > 0) {
             final int mTableStartIndex = teleVM().fields().Hub_mTableStartIndex.readInt(teleObject().reference());
-            _mTablePanel = new ObjectArrayPanel(this, Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
+            _mTableTable = new ArrayElementsTable(this, Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
                             mTableStartIndex,
                             teleVM().fields().Hub_mTableLength.readInt(teleObject().reference()),
                             "M",
                             WordValueLabel.ValueMode.WORD);
-            panel.add(_mTablePanel);
+            final JScrollPane mTableScrollPane = new JScrollPane(_mTableTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            mTableScrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+            mTableScrollPane.setBackground(style().defaultBackgroundColor());
+            mTableScrollPane.setOpaque(true);
+            panel.add(mTableScrollPane);
         }
         if (hub.referenceMapLength() > 0) {
             final int referenceMapStartIndex = teleVM().fields().Hub_referenceMapStartIndex.readInt(teleObject().reference());
-            _refMapPanel = new ObjectArrayPanel(this, Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
+            _refMapTable = new ArrayElementsTable(this, Kind.INT, teleVM().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
                             referenceMapStartIndex,
                             teleVM().fields().Hub_referenceMapLength.readInt(teleObject().reference()),
                             "R",
                             WordValueLabel.ValueMode.WORD);
-            panel.add(_refMapPanel);
+            final JScrollPane refMapScrollPane = new JScrollPane(_refMapTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            refMapScrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+            refMapScrollPane.setBackground(style().defaultBackgroundColor());
+            refMapScrollPane.setOpaque(true);
+            panel.add(refMapScrollPane);
         }
 
-        final JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBackground(style().defaultBackgroundColor());
-        scrollPane.setOpaque(true);
-        frame().getContentPane().add(scrollPane);
+//        final JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+//        scrollPane.setBackground(style().defaultBackgroundColor());
+//        scrollPane.setOpaque(true);
+//        frame().getContentPane().add(scrollPane);
+
+        frame().getContentPane().add(panel);
     }
 
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
-        _fieldsPanel.refresh(epoch, force);
-        if (_iTablePanel != null) {
-            _iTablePanel.refresh(epoch, force);
+        _fieldsTable.refresh(epoch, force);
+        if (_iTableTable != null) {
+            _iTableTable.refresh(epoch, force);
         }
-        if (_vTablePanel != null) {
-            _vTablePanel.refresh(epoch, force);
+        if (_vTableTable != null) {
+            _vTableTable.refresh(epoch, force);
         }
-        if (_mTablePanel != null) {
-            _mTablePanel.refresh(epoch, force);
+        if (_mTableTable != null) {
+            _mTableTable.refresh(epoch, force);
         }
-        if (_refMapPanel != null) {
-            _refMapPanel.refresh(epoch, force);
+        if (_refMapTable != null) {
+            _refMapTable.refresh(epoch, force);
         }
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);

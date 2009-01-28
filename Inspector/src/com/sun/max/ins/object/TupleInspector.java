@@ -36,7 +36,7 @@ import com.sun.max.vm.layout.*;
  */
 public class TupleInspector extends ObjectInspector<TupleInspector> {
 
-    private InspectorPanel _fieldsPanel;
+    private ObjectFieldsTable _fieldsTable;
 
     private final InspectorMenuItems _classMethodInspectorMenuItems;
     private final InspectorMenuItems _targetMethodInspectorMenuItems;
@@ -67,9 +67,9 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        _fieldsPanel = new JTableObjectFieldsPanel(this, teleObject().getFieldActors());
-        _fieldsPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
-        final JScrollPane scrollPane = new JScrollPane(_fieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        _fieldsTable = new ObjectFieldsTable(this, teleObject().getFieldActors());
+        final JScrollPane scrollPane = new JScrollPane(_fieldsTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         scrollPane.setBackground(style().defaultBackgroundColor());
         scrollPane.setOpaque(true);
         frame().getContentPane().add(scrollPane);
@@ -78,7 +78,7 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
-        _fieldsPanel.refresh(epoch, force);
+        _fieldsTable.refresh(epoch, force);
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
         }

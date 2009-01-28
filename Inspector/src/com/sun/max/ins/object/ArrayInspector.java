@@ -34,12 +34,11 @@ import com.sun.max.vm.type.*;
 /**
  * An object inspector specialized for displaying a Maxine low-level object in the {@link TeleVM}, constructed using {@link ArrayLayout}.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
 public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
 
-    private InspectorPanel _elementsPanel;
+    private InspectorTable _elementsTable;
 
     ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
         super(inspection, residence, teleObject);
@@ -55,9 +54,10 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
         final Kind kind = arrayClassActor.componentClassActor().kind();
         final WordValueLabel.ValueMode valueMode = kind == Kind.REFERENCE ? WordValueLabel.ValueMode.REFERENCE : WordValueLabel.ValueMode.WORD;
         final int arrayOffsetFromOrigin = arrayClassActor.arrayLayout().getElementOffsetFromOrigin(0).toInt();
-        _elementsPanel = new JTableObjectArrayPanel(this, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
-        _elementsPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
-        final JScrollPane scrollPane = new JScrollPane(_elementsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        _elementsTable = new ArrayElementsTable(this, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
+
+        final JScrollPane scrollPane = new JScrollPane(_elementsTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
         scrollPane.setBackground(style().defaultBackgroundColor());
         scrollPane.setOpaque(true);
         frame().getContentPane().add(scrollPane);
@@ -66,7 +66,7 @@ public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
-        _elementsPanel.refresh(epoch, force);
+        _elementsTable.refresh(epoch, force);
     }
 
 }

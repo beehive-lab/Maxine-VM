@@ -131,6 +131,10 @@ public abstract class LocationLabel extends InspectorLabel {
             redisplay();
         }
 
+        public AsAddressWithOffset(Inspection inspection) {
+            this(inspection, 0, Address.zero());
+        }
+
         public final void redisplay() {
             setFont(style().hexDataFont());
             setForeground(style().hexDataColor());
@@ -217,13 +221,17 @@ public abstract class LocationLabel extends InspectorLabel {
      */
     public static class AsOffset extends LocationLabel {
 
-        public AsOffset(Inspection inspection, int offset) {
-            this(inspection, offset, null);
-        }
-
         public AsOffset(Inspection inspection, int offset, Address origin) {
             super(inspection, offset, origin);
             redisplay();
+        }
+
+        public AsOffset(Inspection inspection, int offset) {
+            this(inspection, offset, Address.zero());
+        }
+
+        public AsOffset(Inspection inspection) {
+            this(inspection, 0, Address.zero());
         }
 
         public void redisplay() {

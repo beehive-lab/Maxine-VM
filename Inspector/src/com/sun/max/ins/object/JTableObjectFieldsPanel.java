@@ -27,7 +27,6 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
@@ -38,64 +37,13 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
-// TODO (mlvdv)  implement null element suppression and correct update (cache or just use label array?)
 /**
  * A table-based panel that displays fields in a Maxine low level heap object (in tuples or hybrids).
  *
  * @author Michael Van De Vanter
  */
+@Deprecated
 public class JTableObjectFieldsPanel extends InspectorPanel {
-
-    /**
-     * Defines the columns supported by the inspector; the view includes one of each
-     * kind.  The visibility of them, however, may be changed by the user.
-     */
-    private enum ObjectFieldColumnKind {
-        ADDRESS("Addr.", "Memory address of field", -1),
-        POSITION("Pos.", "Relative position of field (bytes)", 20),
-        TYPE("Type", "Type of field", 20),
-        NAME("Name", "Field name", 20),
-        VALUE("Value", "Field value", 20),
-        REGION("Region", "Memory region pointed to by value", 20);
-
-        private final String _columnLabel;
-        private final String _toolTipText;
-        private final int _minWidth;
-
-        private ObjectFieldColumnKind(String label, String toolTipText, int minWidth) {
-            _columnLabel = label;
-            _toolTipText = toolTipText;
-            _minWidth = minWidth;
-        }
-
-        /**
-         * @return text to appear in the column header
-         */
-        public String label() {
-            return _columnLabel;
-        }
-
-        /**
-         * @return text to appear in the column header's toolTip, null if none specified
-         */
-        public String toolTipText() {
-            return _toolTipText;
-        }
-
-        /**
-         * @return minimum width allowed for this column when resized by user; -1 if none specified.
-         */
-        public int minWidth() {
-            return _minWidth;
-        }
-
-        @Override
-        public String toString() {
-            return _columnLabel;
-        }
-
-        public static final IndexedSequence<ObjectFieldColumnKind> VALUES = new ArraySequence<ObjectFieldColumnKind>(values());
-    }
 
     private final ObjectInspector _objectInspector;
     private final Inspection _inspection;
@@ -109,6 +57,12 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
     private final MyTableColumnModel _columnModel;
     private final TableColumn[] _columns;
 
+    /**
+     * Creates a panel for displaying a list of object fields.
+     *
+     * @param objectInspector parent that contains this panel
+     * @param fieldActors description of the fields to be displayed
+     */
     public JTableObjectFieldsPanel(final ObjectInspector objectInspector, Collection<FieldActor> fieldActors) {
         super(objectInspector.inspection(), new BorderLayout());
         _objectInspector = objectInspector;
@@ -117,6 +71,7 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
         _teleObject = objectInspector.teleObject();
         _isTeleActor = _teleObject instanceof TeleActor;
 
+        // Sort fields by offset in object layout.
         fieldActors.toArray(_fieldActors);
         java.util.Arrays.sort(_fieldActors, new Comparator<FieldActor>() {
             public int compare(FieldActor a, FieldActor b) {
@@ -124,9 +79,10 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
                 return aOffset.compareTo(b.offset());
             }
         });
+
         _model = new MyTableModel();
         _columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
-        _columnModel = new MyTableColumnModel();
+        _columnModel = new MyTableColumnModel(_objectInspector);
         _table = new MyTable(_model, _columnModel);
         _table.setOpaque(true);
         _table.setBackground(style().defaultBackgroundColor());
@@ -135,17 +91,21 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
         _table.setShowVerticalLines(false);
         _table.setIntercellSpacing(new Dimension(0, 0));
         _table.setRowHeight(20);
-        _table.addMouseListener(new MyInspectorMouseClickAdapter(_inspection));
+        _table.addMouseListener(new TableCellMouseClickAdapter(_inspection, _table));
 
         refresh(_inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(_table);
         final JScrollPane scrollPane = new JScrollPane(_table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBackground(style().defaultBackgroundColor());
         scrollPane.setOpaque(true);
-        add(_table.getTableHeader(), BorderLayout.NORTH);
-        add(_table, BorderLayout.CENTER);
+        //add(_table, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
+    /**
+     * Models the fields/rows in a list of object fields;
+     * the value of each cell is the {@link FieldActor} that describes the field.
+     */
     private final class MyTableModel extends AbstractTableModel {
 
         public int getColumnCount() {
@@ -166,6 +126,9 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
         }
     }
 
+    /**
+     * A table customized with tool tips in the column headers.
+     */
     private final class MyTable extends JTable {
 
         MyTable(TableModel model, TableColumnModel tableColumnModel) {
@@ -174,6 +137,7 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
 
         @Override
         protected JTableHeader createDefaultTableHeader() {
+            System.out.println(this.getClass().toString() + "create Header");
             return new JTableHeader(_columnModel) {
                 @Override
                 public String getToolTipText(MouseEvent mouseEvent) {
@@ -187,19 +151,19 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
     }
 
     /**
-     * A column model for object fields, to be used in an {@link ObjectInspector}.
+     * A column model for object headers, to be used in an {@link ObjectInspector}.
      * Column selection is driven by choices in the parent {@link ObjectInspector}.
      * This implementation cannot update column choices dynamically.
      */
     private final class MyTableColumnModel extends DefaultTableColumnModel {
-        //
-        MyTableColumnModel() {
-            createColumn(ObjectFieldColumnKind.ADDRESS, new AddressRenderer(), _objectInspector.showAddresses());
-            createColumn(ObjectFieldColumnKind.POSITION, new PositionRenderer(), _objectInspector.showOffsets());
-            createColumn(ObjectFieldColumnKind.TYPE, new TypeRenderer(), _objectInspector.showTypes());
+
+        MyTableColumnModel(ObjectInspector objectInspector) {
+            createColumn(ObjectFieldColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
+            createColumn(ObjectFieldColumnKind.POSITION, new PositionRenderer(), objectInspector.showOffsets());
+            createColumn(ObjectFieldColumnKind.TYPE, new TypeRenderer(), objectInspector.showTypes());
             createColumn(ObjectFieldColumnKind.NAME, new NameRenderer(), true);
             createColumn(ObjectFieldColumnKind.VALUE, new ValueRenderer(), true);
-            createColumn(ObjectFieldColumnKind.REGION, new RegionRenderer(), _objectInspector.showMemoryRegions());
+            createColumn(ObjectFieldColumnKind.REGION, new RegionRenderer(), objectInspector.showMemoryRegions());
         }
 
         private void createColumn(ObjectFieldColumnKind columnKind, TableCellRenderer renderer, boolean isVisible) {
@@ -211,27 +175,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
                 addColumn(_columns[col]);
             }
             _columns[col].setIdentifier(columnKind);
-        }
-    }
-
-    private final class MyInspectorMouseClickAdapter extends InspectorMouseClickAdapter {
-        MyInspectorMouseClickAdapter(Inspection inspection) {
-            super(inspection);
-        }
-        @Override
-        public void procedure(final MouseEvent mouseEvent) {
-            // Locate the renderer under the event location, and pass along the mouse click if appropriate
-            final Point p = mouseEvent.getPoint();
-            final int hitColumnIndex = _table.columnAtPoint(p);
-            final int hitRowIndex = _table.rowAtPoint(p);
-            if ((hitColumnIndex != -1) && (hitRowIndex != -1)) {
-                final TableCellRenderer tableCellRenderer = _table.getCellRenderer(hitRowIndex, hitColumnIndex);
-                final Object cellValue = _table.getValueAt(hitRowIndex, hitColumnIndex);
-                final Component component = tableCellRenderer.getTableCellRendererComponent(_table, cellValue, false, true, hitRowIndex, hitColumnIndex);
-                if (component != null) {
-                    component.dispatchEvent(mouseEvent);
-                }
-            }
         }
     }
 
@@ -263,7 +206,7 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
 
     private final class TypeRenderer implements TableCellRenderer, Prober {
 
-        private ClassActorLabel[] _labels = new ClassActorLabel[_fieldActors.length];
+        private TypeLabel[] _labels = new TypeLabel[_fieldActors.length];
 
         public void refresh(long epoch, boolean force) {
             for (InspectorLabel label : _labels) {
@@ -284,10 +227,10 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            ClassActorLabel label = _labels[row];
+            TypeLabel label = _labels[row];
             if (label == null) {
                 final FieldActor fieldActor = (FieldActor) value;
-                label = new ClassActorLabel(_inspection, fieldActor.descriptor());
+                label = new TypeLabel(_inspection, fieldActor.descriptor());
                 _labels[row] = label;
             }
             return label;

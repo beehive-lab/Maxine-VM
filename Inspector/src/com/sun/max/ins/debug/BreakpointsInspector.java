@@ -389,7 +389,7 @@ public final class BreakpointsInspector extends UniqueInspector {
         }
     }
 
-    private final class MethodCellRenderer extends PlainLabel implements TableCellRenderer {
+    private final class MethodCellRenderer extends JavaNameLabel implements TableCellRenderer {
 
         public MethodCellRenderer(Inspection inspection) {
             super(inspection, null);
@@ -398,12 +398,11 @@ public final class BreakpointsInspector extends UniqueInspector {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = get(row);
-            setText(breakpointData.shortName());
-            setToolTipText(breakpointData.longName());
+            setValue(breakpointData.shortName(), breakpointData.longName());
             if (row == _table.getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
-                setBackground(style().defaultTextBackgroundColor());
+                setBackground(style().javaNameBackgroundColor());
             }
             return this;
         }

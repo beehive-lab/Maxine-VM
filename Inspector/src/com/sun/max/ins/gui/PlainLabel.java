@@ -51,7 +51,7 @@ public class PlainLabel extends InspectorLabel {
         // No remote data to refresh
     }
 
-    public final void redisplay() {
+    public void redisplay() {
         setFont(style().defaultFont());
         setForeground(style().defaultTextColor());
         setBackground(style().defaultTextBackgroundColor());

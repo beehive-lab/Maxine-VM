@@ -26,7 +26,6 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
@@ -42,57 +41,9 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
+@Deprecated
 public class JTableObjectArrayPanel extends InspectorPanel {
 
-    /**
-     * Defines the columns supported by the inspector; the view includes one of each
-     * kind.  The visibility of them, however, may be changed by the user.
-     */
-    private enum ArrayElementColumnKind {
-        ADDRESS("Addr.", "Memory address of element", -1),
-        POSITION("Pos.", "Relative position of element (bytes)", 10),
-        NAME("Elem.", "Array element name", 10),
-        VALUE("Value", "Element value", 5),
-        REGION("Region", "Memory region pointed to by value", -1);
-
-        private final String _columnLabel;
-        private final String _toolTipText;
-        private final int _minWidth;
-
-        private ArrayElementColumnKind(String label, String toolTipText, int minWidth) {
-            _columnLabel = label;
-            _toolTipText = toolTipText;
-            _minWidth = minWidth;
-        }
-
-        /**
-         * @return text to appear in the column header
-         */
-        public String label() {
-            return _columnLabel;
-        }
-
-        /**
-         * @return text to appear in the column header's toolTip, null if none specified
-         */
-        public String toolTipText() {
-            return _toolTipText;
-        }
-
-        /**
-         * @return minimum width allowed for this column when resized by user; -1 if none specified.
-         */
-        public int minWidth() {
-            return _minWidth;
-        }
-
-        @Override
-        public String toString() {
-            return _columnLabel;
-        }
-
-        public static final IndexedSequence<ArrayElementColumnKind> VALUES = new ArraySequence<ArrayElementColumnKind>(values());
-    }
 
     private final ObjectInspector _objectInspector;
     private final Inspection _inspection;
@@ -147,7 +98,7 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         _table.setShowVerticalLines(false);
         _table.setIntercellSpacing(new Dimension(0, 0));
         _table.setRowHeight(20);
-        _table.addMouseListener(new MyInspectorMouseClickAdapter(_inspection));
+        _table.addMouseListener(new TableCellMouseClickAdapter(_inspection, _table));
 
         refresh(_inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(_table);
@@ -222,27 +173,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
                 addColumn(_columns[col]);
             }
             _columns[col].setIdentifier(columnKind);
-        }
-    }
-
-    private final class MyInspectorMouseClickAdapter extends InspectorMouseClickAdapter {
-        MyInspectorMouseClickAdapter(Inspection inspection) {
-            super(inspection);
-        }
-        @Override
-        public void procedure(final MouseEvent mouseEvent) {
-            // Locate the renderer under the event location, and pass along the mouse click if appropriate
-            final Point p = mouseEvent.getPoint();
-            final int hitColumnIndex = _table.columnAtPoint(p);
-            final int hitRowIndex = _table.rowAtPoint(p);
-            if ((hitColumnIndex != -1) && (hitRowIndex != -1)) {
-                final TableCellRenderer tableCellRenderer = _table.getCellRenderer(hitRowIndex, hitColumnIndex);
-                final Object cellValue = _table.getValueAt(hitRowIndex, hitColumnIndex);
-                final Component component = tableCellRenderer.getTableCellRendererComponent(_table, cellValue, false, true, hitRowIndex, hitColumnIndex);
-                if (component != null) {
-                    component.dispatchEvent(mouseEvent);
-                }
-            }
         }
     }
 
