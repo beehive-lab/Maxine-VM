@@ -21,7 +21,6 @@
 package com.sun.max.ins.object;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -37,13 +36,13 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
+
 /**
- * A table-based panel that displays fields in a Maxine low level heap object (in tuples or hybrids).
+ * A table that displays Maxine object fields; for use in an instance of {@link ObjectInspector}.
  *
  * @author Michael Van De Vanter
  */
-@Deprecated
-public class JTableObjectFieldsPanel extends InspectorPanel {
+public final class ObjectFieldsTable extends InspectorTable {
 
     private final ObjectInspector _objectInspector;
     private final Inspection _inspection;
@@ -52,19 +51,18 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
     private Pointer _objectOrigin;
     private final boolean _isTeleActor;
 
-    private final JTable _table;
-    private final MyTableModel _model;
-    private final MyTableColumnModel _columnModel;
+    private final ObjectFieldsTableModel _model;
+    private final ObjectFieldsTableColumnModel _columnModel;
     private final TableColumn[] _columns;
 
     /**
-     * Creates a panel for displaying a list of object fields.
+     * A {@link JTable} specialized to display Maxine object fields.
      *
      * @param objectInspector parent that contains this panel
      * @param fieldActors description of the fields to be displayed
      */
-    public JTableObjectFieldsPanel(final ObjectInspector objectInspector, Collection<FieldActor> fieldActors) {
-        super(objectInspector.inspection(), new BorderLayout());
+    public ObjectFieldsTable(final ObjectInspector objectInspector, Collection<FieldActor> fieldActors) {
+        super(objectInspector.inspection());
         _objectInspector = objectInspector;
         _inspection = objectInspector.inspection();
         _fieldActors = new FieldActor[fieldActors.size()];
@@ -80,33 +78,47 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
             }
         });
 
-        _model = new MyTableModel();
+        _model = new ObjectFieldsTableModel();
         _columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
-        _columnModel = new MyTableColumnModel(_objectInspector);
-        _table = new MyTable(_model, _columnModel);
-        _table.setOpaque(true);
-        _table.setBackground(style().defaultBackgroundColor());
-        _table.setFillsViewportHeight(true);
-        _table.setShowHorizontalLines(false);
-        _table.setShowVerticalLines(false);
-        _table.setIntercellSpacing(new Dimension(0, 0));
-        _table.setRowHeight(20);
-        _table.addMouseListener(new TableCellMouseClickAdapter(_inspection, _table));
+        _columnModel = new ObjectFieldsTableColumnModel(_objectInspector);
+        setModel(_model);
+        setColumnModel(_columnModel);
+        setOpaque(true);
+        setBackground(style().defaultBackgroundColor());
+        setFillsViewportHeight(true);
+        setShowHorizontalLines(style().objectTableShowHorizontalLines());
+        setShowVerticalLines(style().objectTableShowVerticalLines());
+        setIntercellSpacing(style().objectTableIntercellSpacing());
+        setRowHeight(style().objectTableRowHeight());
+        addMouseListener(new TableCellMouseClickAdapter(_inspection, this));
 
         refresh(_inspection.teleVM().epoch(), true);
-        JTableColumnResizer.adjustColumnPreferredWidths(_table);
-        final JScrollPane scrollPane = new JScrollPane(_table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBackground(style().defaultBackgroundColor());
-        scrollPane.setOpaque(true);
-        //add(_table, BorderLayout.CENTER);
-        add(scrollPane, BorderLayout.CENTER);
+        JTableColumnResizer.adjustColumnPreferredWidths(this);
+    }
+
+    /**
+     * Add tool tip text to the column headers, as specified by {@link ObjectFieldColumnKind}.
+     *
+     * @see javax.swing.JTable#createDefaultTableHeader()
+     */
+    @Override
+    protected JTableHeader createDefaultTableHeader() {
+        return new JTableHeader(_columnModel) {
+            @Override
+            public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final int index = _columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                return ObjectFieldColumnKind.VALUES.get(modelIndex).toolTipText();
+            }
+        };
     }
 
     /**
      * Models the fields/rows in a list of object fields;
      * the value of each cell is the {@link FieldActor} that describes the field.
      */
-    private final class MyTableModel extends AbstractTableModel {
+    private final class ObjectFieldsTableModel extends AbstractTableModel {
 
         public int getColumnCount() {
             return ObjectFieldColumnKind.VALUES.length();
@@ -127,37 +139,13 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
     }
 
     /**
-     * A table customized with tool tips in the column headers.
-     */
-    private final class MyTable extends JTable {
-
-        MyTable(TableModel model, TableColumnModel tableColumnModel) {
-            super(model, tableColumnModel);
-        }
-
-        @Override
-        protected JTableHeader createDefaultTableHeader() {
-            System.out.println(this.getClass().toString() + "create Header");
-            return new JTableHeader(_columnModel) {
-                @Override
-                public String getToolTipText(MouseEvent mouseEvent) {
-                    final Point p = mouseEvent.getPoint();
-                    final int index = _columnModel.getColumnIndexAtX(p.x);
-                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
-                    return ObjectFieldColumnKind.VALUES.get(modelIndex).toolTipText();
-                }
-            };
-        }
-    }
-
-    /**
      * A column model for object headers, to be used in an {@link ObjectInspector}.
      * Column selection is driven by choices in the parent {@link ObjectInspector}.
      * This implementation cannot update column choices dynamically.
      */
-    private final class MyTableColumnModel extends DefaultTableColumnModel {
+    private final class ObjectFieldsTableColumnModel extends DefaultTableColumnModel {
 
-        MyTableColumnModel(ObjectInspector objectInspector) {
+        ObjectFieldsTableColumnModel(ObjectInspector objectInspector) {
             createColumn(ObjectFieldColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
             createColumn(ObjectFieldColumnKind.POSITION, new PositionRenderer(), objectInspector.showOffsets());
             createColumn(ObjectFieldColumnKind.TYPE, new TypeRenderer(), objectInspector.showTypes());
@@ -181,7 +169,7 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
     private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
 
         AddressRenderer() {
-            super(_inspection, 0, Address.zero());
+            super(_inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -194,7 +182,7 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
     private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
 
         public PositionRenderer() {
-            super(_inspection, 0, Address.zero());
+            super(_inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -204,43 +192,23 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
         }
     }
 
-    private final class TypeRenderer implements TableCellRenderer, Prober {
+    private final class TypeRenderer extends TypeLabel implements TableCellRenderer {
 
-        private TypeLabel[] _labels = new TypeLabel[_fieldActors.length];
-
-        public void refresh(long epoch, boolean force) {
-            for (InspectorLabel label : _labels) {
-                if (label != null) {
-                    label.refresh(epoch, force);
-                }
-            }
+        public TypeRenderer() {
+            super(_inspection);
         }
 
-        @Override
-        public void redisplay() {
-            for (InspectorLabel label : _labels) {
-                if (label != null) {
-                    label.redisplay();
-                }
-            }
-        }
-
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            TypeLabel label = _labels[row];
-            if (label == null) {
-                final FieldActor fieldActor = (FieldActor) value;
-                label = new TypeLabel(_inspection, fieldActor.descriptor());
-                _labels[row] = label;
-            }
-            return label;
+            final FieldActor fieldActor = (FieldActor) value;
+            setValue(fieldActor.descriptor());
+            return this;
         }
     }
 
     private final class NameRenderer extends FieldActorNameLabel implements TableCellRenderer {
 
         public NameRenderer() {
-            super(_inspection, null);
+            super(_inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -262,7 +230,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
@@ -271,7 +238,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             InspectorLabel label = _labels[row];
             if (label == null) {
@@ -319,7 +285,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
@@ -328,7 +293,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             InspectorLabel label = _labels[row];
             if (label == null) {
@@ -345,7 +309,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
         }
     }
 
-    @Override
     public void redisplay() {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
@@ -357,7 +320,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
 
     private long _lastRefreshEpoch = -1;
 
-    @Override
     public void refresh(long epoch, boolean force) {
         if (epoch > _lastRefreshEpoch || force) {
             _lastRefreshEpoch = epoch;
@@ -368,5 +330,6 @@ public class JTableObjectFieldsPanel extends InspectorPanel {
             }
         }
     }
+
 
 }

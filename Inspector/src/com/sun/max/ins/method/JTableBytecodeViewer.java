@@ -227,7 +227,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final Inspection _inspection;
     private final JTable _table;
     private final MyTableModel _model;
-    private final MyTableColumnModel _columnModel;
+    private final BytecodeTableColumnModel _columnModel;
     private final TableColumn[] _columns;
     private PoolConstantLabel.Mode _operandDisplayMode;
 
@@ -236,8 +236,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _inspection = inspection;
         _model = new MyTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
-        _columnModel = new MyTableColumnModel();
-        _table = new MyTable(_model, _columnModel);
+        _columnModel = new BytecodeTableColumnModel();
+        _table = new BytecodeTable(_model, _columnModel);
         _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
         createView(teleVM().epoch());
     }
@@ -249,10 +249,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _table.setOpaque(true);
         _table.setBackground(style().defaultBackgroundColor());
         _table.setFillsViewportHeight(true);
-        _table.setShowHorizontalLines(false);
-        _table.setShowVerticalLines(false);
-        _table.setIntercellSpacing(new Dimension(0, 0));
-        _table.setRowHeight(20);
+        _table.setShowHorizontalLines(style().codeTableShowHorizontalLines());
+        _table.setShowVerticalLines(style().codeTableShowVerticalLines());
+        _table.setIntercellSpacing(style().codeTableIntercellSpacing());
+        _table.setRowHeight(style().codeTableRowHeight());
         _table.setRowSelectionAllowed(true);
         _table.setColumnSelectionAllowed(true);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -466,9 +466,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class MyTable extends JTable {
+    private final class BytecodeTable extends JTable {
 
-        MyTable(TableModel model, TableColumnModel tableColumnModel) {
+        BytecodeTable(TableModel model, TableColumnModel tableColumnModel) {
             super(model, tableColumnModel);
         }
 
@@ -496,11 +496,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class MyTableColumnModel extends DefaultTableColumnModel {
+    private final class BytecodeTableColumnModel extends DefaultTableColumnModel {
 
         private final Preferences _preferences;
 
-        MyTableColumnModel() {
+        BytecodeTableColumnModel() {
             _preferences = new Preferences(JTableBytecodeViewer.globalPreferences(inspection())) {
                 @Override
                 public void setIsVisible(ColumnKind columnKind, boolean visible) {

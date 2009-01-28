@@ -400,5 +400,32 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return _searchRowMatchedBackground;
     }
 
+    // Table-based Views
+    @Override
+    public Dimension objectTableIntercellSpacing() {
+        return zeroTableIntercellSpacing();
+    }
+    @Override
+    public boolean objectTableShowHorizontalLines() {
+        return false;
+    }
+    @Override
+    public boolean objectTableShowVerticalLines() {
+        return false;
+    }
+
+    @Override
+    public Dimension codeTableIntercellSpacing() {
+        return zeroTableIntercellSpacing();
+    }
+    @Override
+    public boolean codeTableShowHorizontalLines() {
+        return false;
+    }
+    @Override
+    public boolean codeTableShowVerticalLines() {
+        return false;
+    }
+
 
 }

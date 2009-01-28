@@ -21,7 +21,6 @@
 package com.sun.max.ins.object;
 
 import java.awt.*;
-import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -37,13 +36,12 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * A table-based panel that displays array members in a Maxine low level heap object (in arrays or hybrids) as a list of rows.
+ * A table that displays Maxine array elements; for use in an instance of {@link ObjectInspector}.
+ * Null array elements can be hidden from the display.
  *
  * @author Michael Van De Vanter
  */
-@Deprecated
-public class JTableObjectArrayPanel extends InspectorPanel {
-
+public final class ArrayElementsTable extends InspectorTable {
 
     private final ObjectInspector _objectInspector;
     private final Inspection _inspection;
@@ -61,13 +59,23 @@ public class JTableObjectArrayPanel extends InspectorPanel {
     private int[] _rowToElementMap;  // display row --> element index
     private int _visibleElementCount = 0;  // number of array elements being displayed
 
-    private final JTable _table;
-    private final MyTableModel _model;
-    private final MyTableColumnModel _columnModel;
+    private final ArrayElementsTableModel _model;
+    private final ArrayElementsTableColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    JTableObjectArrayPanel(final ObjectInspector objectInspector, final Kind kind, int startOffset, int startIndex, int length, String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
-        super(objectInspector.inspection(), new BorderLayout());
+    /**
+     * A {@link JTable} specialized to display Maxine array elements.
+     *
+     * @param objectInspector the parent of this component
+     * @param kind the Maxine value "kind" of the array.
+     * @param startOffset memory position relative to the object origin where the displayed array starts
+     * @param startIndex index into the displayed array where the display starts
+     * @param length number of elements to display
+     * @param indexPrefix text to prepend to the displayed name(index) of each element.
+     * @param wordValueMode how to display word values, based on their presumed use in the VM.
+     */
+    ArrayElementsTable(final ObjectInspector objectInspector, final Kind kind, int startOffset, int startIndex, int length, String indexPrefix, WordValueLabel.ValueMode wordValueMode) {
+        super(objectInspector.inspection());
         _objectInspector = objectInspector;
         _inspection = objectInspector.inspection();
         _teleObject = objectInspector.teleObject();
@@ -87,29 +95,48 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         }
         _visibleElementCount = _arrayLength;
 
-        _model = new MyTableModel();
+        _model = new ArrayElementsTableModel();
         _columns = new TableColumn[ArrayElementColumnKind.VALUES.length()];
-        _columnModel = new MyTableColumnModel();
-        _table = new MyTable(_model, _columnModel);
-        _table.setOpaque(true);
-        _table.setBackground(style().defaultBackgroundColor());
-        _table.setFillsViewportHeight(true);
-        _table.setShowHorizontalLines(false);
-        _table.setShowVerticalLines(false);
-        _table.setIntercellSpacing(new Dimension(0, 0));
-        _table.setRowHeight(20);
-        _table.addMouseListener(new TableCellMouseClickAdapter(_inspection, _table));
+        _columnModel = new ArrayElementsTableColumnModel(_objectInspector);
+        setModel(_model);
+        setColumnModel(_columnModel);
+        setOpaque(true);
+        setBackground(style().defaultBackgroundColor());
+        setFillsViewportHeight(true);
+        setShowHorizontalLines(style().objectTableShowHorizontalLines());
+        setShowVerticalLines(style().objectTableShowVerticalLines());
+        setIntercellSpacing(style().objectTableIntercellSpacing());
+        setRowHeight(style().objectTableRowHeight());
+        addMouseListener(new TableCellMouseClickAdapter(_inspection, this));
 
         refresh(_inspection.teleVM().epoch(), true);
-        JTableColumnResizer.adjustColumnPreferredWidths(_table);
-        final JScrollPane scrollPane = new JScrollPane(_table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBackground(style().defaultBackgroundColor());
-        scrollPane.setOpaque(true);
-        add(_table.getTableHeader(), BorderLayout.NORTH);
-        add(_table, BorderLayout.CENTER);
+        JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
-    private final class MyTableModel extends AbstractTableModel {
+    /**
+     * Add tool tip text to the column headers, as specified by {@link ArrayElementsColumnKind}.
+     *
+     * @see javax.swing.JTable#createDefaultTableHeader()
+     */
+    @Override
+    protected JTableHeader createDefaultTableHeader() {
+        return new JTableHeader(_columnModel) {
+            @Override
+            public String getToolTipText(java.awt.event.MouseEvent mouseEvent) {
+                final Point p = mouseEvent.getPoint();
+                final int index = _columnModel.getColumnIndexAtX(p.x);
+                final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                return ArrayElementColumnKind.VALUES.get(modelIndex).toolTipText();
+            }
+        };
+    }
+
+    /**
+     * Models the words/rows in a sequence of array elements;
+     * the value of each cell is simply the index into the array
+     * elements being displayed.
+     */
+    private final class ArrayElementsTableModel extends AbstractTableModel {
 
         public int getColumnCount() {
             return ArrayElementColumnKind.VALUES.length();
@@ -129,39 +156,19 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         }
     }
 
-    private final class MyTable extends JTable {
-
-        MyTable(TableModel model, TableColumnModel tableColumnModel) {
-            super(model, tableColumnModel);
-        }
-
-        @Override
-        protected JTableHeader createDefaultTableHeader() {
-            return new JTableHeader(_columnModel) {
-                @Override
-                public String getToolTipText(MouseEvent mouseEvent) {
-                    final Point p = mouseEvent.getPoint();
-                    final int index = _columnModel.getColumnIndexAtX(p.x);
-                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
-                    return ArrayElementColumnKind.VALUES.get(modelIndex).toolTipText();
-                }
-            };
-        }
-    }
-
     /**
      * A column model for array elements, to be used in an {@link ObjectInspector}.
      * Column selection is driven by choices in the parent {@link ObjectInspector}.
      * This implementation cannot update column choices dynamically.
      */
-    private final class MyTableColumnModel extends DefaultTableColumnModel {
+    private final class ArrayElementsTableColumnModel extends DefaultTableColumnModel {
 
-        MyTableColumnModel() {
-            createColumn(ArrayElementColumnKind.ADDRESS, new AddressRenderer(), _objectInspector.showAddresses());
-            createColumn(ArrayElementColumnKind.POSITION, new PositionRenderer(), _objectInspector.showOffsets());
+        ArrayElementsTableColumnModel(ObjectInspector objectInspector) {
+            createColumn(ArrayElementColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
+            createColumn(ArrayElementColumnKind.POSITION, new PositionRenderer(), objectInspector.showOffsets());
             createColumn(ArrayElementColumnKind.NAME, new NameRenderer(), true);
             createColumn(ArrayElementColumnKind.VALUE, new ValueRenderer(), true);
-            createColumn(ArrayElementColumnKind.REGION, new RegionRenderer(), _objectInspector.showMemoryRegions());
+            createColumn(ArrayElementColumnKind.REGION, new RegionRenderer(), objectInspector.showMemoryRegions());
         }
 
         private void createColumn(ArrayElementColumnKind columnKind, TableCellRenderer renderer, boolean isVisible) {
@@ -179,7 +186,7 @@ public class JTableObjectArrayPanel extends InspectorPanel {
     private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
 
         AddressRenderer() {
-            super(_inspection, 0, Address.zero());
+            super(_inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -193,7 +200,7 @@ public class JTableObjectArrayPanel extends InspectorPanel {
     private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
 
         public PositionRenderer() {
-            super(_inspection, 0, Address.zero());
+            super(_inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -229,7 +236,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
@@ -238,7 +244,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final int index = _rowToElementMap[row];
             InspectorLabel label = _labels[index];
@@ -283,7 +288,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public void redisplay() {
             for (InspectorLabel label : _labels) {
                 if (label != null) {
@@ -292,7 +296,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
             }
         }
 
-        @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
             final int index = _rowToElementMap[row];
             InspectorLabel label = _labels[index];
@@ -309,7 +312,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
         }
     }
 
-    @Override
     public void redisplay() {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
@@ -321,7 +323,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
 
     private long _lastRefreshEpoch = -1;
 
-    @Override
     public void refresh(long epoch, boolean force) {
         if (epoch > _lastRefreshEpoch || force) {
             _lastRefreshEpoch = epoch;
@@ -352,5 +353,6 @@ public class JTableObjectArrayPanel extends InspectorPanel {
             }
         }
     }
+
 
 }

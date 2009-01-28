@@ -163,7 +163,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     private final Inspection _inspection;
     private final JTable _table;
     private final MyTableModel _model;
-    private final MyTableColumnModel _columnModel;
+    private final TargetCodeTableColumnModel _columnModel;
     private final TableColumn[] _columns;
     private final OperandsRenderer _operandsRenderer;
     private final SourceLineRenderer _sourceLineRenderer;
@@ -175,8 +175,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _sourceLineRenderer = new SourceLineRenderer();
         _model = new MyTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
-        _columnModel = new MyTableColumnModel();
-        _table = new MyTable(_model, _columnModel);
+        _columnModel = new TargetCodeTableColumnModel();
+        _table = new TargetCodeTable(_model, _columnModel);
         createView(teleVM().epoch());
     }
 
@@ -187,10 +187,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _table.setOpaque(true);
         _table.setBackground(style().defaultBackgroundColor());
         _table.setFillsViewportHeight(true);
-        _table.setShowHorizontalLines(false);
-        _table.setShowVerticalLines(false);
-        _table.setIntercellSpacing(new Dimension(0, 0));
-        _table.setRowHeight(20);
+        _table.setShowHorizontalLines(style().codeTableShowHorizontalLines());
+        _table.setShowVerticalLines(style().codeTableShowVerticalLines());
+        _table.setIntercellSpacing(style().codeTableIntercellSpacing());
+        _table.setRowHeight(style().codeTableRowHeight());
         _table.setRowSelectionAllowed(true);
         _table.setColumnSelectionAllowed(true);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -391,9 +391,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class MyTable extends JTable {
+    private final class TargetCodeTable extends JTable {
 
-        MyTable(TableModel model, TableColumnModel tableColumnModel) {
+        TargetCodeTable(TableModel model, TableColumnModel tableColumnModel) {
             super(model, tableColumnModel);
         }
 
@@ -421,11 +421,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private final class MyTableColumnModel extends DefaultTableColumnModel {
+    private final class TargetCodeTableColumnModel extends DefaultTableColumnModel {
 
         private final Preferences _preferences;
 
-        private MyTableColumnModel() {
+        private TargetCodeTableColumnModel() {
             _preferences = new Preferences(JTableTargetCodeViewer.globalPreferences(inspection())) {
                 @Override
                 public void setIsVisible(ColumnKind columnKind, boolean visible) {
