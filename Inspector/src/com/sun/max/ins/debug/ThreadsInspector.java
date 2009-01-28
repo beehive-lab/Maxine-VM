@@ -106,7 +106,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
         _model = new ThreadsTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new ThreadsColumnModel();
-        _table = new ThreadJTable(_model, _columnModel);
+        _table = new ThreadTable(_model, _columnModel);
         createFrame(null);
         refreshView(inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(_table);
@@ -125,6 +125,10 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
 
     @Override
     public void createView(long epoch) {
+        _table.setShowHorizontalLines(style().defaultTableShowHorizontalLines());
+        _table.setShowVerticalLines(style().defaultTableShowVerticalLines());
+        _table.setIntercellSpacing(style().defaultTableIntercellSpacing());
+        _table.setRowHeight(style().defaultTableRowHeight());
         _table.setRowSelectionAllowed(true);
         _table.setColumnSelectionAllowed(false);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -136,9 +140,9 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
         refreshView(epoch, true);
     }
 
-    private final class ThreadJTable extends JTable {
+    private final class ThreadTable extends JTable {
 
-        ThreadJTable(TableModel model, TableColumnModel tableColumnModel) {
+        ThreadTable(TableModel model, TableColumnModel tableColumnModel) {
             super(model, tableColumnModel);
         }
 
