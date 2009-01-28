@@ -190,7 +190,7 @@ public abstract class DataLabel extends InspectorLabel {
     }
 
     /**
-     * A label that displays the decimal value of an unchanging int; a ToolTip displays the value in hex.
+     * A label that displays the decimal value of an unchanging integer; a ToolTip displays the value in hex.
      */
     public static final class IntAsDecimal extends DataLabel {
         public IntAsDecimal(Inspection inspection, int n) {

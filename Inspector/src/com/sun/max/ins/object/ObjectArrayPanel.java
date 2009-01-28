@@ -37,6 +37,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
+@Deprecated
 public class ObjectArrayPanel extends InspectorPanel {
 
     private final AppendableSequence<InspectorLabel> _labels = new ArrayListSequence<InspectorLabel>(20);

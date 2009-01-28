@@ -41,6 +41,7 @@ import com.sun.max.vm.value.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
+@Deprecated
 final class ObjectHeaderPanel extends InspectorPanel {
 
     private final TeleObject _teleObject;
@@ -71,7 +72,7 @@ final class ObjectHeaderPanel extends InspectorPanel {
             addLabel(new LocationLabel.AsOffset(inspection, hubReferenceOffset, origin));
         }
         if (_objectInspector.showTypes()) {
-            addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass())));
+            addLabel(new TypeLabel(inspection(), JavaTypeDescriptor.forJavaClass(teleHub.hub().getClass())));
         }
         addLabel(new TextLabel(inspection(), "hub"));
         addLabel(new WordValueLabel(inspection(), ValueMode.REFERENCE, teleHub.getCurrentOrigin()));
@@ -95,7 +96,7 @@ final class ObjectHeaderPanel extends InspectorPanel {
             addLabel(new LocationLabel.AsOffset(inspection(), miscWordOffset, origin));
         }
         if (_objectInspector.showTypes()) {
-            addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.WORD));
+            addLabel(new TypeLabel(inspection(), JavaTypeDescriptor.WORD));
         }
         addLabel(new TextLabel(inspection(), "misc"));
         final ValueLabel miscValueLabel = new MiscWordLabel(inspection(), teleObject);
@@ -115,7 +116,7 @@ final class ObjectHeaderPanel extends InspectorPanel {
                 addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
             if (_objectInspector.showTypes()) {
-                addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
+                addLabel(new TypeLabel(inspection(), JavaTypeDescriptor.INT));
             }
             addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes
@@ -132,7 +133,7 @@ final class ObjectHeaderPanel extends InspectorPanel {
                 addLabel(new LocationLabel.AsOffset(inspection(), arrayLengthOffset, origin));
             }
             if (_objectInspector.showTypes()) {
-                addLabel(new ClassActorLabel(inspection(), JavaTypeDescriptor.INT));
+                addLabel(new TypeLabel(inspection(), JavaTypeDescriptor.INT));
             }
             addLabel(new TextLabel(inspection(), "length"));
             // Assume length never changes

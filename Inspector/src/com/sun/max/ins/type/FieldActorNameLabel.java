@@ -40,6 +40,10 @@ public class FieldActorNameLabel extends InspectorLabel {
         redisplay();
     }
 
+    public FieldActorNameLabel(Inspection inspection) {
+        this(inspection, null);
+    }
+
     public void setValue(FieldActor fieldActor) {
         _fieldActor = fieldActor;
         updateText();

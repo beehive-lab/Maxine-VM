@@ -283,7 +283,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
         }
     }
 
-    private final class NameCellRenderer extends PlainLabel implements TableCellRenderer {
+    private final class NameCellRenderer extends JavaNameLabel implements TableCellRenderer {
 
         NameCellRenderer(Inspection inspection) {
             super(inspection, null);
@@ -292,12 +292,11 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            setText(inspection().nameDisplay().shortName(teleNativeThread));
-            setToolTipText("Name:  " + inspection().nameDisplay().longName(teleNativeThread));
+            setValue(inspection().nameDisplay().shortName(teleNativeThread), "Name:  " + inspection().nameDisplay().longName(teleNativeThread));
             if (row == _table.getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
-                setBackground(style().defaultTextBackgroundColor());
+                setBackground(style().javaNameBackgroundColor());
             }
             return this;
         }
