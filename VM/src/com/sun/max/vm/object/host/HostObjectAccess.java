@@ -29,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.prototype.*;
@@ -189,12 +188,7 @@ public final class HostObjectAccess {
     /**
      * A map used to canonicalize instances of the Maxine value classes.
      */
-    private static Map<Value, Value> _valueMap;
-
-    /**
-     * A map used to canonicalize instances of @link NameAndTypeConstant.
-     */
-    private static final Map<NameAndTypeConstant, NameAndTypeConstant> _nameAndTypeMap = new HashMap<NameAndTypeConstant, NameAndTypeConstant>();
+    private static final Map<Object, Object> _valueMap = new HashMap<Object, Object>();
 
     /**
      * This method maps a host object to a target object. For most objects, this method will return the parameter
@@ -205,37 +199,32 @@ public final class HostObjectAccess {
      * @return a reference to the corresponding object in the target VM
      */
     public static Object hostToTarget(Object object) {
-        if (object instanceof String) {
-            return ((String) object).intern();
+        if (object instanceof String || object instanceof Value || object instanceof NameAndTypeConstant) {
+            // canonicalize all instances of these classes using .equals()
+            Object result = _valueMap.get(object);
+            if (result == null) {
+                result = object;
+                _valueMap.put(object, object);
+            }
+            return result;
         }
-        if (object instanceof Value) {
-            // canonicalize all instances of com.sun.max.vm.value.Value
-            return hostToTargetValue(object);
-        }
-        if (_objectMap == null) {
-            // remap certain objects to certain other objects
-            initializeObjectIdentityMap();
-        }
-        final Object replace = _objectMap.get(object);
-        if (replace == NULL) {
-            return null;
-        }
+        final Object replace = getObjectReplacement(object);
         if (replace != null) {
-            return replace;
+            return replace == NULL ? null : replace;
         }
         if (object instanceof Thread || object instanceof ThreadGroup) {
             return null;
         }
-
-        if (object instanceof NameAndTypeConstant) {
-            NameAndTypeConstant nameAndType = _nameAndTypeMap.get(object);
-            if (nameAndType == null) {
-                nameAndType = (NameAndTypeConstant) object;
-                _nameAndTypeMap.put(nameAndType, nameAndType);
-            }
-            return nameAndType;
-        }
         return object;
+    }
+
+    private static Object getObjectReplacement(Object object) {
+        if (_objectMap == null) {
+            // check the object identity map certain objects to certain other objects
+            initializeObjectIdentityMap();
+        }
+        final Object replace = _objectMap.get(object);
+        return replace;
     }
 
     private static void initializeObjectIdentityMap() {
@@ -250,54 +239,6 @@ public final class HostObjectAccess {
         _objectMap.put(_mainThread.getThreadGroup(), threadGroup);
         _objectMap.put(threadGroup, threadGroup);
         _objectMap.put(MaxineVM.host(), MaxineVM.target());
-        final Properties systemProperies = new Properties();
-        for (String name : JDK_java_lang_System.REMEMBERED_PROPERTY_NAMES) {
-            final String value = System.getProperty(name);
-            if (value != null) {
-                systemProperies.setProperty(name, value);
-            }
-        }
-        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), systemProperies);
-        try {
-            _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.ApplicationShutdownHooks"), "hooks"), new IdentityHashMap<Thread, Thread>());
-            _objectMap.put(WithoutAccessCheck.getStaticField(Class.forName("java.lang.Shutdown"), "hooks"), new ArrayList<Runnable>());
-        } catch (ClassNotFoundException classNotFoundException) {
-            ProgramError.unexpected(classNotFoundException);
-        }
-
-        HackJDK.fixBufferedInputStream(_objectMap);
-    }
-
-    private static Object hostToTargetValue(Object object) {
-        if (_valueMap == null) {
-            _valueMap = new HashMap<Value, Value>();
-        }
-        final Value iv = (Value) object;
-
-        // '-0' requires a compiler literal that is separated from '0',
-        // even though '==' per FPU would return 'true':
-        switch (iv.kind().asEnum()) {
-            case FLOAT: {
-                if (iv.asFloat() == 0F && Float.floatToRawIntBits(iv.asFloat()) != 0) {
-                    return iv;
-                }
-                break;
-            }
-            case DOUBLE: {
-                if (iv.asDouble() == 0D && Double.doubleToRawLongBits(iv.asDouble()) != 0L) {
-                    return iv;
-                }
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-        final Value rv = _valueMap.get(iv);
-        if (rv != null) {
-            return rv;
-        }
-        _valueMap.put(iv, iv);
-        return iv;
+        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), HackJDK._initialSystemProperties);
     }
 }

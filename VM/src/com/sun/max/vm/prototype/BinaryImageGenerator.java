@@ -216,7 +216,7 @@ public final class BinaryImageGenerator {
                 // write the tree file only if specified by the user.
                 writeObjectTree(dataPrototype, graphPrototype, new File(outputDirectory, _objectTreeFileOption.getValue()));
             }
-            writeMethodTree(graphPrototype.compiledPrototype(), new File(outputDirectory, _methodTreeFileOption.getValue()));
+            writeMethodTree(graphPrototype._compiledPrototype, new File(outputDirectory, _methodTreeFileOption.getValue()));
 
         } catch (IOException ioException) {
             ProgramError.unexpected("could not write file ", ioException);

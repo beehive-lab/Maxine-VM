@@ -435,10 +435,14 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         final String className = argument.substring(0, ix);
         final String fieldName = argument.substring(ix + 1);
         try {
-            final ClassActor classActor = ClassActor.fromJava(Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER));
-            final StaticTuple staticTuple =  (StaticTuple) classActor.staticTuple();
             Trace.line(1, "resetting field " +  argument + " to default value");
+            final Class<?> javaClass = Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
+            HackJDK.resetField(javaClass, fieldName);
+            /*
+            final ClassActor classActor = ClassActor.fromJava(javaClass);
+            final StaticTuple staticTuple =  (StaticTuple) classActor.staticTuple();
             staticTuple.resetField(fieldName, true);
+            */
         }  catch (Exception ex) {
             ProgramError.unexpected("failed to reset: " + argument);
         }
