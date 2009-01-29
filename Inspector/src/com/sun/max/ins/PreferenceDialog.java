@@ -80,6 +80,15 @@ public class PreferenceDialog extends InspectorDialog {
         objectInspectorPanel.setBorder(border);
         prefPanel.add(objectInspectorPanel);
 
+        final JPanel hubLabelPanel = new JPanel(new BorderLayout());
+        hubLabelPanel.setBorder(border);
+        hubLabelPanel.add(new TextLabel(inspection, "Hubs"), BorderLayout.WEST);
+        prefPanel.add(hubLabelPanel);
+
+        final JPanel hubInspectorPanel = HubInspector.globalHubPreferences(inspection).getPanel();
+        hubInspectorPanel.setBorder(border);
+        prefPanel.add(hubInspectorPanel);
+
         final JPanel methodLabelPanel = new JPanel(new BorderLayout());
         methodLabelPanel.setBorder(border);
         methodLabelPanel.add(new TextLabel(inspection, "Methods"), BorderLayout.WEST);

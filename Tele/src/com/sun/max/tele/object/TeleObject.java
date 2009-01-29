@@ -165,6 +165,25 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     /**
+     *  Gets the fields for either a tuple or hybrid object, returns empty set for arrays.
+     *  Returns static fields in the special case of a {@link StaticTuple} object.
+     */
+    public Set<FieldActor> getFieldActors() {
+        final Set<FieldActor> instanceFieldActors = new HashSet<FieldActor>();
+        collectInstanceFieldActors(classActorForType(), instanceFieldActors);
+        return instanceFieldActors;
+    }
+
+    private void collectInstanceFieldActors(ClassActor classActor, Set<FieldActor> instanceFieldActors) {
+        if (classActor != null) {
+            for (FieldActor fieldActor : classActor.localInstanceFieldActors()) {
+                instanceFieldActors.add(fieldActor);
+            }
+            collectInstanceFieldActors(classActor.superClassActor(), instanceFieldActors);
+        }
+    }
+
+    /**
      * @param fieldActor local {@link FieldActor}, part of the {@link ClassActor} for the type of this object, that
      *            describes a field in this object in the {@link TeleVM}
      * @return contents of the designated field in this object in the {@link TeleVM}

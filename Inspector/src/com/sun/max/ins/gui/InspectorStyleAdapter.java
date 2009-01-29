@@ -42,7 +42,14 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
     public Color frameBorderFlashColor() {
         return Color.RED;
     }
-
+    private Border _defaultPaneTopBorder = BorderFactory.createMatteBorder(3, 0, 0, 0, defaultBorderColor());
+    public Border defaultPaneTopBorder() {
+        return _defaultPaneTopBorder;
+    }
+    private Border _defaultPaneBottomBorder = BorderFactory.createMatteBorder(0, 0, 3, 0, defaultBorderColor());
+    public Border defaultPaneBottomBorder() {
+        return _defaultPaneBottomBorder;
+    }
     // Default text
     public Color defaultTextColor() {
         return Color.BLACK;
@@ -426,6 +433,53 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
         return SunYellow3;
     }
 
+    // Table-display related
+    private final Dimension _zeroTableIntercellSpacing  = new Dimension(0, 0);
+    public Dimension zeroTableIntercellSpacing() {
+        return _zeroTableIntercellSpacing;
+    }
+    private final Dimension _defaultTableIntercellSpacing = new Dimension(1, 1);
+    public Dimension defaultTableIntercellSpacing() {
+        return _defaultTableIntercellSpacing;
+    }
+    private final int _defaultTableRowHeight = 20;
+    public int defaultTableRowHeight() {
+        return _defaultTableRowHeight;
+    }
+    private final boolean _defaultTableShowHorizontalLines = true;
+    public boolean defaultTableShowHorizontalLines() {
+        return _defaultTableShowHorizontalLines;
+    }
+    private final boolean _defaultTableShowVertictalLines = true;
+    public boolean defaultTableShowVerticalLines() {
+        return _defaultTableShowVertictalLines;
+    }
+
+    public Dimension objectTableIntercellSpacing() {
+        return defaultTableIntercellSpacing();
+    }
+    public int objectTableRowHeight() {
+        return defaultTableRowHeight();
+    }
+    public boolean objectTableShowHorizontalLines() {
+        return defaultTableShowHorizontalLines();
+    }
+    public boolean objectTableShowVerticalLines() {
+        return defaultTableShowVerticalLines();
+    }
+
+    public Dimension codeTableIntercellSpacing() {
+        return defaultTableIntercellSpacing();
+    }
+    public int codeTableRowHeight() {
+        return defaultTableRowHeight();
+    }
+    public boolean codeTableShowHorizontalLines() {
+        return defaultTableShowHorizontalLines();
+    }
+    public boolean codeTableShowVerticalLines() {
+        return defaultTableShowVerticalLines();
+    }
 
     /** Returns an ImageIcon, or null if the path was invalid. */
     protected ImageIcon createImageIcon(String path, String description) {

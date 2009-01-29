@@ -20,13 +20,9 @@
  */
 package com.sun.max.ins.object;
 
-import javax.swing.*;
-
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
@@ -34,13 +30,12 @@ import com.sun.max.vm.layout.*;
 /**
  * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} constructed using {@link TupleLayout}.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
 public class TupleInspector extends ObjectInspector<TupleInspector> {
 
+    private ObjectPane _fieldsPane;
     private final InspectorMenuItems _classMethodInspectorMenuItems;
-
     private final InspectorMenuItems _targetMethodInspectorMenuItems;
 
     TupleInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
@@ -66,28 +61,18 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
         }
     }
 
-    private AppendableSequence<ValueLabel> _valueLabels = new LinkSequence<ValueLabel>();
-
-    @Override
-    public synchronized AppendableSequence<ValueLabel> valueLabels() {
-        return _valueLabels;
-    }
-
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        final JPanel fieldsPanel = createFieldsPanel(_valueLabels);
-        frame().getContentPane().add(new JScrollPane(fieldsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
-    }
-
-    public void viewConfigurationChanged(long epoch) {
-        _valueLabels = new ArrayListSequence<ValueLabel>();
-        reconstructView();
+        final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
+        _fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);
+        frame().getContentPane().add(_fieldsPane);
     }
 
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
+        _fieldsPane.refresh(epoch, force);
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
         }
@@ -95,6 +80,5 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
             _targetMethodInspectorMenuItems.refresh(epoch, force);
         }
     }
-
 
 }

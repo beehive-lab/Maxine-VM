@@ -227,7 +227,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final Inspection _inspection;
     private final JTable _table;
     private final MyTableModel _model;
-    private final MyTableColumnModel _columnModel;
+    private final BytecodeTableColumnModel _columnModel;
     private final TableColumn[] _columns;
     private PoolConstantLabel.Mode _operandDisplayMode;
 
@@ -236,8 +236,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _inspection = inspection;
         _model = new MyTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
-        _columnModel = new MyTableColumnModel();
-        _table = new MyTable(_model, _columnModel);
+        _columnModel = new BytecodeTableColumnModel();
+        _table = new BytecodeTable(_model, _columnModel);
         _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
         createView(teleVM().epoch());
     }
@@ -249,10 +249,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _table.setOpaque(true);
         _table.setBackground(style().defaultBackgroundColor());
         _table.setFillsViewportHeight(true);
-        _table.setShowHorizontalLines(false);
-        _table.setShowVerticalLines(false);
-        _table.setIntercellSpacing(new Dimension(0, 0));
-        _table.setRowHeight(20);
+        _table.setShowHorizontalLines(style().codeTableShowHorizontalLines());
+        _table.setShowVerticalLines(style().codeTableShowVerticalLines());
+        _table.setIntercellSpacing(style().codeTableIntercellSpacing());
+        _table.setRowHeight(style().codeTableRowHeight());
         _table.setRowSelectionAllowed(true);
         _table.setColumnSelectionAllowed(true);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -466,9 +466,9 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class MyTable extends JTable {
+    private final class BytecodeTable extends JTable {
 
-        MyTable(TableModel model, TableColumnModel tableColumnModel) {
+        BytecodeTable(TableModel model, TableColumnModel tableColumnModel) {
             super(model, tableColumnModel);
         }
 
@@ -496,11 +496,11 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class MyTableColumnModel extends DefaultTableColumnModel {
+    private final class BytecodeTableColumnModel extends DefaultTableColumnModel {
 
         private final Preferences _preferences;
 
-        MyTableColumnModel() {
+        BytecodeTableColumnModel() {
             _preferences = new Preferences(JTableBytecodeViewer.globalPreferences(inspection())) {
                 @Override
                 public void setIsVisible(ColumnKind columnKind, boolean visible) {
@@ -604,7 +604,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable {
+    private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             setOpaque(true);
             setBackground(getRowBackgroundColor(row));
@@ -662,6 +662,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public String getSearchableText() {
             return "";
         }
+
+        public void redisplay() {
+        }
+
+        public void refresh(long epoch, boolean force) {
+        }
     }
 
     private final class NumberRenderer extends PlainLabel implements TableCellRenderer {
@@ -716,7 +722,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
-    private final class OperandRenderer implements  TableCellRenderer {
+    private final class OperandRenderer implements  TableCellRenderer, Prober {
 
         public OperandRenderer() {
         }
@@ -740,6 +746,12 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                 renderer.setForeground(specialForegroundColor);
             }
             return renderer;
+        }
+
+        public void redisplay() {
+        }
+
+        public void refresh(long epoch, boolean force) {
         }
     }
 
@@ -790,19 +802,18 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     @Override
     protected void updateView(long epoch, boolean force) {
-        // No labels that need updating; operand labels are recreated when displayed.
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.refresh(epoch, force);
+        }
     }
 
     public void redisplay() {
-        for (int col = _columnModel.getColumnCount() - 1; col >= 0; --col) {
-            final TableCellRenderer renderer = _table.getCellRenderer(0, col);
-            if (renderer instanceof InspectorLabel) {
-                final InspectorLabel inspectorLabel = (InspectorLabel) renderer;
-                inspectorLabel.redisplay();
-            }
+        for (TableColumn column : _columns) {
+            final Prober prober = (Prober) column.getCellRenderer();
+            prober.redisplay();
         }
         invalidate();
         repaint();
     }
-
 }

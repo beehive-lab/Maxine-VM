@@ -118,7 +118,7 @@ public final class BreakpointsInspector extends UniqueInspector {
         _model = new BreakpointTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new BreakpointColumnModel();
-        _table = new BreakpointJTable(_model, _columnModel);
+        _table = new BreakpointTable(_model, _columnModel);
         createFrame(null);
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -137,6 +137,10 @@ public final class BreakpointsInspector extends UniqueInspector {
 
     @Override
     public void createView(long epoch) {
+        _table.setShowHorizontalLines(style().defaultTableShowHorizontalLines());
+        _table.setShowVerticalLines(style().defaultTableShowVerticalLines());
+        _table.setIntercellSpacing(style().defaultTableIntercellSpacing());
+        _table.setRowHeight(style().defaultTableRowHeight());
         _table.setRowSelectionAllowed(true);
         _table.setColumnSelectionAllowed(false);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -150,9 +154,9 @@ public final class BreakpointsInspector extends UniqueInspector {
     }
 
 
-    private final class BreakpointJTable extends JTable {
+    private final class BreakpointTable extends JTable {
 
-        BreakpointJTable(TableModel model, TableColumnModel tableColumnModel) {
+        BreakpointTable(TableModel model, TableColumnModel tableColumnModel) {
             super(model, tableColumnModel);
         }
 
@@ -389,7 +393,7 @@ public final class BreakpointsInspector extends UniqueInspector {
         }
     }
 
-    private final class MethodCellRenderer extends PlainLabel implements TableCellRenderer {
+    private final class MethodCellRenderer extends JavaNameLabel implements TableCellRenderer {
 
         public MethodCellRenderer(Inspection inspection) {
             super(inspection, null);
@@ -398,12 +402,11 @@ public final class BreakpointsInspector extends UniqueInspector {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final BreakpointData breakpointData = get(row);
-            setText(breakpointData.shortName());
-            setToolTipText(breakpointData.longName());
+            setValue(breakpointData.shortName(), breakpointData.longName());
             if (row == _table.getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
-                setBackground(style().defaultTextBackgroundColor());
+                setBackground(style().javaNameBackgroundColor());
             }
             return this;
         }
