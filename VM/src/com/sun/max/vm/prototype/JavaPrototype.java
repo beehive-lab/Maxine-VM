@@ -231,8 +231,6 @@ public class JavaPrototype extends Prototype {
             PrototypeClassLoader.omitPackage("java.util.prefs");
         }
 
-        HackJDK.checkVMFlags();
-        // TODO: determine which of these classes and packages are actually needed
         loadPackage("java.lang", false);
         loadPackage("java.lang.reflect", false); // needed to compile and to invoke the main method
         loadPackage("java.io", false);

@@ -70,15 +70,7 @@ public final class FloatValue extends PrimitiveValue<FloatValue> {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            // common case of reference equality
-            return true;
-        }
-        if (!(other instanceof FloatValue)) {
-            return false;
-        }
-        final FloatValue floatValue = (FloatValue) other;
-        return _value == floatValue.asFloat();
+        return other == this || ((other instanceof FloatValue) && (Float.floatToIntBits(((FloatValue) other)._value) == Float.floatToIntBits(_value)));
     }
 
     @Override

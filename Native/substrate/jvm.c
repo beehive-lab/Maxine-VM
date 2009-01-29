@@ -1643,9 +1643,6 @@ jint JVM_Available(jint fd, jlong *pbytes) {
         return 0;
     }
     *pbytes = end - cur;
-#if DEBUG_JVMNI
-    printf("JVM_Available(%d, %p): %d %d %d\n", fd, pbytes, current, end, *pbytes);
-#endif
     return 1;
 }
 
