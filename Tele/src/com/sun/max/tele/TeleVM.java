@@ -269,7 +269,6 @@ public abstract class TeleVM {
         final MaxineVM vm = new MaxineVM(vmConfiguration);
         MaxineVM.setTarget(vm);
         MaxineVM.setGlobalHostOrTarget(vm);
-        HackJDK.checkVMFlags();
         new JavaPrototype(vm.configuration(), false);
         return vm;
     }

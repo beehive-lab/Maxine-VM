@@ -110,4 +110,10 @@ public final class Objects {
         return _unsafe.allocateInstance(javaClass);
     }
 
+    public static <T> T allocateObject(Class<T> javaClass) throws InstantiationException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        final Constructor constructor = javaClass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        final Object object = constructor.newInstance();
+        return StaticLoophole.cast(javaClass, object);
+    }
 }

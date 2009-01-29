@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler;
 
 import com.sun.max.*;
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -98,13 +97,4 @@ public interface CompilerScheme extends DynamicCompilerScheme {
      *         accessing a name stack variable in the denoted frame
      */
     Pointer namedVariablesBasePointer(Pointer stackPointer, Pointer framePointer);
-
-    /**
-     * Makes the current stub frame (which is incomplete, because it belongs to a trap stub)
-     * look like a complete call frame with the given return address.
-     *
-     * @param returnAddress the return address for the ficticious call of the stub
-     */
-    @INLINE(override = true)
-    void fakeCall(Address returnAddress);
 }

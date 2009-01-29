@@ -33,7 +33,9 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.prototype.HackJDK.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A graph prototype represents the pre-initialized prototype of the virtual
@@ -44,284 +46,45 @@ import com.sun.max.vm.type.*;
 public class GraphPrototype extends Prototype {
 
     private final boolean _debuggingPaths;
+    public final CompiledPrototype _compiledPrototype;
     private final Map<Object, Link> _objectToParent = new IdentityHashMap<Object, Link>();
     private LinkedList<Object> _worklist = new LinkedList<Object>();
     private IdentitySet<Object> _objects = new IdentitySet<Object>(Object.class, Ints.M);
 
-    /**
-     * Returns an iterable collection of all the objects in the graph prototype.
-     * @return a collection of all objects in this graph
-     */
-    public Iterable<Object> objects() {
-        return _objects;
-    }
+    private Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
 
     /**
-     * A link between objects in the graph, e.g. a field that contains a reference from
-     * one object to another, an array element, etc.
-     */
-    static class Link {
-        final Object _parent;
-        final Object _name;
-
-        /**
-         * Creates a new link from the specified parent object the the child object.
-         *
-         * @param parent the parent object (i.e. the one containing the reference)
-         * @param name the name of the link
-         */
-        Link(Object parent, Object name) {
-            _parent = parent;
-            _name = name;
-        }
-
-        /**
-         * Converts this link to a string.
-         *
-         * @return the name of this link as a string
-         */
-        public String name() {
-            if (_name instanceof String) {
-                return _name.toString();
-            }
-            return "[" + _name + "]";
-        }
-
-        /**
-         * Converts this link to a string that is suitable for use as a sufix.
-         *
-         * @return the name of this link
-         */
-        public String nameAsSuffix() {
-            if (_name instanceof String) {
-                return "." + _name.toString();
-            }
-            return "[" + _name + "]";
-        }
-    }
-
-    /**
-     * Get the parent of the specified object. The link graph forms a tree, with
-     * every object having either zero or one parent.
+     * Create a new graph prototype from the specified compiled prototype and compute the transitive closure
+     * of all references.
      *
-     * @param object the object for which to get the object
-     * @return the object which is the parent of the specified object
+     * @param compiledPrototype the compiled prototype from which to begin creating the graph prototype
+     * @param tree a boolean indicating whether to generate a tree file that contains connectivity information
+     * about the graph that is useful for debugging
      */
-    public Object parentOf(Object object) {
-        return _objectToParent.get(object);
+    public GraphPrototype(CompiledPrototype compiledPrototype, boolean tree) {
+        super(compiledPrototype.vmConfiguration());
+        _compiledPrototype = compiledPrototype;
+        _debuggingPaths = true;
+        add(null, ClassRegistry.vmClassRegistry(), "[root]");
+        gatherObjects();
     }
 
-    /**
-     * Get the set of all links.
-     *
-     * @return the set of all links
-     */
-    public Set<Map.Entry<Object, Link>> links() {
-        return _objectToParent.entrySet();
-    }
 
     /**
-     * Print the path from the root to the specified object.
-     *
-     * @param object the object for which to print the path
-     * @param out the stream to which to print the output
-     */
-    public void printPath(Object object, PrintStream out) {
-        out.println("BEGIN path");
-        out.println(object.getClass().getName() + "    [" + Strings.truncate(object.toString(), 60) + "]");
-        Link link = _objectToParent.get(object);
-        while (link != null) {
-            final Object parent = link._parent;
-            out.println(parent.getClass().getName() + link.nameAsSuffix() + "    [" + Strings.truncate(parent.toString(), 60) + "]");
-            link = _objectToParent.get(parent);
-        }
-        out.println("END path");
-    }
-
-    /**
-     * Print the path from the root to the specified object to the standard output stream.
-     *
-     * @param object
-     */
-    public void printPath(Object object) {
-        printPath(object, System.out);
-    }
-
-    /**
-     * Add a link between the parent object and the child object with the specified link name.
-     *
-     * @param parent the parent object
-     * @param child the child object
-     * @param fieldNameOrArrayIndex the name of the field or the array index which characterizes the
-     * link between the parent object and the child object
-     */
-    private void add(Object parent, Object child, Object fieldNameOrArrayIndex) {
-        final Object object = HostObjectAccess.hostToTarget(child);
-        if (object != null && !_objects.contains(object)) {
-            _objects.add(object);
-            _worklist.add(object);
-
-            if (_debuggingPaths) {
-                _objectToParent.put(object, parent == null ? null : new Link(parent, fieldNameOrArrayIndex));
-            }
-
-            if (object instanceof Proxy) {
-                printPath(object, System.err);
-                ProgramError.unexpected("There should not be any instances of " + Proxy.class + " in the boot image");
-            }
-        }
-    }
-
-    /**
-     * Checks whether the specified field is static.
-     *
-     * @param field the field to check
-     * @return {@code true} if the specified field is static; {@code false} otherwise
-     */
-    private boolean isStatic(Field field) {
-        return (field.getModifiers() & Modifier.STATIC) != 0;
-    }
-
-    /**
-     * Checks whether the specified field is of reference type.
-     *
-     * @param field the field to check
-     * @return {@code true} if the field is a reference type; {@code false} otherwise
-     */
-    private boolean isReferenceField(Field field) {
-        final Class type = field.getType();
-        return !(type.isPrimitive() || Word.class.isAssignableFrom(type));
-    }
-
-    private Map<Class, Sequence<Field>> _classToInstanceReferenceFields = new IdentityHashMap<Class, Sequence<Field>>();
-
-    /**
-     * Extracts and registers the instance fields of the specified class. Some fields are
-     * filtered. See {@link HackJDK#isOmittedField(Field) HackJDK} for details.
-     *
-     * @param javaClass the java class
-     * @return a sequence of the instance fields of the specified class that are not filtered
-     */
-    private Sequence<Field> registerInstanceFields(Class javaClass) {
-        final AppendableSequence<Field> dynamicReferenceFields = new LinkSequence<Field>();
-        Class c = javaClass;
-        do {
-            for (Field field : c.getDeclaredFields()) {
-                HackJDK.checkForUnknownTransientField(field);
-                if (!isStatic(field) && isReferenceField(field) && !HackJDK.isOmittedField(field) && !MaxineVM.isPrototypeOnly(field)) {
-                    field.setAccessible(true);
-                    dynamicReferenceFields.append(field);
-                }
-            }
-            c = c.getSuperclass();
-        } while (c != null);
-        _classToInstanceReferenceFields.put(javaClass, dynamicReferenceFields);
-        return dynamicReferenceFields;
-    }
-
-    /**
-     * Get the class reference from an object and gather the non-filtered instance fields
-     * for the specified object.
-     *
-     * @param object the object for which to get the class and instance fields
-     * @param javaClass the java class of the object
-     * @return a sequence of the instance fields for the object
-     */
-    private Sequence<Field> gatherClassReference(Object object, Class javaClass) {
-        Sequence<Field> dynamicReferenceFields = _classToInstanceReferenceFields.get(javaClass);
-        if (dynamicReferenceFields == null) {
-            try {
-                final ClassActor classActor = ClassActor.fromJava(javaClass);
-                add(object, classActor, "[class]");
-                dynamicReferenceFields = registerInstanceFields(javaClass);
-            } catch (ProgramError e) {
-                printPath(object, System.err);
-                ProgramError.unexpected("Problem while creating actor for " + javaClass, e);
-            }
-        }
-        return dynamicReferenceFields;
-    }
-
-    /**
-     * Iterate over the reference elements of an array and add the referenced objects.
-     *
-     * @param array the array to iterate over
-     */
-    private void gatherReferenceArrayElements(Object[] array) {
-        for (int i = 0; i < array.length; i++) {
-            add(array, array[i], _debuggingPaths ? i : null);
-        }
-    }
-
-    /**
-     * Iterate over the reference fields for an object and add the referenced objects.
-     *
-     * @param dynamicReferenceFields the sequence of reference fields
-     * @param object the object from which to read the values
-     */
-    private void gatherDynamicReferenceFields(Sequence<Field> dynamicReferenceFields, Object object) {
-        for (Field referenceField : dynamicReferenceFields) {
-            try {
-                final Object fieldValue = referenceField.get(object);
-                add(object, fieldValue, referenceField.getName());
-            } catch (IllegalAccessException illegalAccessException) {
-                ProgramError.unexpected("could not access dynamic reference field: " + referenceField);
-            }
-        }
-    }
-
-    /**
-     * Gather the static reference fields and add the referenced objects.
-     *
-     * @param staticTuple the static tuple of the class
-     */
-    private void gatherStaticTuple(StaticTuple staticTuple) {
-        ClassActor classActor = staticTuple.classActor();
-        add(staticTuple, classActor, "[class]");
-        do {
-            for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
-                if (fieldActor.kind() == Kind.REFERENCE) {
-                    add(staticTuple, HostTupleAccess.readValue(staticTuple, fieldActor).asObject(), _debuggingPaths ? fieldActor.name().toString() : null);
-                }
-            }
-            classActor = classActor.superClassActor();
-        } while (classActor != null);
-    }
-
-    /**
-     * Gathers all objects referenced directly and indirectly by this object, including from
-     * instance reference fields, static reference fields, the class object itself, etc.
-     *
-     * @param object the object to scan
-     */
-    private void gatherChildren(Object object) {
-        final Class javaClass = object.getClass();
-        if (javaClass == StaticTuple.class) {
-            gatherStaticTuple((StaticTuple) object);
-        } else {
-            final Sequence<Field> dynamicReferenceFields = gatherClassReference(object, javaClass);
-            if (javaClass.isArray()) {
-                final Class componentClass = javaClass.getComponentType();
-                if (!componentClass.isPrimitive() && !Word.class.isAssignableFrom(componentClass)) {
-                    gatherReferenceArrayElements((Object[]) object);
-                }
-            } else {
-                if (javaClass == Class.class) {
-                    gatherClassReference(object, (Class) object);
-                }
-                gatherDynamicReferenceFields(dynamicReferenceFields, object);
-            }
-        }
-    }
-
-    /**
-     * A collection of information about a class, used in statistics gathering.
+     * The information gathered for a class during exploration of the graph, including
+     * the reference fields that need to be scanned to traverse the object graph.
      */
     static class ClassInfo {
         final Class _class;
+        final AppendableSequence<Field> _mutableReferenceFields = new LinkSequence<Field>();
+        final AppendableSequence<Field> _immutableReferenceFields = new LinkSequence<Field>();
+        final AppendableSequence<SpecialField> _specialReferenceFields = new LinkSequence<SpecialField>();
+        final AppendableSequence<ClassInfo> _subClasses = new ArrayListSequence<ClassInfo>();
+
+        ClassInfo _classClassInfo; // the class info object for the static members of the class
+
         long _numberOfObjects;
         long _totalSize;
-        AppendableSequence<ClassInfo> _subClasses = new ArrayListSequence<ClassInfo>();
 
         /**
          * Creates a class info data structure for the specified Java class.
@@ -330,18 +93,6 @@ public class GraphPrototype extends Prototype {
          */
         ClassInfo(Class clazz) {
             _class = clazz;
-        }
-
-        /**
-         * Copy this class info object.
-         *
-         * @return a new class info object with the same values as this one
-         */
-        ClassInfo copy() {
-            final ClassInfo copy = new ClassInfo(_class);
-            copy._numberOfObjects = _numberOfObjects;
-            copy._totalSize = _totalSize;
-            return copy;
         }
 
         /**
@@ -477,7 +228,140 @@ public class GraphPrototype extends Prototype {
         };
     }
 
-    private Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
+
+    /**
+     * Returns an iterable collection of all the objects in the graph prototype.
+     * @return a collection of all objects in this graph
+     */
+    public Iterable<Object> objects() {
+        return _objects;
+    }
+
+    /**
+     * A link between objects in the graph, e.g. a field that contains a reference from
+     * one object to another, an array element, etc.
+     */
+    static class Link {
+        final Object _parent;
+        final Object _name;
+
+        /**
+         * Creates a new link from the specified parent object the the child object.
+         *
+         * @param parent the parent object (i.e. the one containing the reference)
+         * @param name the name of the link
+         */
+        Link(Object parent, Object name) {
+            _parent = parent;
+            _name = name;
+        }
+
+        /**
+         * Converts this link to a string.
+         *
+         * @return the name of this link as a string
+         */
+        public String name() {
+            if (_name instanceof String) {
+                return _name.toString();
+            }
+            return "[" + _name + "]";
+        }
+
+        /**
+         * Converts this link to a string that is suitable for use as a sufix.
+         *
+         * @return the name of this link
+         */
+        public String nameAsSuffix() {
+            if (_name instanceof String) {
+                return "." + _name.toString();
+            }
+            return "[" + _name + "]";
+        }
+    }
+
+    /**
+     * Get the set of all links.
+     *
+     * @return the set of all links
+     */
+    public Set<Map.Entry<Object, Link>> links() {
+        return _objectToParent.entrySet();
+    }
+
+    /**
+     * Print the path from the root to the specified object.
+     *
+     * @param object the object for which to print the path
+     * @param out the stream to which to print the output
+     */
+    public void printPath(Object object, PrintStream out) {
+        out.println("BEGIN path");
+        out.println(object.getClass().getName() + "    [" + Strings.truncate(object.toString(), 60) + "]");
+        Link link = _objectToParent.get(object);
+        while (link != null) {
+            final Object parent = link._parent;
+            out.println(parent.getClass().getName() + link.nameAsSuffix() + "    [" + Strings.truncate(parent.toString(), 60) + "]");
+            link = _objectToParent.get(parent);
+        }
+        out.println("END path");
+    }
+
+    /**
+     * Print the path from the root to the specified object to the standard output stream.
+     *
+     * @param object
+     */
+    public void printPath(Object object) {
+        printPath(object, System.out);
+    }
+
+    /**
+     * Add a link between the parent object and the child object with the specified link name.
+     *
+     * @param parent the parent object
+     * @param child the child object
+     * @param fieldNameOrArrayIndex the name of the field or the array index which characterizes the
+     * link between the parent object and the child object
+     */
+    private void add(Object parent, Object child, Object fieldNameOrArrayIndex) {
+        final Object object = HostObjectAccess.hostToTarget(child);
+        if (object != null && !_objects.contains(object)) {
+            _objects.add(object);
+            _worklist.add(object);
+
+            if (_debuggingPaths) {
+                _objectToParent.put(object, parent == null ? null : new Link(parent, fieldNameOrArrayIndex));
+            }
+
+            if (object instanceof Proxy) {
+                printPath(object, System.err);
+                ProgramError.unexpected("There should not be any instances of " + Proxy.class + " in the boot image");
+            }
+        }
+    }
+
+    /**
+     * Checks whether the specified field is static.
+     *
+     * @param field the field to check
+     * @return {@code true} if the specified field is static; {@code false} otherwise
+     */
+    private boolean isStatic(Field field) {
+        return (field.getModifiers() & Modifier.STATIC) != 0;
+    }
+
+    /**
+     * Checks whether the specified field is of reference type.
+     *
+     * @param field the field to check
+     * @return {@code true} if the field is a reference type; {@code false} otherwise
+     */
+    private boolean isReferenceField(Field field) {
+        final Class type = field.getType();
+        return !(type.isPrimitive() || Word.class.isAssignableFrom(type));
+    }
 
     /**
      * Gather all objects by transitive closure on the object references.
@@ -488,15 +372,7 @@ public class GraphPrototype extends Prototype {
         while (!_worklist.isEmpty()) {
             final Object object = _worklist.removeFirst();
             try {
-                if (object instanceof Class) {
-                    // must ensure that any Class instances in the image are referenced by the mirror field of the ClassActor
-                    final Class<?> javaClass = (Class<?>) object;
-                    ClassActor.fromJava(javaClass).setMirror(javaClass);
-                }
-                final ClassInfo info = makeInfo(object.getClass());
-                info._numberOfObjects++;
-                info._totalSize += HostObjectAccess.getSize(object).toLong();
-                gatherChildren(object);
+                explore(object);
             } catch (ProgramError e) {
                 printPath(object, System.err);
                 ProgramError.unexpected("Problem while gathering instance of " + object.getClass(), e);
@@ -507,26 +383,6 @@ public class GraphPrototype extends Prototype {
             }
         }
         Trace.end(1, "gatherObjects: " + n + " objects");
-    }
-
-    /**
-     * Create the class info for the specified class, it it does not already exist.
-     *
-     * @param c the class for which to create the info
-     * @return the class info for the specified class
-     */
-    private ClassInfo makeInfo(Class c) {
-        ClassInfo info = _classInfos.get(c);
-        if (info == null) {
-            info = new ClassInfo(c);
-            final Class superClass = c.getSuperclass();
-            if (superClass != null) {
-                final ClassInfo superClassInfo = makeInfo(superClass);
-                superClassInfo._subClasses.append(info);
-            }
-            _classInfos.put(c, info);
-        }
-        return info;
     }
 
     /**
@@ -549,36 +405,133 @@ public class GraphPrototype extends Prototype {
         for (ClassInfo info : classInfos) {
             final long aggregateNumberOfObjects = info.aggregateNumberOfObjects();
             final long aggregateTotalSize = info.aggregateTotalSize();
-            printStream.printf("%-10d / %-10d = %-10d %s\n", aggregateTotalSize, aggregateNumberOfObjects, aggregateTotalSize / aggregateNumberOfObjects, info._class.getName());
+            if (aggregateNumberOfObjects > 0) {
+                printStream.printf("%-10d / %-10d = %-10d %s\n", aggregateTotalSize, aggregateNumberOfObjects, aggregateTotalSize / aggregateNumberOfObjects, info._class.getName());
+            }
         }
         printStream.println("Aggregate Histogram End");
 
     }
 
-    private final CompiledPrototype _compiledPrototype;
-
     /**
-     * Gets a reference to the compiled prototype.
-     *
-     * @return a reference to the compiled prototype for this graph prototype
+     * Create the class info for a specified java class, if it doesn't already exist. This requires
+     * first creating the class info for the super class, and then building a list of all fields
+     * in the class that are used for walking the graph.
+     * @param javaClass the java class for which to get or create the class info
+     * @return the class info for the class
      */
-    public CompiledPrototype compiledPrototype() {
-        return _compiledPrototype;
+    private ClassInfo makeClassInfo(Class javaClass) {
+        ClassInfo classInfo = _classInfos.get(javaClass);
+        if (classInfo == null) {
+            final Class superClass = javaClass.getSuperclass();
+            final ClassInfo superInfo = superClass == null ? null : makeClassInfo(superClass);
+            classInfo = new ClassInfo(javaClass);
+            final ClassInfo staticInfo = new ClassInfo(javaClass);
+            classInfo._classClassInfo = staticInfo;
+            _classInfos.put(javaClass, classInfo);
+
+            if (superInfo != null) {
+                // propagate information from super class field lists to this new class info
+                superInfo._subClasses.append(classInfo);
+                AppendableSequence.Static.appendAll(classInfo._immutableReferenceFields, superInfo._immutableReferenceFields);
+                AppendableSequence.Static.appendAll(classInfo._mutableReferenceFields, superInfo._mutableReferenceFields);
+                AppendableSequence.Static.appendAll(classInfo._specialReferenceFields, superInfo._specialReferenceFields);
+            }
+
+            for (Field field : javaClass.getDeclaredFields()) {
+                if (isReferenceField(field) && !MaxineVM.isPrototypeOnly(field)) {
+                    field.setAccessible(true);
+                    final ClassInfo info = isStatic(field) ? staticInfo : classInfo;
+                    final SpecialField specialField = HackJDK.getSpecialField(field);
+                    if (specialField != null) {
+                        specialField._field = field;
+                        if (!(specialField instanceof ZeroField)) {
+                            info._specialReferenceFields.append(specialField);
+                        }
+                    } else {
+                        // TODO: mutable vs. immutable fields
+                        info._mutableReferenceFields.append(field);
+                    }
+                }
+            }
+        }
+        return classInfo;
     }
 
     /**
-     * Create a new graph prototype from the specified compiled prototype and compute the transitive closure
-     * of all references.
-     *
-     * @param compiledPrototype the compiled prototype from which to begin creating the graph prototype
-     * @param tree a boolean indicating whether to generate a tree file that contains connectivity information
-     * about the graph that is useful for debugging
+     * Explore a live object in the graph. Walk the object's class and read any reference fields to transitively
+     * explore the object graph.
+     * @param object the object to explore
      */
-    public GraphPrototype(CompiledPrototype compiledPrototype, boolean tree) {
-        super(compiledPrototype.vmConfiguration());
-        _compiledPrototype = compiledPrototype;
-        _debuggingPaths = true;
-        add(null, ClassRegistry.vmClassRegistry(), "[root]");
-        gatherObjects();
+    private void explore(Object object) {
+        // get the class info for the object's class
+        final Class<?> objectClass = object.getClass();
+        final ClassInfo classInfo = makeClassInfo(objectClass);
+
+        // add the object's class to the graph
+        add(object, objectClass, "class");
+
+        if (object instanceof Class) {
+            // must ensure that any Class instances in the image are referenced by the mirror field of the ClassActor
+            exploreClass(object);
+        } else if (object instanceof ClassActor) {
+            // must ensure that any ClassActor instances reference the java.lang.Class instance
+            exploreClassActor(object);
+        }
+
+        // walk the reference fields of the object
+        walkFields(object, classInfo);
+
+        // if this is a reference array, walk its elements
+        if (object instanceof Object[] && !(object instanceof Word[])) {
+            final Object[] array = (Object[]) object;
+            for (int i = 0; i < array.length; i++) {
+                add(array, HostObjectAccess.hostToTarget(array[i]), i);
+            }
+        }
+    }
+
+    private void exploreClassActor(Object object) {
+        final ClassActor classActor = (ClassActor) object;
+        final Class<?> javaClass = classActor.toJava();
+        classActor.setMirror(javaClass);
+        // add the class actor object
+        add(object, javaClass, "mirror");
+    }
+
+    private void exploreClass(Object object) throws ProgramError {
+        final Class<?> javaClass = (Class<?>) object;
+        final ClassActor classActor = ClassActor.fromJava(javaClass);
+        if (classActor == null) {
+            if (MaxineVM.isPrototypeOnly(javaClass)) {
+                throw ProgramError.unexpected("Instance of prototype only class " + javaClass + " should not be reachable.");
+            }
+            throw ProgramError.unexpected("Could not get class actor for " + javaClass);
+        }
+        classActor.setMirror(javaClass);
+        // add the class actor object
+        add(object, classActor, "classActor");
+        // walk the static fields of the class
+        walkFields(null, makeClassInfo(javaClass)._classClassInfo);
+    }
+
+    private void walkFields(Object object, ClassInfo classInfo) throws ProgramError {
+        // TODO: mutable vs. immutable fields
+        for (Field field : classInfo._mutableReferenceFields) {
+            try {
+                final Object value = HostObjectAccess.hostToTarget(field.get(object));
+                add(object, value, field.getName());
+            } catch (IllegalArgumentException e) {
+                throw ProgramError.unexpected(e);
+            } catch (IllegalAccessException e) {
+                throw ProgramError.unexpected(e);
+            }
+        }
+
+        for (SpecialField specialField : classInfo._specialReferenceFields) {
+            final Value value = specialField.getValue(object, FieldActor.fromJava(specialField._field));
+            final Object result = value.unboxObject();
+            add(object, result, specialField.getName());
+        }
     }
 }
