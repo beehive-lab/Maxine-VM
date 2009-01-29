@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.object;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
@@ -36,8 +34,7 @@ import com.sun.max.vm.layout.*;
  */
 public class TupleInspector extends ObjectInspector<TupleInspector> {
 
-    private ObjectFieldsTable _fieldsTable;
-
+    private ObjectPane _fieldsPane;
     private final InspectorMenuItems _classMethodInspectorMenuItems;
     private final InspectorMenuItems _targetMethodInspectorMenuItems;
 
@@ -67,18 +64,15 @@ public class TupleInspector extends ObjectInspector<TupleInspector> {
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        _fieldsTable = new ObjectFieldsTable(this, teleObject().getFieldActors());
-        final JScrollPane scrollPane = new JScrollPane(_fieldsTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
-        scrollPane.setBackground(style().defaultBackgroundColor());
-        scrollPane.setOpaque(true);
-        frame().getContentPane().add(scrollPane);
+        final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
+        _fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);
+        frame().getContentPane().add(_fieldsPane);
     }
 
     @Override
     public void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
-        _fieldsTable.refresh(epoch, force);
+        _fieldsPane.refresh(epoch, force);
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
         }

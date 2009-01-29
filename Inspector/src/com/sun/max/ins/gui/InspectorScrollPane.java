@@ -18,39 +18,48 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.object;
+package com.sun.max.ins.gui;
+
+import java.awt.*;
+
+import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.layout.*;
+
 
 /**
- * An object inspector specialized for displaying a Maxine low-level object in the {@link TeleVM}, constructed using {@link ArrayLayout}.
+ * Base class for Inspector scroll panes.
  *
  * @author Michael Van De Vanter
  */
-public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
+public abstract class InspectorScrollPane extends JScrollPane implements Prober, InspectionHolder {
 
-    private ObjectPane _elementsPane;
+    private final Inspection _inspection;
 
-    ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
-        super(inspection, residence, teleObject);
-        createFrame(null);
+    public final Inspection inspection() {
+        return _inspection;
     }
 
-    @Override
-    protected synchronized void createView(long epoch) {
-        super.createView(epoch);
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
-        _elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
-        frame().getContentPane().add(_elementsPane);
+    public final InspectorStyle style() {
+        return _inspection.style();
     }
 
-    @Override
-    public void refreshView(long epoch, boolean force) {
-        super.refreshView(epoch, force);
-        _elementsPane.refresh(epoch, force);
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    public InspectionActions actions() {
+        return _inspection.actions();
+    }
+
+    public TeleVM teleVM() {
+        return _inspection.teleVM();
+    }
+
+    protected InspectorScrollPane(Inspection inspection, Component component) {
+        super(component);
+        _inspection = inspection;
     }
 
 }
