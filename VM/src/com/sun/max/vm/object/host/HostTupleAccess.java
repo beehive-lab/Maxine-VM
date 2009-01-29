@@ -25,10 +25,9 @@ import java.lang.reflect.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
+import com.sun.max.vm.prototype.HackJDK.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -36,7 +35,7 @@ import com.sun.max.vm.value.*;
 /**
  * This class implements utilities that provide access to host objects that represent
  * classes (i.e. not arrays or hybrids).
- * 
+ *
  * @author Bernd Mathiske
  */
 @PROTOTYPE_ONLY
@@ -59,43 +58,33 @@ public final class HostTupleAccess {
      * @return the internal boxed representation of the value of the field
      */
     public static Value readValue(Object tuple, FieldActor fieldActor) {
-        assert MaxineVM.isPrototyping();
         if (fieldActor.isInjected()) {
             final InjectedFieldActor injectedFieldActor = (InjectedFieldActor) fieldActor;
             return injectedFieldActor.readInjectedValue(Reference.fromJava(tuple));
         }
-        if (!HackJDK.isOmittedFieldActor(fieldActor)) {
-            if (fieldActor.isStatic()) {
-                final StaticTuple staticTuple = (StaticTuple) tuple;
-                final Value value = staticTuple.getValue(fieldActor);
-                if (value != null) {
-                    return value;
-                }
-            }
-            try {
-                final Field field = fieldActor.holder().toJava().getDeclaredField(fieldActor.name().toString());
-                if (!HackJDK.isOmittedField(field)) {
-                    field.setAccessible(true);
-                    try {
-                        Object boxedJavaValue = field.get(tuple);
-                        if (fieldActor.kind() == Kind.REFERENCE) {
-                            boxedJavaValue = HostObjectAccess.hostToTarget(boxedJavaValue);
-                        }
-                        return fieldActor.kind().asValue(boxedJavaValue);
-                    } catch (IllegalAccessException illegalAcessexception) {
-                        accessError(fieldActor);
-                        return null;
-                    }
-                }
-            } catch (NoSuchFieldException noSuchFieldException) {
-                ProgramError.check(HackJDK.isFilteredFieldActor(fieldActor));
-            }
-            final Value constantValue = fieldActor.constantValue();
-            if (constantValue != null) {
-                return constantValue;
-            }
+        // is this a special field?
+        final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
+        if (specialField != null) {
+            return specialField.getValue(tuple, fieldActor);
         }
-        return fieldActor.kind().zeroValue();
+        // does the field have a constant value?
+        final Value constantValue = fieldActor.constantValue();
+        if (constantValue != null) {
+            return constantValue;
+        }
+        // try to read the field's value via reflection
+        try {
+            final Field field = fieldActor.toJava();
+            field.setAccessible(true);
+            Object boxedJavaValue = field.get(tuple);
+            if (fieldActor.kind() == Kind.REFERENCE) {
+                boxedJavaValue = HostObjectAccess.hostToTarget(boxedJavaValue);
+            }
+            return fieldActor.kind().asValue(boxedJavaValue);
+        } catch (IllegalAccessException illegalAcessexception) {
+            accessError(fieldActor);
+            return null;
+        }
     }
 
     /**

@@ -20,11 +20,6 @@
  */
 package com.sun.max.vm.actor.holder;
 
-import java.util.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.collect.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
@@ -75,50 +70,6 @@ public final class StaticTuple {
     @Override
     public String toString() {
         return "staticTuple-" + _classActor.simpleName();
-    }
-
-    /**
-     * A map for recording <i>overriding</i> values for static fields. If a static field has an overriding value, then this
-     * overriding value is placed in the boot image instead of the value of the field obtained via reflection.
-     */
-    private Map<FieldActor, Value> _fieldActorToValue;
-
-    @PROTOTYPE_ONLY
-    public Value getValue(FieldActor fieldActor) {
-        if (_fieldActorToValue != null) {
-            return _fieldActorToValue.get(fieldActor);
-        }
-        return null;
-    }
-
-    @PROTOTYPE_ONLY
-    public void setField(String fieldName, Object boxedJavaValue) {
-        final FieldActor fieldActor = _classActor.findLocalStaticFieldActor(fieldName);
-        ProgramError.check(fieldActor != null);
-        if (_fieldActorToValue == null) {
-            _fieldActorToValue = new LinkedIdentityHashMap<FieldActor, Value>();
-        }
-        final Value value = Value.fromBoxedJavaValue(boxedJavaValue);
-        ProgramError.check(fieldActor.kind() == value.kind());
-        _fieldActorToValue.put(fieldActor, value);
-    }
-
-    /**
-     * Reset the static field to its zero value if it exists.
-     * @param fieldName the name of the field
-     * @param mustExist whether it is a program error if the field does not exist
-     */
-    @PROTOTYPE_ONLY
-    public void resetField(String fieldName, boolean mustExist) {
-        final FieldActor fieldActor = _classActor.findLocalStaticFieldActor(fieldName);
-        if (fieldActor == null) {
-            ProgramError.check(!mustExist, "static field not found: " + fieldName);
-        } else {
-            if (_fieldActorToValue == null) {
-                _fieldActorToValue = new LinkedIdentityHashMap<FieldActor, Value>();
-            }
-            _fieldActorToValue.put(fieldActor, fieldActor.kind().zeroValue());
-        }
     }
 
     public static boolean is(Object object) {

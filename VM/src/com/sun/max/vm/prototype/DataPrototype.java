@@ -351,8 +351,7 @@ public final class DataPrototype extends Prototype {
             // For example, calling "toString()" on a HashMap instance in the graph may cause the "entrySet"
             // field to change from null to a new instance.
             if (cell == null) {
-                graphPrototype().printPath(object);
-                ProgramError.unexpected("no cell for object: class=" + object.getClass().getName() + " toString=\"" + object + "\"");
+                throw new MissingCellException(object);
             }
 
             return cell;
@@ -722,7 +721,13 @@ public final class DataPrototype extends Prototype {
                         }
 
                         m.setOffset(offset, object);
-                        hub.specificLayout().visitObjectCell(object, m);
+                        try {
+                            hub.specificLayout().visitObjectCell(object, m);
+                        } catch (MissingCellException e) {
+                            System.out.println("no cell for object: class=" + e._object.getClass().getName() + " toString=\"" + e._object + "\"");
+                            _graphPrototype.printPath(object);
+                            throw ProgramError.unexpected(e);
+                        }
 
                         previousOffset = offset;
                         previousSize = size;
@@ -1057,4 +1062,10 @@ public final class DataPrototype extends Prototype {
         Trace.end(1, DataPrototype.class.getSimpleName());
     }
 
+    private static class MissingCellException extends RuntimeException {
+        final Object _object;
+        MissingCellException(Object object) {
+            this._object = object;
+        }
+    }
 }
