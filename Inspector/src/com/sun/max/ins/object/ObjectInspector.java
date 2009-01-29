@@ -65,6 +65,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         private Factory(Inspection inspection) {
             super(inspection);
             _globalPreferences = new Preferences(inspection);
+            HubInspector.initializeStatic(inspection);
         }
 
         public static void make(final Inspection inspection) {
@@ -158,7 +159,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             final JCheckBox alwaysShowHeaderCheckBox = new JCheckBox("Header");
             alwaysShowHeaderCheckBox.setOpaque(true);
             alwaysShowHeaderCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowHeaderCheckBox.setToolTipText("Show new Object Inspectors initially display the header?");
+            alwaysShowHeaderCheckBox.setToolTipText("Shouls new Object Inspectors initially display the header?");
             alwaysShowHeaderCheckBox.setSelected(_showHeader);
 
             final JCheckBox alwaysShowAddressesCheckBox = new JCheckBox("Addresses");
@@ -389,7 +390,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         panel.setBackground(style().defaultBackgroundColor());
         if (_showHeaderMenuCheckBox.getState()) {
             _objectHeaderTable = new ObjectHeaderTable(this);
-            _objectHeaderTable.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
+            _objectHeaderTable.setBorder(style().defaultPaneBottomBorder());
             // Will add without column headers
             panel.add(_objectHeaderTable, BorderLayout.NORTH);
         }

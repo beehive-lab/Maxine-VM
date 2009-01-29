@@ -38,9 +38,17 @@ public interface InspectorStyle {
     String name();
 
     // Window, Frame, Desktop attributes
+    /** Default background color for all inspector display elements. */
     Color defaultBackgroundColor();
+    /** Default color for all custom borders used in the inspector. */
     Color defaultBorderColor();
+    /** Default color used to flash borders. */
     Color frameBorderFlashColor();
+    /** Default top-only border for display elements that are parts of a larger frame. */
+    Border defaultPaneTopBorder();
+    /** Default bottom-only border for display elements that are parts of a larger frame. */
+    Border defaultPaneBottomBorder();
+
 
     // General visual attributes, for all inspections
 

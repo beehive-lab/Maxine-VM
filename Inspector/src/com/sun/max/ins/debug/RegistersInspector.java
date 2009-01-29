@@ -101,17 +101,16 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
     private void redisplay() {
         _integerRegisterPanel.setOpaque(true);
         _integerRegisterPanel.setBackground(style().defaultBackgroundColor());
-        _integerRegisterPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 3, 0, style().defaultBorderColor()));
+        _integerRegisterPanel.setBorder(style().defaultPaneBottomBorder());
         _integerRegisterPanel.redisplay();
 
         _stateRegisterPanel.setOpaque(true);
         _stateRegisterPanel.setBackground(style().defaultBackgroundColor());
-        _stateRegisterPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 3, 0, style().defaultBorderColor()));
+        _stateRegisterPanel.setBorder(style().defaultPaneBottomBorder());
         _stateRegisterPanel.redisplay();
 
         _floatingPointRegisterPanel.setOpaque(true);
         _floatingPointRegisterPanel.setBackground(style().defaultBackgroundColor());
-        _floatingPointRegisterPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 3, 0, style().defaultBorderColor()));
         _floatingPointRegisterPanel.redisplay();
     }
 

@@ -91,6 +91,7 @@ public class ObjectHeaderTable extends InspectorTable {
         setShowVerticalLines(style().objectTableShowVerticalLines());
         setIntercellSpacing(style().objectTableIntercellSpacing());
         setRowHeight(style().objectTableRowHeight());
+        setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, _inspection.style().defaultBorderColor()));
         addMouseListener(new TableCellMouseClickAdapter(_inspection, this));
 
         refresh(_inspection.teleVM().epoch(), true);

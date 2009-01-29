@@ -42,7 +42,14 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
     public Color frameBorderFlashColor() {
         return Color.RED;
     }
-
+    private Border _defaultPaneTopBorder = BorderFactory.createMatteBorder(3, 0, 0, 0, defaultBorderColor());
+    public Border defaultPaneTopBorder() {
+        return _defaultPaneTopBorder;
+    }
+    private Border _defaultPaneBottomBorder = BorderFactory.createMatteBorder(0, 0, 3, 0, defaultBorderColor());
+    public Border defaultPaneBottomBorder() {
+        return _defaultPaneBottomBorder;
+    }
     // Default text
     public Color defaultTextColor() {
         return Color.BLACK;
