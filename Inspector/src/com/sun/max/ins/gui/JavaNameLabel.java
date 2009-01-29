@@ -27,11 +27,15 @@ import com.sun.max.ins.*;
  *
  * @author Michael Van De Vanter
   */
-public final class JavaNameLabel extends InspectorLabel {
+public class JavaNameLabel extends InspectorLabel {
 
     public JavaNameLabel(Inspection inspection, String name) {
         super(inspection, name);
         redisplay();
+    }
+
+    public JavaNameLabel(Inspection inspection) {
+        this(inspection, null);
     }
 
     public JavaNameLabel(Inspection inspection, String name, String toolTipText) {
@@ -39,8 +43,17 @@ public final class JavaNameLabel extends InspectorLabel {
         setToolTipText(toolTipText);
     }
 
+    public void setValue(String name) {
+        setText(name);
+        setToolTipText("");
+    }
+
+    public void setValue(String name, String toolTipText) {
+        setText(name);
+        setToolTipText(toolTipText);
+    }
+
     public void refresh(long epoch, boolean force) {
-        // Name doesn't change.
     }
 
     public void redisplay() {

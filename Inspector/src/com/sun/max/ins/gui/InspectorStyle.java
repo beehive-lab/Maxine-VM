@@ -38,9 +38,17 @@ public interface InspectorStyle {
     String name();
 
     // Window, Frame, Desktop attributes
+    /** Default background color for all inspector display elements. */
     Color defaultBackgroundColor();
+    /** Default color for all custom borders used in the inspector. */
     Color defaultBorderColor();
+    /** Default color used to flash borders. */
     Color frameBorderFlashColor();
+    /** Default top-only border for display elements that are parts of a larger frame. */
+    Border defaultPaneTopBorder();
+    /** Default bottom-only border for display elements that are parts of a larger frame. */
+    Border defaultPaneBottomBorder();
+
 
     // General visual attributes, for all inspections
 
@@ -220,12 +228,45 @@ public interface InspectorStyle {
     Icon debugActiveRowButtonIcon();
 
     // Search related
+    /** Icon for the search button that selects the next match moving forward.  */
     Icon searchNextMatchButtonIcon();
+    /** Icon for the search button that selects the next match moving backward.  */
     Icon searchPreviousMatchButtonIcon();
     /** Background color for patterns typed into a search field that don't match anything. */
     Color searchFailedBackground();
     /** Background color for rows that have been matched by a search. */
     Color searchMatchedBackground();
+
+    // Table-display related
+    /** No spacing between cells in table-based views; hides vertical and horizontal lines. */
+    Dimension zeroTableIntercellSpacing();
+
+    /** Default spacing between cells in table-based views. */
+    Dimension defaultTableIntercellSpacing();
+    /** Default row height in table-based views. */
+    int defaultTableRowHeight();
+    /** Default choice to display horizontal lines in table-based views. */
+    boolean defaultTableShowHorizontalLines();
+    /** Default choice to display vertical lines in table-based views. */
+    boolean defaultTableShowVerticalLines();
+
+    /** Spacing between cells in table-based object views. */
+    Dimension objectTableIntercellSpacing();
+    /** Row height in table-based object views. */
+    int objectTableRowHeight();
+    /** Choice to display horizontal lines in table-based object views. */
+    boolean objectTableShowHorizontalLines();
+    /** Choice to display vertical lines in table-based object views. */
+    boolean objectTableShowVerticalLines();
+
+    /** Spacing between cells in table-based code views. */
+    Dimension codeTableIntercellSpacing();
+    /** Row height in table-based code views. */
+    int codeTableRowHeight();
+    /** Choice to display horizontal lines in table-based code views. */
+    boolean codeTableShowHorizontalLines();
+    /** Choice to display vertical lines in table-based code views. */
+    boolean codeTableShowVerticalLines();
 
     // Standard Color Palates.  Please don't change; create new colors if needed.
     // Palate 1:  Primary colors, designed to work well together

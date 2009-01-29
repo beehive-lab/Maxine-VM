@@ -70,6 +70,7 @@ public final class MaxineInspector {
     private static void createAndShowGUI(TeleVM teleVM) {
         try {
             Trace.begin(TRACE_VALUE, _tracePrefix + "Initializing");
+            final long startTimeMillis = System.currentTimeMillis();
 
             TeleDisassembler.initialize(teleVM);
 
@@ -104,7 +105,7 @@ public final class MaxineInspector {
                     StackInspector.make(_inspection, _inspection.focus().thread());
                     BreakpointsInspector.make(_inspection);
                     MethodInspector.Manager.make(_inspection);
-                    ObjectInspector.Manager.make(_inspection);
+                    ObjectInspector.Factory.make(_inspection);
                     _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM, _inspection.focus().thread().instructionPointer()), false);
                     _inspection.refreshAll(false);
                 } catch (Throwable throwable) {
@@ -119,10 +120,10 @@ public final class MaxineInspector {
 //                    teleVM.teleCodeRegistry();
 //                }
                 MethodInspector.Manager.make(_inspection);
-                ObjectInspector.Manager.make(_inspection);
+                ObjectInspector.Factory.make(_inspection);
                 _inspection.refreshAll(false);
             }
-            Trace.end(TRACE_VALUE, _tracePrefix + "Initializing");
+            Trace.end(TRACE_VALUE, _tracePrefix + "Initializing", startTimeMillis);
 
 
             _inspection.setVisible(true);

@@ -33,7 +33,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorPanel extends JPanel implements Prober {
+public abstract class InspectorPanel extends JPanel implements Prober, InspectionHolder {
 
     private final Inspection _inspection;
 
@@ -43,6 +43,14 @@ public abstract class InspectorPanel extends JPanel implements Prober {
 
     public final InspectorStyle style() {
         return _inspection.style();
+    }
+
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    public InspectionActions actions() {
+        return _inspection.actions();
     }
 
     public TeleVM teleVM() {

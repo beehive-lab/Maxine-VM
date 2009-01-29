@@ -20,37 +20,44 @@
  */
 package com.sun.max.ins.object;
 
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
+import javax.swing.table.*;
+
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.object.*;
-import com.sun.max.vm.layout.*;
+import com.sun.max.ins.gui.*;
+
 
 /**
- * An object inspector specialized for displaying a Maxine low-level object in the {@link TeleVM}, constructed using {@link ArrayLayout}.
+ * Forwards mouse events to the appropriate table cell.
  *
  * @author Michael Van De Vanter
+ *
  */
-public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
+public class TableCellMouseClickAdapter extends InspectorMouseClickAdapter {
 
-    private ObjectPane _elementsPane;
+    private final JTable _table;
 
-    ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
-        super(inspection, residence, teleObject);
-        createFrame(null);
+    TableCellMouseClickAdapter(Inspection inspection, JTable table) {
+        super(inspection);
+        _table = table;
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
-        super.createView(epoch);
-        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
-        _elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
-        frame().getContentPane().add(_elementsPane);
+    public void procedure(final MouseEvent mouseEvent) {
+        // Locate the renderer under the event location and pass along the event.
+        final Point p = mouseEvent.getPoint();
+        final int hitColumnIndex = _table.columnAtPoint(p);
+        final int hitRowIndex = _table.rowAtPoint(p);
+        if ((hitColumnIndex != -1) && (hitRowIndex != -1)) {
+            final TableCellRenderer tableCellRenderer = _table.getCellRenderer(hitRowIndex, hitColumnIndex);
+            final Object cellValue = _table.getValueAt(hitRowIndex, hitColumnIndex);
+            final Component component = tableCellRenderer.getTableCellRendererComponent(_table, cellValue, false, true, hitRowIndex, hitColumnIndex);
+            if (component != null) {
+                component.dispatchEvent(mouseEvent);
+            }
+        }
     }
-
-    @Override
-    public void refreshView(long epoch, boolean force) {
-        super.refreshView(epoch, force);
-        _elementsPane.refresh(epoch, force);
-    }
-
 }

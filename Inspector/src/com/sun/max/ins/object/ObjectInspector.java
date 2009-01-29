@@ -26,16 +26,12 @@ import java.util.*;
 
 import javax.swing.*;
 
-import com.sun.max.collect.*;
-import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.memory.MemoryInspector.*;
 import com.sun.max.ins.memory.MemoryWordInspector.*;
-import com.sun.max.ins.type.*;
-import com.sun.max.ins.value.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -44,8 +40,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * An inspector that displays the content of a Maxine low level heap object in the {@link TeleVM}.
@@ -55,7 +49,7 @@ import com.sun.max.vm.value.*;
  */
 public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspector> extends UniqueInspector<ObjectInspector_Type> implements MemoryInspectable, MemoryWordInspectable {
 
-    private static Manager _manager;
+    private static Factory _factory;
 
     private static Preferences _globalPreferences;
 
@@ -64,61 +58,57 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     }
 
     /**
-     * Singleton manager;  no visible presence or direct user interaction at this time.
-     *
-     * @author Michael Van De Vanter
+     * Singleton factory;  no visible presence or direct user interaction at this time.
      */
-    public static final class Manager extends AbstractInspectionHolder {
+    public static final class Factory extends AbstractInspectionHolder {
 
-        private Manager(Inspection inspection) {
+        private Factory(Inspection inspection) {
             super(inspection);
             _globalPreferences = new Preferences(inspection);
+            HubInspector.initializeStatic(inspection);
         }
 
-        public static void make(Inspection inspection) {
-            if (_manager == null) {
-                Trace.begin(1, "[ObjectInspector] initializing manager");
-                _manager = new Manager(inspection);
+        public static void make(final Inspection inspection) {
+            if (_factory == null) {
+                Trace.begin(1, "[ObjectInspector.Factory] initializing");
+                _factory = new Factory(inspection);
                 inspection.focus().addListener(new InspectionFocusAdapter() {
 
                     @Override
                     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
                         if (teleObject != null) {
-                            ObjectInspector.make(_manager.inspection(), teleObject);
+                            ObjectInspector objectInspector;
+                            UniqueInspector.Key<? extends ObjectInspector> key;
+                            if (teleObject instanceof TeleArrayObject) {
+                                key = UniqueInspector.Key.create(inspection, ArrayInspector.class, teleObject.reference());
+                                objectInspector = UniqueInspector.find(inspection, key);
+                                if (objectInspector == null) {
+                                    objectInspector  = new ArrayInspector(inspection, Residence.INTERNAL, teleObject);
+                                }
+                            } else if (teleObject instanceof TeleTupleObject) {
+                                key = UniqueInspector.Key.create(inspection, TupleInspector.class, teleObject.reference());
+                                objectInspector = UniqueInspector.find(inspection, key);
+                                if (objectInspector == null) {
+                                    objectInspector  = new TupleInspector(inspection, Residence.INTERNAL, teleObject);
+                                }
+                            } else {
+                                assert teleObject instanceof TeleHybridObject;
+                                key = UniqueInspector.Key.create(inspection, HubInspector.class, teleObject.reference());
+                                objectInspector = UniqueInspector.find(inspection, key);
+                                if (objectInspector == null) {
+                                    objectInspector  = new HubInspector(inspection, Residence.INTERNAL, teleObject);
+                                }
+                            }
+                            if (objectInspector != null) {
+                                objectInspector.highlight();
+                            }
                         }
                     }
                 });
-                Trace.end(1, "[ObjectInspector] initializing manager");
+                Trace.end(1, "[ObjectInspector.Factory] initializing");
             }
         }
 
-    }
-
-    private static final IdentityHashSet<ObjectInspector> _objectInspectors = new IdentityHashSet<ObjectInspector>();
-
-    /**
-     * Displays and highlights a kind of object inspector appropriate to the object reference.
-     * @return A possibly new inspector for the object
-     */
-    private static void make(Inspection inspection, TeleObject teleObject) {
-        final boolean isArray = teleObject instanceof TeleArrayObject;
-        final boolean isTuple = teleObject instanceof TeleTupleObject;
-        final Class<? extends ObjectInspector> inspectorClass = isArray ? ArrayInspector.class : isTuple ? TupleInspector.class : HubInspector.class;
-        final UniqueInspector.Key<? extends ObjectInspector> key = UniqueInspector.Key.create(inspection, inspectorClass, teleObject.reference());
-        ObjectInspector objectInspector = UniqueInspector.find(inspection, key);
-        if (objectInspector == null) {
-            if (isArray) {
-                objectInspector = new ArrayInspector(inspection, Residence.INTERNAL, teleObject);
-            } else if (isTuple) {
-                objectInspector = new TupleInspector(inspection, Residence.INTERNAL, teleObject);
-            } else {
-                if (!(teleObject instanceof TeleHybridObject)) {
-                    assert teleObject instanceof TeleHybridObject;
-                }
-                objectInspector = new HubInspector(inspection, Residence.INTERNAL, teleObject);
-            }
-        }
-        objectInspector.highlight();
     }
 
     // Preferences
@@ -169,7 +159,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             final JCheckBox alwaysShowHeaderCheckBox = new JCheckBox("Header");
             alwaysShowHeaderCheckBox.setOpaque(true);
             alwaysShowHeaderCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowHeaderCheckBox.setToolTipText("Show new Object Inspectors initially display the header?");
+            alwaysShowHeaderCheckBox.setToolTipText("Shouls new Object Inspectors initially display the header?");
             alwaysShowHeaderCheckBox.setSelected(_showHeader);
 
             final JCheckBox alwaysShowAddressesCheckBox = new JCheckBox("Addresses");
@@ -251,7 +241,6 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             panel.add(upperPanel, BorderLayout.NORTH);
             panel.add(lowerPanel, BorderLayout.SOUTH);
 
-
             return panel;
         }
 
@@ -291,13 +280,12 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     }
 
-
     private final TeleObject _teleObject;
 
     /**
      * @return local surrogate for the object being inspected in the {@link TeleVM}
      */
-    public TeleObject teleObject() {
+    TeleObject teleObject() {
         return _teleObject;
     }
 
@@ -306,6 +294,14 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
      */
     private Pointer _currentObjectOrigin;
 
+    /**
+     * @return The actual location in {@link TeleVM} memory where
+     * the object resides at present; this may change via GC.
+     */
+    Pointer currentOrigin() {
+        return _currentObjectOrigin;
+    }
+
     private final JCheckBoxMenuItem _showHeaderMenuCheckBox;
     private final JCheckBoxMenuItem _showAddressesMenuCheckBox;
     private final JCheckBoxMenuItem _showOffsetsMenuCheckBox;
@@ -313,7 +309,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private final JCheckBoxMenuItem _showMemoryRegionsMenuCheckBox;
     private final JCheckBoxMenuItem _hideNullArrayElementsMenuCheckBox;
 
-    private ObjectHeaderInspector _objectHeaderInspector;
+    private InspectorTable _objectHeaderTable;
 
     protected ObjectInspector(final Inspection inspection, Residence residence, final TeleObject teleObject) {
         super(inspection, residence, teleObject.reference());
@@ -325,7 +321,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         _showHeaderMenuCheckBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (!_showHeaderMenuCheckBox.getState()) {
-                    _objectHeaderInspector = null;
+                    _objectHeaderTable = null;
                 }
                 reconstructView();
             }
@@ -360,7 +356,6 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 reconstructView();
             }
         });
-        _objectInspectors.add(this);
     }
 
     @Override
@@ -394,8 +389,10 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         panel.setOpaque(true);
         panel.setBackground(style().defaultBackgroundColor());
         if (_showHeaderMenuCheckBox.getState()) {
-            _objectHeaderInspector = new ObjectHeaderInspector(inspection(), teleObject(), this, valueLabels());
-            panel.add(_objectHeaderInspector, BorderLayout.NORTH);
+            _objectHeaderTable = new ObjectHeaderTable(this);
+            _objectHeaderTable.setBorder(style().defaultPaneBottomBorder());
+            // Will add without column headers
+            panel.add(_objectHeaderTable, BorderLayout.NORTH);
         }
         frame().setContentPane(panel);
     }
@@ -434,32 +431,32 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
      /**
      * @return whether to display the "Address" column for headers, tuples, and arrays
      */
-    public boolean showAddresses() {
+    boolean showAddresses() {
         return _showAddressesMenuCheckBox.getState();
     }
 
     /**
      * @return whether to display the "Offset" column for headers, tuples and arrays
      */
-    public boolean showOffsets() {
+    boolean showOffsets() {
         return _showOffsetsMenuCheckBox.getState();
     }
 
     /**
      * @return whether to display the "Type" column for headers and tuples
      */
-    public boolean showTypes() {
+    boolean showTypes() {
         return _showTypesMenuCheckBox.getState();
     }
 
-    public boolean hideNullArrayElements() {
+    boolean hideNullArrayElements() {
         return _hideNullArrayElementsMenuCheckBox.getState();
     }
 
     /**
      * @return whether to display the "Region" column for headers and tuples
      */
-    public boolean showMemoryRegions() {
+    boolean showMemoryRegions() {
         return _showMemoryRegionsMenuCheckBox.getState();
     }
 
@@ -467,7 +464,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     /**
      * @return how many columns are currently being displayed
      */
-    public int numberOfTupleColumns() {
+    int numberOfTupleColumns() {
         int result = 2; // always show field name and value
         if (showAddresses()) {
             result++;
@@ -487,7 +484,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     /**
      * @return how many columns are currently being displayed
      */
-    public int numberOfArrayColumns() {
+    int numberOfArrayColumns() {
         int result = 2;
         if (showAddresses()) {
             result++;
@@ -513,8 +510,6 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         }
     };
 
-    protected abstract AppendableSequence<ValueLabel> valueLabels();
-
     @Override
     public synchronized void refreshView(long epoch, boolean force) {
         if (isShowing() || force) {
@@ -524,156 +519,42 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 _currentObjectOrigin = newOrigin;
                 reconstructView();
             } else {
-                if (_objectHeaderInspector != null) {
-                    _objectHeaderInspector.refresh(epoch, force);
-                }
-                for (ValueLabel valueLabel : valueLabels()) {
-                    valueLabel.refresh(epoch, force);
+                if (_objectHeaderTable != null) {
+                    _objectHeaderTable.refresh(epoch, force);
                 }
             }
             super.refreshView(epoch, force);
         }
     }
 
+    public void viewConfigurationChanged(long epoch) {
+        reconstructView();
+    }
 
     /**
-     * Adds to the {@link JPanel} a row of labels for each field defined the {@link ClassActor}, and
-     * adds the {@link ValueLabel} on the row to a collection used to update the values on refresh.
+     * Gets the fields for either a tuple or hybrid object, static fields in the special case of a {@link StaticTuple} object.
+     *
+     * @return a {@FieldActor} for every field in the object, sorted by offset.
      */
-    private void displayFields(JPanel fieldsPanel, ClassActor classActor, AppendableSequence<ValueLabel> valueLabels) {
-        if (classActor == null) {
-            return;
-        }
-        if (!(_teleObject instanceof TeleStaticTuple)) {
-            displayFields(fieldsPanel, classActor.superClassActor(), valueLabels);
-        }
-        final FieldActor[] fieldActors = _teleObject instanceof TeleStaticTuple ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
-        Arrays.sort(fieldActors, new Comparator<FieldActor>() {
+    protected Collection<FieldActor> getFieldActors() {
+        final TreeSet<FieldActor> fieldActors = new TreeSet<FieldActor>(new Comparator<FieldActor>() {
             public int compare(FieldActor a, FieldActor b) {
                 final Integer aOffset = a.offset();
                 return aOffset.compareTo(b.offset());
             }
         });
-        for (final FieldActor fieldActor : fieldActors) {
-            if (showAddresses()) {
-                fieldsPanel.add(new LocationLabel.AsAddressWithOffset(inspection(), fieldActor.offset(), _currentObjectOrigin));  // Field address
-            }
-            if (showOffsets()) {
-                fieldsPanel.add(new LocationLabel.AsOffset(inspection(), fieldActor.offset(), _currentObjectOrigin));                           // Field position
-            }
-            if (showTypes()) {
-                fieldsPanel.add(new ClassActorLabel(inspection(), fieldActor.descriptor()));                                                              // Field type
-            }
-            fieldsPanel.add(new FieldActorLabel(inspection(), fieldActor));                                                                                     // Field name
-
-            ValueLabel valueLabel;
-            if (fieldActor.kind() == Kind.REFERENCE) {
-                valueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE) {
-                    @Override
-                    public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
-                    }
-                };
-            } else if (fieldActor.kind() == Kind.WORD) {
-                valueLabel = new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD) {
-                    @Override
-                    public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
-                    }
-                };
-            } else {
-                if (_teleObject instanceof TeleActor && fieldActor.name().toString().equals("_flags")) {
-                    final TeleActor teleActor = (TeleActor) _teleObject;
-                    valueLabel =  new ActorFlagsValueLabel(inspection(), teleActor);
-                } else {
-                    valueLabel = new PrimitiveValueLabel(inspection(), fieldActor.kind()) {
-                        @Override
-                        public Value fetchValue() {
-                            return _teleObject.readFieldValue(fieldActor);
-                        }
-                    };
-                }
-            }
-            valueLabels.append(valueLabel);
-            fieldsPanel.add(valueLabel);                                                                                                                                     // Field value
-
-            if (showMemoryRegions()) {
-                final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
-                    @Override
-                    public Value fetchValue() {
-                        return _teleObject.readFieldValue(fieldActor);
-                    }
-                };
-                valueLabels.append(memoryRegionValueLabel);
-                fieldsPanel.add(memoryRegionValueLabel);
-            }
-        }
+        collectFieldActors(teleObject().classActorForType(), _teleObject instanceof TeleStaticTuple, fieldActors);
+        return fieldActors;
     }
 
-    protected JPanel createFieldsPanel(AppendableSequence<ValueLabel> valueLabels) {
-        final JPanel fieldsPanel = new JPanel(new SpringLayout());
-        fieldsPanel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
-        fieldsPanel.setOpaque(true);
-        fieldsPanel.setBackground(style().defaultBackgroundColor());
-        displayFields(fieldsPanel, teleObject().classActorForType(), valueLabels);
-        SpringUtilities.makeCompactGrid(fieldsPanel, fieldsPanel.getComponentCount() / numberOfTupleColumns(), numberOfTupleColumns(), 0, 0, 0, 0);
-        return fieldsPanel;
-    }
-
-    protected JPanel createArrayPanel(AppendableSequence<ValueLabel> valueLabels, final Kind kind, int startOffset, int startIndex, int length, String indexPrefix,
-                                      WordValueLabel.ValueMode wordValueMode) {
-        final int size = kind.size();
-        final JPanel panel = new JPanel(new SpringLayout());
-        panel.setOpaque(true);
-        panel.setBackground(style().defaultBackgroundColor());
-        for (int i = 0; i < length; i++) {
-            final int index = startIndex + i;
-            if (!hideNullArrayElements() || !teleVM().getElementValue(kind, _teleObject.reference(), index).isZero()) {
-                if (showAddresses()) {
-                    panel.add(new LocationLabel.AsAddressWithOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
-                }
-                if (showOffsets()) {
-                    panel.add(new LocationLabel.AsOffset(inspection(), startOffset + (i * size), _currentObjectOrigin));
-                }
-                panel.add(new LocationLabel.AsIndex(inspection(), indexPrefix, i, startOffset + (i * size), _currentObjectOrigin));
-                if (kind == Kind.REFERENCE) {
-                    valueLabels.append(new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE) {
-                        @Override
-                        public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                        }
-                    });
-                } else if (kind == Kind.WORD) {
-                    valueLabels.append(new WordValueLabel(inspection(), wordValueMode) {
-                        @Override
-                        public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                        }
-                    });
-                } else {
-                    valueLabels.append(new PrimitiveValueLabel(inspection(), kind) {
-                        @Override
-                        public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                        }
-                    });
-                }
-                panel.add(valueLabels.last());
-                if (showMemoryRegions()) {
-                    final ValueLabel memoryRegionValueLabel = new MemoryRegionValueLabel(inspection()) {
-                        @Override
-                        public Value fetchValue() {
-                            return teleVM().getElementValue(kind, _teleObject.reference(), index);
-                        }
-                    };
-                    valueLabels.append(memoryRegionValueLabel);
-                    panel.add(memoryRegionValueLabel);
-                }
+    private void collectFieldActors(ClassActor classActor, boolean isStatic, TreeSet<FieldActor> fieldActors) {
+        if (classActor != null) {
+            final FieldActor[] localFieldActors = isStatic ? classActor.localStaticFieldActors() : classActor.localInstanceFieldActors();
+            for (FieldActor fieldActor : localFieldActors) {
+                fieldActors.add(fieldActor);
             }
+            collectFieldActors(classActor.superClassActor(), isStatic, fieldActors);
         }
-        SpringUtilities.makeCompactGrid(panel, numberOfArrayColumns());
-        panel.setBorder(BorderFactory.createMatteBorder(3, 0, 0, 0, style().defaultBorderColor()));
-        return panel;
     }
 
     public InspectorAction getMemoryInspectorAction() {

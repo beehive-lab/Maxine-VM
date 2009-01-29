@@ -218,6 +218,10 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     @Override
     public void createView(long epoch) {
+        _table.setShowHorizontalLines(style().defaultTableShowHorizontalLines());
+        _table.setShowVerticalLines(style().defaultTableShowVerticalLines());
+        _table.setIntercellSpacing(style().defaultTableIntercellSpacing());
+        _table.setRowHeight(style().defaultTableRowHeight());
         _table.setRowSelectionAllowed(true);
         _table.setColumnSelectionAllowed(false);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -230,8 +234,8 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
 
     private final class MemoryRegionJTable extends JTable {
 
-        MemoryRegionJTable(MemoryRegionTableModel memoryRegionTableModel, MemoryRegionColumnModel memoryRegionColumnModel) {
-            super(memoryRegionTableModel, memoryRegionColumnModel);
+        MemoryRegionJTable(TableModel tableModel, TableColumnModel tableColumnModel) {
+            super(tableModel, tableColumnModel);
         }
 
         @Override

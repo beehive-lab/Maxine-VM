@@ -35,7 +35,7 @@ import com.sun.max.unsafe.*;
 public abstract class LocationLabel extends InspectorLabel {
 
     protected int _value;
-    protected final Address _base;
+    protected Address _base;
     private long _epoch = -1;
 
     /**
@@ -114,6 +114,12 @@ public abstract class LocationLabel extends InspectorLabel {
         updateText();
     }
 
+    public final void setValue(int value, Address base) {
+        _value = value;
+        _base = base;
+        updateText();
+    }
+
     /**
      * A label that displays, in hex, an address relative to an origin.
      * A right-button menu is available with some useful commands.
@@ -123,6 +129,10 @@ public abstract class LocationLabel extends InspectorLabel {
         public AsAddressWithOffset(Inspection inspection, int offset, Address base) {
             super(inspection, offset, base);
             redisplay();
+        }
+
+        public AsAddressWithOffset(Inspection inspection) {
+            this(inspection, 0, Address.zero());
         }
 
         public final void redisplay() {
@@ -211,13 +221,17 @@ public abstract class LocationLabel extends InspectorLabel {
      */
     public static class AsOffset extends LocationLabel {
 
-        public AsOffset(Inspection inspection, int offset) {
-            this(inspection, offset, null);
-        }
-
         public AsOffset(Inspection inspection, int offset, Address origin) {
             super(inspection, offset, origin);
             redisplay();
+        }
+
+        public AsOffset(Inspection inspection, int offset) {
+            this(inspection, offset, Address.zero());
+        }
+
+        public AsOffset(Inspection inspection) {
+            this(inspection, 0, Address.zero());
         }
 
         public void redisplay() {
@@ -244,9 +258,9 @@ public abstract class LocationLabel extends InspectorLabel {
      * menus is available with some useful commands.
      * The address does not update if contents at location get moved.
      */
-    public static final class AsIndex extends LocationLabel {
+    public static class AsIndex extends LocationLabel {
         private final String _prefix;
-        private final int _index;
+        private int _index;
 
         /**
          * A label that displays a memory location <base> + <offset> as "<prefix>[<index>]",
@@ -263,6 +277,13 @@ public abstract class LocationLabel extends InspectorLabel {
             setFont(style().decimalDataFont());
             setForeground(style().decimalDataColor());
             setBackground(style().decimalDataBackgroundColor());
+            updateText();
+        }
+
+        public void setValue(int index, int value, Address base) {
+            _index = index;
+            _value = value;
+            _base = base;
             updateText();
         }
 
