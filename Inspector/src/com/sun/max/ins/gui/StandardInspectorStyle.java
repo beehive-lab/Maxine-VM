@@ -39,17 +39,17 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return "Standard";
     }
 
-    private final int _defaultFontSize = 12;
-    private final Font _defaultFont = new Font("SansSerif", Font.PLAIN, _defaultFontSize);
-    private final Font _defaultBoldFont = new Font("SansSerif", Font.BOLD, _defaultFontSize);
+    private final int _defaultTextFontSize = 12;
+    private final Font _defaultFont = new Font("SansSerif", Font.PLAIN, defaultTextFontSize());
+    private final Font _defaultBoldFont = new Font("SansSerif", Font.BOLD, defaultTextFontSize());
     private final Color _defaultTextColor = InspectorStyle.Black;
 
-    private final Font _hexDataFont = new Font("Monospaced", Font.PLAIN, _defaultFontSize);
+    private final Font _hexDataFont = new Font("Monospaced", Font.PLAIN, defaultTextFontSize());
 
-    private final int _defaultTitleFontSize = _defaultFontSize + 2;
-    private final Font _defaultTitleFont = new Font("Serif", Font.BOLD, _defaultTitleFontSize);
+    private final int _defaultTitleFontSize = defaultTextFontSize() + 2;
+    private final Font _defaultTitleFont = new Font("Serif", Font.BOLD, textTitleFontSize());
 
-    private final Font _flagsFont = new Font("Serif", Font.PLAIN, _defaultFontSize);
+    private final Font _flagsFont = new Font("Serif", Font.PLAIN, defaultTextFontSize());
 
 
 
@@ -69,7 +69,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return _defaultFont;
     }
     public int defaultTextFontSize() {
-        return _defaultFontSize;
+        return _defaultTextFontSize;
     }
     @Override
     public Color defaultTextColor() {
@@ -212,7 +212,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
     @Override
     public int primitiveDataFontSize() {
-        return _defaultFontSize;
+        return _defaultTextFontSize;
     }
 
     // Display of char values
@@ -259,7 +259,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
     @Override
     public int defaultCodeFontSize() {
-        return _defaultFontSize;
+        return _defaultTextFontSize;
     }
     @Override
     public Color defaultCodeBackgroundColor() {
@@ -281,12 +281,12 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
     @Override
     public int targetCodeFontSize() {
-        return _defaultFontSize;
+        return _defaultTextFontSize;
     }
 
     // Display of bytecodes
-    private final Font _bytecodeMnemonicFont = new Font("Serif", Font.ITALIC, _defaultFontSize + 1);
-    private final Font _bytecodeOperandFont = new Font("SansSerif", Font.PLAIN, _defaultFontSize);
+    private final Font _bytecodeMnemonicFont = new Font("Serif", Font.ITALIC, _defaultTextFontSize + 1);
+    private final Font _bytecodeOperandFont = new Font("SansSerif", Font.PLAIN, _defaultTextFontSize);
 
     @Override
     public Font bytecodeMnemonicFont() {
@@ -298,7 +298,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
     @Override
     public int bytecodeFontSize() {
-        return _defaultFontSize + 1;
+        return _defaultTextFontSize + 1;
     }
 
     @Override

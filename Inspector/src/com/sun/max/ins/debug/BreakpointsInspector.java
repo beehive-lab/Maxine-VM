@@ -39,32 +39,27 @@ import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 
 /**
- * Access to information about all kinds of breakpoints that might be set in the {@link TeleVM}.
+ * Singleton inspector that displays information about all kinds of breakpoints that might be set in the {@link TeleVM}.
  * Wrappers with extra information about each breakpoint are kept in a model.
  *
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class BreakpointsInspector extends UniqueInspector {
+public final class BreakpointsInspector extends Inspector {
 
-    /**
-     * @return the singleton instance, if it exists
-     */
-    private static BreakpointsInspector getInspector(Inspection inspection) {
-        return UniqueInspector.find(inspection, BreakpointsInspector.class);
-    }
+    // Set to null when inspector closed.
+    private static BreakpointsInspector _breakpointsInspector;
 
     /**
      * Displays and highlights the (singleton) breakpoints inspector.
      * @return  The breakpoints inspector, possibly newly created.
      */
     public static BreakpointsInspector make(Inspection inspection) {
-        BreakpointsInspector breakpointsInspector = getInspector(inspection);
-        if (breakpointsInspector == null) {
-            breakpointsInspector = new BreakpointsInspector(inspection, Residence.INTERNAL);
+        if (_breakpointsInspector == null) {
+            _breakpointsInspector = new BreakpointsInspector(inspection, Residence.INTERNAL);
         }
-        breakpointsInspector.highlight();
-        return breakpointsInspector;
+        _breakpointsInspector.highlight();
+        return _breakpointsInspector;
     }
 
     /**
@@ -573,6 +568,20 @@ public final class BreakpointsInspector extends UniqueInspector {
     public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
         updateSelectedBreakpoint(teleBreakpoint);
     }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        _breakpointsInspector = null;
+        super.inspectorClosing();
+    }
+
+    @Override
+    public void vmProcessTerminated() {
+        _breakpointsInspector = null;
+        dispose();
+    }
+
     /**
      * Global breakpoint focus has changed; revise selection in inspector if needed.
      */
@@ -646,17 +655,6 @@ public final class BreakpointsInspector extends UniqueInspector {
             row++;
         }
         return -1;
-    }
-
-    @Override
-    public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
-        super.inspectorClosing();
-    }
-
-    @Override
-    public void vmProcessTerminated() {
-        dispose();
     }
 
     /**

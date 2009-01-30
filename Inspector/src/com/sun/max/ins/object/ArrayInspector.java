@@ -30,12 +30,12 @@ import com.sun.max.vm.layout.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ArrayInspector extends ObjectInspector<ArrayInspector> {
+public final class ArrayInspector extends ObjectInspector {
 
     private ObjectPane _elementsPane;
 
-    ArrayInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
-        super(inspection, residence, teleObject);
+    ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
+        super(inspection, factory, residence, teleObject);
         createFrame(null);
     }
 

@@ -35,33 +35,27 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
 /**
- * An inspector that displays the list of threads running in the process of the {@link TeleVM}.
+ * A singleton inspector that displays the list of threads running in the process of the {@link TeleVM}.
  *
  * @author Bernd Mathiske
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
+public final class ThreadsInspector extends Inspector {
 
-    /**
-     * @return the singleton instance, if it exists
-     */
-    private static ThreadsInspector getInspector(Inspection inspection) {
-        return UniqueInspector.find(inspection, ThreadsInspector.class);
-    }
-
+    // Set to null when inspector closed.
+    private static ThreadsInspector _threadsInspector;
     /**
      * Display and highlight the (singleton) threads inspector.
      *
      * @return  The threads inspector, possibly newly created.
      */
     public static ThreadsInspector make(Inspection inspection) {
-        ThreadsInspector threadsInspector = getInspector(inspection);
-        if (threadsInspector == null) {
-            threadsInspector = new ThreadsInspector(inspection, Residence.INTERNAL);
+        if (_threadsInspector == null) {
+            _threadsInspector = new ThreadsInspector(inspection, Residence.INTERNAL);
         }
-        threadsInspector.highlight();
-        return threadsInspector;
+        _threadsInspector.highlight();
+        return _threadsInspector;
     }
 
     /**
@@ -98,7 +92,7 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
     private final ThreadsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "threadsInspector");
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "_threadsInspector");
 
     private ThreadsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
@@ -388,11 +382,13 @@ public final class ThreadsInspector extends UniqueInspector<ThreadsInspector> {
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
+        _threadsInspector = null;
         super.inspectorClosing();
     }
 
     @Override
     public void vmProcessTerminated() {
+        _threadsInspector = null;
         dispose();
     }
 

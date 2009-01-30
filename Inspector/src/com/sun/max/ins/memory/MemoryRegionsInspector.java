@@ -44,18 +44,14 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * An inspector that displays a list of {@link MemoryRegion}s that have been allocated in the {@link TeleVM}.
+ * A singleton inspector that displays a list of {@link MemoryRegion}s that have been allocated in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsInspector> {
+public final class MemoryRegionsInspector extends Inspector {
 
-    /**
-     * @return the singleton instance, if it exists
-     */
-    private static MemoryRegionsInspector getInspector(Inspection inspection) {
-        return UniqueInspector.find(inspection, MemoryRegionsInspector.class);
-    }
+    // Set to null when inspector closed.
+    private static MemoryRegionsInspector _memoryRegionsInspector;
 
     /**
      * Display and highlight the (singleton) MemoryRegions inspector.
@@ -63,12 +59,11 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
      * @return  The MemoryRegions inspector, possibly newly created.
      */
     public static MemoryRegionsInspector make(Inspection inspection) {
-        MemoryRegionsInspector memoryRegionsInspector = getInspector(inspection);
-        if (memoryRegionsInspector == null) {
-            memoryRegionsInspector = new MemoryRegionsInspector(inspection, Residence.INTERNAL);
+        if (_memoryRegionsInspector == null) {
+            _memoryRegionsInspector = new MemoryRegionsInspector(inspection, Residence.INTERNAL);
         }
-        memoryRegionsInspector.highlight();
-        return memoryRegionsInspector;
+        _memoryRegionsInspector.highlight();
+        return _memoryRegionsInspector;
     }
 
     /**
@@ -725,12 +720,14 @@ public final class MemoryRegionsInspector extends UniqueInspector<MemoryRegionsI
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
+        _memoryRegionsInspector = null;
         super.inspectorClosing();
     }
 
     @Override
     public void vmProcessTerminated() {
         Trace.line(1, tracePrefix() + " closing - process terminated");
+        _memoryRegionsInspector = null;
         dispose();
     }
 

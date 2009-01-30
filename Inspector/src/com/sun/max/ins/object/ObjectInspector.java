@@ -36,6 +36,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.object.TeleObject.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
@@ -47,68 +48,15 @@ import com.sun.max.vm.actor.member.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspector> extends UniqueInspector<ObjectInspector_Type> implements MemoryInspectable, MemoryWordInspectable {
-
-    private static Factory _factory;
+public abstract class ObjectInspector extends Inspector implements MemoryInspectable, MemoryWordInspectable {
 
     private static Preferences _globalPreferences;
 
     public static synchronized Preferences globalPreferences(Inspection inspection) {
-        return _globalPreferences;
-    }
-
-    /**
-     * Singleton factory;  no visible presence or direct user interaction at this time.
-     */
-    public static final class Factory extends AbstractInspectionHolder {
-
-        private Factory(Inspection inspection) {
-            super(inspection);
+        if (_globalPreferences == null) {
             _globalPreferences = new Preferences(inspection);
-            HubInspector.initializeStatic(inspection);
         }
-
-        public static void make(final Inspection inspection) {
-            if (_factory == null) {
-                Trace.begin(1, "[ObjectInspector.Factory] initializing");
-                _factory = new Factory(inspection);
-                inspection.focus().addListener(new InspectionFocusAdapter() {
-
-                    @Override
-                    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-                        if (teleObject != null) {
-                            ObjectInspector objectInspector;
-                            UniqueInspector.Key<? extends ObjectInspector> key;
-                            if (teleObject instanceof TeleArrayObject) {
-                                key = UniqueInspector.Key.create(inspection, ArrayInspector.class, teleObject.reference());
-                                objectInspector = UniqueInspector.find(inspection, key);
-                                if (objectInspector == null) {
-                                    objectInspector  = new ArrayInspector(inspection, Residence.INTERNAL, teleObject);
-                                }
-                            } else if (teleObject instanceof TeleTupleObject) {
-                                key = UniqueInspector.Key.create(inspection, TupleInspector.class, teleObject.reference());
-                                objectInspector = UniqueInspector.find(inspection, key);
-                                if (objectInspector == null) {
-                                    objectInspector  = new TupleInspector(inspection, Residence.INTERNAL, teleObject);
-                                }
-                            } else {
-                                assert teleObject instanceof TeleHybridObject;
-                                key = UniqueInspector.Key.create(inspection, HubInspector.class, teleObject.reference());
-                                objectInspector = UniqueInspector.find(inspection, key);
-                                if (objectInspector == null) {
-                                    objectInspector  = new HubInspector(inspection, Residence.INTERNAL, teleObject);
-                                }
-                            }
-                            if (objectInspector != null) {
-                                objectInspector.highlight();
-                            }
-                        }
-                    }
-                });
-                Trace.end(1, "[ObjectInspector.Factory] initializing");
-            }
-        }
-
+        return _globalPreferences;
     }
 
     // Preferences
@@ -219,7 +167,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             hideNullArrayElementsCheckBox.addItemListener(itemListener);
 
             final JPanel contentPanel = new JPanel();
-            contentPanel.add(new TextLabel(_inspection, "Show:  "));
+            contentPanel.add(new TextLabel(_inspection, "Columns:  "));
             contentPanel.add(alwaysShowHeaderCheckBox);
             contentPanel.add(alwaysShowAddressesCheckBox);
             contentPanel.add(alwaysShowOffsetsCheckBox);
@@ -280,6 +228,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     }
 
+    private final ObjectInspectorFactory _factory;
+
     private final TeleObject _teleObject;
 
     /**
@@ -311,8 +261,9 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     private InspectorTable _objectHeaderTable;
 
-    protected ObjectInspector(final Inspection inspection, Residence residence, final TeleObject teleObject) {
-        super(inspection, residence, teleObject.reference());
+    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, Residence residence, final TeleObject teleObject) {
+        super(inspection, residence);
+        _factory = factory;
         final Preferences preferences = globalPreferences(inspection);
         _teleObject = teleObject;
         _currentObjectOrigin = teleObject().getCurrentOrigin();
@@ -368,7 +319,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         frame().menu().add(_showOffsetsMenuCheckBox);
         frame().menu().add(_showTypesMenuCheckBox);
         frame().menu().add(_showMemoryRegionsMenuCheckBox);
-        if (!(_teleObject instanceof TeleTupleObject)) {
+        if (!(_teleObject.getObjectKind() == ObjectKind.TUPLE)) {
+            // both arrays and hybrids have array elements
             frame().menu().add(_hideNullArrayElementsMenuCheckBox);
         }
         frame().menu().add(new InspectorAction(inspection(), "Object Display Prefs..") {
@@ -425,6 +377,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         if (_teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
+        _factory.objectInspectorClosing(this);
         super.inspectorClosing();
     }
 

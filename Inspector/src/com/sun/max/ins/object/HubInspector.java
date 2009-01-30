@@ -42,16 +42,15 @@ import com.sun.max.vm.object.*;
  *
  * @author Michael Van De Vanter
  */
-public class HubInspector extends ObjectInspector<HubInspector> {
+public class HubInspector extends ObjectInspector {
 
-    private static HubPreferences _globalHubPreferences;
-
-    protected static void initializeStatic(Inspection inspection) {
-        _globalHubPreferences = new HubPreferences(inspection);
-    }
+    private static HubPreferences _globalPreferences;
 
     public static synchronized HubPreferences globalHubPreferences(Inspection inspection) {
-        return _globalHubPreferences;
+        if (_globalPreferences == null) {
+            _globalPreferences = new HubPreferences(inspection);
+        }
+        return _globalPreferences;
     }
 
     // Preferences
@@ -215,8 +214,8 @@ public class HubInspector extends ObjectInspector<HubInspector> {
 
     private final InspectorMenuItems _classMethodInspectorMenuItems;
 
-    HubInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
-        super(inspection, residence, teleObject);
+    HubInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
+        super(inspection, factory, residence, teleObject);
         _teleHub = (TeleHub) teleObject;
         _toolBar = new JToolBar();
         _toolBar.setFloatable(false);
