@@ -46,6 +46,33 @@ import com.sun.max.vm.value.*;
 public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectProvider {
 
     /**
+     * Identification for the three low-level Maxine heap objects implementations upon which all objects are implemented.
+     * @see com.sun.max.vm.object.ObjectAccess
+     */
+    public enum ObjectKind {
+
+        /**
+         * A Maxine implementation object that represents a Java array.
+         * @see com.sun.max.vm.object.ArrayAccess
+         */
+        ARRAY,
+
+        /**
+         * A Maxine implementation object that represents a Java object instance:  a collection of name/value pairs.
+         * @see com.sun.max.vm.object.TupleAccess
+         */
+        TUPLE,
+
+        /**
+         * A special Maxine implementation object used to implement {@link Hub}s.
+         * These represent special objects that cannot be described in ordinary Java;
+         * they have both fields (as in an object instance) and a collection of
+         * specialized arrays.
+         * @see com.sun.max.vm.object.Hybrid
+         */
+        HYBRID;
+    }
+    /**
      * Controls tracing for object copying.
      */
     protected static final int COPY_TRACE_VALUE = 4;
@@ -93,6 +120,11 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     public Pointer getCurrentOrigin() {
         return _reference.toOrigin();
     }
+
+    /**
+     * @return to which of the Maxine heap object representations does this surrogate refer?
+     */
+    public abstract ObjectKind getObjectKind();
 
     private final long _oid;
 
