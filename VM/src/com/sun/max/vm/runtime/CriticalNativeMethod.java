@@ -31,7 +31,7 @@ import com.sun.max.vm.jni.*;
 /**
  * This class represents a critical native method that is used by the virtual machine
  * and must be linked while the VM is starting up. Some critical native methods are JNI functions,
- * and this class with pre-allocate the required mangled string name in order to link
+ * and this class will pre-allocate the required mangled string name in order to link
  * these methods before allocation works.
  *
  * @author Ben L. Titzer

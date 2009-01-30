@@ -80,54 +80,6 @@ public abstract class BytecodeTest_native<Method_Type extends IrMethod> extends 
     private static native double doubleIdentity(double value);
     private static native Object referenceIdentity(Object value);
 
-    public static class TestValuesMapping implements KindMapping<Value[]> {
-
-        public Value[] mapBoolean() {
-            return BooleanValue.arrayFrom(true, false);
-        }
-
-        public Value[] mapByte() {
-            return ByteValue.arrayFrom(Byte.MIN_VALUE, (byte) (Byte.MIN_VALUE + 1), (byte) -1, (byte) 0, (byte) 1, (byte) (Byte.MAX_VALUE - 1), Byte.MAX_VALUE);
-        }
-
-        public Value[] mapChar() {
-            return CharValue.arrayFrom((char) 0, (char) 1, (char)  (Character.MAX_VALUE - 1), Character.MAX_VALUE);
-        }
-
-        public Value[] mapDouble() {
-            return DoubleValue.arrayFrom(Double.MIN_VALUE, Double.MIN_VALUE + 1, -1D, 0D, 1D, Double.MAX_VALUE - 1, Double.MAX_VALUE);
-        }
-
-        public Value[] mapFloat() {
-            return FloatValue.arrayFrom(Float.MIN_VALUE, Float.MIN_VALUE + 1, -1F, 0F, 1F, Float.MAX_VALUE - 1, Float.MAX_VALUE);
-        }
-
-        public Value[] mapInt() {
-            return IntValue.arrayFrom(Integer.MIN_VALUE, Integer.MIN_VALUE + 1, -1, 0, 1, Integer.MAX_VALUE - 1, Integer.MAX_VALUE);
-        }
-
-        public Value[] mapLong() {
-            return LongValue.arrayFrom(Long.MIN_VALUE, Long.MIN_VALUE + 1, -1, 0, 1, Long.MAX_VALUE - 1, Long.MAX_VALUE);
-        }
-
-        public Value[] mapReference() {
-            return new ReferenceValue[]{ReferenceValue.NULL, ReferenceValue.from(this)};
-        }
-
-        public Value[] mapShort() {
-            return ShortValue.arrayFrom(Short.MIN_VALUE, (short) (Short.MIN_VALUE + 1), (short) -1, (short) 0, (short) 1, (short) (Short.MAX_VALUE - 1), Short.MAX_VALUE);
-        }
-
-        public Value[] mapVoid() {
-            return new Value[]{};
-        }
-
-        public Value[] mapWord() {
-            return new Value[]{};
-        }
-
-    }
-
     public void test_reference_identity() {
         final Method_Type method = compileMethod("referenceIdentity", SignatureDescriptor.create(Object.class, Object.class));
         if (hasInterpreter()) {
@@ -139,23 +91,6 @@ public abstract class BytecodeTest_native<Method_Type extends IrMethod> extends 
     }
 
     public void test_primitive_identity() {
-        final TestValuesMapping mapping = new TestValuesMapping();
-        for (Kind<?> kind : Kind.VALUES) {
-            @JavacSyntax("Incomparable types bug")
-            final Kind rawKind = kind;
-            if (rawKind == Kind.WORD || rawKind == Kind.REFERENCE) {
-                continue;
-            }
-            final String kindName = kind.name().toString();
-            final String name = kindName.toLowerCase();
-            final Method_Type method = compileMethod(name + "Identity", SignatureDescriptor.create(kind.toJava(), kind.toJava()));
-            if (hasInterpreter()) {
-                for (Value value : kind.acceptMapping(mapping)) {
-                    final Value returnedValue = execute(method, value);
-                    assertTrue(returnedValue.equals(value));
-                }
-            }
-        }
     }
 
     private static void parametersAsString(StringBuilder sb, Object rdi, int rsi, long rdx, short rcx, char r8, Object r9, int sp24, long sp16, short sp8, char sp0) {
