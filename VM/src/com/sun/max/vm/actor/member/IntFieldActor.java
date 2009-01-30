@@ -47,14 +47,4 @@ public class IntFieldActor extends FieldActor<IntValue> {
     public final void writeInt(Object object, int value) {
         TupleAccess.writeInt(object, offset(), value);
     }
-
-    @FOLD
-    public static IntFieldActor findInstance(Class javaClass, String name) {
-        return (IntFieldActor) FieldActor.findInstance(javaClass, name);
-    }
-
-    @FOLD
-    public static IntFieldActor findStatic(Class javaClass, String name) {
-        return (IntFieldActor) FieldActor.findStatic(javaClass, name);
-    }
 }

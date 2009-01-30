@@ -34,6 +34,17 @@ public class StaticInitializers {
         System.out.println("StaticInitializersTest");
         System.out.println(_staticString1);
         System.out.println(_staticString2);
+        System.out.println(new StaticA());
     }
 
+}
+
+class StaticA {
+    static {
+        System.out.println("StaticA class init.");
+    }
+    @Override
+    public String toString() {
+        return "StaticA";
+    }
 }

@@ -101,6 +101,7 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
         test.output.JavacTest.class,
+        test.output.StaticInitializers.class,
         test.output.BlockingQueue.class,
         _expectedAutoTestFailures
     );
