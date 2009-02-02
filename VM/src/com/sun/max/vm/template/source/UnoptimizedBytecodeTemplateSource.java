@@ -1597,7 +1597,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NEW)
     public static void new_(ReferenceResolutionGuard guard) {
-        final ClassActor classActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveClass.resolveClass(guard));
+        final ClassActor classActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveClassForNew.resolveClassForNew(guard));
         JitStackFrameOperation.pushReference(NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor));
     }
 

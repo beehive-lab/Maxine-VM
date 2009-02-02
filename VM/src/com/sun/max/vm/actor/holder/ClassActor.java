@@ -1449,7 +1449,7 @@ public abstract class ClassActor extends Actor {
         _initializationState = InitializationState.INITIALIZED;
     }
 
-    private boolean isInitializationRequired() {
+    private boolean tryInitialization() {
         while (true) {
             synchronized (this) {
                 switch (_initializationState) {
@@ -1502,7 +1502,7 @@ public abstract class ClassActor extends Actor {
      * See #2.17.5.
      */
     public void makeInitialized() {
-        if (isInitializationRequired()) {
+        if (tryInitialization()) {
             if (_superClassActor != null) {
                 try {
                     _superClassActor.makeInitialized();
