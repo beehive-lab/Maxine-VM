@@ -155,7 +155,6 @@ public final class Trap {
                     break; // unreachable
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
-                    VMConfiguration.hostOrTarget().compilerScheme().fakeCall(TRAP_INSTRUCTION_POINTER.getVariableWord().asAddress());
                     Deoptimizer.deoptimizeTopFrame();
                     break;
                 case ARITHMETIC_EXCEPTION:

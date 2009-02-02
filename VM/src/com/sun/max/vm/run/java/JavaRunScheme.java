@@ -23,12 +23,10 @@ package com.sun.max.vm.run.java;
 import java.io.*;
 import java.lang.reflect.*;
 import java.security.*;
-import java.util.*;
 import java.util.jar.*;
 
 import sun.misc.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -65,24 +63,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
     public JavaRunScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
-    }
-
-    /**
-     * Some static fields from the {@code java.lang.ClassLoader} class cannot be
-     * carried over during prototyping time. This method will reset them to fresh
-     * values, which allows re-enabling processing of important system properties.
-     */
-    @PROTOTYPE_ONLY
-    private void resetClassLoaderStaticFields() {
-        final ClassActor classLoaderClassActor = ClassActor.fromJava(ClassLoader.class);
-        final StaticTuple staticTuple = (StaticTuple) classLoaderClassActor.staticTuple();
-        staticTuple.resetField("bootstrapClassPath", false); // JDK1.6.0_02 has it, later versions may not have it
-        staticTuple.resetField("scl", true);
-        staticTuple.resetField("sclSet", true);
-        staticTuple.setField("loadedLibraryNames", new Vector());
-        staticTuple.setField("systemNativeLibraries", new Vector());
-        staticTuple.setField("usr_paths", null);
-        staticTuple.setField("sys_paths", null);
     }
 
     /**
@@ -148,12 +128,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         switch (phase) {
-            case PROTOTYPING: {
-                if (MaxineVM.isPrototyping()) {
-                    resetClassLoaderStaticFields();
-                }
-                break;
-            }
             case STARTING: {
                 MaxineMessenger.initialize();
 

@@ -346,20 +346,6 @@ public final class JDK_java_lang_System {
     }
 
     /**
-     * These are the properties that are to be remembered from the host VM on which the image was built.
-     */
-    @PROTOTYPE_ONLY
-    public static final String[] REMEMBERED_PROPERTY_NAMES = {
-        "java.specification.version",
-        "java.specification.name",
-        "java.class.version",
-        "java.vendor",
-        "java.vendor.url",
-        "java.vendor.url.bug",
-        "file.encoding.pkg",
-    };
-
-    /**
      * Sets a property in the specified property set, if it has not already been set.
      *
      * @param properties the properties set in which to set the property

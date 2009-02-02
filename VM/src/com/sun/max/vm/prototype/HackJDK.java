@@ -22,36 +22,49 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 import java.lang.reflect.*;
-import java.lang.reflect.Proxy;
-import java.net.*;
-import java.security.*;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.*;
-import java.util.regex.*;
 
 import sun.misc.*;
-import sun.util.calendar.*;
 
-import com.sun.max.*;
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.jdk.JDK.*;
+import com.sun.max.vm.value.*;
 
 /**
  * This class encapsulates a number of hacks to work around inexplicable problems
  * in the JDK and alter some quantities (e.g. the library path) of the underlying host
  * virtual machine.
  *
+ * @author Ben L. Titzer
  * @author Bernd Mathiske
  */
+@PROTOTYPE_ONLY
 public final class HackJDK {
 
     private HackJDK() {
     }
+
+    /**
+     * These are the properties that are to be remembered from the host VM on which the image was built.
+     */
+    public static final String[] REMEMBERED_PROPERTY_NAMES = {
+        "java.specification.version",
+        "java.specification.name",
+        "java.class.version",
+        "java.vendor",
+        "java.vendor.url",
+        "java.vendor.url.bug",
+        "file.encoding.pkg",
+        "file.separator",
+        "path.separator",
+    };
+
+    private static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
+    public static final Properties _initialSystemProperties = buildInitialSystemProperties();
 
     /**
      * Overrides the default VM library path with the specified new path.
@@ -66,212 +79,100 @@ public final class HackJDK {
     }
 
     /**
-     * Check whether the specified field is filtered by the standard java reflection
-     * mechanism. The JDK internally hides some fields in order to prevent certain
-     * security vulnerabilities.
-     * @see sun.reflect.Reflection.registerFieldsToFilter()
-     *
-     * @param fieldActor the field to check
-     * @return {@code true} if the field is normally filtered by the underlying JDK reflection mechanism;
-     * {@code false} otherwise
+     * This array contains all the special fields that are either ignored (i.e. set to zero) or
+     * specially handled when building the prototype.
      */
-    public static boolean isFilteredFieldActor(FieldActor fieldActor) {
-        final Class<Map<Class, String[]>> type = null;
-        final Map<Class, String[]> fieldFilterMap = StaticLoophole.cast(type, WithoutAccessCheck.getStaticField(sun.reflect.Reflection.class, "fieldFilterMap"));
-        final String[] filteredFieldNames = fieldFilterMap.get(fieldActor.holder().toJava());
-        if (filteredFieldNames != null) {
-            for (String fieldName : filteredFieldNames) {
-                if (fieldName.equals(fieldActor.name())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    // Checkstyle: stop
+    private static final Object[] _specialFieldArray = {
+        JDK.java_lang_ApplicationShutdownHooks,
+            new ValueField("hooks", ReferenceValue.from(new IdentityHashMap<Thread, Thread>())),
+        JDK.java_lang_Class,
+            "cachedConstructor",
+            "newInstanceCallerCache",
+            "name",
+            "declaredFields",
+            "publicFields",
+            "declaredMethods",
+            "publicMethods",
+            "declaredConstructors",
+            "publicConstructors",
+            "declaredPublicFields",
+            "declaredPublicMethods",
+            "genericInfo",
+            "enumConstants",
+            "enumConstantDirectory",
+            "annotations",
+            "declaredAnnotations",
+            "classRedefinedCount",
+            "lastRedefinedCount",
+        JDK.java_lang_ClassLoader,
+            "bootstrapClassPath",
+            "scl",
+            "sclSet",
+            "usr_paths",
+            "sys_paths",
+            new ValueField("loadedLibraryNames", ReferenceValue.from(new Vector())),
+            new ValueField("systemNativeLibraries", ReferenceValue.from(new Vector())),
+        JDK.java_util_EnumMap,
+            "entrySet",
+        JDK.java_lang_reflect_Field,
+            "genericInfo",
+            "declaredAnnotations",
+            "fieldAccessor",
+            "overrideFieldAccessor",
+        JDK.java_lang_reflect_Constructor,
+            "genericInfo",
+            "declaredAnnotations",
+            "constructorAccessor",
+        JDK.java_lang_reflect_Method,
+            "genericInfo",
+            "declaredAnnotations",
+            "methodAccessor",
+        JDK.java_lang_Package,
+            "loader",
+            "packageInfo",
+        JDK.java_lang_Shutdown,
+            new ValueField("hooks", ReferenceValue.from(new ArrayList<Runnable>())),
+        JDK.java_lang_System,
+            new ValueField("props", ReferenceValue.from(_initialSystemProperties)),
+        JDK.java_lang_ref_Reference,
+            "discovered",
+            "pending",
+        JDK.java_lang_ref_Finalizer,
+            "unfinalized",
+            "queue",
+        JDK.java_lang_Throwable,
+            "backtrace",
+        JDK.java_lang_Thread,
+            "parkBlocker",
+            "blocker",
+            "threadLocals",
+            "inheritableThreadLocals",
+        JDK.sun_misc_VM,
+            "booted",
+            "finalRefCount",
+            "peakFinalRefCount",
+        JDK.java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl,
+            new AtomicFieldUpdaterOffsetRecomputation("offset"),
+        JDK.java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl,
+            new AtomicFieldUpdaterOffsetRecomputation("offset"),
+        JDK.java_util_concurrent_atomic_AtomicLongFieldUpdater$CASUpdater,
+            new AtomicFieldUpdaterOffsetRecomputation("offset"),
+        JDK.java_util_concurrent_atomic_AtomicLongFieldUpdater$LockedUpdater,
+            new AtomicFieldUpdaterOffsetRecomputation("offset"),
+        JDK.java_io_UnixFileSystem,
+            new ExpiringCacheField("cache"),
+            new ExpiringCacheField("javaHomePrefixCache"),
+        JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer,
+            new FieldOffsetRecomputation("stateOffset", JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer, "state"),
+            new FieldOffsetRecomputation("headOffset", JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer, "head"),
+            new FieldOffsetRecomputation("tailOffset", JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer, "tail"),
+            new FieldOffsetRecomputation("waitStatusOffset", JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer$Node, "waitStatus"),
+            new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_locks_AbstractQueuedSynchronizer$Node, "next"),
+    };
+    // Checkstyle: start
 
-    /**
-     * This method must be called before creating the Java prototype, if a graph prototype is going to be created as
-     * well. It performs various checks the value of various system properties. These are properties that must be set
-     * via "-Dname=value" VM flags as they are read before the 'main' method of an application (such as
-     * {@link BinaryImageGenerator} is run.
-     *
-     * Note: Historically, this method actually did something. It has been left here should this kind of functionality
-     * be required again in the future.
-     */
-    public static void checkVMFlags() {
-        final AppendableSequence<String> missingVMOptions = new ArrayListSequence<String>();
-        ProgramError.check(missingVMOptions.isEmpty(), "The following VM command line option(s) are missing:\n    " + Sequence.Static.toString(missingVMOptions, null, "\n    "));
-    }
-
-    /**
-     * Lookup a non-public inner class.
-     *
-     * @param outerClass the class containing the inner class
-     * @param innerClassSimpleName the name of the inner class as a string
-     */
-    private static Class c(Class outerClass, String innerClassSimpleName) {
-        final Class innerClass = Classes.getInnerClass(outerClass, innerClassSimpleName);
-        if (innerClass == null) {
-            ProgramWarning.message("inner class not found: " + innerClassSimpleName);
-            return Void.class;
-        }
-        return innerClass;
-    }
-
-    private static Class c(String className) {
-        return Classes.forName(className);
-    }
-
-    /**
-     * Utility class for gathering fields.
-     */
-    static class FieldSet extends HashSet<Field> {
-        public FieldSet(Object... classesOrFieldNames) {
-            Class c = null;
-            for (Object o : classesOrFieldNames) {
-                if (o instanceof Class) {
-                    c = (Class) o;
-                } else {
-                    assert c != null;
-                    final String name = (String) o;
-                    try {
-                        add(c.getDeclaredField(name));
-                    } catch (NoSuchFieldException noSuchFieldException) {
-                        ProgramWarning.message("field not found: " + c.getName() + "." + name);
-                    }
-                }
-            }
-        }
-
-        public void add(Class holder, String... fieldNames) {
-            for (String name : fieldNames) {
-                try {
-                    add(holder.getDeclaredField(name));
-                } catch (NoSuchFieldException noSuchFieldException) {
-                    ProgramWarning.message("field not found: " + holder.getName() + "." + name);
-                }
-            }
-        }
-    }
-
-    /**
-     * A set of all the transient fields in the initialized JDK that should be preserved.
-     */
-    private static final FieldSet _preservedTransientFields = new FieldSet(
-        AbstractList.class, "modCount",
-        AbstractMap.class, "keySet", "values",
-        ArrayList.class, "elementData",
-        BitSet.class, "wordsInUse", "sizeIsSticky",
-        BasicPermission.class, "wildcard", "path", "exitVM",
-        c(Collections.class, "CheckedMap"), "entrySet",
-        c(Collections.class, "SingletonMap"), "keySet", "entrySet", "values",
-        c(Collections.class, "SynchronizedMap"), "keySet", "entrySet", "values",
-        c(Collections.class, "UnmodifiableMap"), "keySet", "entrySet", "values",
-        Constructor.class, "signature",
-        EnumMap.class, "keyType", "keyUniverse", "size", "vals",
-        Field.class, "signature",
-        IdentityHashMap.class, "table", "modCount", "threshold", "entrySet",
-        HashMap.class, "table", "size", "modCount", "entrySet",
-        Hashtable.class, "table", "count", "modCount", "keySet", "entrySet", "values",
-        HashSet.class, "map",
-        LinkedList.class, "header", "size",
-        Method.class, "signature",
-        Pattern.class, "compiled", "normalizedPattern", "root", "matchRoot", "buffer", "groupNodes", "temp", "capturingGroupCount", "localCount", "cursor", "patternLength",
-        TreeMap.class, "root", "size", "modCount", "entrySet", "navigableKeySet", "descendingMap",
-        WeakHashMap.class, "entrySet",
-        ConcurrentHashMap.class, "keySet", "entrySet", "values",
-        c(ConcurrentHashMap.class, "Segment"), "count", "modCount", "threshold", "table",
-        LinkedHashMap.class, "header",
-        Locale.class, "hashCodeValue",
-        ZoneInfo.class, "dirty", "lastRule",
-        LinkedBlockingQueue.class, "head", "last",
-        Permissions.class, "permsMap", "hasUnresolved",
-        File.class, "prefixLength",
-        URL.class, "query", "path", "userInfo", "hostAddress", "handler",
-        c(AbstractQueuedSynchronizer.class, "ConditionObject"), "firstWaiter", "lastWaiter",
-        AbstractOwnableSynchronizer.class, "exclusiveOwnerThread",
-        AbstractQueuedSynchronizer.class, "head", "tail"
-    );
-
-    /**
-     * A set of all the transient fields in the initialized JDK that should be omitted.
-     */
-    private static final Set<Field> _omittedTransientFields = new FieldSet(
-        Class.class, "cachedConstructor", "newInstanceCallerCache", "name", "declaredFields", "publicFields",
-                     "declaredMethods", "publicMethods", "declaredConstructors", "publicConstructors",
-                     "declaredPublicFields", "declaredPublicMethods", "genericInfo",
-                     "enumConstants", "enumConstantDirectory", "annotations", "declaredAnnotations",
-                     "classRedefinedCount", "lastRedefinedCount",
-        Field.class, "genericInfo", "declaredAnnotations",
-        EnumMap.class, "entrySet",
-        Constructor.class, "genericInfo", "declaredAnnotations",
-        Method.class, "genericInfo", "declaredAnnotations",
-        java.lang.Package.class, "loader", "packageInfo",
-        java.lang.ref.Reference.class, "discovered"
-    );
-
-    /**
-     * We keep track of all those transient fields in the JDK that we expect to encounter,
-     * so we don't experience unawareness "surprises".
-     * For each transient field in the boot image,
-     * we have to carefully decide on a case-by-case basis
-     * whether we want to capture its value or not.
-     */
-    private static final Set<Field> _knownTransientFields = Sets.union(_preservedTransientFields, _omittedTransientFields);
-
-    /**
-     * A set to prevent repeating identical warning messages.
-     */
-    private static final Set<Field> _unknownTransientFields = new HashSet<Field>();
-
-    /**
-     * Checks whether the specified field is an unknown transient field.
-     *
-     * @param field the field
-     */
-    public static void checkForUnknownTransientField(Field field) {
-        if ((field.getModifiers() & Modifier.TRANSIENT) != 0 && !_knownTransientFields.contains(field)) {
-            if (MaxPackage.isMaxClass(field.getDeclaringClass())) {
-                // The 'transient' keyword is used in Maxine class to mean don't copy the field's value into the boot image
-                return;
-            }
-            if (!_unknownTransientFields.contains(field)) {
-                _unknownTransientFields.add(field);
-                ProgramWarning.message("unknown transient field: " + field);
-            }
-        }
-    }
-
-    /**
-     * Some classes should not have their fields explored because they reference
-     * VM-specific implementation details in the host VM. For example,
-     * some parts of the reflection machinery in the host VM will not work on the target VM.
-     *
-     * @see com.sun.max.vm.jdk.JDK_java_lang_reflect_Field
-     */
-    private static final FieldSet _omittedNonTransientFields = new FieldSet(
-        Constructor.class, "constructorAccessor",
-        Field.class, "fieldAccessor", "overrideFieldAccessor",
-        Method.class, "methodAccessor",
-
-        // We need to copy the main thread but not most of it's state
-        Thread.class, "parkBlocker", "blocker",
-
-        c("java.lang.ref.Finalizer"), "unfinalized", "queue", "lock",
-
-        c("java.lang.ref.Reference"), "pending", "lock",
-
-        Thread.class, "threadLocals", "inheritableThreadLocals",
-        VM.class, "booted", "finalRefCount", "peakFinalRefCount",
-
-        // If Proxy is allowed in the image, we don't want these fields.
-        Proxy.class, "constructorParams", "loaderToCache", "proxyClasses"
-    );
-
-    /**
-     * The union of both the omitted transient and non-transient fields.
-     */
-    private static final Set<Field> _omittedFields = Sets.union(_omittedTransientFields, _omittedNonTransientFields);
+    private static final Map<String, Map<String, SpecialField>> _specialFieldMap = buildSpecialFieldMap(_specialFieldArray);
 
     /**
      * Checks whether the specified field should be omitted.
@@ -279,54 +180,212 @@ public final class HackJDK {
      * @param field the field to check
      */
     public static boolean isOmittedField(Field field) {
-        if (_omittedFields.contains(field)) {
+        if (field.getName().startsWith("$SWITCH_TABLE")) {
             return true;
         }
-        if ((field.getModifiers() & Modifier.TRANSIENT) != 0) {
-            if (_knownTransientFields.contains(field)) {
-                assert _preservedTransientFields.contains(field);
-                return false;
-            }
+        final SpecialField specialField = getSpecialField(field);
+        if (specialField instanceof ZeroField) {
             return true;
-        }
-        return field.getName().startsWith("$SWITCH_TABLE");
-    }
-
-    /**
-     * Checks whether the specified field actor should be omitted.
-     *
-     * @param fieldActor the field actor to check
-     */
-    public static boolean isOmittedFieldActor(FieldActor fieldActor) {
-        if (fieldActor.name().toString().equals("backtrace")) {
-            return fieldActor.holder().toJava() == Throwable.class;
         }
         return false;
     }
 
+    public static SpecialField getSpecialField(FieldActor fieldActor) {
+        final String className = fieldActor.holder().name().toString();
+        final Map<String, SpecialField> map = _specialFieldMap.get(className);
+        if (map != null) {
+            return map.get(fieldActor.name().toString());
+        }
+        return null;
+    }
+
+    public static SpecialField getSpecialField(Field field) {
+        final String className = field.getDeclaringClass().getName();
+        final Map<String, SpecialField> map = _specialFieldMap.get(className);
+        if (map != null) {
+            return map.get(field.getName());
+        }
+        return null;
+    }
+
     /**
-     * Registers an object in a static final field for replacement with new one for the boot image.
-     * The original has a stale value from the host VM in its field "offset",
-     * referring to a field offset in BufferedInputStream objects.
-     * We replace the value with the prospective field offset according to the target layout.
-     *
-     * @param objectMap the object map used by HostObjectAccess to substitute objects that go into the boot image.
+     * Builds a map that stores the special fields for each class.
+     * @param specification an array of objects consisting of a ClassRef followed by a non-empty sequence of either
+     * String objects or SpecialField objects.
+     * @return a map from java classes to their special fields
      */
-    public static void fixBufferedInputStream(Map<Object, Object> objectMap) {
-        try {
-            final Field field = BufferedInputStream.class.getDeclaredField("bufUpdater");
-            field.setAccessible(true);
-            final Object brokenUpdater = field.get(BufferedInputStream.class);
+    private static Map<String, Map<String, SpecialField>> buildSpecialFieldMap(Object[] specification) {
+        final Map<String, Map<String, SpecialField>> map = new HashMap<String, Map<String, SpecialField>>();
+        int i = 0;
+        for (; i < specification.length; i++) {
+            final Object object = specification[i];
+            if (object instanceof ClassRef) {
+                // we found a classref, add it and its special fields to the map
+                final Class javaClass = ((ClassRef) object).javaClass();
+                final Map<String, SpecialField> fieldMap = new HashMap<String, SpecialField>();
+                map.put(javaClass.getName(), fieldMap);
 
-            final Object fixedUpdater = Objects.clone(brokenUpdater);
-            final FieldActor fieldActor = ClassActor.fromJava(BufferedInputStream.class).findLocalInstanceFieldActor("buf");
-            WithoutAccessCheck.setInstanceField(fixedUpdater, "offset", (long) fieldActor.offset());
+                // add all the subsequent field entries to the map
+                for (++i; i < specification.length; i++) {
+                    final Object field = specification[i];
+                    if (field instanceof SpecialField) {
+                        final SpecialField specialField = (SpecialField) field;
+                        fieldMap.put(specialField.getName(), specialField);
+                    } else if (field instanceof String) {
+                        final String fieldName = (String) field;
+                        fieldMap.put(fieldName, new ZeroField(fieldName));
+                    } else {
+                        i--;
+                        break;
+                    }
+                }
+            } else {
+                ProgramError.unexpected("format of special field array is wrong");
+            }
+        }
+        return map;
+    }
 
-            objectMap.put(brokenUpdater, fixedUpdater);
-        } catch (NoSuchFieldException noSuchFieldException) {
-            // this version of JDK might be ok without this fix
-        } catch (Throwable throwable) {
-            ProgramError.unexpected();
+    /**
+     * Register a field of a class to be reset at prototyping time.
+     * @param javaClass the java class that declared the field
+     * @param fieldName the name of the field as a string
+     */
+    public static void resetField(Class javaClass, String fieldName) {
+        Map<String, SpecialField> fieldMap = _specialFieldMap.get(javaClass);
+        if (fieldMap == null ) {
+            fieldMap = new HashMap<String, SpecialField>();
+            _specialFieldMap.put(javaClass.getName(), fieldMap);
+        }
+        fieldMap.put(fieldName, new ZeroField(fieldName));
+    }
+
+    private static Properties buildInitialSystemProperties() {
+        final Properties properties = new Properties();
+        for (String p : REMEMBERED_PROPERTY_NAMES) {
+            final String value = System.getProperty(p);
+            if (value != null) {
+                properties.setProperty(p, value);
+            }
+        }
+        return properties;
+    }
+
+    public abstract static class SpecialField {
+        private final String _name;
+        public Field _field;
+        SpecialField(String name) {
+            this._name = name;
+        }
+        public String getName() {
+            return _name;
+        }
+        public abstract Value getValue(Object object, FieldActor field);
+    }
+
+    private static class ValueField extends SpecialField {
+        private final Value _value;
+        ValueField(String name, Value val) {
+            super(name);
+            _value = val;
+        }
+        @Override
+        public Value getValue(Object object, FieldActor field) {
+            return _value;
+        }
+    }
+
+    public static class ZeroField extends SpecialField {
+        ZeroField(String name) {
+            super(name);
+        }
+        @Override
+        public Value getValue(Object object, FieldActor field) {
+            return field.kind().zeroValue();
+        }
+    }
+
+    private static class AtomicFieldUpdaterOffsetRecomputation extends SpecialField {
+        AtomicFieldUpdaterOffsetRecomputation(String name) {
+            super(name);
+        }
+        @Override
+        public Value getValue(Object object, FieldActor fieldActor) {
+            final Field field = fieldActor.toJava();
+            assert !Modifier.isStatic(field.getModifiers());
+            try {
+                /*
+                 * Explanation: java.util.concurrent is full of objects and classes that cache the offset
+                 * of particular fields in the JDK. Here, Atomic<X>FieldUpdater implementation objects cache
+                 * the offset of some specified field. Which field? Oh...only Doug Lea knows that. We have to
+                 * search the declaring class for a field that has the same "unsafe" offset as the cached
+                 * offset in this atomic updater object.
+                 */
+                final Field tclassField = field.getDeclaringClass().getDeclaredField("tclass");
+                tclassField.setAccessible(true);
+                final Class tclass = (Class) tclassField.get(object);
+
+                final Field offsetField = fieldActor.toJava();
+                offsetField.setAccessible(true);
+                final long offset = offsetField.getLong(object);
+                // search the declared fields for a field with a matching offset
+                for (Field f : tclass.getDeclaredFields()) {
+                    if ((f.getModifiers() & Modifier.STATIC) == 0) {
+                        final long fieldOffset = _unsafe.objectFieldOffset(f);
+                        if (fieldOffset == offset) {
+                            return LongValue.from(FieldActor.fromJava(f).offset());
+                        }
+                    }
+                }
+                throw ProgramError.unexpected("unknown atomic field updater of class: " + tclass + ", offset = " + offset);
+            } catch (Exception e) {
+                throw ProgramError.unexpected(e);
+            }
+        }
+    }
+
+    private static class ExpiringCacheField extends SpecialField {
+        private final Map<Object, Object> _newValues = new IdentityHashMap<Object, Object>();
+        ExpiringCacheField(String name) {
+            super(name);
+        }
+        @Override
+        public Value getValue(Object object, FieldActor fieldActor) {
+            Object result = _newValues.get(object);
+            if (result == null) {
+                Constructor<?> constructor;
+                try {
+                    final Class<?> javaClass = JDK.java_io_ExpiringCache.javaClass();
+                    constructor = javaClass.getDeclaredConstructor();
+                    constructor.setAccessible(true);
+                    result = constructor.newInstance();
+                } catch (Exception e) {
+                    throw ProgramError.unexpected(e);
+                }
+                _newValues.put(object, result);
+            }
+            return ReferenceValue.from(result);
+        }
+    }
+
+    private static class FieldOffsetRecomputation extends SpecialField {
+        private final ClassRef _classRef;
+        private final String _fieldName;
+        FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {
+            super(offsetFieldName);
+            _fieldName = fieldName;
+            _classRef = classRef;
+        }
+        @Override
+        public Value getValue(Object object, FieldActor fieldActor) {
+            Field field;
+            try {
+                final Class<?> javaClass = _classRef.javaClass();
+                field = javaClass.getDeclaredField(_fieldName);
+            } catch (Exception e) {
+                throw ProgramError.unexpected(e);
+            }
+            return LongValue.from(_unsafe.objectFieldOffset(field));
         }
     }
 }
