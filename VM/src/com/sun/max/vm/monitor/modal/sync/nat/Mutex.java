@@ -64,21 +64,45 @@ public final class Mutex {
     public Mutex() {
     }
 
+    /**
+     * Performs native allocation for this <code>Mutex</code>.
+     */
     public void alloc() {
         _mutex =  Memory.mustAllocate(_size);
         nativeMutexInitialize(_mutex);
     }
 
+    /**
+     * Causes the current thread to perform a lock on the mutex.
+     *
+     * This is not intended for recursive locking, even though the native mutex implementation
+     * may support it.
+     *
+     * @return true if an error occured in native code; false otherwise
+     */
     @INLINE
     public boolean lock() {
         return nativeMutexLock(_mutex);
     }
 
+    /**
+     * Causes the current thread to perform an unlock on the mutex.
+     *
+     * The current thread must own the given mutex when calling this method, otherwise the
+     * results are undefined.
+     *
+     * @return true if an error occured in native code; false otherwise
+     * @see Mutex#lock()
+     */
     @INLINE
     public boolean unlock() {
         return nativeMutexUnlock(_mutex);
     }
 
+    /**
+     * Returns a pointer to this <code>Mutex</code>'s native data structure.
+     * @return
+     */
     @INLINE
     public Pointer asPointer() {
         return _mutex;
