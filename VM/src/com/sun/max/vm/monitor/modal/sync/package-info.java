@@ -19,6 +19,6 @@
  * Company, Ltd.
  */
 /**
- * A collection of synch primitives as Java objects
+ * A collection of synchronization primitives as Java objects
  */
 package com.sun.max.vm.monitor.modal.sync;

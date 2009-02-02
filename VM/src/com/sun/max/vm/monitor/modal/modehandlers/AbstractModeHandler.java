@@ -50,6 +50,11 @@ public abstract class AbstractModeHandler implements ModeHandler {
         return _delegate;
     }
 
+    /**
+     * Returns the current VM monitor scheme.
+     *
+     * @return the current VM monitor scheme.
+     */
     protected ModalMonitorScheme monitorScheme() {
         return _monitorScheme;
     }
@@ -65,11 +70,23 @@ public abstract class AbstractModeHandler implements ModeHandler {
         }
     }
 
+    /**
+     * Returns the current thread's id (its VMThreadMap id) in an encoding suitable for
+     * lockwords defined by the ModalLockWord64 hierarchy.
+     *
+     * @return the encoded thread ID
+     */
     @INLINE
     protected static final int encodeCurrentThreadIDForLockword() {
         return VmThreadLocal.ID.getConstantWord().asAddress().toInt() + 1;
     }
 
+    /**
+     * Decodes the given lockword thread id into a VMThreadMap id.
+     *
+     * @param lockwordThreadID the lockword thread id
+     * @return the VMThreadMap id
+     */
     @INLINE
     protected static final int decodeLockwordThreadID(int lockwordThreadID) {
         return lockwordThreadID - 1;
@@ -79,24 +96,79 @@ public abstract class AbstractModeHandler implements ModeHandler {
     }
 
     /**
-     * An AbstractModeHandler subclass must implement this interface to
-     * act as the entry-point for monitor operations via the MonitorScheme adapter.
+     * Runtime entry points into the fastest path of the locking-mode hierarchy.
      */
     public interface MonitorSchemeEntry extends ModeHandler {
+
+        /**
+         * Acquires or recursively locks the given object's monitor for the current thread.
+         *
+         * @param object the Object being acquired
+         */
         void monitorEnter(Object object);
+
+        /**
+         * Releases or recursively unlocks the given object's monitor for the current thread.
+         *
+         * @param object the Object being released
+         */
         void monitorExit(Object object);
+
+        /**
+         * Performs Object.notify() / notifyAll() for the given Object.
+         *
+         * @param object the Object to notify
+         * @param all true if all threads should be notified; false if only one should be notified
+         */
         void monitorNotify(Object object, boolean all);
+
+        /**
+         * Performs Object.wait() for the given Object.
+         *
+         * @param object the Object on which to wait
+         * @param timeout the wait timeout
+         * @throws InterruptedException if the current thread was interrupted via Thread.interrupt() whilst waiting.
+         */
         void monitorWait(Object object, long timeout) throws InterruptedException;
+
+        /**
+         * Returns the given Object's hashcode.
+         *
+         * @return the given Object's hashcode.
+         */
         int makeHashCode(Object object);
+
+        /**
+         * Returns an image build-time misc word for the given Object.
+         *
+         * @param object the Object
+         * @return the Object's image build-time misc word
+         */
         Word createMisc(Object object);
+
+        /**
+         * Tests if the given VmThread owns the given Object's monitor.
+         *
+         * @param object the Object to test
+         * @param thread the VmThread to test
+         * @return true if the thread owns the Object's monitor; false otherwise
+         */
         boolean threadHoldsMonitor(Object object, VmThread thread);
+
+        /**
+         *  Notification that we are at a global safe-point, pre-collection.
+         */
         void beforeGarbageCollection();
+
+        /**
+         *  Notification that we are at a global safe-point, post-collection.
+         */
         void afterGarbageCollection();
     }
 
     /**
-     * An AbstractModeHandler subclass must implement this interface to
-     * act as a delegate for another AbstractModeHandler.
+     * Standard interface between nodes in a locking mode hierarchy to allow
+     * mode transitions and delegation.
      */
     public interface ModeDelegate extends ModeHandler {
         ModalLockWord64 prepareModalLockWord(Object object, ModalLockWord64 currentlockWord);

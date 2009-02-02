@@ -28,20 +28,18 @@ import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
 
 /**
- * Abstracts bit field access to a 64-bit thin-lock word.
- * @see LightweightLockWord64
+ * Abstracts access to a thin lock word's bit fields.
  *
  * @author Simon Wilkinson
  */
 public abstract class ThinLockWord64 extends LightweightLockWord64 {
 
     /*
-     * bit [63........................................ 1  0]     Shape         Mode      State
+     * bit [63........................................ 1  0]     Shape         Lock-state
      *
-     *     [     0    ][ util  ][     0      ][ hash ][m][0]     Lightweight   Thin      Unlocked
-     *     [ r. count ][ util  ][  thread ID ][ hash ][m][0]     Lightweight   Thin      Locked (rcount >= 1)
-     *
-     *     [     Def. by inflated monitor scheme     ][m][1]     Inflated
+     *     [     0    ][ util  ][     0      ][ hash ][m][0]     Lightweight   Unlocked
+     *     [ r. count ][ util  ][  thread ID ][ hash ][m][0]     Lightweight   Locked (rcount >= 1)
+     *     [                 Undefined               ][m][1]     Inflated
      *
      * Note:
      * A valid thread ID must be >= 1.
@@ -56,6 +54,12 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
     protected ThinLockWord64() {
     }
 
+    /**
+     * Boxing-safe cast of a <code>Word</code> to a <code>ThinLockWord64</code>.
+     *
+     * @param word the word to cast
+     * @return the cast word
+     */
     @INLINE
     public static ThinLockWord64 as(Word word) {
         if (MaxineVM.isPrototyping()) {
@@ -64,26 +68,57 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
         return UnsafeLoophole.castWord(ThinLockWord64.class, word);
     }
 
+    /**
+     * Tests if the given lock word is a <code>ThinLockWord64</code>.
+     *
+     * @param lockWord the lock word to test
+     * @return true if <code>lockWord</code> is a <code>ThinLockWord64</code>; false otherwise
+     */
     @INLINE
     public static final boolean isThinLockWord(ModalLockWord64 lockWord) {
         return ThinLockWord64.as(lockWord).isLightweight();
     }
 
+    /**
+     * Returns a copy of this lock word in an unlocked state.
+     *
+     * @return the copy lock word
+     */
     @INLINE
     public final ThinLockWord64 asUnlocked() {
         return ThinLockWord64.as(asAddress().and(UNLOCKED_MASK));
     }
 
+    /**
+     * Returns a copy of this lock word in a locked state, where the owner is
+     * installed as <code>threadID</code>, and the recursion count is 1.
+     *
+     * @param threadID the lock owner
+     * @return the copy lock word
+     */
     @INLINE
     public final ThinLockWord64 asLockedOnceBy(int threadID) {
         return ThinLockWord64.as(asUnlocked().asAddress().or(Address.fromInt(threadID).shiftedLeft(THREADID_SHIFT)).or(RCOUNT_INC_WORD));
     }
 
+    /**
+     * Gets the value of this lock word's lock owner field.
+     *
+     * @return the hashcode
+     */
     @INLINE
     public final int getLockOwnerID() {
         return getThreadID();
     }
 
+
+    /**
+     * (Image build support) Returns a new, unlocked <code>ThinLockWord64</code> with the given
+     * hashcode installed into the hashcode field.
+     *
+     * @param hashcode the hashcode to install
+     * @return the lock word
+     */
     @INLINE
     public static final ThinLockWord64 unlockedFromHashcode(int hashcode) {
         return ThinLockWord64.as(HashableLockWord64.as(Address.zero()).setHashcode(hashcode));
