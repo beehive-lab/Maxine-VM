@@ -274,8 +274,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                     TypeDescriptor descriptor,
                     int flags);
 
-    public abstract <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping);
-
     public static final Kind<VoidValue> VOID = new Kind<VoidValue>(KindEnum.VOID, "void", void.class, null, VoidValue.class, 'V', Void.class, JavaTypeDescriptor.VOID, null) {
         @Override
         public VoidValue convert(Value value) {
@@ -297,11 +295,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public final ArrayLayout<VoidValue> arrayLayout(LayoutScheme layoutScheme) {
             throw new ClassCastException("there is no array layout for void");
-        }
-
-        @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapVoid();
         }
 
         @Override
@@ -392,11 +385,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapByte();
-        }
-
-        @Override
         public ByteFieldActor createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
@@ -471,11 +459,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public final BooleanArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.booleanArrayLayout();
-        }
-
-        @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapBoolean();
         }
 
         @Override
@@ -556,11 +539,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapShort();
-        }
-
-        @Override
         public ShortFieldActor createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
@@ -638,11 +616,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapChar();
-        }
-
-        @Override
         public CharFieldActor createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
@@ -715,11 +688,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapInt();
-        }
-
-        @Override
         public IntFieldActor createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
@@ -789,11 +757,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public final FloatArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.floatArrayLayout();
-        }
-
-        @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapFloat();
         }
 
         @Override
@@ -884,11 +847,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapLong();
-        }
-
-        @Override
         public LongFieldActor createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
@@ -976,11 +934,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapDouble();
-        }
-
-        @Override
         public DoubleFieldActor createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
@@ -1056,11 +1009,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapWord();
-        }
-
-        @Override
         public WordFieldActor createFieldActor(
                         Utf8Constant name,
                         TypeDescriptor descriptor,
@@ -1108,9 +1056,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
             if (kind != value.kind()) {
                 return super.convert(value);
             }
-            @JdtSyntax("warning with  type - bug?")
-            final Value v = value;
-            return (ReferenceValue) v;
+            return (ReferenceValue) value;
         }
 
         @Override
@@ -1126,11 +1072,6 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         @Override
         public final ReferenceArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.referenceArrayLayout();
-        }
-
-        @Override
-        public <Result_Type> Result_Type acceptMapping(KindMapping<Result_Type> mapping) {
-            return mapping.mapReference();
         }
 
         @Override
@@ -1205,6 +1146,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
                 return null;
         }
     }
+
 
     /**
      * Unboxes a given object to a boolean.
@@ -1398,14 +1340,4 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         throw new IllegalArgumentException("expected a boxed double, got " + boxedJavaValue.getClass().getName());
     }
 
-    /**
-     * Gets the number of VM stack slots used by a sequence of values of the specified kinds.
-     */
-    public static int stackSlots(Kind... kinds) {
-        int count = 0;
-        for (Kind kind : kinds) {
-            count += kind.stackSlots();
-        }
-        return count;
-    }
 }

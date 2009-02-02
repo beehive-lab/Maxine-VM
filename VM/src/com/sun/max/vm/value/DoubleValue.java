@@ -69,15 +69,7 @@ public final class DoubleValue extends PrimitiveValue<DoubleValue> {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            // common case of reference equality
-            return true;
-        }
-        if (!(other instanceof DoubleValue)) {
-            return false;
-        }
-        final DoubleValue doubleValue = (DoubleValue) other;
-        return _value == doubleValue.asDouble();
+        return other == this || ((other instanceof DoubleValue) && (Double.doubleToLongBits(((DoubleValue) other)._value) == Double.doubleToLongBits(_value)));
     }
 
     @Override

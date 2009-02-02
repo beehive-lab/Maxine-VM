@@ -358,10 +358,6 @@ public class CompiledPrototype extends Prototype {
             // this method is already processed or on the queue.
             return false;
         }
-        if (_neverCompile.contains(methodActor)) {
-            // method has been added to an explicit ban list
-            return false;
-        }
         if (methodActor.isAnnotationPresent(BOOT_IMAGE_DIRECTIVE.class)) {
             final BOOT_IMAGE_DIRECTIVE annotation = methodActor.toJava().getAnnotation(BOOT_IMAGE_DIRECTIVE.class);
             if (annotation.keepUnlinked()) {
@@ -462,9 +458,6 @@ public class CompiledPrototype extends Prototype {
             addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedConstructorStub(methodActor));
         }
 
-        // ClassActor.fromJava(InterpreterRemoteTestClass.class);
-        // ClassActor.fromJava(InterpreterRemoteTestChildClass.class);
-
         add(ClassActor.fromJava(DebugBreak.class).findLocalStaticMethodActor("here"), null, vmEntryPoint);
         // pre-compile the dynamic linking methods, which reduces startup time
         add(ClassActor.fromJava(Runtime.class).findLocalVirtualMethodActor("loadLibrary0"), null, vmEntryPoint);
@@ -478,23 +471,6 @@ public class CompiledPrototype extends Prototype {
     private void addStaticAndVirtualMethods(ClassActor classActor) {
         addMethods(null, classActor.localVirtualMethodActors(), (classActor instanceof InterfaceActor) ? Relationship.INTERFACE_CALL : Relationship.VIRTUAL_CALL);
         addMethods(null, classActor.localStaticMethodActors(), Relationship.DIRECT_CALL);
-    }
-
-    private final IdentityHashSet<MethodActor> _neverCompile = new IdentityHashSet<MethodActor>();
-
-    /**
-     * Some methods should never be compiled.
-     */
-    private void gatherNeverCompileMethods() {
-        // sun.reflect.ConstantPool methods are substituted by a subclass com.sun.max.jdk.jdk.ConstantPoolAdaptor.
-        // However, the substituted (superclass) methods will not compile under MaxineVM because of
-        // reflection field filtering
-        final ClassActor classActor = ClassActor.fromJava(sun.reflect.ConstantPool.class);
-        for (VirtualMethodActor dynamicMethodActor : classActor.localVirtualMethodActors()) {
-            if (!dynamicMethodActor.isInitializer()) {
-                _neverCompile.add(dynamicMethodActor);
-            }
-        }
     }
 
     private int _totalCompilations;
@@ -611,7 +587,6 @@ public class CompiledPrototype extends Prototype {
         // 2. add only entrypoint methods and methods not to be compiled.
         addMethodsReferencedByExistingTargetCode();
         addVMEntryPoints();
-        gatherNeverCompileMethods();
     }
 
     public boolean compile() {
