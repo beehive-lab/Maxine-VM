@@ -512,7 +512,7 @@ public class GraphPrototype extends Prototype {
         // add the class actor object
         add(object, classActor, "classActor");
         // walk the static fields of the class
-        walkFields(null, makeClassInfo(javaClass)._classClassInfo);
+        walkFields(object, makeClassInfo(javaClass)._classClassInfo);
     }
 
     private void walkFields(Object object, ClassInfo classInfo) throws ProgramError {
