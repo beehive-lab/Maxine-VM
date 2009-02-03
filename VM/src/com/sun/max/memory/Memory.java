@@ -26,7 +26,11 @@ import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
 
 /**
- * Access to linear RAM.
+ * This class provides methods to access raw memory through pointers.
+ * It also provides allocation methods that are expected to be for small quantities
+ * of memory (or quanttites that are not multiple of a page) that will be satisfied
+ * by the native allocation library, i.e. malloc/free.
+ * Large amounts of memory should be allocated using the @see VirtualMemory class.
  *
  * @author Bernd Mathiske
  */
@@ -38,14 +42,14 @@ public final class Memory {
     public static final OutOfMemoryError OUT_OF_MEMORY_ERROR = new OutOfMemoryError();
 
     @C_FUNCTION
-    private static native Pointer nativeAllocate(Size size);
+    private static native Pointer memory_allocate(Size size);
 
     /**
      * @param size the size of the chunk of memory to be allocated
      * @return a pointer to the allocated chunk of memory or {@code Pointer.zero()} if allocation failed
      */
     public static Pointer allocate(Size size) {
-        return Word.isBoxed() ? BoxedMemory.allocate(size) : nativeAllocate(size);
+        return Word.isBoxed() ? BoxedMemory.allocate(size) : memory_allocate(size);
     }
 
     /**
@@ -66,7 +70,7 @@ public final class Memory {
      * @throws OutOfMemoryError if allocation failed
      */
     public static Pointer mustAllocate(Size size) throws OutOfMemoryError, IllegalArgumentException {
-        final Pointer result = Word.isBoxed() ? BoxedMemory.allocate(size) : nativeAllocate(size);
+        final Pointer result = Word.isBoxed() ? BoxedMemory.allocate(size) : memory_allocate(size);
         if (result.isZero()) {
             throw new OutOfMemoryError();
         }
@@ -84,10 +88,10 @@ public final class Memory {
     }
 
     @C_FUNCTION
-    private static native Pointer nativeReallocate(Pointer block, Size size);
+    private static native Pointer memory_reallocate(Pointer block, Size size);
 
     public static Pointer reallocate(Pointer block, Size size) throws OutOfMemoryError, IllegalArgumentException {
-        return Word.isBoxed() ? BoxedMemory.reallocate(block, size) : nativeReallocate(block, size);
+        return Word.isBoxed() ? BoxedMemory.reallocate(block, size) : memory_reallocate(block, size);
     }
 
     public static Pointer reallocate(Pointer block, int size) throws OutOfMemoryError, IllegalArgumentException {
@@ -95,13 +99,13 @@ public final class Memory {
     }
 
     @C_FUNCTION
-    private static native int nativeDeallocate(Address pointer);
+    private static native int memory_deallocate(Address pointer);
 
     public static void deallocate(Address block) throws IllegalArgumentException {
         if (block.isZero()) {
             throw new IllegalArgumentException();
         }
-        final int errorCode = Word.isBoxed() ? BoxedMemory.deallocate(block) : nativeDeallocate(block);
+        final int errorCode = Word.isBoxed() ? BoxedMemory.deallocate(block) : memory_deallocate(block);
         if (errorCode != 0) {
             ProgramError.unexpected("Memory.deallocate() failed with OS error code: " + errorCode);
         }

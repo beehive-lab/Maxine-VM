@@ -46,9 +46,12 @@
     extern void guestvmXen_yield(void);
     extern void guestvmXen_interrupt(void *thread);
     extern void guestvmXen_set_priority(void *thread, int priority);
-    extern int guestvmXen_pageSize();
-    extern int guestvmXen_protectPage(unsigned long address);
-    extern int guestvmXen_unProtectPage(unsigned long address);
+    extern void *guestvmXen_virtualMemory_allocate(size_t size, int type);
+    extern void *guestvmXen_virtualMemory_deallocate(void *address, size_t size, int type);
+    extern void *guestvmXen_virtualMemory_allocateIn31BitSpace(size_t size, int type);
+    extern int guestvmXen_virtualMemory_pageSize();
+    extern int guestvmXen_virtualMemory_protectPage(unsigned long address);
+    extern int guestvmXen_virtualMemory_unProtectPage(unsigned long address);
     extern void guestvmXen_set_javaId(guestvmXen_Thread, int id);
     extern void guestvmXen_init_blue_zone(void *threadSpecifics);
     extern void guestvmXen_blue_zone_trap(void *threadSpecifics);

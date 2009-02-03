@@ -38,12 +38,12 @@ long total_memory = -1;
 long max_memory = -1;
 long free_memory = -1;
 
-Address nativeAllocate(Size size)
+Address memory_allocate(Size size)
 {
     return (Address) malloc((size_t) size);
 }
 
-Address nativeReallocate(Address pointer, Size size)
+Address memory_reallocate(Address pointer, Size size)
 {
 	if (pointer == 0) {
 		return (Address) malloc((size_t) size);
@@ -51,7 +51,7 @@ Address nativeReallocate(Address pointer, Size size)
     return (Address) realloc((void *) pointer, (size_t) size);
 }
 
-jint nativeDeallocate(Address pointer)
+jint memory_deallocate(Address pointer)
 {
     free((void *) pointer);
     return 0;
@@ -72,13 +72,4 @@ void native_writeFreeMemory(long mem)
 	free_memory = mem;
 }
 
-jboolean nativeAllocateMemoryAtFixedAddress(Address pointer, Size size){
-	if( virtualMemory_allocateAtFixedAddress(pointer, size) == 0){
-		perror("nativeAllocateMemoryAtFixedAddress: could not native allocate bytes of memory at fixed address ");
-		exit(-1);
-	}
-	else {
-		return true;
-	}
-}
 
