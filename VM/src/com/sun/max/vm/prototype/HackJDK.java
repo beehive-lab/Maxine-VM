@@ -252,7 +252,7 @@ public final class HackJDK {
      * @param fieldName the name of the field as a string
      */
     public static void resetField(Class javaClass, String fieldName) {
-        Map<String, SpecialField> fieldMap = _specialFieldMap.get(javaClass);
+        Map<String, SpecialField> fieldMap = _specialFieldMap.get(javaClass.getName());
         if (fieldMap == null ) {
             fieldMap = new HashMap<String, SpecialField>();
             _specialFieldMap.put(javaClass.getName(), fieldMap);
