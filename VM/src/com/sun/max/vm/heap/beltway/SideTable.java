@@ -172,7 +172,7 @@ public class SideTable {
             Log.println(_numberOfChunks);
         }
 
-        if (VirtualMemory.allocateMemoryAtFixedAddress(_sideTableStart, _sideTableSize) == false) {
+        if (VirtualMemory.allocatePageAlignedAtFixedAddress(_sideTableStart, _sideTableSize, VirtualMemory.Type.HEAP) == false) {
             Log.print("MaxineVM: Could not allocate memory starting @address ");
             Log.print(_sideTableStart);
             MaxineVM.native_exit(MaxineVM.HARD_EXIT_CODE);

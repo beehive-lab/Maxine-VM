@@ -54,9 +54,9 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     protected static final int NUMBER_OF_RUNTIME_CODE_REGIONS = 64;
 
     /**
-     * The maximum number of virtual code regions.
+     * The maximum possible number of virtual code regions in a 31 bit address (i.e. 2GB) address range.
      */
-    protected static final int VIRTUAL_NUMBER_OF_RUNTIME_CODE_REGIONS = Integer.MAX_VALUE / RUNTIME_CODE_REGION_SIZE;
+    protected static final int VIRTUAL_NUMBER_OF_RUNTIME_CODE_REGIONS = Integer.MAX_VALUE / RUNTIME_CODE_REGION_SIZE + 1;
 
     /**
      * The maximum size of the code cache.

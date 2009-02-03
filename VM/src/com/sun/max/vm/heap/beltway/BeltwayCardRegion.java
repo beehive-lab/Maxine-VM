@@ -131,7 +131,7 @@ public class BeltwayCardRegion {
             Log.println(_numberOfCards);
         }
 
-        if (VirtualMemory.allocateMemoryAtFixedAddress(cardTableStart, Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH)) == false) {
+        if (VirtualMemory.allocatePageAlignedAtFixedAddress(cardTableStart, Size.fromLong(_numberOfCards * CARD_SLOT_LENGTH), VirtualMemory.Type.HEAP) == false) {
             Log.print("MaxineVM: Could not allocate memory starting @address: ");
             Log.println(cardTableStart);
             MaxineVM.native_exit(MaxineVM.HARD_EXIT_CODE);
