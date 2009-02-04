@@ -20,16 +20,12 @@
  */
 package com.sun.max.ins.debug;
 
-import java.awt.*;
-import java.awt.event.*;
-
 import javax.swing.*;
-import javax.swing.table.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.gui.InspectorTable.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
@@ -37,8 +33,6 @@ import com.sun.max.tele.debug.*;
 /**
  * A singleton inspector that displays the list of threads running in the process of the {@link TeleVM}.
  *
- * @author Bernd Mathiske
- * @author Mick Jordan
  * @author Michael Van De Vanter
  */
 public final class ThreadsInspector extends Inspector {
@@ -58,52 +52,22 @@ public final class ThreadsInspector extends Inspector {
         return _threadsInspector;
     }
 
-    /**
-     * Defines the columns supported by the inspector; the view includes one of each kind.
-     */
-    enum ColumnKind {
-        ID("ID", "ID assigned by OS"),
-        SERIAL("VM ID", "ID assigned by VM, none if native"),
-        KIND("Kind", null),
-        NAME("Name", null),
-        STATUS("Status", null);
-
-        private final String _label;
-        private final String _toolTipText;
-
-        private ColumnKind(String label, String toolTipText) {
-            _label = label;
-            _toolTipText = toolTipText;
-        }
-
-        public String label() {
-            return _label;
-        }
-
-        public String toolTipText() {
-            return _toolTipText;
-        }
-
-        public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
-    }
-
-    private final JTable _table;
-    private final ThreadsTableModel _model;
-    private final ThreadsColumnModel _columnModel;
-    private final TableColumn[] _columns;
+    private ThreadsTable _table;
 
     private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "_threadsInspector");
 
     private ThreadsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
         Trace.begin(1,  tracePrefix() + " initializing");
-        _model = new ThreadsTableModel();
-        _columns = new TableColumn[ColumnKind.VALUES.length()];
-        _columnModel = new ThreadsColumnModel();
-        _table = new ThreadTable(_model, _columnModel);
         createFrame(null);
-        refreshView(inspection.teleVM().epoch(), true);
-        JTableColumnResizer.adjustColumnPreferredWidths(_table);
+        frame().menu().addSeparator();
+        frame().menu().add(new InspectorAction(inspection, "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _table.preferences());
+            }
+        });
+        frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -119,264 +83,30 @@ public final class ThreadsInspector extends Inspector {
 
     @Override
     public void createView(long epoch) {
-        _table.setShowHorizontalLines(style().defaultTableShowHorizontalLines());
-        _table.setShowVerticalLines(style().defaultTableShowVerticalLines());
-        _table.setIntercellSpacing(style().defaultTableIntercellSpacing());
-        _table.setRowHeight(style().defaultTableRowHeight());
-        _table.setRowSelectionAllowed(true);
-        _table.setColumnSelectionAllowed(false);
-        _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        _table.addMouseListener(new ThreadsInspectorMouseClickAdapter(inspection()));
-        final JScrollPane scrollPane = new JScrollPane(_table);
-        scrollPane.setPreferredSize(inspection().geometry().threadsFramePrefSize());
-        frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
+        _table = new ThreadsTable(inspection());
+        _table.addColumnChangeListener(new ColumnChangeListener() {
+            public void columnPreferenceChanged() {
+                reconstructView();
+            }
+        });
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         frame().setContentPane(scrollPane);
-        refreshView(epoch, true);
     }
 
-    private final class ThreadTable extends JTable {
-
-        ThreadTable(TableModel model, TableColumnModel tableColumnModel) {
-            super(model, tableColumnModel);
-        }
-
-        @Override
-        protected JTableHeader createDefaultTableHeader() {
-            return new JTableHeader(_columnModel) {
-                @Override
-                public String getToolTipText(MouseEvent mouseEvent) {
-                    final Point p = mouseEvent.getPoint();
-                    final int index = _columnModel.getColumnIndexAtX(p.x);
-                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
-                    return ColumnKind.VALUES.get(modelIndex).toolTipText();
-                }
-            };
-        }
-    }
-
-
-    private final class ThreadsColumnModel extends DefaultTableColumnModel {
-
-        private ThreadsColumnModel() {
-            createColumn(ColumnKind.ID, new IDCellRenderer(inspection()));
-            createColumn(ColumnKind.SERIAL, new SerialCellRenderer(inspection()));
-            createColumn(ColumnKind.KIND, new KindCellRenderer(inspection()));
-            createColumn(ColumnKind.NAME, new NameCellRenderer(inspection()));
-            createColumn(ColumnKind.STATUS, new StatusCellRenderer(inspection()));
-        }
-
-        private void createColumn(ColumnKind columnKind, TableCellRenderer renderer) {
-            final int col = columnKind.ordinal();
-            _columns[col] = new TableColumn(col, 0, renderer, null);
-            _columns[col].setHeaderValue(columnKind.label());
-            _columns[col].setIdentifier(columnKind);
-            addColumn(_columns[col]);
-        }
-    }
-
-
-    private final class ThreadsTableModel extends DefaultTableModel {
-
-        @Override
-        public int getColumnCount() {
-            return ColumnKind.VALUES.length();
-        }
-
-        @Override
-        public int getRowCount() {
-            return teleVM().threads().length();
-        }
-
-        @Override
-        public Object getValueAt(int row, int col) {
-            int count = 0;
-            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
-                if (count == row) {
-                    return teleNativeThread;
-                }
-                count++;
-            }
-            return null;
-        }
-
-        @Override
-        public Class< ? > getColumnClass(int c) {
-            return TeleNativeThread.class;
-        }
-    }
-
-
-    private final class IDCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        IDCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final String threadIdText = Long.toString(teleNativeThread.id());
-            setText(threadIdText);
-            setToolTipText("Native thread ID:  " + threadIdText);
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class SerialCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        SerialCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final TeleVmThread teleVmThread    = teleNativeThread.teleVmThread();
-            if (teleVmThread != null) {
-                final String serialString = Long.toString(teleVmThread.serial());
-                setText(serialString);
-                setToolTipText("VM thread serial ID:  " + serialString);
-            } else {
-                setText("");
-                setToolTipText("Not a VM thread");
-            }
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class KindCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        KindCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final TeleVmThread teleVmThread    = teleNativeThread.teleVmThread();
-            String kind;
-            if (teleVmThread != null) {
-                kind = "Java";
-            } else {
-                kind = "native";
-            }
-            setText(kind);
-            setToolTipText("Kind:  " + kind);
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class NameCellRenderer extends JavaNameLabel implements TableCellRenderer {
-
-        NameCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            setValue(inspection().nameDisplay().shortName(teleNativeThread), "Name:  " + inspection().nameDisplay().longName(teleNativeThread));
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().javaNameBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class StatusCellRenderer extends PlainLabel implements TableCellRenderer {
-
-        StatusCellRenderer(Inspection inspection) {
-            super(inspection, null);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            if (teleNativeThread.breakpoint() != null) {
-                setText("At Breakpoint");
-                setToolTipText("Status: At Breakpoint");
-            } else {
-                final String status = teleNativeThread.state().toString();
-                setText(status);
-                setToolTipText("Status:  " + status);
-            }
-            if (row == _table.getSelectionModel().getMinSelectionIndex()) {
-                setBackground(style().defaultCodeAlternateBackgroundColor());
-            } else {
-                setBackground(style().defaultTextBackgroundColor());
-            }
-            return this;
-        }
-    }
-
-    private final class ThreadsInspectorMouseClickAdapter extends InspectorMouseClickAdapter {
-
-        ThreadsInspectorMouseClickAdapter(Inspection inspection) {
-            super(inspection);
-        }
-
-        @Override
-        public void procedure(final MouseEvent mouseEvent) {
-            switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
-                case MouseEvent.BUTTON1: {
-                    final int row = _table.getSelectedRow();
-                    final int column = _table.getSelectedColumn();
-                    final TeleNativeThread teleNativeThread = (TeleNativeThread) _table.getValueAt(row, column);
-                    focus().setThread(teleNativeThread);
-                }
-            }
-        }
-    };
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        final ThreadsTableModel threadsTableModel = (ThreadsTableModel) _table.getModel();
-        threadsTableModel.fireTableDataChanged();
-        updateThreadFocus(focus().thread());
+        _table.refresh(epoch, force);
         super.refreshView(epoch, force);
     }
 
     @Override
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
-        updateThreadFocus(teleNativeThread);
-    }
-
-    /**
-     * Changes the Inspector's selected row to agree with the global thread selection.
-     */
-    private void updateThreadFocus(TeleNativeThread selectedThread) {
-        int row = 0;
-        for (TeleNativeThread teleNativeThread : teleVM().threads()) {
-            if (teleNativeThread == selectedThread) {
-                if (_table.getSelectedRow() != row) {
-                    _table.setRowSelectionInterval(row, row);
-                }
-                break;
-            }
-            row++;
-        }
+        _table.selectThread(teleNativeThread);
     }
 
     public void viewConfigurationChanged(long epoch) {
-        //  All view configurations are applied dynamically in this inspector.
-        refreshView(epoch, true);
+        reconstructView();
     }
 
     @Override

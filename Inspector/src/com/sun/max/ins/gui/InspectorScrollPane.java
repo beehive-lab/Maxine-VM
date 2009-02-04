@@ -29,13 +29,28 @@ import com.sun.max.tele.*;
 
 
 /**
- * Base class for Inspector scroll panes.
+ * A scroll pane specialized for use in the Maxine Inspector.
+ * By default uses policies VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorScrollPane extends JScrollPane implements Prober, InspectionHolder {
+public class InspectorScrollPane extends JScrollPane implements Prober, InspectionHolder {
 
     private final Inspection _inspection;
+
+    /**
+     * Creates a new {@JScrollPane} for use in the {@link Inspection}.
+     * By default uses policies VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER.
+     *
+     * @param inspection
+     * @param component the component to display in the scrollbar's viewport
+     */
+    public InspectorScrollPane(Inspection inspection, Component component) {
+        super(component, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        _inspection = inspection;
+        setOpaque(true);
+        setBackground(inspection.style().defaultBackgroundColor());
+    }
 
     public final Inspection inspection() {
         return _inspection;
@@ -57,9 +72,10 @@ public abstract class InspectorScrollPane extends JScrollPane implements Prober,
         return _inspection.teleVM();
     }
 
-    protected InspectorScrollPane(Inspection inspection, Component component) {
-        super(component);
-        _inspection = inspection;
+    public void redisplay() {
+    }
+
+    public void refresh(long epoch, boolean force) {
     }
 
 }

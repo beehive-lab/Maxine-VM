@@ -82,8 +82,6 @@ public class ObjectHeaderTable extends InspectorTable {
         _columnModel = new ObjectHeaderTableColumnModel(_objectInspector);
         setModel(_model);
         setColumnModel(_columnModel);
-        setOpaque(true);
-        setBackground(style().defaultBackgroundColor());
         setFillsViewportHeight(true);
         setShowHorizontalLines(style().objectTableShowHorizontalLines());
         setShowVerticalLines(style().objectTableShowVerticalLines());

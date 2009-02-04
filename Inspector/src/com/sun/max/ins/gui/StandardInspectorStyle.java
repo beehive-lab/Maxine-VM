@@ -25,6 +25,8 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import com.sun.max.ins.*;
+
 /**
  * A fully specified style, designed to be evolve slowly and resemble earlier prototypes.
  *
@@ -34,30 +36,54 @@ import javax.swing.border.*;
  */
 public class StandardInspectorStyle extends InspectorStyleAdapter {
 
-    @Override
-    public String name() {
-        return "Standard";
-    }
+    private final int _defaultFontSize;
+    private final int _defaultRowHeight;
+    private final String _name;
 
-    private final int _defaultTextFontSize = 12;
-    private final Font _defaultFont = new Font("SansSerif", Font.PLAIN, defaultTextFontSize());
-    private final Font _defaultBoldFont = new Font("SansSerif", Font.BOLD, defaultTextFontSize());
-    private final Color _defaultTextColor = InspectorStyle.Black;
+    private Font _defaultBoldFont;
+    private Font _defaultMonospacedFont;
 
-    private final Font _hexDataFont = new Font("Monospaced", Font.PLAIN, defaultTextFontSize());
+    private int _defaultTitleFontSize;
+    private Font _defaultTitleFont;
 
-    private final int _defaultTitleFontSize = defaultTextFontSize() + 2;
-    private final Font _defaultTitleFont = new Font("Serif", Font.BOLD, textTitleFontSize());
-
-    private final Font _flagsFont = new Font("Serif", Font.PLAIN, defaultTextFontSize());
-
-
-
+    private Font _flagsFont;
 
     private final Color _paleGray = InspectorStyle.CoolGray2;
     private final Color _paleBlue = InspectorStyle.SunBlue3;
-
     private final Color _backgroundGray = new Color(238, 238, 238); // very pale
+    private final Color _defaultTextColor = InspectorStyle.Black;
+
+
+    public StandardInspectorStyle(Inspection inspection, int defaultFontSize, int defaultRowHeight) {
+        super(inspection);
+        _defaultFontSize = defaultFontSize;
+        _defaultRowHeight = defaultRowHeight;
+        _name = "Standard-" + defaultFontSize;
+    }
+
+    @Override
+    public String name() {
+        return _name;
+    }
+
+    @Override
+    public String toString() {
+        return name();
+    }
+
+    private Font defaultBoldFont() {
+        if (_defaultBoldFont == null) {
+            _defaultBoldFont = new Font("SansSerif", Font.BOLD, defaultTextFontSize());
+        }
+        return _defaultBoldFont;
+    }
+
+    private Font defaultMonospacedFont() {
+        if (_defaultMonospacedFont == null) {
+            _defaultMonospacedFont = new Font("Monospaced", Font.PLAIN, defaultTextFontSize());
+        }
+        return _defaultMonospacedFont;
+    }
 
     @Override
     public Color defaultBackgroundColor() {
@@ -65,11 +91,16 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     // Default text
+    private Font _defaultFont;
+
     public Font defaultFont() {
+        if (_defaultFont == null) {
+            _defaultFont = new Font("SansSerif", Font.PLAIN, defaultTextFontSize());
+        }
         return _defaultFont;
     }
     public int defaultTextFontSize() {
-        return _defaultTextFontSize;
+        return _defaultFontSize;
     }
     @Override
     public Color defaultTextColor() {
@@ -83,16 +114,22 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // Plain text labels
     @Override
     public Font textLabelFont() {
-        return _defaultBoldFont;
+        return defaultBoldFont();
     }
 
     // Defaults for textual titles
     @Override
     public Font textTitleFont() {
+        if (_defaultTitleFont == null) {
+            _defaultTitleFont = new Font("Serif", Font.BOLD, textTitleFontSize());
+        }
         return _defaultTitleFont;
     }
     @Override
     public int textTitleFontSize() {
+        if (_defaultTitleFontSize == 0) {
+            _defaultTitleFontSize =  defaultTextFontSize() + 2;
+        }
         return _defaultTitleFontSize;
     }
     @Override
@@ -103,7 +140,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // Defaults for integers displayed in decimal
     @Override
     public Font decimalDataFont() {
-        return _defaultFont;
+        return defaultFont();
     }
     @Override
     public int decimalDataFontSize() {
@@ -117,7 +154,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // Defaults for integers displayed in hex
     @Override
     public Font hexDataFont() {
-        return _hexDataFont;
+        return defaultMonospacedFont();
     }
     @Override
     public int hexDataFontSize() {
@@ -198,9 +235,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color wordSelectedColor() {
         return _wordSelectedColor;
     }
-
     @Override
     public Font wordFlagsFont() {
+        if (_flagsFont == null) {
+            _flagsFont = new Font("Serif", Font.PLAIN, defaultTextFontSize());
+        }
         return _flagsFont;
     }
 
@@ -208,11 +247,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // Display of primitive Java data values
     @Override
     public Font primitiveDataFont() {
-        return _defaultFont;
+        return defaultFont();
     }
     @Override
     public int primitiveDataFontSize() {
-        return _defaultTextFontSize;
+        return defaultTextFontSize();
     }
 
     // Display of char values
@@ -238,11 +277,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // Names for Java entities
     @Override
     public Font javaNameFont() {
-        return _defaultFont;
+        return defaultFont();
     }
     @Override
     public Font javaClassNameFont() {
-        return _defaultBoldFont;
+        return defaultBoldFont();
     }
 
     @Override
@@ -255,11 +294,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     private final Color _codeStopBackgroundColor = _paleGray;
     @Override
     public Font defaultCodeFont() {
-        return _defaultFont;
+        return defaultFont();
     }
     @Override
     public int defaultCodeFontSize() {
-        return _defaultTextFontSize;
+        return defaultTextFontSize();
     }
     @Override
     public Color defaultCodeBackgroundColor() {
@@ -277,28 +316,34 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     // Display of machine code
     @Override
     public Font defaultTextFont() {
-        return _defaultBoldFont;
+        return defaultBoldFont();
     }
     @Override
     public int targetCodeFontSize() {
-        return _defaultTextFontSize;
+        return defaultTextFontSize();
     }
 
     // Display of bytecodes
-    private final Font _bytecodeMnemonicFont = new Font("Serif", Font.ITALIC, _defaultTextFontSize + 1);
-    private final Font _bytecodeOperandFont = new Font("SansSerif", Font.PLAIN, _defaultTextFontSize);
+    private Font _bytecodeMnemonicFont;
+    private Font _bytecodeOperandFont;
 
     @Override
     public Font bytecodeMnemonicFont() {
+        if (_bytecodeMnemonicFont == null) {
+            _bytecodeMnemonicFont = new Font("Serif", Font.ITALIC, defaultTextFontSize() + 1);
+        }
         return _bytecodeMnemonicFont;
     }
     @Override
     public Font bytecodeOperandFont() {
+        if (_bytecodeOperandFont == null) {
+            _bytecodeOperandFont = new Font("SansSerif", Font.PLAIN, defaultTextFontSize());
+        }
         return _bytecodeOperandFont;
     }
     @Override
     public int bytecodeFontSize() {
-        return _defaultTextFontSize + 1;
+        return defaultTextFontSize() + 1;
     }
 
     @Override
@@ -406,11 +451,28 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return zeroTableIntercellSpacing();
     }
     @Override
+    public int defaultTableRowHeight() {
+        return _defaultRowHeight;
+    }
+    @Override
     public boolean objectTableShowHorizontalLines() {
         return false;
     }
     @Override
     public boolean objectTableShowVerticalLines() {
+        return false;
+    }
+
+    @Override
+    public Dimension threadLocalsTableIntercellSpacing() {
+        return zeroTableIntercellSpacing();
+    }
+    @Override
+    public boolean threadLocalsTableShowHorizontalLines() {
+        return false;
+    }
+    @Override
+    public boolean threadLocalsTableShowVerticalLines() {
         return false;
     }
 
@@ -426,6 +488,5 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public boolean codeTableShowVerticalLines() {
         return false;
     }
-
 
 }

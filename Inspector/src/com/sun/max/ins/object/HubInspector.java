@@ -94,35 +94,16 @@ public class HubInspector extends ObjectInspector {
          * @return a GUI panel for setting preferences
          */
         public JPanel getPanel() {
-            final JCheckBox alwaysShowFieldsCheckBox = new JCheckBox("Fields");
-            alwaysShowFieldsCheckBox.setOpaque(true);
-            alwaysShowFieldsCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowFieldsCheckBox.setToolTipText("Should new Object Inspectors initially display the fields in a Hub?");
-            alwaysShowFieldsCheckBox.setSelected(_showFields);
-
-            final JCheckBox alwaysShowVTablesCheckBox = new JCheckBox("vTables");
-            alwaysShowVTablesCheckBox.setOpaque(true);
-            alwaysShowVTablesCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowVTablesCheckBox.setToolTipText("Should new Object Inspectors initially display the vTables in a Hub?");
-            alwaysShowVTablesCheckBox.setSelected(_showVTables);
-
-            final JCheckBox alwaysShowITablesCheckBox = new JCheckBox("iTables");
-            alwaysShowITablesCheckBox.setOpaque(true);
-            alwaysShowITablesCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowITablesCheckBox.setToolTipText("Should new Object Inspectors initially display the iTables in a Hub?");
-            alwaysShowITablesCheckBox.setSelected(_showITables);
-
-            final JCheckBox alwaysShowMTablesCheckBox = new JCheckBox("mTables");
-            alwaysShowMTablesCheckBox.setOpaque(true);
-            alwaysShowMTablesCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowMTablesCheckBox.setToolTipText("Should new Object Inspectors initially display the mTables in a Hub?");
-            alwaysShowMTablesCheckBox.setSelected(_showMTables);
-
-            final JCheckBox alwaysShowRefMapsCheckBox = new JCheckBox("Reference Maps");
-            alwaysShowRefMapsCheckBox.setOpaque(true);
-            alwaysShowRefMapsCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowRefMapsCheckBox.setToolTipText("Should new Object Inspectors initially display the reference maps in a Hub?");
-            alwaysShowRefMapsCheckBox.setSelected(_showRefMaps);
+            final InspectorCheckBox alwaysShowFieldsCheckBox =
+                new InspectorCheckBox(_inspection, "Fields", "Should new Object Inspectors initially display the fields in a Hub?", _showFields);
+            final InspectorCheckBox alwaysShowVTablesCheckBox =
+                new InspectorCheckBox(_inspection, "vTables", "Should new Object Inspectors initially display the vTables in a Hub?", _showVTables);
+            final InspectorCheckBox alwaysShowITablesCheckBox =
+                new InspectorCheckBox(_inspection, "iTables", "Should new Object Inspectors initially display the iTables in a Hub?", _showITables);
+            final InspectorCheckBox alwaysShowMTablesCheckBox =
+                new InspectorCheckBox(_inspection, "mTables", "Should new Object Inspectors initially display the mTables in a Hub?", _showMTables);
+            final InspectorCheckBox alwaysShowRefMapsCheckBox =
+                new InspectorCheckBox(_inspection, "Reference Maps", "Should new Object Inspectors initially display the reference maps in a Hub?", _showRefMaps);
 
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
@@ -147,7 +128,7 @@ public class HubInspector extends ObjectInspector {
             alwaysShowMTablesCheckBox.addItemListener(itemListener);
             alwaysShowRefMapsCheckBox.addItemListener(itemListener);
 
-            final JPanel contentPanel = new JPanel();
+            final JPanel contentPanel = new InspectorPanel(_inspection);
             contentPanel.add(new TextLabel(_inspection, "Show:  "));
             contentPanel.add(alwaysShowFieldsCheckBox);
             contentPanel.add(alwaysShowVTablesCheckBox);
@@ -155,9 +136,7 @@ public class HubInspector extends ObjectInspector {
             contentPanel.add(alwaysShowMTablesCheckBox);
             contentPanel.add(alwaysShowRefMapsCheckBox);
 
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(true);
-            panel.setBackground(_inspection.style().defaultBackgroundColor());
+            final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
             panel.add(contentPanel, BorderLayout.WEST);
 
             return panel;
@@ -172,14 +151,8 @@ public class HubInspector extends ObjectInspector {
             Dialog(Inspection inspection) {
                 super(inspection, "Hub Inspector Preferences", false);
 
-                final JPanel dialogPanel = new JPanel();
-                dialogPanel.setLayout(new BorderLayout());
-                dialogPanel.setOpaque(true);
-                dialogPanel.setBackground(style().defaultBackgroundColor());
-
-                final JPanel buttons = new JPanel();
-                buttons.setOpaque(true);
-                buttons.setBackground(style().defaultBackgroundColor());
+                final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+                final JPanel buttons = new InspectorPanel(inspection);
                 buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
                     @Override
                     protected void procedure() {
@@ -199,12 +172,6 @@ public class HubInspector extends ObjectInspector {
     }
 
     private final TeleHub _teleHub;
-    private final JToolBar _toolBar;
-    private final JCheckBox _showFieldsCheckBox;
-    private final JCheckBox  _showVTableCheckBox;
-    private final JCheckBox  _showITableCheckBox;
-    private final JCheckBox  _showMTableCheckBox;
-    private final JCheckBox  _showRefMapCheckBox;
 
     private ObjectPane _fieldsPane;
     private ObjectPane _vTablePane;
@@ -217,56 +184,6 @@ public class HubInspector extends ObjectInspector {
     HubInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
         super(inspection, factory, residence, teleObject);
         _teleHub = (TeleHub) teleObject;
-        _toolBar = new JToolBar();
-        _toolBar.setFloatable(false);
-        _toolBar.setBackground(style().defaultBackgroundColor());
-
-        final HubPreferences hubPreferences = globalHubPreferences(inspection());
-
-        _showFieldsCheckBox = new JCheckBox("fields", hubPreferences._showFields);
-        _showFieldsCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                reconstructView();
-            }
-        });
-        _toolBar.add(_showFieldsCheckBox);
-        _toolBar.add(Box.createHorizontalGlue());
-
-        _showVTableCheckBox = new JCheckBox("vTable", hubPreferences._showVTables);
-        _showVTableCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                reconstructView();
-            }
-        });
-        _toolBar.add(_showVTableCheckBox);
-        _toolBar.add(Box.createHorizontalGlue());
-
-        _showITableCheckBox = new JCheckBox("iTable", hubPreferences._showITables);
-        _showITableCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                reconstructView();
-            }
-        });
-        _toolBar.add(_showITableCheckBox);
-        _toolBar.add(Box.createHorizontalGlue());
-
-        _showMTableCheckBox = new JCheckBox("mTable", hubPreferences._showMTables);
-        _showMTableCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                reconstructView();
-            }
-        });
-        _toolBar.add(_showMTableCheckBox);
-        _toolBar.add(Box.createHorizontalGlue());
-
-        _showRefMapCheckBox = new JCheckBox("ref. map", hubPreferences._showRefMaps);
-        _showRefMapCheckBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-                reconstructView();
-            }
-        });
-        _toolBar.add(_showRefMapCheckBox);
-
         createFrame(null);
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {
@@ -276,51 +193,95 @@ public class HubInspector extends ObjectInspector {
         } else {
             _classMethodInspectorMenuItems = null;
         }
-
     }
 
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        final JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setOpaque(true);
-        panel.setBackground(style().defaultBackgroundColor());
+        final HubPreferences hubPreferences = globalHubPreferences(inspection());
 
-        panel.add(_toolBar);
+        final JPanel panel = new InspectorPanel(inspection());
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+        final JToolBar toolBar = new InspectorToolBar(inspection());
+
+        final  JCheckBox showFieldsCheckBox = new InspectorCheckBox(inspection(), "fields", "Display hub fields?", hubPreferences._showFields);
+        showFieldsCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
+        toolBar.add(showFieldsCheckBox);
+        toolBar.add(Box.createHorizontalGlue());
+
+        final JCheckBox showVTableCheckBox = new InspectorCheckBox(inspection(), "vTable", "Display hub vTables?", hubPreferences._showVTables);
+        showVTableCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
+        toolBar.add(showVTableCheckBox);
+        toolBar.add(Box.createHorizontalGlue());
+
+        final JCheckBox showITableCheckBox = new InspectorCheckBox(inspection(), "iTable", "Display hub iTables?", hubPreferences._showITables);
+        showITableCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
+        toolBar.add(showITableCheckBox);
+        toolBar.add(Box.createHorizontalGlue());
+
+        final JCheckBox showMTableCheckBox = new InspectorCheckBox(inspection(), "mTable", "Display hub mTables?", hubPreferences._showMTables);
+        showMTableCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
+        toolBar.add(showMTableCheckBox);
+        toolBar.add(Box.createHorizontalGlue());
+
+        final JCheckBox showRefMapCheckBox = new InspectorCheckBox(inspection(), "ref. map", "Display hub ref map?", hubPreferences._showRefMaps);
+        showRefMapCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                reconstructView();
+            }
+        });
+        toolBar.add(showRefMapCheckBox);
+
+        panel.add(toolBar);
 
         _fieldsPane = ObjectPane.createFieldsPane(this, _teleHub);
-        _showFieldsCheckBox.setEnabled(true);
-        _showFieldsCheckBox.setBackground(style().defaultBackgroundColor());
-        if (_showFieldsCheckBox.isSelected()) {
+        showFieldsCheckBox.setEnabled(true);
+        if (showFieldsCheckBox.isSelected()) {
             _fieldsPane.setBorder(style().defaultPaneTopBorder());
             panel.add(_fieldsPane);
         }
 
         _vTablePane = ObjectPane.createVTablePane(this, _teleHub);
-        _showVTableCheckBox.setEnabled(_vTablePane != null);
-        if (_vTablePane != null && _showVTableCheckBox.isSelected()) {
+        showVTableCheckBox.setEnabled(_vTablePane != null);
+        if (_vTablePane != null && showVTableCheckBox.isSelected()) {
             _vTablePane.setBorder(style().defaultPaneTopBorder());
             panel.add(_vTablePane);
         }
 
         _iTablePane = ObjectPane.createITablePane(this, _teleHub);
-        _showITableCheckBox.setEnabled(_iTablePane != null);
-        if (_iTablePane != null && _showITableCheckBox.isSelected()) {
+        showITableCheckBox.setEnabled(_iTablePane != null);
+        if (_iTablePane != null && showITableCheckBox.isSelected()) {
             _iTablePane.setBorder(style().defaultPaneTopBorder());
             panel.add(_iTablePane);
         }
 
         _mTablePane = ObjectPane.createMTablePane(this, _teleHub);
-        _showMTableCheckBox.setEnabled(_mTablePane != null);
-        if (_mTablePane != null && _showMTableCheckBox.isSelected()) {
+        showMTableCheckBox.setEnabled(_mTablePane != null);
+        if (_mTablePane != null && showMTableCheckBox.isSelected()) {
             _mTablePane.setBorder(style().defaultPaneTopBorder());
             panel.add(_mTablePane);
         }
 
         _refMapPane = ObjectPane.createRefMapPane(this, _teleHub);
-        _showRefMapCheckBox.setEnabled(_refMapPane != null);
-        if (_refMapPane != null && _showRefMapCheckBox.isSelected()) {
+        showRefMapCheckBox.setEnabled(_refMapPane != null);
+        if (_refMapPane != null && showRefMapCheckBox.isSelected()) {
             _refMapPane.setBorder(style().defaultPaneTopBorder());
             panel.add(_refMapPane);
         }

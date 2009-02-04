@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.value.*;
 
@@ -31,30 +32,31 @@ import com.sun.max.vm.value.*;
  * An inspector for VM thread locals in the {@link TeleVM}.
  *
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocalsInspector> {
+public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsInspector> {
 
     /**
      * Finds an existing thread locals inspector for a thread.
      *
      * @return null if doesn't exist
      */
-    public static VmThreadLocalsInspector get(Inspection inspection, TeleNativeThread teleNativeThread) {
-        return VmThreadLocalsInspectorContainer.getInspector(inspection, teleNativeThread);
+    public static ThreadLocalsInspector get(Inspection inspection, TeleNativeThread teleNativeThread) {
+        return ThreadLocalsInspectorContainer.getInspector(inspection, teleNativeThread);
     }
 
     /**
      * Displays and highlights a thread locals inspector for the currently selected thread.
      */
-    public static VmThreadLocalsInspector make(Inspection inspection) {
+    public static ThreadLocalsInspector make(Inspection inspection) {
         return make(inspection, inspection.focus().thread());
     }
 
     /**
      * Display and highlight a thread locals inspector for a thread.
      */
-    public static VmThreadLocalsInspector make(Inspection inspection, TeleNativeThread teleNativeThread) {
-        final VmThreadLocalsInspector threadLocalsInspector = VmThreadLocalsInspectorContainer.makeInspector(inspection, teleNativeThread);
+    public static ThreadLocalsInspector make(Inspection inspection, TeleNativeThread teleNativeThread) {
+        final ThreadLocalsInspector threadLocalsInspector = ThreadLocalsInspectorContainer.makeInspector(inspection, teleNativeThread);
         if (threadLocalsInspector != null) {
             threadLocalsInspector.highlight();
             return threadLocalsInspector;
@@ -63,24 +65,42 @@ public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocal
     }
 
     private final TeleNativeThread _teleNativeThread;
-    private VmThreadLocalsInspectorContainer _parent;
+    private ThreadLocalsInspectorContainer _parent;
 
-    private VMThreadLocalsPanel _enabledThreadLocals;
-    private VMThreadLocalsPanel _disabledThreadLocals;
-    private VMThreadLocalsPanel _triggeredThreadLocals;
+    private ThreadLocalsPanel _enabledThreadLocalsPanel;
+    private ThreadLocalsPanel _disabledThreadLocalsPanel;
+    private ThreadLocalsPanel _triggeredThreadLocalsPanel;
 
-    public VmThreadLocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, VmThreadLocalsInspectorContainer parent) {
+    private final ThreadLocalsViewPreferences _globalPreferences;
+    private final ThreadLocalsViewPreferences _instancePreferences;
+
+    public ThreadLocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, ThreadLocalsInspectorContainer parent) {
         super(inspection, parent.residence(),  LongValue.from(teleNativeThread.id()));
         _parent = parent;
         _teleNativeThread = teleNativeThread;
-        createFrame(null);
+
+        _globalPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
+        _instancePreferences = new ThreadLocalsViewPreferences(_globalPreferences) {
+            @Override
+            public void setIsVisible(ThreadLocalsColumnKind columnKind, boolean visible) {
+                super.setIsVisible(columnKind, visible);
+                reconstructView();
+            }
+        };
+
+        createFrame(new InspectorMenu());
+        frame().menu().addSeparator();
+        frame().menu().add(new InspectorAction(inspection, "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", _instancePreferences, _globalPreferences);
+            }
+        });
+        refreshView(inspection.teleVM().epoch(), true);
     }
 
     @Override
     public void createView(long epoch) {
-        final JPanel contentPane = new JPanel();
-        contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
-        contentPane.setOpaque(true);
 
         final JTabbedPane tabbedPane = new JTabbedPane();
 
@@ -88,18 +108,15 @@ public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocal
         final TeleVMThreadLocalValues disabledVmThreadLocalValues = _teleNativeThread.stack().disabledVmThreadLocalValues();
         final TeleVMThreadLocalValues triggeredVmThreadLocalValues = _teleNativeThread.stack().triggeredVmThreadLocalValues();
 
-        _enabledThreadLocals = new VMThreadLocalsPanel(inspection(), enabledVmThreadLocalValues);
-        _disabledThreadLocals = new VMThreadLocalsPanel(inspection(), disabledVmThreadLocalValues);
-        _triggeredThreadLocals = new VMThreadLocalsPanel(inspection(), triggeredVmThreadLocalValues);
+        _enabledThreadLocalsPanel = new ThreadLocalsPanel(this, enabledVmThreadLocalValues, _instancePreferences);
+        _disabledThreadLocalsPanel = new ThreadLocalsPanel(this, disabledVmThreadLocalValues, _instancePreferences);
+        _triggeredThreadLocalsPanel = new ThreadLocalsPanel(this, triggeredVmThreadLocalValues, _instancePreferences);
 
-        tabbedPane.add("Enabled", _enabledThreadLocals);
-        tabbedPane.add("Disabled", _disabledThreadLocals);
-        tabbedPane.add("Triggered", _triggeredThreadLocals);
+        tabbedPane.add("Enabled", _enabledThreadLocalsPanel);
+        tabbedPane.add("Disabled", _disabledThreadLocalsPanel);
+        tabbedPane.add("Triggered", _triggeredThreadLocalsPanel);
 
-        contentPane.add(tabbedPane);
-
-        frame().getContentPane().add(contentPane);
-        refreshView(epoch, true);
+        frame().setContentPane(tabbedPane);
     }
 
     @Override
@@ -113,13 +130,14 @@ public final class VmThreadLocalsInspector extends UniqueInspector<VmThreadLocal
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        _enabledThreadLocals.refresh(epoch, force);
-        _disabledThreadLocals.refresh(epoch, force);
-        _triggeredThreadLocals.refresh(epoch, force);
+        _enabledThreadLocalsPanel.refresh(epoch, force);
+        _disabledThreadLocalsPanel.refresh(epoch, force);
+        _triggeredThreadLocalsPanel.refresh(epoch, force);
         super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {
+        reconstructView();
     }
 
     @Override

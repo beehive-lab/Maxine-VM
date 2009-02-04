@@ -81,15 +81,14 @@ public abstract class CodeViewer extends InspectorPanel {
         super(inspection, new BorderLayout());
         _parent = parent;
 
-        _searchButton = new JButton(new AbstractAction() {
+        _searchButton = new InspectorButton(inspection, new AbstractAction("Search...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 addSearchToolBar();
             }
         });
-        _searchButton.setText("Search...");
         _searchButton.setToolTipText("Open toolbar for searching");
 
-        _activeRowsButton = new JButton(new AbstractAction() {
+        _activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style().debugActiveRowButtonIcon()) {
             public void actionPerformed(ActionEvent actionEvent) {
                 int nextActiveRow = nextActiveRow();
                 if (nextActiveRow >= 0) {
@@ -101,19 +100,18 @@ public abstract class CodeViewer extends InspectorPanel {
                 }
             }
         });
-        _activeRowsButton.setIcon(style().debugActiveRowButtonIcon());
         _activeRowsButton.setForeground(style().debugIPTagColor());
         _activeRowsButton.setToolTipText("Scroll to next line with IP or Call Return");
         _activeRowsButton.setEnabled(false);
 
-        _viewCloseButton = new JButton();
+        _viewCloseButton =
+            new InspectorButton(inspection(), "", "Close " + codeViewerKindName());
         _viewCloseButton.setAction(new AbstractAction() {
             public void actionPerformed(ActionEvent actionEvent) {
                 parent().closeCodeViewer(CodeViewer.this);
             }
         });
         _viewCloseButton.setIcon(style().codeViewCloseIcon());
-        _viewCloseButton.setToolTipText("Close " + codeViewerKindName());
 
         //getActionMap().put(SEARCH_ACTION, new SearchAction());
 
@@ -122,9 +120,8 @@ public abstract class CodeViewer extends InspectorPanel {
     }
 
     protected void createView(long epoch) {
-        _toolBarPanel = new JPanel();
-        _toolBarPanel.setLayout(new GridLayout(0, 1));
-        _toolBar = new JToolBar();
+        _toolBarPanel = new InspectorPanel(inspection(), new GridLayout(0, 1));
+        _toolBar = new InspectorToolBar(inspection());
         _toolBar.setFloatable(false);
         _toolBar.setRollover(true);
         _toolBarPanel.add(_toolBar);
@@ -272,6 +269,7 @@ public abstract class CodeViewer extends InspectorPanel {
         _toolBar.add(_viewCloseButton);
     }
 
+    @Override
     public final void refresh(long epoch, boolean force) {
         updateCaches(epoch, force);
         updateView(epoch, force);

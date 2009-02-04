@@ -44,10 +44,10 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
     private final ObjectAggregator _objectAggregator;
     private int _start;
     private int _end;
-    private JPanel _contentPane = new JPanel();
+    private final  JPanel _contentPane;
 
     private JComponent createController() {
-        final JPanel controller = new JPanel(new SpringLayout());
+        final JPanel controller = new InspectorPanel(inspection(), new SpringLayout());
 
         controller.add(new TextLabel(inspection(), "start:"));
         final AddressInputField.Hex startField = new AddressInputField.Hex(inspection(), Address.fromInt(_start)) {
@@ -112,9 +112,9 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         _contentPane.removeAll();
         _contentPane.setLayout(new BorderLayout());
 
-        _contentPane.add(new JLabel(_objectAggregator.count() + " instances occupying " + _objectAggregator.size().toLong() + " bytes"), BorderLayout.NORTH);
+        _contentPane.add(new TextLabel(inspection(), _objectAggregator.count() + " instances occupying " + _objectAggregator.size().toLong() + " bytes"), BorderLayout.NORTH);
 
-        final JPanel view = new JPanel(new SpringLayout());
+        final JPanel view = new InspectorPanel(inspection(), new SpringLayout());
 
         final Iterator<Reference> iterator = _objectAggregator.instances(teleVM());
 
@@ -135,7 +135,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
 
         SpringUtilities.makeCompactGrid(view, 1);
 
-        final JScrollPane scrollPane = new JScrollPane(view, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), view);
         final Dimension dim = scrollPane.getPreferredSize();
         scrollPane.setPreferredSize(new Dimension(Math.min(200, dim.width), Math.min(400, dim.height)));
         _contentPane.add(scrollPane, BorderLayout.CENTER);
@@ -147,6 +147,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         super(inspection, residence, ReferenceValue.from(objectAggregator.type()));
         _objectAggregator = objectAggregator;
         _end = Math.min(100, _objectAggregator.count() - 1);
+        _contentPane = new InspectorPanel(inspection);
         createFrame(null);
         frame().moveToMiddle();
     }

@@ -71,10 +71,9 @@ public final class BootImageInspector extends Inspector {
 
     @Override
     public void createView(long epoch) {
-        _infoPanel = new JPanel(new SpringLayout());
-        _infoPanel.setBackground(style().defaultBackgroundColor());
+        _infoPanel = new InspectorPanel(inspection(), new SpringLayout());
         populateInfoPanel();
-        final JScrollPane scrollPane = new JScrollPane(_infoPanel);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _infoPanel);
         frame().setContentPane(scrollPane);
     }
 

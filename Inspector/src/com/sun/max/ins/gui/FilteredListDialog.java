@@ -161,10 +161,8 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
             _actionName = actionName;
         }
 
-        final JPanel dialogPanel = new JPanel(new BorderLayout());
-        final JPanel textPanel = new JPanel();
-        textPanel.setOpaque(true);
-        textPanel.setBackground(style().defaultBackgroundColor());
+        final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+        final JPanel textPanel = new InspectorPanel(inspection);
 
         textPanel.add(new TextLabel(inspection, filterFieldLabel + ":"));
         _textField.setFont(style().javaClassNameFont());
@@ -186,11 +184,11 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
             _list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         }
         _list.setLayoutOrientation(JList.VERTICAL);
-        final JScrollPane scrollPane = new JScrollPane(_list);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection, _list);
         scrollPane.setPreferredSize(new Dimension(550, 425));
         dialogPanel.add(scrollPane, BorderLayout.CENTER);
 
-        final JPanel buttonPanel = new JPanel();
+        final JPanel buttonPanel = new InspectorPanel(inspection);
         final JButton selectButton = new JButton(new SelectAction());
         final JButton cancelButton = new JButton(new CancelAction());
         buttonPanel.add(selectButton);

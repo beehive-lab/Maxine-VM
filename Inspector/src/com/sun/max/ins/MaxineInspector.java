@@ -74,7 +74,7 @@ public final class MaxineInspector {
 
             TeleDisassembler.initialize(teleVM);
 
-            _inspection = new Inspection(teleVM, new StandardInspectorStyle(), new BasicInspectorGeometry());
+            _inspection = new Inspection(teleVM, new BasicInspectorGeometry());
 
             _inspection.initialize();
 
@@ -101,7 +101,7 @@ public final class MaxineInspector {
 
                     ThreadsInspector.make(_inspection);
                     RegistersInspector.make(_inspection);
-                    VmThreadLocalsInspector.make(_inspection);
+                    ThreadLocalsInspector.make(_inspection);
                     StackInspector.make(_inspection, _inspection.focus().thread());
                     BreakpointsInspector.make(_inspection);
                     MethodInspector.Manager.make(_inspection);

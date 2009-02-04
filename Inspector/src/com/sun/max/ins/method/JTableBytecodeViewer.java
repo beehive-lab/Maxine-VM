@@ -125,16 +125,16 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
     }
 
-    public static class Preferences extends TableColumnVisibilityPreferences<ColumnKind> {
+    public static class BytecodeViewerPreferences extends TableColumnVisibilityPreferences<ColumnKind> {
         private PoolConstantLabel.Mode _operandDisplayMode;
 
-        public Preferences(Inspection inspection) {
+        public BytecodeViewerPreferences(Inspection inspection) {
             super(inspection, "bytecodeInspectorPrefs", ColumnKind.class, ColumnKind.VALUES);
             final OptionTypes.EnumType<PoolConstantLabel.Mode> optionType = new OptionTypes.EnumType<PoolConstantLabel.Mode>(PoolConstantLabel.Mode.class);
             _operandDisplayMode = inspection.settings().get(_saveSettingsListener, "operandDisplayMode", optionType, PoolConstantLabel.Mode.JAVAP);
         }
 
-        public Preferences(Preferences otherPreferences) {
+        public BytecodeViewerPreferences(BytecodeViewerPreferences otherPreferences) {
             super(otherPreferences);
             _operandDisplayMode = otherPreferences._operandDisplayMode;
         }
@@ -174,10 +174,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         @Override
         public JPanel getPanel() {
-            final JRadioButton javapButton = new JRadioButton("javap style");
-            javapButton.setToolTipText("Display bytecode operands in a style similar to the 'javap' tool and the JVM spec book");
-            final JRadioButton terseButton = new JRadioButton("terse style");
-            terseButton.setToolTipText("Display bytecode operands in a terse style");
+            final JRadioButton javapButton = new InspectorRadioButton(_inspection, "javap style", "Display bytecode operands in a style similar to the 'javap' tool and the JVM spec book");
+            final JRadioButton terseButton = new InspectorRadioButton(_inspection, "terse style", "Display bytecode operands in a terse style");
             final ButtonGroup group = new ButtonGroup();
             group.add(javapButton);
             group.add(terseButton);
@@ -197,35 +195,32 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             javapButton.addActionListener(styleActionListener);
             terseButton.addActionListener(styleActionListener);
 
-            final JPanel panel2 = new JPanel(new BorderLayout());
-            panel2.setOpaque(true);
-            panel2.setBackground(_inspection.style().defaultBackgroundColor());
-            final JPanel operandStylePanel = new JPanel();
-            operandStylePanel.setOpaque(true);
-            operandStylePanel.setBackground(_inspection.style().defaultBackgroundColor());
+            final JPanel panel2 = new InspectorPanel(_inspection, new BorderLayout());
+
+            final JPanel operandStylePanel = new InspectorPanel(_inspection);
             operandStylePanel.add(new TextLabel(_inspection, "Operand Style:  "));
             operandStylePanel.add(javapButton);
             operandStylePanel.add(terseButton);
             panel2.add(operandStylePanel, BorderLayout.WEST);
 
-            final JPanel panel = new JPanel(new BorderLayout());
+            final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
             panel.add(super.getPanel(), BorderLayout.NORTH);
             panel.add(operandStylePanel, BorderLayout.SOUTH);
             return panel;
         }
     }
 
-    private static Preferences _globalPreferences;
+    private static BytecodeViewerPreferences _globalPreferences;
 
-    public static synchronized Preferences globalPreferences(Inspection inspection) {
+    public static synchronized BytecodeViewerPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
-            _globalPreferences = new Preferences(inspection);
+            _globalPreferences = new BytecodeViewerPreferences(inspection);
         }
         return _globalPreferences;
     }
 
     private final Inspection _inspection;
-    private final JTable _table;
+    private JTable _table;
     private final MyTableModel _model;
     private final BytecodeTableColumnModel _columnModel;
     private final TableColumn[] _columns;
@@ -237,15 +232,14 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _model = new MyTableModel();
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new BytecodeTableColumnModel();
-        _table = new BytecodeTable(_model, _columnModel);
-        _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
         createView(teleVM().epoch());
     }
 
     @Override
     protected void createView(long epoch) {
         super.createView(epoch);
-
+        _table = new BytecodeTable(_model, _columnModel);
+        _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
         _table.setOpaque(true);
         _table.setBackground(style().defaultBackgroundColor());
         _table.setFillsViewportHeight(true);
@@ -261,48 +255,48 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         // Set up toolbar
         // TODO (mlvdv) implement remaining debugging controls in Bytecode view
         // the disabled ones haven't been adapted for bytecode-based debugging
-        JButton button = new JButton(_inspection.actions().toggleBytecodeBreakpoint());
+        JButton button = new InspectorButton(_inspection, _inspection.actions().toggleBytecodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugStepOver());
+        button = new InspectorButton(_inspection, _inspection.actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOverButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugSingleStep());
+        button = new InspectorButton(_inspection, _inspection.actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepInButtonIcon());
         button.setEnabled(false);
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugReturnFromFrame());
+        button = new InspectorButton(_inspection, _inspection.actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
         button.setEnabled(haveTargetCodeAddresses());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugRunToInstruction());
+        button = new InspectorButton(_inspection, _inspection.actions().debugRunToInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
         button.setEnabled(haveTargetCodeAddresses());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugResume());
+        button = new InspectorButton(_inspection, _inspection.actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugContinueButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugPause());
+        button = new InspectorButton(_inspection, _inspection.actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugPauseButtonIcon());
@@ -310,7 +304,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         toolBar().add(Box.createHorizontalGlue());
 
-        toolBar().add(new JLabel("Bytecode"));
+        toolBar().add(new TextLabel(inspection(), "Bytecode"));
 
         toolBar().add(Box.createHorizontalGlue());
 
@@ -318,21 +312,18 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         addActiveRowsButton();
 
-        final JButton viewOptionsButton = new JButton(new AbstractAction() {
+        final JButton viewOptionsButton = new InspectorButton(_inspection, new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "Bytecode View Options", _columnModel.preferences(), globalPreferences(inspection()));
             }
         });
-        viewOptionsButton.setText("View...");
         viewOptionsButton.setToolTipText("Bytecode view options");
         toolBar().add(viewOptionsButton);
 
         toolBar().add(Box.createHorizontalGlue());
         addCodeViewCloseButton();
 
-        final JScrollPane scrollPane = new JScrollPane(_table);
-        scrollPane.setOpaque(true);
-        scrollPane.setBackground(style().defaultBackgroundColor());
+        final JScrollPane scrollPane = new InspectorScrollPane(_inspection, _table);
         add(scrollPane, BorderLayout.CENTER);
 
         refresh(epoch, true);
@@ -498,10 +489,10 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class BytecodeTableColumnModel extends DefaultTableColumnModel {
 
-        private final Preferences _preferences;
+        private final BytecodeViewerPreferences _preferences;
 
         BytecodeTableColumnModel() {
-            _preferences = new Preferences(JTableBytecodeViewer.globalPreferences(inspection())) {
+            _preferences = new BytecodeViewerPreferences(JTableBytecodeViewer.globalPreferences(inspection())) {
                 @Override
                 public void setIsVisible(ColumnKind columnKind, boolean visible) {
                     super.setIsVisible(columnKind, visible);
@@ -536,7 +527,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             _columns[col].setIdentifier(columnKind);
         }
 
-        public Preferences preferences() {
+        public BytecodeViewerPreferences preferences() {
             return _preferences;
         }
     }
@@ -808,11 +799,14 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
     }
 
+    @Override
     public void redisplay() {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
+        // TODO (mlvdv)  code view hack for style changes
+        _table.setRowHeight(style().codeTableRowHeight());
         invalidate();
         repaint();
     }
