@@ -47,15 +47,4 @@ public class BooleanFieldActor extends FieldActor<BooleanValue> {
     public final void writeBoolean(Object object, boolean value) {
         TupleAccess.writeBoolean(object, offset(), value);
     }
-
-    @FOLD
-    public static BooleanFieldActor findDynamic(Class javaClass, String name) {
-        return (BooleanFieldActor) FieldActor.findInstance(javaClass, name);
-    }
-
-    @FOLD
-    public static BooleanFieldActor findStatic(Class javaClass, String name) {
-        return (BooleanFieldActor) FieldActor.findStatic(javaClass, name);
-    }
-
 }

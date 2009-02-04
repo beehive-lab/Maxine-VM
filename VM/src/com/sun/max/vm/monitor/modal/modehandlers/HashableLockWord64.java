@@ -26,7 +26,7 @@ import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.*;
 
 /**
- * Abstracts hashcode field access to a 64-bit modal lock word.
+ * Abstracts access to a lock word's hashcode bit field.
  *
  * @see ModalLockWord64
  *
@@ -35,9 +35,11 @@ import com.sun.max.vm.*;
 public abstract class HashableLockWord64 extends ModalLockWord64 {
 
     /*
+     * Field layout:
+     *
      * bit [63............................... 1  0]
      *
-     *     [Def. by hashed lock word][ hash ][m][n]
+     *     [     Undefined      ][ hashcode ][m][s]
      *
      */
 
@@ -48,6 +50,12 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
     protected HashableLockWord64() {
     }
 
+    /**
+     * Boxing-safe cast of a <code>Word</code> to a <code>HashableLockWord64</code>.
+     *
+     * @param word the word to cast
+     * @return the cast word
+     */
     @INLINE
     public static HashableLockWord64 as(Word word) {
         if (MaxineVM.isPrototyping()) {
@@ -56,11 +64,25 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
         return UnsafeLoophole.castWord(HashableLockWord64.class, word);
     }
 
+    /**
+     * Gets the value of this lock word's hashcode field.
+     *
+     * @return the hashcode
+     */
     @INLINE
     public final int getHashcode() {
         return asAddress().unsignedShiftedRight(HASHCODE_SHIFT).and(HASHCODE_SHIFTED_MASK).toInt();
     }
 
+    /**
+     * Installs the given hashcode into a <i>copy</i> of this <code>HashableLockWord64</code>. The copied
+     * lock word is returned.
+     *
+     * Note: It is assumed that this lock word does not contain an existing hashcode.
+     *
+     * @param hashcode the hashcode to install
+     * @return a copy of this <code>HashableLockWord64</code> with the installed hashcode
+     */
     @INLINE
     public final HashableLockWord64 setHashcode(int hashcode) {
         return HashableLockWord64.as(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));

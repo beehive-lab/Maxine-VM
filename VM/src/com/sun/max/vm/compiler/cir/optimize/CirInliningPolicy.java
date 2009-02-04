@@ -92,6 +92,10 @@ public class CirInliningPolicy {
 
         @Override
         public boolean shouldInline(CirOptimizer cirOptimizer, CirMethod method, CirValue[] arguments) {
+            if (cirOptimizer.hasNoInlining()) {
+                // static inlining heuristics have been turned off for this method or class
+                return false;
+            }
             final boolean result = BytecodeAssessor.hasSmallStraightlineCode(method.classMethodActor());
             if (result) {
                 Trace.line(7, "should inline: " + method.classMethodActor().qualifiedName());

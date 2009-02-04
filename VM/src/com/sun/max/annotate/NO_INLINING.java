@@ -18,13 +18,23 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.reference;
+package com.sun.max.annotate;
+
+import java.lang.annotation.*;
+
 
 /**
- * @author Bernd Mathiske
+ * Every thus annotated method or class should not have static inlining heuristics applied.
+ * The only inlining that should occur in methods or classes with this annotation should
+ * be methods explicitly marked {@linked INLINE}.
+ *
+ * This annotation exists primarily for annotating method or classes that call other methods
+ * that <b>should not</b> be inlined for testing reasons (e.g. a test() method should not
+ * be inlined into the testing framework that calls test()).
+ *
+ * @author Ben L. Titzer
  */
-public interface ReferenceProcedure {
-
-    void run(Object reference);
-
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface NO_INLINING {
 }

@@ -27,21 +27,24 @@ import com.sun.max.vm.*;
 
 /**
  * Abstracts bit field access to a 64-bit modal lock word.
- * 2 x mode bits are used, allowing 2 lock shapes and 2 modes per shape.
  *
- * Subclasses are expected to respect the field layout, but define the use of
- * fields more specifically. Sub classes should also define the use of and access
- * to the per-shape mode bit (m).
+ * This base class defines only the mode fields; the minimum
+ * necessary to allow eventual decoding of the lock word.
  *
  * @author Simon Wilkinson
  */
 public abstract class ModalLockWord64 extends Word {
 
     /*
+     * Field layout:
+     *
      * bit [63............................... 1  0]     Shape
      *
-     *     [Def. by l. weight monitor scheme][m][0]     Lightweight
-     *     [ Def. by inflated monitor scheme][m][1]     Inflated
+     *     [           Undefined            ][m][0]     Lightweight
+     *     [           Undefined            ][m][1]     Inflated
+     *
+     * 2 mode bits are used, allowing 2 lock shapes and 2 modes per shape.
+     * Sub classes should define the use of and access to the per-shape mode bit (m).
      *
      */
 
@@ -52,6 +55,12 @@ public abstract class ModalLockWord64 extends Word {
     protected ModalLockWord64() {
     }
 
+    /**
+     * Boxing-safe cast of a <code>Word</code> to a <code>ModalLockWord64</code>.
+     *
+     * @param word the word to cast
+     * @return the cast word
+     */
     @INLINE
     public static ModalLockWord64 as(Word word) {
         if (MaxineVM.isPrototyping()) {
@@ -60,11 +69,21 @@ public abstract class ModalLockWord64 extends Word {
         return UnsafeLoophole.castWord(ModalLockWord64.class, word);
     }
 
+    /**
+     * Tests if this lock word is in an inflated mode.
+     *
+     * @return true if inflated; false otherwise
+     */
     @INLINE
     public final boolean isInflated() {
         return asAddress().isBitSet(SHAPE_BIT_INDEX);
     }
 
+    /**
+     * Tests if this lock word is in a lightweight mode.
+     *
+     * @return true if lightweight; false otherwise
+     */
     @INLINE
     public final boolean isLightweight() {
         return !isInflated();

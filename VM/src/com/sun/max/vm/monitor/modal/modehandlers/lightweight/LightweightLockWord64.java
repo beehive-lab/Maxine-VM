@@ -27,20 +27,19 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 
 /**
- * Base class for lightweight lock words.
- *
- * The bit field manipulation is constructed to be endian-agnostic.
- * This could be optimised quite a bit for specific architectures.
+ * Provides common bit-field definitions and method-level access for lightweight lock words.
  *
  * @author Simon Wilkinson
  */
 public abstract class LightweightLockWord64 extends HashableLockWord64 {
 
     /*
+     * Field layout:
+     *
      * bit [63........................................ 1  0]     Shape
      *
      *     [ r. count ][ util  ][  thread ID ][ hash ][m][0]     Lightweight
-     *     [    Def. by inflated monitor scheme      ][m][1]     Inflated
+     *     [                 Undefined               ][m][1]     Inflated
      *
      */
 
@@ -61,6 +60,12 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
     protected LightweightLockWord64() {
     }
 
+    /**
+     * Boxing-safe cast of a <code>Word</code> to a <code>LightweightLockWord64</code>.
+     *
+     * @param word the word to cast
+     * @return the cast word
+     */
     @INLINE
     public static LightweightLockWord64 as(Word word) {
         if (MaxineVM.isPrototyping()) {
@@ -69,26 +74,52 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
         return UnsafeLoophole.castWord(LightweightLockWord64.class, word);
     }
 
+    /**
+     * Gets the value of this lock word's thread ID field.
+     *
+     * @return the hashcode field value
+     */
     @INLINE
     protected final int getThreadID() {
         return asAddress().unsignedShiftedRight(THREADID_SHIFT).and(THREADID_SHIFTED_MASK).toInt();
     }
 
+    /**
+     * Gets the value of this lock word's util field.
+     *
+     * @return the util field value
+     */
     @INLINE
     protected final int getUtil() {
         return asAddress().unsignedShiftedRight(UTIL_SHIFT).and(UTIL_SHIFTED_MASK).toInt();
     }
 
+    /**
+     * Tests if this lock word's recursion count field is at its maximum possible value
+     * for the field's bit width.
+     *
+     * @return true if the recursion count field is at its maximum value; false otherwise
+     */
     @INLINE
     public final boolean countOverflow() {
         return asAddress().unsignedShiftedRight(RCOUNT_SHIFT).equals(RCOUNT_SHIFTED_MASK);
     }
 
+    /**
+     * Tests if this lock word's recursion count field is at its minimum possible value.
+     *
+     * @return true if the recursion count field is at its minimum value; false otherwise
+     */
     @INLINE
     public final boolean countUnderflow() {
         return asAddress().unsignedShiftedRight(RCOUNT_SHIFT).isZero();
     }
 
+    /**
+     * Returns a copy of this lock word with the value of its recursion count field incremented.
+     *
+     * @return a copy lock word with incremented recursion count
+     */
     @INLINE
     public final LightweightLockWord64 incrementCount() {
         // So long as the rcount field is within a byte boundary, we can just use addition
@@ -96,11 +127,21 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
         return LightweightLockWord64.as(asAddress().plus(RCOUNT_INC_WORD));
     }
 
+    /**
+     * Returns a copy of this lock word with the value of its recursion count field decremented.
+     *
+     * @return a copy lock word with decremented recursion count
+     */
     @INLINE
     public final LightweightLockWord64 decrementCount() {
         return LightweightLockWord64.as(asAddress().minus(RCOUNT_INC_WORD));
     }
 
+    /**
+     * Gets the value of this lock word's recursion count field.
+     *
+     * @return the recursion count
+     */
     @INLINE
     public final int getRecursionCount() {
         return asAddress().unsignedShiftedRight(RCOUNT_SHIFT).toInt();
