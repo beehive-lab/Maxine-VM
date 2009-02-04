@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.b.c;
 
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 
@@ -35,10 +36,15 @@ import com.sun.max.vm.compiler.cir.variable.*;
  */
 abstract class JavaSlots implements Cloneable {
 
+    protected final SlotVariableFactory _variableFactory;
+    protected JavaStackSlot[] _slots;
+
     public abstract static class JavaStackSlot {
     }
+
     public static class FillerJavaStackSlot extends JavaStackSlot {
     }
+
     public static class VariableJavaStackSlot extends JavaStackSlot {
         private final CirVariable _cirVariable;
         public VariableJavaStackSlot(CirVariable variable) {
@@ -49,19 +55,20 @@ abstract class JavaSlots implements Cloneable {
         }
     }
 
-    protected final SlotVariableFactory _variableFactory;
-    protected JavaStackSlot[] _slots;
-
     protected JavaSlots(SlotVariableFactory variableFactory) {
         _variableFactory = variableFactory;
         _slots = new JavaStackSlot[_variableFactory.getMaxSlotCount()];
     }
 
     public JavaSlots copy() {
-        Metrics.increment("JavaSlots.copy()");
-        final JavaSlots result = Objects.clone(this);
-        result._slots = Arrays.copy(_slots, new JavaStackSlot[_slots.length]);
-        return result;
+        try {
+            Metrics.increment("JavaSlots.copy()");
+            final JavaSlots result = (JavaSlots) clone();
+            result._slots = Arrays.copy(_slots, new JavaStackSlot[_slots.length]);
+            return result;
+        } catch (CloneNotSupportedException e) {
+            throw ProgramError.unexpected(e);
+        }
     }
 
     protected abstract int effectiveLength();

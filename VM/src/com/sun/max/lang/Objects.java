@@ -26,8 +26,6 @@ import sun.misc.*;
 
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.heap.*;
 
 /**
  * Basic generic utilities for objects.
@@ -68,32 +66,6 @@ public final class Objects {
             }
             c = c.getSuperclass();
         }
-    }
-
-    public static <T> T clone(T object) {
-        if (MaxineVM.isPrototyping()) {
-            Throwable t;
-            final Class<T> type = null;
-            try {
-                final Object result = WithoutAccessCheck.invokeVirtual(object, "clone", new Class[]{}, new Object[]{});
-                return StaticLoophole.cast(type, result);
-            } catch (InvocationTargetException invocationTargetException) {
-                t = invocationTargetException.getTargetException();
-            } catch (Throwable throwable1) {
-                t = throwable1;
-            }
-            if (t instanceof CloneNotSupportedException) {
-                try {
-                    final Object result = _unsafe.allocateInstance(object.getClass());
-                    copy(object, result);
-                    return StaticLoophole.cast(type, result);
-                } catch (Throwable throwable2) {
-                    t = throwable2;
-                }
-            }
-            throw ProgramError.unexpected(t);
-        }
-        return Heap.clone(object);
     }
 
     /**

@@ -353,19 +353,19 @@ public final class HeapReferenceScheme extends AbstractVMScheme implements Refer
 
     @INLINE
     public void writeReference(Reference reference, Offset offset, Reference value) {
-        heapScheme().writeBarrier(reference);
+        heapScheme().writeBarrier(reference, value);
         gripScheme().fromReference(reference).writeGrip(offset, value.toGrip());
     }
 
     @INLINE
     public void writeReference(Reference reference, int offset, Reference value) {
-        heapScheme().writeBarrier(reference);
+        heapScheme().writeBarrier(reference, value);
         gripScheme().fromReference(reference).writeGrip(offset, value.toGrip());
     }
 
     @INLINE
     public void setReference(Reference reference, int displacement, int index, Reference value) {
-        heapScheme().writeBarrier(reference);
+        heapScheme().writeBarrier(reference, value);
         gripScheme().fromReference(reference).setGrip(displacement, index, value.toGrip());
     }
 
@@ -391,13 +391,13 @@ public final class HeapReferenceScheme extends AbstractVMScheme implements Refer
 
     @INLINE
     public Reference compareAndSwapReference(Reference reference, Offset offset, Reference suspectedValue, Reference newValue) {
-        heapScheme().writeBarrier(reference);
+        heapScheme().writeBarrier(reference, newValue);
         return gripScheme().fromReference(reference).compareAndSwapReference(offset, suspectedValue, newValue);
     }
 
     @INLINE
     public Reference compareAndSwapReference(Reference reference, int offset, Reference suspectedValue, Reference newValue) {
-        heapScheme().writeBarrier(reference);
+        heapScheme().writeBarrier(reference, newValue);
         return gripScheme().fromReference(reference).compareAndSwapReference(offset, suspectedValue, newValue);
     }
 }

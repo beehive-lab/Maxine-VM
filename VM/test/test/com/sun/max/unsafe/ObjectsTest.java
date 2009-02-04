@@ -21,7 +21,6 @@
 package test.com.sun.max.unsafe;
 
 import com.sun.max.ide.*;
-import com.sun.max.lang.*;
 
 /**
  * Tests for com.sun.max.util.Objects.
@@ -39,14 +38,6 @@ public class ObjectsTest extends MaxTestCase {
     }
 
     public void test_clone() {
-        final int[] original = new int[100];
-        for (int i = 0; i < original.length; i++) {
-            original[i] = i;
-        }
-        final int[] clone = Objects.clone(original);
-        for (int i = 0; i < 100; i++) {
-            assertTrue(clone[i] == original[i]);
-        }
     }
 
     private static final class C {

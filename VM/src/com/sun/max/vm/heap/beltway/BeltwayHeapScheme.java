@@ -419,7 +419,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
                     SideTable.markStartSideTable(tlab.start());
                 }
                 if (newTLABAddress.isZero()) { // TLAB allocation failed, nursery is full, Trigger GC
-                    //Debug.println("Nursery is full, trigger GC");
                     if (!Heap.collectGarbage(size) || BeltwayHeapScheme._outOfMemory) {
                         throw _outOfMemoryError;
 
@@ -428,12 +427,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
                     return tlab.allocate(size);
                 }
 
-                //Debug.lock();
-                //Debug.print("GC TLAB Set Successfully: ");
-                //Debug.println(newTLABAddress);
-                //Debug.print(" from thread with id: ");
-                //Debug.println(thread.id());
-                //Debug.unlock();
                 //_allocatedTLABS++;
                 initializeTLAB(tlab, newTLABAddress, newSize);
                 return tlab.allocate(size);
@@ -472,7 +465,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         if (newTLABAddress.isZero()) {
             FatalError.unexpected("Nursery is full, trigger GC in the First Allocation(?) Smth is wrong....");
         } else {
-            //Debug.println("TLAB Set Successfully: ");
             initializeTLAB(tlab, newTLABAddress, newSize);
         }
     }
@@ -486,15 +478,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
         if (newTLABAddress.isZero()) {
             FatalError.unexpected("Nursery is full, trigger GC in the First Allocation(?) Smth is wrong!");
         } else {
-            //Debug.print("GC TLAB  Set Successfully: ");
-            //Debug.println(newTLABAddress);
-            // synchronized (_tlabCounterMutex) {
-            //_allocatedTLABS++;
-            // }
             initializeTLAB(tlab, newTLABAddress, newSize);
-            //Debug.print("Initialized TLAB ");
-            // Card Checking
-            //testCardAllignment(newTLABAddress);
 
         }
     }
@@ -536,14 +520,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     @INLINE
     public final Pointer allocate(RuntimeMemoryRegion to, Size size) {
         return null;
-    }
-
-    protected synchronized boolean minorCollect(Size size) {
-        return false;
-    }
-
-    protected synchronized boolean majorCollect(Size size) {
-        return false;
     }
 
     /**
@@ -639,11 +615,6 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     @Override
     public boolean isPinned(Object object) {
         return false;
-    }
-
-    @INLINE
-    @Override
-    public final void writeBarrier(Reference reference) {
     }
 
     @Override

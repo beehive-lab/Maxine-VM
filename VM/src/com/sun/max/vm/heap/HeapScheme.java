@@ -159,5 +159,5 @@ public interface HeapScheme extends VMScheme {
     void runFinalization();
 
     @INLINE
-    void writeBarrier(Reference reference);
+    void writeBarrier(Reference from, Reference to);
 }
