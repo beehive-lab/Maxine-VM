@@ -1870,9 +1870,9 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(11.2,2.0) == 1.2
-            runString = "test(11.2,2.0)";
-            if (1.2f != test.bytecode.BC_frem.test(11.2f, 2.0f)) {
+        // test(12.5,6.0) == 0.5
+            runString = "test(12.5,6.0)";
+            if (0.5f != test.bytecode.BC_frem.test(12.5f, 6.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

@@ -20,7 +20,7 @@
  */
 /*
  * @Harness: java
- * @Runs: (311.0f, 10f) = 1.0f; (11.2f, 2.0f) = 1.2f
+ * @Runs: (311.0f, 10f) = 1.0f; (12.5f, 6.0f) = 0.5f
  */
 package test.bytecode;
 
