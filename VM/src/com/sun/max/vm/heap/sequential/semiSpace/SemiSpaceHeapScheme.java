@@ -244,8 +244,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _toSpace.setSize(size);
 
             final boolean useVirtual = _virtualAllocOption.isPresent();
-            final Pointer fromStart = useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size);
-            final Pointer toStart = useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size);
+            final Pointer fromStart = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
+            final Pointer toStart = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
             _fromSpace.setStart(fromStart);
             _toSpace.setStart(toStart);
 
@@ -446,7 +446,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         }
         final boolean useVirtual = _virtualAllocOption.isPresent();
         if (useVirtual) {
-            VirtualMemory.deallocate(_fromSpace.start(), _fromSpace.size());
+            VirtualMemory.deallocate(_fromSpace.start(), _fromSpace.size(), VirtualMemory.Type.HEAP);
         } else {
             Memory.deallocate(_fromSpace.start());
         }
@@ -456,7 +456,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             Log.println(size.toLong());
         }
         _fromSpace.setSize(size);
-        _fromSpace.setStart(useVirtual ? VirtualMemory.allocate(size) : Memory.allocate(size));
+        _fromSpace.setStart(useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size));
         if (_fromSpace.size().isZero()) {
             _outOfMemory = true;
             return false;

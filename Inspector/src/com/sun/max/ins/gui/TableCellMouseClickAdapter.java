@@ -18,7 +18,7 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.object;
+package com.sun.max.ins.gui;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,7 +27,6 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
 
 
 /**
@@ -40,7 +39,7 @@ public class TableCellMouseClickAdapter extends InspectorMouseClickAdapter {
 
     private final JTable _table;
 
-    TableCellMouseClickAdapter(Inspection inspection, JTable table) {
+    public TableCellMouseClickAdapter(Inspection inspection, JTable table) {
         super(inspection);
         _table = table;
     }

@@ -25,12 +25,18 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.*;
 
+import com.sun.max.ins.*;
+
 /**
  * An adaptor for specifying styles.
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorStyleAdapter implements InspectorStyle {
+public abstract class InspectorStyleAdapter extends AbstractInspectionHolder implements InspectorStyle {
+
+    protected InspectorStyleAdapter(Inspection inspection) {
+        super(inspection);
+    }
 
     // Window, Frame, Desktop attributes
     public Color defaultBackgroundColor() {
@@ -42,11 +48,11 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
     public Color frameBorderFlashColor() {
         return Color.RED;
     }
-    private Border _defaultPaneTopBorder = BorderFactory.createMatteBorder(3, 0, 0, 0, defaultBorderColor());
+    private Border _defaultPaneTopBorder = BorderFactory.createMatteBorder(2, 0, 0, 0, defaultBorderColor());
     public Border defaultPaneTopBorder() {
         return _defaultPaneTopBorder;
     }
-    private Border _defaultPaneBottomBorder = BorderFactory.createMatteBorder(0, 0, 3, 0, defaultBorderColor());
+    private Border _defaultPaneBottomBorder = BorderFactory.createMatteBorder(0, 0, 2, 0, defaultBorderColor());
     public Border defaultPaneBottomBorder() {
         return _defaultPaneBottomBorder;
     }
@@ -465,6 +471,19 @@ public abstract class InspectorStyleAdapter implements InspectorStyle {
         return defaultTableShowHorizontalLines();
     }
     public boolean objectTableShowVerticalLines() {
+        return defaultTableShowVerticalLines();
+    }
+
+    public Dimension threadLocalsTableIntercellSpacing() {
+        return defaultTableIntercellSpacing();
+    }
+    public int threadLocalsTableRowHeight() {
+        return defaultTableRowHeight();
+    }
+    public boolean threadLocalsTableShowHorizontalLines() {
+        return defaultTableShowHorizontalLines();
+    }
+    public boolean threadLocalsTableShowVerticalLines() {
         return defaultTableShowVerticalLines();
     }
 

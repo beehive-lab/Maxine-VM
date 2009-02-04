@@ -25,6 +25,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -653,4 +654,13 @@ public class BootImage {
         outputStream.write(_dataPrototype.codeData());
         _trailer.write(outputStream);
     }
+
+    @C_FUNCTION
+    static native Address nativeGetEndOfCodeRegion();
+
+    public static Address getEndOfCodeRegion() {
+        return nativeGetEndOfCodeRegion();
+    }
+
+
 }

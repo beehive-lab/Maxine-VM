@@ -24,12 +24,30 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.schemes.*;
 
 /**
- * Base communication required between mode handlers.
+ * Base communication required between mode handlers in a locking mode hierarchy.
  *
  * @author Simon Wilkinson
  */
 public interface ModeHandler {
+
+    /**
+     * Informs the ModeHandler of the monitor scheme it is defined within.
+     *
+     * @param monitorScheme the VM's monitor scheme
+     */
     void setMonitorScheme(ModalMonitorScheme monitorScheme);
+
+    /**
+     * Performs any initialization necessary for the given phase.
+     *
+     * @param phase the current VM phase
+     */
     void initialize(MaxineVM.Phase phase);
+
+    /**
+     * Returns this ModeHandler's delegate ModeHandler within the locking mode hierarchy.
+     *
+     * @return this ModeHandler's delegate
+     */
     ModeHandler delegate();
 }

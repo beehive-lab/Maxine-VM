@@ -28,6 +28,13 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
+ * A StandardJavaMonitor provides Java monitor services on behalf of another object (the <b>bound</b> object).
+ *
+ * Monitor enter and exit are implemented via a per-monitor mutex.
+ * Wait and notify are implemented via a per-monitor waiting list and a per-thread condition variable
+ * on which a thread suspends itself. A per-thread condition variable is necessary in order to implement
+ * single thread notification.
+ *
  * @author Simon Wilkinson
  */
 public class StandardJavaMonitor extends AbstractJavaMonitor {
@@ -208,6 +215,16 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         Log.print("}");
     }
 
+    /**
+     * Specialised JavaMonitor intended to be bound to the
+     * VMThreadMap.ACTIVE object at image build time.
+     *
+     * MonitorEnter semantics are slightly modified to
+     * halt a meta-circular regression arising from thread termination clean-up.
+     * See VmThread.beTerminated().
+     *
+     * @author Simon Wilkinson
+     */
     static class VMThreadMapJavaMonitor extends StandardJavaMonitor {
 
         @Override
@@ -224,6 +241,14 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         }
     }
 
+    /**
+     * Specialised JavaMonitor intended to be bound to the HeapScheme object at image build time.
+     *
+     * This monitor checks for the GC thread attempting to acquire the HeapScheme lock, which is
+     * deadlock prone.
+     *
+     * @author Simon Wilkinson
+     */
     static class HeapSchemeDeadlockDetectionJavaMonitor extends StandardJavaMonitor {
 
         private boolean _elideForDeadlockStackTrace = false;

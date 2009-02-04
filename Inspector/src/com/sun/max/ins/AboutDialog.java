@@ -59,17 +59,13 @@ public final class AboutDialog extends InspectorDialog {
     public AboutDialog(Inspection inspection) {
         super(inspection, "About Maxine", true);
 
-        final JPanel dialogPanel = new JPanel();
-        dialogPanel.setLayout(new BorderLayout());
-        dialogPanel.setOpaque(true);
-        dialogPanel.setBackground(style().defaultBackgroundColor());
+        final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
 
         _textArea.setLineWrap(true);
         _textArea.setWrapStyleWord(true);
         _textArea.setColumns(50);
         _textArea.setRows(17);
-        final JScrollPane scrollPane = new JScrollPane(_textArea);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection, _textArea);
         dialogPanel.add(scrollPane, BorderLayout.CENTER);
         dialogPanel.add(new JButton(new AbstractAction("Close") {
             public void actionPerformed(ActionEvent e) {

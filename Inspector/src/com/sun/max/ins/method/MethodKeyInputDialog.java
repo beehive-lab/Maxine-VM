@@ -213,17 +213,14 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         _returnTypeField = new JTextField(30);
         _parametersField = new JTextArea(5, 30);
 
-        final JLabel holderLabel = new JLabel("Declaring class:");
+        final TextLabel holderLabel = new TextLabel(inspection, "Declaring class:");
         final JButton holderButton = new JButton(new TypeFieldChooser("...", _holderField));
-
-
         final JLabel nameLabel = new JLabel("Name:");
-
-        final JLabel returnTypeLabel = new JLabel("Return type:");
+        final TextLabel returnTypeLabel = new TextLabel(inspection, "Return type:");
         final JButton returnTypeButton = new JButton(new TypeFieldChooser("...", _returnTypeField));
 
-        final JScrollPane parametersPane = new JScrollPane(_parametersField);
-        final JLabel parametersLabel = new JLabel("Parameters:");
+        final JScrollPane parametersPane = new InspectorScrollPane(inspection, _parametersField);
+        final TextLabel parametersLabel = new TextLabel(inspection, "Parameters:");
         final JButton parametersButton = new JButton(new TypeFieldChooser("...", _parametersField));
 
         _okButton = new JButton(new AbstractAction("OK") {
@@ -238,12 +235,12 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
             }
         });
 
-        final JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        final JPanel statusPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEFT));
         statusPanel.add(new JLabel("Method key:"));
         statusPanel.add(_methodKeyMessage);
         statusPanel.setBorder(BorderFactory.createEtchedBorder());
 
-        final JPanel inputPanel = new JPanel();
+        final JPanel inputPanel = new InspectorPanel(inspection);
         final GroupLayout layout = new GroupLayout(inputPanel);
         inputPanel.setLayout(layout);
         layout.setAutoCreateContainerGaps(true);

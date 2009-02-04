@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.cir.optimize;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.CirTraceObserver.*;
@@ -93,4 +94,8 @@ public class CirOptimizer {
         } while (inflated);
     }
 
+    public boolean hasNoInlining() {
+        return classMethodActor().getAnnotation(NO_INLINING.class) != null ||
+        classMethodActor().holder().getAnnotation(NO_INLINING.class) != null;
+    }
 }

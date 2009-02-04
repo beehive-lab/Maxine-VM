@@ -84,8 +84,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
         _locals = new WordValueLabel[classMethodActor.codeAttribute().maxLocals()];
         _stack =  new WordValueLabel[classMethodActor.codeAttribute().maxStack()];
-        _localsPanel = new JPanel(new SpringLayout());
-        _stackPanel = new JPanel(new SpringLayout());
+        _localsPanel = new InspectorPanel(inspection, new SpringLayout());
+        _stackPanel = new InspectorPanel(inspection, new SpringLayout());
         _stackPanel.setBackground(InspectorStyle.SunYellow2);
         _stackDepth = 0;
         _showAll = true;
@@ -285,17 +285,16 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     @Override
     protected void createView(long epoch) {
         initPanelView();
-        final JPanel mainPanel = new JPanel();
+        final JPanel mainPanel = new InspectorPanel(inspection());
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.PAGE_AXIS));
-        final JCheckBox showAll = new JCheckBox("show all");
+        final JCheckBox showAll = new InspectorCheckBox(inspection(), "show all", null, true);
         showAll.setMnemonic(KeyEvent.VK_C);
-        showAll.setSelected(true);
         showAll.addItemListener(this);
         showAll.setAlignmentX(Component.LEFT_ALIGNMENT);
         mainPanel.add(showAll);
         mainPanel.add(_localsPanel);
         mainPanel.add(_stackPanel);
-        final JScrollPane scrollPane = new JScrollPane(mainPanel);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), mainPanel);
         frame().setContentPane(scrollPane);
     }
 

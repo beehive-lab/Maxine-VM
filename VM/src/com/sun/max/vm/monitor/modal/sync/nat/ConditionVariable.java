@@ -69,6 +69,9 @@ public final class ConditionVariable {
     public ConditionVariable() {
     }
 
+    /**
+     * Performs native allocation for this <code>ConditionVariable</code>.
+     */
     public void allocate() {
         _condition =  Memory.mustAllocate(_size);
         nativeConditionInitialize(_condition);
@@ -78,16 +81,45 @@ public final class ConditionVariable {
         return _condition.isZero();
     }
 
+    /**
+     * Causes the current thread to wait until this <code>ConditionVariable</code>
+     * is signaled via {@link #threadNotify(boolean all) threadNotify()}.
+     * If a timeout > 0 is specified, then the thread may return after this timeout
+     * has elapsed without being signaled.
+     *
+     * The current thread must own the given mutex when calling this method, otherwise the
+     * results are undefined. Before blocking, the current thread will release the mutex.
+     * On return, the current thread is guaranteed to own the mutex.
+     *
+     * The thread may return early if its <code>java.lang.Thread</code> is interrupted via
+     * {@link java.lang.Thread#interrupt() interrupt()} whilst blocking.
+     * In this case, this method returns returns true. In all other cases it returns false.
+     *
+     * @param mutex the mutex on which to block
+     * @param timeoutMilliSeconds the maximum time to block. No timeout is used if timeoutMilliSeconds == 0.
+     * @return true if the current thread was interrupted whilst blocking; false otherwise
+     */
     @INLINE
     public boolean threadWait(Mutex mutex, long timeoutMilliSeconds) {
         return nativeConditionWait(mutex.asPointer(), _condition, timeoutMilliSeconds);
     }
 
+    /**
+     * Causes one or all of the threads {@link #threadWait(Mutex mutex, long timeoutMilliSeconds) waiting} on this <code>ConditionVariable</code> to
+     * wake-up.
+     *
+     * @param all notify all threads
+     * @return true if an error occured in native code; false otherwise
+     */
     @INLINE
     public boolean threadNotify(boolean all) {
         return nativeConditionNotify(_condition, all);
     }
 
+    /**
+     * Returns a pointer to this <code>ConditionVariable</code>'s native data structure.
+     * @return
+     */
     @INLINE
     public Pointer asPointer() {
         return _condition;

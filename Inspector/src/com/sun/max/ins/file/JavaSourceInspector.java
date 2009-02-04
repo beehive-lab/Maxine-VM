@@ -51,8 +51,7 @@ public final class JavaSourceInspector  extends FileInspector {
         _textArea.setFont(style().javaNameFont());
         _textArea.setCaretPosition(0);
 
-        final JScrollPane scrollPane = new JScrollPane(_textArea);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _textArea);
         scrollPane.setPreferredSize(inspection().geometry().javaSourceFramePrefSize());
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         frame().setContentPane(scrollPane);

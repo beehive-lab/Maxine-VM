@@ -100,8 +100,6 @@ public final class ArrayElementsTable extends InspectorTable {
         _columnModel = new ArrayElementsTableColumnModel(_objectInspector);
         setModel(_model);
         setColumnModel(_columnModel);
-        setOpaque(true);
-        setBackground(style().defaultBackgroundColor());
         setFillsViewportHeight(true);
         setShowHorizontalLines(style().objectTableShowHorizontalLines());
         setShowVerticalLines(style().objectTableShowVerticalLines());

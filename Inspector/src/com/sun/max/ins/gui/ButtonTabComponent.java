@@ -77,10 +77,12 @@ public class ButtonTabComponent extends InspectorPanel {
         setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
     }
 
+    @Override
     public void refresh(long epoch, boolean force) {
         // No remote data that needs reading.
     }
 
+    @Override
     public void redisplay() {
         // No view configurations that we're willing to fuss with.
     }

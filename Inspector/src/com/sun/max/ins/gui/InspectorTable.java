@@ -22,18 +22,42 @@ package com.sun.max.ins.gui;
 
 import javax.swing.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 
 /**
- * Base class for Inspector tables.
+ * A table specialized for use in the Maxine Inspector.
  *
  * @author Michael Van De Vanter
  */
 public abstract class InspectorTable extends JTable implements Prober, InspectionHolder {
 
+    /**
+     *   Notification service for table based views that allow columns to be turned on and off.
+     */
+    public interface ColumnChangeListener {
+
+        /**
+         * Notifies that the set of visible columns has been changed.
+         */
+        void columnPreferenceChanged();
+    }
+
     private final Inspection _inspection;
+
+    /**
+     * Creates a new {@JTable} for use in the {@link Inspection}.
+     */
+    protected InspectorTable(Inspection inspection) {
+        super();
+        _inspection = inspection;
+        setOpaque(true);
+        setBackground(inspection.style().defaultBackgroundColor());
+        getTableHeader().setBackground(inspection.style().defaultBackgroundColor());
+        getTableHeader().setFont(style().defaultTextFont());
+    }
 
     public final Inspection inspection() {
         return _inspection;
@@ -55,9 +79,33 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return _inspection.teleVM();
     }
 
-    protected InspectorTable(Inspection inspection) {
-        super();
-        _inspection = inspection;
+    private IdentityHashSet<ColumnChangeListener> _columnChangeListeners = new IdentityHashSet<ColumnChangeListener>();
+
+    /**
+     * Adds a listener for view update when column visibility changes.
+     */
+    public void addColumnChangeListener(ColumnChangeListener listener) {
+        synchronized (this) {
+            _columnChangeListeners.add(listener);
+        }
+    }
+
+    /**
+     * Remove a listener for view update when column visibility changed.
+     */
+    public void removeColumnChangeListener(ColumnChangeListener listener) {
+        synchronized (this) {
+            _columnChangeListeners.remove(listener);
+        }
+    }
+
+    /**
+     * Notifies listeners that the column visibility preferences for the table have changed.
+     */
+    public void fireColumnPreferenceChanged() {
+        for (ColumnChangeListener listener : _columnChangeListeners.clone()) {
+            listener.columnPreferenceChanged();
+        }
     }
 
 }

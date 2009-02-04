@@ -48,8 +48,9 @@ public class LowAddressCodeManager extends CodeManager {
 
     /**
      * Get the next free code region. In this implementation, virtual memory is allocated
-     * for the next empty code region in the low part of a 32-bit address space.
-     * @return a reference to the next free code region
+     * somewhere in the 31 bit address space and the returned address determines the
+     * code region object in the code regions array.
+     * @return a reference to the code region
      */
     @Override
     protected CodeRegion makeFreeCodeRegion() {
@@ -57,7 +58,7 @@ public class LowAddressCodeManager extends CodeManager {
             Problem.unimplemented("cannot free code regions");
         }
 
-        final Address address = VirtualMemory.allocateIn31BitSpace(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
+        final Address address = VirtualMemory.allocateIn31BitSpace(Size.fromInt(RUNTIME_CODE_REGION_SIZE), VirtualMemory.Type.CODE);
         if (address.isZero() || address.isAllOnes()) {
             if (_numberOfRuntimeCodeRegionsInUse == 0) {
                 ProgramError.unexpected("could not allocate first runtime memory region");

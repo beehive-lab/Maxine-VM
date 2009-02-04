@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.method;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.lang.*;
@@ -44,7 +42,7 @@ public final class DirInspector extends IrInspector<DirInspector> {
 
         _dirPanel = new DirPanel(inspection(), _dirMethod);
 
-        frame().setContentPane(new JScrollPane(_dirPanel));
+        frame().setContentPane(new InspectorScrollPane(inspection(), _dirPanel));
     }
 
     private DirInspector(Inspection inspection, Residence residence, Reference dirMethodReference) {
