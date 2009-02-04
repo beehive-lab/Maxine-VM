@@ -152,12 +152,20 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
         }
     }
 
+    private DFPR doublePrecisionParameterRegister(int parameterIndex) {
+        return (DFPR) _targetABI.floatingPointParameterRegisters().get(2 * parameterIndex);
+    }
+
+    private SFPR singlePrecisionParameterRegister(int parameterIndex) {
+        return (SFPR) _targetABI.floatingPointParameterRegisters().get((2 * parameterIndex) + 1);
+    }
+
     @Override
     protected void assignDoubleTemplateArgument(int parameterIndex, double argument) {
         try {
             final GPR scratchRegister = GPR.G1;
             final GPR scratchRegister2 = GPR.O7;
-            final DFPR register = (DFPR) _targetABI.floatingPointParameterRegisters().get(parameterIndex);
+            final DFPR register = doublePrecisionParameterRegister(parameterIndex);
             _asm.reset();
             if (argument == 0) {
                 _asm.clr(scratchRegister);
@@ -176,7 +184,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
     protected void assignFloatTemplateArgument(int parameterIndex, float argument) {
         try {
             final GPR scratchRegister = _targetABI.scratchRegister();
-            final SFPR register = (SFPR) _targetABI.floatingPointParameterRegisters().get(parameterIndex);
+            final SFPR register = singlePrecisionParameterRegister(parameterIndex);
             _asm.reset();
             if (argument == 0) {
                 _asm.clr(scratchRegister);

@@ -41,7 +41,6 @@ import com.sun.max.vm.type.*;
  * TODO: for now only 64-bit is supported. You'll have to refactor this (in particular, regarding STACK_BIAS usage)
  * to adapt to 32 bits.
  *
- * @author Bernd Mathiske
  * @author Laurent Daynes
  */
 public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
@@ -128,10 +127,25 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
     protected static final IndexedSequence<SPARCEirRegister> _integerOutRegisters = new ArraySequence<SPARCEirRegister>(O0, O1, O2, O3, O4, O5);
     protected static final IndexedSequence<SPARCEirRegister> _integerInRegisters = new ArraySequence<SPARCEirRegister>(I0, I1, I2, I3, I4, I5);
 
-    // FIXME: this is different from the SPARC / Solaris ABI. To be able to model it, we'd have to split the notion of floating point register into single and double precision,
-    // or into FLOAT and DOUBLE kinds (float would use F1, F3, F5 etc..., double would use D0 (i.e., F0), D2, D4, etc... The same change would be needed for TargetABI.
-    protected static final IndexedSequence<SPARCEirRegister> _floatingPointOutRegisters = new ArraySequence<SPARCEirRegister>(F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28);
-    protected static final IndexedSequence<SPARCEirRegister> _floatingPointInRegisters = new ArraySequence<SPARCEirRegister>(F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28);
+    // The SPARC / Solaris ABI distinguishes 3 categories of floating point registers
+    // that overlaps over the entire set of floating point registers: single, double and quad precisions.
+    // We currently do not use operations that requires quad-precisions registers so we ignore thse.
+    // The FLOAT and DOUBLE kinds map directly to single and double precision register type.
+    // SPARC /Solaris ABI makes single precision values passed in odd-numbered registers (F1, F3, F5, etc...), whereas double
+    // precisions are passed in even-numbered registers (D0, D2, D4, etc...). Each double precision register actually maps phisically
+    // to two consecutives single-precision registers (e.g., D0 == F0 + F1, D2 = F2 + F3, etc...) for the first 32 registers. Subsequent
+    // registers (D32 and up) are actual double precision registers.
+    protected static final IndexedSequence<SPARCEirRegister> _floatingPointOutRegisters =
+        new ArraySequence<SPARCEirRegister>(
+                        F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
+                        F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
+    protected static final IndexedSequence<SPARCEirRegister> _floatingPointInRegisters = new ArraySequence<SPARCEirRegister>(_floatingPointOutRegisters);
+
+    protected static final IndexedSequence<SPARCEirRegister> _singlePrecisionParameterRegisters =
+        new ArraySequence<SPARCEirRegister>(F1, F3, F5, F7, F9,  F11, F13, F15, F17, F19, F21, F23, F25, F27, F29, F31);
+    protected static final IndexedSequence<SPARCEirRegister> _doublePrecisionParameterRegisters =
+        new ArraySequence<SPARCEirRegister>(F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28, F30);
+
     private static final IndexedSequence<SPARCEirRegister> _emptyRegisterSet = new ArraySequence<SPARCEirRegister>();
 
     @Override
@@ -139,21 +153,23 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         final EirLocation[] result = new EirLocation[kinds.length];
         final IndexedSequence<SPARCEirRegister> integerParameterRegisters = stackSlotPurpose.equals(EirStackSlot.Purpose.PARAMETER) ? _integerInRegisters : _integerOutRegisters;
         // This strictly follows the Solaris / SPARC 64-bits ABI.
-        // Each arguments match a position on the stack, and each stack position correspond to a specific registers.
+        // Each argument matches a position on the stack, and each stack position corresponds to a specific register.
         // So it may be the case that a register is not used. For instance, consider the following call:
         //                          SP-relative offset to reserved stack slot
         // f( char,         %o0     BIAS + RW_SAVING_AREA + 0 * wordSize
         //    float,        %f3     BIAS + RW_SAVING_AREA + 1 * wordSize
         //    short,        %o2     BIAS + RW_SAVING_AREA + 2 * wordSize
-        //    double,       %d6     BIAS + RW_SAVING_AREA + 3 * wordSize
-        //    int,          %o5     BIAS + RW_SAVING_AREA + 5 * wordSize
-        //    int           -       BIAS + RW_SAVING_AREA + 6 * wordSize
+        //    double,       %f6     BIAS + RW_SAVING_AREA + 3 * wordSize
+        //    int,          %o4     BIAS + RW_SAVING_AREA + 5 * wordSize
+        //    int           %o5     BIAS + RW_SAVING_AREA + 6 * wordSize
         //
-        // In this case, %o1, %o3 and %o4 aren't used. This means that when compiling the callee, we should add the corresponding %i registers to the pool
-        // of available registers. TODO: add a "unused parameter registers" function that takes a method signature and return a Pool of register to the reg alloc.
+        // In this case, %o1 and %o3 aren't used. This means that when compiling the callee,
+        // we may add the corresponding %i registers to the pool of available registers
+        // (especially since these are already caller-saved by the caller).
 
         int stackOffset = 0;
         for (int i = 0; i < kinds.length; i++) {
+            final IndexedSequence<SPARCEirRegister> parameterRegisters;
             switch (kinds[i].asEnum()) {
                 case BYTE:
                 case BOOLEAN:
@@ -162,29 +178,25 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
                 case INT:
                 case LONG:
                 case WORD:
-                case REFERENCE: {
-                    if (i < integerParameterRegisters.length()) {
-                        result[i] = integerParameterRegisters.get(i);
-                    } else {
-                        result[i] = new EirStackSlot(stackSlotPurpose, stackOffset);
-                        stackOffset += stackSlotSize();
-                    }
+                case REFERENCE:
+                    parameterRegisters = integerParameterRegisters;
                     break;
-                }
                 case FLOAT:
-                case DOUBLE: {
-                    if (i < _floatingPointOutRegisters.length()) {
-                        result[i] = _floatingPointOutRegisters.get(i);
-                    } else {
-                        result[i] = new EirStackSlot(stackSlotPurpose, stackOffset);
-                        stackOffset += stackSlotSize();
-                    }
+                    parameterRegisters = _singlePrecisionParameterRegisters;
                     break;
-                }
+                case DOUBLE:
+                    parameterRegisters = _doublePrecisionParameterRegisters;
+                    break;
                 default: {
                     ProgramError.unknownCase();
                     return null;
                 }
+            }
+            if (i < parameterRegisters.length()) {
+                result[i] = parameterRegisters.get(i);
+            } else {
+                result[i] = new EirStackSlot(stackSlotPurpose, stackOffset);
+                stackOffset += stackSlotSize();
             }
         }
         return result;
@@ -272,15 +284,6 @@ public abstract class SPARCEirABI extends EirABI<SPARCEirRegister> {
         final GPR[] result = new GPR[_integerOutRegisters.length()];
         for (int i = 0; i < _integerOutRegisters.length(); i++) {
             final SPARCEirRegister.GeneralPurpose r = (SPARCEirRegister.GeneralPurpose) _integerOutRegisters.get(i);
-            result[i] = r.as();
-        }
-        return result;
-    }
-
-    private static FPR[] getTargetFloatingPointParameterRegisters() {
-        final FPR[] result = new FPR[_floatingPointOutRegisters.length()];
-        for (int i = 0; i < _floatingPointOutRegisters.length(); i++) {
-            final SPARCEirRegister.FloatingPoint r = (SPARCEirRegister.FloatingPoint) _floatingPointOutRegisters.get(i);
             result[i] = r.as();
         }
         return result;

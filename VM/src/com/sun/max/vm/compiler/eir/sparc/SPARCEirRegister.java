@@ -194,7 +194,7 @@ public abstract class SPARCEirRegister extends EirRegister {
 
         @Override
         public Kind kind() {
-            return Kind.DOUBLE;
+            return Kind.FLOAT;
         }
 
         /**
@@ -343,6 +343,11 @@ public abstract class SPARCEirRegister extends EirRegister {
 
         private DoublePrecision(int value) {
             super(value);
+        }
+
+        @Override
+        public Kind kind() {
+            return Kind.DOUBLE;
         }
 
         @Override

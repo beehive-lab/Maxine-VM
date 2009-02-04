@@ -31,7 +31,6 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.sparc.*;
 
 /**
- * @author Bernd Mathiske
  * @author Laurent Daynes
  */
 public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
@@ -42,8 +41,9 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
     protected static final IndexedSequence<GPR> _incomingIntegerParameterRegisters = new ArraySequence<GPR>(I0, I1, I2, I3, I4, I5);
     protected static final IndexedSequence<GPR> _outgoingIntegerParameterRegisters = new ArraySequence<GPR>(O0, O1, O2, O3, O4, O5);
 
-    // FIXME: this differs from the SPARC / Solaris ABI. See comment in SPARCEirABI.
-    protected static final IndexedSequence<FPR> _floatingPointParameterRegisters = new ArraySequence<FPR>(F0, F2, F4, F6, F8, F10, F12, F14, F16, F18, F20, F22, F24, F26, F28);
+    protected static final IndexedSequence<FPR> _floatingPointParameterRegisters = new ArraySequence<FPR>(
+                        F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
+                        F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31);
 
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
                     IndexedSequence<GPR> integerIncomingParameterRegisters,
@@ -57,17 +57,27 @@ public abstract class SPARCTargetABIsScheme extends TargetABIsScheme<GPR, FPR> {
 
     public static TargetABI<GPR, FPR> createSPARC64TargetABI(RegisterRoleAssignment<GPR, FPR> registerRoleAssignment, CallEntryPoint callEntryPoint,
                     IndexedSequence<FPR> floatingPointParameterRegisters, boolean useRegisterWindows, boolean callPushesReturnAddress) {
-        return createSPARC64TargetABI(registerRoleAssignment, callEntryPoint,
-                        _incomingIntegerParameterRegisters, _outgoingIntegerParameterRegisters,
-                        floatingPointParameterRegisters, useRegisterWindows, callPushesReturnAddress);
+        return createSPARC64TargetABI(
+                        registerRoleAssignment,
+                        callEntryPoint,
+                        _incomingIntegerParameterRegisters,
+                        _outgoingIntegerParameterRegisters,
+                        floatingPointParameterRegisters,
+                        useRegisterWindows,
+                        callPushesReturnAddress);
     }
 
-    public SPARCTargetABIsScheme(VMConfiguration vmConfiguration,
+    public SPARCTargetABIsScheme(
+                    VMConfiguration vmConfiguration,
                     TargetABI<GPR, FPR> jitABI,
                     TargetABI<GPR, FPR> optimizedJavaABI) {
         super(vmConfiguration,
-                        // FIXME: cannot model SPARC / Solaris native  -- see comment above
-                        createSPARC64TargetABI(_nativeRegisterRoleAssignment, CallEntryPoint.C_ENTRY_POINT, _incomingIntegerParameterRegisters, _outgoingIntegerParameterRegisters, null, false, false),
-              jitABI, optimizedJavaABI, null);
+                        createSPARC64TargetABI(
+                                        _nativeRegisterRoleAssignment,
+                                        CallEntryPoint.C_ENTRY_POINT,
+                                        _incomingIntegerParameterRegisters,
+                                        _outgoingIntegerParameterRegisters,
+                                        null, false, false),
+                                        jitABI, optimizedJavaABI, null);
     }
 }

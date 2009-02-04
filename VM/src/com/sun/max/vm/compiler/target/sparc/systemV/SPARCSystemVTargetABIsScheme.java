@@ -35,9 +35,6 @@ import com.sun.max.vm.compiler.target.sparc.*;
  * The JIT doesn't use register windows for jit-ed code's stack frame and uses an explicitly managed frame pointer
  * using the local register L0.
  *
- * TODO: floating point parameter registers
- *
- * @author Bernd Mathiske
  * @author Laurent Daynes
  */
 public final class SPARCSystemVTargetABIsScheme extends SPARCTargetABIsScheme {
