@@ -95,9 +95,7 @@ public final class MemoryInspector extends Inspector {
     private int _numberOfGroupsPerLine;
 
     private JComponent createController() {
-        final JPanel controller = new JPanel(new SpringLayout());
-        controller.setOpaque(true);
-        controller.setBackground(style().defaultBackgroundColor());
+        final JPanel controller = new InspectorPanel(inspection(), new SpringLayout());
 
         controller.add(new TextLabel(inspection(), "start:"));
         final AddressInputField.Hex addressField = new AddressInputField.Hex(inspection(), _address) {
@@ -185,7 +183,7 @@ public final class MemoryInspector extends Inspector {
         super.refreshView(epoch, force);
     }
 
-    private JPanel _contentPane = new JPanel();
+    private JPanel _contentPane;
 
     private static final Predicate<Inspector> _allMemoryInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
@@ -210,16 +208,13 @@ public final class MemoryInspector extends Inspector {
         frame().menu().add(inspection().getDeleteInspectorsAction(_otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
         frame().menu().add(inspection().getDeleteInspectorsAction(_allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
 
+        _contentPane = new InspectorPanel(inspection());
         frame().setContentPane(_contentPane);
         _contentPane.removeAll();
         _contentPane.setLayout(new BoxLayout(_contentPane, BoxLayout.Y_AXIS));
-        _contentPane.setOpaque(true);
-        _contentPane.setBackground(style().defaultBackgroundColor());
         _contentPane.add(createController());
 
-        final JPanel view = new JPanel(new SpringLayout());
-        view.setOpaque(true);
-        view.setBackground(style().defaultBackgroundColor());
+        final JPanel view = new InspectorPanel(inspection(), new SpringLayout());
         _contentPane.add(view);
 
         int numberOfLines = _numberOfGroups / _numberOfGroupsPerLine;

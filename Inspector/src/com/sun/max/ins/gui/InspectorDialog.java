@@ -27,14 +27,25 @@ import com.sun.max.tele.*;
 
 
 /**
- * Base class for Inspector dialogs.
+ * A dialog specialized for use in the Maxine Inspector.
  *
  * @author Michael Van De Vanter
- *
  */
-public abstract class InspectorDialog extends JDialog {
+public abstract class InspectorDialog extends JDialog implements InspectionHolder {
 
     private final Inspection _inspection;
+
+    /**
+     * Creates an instance of {@link JDialog}, specialized for use in the Maxine Inspector.
+     *
+     * @param title title of the dialog, appears in frame
+     * @param modal should the dialog be modal, i.e. capture all user input when visible?
+     */
+    protected InspectorDialog(Inspection inspection, String title, boolean modal) {
+        super(inspection, title, modal);
+        _inspection = inspection;
+        setBackground(inspection.style().defaultBackgroundColor());
+    }
 
     public final Inspection inspection() {
         return _inspection;
@@ -44,13 +55,21 @@ public abstract class InspectorDialog extends JDialog {
         return _inspection.style();
     }
 
-    public final TeleVM teleVM() {
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    public InspectionActions actions() {
+        return _inspection.actions();
+    }
+
+    public TeleVM teleVM() {
         return _inspection.teleVM();
     }
 
-    protected InspectorDialog(Inspection inspection, String title, boolean modal) {
-        super(inspection, title, modal);
-        _inspection = inspection;
+    public void redisplay() {
     }
 
+    public void refresh(long epoch, boolean force) {
+    }
 }

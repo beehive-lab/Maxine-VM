@@ -29,10 +29,14 @@ import com.sun.max.ins.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * /**
+ * A text field specialized for use in the Maxine Inspector.
+ *
  * An editable JTextField that lets you enter a positive integer number
  * in a specified range, using digits of a specified radix/base.
  *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public abstract class AddressInputField extends JTextField {
 

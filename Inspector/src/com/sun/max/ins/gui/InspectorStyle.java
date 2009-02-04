@@ -259,6 +259,15 @@ public interface InspectorStyle {
     /** Choice to display vertical lines in table-based object views. */
     boolean objectTableShowVerticalLines();
 
+    /** Spacing between cells in table-based VM thread locals views. */
+    Dimension threadLocalsTableIntercellSpacing();
+    /** Row height in table-based VM thread locals views. */
+    int threadLocalsTableRowHeight();
+    /** Choice to display horizontal lines in table-based VM thread locals views. */
+    boolean threadLocalsTableShowHorizontalLines();
+    /** Choice to display vertical lines in table-based VM thread locals views. */
+    boolean threadLocalsTableShowVerticalLines();
+
     /** Spacing between cells in table-based code views. */
     Dimension codeTableIntercellSpacing();
     /** Row height in table-based code views. */

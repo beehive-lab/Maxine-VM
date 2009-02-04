@@ -67,7 +67,7 @@ public final class MemoryWordInspector extends Inspector {
     private final int _wordHexChars;
 
     private JComponent createController() {
-        final JPanel controller = new JPanel(new SpringLayout());
+        final JPanel controller = new InspectorPanel(inspection(), new SpringLayout());
 
         final AddressInputField.Hex addressField = new AddressInputField.Hex(inspection(), _address) {
             @Override
@@ -270,7 +270,7 @@ public final class MemoryWordInspector extends Inspector {
         refreshView(true);
     }
 
-    private JPanel _contentPane = new JPanel();
+    private JPanel _contentPane;
 
     private static final Predicate<Inspector> _allMemoryWordInspectorsPredicate = new Predicate<Inspector>() {
         public boolean evaluate(Inspector inspector) {
@@ -291,13 +291,13 @@ public final class MemoryWordInspector extends Inspector {
 
     @Override
     protected synchronized void createView(long epoch) {
-
+        _contentPane = new InspectorPanel(inspection());
         frame().setContentPane(_contentPane);
         _contentPane.removeAll();
         _contentPane.setLayout(new BoxLayout(_contentPane, BoxLayout.Y_AXIS));
         _contentPane.add(createController());
 
-        final JPanel view = new JPanel(new SpringLayout());
+        final JPanel view = new InspectorPanel(inspection(), new SpringLayout());
         _contentPane.add(view);
 
         _addressLabels = new RegisterAddressLabel[_numberOfWords];

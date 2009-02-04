@@ -29,13 +29,33 @@ import com.sun.max.tele.*;
 
 
 /**
- * Base class for Inspector panels.
+ * A panel specialized for use in the Maxine Inspector.
  *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorPanel extends JPanel implements Prober, InspectionHolder {
+public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
 
     private final Inspection _inspection;
+
+    /**
+     * Creates a new {@JPanel} for use in the {@link Inspection}.
+     */
+    public InspectorPanel(Inspection inspection) {
+        super();
+        _inspection = inspection;
+    }
+
+    /**
+     * Creates a new {@JPanel} specialized for use in the Maxine Inspector.
+     * @param inspection
+     * @param layoutManager specifies layout for the panel.
+     */
+    public InspectorPanel(Inspection inspection, LayoutManager layoutManager) {
+        super(layoutManager);
+        _inspection = inspection;
+        setOpaque(true);
+        setBackground(inspection.style().defaultBackgroundColor());
+    }
 
     public final Inspection inspection() {
         return _inspection;
@@ -57,14 +77,10 @@ public abstract class InspectorPanel extends JPanel implements Prober, Inspectio
         return _inspection.teleVM();
     }
 
-    protected InspectorPanel(Inspection inspection) {
-        super();
-        _inspection = inspection;
+    public void redisplay() {
     }
 
-    protected InspectorPanel(Inspection inspection, LayoutManager layoutManager) {
-        super(layoutManager);
-        _inspection = inspection;
+    public void refresh(long epoch, boolean force) {
     }
 
 }
