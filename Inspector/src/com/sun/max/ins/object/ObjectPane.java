@@ -41,7 +41,6 @@ public final class ObjectPane extends InspectorScrollPane {
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleArrayObject}; never null;
      */
-
     public static ObjectPane createArrayElementsPane(ObjectInspector objectInspector, TeleArrayObject teleArrayObject) {
         final int length = teleArrayObject.getLength();
         final ArrayClassActor arrayClassActor = (ArrayClassActor) teleArrayObject.classActorForType();
@@ -51,6 +50,7 @@ public final class ObjectPane extends InspectorScrollPane {
         final ArrayElementsTable arrayElementsTable = new ArrayElementsTable(objectInspector, kind, arrayOffsetFromOrigin, 0, length, "", valueMode);
         return new ObjectPane(objectInspector.inspection(), arrayElementsTable);
     }
+
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleTupleObject} ; never null;
      */
@@ -142,16 +142,14 @@ public final class ObjectPane extends InspectorScrollPane {
     private ObjectPane(Inspection inspection, InspectorTable inspectorTable) {
         super(inspection, inspectorTable);
         _inspectorTable = inspectorTable;
-        setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        setBackground(inspection.style().defaultBackgroundColor());
-        setOpaque(true);
     }
 
+    @Override
     public void redisplay() {
         _inspectorTable.redisplay();
     }
 
+    @Override
     public void refresh(long epoch, boolean force) {
         _inspectorTable.refresh(epoch, force);
     }

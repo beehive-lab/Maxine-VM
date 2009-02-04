@@ -54,8 +54,7 @@ public abstract class NativeMethodAddressInputDialog extends InspectorDialog {
         _initialCodeSize = initialCodeSize;
         _initialTitle =  defaultTitle(codeStart);
 
-        final JPanel dialogPanel = new JPanel(new SpringLayout());
-        dialogPanel.setLayout(new SpringLayout());
+        final JPanel dialogPanel = new InspectorPanel(inspection, new SpringLayout());
         dialogPanel.add(new TextLabel(inspection, "Address:"));
         _addressInputField = new AddressInputField.Hex(inspection, codeStart) {
             @Override

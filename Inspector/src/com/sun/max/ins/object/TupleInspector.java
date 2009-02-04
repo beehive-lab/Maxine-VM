@@ -32,14 +32,14 @@ import com.sun.max.vm.layout.*;
  *
  * @author Michael Van De Vanter
  */
-public class TupleInspector extends ObjectInspector<TupleInspector> {
+public class TupleInspector extends ObjectInspector {
 
     private ObjectPane _fieldsPane;
     private final InspectorMenuItems _classMethodInspectorMenuItems;
     private final InspectorMenuItems _targetMethodInspectorMenuItems;
 
-    TupleInspector(Inspection inspection, Residence residence, TeleObject teleObject) {
-        super(inspection, residence, teleObject);
+    TupleInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
+        super(inspection, factory, residence, teleObject);
         createFrame(null);
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {

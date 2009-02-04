@@ -24,16 +24,22 @@ import com.sun.max.ins.*;
 
 
 /**
- * A text label with all default properties.
+ * A text label specialized for use in the Maxine Inspector.
  *
  * @author Michael Van De Vanter
-  */
+ */
 public class PlainLabel extends InspectorLabel {
 
+    /**
+     * Creates a new text label displaying the value of an integer.
+     */
     public PlainLabel(Inspection inspection, int n) {
         this(inspection, Integer.toString(n));
     }
 
+    /**
+     * Creates a new text label displaying specified text.
+     */
     public PlainLabel(Inspection inspection, String text) {
         super(inspection, text);
         redisplay();

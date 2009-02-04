@@ -99,13 +99,11 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     }
 
     private JPanel createDescriptorPanel(TargetJavaFrameDescriptor descriptor) {
-        final JPanel panel = new JPanel();
-        panel.setOpaque(true);
-        panel.setBackground(style().defaultBackgroundColor());
+        final JPanel panel = new InspectorPanel(inspection());
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
         final BytecodeLocation bytecodeLocation = descriptor.bytecodeLocation();
-        final JLabel bytecodeLocationLabel = new JLabel(shortString(bytecodeLocation));
+        final TextLabel bytecodeLocationLabel = new TextLabel(inspection(), shortString(bytecodeLocation));
         bytecodeLocationLabel.setToolTipText(bytecodeLocation.toString());
         panel.add(bytecodeLocationLabel);
 
@@ -116,7 +114,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
             if (lineNumber >= 0) {
                 source += " : " + lineNumber;
             }
-            final JLabel sourceLocationLabel = new JLabel(source);
+            final TextLabel sourceLocationLabel = new TextLabel(inspection(), source);
             sourceLocationLabel.setToolTipText(sourceFileName);
             sourceLocationLabel.addMouseListener(new MouseAdapter() {
                 @Override
@@ -135,12 +133,12 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
                 local += ": " + entry.name(codeAttribute.constantPool());
             }
             local += " = " + targetLocationToString(descriptor.locals()[i]);
-            panel.add(new JLabel(local));
+            panel.add(new TextLabel(inspection(), local));
         }
         for (int i = 0; i < descriptor.stackSlots().length; i++) {
             String stackSlot = "stack #" + i;
             stackSlot += " = " + targetLocationToString(descriptor.stackSlots()[i]);
-            panel.add(new JLabel(stackSlot));
+            panel.add(new TextLabel(inspection(), stackSlot));
         }
         panel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, style().defaultBorderColor()));
         return panel;
@@ -157,7 +155,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     @Override
     protected synchronized void createView(long epoch) {
         if (_javaFrameDescriptor != null) {
-            final JPanel panel = new JPanel();
+            final JPanel panel = new InspectorPanel(inspection());
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
             TargetJavaFrameDescriptor descriptor = _javaFrameDescriptor;
             do {

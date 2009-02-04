@@ -23,7 +23,7 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 
 /**
- * A text label that really is a label:  an English legend that describes something.
+ * A textual label specialized for use in the Maxine Inspector.
  *
  * @author Michael Van De Vanter
   */

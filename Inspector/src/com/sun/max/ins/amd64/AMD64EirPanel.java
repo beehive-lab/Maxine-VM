@@ -48,9 +48,11 @@ public final class AMD64EirPanel extends EirPanel<EirMethod> {
         return eirMethod().name() + "(" + Arrays.toString(eirMethod().parameterLocations(), ", ") + ") -> " + eirMethod().resultLocation();
     }
 
+    @Override
     public void refresh(long epoch, boolean force) {
     }
 
+    @Override
     public void redisplay() {
         // TODO (mlvdv)  redisplay this
     }
@@ -60,7 +62,7 @@ public final class AMD64EirPanel extends EirPanel<EirMethod> {
             return;
         }
 
-        final JPanel panel = new JPanel(new SpringLayout());
+        final JPanel panel = new InspectorPanel(inspection(), new SpringLayout());
         panel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, Color.BLUE));
         panel.add(new Space());
         panel.add(new TitleLabel(inspection(), literals.first().value().kind() == Kind.REFERENCE ? "References" : "Scalars"));
@@ -209,7 +211,7 @@ public final class AMD64EirPanel extends EirPanel<EirMethod> {
     }
 
     private void addBlock(EirBlock block) {
-        final JPanel panel = new JPanel(new SpringLayout());
+        final JPanel panel = new InspectorPanel(inspection(), new SpringLayout());
         panel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, Color.BLUE));
         panel.add(new Space());
         panel.add(new Space());

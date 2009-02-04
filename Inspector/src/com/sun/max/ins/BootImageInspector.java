@@ -33,22 +33,26 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 
 /**
+ * Singleton inspector for the boot image from which the {@link TeleVM} was started.
+ *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class BootImageInspector extends UniqueInspector<BootImageInspector> {
+public final class BootImageInspector extends Inspector {
+
+    // Set to null when inspector closed.
+    private static BootImageInspector _bootImageInspector;
 
     /**
      * Display and highlight the (singleton) Boot Image inspector.
      * @return  The Boot Image inspector, possibly newly created.
      */
     public static BootImageInspector make(Inspection inspection) {
-        BootImageInspector bootImageInspector = UniqueInspector.find(inspection, BootImageInspector.class);
-        if (bootImageInspector == null) {
-            bootImageInspector = new BootImageInspector(inspection, Residence.INTERNAL);
+        if (_bootImageInspector == null) {
+            _bootImageInspector = new BootImageInspector(inspection, Residence.INTERNAL);
         }
-        bootImageInspector.highlight();
-        return bootImageInspector;
+        _bootImageInspector.highlight();
+        return _bootImageInspector;
     }
 
     private JPanel _infoPanel;
@@ -64,17 +68,24 @@ public final class BootImageInspector extends UniqueInspector<BootImageInspector
     public String getTextForTitle() {
         return "Boot Image: " + teleVM().bootImageFile().getAbsolutePath();
     }
+
     @Override
     public void createView(long epoch) {
-        _infoPanel = new JPanel(new SpringLayout());
-        _infoPanel.setBackground(style().defaultBackgroundColor());
+        _infoPanel = new InspectorPanel(inspection(), new SpringLayout());
         populateInfoPanel();
-        final JScrollPane scrollPane = new JScrollPane(_infoPanel);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _infoPanel);
         frame().setContentPane(scrollPane);
     }
 
     public void viewConfigurationChanged(long epoch) {
         reconstructView();
+    }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        _bootImageInspector = null;
+        super.inspectorClosing();
     }
 
     private void addInfo(String name, InspectorLabel label) {
@@ -152,12 +163,6 @@ public final class BootImageInspector extends UniqueInspector<BootImageInspector
 
         addInfo("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootImageStart.plus(header._messengerInfoOffset)));
         SpringUtilities.makeCompactGrid(_infoPanel, 2);
-    }
-
-    @Override
-    public void inspectorClosing() {
-        Trace.line(1, tracePrefix() + " closing");
-        super.inspectorClosing();
     }
 
 }
