@@ -28,7 +28,7 @@ import com.sun.max.ins.*;
 import com.sun.max.tele.*;
 
 /**
- * Base class for {@link Inspector} text fields.
+ * A text field specialized for use in the {@link Inspector}.
  * Appears like a {@link JLabel}, except that the
  * text can be selected and copied by a user.
  *

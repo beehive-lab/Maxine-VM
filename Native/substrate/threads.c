@@ -146,9 +146,9 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     stackBottom = threadSpecifics->stackBase;
 #else
     /* the stack is malloc'd on these platforms, protect a page for the thread locals */
-    stackBottom = pageAlign(threadSpecifics->stackBase);
-    protectPage(stackBottom);
-    stackBottom += getPageSize();
+    stackBottom = virtualMemory_pageAlign(threadSpecifics->stackBase);
+    virtualMemory_protectPage(stackBottom);
+    stackBottom += virtualMemory_getPageSize();
 #endif
     int vmThreadLocalsSize = image_header()->vmThreadLocalsSize;
     Address current = stackBottom - sizeof(Address);
@@ -164,17 +164,17 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     threadSpecifics->disabledVmThreadLocals = current;
     current += vmThreadLocalsSize;
     threadSpecifics->refMapArea = current;
-    current = pageAlign(current + refMapAreaSize);
+    current = virtualMemory_pageAlign(current + refMapAreaSize);
     threadSpecifics->stackRedZone = current;
-    current += getPageSize();
+    current += virtualMemory_getPageSize();
     threadSpecifics->stackYellowZone = current;
-    current += getPageSize();
+    current += virtualMemory_getPageSize();
     initBlueZone(threadSpecifics);
 
 #if log_THREADS
     int id = threadSpecifics->id;
     log_println("thread %3d: stackBase = %p", id, threadSpecifics->stackBase);
-    log_println("thread %3d: stackBase (aligned) = %p", id, pageAlign(threadSpecifics->stackBase));
+    log_println("thread %3d: stackBase (aligned) = %p", id, virtualMemory_pageAlign(threadSpecifics->stackBase));
     log_println("thread %3d: stackSize = %d (0x%x)", id, threadSpecifics->stackSize, threadSpecifics->stackSize);
     log_println("thread %3d: stackBottom = %p", id, stackBottom);
     log_println("thread %3d: triggeredVmThreadLocals = %p", id, threadSpecifics->triggeredVmThreadLocals);
@@ -198,13 +198,13 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     c_ASSERT(threadSpecifics->stackSize == stackInfo.ss_size);
 #endif
 
-    protectPage(threadSpecifics->stackRedZone);
-    protectPage(threadSpecifics->stackYellowZone);
+    virtualMemory_protectPage(threadSpecifics->stackRedZone);
+    virtualMemory_protectPage(threadSpecifics->stackYellowZone);
  }
 
 void tryUnprotectPage(Address address) {
     if (address != (Address) 0) {
-        unprotectPage(address);
+    	virtualMemory_unprotectPage(address);
     }
 }
 
@@ -214,7 +214,7 @@ void thread_destroySegments(thread_Specifics *threadSpecifics) {
     tryUnprotectPage(threadSpecifics->stackYellowZone);
 #if (os_LINUX || os_DARWIN || os_GUESTVMXEN)
     /* these platforms have an extra protected page for the triggered thread locals */
-    tryUnprotectPage(pageAlign(threadSpecifics->stackBase));
+    tryUnprotectPage(virtualMemory_pageAlign(threadSpecifics->stackBase));
     /* the stack is free'd by the pthreads library. */
 #endif
 }
@@ -229,8 +229,8 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     int error;
 #endif
 
-    if (pageAlign(stackSize) != stackSize) {
-        log_println("thread_create: thread stack size must be a multiple of the OS page size (%d)", getPageSize());
+    if (virtualMemory_pageAlign(stackSize) != stackSize) {
+        log_println("thread_create: thread stack size must be a multiple of the OS page size (%d)", virtualMemory_getPageSize());
         return (Thread) 0;
     }
 

@@ -74,7 +74,7 @@ public final class MaxineInspector {
 
             TeleDisassembler.initialize(teleVM);
 
-            _inspection = new Inspection(teleVM, new StandardInspectorStyle(), new BasicInspectorGeometry());
+            _inspection = new Inspection(teleVM, new BasicInspectorGeometry());
 
             _inspection.initialize();
 
@@ -101,11 +101,11 @@ public final class MaxineInspector {
 
                     ThreadsInspector.make(_inspection);
                     RegistersInspector.make(_inspection);
-                    VmThreadLocalsInspector.make(_inspection);
+                    ThreadLocalsInspector.make(_inspection);
                     StackInspector.make(_inspection, _inspection.focus().thread());
                     BreakpointsInspector.make(_inspection);
                     MethodInspector.Manager.make(_inspection);
-                    ObjectInspector.Factory.make(_inspection);
+                    ObjectInspectorFactory.make(_inspection);
                     _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM, _inspection.focus().thread().instructionPointer()), false);
                     _inspection.refreshAll(false);
                 } catch (Throwable throwable) {
@@ -120,7 +120,7 @@ public final class MaxineInspector {
 //                    teleVM.teleCodeRegistry();
 //                }
                 MethodInspector.Manager.make(_inspection);
-                ObjectInspector.Factory.make(_inspection);
+                ObjectInspectorFactory.make(_inspection);
                 _inspection.refreshAll(false);
             }
             Trace.end(TRACE_VALUE, _tracePrefix + "Initializing", startTimeMillis);

@@ -283,13 +283,13 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
     /**
      * Encapsulates the user-settable preferences governing various aspects of how (or what) code is displayed.
      */
-    public static class Preferences {
+    public static class MethodInspectorPreferences {
         /**
          * A predicate specifying which kinds of code are to be displayed in a method inspector.
          */
         private final Map<CodeKind, Boolean> _visibleCodeKinds = new EnumMap<CodeKind, Boolean>(CodeKind.class);
         private final Inspection _inspection;
-        Preferences(Inspection inspection) {
+        MethodInspectorPreferences(Inspection inspection) {
             _inspection = inspection;
             final InspectionSettings settings = inspection.settings();
             final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("methodInspectorPrefs", null) {
@@ -332,7 +332,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         public JPanel getPanel() {
             final JCheckBox[] checkBoxes = new JCheckBox[CodeKind.VALUES.length()];
 
-            final Preferences preferences = globalPreferences(_inspection);
+            final MethodInspectorPreferences preferences = globalPreferences(_inspection);
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
                     final Object source = e.getItemSelectable();
@@ -345,22 +345,16 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
                     }
                 }
             };
-            final JPanel content = new JPanel();
+            final JPanel content = new InspectorPanel(_inspection);
             content.add(new TextLabel(_inspection, "View:  "));
             for (CodeKind codeKind : CodeKind.VALUES) {
-                final JCheckBox checkBox = new JCheckBox(codeKind.toString());
-                checkBox.setOpaque(true);
-                checkBox.setBackground(_inspection.style().defaultBackgroundColor());
-                checkBox.setToolTipText("Should new Method inspectors initially display this code, when available?");
-                checkBox.setEnabled(codeKind.isImplemented());
-                checkBox.setSelected(preferences.isVisible(codeKind));
+                final JCheckBox checkBox =
+                    new InspectorCheckBox(_inspection, codeKind.toString(), "Should new Method inspectors initially display this code, when available?", codeKind.isImplemented());
                 checkBox.addItemListener(itemListener);
                 checkBoxes[codeKind.ordinal()] = checkBox;
                 content.add(checkBox);
             }
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(true);
-            panel.setBackground(_inspection.style().defaultBackgroundColor());
+            final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
             panel.add(content, BorderLayout.WEST);
             return panel;
         }
@@ -373,14 +367,9 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
             Dialog(Inspection inspection) {
                 super(inspection, "Method Code Display Preferences", false);
 
-                final JPanel dialogPanel = new JPanel();
-                dialogPanel.setLayout(new BorderLayout());
-                dialogPanel.setOpaque(true);
-                dialogPanel.setBackground(style().defaultBackgroundColor());
+                final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
 
-                final JPanel buttons = new JPanel();
-                buttons.setOpaque(true);
-                buttons.setBackground(style().defaultBackgroundColor());
+                final JPanel buttons = new InspectorPanel(inspection);
                 buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
                     @Override
                     protected void procedure() {
@@ -399,11 +388,11 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         }
     }
 
-    private static Preferences _globalPreferences;
+    private static MethodInspectorPreferences _globalPreferences;
 
-    public static synchronized Preferences globalPreferences(Inspection inspection) {
+    public static synchronized MethodInspectorPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
-            _globalPreferences = new Preferences(inspection);
+            _globalPreferences = new MethodInspectorPreferences(inspection);
         }
         return _globalPreferences;
     }

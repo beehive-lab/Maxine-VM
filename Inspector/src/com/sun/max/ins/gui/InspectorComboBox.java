@@ -18,30 +18,24 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.sparc.flat;
+package com.sun.max.ins.gui;
 
-import static com.sun.max.asm.sparc.FPR.*;
-import static com.sun.max.asm.sparc.GPR.*;
+import javax.swing.*;
 
-import com.sun.max.asm.sparc.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.sparc.*;
+import com.sun.max.ins.*;
+
 
 /**
- * @author Bernd Mathiske
-  * @author Laurent Daynes
-*/
-public final class SPARCFlatTargetABIsScheme extends SPARCTargetABIsScheme {
+ * A combo box specialized for use in the Maxine Inspector.
+ *
+ * @author Michael Van De Vanter
+ */
+public class InspectorComboBox extends JComboBox {
 
-    private static final RegisterRoleAssignment<GPR, FPR> _javaRegisterRoleAssignment =
-        new RegisterRoleAssignment<GPR, FPR>(GPR.class, O6, I6, O6, I6, I0, O0, G1, G2, L7, FPR.class, F0, F30, I7, O7);
-
-    public SPARCFlatTargetABIsScheme(VMConfiguration vmConfiguration) {
-        super(vmConfiguration,
-                        createSPARC64TargetABI(_javaRegisterRoleAssignment, CallEntryPoint.JIT_ENTRY_POINT, _floatingPointParameterRegisters, false, false),
-                        createSPARC64TargetABI(_javaRegisterRoleAssignment, CallEntryPoint.OPTIMIZED_ENTRY_POINT, _floatingPointParameterRegisters, false, false));
+    public InspectorComboBox(Inspection inspection, Object[] items) {
+        super(items);
+        setOpaque(true);
+        setFont(inspection.style().textLabelFont());
+        setBackground(inspection.style().defaultBackgroundColor());
     }
-
 }

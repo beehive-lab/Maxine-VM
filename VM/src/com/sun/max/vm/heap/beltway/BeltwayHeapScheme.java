@@ -35,6 +35,7 @@ import com.sun.max.vm.heap.beltway.profile.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -142,8 +143,8 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
     @INLINE
     protected final Address allocateMemory(Size size) {
-        final Address endOfCodeRegion = VirtualMemory.getEndOfCodeRegion();
-        if (VirtualMemory.allocateMemoryAtFixedAddress(endOfCodeRegion, size)) {
+        final Address endOfCodeRegion = BootImage.getEndOfCodeRegion();
+        if (VirtualMemory.allocatePageAlignedAtFixedAddress(endOfCodeRegion, size, VirtualMemory.Type.HEAP)) {
             return endOfCodeRegion;
         }
         FatalError.unexpected("Error! Could not map fix the requested memory size");

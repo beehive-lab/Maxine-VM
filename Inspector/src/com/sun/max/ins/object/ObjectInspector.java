@@ -36,6 +36,7 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.tele.object.TeleObject.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
@@ -47,68 +48,15 @@ import com.sun.max.vm.actor.member.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspector> extends UniqueInspector<ObjectInspector_Type> implements MemoryInspectable, MemoryWordInspectable {
+public abstract class ObjectInspector extends Inspector implements MemoryInspectable, MemoryWordInspectable {
 
-    private static Factory _factory;
+    private static ObjectInspectorPreferences _globalPreferences;
 
-    private static Preferences _globalPreferences;
-
-    public static synchronized Preferences globalPreferences(Inspection inspection) {
+    public static synchronized ObjectInspectorPreferences globalPreferences(Inspection inspection) {
+        if (_globalPreferences == null) {
+            _globalPreferences = new ObjectInspectorPreferences(inspection);
+        }
         return _globalPreferences;
-    }
-
-    /**
-     * Singleton factory;  no visible presence or direct user interaction at this time.
-     */
-    public static final class Factory extends AbstractInspectionHolder {
-
-        private Factory(Inspection inspection) {
-            super(inspection);
-            _globalPreferences = new Preferences(inspection);
-            HubInspector.initializeStatic(inspection);
-        }
-
-        public static void make(final Inspection inspection) {
-            if (_factory == null) {
-                Trace.begin(1, "[ObjectInspector.Factory] initializing");
-                _factory = new Factory(inspection);
-                inspection.focus().addListener(new InspectionFocusAdapter() {
-
-                    @Override
-                    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-                        if (teleObject != null) {
-                            ObjectInspector objectInspector;
-                            UniqueInspector.Key<? extends ObjectInspector> key;
-                            if (teleObject instanceof TeleArrayObject) {
-                                key = UniqueInspector.Key.create(inspection, ArrayInspector.class, teleObject.reference());
-                                objectInspector = UniqueInspector.find(inspection, key);
-                                if (objectInspector == null) {
-                                    objectInspector  = new ArrayInspector(inspection, Residence.INTERNAL, teleObject);
-                                }
-                            } else if (teleObject instanceof TeleTupleObject) {
-                                key = UniqueInspector.Key.create(inspection, TupleInspector.class, teleObject.reference());
-                                objectInspector = UniqueInspector.find(inspection, key);
-                                if (objectInspector == null) {
-                                    objectInspector  = new TupleInspector(inspection, Residence.INTERNAL, teleObject);
-                                }
-                            } else {
-                                assert teleObject instanceof TeleHybridObject;
-                                key = UniqueInspector.Key.create(inspection, HubInspector.class, teleObject.reference());
-                                objectInspector = UniqueInspector.find(inspection, key);
-                                if (objectInspector == null) {
-                                    objectInspector  = new HubInspector(inspection, Residence.INTERNAL, teleObject);
-                                }
-                            }
-                            if (objectInspector != null) {
-                                objectInspector.highlight();
-                            }
-                        }
-                    }
-                });
-                Trace.end(1, "[ObjectInspector.Factory] initializing");
-            }
-        }
-
     }
 
     // Preferences
@@ -120,7 +68,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
     private static final String SHOW_MEMORY_REGIONS_PREFERENCE = "showMemoryRegions";
     private static final String HIDE_NULL_ARRAY_ELEMENTS_PREFERENCE = "hideNullArrayElements";
 
-    public static class Preferences {
+    public static class ObjectInspectorPreferences {
         private final Inspection _inspection;
         boolean _showHeader;
         boolean _showAddresses;
@@ -129,7 +77,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         boolean _showMemoryRegions;
         boolean _hideNullArrayElements;
 
-        Preferences(Inspection inspection) {
+        ObjectInspectorPreferences(Inspection inspection) {
             _inspection = inspection;
             final InspectionSettings settings = inspection.settings();
             final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("objectInspectorPrefs", null) {
@@ -156,41 +104,18 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
          * @return a GUI panel for setting preferences
          */
         public JPanel getPanel() {
-            final JCheckBox alwaysShowHeaderCheckBox = new JCheckBox("Header");
-            alwaysShowHeaderCheckBox.setOpaque(true);
-            alwaysShowHeaderCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowHeaderCheckBox.setToolTipText("Shouls new Object Inspectors initially display the header?");
-            alwaysShowHeaderCheckBox.setSelected(_showHeader);
-
-            final JCheckBox alwaysShowAddressesCheckBox = new JCheckBox("Addresses");
-            alwaysShowAddressesCheckBox.setOpaque(true);
-            alwaysShowAddressesCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowAddressesCheckBox.setToolTipText("Display addresses?");
-            alwaysShowAddressesCheckBox.setSelected(_showAddresses);
-
-            final JCheckBox alwaysShowOffsetsCheckBox = new JCheckBox("Offsets");
-            alwaysShowOffsetsCheckBox.setOpaque(true);
-            alwaysShowOffsetsCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowOffsetsCheckBox.setToolTipText("Display offsets?");
-            alwaysShowOffsetsCheckBox.setSelected(_showOffsets);
-
-            final JCheckBox alwaysShowTupleTypeCheckBox = new JCheckBox("Type");
-            alwaysShowTupleTypeCheckBox.setOpaque(true);
-            alwaysShowTupleTypeCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowTupleTypeCheckBox.setToolTipText("Display types in tuples?");
-            alwaysShowTupleTypeCheckBox.setSelected(_showFieldTypes);
-
-            final JCheckBox alwaysShowMemoryRegionCheckBox = new JCheckBox("Region");
-            alwaysShowMemoryRegionCheckBox.setOpaque(true);
-            alwaysShowMemoryRegionCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            alwaysShowMemoryRegionCheckBox.setToolTipText("Display memory region in tuples?");
-            alwaysShowMemoryRegionCheckBox.setSelected(_showMemoryRegions);
-
-            final JCheckBox hideNullArrayElementsCheckBox = new JCheckBox("Hide null array elements");
-            hideNullArrayElementsCheckBox.setOpaque(true);
-            hideNullArrayElementsCheckBox.setBackground(_inspection.style().defaultBackgroundColor());
-            hideNullArrayElementsCheckBox.setToolTipText("Hide null elements in arrays?");
-            hideNullArrayElementsCheckBox.setSelected(_hideNullArrayElements);
+            final JCheckBox alwaysShowHeaderCheckBox =
+                new InspectorCheckBox(_inspection, "Header", "Should new Object Inspectors initially display the header?", _showHeader);
+            final JCheckBox alwaysShowAddressesCheckBox =
+                new InspectorCheckBox(_inspection, "Addresses", "Should new Object Inspectors initially display addresses?", _showAddresses);
+            final JCheckBox alwaysShowOffsetsCheckBox =
+                new InspectorCheckBox(_inspection, "Offsets", "Should new Object Inspectors initially display offsets?", _showOffsets);
+            final JCheckBox alwaysShowTupleTypeCheckBox =
+                new InspectorCheckBox(_inspection, "Type", "Should new Object Inspectors initially display types?", _showFieldTypes);
+            final JCheckBox alwaysShowMemoryRegionCheckBox =
+                new InspectorCheckBox(_inspection, "Region", "Should new Object Inspectors initially display memory regions?", _showMemoryRegions);
+            final JCheckBox hideNullArrayElementsCheckBox =
+                new InspectorCheckBox(_inspection, "Hide null array elements", "Should new Object Inspectors initially hide null elements in arrays?", _hideNullArrayElements);
 
             final ItemListener itemListener = new ItemListener() {
                 public void itemStateChanged(ItemEvent e) {
@@ -218,26 +143,25 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
             alwaysShowMemoryRegionCheckBox.addItemListener(itemListener);
             hideNullArrayElementsCheckBox.addItemListener(itemListener);
 
-            final JPanel contentPanel = new JPanel();
-            contentPanel.add(new TextLabel(_inspection, "Show:  "));
-            contentPanel.add(alwaysShowHeaderCheckBox);
-            contentPanel.add(alwaysShowAddressesCheckBox);
-            contentPanel.add(alwaysShowOffsetsCheckBox);
-            contentPanel.add(alwaysShowTupleTypeCheckBox);
-            contentPanel.add(alwaysShowMemoryRegionCheckBox);
+            final JPanel upperContentPanel = new InspectorPanel(_inspection);
+            upperContentPanel.add(new TextLabel(_inspection, "Columns:  "));
+            upperContentPanel.add(alwaysShowHeaderCheckBox);
+            upperContentPanel.add(alwaysShowAddressesCheckBox);
+            upperContentPanel.add(alwaysShowOffsetsCheckBox);
+            upperContentPanel.add(alwaysShowTupleTypeCheckBox);
+            upperContentPanel.add(alwaysShowMemoryRegionCheckBox);
 
+            final JPanel upperPanel = new InspectorPanel(_inspection, new BorderLayout());
+            upperPanel.add(upperContentPanel, BorderLayout.WEST);
 
-            final JPanel upperPanel = new JPanel(new BorderLayout());
-            upperPanel.setOpaque(true);
-            upperPanel.setBackground(_inspection.style().defaultBackgroundColor());
-            upperPanel.add(contentPanel, BorderLayout.WEST);
+            final JPanel lowerContentPanel = new InspectorPanel(_inspection);
+            lowerContentPanel.add(new TextLabel(_inspection, "Options:  "));
+            lowerContentPanel.add(hideNullArrayElementsCheckBox);
 
-            final JPanel lowerPanel = new JPanel();
-            lowerPanel.add(hideNullArrayElementsCheckBox);
+            final JPanel lowerPanel = new InspectorPanel(_inspection, new BorderLayout());
+            lowerPanel.add(lowerContentPanel, BorderLayout.WEST);
 
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(true);
-            panel.setBackground(_inspection.style().defaultBackgroundColor());
+            final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
             panel.add(upperPanel, BorderLayout.NORTH);
             panel.add(lowerPanel, BorderLayout.SOUTH);
 
@@ -245,23 +169,18 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         }
 
         void showDialog() {
-            new Dialog(_inspection);
+            new ObjectInspectorPreferencesDialog(_inspection);
         }
 
-        private final class Dialog extends InspectorDialog {
+        private final class ObjectInspectorPreferencesDialog extends InspectorDialog {
 
-            Dialog(Inspection inspection) {
+            ObjectInspectorPreferencesDialog(Inspection inspection) {
                 super(inspection, "Object Inspector Preferences", false);
 
-                final JPanel dialogPanel = new JPanel();
-                dialogPanel.setLayout(new BorderLayout());
-                dialogPanel.setOpaque(true);
-                dialogPanel.setBackground(style().defaultBackgroundColor());
+                final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
 
-                final JPanel buttons = new JPanel();
-                buttons.setOpaque(true);
-                buttons.setBackground(style().defaultBackgroundColor());
-                buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
+                final JPanel buttonPanel = new InspectorPanel(inspection);
+                buttonPanel.add(new JButton(new InspectorAction(inspection(), "Close") {
                     @Override
                     protected void procedure() {
                         dispose();
@@ -269,7 +188,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
                 }));
 
                 dialogPanel.add(getPanel(), BorderLayout.NORTH);
-                dialogPanel.add(buttons, BorderLayout.SOUTH);
+                dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 
                 setContentPane(dialogPanel);
                 pack();
@@ -279,6 +198,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         }
 
     }
+
+    private final ObjectInspectorFactory _factory;
 
     private final TeleObject _teleObject;
 
@@ -311,9 +232,10 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     private InspectorTable _objectHeaderTable;
 
-    protected ObjectInspector(final Inspection inspection, Residence residence, final TeleObject teleObject) {
-        super(inspection, residence, teleObject.reference());
-        final Preferences preferences = globalPreferences(inspection);
+    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, Residence residence, final TeleObject teleObject) {
+        super(inspection, residence);
+        _factory = factory;
+        final ObjectInspectorPreferences preferences = globalPreferences(inspection);
         _teleObject = teleObject;
         _currentObjectOrigin = teleObject().getCurrentOrigin();
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
@@ -368,7 +290,8 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         frame().menu().add(_showOffsetsMenuCheckBox);
         frame().menu().add(_showTypesMenuCheckBox);
         frame().menu().add(_showMemoryRegionsMenuCheckBox);
-        if (!(_teleObject instanceof TeleTupleObject)) {
+        if (!(_teleObject.getObjectKind() == ObjectKind.TUPLE)) {
+            // both arrays and hybrids have array elements
             frame().menu().add(_hideNullArrayElementsMenuCheckBox);
         }
         frame().menu().add(new InspectorAction(inspection(), "Object Display Prefs..") {
@@ -384,10 +307,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
 
     @Override
     protected synchronized void createView(long epoch) {
-        final JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setOpaque(true);
-        panel.setBackground(style().defaultBackgroundColor());
+        final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         if (_showHeaderMenuCheckBox.getState()) {
             _objectHeaderTable = new ObjectHeaderTable(this);
             _objectHeaderTable.setBorder(style().defaultPaneBottomBorder());
@@ -425,6 +345,7 @@ public abstract class ObjectInspector<ObjectInspector_Type extends ObjectInspect
         if (_teleObject == inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(null);
         }
+        _factory.objectInspectorClosing(this);
         super.inspectorClosing();
     }
 

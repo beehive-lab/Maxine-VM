@@ -45,6 +45,11 @@ public class TeleTupleObject extends TeleObject {
     }
 
     @Override
+    public ObjectKind getObjectKind() {
+        return ObjectKind.TUPLE;
+    }
+
+    @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind() == Kind.REFERENCE) {
             return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));

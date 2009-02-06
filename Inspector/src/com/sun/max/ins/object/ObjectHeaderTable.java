@@ -55,7 +55,6 @@ public class ObjectHeaderTable extends InspectorTable {
     private final TeleObject _teleObject;
     private Pointer _objectOrigin;
     private TeleHub _teleHub;
-    private final boolean _isTupleObject;  // The kind of an object doesn't change, once created.
     private  final int _hubReferenceOffset;  // Property of the layout scheme; doesn't change
     private  final int _miscWordOffset;   // Property of the layout scheme; doesn't change
     private  final int _arrayLengthOffset;  // Property of the layout scheme; doesn't change
@@ -74,7 +73,6 @@ public class ObjectHeaderTable extends InspectorTable {
         _objectInspector = objectInspector;
         _inspection = objectInspector.inspection();
         _teleObject = objectInspector.teleObject();
-        _isTupleObject = _teleObject instanceof TeleTupleObject;
         _hubReferenceOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
         _miscWordOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
         _arrayLengthOffset = teleVM().layoutScheme().arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
@@ -84,8 +82,6 @@ public class ObjectHeaderTable extends InspectorTable {
         _columnModel = new ObjectHeaderTableColumnModel(_objectInspector);
         setModel(_model);
         setColumnModel(_columnModel);
-        setOpaque(true);
-        setBackground(style().defaultBackgroundColor());
         setFillsViewportHeight(true);
         setShowHorizontalLines(style().objectTableShowHorizontalLines());
         setShowVerticalLines(style().objectTableShowVerticalLines());
@@ -127,8 +123,16 @@ public class ObjectHeaderTable extends InspectorTable {
         }
 
         public int getRowCount() {
-            // array and hybrid objects have three word headers
-            return _isTupleObject ? 2 : 3;
+            switch(_teleObject.getObjectKind()) {
+                case TUPLE:
+                    return 2;
+                case ARRAY:
+                    return 3;
+                case HYBRID:
+                    return 3;
+            }
+            ProgramError.unexpected("unrecognized object kind");
+            return -1;
         }
 
         public Object getValueAt(int row, int col) {
@@ -287,25 +291,32 @@ public class ObjectHeaderTable extends InspectorTable {
             _labels[HEADER_MISC_ROW] = new MiscWordLabel(_inspection, _teleObject);
 
             // Array length (only for array and hybrid objects).
-            if (_teleObject instanceof TeleArrayObject) {
-                final TeleArrayObject teleArrayObject = (TeleArrayObject) _teleObject;
-                _labels[HEADER_ARRAY_LENGTH_ROW] = new WordValueLabel(_inspection, ValueMode.WORD) {
-                    @Override
-                    public Value fetchValue() {
-                        return IntValue.from(teleArrayObject.getLength());
-                    }
-                };
-            } else if (_teleObject instanceof TeleHybridObject) {
-                final TeleHybridObject teleHybridObject = (TeleHybridObject) _teleObject;
-                _labels[HEADER_ARRAY_LENGTH_ROW] = new WordValueLabel(_inspection, ValueMode.WORD) {
-                    @Override
-                    public Value fetchValue() {
-                        return IntValue.from(teleHybridObject.readArrayLength());
-                    }
-                };
-            } else {
-                // Dummy; never used
-                _labels[HEADER_ARRAY_LENGTH_ROW] = new TextLabel(_inspection, "");
+            switch (_teleObject.getObjectKind()) {
+                case ARRAY: {
+                    final TeleArrayObject teleArrayObject = (TeleArrayObject) _teleObject;
+                    _labels[HEADER_ARRAY_LENGTH_ROW] = new WordValueLabel(_inspection, ValueMode.WORD) {
+                        @Override
+                        public Value fetchValue() {
+                            return IntValue.from(teleArrayObject.getLength());
+                        }
+                    };
+                    break;
+                }
+                case HYBRID: {
+                    final TeleHybridObject teleHybridObject = (TeleHybridObject) _teleObject;
+                    _labels[HEADER_ARRAY_LENGTH_ROW] = new WordValueLabel(_inspection, ValueMode.WORD) {
+                        @Override
+                        public Value fetchValue() {
+                            return IntValue.from(teleHybridObject.readArrayLength());
+                        }
+                    };
+                    break;
+                }
+                case TUPLE: {
+                    // Dummy; never used
+                    _labels[HEADER_ARRAY_LENGTH_ROW] = new TextLabel(_inspection, "");
+                    break;
+                }
             }
         }
 

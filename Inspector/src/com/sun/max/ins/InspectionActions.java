@@ -792,7 +792,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link VmThreadLocalsInspector}.
+     * Action:  makes visible the {@link ThreadLocalsInspector}.
      */
     final class ViewVmThreadLocalsAction extends InspectorAction {
 
@@ -805,7 +805,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            VmThreadLocalsInspector.make(inspection());
+            ThreadLocalsInspector.make(inspection());
         }
 
         @Override

@@ -71,10 +71,7 @@ public abstract class AddressInputDialog extends InspectorDialog {
             _actionName = actionName;
         }
 
-        final JPanel dialogPanel = new JPanel(new SpringLayout());
-        dialogPanel.setLayout(new SpringLayout());
-        dialogPanel.setOpaque(true);
-        dialogPanel.setBackground(style().defaultBackgroundColor());
+        final JPanel dialogPanel = new InspectorPanel(inspection, new SpringLayout());
         dialogPanel.add(new TextLabel(inspection(), "Address:"));
         _addressInputField = new AddressInputField.Hex(inspection, initialAddress) {
             @Override

@@ -1380,23 +1380,6 @@ class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
     private static final LongValue STACK_SLOT_SIZE = LongValue.from(Word.width().numberOfBytes());
 
     @Override
-    public void visitPush(Push builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 1;
-        final EirValue stackPointer = methodTranslation().integerRegisterRoleValue(VMRegister.Role.CPU_STACK_POINTER);
-        final EirValue argument =  dirToEirValue(dirArguments[0]);
-        addInstruction(new SUB_I64(eirBlock(), stackPointer, createEirConstant(STACK_SLOT_SIZE)));
-        addInstruction(new SPARCEirStore(eirBlock(), argument.kind(), argument, stackPointer));
-    }
-
-    @Override
-    public void visitPop(Pop builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 0;
-        final EirValue stackPointer = methodTranslation().integerRegisterRoleValue(VMRegister.Role.CPU_STACK_POINTER);
-        addInstruction(new SPARCEirLoad(eirBlock(), dirResult.kind(), dirToEirValue(dirResult), stackPointer));
-        addInstruction(new ADD_I64(eirBlock(), stackPointer, createEirConstant(STACK_SLOT_SIZE)));
-    }
-
-    @Override
     public void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirArguments.length == 1 && dirArguments[0].isConstant() && dirArguments[0].value().asObject() instanceof VMRegister.Role;
         final EirValue result = dirToEirValue(dirResult);

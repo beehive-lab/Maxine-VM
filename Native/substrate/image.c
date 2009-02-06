@@ -286,14 +286,14 @@ static void mapHeapAndCode(int fd) {
     _heap = (Address) &maxvm_image_start + fileOffset;
 #elif os_LINUX
     _heap = virtualMemory_mapFileIn31BitSpace(_header->bootHeapSize + _header->bootCodeSize, fd, fileOffset);
-    if (_heap == 0) {
+    if (_heap == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
 #elif os_SOLARIS || os_DARWIN
     // Reserve more than -Xmx should ever demand.
     // Most of this will be released again once in Java code by the heap scheme
-    _heap = virtualMemory_reserve(TERA_BYTE);
-    if (_heap == 0) {
+    _heap = virtualMemory_allocateNoSwap(TERA_BYTE, HEAP_VM);
+    if (_heap == ALLOC_FAILED) {
         log_exit(4, "could not reserve boot image");
     }
 #if log_LOADER
@@ -301,7 +301,7 @@ static void mapHeapAndCode(int fd) {
     log_println("reserved address space ends at %p", _heap + TERA_BYTE);
 #endif
 
-    if (!virtualMemory_mapFileAtFixedAddress(_heap, _header->bootHeapSize + _header->bootCodeSize, fd, fileOffset)) {
+    if (virtualMemory_mapFileAtFixedAddress(_heap, _header->bootHeapSize + _header->bootCodeSize, fd, fileOffset) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
 #else

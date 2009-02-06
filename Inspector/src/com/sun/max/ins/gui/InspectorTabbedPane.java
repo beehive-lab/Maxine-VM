@@ -18,25 +18,51 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.sparc.gwff;
+package com.sun.max.ins.gui;
 
-import com.sun.max.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.target.*;
+import javax.swing.*;
+
+import com.sun.max.ins.*;
+import com.sun.max.tele.*;
+
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * A tabbed pane specialized for use in the Maxine Inspector.
+ *
+ * @author Michael Van De Vanter
  */
-public class Package extends VMPackage {
-    public Package() {
+public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
+
+    private final Inspection _inspection;
+
+    /**
+     * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
+     */
+    protected InspectorTabbedPane(Inspection inspection) {
         super();
-        registerScheme(TargetABIsScheme.class, SPARCGwffTargetABIsScheme.class);
+        _inspection = inspection;
+        setOpaque(true);
+        setBackground(inspection.style().defaultBackgroundColor());
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.targetABIsPackage() == this;
+    public final Inspection inspection() {
+        return _inspection;
     }
+
+    public final InspectorStyle style() {
+        return _inspection.style();
+    }
+
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    public InspectionActions actions() {
+        return _inspection.actions();
+    }
+
+    public TeleVM teleVM() {
+        return _inspection.teleVM();
+    }
+
 }
