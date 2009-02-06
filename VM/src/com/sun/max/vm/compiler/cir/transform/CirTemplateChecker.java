@@ -115,9 +115,6 @@ public final class CirTemplateChecker extends CirVisitor {
             if (routine instanceof CirBuiltin) {
                 final CirBuiltin cirBuiltin = (CirBuiltin) routine;
                 final Builtin builtin = cirBuiltin.builtin();
-                if (builtin == SpecialBuiltin.Push.BUILTIN || builtin == SpecialBuiltin.Pop.BUILTIN) {
-                    return true;
-                }
                 if (builtin == GetIntegerRegister.BUILTIN) {
                     final CirValue[] arguments = call.arguments();
                     final Role role = (Role) arguments[0].value().asObject();

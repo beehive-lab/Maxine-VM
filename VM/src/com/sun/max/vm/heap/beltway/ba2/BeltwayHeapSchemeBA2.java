@@ -28,6 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.profile.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
@@ -120,7 +121,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
 
     }
 
-    @Override
     @INLINE
     public boolean minorCollect(Size requestedFreeSpace) {
         if (_outOfMemory) {
@@ -135,7 +135,6 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
         return false;
     }
 
-    @Override
     @INLINE
     public boolean majorCollect(Size requestedFreeSpace) {
         if (_outOfMemory) {
@@ -167,6 +166,12 @@ public class BeltwayHeapSchemeBA2 extends BeltwayHeapScheme {
     @INLINE
     public boolean checkOverlappingBelts(Belt from, Belt to) {
         return (from.getAllocationMark().greaterThan(to.start()) || from.end().greaterThan(to.start())) ? true : false;
+    }
+
+    @Override
+    @INLINE
+    public void writeBarrier(Reference from, Reference to) {
+        // do nothing.
     }
 
 }

@@ -22,6 +22,7 @@ package com.sun.max.vm.heap.prototype;
 
 import java.lang.reflect.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -138,10 +139,6 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
         return false;
     }
 
-    @Override
-    public void writeBarrier(Reference reference) {
-    }
-
     public Pointer gcAllocate(RuntimeMemoryRegion region, Size size) {
         return null;
     }
@@ -150,4 +147,9 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
         return null;
     }
 
+    @Override
+    @INLINE
+    public void writeBarrier(Reference from, Reference to) {
+        // do nothing.
+    }
 }

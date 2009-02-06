@@ -719,9 +719,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     public void finalize(MaxineVM.Phase phase) {
     }
 
-    @INLINE
     @Override
-    public void writeBarrier(Reference reference) {
+    @INLINE
+    public void writeBarrier(Reference from, Reference to) {
+        // do nothing.
     }
-
 }

@@ -606,14 +606,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitPush(Push builtin, IR_Type result, IR_Type[] arguments) {
-        visitSpecialBuiltin(builtin, result, arguments);
-    }
-
-    public void visitPop(Pop builtin, IR_Type result, IR_Type[] arguments) {
-        visitSpecialBuiltin(builtin, result, arguments);
-    }
-
     public void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }
@@ -666,9 +658,6 @@ public class BuiltinAdapter<IR_Type> implements BuiltinVisitor<IR_Type> {
         visitSpecialBuiltin(builtin, result, arguments);
     }
 
-    public void visitBreakpoint(Breakpoint builtin, IR_Type result, IR_Type[] arguments) {
-        visitSpecialBuiltin(builtin, result, arguments);
-    }
     public void visitIntToFloat(IntToFloat builtin, IR_Type result, IR_Type[] arguments) {
         visitSpecialBuiltin(builtin, result, arguments);
     }

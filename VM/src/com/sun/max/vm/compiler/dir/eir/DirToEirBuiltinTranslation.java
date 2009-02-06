@@ -118,12 +118,6 @@ public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue
     }
 
     @Override
-    public final void visitBreakpoint(Breakpoint builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 0;
-        addInstruction(new EirBreakpoint(eirBlock()));
-    }
-
-    @Override
     public final void visitMarker(Marker builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirArguments.length == 0;
         addInstruction(new EirMarker(eirBlock()));

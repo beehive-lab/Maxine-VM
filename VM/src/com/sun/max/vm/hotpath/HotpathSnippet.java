@@ -61,21 +61,6 @@ public abstract class HotpathSnippet extends Snippet {
         public static final CheckType SNIPPET = new CheckType();
     }
 
-    /**
-     * We need to explicitly check for the default switch case if we ever encounter it during recording.
-     */
-    /*
-    public static final class CheckSwitchDefaultCase extends HotpathSnippet {
-        @SNIPPET
-        public static void checkSwitchDefaultCase(int index, int low, int high) {
-            if (index < low || index > high) {
-                throw new GuardException();
-            }
-        }
-        public static final CheckSwitchDefaultCase SNIPPET = new CheckSwitchDefaultCase();
-    }
-    */
-
     public static final class CallBailout extends HotpathSnippet {
         @SNIPPET
         public static void callBailout(TirGuard guard) {

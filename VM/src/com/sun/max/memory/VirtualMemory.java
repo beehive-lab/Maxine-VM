@@ -26,7 +26,6 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * Access to the virtual memory facilities of the underlying operating system.

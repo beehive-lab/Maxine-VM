@@ -163,14 +163,6 @@ public final class BeltManager {
     }
 
     @INLINE
-    public Belt getCustomBelt(Address startAddress, Address stopAddress, Address allocationMark) {
-        _tempBelt.setStart(startAddress);
-        _tempBelt.setEnd(stopAddress);
-        _tempBelt.setAllocationMark(allocationMark);
-        return _tempBelt;
-    }
-
-    @INLINE
     public Belt getRemainingOverlappingBelt(Belt from) {
         _tempBelt.setStart(from.getPrevAllocationMark());
         _tempBelt.setEnd(from.end());

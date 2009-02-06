@@ -28,6 +28,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.beltway.*;
 import com.sun.max.vm.heap.beltway.profile.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.tele.*;
 
 /**
@@ -145,11 +146,6 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         return true;
     }
 
-    @Override
-    public boolean majorCollect(Size requestedFreeSpace) {
-        return false;
-    }
-
     private Size immediateFreeSpace(Belt belt) {
         return belt.end().minus(belt.getAllocationMark()).asSize();
     }
@@ -163,4 +159,9 @@ public class BeltwayHeapSchemeGenerational extends BeltwayHeapScheme {
         return false;
     }
 
+    @Override
+    @INLINE
+    public void writeBarrier(Reference from, Reference to) {
+        // do nothing.
+    }
 }
