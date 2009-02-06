@@ -178,6 +178,10 @@ public final class TargetABI<IntegerRegister_Type extends Symbol, FloatingPointR
         return parameterKind != Kind.FLOAT && parameterKind != Kind.DOUBLE;
     }
 
+    // FIXME: this is architecture AND compiler dependent.
+    // Should be delegated to some other class since TargetABI is final.
+    // It is also redundant with the EirABI which already to this parameter to platform register mapping.
+    // see EirABI.getParameterLocations.
     public TargetLocation[] getParameterTargetLocations(Kind[] parameterKinds) {
         final TargetLocation[] result = new TargetLocation[parameterKinds.length];
         int integerIndex = 0;

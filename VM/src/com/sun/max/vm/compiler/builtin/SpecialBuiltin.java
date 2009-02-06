@@ -101,37 +101,6 @@ public abstract class SpecialBuiltin extends Builtin {
         public static final AddWordsToIntegerRegister BUILTIN = new AddWordsToIntegerRegister();
     }
 
-    @BUILTIN(builtinClass = SpecialBuiltin.Push.class)
-    public static native void push(Word value);
-
-    @BUILTIN(builtinClass = SpecialBuiltin.Push.class)
-    public static native void pushObject(Object value);
-
-    public static class Push extends SpecialBuiltin {
-
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 1;
-            visitor.visitPush(this, result, arguments);
-        }
-
-        public static final Push BUILTIN = new Push();
-    }
-
-    @BUILTIN(builtinClass = SpecialBuiltin.Pop.class)
-    public static native Word pop();
-
-    public static class Pop extends SpecialBuiltin {
-
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 0;
-            visitor.visitPop(this, result, arguments);
-        }
-
-        public static final Pop BUILTIN = new Pop();
-    }
-
     @BUILTIN(builtinClass = SpecialBuiltin.GetInstructionPointer.class)
     public static native Pointer getInstructionPointer();
 
@@ -338,20 +307,6 @@ public abstract class SpecialBuiltin extends Builtin {
         }
 
         public static final FlushRegisterWindows BUILTIN = new FlushRegisterWindows();
-    }
-
-    @BUILTIN(builtinClass = SpecialBuiltin.Breakpoint.class)
-    public static native void breakpoint();
-
-    public static class Breakpoint extends SpecialBuiltin {
-
-        @Override
-        public <IR_Type> void acceptVisitor(BuiltinVisitor<IR_Type> visitor, IR_Type result, IR_Type[] arguments) {
-            assert arguments.length == 0;
-            visitor.visitBreakpoint(this, result, arguments);
-        }
-
-        public static final Breakpoint BUILTIN = new Breakpoint();
     }
 
     public static class IntToFloat extends SpecialBuiltin {

@@ -18,25 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.target.sparc.flat;
+package com.sun.max.ins.gui;
 
-import com.sun.max.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.target.*;
+import javax.swing.*;
+
+import com.sun.max.ins.*;
+
 
 /**
- * @see MaxPackage
- * 
- * @author Bernd Mathiske
+ * A checkbox specialized for use in the Maxine Inspector.
+ *
+ * @author Michael Van De Vanter
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-        registerScheme(TargetABIsScheme.class, SPARCFlatTargetABIsScheme.class);
+public final class InspectorCheckBox extends JCheckBox {
+
+    /**
+     *  Creates a new {@JCheckBox} specialized for use in the Maxine Inspector.
+     * @param inspection
+     * @param text the text to appear in the label
+     * @param selected whether the check box is currently selected.
+     */
+    public InspectorCheckBox(Inspection inspection, String text, String toolTipText, boolean selected) {
+        super(text, selected);
+        setToolTipText(toolTipText);
+        setOpaque(true);
+        setFont(inspection.style().textLabelFont());
+        setBackground(inspection.style().defaultBackgroundColor());
     }
 
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.targetABIsPackage() == this;
-    }
 }

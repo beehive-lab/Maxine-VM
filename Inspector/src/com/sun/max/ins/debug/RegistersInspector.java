@@ -77,9 +77,8 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
 
     @Override
     public void createView(long epoch) {
-        final JPanel contentPane = new JPanel();
+        final JPanel contentPane = new InspectorPanel(inspection());
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
-        contentPane.setOpaque(true);
 
         final TeleIntegerRegisters integerRegisters = _teleNativeThread.integerRegisters();
         _integerRegisterPanel = RegisterPanel.createIntegerRegisterPanel(inspection(), integerRegisters);
@@ -93,24 +92,14 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
         _floatingPointRegisterPanel = RegisterPanel.createFloatingPointRegisterPanel(inspection(), floatingPointRegisters);
         contentPane.add(_floatingPointRegisterPanel);
 
-        frame().getContentPane().add(new JScrollPane(contentPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER));
+        frame().getContentPane().add(new InspectorScrollPane(inspection(), contentPane));
         redisplay();
         refreshView(epoch, true);
     }
 
     private void redisplay() {
-        _integerRegisterPanel.setOpaque(true);
-        _integerRegisterPanel.setBackground(style().defaultBackgroundColor());
-        _integerRegisterPanel.setBorder(style().defaultPaneBottomBorder());
         _integerRegisterPanel.redisplay();
-
-        _stateRegisterPanel.setOpaque(true);
-        _stateRegisterPanel.setBackground(style().defaultBackgroundColor());
-        _stateRegisterPanel.setBorder(style().defaultPaneBottomBorder());
         _stateRegisterPanel.redisplay();
-
-        _floatingPointRegisterPanel.setOpaque(true);
-        _floatingPointRegisterPanel.setBackground(style().defaultBackgroundColor());
         _floatingPointRegisterPanel.redisplay();
     }
 

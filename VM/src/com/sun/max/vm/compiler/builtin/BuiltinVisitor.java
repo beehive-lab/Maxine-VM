@@ -178,8 +178,6 @@ public interface BuiltinVisitor<IR_Type> {
     void visitGetIntegerRegister(GetIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
     void visitSetIntegerRegister(SetIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
     void visitAddWordsToIntegerRegister(AddWordsToIntegerRegister builtin, IR_Type result, IR_Type[] arguments);
-    void visitPush(Push builtin, IR_Type result, IR_Type[] arguments);
-    void visitPop(Pop builtin, IR_Type result, IR_Type[] arguments);
     void visitPause(Pause builtin, IR_Type result, IR_Type[] arguments);
 
     void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, IR_Type result, IR_Type[] arguments);
@@ -198,7 +196,6 @@ public interface BuiltinVisitor<IR_Type> {
     void visitSoftSafepoint(SoftSafepoint builtin, IR_Type result, IR_Type[] arguments);
     void visitHardSafepoint(HardSafepoint builtin, IR_Type result, IR_Type[] arguments);
 
-    void visitBreakpoint(Breakpoint builtin, IR_Type result, IR_Type[] arguments);
     void visitFlushRegisterWindows(FlushRegisterWindows builtin, IR_Type result, IR_Type[] arguments);
 
     void visitIntToFloat(IntToFloat builtin, IR_Type result, IR_Type[] arguments);

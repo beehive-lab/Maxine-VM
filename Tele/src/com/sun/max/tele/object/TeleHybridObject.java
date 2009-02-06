@@ -46,6 +46,11 @@ public abstract class TeleHybridObject extends TeleObject {
     }
 
     @Override
+    public ObjectKind getObjectKind() {
+        return ObjectKind.HYBRID;
+    }
+
+    @Override
     public Value readFieldValue(FieldActor fieldActor) {
         if (fieldActor.kind() == Kind.REFERENCE) {
             return TeleReferenceValue.from(teleVM(), teleVM().wordToReference(reference().readWord(fieldActor.offset())));

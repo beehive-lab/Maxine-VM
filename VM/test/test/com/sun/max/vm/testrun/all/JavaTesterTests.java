@@ -58,7 +58,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test(2) ==
+        // test(2) == 
             runString = "test(2)";
             if (!"".equals(test.bytecode.BC_aaload.test(2))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -230,7 +230,7 @@ public class JavaTesterTests {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }
-        // test("") ==
+        // test("") == 
             runString = "test(\"\")";
             if (!"".equals(test.bytecode.BC_areturn.test(""))) {
                 JavaTesterRunScheme.end(runString, false);
@@ -1867,6 +1867,12 @@ public class JavaTesterTests {
         // test(311.0,10.0) == 1.0
             runString = "test(311.0,10.0)";
             if (1.0f != test.bytecode.BC_frem.test(311.0f, 10.0f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(12.5,6.0) == 0.5
+            runString = "test(12.5,6.0)";
+            if (0.5f != test.bytecode.BC_frem.test(12.5f, 6.0f)) {
                 JavaTesterRunScheme.end(runString, false);
                 return;
             }

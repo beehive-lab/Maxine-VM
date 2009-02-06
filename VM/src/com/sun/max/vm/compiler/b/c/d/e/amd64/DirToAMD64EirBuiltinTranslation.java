@@ -1272,20 +1272,6 @@ class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
     }
 
     @Override
-    public void visitPush(Push builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 1;
-        final EirValue stackPointer = methodTranslation().integerRegisterRoleValue(VMRegister.Role.CPU_STACK_POINTER);
-        addInstruction(new PUSH(eirBlock(), stackPointer, dirToEirValue(dirArguments[0])));
-    }
-
-    @Override
-    public void visitPop(Pop builtin, DirValue dirResult, DirValue[] dirArguments) {
-        assert dirArguments.length == 0;
-        final EirValue stackPointer = methodTranslation().integerRegisterRoleValue(VMRegister.Role.CPU_STACK_POINTER);
-        addInstruction(new POP(eirBlock(), dirToEirValue(dirResult), stackPointer));
-    }
-
-    @Override
     public void visitGetFloatingPointRegister(GetFloatingPointRegister builtin, DirValue dirResult, DirValue[] dirArguments) {
         assert dirArguments.length == 1 && dirArguments[0].isConstant() && dirArguments[0].value().asObject() instanceof VMRegister.Role;
         final EirValue result = dirToEirValue(dirResult);

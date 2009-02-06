@@ -26,97 +26,125 @@ import java.io.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
+ * Access to the virtual memory facilities of the underlying operating system.
+ * Provides methods to allocate quantities of memory that are expected to be
+ * multiples of page size (or may be rounded up). To enable possible optimizations
+ * in virtual memory management, memory is classified into different different uses
+ * by the @see Type enum.
+ *
+ * Also provides the ability to map files into virtual memory and to change page protection.
+ *
  * @author Bernd Mathiske
+ * @author Mick Jordan
  */
 public final class VirtualMemory {
+
+    public enum Type {
+        HEAP,               // for the garbage collected heap
+        STACK,             // for thread stacks
+        CODE,               // for compiled code
+        DATA                // for miscellaneous data
+    }
+
     private VirtualMemory() {
     }
 
-    private static native long nativeMapFile(long size, int fd, long fileOffset);
-
-    public static Pointer mapFile(Size size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
-        final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
-        return Pointer.fromLong(nativeMapFile(size.toLong(), fd, fileOffset.toLong()));
-    }
-
-    private static native long nativeMapFileIn31BitSpace(int size, int fd, long fileOffset);
+    /* Allocation methods.
+     * Requested sizes may be rounded up to be a multiple of the system page size.
+     * All allocations return @see Pointer.zero on failure.
+     */
 
     /**
-     * Only supported on Linux.
+     * Allocate virtual memory of a given type.
+     * @param size the amount requested
+     * @param type the type of memory requested
+     * @return the address of the allocated memory
      */
-    public static Pointer mapFileIn31BitSpace(int size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
-        if (Platform.hostOrTarget().operatingSystem() != OperatingSystem.LINUX) {
-            throw new UnsupportedOperationException();
-        }
-        final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
-        return Pointer.fromLong(nativeMapFileIn31BitSpace(size, fd, fileOffset.toLong()));
+    public static Pointer allocate(Size size, Type type) {
+        return virtualMemory_allocate(size, type.ordinal());
     }
-
-    @C_FUNCTION
-    private static native Pointer virtualMemory_nativeAllocate(Size size);
-
-    public static Pointer allocate(Size size) {
-        return virtualMemory_nativeAllocate(size);
-    }
-
-    public static void deallocate(Address pointer, Size size) {
-        nativeRelease(pointer, size);
-    }
-
-    @C_FUNCTION
-    private static native Pointer nativeAllocateIn31BitSpace(Size size);
 
     /**
-     * Only supported on Linux/GuestVM.
+     * Deallocate virtual memory of a given type.
+     * @param pointer base address of previously allocated memory
+     * @param size size of previously allocated memory
+     * @param type type of memory
+     * @return zero if failed, pointer otherwise.
      */
-    public static Pointer allocateIn31BitSpace(Size size) {
-        return nativeAllocateIn31BitSpace(size);
+    public static Address deallocate(Address pointer, Size size, Type type) {
+        return virtualMemory_deallocate(pointer, size, type.ordinal());
     }
 
-    public static boolean allocateMemoryAtFixedAddress(Address pointer, Size size) {
+
+    /**
+     * Allocate virtual memory at a fixed address.
+     * Evidently the caller of this method must know that the virtual memory
+     * at the given address is available for allocation.
+     *
+     * @param pointer page aligned address at which to allocate the virtual memory
+     * @param size the size requested
+     * @return true if the memory was allocated, false other wise
+     */
+    public static boolean allocateAtFixedAddress(Address address, Size size, Type type) {
+        return virtualMemory_allocateAtFixedAddress(address, size, type.ordinal());
+    }
+
+    /**
+     * Allocate virtual memory at a fixed address, which must be page aligned.
+     * Evidently the caller of this method must know that the virtual memory
+     * at the given address is available for allocation.
+     *
+     * @param pointer page aligned address at which to allocate the virtual memory
+     * @param size the size requested
+     * @type type of memory
+     * @return true if the memory was allocated, false other wise
+     */
+    public static boolean allocatePageAlignedAtFixedAddress(Address pointer, Size size, Type type) {
         if (!pointer.isAligned(Platform.target().pageSize())) {
-            FatalError.unexpected("Error (Virtual Memory): Start address of the mmaped space must be page alligned ");
+            throw new IllegalArgumentException("start address of the request memory must be page aligned ");
         }
-        return nativeAllocateMemoryAtFixedAddress(pointer, size);
+        return virtualMemory_allocateAtFixedAddress(pointer, size, type.ordinal());
     }
-
-    @C_FUNCTION
-    static native boolean nativeAllocateMemoryAtFixedAddress(Address pointer, Size size);
-
-    @C_FUNCTION
-    private static native boolean nativeAllocateAtFixedAddress(Address address, Size size);
 
     /**
-     * Only supported on Solaris.
+     * Allocate virtual memory in the address range available using 31 bits of addressing.
+     * I.e., in the first 2GB of memory. This method may not be implemented on all platforms.
+     * @param size the size requested
+     * @type type of memory
+     * @return the address of the allocated memory or zero if unsuccessful
      */
-    public static boolean allocate(Address address, Size size) {
-        return nativeAllocateAtFixedAddress(address, size);
+    public static Pointer allocateIn31BitSpace(Size size, Type type) {
+        return virtualMemory_allocateIn31BitSpace(size, type.ordinal());
+    }
+
+    /**
+     * Allocate virtual memory that is not backed by swap space.
+     * @param size the size requested
+     * @type type of memory
+     * @return the address of the allocated memory or zero if unsuccessful
+     */
+    public static Pointer allocateNoSwap(Size size, Type type) {
+        return virtualMemory_allocateNoSwap(size);
     }
 
     @C_FUNCTION
-    private static native Pointer nativeReserve(Size size);
-
-    public static Pointer reserve(Size size) {
-        return nativeReserve(size);
-    }
-
+    private static native boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type);
 
     @C_FUNCTION
-    static native Address nativeGetEndOfCodeRegion();
-
-    public static Address getEndOfCodeRegion() {
-        return nativeGetEndOfCodeRegion();
-    }
+    private static native Pointer virtualMemory_allocateIn31BitSpace(Size size, int type);
 
     @C_FUNCTION
-    private static native boolean nativeRelease(Address start, Size size);
+    private static native Pointer virtualMemory_allocateNoSwap(Size size);
 
-    public static boolean release(Address start, Size size) {
-        return nativeRelease(start, size);
-    }
+    @C_FUNCTION
+    private static native Pointer virtualMemory_allocate(Size size, int type);
+
+    @C_FUNCTION
+    private static native Pointer virtualMemory_deallocate(Address start, Size size, int type);
+
+    /* Page protection methods */
 
     /**
      * Sets access protection for a given memory page such that any access (read or write) to it causes a trap.
@@ -124,18 +152,81 @@ public final class VirtualMemory {
      * @param pageAddress an address denoting the start of a mapped memory page. This value must be aligned to the
      *            underlying platform's {@linkplain com.sun.max.platform.Platform#pageSize() page size}.
      */
-    @C_FUNCTION
-    public static native void protectPage(Address pageAddress);
+    @INLINE
+    public static void protectPage(Address pageAddress) {
+        virtualMemory_protectPage(pageAddress);
+    }
 
-    /**
+     /**
      * Sets access protection for a given memory page such that any read or write access to it is legal.
      *
      * @param pageAddress an address denoting the start of a mapped memory page. This value must be aligned to the
      *            underlying platform's {@linkplain com.sun.max.platform.Platform#pageSize() page size}.
      */
-    @C_FUNCTION
-    public static native void unprotectPage(Address pageAddress);
+
+    @INLINE
+    public static void unprotectPage(Address pageAddress) {
+        virtualMemory_unprotectPage(pageAddress);
+    }
+
+    /**
+     * Ensure that the given address is page aligned by rounding up if necessary.
+     * @param address
+     * @return
+     */
+    @INLINE
+    public static Address pageAlign(Address address) {
+        return virtualMemory_pageAlign(address);
+    }
 
     @C_FUNCTION
-    public static native Address pageAlign(Address address);
+    private static native void virtualMemory_protectPage(Address pageAddress);
+
+    @C_FUNCTION
+    public static native void virtualMemory_unprotectPage(Address pageAddress);
+
+    @C_FUNCTION
+    public static native Address virtualMemory_pageAlign(Address address);
+
+    /* File mapping methods */
+
+    /**
+     * Map an open file into virtual memory.
+     * @param size
+     * @param fileDescriptor
+     * @param fileOffset
+     * @return
+     * @throws IOException
+     */
+
+    public static Pointer mapFile(Size size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
+        final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
+        return Pointer.fromLong(virtualMemory_mapFile(size.toLong(), fd, fileOffset.toLong()));
+    }
+
+    /**
+     * Map an open file into virtual memory restricted to the address range available in 31 bits, i.e. up to 2GB.
+     * This is only available on Linux.
+     * @param size
+     * @param fileDescriptor
+     * @param fileOffset
+     * @return
+     * @throws IOException
+     */
+    public static Pointer mapFileIn31BitSpace(int size, FileDescriptor fileDescriptor, Address fileOffset) throws IOException {
+        if (Platform.hostOrTarget().operatingSystem() != OperatingSystem.LINUX) {
+            throw new UnsupportedOperationException();
+        }
+        final Integer fd = (Integer) WithoutAccessCheck.getInstanceField(fileDescriptor, "fd");
+        return Pointer.fromLong(virtualMemory_mapFileIn31BitSpace(size, fd, fileOffset.toLong()));
+    }
+
+    /* These are JNI functions because they may block */
+
+    private static native long virtualMemory_mapFile(long size, int fd, long fileOffset);
+
+    private static native long virtualMemory_mapFileIn31BitSpace(int size, int fd, long fileOffset);
+
+
+
 }

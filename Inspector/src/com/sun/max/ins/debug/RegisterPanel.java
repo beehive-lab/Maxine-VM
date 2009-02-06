@@ -94,6 +94,7 @@ public abstract class RegisterPanel extends InspectorPanel {
         return new StateRegisterPanel(inspection, registers);
     }
 
+    @Override
     public final void refresh(long epoch, boolean force) {
         for (Symbol register : _registers.symbolizer()) {
             final int index = register.value();
@@ -112,6 +113,7 @@ public abstract class RegisterPanel extends InspectorPanel {
         }
     }
 
+    @Override
     public final void redisplay() {
         for (WordValueLabel wordValueLabel : _registerInspectors) {
             wordValueLabel.redisplay();

@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins.method;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.amd64.*;
 import com.sun.max.ins.gui.*;
@@ -67,7 +65,7 @@ public final class EirInspector extends IrInspector<EirInspector> {
     protected void createView(long epoch) {
         _classMethodInspectorMenuItems = new ClassMethodMenuItems(inspection(), teleClassMethodActor());
         frame().add(_classMethodInspectorMenuItems);
-        frame().setContentPane(new JScrollPane(_eirPanel));
+        frame().setContentPane(new InspectorScrollPane(inspection(), _eirPanel));
     }
 
     @Override

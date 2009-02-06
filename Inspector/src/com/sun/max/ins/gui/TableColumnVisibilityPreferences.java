@@ -189,23 +189,18 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
                 }
             }
         };
-        final JPanel content = new JPanel();
+        final JPanel content = new InspectorPanel(_inspection);
         content.add(new TextLabel(_inspection, "Columns:  "));
         for (Column_Type columnType : _columnTypeValues) {
             if (canBeMadeInvisible(columnType)) {
-                final JCheckBox checkBox = new JCheckBox(label(columnType));
-                checkBox.setOpaque(true);
-                checkBox.setBackground(_inspection.style().defaultBackgroundColor());
-                checkBox.setToolTipText(_saveSettingsListener != null ? "Display column in all views?" : "Display column in this view?");
-                checkBox.setSelected(isVisible(columnType));
+                final JCheckBox checkBox =
+                    new InspectorCheckBox(_inspection, label(columnType), _saveSettingsListener != null ? "Display column in all views?" : "Display column in this view?", isVisible(columnType));
                 checkBox.addItemListener(itemListener);
                 checkBoxes[columnType.ordinal()] = checkBox;
                 content.add(checkBox);
             }
         }
-        final JPanel panel = new JPanel(new BorderLayout());
-        panel.setOpaque(true);
-        panel.setBackground(_inspection.style().defaultBackgroundColor());
+        final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
         panel.add(content, BorderLayout.WEST);
         return panel;
     }
@@ -228,28 +223,24 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
                         TableColumnVisibilityPreferences<Column_Type> globalPreferences) {
             super(inspection, title, true);
 
-            final JPanel contentPanel = new JPanel();
-            contentPanel.setLayout(new BorderLayout());
-            contentPanel.setOpaque(true);
-            contentPanel.setBackground(style().defaultBackgroundColor());
+            final JPanel contentPanel = new InspectorPanel(inspection, new BorderLayout());
 
-            final JPanel prefPanel = new JPanel();
-            prefPanel.setLayout(new SpringLayout());
+            final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
 
             final Border border = BorderFactory.createLineBorder(Color.black);
 
-            final JPanel thisViewLabelPanel = new JPanel(new BorderLayout());
+            final JPanel thisViewLabelPanel = new InspectorPanel(inspection, new BorderLayout());
             thisViewLabelPanel.setBorder(border);
-            thisViewLabelPanel.add(new TextLabel(inspection(), "This View"), BorderLayout.WEST);
+            thisViewLabelPanel.add(new TextLabel(inspection, "This View"), BorderLayout.WEST);
             prefPanel.add(thisViewLabelPanel);
 
             final JPanel viewOptionPanel = instancePreferences.getPanel();
             viewOptionPanel.setBorder(border);
             prefPanel.add(viewOptionPanel);
 
-            final JPanel preferencesLabelPanel = new JPanel(new BorderLayout());
+            final JPanel preferencesLabelPanel = new InspectorPanel(inspection, new BorderLayout());
             preferencesLabelPanel.setBorder(border);
-            preferencesLabelPanel.add(new TextLabel(inspection(), "Prefs"), BorderLayout.WEST);
+            preferencesLabelPanel.add(new TextLabel(inspection, "Prefs"), BorderLayout.WEST);
             prefPanel.add(preferencesLabelPanel);
 
             final JPanel preferencesPanel = globalPreferences.getPanel();
@@ -258,9 +249,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
 
             SpringUtilities.makeCompactGrid(prefPanel, 2);
 
-            final JPanel buttonsPanel = new JPanel();
-            buttonsPanel.setOpaque(true);
-            buttonsPanel.setBackground(style().defaultBackgroundColor());
+            final JPanel buttonsPanel = new InspectorPanel(inspection);
             buttonsPanel.add(new JButton(new InspectorAction(inspection(), "Close") {
                 @Override
                 protected void procedure() {
@@ -288,17 +277,12 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
                         TableColumnVisibilityPreferences<Column_Type> instancePreferences) {
             super(inspection, title, true);
 
-            final JPanel contentPanel = new JPanel();
-            contentPanel.setLayout(new BorderLayout());
-            contentPanel.setOpaque(true);
-            contentPanel.setBackground(style().defaultBackgroundColor());
+            final JPanel contentPanel = new InspectorPanel(inspection, new BorderLayout());
 
             final JPanel viewOptionPanel = instancePreferences.getPanel();
             viewOptionPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 
-            final JPanel buttonsPanel = new JPanel();
-            buttonsPanel.setOpaque(true);
-            buttonsPanel.setBackground(style().defaultBackgroundColor());
+            final JPanel buttonsPanel = new InspectorPanel(inspection);
             buttonsPanel.add(new JButton(new InspectorAction(inspection(), "Close") {
                 @Override
                 protected void procedure() {

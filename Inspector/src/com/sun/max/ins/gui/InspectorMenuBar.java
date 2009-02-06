@@ -18,12 +18,57 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.ins.gui;
+
+import javax.swing.*;
+
+import com.sun.max.ins.*;
+import com.sun.max.tele.*;
+
+
 /**
- * SPARC ABIs using register windows for GPRs and a flat file for FPRs
- * ("GWFF" :== Gpr - Windows, Fpr - Flat).
- * This differs from the System V ABI,
- * which passes floating point values in GPRs.
+ * A menu bar specialized for use in the Maxine Inspector.
  *
- * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
-package com.sun.max.vm.compiler.target.sparc.gwff;
+public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHolder {
+
+    private final Inspection _inspection;
+
+    /**
+     * Creates a new {@JMenuBar}, specialized for use in the Maxine Inspector.
+     */
+    protected InspectorMenuBar(Inspection inspection) {
+        _inspection = inspection;
+        setOpaque(true);
+        setBackground(inspection.style().defaultBackgroundColor());
+    }
+
+    public final Inspection inspection() {
+        return _inspection;
+    }
+
+    public final InspectorStyle style() {
+        return _inspection.style();
+    }
+
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    public InspectionActions actions() {
+        return _inspection.actions();
+    }
+
+    public TeleVM teleVM() {
+        return _inspection.teleVM();
+    }
+
+    public void redisplay() {
+    }
+
+    public void refresh(long epoch, boolean force) {
+    }
+
+
+}

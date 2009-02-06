@@ -95,11 +95,11 @@ ifeq ($(TARGETOS),SunOS)
     	ifeq ($a,sparcv9)
     		ISA := sparc
     		ARCH := v9
-            ARCH_FLAG := "-m64"
+         ARCH_FLAG := "-m64"
     	else
     	    ISA := sparc
     	    ARCH := v8
-            ARCH_FLAG := "-m32"
+          ARCH_FLAG := "-m32"
     	endif
         PLATFORM := $(OS)-$(ISA)$(ARCH)
     endif

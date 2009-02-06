@@ -48,6 +48,11 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
         super(teleVM, reference);
     }
 
+    @Override
+    public ObjectKind getObjectKind() {
+        return ObjectKind.ARRAY;
+    }
+
     /**
      * @return length of this array in the {@link teleVM}.
      */

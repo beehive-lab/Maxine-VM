@@ -126,12 +126,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
     }
 
-    public static class Preferences extends TableColumnVisibilityPreferences<ColumnKind> {
-        public Preferences(TableColumnVisibilityPreferences<ColumnKind> otherPreferences) {
+    public static class TargetCodeViewerPreferences extends TableColumnVisibilityPreferences<ColumnKind> {
+        public TargetCodeViewerPreferences(TableColumnVisibilityPreferences<ColumnKind> otherPreferences) {
             super(otherPreferences);
         }
 
-        public Preferences(Inspection inspection) {
+        public TargetCodeViewerPreferences(Inspection inspection) {
             super(inspection, "targetCodeInspectorPrefs", ColumnKind.class, ColumnKind.VALUES);
         }
 
@@ -151,11 +151,11 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private static Preferences _globalPreferences;
+    private static TargetCodeViewerPreferences _globalPreferences;
 
-    public static synchronized Preferences globalPreferences(Inspection inspection) {
+    public static synchronized TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
-            _globalPreferences = new Preferences(inspection);
+            _globalPreferences = new TargetCodeViewerPreferences(inspection);
         }
         return _globalPreferences;
     }
@@ -197,43 +197,43 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _table.addMouseListener(new MyInspectorMouseClickAdapter(_inspection));
 
         // Set up toolbar
-        JButton button = new JButton(_inspection.actions().toggleTargetCodeBreakpoint());
+        JButton button = new InspectorButton(_inspection, _inspection.actions().toggleTargetCodeBreakpoint());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugToggleBreakpointbuttonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugStepOver());
+        button = new InspectorButton(_inspection, _inspection.actions().debugStepOver());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOverButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugSingleStep());
+        button = new InspectorButton(_inspection, _inspection.actions().debugSingleStep());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepInButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugReturnFromFrame());
+        button = new InspectorButton(_inspection, _inspection.actions().debugReturnFromFrame());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugStepOutButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugRunToInstruction());
+        button = new InspectorButton(_inspection, _inspection.actions().debugRunToInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugResume());
+        button = new InspectorButton(_inspection, _inspection.actions().debugResume());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugContinueButtonIcon());
         toolBar().add(button);
 
-        button = new JButton(_inspection.actions().debugPause());
+        button = new InspectorButton(_inspection, _inspection.actions().debugPause());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugPauseButtonIcon());
@@ -241,7 +241,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         toolBar().add(Box.createHorizontalGlue());
 
-        toolBar().add(new JLabel("Target Code"));
+        toolBar().add(new TextLabel(inspection(), "Target Code"));
 
         toolBar().add(Box.createHorizontalGlue());
 
@@ -249,21 +249,18 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
         addSearchButton();
 
-        final JButton viewOptionsButton = new JButton(new AbstractAction() {
+        final JButton viewOptionsButton = new InspectorButton(inspection(), new AbstractAction("View...") {
             public void actionPerformed(ActionEvent actionEvent) {
                 new TableColumnVisibilityPreferences.Dialog<ColumnKind>(inspection(), "TargetCode View Options", _columnModel.preferences(), globalPreferences(inspection()));
             }
         });
-        viewOptionsButton.setText("View...");
         viewOptionsButton.setToolTipText("Target code view options");
         toolBar().add(viewOptionsButton);
 
         toolBar().add(Box.createHorizontalGlue());
         addCodeViewCloseButton();
 
-        final JScrollPane scrollPane = new JScrollPane(_table);
-        scrollPane.setOpaque(true);
-        scrollPane.setBackground(style().defaultBackgroundColor());
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         add(scrollPane, BorderLayout.CENTER);
 
         refresh(epoch, true);
@@ -423,10 +420,10 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private final class TargetCodeTableColumnModel extends DefaultTableColumnModel {
 
-        private final Preferences _preferences;
+        private final TargetCodeViewerPreferences _preferences;
 
         private TargetCodeTableColumnModel() {
-            _preferences = new Preferences(JTableTargetCodeViewer.globalPreferences(inspection())) {
+            _preferences = new TargetCodeViewerPreferences(JTableTargetCodeViewer.globalPreferences(inspection())) {
                 @Override
                 public void setIsVisible(ColumnKind columnKind, boolean visible) {
                     super.setIsVisible(columnKind, visible);
@@ -452,7 +449,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             createColumn(ColumnKind.BYTES, new BytesRenderer(_inspection));
         }
 
-        private Preferences preferences() {
+        private TargetCodeViewerPreferences preferences() {
             return _preferences;
         }
 
@@ -800,11 +797,14 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
+    @Override
     public void redisplay() {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
             prober.redisplay();
         }
+        // TODO (mlvdv)  code view hack for style changes
+        _table.setRowHeight(style().codeTableRowHeight());
         invalidate();
         repaint();
     }

@@ -197,7 +197,7 @@ static void blueZoneTrap(thread_Specifics *threadSpecifics) {
 
 static int isInGuardZone(Address address, Address zoneBegin) {
     /* return true if the address is in the zone, or is within N pages of the zone */
-    return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * getPageSize());
+    return address >= zoneBegin && (address - zoneBegin) < ((1 + STACK_GUARD_PAGES) * virtualMemory_getPageSize());
 }
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
@@ -221,7 +221,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 
     if (isInGuardZone((Address)stackPointer, threadSpecifics->stackYellowZone)) {
         /* if the stack pointer is in the yellow zone, assume this is a stack fault */
-        unprotectPage(threadSpecifics->stackYellowZone);
+    	virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);
         trapNumber = STACK_FAULT;
     } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackRedZone)) {
         /* if the stack pointer is in the red zone, (we shouldn't be alive) */

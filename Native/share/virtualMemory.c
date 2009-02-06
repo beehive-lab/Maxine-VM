@@ -60,108 +60,112 @@
 
 #define PROT                (PROT_EXEC | PROT_READ | PROT_WRITE)
 
-/* map file calls may block so must be JNI functions */
-Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
-    return (Address) mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
-}
+/* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
+#define CHECK_RESULT(result) ((Address) (result == MAP_FAILED ? ALLOC_FAILED : result))
 
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeMapFile(JNIEnv *env, jclass c, jlong size, jint fd, jlong offset) {
-    return (jlong) virtualMemory_mapFileIn31BitSpace((Size) size, fd, (Size) offset);
+Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
+	return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
+ }
+
+JNIEXPORT Address JNICALL
+Java_com_sun_max_memory_VirtualMemory_mapFile(JNIEnv *env, jclass c, jlong size, jint fd, jlong offset) {
+    return virtualMemory_mapFile((Size) size, fd, (Size) offset);
 }
 
 Address virtualMemory_mapFileIn31BitSpace(jint size, jint fd, Size offset) {
-    return (Address) mmap(0, (size_t) size, PROT, MAP_PRIVATE | MAP_32BIT, fd, (off_t) offset);
+	return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_PRIVATE | MAP_32BIT, fd, (off_t) offset));
 }
 
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_memory_VirtualMemory_nativeMapFileIn31BitSpace(JNIEnv *env, jclass c, jint size, jint fd, jlong offset) {
-    return (jlong) virtualMemory_mapFileIn31BitSpace(size, fd, (Size) offset);
+JNIEXPORT Address JNICALL
+Java_com_sun_max_memory_VirtualMemory_mapFileIn31BitSpace(JNIEnv *env, jclass c, jint size, jint fd, jlong offset) {
+    return virtualMemory_mapFileIn31BitSpace(size, fd, (Size) offset);
 }
 
-jboolean virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd, Size offset) {
-    return ((Address)mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset) == address);
+Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd, Size offset) {
+    return CHECK_RESULT(mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset));
 }
 
-/* simple mapped memory, no need for JNI*/
-Address virtualMemory_nativeAllocate(Size size) {
-#if !os_GUESTVMXEN
-    return (Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0);
+Address virtualMemory_allocateNoSwap(Size size, int type) {
+	void *result = mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_NORESERVE, -1, (off_t) 0);
+#if log_LOADER
+	log_println(" %d virtualMemory_allocateNoSwap allocated %lx at %p",sizeof(size), size, result);
+#endif
+	return CHECK_RESULT(result);
+}
+
+// end of conditional exclusion of mmap stuff not available (or used) on GUESTVMXEN
+#endif // GUESTVMXEN
+
+
+Address virtualMemory_allocate(Size size, int type) {
+#if os_GUESTVMXEN
+	return (Address) guestvmXen_virtualMemory_allocate(size, type);
+#else
+    return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0));
 #endif
 }
 
-Address nativeAllocateIn31BitSpace(Size size) {
+Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 #if os_LINUX
-    return (Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0);
+    return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0));
+#elif os_GUESTVMXEN
+    return (Address) guestvmXen_virtualMemory_allocateIn31BitSpace(size, type);
 #else
     c_UNIMPLEMENTED();
     return 0;
 #endif
 }
 
-jboolean nativeAllocateAtFixedAddress(Address address, Size size) {
-    return virtualMemory_allocateAtFixedAddress(address, size);
-}
-
-Address virtualMemory_reserve(Size size) {
-	Address addr = 	(Address) mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_NORESERVE, -1, (off_t) 0);
-#if log_LOADER
-	log_println(" %d virtualMemory_reserve reserved %lx at %p",sizeof(size), size, addr);
+Address virtualMemory_deallocate(Address start, Size size, int type) {
+#if os_GUESTVMXEN
+	return (Address) guestvmXen_virtualMemory_deallocate(start, size, type);
+#else
+    int result = munmap((void *) start, (size_t) size);
+    return result == -1 ? 0 : start;
 #endif
-	return addr;
 }
 
-Address nativeReserve(Size size) {
-    return virtualMemory_reserve(size);
-}
-
-jboolean nativeRelease(Address start, Size size) {
-    return (munmap((void *) start, (size_t) size) == 0);
-}
-
-#endif // GUESTVMXEN
-
-jboolean virtualMemory_allocateAtFixedAddress(Address address, Size size) {
+Address virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
 #if os_SOLARIS || os_DARWIN
-  return (jboolean) ((Address) mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0) == address);
+  return CHECK_RESULT(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0));
 #else
     c_UNIMPLEMENTED();
     return false;
 #endif
 }
 
-void protectPage(Address pageAddress) {
-    c_ASSERT(pageAlign(pageAddress) == pageAddress);
+void virtualMemory_protectPage(Address pageAddress) {
+    c_ASSERT(virtualMemory_pageAlign(pageAddress) == pageAddress);
 
 #if os_SOLARIS || os_DARWIN || os_LINUX
-    if (mprotect((Word) pageAddress, getPageSize(), PROT_NONE) != 0) {
+    if (mprotect((Word) pageAddress, virtualMemory_getPageSize(), PROT_NONE) != 0) {
          int error = errno;
          log_exit(error, "protectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
     }
 #elif os_GUESTVMXEN
-    guestvmXen_protectPage(pageAddress);
+    guestvmXen_virtualMemory_protectPage(pageAddress);
 #else
     c_UNIMPLEMENTED();
 #endif
 }
 
-void unprotectPage(Address pageAddress) {
-	c_ASSERT(pageAlign(pageAddress) == pageAddress);
+void virtualMemory_unprotectPage(Address pageAddress) {
+	c_ASSERT(virtualMemory_pageAlign(pageAddress) == pageAddress);
 #if os_SOLARIS || os_DARWIN || os_LINUX
-	if (mprotect((Word) pageAddress, getPageSize(), PROT_READ| PROT_WRITE) != 0){
+	if (mprotect((Word) pageAddress, virtualMemory_getPageSize(), PROT_READ| PROT_WRITE) != 0){
          int error = errno;
 		 log_exit(error, "unprotectPage: mprotect(0x%0lx) failed: %s", pageAddress, strerror(error));
 	}
 #elif os_GUESTVMXEN
-	guestvmXen_unProtectPage(pageAddress);
+	guestvmXen_virtualMemory_unProtectPage(pageAddress);
 #else
 	c_UNIMPLEMENTED();
 #endif
 }
 
-unsigned int getPageSize(void){
+unsigned int virtualMemory_getPageSize(void){
 #if os_GUESTVMXEN
-    return guestvmXen_pageSize();
+    return guestvmXen_virtualMemory_pageSize();
 #else
     return getpagesize();
 #endif
@@ -170,7 +174,7 @@ unsigned int getPageSize(void){
 /*
  * Aligns a given address up to the next page-aligned address if it is not already page-aligned.
  */
-Address pageAlign(Address address){
-      long alignment = getPageSize() - 1;
+Address virtualMemory_pageAlign(Address address){
+      long alignment = virtualMemory_getPageSize() - 1;
         return ((long)(address + alignment) & ~alignment);
 }
