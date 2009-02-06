@@ -68,9 +68,16 @@ typedef struct {
     Address enabledVmThreadLocals;
     Address disabledVmThreadLocals;
     Address refMapArea;
-    Address stackYellowZone;
-    Address stackRedZone;
+    Address stackYellowZone; // unmapped to cause a trap on access
+    Address stackRedZone;    // unmapped always - fatal exit if accessed
+    /*
+     * The blue zone is a page that is much closer to the base of the stack and is optionally protected.
+     * This can be used, e.g., to determine the actual stack size needed by a thread, or to avoid
+     * reserving actual real memory until it is needed.
+     */
+
     Address stackBlueZone;
+    void *osData;  // place to hang miscellaneous OS dependent record keeping data.
 } thread_Specifics;
 
 extern thread_Specifics *thread_currentSpecifics(void);
