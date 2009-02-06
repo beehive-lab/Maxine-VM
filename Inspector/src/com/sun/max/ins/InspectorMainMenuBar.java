@@ -24,6 +24,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
 /**
@@ -31,24 +32,37 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class InspectorMenuBar extends JMenuBar {
+public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private final InspectionActions _actions;
 
-    public InspectorMenuBar(InspectionActions actions) {
+    public InspectorMainMenuBar(InspectionActions actions) {
+        super(actions.inspection());
         _actions = actions;
+        addMenus();
+    }
+
+    private void addMenus() {
         add(createInspectionMenu());
         add(createClassMenu());
         add(createObjectMenu());
         add(createMemoryMenu());
         add(createMethodMenu());
-        if (_actions.inspection().hasProcess()) {
+        if (inspection().hasProcess()) {
             add(createDebugMenu());
         }
         add(createViewMenu());
         add(createJavaMenu());
         add(createTestMenu());
         add(createHelpMenu());
+    }
+
+    @Override
+    public void redisplay() {
+    }
+
+    @Override
+    public void refresh(long epoch, boolean force) {
     }
 
     /**
@@ -60,7 +74,7 @@ public final class InspectorMenuBar extends JMenuBar {
 
     private JMenu createInspectionMenu() {
         final JMenu menu = new JMenu("Inspector");
-        if (!_actions.inspection().teleVM().isBootImageRelocated()) {
+        if (!inspection().teleVM().isBootImageRelocated()) {
             menu.add(_actions.relocateBootImage());
             menu.addSeparator();
         }

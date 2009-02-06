@@ -44,8 +44,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 
 /**
- * Holds the user interaction state for the inspection of a Maxine VM,
- * which is accessed via a {@link TeleVM} surrogate.
+ * Holds the user interaction state for the inspection of a Maxine VM, which is accessed via a {@link TeleVM} surrogate.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -67,8 +66,8 @@ public class Inspection extends JFrame {
     private static final String _inspectorName = "Maxine Inspector";
 
     /**
-     * Constants specifying the state of the Inspection and {@link TeleVM}, if present.
-     * These are a superset of {@link TeleProcess.State}.
+     * Constants specifying the state of the Inspection and {@link TeleVM}, if present. These are a superset of
+     * {@link TeleProcess.State}.
      */
     public enum InspectionState {
 
@@ -119,13 +118,13 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Constants specifying how commands that control the debuggee process are executed with respect
-     * to the AWT event handling thread that spawned the command request.
+     * Constants specifying how commands that control the debuggee process are executed with respect to the AWT event
+     * handling thread that spawned the command request.
      */
     public enum DebugMode {
         /**
-         * Constant denoting that a command is only started on the AWT event handling thread that spawned it.
-         * The action to be taken once the debuggee process stops is performed on another thread.
+         * Constant denoting that a command is only started on the AWT event handling thread that spawned it. The action
+         * to be taken once the debuggee process stops is performed on another thread.
          */
         ASYNCHRONOUS,
 
@@ -174,23 +173,24 @@ public class Inspection extends JFrame {
     private final InspectorNameDisplay _nameDisplay;
 
     /**
-     * @return Inspection utility for generating standard, human-intelligible names for entities in the inspection environment.
+     * @return Inspection utility for generating standard, human-intelligible names for entities in the inspection
+     *         environment.
      */
     public InspectorNameDisplay nameDisplay() {
         return _nameDisplay;
     }
 
+    private final InspectorStyleFactory _styleFactory;
     private InspectorStyle _style;
 
     /**
-     * The current configuration for visual style.  This may someday
-     * be changed dynamically through user selection.
+     * The current configuration for visual style.
      */
     public InspectorStyle style() {
         return _style;
     }
 
-    public void setStyle(InspectorStyle style) {
+    private void setStyle(InspectorStyle style) {
         _style = style;
         updateViewConfiguration();
     }
@@ -223,9 +223,8 @@ public class Inspection extends JFrame {
     /**
      * Updates the current key binding map for this inspection.
      *
-     * @param keyBindingMap a key binding map. If this value differs from the
-     *            {@linkplain #keyBindingMap() current key binding map}, then the accelerator keys of all the relevant
-     *            inspector actions are updated.
+     * @param keyBindingMap a key binding map. If this value differs from the {@linkplain #keyBindingMap() current key
+     *            binding map}, then the accelerator keys of all the relevant inspector actions are updated.
      */
     public void setKeyBindingMap(KeyBindingMap keyBindingMap) {
         if (keyBindingMap != _keyBindingMap) {
@@ -254,32 +253,34 @@ public class Inspection extends JFrame {
         }
     }
 
-    private final Preferences _preferences = new Preferences();
+    private final InspectionPreferences _preferences = new InspectionPreferences();
 
-    public Preferences preferences() {
+    public InspectionPreferences preferences() {
         return _preferences;
     }
 
     private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
+    private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
     private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
     private static final String DEBUG_MODE_PREFERENCE = "debugMode";
     private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
 
+    public class InspectionPreferences extends AbstractSaveSettingsListener {
 
-    public class Preferences extends AbstractSaveSettingsListener {
-        public Preferences() {
+        public InspectionPreferences() {
             super("inspection", Inspection.this);
         }
 
         public void saveSettings(SaveSettingsEvent settings) {
             settings.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
+            settings.save(DISPLAY_STYLE_PREFERENCE, style().name());
             settings.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
             settings.save(DEBUG_MODE_PREFERENCE, debugMode().name());
             settings.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = _externalViewerConfig.get(externalViewerType);
                 if (config != null) {
-                    settings.save(EXTERNAL_VIEWER_PREFERENCE  + "." + externalViewerType.name(), config);
+                    settings.save(EXTERNAL_VIEWER_PREFERENCE + "." + externalViewerType.name(), config);
                 }
             }
         }
@@ -297,6 +298,16 @@ public class Inspection extends JFrame {
                         ProgramWarning.message("Unknown key bindings name ignored: " + keyBindingsName);
                     }
                 }
+
+                if (_settings.containsKey(this, DISPLAY_STYLE_PREFERENCE)) {
+                    final String displayStyleName = _settings.get(this, DISPLAY_STYLE_PREFERENCE, OptionTypes.STRING_TYPE, null);
+                    InspectorStyle style = _styleFactory.findStyle(displayStyleName);
+                    if (style == null) {
+                        style = _styleFactory.defaultStyle();
+                    }
+                    _style = style;
+                }
+
                 DebugMode defaultDebugMode = DebugMode.SYNCHRONOUS;
                 switch (teleVM().vmConfiguration().platform().operatingSystem()) {
                     case SOLARIS:
@@ -321,12 +332,10 @@ public class Inspection extends JFrame {
          * Gets a panel for configuring which key binding map is active.
          */
         public JPanel getPanel() {
-            final JPanel panel = new JPanel();
+            final JPanel panel = new InspectorPanel(Inspection.this);
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            panel.setOpaque(true);
-            panel.setBackground(style().defaultBackgroundColor());
 
-            final JPanel keyBindingsPanel = getKeyBindingsPanel();
+            final JPanel keyBindingsPanel = getUIPanel();
             final JPanel debugPanel = getDebugPanel();
             final JPanel externalViewerPanel = getExternalViewerPanel();
 
@@ -344,38 +353,48 @@ public class Inspection extends JFrame {
         /**
          * Gets a panel for configuring which key binding map is active.
          */
-        public JPanel getKeyBindingsPanel() {
+        private JPanel getUIPanel() {
+
+            final JPanel interiorPanel = new InspectorPanel(Inspection.this);
+
+            // Add key binding chooser
             final Collection<KeyBindingMap> allKeyBindingMaps = KeyBindingMap.ALL.values();
-            final JComboBox keyBindingsComboBox = new JComboBox(allKeyBindingMaps.toArray());
+            final JComboBox keyBindingsComboBox = new InspectorComboBox(Inspection.this, allKeyBindingMaps.toArray());
             keyBindingsComboBox.setSelectedItem(_keyBindingMap);
             keyBindingsComboBox.addActionListener(new ActionListener() {
+
                 public void actionPerformed(ActionEvent e) {
                     setKeyBindingMap((KeyBindingMap) keyBindingsComboBox.getSelectedItem());
                 }
             });
-
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(true);
-            panel.setBackground(style().defaultBackgroundColor());
-            final JPanel interiorPanel = new JPanel();
-            interiorPanel.setOpaque(true);
-            interiorPanel.setBackground(style().defaultBackgroundColor());
             interiorPanel.add(new TextLabel(Inspection.this, "Key Bindings:  "));
             interiorPanel.add(keyBindingsComboBox);
-            panel.add(interiorPanel, BorderLayout.WEST);
 
+            // Add display style chooser
+            final JComboBox uiComboBox = new InspectorComboBox(Inspection.this, _styleFactory.allStyles());
+            uiComboBox.setSelectedItem(_style);
+            uiComboBox.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    setStyle((InspectorStyle) uiComboBox.getSelectedItem());
+                }
+            });
+            interiorPanel.add(new TextLabel(Inspection.this, "Display style:  "));
+            interiorPanel.add(uiComboBox);
+
+            final JPanel panel = new InspectorPanel(Inspection.this, new BorderLayout());
+            panel.add(interiorPanel, BorderLayout.WEST);
             return panel;
         }
 
         /**
          * @return a GUI panel for setting the debugging mode
          */
-        public JPanel getDebugPanel() {
-
-            final JRadioButton synchButton = new JRadioButton("synchronous");
-            synchButton.setToolTipText("Inspector waits during VM execution");
-            final JRadioButton asynchButton = new JRadioButton("asynchronous");
-            asynchButton.setToolTipText("Inspector runs during VM execution");
+        private JPanel getDebugPanel() {
+            final JRadioButton synchButton =
+                new InspectorRadioButton(Inspection.this, "synchronous", "Inspector waits during VM execution");
+            final JRadioButton asynchButton =
+                new InspectorRadioButton(Inspection.this, "asynchronous", "Inspector runs during VM execution");
             final ButtonGroup group = new ButtonGroup();
             group.add(synchButton);
             group.add(asynchButton);
@@ -387,6 +406,7 @@ public class Inspection extends JFrame {
             }
 
             final ActionListener styleActionListener = new ActionListener() {
+
                 public void actionPerformed(ActionEvent e) {
                     if (synchButton.isSelected()) {
                         setDebugMode(DebugMode.SYNCHRONOUS);
@@ -398,10 +418,13 @@ public class Inspection extends JFrame {
             synchButton.addActionListener(styleActionListener);
             asynchButton.addActionListener(styleActionListener);
 
-            final JCheckBox wordValueCheckBox = new JCheckBox("Investigate memory references");
-            wordValueCheckBox.setToolTipText("Should displayed memory words be investigated as possible references by reading from the VM");
-            wordValueCheckBox.setSelected(_investigateWordValues);
+            final JCheckBox wordValueCheckBox =
+                new InspectorCheckBox(Inspection.this,
+                                "Investigate memory references",
+                                "Should displayed memory words be investigated as possible references by reading from the VM",
+                                _investigateWordValues);
             wordValueCheckBox.addActionListener(new ActionListener() {
+
                 public void actionPerformed(ActionEvent actionEvent) {
                     final JCheckBox checkBox = (JCheckBox) actionEvent.getSource();
                     _investigateWordValues = checkBox.isSelected();
@@ -409,12 +432,9 @@ public class Inspection extends JFrame {
                 }
             });
 
-            final JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(true);
-            panel.setBackground(style().defaultBackgroundColor());
-            final JPanel interiorPanel = new JPanel();
-            interiorPanel.setOpaque(true);
-            interiorPanel.setBackground(style().defaultBackgroundColor());
+            final JPanel panel = new InspectorPanel(Inspection.this, new BorderLayout());
+
+            final JPanel interiorPanel = new InspectorPanel(Inspection.this);
             interiorPanel.add(new TextLabel(Inspection.this, "Debugging:  "));
             interiorPanel.add(synchButton);
             interiorPanel.add(asynchButton);
@@ -429,10 +449,10 @@ public class Inspection extends JFrame {
          */
         public JPanel getExternalViewerPanel() {
 
-            final JPanel cards = new JPanel(new CardLayout());
-            final JPanel noneCard = new JPanel();
+            final JPanel cards = new InspectorPanel(Inspection.this, new CardLayout());
+            final JPanel noneCard = new InspectorPanel(Inspection.this);
 
-            final JPanel processCard = new JPanel();
+            final JPanel processCard = new InspectorPanel(Inspection.this);
             processCard.add(new TextLabel(Inspection.this, "Command: "));
             processCard.setToolTipText("The pattern '$file' will be replaced with the full path to the file and '$line' will be replaced with the line number to view.");
             final JTextArea commandTextArea = new JTextArea(2, 30);
@@ -440,21 +460,23 @@ public class Inspection extends JFrame {
             commandTextArea.setWrapStyleWord(true);
             commandTextArea.setText(_externalViewerConfig.get(ExternalViewerType.PROCESS));
             commandTextArea.addFocusListener(new FocusAdapter() {
+
                 @Override
                 public void focusLost(FocusEvent e) {
                     final String command = commandTextArea.getText();
                     setExternalViewerConfiguration(ExternalViewerType.PROCESS, command);
                 }
             });
-            final JScrollPane scrollPane = new JScrollPane(commandTextArea);
+            final JScrollPane scrollPane = new InspectorScrollPane(Inspection.this, commandTextArea);
             processCard.add(scrollPane);
 
-            final JPanel socketCard = new JPanel();
+            final JPanel socketCard = new InspectorPanel(Inspection.this);
             final JTextField portTextField = new JTextField(6);
             portTextField.setText(_externalViewerConfig.get(ExternalViewerType.SOCKET));
             socketCard.add(new TextLabel(Inspection.this, "Port: "));
             socketCard.add(portTextField);
             portTextField.addFocusListener(new FocusAdapter() {
+
                 @Override
                 public void focusLost(FocusEvent e) {
                     final String portString = portTextField.getText();
@@ -467,8 +489,9 @@ public class Inspection extends JFrame {
             cards.add(socketCard, ExternalViewerType.SOCKET.name());
 
             final ExternalViewerType[] values = ExternalViewerType.values();
-            final JComboBox comboBox = new JComboBox(values);
+            final JComboBox comboBox = new InspectorComboBox(Inspection.this, values);
             comboBox.addActionListener(new ActionListener() {
+
                 public void actionPerformed(ActionEvent e) {
                     final ExternalViewerType externalViewerType = (ExternalViewerType) comboBox.getSelectedItem();
                     setExternalViewer(externalViewerType);
@@ -480,14 +503,12 @@ public class Inspection extends JFrame {
             final CardLayout cardLayout = (CardLayout) cards.getLayout();
             cardLayout.show(cards, _externalViewerType.name());
 
-            final JPanel comboBoxPanel = new JPanel();
+            final JPanel comboBoxPanel = new InspectorPanel(Inspection.this);
             comboBoxPanel.add(new TextLabel(Inspection.this, "External File Viewer:  "));
             comboBoxPanel.add(comboBox);
 
-            final JPanel panel = new JPanel();
+            final JPanel panel = new InspectorPanel(Inspection.this);
             panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            panel.setOpaque(true);
-            panel.setBackground(style().defaultBackgroundColor());
             panel.add(comboBoxPanel);
             panel.add(cards);
             return panel;
@@ -505,8 +526,8 @@ public class Inspection extends JFrame {
         NONE,
 
         /**
-         * Specifies that an external viewer is listening on a socket for 'open file' requests.
-         * A request is a string of bytes matching this pattern:
+         * Specifies that an external viewer is listening on a socket for 'open file' requests. A request is a string of
+         * bytes matching this pattern:
          *
          * <pre>
          *     &lt;path to file&gt;|&lt;line number&gt;
@@ -515,7 +536,7 @@ public class Inspection extends JFrame {
          * For example, the following code generates the bytes of a typical command:
          *
          * <pre>
-         *     &quot;/maxine/VM/src/com/sun/max/vm/MaxineVM.java|239&quot;.getBytes()
+         * &quot;/maxine/VM/src/com/sun/max/vm/MaxineVM.java|239&quot;.getBytes()
          * </pre>
          */
         SOCKET,
@@ -609,7 +630,7 @@ public class Inspection extends JFrame {
                         final int port = Integer.parseInt(portString);
                         final Socket fileViewer = new Socket(hostname, port);
                         final String command = javaSourceFile.getAbsolutePath() + "|" + lineNumber;
-                        Trace.line(1,  tracePrefix() + "Opening file via localhost:" + portString);
+                        Trace.line(1, tracePrefix() + "Opening file via localhost:" + portString);
                         final OutputStream fileViewerStream = fileViewer.getOutputStream();
                         fileViewerStream.write(command.getBytes());
                         fileViewerStream.flush();
@@ -637,14 +658,14 @@ public class Inspection extends JFrame {
     private final InspectionActions _inspectionActions;
 
     /**
-     * @return the global collection of actions, many of which are
-     * singletons with state that gets refreshed.
+     * @return the global collection of actions, many of which are singletons with state that gets refreshed.
      */
     public InspectionActions actions() {
         return _inspectionActions;
     }
 
     private final JDesktopPane _desktopPane = new JDesktopPane() {
+
         /**
          * Any component added to the desktop pane is brought to the front.
          */
@@ -660,13 +681,11 @@ public class Inspection extends JFrame {
         return _desktopPane;
     }
 
-    private final JScrollPane _scrollPane = new JScrollPane(_desktopPane);
+    private final JScrollPane _scrollPane;
 
     public Rectangle getVisibleBounds() {
         return _scrollPane.getVisibleRect();
     }
-
-    private final InspectorMenuBar _menuBar;
 
     private final InspectorMenu _viewMenu;
 
@@ -681,7 +700,7 @@ public class Inspection extends JFrame {
         return result;
     }
 
-    public Inspection(TeleVM teleVM, InspectorStyle style, InspectorGeometry geometry) throws IOException {
+    public Inspection(TeleVM teleVM, InspectorGeometry geometry) throws IOException {
         super(_inspectorName);
         _teleVM = teleVM;
         _bootImageFileName = _teleVM.bootImageFile().getAbsolutePath().toString();
@@ -691,14 +710,17 @@ public class Inspection extends JFrame {
         }
         _teleVMTrace = new TeleVMTrace(teleVM);
         _nameDisplay = new InspectorNameDisplay(this);
-        _style = style;
+        _styleFactory = new InspectorStyleFactory(this);
+        _style = _styleFactory.defaultStyle();
         _geometry = geometry;
+        _scrollPane = new InspectorScrollPane(this, _desktopPane);
         _focus = new InspectionFocus(this);
         _settings = new InspectionSettings(this, new File(teleVM.programFile().getParentFile(), _SETTINGS_FILE_NAME));
 
         setDefaultLookAndFeelDecorated(true);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
+
             @Override
             public void windowClosing(WindowEvent windowevent) {
                 quit();
@@ -711,7 +733,6 @@ public class Inspection extends JFrame {
         _desktopPane.setPreferredSize(_geometry.inspectorFramePrefSize());
         setLocation(_geometry.inspectorFrameDefaultLocation());
         _inspectionActions = new InspectionActions(this);
-        _menuBar = new InspectorMenuBar(_inspectionActions);
         _viewMenu = new InspectorMenu();
         _viewMenu.add(_inspectionActions.viewBootImage());
         _viewMenu.add(_inspectionActions.viewMemoryRegions());
@@ -721,9 +742,10 @@ public class Inspection extends JFrame {
         _viewMenu.add(_inspectionActions.viewStack());
         _viewMenu.add(_inspectionActions.viewMethodCode());
         _viewMenu.add(_inspectionActions.viewBreakpoints());
-        setJMenuBar(_menuBar);
+        setJMenuBar(new InspectorMainMenuBar(_inspectionActions));
 
         _desktopPane.addMouseListener(new InspectorMouseClickAdapter(this) {
+
             @Override
             public void procedure(final MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
@@ -745,26 +767,21 @@ public class Inspection extends JFrame {
     }
 
     /**
-     *  Note that there is a delay, as well as a
-     * gap in the AWT event queue between the actual change in the
-     * {@link TeleVM} process state and the receipt of notification by the
-     * Inspector. This value may not always agree with what's reported by
-     * {@link TeleVM#state()}.
+     * Note that there is a delay, as well as a gap in the AWT event queue between the actual change in the
+     * {@link TeleVM} process state and the receipt of notification by the Inspector. This value may not always agree
+     * with what's reported by {@link TeleVM#state()}.
      *
-     * @return the presumed state of the {@link TeleVM} as of the
-     * most recent update, subject to quantum and other effects.
+     * @return the presumed state of the {@link TeleVM} as of the most recent update, subject to quantum and other
+     *         effects.
      */
     private State _presumedState = null;
 
     /**
-     * Is the {@link TeleVM} running, as of the most recent state update?
-     * Note that there is a delay, as well as a gap in the AWT event
-     * queue, between the stopping of the {@link TeleVM} and the receipt of
-     * notification by the Inspector (when running asynchronous), so this
-     * value may not always agree with what's reported by
-     * {@link TeleVM#state()}.  In particular, the AWT event
-     * queue might initiate new action sequences when the {@link TeleVM}
-     * has actually stopped, but before the Inspector receives notification.
+     * Is the {@link TeleVM} running, as of the most recent state update? Note that there is a delay, as well as a gap
+     * in the AWT event queue, between the stopping of the {@link TeleVM} and the receipt of notification by the
+     * Inspector (when running asynchronous), so this value may not always agree with what's reported by
+     * {@link TeleVM#state()}. In particular, the AWT event queue might initiate new action sequences when the
+     * {@link TeleVM} has actually stopped, but before the Inspector receives notification.
      *
      * @return VM state == {@link State#STOPPED}.
      */
@@ -773,8 +790,7 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Is the {@link TeleVM} available to start running, as of the most recent
-     * state update?
+     * Is the {@link TeleVM} available to start running, as of the most recent state update?
      *
      * @return VM state == {@link State#STOPPED}.
      */
@@ -793,23 +809,24 @@ public class Inspection extends JFrame {
         Trace.begin(1, tracer);
         final long startTimeMillis = System.currentTimeMillis();
         _presumedState = e.newState();
-        switch(_presumedState) {
+        final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
+        switch (_presumedState) {
             case STOPPED:
                 if (_teleVM.isInGC()) {
-                    _menuBar.setStateColor(style().vmStoppedinGCBackgroundColor());
+                    menuBar.setStateColor(style().vmStoppedinGCBackgroundColor());
                     _inspectionState = InspectionState.STOPPED_IN_GC;
                 } else {
-                    _menuBar.setStateColor(style().vmStoppedBackgroundColor());
+                    menuBar.setStateColor(style().vmStoppedBackgroundColor());
                     _inspectionState = InspectionState.STOPPED;
                 }
                 updateAfterVMStopped(e.epoch());
                 break;
             case RUNNING:
-                _menuBar.setStateColor(style().vmRunningBackgroundColor());
+                menuBar.setStateColor(style().vmRunningBackgroundColor());
                 _inspectionState = InspectionState.RUNNING;
                 break;
             case TERMINATED:
-                _menuBar.setStateColor(style().vmTerminatedBackgroundColor());
+                menuBar.setStateColor(style().vmTerminatedBackgroundColor());
                 _inspectionState = InspectionState.TERMINATED;
                 Trace.line(1, tracePrefix() + " - VM process terminated");
                 // Give all process-sensitive views a chance to shut down
@@ -834,15 +851,16 @@ public class Inspection extends JFrame {
         Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
         _presumedState = State.RUNNING;
         _inspectionState = InspectionState.RUNNING;
-        _menuBar.setStateColor(style().vmRunningBackgroundColor());
+        final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
+        menuBar.setStateColor(style().vmRunningBackgroundColor());
     }
 
-
     /**
-     * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}.
-     * Ensures that the event is handled only on the current AWT event  thread.
+     * Handles reported changes in the {@linkplain TeleProcess#state() tele process state}. Ensures that the event is
+     * handled only on the current AWT event thread.
      */
     private final class ProcessStateListener implements StateTransitionListener {
+
         public void handleStateTransition(final StateTransitionEvent e) {
             if (java.awt.EventQueue.isDispatchThread()) {
                 processStateChange(e);
@@ -853,6 +871,7 @@ public class Inspection extends JFrame {
                 }
                 Trace.begin(TRACE_VALUE, tracer);
                 SwingUtilities.invokeLater(new Runnable() {
+
                     public void run() {
                         processStateChange(e);
                     }
@@ -873,15 +892,17 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Handles reported breakpoint changes in the {@link TeleVM}.
-     * Ensures that the event is handled only on the current AWT event  thread.
+     * Handles reported breakpoint changes in the {@link TeleVM}. Ensures that the event is handled only on the current
+     * AWT event thread.
      */
     private final class BreakpointListener implements TeleViewModel.Listener {
+
         public void refreshView(final long epoch) {
             if (java.awt.EventQueue.isDispatchThread()) {
                 processBreakpointChange(epoch);
             } else {
                 SwingUtilities.invokeLater(new Runnable() {
+
                     public void run() {
                         processBreakpointChange(epoch);
                     }
@@ -897,7 +918,7 @@ public class Inspection extends JFrame {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
         _inspectionActions.refresh(teleVM().epoch(), true);
-        //Listen for process state changes
+        // Listen for process state changes
         teleVM().addStateListener(new ProcessStateListener());
         // Listen for changes in breakpoints
         teleVM().addBreakpointListener(new BreakpointListener());
@@ -917,8 +938,8 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * @return default title for any messages: defaults to name of current {@link InspectorAction}
-     * if one is current, otherwise the generic name of the inspector.
+     * @return default title for any messages: defaults to name of current {@link InspectorAction} if one is current,
+     *         otherwise the generic name of the inspector.
      */
     private String dialogTitle() {
         return _currentAction != null ? _currentAction.name() : _inspectorName;
@@ -986,8 +1007,8 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Removes a listener for view update, for example when an Inspector
-     * is disposed or when the default notification mechanism is being overridden.
+     * Removes a listener for view update, for example when an Inspector is disposed or when the default notification
+     * mechanism is being overridden.
      */
     public void removeInspectionListener(InspectionListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "removing inspection listener: " + listener);
@@ -1018,10 +1039,10 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Updates all views, assuming that display and style parameters
-     * may have changed; forces state reload from the {@link TeleVM}.
+     * Updates all views, assuming that display and style parameters may have changed; forces state reload from the
+     * {@link TeleVM}.
      */
-    public synchronized void updateViewConfiguration() {
+    private synchronized void updateViewConfiguration() {
         final long epoch = teleVM().epoch();
         for (InspectionListener listener : _inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
@@ -1031,9 +1052,9 @@ public class Inspection extends JFrame {
     }
 
     private final Tracer _threadTracer = new Tracer("refresh thread state");
+
     /**
-     * Determines what happened in {@link TeleVM} execution that just concluded.
-     * Then updates all view state as needed.
+     * Determines what happened in {@link TeleVM} execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped(long epoch) {
         assert _teleVM.state() == State.STOPPED;
@@ -1074,8 +1095,9 @@ public class Inspection extends JFrame {
                 }
             }
             if (!atBreakpoint) {
-                // If there was no selection based on breakpoint, then check the thread that was selected before the change.
-                // TODO (mlvdv)  do this some other way, then obsolete isValidThread()
+                // If there was no selection based on breakpoint, then check the thread that was selected before the
+                // change.
+                // TODO (mlvdv) do this some other way, then obsolete isValidThread()
                 InspectorError.check(teleVM().isValidThread(focus().thread()), "Selected thread no longer valid");
             }
             // Reset focus to new IP.
@@ -1088,6 +1110,7 @@ public class Inspection extends JFrame {
     }
 
     private final class DeleteInspectorsAction extends InspectorAction {
+
         private final Predicate<Inspector> _predicate;
 
         public DeleteInspectorsAction(Inspection inspection, Predicate<Inspector> predicate, String title) {
@@ -1097,7 +1120,7 @@ public class Inspection extends JFrame {
 
         @Override
         public void procedure() {
-            for (int i = _desktopPane.getComponentCount() - 1;  i >= 0; i--) {
+            for (int i = _desktopPane.getComponentCount() - 1; i >= 0; i--) {
                 // Delete backwards so that the indices don't change
                 final Component component = _desktopPane.getComponent(i);
                 if (component instanceof InspectorFrame) {
@@ -1168,7 +1191,7 @@ public class Inspection extends JFrame {
     public void limitSize(JComponent inspector) {
         if (inspector.getWidth() > getWidth() - 64 || inspector.getHeight() > getHeight() - 64) {
             final int w = Math.min(inspector.getWidth(), getWidth() - 64);
-            final int h =  Math.min(inspector.getHeight(), getHeight() - 64);
+            final int h = Math.min(inspector.getHeight(), getHeight() - 64);
             inspector.setSize(w, h);
         }
     }
@@ -1182,6 +1205,7 @@ public class Inspection extends JFrame {
 
         /**
          * An object that delays evaluation of a trace message.
+         *
          * @param message identifies what is being traced
          */
         public Tracer(String message) {

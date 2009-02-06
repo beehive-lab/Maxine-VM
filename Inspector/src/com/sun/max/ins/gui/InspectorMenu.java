@@ -59,7 +59,8 @@ public final class InspectorMenu implements Prober {
             if (inspector.residence() == Residence.INTERNAL) {
                 add(inspector.getCloseOtherInspectorsAction());
             }
-            add(inspector.createToggleResidenceAction());
+            // Undocking isn't supported at this time (mlvdv Jan 2009)
+            //add(inspector.createToggleResidenceAction());
             if (inspector instanceof MemoryInspectable) {
                 final MemoryInspectable memoryInspectable = (MemoryInspectable) inspector;
                 add(memoryInspectable.getMemoryInspectorAction());
@@ -76,7 +77,8 @@ public final class InspectorMenu implements Prober {
             if (inspector.residence() == Residence.INTERNAL) {
                 add(inspector.getCloseOtherInspectorsAction());
             }
-            add(inspector.createToggleResidenceAction());
+            // undocking isn't supported at this time  mlvdv Jan 2009
+            //add(inspector.createToggleResidenceAction());
             if (inspector instanceof MemoryInspectable) {
                 final MemoryInspectable memoryInspectable = (MemoryInspectable) inspector;
                 add(memoryInspectable.getMemoryInspectorAction());

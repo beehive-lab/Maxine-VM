@@ -318,9 +318,12 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     public void viewConfigurationChanged(long epoch) {
+        // TODO (mlvdv) fix method display update when view configurations change, patched now
         for (CodeViewer codeViewer : _codeViewers.values()) {
             codeViewer.redisplay();
         }
+        // Reconstruct doesnt' work now for code views
+        // reconstructView();
     }
 
     private int codeViewerCount() {

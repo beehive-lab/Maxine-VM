@@ -222,12 +222,9 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
     @Override
     public void createView(long epoch) {
-        final JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
+        final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
 
-        final JPanel header = new JPanel(new SpringLayout());
-        header.setOpaque(true);
-        header.setBackground(style().defaultBackgroundColor());
+        final JPanel header = new InspectorPanel(_inspection, new SpringLayout());
         header.add(new TextLabel(_inspection, "start: "));
         header.add(new DataLabel.AddressAsHex(_inspection, _teleNativeThread.stack().start()));
         header.add(new TextLabel(_inspection, "size: "));
@@ -244,8 +241,8 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
         _list.addListSelectionListener(_frameSelectionListener);
 
-        _nativeFrame = new JPanel();
-        final JScrollPane listScrollPane = new JScrollPane(_list);
+        _nativeFrame = new InspectorPanel(_inspection);
+        final JScrollPane listScrollPane = new InspectorScrollPane(_inspection, _list);
         _splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT) {
             @Override
             public void setLeftComponent(Component component) {
@@ -322,12 +319,12 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         }
     }
 
-    abstract static class SelectedFrame<StackFrame_Type extends StackFrame> extends JPanel {
+    abstract static class SelectedFrame<StackFrame_Type extends StackFrame> extends InspectorPanel {
 
         protected StackFrame_Type _stackFrame;
 
-        public SelectedFrame(StackFrame_Type stackFrame) {
-            super(new BorderLayout());
+        public SelectedFrame(Inspection inspection, StackFrame_Type stackFrame) {
+            super(inspection, new BorderLayout());
             _stackFrame = stackFrame;
         }
 
@@ -343,6 +340,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         /**
          * Reads any state from the {@link TeleVM} that might change.
          */
+        @Override
         public void refresh(long epoch, boolean force) {
         }
     }
@@ -350,10 +348,8 @@ public class StackInspector extends UniqueInspector<StackInspector> {
     class SelectedAdapterFrame extends SelectedFrame<AdapterStackFrame> {
 
         public SelectedAdapterFrame(AdapterStackFrame adapterStackFrame) {
-            super(adapterStackFrame);
-            final JPanel header = new JPanel(new SpringLayout());
-            header.setOpaque(true);
-            header.setBackground(style().defaultBackgroundColor());
+            super(_inspection, adapterStackFrame);
+            final JPanel header = new InspectorPanel(_inspection, new SpringLayout());
             header.add(new TextLabel(_inspection, "Frame size:"));
             header.add(new DataLabel.IntAsDecimal(_inspection, adapterStackFrame.layout().frameSize()));
             header.add(new TextLabel(_inspection, "Frame pointer:"));
@@ -365,7 +361,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
             SpringUtilities.makeCompactGrid(header, 2);
 
             add(header, BorderLayout.NORTH);
-            add(new JPanel(), BorderLayout.CENTER);
+            add(new InspectorPanel(_inspection), BorderLayout.CENTER);
         }
 
         @Override
@@ -384,18 +380,16 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         final JCheckBox _showSlotAddresses;
 
         SelectedJavaFrame(JavaStackFrame javaStackFrame) {
-            super(javaStackFrame);
+            super(_inspection, javaStackFrame);
             final Address slotBase = javaStackFrame.slotBase();
             _stackFrame = javaStackFrame;
             _targetMethod = javaStackFrame.targetMethod();
             _codeAttribute = _targetMethod.classMethodActor().codeAttribute();
             final int frameSize = javaStackFrame.layout().frameSize();
 
-            final JPanel header = new JPanel(new SpringLayout());
+            final JPanel header = new InspectorPanel(_inspection, new SpringLayout());
             _instructionPointerLabel = new WordValueLabel(_inspection, ValueMode.INTEGER_REGISTER, javaStackFrame.instructionPointer());
 
-            header.setOpaque(true);
-            header.setBackground(style().defaultBackgroundColor());
             header.add(new TextLabel(_inspection, "Frame size:"));
             header.add(new DataLabel.IntAsDecimal(_inspection, frameSize));
 
@@ -415,10 +409,8 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
             SpringUtilities.makeCompactGrid(header, 2);
 
-            final JPanel slotsPanel = new JPanel(new SpringLayout());
+            final JPanel slotsPanel = new InspectorPanel(_inspection, new SpringLayout());
             slotsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-            slotsPanel.setOpaque(true);
-            slotsPanel.setBackground(style().defaultBackgroundColor());
 
             _slots = javaStackFrame.layout().slots();
             _slotLabels = new TextLabel[_slots.length()];
@@ -447,8 +439,8 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
             SpringUtilities.makeCompactGrid(slotsPanel, 2);
 
-            _showSlotAddresses = new JCheckBox("Slot addresses");
-            final JPanel slotNameFormatPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            _showSlotAddresses = new InspectorCheckBox(_inspection, "Slot addresses", null, false);
+            final JPanel slotNameFormatPanel = new InspectorPanel(_inspection, new FlowLayout(FlowLayout.LEFT));
             slotNameFormatPanel.add(_showSlotAddresses);
             _showSlotAddresses.addItemListener(new ItemListener() {
                 @Override
@@ -460,7 +452,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
             refresh(teleVM().epoch(), true);
 
             add(header, BorderLayout.NORTH);
-            final JScrollPane slotsScrollPane = new JScrollPane(slotsPanel);
+            final JScrollPane slotsScrollPane = new InspectorScrollPane(inspection(), slotsPanel);
             add(slotsScrollPane, BorderLayout.CENTER);
             add(slotNameFormatPanel, BorderLayout.SOUTH);
         }

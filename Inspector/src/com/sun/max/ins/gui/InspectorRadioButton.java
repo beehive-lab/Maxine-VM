@@ -18,10 +18,31 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+package com.sun.max.ins.gui;
+
+import javax.swing.*;
+
+import com.sun.max.ins.*;
+
+
 /**
- * SPARC ABIs that do not use register windows for Java methods.
- * The native/C ABIs still do use register windows, though.
+ * A radio button specialized for use in the Maxine Inspector.
  *
- * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
-package com.sun.max.vm.compiler.target.sparc.flat;
+public final class InspectorRadioButton extends JRadioButton {
+
+    /**
+     *  Creates a new {@JRadioButton} specialized for use in the Maxine Inspector.
+     * @param inspection
+     * @param text the text to appear in the label
+     * @param selected whether the check box is currently selected.
+     */
+    public InspectorRadioButton(Inspection inspection, String text, String toolTipText) {
+        super(text);
+        setToolTipText(toolTipText);
+        setOpaque(true);
+        setFont(inspection.style().textLabelFont());
+        setBackground(inspection.style().defaultBackgroundColor());
+    }
+}

@@ -39,9 +39,8 @@ import com.sun.max.program.*;
  * @author Michael Van De Vanter
  *
  */
-public class RowTextSearchToolBar extends JToolBar {
+public class RowTextSearchToolBar extends InspectorToolBar {
 
-    private final Inspection _inspection;
     private final RowSearchListener _owner;
     private final RowTextSearcher _searcher;
     private final JTextField _textField;
@@ -54,7 +53,7 @@ public class RowTextSearchToolBar extends JToolBar {
 
     private class SearchTextListener implements DocumentListener {
         public void changedUpdate(DocumentEvent e) {
-            // This should never be called
+            // This should never be called        _infoPanel.setBackground(style().defaultBackgroundColor());
             ProgramError.unexpected();
         }
 
@@ -75,13 +74,12 @@ public class RowTextSearchToolBar extends JToolBar {
      * @param rowTextSearcher a regular expression search session wrapped around some row-based data
      */
     public RowTextSearchToolBar(Inspection inspection, RowSearchListener owner, RowTextSearcher rowTextSearcher) {
-        _inspection = inspection;
+        super(inspection);
         _owner = owner;
         _searcher = rowTextSearcher;
         setFloatable(false);
         setRollover(true);
-        add(new JLabel("Search: "));
-        setBackground(_inspection.style().defaultBackgroundColor());
+        add(new TextLabel(inspection, "Search: "));
 
         _textField = new JTextField();
         _textField.setColumns(10);  // doesn't seem to have an effect
@@ -106,7 +104,7 @@ public class RowTextSearchToolBar extends JToolBar {
                 _owner.selectNextResult();
             }
         });
-        _nextButton.setIcon(_inspection.style().searchNextMatchButtonIcon());
+        _nextButton.setIcon(style().searchNextMatchButtonIcon());
         _nextButton.setToolTipText("Scroll to next matching line");
         _nextButton.setEnabled(false);
         add(_nextButton);
@@ -116,7 +114,7 @@ public class RowTextSearchToolBar extends JToolBar {
                 _owner.selectPreviousResult();
             }
         });
-        _previousButton.setIcon(_inspection.style().searchPreviousMatchButtonIcon());
+        _previousButton.setIcon(style().searchPreviousMatchButtonIcon());
         _previousButton.setToolTipText("Scroll to previous matching line");
         _previousButton.setEnabled(false);
         add(_previousButton);
@@ -128,7 +126,7 @@ public class RowTextSearchToolBar extends JToolBar {
                 _owner.closeSearch();
             }
         });
-        closeButton.setIcon(_inspection.style().codeViewCloseIcon());
+        closeButton.setIcon(style().codeViewCloseIcon());
         closeButton.setToolTipText("Close Search");
         add(closeButton);
     }
@@ -154,7 +152,7 @@ public class RowTextSearchToolBar extends JToolBar {
             try {
                 pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE);
             } catch (PatternSyntaxException patternSyntaxException) {
-                _textField.setBackground(_inspection.style().searchFailedBackground());
+                _textField.setBackground(style().searchFailedBackground());
                 _statusLabel.setText("regexp error");
                 return;
             }
@@ -168,11 +166,11 @@ public class RowTextSearchToolBar extends JToolBar {
                 _statusLabel.setText(Integer.toString(matchCount) + " rows matched");
             }
             if (matchCount > 0) {
-                _textField.setBackground(_inspection.style().searchMatchedBackground());
+                _textField.setBackground(style().searchMatchedBackground());
                 _nextButton.setEnabled(true);
                 _previousButton.setEnabled(true);
             } else {
-                _textField.setBackground(_inspection.style().searchFailedBackground());
+                _textField.setBackground(style().searchFailedBackground());
                 _nextButton.setEnabled(false);
                 _previousButton.setEnabled(false);
             }

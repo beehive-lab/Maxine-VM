@@ -47,10 +47,12 @@ public final class LocalsPanel extends InspectorPanel {
         _numArguments = classMethodActor.numberOfParameterLocals();
     }
 
+    @Override
     public void refresh(long epoch, boolean force) {
         // No data that can change
     }
 
+    @Override
     public void redisplay() {
         // No apparent view configuration information
     }

@@ -22,13 +22,19 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 
+import com.sun.max.ins.*;
+
 /**
  * A style for playing with different parameters; not ready to be used.
- * 
+ *
  * @author Michael Van De Vanter
  *
  */
 public class AlternateInspectorStyle extends InspectorStyleAdapter {
+
+    public AlternateInspectorStyle(Inspection inspection) {
+        super(inspection);
+    }
 
     @Override
     public String name() {

@@ -41,7 +41,7 @@ public final class DirPanel extends InspectorPanel {
     }
 
     private void addBlock(DirBlock block) {
-        final JPanel panel = new JPanel(new SpringLayout());
+        final JPanel panel = new InspectorPanel(inspection(), new SpringLayout());
         panel.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0, Color.BLUE));
         final TitleLabel blockTitle = new TitleLabel(inspection(), "BLOCK #" + block.serial());
         blockTitle.setForeground(Color.BLUE);
@@ -65,9 +65,11 @@ public final class DirPanel extends InspectorPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     }
 
+    @Override
     public void refresh(long epoch, boolean force) {
     }
 
+    @Override
     public void redisplay() {
         // TODO (mlvdv)  redisplay this
     }

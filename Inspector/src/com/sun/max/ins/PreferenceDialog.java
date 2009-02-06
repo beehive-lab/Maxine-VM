@@ -27,6 +27,7 @@ import javax.swing.*;
 import javax.swing.border.*;
 
 import com.sun.max.gui.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.method.*;
@@ -41,19 +42,15 @@ import com.sun.max.ins.object.*;
 public class PreferenceDialog extends InspectorDialog {
 
     public PreferenceDialog(final Inspection inspection) {
-        super(inspection, "Inspector Preferences", true);
+        super(inspection, "Preferences", false);
 
-        final JPanel dialogPanel = new JPanel();
-        dialogPanel.setLayout(new BorderLayout());
-        dialogPanel.setOpaque(true);
-        dialogPanel.setBackground(style().defaultBackgroundColor());
+        final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
 
-        final JPanel prefPanel = new JPanel();
-        prefPanel.setLayout(new SpringLayout());
+        final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
 
         final Border border = BorderFactory.createLineBorder(Color.black);
 
-        final JPanel generalLabelPanel = new JPanel(new BorderLayout());
+        final JPanel generalLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         generalLabelPanel.setBorder(border);
         generalLabelPanel.add(new TextLabel(inspection, "General"), BorderLayout.WEST);
         prefPanel.add(generalLabelPanel);
@@ -62,34 +59,7 @@ public class PreferenceDialog extends InspectorDialog {
         keyBindingsPanel.setBorder(border);
         prefPanel.add(keyBindingsPanel);
 
-        final JPanel memoryRegionsLabelPanel = new JPanel(new BorderLayout());
-        memoryRegionsLabelPanel.setBorder(border);
-        memoryRegionsLabelPanel.add(new TextLabel(inspection, "Memory regions"), BorderLayout.WEST);
-        prefPanel.add(memoryRegionsLabelPanel);
-
-        final JPanel memoryRegionsInspectorPanel = MemoryRegionsInspector.globalPreferences(inspection).getPanel();
-        memoryRegionsInspectorPanel.setBorder(border);
-        prefPanel.add(memoryRegionsInspectorPanel);
-
-        final JPanel objectLabelPanel = new JPanel(new BorderLayout());
-        objectLabelPanel.setBorder(border);
-        objectLabelPanel.add(new TextLabel(inspection, "Objects"), BorderLayout.WEST);
-        prefPanel.add(objectLabelPanel);
-
-        final JPanel objectInspectorPanel = ObjectInspector.globalPreferences(inspection).getPanel();
-        objectInspectorPanel.setBorder(border);
-        prefPanel.add(objectInspectorPanel);
-
-        final JPanel hubLabelPanel = new JPanel(new BorderLayout());
-        hubLabelPanel.setBorder(border);
-        hubLabelPanel.add(new TextLabel(inspection, "Hubs"), BorderLayout.WEST);
-        prefPanel.add(hubLabelPanel);
-
-        final JPanel hubInspectorPanel = HubInspector.globalHubPreferences(inspection).getPanel();
-        hubInspectorPanel.setBorder(border);
-        prefPanel.add(hubInspectorPanel);
-
-        final JPanel methodLabelPanel = new JPanel(new BorderLayout());
+        final JPanel methodLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         methodLabelPanel.setBorder(border);
         methodLabelPanel.add(new TextLabel(inspection, "Methods"), BorderLayout.WEST);
         prefPanel.add(methodLabelPanel);
@@ -98,7 +68,7 @@ public class PreferenceDialog extends InspectorDialog {
         methodInspectorPanel.setBorder(border);
         prefPanel.add(methodInspectorPanel);
 
-        final JPanel targetCodeLabelPanel = new JPanel(new BorderLayout());
+        final JPanel targetCodeLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         targetCodeLabelPanel.setBorder(border);
         targetCodeLabelPanel.add(new TextLabel(inspection, "Target Code"), BorderLayout.WEST);
         prefPanel.add(targetCodeLabelPanel);
@@ -107,7 +77,7 @@ public class PreferenceDialog extends InspectorDialog {
         targetCodeInspectorPanel.setBorder(border);
         prefPanel.add(targetCodeInspectorPanel);
 
-        final JPanel bytecodeLabelPanel = new JPanel(new BorderLayout());
+        final JPanel bytecodeLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         bytecodeLabelPanel.setBorder(border);
         bytecodeLabelPanel.add(new TextLabel(inspection, "Bytecode"), BorderLayout.WEST);
         prefPanel.add(bytecodeLabelPanel);
@@ -116,12 +86,64 @@ public class PreferenceDialog extends InspectorDialog {
         bytecodeInspectorPanel.setBorder(border);
         prefPanel.add(bytecodeInspectorPanel);
 
+        final JPanel objectLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        objectLabelPanel.setBorder(border);
+        objectLabelPanel.add(new TextLabel(inspection, "Objects"), BorderLayout.WEST);
+        prefPanel.add(objectLabelPanel);
+
+        final JPanel objectInspectorPanel = ObjectInspector.globalPreferences(inspection).getPanel();
+        objectInspectorPanel.setBorder(border);
+        prefPanel.add(objectInspectorPanel);
+
+        final JPanel hubLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        hubLabelPanel.setBorder(border);
+        hubLabelPanel.add(new TextLabel(inspection, "Hubs"), BorderLayout.WEST);
+        prefPanel.add(hubLabelPanel);
+
+        final JPanel hubInspectorPanel = HubInspector.globalHubPreferences(inspection).getPanel();
+        hubInspectorPanel.setBorder(border);
+        prefPanel.add(hubInspectorPanel);
+
+        final JPanel threadsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        threadsLabelPanel.setBorder(border);
+        threadsLabelPanel.add(new TextLabel(inspection, "Threads"), BorderLayout.WEST);
+        prefPanel.add(threadsLabelPanel);
+
+        final JPanel threadsInspectorPanel = ThreadsViewPreferences.globalPreferences(inspection).getPanel();
+        threadsInspectorPanel.setBorder(border);
+        prefPanel.add(threadsInspectorPanel);
+
+        final JPanel breakpointsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        breakpointsLabelPanel.setBorder(border);
+        breakpointsLabelPanel.add(new TextLabel(inspection, "Breakpoints"), BorderLayout.WEST);
+        prefPanel.add(breakpointsLabelPanel);
+
+        final JPanel breakpointsInspectorPanel = BreakpointsViewPreferences.globalPreferences(inspection).getPanel();
+        breakpointsInspectorPanel.setBorder(border);
+        prefPanel.add(breakpointsInspectorPanel);
+
+        final JPanel memoryRegionsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        memoryRegionsLabelPanel.setBorder(border);
+        memoryRegionsLabelPanel.add(new TextLabel(inspection, "Memory regions"), BorderLayout.WEST);
+        prefPanel.add(memoryRegionsLabelPanel);
+
+        final JPanel memoryRegionsInspectorPanel = MemoryRegionsViewPreferences.globalPreferences(inspection).getPanel();
+        memoryRegionsInspectorPanel.setBorder(border);
+        prefPanel.add(memoryRegionsInspectorPanel);
+
+        final JPanel vmThreadLocalsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        vmThreadLocalsLabelPanel.setBorder(border);
+        vmThreadLocalsLabelPanel.add(new TextLabel(inspection, "VM Thread Locals"), BorderLayout.WEST);
+        prefPanel.add(vmThreadLocalsLabelPanel);
+
+        final JPanel vmThreadLocalsInspectorPanel = ThreadLocalsViewPreferences.globalPreferences(inspection).getPanel();
+        vmThreadLocalsInspectorPanel.setBorder(border);
+        prefPanel.add(vmThreadLocalsInspectorPanel);
+
         SpringUtilities.makeCompactGrid(prefPanel, 2);
 
-        final JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setOpaque(true);
-        buttonsPanel.setBackground(style().defaultBackgroundColor());
-        buttonsPanel.add(new JButton(new AbstractAction("Close") {
+        final JPanel buttonsPanel = new InspectorPanel(inspection);
+        buttonsPanel.add(new InspectorButton(inspection, new AbstractAction("Close") {
             public void actionPerformed(ActionEvent e) {
                 inspection.settings().save();
                 dispose();
