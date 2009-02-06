@@ -104,7 +104,7 @@ thread_Specifics *thread_createSegments(int id, Size stackSize) {
 #if (os_LINUX || os_DARWIN)
     threadSpecifics->stackBase = (Address) malloc(stackSize);
 #  elif os_GUESTVMXEN
-    threadSpecifics->stackBase = (Address) guestvmXen_alloc_thread_stack(stackSize);
+    threadSpecifics->stackBase = (Address) guestvmXen_allocate_stack(threadSpecifics, stackSize);
 #endif
     if (threadSpecifics->stackBase == 0) {
     	free(threadSpecifics);
@@ -116,17 +116,19 @@ thread_Specifics *thread_createSegments(int id, Size stackSize) {
     return threadSpecifics;
 }
 
-/*
- * The blue zone is a page that is much closer to the base of the stack that is optionally protected.
- * This can be used, e.g., to determine the actual stack size needed by a thread, or to avoid
- * reserving actual real memory until it is needed.
- */
-void initBlueZone(thread_Specifics *threadSpecifics) {
+void initStackProtection(thread_Specifics *threadSpecifics) {
 #if os_GUESTVMXEN
-	guestvmXen_init_blue_zone(threadSpecifics);
+	// all page protection is handled in following call
+	guestvmXen_initStack(threadSpecifics);
 #else
 	threadSpecifics->stackBlueZone = threadSpecifics->stackYellowZone;
+    virtualMemory_protectPage(threadSpecifics->stackRedZone);
+    virtualMemory_protectPage(threadSpecifics->stackYellowZone);
+#if !os_SOLARIS
+    virtualMemory_protectPage(virtualMemory_pageAlign(threadSpecifics->stackBase));
 #endif
+#endif
+
 }
 
 void thread_initSegments(thread_Specifics *threadSpecifics) {
@@ -146,16 +148,12 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     stackBottom = threadSpecifics->stackBase;
 #else
     /* the stack is malloc'd on these platforms, protect a page for the thread locals */
-    stackBottom = virtualMemory_pageAlign(threadSpecifics->stackBase);
-    virtualMemory_protectPage(stackBottom);
-    stackBottom += virtualMemory_getPageSize();
+    /* N.B. do not read or write the contents of the stack until initStackProtection returns. */
+    stackBottom = virtualMemory_pageAlign(threadSpecifics->stackBase) + virtualMemory_getPageSize();
 #endif
     int vmThreadLocalsSize = image_header()->vmThreadLocalsSize;
     Address current = stackBottom - sizeof(Address);
     Size refMapAreaSize = 1 + threadSpecifics->stackSize / sizeof(Address) / 8;
-
-    /* be sure to clear each of the thread local spaces */
-    memset((void *) (current + sizeof(Address)), 0, vmThreadLocalsSize * 3);
 
     threadSpecifics->triggeredVmThreadLocals = current;
     current += vmThreadLocalsSize;
@@ -169,7 +167,10 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     current += virtualMemory_getPageSize();
     threadSpecifics->stackYellowZone = current;
     current += virtualMemory_getPageSize();
-    initBlueZone(threadSpecifics);
+    initStackProtection(threadSpecifics);
+
+    /* be sure to clear each of the thread local spaces */
+    memset((void *) (threadSpecifics->triggeredVmThreadLocals + sizeof(Address)), 0, vmThreadLocalsSize * 3);
 
 #if log_THREADS
     int id = threadSpecifics->id;
@@ -191,15 +192,6 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
   /* make sure we didn't run out of space. */
   c_ASSERT(threadSpecifics->stackBase + threadSpecifics->stackSize > current);
 
-#if os_GUESTVMXEN
-    stackinfo_t stackInfo;
-    guestvmXen_get_stack_info(&stackInfo);
-    c_ASSERT(threadSpecifics->stackBase == (Address)stackInfo.ss_sp - stackInfo.ss_size);
-    c_ASSERT(threadSpecifics->stackSize == stackInfo.ss_size);
-#endif
-
-    virtualMemory_protectPage(threadSpecifics->stackRedZone);
-    virtualMemory_protectPage(threadSpecifics->stackYellowZone);
  }
 
 void tryUnprotectPage(Address address) {
@@ -209,13 +201,16 @@ void tryUnprotectPage(Address address) {
 }
 
 void thread_destroySegments(thread_Specifics *threadSpecifics) {
+#if !os_GUESTVMXEN
     /* unprotect pages so some other unfortunate soul doesn't get zapped when reusing the space */
     tryUnprotectPage(threadSpecifics->stackRedZone);
     tryUnprotectPage(threadSpecifics->stackYellowZone);
-#if (os_LINUX || os_DARWIN || os_GUESTVMXEN)
+#if (os_LINUX || os_DARWIN)
     /* these platforms have an extra protected page for the triggered thread locals */
     tryUnprotectPage(virtualMemory_pageAlign(threadSpecifics->stackBase));
     /* the stack is free'd by the pthreads library. */
+#endif
+    // on GUESTVMXEN stack protection is handled elsewhere
 #endif
 }
 
