@@ -21,6 +21,7 @@
 package com.sun.max.ins.debug;
 
 import javax.swing.*;
+import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
@@ -66,6 +67,7 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
 
     private final TeleNativeThread _teleNativeThread;
     private ThreadLocalsInspectorContainer _parent;
+    private JTabbedPane _tabbedPane;
 
     private ThreadLocalsPanel _enabledThreadLocalsPanel;
     private ThreadLocalsPanel _disabledThreadLocalsPanel;
@@ -102,7 +104,7 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
     @Override
     public void createView(long epoch) {
 
-        final JTabbedPane tabbedPane = new JTabbedPane();
+        _tabbedPane = new JTabbedPane();
 
         final TeleVMThreadLocalValues enabledVmThreadLocalValues = _teleNativeThread.stack().enabledVmThreadLocalValues();
         final TeleVMThreadLocalValues disabledVmThreadLocalValues = _teleNativeThread.stack().disabledVmThreadLocalValues();
@@ -112,11 +114,18 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
         _disabledThreadLocalsPanel = new ThreadLocalsPanel(this, disabledVmThreadLocalValues, _instancePreferences);
         _triggeredThreadLocalsPanel = new ThreadLocalsPanel(this, triggeredVmThreadLocalValues, _instancePreferences);
 
-        tabbedPane.add("Enabled", _enabledThreadLocalsPanel);
-        tabbedPane.add("Disabled", _disabledThreadLocalsPanel);
-        tabbedPane.add("Triggered", _triggeredThreadLocalsPanel);
+        _tabbedPane.add("Enabled", _enabledThreadLocalsPanel);
+        _tabbedPane.add("Disabled", _disabledThreadLocalsPanel);
+        _tabbedPane.add("Triggered", _triggeredThreadLocalsPanel);
 
-        frame().setContentPane(tabbedPane);
+        _tabbedPane.addChangeListener(new ChangeListener() {
+            // Do  a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
+            public void stateChanged(ChangeEvent event) {
+                refreshView(teleVM().epoch(), true);
+            }
+        });
+
+        frame().setContentPane(_tabbedPane);
     }
 
     @Override
@@ -130,9 +139,9 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        _enabledThreadLocalsPanel.refresh(epoch, force);
-        _disabledThreadLocalsPanel.refresh(epoch, force);
-        _triggeredThreadLocalsPanel.refresh(epoch, force);
+        // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
+        final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) _tabbedPane.getSelectedComponent();
+        threadLocalsPanel.refresh(epoch, force);
         super.refreshView(epoch, force);
     }
 
