@@ -73,4 +73,13 @@ public class FixedAddressCodeManager extends CodeManager {
         return null;
     }
 
+    @Override
+    protected CodeRegion codePointerToRuntimeCodeRegion(Address codePointer) {
+        final int index = codePointer.minus(start()).dividedBy(RUNTIME_CODE_REGION_SIZE).toInt();
+        final CodeRegion codeRegion = _runtimeCodeRegions[index];
+        if (codeRegion == null) {
+            return null;
+        }
+        return codeRegion;
+    }
 }
