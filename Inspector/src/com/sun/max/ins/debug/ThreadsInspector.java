@@ -67,7 +67,7 @@ public final class ThreadsInspector extends Inspector {
                 new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _table.preferences());
             }
         });
-        frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
+        //frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
         Trace.end(1,  tracePrefix() + " initializing");
     }
 

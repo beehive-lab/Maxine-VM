@@ -86,8 +86,8 @@ public class BasicInspectorGeometry implements InspectorGeometry {
     }
 
     // Breakpoint Inspector frame
-    private static final Point _breakpointsFrameDefaultLocation = new Point(1095, 0);
-    private static final Dimension _breakpointsFramePrefSize = new Dimension(500, 250);
+    private static final Point _breakpointsFrameDefaultLocation = new Point(1099, 0);
+    private static final Dimension _breakpointsFramePrefSize = new Dimension(490, 250);
 
     public Point breakpointsFrameDefaultLocation() {
         return _breakpointsFrameDefaultLocation;
