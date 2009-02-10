@@ -60,7 +60,7 @@ public final class BreakpointsInspector extends Inspector {
         super(inspection, residence);
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
-        frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
+        //frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
         frame().menu().addSeparator();
         frame().menu().add(new InspectorAction(inspection, "View Options") {
             @Override
@@ -93,7 +93,9 @@ public final class BreakpointsInspector extends Inspector {
             }
         });
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        scrollPane.setPreferredSize(inspection().geometry().breakpointsFramePrefSize());
         frame().setContentPane(scrollPane);
+        frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
     }
 
     /**
