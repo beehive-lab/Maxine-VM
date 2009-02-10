@@ -26,7 +26,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
 
 /**
- * Canonical surrogate for an object of type {@link String} in the tele VM.
+ * Canonical surrogate for an object of type {@link String} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
@@ -35,7 +35,7 @@ public class TeleString extends TeleTupleObject implements StringProvider {
     private String _string;
 
     /**
-     * @return a local copy of the string contained in this object in the tele VM
+     * @return a local copy of the string contained in this object in the {@link TeleVM}.
      */
     public String getString() {
         if (_string == null) {
