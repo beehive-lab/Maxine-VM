@@ -73,6 +73,9 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
 
         // Most general type of tuple-object surrogate, so there will always be a match.
         _teleTupleObjectClassToObjectInspectorConstructor.put(TeleTupleObject.class, getConstructor(TupleInspector.class));
+        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleString.class, getConstructor(StringInspector.class));
+        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleStringConstant.class, getConstructor(StringConstantInspector.class));
+        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantInspector.class));
 
         inspection.focus().addListener(new InspectionFocusAdapter() {
 
