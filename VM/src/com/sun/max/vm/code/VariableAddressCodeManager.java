@@ -33,7 +33,7 @@ import com.sun.max.unsafe.*;
  * @author Bernd Mathiske
  * @author Mick Jordan
  */
-public abstract class VariableAddressCodeManager extends CodeManager {
+public class VariableAddressCodeManager extends CodeManager {
 
     /**
      * Constructs a new code manager with the default number of virtual regions, with

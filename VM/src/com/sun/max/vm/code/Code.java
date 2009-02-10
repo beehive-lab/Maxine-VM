@@ -64,10 +64,13 @@ public final class Code {
      */
     private static CodeManager createCodeManager() {
         switch (Platform.hostOrTarget().operatingSystem()) {
-            case LINUX:
-            case GUESTVM: {
+            case LINUX: {
                 return new LowAddressCodeManager();
             }
+            case GUESTVM: {
+                return new VariableAddressCodeManager();
+            }
+
             case DARWIN:
             case SOLARIS: {
                 return new FixedAddressCodeManager();
