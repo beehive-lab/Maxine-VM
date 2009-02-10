@@ -54,11 +54,6 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     protected static final int NUMBER_OF_RUNTIME_CODE_REGIONS = 64;
 
     /**
-     * The maximum possible number of virtual code regions in a 31 bit address (i.e. 2GB) address range.
-     */
-    protected static final int VIRTUAL_NUMBER_OF_RUNTIME_CODE_REGIONS = Integer.MAX_VALUE / RUNTIME_CODE_REGION_SIZE + 1;
-
-    /**
      * The maximum size of the code cache.
      */
     public static final int CODE_CACHE_SIZE = NUMBER_OF_RUNTIME_CODE_REGIONS * RUNTIME_CODE_REGION_SIZE;
@@ -80,9 +75,10 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     }
 
     /**
-     * Creates a code manager with the specified number of code regions.
+     * Creates a code manager that can manage a given number of number of code regions. Populate the array with empty
+     * CodeRegion objects, whose description is "Code-N", where N is the index in the code region array.
      *
-     * @param numberOfRuntimeCodeRegions the number of code regions that this code manager should allocate
+     * @param numberOfRuntimeCodeRegions the maximum number of code regions that this code manager should manage
      */
     CodeManager(int numberOfRuntimeCodeRegions) {
         super();
@@ -157,17 +153,7 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * @return a reference to the code region that contains the specified code pointer, if one exists; {@code null} if
      *         the code pointer lies outside of all runtime code regions
      */
-    private CodeRegion codePointerToRuntimeCodeRegion(Address codePointer) {
-        if (!contains(codePointer)) {
-            return null;
-        }
-        final int index = codePointer.minus(start()).dividedBy(RUNTIME_CODE_REGION_SIZE).toInt();
-        final CodeRegion codeRegion = _runtimeCodeRegions[index];
-        if (codeRegion == null) {
-            return null;
-        }
-        return codeRegion;
-    }
+    protected abstract CodeRegion codePointerToRuntimeCodeRegion(Address codePointer);
 
     /**
      * Looks up the code region in which the specified code pointer lies. This lookup includes
@@ -180,6 +166,9 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
     CodeRegion codePointerToCodeRegion(Address codePointer) {
         if (Code.bootCodeRegion().contains(codePointer)) {
             return Code.bootCodeRegion();
+        }
+        if (!contains(codePointer)) {
+            return null;
         }
         return codePointerToRuntimeCodeRegion(codePointer);
     }

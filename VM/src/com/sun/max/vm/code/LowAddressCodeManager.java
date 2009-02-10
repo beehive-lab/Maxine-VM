@@ -21,60 +21,19 @@
 package com.sun.max.vm.code;
 
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 /**
  * A code manager that allocates virtual memory in the low 31 bits of the address range.
  *
  * @author Bernd Mathiske
+ * @author Mick Jordan
  */
-public class LowAddressCodeManager extends CodeManager {
+public class LowAddressCodeManager extends VariableAddressCodeManager {
 
-    /**
-     * Constructs a new code manager with the maximum number of virtual regions, with
-     * the starting address at {@code 0x00000000}.
-     */
-    LowAddressCodeManager() {
-        super(VIRTUAL_NUMBER_OF_RUNTIME_CODE_REGIONS);
-        setStart(Address.zero());
-        setSize(Size.fromInt(Integer.MAX_VALUE));
-    }
-
-    /**
-     * The number of code regions currently being used.
-     */
-    private int _numberOfRuntimeCodeRegionsInUse = 0;
-
-    /**
-     * Get the next free code region. In this implementation, virtual memory is allocated
-     * somewhere in the 31 bit address space and the returned address determines the
-     * code region object in the code regions array.
-     * @return a reference to the code region
-     */
     @Override
-    protected CodeRegion makeFreeCodeRegion() {
-        if (_numberOfRuntimeCodeRegionsInUse >= _runtimeCodeRegions.length) {
-            Problem.unimplemented("cannot free code regions");
-        }
-
-        final Address address = VirtualMemory.allocateIn31BitSpace(Size.fromInt(RUNTIME_CODE_REGION_SIZE), VirtualMemory.Type.CODE);
-        if (address.isZero() || address.isAllOnes()) {
-            if (_numberOfRuntimeCodeRegionsInUse == 0) {
-                ProgramError.unexpected("could not allocate first runtime memory region");
-            }
-            Problem.unimplemented("cannot free code regions");
-        }
-
-        final int index = address.dividedBy(RUNTIME_CODE_REGION_SIZE).toInt();
-        final CodeRegion codeRegion = getRuntimeCodeRegion(index);
-        assert codeRegion.size().isZero();
-        codeRegion.setStart(address);
-        codeRegion.setMark(address);
-        codeRegion.setSize(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
-
-        _numberOfRuntimeCodeRegionsInUse++;
-        return codeRegion;
+    protected Address allocateCodeRegionMemory(Size size) {
+        return VirtualMemory.allocateIn31BitSpace(size, VirtualMemory.Type.CODE);
     }
 
 }
