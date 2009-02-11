@@ -94,6 +94,7 @@ public final class MemoryRegionsInspector extends Inspector {
     @Override
     public void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
+        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {

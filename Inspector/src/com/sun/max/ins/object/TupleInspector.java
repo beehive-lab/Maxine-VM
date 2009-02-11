@@ -71,7 +71,6 @@ public class TupleInspector extends ObjectInspector {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        super.refreshView(epoch, force);
         _fieldsPane.refresh(epoch, force);
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
@@ -79,6 +78,7 @@ public class TupleInspector extends ObjectInspector {
         if (_targetMethodInspectorMenuItems != null) {
             _targetMethodInspectorMenuItems.refresh(epoch, force);
         }
+        super.refreshView(epoch, force);
     }
 
 }
