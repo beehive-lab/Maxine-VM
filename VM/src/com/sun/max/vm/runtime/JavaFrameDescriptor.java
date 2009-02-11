@@ -172,7 +172,8 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
                 s += "\n  ---parent---\n";
             }
             final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
-            s += " where: " + classMethodActor.format("%H.%n(%p)") + "@" + javaFrameDescriptor.bytecodePosition();
+            final int bytecodePosition = javaFrameDescriptor.bytecodePosition();
+            s += " where: " + classMethodActor.toStackTraceElement(bytecodePosition) + "@" + bytecodePosition;
             s += "\nlocals:";
             for (int i = 0; i < javaFrameDescriptor._locals.length; i++) {
                 s += " [" + i + "]=" + javaFrameDescriptor._locals[i];
@@ -194,7 +195,9 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
 
         do {
             final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
-            s += String.format("<<%s@%s locals:[%s] stack:[%s]>>", classMethodActor.format("%h.%n"), javaFrameDescriptor.bytecodePosition(),
+            final int bytecodePosition = javaFrameDescriptor.bytecodePosition();
+            s += String.format("<<%s@%s locals:[%s] stack:[%s]>>", classMethodActor.format("%h.%n(%s)", bytecodePosition),
+                            bytecodePosition,
                             com.sun.max.lang.Arrays.toString(javaFrameDescriptor._locals, ", "),
                             com.sun.max.lang.Arrays.toString(javaFrameDescriptor._stackSlots, ", "));
             javaFrameDescriptor = javaFrameDescriptor.parent();
