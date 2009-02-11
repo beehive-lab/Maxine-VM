@@ -41,21 +41,12 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native <Type> Type nativeCastObject(Object object);
 
-    /**
-     * Use this variant, not the one below, if the l-value taking the result of this method is a manifest type.
-     */
     @UNCHECKED_CAST
     public static <Type> Type cast(Object object) {
         assert MaxineVM.isPrototyping();
         assert !(object instanceof Word);
-        return nativeCastObject(object);
-    }
-
-    @PROTOTYPE_ONLY
-    public static <Type> Type castObject(Object object) {
-        assert MaxineVM.isPrototyping();
-        assert !(object instanceof Word);
-        return nativeCastObject(object);
+        final Class<Type> type = null;
+        return StaticLoophole.cast(type, nativeCastObject(object));
     }
 
     @PROTOTYPE_ONLY
@@ -65,7 +56,8 @@ public final class UnsafeLoophole {
     public static <Word_Type extends Word> Word_Type intToWord(int value) {
         assert MaxineVM.isPrototyping();
         ProgramError.check(Word.width() == WordWidth.BITS_32);
-        return nativeIntToWord(value);
+        final Class<Word_Type> type = null;
+        return StaticLoophole.cast(type, nativeIntToWord(value));
     }
 
     @PROTOTYPE_ONLY
@@ -75,7 +67,8 @@ public final class UnsafeLoophole {
     public static <Word_Type extends Word> Word_Type longToWord(long value) {
         assert MaxineVM.isPrototyping();
         ProgramError.check(Word.width() == WordWidth.BITS_64);
-        return nativeLongToWord(value);
+        final Class<Word_Type> type = null;
+        return StaticLoophole.cast(type, nativeLongToWord(value));
     }
 
     @PROTOTYPE_ONLY
@@ -248,6 +241,7 @@ public final class UnsafeLoophole {
     @UNCHECKED_CAST
     public static <Word_Type extends Word> Word_Type castWord(Word word) {
         assert MaxineVM.isPrototyping();
-        return nativeWordCast(word);
+        final Class<Word_Type> type = null;
+        return StaticLoophole.cast(type, nativeWordCast(word));
     }
 }
