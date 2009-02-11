@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.type.*;
@@ -40,6 +41,11 @@ public abstract class PointerLoadBuiltin extends PointerBuiltin {
     @Override
     public final boolean hasSideEffects() {
         return false;
+    }
+
+    @Override
+    public int reasonsMayStop() {
+        return Stoppable.NULL_POINTER_CHECK;
     }
 
     /**

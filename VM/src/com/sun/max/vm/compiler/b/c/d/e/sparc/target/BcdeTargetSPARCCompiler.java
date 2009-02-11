@@ -312,7 +312,8 @@ public final class BcdeTargetSPARCCompiler extends BcdeSPARCCompiler implements 
             case EXCEPTION_HANDLING: {
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(instructionPointer);
                 if (!catchAddress.isZero()) {
-                    final Throwable throwable = UnsafeLoophole.cast(StackUnwindingContext.class, context)._throwable;
+                    final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+                    final Throwable throwable = stackUnwindingContext._throwable;
                     if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // Reset the stack walker
                         stackFrameWalker.reset();

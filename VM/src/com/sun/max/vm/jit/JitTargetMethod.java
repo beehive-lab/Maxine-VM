@@ -113,7 +113,7 @@ public abstract class JitTargetMethod extends TargetMethod {
     }
 
     @Override
-    public Iterator<BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
+    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
         final BytecodeLocation bytecodeLocation = new BytecodeLocation(classMethodActor(), bytecodePositionFor(instructionPointer.asPointer()));
         return Iterators.iterator(new BytecodeLocation[] {bytecodeLocation});
     }

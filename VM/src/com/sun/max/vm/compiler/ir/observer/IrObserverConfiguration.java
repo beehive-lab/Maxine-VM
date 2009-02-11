@@ -128,7 +128,7 @@ public class IrObserverConfiguration {
     private static String addTraceObservers(String irObservers, String[] methodsToBeTraced) {
         if (methodsToBeTraced != null) {
             if (!irObservers.contains(IrTraceObserverDispatcher.class.getSimpleName())) {
-                return Strings.concat(irObservers, IrTraceObserverDispatcher.class.getName(), ",");
+                return Strings.concat(IrTraceObserverDispatcher.class.getName(), irObservers, ",");
             }
         }
         return irObservers;

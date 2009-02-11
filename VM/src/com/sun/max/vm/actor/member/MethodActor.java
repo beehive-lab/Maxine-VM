@@ -101,6 +101,11 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
+    public final boolean isUncheckedCast() {
+        return isUncheckedCast(flags());
+    }
+
+    @INLINE
     public final boolean isTrapStub() {
         return Trap.isTrapStub(this);
     }
@@ -213,7 +218,7 @@ public abstract class MethodActor extends MemberActor {
 
     public static MethodActor fromJava(Method javaMethod) {
         // The injected field in a Method object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = MaxineVM.isPrototyping() ? null : Method_methodActor.read(javaMethod);
+        MethodActor methodActor = MaxineVM.isPrototyping() ? null : (MethodActor) Method_methodActor.readObject(javaMethod);
         if (methodActor == null) {
             final String name = MaxineVM.isPrototyping() && javaMethod.getAnnotation(SURROGATE.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName();
             methodActor = findMethodActor(ClassActor.fromJava(javaMethod.getDeclaringClass()), SymbolTable.makeSymbol(name), SignatureDescriptor.fromJava(javaMethod));
@@ -226,7 +231,7 @@ public abstract class MethodActor extends MemberActor {
 
     public static MethodActor fromJavaConstructor(Constructor javaConstructor) {
         // The injected field in a Constructor object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = MaxineVM.isPrototyping() ? null : Constructor_methodActor.read(javaConstructor);
+        MethodActor methodActor = MaxineVM.isPrototyping() ? null : (MethodActor) Constructor_methodActor.readObject(javaConstructor);
         if (methodActor == null) {
             methodActor = findMethodActor(ClassActor.fromJava(javaConstructor.getDeclaringClass()), SymbolTable.INIT, SignatureDescriptor.fromJava(javaConstructor));
             if (!MaxineVM.isPrototyping()) {

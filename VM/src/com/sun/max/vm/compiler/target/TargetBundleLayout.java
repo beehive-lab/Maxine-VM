@@ -128,8 +128,8 @@ public final class TargetBundleLayout {
 
         final int numberOfFields = ArrayField.VALUES.length();
         _lengths = new int[numberOfFields];
-        _cellSizes = WordArray.create(Size.class, Size.zero(), numberOfFields);
-        _cellOffsets = WordArray.create(Offset.class, Offset.zero(), numberOfFields);
+        _cellSizes = new Size[numberOfFields];
+        _cellOffsets = new Offset[numberOfFields];
         WordArray.fill(_cellOffsets, INVALID_OFFSET);
 
         if (MaxineVM.isPrototyping()) {

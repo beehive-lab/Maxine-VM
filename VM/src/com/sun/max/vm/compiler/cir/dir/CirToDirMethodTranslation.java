@@ -294,7 +294,8 @@ class CirToDirMethodTranslation {
         DirJavaFrameDescriptor dirJavaFrameDescriptor = _cirToDirJavaFrameDescriptor.get(cirJavaFrameDescriptor);
         if (dirJavaFrameDescriptor == null) {
             dirJavaFrameDescriptor = new DirJavaFrameDescriptor(cirToDirJavaFrameDescriptor(cirJavaFrameDescriptor.parent()),
-                                                                       cirJavaFrameDescriptor.bytecodeLocation(),
+                                                                       cirJavaFrameDescriptor.classMethodActor(),
+                                                                       cirJavaFrameDescriptor.bytecodePosition(),
                                                                        cirToDirValues(cirJavaFrameDescriptor.locals()),
                                                                        cirToDirValues(cirJavaFrameDescriptor.stackSlots()));
             _cirToDirJavaFrameDescriptor.put(cirJavaFrameDescriptor, dirJavaFrameDescriptor);
@@ -342,10 +343,34 @@ class CirToDirMethodTranslation {
         return _returnBlock;
     }
 
+    /**
+     * Facility for generating the DIR code when translating a safepoint or a call to a builtin or method.
+     */
     private abstract class CallGenerator<CirProcedure_Type extends CirValue> {
+
+        /**
+         * Generates the DIR instruction specific to the type of CIR call being processed by this call translation.
+         *
+         * @param result the variable to which the result of the call will be assigned
+         * @param cirProcedure the procedure applied by the call
+         * @param arguments the arguments of the call
+         * @param catchBlock the DIR block where execution continues in case of an exception thrown during the call
+         * @param isNativeCall specifies if this is a call to native code (i.e. one that crosses an ABI boundary)
+         * @param javaFrameDescriptor the frame descriptor for the call (may be null)
+         * @return the DIR instruction implementing the call
+         */
         protected abstract DirInstruction createCallInstruction(DirVariable result, CirProcedure_Type cirProcedure, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor);
 
-        void generateCall(Translation translation, CirProcedure_Type cirProcedure, CirValue[] cirArguments, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
+        /**
+         * Translates a CIR call.
+         *
+         * @param translation the translation to be processed
+         * @param cirProcedure the procedure applied by the body of the {@linkplain Translation#_closure closure} being translated
+         * @param cirArguments the arguments of the procedure application
+         * @param isNativeCall specifies if this is a call to native code (i.e. one that crosses an ABI boundary)
+         * @param javaFrameDescriptor the frame descriptor for the call (may be null)
+         */
+        final void generateCall(Translation translation, CirProcedure_Type cirProcedure, CirValue[] cirArguments, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
             final CirValue normalContinuation = cirArguments[cirArguments.length - 2];
             Translation cc;
             DirVariable result;
@@ -416,13 +441,14 @@ class CirToDirMethodTranslation {
     private final CallGenerator<CirBuiltin> _builtinCallGenerator = new CallGenerator<CirBuiltin>() {
         @Override
         protected DirInstruction createCallInstruction(DirVariable result, CirBuiltin cirBuiltin, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
-            return new DirBuiltinCall(result, cirBuiltin.builtin(), arguments, catchBlock);
+            return new DirBuiltinCall(result, cirBuiltin.builtin(), arguments, catchBlock, javaFrameDescriptor);
         }
     };
 
     private final CallGenerator<CirBuiltin> _safepointGenerator = new CallGenerator<CirBuiltin>() {
         @Override
         protected DirInstruction createCallInstruction(DirVariable result, CirBuiltin cirBuiltin, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
+            assert javaFrameDescriptor != null;
             return new DirSafepoint(javaFrameDescriptor);
         }
     };
@@ -497,11 +523,11 @@ class CirToDirMethodTranslation {
             generateDirSwitch(translation, (CirSwitch) cirProcedure, cirArguments);
         } else if (cirProcedure instanceof CirBuiltin) {
             final CirBuiltin cirBuiltin = (CirBuiltin) cirProcedure;
+            final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
             if (cirBuiltin.builtin() == SafepointBuiltin.SoftSafepoint.BUILTIN || cirBuiltin.builtin() == SafepointBuiltin.HardSafepoint.BUILTIN) {
-                final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());
                 _safepointGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             } else {
-                _builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, null);
+                _builtinCallGenerator.generateCall(translation, cirBuiltin, cirArguments, false, dirJavaFrameDescriptor);
             }
         } else if (cirProcedure instanceof CirMethod || cirProcedure instanceof CirConstant) {
             final DirJavaFrameDescriptor dirJavaFrameDescriptor = cirToDirJavaFrameDescriptor(cirCall.javaFrameDescriptor());

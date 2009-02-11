@@ -302,7 +302,8 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
         }
         return new EirJavaFrameDescriptor(instruction,
                                           dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor.parent(), instruction),
-                                          dirJavaFrameDescriptor.bytecodeLocation(),
+                                          dirJavaFrameDescriptor.classMethodActor(),
+                                          dirJavaFrameDescriptor.bytecodePosition(),
                                           dirToEirValues(dirJavaFrameDescriptor.locals()),
                                           dirToEirValues(dirJavaFrameDescriptor.stackSlots()));
     }

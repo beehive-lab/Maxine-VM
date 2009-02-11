@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * @author Bernd Mathiske
@@ -29,6 +30,11 @@ public abstract class SafepointBuiltin extends SpecialBuiltin {
 
     protected SafepointBuiltin() {
         super(SafepointBuiltin.class);
+    }
+
+    @Override
+    public int reasonsMayStop() {
+        return Stoppable.SAFEPOINT;
     }
 
     @BUILTIN(builtinClass = SoftSafepoint.class)
@@ -56,5 +62,4 @@ public abstract class SafepointBuiltin extends SpecialBuiltin {
         }
         public static final HardSafepoint BUILTIN = new HardSafepoint();
     }
-
 }

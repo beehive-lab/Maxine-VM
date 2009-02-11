@@ -45,6 +45,7 @@ public final class ArrayAccess {
 
     /**
      * Reads the length of the specified array.
+     *
      * @param array the array object
      * @return the length of the array
      */
@@ -55,6 +56,7 @@ public final class ArrayAccess {
 
     /**
      * An inlined method to check an array index against the bounds of the array.
+     *
      * @param array the array object
      * @param index the index into the array
      */
@@ -71,6 +73,7 @@ public final class ArrayAccess {
      * specialized version compiles such that it does not require any reference literals,
      * which makes it suitable for use in JIT templates. For more information on constraints
      * imposed on JIT templates, see {@link TemplateBasedTargetGenerator the JIT}.
+     *
      * @param array the array object
      * @param index the index into the array
      */
@@ -84,6 +87,7 @@ public final class ArrayAccess {
 
     /**
      * A non-inlineable version of an array bounds check.
+     *
      * @param array the array object
      * @param index the index into the array
      */
@@ -98,6 +102,7 @@ public final class ArrayAccess {
     /**
      * Checks that the specified object reference can be assigned to the given object array.
      * This implements the same check as the {@code aastore} JVM bytecode.
+     *
      * @param array the array object
      * @param value the object reference to write into the specified array
      */
@@ -116,7 +121,7 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a byte from the specified array at the specified index.
+     * Gets a byte from the specified array at the specified index.
      *
      * @param array the array object
      * @param index the index into the array
@@ -132,7 +137,7 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a byte in the specified array at the specified index.
+     * Sets a byte in the specified array at the specified index.
      *
      * @param array the array object
      * @param index the index into the array
@@ -149,7 +154,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a boolean from the specified array at the specified index.
+     * Gets a boolean from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -164,7 +170,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a boolean in the specified array at the specified index.
+     * Sets a boolean in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -180,7 +187,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a short from the specified array at the specified index.
+     * Gets a short from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -195,7 +203,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a short in the specified array at the specified index.
+     * Sets a short in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -211,7 +220,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a char from the specified array at the specified index.
+     * Gets a char from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -226,7 +236,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a char in the specified array at the specified index.
+     * Sets a char in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -242,7 +253,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get an int from the specified array at the specified index.
+     * Gets an int from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -257,7 +269,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set an int in the specified array at the specified index.
+     * Sets an int in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -273,7 +286,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a float from the specified array at the specified index.
+     * Gets a float from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -288,7 +302,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a float in the specified array at the specified index.
+     * Sets a float in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -304,7 +319,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a long from the specified array at the specified index.
+     * Gets a long from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -319,7 +335,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a long in the specified array at the specified index.
+     * Sets a long in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -335,7 +352,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a double from the specified array at the specified index.
+     * Gets a double from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -350,7 +368,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a double in the specified array at the specified index.
+     * Sets a double in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -366,7 +385,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a word from the specified array at the specified index.
+     * Gets a word from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -381,7 +401,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a word in the specified array at the specified index.
+     * Sets a word in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index
@@ -397,7 +418,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Get a reference from the specified array at the specified index.
+     * Gets a reference from the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @return the value at the specified index in the specified array
@@ -412,7 +434,8 @@ public final class ArrayAccess {
     }
 
     /**
-     * Set a reference in the specified array at the specified index.
+     * Sets a reference in the specified array at the specified index.
+     *
      * @param array the array object
      * @param index the index into the array
      * @param value the value to write into the array at the specified index

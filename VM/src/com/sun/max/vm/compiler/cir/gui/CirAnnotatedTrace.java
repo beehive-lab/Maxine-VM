@@ -30,7 +30,7 @@ import com.sun.max.vm.compiler.cir.*;
 /**
  * A textual trace of a CIR graph annotated by {@linkplain Element descriptions of the position(s) of each CIR node}
  * within the trace.
- * 
+ *
  * @author Doug Simon
  * @author Sumeet Panchal
  */
@@ -76,7 +76,7 @@ class CirAnnotatedTrace implements Iterable<CirAnnotatedTrace.Element> {
         /**
          * Gets the {@linkplain Class#getSimpleName() simple name} of the type of this element's
          * {@linkplain #node() node}.
-         * 
+         *
          * @return {@code ""} if {@code node() == null}
          */
         public final String nodeType() {

@@ -53,7 +53,7 @@ public class Frame {
     public Frame(BytecodeLocation location, int sp) {
         _method = location.classMethodActor();
         _sp = sp;
-        _pc = location.position();
+        _pc = location.bytecodePosition();
     }
 
     public ClassMethodActor method() {

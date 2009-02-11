@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.compiler.cir;
 
-import com.sun.max.collect.*;
-import com.sun.max.lang.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
@@ -42,14 +40,6 @@ public abstract class CirValue extends CirNode implements IrValue {
 
     protected CirValue(Kind kind) {
         _kind = kind;
-    }
-
-    public static Kind[] getKinds(CirValue[] arguments) {
-        return Arrays.map(arguments, Kind.class, new MapFunction<CirValue, Kind>() {
-            public Kind map(CirValue cirValue) {
-                return cirValue.kind();
-            }
-        });
     }
 
     public boolean isCategory1() {

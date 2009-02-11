@@ -90,12 +90,14 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         return getArraySize(readLength(accessor));
     }
 
+    @PROTOTYPE_ONLY
     @Override
     public void visitHeader(ObjectCellVisitor visitor, Object array) {
         super.visitHeader(visitor, array);
         visitor.visitHeaderField(_lengthOffset, "length", JavaTypeDescriptor.INT, IntValue.from(HostObjectAccess.getArrayLength(array)));
     }
 
+    @PROTOTYPE_ONLY
     private void visitElements(ObjectCellVisitor visitor, Object array) {
         final int length = Array.getLength(array);
         final Hub hub = HostObjectAccess.readHub(array);
@@ -114,6 +116,7 @@ public abstract class OhmArrayLayout<Value_Type extends Value<Value_Type>> exten
         }
     }
 
+    @PROTOTYPE_ONLY
     public void visitObjectCell(Object array, ObjectCellVisitor visitor) {
         visitHeader(visitor, array);
         visitElements(visitor, array);

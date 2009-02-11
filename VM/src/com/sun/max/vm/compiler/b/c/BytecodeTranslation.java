@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import static com.sun.max.vm.compiler.ExceptionThrower.Static.*;
+import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
 import java.lang.reflect.*;
 
@@ -51,8 +51,8 @@ import com.sun.max.vm.value.*;
  * A bytecode visitor that generates a HCIR tree for one BirBlock
  * in the context of a given BirToCirTranslation.
  *
- * A HCIR tree is a CIR tree with some restriction on what can appear in the operator position
- * of a @{link CirCall}.  HCIR allows only the following types of operators:
+ * A HCIR tree is a CIR tree with some restriction on what can appear as the {@linkplain CirCall#procedure() procedure}
+ * of a @{linkplain CirCall call}.  HCIR allows only the following types of operators:
  *   1. {@link JavaBuiltin}
  *   2. {@link CirClosure}
  *   3. {@link CirBlock}
@@ -61,7 +61,7 @@ import com.sun.max.vm.value.*;
  *   6. {@link JavaOperator}
  *
  * Basically, only the operators and constructs that can be found in JVM bytecode can appear in
- * HCIR.  Other builtins, snippets, or other CIR values are now allowed to appear here but are
+ * HCIR.  Other builtins, snippets, or other CIR values are not allowed to appear here but are
  * introduced in the lowering pass. (see {@link HCirToLCirTranslation})
  *
  * The rationale for this transformation is that there are a certain class of optimizations
@@ -84,7 +84,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected final BirToCirMethodTranslation _methodTranslation;
     protected final ConstantPool _constantPool;
     protected CirCall _currentCall;
-    protected BytecodeLocation _lastLocation;
 
     public BytecodeTranslation(BlockState blockState, BirToCirMethodTranslation methodTranslation) {
         _blockState = blockState;
@@ -96,20 +95,13 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         _currentCall = body;
     }
 
-    protected BytecodeLocation currentLocation() {
-        if (_lastLocation == null || _lastLocation.position() != currentOpcodePosition()) {
-            _lastLocation = new BytecodeLocation(_methodTranslation.classMethodActor().compilee(), currentOpcodePosition());
-        }
-        return _lastLocation;
-    }
-
     public String classMethodName() {
         return _methodTranslation.classMethodActor().name().toString();
     }
 
     private CirContinuation makeExceptionContinuation(BlockState dispatcherState) {
         final CirCall call = _methodTranslation.newCirCall(dispatcherState.cirBlock());
-        final CirVariable throwable = _methodTranslation.stackVariableFactory().makeVariable(Kind.REFERENCE, 0, currentLocation());
+        final CirVariable throwable = _methodTranslation.stackVariableFactory().makeVariable(Kind.REFERENCE, 0);
         final CirContinuation continuation = new CirContinuation(throwable);
         continuation.setBody(call);
         return continuation;
@@ -150,14 +142,14 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         }
         // No control flow byte code has occurred,
         // so fall through to the adjacent basic block:
-        _currentCall.setProcedure(getAdjacentContinuation(), null);
+        _currentCall.setProcedure(getAdjacentContinuation());
         _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
     private void assign(CirVariable variable, CirValue value) {
         assert variable.kind().toStackKind() == value.kind().toStackKind() : incompatibleTypesErrorMessage(variable.kind().toStackKind(), value.kind().toStackKind());
-        final CirClosure closure = new CirClosure(currentLocation());
-        _currentCall.setProcedure(closure, null);
+        final CirClosure closure = new CirClosure();
+        _currentCall.setProcedure(closure);
         _currentCall.setArguments(value);
 
         _currentCall = new CirCall();
@@ -167,7 +159,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected void push(Kind kind, CirValue argument) {
         assert argument.kind() == kind : incompatibleTypesErrorMessage(argument.kind(), kind);
-        final CirVariable stackVariable = _stack.push(kind, currentLocation());
+        final CirVariable stackVariable = _stack.push(kind);
         assign(stackVariable, argument);
     }
 
@@ -215,7 +207,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     private void localLoad(Kind kind, int index) {
-        final CirVariable localVariable = _frame.makeVariable(kind, index, currentLocation());
+        final CirVariable localVariable = _frame.makeVariable(kind, index);
         push(kind, localVariable);
     }
 
@@ -226,29 +218,35 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     private void localStore(Kind kind, int index) {
         final CirVariable stackVariable = pop(kind);
-        final CirVariable localVariable = _frame.makeVariable(kind, index, currentLocation());
+        final CirVariable localVariable = _frame.makeVariable(kind, index);
         assign(localVariable, stackVariable);
     }
 
     private void localStoreReferenceOrWord(int index) {
         final CirVariable stackVariable = popReferenceOrWord();
-        final CirVariable localVariable = _frame.makeVariable(stackVariable.kind(), index, currentLocation());
+        final CirVariable localVariable = _frame.makeVariable(stackVariable.kind(), index);
         assign(localVariable, stackVariable);
     }
 
     private void createJavaFrameDescriptor() {
-        _currentCall.setJavaFrameDescriptor(new CirJavaFrameDescriptor(currentLocation(), _frame.makeDescriptor(), _stack.makeDescriptor()));
+        _currentCall.setJavaFrameDescriptor(new CirJavaFrameDescriptor(_methodTranslation.classMethodActor().compilee(), currentOpcodePosition(), _frame.makeDescriptor(), _stack.makeDescriptor()));
     }
 
-    protected void call(CirRoutine cirRoutine, CirValue[] regularArguments, CirContinuation normalContinuation) {
-        if (cirRoutine.needsJavaFrameDescriptor()) {
+    protected void call(CirRoutine cirRoutine, CirValue[] regularArguments, CirValue normalContinuation) {
+        if (Stoppable.Static.canStop(cirRoutine)) {
             createJavaFrameDescriptor();
         }
-        final CirValue exceptionContinuation = ExceptionThrower.Static.throwsAny(cirRoutine) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
+
+        final CirValue exceptionContinuation = Stoppable.Static.canStopWithException(cirRoutine) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
         _currentCall.setArguments(Arrays.append(CirValue.class, regularArguments, normalContinuation, exceptionContinuation));
-        _currentCall.setProcedure((CirProcedure) cirRoutine, currentLocation());
-        _currentCall = new CirCall();
-        normalContinuation.setBody(_currentCall);
+        _currentCall.setProcedure((CirProcedure) cirRoutine);
+        if (normalContinuation != CirValue.UNDEFINED) {
+            _currentCall = new CirCall();
+            final CirContinuation cc = (CirContinuation) normalContinuation;
+            cc.setBody(_currentCall);
+        } else {
+            assert cirRoutine instanceof Throw;
+        }
     }
 
     protected void callAndPush(CirRoutine cirRoutine, CirValue... regularArguments) {
@@ -274,12 +272,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     protected void stackCall(CirRoutine cirRoutine) {
         final Kind[] parameterKinds = cirRoutine.parameterKinds();
-        final int nRegularArguments = parameterKinds.length - 2;
-        final CirValue[] regularArguments = CirClosure.newParameters(nRegularArguments);
-        for (int i = nRegularArguments - 1; i >= 0; i--) {
-            regularArguments[i] = pop(parameterKinds[i]);
+        final int numberOfArguments = parameterKinds.length;
+        final CirValue[] arguments = CirClosure.newParameters(numberOfArguments);
+        for (int i = numberOfArguments - 1; i >= 0; i--) {
+            arguments[i] = pop(parameterKinds[i]);
         }
-        callAndPush(cirRoutine, regularArguments);
+        callAndPush(cirRoutine, arguments);
     }
 
     protected void stackCall(Builtin builtin) {
@@ -296,7 +294,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         final CirValue failure = getAdjacentContinuation();
         assert failure != null : "expected fall through basic block";
         _currentCall.setArguments(value1, value2, success, failure);
-        _currentCall.setProcedure(cirSwitch, currentLocation());
+        _currentCall.setProcedure(cirSwitch);
     }
 
     private <Value_Type extends Value<Value_Type>> void conditionalBranch(CirSwitch cirSwitch, Value_Type value2, int offset) {
@@ -331,7 +329,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     private void terminate(Kind kind) {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter(), currentLocation());
+        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter());
         final CirVariable result = pop(kind);
         _currentCall.setArguments(result);
     }
@@ -343,14 +341,14 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         if (returnKind == Kind.VOID) {
             continuation = new CirContinuation();
         } else {
-            final CirVariable result = _stack.push(returnKind, currentLocation());
+            final CirVariable result = _stack.push(returnKind);
             continuation = new CirContinuation(result);
         }
         arguments[arguments.length - 2] = continuation;
         arguments[arguments.length - 1] = getCurrentExceptionContinuation();
 
         _currentCall.setArguments(arguments);
-        _currentCall.setProcedure(method, currentLocation());
+        _currentCall.setProcedure(method);
         _currentCall = new CirCall();
         continuation.setBody(_currentCall);
     }
@@ -1011,7 +1009,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void goto_(int offset) {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        _currentCall.setProcedure(getBranchContinuation(offset), currentLocation());
+        _currentCall.setProcedure(getBranchContinuation(offset));
         _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
@@ -1039,7 +1037,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         arguments[1 + (numberOfCases * 2)] = getBranchContinuation(defaultOffset);
         _currentCall.setArguments(arguments);
         final CirSwitch switchBuiltin = new CirSwitch(Kind.INT, ValueComparator.EQUAL, numberOfCases);
-        _currentCall.setProcedure(switchBuiltin, currentLocation());
+        _currentCall.setProcedure(switchBuiltin);
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
     }
 
@@ -1056,7 +1054,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
         arguments[1 + (numberOfCases * 2)] = getBranchContinuation(defaultOffset);
         _currentCall.setArguments(arguments);
         final CirSwitch switchBuiltin = new CirSwitch(Kind.INT, ValueComparator.EQUAL, numberOfCases);
-        _currentCall.setProcedure(switchBuiltin, currentLocation());
+        _currentCall.setProcedure(switchBuiltin);
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
     }
 
@@ -1083,14 +1081,14 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void areturn() {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
-        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter(), currentLocation());
+        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter());
         final CirVariable result = popReferenceOrWord();
         _currentCall.setArguments(result);
     }
 
     @Override
     protected void vreturn() {
-        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter(), currentLocation());
+        _currentCall.setProcedure(_methodTranslation.variableFactory().normalContinuationParameter());
         _currentCall.setArguments(CirCall.NO_ARGUMENTS);
     }
 
@@ -1130,11 +1128,11 @@ public final class BytecodeTranslation extends BytecodeVisitor {
             if (MaxineVM.isPrototyping()) {
                 final C_FUNCTION cFunctionAnnotation = _methodTranslation.classMethodActor().getAnnotation(C_FUNCTION.class);
                 if (cFunctionAnnotation == null || !cFunctionAnnotation.isInterruptHandler()) {
-                    callAndPush(JavaOperator.PROLOGUE);
+                    callAndPush(JavaOperator.SAFEPOINT_OP);
                 }
             } else {
                 if (_methodTranslation.classMethodActor().isCFunction()) {
-                    callAndPush(JavaOperator.PROLOGUE);
+                    callAndPush(JavaOperator.SAFEPOINT_OP);
                 }
             }
         }
@@ -1709,12 +1707,12 @@ public final class BytecodeTranslation extends BytecodeVisitor {
 
     @Override
     protected void iinc(int index, int addend) {
-        final CirVariable localVariable = _frame.makeVariable(Kind.INT, index, currentLocation());
+        final CirVariable localVariable = _frame.makeVariable(Kind.INT, index);
         final CirContinuation continuation = new CirContinuation(localVariable);
         final JavaOperator op = JavaOperator.INT_PLUS;
-        final CirValue exceptionContinuation = throwsAny(op) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
+        final CirValue exceptionContinuation = canStop(op) ? getCurrentExceptionContinuation() : CirValue.UNDEFINED;
         _currentCall.setArguments(localVariable, CirConstant.fromInt(addend), continuation, exceptionContinuation);
-        _currentCall.setProcedure(op, currentLocation());
+        _currentCall.setProcedure(op);
         _currentCall = new CirCall();
         continuation.setBody(_currentCall);
     }
@@ -1722,10 +1720,8 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     @Override
     protected void athrow() {
         assert isEndOfBlock() : expectedEndOfBlockErrorMessage();
+        final Throw athrow = new Throw();
         final CirVariable throwable = pop(Kind.REFERENCE);
-        createJavaFrameDescriptor();
-        _currentCall.setProcedure(new Throw(), currentLocation());
-        _currentCall.setArguments(throwable, CirValue.UNDEFINED, getCurrentExceptionContinuation());
+        call(athrow, new CirValue[] {throwable}, CirValue.UNDEFINED);
     }
-
 }

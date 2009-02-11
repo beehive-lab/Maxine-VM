@@ -158,7 +158,8 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
         TargetJavaFrameDescriptor targetJavaFrameDescriptor = _eirToTargetJavaFrameDescriptor.get(eirJavaFrameDescriptor);
         if (targetJavaFrameDescriptor == null) {
             targetJavaFrameDescriptor = new TargetJavaFrameDescriptor(eirToTargetJavaFrameDescriptor(eirJavaFrameDescriptor.parent()),
-                                                                      eirJavaFrameDescriptor.bytecodeLocation(),
+                                                                      eirJavaFrameDescriptor.classMethodActor(),
+                                                                      eirJavaFrameDescriptor.bytecodePosition(),
                                                                       eirToTargetLocations(eirJavaFrameDescriptor.locals()),
                                                                       eirToTargetLocations(eirJavaFrameDescriptor.stackSlots()));
             _eirToTargetJavaFrameDescriptor.put(eirJavaFrameDescriptor, targetJavaFrameDescriptor);
@@ -238,7 +239,9 @@ public abstract class EirTargetEmitter<Assembler_Type extends Assembler> {
 
     private void appendTargetJavaFrameDescriptors(Iterable<? extends EirStop> stops, AppendableSequence<TargetJavaFrameDescriptor> descriptors) {
         for (EirStop stop : stops) {
-            descriptors.append(eirToTargetJavaFrameDescriptor(stop.javaFrameDescriptor()));
+            final EirJavaFrameDescriptor javaFrameDescriptor = stop.javaFrameDescriptor();
+            assert javaFrameDescriptor != null : " stop " + stop + " is missing a Java frame descriptor";
+            descriptors.append(eirToTargetJavaFrameDescriptor(javaFrameDescriptor));
         }
     }
 

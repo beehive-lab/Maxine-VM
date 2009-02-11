@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.b.c;
 
 import com.sun.max.lang.*;
-import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.variable.*;
@@ -62,7 +61,6 @@ abstract class JavaSlots implements Cloneable {
 
     public JavaSlots copy() {
         try {
-            Metrics.increment("JavaSlots.copy()");
             final JavaSlots result = (JavaSlots) clone();
             result._slots = Arrays.copy(_slots, new JavaStackSlot[_slots.length]);
             return result;

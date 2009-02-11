@@ -43,11 +43,11 @@ public class CirBuiltinVariantOptimization extends CirDeflation {
     }
 
     public static void apply(CirGenerator cirGenerator, CirNode node, Variant variant, CirMethod cirMethod) {
-        cirGenerator.notifyBeforeTransformation(cirMethod, node, Transformation.BUILTIN_VARIANT_OPTIMIZATION);
         final CirOptimizer optimizer = new CirOptimizer(cirGenerator, cirMethod, node, CirInliningPolicy.NONE);
+        optimizer.notifyBeforeTransformation(node, TransformationType.BUILTIN_VARIANT_OPTIMIZATION);
         final CirBuiltinVariantOptimization optimization = new CirBuiltinVariantOptimization(optimizer, node, variant);
         optimization.reduceCalls();
-        cirGenerator.notifyAfterTransformation(cirMethod, node, Transformation.BUILTIN_VARIANT_OPTIMIZATION);
+        optimizer.notifyAfterTransformation(node, TransformationType.BUILTIN_VARIANT_OPTIMIZATION);
     }
 
     @Override
@@ -58,14 +58,14 @@ public class CirBuiltinVariantOptimization extends CirDeflation {
             switch (_variant) {
                 case FOLDABLE: {
                     if (cirBuiltin != cirBuiltin.foldableVariant()) {
-                        call.setProcedure(cirBuiltin.foldableVariant(), call.bytecodeLocation());
+                        call.setProcedure(cirBuiltin.foldableVariant());
                         result = true;
                     }
                     break;
                 }
                 case FOLDABLE_WHEN_NOT_ZERO: {
                     if (cirBuiltin != cirBuiltin.foldableWhenNotZeroVariant()) {
-                        call.setProcedure(cirBuiltin.foldableWhenNotZeroVariant(), call.bytecodeLocation());
+                        call.setProcedure(cirBuiltin.foldableWhenNotZeroVariant());
                         result = true;
                     }
                     break;

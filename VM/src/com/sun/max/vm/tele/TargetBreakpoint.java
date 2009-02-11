@@ -72,7 +72,7 @@ public final class TargetBreakpoint {
 
     private static final byte[] _breakpointCode = createBreakpointCode(Platform.target().processorKind().instructionSet());
 
-    private static byte[] breakpointCode() {
+    public static byte[] breakpointCode() {
         return _breakpointCode;
     }
 

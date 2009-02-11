@@ -35,6 +35,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.hotpath.AsynchronousProfiler;
 import com.sun.max.vm.hotpath.AsynchronousProfiler.*;
 import com.sun.max.vm.hotpath.compiler.*;
@@ -312,7 +313,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         @Override
         protected void invokeStaticMethod(MethodActor method) {
             final StaticMethodActor staticMethodActor = InvocationTarget.findInvokeStaticTarget(method);
-            staticMethodActor.holder().makeInitialized();
+            MakeHolderInitialized.makeHolderInitialized(staticMethodActor);
             profileInvoke(staticMethodActor);
             if (staticMethodActor.isNative()) {
                 execute(staticMethodActor);
@@ -325,7 +326,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         @Override
         protected void invokeVirtualMethod(MethodActor method) {
             final VirtualMethodActor declaredMethod = (VirtualMethodActor) method;
-            declaredMethod.holder().makeInitialized();
+            MakeHolderInitialized.makeHolderInitialized(declaredMethod);
             final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.numberOfParameterLocals() - 1).asObject();
             if (receiver == null) {
                 catchException(new NullPointerException());
@@ -333,7 +334,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
             }
             final VirtualMethodActor virtualMethodActor = InvocationTarget.findInvokeVirtualTarget(declaredMethod, receiver);
             profileInvoke(virtualMethodActor);
-            virtualMethodActor.holder().makeInitialized();
+            MakeHolderInitialized.makeHolderInitialized(virtualMethodActor);
             if (virtualMethodActor.isNative()) {
                 execute(virtualMethodActor);
                 return;
@@ -345,14 +346,14 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         @Override
         protected void invokeInterfaceMethod(MethodActor method) {
             final InterfaceMethodActor declaredMethod = (InterfaceMethodActor) method;
-            declaredMethod.holder().makeInitialized();
+            MakeHolderInitialized.makeHolderInitialized(declaredMethod);
             final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.descriptor().getNumberOfLocals()).asObject();
             if (receiver == null) {
                 catchException(new NullPointerException());
                 return;
             }
             final VirtualMethodActor virtualMethodActor = InvocationTarget.findInvokeInterfaceTarget(declaredMethod, receiver);
-            virtualMethodActor.holder().makeInitialized();
+            MakeHolderInitialized.makeHolderInitialized(virtualMethodActor);
             profileInvoke(virtualMethodActor);
             if (virtualMethodActor.isNative()) {
                 execute(virtualMethodActor);

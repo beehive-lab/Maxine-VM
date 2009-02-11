@@ -67,7 +67,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
     @INLINE
     protected final InflatedMonitorLockWord64 readMiscAndProtectBinding(Object object) {
-        final InflatedMonitorLockWord64 lockWord = InflatedMonitorLockWord64.as(ObjectAccess.readMisc(object));
+        final InflatedMonitorLockWord64 lockWord = InflatedMonitorLockWord64.from(ObjectAccess.readMisc(object));
         if (lockWord.isBound()) {
             JavaMonitorManager.protectBinding(lockWord.getBoundMonitor());
         }
@@ -76,12 +76,12 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
     protected int makeBoundHashCode(Object object, InflatedMonitorLockWord64 lockWord) {
         final JavaMonitor monitor = lockWord.getBoundMonitor();
-        final HashableLockWord64 swappedLockword = HashableLockWord64.as(monitor.displacedMisc());
+        final HashableLockWord64 swappedLockword = HashableLockWord64.from(monitor.displacedMisc());
         int hashcode = swappedLockword.getHashcode();
         if (hashcode == 0) {
             hashcode = monitorScheme().createHashCode(object);
             final HashableLockWord64 newSwappedLockword = swappedLockword.setHashcode(hashcode);
-            final HashableLockWord64 answer = HashableLockWord64.as(monitor.compareAndSwapDisplacedMisc(swappedLockword, newSwappedLockword));
+            final HashableLockWord64 answer = HashableLockWord64.from(monitor.compareAndSwapDisplacedMisc(swappedLockword, newSwappedLockword));
             if (!answer.equals(swappedLockword)) {
                 hashcode = answer.getHashcode();
             }
@@ -141,7 +141,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public void initialize(MaxineVM.Phase phase) {
-            if (phase == MaxineVM.Phase.PROTOTYPING) {
+            if (MaxineVM.isPrototyping()) {
                 JavaMonitorManager.setRequireProxyAcquirableMonitors(false);
             }
         }
@@ -202,7 +202,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 }
                 // Another thread installed a hashcode or got the monitor.
                 // Try again.
-                lockWord = InflatedMonitorLockWord64.as(answer);
+                lockWord = InflatedMonitorLockWord64.from(answer);
             }
         }
 
@@ -213,7 +213,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 HostMonitor.exit(object);
                 return;
             }
-            final InflatedMonitorLockWord64 lockWord = InflatedMonitorLockWord64.as(ObjectAccess.readMisc(object));
+            final InflatedMonitorLockWord64 lockWord = InflatedMonitorLockWord64.from(ObjectAccess.readMisc(object));
             super.monitorExit(object, lockWord);
         }
 
@@ -224,7 +224,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 HostMonitor.notify(object);
                 return;
             }
-            final InflatedMonitorLockWord64 lockWord = InflatedMonitorLockWord64.as(ObjectAccess.readMisc(object));
+            final InflatedMonitorLockWord64 lockWord = InflatedMonitorLockWord64.from(ObjectAccess.readMisc(object));
             super.monitorNotify(object, all, lockWord);
         }
 
@@ -288,17 +288,17 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public void delegateMonitorExit(Object object, ModalLockWord64 lockWord) {
-            monitorExit(object, InflatedMonitorLockWord64.as(lockWord));
+            monitorExit(object, InflatedMonitorLockWord64.from(lockWord));
         }
 
         @Override
         public void delegateMonitorNotify(Object object, boolean all, ModalLockWord64 lockWord) {
-            monitorNotify(object, all, InflatedMonitorLockWord64.as(lockWord));
+            monitorNotify(object, all, InflatedMonitorLockWord64.from(lockWord));
         }
 
         @Override
         public void delegateMonitorWait(Object object, long timeout, ModalLockWord64 lockWord) throws InterruptedException {
-            final InflatedMonitorLockWord64 inflatedLockWord = InflatedMonitorLockWord64.as(lockWord);
+            final InflatedMonitorLockWord64 inflatedLockWord = InflatedMonitorLockWord64.from(lockWord);
             if (inflatedLockWord.isBound()) {
                 JavaMonitorManager.protectBinding(inflatedLockWord.getBoundMonitor());
             }
@@ -335,21 +335,21 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             super(new UnboundMiscWordWriter() {
                 @Override
                 public void writeUnboundMiscWord(Object object, Word preBindingMiscWord) {
-                    ObjectAccess.writeMisc(object, ThinLockWord64.as(preBindingMiscWord).asUnlocked());
+                    ObjectAccess.writeMisc(object, ThinLockWord64.from(preBindingMiscWord).asUnlocked());
                 }
             });
         }
 
         @Override
         public void initialize(MaxineVM.Phase phase) {
-            if (phase == MaxineVM.Phase.PROTOTYPING) {
+            if (MaxineVM.isPrototyping()) {
                 JavaMonitorManager.setRequireProxyAcquirableMonitors(true);
             }
         }
 
         @Override
         public ModalLockWord64 prepareModalLockWord(Object object, ModalLockWord64 currentlockWord) {
-            final ThinLockWord64 thinLockWord =  ThinLockWord64.as(currentlockWord);
+            final ThinLockWord64 thinLockWord =  ThinLockWord64.from(currentlockWord);
             // FIXME: We have to map the thinLockWord threadID back to the VmThread. This is expensive -
             // and has to lock VMThread.ACTIVE. Maybe we should just keep threadID's in Monitor's too?
             // FIXME: What if the VmThread is null?
@@ -366,8 +366,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public ModalLockWord64 rePrepareModalLockWord(ModalLockWord64 preparedLockWord, ModalLockWord64 currentlockWord) {
-            final ThinLockWord64 thinLockWord =  ThinLockWord64.as(currentlockWord);
-            final JavaMonitor monitor = InflatedMonitorLockWord64.as(preparedLockWord).getBoundMonitor();
+            final ThinLockWord64 thinLockWord =  ThinLockWord64.from(currentlockWord);
+            final JavaMonitor monitor = InflatedMonitorLockWord64.from(preparedLockWord).getBoundMonitor();
             monitor.setDisplacedMisc(thinLockWord);
             if (!thinLockWord.equals(thinLockWord.asUnlocked())) {
                 final VmThread owner = VmThreadMap.ACTIVE.getVmThreadForID(decodeLockwordThreadID(thinLockWord.getLockOwnerID()));
@@ -380,7 +380,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public void cancelPreparedModalLockWord(ModalLockWord64 preparedLockWord) {
-            JavaMonitorManager.unbindMonitor(InflatedMonitorLockWord64.as(preparedLockWord).getBoundMonitor());
+            JavaMonitorManager.unbindMonitor(InflatedMonitorLockWord64.from(preparedLockWord).getBoundMonitor());
         }
     }
 
@@ -393,21 +393,21 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             super(new UnboundMiscWordWriter() {
                 @Override
                 public void writeUnboundMiscWord(Object object, Word preBindingMiscWord) {
-                    ObjectAccess.writeMisc(object, BiasedLockWord64.as(preBindingMiscWord).asAnonBiased());
+                    ObjectAccess.writeMisc(object, BiasedLockWord64.from(preBindingMiscWord).asAnonBiased());
                 }
             });
         }
 
         @Override
         public void initialize(MaxineVM.Phase phase) {
-            if (phase == MaxineVM.Phase.PROTOTYPING) {
+            if (MaxineVM.isPrototyping()) {
                 JavaMonitorManager.setRequireProxyAcquirableMonitors(true);
             }
         }
 
         @Override
         public ModalLockWord64 prepareModalLockWord(Object object, ModalLockWord64 currentlockWord) {
-            final BiasedLockWord64 biasedLockWord = BiasedLockWord64.as(currentlockWord);
+            final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(currentlockWord);
             final JavaMonitor monitor = JavaMonitorManager.bindMonitor(object);
             final InflatedMonitorLockWord64 newLockWord = InflatedMonitorLockWord64.boundFromMonitor(monitor);
             monitor.setDisplacedMisc(biasedLockWord);
@@ -423,8 +423,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public ModalLockWord64 rePrepareModalLockWord(ModalLockWord64 preparedLockWord, ModalLockWord64 currentlockWord) {
-            final BiasedLockWord64 biasedLockWord =  BiasedLockWord64.as(currentlockWord);
-            final JavaMonitor monitor = InflatedMonitorLockWord64.as(preparedLockWord).getBoundMonitor();
+            final BiasedLockWord64 biasedLockWord =  BiasedLockWord64.from(currentlockWord);
+            final JavaMonitor monitor = InflatedMonitorLockWord64.from(preparedLockWord).getBoundMonitor();
             monitor.setDisplacedMisc(biasedLockWord);
             if (!biasedLockWord.countUnderflow()) {
                 final VmThread owner = VmThreadMap.ACTIVE.getVmThreadForID(decodeLockwordThreadID(biasedLockWord.getBiasOwnerID()));
@@ -437,7 +437,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         @Override
         public void cancelPreparedModalLockWord(ModalLockWord64 preparedLockWord) {
-            JavaMonitorManager.unbindMonitor(InflatedMonitorLockWord64.as(preparedLockWord).getBoundMonitor());
+            JavaMonitorManager.unbindMonitor(InflatedMonitorLockWord64.from(preparedLockWord).getBoundMonitor());
         }
     }
 }

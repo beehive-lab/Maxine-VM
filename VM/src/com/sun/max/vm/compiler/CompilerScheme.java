@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
@@ -41,6 +42,7 @@ public interface CompilerScheme extends DynamicCompilerScheme {
      *
      * @param packageLoader a package loader which can be used to load classes that define built-ins
      */
+    @PROTOTYPE_ONLY
     void createBuiltins(PackageLoader packageLoader);
 
     /**
@@ -49,11 +51,13 @@ public interface CompilerScheme extends DynamicCompilerScheme {
      *
      * @param packageLoader a package loader which can be used to load classes that define snippets
      */
+    @PROTOTYPE_ONLY
     void createSnippets(PackageLoader packageLoader);
 
     /**
      * Optimize the internal snippets.
      */
+    @PROTOTYPE_ONLY
     void compileSnippets();
 
     /**
@@ -61,6 +65,7 @@ public interface CompilerScheme extends DynamicCompilerScheme {
      *
      * @return {@code true} if the snippets are compiled; {@code false} otherwise
      */
+    @PROTOTYPE_ONLY
     boolean areSnippetsCompiled();
 
     /**

@@ -35,7 +35,7 @@ public abstract class CirLeafConversion extends CirTransformation {
 
     @Override
     public CirNode transformCall(CirCall call) {
-        call.setProcedure((CirValue) call.procedure().acceptTransformation(this), call.bytecodeLocation());
+        call.setProcedure((CirValue) call.procedure().acceptTransformation(this));
         call.clearJavaFrameDescriptorIfNotNeeded();
 
         transformValues(call.arguments());

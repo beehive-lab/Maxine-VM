@@ -41,8 +41,8 @@ public final class DirToAMD64EirInstructionTranslation extends DirToEirInstructi
     }
 
     @Override
-    public DirToEirBuiltinTranslation createBuiltinTranslation(DirToEirInstructionTranslation dirToEirInstructionTranslation) {
-        return new DirToAMD64EirBuiltinTranslation(this);
+    public DirToEirBuiltinTranslation createBuiltinTranslation(DirToEirInstructionTranslation dirToEirInstructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor) {
+        return new DirToAMD64EirBuiltinTranslation(this, javaFrameDescriptor);
     }
 
     private EirBlock translateConditionalBranch(DirSwitch dirSwitch, int index) {

@@ -28,6 +28,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.runtime.*;
@@ -134,7 +135,7 @@ public class JITTest_stackManipulations extends CompilerTestCase<TargetMethod> {
             public Class call() {
                 final Class targetClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, javaClass.getName());
                 final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
-                tupleClassActor.makeInitialized();
+                MakeClassInitialized.makeClassInitialized(tupleClassActor);
                 return targetClass;
             }
         });

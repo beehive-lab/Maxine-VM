@@ -21,24 +21,20 @@
 package com.sun.max.vm.runtime;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.type.*;
 
 /**
- * A token that "guards" the {@linkplain PoolConstant#resolve(ConstantPool, int) resolution} of a constant pool entry.
- * 
+ * A token that "guards" the {@linkplain PoolConstant#callWithResolutionAndfClassInitialization(ConstantPool, int) resolution} of a constant pool entry to an {@link Actor}.
+ *
  * This pattern of use is intended:
- * 
+ *
  * if (guard.isClear()) { guard.set(...); } return guard.value();
- * 
- * The methods 'set()' and 'value()' are defined by subclasses hereof. They cannot be subsumed by abstract methods,
- * because they have incompatible types. Well, that they are incompatible types in Java is precisely the reason why we
- * had to create those subclasses in the first place.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-public abstract class ResolutionGuard {
+public final class ResolutionGuard {
 
     private final ConstantPool _constantPool;
 
@@ -48,19 +44,33 @@ public abstract class ResolutionGuard {
 
     private final int _constantPoolIndex;
 
-    protected ResolutionGuard(ConstantPool constantPool, int constantPoolIndex) {
+    @CONSTANT_WHEN_NOT_ZERO
+    private Actor _value = null;
+
+    public ResolutionGuard(ConstantPool constantPool, int constantPoolIndex) {
         _constantPool = constantPool;
         _constantPoolIndex = constantPoolIndex;
     }
 
     @INLINE
-    public final int constantPoolIndex() {
+    public void set(Actor value) {
+        _value = value;
+    }
+
+    @INLINE
+    public Actor get() {
+        return _value;
+    }
+
+    @INLINE
+    public int constantPoolIndex() {
         return _constantPoolIndex;
     }
 
-    public abstract boolean isClear();
-
-    public abstract Kind kind();
+    @INLINE
+    public boolean isClear() {
+        return _value == null;
+    }
 
     /**
      * Gets the pool constant whose resolution is guarded by this object.
@@ -70,7 +80,7 @@ public abstract class ResolutionGuard {
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
         return getClass().getSimpleName() + "[" + poolConstant().valueString(constantPool()) + "]";
     }
 }

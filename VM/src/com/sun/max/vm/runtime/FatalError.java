@@ -53,7 +53,8 @@ public final class FatalError extends Error {
         }
         Log.unlock(lockDisabledSafepoints);
         MaxineVM.native_exit(11);
-        throw UnsafeLoophole.cast(FatalError.class, null);
+        final FatalError unreachable = UnsafeLoophole.cast(null);
+        throw unreachable;
     }
 
     @INLINE

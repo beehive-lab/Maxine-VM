@@ -24,17 +24,11 @@ import com.sun.max.*;
 
 /**
  * @see MaxPackage
- * 
+ *
  * @author Bernd Mathiske
  */
 public class Package extends MaxPackage {
     public Package() {
         super();
-    }
-
-    private static final String _packageName = new Package().name();
-
-    public static boolean contains(Class javaClass) {
-        return javaClass.getName().startsWith(_packageName);
     }
 }

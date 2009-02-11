@@ -49,7 +49,7 @@ public final class AMD64Deoptimization extends Deoptimization {
 
     @Override
     protected void createJitFrame(TargetJavaFrameDescriptor javaFrameDescriptor, Deoptimizer.Situation situation) {
-        final ClassMethodActor classMethodActor = javaFrameDescriptor.bytecodeLocation().classMethodActor();
+        final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) VMConfiguration.target().jitScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
         final AMD64JitStackFrameLayout layout = (AMD64JitStackFrameLayout) jitTargetMethod.stackFrameLayout();
 
@@ -62,7 +62,7 @@ public final class AMD64Deoptimization extends Deoptimization {
             assert _currentCallSaveAreaPosition == 0;
 
             // First, subtract the call's arguments (which JIT code would have popped from the stack by now):
-            final MethodActor callee = javaFrameDescriptor.bytecodeLocation().getCalleeMethodActor();
+            final MethodActor callee = javaFrameDescriptor.getCalleeMethodActor();
             if (!callee.isStatic()) {
                 // Remove receiver argument slot:
                 numberOfStackSlots--;
@@ -113,7 +113,7 @@ public final class AMD64Deoptimization extends Deoptimization {
             }
         }
 
-        final Pointer instructionPointer = jitTargetMethod.codeStart().plus(jitTargetMethod.targetCodePositionFor(javaFrameDescriptor.bytecodeLocation().position()));
+        final Pointer instructionPointer = jitTargetMethod.codeStart().plus(jitTargetMethod.targetCodePositionFor(javaFrameDescriptor.bytecodePosition()));
         _jitStackFrameInfos.prepend(new JitStackFrameInfo(_currentCallSaveAreaPosition, framePointerPosition, instructionPointer));
     }
 
@@ -170,7 +170,7 @@ public final class AMD64Deoptimization extends Deoptimization {
         buffer().extend(buffer().size() + JavaStackFrameLayout.STACK_SLOT_SIZE);
         final int callSaveAreaPosition = buffer().size();
 
-        final ClassMethodActor classMethodActor = javaFrameDescriptor.bytecodeLocation().classMethodActor();
+        final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
         final JitTargetMethod jitTargetMethod = (JitTargetMethod) VMConfiguration.target().jitScheme().compile(classMethodActor, CompilationDirective.DEFAULT);
         assert jitTargetMethod.adapterReturnPosition() > 0;
         final Pointer instructionPointer = jitTargetMethod.codeStart().plus(jitTargetMethod.adapterReturnPosition());

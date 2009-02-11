@@ -324,8 +324,8 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. "int foo(Pointer, Word, int[])+14 in com.sun.max.ins.Bar"
      */
     public String longName(BytecodeLocation bytecodeLocation) {
-        final int position = bytecodeLocation.position();
-        return bytecodeLocation.classMethodActor().format("%r %n(%p)" + (position != 0 ? " +" + bytecodeLocation.position() : "") + " in %H");
+        final int position = bytecodeLocation.bytecodePosition();
+        return bytecodeLocation.classMethodActor().format("%r %n(%p)" + (position != 0 ? " +" + bytecodeLocation.bytecodePosition() : "") + " in %H");
     }
 
     /**

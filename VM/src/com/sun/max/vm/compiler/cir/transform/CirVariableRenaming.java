@@ -20,12 +20,11 @@
  */
 package com.sun.max.vm.compiler.cir.transform;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 
 /**
  * Simple variable environment for renaming purposes.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class CirVariableRenaming {
@@ -75,15 +74,5 @@ public final class CirVariableRenaming {
             renaming = renaming._parent;
         } while (renaming != null);
         return s;
-    }
-
-    public void trace(int level) {
-        if (Trace.hasLevel(level)) {
-            CirVariableRenaming renaming = this;
-            do {
-                Trace.line(level, renaming._from + "->" + renaming._to);
-                renaming = renaming._parent;
-            } while (renaming != null);
-        }
     }
 }

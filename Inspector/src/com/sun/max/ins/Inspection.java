@@ -583,7 +583,7 @@ public class Inspection extends JFrame {
         }
         final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.position());
+        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition());
         if (lineNumber == -1) {
             return false;
         }

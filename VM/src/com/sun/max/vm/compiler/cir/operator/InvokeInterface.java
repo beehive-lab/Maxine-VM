@@ -25,17 +25,13 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
+import com.sun.max.vm.type.*;
 
 
 public class InvokeInterface extends JavaResolvableOperator<InterfaceMethodActor> {
 
     public InvokeInterface(ConstantPool constantPool, int index) {
-        super(NULL_POINTER_EXCEPTION | ANY, constantPool, index, constantPool.interfaceMethodAt(index).signature(constantPool).getResultKind());
-    }
-
-    @Override
-    public boolean needsJavaFrameDescriptor() {
-        return true;
+        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.interfaceMethodAt(index).signature(constantPool).getResultKind());
     }
 
     @Override
@@ -46,5 +42,11 @@ public class InvokeInterface extends JavaResolvableOperator<InterfaceMethodActor
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public Kind[] parameterKinds() {
+        final MethodRefConstant method = _constantPool.methodAt(_index);
+        return method.signature(_constantPool).getParameterKindsIncludingReceiver(method.holder(_constantPool).toKind());
     }
 }

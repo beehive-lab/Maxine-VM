@@ -67,7 +67,7 @@ public final class CirCheckcastPruning extends CirVisitor {
             return;
         }
         final CirValue[] arguments = call.arguments();
-        call.setProcedure(CirMethod.getNormalContinuation(arguments), call.bytecodeLocation());
+        call.setProcedure(CirMethod.getNormalContinuation(arguments));
         call.setArguments(CirCall.NO_ARGUMENTS);
         call.setJavaFrameDescriptor(null);
     }

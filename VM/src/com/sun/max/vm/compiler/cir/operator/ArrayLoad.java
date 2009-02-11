@@ -29,7 +29,7 @@ public class ArrayLoad extends JavaOperator {
     private final Kind _kind;
 
     public ArrayLoad(Kind kind) {
-        super(NULL_POINTER_EXCEPTION | ARRAY_INDEX_OUT_OF_BOUNDS_EXCEPTION);
+        super(CALL | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK);
         _kind = kind;
     }
 
@@ -41,6 +41,13 @@ public class ArrayLoad extends JavaOperator {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
+    }
+
+    private static final Kind[] _parameterKinds = {Kind.REFERENCE, Kind.INT};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 
     @Override

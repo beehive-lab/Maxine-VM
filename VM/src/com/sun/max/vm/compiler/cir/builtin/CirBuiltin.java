@@ -36,7 +36,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Bernd Mathiske
  */
-public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, CirReducible{
+public class CirBuiltin extends CirOperator implements CirFoldable, CirReducible{
 
     private static CirValue[] withoutContinuations(CirValue[] arguments) {
         return Arrays.subArray(arguments, 0, arguments.length - 2);
@@ -101,9 +101,9 @@ public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, 
         }
     }
 
-    public boolean needsJavaFrameDescriptor() {
-        return false;
-    }
+//    public boolean needsJavaFrameDescriptor() {
+//        return runtimeChecks() != NONE;
+//    }
 
     @Override
     public void acceptVisitor(CirVisitor visitor) {
@@ -169,7 +169,7 @@ public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, 
 
     protected CirBuiltin(Builtin builtin) {
         _builtin = builtin;
-        _parameterKinds = Arrays.append(builtin.parameterKinds(), Kind.REFERENCE, Kind.REFERENCE);
+        _parameterKinds = builtin.parameterKinds();
     }
 
     private void initialize() {
@@ -253,8 +253,8 @@ public class CirBuiltin extends CirOperator implements CirRoutine, CirFoldable, 
     }
 
     @Override
-    public int thrownExceptions() {
-        return _builtin.thrownExceptions();
+    public int reasonsMayStop() {
+        return _builtin.reasonsMayStop();
     }
 
     @Override

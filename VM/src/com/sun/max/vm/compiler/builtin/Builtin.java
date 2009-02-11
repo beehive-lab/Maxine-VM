@@ -34,9 +34,7 @@ import com.sun.max.vm.type.*;
 /**
  * @author Bernd Mathiske
  */
-public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, ExceptionThrower {
-
-    private int _thrownExceptions = ExceptionThrower.ANY;
+public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, Stoppable {
 
     @CONSTANT
     private static IndexedSequence<Builtin> _builtins = new ArrayListSequence<Builtin>();
@@ -59,8 +57,14 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
         return true;
     }
 
-    public int thrownExceptions() {
-        return _thrownExceptions;
+    /**
+     * {@inheritDoc}
+     *
+     * This must be overridden by builtins that may cause a runtime exception such as {@link ArithmeticException} or
+     * {@link NullPointerException}.
+     */
+    public int reasonsMayStop() {
+        return Stoppable.NONE;
     }
 
     @PROTOTYPE_ONLY
@@ -69,7 +73,6 @@ public abstract class Builtin extends IrRoutine implements Comparable<Builtin>, 
             final BUILTIN builtinAnnotation = classMethodActor.getAnnotation(BUILTIN.class);
             final Builtin builtin = BUILTIN.Static.get(builtinAnnotation.builtinClass());
             _classMethodActorToBuiltin.put(classMethodActor, builtin);
-            builtin._thrownExceptions = builtinAnnotation.thrownExceptions();
         }
     }
 

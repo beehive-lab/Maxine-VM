@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.b.c;
 
 import java.util.*;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.type.*;
 
@@ -57,14 +56,14 @@ abstract class SlotVariableFactory {
         _positionToCirVariable.put(position, cirVariable);
     }
 
-    protected abstract CirVariable createSlotVariable(Kind kind, int slotIndex, BytecodeLocation location);
+    protected abstract CirVariable createSlotVariable(Kind kind, int slotIndex);
 
-    public CirVariable makeVariable(Kind kind, int index, BytecodeLocation bytecodeLocation) {
+    public CirVariable makeVariable(Kind kind, int index) {
         assert isValidIndex(kind, index);
         final SlotPosition position = new SlotPosition(kind, index);
         CirVariable cirVariable = _positionToCirVariable.get(position);
         if (cirVariable == null) {
-            cirVariable = createSlotVariable(position.getKind(), index, bytecodeLocation);
+            cirVariable = createSlotVariable(position.getKind(), index);
             _positionToCirVariable.put(position, cirVariable);
         }
         return cirVariable;

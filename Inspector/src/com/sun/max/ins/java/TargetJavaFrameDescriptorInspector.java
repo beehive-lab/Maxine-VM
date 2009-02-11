@@ -48,8 +48,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         if (javaFrameDescriptor == null) {
             return -1L;
         }
-        final BytecodeLocation bytecodeLocation = javaFrameDescriptor.bytecodeLocation();
-        return (MethodID.fromMethodActor(bytecodeLocation.classMethodActor()).asAddress().toLong() << MAX_BYTE_CODE_BITS) | bytecodeLocation.position();
+        return (MethodID.fromMethodActor(javaFrameDescriptor.classMethodActor()).asAddress().toLong() << MAX_BYTE_CODE_BITS) | javaFrameDescriptor.bytecodePosition();
     }
 
     private TargetJavaFrameDescriptorInspector(Inspection inspection, Residence residence, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
@@ -75,7 +74,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     }
 
     private String shortString(BytecodeLocation bytecodeLocation) {
-        return bytecodeLocation.classMethodActor().name().toString() + " @ " + bytecodeLocation.position();
+        return bytecodeLocation.classMethodActor().name().toString() + " @ " + bytecodeLocation.bytecodePosition();
     }
 
     private String targetLocationToString(TargetLocation targetLocation) {
@@ -102,7 +101,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         final JPanel panel = new InspectorPanel(inspection());
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        final BytecodeLocation bytecodeLocation = descriptor.bytecodeLocation();
+        final BytecodeLocation bytecodeLocation = descriptor;
         final TextLabel bytecodeLocationLabel = new TextLabel(inspection(), shortString(bytecodeLocation));
         bytecodeLocationLabel.setToolTipText(bytecodeLocation.toString());
         panel.add(bytecodeLocationLabel);
@@ -128,7 +127,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         final CodeAttribute codeAttribute = bytecodeLocation.classMethodActor().codeAttribute();
         for (int i = 0; i < descriptor.locals().length; i++) {
             String local = "local #" + i;
-            final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, bytecodeLocation.position());
+            final LocalVariableTable.Entry entry = codeAttribute.localVariableTable().findLocalVariable(i, bytecodeLocation.bytecodePosition());
             if (entry != null) {
                 local += ": " + entry.name(codeAttribute.constantPool());
             }
@@ -147,7 +146,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     @Override
     public String getTextForTitle() {
         if (_javaFrameDescriptor != null) {
-            return shortString(_javaFrameDescriptor.bytecodeLocation());
+            return shortString(_javaFrameDescriptor);
         }
         return null;
     }

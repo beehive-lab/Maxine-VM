@@ -25,11 +25,12 @@ import java.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Byte code scanner that finds method references.
- * 
+ *
  * @author Bernd Mathiske
  */
 class MethodReferenceBytecodeAdapter extends BytecodeAdapter {
@@ -59,7 +60,8 @@ class MethodReferenceBytecodeAdapter extends BytecodeAdapter {
     protected void invokespecial(int index) {
         final ClassMethodRefConstant methodRef = _constantPool.classMethodAt(index);
         if (methodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            _staticAndSpecialMethodActors.add(ResolutionSnippet.ResolveSpecialMethod.quasiFold(_constantPool, index));
+            final ResolutionGuard guard = _constantPool.makeResolutionGuard(index, ResolveSpecialMethod.SNIPPET);
+            _staticAndSpecialMethodActors.add(ResolveSpecialMethod.resolveSpecialMethod(guard));
         }
     }
 
@@ -67,7 +69,8 @@ class MethodReferenceBytecodeAdapter extends BytecodeAdapter {
     protected void invokestatic(int index) {
         final ClassMethodRefConstant methodRef = _constantPool.classMethodAt(index);
         if (methodRef.isResolvableWithoutClassLoading(_constantPool)) {
-            _staticAndSpecialMethodActors.add(ResolutionSnippet.ResolveStaticMethod.quasiFold(_constantPool, index));
+            final ResolutionGuard guard = _constantPool.makeResolutionGuard(index, ResolveStaticMethod.SNIPPET);
+            _staticAndSpecialMethodActors.add(ResolveStaticMethod.resolveStaticMethod(guard));
         }
     }
 

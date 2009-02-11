@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jni;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.actor.member.*;
@@ -34,11 +35,9 @@ public abstract class FieldID extends MemberID {
     protected FieldID() {
     }
 
+    @UNCHECKED_CAST
     public static FieldID fromWord(Word word) {
-        if (Word.isBoxed()) {
-            return new BoxedFieldID(word);
-        }
-        return UnsafeLoophole.castWord(FieldID.class, word);
+        return new BoxedFieldID(word);
     }
 
     public static FieldID fromFieldActor(FieldActor fieldActor) {

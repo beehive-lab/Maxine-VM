@@ -116,11 +116,11 @@ public abstract class CirNode implements Cloneable {
     }
 
     /**
-     * @see CirPrinter#CirPrinter(PrintStream, CirNode, boolean, boolean, int)
+     * @see CirPrinter#CirPrinter(PrintStream, CirNode, boolean, int)
      */
     public final String traceToString(boolean showBir, boolean printIds, int nesting) {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        acceptVisitor(new CirPrinter(new PrintStream(byteArrayOutputStream), this, showBir, printIds, nesting));
+        acceptVisitor(new CirPrinter(new PrintStream(byteArrayOutputStream), this, printIds, nesting));
         return byteArrayOutputStream.toString();
     }
 }

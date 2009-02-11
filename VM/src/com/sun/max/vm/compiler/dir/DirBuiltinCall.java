@@ -28,7 +28,7 @@ import com.sun.max.vm.compiler.dir.transform.*;
  *
  * @author Bernd Mathiske
  */
-public class DirBuiltinCall extends DirCall {
+public class DirBuiltinCall extends DirCall<Builtin> {
 
     private final Builtin _builtin;
 
@@ -38,8 +38,8 @@ public class DirBuiltinCall extends DirCall {
      * @param arguments arguments for the builtin
      * @param catchBlock the block where execution continues in case of an (implicit) exception thrown by the builtin
      */
-    public DirBuiltinCall(DirVariable result, Builtin builtin, DirValue[] arguments, DirCatchBlock catchBlock) {
-        super(result, arguments, catchBlock);
+    public DirBuiltinCall(DirVariable result, Builtin builtin, DirValue[] arguments, DirCatchBlock catchBlock, DirJavaFrameDescriptor javaFrameDescriptor) {
+        super(result, arguments, catchBlock, javaFrameDescriptor);
         _builtin = builtin;
     }
 
@@ -48,50 +48,13 @@ public class DirBuiltinCall extends DirCall {
     }
 
     @Override
-    public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
-        if (other instanceof DirBuiltinCall) {
-            final DirBuiltinCall dirBuiltinCall = (DirBuiltinCall) other;
-            if (_builtin != dirBuiltinCall._builtin) {
-                return false;
-            }
-            assert arguments().length == dirBuiltinCall.arguments().length;
-            for (int i = 0; i < arguments().length; i++) {
-                if (!arguments()[i].equals(dirBuiltinCall.arguments()[i])) {
-                    return false;
-                }
-            }
-            if (catchBlock() == null) {
-                return dirBuiltinCall.catchBlock() == null;
-            }
-            if (dirBuiltinCall.catchBlock() == null) {
-                return false;
-            }
-            return catchBlock().isEquivalentTo(dirBuiltinCall.catchBlock(), dirBlockEquivalence);
-        }
-        return false;
+    protected Builtin procedure() {
+        return _builtin;
     }
 
     @Override
     public int hashCodeForBlock() {
         return super.hashCodeForBlock() ^ _builtin.serial();
-    }
-
-    @Override
-    public String toString() {
-        String arguments = "";
-        String separator = "";
-        for (int i = 0; i < arguments().length; i++) {
-            arguments += separator + arguments()[i];
-            separator = " ";
-        }
-        String s = _builtin.toString() + "(" + arguments + ")";
-        if (result() != null) {
-            s = result().toString() + " := " +  s;
-        }
-        if (catchBlock() != null) {
-            s += " -> #" + catchBlock().serial();
-        }
-        return s;
     }
 
     @Override

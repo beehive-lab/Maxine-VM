@@ -134,6 +134,8 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
         if (_calls == null) {
             _calls = new LinkSequence<CirCall>();
         }
+        assert call.arguments().length == closure().parameters().length;
+        assert !Sequence.Static.containsIdentical(_calls, call);
         _calls.append(call);
     }
 
@@ -187,7 +189,6 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
     }
 
     public CirCall inline(CirOptimizer optimizer, CirValue[] arguments, CirJavaFrameDescriptor javaFrameDescriptor) {
-        assert javaFrameDescriptor == null;
         if (numberOfCalls() > 1) {
             CirSwitchEncapsulation.apply(this);
         }

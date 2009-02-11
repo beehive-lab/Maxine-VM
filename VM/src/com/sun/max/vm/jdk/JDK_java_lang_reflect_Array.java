@@ -407,6 +407,7 @@ final class JDK_java_lang_reflect_Array {
 
     /**
      * Allocates a new multi-dimensional array with the specified component class and dimensions.
+     *
      * @param javaComponentClass the component type of the innermost dimension
      * @param dimensions an array denoting the size of the inner arrays
      * @return a new multi-dimensional array

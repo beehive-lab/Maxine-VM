@@ -26,6 +26,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
+import com.sun.max.vm.type.*;
 
 
 public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
@@ -33,14 +34,9 @@ public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
     private final BlockState _blockState;
 
     public InvokeVirtual(ConstantPool constantPool, int index, BirToCirMethodTranslation translation, BlockState blockState) {
-        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
+        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
         _translation = translation;
         _blockState = blockState;
-    }
-
-    @Override
-    public boolean needsJavaFrameDescriptor() {
-        return true;
     }
 
     @Override
@@ -59,5 +55,11 @@ public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
 
     public BlockState blockState() {
         return _blockState;
+    }
+
+    @Override
+    public Kind[] parameterKinds() {
+        final MethodRefConstant method = _constantPool.methodAt(_index);
+        return method.signature(_constantPool).getParameterKindsIncludingReceiver(method.holder(_constantPool).toKind());
     }
 }

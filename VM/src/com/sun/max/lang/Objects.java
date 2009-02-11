@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
  * Basic generic utilities for objects.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public final class Objects {
 
@@ -38,6 +39,16 @@ public final class Objects {
     }
 
     private static final Unsafe _unsafe = (Unsafe) WithoutAccessCheck.getStaticField(Unsafe.class, "theUnsafe");
+
+    /**
+     * Compares two given objects for equality using {@link Object#equals(Object)}.
+     *
+     * @return true if both {@code o1} and {@code o2} are {@code null} || {@code o1.equals(o2)}
+     */
+    public static boolean equal(Object o1, Object o2) {
+        return o1 == null ? o2 == null : o1.equals(o2);
+    }
+
 
     /**
      * Copies the values of the instance fields in one object to another object.

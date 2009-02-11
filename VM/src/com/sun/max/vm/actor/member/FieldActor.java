@@ -139,7 +139,7 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
     }
 
     public static FieldActor fromJava(Field javaField) {
-        FieldActor fieldActor = MaxineVM.isPrototyping() ? null : Field_fieldActor.read(javaField);
+        FieldActor fieldActor = MaxineVM.isPrototyping() ? null : (FieldActor) Field_fieldActor.readObject(javaField);
         if (fieldActor == null) {
             final ClassActor classActor = ClassActor.fromJava(javaField.getDeclaringClass());
             fieldActor = classActor.findFieldActor(SymbolTable.makeSymbol(javaField.getName()), JavaTypeDescriptor.forJavaClass(javaField.getType()));

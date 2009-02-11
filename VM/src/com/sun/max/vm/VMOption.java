@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
 
@@ -78,6 +79,7 @@ public class VMOption {
      * @param help the help text to be printed for this option on the command line
      * @param phase the phase in which to parse this option
      */
+    @PROTOTYPE_ONLY
     public VMOption(String prefix, String help, Phase phase) {
         _prefix = prefix;
         _help = help;

@@ -29,6 +29,7 @@ import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.prototype.*;
@@ -72,7 +73,7 @@ public class TemplateGenerator {
                 assert !MaxineVM.isPrototypeOnly(javaClass);
                 final Class targetClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, javaClass.getName());
                 final TupleClassActor tupleClassActor = (TupleClassActor) ClassActor.fromJava(targetClass);
-                tupleClassActor.makeInitialized();
+                MakeClassInitialized.makeClassInitialized(tupleClassActor);
                 return targetClass;
             }
         });

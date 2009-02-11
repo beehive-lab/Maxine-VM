@@ -39,6 +39,14 @@ public abstract class CirProcedure extends CirValue {
         super(Kind.WORD);
     }
 
+    /**
+     * Gets the kinds of the parameters declared by this procedure. This does not include the normal and exception
+     * continuation parameters.
+     *
+     * @return the kinds of the parameters declared by this procedure. A {@code null} value in the returned array
+     *         indicates that either a {@link Kind#WORD} or {@link Kind#REFERENCE} argument is accepted for the
+     *         corresponding parameter position.
+     */
     public abstract Kind[] parameterKinds();
 
     public static boolean isConstantArgument(CirValue[] arguments, Enum index) {

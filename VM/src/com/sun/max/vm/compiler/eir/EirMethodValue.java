@@ -45,12 +45,16 @@ public final class EirMethodValue extends EirValue {
     }
 
     @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
     public String toString() {
         return "<" + _classMethodActor.name() + ">";
     }
 
     public EirMethodValue(ClassMethodActor classMethodActor) {
-        super();
         _classMethodActor = classMethodActor;
         fixLocation(new Location());
     }

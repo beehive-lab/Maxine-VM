@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.dir;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -28,8 +28,8 @@ import com.sun.max.vm.runtime.*;
  */
 public class DirJavaFrameDescriptor extends JavaFrameDescriptor<DirValue> {
 
-    public DirJavaFrameDescriptor(DirJavaFrameDescriptor parent, BytecodeLocation bytecodeLocation, DirValue[] locals, DirValue[] stackSlots) {
-        super(parent, bytecodeLocation, locals, stackSlots);
+    public DirJavaFrameDescriptor(DirJavaFrameDescriptor parent, ClassMethodActor classMethodActor, int bytecodePosition, DirValue[] locals, DirValue[] stackSlots) {
+        super(parent, classMethodActor, bytecodePosition, locals, stackSlots);
     }
 
     @Override

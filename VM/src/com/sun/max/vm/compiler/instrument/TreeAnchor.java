@@ -47,7 +47,7 @@ public class TreeAnchor extends Anchor {
      * Bytecode position at which this counter is inserted.
      */
     public int position() {
-        return _location.position();
+        return _location.bytecodePosition();
     }
 
     private int _frequency;
@@ -137,7 +137,7 @@ public class TreeAnchor extends Anchor {
 
     @Override
     public String toString() {
-        final int line = _location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(_location.position());
+        final int line = _location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(_location.bytecodePosition());
         return "loc: " + _location.toString() + ", line: " + line + ", count: " + _frequency;
     }
 

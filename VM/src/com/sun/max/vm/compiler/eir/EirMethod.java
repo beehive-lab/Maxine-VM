@@ -37,7 +37,7 @@ import com.sun.max.vm.type.*;
 public class EirMethod extends AbstractIrMethod {
 
     public boolean isTemplate() {
-        return classMethodActor().isTemplate() || classMethodActor().holder().isTemplate();
+        return classMethodActor().isTemplate();
     }
 
     public boolean isTrampoline() {

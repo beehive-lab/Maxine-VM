@@ -84,14 +84,14 @@ public interface HeapScheme extends VMScheme {
      * Creates a hybrid object that is both a tuple and an array,
      * but leaving out the array part beyond the tuple for now.
      */
-    <Hybrid_Type extends Hybrid> Hybrid_Type createHybrid(DynamicHub hub);
+    Object createHybrid(DynamicHub hub);
 
     /**
      * Expands the hybrid object to its full array length.
      * The implementation may modify the original object and return it
      * or it can create a new object that contains the same tuple values and return that.
      */
-    <Hybrid_Type extends Hybrid> Hybrid_Type expandHybrid(Hybrid_Type hybrid, int length);
+    Hybrid expandHybrid(Hybrid hybrid, int length);
 
     /**
      * Creates a shallow clone of an object.

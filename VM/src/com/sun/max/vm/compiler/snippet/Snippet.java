@@ -22,9 +22,11 @@ package com.sun.max.vm.compiler.snippet;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.object.*;
@@ -78,17 +80,65 @@ public abstract class Snippet extends IrRoutine {
 
     // Miscellaneous Snippets:
 
-    public static final class InitializeClass extends Snippet {
+    /**
+     * Ensures that the class in which a given static method or field is declared is initialized, performing class
+     * initialization if necessary.
+     */
+    public static final class MakeHolderInitialized extends Snippet {
         @SNIPPET
         @INLINE
-        public static void initializeClass(ClassActor classActor) {
+        public static void makeHolderInitialized(MemberActor memberActor) {
+            MakeClassInitialized.makeClassInitialized(memberActor.holder());
+        }
+        public static final MakeHolderInitialized SNIPPET = new MakeHolderInitialized();
+    }
+
+    /**
+     * Ensures that a given class is initialized, performing class initialization if necessary.
+     */
+    public static final class MakeClassInitialized extends Snippet {
+        @SNIPPET
+        @INLINE
+        public static void makeClassInitialized(ClassActor classActor) {
             if (MaxineVM.isPrototyping()) {
                 classActor.makeInitialized();
             } else if (!classActor.isInitialized()) {
-                classActor.makeInitialized();
+                if (!classActor.isInitialized()) {
+                    classActor.makeInitialized();
+                }
             }
         }
-        public static final InitializeClass SNIPPET = new InitializeClass();
+        public static final MakeClassInitialized SNIPPET = new MakeClassInitialized();
+    }
+
+    /**
+     * Produces an address corresponding to the entry point for the code of a given method
+     * as compiled by the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT optimizing compiler}.
+     *
+     * If the compiled code does not yet exist for the method, it is compiled with the
+     * {@linkplain CompilationDirective#DEFAULT default} compiler.
+     */
+    public static final class MakeEntrypoint extends Snippet {
+        @SNIPPET
+        public static Address makeEntrypoint(ClassMethodActor classMethodActor) {
+            return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT);
+        }
+        public static final MakeEntrypoint SNIPPET = new MakeEntrypoint();
+    }
+
+    /**
+     * Produces an address corresponding to the entry point for the code of a given method
+     * as compiled by the {@linkplain CallEntryPoint#OPTIMIZED_ENTRY_POINT optimizing compiler}.
+     *
+     * If the compiled code does not yet exist for the method, it is compiled with the
+     * with a compiler that inserts {@linkplain CompilationDirective#TRACE_JIT tracing} instrumentation.
+     */
+    public static final class MakeTracedEntrypoint extends Snippet {
+        @SNIPPET
+        public static Address makeTracedEntrypoint(ClassMethodActor classMethodActor) {
+            return CompilationScheme.Static.compile(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.TRACE_JIT);
+        }
+        public static final MakeTracedEntrypoint SNIPPET = new MakeTracedEntrypoint();
     }
 
     public static final class CheckCast extends Snippet {
@@ -153,6 +203,7 @@ public abstract class Snippet extends IrRoutine {
             }
             // null checks are implicitly checked
         }
+
         public static final CheckNullPointer SNIPPET = new CheckNullPointer();
     }
 
@@ -228,10 +279,10 @@ public abstract class Snippet extends IrRoutine {
      * Snippets that are used in lieu of a builtin when it is not yet implemented by the compiler scheme:
      */
 
-    @C_FUNCTION
-    private static native int nativeLongCompare(long greater, long less);
-
     public static final class LongCompare extends Snippet {
+        @C_FUNCTION
+        private static native int nativeLongCompare(long greater, long less);
+
         @SNIPPET
         public static int longCompare(long greater, int less) {
             if (MaxineVM.isPrototyping()) {
@@ -249,10 +300,10 @@ public abstract class Snippet extends IrRoutine {
         public static final LongCompare SNIPPET = new LongCompare();
     }
 
-    @C_FUNCTION
-    private static native long nativeLongSignedShiftedRight(long number, int shift);
-
     public static final class LongSignedShiftedRight extends Snippet {
+        @C_FUNCTION
+        private static native long nativeLongSignedShiftedRight(long number, int shift);
+
         @SNIPPET
         public static long longSignedShiftedRight(long number, int shift) {
             if (MaxineVM.isPrototyping()) {
@@ -264,10 +315,9 @@ public abstract class Snippet extends IrRoutine {
         public static final LongSignedShiftedRight SNIPPET = new LongSignedShiftedRight();
     }
 
-    @C_FUNCTION
-    private static native long nativeLongTimes(long factor1, long factor2);
-
     public static final class LongTimes extends Snippet {
+        @C_FUNCTION
+        private static native long nativeLongTimes(long factor1, long factor2);
 
         @SNIPPET
         public static long longTimes(long factor1, long factor2) {
@@ -280,10 +330,10 @@ public abstract class Snippet extends IrRoutine {
         public static final LongTimes SNIPPET = new LongTimes();
     }
 
-    @C_FUNCTION
-    private static native long nativeLongDivided(long dividend, long divisor);
-
     public static final class LongDivided extends Snippet {
+        @C_FUNCTION
+        private static native long nativeLongDivided(long dividend, long divisor);
+
         @SNIPPET
         public static long longDivided(long dividend, long divisor) {
             if (MaxineVM.isPrototyping()) {
@@ -295,10 +345,10 @@ public abstract class Snippet extends IrRoutine {
         public static final LongDivided SNIPPET = new LongDivided();
     }
 
-    @C_FUNCTION
-    private static native long nativeLongRemainder(long dividend, long divisor);
-
     public static final class LongRemainder extends Snippet {
+        @C_FUNCTION
+        private static native long nativeLongRemainder(long dividend, long divisor);
+
         @SNIPPET
         public static long longRemainder(long dividend, long divisor) {
             if (MaxineVM.isPrototyping()) {
@@ -310,10 +360,10 @@ public abstract class Snippet extends IrRoutine {
         public static final LongRemainder SNIPPET = new LongRemainder();
     }
 
-    @C_FUNCTION
-    private static native float nativeFloatRemainder(float dividend, float divisor);
-
     public static final class FloatRemainder extends Snippet {
+        @C_FUNCTION
+        private static native float nativeFloatRemainder(float dividend, float divisor);
+
         @SNIPPET
         public static float floatRemainder(float dividend, float divisor) {
             if (MaxineVM.isPrototyping()) {
@@ -325,10 +375,10 @@ public abstract class Snippet extends IrRoutine {
         public static final FloatRemainder SNIPPET = new FloatRemainder();
     }
 
-    @C_FUNCTION
-    private static native double nativeDoubleRemainder(double dividend, double divisor);
-
     public static final class DoubleRemainder extends Snippet {
+        @C_FUNCTION
+        private static native double nativeDoubleRemainder(double dividend, double divisor);
+
         @SNIPPET
         public static double doubleRemainder(double dividend, double divisor) {
             if (MaxineVM.isPrototyping()) {

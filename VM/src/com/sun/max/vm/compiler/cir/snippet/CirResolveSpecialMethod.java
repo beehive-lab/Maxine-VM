@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.cir.snippet;
 
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.compiler.snippet.*;
@@ -45,9 +44,8 @@ public final class CirResolveSpecialMethod extends CirSpecialSnippet {
 
     @Override
     public CirCall fold(CirOptimizer cirOptimizer, CirValue... arguments) throws CirFoldingException {
-        final EntrypointResolutionGuard guard = (EntrypointResolutionGuard) getConstantArgumentValue(arguments, Parameter.guard).asObject();
-        final ConstantPool constantPool = guard.constantPool();
-        final VirtualMethodActor selectedMethod = ResolutionSnippet.ResolveSpecialMethod.quasiFold(constantPool, guard.constantPoolIndex());
+        final ResolutionGuard guard = (ResolutionGuard) getConstantArgumentValue(arguments, Parameter.guard).asObject();
+        final VirtualMethodActor selectedMethod = ResolutionSnippet.ResolveSpecialMethod.resolveSpecialMethod(guard);
         return new CirCall(getNormalContinuation(arguments), builtinOrMethod(selectedMethod, cirOptimizer.cirGenerator()));
     }
 }

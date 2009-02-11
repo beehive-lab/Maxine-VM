@@ -40,12 +40,10 @@ import com.sun.max.vm.compiler.cir.variable.*;
 public final class CirContinuation extends CirClosure {
 
     public CirContinuation(CirVariable parameter) {
-        super(null);
         setParameters(parameter);
     }
 
     public CirContinuation() {
-        super(null);
         setParameters(NO_PARAMETERS);
     }
 

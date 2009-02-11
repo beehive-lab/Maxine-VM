@@ -24,7 +24,6 @@ import java.io.*;
 
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 
 /**
  * Instances of this class contain the execution state of a single thread in the system.
@@ -97,8 +96,7 @@ class ExecutionThread {
         ExecutionFrame frame = _frame;
         printStream.println(executionException.getMessage());
         while (frame != null) {
-            final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
-            printStream.println("\tat " + bytecodeLocation.toStackTraceElement());
+            printStream.println("\tat " + frame.method().toStackTraceElement(frame.currentOpcodePosition()));
             frame = frame.callersFrame();
         }
         if (executionException.getCause() != null) {
@@ -112,8 +110,7 @@ class ExecutionThread {
         final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
         ExecutionFrame frame = _frame;
         while (frame != null) {
-            final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
-            sb.append(String.format("%n%s [bci:%d]", bytecodeLocation.toStackTraceElement(), frame.currentOpcodePosition()));
+            sb.append(String.format("%n%s [bci:%d]", frame.method().toStackTraceElement(frame.currentOpcodePosition())));
             frame = frame.callersFrame();
         }
         return sb.toString();

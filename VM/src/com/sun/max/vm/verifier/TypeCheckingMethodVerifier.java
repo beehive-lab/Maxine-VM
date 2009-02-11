@@ -1264,6 +1264,17 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
                 throw verifyError("INVOKEINTERFACE count operand does not match method signature");
             }
 
+            final TypeDescriptor holder = methodConstant.holder(constantPool());
+            if (holder.equals(JavaTypeDescriptor.OBJECT)) {
+                // This is a case of invokeinterface being used to invoke a virtual method
+                // declared in java.lang.Object. While this is perfectly legal, it complicates
+                // the compilation or interpretation of invokeinterface. What's more, no sane
+                // Java source compiler will produce such code. As such, the instruction is
+                // re-written to use invokevirtual instead.
+                final byte[] code = bytecodeScanner().bytecodeBlock().code();
+                code[bytecodeScanner().currentOpcodePosition()] = (byte) Bytecode.INVOKEVIRTUAL.ordinal();
+            }
+
             pushMethodResult(methodSignature);
         }
 

@@ -33,6 +33,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.tele.*;
 import com.sun.max.vm.template.*;
+import com.sun.max.vm.template.source.*;
 
 /**
  * Target code generator based on template. The code generator uses a simple bytecode to target translator that produces code by merely
@@ -59,13 +60,12 @@ public abstract class TemplateBasedTargetGenerator extends TargetGenerator {
         initializeTemplateTable(new TemplateTable(templateSources));
     }
 
+    @PROTOTYPE_ONLY
     public void initialize() {
         try {
             // Don't want any hardcoded symbolic references to template source classes, so we use reflection to obtain the list of templates.
             // Need to find a better way to do this.
-            final Class[] templateSources =
-                (Class[]) Class.forName("com.sun.max.vm.template.source.TemplateTableConfiguration").getField("OPTIMIZED_TEMPLATE_SOURCES").get(null);
-
+            final Class[] templateSources = (Class[]) TemplateTableConfiguration.class.getField("OPTIMIZED_TEMPLATE_SOURCES").get(null);
             initializeTemplateTable(templateSources);
         } catch (Throwable throwable) {
             ProgramError.unexpected("FAILED TO INITIALIZE TEMPLATE TABLE", throwable);

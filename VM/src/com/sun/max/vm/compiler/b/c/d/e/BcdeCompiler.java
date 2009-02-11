@@ -24,6 +24,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.Arrays;
 import com.sun.max.program.*;
@@ -61,6 +62,7 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
 
     protected abstract Class<? extends BuiltinVisitor> builtinTranslationClass();
 
+    @PROTOTYPE_ONLY
     @Override
     public void createBuiltins(PackageLoader packageLoader) {
         super.createBuiltins(packageLoader);
@@ -77,10 +79,5 @@ public abstract class BcdeCompiler<EirGenerator_Type extends EirGenerator> exten
             final Builtin builtin = Builtin.builtins().get(i);
             _isBuiltinImplemented[i] = methodNames.contains("visit" + Naming.toClassName(builtin.name()));
         }
-    }
-
-    @Override
-    public void createSnippets(PackageLoader packageLoader) {
-        super.createSnippets(packageLoader);
     }
 }

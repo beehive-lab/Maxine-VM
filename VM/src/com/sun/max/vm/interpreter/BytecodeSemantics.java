@@ -125,8 +125,9 @@ public class BytecodeSemantics {
     // =============================================================================
     // ========================= Field operations ==================================
     // =============================================================================
-    public boolean booleanGetField(Object object, ReferenceResolutionGuard guard) {
-        return FieldReadSnippet.ReadBoolean.readBoolean(object, UnsafeLoophole.<BooleanFieldActor>cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard)));
+    public boolean booleanGetField(Object object, ResolutionGuard guard) {
+        final FieldActor fieldActor = ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard);
+        return FieldReadSnippet.ReadBoolean.readBoolean(object, UnsafeLoophole.<BooleanFieldActor>cast(fieldActor));
     }
 
     public boolean booleanGetField(Object object, int offset) {
@@ -202,8 +203,8 @@ public class BytecodeSemantics {
     public Object newObject(ClassActor classActor) {
         return NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor);
     }
-    public Object newObject(ReferenceResolutionGuard guard) {
-        final ClassActor classActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveClass.resolveClass(guard));
+    public Object newObject(ResolutionGuard guard) {
+        final ClassActor classActor = ResolutionSnippet.ResolveClass.resolveClass(guard);
         return NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor);
     }
 }

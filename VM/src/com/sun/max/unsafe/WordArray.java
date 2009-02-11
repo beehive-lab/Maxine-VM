@@ -20,47 +20,48 @@
  */
 package com.sun.max.unsafe;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.object.*;
 
 /**
  * Why we never directly use any arrays of any subtype of 'Word':
- * 
+ *
  * The byte codes aaload and aastore have no clue whether the array reference on the stack refers to a Word array or an
  * Object array. As long as we are unable to or unsure whether we can discern the difference STATICALLY, we must not
  * allow aaload and aastore to deal with either case dynamically.
- * 
+ *
  * Compare this to the situation between byte arrays and boolean arrays addressed by baload and bastore! In those cases,
  * we CAN differentiate between the respective array types DYNAMICALLY and cause no harm to the GC, because both types
  * are primitive types.
- * 
+ *
  * In case of Object and Word, one calls for a stack map entry and the other does not. Therefore, a dynamic distinction
  * would require support for dynamic stack map changes. So far we are not willing to afford the price for that
  * (runtime, implementation effort, complexity).
- * 
+ *
  * Instead, always use WordArray.set() and WordArray.get() instead of [] when addressing word array elements.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class WordArray {
+
     private WordArray() {
     }
 
-    public static <Word_Type extends Word> Word_Type[] create(Class<Word_Type> wordType, Word_Type zero, int length) {
-        assert zero.isZero();
-        final Word_Type[] result = UnsafeLoophole.cast(Array.newInstance(wordType, length));
-        if (MaxineVM.isPrototyping()) {
-            for (int i = 0; i < result.length; i++) {
-                set(result, i, zero);
+    /**
+     * Replaces all {@code null} entries in a given word array with the appropriately typed boxed zero value.
+     */
+    @PROTOTYPE_ONLY
+    private static <Word_Type extends Word> void replaceNullWithZero(Word_Type[] array) {
+        final Class<Class<Word_Type>> type = null;
+        final Class<Word_Type> wordType = StaticLoophole.cast(type, array.getClass().getComponentType());
+        final Word_Type zero = Word.zero().as(wordType);
+        for (int i = 0; i != array.length; ++i) {
+            if (array[i] == null) {
+                array[i] = zero;
             }
         }
-        return result;
     }
-
-    private static final class UncheckedGet_ {}
 
     public static <Word_Type extends Word> void fill(Word_Type[] array, Word_Type value) {
         for (int i = 0; i < array.length; i++) {
@@ -70,6 +71,9 @@ public final class WordArray {
 
     // Substituted by uncheckedGet_()
     public static <Word_Type extends Word> Word_Type uncheckedGet(Word_Type[] array, int index) {
+        if (array[index] == null) {
+            replaceNullWithZero(array);
+        }
         return array[index];
     }
 
@@ -79,11 +83,11 @@ public final class WordArray {
         return ArrayAccess.getWord(array, index);
     }
 
-
-    private static final class Get_ {}
-
     // Substituted by get_()
     public static <Word_Type extends Word> Word_Type get(Word_Type[] array, int index) {
+        if (array[index] == null) {
+            replaceNullWithZero(array);
+        }
         return array[index];
     }
 
@@ -93,9 +97,6 @@ public final class WordArray {
         ArrayAccess.inlineCheckIndex(array, index);
         return ArrayAccess.getWord(array, index);
     }
-
-
-    private static final class UncheckedSet_ {}
 
     // Substituted by uncheckedSet_()
     public static <Word_Type extends Word> void uncheckedSet(Word_Type[] array, int index, Word_Type value) {
@@ -107,9 +108,6 @@ public final class WordArray {
     private static <Word_Type extends Word> void uncheckedSet_(Word_Type[] array, int index, Word_Type value) {
         ArrayAccess.setWord(array, index, value);
     }
-
-
-    private static final class Set_ {}
 
     // Substituted by set_()
     public static <Word_Type extends Word> void set(Word_Type[] array, int index, Word_Type value) {

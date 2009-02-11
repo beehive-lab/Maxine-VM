@@ -127,7 +127,7 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PROTOTYPING) {
+        if (MaxineVM.isPrototyping()) {
             _beltManager.createBelts();
 
             for (int i = 0; i < BeltwayConfiguration._numberOfGCThreads; i++) {
@@ -564,17 +564,15 @@ public abstract class BeltwayHeapScheme extends AbstractVMScheme implements Heap
     }
 
     @NO_SAFEPOINTS("TODO")
-    public <Hybrid_Type extends Hybrid> Hybrid_Type createHybrid(DynamicHub hub) {
+    public Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize();
         final Pointer cell = allocate(size);
-        @JavacSyntax("type checker not able to infer type here")
-        final Class<Hybrid_Type> type = null;
-        return UnsafeLoophole.cast(type, Cell.plantHybrid(cell, size, hub));
+        return Cell.plantHybrid(cell, size, hub);
     }
 
     @NO_SAFEPOINTS("TODO")
     @Override
-    public <Hybrid_Type extends Hybrid> Hybrid_Type expandHybrid(Hybrid_Type hybrid, int length) {
+    public Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size newSize = Layout.hybridLayout().getArraySize(length);
         final Pointer newCell = allocate(newSize);
         return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);

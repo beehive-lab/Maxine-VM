@@ -1387,7 +1387,7 @@ public abstract class ClassActor extends Actor {
             }
             return JavaTypeDescriptor.forJavaClass(javaClass).resolve(javaClass.getClassLoader());
         }
-        return Class_classActor.read(javaClass);
+        return (ClassActor) Class_classActor.readObject(javaClass);
     }
 
     /**
@@ -1428,8 +1428,24 @@ public abstract class ClassActor extends Actor {
         }
     }
 
+    /**
+     * Constants denoting the initialization state for a class. The terminal state for any class is either
+     * {@link #INITIALIZED} or {@link #ERROR}.
+     */
     enum InitializationState {
-        ERROR, PREPARED, VERIFIED, INITIALIZING, INITIALIZED
+        ERROR, PREPARED, VERIFIED, INITIALIZING;
+
+        /**
+         * State denoting that a class is initialized. This is not represented as a enum constant
+         * as the {@linkplain ClassActor#isInitialized() test} for whether or not a class is initialized
+         * is inlined everywhere the JVM semantics require a class initialization barrier. To make
+         * this code as small and fast as possible, it must not require loading of a static variable.
+         *
+         * This means there is a short window in the beginning of the {@link ClassActor#ClassActor constructor} during which
+         * the {@code ClassActor} instance being initialized may appear initialized. Care must be taken to ensure
+         * {@link ClassActor#isInitialized()} is never called inside this window.
+         */
+        public static final InitializationState INITIALIZED = null;
     }
 
     private InitializationState _initializationState;
@@ -1452,6 +1468,9 @@ public abstract class ClassActor extends Actor {
     private boolean tryInitialization() {
         while (true) {
             synchronized (this) {
+                if (isInitialized()) {
+                    return false;
+                }
                 switch (_initializationState) {
                     case ERROR: {
                         throw new NoClassDefFoundError();
@@ -1476,9 +1495,6 @@ public abstract class ClassActor extends Actor {
                         }
                         break;
                     }
-                    case INITIALIZED: {
-                        return false;
-                    }
                 }
             }
         }
@@ -1490,12 +1506,17 @@ public abstract class ClassActor extends Actor {
         notifyAll();
     }
 
+    /**
+     * Determines if this the class represented by this class actor is initialized.
+     *
+     * This test must be fast and so it is not synchronized. This means that a return value of {@code false}
+     * is conservative. That is, the caller should operate on the assumption that the class is not initialized,
+     * even though it may well be by the time the caller takes some action predicted on the class being initialized.
+     * However, a return value of {@code true} is a guarantee that the class is initialized.
+     */
+    @INLINE
     public final boolean isInitialized() {
-        // When this is enquired for optimization purposes (e.g., folding of final static variable)
-        // we can do without the synchronized since INITIALIZED is a terminal state. So when seeing
-        // INITIALIZED without synchronization, one can safely assume the class is indeed initialized.
-        // If not INITIALIZED, the caller has to conservatively assume that it isn't initialized and  ignore potential optimization.
-        return _initializationState == InitializationState.INITIALIZED;
+        return _initializationState == null;
     }
 
     /**

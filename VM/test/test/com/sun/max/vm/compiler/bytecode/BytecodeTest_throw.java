@@ -25,7 +25,6 @@ import java.lang.reflect.*;
 
 import test.com.sun.max.vm.compiler.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -67,7 +66,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
                 confirmPresence();
             }
         };
-        ProgramError.check(perform_catchNull() == 123);
+        assertTrue(perform_catchNull() == 123);
         final Value result = executeWithReceiver(method);
         assertTrue(result.asInt() == 123);
     }
@@ -94,7 +93,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
 
     public void test_perform_controlFlow() {
         final Method_Type method = compileMethod("perform_controlFlow", SignatureDescriptor.create(int.class, int.class, TestException.class));
-        ProgramError.check(perform_controlFlow(2, new TestException(-1)) == 123);
+        assertTrue(perform_controlFlow(2, new TestException(-1)) == 123);
         final Value result = executeWithReceiver(method, IntValue.from(2), ReferenceValue.from(new TestException(-1)));
         assertTrue(result.asInt() == 123);
     }
@@ -136,7 +135,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
                 confirmPresence();
             }
         };
-        ProgramError.check(perform_catch0(new TestException(-1)) == 123);
+        assertTrue(perform_catch0(new TestException(-1)) == 123);
         final Value result = executeWithReceiver(method, ReferenceValue.from(new TestException(-1)));
         assertTrue(result.asInt() == 123);
     }
@@ -152,7 +151,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
 
     public void test_catch1() {
         final Method_Type method = compileMethod("perform_catch1", SignatureDescriptor.create(int.class, TestException.class));
-        ProgramError.check(perform_catch1(new TestException(-1)) == 123);
+        assertTrue(perform_catch1(new TestException(-1)) == 123);
         final Value result = executeWithReceiver(method, ReferenceValue.from(new TestException(-1)));
         assertTrue(result.asInt() == 123);
     }
@@ -186,27 +185,27 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
     public void test_catch2() {
         final Method_Type method = compileMethod("perform_catch2", SignatureDescriptor.create(int.class, TestException.class));
 
-        ProgramError.check(perform_catch2(new TestException(-1)) == 456);
+        assertTrue(perform_catch2(new TestException(-1)) == 456);
         Value result = executeWithReceiver(method, ReferenceValue.from(new TestException(-1)));
         assertTrue(result.asInt() == 456);
 
-        ProgramError.check(perform_catch2(new TestException(1)) == 123);
+        assertTrue(perform_catch2(new TestException(1)) == 123);
         result = executeWithReceiver(method, ReferenceValue.from(new TestException(1)));
         assertTrue(result.asInt() == 123);
 
-        ProgramError.check(perform_catch2(new TestException(2)) == 789);
+        assertTrue(perform_catch2(new TestException(2)) == 789);
         result = executeWithReceiver(method, ReferenceValue.from(new TestException(2)));
         assertTrue(result.asInt() == 789);
 
-        ProgramError.check(perform_catch2(new TestException(3)) == 456);
+        assertTrue(perform_catch2(new TestException(3)) == 456);
         result = executeWithReceiver(method, ReferenceValue.from(new TestException(3)));
         assertTrue(result.asInt() == 456);
 
-        ProgramError.check(perform_catch2(new TestException(4)) == 123);
+        assertTrue(perform_catch2(new TestException(4)) == 123);
         result = executeWithReceiver(method, ReferenceValue.from(new TestException(4)));
         assertTrue(result.asInt() == 123);
 
-        ProgramError.check(perform_catch2(new TestException(5)) == 123);
+        assertTrue(perform_catch2(new TestException(5)) == 123);
         result = executeWithReceiver(method, ReferenceValue.from(new TestException(5)));
         assertTrue(result.asInt() == 123);
     }
@@ -230,11 +229,11 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
             }
         };
 
-        ProgramError.check(perform_catch3(new TestException(-1)) == 11);
+        assertTrue(perform_catch3(new TestException(-1)) == 11);
         Value result = executeWithReceiver(method, ReferenceValue.from(new TestException(-1)));
         assertTrue(result.asInt() == 11);
 
-        ProgramError.check(perform_catch3(new TestException(1)) == 0);
+        assertTrue(perform_catch3(new TestException(1)) == 0);
         result = executeWithReceiver(method, ReferenceValue.from(new TestException(1)));
         assertTrue(result.asInt() == 0);
     }
@@ -257,7 +256,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
                 confirmPresence();
             }
         };
-        ProgramError.check(perform_catch4() == 11);
+        assertTrue(perform_catch4() == 11);
         final Value< ? > result = executeWithReceiver(method);
         assertTrue(result.asInt() == 11);
     }
@@ -282,7 +281,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
 
     public void test_blocks() {
         final Method_Type method = compileMethod("perform_blocks", SignatureDescriptor.create(int.class));
-        ProgramError.check(perform_blocks() == 1);
+        assertTrue(perform_blocks() == 1);
         final Value< ? > result = executeWithReceiver(method);
         assertTrue(result.asInt() == 1);
     }
@@ -304,7 +303,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
 
     public void test_type1() {
         final Method_Type method = compileMethod("perform_type1", SignatureDescriptor.create(int.class));
-        ProgramError.check(perform_type1() == 3);
+        assertTrue(perform_type1() == 3);
         final Value< ? > result = executeWithReceiver(method);
         assertTrue(result.asInt() == 3);
     }
@@ -322,7 +321,7 @@ public abstract class BytecodeTest_throw<Method_Type extends IrMethod> extends C
 
     public void test_type2() {
         final Method_Type method = compileMethod("perform_type2", SignatureDescriptor.create(int.class));
-        ProgramError.check(perform_type2() == 2);
+        assertTrue(perform_type2() == 2);
         final Value< ? > result = executeWithReceiver(method);
         assertTrue(result.asInt() == 2);
     }

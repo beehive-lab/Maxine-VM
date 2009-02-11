@@ -97,11 +97,11 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         setEirBlock(eirBlock);
     }
 
-    protected abstract DirToEirBuiltinTranslation createBuiltinTranslation(DirToEirInstructionTranslation instructionTranslation);
+    protected abstract DirToEirBuiltinTranslation createBuiltinTranslation(DirToEirInstructionTranslation instructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor);
 
     public final void visitBuiltinCall(DirBuiltinCall dirBuiltinCall) {
         addTry(dirBuiltinCall);
-        final DirToEirBuiltinTranslation builtinCallTranslation = createBuiltinTranslation(this);
+        final DirToEirBuiltinTranslation builtinCallTranslation = createBuiltinTranslation(this, dirBuiltinCall.javaFrameDescriptor());
         dirBuiltinCall.builtin().acceptVisitor(builtinCallTranslation, dirBuiltinCall.result(), dirBuiltinCall.arguments());
         if (dirBuiltinCall.catchBlock() != null) {
             splitBlock();
@@ -160,11 +160,14 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
     private void generateCall(DirJavaFrameDescriptor dirJavaFrameDescriptor, EirABI abi, Kind resultKind, EirValue result, EirValue function, Kind[] argumentKinds, EirValue... arguments) {
         final EirLocation[] argumentLocations = abi.getParameterLocations(EirStackSlot.Purpose.LOCAL, argumentKinds);
         final EirLocation resultLocation = (result == null) ? null : abi.getResultLocation(resultKind);
-        final EirCall instruction = _methodTranslation.isTemplate() ?
+        final boolean isTemplate = _methodTranslation.isTemplate();
+        final EirCall instruction = isTemplate ?
                         _methodTranslation.createRuntimeCall(_eirBlock, abi, result, resultLocation, function, arguments, argumentLocations) :
                         _methodTranslation.createCall(_eirBlock, abi, result, resultLocation, function, arguments, argumentLocations);
         addInstruction(instruction);
-        instruction.setEirJavaFrameDescriptor(_methodTranslation.dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor, instruction));
+        if (!isTemplate) {
+            instruction.setEirJavaFrameDescriptor(_methodTranslation.dirToEirJavaFrameDescriptor(dirJavaFrameDescriptor, instruction));
+        }
     }
 
     private EirValue _raiseThrowableEirValue = null;

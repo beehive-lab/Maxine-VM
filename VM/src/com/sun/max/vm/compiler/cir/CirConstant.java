@@ -38,6 +38,8 @@ public final class CirConstant extends CirValue {
         _value = value;
     }
 
+    public static final CirConstant NULL = new CirConstant(ReferenceValue.NULL);
+
     /**
      * @return the constant converted to a kind that the Java expression stack uses
      */
@@ -68,6 +70,9 @@ public final class CirConstant extends CirValue {
     }
 
     public static CirConstant fromObject(Object object) {
+        if (object == null) {
+            return NULL;
+        }
         return new CirConstant(ReferenceValue.from(object));
     }
 

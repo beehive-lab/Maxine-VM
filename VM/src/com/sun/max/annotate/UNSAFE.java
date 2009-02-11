@@ -62,7 +62,7 @@ import com.sun.max.vm.type.*;
  * It only applies when a method manually declared UNSAFE is found.
  *
  * @see ClassfileReader
- * 
+ *
  * @author Bernd Mathiske
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -219,7 +219,6 @@ public @interface UNSAFE {
         private static final String _vmPackageName = new com.sun.max.vm.Package().name();
         private static final String _asmPackageName = new com.sun.max.vm.asm.Package().name();
 
-        // TODO: parallelize
         /**
          * Find all unsafe methods and mark them with the UNSAFE flag.
          * As a side-effect add them to the list for use of the {@link CompiledPrototype}.

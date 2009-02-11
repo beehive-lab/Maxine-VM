@@ -136,7 +136,7 @@ final class JDK_java_security_AccessController {
                 // native frame
                 return true;
             }
-            final Iterator<BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
             if (bytecodeLocations == null) {
                 final ProtectionDomain protectionDomain = targetMethod.classMethodActor().holder().protectionDomain();
                 if (protectionDomain != null) {
@@ -192,7 +192,7 @@ final class JDK_java_security_AccessController {
      */
     @SUBSTITUTE
     public static AccessControlContext getInheritedAccessControlContext() {
-        return UnsafeLoophole.cast(AccessControlContext.class, ReferenceFieldActor.findInstance(Thread.class, "inheritedAccessControlContext").readObject(Thread.currentThread()));
+        return UnsafeLoophole.cast(ReferenceFieldActor.findInstance(Thread.class, "inheritedAccessControlContext").readObject(Thread.currentThread()));
     }
 
 }

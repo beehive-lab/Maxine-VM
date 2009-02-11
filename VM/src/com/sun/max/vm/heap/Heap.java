@@ -38,7 +38,13 @@ public final class Heap {
 
     private static final VMSizeOption _maxHeapSizeOption = new VMSizeOption("-Xmx", Size.G, "The maximum heap size.", MaxineVM.Phase.PRISTINE);
 
-    private static final VMSizeOption _initialHeapSizeOption = new VMSizeOption("-Xms", Size.M.times(512), "The initial heap size.", MaxineVM.Phase.PRISTINE) {
+    private static final VMSizeOption _initialHeapSizeOption = new InitialHeapSizeOption();
+
+    static class InitialHeapSizeOption extends VMSizeOption {
+        @PROTOTYPE_ONLY
+        public InitialHeapSizeOption() {
+            super("-Xms", Size.M.times(512), "The initial heap size.", MaxineVM.Phase.PRISTINE);
+        }
         @Override
         public boolean check() {
             return !(isPresent() && _maxHeapSizeOption.isPresent() && getValue().greaterThan(_maxHeapSizeOption.getValue()));
@@ -47,7 +53,7 @@ public final class Heap {
         public void printErrorMessage() {
             Log.print("initial heap size must not be greater than max heap size");
         }
-    };
+    }
 
     private static final VMOption _disableGCOption = new VMOption("-XX:DisableGC", "Disable garbage collection.", MaxineVM.Phase.PRISTINE);
 
@@ -176,14 +182,13 @@ public final class Heap {
     }
 
     @INLINE
-    public static <Hybrid_Type extends Hybrid> Hybrid_Type expandHybrid(Hybrid_Type hybrid, int length) {
+    public static Hybrid expandHybrid(Hybrid hybrid, int length) {
         return heapScheme().expandHybrid(hybrid, length);
     }
 
     @INLINE
-    public static <Type> Type clone(Type object) {
-        final Class<Type> type = null;
-        return UnsafeLoophole.cast(type, heapScheme().clone(object));
+    public static Object clone(Object object) {
+        return heapScheme().clone(object);
     }
 
     @INLINE

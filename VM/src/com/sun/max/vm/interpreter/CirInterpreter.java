@@ -104,7 +104,7 @@ public class CirInterpreter extends IrInterpreter<CirMethod> {
                 call = foldBuiltin((CirBuiltin) procedure, arguments);
             } else if (procedure instanceof CirBlock) {
                 final CirBlock block = (CirBlock) procedure;
-                call.setProcedure(block.closure(), call.bytecodeLocation());
+                call.setProcedure(block.closure());
             } else if (procedure instanceof CirVariable) {
                 if (procedure instanceof CirNormalContinuationParameter) {
                     if (arguments.length == 0) {

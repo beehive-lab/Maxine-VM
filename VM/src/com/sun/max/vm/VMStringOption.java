@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -45,6 +46,7 @@ public class VMStringOption extends VMOption {
      * @param help the help text for this option
      * @param phase the option phase in which to parse this option
      */
+    @PROTOTYPE_ONLY
     public VMStringOption(String prefix, boolean space, String defaultValue, String help, MaxineVM.Phase phase) {
         super(prefix, help, phase);
         _value = defaultValue;

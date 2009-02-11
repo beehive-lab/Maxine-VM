@@ -486,7 +486,7 @@ public abstract class StackFrameWalker {
                 // native frame
                 continue;
             }
-            final Iterator<BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+            final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
             if (bytecodeLocations == null) {
                 appendClassMethodActor(result, targetMethod.classMethodActor(), invisibleFrames);
             } else {
@@ -496,7 +496,7 @@ public abstract class StackFrameWalker {
         return result;
     }
 
-    private static void appendCallers(AppendableSequence<ClassMethodActor> result, Iterator<BytecodeLocation> bytecodeLocations, boolean invisibleFrames) {
+    private static void appendCallers(AppendableSequence<ClassMethodActor> result, Iterator<? extends BytecodeLocation> bytecodeLocations, boolean invisibleFrames) {
         // this recursive method appends inlined bytecode locations to the frame list (i.e. parent first)
         if (bytecodeLocations.hasNext()) {
             final BytecodeLocation bytecodeLocation = bytecodeLocations.next();
