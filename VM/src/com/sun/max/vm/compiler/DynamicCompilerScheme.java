@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -87,6 +88,7 @@ public interface DynamicCompilerScheme extends VMScheme {
      * @param virtualCalls a sequence of virtual calls to which this method should append
      * @param interfaceCalls a sequence of interface calls to which this method should append
      */
+    @PROTOTYPE_ONLY
     void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls);
 
     /**
@@ -98,6 +100,7 @@ public interface DynamicCompilerScheme extends VMScheme {
     /**
      * Method to initialize the dynamic compiler.
      */
+    @PROTOTYPE_ONLY
     void initializeForJitCompilations(); // TODO: move to using the basic initialize(Phase) method?
 
     /**

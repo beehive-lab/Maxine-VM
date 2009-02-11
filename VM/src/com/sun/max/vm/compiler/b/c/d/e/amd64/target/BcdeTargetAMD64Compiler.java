@@ -30,7 +30,6 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.asm.amd64.*;
@@ -302,7 +301,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
                 final Address throwAddress = isTopFrame ? instructionPointer : instructionPointer.minus(1);
                 final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
                 if (!catchAddress.isZero()) {
-                    final Throwable throwable = UnsafeLoophole.cast(StackUnwindingContext.class, context)._throwable;
+                    final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+                    final Throwable throwable = stackUnwindingContext._throwable;
                     if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
                         // Reset the stack walker
                         stackFrameWalker.reset();
@@ -340,7 +340,7 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (phase == Phase.PROTOTYPING) {
+        if (MaxineVM.isPrototyping()) {
             _unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"));
         }
     }

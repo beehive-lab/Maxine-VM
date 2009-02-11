@@ -20,30 +20,19 @@
  */
 package com.sun.max.vm.compiler.cir.variable;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 /**
  * A local variable in the sense of the JVM spec that is not a method parameter.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class CirLocalVariable extends CirSlotVariable {
 
-    private final BytecodeLocation _location;
-
-    public CirLocalVariable(int serial, Kind kind, int localIndex, BytecodeLocation location) {
+    public CirLocalVariable(int serial, Kind kind, int localIndex) {
         super(serial, kind, localIndex);
-        _location = location;
-    }
-
-    /**
-     * @return a location at which this variable is defined
-     */
-    public BytecodeLocation definedAt() {
-        return _location;
     }
 
     @Override

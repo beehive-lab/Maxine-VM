@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler;
 
 import com.sun.max.*;
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -73,23 +74,28 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         return irGenerator().numberOfCompilations();
     }
 
+    @PROTOTYPE_ONLY
     public void createBuiltins(PackageLoader packageLoader) {
         packageLoader.loadAndInitializeAll(Builtin.class);
         Builtin.initialize();
     }
 
+    @PROTOTYPE_ONLY
     public void createSnippets(PackageLoader packageLoader) {
         packageLoader.loadAndInitializeAll(Snippet.class);
         packageLoader.loadAndInitializeAll(HotpathSnippet.class);
         packageLoader.loadAndInitializeAll(DynamicTrampoline.class);
     }
 
+    @PROTOTYPE_ONLY
     private boolean _areSnippetsCompiled = false;
 
+    @PROTOTYPE_ONLY
     public boolean areSnippetsCompiled() {
         return _areSnippetsCompiled;
     }
 
+    @PROTOTYPE_ONLY
     public void compileSnippets() {
         _areSnippetsCompiled = true;
         ClassActor.DEFERRABLE_QUEUE_2.runAll();
@@ -117,10 +123,12 @@ public abstract class AbstractCompiler extends AbstractVMScheme implements Compi
         return irGenerator().makeIrMethod(classMethodActor);
     }
 
+    @PROTOTYPE_ONLY
     public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         throw new UnsupportedOperationException();
     }
 
+    @PROTOTYPE_ONLY
     public void initializeForJitCompilations() {
     }
 

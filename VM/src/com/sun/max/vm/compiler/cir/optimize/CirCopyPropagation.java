@@ -104,14 +104,14 @@ public class CirCopyPropagation{
 
         if (finalLength != params.length) {
             if (finalLength == 0) {
-                proc.setParameters(CirClosure.NO_PARAMETERS);
-                call.setArguments(CirCall.NO_ARGUMENTS);
+                call.assign(proc.body());
             } else {
                 final CirValue[] nargs = new CirValue[finalLength];
                 final CirVariable[] nparams = new CirVariable[finalLength];
                 int j = 0;
                 for (int i = 0; i < params.length; i++) {
                     if (subst[i] == null) {
+                        assert args[i] != null;
                         nargs[j] = args[i];
                         nparams[j] = params[i];
                         j++;

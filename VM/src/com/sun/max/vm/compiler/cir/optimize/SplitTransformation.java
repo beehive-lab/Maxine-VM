@@ -22,7 +22,8 @@ package com.sun.max.vm.compiler.cir.optimize;
 
 import java.util.*;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.operator.*;
@@ -47,14 +48,8 @@ public final class SplitTransformation {
     public static class Split extends JavaOperator {
 
         @Override
-        public boolean needsJavaFrameDescriptor() {
-            return false;
-        }
-
-        @Override
         public Kind[] parameterKinds() {
-            assert false : "unimplemented";
-            return null;
+            throw Problem.unimplemented();
         }
 
         /**
@@ -65,6 +60,7 @@ public final class SplitTransformation {
          * branch order = 2 default : defaultCont //branch order = 0 }
          */
         public Split(CirCall switchCall, int branch) {
+            super(Stoppable.NONE);
             assert switchCall.procedure() instanceof CirSwitch;
             _switchCall = switchCall;
             _branchOrder = branch;
@@ -118,7 +114,7 @@ public final class SplitTransformation {
         splitTransformation.run();
     }
 
-    private BytecodeLocation _bytecodeLocation;
+    private CirJavaFrameDescriptor _javaFrameDescriptor;
 
     private static CirClosure lambda(CirVariable arg, CirCall body) {
         if (arg == null) {
@@ -140,7 +136,7 @@ public final class SplitTransformation {
 
     private CirCall call(CirValue proc, CirValue... args) {
         final CirCall call = new CirCall(proc, args);
-        call.setBytecodeLocation(_bytecodeLocation);
+        call.setJavaFrameDescriptor(_javaFrameDescriptor);
         return call;
     }
 
@@ -156,7 +152,7 @@ public final class SplitTransformation {
                     super.visitCall(oldCall);
                     return;
                 }
-                _bytecodeLocation = oldCall.bytecodeLocation();
+                _javaFrameDescriptor = oldCall.javaFrameDescriptor();
 
                 final CirExceptionContinuationParameter ce = (CirExceptionContinuationParameter) _methodTranslation.variableFactory().exceptionContinuationParameter();
 

@@ -22,7 +22,6 @@ package com.sun.max.tele.interpreter;
 
 import java.lang.reflect.*;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -60,8 +59,7 @@ public class TeleInterpreterException extends InvocationTargetException {
             final int depth = frame.depth();
             final StackTraceElement[] stackTrace = new StackTraceElement[depth];
             while (frame != null) {
-                final BytecodeLocation bytecodeLocation = new BytecodeLocation(frame.method(), frame.currentOpcodePosition());
-                stackTrace[i++] = bytecodeLocation.toStackTraceElement();
+                stackTrace[i++] = frame.method().toStackTraceElement(frame.currentOpcodePosition());
                 frame = frame.callersFrame();
             }
             setStackTrace(stackTrace);

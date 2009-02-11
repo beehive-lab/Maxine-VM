@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jni;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
 import com.sun.max.vm.actor.member.*;
@@ -34,11 +35,9 @@ public abstract class MethodID extends MemberID {
     protected MethodID() {
     }
 
+    @UNCHECKED_CAST
     public static MethodID fromWord(Word word) {
-        if (Word.isBoxed()) {
-            return new BoxedMethodID(word);
-        }
-        return UnsafeLoophole.castWord(MethodID.class, word);
+        return new BoxedMethodID(word);
     }
 
     public static MethodID fromMethodActor(MethodActor methodActor) {

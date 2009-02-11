@@ -24,24 +24,24 @@
 #include "jni.h"
 #include "word.h"
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeCastObject(JNIEnv *env, jclass c, jobject type, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeCastObject(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeIntToWord(JNIEnv *env, jclass c, jobject type, jint value) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeIntToWord(JNIEnv *env, jclass c, jint value)
 {
 #if word_32_BITS
     return (jobject) value;
 #else
     return (jobject) (jlong) value;
-#endif    
+#endif
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeLongToWord(JNIEnv *env, jclass c, jobject type, jlong value) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeLongToWord(JNIEnv *env, jclass c, jlong value)
 {
 #if word_32_BITS
 	return (jobject) (jint) value;
@@ -50,8 +50,8 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeLongToWord(JNIEnv *env, jclass c, j
 #endif
 }
 
-JNIEXPORT jint JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToInt(JNIEnv *env, jclass c, jobject value) 
+JNIEXPORT jint JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToInt(JNIEnv *env, jclass c, jobject value)
 {
 #if word_32_BITS
 	return (jint) value;
@@ -60,8 +60,8 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToInt(JNIEnv *env, jclass c, jo
 #endif
 }
 
-JNIEXPORT jlong JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToLong(JNIEnv *env, jclass c, jobject value) 
+JNIEXPORT jlong JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToLong(JNIEnv *env, jclass c, jobject value)
 {
 #if word_32_BITS
 	return (jlong) (jint) value;
@@ -70,20 +70,20 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToLong(JNIEnv *env, jclass c, j
 #endif
 }
 
-JNIEXPORT jboolean JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeByteToBoolean(JNIEnv *env, jclass c, jbyte value) 
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeByteToBoolean(JNIEnv *env, jclass c, jbyte value)
 {
     return (jboolean) value;
 }
 
-JNIEXPORT jbyte JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeBooleanToByte(JNIEnv *env, jclass c, jboolean value) 
+JNIEXPORT jbyte JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeBooleanToByte(JNIEnv *env, jclass c, jboolean value)
 {
     return (jbyte) value;
 }
 
-JNIEXPORT jchar JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeShortToChar(JNIEnv *env, jclass c, jshort value) 
+JNIEXPORT jchar JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeShortToChar(JNIEnv *env, jclass c, jshort value)
 {
   union {
       jshort shortValue;
@@ -93,8 +93,8 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeShortToChar(JNIEnv *env, jclass c, 
   return result.charValue;
 }
 
-JNIEXPORT jshort JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeCharToShort(JNIEnv *env, jclass c, jchar value) 
+JNIEXPORT jshort JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeCharToShort(JNIEnv *env, jclass c, jchar value)
 {
   union {
       jchar charValue;
@@ -104,8 +104,8 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeCharToShort(JNIEnv *env, jclass c, 
   return result.shortValue;
 }
 
-JNIEXPORT jfloat JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeIntToFloat(JNIEnv *env, jclass c, jint value) 
+JNIEXPORT jfloat JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeIntToFloat(JNIEnv *env, jclass c, jint value)
 {
   union {
       jint intValue;
@@ -115,8 +115,8 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeIntToFloat(JNIEnv *env, jclass c, j
   return result.floatValue;
 }
 
-JNIEXPORT jint JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeFloatToInt(JNIEnv *env, jclass c, jfloat value) 
+JNIEXPORT jint JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeFloatToInt(JNIEnv *env, jclass c, jfloat value)
 {
   union {
       jfloat floatValue;
@@ -126,8 +126,8 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeFloatToInt(JNIEnv *env, jclass c, j
   return result.intValue;
 }
 
-JNIEXPORT jdouble JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeLongToDouble(JNIEnv *env, jclass c, jlong value) 
+JNIEXPORT jdouble JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeLongToDouble(JNIEnv *env, jclass c, jlong value)
 {
   union {
       jlong longValue;
@@ -137,8 +137,8 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeLongToDouble(JNIEnv *env, jclass c,
   return result.doubleValue;
 }
 
-JNIEXPORT jlong JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeDoubleToLong(JNIEnv *env, jclass c, jdouble value) 
+JNIEXPORT jlong JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeDoubleToLong(JNIEnv *env, jclass c, jdouble value)
 {
   union {
       jdouble doubleValue;
@@ -148,50 +148,50 @@ Java_com_sun_max_unsafe_UnsafeLoophole_nativeDoubleToLong(JNIEnv *env, jclass c,
   return result.longValue;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeReferenceToWord(JNIEnv *env, jclass c, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeReferenceToWord(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToReference(JNIEnv *env, jclass c, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToReference(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToObject(JNIEnv *env, jclass c, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToObject(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeGripToWord(JNIEnv *env, jclass c, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeGripToWord(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToGrip(JNIEnv *env, jclass c, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordToGrip(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeGripToReference(JNIEnv *env, jclass c, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeGripToReference(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeReferenceToGrip(JNIEnv *env, jclass c, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeReferenceToGrip(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }
 
-JNIEXPORT jobject JNICALL 
-Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordCast(JNIEnv *env, jclass c, jobject type, jobject object) 
+JNIEXPORT jobject JNICALL
+Java_com_sun_max_unsafe_UnsafeLoophole_nativeWordCast(JNIEnv *env, jclass c, jobject object)
 {
   return object;
 }

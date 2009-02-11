@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.b.c;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.compiler.cir.*;
@@ -51,9 +50,8 @@ public class BirToCirMethodTranslation {
     public CirVariable[] createParameters(Kind[] parameterKinds) {
         final CirVariable[] parameters = CirClosure.newParameters(parameterKinds.length + 2);
         int i = 0;
-        final BytecodeLocation location = new BytecodeLocation(classMethodActor().compilee(), 0);
         while (i < parameterKinds.length) {
-            parameters[i] = _variableFactory.createMethodParameter(parameterKinds[i], i, location);
+            parameters[i] = _variableFactory.createMethodParameter(parameterKinds[i], i);
             i++;
         }
         parameters[i++] = _variableFactory.normalContinuationParameter();

@@ -62,11 +62,11 @@ public class CirBytecode {
         /**
          * {@link CirCall} instruction.
          * <pre>
-         * Format: CALL count numberOfJavaFrameDescriptors {numberOFLocals numberOfStackSlots}* (location)
+         * Format: CALL count numberOfJavaFrameDescriptors {numberOFLocals numberOfStackSlots}*
          * </pre>
          * OR
          * <pre>
-         * Format: CALL_[count] numberOfJavaFrameDescriptors {numberOFLocals numberOfStackSlots}* (location)  // 0 <= count <= 6
+         * Format: CALL_[count] numberOfJavaFrameDescriptors {numberOFLocals numberOfStackSlots}*  // 0 <= count <= 6
          * </pre>
          * Stack: ..., procedure:CirValue, arguments:CirValue*count => ..., CirCall
          */
@@ -281,11 +281,11 @@ public class CirBytecode {
         /**
          * {@link CirClosure} instruction.
          * <pre>
-         * Format: CLOSURE count (location)
+         * Format: CLOSURE count
          * </pre>
          * OR
          * <pre>
-         * Format: CLOSURE_[count] (location)   // 0 <= count <= 6
+         * Format: CLOSURE_[count]  // 0 <= count <= 6
          * </pre>
          * Stack: ..., body:CirCall, parameters:CirVariable*count => ..., CirClosure
          */
@@ -440,7 +440,7 @@ public class CirBytecode {
         /**
          * {@link CirLocalVariable} instruction.
          * <pre>
-         * Format: LOCAL_VARIABLE serial kind slot (location)
+         * Format: LOCAL_VARIABLE serial kind slot
          * </pre>
          * Stack: ...  => ..., CirLocalVariable
          */
@@ -449,7 +449,7 @@ public class CirBytecode {
         /**
          * {@link CirMethodParameter} instruction.
          * <pre>
-         * Format: METHOD_PARAMETER serial kind slot (location)
+         * Format: METHOD_PARAMETER serial kind slot
          * </pre>
          * Stack: ...  => ..., CirMethodParameter
          */

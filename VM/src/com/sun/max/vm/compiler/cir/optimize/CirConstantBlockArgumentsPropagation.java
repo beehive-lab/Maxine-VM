@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.cir.optimize;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.vm.compiler.cir.CirTraceObserver.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 
@@ -177,13 +178,15 @@ public final class CirConstantBlockArgumentsPropagation {
         return propagatedAny;
     }
 
-    public static boolean apply(Iterable<CirBlock> blocks) {
+    public static boolean apply(CirOptimizer optimizer, CirNode node, Iterable<CirBlock> blocks) {
+        optimizer.notifyBeforeTransformation(node, TransformationType.CONSTANT_BLOCK_ARGUMENT_PROPAGATION);
         boolean propagatedAny = false;
         for (CirBlock block : blocks) {
             if (apply(block)) {
                 propagatedAny = true;
             }
         }
+        optimizer.notifyAfterTransformation(node, TransformationType.CONSTANT_BLOCK_ARGUMENT_PROPAGATION);
         return propagatedAny;
     }
 }

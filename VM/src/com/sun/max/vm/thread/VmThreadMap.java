@@ -319,7 +319,7 @@ public final class VmThreadMap {
         @INLINE
         VmThread get(int id) {
             // this operation may be performance critical, so avoid the bounds check
-            return UnsafeLoophole.cast(VmThread.class, ArrayAccess.getObject(_vmThreads, id));
+            return UnsafeLoophole.cast(ArrayAccess.getObject(_vmThreads, id));
         }
 
         VmThread getThreadFromSerial(long serial) {

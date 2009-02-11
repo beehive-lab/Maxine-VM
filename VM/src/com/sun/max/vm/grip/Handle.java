@@ -25,10 +25,13 @@ import com.sun.max.unsafe.*;
 
 /**
  * A pointer to a pointer to an object.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class Handle extends Word {
+
+    @UNCHECKED_CAST
+    public static native Handle from(Word word);
 
     @Override
     public String toString() {
@@ -45,12 +48,10 @@ public abstract class Handle extends Word {
         asPointer().writeWord(0, origin);
     }
 
-    @INLINE
-    public static Handle fromGrip(Grip grip) {
-        return UnsafeLoophole.castWord(Handle.class, UnsafeLoophole.gripToWord(grip));
-    }
+    @UNCHECKED_CAST
+    public static native Handle fromGrip(Grip grip);
 
-    @INLINE
+    @UNCHECKED_CAST
     public final Grip toGrip() {
         return UnsafeLoophole.wordToGrip(this);
     }

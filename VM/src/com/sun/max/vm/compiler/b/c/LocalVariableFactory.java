@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.b.c.JavaSlots.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.type.*;
@@ -59,7 +58,7 @@ class LocalVariableFactory extends SlotVariableFactory {
     }
 
     @Override
-    protected CirVariable createSlotVariable(Kind kind, int slotIndex, BytecodeLocation location) {
-        return _cirVariableFactory.createLocalVariable(kind, slotIndex, location);
+    protected CirVariable createSlotVariable(Kind kind, int slotIndex) {
+        return _cirVariableFactory.createLocalVariable(kind, slotIndex);
     }
 }

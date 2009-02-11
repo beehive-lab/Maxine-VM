@@ -35,13 +35,13 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Substitutions for {@link java.lang.Throwable java.lang.Throwable} that collect the stack trace.
+ * Substitutions for {@link java.lang.Throwable} that collect the stack trace.
  *
  * @author Ben L. Titzer
  * @author Laurent Daynes
  */
 @METHOD_SUBSTITUTIONS(Throwable.class)
-final class JDK_java_lang_Throwable {
+public final class JDK_java_lang_Throwable {
 
     /**
      * This field provides access to the private field "stackTrace" in the {@link java.lang.Throwable java.lang.Throwable}
@@ -123,7 +123,7 @@ final class JDK_java_lang_Throwable {
     }
 
     private static void addStackTraceElements(List<StackTraceElement> result, TargetMethod targetMethod, StackFrame stackFrame) {
-        final Iterator<BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
+        final Iterator<? extends BytecodeLocation> bytecodeLocations = targetMethod.getBytecodeLocationsFor(stackFrame.instructionPointer());
         if (bytecodeLocations == null) {
             addDefaultStackTraceElement(result, targetMethod.classMethodActor(), -1);
         } else {

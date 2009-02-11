@@ -20,7 +20,7 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import static com.sun.max.vm.compiler.cir.CirTraceObserver.Transformation.*;
+import static com.sun.max.vm.compiler.cir.CirTraceObserver.TransformationType.*;
 
 import java.lang.reflect.*;
 
@@ -59,7 +59,7 @@ public class BirToCirTranslator extends CirGenerator {
         notifyAfterTransformation(cirMethod, cirClosure, HCIR_FREE_VARIABLE_CAPTURING);
 
         notifyBeforeTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
-        CirAlphaConversion.apply(methodTranslation.variableFactory(), cirClosure);
+        CirAlphaConversion.apply(cirClosure);
         notifyAfterTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
 
         notifyBeforeTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
@@ -74,7 +74,9 @@ public class BirToCirTranslator extends CirGenerator {
          * first before running any analysis pass.  It was simpler and got most
          * of the interesting cases.
          */
+        notifyBeforeTransformation(cirMethod, cirClosure, COPY_PROPAGATION);
         CirCopyPropagation.apply(cirClosure);
+        notifyAfterTransformation(cirMethod, cirClosure, COPY_PROPAGATION);
 
         /* optionally verify the structure of the code */
         CirVisitingTraversal.apply(methodTranslation.cirClosure(), new Verifier());
@@ -112,16 +114,13 @@ public class BirToCirTranslator extends CirGenerator {
             cirClosure = applyWrapping(classMethodActor, cirClosure);
         }
 
-
         notifyBeforeTransformation(cirMethod, cirClosure, LCIR_FREE_VARIABLE_CAPTURING);
         freeVariableCapturing = new FreeVariableCapturing(methodTranslation);
         freeVariableCapturing.run();
         notifyAfterTransformation(cirMethod, cirClosure, LCIR_FREE_VARIABLE_CAPTURING);
 
-
         notifyBeforeTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
-
-        CirAlphaConversion.apply(methodTranslation.variableFactory(), cirClosure);
+        CirAlphaConversion.apply(cirClosure);
         notifyAfterTransformation(cirMethod, cirClosure, ALPHA_CONVERSION);
 
         notifyBeforeTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
@@ -135,10 +134,8 @@ public class BirToCirTranslator extends CirGenerator {
      * Performs wrapping of a method annotated by {@link WRAPPED} (explicitly or {@linkplain JNI_FUNCTION implicitly}).
      * Note that this transformation is only performed during {@linkplain MaxineVM#isPrototyping() prototyping}.
      *
-     * @param classMethodActor
-     *                a method being compiled
-     * @param cirClosure
-     *                the initial CIR graph for {@code classMethodActor}
+     * @param classMethodActor a method being compiled
+     * @param cirClosure the initial CIR graph for {@code classMethodActor}
      * @return the closure for {@code classMethodActor} after any relevant wrapping transformation has been applied
      */
     @PROTOTYPE_ONLY
@@ -171,7 +168,7 @@ public class BirToCirTranslator extends CirGenerator {
      */
     private void foldAndMemoize(CirMethod cirMethod) {
         final CirVariableFactory variableFactory = new CirVariableFactory();
-        final CirClosure cirClosure = new CirClosure(null);
+        final CirClosure cirClosure = new CirClosure();
         cirClosure.setParameters(variableFactory.normalContinuationParameter(), variableFactory.exceptionContinuationParameter());
         try {
             cirClosure.setBody(CirRoutine.Static.fold(cirMethod, cirClosure.parameters()));

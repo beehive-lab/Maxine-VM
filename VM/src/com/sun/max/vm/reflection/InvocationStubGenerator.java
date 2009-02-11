@@ -135,31 +135,20 @@ public class InvocationStubGenerator<T> {
     /**
      * Creates a generator for a stub used to invoke a {@code target}.
      *
-     * @param target
-     *                the {@linkplain Method method} or {@linkplain Constructor constructor} for which the stub is being
-     *                generated
-     * @param superClass
-     *                the super class of the stub. Must be {@link GeneratedMethodStub} or
-     *                {@link GeneratedConstructorStub}.
-     * @param name
-     *                the VM-level name of the target (must be "<init>" if target is a constructor)
-     * @param declaringClass
-     *                the class in which the target is declared
-     * @param returnType
-     *                the declared return type of the target
-     * @param parameterTypes
-     *                the declared parameter types of the target
-     * @param isStatic
-     *                specifies if the target is {@code static}
-     * @param isPrivate
-     *                specifies if the target is {@code private}
-     * @param classToInstantiate
-     *                the class instantiated by the target (ignored if target is not a constructor)
-     * @param forSerialization
-     *                specifies if the target is being generated for serialization (ignored if target is not a
-     *                constructor)
-     * @param boxing
-     *                enum value encapsulating the semantics of how values are to be boxed and unboxed by the stub
+     * @param target the {@linkplain Method method} or {@linkplain Constructor constructor} for which the stub is being
+     *            generated
+     * @param superClass the super class of the stub. Must be {@link GeneratedMethodStub} or
+     *            {@link GeneratedConstructorStub}.
+     * @param name the VM-level name of the target (must be "<init>" if target is a constructor)
+     * @param declaringClass the class in which the target is declared
+     * @param returnType the declared return type of the target
+     * @param parameterTypes the declared parameter types of the target
+     * @param isStatic specifies if the target is {@code static}
+     * @param isPrivate specifies if the target is {@code private}
+     * @param classToInstantiate the class instantiated by the target (ignored if target is not a constructor)
+     * @param forSerialization specifies if the target is being generated for serialization (ignored if target is not a
+     *            constructor)
+     * @param boxing enum value encapsulating the semantics of how values are to be boxed and unboxed by the stub
      */
     InvocationStubGenerator(AccessibleObject target,
                     Class<T> superClass,
@@ -248,11 +237,11 @@ public class InvocationStubGenerator<T> {
             _constantPoolEditor.release();
 
             if (MaxineVM.isPrototyping()) {
-                _stub = StaticLoophole.cast(superClass, stubClassActor.toJava().newInstance());
+                _stub = superClass.cast(stubClassActor.toJava().newInstance());
             } else {
                 // In the target we cannot call Class.newInstance() as it calls the constructor for the stub class by reflection
                 // and ends up back here. Since the stub constructor actually does nothing important we just allocate the object.
-                _stub = UnsafeLoophole.cast(superClass, Heap.createTuple(stubClassActor.dynamicHub()));
+                _stub = superClass.cast(Heap.createTuple(stubClassActor.dynamicHub()));
             }
         } catch (InstantiationException e) {
             throw (InternalError) new InternalError().initCause(e);
@@ -681,7 +670,7 @@ public class InvocationStubGenerator<T> {
     static final int InvocationTargetException_init_Throwable = register(createClassMethodConstant(InvocationTargetException.class, Throwable.class));
 
     static final int Object_toString = register(createClassMethodConstant(Object.class, SymbolTable.makeSymbol("toString")));
-    static final int UnsafeLoophole_castWord_Class_Word = register(createClassMethodConstant(UnsafeLoophole.class, SymbolTable.makeSymbol("castWord"), Class.class, Word.class));
+    static final int UnsafeLoophole_castWord_Word = register(createClassMethodConstant(UnsafeLoophole.class, SymbolTable.makeSymbol("castWord"), Word.class));
 
     static final int StringBuilder_append_int = register(createClassMethodConstant(StringBuilder.class, SymbolTable.makeSymbol("append"), int.class));
     static final int StringBuilder_append_String = register(createClassMethodConstant(StringBuilder.class, SymbolTable.makeSymbol("append"), String.class));

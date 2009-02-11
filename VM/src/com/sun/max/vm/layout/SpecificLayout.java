@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.layout;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -49,6 +50,7 @@ public interface SpecificLayout extends GeneralLayout {
 
     Size specificSize(Accessor accessor);
 
+    @PROTOTYPE_ONLY
     void visitObjectCell(Object object, ObjectCellVisitor visitor);
 
     int getHubReferenceOffsetInCell();
@@ -89,6 +91,7 @@ public interface SpecificLayout extends GeneralLayout {
      *
      * @author Doug Simon
      */
+    @PROTOTYPE_ONLY
     public static interface ObjectCellVisitor {
 
         void visitField(int offsetInCell, Utf8Constant name, TypeDescriptor type, Value value);

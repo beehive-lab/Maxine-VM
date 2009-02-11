@@ -81,9 +81,10 @@ public abstract class EirCall<EirInstructionVisitor_Type extends EirInstructionV
                 if (location instanceof EirStackSlot) {
                     location = methodGeneration.canonicalizeStackSlot((EirStackSlot) location);
                 }
-                _arguments[i] = new EirOperand(this, EirOperand.Effect.USE, argumentLocations[i].category().asSet());
-                _arguments[i].setRequiredLocation(argumentLocations[i]);
-                _arguments[i].setEirValue(arguments[i]);
+                final EirOperand argument = new EirOperand(this, EirOperand.Effect.USE, argumentLocations[i].category().asSet());
+                argument.setRequiredLocation(argumentLocations[i]);
+                argument.setEirValue(arguments[i]);
+                _arguments[i] = argument;
             }
         }
         final EirRegister[] callerSavedRegisters = abi.callerSavedRegisterArray();

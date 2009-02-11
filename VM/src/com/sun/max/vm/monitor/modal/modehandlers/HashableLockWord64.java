@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.modehandlers;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.*;
 
 /**
  * Abstracts access to a lock word's hashcode bit field.
@@ -56,12 +55,9 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @INLINE
-    public static HashableLockWord64 as(Word word) {
-        if (MaxineVM.isPrototyping()) {
-            return new BoxedHashableLockWord64(word);
-        }
-        return UnsafeLoophole.castWord(HashableLockWord64.class, word);
+    @UNCHECKED_CAST
+    public static HashableLockWord64 from(Word word) {
+        return new BoxedHashableLockWord64(word);
     }
 
     /**
@@ -85,6 +81,6 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
      */
     @INLINE
     public final HashableLockWord64 setHashcode(int hashcode) {
-        return HashableLockWord64.as(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
+        return HashableLockWord64.from(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
     }
 }

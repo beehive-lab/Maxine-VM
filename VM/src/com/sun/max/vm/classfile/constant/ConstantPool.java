@@ -421,8 +421,10 @@ public final class ConstantPool {
     }
 
     /**
-     * Creates an object that wraps the result of resolving a resolvable constant.
+     * Creates an object that wraps the result of resolving a resolvable constant for a particular reason.
      * This ensures that such resolution processing is only performed once for any given constant.
+     *
+     * @param index the index of a resolvable entry in this constant pool
      */
     public ResolutionGuard makeResolutionGuard(int index, ResolutionSnippet snippet) {
         synchronized (_guards) {

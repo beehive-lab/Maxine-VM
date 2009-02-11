@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.modehandlers;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.*;
 
 /**
  * Abstracts bit field access to a 64-bit modal lock word.
@@ -61,12 +60,9 @@ public abstract class ModalLockWord64 extends Word {
      * @param word the word to cast
      * @return the cast word
      */
-    @INLINE
-    public static ModalLockWord64 as(Word word) {
-        if (MaxineVM.isPrototyping()) {
-            return new BoxedModalLockWord64(word);
-        }
-        return UnsafeLoophole.castWord(ModalLockWord64.class, word);
+    @UNCHECKED_CAST
+    public static ModalLockWord64 from(Word word) {
+        return new BoxedModalLockWord64(word);
     }
 
     /**

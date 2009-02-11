@@ -20,14 +20,16 @@
  */
 package com.sun.max.vm.template.source;
 
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.instrument.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.hotpath.*;
 import com.sun.max.vm.hotpath.compiler.*;
 import com.sun.max.vm.runtime.*;
@@ -199,7 +201,7 @@ public class TracedBytecodeTemplateSource {
         UnoptimizedBytecodeTemplateSource.aload_3(dispToLocalSlot);
     }
 
-    public static void anewarray(ReferenceResolutionGuard guard) {
+    public static void anewarray(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.anewarray(guard);
     }
@@ -269,7 +271,7 @@ public class TracedBytecodeTemplateSource {
         UnoptimizedBytecodeTemplateSource.castore();
     }
 
-    public static void checkcast(ReferenceResolutionGuard guard) {
+    public static void checkcast(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.checkcast(guard);
     }
@@ -569,230 +571,230 @@ public class TracedBytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.REFERENCE, traced = Traced.YES)
-    public static void rgetfield(ReferenceResolutionGuard guard) {
+    public static void rgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.rgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.WORD, traced = Traced.YES)
-    public static void wgetfield(ReferenceResolutionGuard guard) {
+    public static void wgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.wgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BYTE, traced = Traced.YES)
-    public static void bgetfield(ReferenceResolutionGuard guard) {
+    public static void bgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.bgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.CHAR, traced = Traced.YES)
-    public static void cgetfield(ReferenceResolutionGuard guard) {
+    public static void cgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.cgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void dgetfield(ReferenceResolutionGuard guard) {
+    public static void dgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.dgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void fgetfield(ReferenceResolutionGuard guard) {
+    public static void fgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.fgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.INT, traced = Traced.YES)
-    public static void igetfield(ReferenceResolutionGuard guard) {
+    public static void igetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.igetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void jgetfield(ReferenceResolutionGuard guard) {
+    public static void jgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.jgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.SHORT, traced = Traced.YES)
-    public static void sgetfield(ReferenceResolutionGuard guard) {
+    public static void sgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.sgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BOOLEAN, traced = Traced.YES)
-    public static void zgetfield(ReferenceResolutionGuard guard) {
+    public static void zgetfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.zgetfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.REFERENCE, traced = Traced.YES)
-    public static void rputfield(ReferenceResolutionGuard guard) {
+    public static void rputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.rputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.WORD, traced = Traced.YES)
-    public static void wputfield(ReferenceResolutionGuard guard) {
+    public static void wputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.wputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BYTE, traced = Traced.YES)
-    public static void bputfield(ReferenceResolutionGuard guard) {
+    public static void bputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.bputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.CHAR, traced = Traced.YES)
-    public static void cputfield(ReferenceResolutionGuard guard) {
+    public static void cputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.cputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void dputfield(ReferenceResolutionGuard guard) {
+    public static void dputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.dputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void fputfield(ReferenceResolutionGuard guard) {
+    public static void fputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.fputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.INT, traced = Traced.YES)
-    public static void iputfield(ReferenceResolutionGuard guard) {
+    public static void iputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.iputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void jputfield(ReferenceResolutionGuard guard) {
+    public static void jputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.jputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.SHORT, traced = Traced.YES)
-    public static void sputfield(ReferenceResolutionGuard guard) {
+    public static void sputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.sputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BOOLEAN, traced = Traced.YES)
-    public static void zputfield(ReferenceResolutionGuard guard) {
+    public static void zputfield(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.zputfield(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.BYTE, traced = Traced.YES)
-    public static void bgetstatic(ReferenceResolutionGuard guard) {
+    public static void bgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.bgetstatic(guard);
 
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.CHAR, traced = Traced.YES)
-    public static void cgetstatic(ReferenceResolutionGuard guard) {
+    public static void cgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.cgetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void dgetstatic(ReferenceResolutionGuard guard) {
+    public static void dgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.dgetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void fgetstatic(ReferenceResolutionGuard guard) {
+    public static void fgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.fgetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.INT, traced = Traced.YES)
-    public static void igetstatic(ReferenceResolutionGuard guard) {
+    public static void igetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.igetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void jgetstatic(ReferenceResolutionGuard guard) {
+    public static void jgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.jgetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.REFERENCE, traced = Traced.YES)
-    public static void rgetstatic(ReferenceResolutionGuard guard) {
+    public static void rgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.rgetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.SHORT, traced = Traced.YES)
-    public static void sgetstatic(ReferenceResolutionGuard guard) {
+    public static void sgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.sgetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.BOOLEAN, traced = Traced.YES)
-    public static void zgetstatic(ReferenceResolutionGuard guard) {
+    public static void zgetstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.zgetstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.BYTE, traced = Traced.YES)
-    public static void bputstatic(ReferenceResolutionGuard guard) {
+    public static void bputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.bputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.CHAR, traced = Traced.YES)
-    public static void cputstatic(ReferenceResolutionGuard guard) {
+    public static void cputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.cputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void dputstatic(ReferenceResolutionGuard guard) {
+    public static void dputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.dputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void fputstatic(ReferenceResolutionGuard guard) {
+    public static void fputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.fputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.INT, traced = Traced.YES)
-    public static void iputstatic(ReferenceResolutionGuard guard) {
+    public static void iputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.iputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void jputstatic(ReferenceResolutionGuard guard) {
+    public static void jputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.jputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.REFERENCE, traced = Traced.YES)
-    public static void rputstatic(ReferenceResolutionGuard guard) {
+    public static void rputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.rputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.SHORT, traced = Traced.YES)
-    public static void sputstatic(ReferenceResolutionGuard guard) {
+    public static void sputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.sputstatic(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.BOOLEAN, traced = Traced.YES)
-    public static void zputstatic(ReferenceResolutionGuard guard) {
+    public static void zputstatic(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.zputstatic(guard);
     }
@@ -928,134 +930,136 @@ public class TracedBytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INSTANCEOF, traced = Traced.YES)
-    public static void instanceof_(ReferenceResolutionGuard guard) {
+    public static void instanceof_(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.instanceof_(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.VOID, traced = Traced.YES)
-    public static void invokevirtualVoid(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualVoid(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokevirtualVoid(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void invokevirtualFloat(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualFloat(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokevirtualFloat(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void invokevirtualLong(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualLong(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokevirtualLong(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void invokevirtualDouble(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualDouble(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokevirtualDouble(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.WORD, traced = Traced.YES)
-    public static void invokevirtualWord(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokevirtualWord(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokevirtualWord(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.VOID, traced = Traced.YES)
-    public static void invokeinterfaceVoid(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceVoid(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokeinterfaceVoid(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void invokeinterfaceFloat(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceFloat(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokeinterfaceFloat(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void invokeinterfaceLong(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceLong(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokeinterfaceLong(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void invokeinterfaceDouble(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceDouble(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokeinterfaceDouble(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.WORD, traced = Traced.YES)
-    public static void invokeinterfaceWord(ReferenceResolutionGuard guard, int receiverStackIndex) {
+    public static void invokeinterfaceWord(ResolutionGuard guard, int receiverStackIndex) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokeinterfaceWord(guard, receiverStackIndex);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.VOID, traced = Traced.YES)
-    public static void invokespecialVoid(EntrypointResolutionGuard guard) {
+    public static void invokespecialVoid(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokespecialVoid(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void invokespecialFloat(EntrypointResolutionGuard guard) {
+    public static void invokespecialFloat(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokespecialFloat(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void invokespecialLong(EntrypointResolutionGuard guard) {
+    public static void invokespecialLong(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokespecialLong(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void invokespecialDouble(EntrypointResolutionGuard guard) {
+    public static void invokespecialDouble(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokespecialDouble(guard);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.WORD, traced = Traced.YES)
-    public static void invokespecialWord(EntrypointResolutionGuard guard) {
+    public static void invokespecialWord(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.invokespecialWord(guard);
     }
 
+    @INLINE
+    private static Address invokestaticEntrypoint(ResolutionGuard guard) {
+        final StaticMethodActor staticMethod = resolveStaticMethod(guard);
+        MakeHolderInitialized.makeHolderInitialized(staticMethod);
+        return MakeTracedEntrypoint.makeTracedEntrypoint(staticMethod);
+    }
+
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.VOID, traced = Traced.YES)
-    public static void invokestaticVoid(EntrypointResolutionGuard guard) {
+    public static void invokestaticVoid(ResolutionGuard guard) {
         trace();
-        final Address entryPoint = ResolveStaticMethod.resolveTracedStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        JitStackFrameOperation.indirectCallVoid(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.FLOAT, traced = Traced.YES)
-    public static void invokestaticFloat(EntrypointResolutionGuard guard) {
+    public static void invokestaticFloat(ResolutionGuard guard) {
         trace();
-        final Address entryPoint = ResolveStaticMethod.resolveTracedStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        JitStackFrameOperation.indirectCallFloat(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.LONG, traced = Traced.YES)
-    public static void invokestaticLong(EntrypointResolutionGuard guard) {
+    public static void invokestaticLong(ResolutionGuard guard) {
         trace();
-        final Address entryPoint = ResolveStaticMethod.resolveTracedStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        JitStackFrameOperation.indirectCallLong(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.DOUBLE, traced = Traced.YES)
-    public static void invokestaticDouble(EntrypointResolutionGuard guard) {
+    public static void invokestaticDouble(ResolutionGuard guard) {
         trace();
-        final Address entryPoint = ResolveStaticMethod.resolveTracedStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        JitStackFrameOperation.indirectCallDouble(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.WORD, traced = Traced.YES)
-    public static void invokestaticWord(EntrypointResolutionGuard guard) {
+    public static void invokestaticWord(ResolutionGuard guard) {
         trace();
-        final Address entryPoint = ResolveStaticMethod.resolveTracedStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        JitStackFrameOperation.indirectCallWord(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     public static void ior() {
@@ -1136,7 +1140,7 @@ public class TracedBytecodeTemplateSource {
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.LDC, kind = KindEnum.REFERENCE, traced = Traced.YES)
-    public static void unresolved_class_ldc(ReferenceResolutionGuard guard) {
+    public static void unresolved_class_ldc(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.unresolved_class_ldc(guard);
     }
@@ -1320,13 +1324,13 @@ public class TracedBytecodeTemplateSource {
         UnoptimizedBytecodeTemplateSource.monitorexit();
     }
 
-    public static void multianewarray(ReferenceResolutionGuard guard, int[] lengths) {
+    public static void multianewarray(ResolutionGuard guard, int[] lengths) {
         trace();
         UnoptimizedBytecodeTemplateSource.multianewarray(guard, lengths);
     }
 
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NEW, traced = Traced.YES)
-    public static void new_(ReferenceResolutionGuard guard) {
+    public static void new_(ResolutionGuard guard) {
         trace();
         UnoptimizedBytecodeTemplateSource.new_(guard);
     }

@@ -47,7 +47,7 @@ public abstract class Stop {
 
     /**
      * Determines if this stop denotes a direct call into the VM runtime (as opposed to an application method). This
-     * method must not be called is this is not a stop for a direct call (i.e.
+     * method must not be called if this is not a stop for a direct call (i.e.
      * {@code this.type() != StopType.DIRECT_CALL}.
      */
     public boolean isDirectRuntimeCall() {

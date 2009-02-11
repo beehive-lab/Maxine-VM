@@ -20,6 +20,19 @@
  */
 package com.sun.max.vm.template.source;
 
+import static com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.SelectInterfaceMethod.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveSpecialMethod.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticMethod.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveVirtualMethod.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInterfaceMethod.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForWriting.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveStaticFieldForReading.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForReading.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveInstanceFieldForWriting.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClass.*;
+import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClassForNew.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
@@ -29,7 +42,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
-import com.sun.max.vm.compiler.snippet.ResolutionSnippet.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -100,8 +112,8 @@ public final class UnoptimizedBytecodeTemplateSource {
     }
 
     @INLINE
-    public static void anewarray(ReferenceResolutionGuard guard) {
-        final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveArrayClass.resolveArrayClass(guard));
+    public static void anewarray(ResolutionGuard guard) {
+        final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(resolveArrayClass(guard));
         final int length = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.pokeReference(0, NonFoldableSnippet.CreateReferenceArray.neverInlineCreateReferenceArray(arrayClassActor, length));
     }
@@ -191,8 +203,8 @@ public final class UnoptimizedBytecodeTemplateSource {
     }
 
     @INLINE
-    public static void checkcast(ReferenceResolutionGuard guard) {
-        final ClassActor classActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveClass.resolveClass(guard));
+    public static void checkcast(ResolutionGuard guard) {
+        final ClassActor classActor = resolveClass(guard);
         final Object object = JitStackFrameOperation.peekReference(0);
         Snippet.CheckCast.checkCast(classActor, object);
     }
@@ -595,40 +607,40 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.REFERENCE)
-    public static void rgetfield(ReferenceResolutionGuard guard) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void rgetfield(ResolutionGuard guard) {
+        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeReference(0, FieldReadSnippet.ReadReference.readReference(object, fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.WORD)
-    public static void wgetfield(ReferenceResolutionGuard guard) {
-        final WordFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void wgetfield(ResolutionGuard guard) {
+        final WordFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeWord(0, FieldReadSnippet.ReadWord.readWord(object, fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BYTE)
-    public static void bgetfield(ReferenceResolutionGuard guard) {
-        final ByteFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void bgetfield(ResolutionGuard guard) {
+        final ByteFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, FieldReadSnippet.ReadByte.readByte(object, fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.CHAR)
-    public static void cgetfield(ReferenceResolutionGuard guard) {
-        final CharFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void cgetfield(ResolutionGuard guard) {
+        final CharFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, FieldReadSnippet.ReadChar.readChar(object, fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.DOUBLE)
-    public static void dgetfield(ReferenceResolutionGuard guard) {
-        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void dgetfield(ResolutionGuard guard) {
+        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeDouble(0, FieldReadSnippet.ReadDouble.readDouble(object, fieldActor));
@@ -636,24 +648,24 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.FLOAT)
-    public static void fgetfield(ReferenceResolutionGuard guard) {
-        final FloatFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void fgetfield(ResolutionGuard guard) {
+        final FloatFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeFloat(0, FieldReadSnippet.ReadFloat.readFloat(object, fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.INT)
-    public static void igetfield(ReferenceResolutionGuard guard) {
-        final IntFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void igetfield(ResolutionGuard guard) {
+        final IntFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, FieldReadSnippet.ReadInt.readInt(object, fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.LONG)
-    public static void jgetfield(ReferenceResolutionGuard guard) {
-        final LongFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void jgetfield(ResolutionGuard guard) {
+        final LongFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.addSlots(1);
         JitStackFrameOperation.pokeLong(0, FieldReadSnippet.ReadLong.readLong(object, fieldActor));
@@ -661,24 +673,24 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.SHORT)
-    public static void sgetfield(ReferenceResolutionGuard guard) {
-        final ShortFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void sgetfield(ResolutionGuard guard) {
+        final ShortFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, FieldReadSnippet.ReadShort.readShort(object, fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETFIELD, kind = KindEnum.BOOLEAN)
-    public static void zgetfield(ReferenceResolutionGuard guard) {
-        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForReading.resolveInstanceFieldForReading(guard));
+    public static void zgetfield(ResolutionGuard guard) {
+        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForReading(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, UnsafeLoophole.booleanToByte(FieldReadSnippet.ReadBoolean.readBoolean(object, fieldActor)));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.REFERENCE)
-    public static void rputfield(ReferenceResolutionGuard guard) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void rputfield(ResolutionGuard guard) {
+        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final Object value = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.removeSlots(2);
@@ -687,8 +699,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.WORD)
-    public static void wputfield(ReferenceResolutionGuard guard) {
-        final WordFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void wputfield(ResolutionGuard guard) {
+        final WordFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final Word value = JitStackFrameOperation.peekWord(0);
         JitStackFrameOperation.removeSlots(2);
@@ -697,8 +709,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BYTE)
-    public static void bputfield(ReferenceResolutionGuard guard) {
-        final ByteFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void bputfield(ResolutionGuard guard) {
+        final ByteFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final byte value = (byte) JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
@@ -707,8 +719,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.CHAR)
-    public static void cputfield(ReferenceResolutionGuard guard) {
-        final CharFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void cputfield(ResolutionGuard guard) {
+        final CharFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final char value = (char) JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
@@ -717,8 +729,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.DOUBLE)
-    public static void dputfield(ReferenceResolutionGuard guard) {
-        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void dputfield(ResolutionGuard guard) {
+        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(2);
         final double value = JitStackFrameOperation.peekDouble(0);
         JitStackFrameOperation.removeSlots(3);
@@ -727,8 +739,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.FLOAT)
-    public static void fputfield(ReferenceResolutionGuard guard) {
-        final FloatFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void fputfield(ResolutionGuard guard) {
+        final FloatFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final float value = JitStackFrameOperation.peekFloat(0);
         JitStackFrameOperation.removeSlots(2);
@@ -737,8 +749,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.INT)
-    public static void iputfield(ReferenceResolutionGuard guard) {
-        final IntFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void iputfield(ResolutionGuard guard) {
+        final IntFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final int value = JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
@@ -747,8 +759,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.LONG)
-    public static void jputfield(ReferenceResolutionGuard guard) {
-        final LongFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void jputfield(ResolutionGuard guard) {
+        final LongFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(2);
         final long value = JitStackFrameOperation.peekLong(0);
         JitStackFrameOperation.removeSlots(3);
@@ -757,8 +769,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.SHORT)
-    public static void sputfield(ReferenceResolutionGuard guard) {
-        final ShortFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void sputfield(ResolutionGuard guard) {
+        final ShortFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final short value = (short) JitStackFrameOperation.peekInt(0);
         JitStackFrameOperation.removeSlots(2);
@@ -767,8 +779,8 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTFIELD, kind = KindEnum.BOOLEAN)
-    public static void zputfield(ReferenceResolutionGuard guard) {
-        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveInstanceFieldForWriting.resolveInstanceFieldForWriting(guard));
+    public static void zputfield(ResolutionGuard guard) {
+        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(resolveInstanceFieldForWriting(guard));
         final Object object = JitStackFrameOperation.peekReference(1);
         final boolean value = UnsafeLoophole.byteToBoolean((byte) JitStackFrameOperation.peekInt(0));
         JitStackFrameOperation.removeSlots(2);
@@ -776,137 +788,151 @@ public final class UnoptimizedBytecodeTemplateSource {
     }
 
     @INLINE
+    private static FieldActor getstaticFieldActor(ResolutionGuard guard) {
+        final FieldActor fieldActor = resolveStaticFieldForReading(guard);
+        MakeHolderInitialized.makeHolderInitialized(fieldActor);
+        return fieldActor;
+    }
+
+    @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.BYTE)
-    public static void bgetstatic(ReferenceResolutionGuard guard) {
-        final ByteFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void bgetstatic(ResolutionGuard guard) {
+        final ByteFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushInt(FieldReadSnippet.ReadByte.readByte(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.CHAR)
-    public static void cgetstatic(ReferenceResolutionGuard guard) {
-        final CharFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void cgetstatic(ResolutionGuard guard) {
+        final CharFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushInt(FieldReadSnippet.ReadChar.readChar(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.DOUBLE)
-    public static void dgetstatic(ReferenceResolutionGuard guard) {
-        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void dgetstatic(ResolutionGuard guard) {
+        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushDouble(FieldReadSnippet.ReadDouble.readDouble(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.FLOAT)
-    public static void fgetstatic(ReferenceResolutionGuard guard) {
-        final FloatFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void fgetstatic(ResolutionGuard guard) {
+        final FloatFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushFloat(FieldReadSnippet.ReadFloat.readFloat(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.INT)
-    public static void igetstatic(ReferenceResolutionGuard guard) {
-        final IntFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void igetstatic(ResolutionGuard guard) {
+        final IntFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushInt(FieldReadSnippet.ReadInt.readInt(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.LONG)
-    public static void jgetstatic(ReferenceResolutionGuard guard) {
-        final LongFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void jgetstatic(ResolutionGuard guard) {
+        final LongFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushLong(FieldReadSnippet.ReadLong.readLong(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.REFERENCE)
-    public static void rgetstatic(ReferenceResolutionGuard guard) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void rgetstatic(ResolutionGuard guard) {
+        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushReference(FieldReadSnippet.ReadReference.readReference(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.SHORT)
-    public static void sgetstatic(ReferenceResolutionGuard guard) {
-        final ShortFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void sgetstatic(ResolutionGuard guard) {
+        final ShortFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushInt(FieldReadSnippet.ReadShort.readShort(fieldActor.holder().staticTuple(), fieldActor));
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.GETSTATIC, kind = KindEnum.BOOLEAN)
-    public static void zgetstatic(ReferenceResolutionGuard guard) {
-        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void zgetstatic(ResolutionGuard guard) {
+        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(getstaticFieldActor(guard));
         JitStackFrameOperation.pushInt(UnsafeLoophole.booleanToByte(FieldReadSnippet.ReadBoolean.readBoolean(fieldActor.holder().staticTuple(), fieldActor)));
     }
 
     @INLINE
+    private static FieldActor putstaticFieldActor(ResolutionGuard guard) {
+        final FieldActor fieldActor = resolveStaticFieldForWriting(guard);
+        MakeHolderInitialized.makeHolderInitialized(fieldActor);
+        return fieldActor;
+    }
+
+    @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.BYTE)
-    public static void bputstatic(ReferenceResolutionGuard guard) {
-        final ByteFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void bputstatic(ResolutionGuard guard) {
         final byte value = (byte) JitStackFrameOperation.popInt();
+        final ByteFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteByte.writeByte(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.CHAR)
-    public static void cputstatic(ReferenceResolutionGuard guard) {
-        final CharFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void cputstatic(ResolutionGuard guard) {
         final char value = (char) JitStackFrameOperation.popInt();
+        final CharFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteChar.writeChar(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.DOUBLE)
-    public static void dputstatic(ReferenceResolutionGuard guard) {
-        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void dputstatic(ResolutionGuard guard) {
         final double value = JitStackFrameOperation.popDouble();
+        final DoubleFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteDouble.writeDouble(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.FLOAT)
-    public static void fputstatic(ReferenceResolutionGuard guard) {
-        final FloatFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void fputstatic(ResolutionGuard guard) {
         final float value = JitStackFrameOperation.popFloat();
+        final FloatFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteFloat.writeFloat(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.INT)
-    public static void iputstatic(ReferenceResolutionGuard guard) {
-        final IntFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void iputstatic(ResolutionGuard guard) {
         final int value = JitStackFrameOperation.popInt();
+        final IntFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteInt.writeInt(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.LONG)
-    public static void jputstatic(ReferenceResolutionGuard guard) {
-        final LongFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void jputstatic(ResolutionGuard guard) {
         final long value = JitStackFrameOperation.popLong();
+        final LongFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteLong.writeLong(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.REFERENCE)
-    public static void rputstatic(ReferenceResolutionGuard guard) {
-        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void rputstatic(ResolutionGuard guard) {
         final Object value = JitStackFrameOperation.popReference();
+        final ReferenceFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteReference.noinlineWriteReference(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.SHORT)
-    public static void sputstatic(ReferenceResolutionGuard guard) {
-        final ShortFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void sputstatic(ResolutionGuard guard) {
         final short value = (short) JitStackFrameOperation.popInt();
+        final ShortFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteShort.writeShort(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.BOOLEAN)
-    public static void zputstatic(ReferenceResolutionGuard guard) {
-        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveStaticFieldForReading.resolveStaticFieldForReading(guard));
+    public static void zputstatic(ResolutionGuard guard) {
         final boolean value = UnsafeLoophole.byteToBoolean((byte) JitStackFrameOperation.popInt());
+        final BooleanFieldActor fieldActor = UnsafeLoophole.cast(putstaticFieldActor(guard));
         FieldWriteSnippet.WriteBoolean.writeBoolean(fieldActor.holder().staticTuple(), fieldActor, value);
     }
 
@@ -1072,170 +1098,174 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INSTANCEOF)
-    public static void instanceof_(ReferenceResolutionGuard guard) {
-        final ClassActor classActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveClass.resolveClass(guard));
+    public static void instanceof_(ResolutionGuard guard) {
+        final ClassActor classActor = UnsafeLoophole.cast(resolveClass(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, UnsafeLoophole.booleanToByte(Snippet.InstanceOf.instanceOf(classActor, object)));
     }
 
     @INLINE
+    private static Address invokevirtualEntrypoint(Object receiver, ResolutionGuard guard, int receiverStackIndex) {
+        final VirtualMethodActor dynamicMethodActor = UnsafeLoophole.cast(resolveVirtualMethod(guard));
+        return MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, dynamicMethodActor).asAddress();
+    }
+
+    @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.VOID)
-    public static void invokevirtualVoid(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final VirtualMethodActor dynamicMethodActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard));
+    public static void invokevirtualVoid(ResolutionGuard guard, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, dynamicMethodActor).asAddress();
+        final Address entryPoint = invokevirtualEntrypoint(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.FLOAT)
-    public static void invokevirtualFloat(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final VirtualMethodActor dynamicMethodActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard));
+    public static void invokevirtualFloat(ResolutionGuard guard, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, dynamicMethodActor).asAddress();
+        final Address entryPoint = invokevirtualEntrypoint(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.LONG)
-    public static void invokevirtualLong(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final VirtualMethodActor dynamicMethodActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard));
+    public static void invokevirtualLong(ResolutionGuard guard, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, dynamicMethodActor).asAddress();
+        final Address entryPoint = invokevirtualEntrypoint(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.DOUBLE)
-    public static void invokevirtualDouble(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final VirtualMethodActor dynamicMethodActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard));
+    public static void invokevirtualDouble(ResolutionGuard guard, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, dynamicMethodActor).asAddress();
+        final Address entryPoint = invokevirtualEntrypoint(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEVIRTUAL, kind = KindEnum.WORD)
-    public static void invokevirtualWord(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final VirtualMethodActor dynamicMethodActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveVirtualMethod.resolveVirtualMethod(guard));
+    public static void invokevirtualWord(ResolutionGuard guard, int receiverStackIndex) {
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectVirtualMethod.selectNonPrivateVirtualMethod(receiver, dynamicMethodActor).asAddress();
+        final Address entryPoint = invokevirtualEntrypoint(receiver, guard, receiverStackIndex);
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.VOID)
-    public static void invokeinterfaceVoid(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final InterfaceMethodActor declaredInterfaceMethod = UnsafeLoophole.cast(ResolveInterfaceMethod.resolveInterfaceMethod(guard));
+    public static void invokeinterfaceVoid(ResolutionGuard guard, int receiverStackIndex) {
+        final InterfaceMethodActor declaredInterfaceMethod = resolveInterfaceMethod(guard);
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
+        final Address entryPoint = selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
         JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.FLOAT)
-    public static void invokeinterfaceFloat(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final InterfaceMethodActor declaredInterfaceMethod = UnsafeLoophole.cast(ResolveInterfaceMethod.resolveInterfaceMethod(guard));
+    public static void invokeinterfaceFloat(ResolutionGuard guard, int receiverStackIndex) {
+        final InterfaceMethodActor declaredInterfaceMethod = resolveInterfaceMethod(guard);
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
+        final Address entryPoint = selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
         JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.LONG)
-    public static void invokeinterfaceLong(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final InterfaceMethodActor declaredInterfaceMethod = UnsafeLoophole.cast(ResolveInterfaceMethod.resolveInterfaceMethod(guard));
+    public static void invokeinterfaceLong(ResolutionGuard guard, int receiverStackIndex) {
+        final InterfaceMethodActor declaredInterfaceMethod = resolveInterfaceMethod(guard);
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
+        final Address entryPoint = selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
         JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.DOUBLE)
-    public static void invokeinterfaceDouble(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final InterfaceMethodActor declaredInterfaceMethod = UnsafeLoophole.cast(ResolveInterfaceMethod.resolveInterfaceMethod(guard));
+    public static void invokeinterfaceDouble(ResolutionGuard guard, int receiverStackIndex) {
+        final InterfaceMethodActor declaredInterfaceMethod = resolveInterfaceMethod(guard);
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
+        final Address entryPoint = selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
         JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKEINTERFACE, kind = KindEnum.WORD)
-    public static void invokeinterfaceWord(ReferenceResolutionGuard guard, int receiverStackIndex) {
-        final InterfaceMethodActor declaredInterfaceMethod = UnsafeLoophole.cast(ResolveInterfaceMethod.resolveInterfaceMethod(guard));
+    public static void invokeinterfaceWord(ResolutionGuard guard, int receiverStackIndex) {
+        final InterfaceMethodActor declaredInterfaceMethod = resolveInterfaceMethod(guard);
         final Object receiver = JitStackFrameOperation.peekReference(receiverStackIndex);
-        final Address entryPoint = MethodSelectionSnippet.SelectInterfaceMethod.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
+        final Address entryPoint = selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
         JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.VTABLE_ENTRY_POINT, receiver);
     }
 
     @INLINE
+    private static Address invokespecialEntrypoint(ResolutionGuard guard) {
+        final VirtualMethodActor virtualMethod = resolveSpecialMethod(guard);
+        return MakeEntrypoint.makeEntrypoint(virtualMethod);
+    }
+
+    @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.VOID)
-    public static void invokespecialVoid(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveSpecialMethod.resolveSpecialMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokespecialVoid(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallVoid(invokespecialEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.FLOAT)
-    public static void invokespecialFloat(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveSpecialMethod.resolveSpecialMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokespecialFloat(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallFloat(invokespecialEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.LONG)
-    public static void invokespecialLong(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveSpecialMethod.resolveSpecialMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokespecialLong(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallLong(invokespecialEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.DOUBLE)
-    public static void invokespecialDouble(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveSpecialMethod.resolveSpecialMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokespecialDouble(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallDouble(invokespecialEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESPECIAL, kind = KindEnum.WORD)
-    public static void invokespecialWord(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveSpecialMethod.resolveSpecialMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokespecialWord(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallWord(invokespecialEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    }
+
+    @INLINE
+    private static Address invokestaticEntrypoint(ResolutionGuard guard) {
+        final StaticMethodActor staticMethod = resolveStaticMethod(guard);
+        MakeHolderInitialized.makeHolderInitialized(staticMethod);
+        return MakeEntrypoint.makeEntrypoint(staticMethod);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.VOID)
-    public static void invokestaticVoid(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveStaticMethod.resolveStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallVoid(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokestaticVoid(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallVoid(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.FLOAT)
-    public static void invokestaticFloat(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveStaticMethod.resolveStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallFloat(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokestaticFloat(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallFloat(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.LONG)
-    public static void invokestaticLong(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveStaticMethod.resolveStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallLong(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokestaticLong(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallLong(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.DOUBLE)
-    public static void invokestaticDouble(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveStaticMethod.resolveStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallDouble(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokestaticDouble(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallDouble(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INVOKESTATIC, kind = KindEnum.WORD)
-    public static void invokestaticWord(EntrypointResolutionGuard guard) {
-        final Address entryPoint = ResolveStaticMethod.resolveStaticMethod(guard).asAddress();
-        JitStackFrameOperation.indirectCallWord(entryPoint, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public static void invokestaticWord(ResolutionGuard guard) {
+        JitStackFrameOperation.indirectCallWord(invokestaticEntrypoint(guard), CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     @INLINE
@@ -1338,17 +1368,9 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.LDC, kind = KindEnum.REFERENCE)
-    public static void unresolved_class_ldc(ReferenceResolutionGuard guard) {
-        Object mirror;
-        final ClassActor classActor = UnsafeLoophole.cast(guard.value());
-        if (classActor == null) {
-            mirror = TemplateRuntime.resolveMirror(guard);
-        } else {
-            mirror = classActor.uncheckedGetMirror();
-            if (mirror == null) {
-                mirror = TemplateRuntime.getClassMirror(classActor);
-            }
-        }
+    public static void unresolved_class_ldc(ResolutionGuard guard) {
+        final ClassActor classActor = resolveClass(guard);
+        final Object mirror = TemplateRuntime.getClassMirror(classActor);
         JitStackFrameOperation.pushReference(mirror);
     }
 
@@ -1582,9 +1604,9 @@ public final class UnoptimizedBytecodeTemplateSource {
     }
 
     @INLINE
-    public static void multianewarray(ReferenceResolutionGuard guard, int[] lengths) {
+    public static void multianewarray(ResolutionGuard guard, int[] lengths) {
         final int numberOfDimensions = lengths.length;
-        final ArrayClassActor arrayClassActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveClass.resolveClass(guard));
+        final ClassActor arrayClassActor = resolveClass(guard);
 
         for (int i = 1; i <= numberOfDimensions; i++) {
             final int length = JitStackFrameOperation.popInt();
@@ -1596,8 +1618,9 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.NEW)
-    public static void new_(ReferenceResolutionGuard guard) {
-        final ClassActor classActor = UnsafeLoophole.cast(ResolutionSnippet.ResolveClassForNew.resolveClassForNew(guard));
+    public static void new_(ResolutionGuard guard) {
+        final ClassActor classActor = resolveClassForNew(guard);
+        MakeClassInitialized.makeClassInitialized(classActor);
         JitStackFrameOperation.pushReference(NonFoldableSnippet.CreateTupleOrHybrid.createTupleOrHybrid(classActor));
     }
 

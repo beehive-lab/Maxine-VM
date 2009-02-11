@@ -30,11 +30,18 @@ import com.sun.max.vm.type.*;
 public class InstanceOf extends JavaResolvableOperator<ClassActor> {
 
     public InstanceOf(ConstantPool constantPool, int index) {
-        super(NONE, constantPool, index, Kind.BOOLEAN);
+        super(CALL, constantPool, index, Kind.BOOLEAN);
     }
 
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
+    }
+
+    private static final Kind[] _parameterKinds = {Kind.REFERENCE};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 }

@@ -20,7 +20,6 @@
  */
 package com.sun.max.unsafe.box;
 
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -30,9 +29,12 @@ public final class BoxedJniHandle extends JniHandle implements UnsafeBox {
 
     protected long _nativeWord;
 
-    public BoxedJniHandle(Word word) {
-        final UnsafeBox unsafeBox = (UnsafeBox) word;
-        _nativeWord = unsafeBox.nativeWord();
+    public static BoxedJniHandle from(long word) {
+        return new BoxedJniHandle(word);
+    }
+
+    private BoxedJniHandle(long word) {
+        _nativeWord = word;
     }
 
     public long nativeWord() {

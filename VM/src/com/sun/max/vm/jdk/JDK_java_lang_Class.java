@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.type.*;
 
 /*
@@ -85,7 +86,7 @@ final class JDK_java_lang_Class {
     private static Class resolveComponent(String name, boolean initialize, ClassLoader classLoader) throws ClassNotFoundException {
         final Class javaClass = classLoader.loadClass(name);
         if (initialize) {
-            ClassActor.fromJava(javaClass).makeInitialized();
+            MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(javaClass));
         }
         return javaClass;
     }

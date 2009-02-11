@@ -512,22 +512,22 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     }
 
 
-    private EirMethod _jniHandleGet;
+    private EirMethod _jniHandleUnhand;
 
     /**
-     * Gets the compiled EIR version of {@link JniHandle#get()}.
+     * Gets the compiled EIR version of {@link JniHandle#unhand()}.
      */
-    protected EirMethod jniHandleGetMethod() {
-        if (_jniHandleGet == null) {
+    protected EirMethod jniHandleUnhandMethod() {
+        if (_jniHandleUnhand == null) {
             try {
-                final Method javaMethod = JniHandle.class.getDeclaredMethod("get");
+                final Method javaMethod = JniHandle.class.getDeclaredMethod("unhand");
                 final ClassMethodActor classMethodActor = ClassMethodActor.fromJava(javaMethod);
-                _jniHandleGet = eirGenerator().makeIrMethod(classMethodActor);
+                _jniHandleUnhand = eirGenerator().makeIrMethod(classMethodActor);
             } catch (NoSuchMethodException e) {
                 ProgramError.unexpected("could not find 'JniHandle.get()' method used in JNI stub");
             }
         }
-        return _jniHandleGet;
+        return _jniHandleUnhand;
     }
 
     /**
@@ -539,7 +539,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
      * @return the reference wrapped by {@code handle} (which may be {@link ReferenceValue#NULL}
      */
     protected Value unwrapJniHandle(Value handle, EirLocation[] argumentLocations, Map<Value, Value> valuesToHandles) throws InvocationTargetException {
-        final Value value = execute(jniHandleGetMethod(), handle);
+        final Value value = execute(jniHandleUnhandMethod(), handle);
         valuesToHandles.put(value, handle);
         return value;
     }

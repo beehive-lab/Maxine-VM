@@ -35,7 +35,7 @@ import com.sun.max.vm.heap.*;
  * are a <i>hybrid</i> between classes and arrays). This is used,
  * for example, to implement hubs, which contain metadata about an
  * object as well as the vtable and itable.
- * 
+ *
  * We declare "Hybrid" as an abstract class as close as possible
  * to the top of the hierarchy rather than as an interface
  * to prevent inheriting any fields before inheriting from subclasses of "Hybrid".
@@ -44,7 +44,7 @@ import com.sun.max.vm.heap.*;
  * This provides the freedom to configure the object headers
  * and origins of tuples and hybrids independently,
  * i.e. otherwise field offsets in tuples would have to be aligned with field offsets in hybrids.
- * 
+ *
  * @author Bernd Mathiske
  */
 public abstract class Hybrid<Hybrid_Type extends Hybrid> {
@@ -63,7 +63,7 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
 
         Expansion(Hybrid hybrid, int length) {
             _hybrid = hybrid;
-            _words = WordArray.create(Word.class, Word.zero(), length);
+            _words = new Word[length];
             _ints = new int[(length * Word.size()) / Ints.SIZE];
         }
     }
@@ -79,7 +79,7 @@ public abstract class Hybrid<Hybrid_Type extends Hybrid> {
 
     /**
      * Expand the given initial hybrid object with fields to a fully fledged hybrid with array features and space.
-     * 
+     *
      * @param length the Word array length of the resulting hybrid
      * @return the expanded hybrid with array features
      */

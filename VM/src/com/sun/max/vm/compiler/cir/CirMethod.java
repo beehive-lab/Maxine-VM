@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.cir;
 
-import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -48,8 +47,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
 
     public CirMethod(ClassMethodActor classMethodActor) {
         _classMethodActor = classMethodActor;
-        // Append a kind each for the normal continuation and for the exception continuation:
-        _parameterKinds = Arrays.append(classMethodActor.getParameterKinds(), Kind.REFERENCE, Kind.REFERENCE);
+        _parameterKinds = classMethodActor.getParameterKinds();
     }
 
     public ClassMethodActor classMethodActor() {
@@ -67,6 +65,11 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     @Override
     public Kind[] parameterKinds() {
         return _parameterKinds;
+    }
+
+    @Override
+    public boolean isConstant() {
+        return true;
     }
 
     public String name() {
@@ -89,34 +92,10 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return name();
     }
 
-    /**
-     * Determines if this method's signature is a valid signature for a {@code public static} method
-     * in the {@link UnsafeLoophole} class.
-     */
-    private boolean isValidFoldableCast(CirGenerator cirGenerator) {
-        final Kind[] parameterKinds = _classMethodActor.getParameterKinds();
-        if (parameterKinds.length > 0) {
-            final WordWidth resultWidth = parameterKinds[parameterKinds.length - 1].width();
-            final WordWidth returnWidth = _classMethodActor.resultKind().width();
-            return returnWidth == resultWidth;
-        }
-        return false;
-    }
-
-    /**
-     * Determines if a given method is a {@code public static} method declared in {@link UnsafeLoophole}.
-     */
-    private boolean isFoldableCast(CirGenerator cirGenerator) {
-        if (_classMethodActor.holder().toJava() == UnsafeLoophole.class && _classMethodActor.isPublic() && _classMethodActor.isStatic() && !_classMethodActor.isBuiltin()) {
-            assert isValidFoldableCast(cirGenerator) : _classMethodActor;
-            return true;
-        }
-        return false;
-    }
-
-    private CirCall foldCast(CirValue[] arguments) {
-        final CirValue result = arguments[arguments.length - 3];
-        final CirValue normalContinuation = arguments[arguments.length - 2];
+    private CirCall foldUncheckedCast(CirValue[] arguments) {
+        assert arguments.length == 3;
+        final CirValue result = arguments[0];
+        final CirValue normalContinuation = arguments[1];
         CirCheckcastPruning.apply(normalContinuation);
         return new CirCall(normalContinuation, result);
     }
@@ -130,8 +109,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         }
 
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
-        if (isFoldableCast(cirGenerator)) {
-            return foldCast(arguments);
+        if (_classMethodActor.isUncheckedCast()) {
+            return foldUncheckedCast(arguments);
         }
         if (_classMethodActor.isStatic() && arguments.length == 2) {
             // no application arguments, just the 2 continuations
@@ -146,7 +125,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         if (compilee.isHiddenToReflection()) {
             return false;
         }
-        if (isFoldableCast(cirOptimizer.cirGenerator())) {
+        if (_classMethodActor.isUncheckedCast()) {
             return true;
         }
         if (!compilee.isDeclaredFoldable()) {
@@ -311,8 +290,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
     }
 
     @Override
-    public int thrownExceptions() {
-        return ExceptionThrower.ANY;
+    public int reasonsMayStop() {
+        return Stoppable.CALL;
     }
 
     public int count(final Builtin builtin, int defaultResult) {

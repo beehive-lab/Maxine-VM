@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class PutField extends JavaResolvableOperator<FieldActor> {
 
     public PutField(ConstantPool constantPool, int index) {
-        super(NULL_POINTER_EXCEPTION, constantPool, index, Kind.VOID);
+        super(CALL | NULL_POINTER_CHECK, constantPool, index, Kind.VOID);
     }
 
     @Override
@@ -44,11 +44,8 @@ public class PutField extends JavaResolvableOperator<FieldActor> {
         visitor.visit(this);
     }
 
-    private boolean _canRaiseNullPointerException = true;
-    public void setCanRaiseNullPointerException(boolean flag) {
-        _canRaiseNullPointerException = flag;
-    }
-    public boolean canRaiseNullPointerException() {
-        return _canRaiseNullPointerException;
+    @Override
+    public Kind[] parameterKinds() {
+        return new Kind[] {Kind.REFERENCE, _constantPool.fieldAt(_index).type(_constantPool).toKind()};
     }
 }

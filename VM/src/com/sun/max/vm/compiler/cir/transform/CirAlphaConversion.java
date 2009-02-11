@@ -32,14 +32,8 @@ import com.sun.max.vm.compiler.cir.variable.*;
  * @author Bernd Mathiske
  */
 public final class CirAlphaConversion {
-    private CirAlphaConversion() {
-        _variableFactory = new CirVariableFactory();
-    }
-    private CirAlphaConversion(CirVariableFactory variableFactory) {
-        _variableFactory = variableFactory;
-    }
 
-    private final CirVariableFactory _variableFactory; // = new CirVariableFactory();
+    private final CirVariableFactory _variableFactory = new CirVariableFactory();
 
     private CirVariableRenaming renameParameters(CirClosure closure, CirVariableRenaming renaming) {
         CirVariableRenaming r = renaming;
@@ -66,6 +60,7 @@ public final class CirAlphaConversion {
     private void renameValues(CirValue[] values, CirVariableRenaming renaming, LinkedList<Inspection> toDo) {
         for (int i = 0; i < values.length; i++) {
             final CirValue value = values[i];
+            assert value != null;
             if (value instanceof CirVariable) {
                 final CirVariable oldVariable = (CirVariable) value;
                 final CirVariable newVariable = renaming.find(oldVariable);
@@ -94,7 +89,7 @@ public final class CirAlphaConversion {
                 }
                 if (call.procedure() instanceof CirVariable) {
                     final CirVariable variable = (CirVariable) call.procedure();
-                    call.setProcedure(renaming.find(variable), call.bytecodeLocation());
+                    call.setProcedure(renaming.find(variable));
                 } else {
                     currentNode = call.procedure();
                     continue;
@@ -123,11 +118,6 @@ public final class CirAlphaConversion {
             currentNode = inspection._node;
             renaming = inspection._renaming;
         }
-    }
-
-    public static void apply(CirVariableFactory variableFactory, CirNode node) {
-        final CirAlphaConversion conversion = new CirAlphaConversion(variableFactory);
-        conversion.run(node);
     }
 
     public static void apply(CirNode node) {

@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
@@ -174,18 +173,6 @@ public final class CirBytecodeReader {
         return kind;
     }
 
-    private BytecodeLocation readBytecodeLocation() {
-        final ClassMethodActor classMethodActor = readConstant();
-        if (classMethodActor == null) {
-            return null;
-        }
-        final int pc = readUnsignedInt();
-        if (_traceStream != null) {
-            _detailedInstructionTrace += "@" + pc;
-        }
-        return new BytecodeLocation(classMethodActor, pc);
-    }
-
     private static final CirVariable[] NO_PARAMETERS = CirClosure.NO_PARAMETERS;
 
     private <Node_Type extends CirNode> Node_Type[] pop(Node_Type[] values) {
@@ -237,8 +224,7 @@ public final class CirBytecodeReader {
     }
 
     private CirClosure readClosure(CirVariable[] parameters, CirCall body) {
-        final BytecodeLocation bytecodeLocation = readBytecodeLocation();
-        final CirClosure closure = new CirClosure(bytecodeLocation);
+        final CirClosure closure = new CirClosure();
         closure.setBody(body);
         closure.setParameters(parameters);
         assert closure.verifyParameters();
@@ -250,18 +236,22 @@ public final class CirBytecodeReader {
             return null;
         }
 
-        final BytecodeLocation bytecodeLocation = readBytecodeLocation();
+        final ClassMethodActor classMethodActor = readConstant();
+        final int bytecodePosition = readUnsignedInt();
+        if (_traceStream != null) {
+            _detailedInstructionTrace += "@" + bytecodePosition;
+        }
         final CirValue[] locals = pop(CirCall.newArguments(readUnsignedInt()));
         final CirValue[] stackSlots = pop(CirCall.newArguments(readUnsignedInt()));
 
-        return new CirJavaFrameDescriptor(popJavaFrameDescriptor(numberOfJavaFrameDescriptors - 1), bytecodeLocation, locals, stackSlots);
+        return new CirJavaFrameDescriptor(popJavaFrameDescriptor(numberOfJavaFrameDescriptors - 1), classMethodActor, bytecodePosition, locals, stackSlots);
     }
 
     private CirCall readCall(int count) {
         final CirCall call = new CirCall();
         call.setArguments(pop(CirCall.newArguments(count)));
         call.setJavaFrameDescriptor(popJavaFrameDescriptor(readUnsignedInt()));
-        call.setProcedure((CirValue) pop(), readBytecodeLocation());
+        call.setProcedure((CirValue) pop());
         return call;
     }
 
@@ -449,16 +439,14 @@ public final class CirBytecodeReader {
                     final int serial = readUnsignedInt();
                     final Kind kind = readKind();
                     final int slotIndex = readUnsignedInt();
-                    final BytecodeLocation bytecodeLocation = readBytecodeLocation();
-                    pushVariable(new CirLocalVariable(serial, kind, slotIndex, bytecodeLocation));
+                    pushVariable(new CirLocalVariable(serial, kind, slotIndex));
                     break;
                 }
                 case METHOD_PARAMETER: {
                     final int serial = readUnsignedInt();
                     final Kind kind = readKind();
                     final int slotIndex = readUnsignedInt();
-                    final BytecodeLocation bytecodeLocation = readBytecodeLocation();
-                    pushVariable(new CirMethodParameter(serial, kind, slotIndex, bytecodeLocation));
+                    pushVariable(new CirMethodParameter(serial, kind, slotIndex));
                     break;
                 }
                 case STACK_VARIABLE: {

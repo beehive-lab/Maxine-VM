@@ -40,6 +40,7 @@ import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.bir.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
@@ -57,6 +58,10 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
 
     public CompilerTest_regressions(String name) {
         super(name);
+    }
+
+    public void test_SemiSpaceHeapScheme_allocate() {
+        compileMethod(SemiSpaceHeapScheme.class, "allocate");
     }
 
     @NEVER_INLINE
@@ -135,13 +140,6 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
             }
 
         }
-    }
-
-    /**
-     * Revealed bug in bytecode preprocessing which caused the result to not verify.
-     */
-    public void test_HttpURLConnection_getInputStream() {
-        compileMethod(sun.net.www.protocol.http.HttpURLConnection.class, "getInputStream");
     }
 
     public void test_BigFloatParams() {
@@ -334,6 +332,13 @@ public abstract class CompilerTest_regressions<Method_Type extends IrMethod> ext
         if (object instanceof WordValue) {
             return;
         }
+    }
+
+    /**
+     * Revealed bug in bytecode preprocessing which caused the result to not verify.
+     */
+    public void test_HttpURLConnection_getInputStream() {
+        compileMethod(sun.net.www.protocol.http.HttpURLConnection.class, "getInputStream");
     }
 
     public void test_fromBoxedJavaValue() {

@@ -28,7 +28,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
 import com.sun.max.vm.compiler.cir.bytecode.CirBytecode.*;
@@ -218,13 +217,20 @@ public class CirBytecodeWriter extends CirVisitor {
         }
     }
 
-    private void writeBytecodeLocation(BytecodeLocation bytecodeLocation) {
-        if (bytecodeLocation == null) {
-            writeConstant(null);
-            return;
+    private void writeJavaFrameDescriptor(CirJavaFrameDescriptor javaFrameDescriptor) {
+        CirJavaFrameDescriptor jfd = javaFrameDescriptor;
+        if (jfd == null) {
+            writeUnsignedInt(0);
+        } else {
+            writeUnsignedInt(jfd.depth());
+            do {
+                writeConstant(jfd.classMethodActor());
+                writeUnsignedInt(jfd.bytecodePosition());
+                writeUnsignedInt(jfd.locals().length);
+                writeUnsignedInt(jfd.stackSlots().length);
+                jfd = jfd.parent();
+            } while (jfd != null);
         }
-        writeConstant(bytecodeLocation.classMethodActor());
-        writeUnsignedInt(bytecodeLocation.position());
     }
 
     private final Stack<String> _traceLines = new Stack<String>();
@@ -260,19 +266,7 @@ public class CirBytecodeWriter extends CirVisitor {
             writeOpcode(CALL);
             writeUnsignedInt(arguments.length);
         }
-        CirJavaFrameDescriptor javaFrameDescriptor = call.javaFrameDescriptor();
-        if (javaFrameDescriptor == null) {
-            writeUnsignedInt(0);
-        } else {
-            writeUnsignedInt(javaFrameDescriptor.depth());
-            do {
-                writeBytecodeLocation(javaFrameDescriptor.bytecodeLocation());
-                writeUnsignedInt(javaFrameDescriptor.locals().length);
-                writeUnsignedInt(javaFrameDescriptor.stackSlots().length);
-                javaFrameDescriptor = javaFrameDescriptor.parent();
-            } while (javaFrameDescriptor != null);
-        }
-        writeBytecodeLocation(call.bytecodeLocation());
+        writeJavaFrameDescriptor(call.javaFrameDescriptor());
         finish(call);
     }
 
@@ -319,7 +313,6 @@ public class CirBytecodeWriter extends CirVisitor {
             writeOpcode(CLOSURE);
             writeUnsignedInt(parameters.length);
         }
-        writeBytecodeLocation(closure.location());
         finish(closure);
     }
 
@@ -422,7 +415,6 @@ public class CirBytecodeWriter extends CirVisitor {
                 writeSerial(variable);
                 writeKind(variable.kind());
                 writeUnsignedInt(variable.slotIndex());
-                writeBytecodeLocation(variable.definedAt());
             }
         };
     }
@@ -436,7 +428,6 @@ public class CirBytecodeWriter extends CirVisitor {
                 writeSerial(variable);
                 writeKind(variable.kind());
                 writeUnsignedInt(variable.slotIndex());
-                writeBytecodeLocation(variable.definedAt());
             }
         };
     }

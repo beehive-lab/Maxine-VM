@@ -60,7 +60,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Bernd Mathiske
  */
-public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible{
+public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible {
 
     private final Kind _comparisonKind;
     private final ValueComparator _valueComparator;
@@ -90,18 +90,17 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
 
     @Override
     public Kind[] parameterKinds() {
-        final Kind[] parameterKinds = new Kind[(numberOfMatches() * 2) + 2];
+        final Kind[] parameterKinds = new Kind[numberOfMatches() * 2];
         int i = 0;
         for (; i <= numberOfMatches(); i++) {
             parameterKinds[i] = _comparisonKind;
         }
         for (; i < parameterKinds.length; i++) {
-            parameterKinds[i] = Kind.REFERENCE;
+            parameterKinds[i] = Kind.WORD;
         }
         return parameterKinds;
     }
 
-//    @Override
     public String name() {
         return "<" + _comparisonKind.name() + "_" + _valueComparator.name() + "_" + numberOfMatches() + ">";
     }

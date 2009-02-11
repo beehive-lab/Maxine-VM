@@ -72,17 +72,21 @@ public abstract class CirFieldReadSnippet extends CirSpecialSnippet {
 
         final CirClosure closure = _cirTupleOffsetSnippet.copyClosure();
 
-        // If snippet compilation has not been completed, snippets are still in unoptimized form.
-        // Thus builtins can hide behind higher level calls.
-        // So here we first need to compile the tuple offset snippet down to builtin calls to reveal all its builtins.
-        // Only then we can replace these builtins with their respective foldable variants.
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
-        if (!cirGenerator.compilerScheme().areSnippetsCompiled() && cirGenerator.compilerScheme().optimizing()) {
-            CirOptimizer.apply(cirGenerator, _cirTupleOffsetSnippet, closure, CirInliningPolicy.STATIC);
+
+        if (MaxineVM.isPrototyping()) {
+            // If snippet compilation has not been completed, snippets are still in unoptimized form.
+            // Thus builtins can hide behind higher level calls.
+            // So here we first need to compile the tuple offset snippet down to builtin calls to reveal all its builtins.
+            // Only then we can replace these builtins with their respective foldable variants.
+            if (!cirGenerator.compilerScheme().areSnippetsCompiled() && cirGenerator.compilerScheme().optimizing()) {
+                CirOptimizer.apply(cirGenerator, _cirTupleOffsetSnippet, closure, CirInliningPolicy.STATIC);
+            }
         }
 
         final CirCall call = CirBetaReduction.applyMultiple(closure, a[TupleOffsetParameter.tuple.ordinal()], a[TupleOffsetParameter.offset.ordinal()]); // omitting the exception arguments
         CirBuiltinVariantOptimization.apply(cirGenerator, call, variant, cirOptimizer.cirMethod());
+        assert call == closure.body();
         closure.setBody(call);
         return CirBetaReduction.applyMultiple(closure, a); // now filling in the exception arguments
     }

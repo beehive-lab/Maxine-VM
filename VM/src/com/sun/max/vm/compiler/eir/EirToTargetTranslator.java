@@ -277,12 +277,13 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         final Sequence<EirCall> directCalls = emitter.directCalls();
         final int[] stopPositions = packLabelPositions(emitter.directCallLabels(), emitter.indirectCallLabels(), emitter.safepointLabels());
         markReferenceCalls(stopPositions, emitter);
+        final byte[] compressedJavaFrameDescriptors = targetMethod.classMethodActor().isTemplate() ? null : emitter.getCompressedJavaFrameDescriptors();
 
         targetMethod.setGenerated(targetBundle,
                         packLabelPositions(emitter.catchRangeLabels()),
                         packCatchBlockPositions(emitter.catchBlocks()),
                         stopPositions,
-                        emitter.getCompressedJavaFrameDescriptors(),
+                        compressedJavaFrameDescriptors,
                         packDirectCallees(directCalls),
                         emitter.indirectCallLabels().length(),
                         emitter.safepointLabels().length(),

@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.cir;
 
 import com.sun.max.lang.*;
 import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 
@@ -50,7 +51,6 @@ public final class CirCall extends CirNode {
 
     private CirValue _procedure;
     private CirValue[] _arguments;
-    private BytecodeLocation _bytecodeLocation;
     private CirJavaFrameDescriptor _javaFrameDescriptor;
 
     public CirCall() {
@@ -64,26 +64,15 @@ public final class CirCall extends CirNode {
      *            {@code arguments} must be {@link #NO_ARGUMENTS}.
      */
     public CirCall(CirValue procedure, CirValue... arguments) {
-        setProcedure(procedure, null);
+        setProcedure(procedure);
         setArguments(arguments);
-    }
-
-    public void setBytecodeLocation(BytecodeLocation bytecodeLocation) {
-        _bytecodeLocation = bytecodeLocation;
     }
 
     /**
      * Sets the procedure that is the target of this call.
      *
      * @param procedure the target procedure
-     * @param location the location of the VM bytecode instruction modeled by the call. This will always be a control
-     *            transfer instruction (including method invocations).
      */
-    public void setProcedure(CirValue procedure, BytecodeLocation location) {
-        _procedure = procedure;
-        _bytecodeLocation = location;
-    }
-
     public void setProcedure(CirValue procedure) {
         _procedure = procedure;
     }
@@ -99,8 +88,9 @@ public final class CirCall extends CirNode {
      *            {@code arguments} must be {@link #NO_ARGUMENTS}.
      */
     public void setArguments(CirValue... arguments) {
-        assert arguments.length > 0 || arguments == NO_ARGUMENTS;
+        assert (arguments.length > 0 && Arrays.find(arguments, null) == -1) || arguments == NO_ARGUMENTS;
         _arguments = arguments;
+
         assert arguments.getClass() == CirValue[].class;
     }
 
@@ -126,14 +116,6 @@ public final class CirCall extends CirNode {
         }
     }
 
-    /**
-     * @return the location of the JVM bytecode instruction modeled by this call or null if this call does not model a
-     *         JVM bytecode instruction
-     */
-    public BytecodeLocation bytecodeLocation() {
-        return _bytecodeLocation;
-    }
-
     public CirJavaFrameDescriptor javaFrameDescriptor() {
         return _javaFrameDescriptor;
     }
@@ -146,7 +128,7 @@ public final class CirCall extends CirNode {
         if (_procedure instanceof CirProcedure) {
             if (_procedure instanceof CirRoutine) {
                 final CirRoutine routine = (CirRoutine) _procedure;
-                if (routine.needsJavaFrameDescriptor()) {
+                if (Stoppable.Static.canStop(routine)) {
                     return;
                 }
             }
@@ -157,7 +139,6 @@ public final class CirCall extends CirNode {
     public void assign(CirCall call) {
         _procedure = call._procedure;
         _arguments = call._arguments;
-        _bytecodeLocation = call._bytecodeLocation;
         _javaFrameDescriptor = call._javaFrameDescriptor;
     }
 
@@ -165,8 +146,13 @@ public final class CirCall extends CirNode {
         return false;
     }
 
+    /**
+     * Determines if this is a call to a native function. Note, this does not mean a call to a native method, but the
+     * call inside a native method's stub to the actual native code. This will be the translation of the
+     * {@link Bytecode#CALLNATIVE} instruction.
+     */
     public boolean isNative() {
-        return _bytecodeLocation != null && _bytecodeLocation.isNativeCall();
+        return _javaFrameDescriptor != null && _javaFrameDescriptor.isNativeCall();
     }
 
     @Override

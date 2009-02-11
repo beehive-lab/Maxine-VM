@@ -217,7 +217,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         public Key(BytecodeLocation bytecodeLocation) {
             super(bytecodeLocation.classMethodActor());
-            _bytecodePosition = bytecodeLocation.position();
+            _bytecodePosition = bytecodeLocation.bytecodePosition();
         }
 
         public Key(MethodKey methodKey, int bytecodePosition) {

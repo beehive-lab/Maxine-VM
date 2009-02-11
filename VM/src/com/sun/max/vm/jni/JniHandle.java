@@ -32,7 +32,7 @@ import com.sun.max.unsafe.*;
  * code to Java code in most {@linkplain JniFunctions JNI functions} and we do not
  * have any guarantee that these values are actually JNI handles, let alone whether
  * they are handles to an expected type of object. The explicit casting that is
- * therefore required actually makes the MaxineVM VM fail in a more understandable
+ * therefore required makes the VM fail in a more understandable
  * fashion (i.e. with a ClassCastException) in the presence of bad native code.
  *
  * @see JniHandles
@@ -44,16 +44,15 @@ public abstract class JniHandle extends Word {
 
     @INLINE
     public static JniHandle zero() {
-        final Class<JniHandle> type = null;
-        return UnsafeLoophole.castWord(type, Word.zero());
+        return Word.zero().asJniHandle();
     }
 
     /**
-     * Dereferences this handle to "unwrap" the Java object. This method will return {@code null}
+     * Dereferences this handle to "unhand" the Java object. This method will return {@code null}
      * if this handle {@link #isZero() is zero}.
      */
     @INLINE
-    public final Object get() {
+    public final Object unhand() {
         return JniHandles.get(this);
     }
 

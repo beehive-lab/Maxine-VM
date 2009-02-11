@@ -33,7 +33,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * An enumerated type to distinguish the style of boxing performed by a stub.
- * 
+ *
  *  @author Doug Simon
  */
 public enum Boxing {
@@ -176,9 +176,7 @@ public enum Boxing {
                 /*
                  * The optimizing compiler is supposed to eliminate all this:
                  */
-                asm.ldc(parameterTypePoolConstantIndex);
-                asm.swap();
-                asm.invokestatic(UnsafeLoophole_castWord_Class_Word, 2, 1);
+                asm.invokestatic(UnsafeLoophole_castWord_Word, 1, 1);
                 asm.checkcast(parameterTypePoolConstantIndex);
             }
         }

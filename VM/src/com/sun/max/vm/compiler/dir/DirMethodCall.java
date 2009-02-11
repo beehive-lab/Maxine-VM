@@ -25,7 +25,7 @@ import com.sun.max.vm.compiler.dir.transform.*;
 /**
  * @author Bernd Mathiske
  */
-public class DirMethodCall extends DirCall {
+public class DirMethodCall extends DirCall<DirValue> {
 
     private final DirValue _method;
 
@@ -42,86 +42,20 @@ public class DirMethodCall extends DirCall {
         return _isNative;
     }
 
-    private final DirJavaFrameDescriptor _javaFrameDescriptor;
-
-    public DirJavaFrameDescriptor javaFrameDescriptor() {
-        return _javaFrameDescriptor;
-    }
-
     public DirMethodCall(DirVariable result, DirValue method, DirValue[] arguments, DirCatchBlock catchBlock, boolean isNativeCall, DirJavaFrameDescriptor javaFrameDescriptor) {
-        super(result, arguments, catchBlock);
+        super(result, arguments, catchBlock, javaFrameDescriptor);
         _method = method;
         _isNative = isNativeCall;
-        _javaFrameDescriptor = javaFrameDescriptor;
     }
 
+    @Override
+    protected DirValue procedure() {
+        return _method;
+    }
 
     @Override
     public int hashCodeForBlock() {
         return super.hashCodeForBlock() ^ _method.hashCodeForBlock();
-    }
-
-    @Override
-    public boolean isEquivalentTo(DirInstruction other, DirBlockEquivalence dirBlockEquivalence) {
-        if (other instanceof DirMethodCall) {
-            final DirMethodCall dirMethodCall = (DirMethodCall) other;
-            if (!_method.equals(dirMethodCall._method)) {
-                return false;
-            }
-            assert arguments().length == dirMethodCall.arguments().length : "two calls to the same method with different number of args: this = " + this + " other = " + other;
-            for (int i = 0; i < arguments().length; i++) {
-                if (!arguments()[i].equals(dirMethodCall.arguments()[i])) {
-                    return false;
-                }
-            }
-            if (catchBlock() == null) {
-                if (dirMethodCall.catchBlock() != null) {
-                    return false;
-                }
-            } else {
-                if (dirMethodCall.catchBlock() == null) {
-                    return false;
-                }
-                if (!catchBlock().isEquivalentTo(dirMethodCall.catchBlock(), dirBlockEquivalence)) {
-                    return false;
-                }
-            }
-            if (_javaFrameDescriptor == null) {
-                if (dirMethodCall._javaFrameDescriptor != null) {
-                    return false;
-                }
-            } else {
-                if (dirMethodCall._javaFrameDescriptor == null) {
-                    return false;
-                }
-                if (!_javaFrameDescriptor.equals(dirMethodCall._javaFrameDescriptor)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        String arguments = "";
-        String separator = "";
-        for (int i = 0; i < arguments().length; i++) {
-            arguments += separator + arguments()[i];
-            separator = " ";
-        }
-        String s = method().toString() + "(" + arguments + ")";
-        if (result() != null) {
-            s = result().toString() + " := " +  s;
-        }
-        if (catchBlock() != null) {
-            s += " -> #" + catchBlock().serial();
-        }
-        if (_javaFrameDescriptor != null) {
-            s += " " + _javaFrameDescriptor.toString();
-        }
-        return s;
     }
 
     @Override

@@ -221,6 +221,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         return UnsafeLoophole.referenceToGrip(accessor.compareAndSwapReference(_hubOffset, UnsafeLoophole.gripToReference(suspectedGrip), UnsafeLoophole.gripToReference(forwardGrip.marked())));
     }
 
+    @PROTOTYPE_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
         final int origin = hub.specificLayout().isTupleLayout() ? -_miscOffset : -_arrayLengthOffset;

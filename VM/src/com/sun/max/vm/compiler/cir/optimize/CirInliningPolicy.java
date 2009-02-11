@@ -60,7 +60,7 @@ public class CirInliningPolicy {
             return false;
         }
         if (compilee.isInline()) {
-            if (compilee.isInlineAfterSnippetsAreCompiled() && !cirOptimizer.cirGenerator().compilerScheme().areSnippetsCompiled()) {
+            if (MaxineVM.isPrototyping() && compilee.isInlineAfterSnippetsAreCompiled() && !cirOptimizer.cirGenerator().compilerScheme().areSnippetsCompiled()) {
                 return false;
             }
             return true;

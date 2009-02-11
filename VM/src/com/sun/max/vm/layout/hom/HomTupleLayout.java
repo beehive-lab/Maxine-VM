@@ -146,6 +146,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         return Size.fromInt(offset);
     }
 
+    @PROTOTYPE_ONLY
     void visitFields(ObjectCellVisitor visitor, Object tuple) {
         final Hub hub = HostObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor();
@@ -162,6 +163,7 @@ public final class HomTupleLayout extends HomGeneralLayout implements TupleLayou
         } while (classActor != null);
     }
 
+    @PROTOTYPE_ONLY
     public void visitObjectCell(Object tuple, ObjectCellVisitor visitor) {
         visitHeader(visitor, tuple);
         visitFields(visitor, tuple);

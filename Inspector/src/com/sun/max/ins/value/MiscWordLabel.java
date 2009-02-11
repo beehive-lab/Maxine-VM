@@ -105,9 +105,9 @@ public final class MiscWordLabel extends ValueLabel {
                 final ModalMonitorScheme modalMonitorScheme = (ModalMonitorScheme) monitorScheme;
                 _modalLockWordDecoder = modalMonitorScheme.getModalLockWordDecoder();
             }
-            final ModalLockWord64 modalLockWord = ModalLockWord64.as(miscWord);
+            final ModalLockWord64 modalLockWord = ModalLockWord64.from(miscWord);
             if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, BiasedLockWord64.class)) {
-                final BiasedLockWord64 biasedLockWord = BiasedLockWord64.as(modalLockWord);
+                final BiasedLockWord64 biasedLockWord = BiasedLockWord64.from(modalLockWord);
                 final int hashcode = biasedLockWord.getHashcode();
                 final int recursion = biasedLockWord.getRecursionCount();
                 final int ownerThreadID = BiasedLockModeHandler.decodeBiasOwnerThreadID(biasedLockWord);
@@ -118,7 +118,7 @@ public final class MiscWordLabel extends ValueLabel {
                 setToolTipText("BiasedLockWord64:  recursion=" + recursion +   ";  thread=" +
                                 threadName + ";  biasEpoch=" + biasEpoch  + "; hashcode=" + hashcode);
             } else if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, ThinLockWord64.class)) {
-                final ThinLockWord64 thinLockWord = ThinLockWord64.as(modalLockWord);
+                final ThinLockWord64 thinLockWord = ThinLockWord64.from(modalLockWord);
                 final int hashcode = thinLockWord.getHashcode();
                 final int recursionCount = thinLockWord.getRecursionCount();
                 final int ownerThreadID = ThinLockModeHandler.decodeLockOwnerThreadID(thinLockWord);
@@ -129,7 +129,7 @@ public final class MiscWordLabel extends ValueLabel {
                                 threadName  + "; hashcode=" + hashcode);
             } else if (_modalLockWordDecoder.isLockWordInMode(modalLockWord, InflatedMonitorLockWord64.class)) {
                 setText("InflatedMonitorLock: " + hexString);
-                final InflatedMonitorLockWord64 inflatedLockWord = InflatedMonitorLockWord64.as(modalLockWord);
+                final InflatedMonitorLockWord64 inflatedLockWord = InflatedMonitorLockWord64.from(modalLockWord);
                 final boolean isBound = inflatedLockWord.isBound();
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.

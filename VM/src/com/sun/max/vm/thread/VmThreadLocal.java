@@ -536,7 +536,7 @@ public enum VmThreadLocal {
         final Pointer highestSlot = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
         final Pointer lowestSlot = LOWEST_STACK_SLOT_ADDRESS.getConstantWord(vmThreadLocals).asPointer();
 
-        final VmThread vmThread = UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference(vmThreadLocals));
+        final VmThread vmThread = UnsafeLoophole.cast(VM_THREAD.getConstantReference(vmThreadLocals));
         if (!vmThread.isGCThread() && lastJavaCallerStackPointer.lessThan(lowestActiveSlot)) {
             Log.print("The stack for thread \"");
             Log.printVmThread(vmThread, false);

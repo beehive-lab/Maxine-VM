@@ -20,30 +20,19 @@
  */
 package com.sun.max.vm.compiler.cir.variable;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 /**
  * A Java method parameter.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class CirMethodParameter extends CirSlotVariable {
 
-    private final BytecodeLocation _location;
-
-    public CirMethodParameter(int serial, Kind kind, int parameterIndex, BytecodeLocation location) {
+    public CirMethodParameter(int serial, Kind kind, int parameterIndex) {
         super(serial, kind, parameterIndex);
-        _location = location;
-    }
-
-    /**
-     * @return a location at which this variable is live
-     */
-    public BytecodeLocation definedAt() {
-        return _location;
     }
 
     @Override

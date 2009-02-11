@@ -360,7 +360,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         if (teleCodeLocation.hasBytecodeLocation()) {
             final BytecodeLocation bytecodeLocation = teleCodeLocation.bytecodeLocation();
             if (bytecodeLocation.classMethodActor() == teleClassMethodActor().classMethodActor()) {
-                final int row = positionToRow(bytecodeLocation.position());
+                final int row = positionToRow(bytecodeLocation.bytecodePosition());
                 if (row >= 0) {
                     if (row != oldSelectedRow) {
                         _table.getSelectionModel().setSelectionInterval(row, row);

@@ -40,8 +40,8 @@ public final class DirToSPARCEirInstructionTranslation extends DirToEirInstructi
     }
 
     @Override
-    public DirToEirBuiltinTranslation createBuiltinTranslation(DirToEirInstructionTranslation dirToEirInstructionTranslation) {
-        return new DirToSPARCEirBuiltinTranslation(this);
+    public DirToEirBuiltinTranslation createBuiltinTranslation(DirToEirInstructionTranslation dirToEirInstructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor) {
+        return new DirToSPARCEirBuiltinTranslation(this, javaFrameDescriptor);
     }
 
     @Override

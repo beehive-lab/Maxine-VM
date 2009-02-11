@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class PutStatic extends JavaResolvableOperator<FieldActor> {
 
     public PutStatic(ConstantPool constantPool, int index) {
-        super(NONE, constantPool, index, Kind.VOID);
+        super(CALL, constantPool, index, Kind.VOID);
     }
 
     @Override
@@ -47,5 +47,10 @@ public class PutStatic extends JavaResolvableOperator<FieldActor> {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public Kind[] parameterKinds() {
+        return new Kind[] {Kind.REFERENCE, _constantPool.fieldAt(_index).type(_constantPool).toKind()};
     }
 }

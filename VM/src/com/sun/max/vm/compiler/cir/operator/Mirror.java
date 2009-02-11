@@ -21,17 +21,20 @@
 package com.sun.max.vm.compiler.cir.operator;
 
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
-
+/**
+ * Operator used to translate an {@link Bytecode#LDC} instruction that loads a {@link Class} value.
+ */
 public class Mirror extends JavaResolvableOperator<ClassActor> {
 
     public Mirror(ConstantPool constantPool, int index) {
-        super(NONE, constantPool, index, Kind.REFERENCE);
+        super(CALL, constantPool, index, Kind.REFERENCE);
     }
 
     @Override
@@ -47,5 +50,12 @@ public class Mirror extends JavaResolvableOperator<ClassActor> {
     @Override
     public void acceptVisitor(CirVisitor visitor) {
         visitor.visitHCirOperator(this);
+    }
+
+    private static final Kind[] _parameterKinds = {Kind.REFERENCE};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 }

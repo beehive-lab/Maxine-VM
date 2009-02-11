@@ -52,10 +52,10 @@ public final class CirInlining {
             if (procedure instanceof CirBlock) {
                 final CirBlock block = (CirBlock) procedure;
                 if (_optimizer.inliningPolicy().isInlineable(_optimizer, block, arguments)) {
-                    _optimizer.notifyBeforeTransformation(block, Transformation.BLOCK_UPDATING);
+                    _optimizer.notifyBeforeTransformation(block, TransformationType.BLOCK_INLINING);
                     call.assign(block.inline(_optimizer, arguments, call.javaFrameDescriptor()));
                     CirBlockUpdating.apply(_node);
-                    _optimizer.notifyAfterTransformation(block, Transformation.BLOCK_UPDATING);
+                    _optimizer.notifyAfterTransformation(block, TransformationType.BLOCK_INLINING);
                     _inlinedAny = true;
                     continue;
                 }
@@ -63,7 +63,8 @@ public final class CirInlining {
             if (procedure instanceof CirMethod) {
                 final CirMethod method = (CirMethod) procedure;
                 if (_optimizer.inliningPolicy().isInlineable(_optimizer, method, arguments)) {
-                    _optimizer.notifyBeforeTransformation(method, Transformation.METHOD_UPDATING);
+                    final Transformation transform = new Transformation(TransformationType.METHOD_INLINING, method.name());
+                    _optimizer.notifyBeforeTransformation(method, transform);
                     try {
                         call.assign(method.inline(_optimizer, arguments, call.javaFrameDescriptor()));
                     } catch (Error error) {
@@ -72,7 +73,7 @@ public final class CirInlining {
                         throw error;
                     }
                     CirBlockUpdating.apply(_node);
-                    _optimizer.notifyAfterTransformation(method, Transformation.METHOD_UPDATING);
+                    _optimizer.notifyAfterTransformation(method, transform);
                     _inlinedAny = true;
                     continue;
                 }
@@ -114,10 +115,10 @@ public final class CirInlining {
     }
 
     public static boolean apply(CirOptimizer optimizer, CirNode node) {
-        optimizer.notifyBeforeTransformation(node, Transformation.INLINING);
+        optimizer.notifyBeforeTransformation(node, TransformationType.INLINING);
         final CirInlining inlining = new CirInlining(optimizer, node);
         inlining.inlineCalls();
-        optimizer.notifyAfterTransformation(node, Transformation.INLINING);
+        optimizer.notifyAfterTransformation(node, TransformationType.INLINING);
         return inlining._inlinedAny;
     }
 

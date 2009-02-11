@@ -24,7 +24,6 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.gui.CirAnnotatedTrace.*;
 import com.sun.max.vm.compiler.cir.transform.*;
@@ -217,24 +216,14 @@ final class CirAnnotatedTraceBuilder extends CirVisitor {
         printClosure("cont", continuation, continuation);
     }
 
-    private String name(CirSlotVariable variable, BytecodeLocation location) {
-//        if (location != null) {
-//            final LocalVariableInfo localVariableInfo = LocalVariableTableAttribute.findLocalVariable(location.classMethodActor().codeAttribute().localVariableTableAttributes(), variable.slotIndex(), location.programCounter());
-//            if (localVariableInfo != null) {
-//                return '"' + localVariableInfo.name() + "\":" + variable.kind().character();
-//            }
-//        }
-        return variable.toString();
-    }
-
     @Override
     public void visitLocalVariable(CirLocalVariable variable) {
-        append(new SimpleElement(variable, print(name(variable, variable.definedAt()))));
+        append(new SimpleElement(variable, print(variable.toString())));
     }
 
     @Override
     public void visitMethodParameter(CirMethodParameter parameter) {
-        append(new SimpleElement(parameter, print(name(parameter, parameter.definedAt()))));
+        append(new SimpleElement(parameter, print(parameter.toString())));
     }
 
     public String trace() {

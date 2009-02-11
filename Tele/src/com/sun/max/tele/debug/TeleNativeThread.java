@@ -476,7 +476,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         private boolean _isTopFrame;
 
         public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, TargetJavaFrameDescriptor descriptor) {
-            this(isTopFrame, targetMethod, stackFrame, descriptor, descriptor.bytecodeLocation().classMethodActor(), 0); //descriptor.bytecodeLocation().());
+            this(isTopFrame, targetMethod, stackFrame, descriptor, descriptor.classMethodActor(), 0); //descriptor.bytecodeLocation().());
         }
 
         public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, TargetJavaFrameDescriptor descriptor, ClassMethodActor classMethodActor, int position) {
@@ -697,7 +697,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                     } else {
 
                         while (descriptor != null) {
-                            final TeleClassMethodActor curTma = _teleVM.findTeleMethodActor(TeleClassMethodActor.class, descriptor.bytecodeLocation().classMethodActor());
+                            final TeleClassMethodActor curTma = _teleVM.findTeleMethodActor(TeleClassMethodActor.class, descriptor.classMethodActor());
 
                             LOGGER.info("Found part frame " + descriptor + " tele method actor: " + curTma);
                             result.append(new FrameProviderImpl(z == 1, teleTargetMethod, stackFrame, descriptor));

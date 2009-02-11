@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.builtin;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -124,7 +125,7 @@ public abstract class SpecialBuiltin extends Builtin {
     /**
      * If the CPU supports it, then this builtin issues an instruction that improves the performance of spin loops by
      * providing a hint to the processor that the current thread is in a spin loop. The processor may use this to
-     * optimize power power consumption while in the spin loop.
+     * optimize power consumption while in the spin loop.
      *
      * If the CPU does not support such an instruction, then nothing is emitted for this builtin.
      */
@@ -210,6 +211,10 @@ public abstract class SpecialBuiltin extends Builtin {
             visitor.visitCall(this, result, arguments);
         }
 
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.CALL;
+        }
         public static final Call BUILTIN = new Call();
     }
 

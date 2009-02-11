@@ -88,7 +88,7 @@ public final class ClassRegistry implements IterableWithLength<ClassActor> {
             return _vmClassRegistry;
         }
         synchronized (classLoader) {
-            final ClassRegistry result = ClassLoader_classRegistry.read(classLoader);
+            final ClassRegistry result = (ClassRegistry) ClassLoader_classRegistry.readObject(classLoader);
             if (result != null) {
                 return result;
             }

@@ -246,6 +246,11 @@ public abstract class SignatureDescriptor extends Descriptor {
         return parameterKinds;
     }
 
+    /**
+     * Gets the kinds of the parameters in this signature with a given receiver kind prepended.
+     *
+     * @param receiverKind the kind of a receiver for the invocation of a non-static method with this signature
+     */
     public Kind[] getParameterKindsIncludingReceiver(Kind receiverKind) {
         final Kind[] parameterKinds = new Kind[_typeDescriptors.length];
         parameterKinds[0] = receiverKind;

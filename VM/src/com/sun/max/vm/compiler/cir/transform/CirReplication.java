@@ -83,6 +83,9 @@ public final class CirReplication {
         for (int i = 0; i < originalValues.length; i++) {
             if (originalValues[i] != null) {
                 toDo.add(new ArrayValueReplication(valuesReplica, i, originalValues[i]));
+                valuesReplica[i] = originalValues[i];
+            } else {
+                assert false;
             }
         }
         return valuesReplica;
@@ -98,7 +101,7 @@ public final class CirReplication {
 
         @Override
         protected void assign(CirNode procedureReplica) {
-            _call.setProcedure((CirValue) procedureReplica, _call.bytecodeLocation());
+            _call.setProcedure((CirValue) procedureReplica);
         }
     }
 
@@ -147,7 +150,7 @@ public final class CirReplication {
             return null;
         }
         final CirJavaFrameDescriptor parentReplica = replicateJavaFrameDescriptor(javaFrameDescriptor.parent(), toDo);
-        final CirJavaFrameDescriptor replica = new CirJavaFrameDescriptor(parentReplica, javaFrameDescriptor.bytecodeLocation(),
+        final CirJavaFrameDescriptor replica = new CirJavaFrameDescriptor(parentReplica, javaFrameDescriptor.classMethodActor(), javaFrameDescriptor.bytecodePosition(),
                                                                                  replicateValues(javaFrameDescriptor.locals(), toDo),
                                                                                  replicateValues(javaFrameDescriptor.stackSlots(), toDo));
         return replica;

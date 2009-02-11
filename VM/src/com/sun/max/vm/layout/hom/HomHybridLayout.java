@@ -72,6 +72,7 @@ public final class HomHybridLayout extends HomWordArrayLayout implements HybridL
         return _tupleLayout.getFieldOffsetInCell(fieldActor);
     }
 
+    @PROTOTYPE_ONLY
     @Override
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
         final Hybrid hybrid = (Hybrid) object;

@@ -62,7 +62,7 @@ public class HandleGripScheme extends AbstractVMScheme implements GripScheme {
             _handleBlock.writeWord(0, previousHandleBlock);
             _handleIndex = 1;
         }
-        final Handle handle = UnsafeLoophole.castWord(Handle.class, _handleBlock.plusWords(_handleIndex));
+        final Handle handle = Handle.from(_handleBlock.plusWords(_handleIndex));
         _handleIndex++;
         return handle;
     }

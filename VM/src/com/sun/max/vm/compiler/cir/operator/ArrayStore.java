@@ -27,7 +27,7 @@ import com.sun.max.vm.type.*;
 public class ArrayStore extends JavaOperator {
     private Kind _elementKind;
     public ArrayStore(Kind elementKind) {
-        super(NULL_POINTER_EXCEPTION | ARRAY_INDEX_OUT_OF_BOUNDS_EXCEPTION | (elementKind == Kind.REFERENCE ? ARRAY_STORE_EXCEPTION : 0));
+        super(CALL | NULL_POINTER_CHECK | ARRAY_BOUNDS_CHECK | (elementKind == Kind.REFERENCE ? ARRAY_STORE_CHECK : 0));
         _elementKind = elementKind;
     }
     public Kind elementKind() {
@@ -42,6 +42,12 @@ public class ArrayStore extends JavaOperator {
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public Kind[] parameterKinds() {
+        return new Kind[] {Kind.REFERENCE, Kind.INT, _elementKind};
+    }
+
     @Override
     public String toString() {
         return "ArrayStore:" + _elementKind;

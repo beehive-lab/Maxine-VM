@@ -34,6 +34,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
@@ -610,7 +611,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public void ensureClassInitialized(Class c) {
-        ClassActor.fromJava(c).makeInitialized();
+        MakeClassInitialized.makeClassInitialized(ClassActor.fromJava(c));
     }
 
     /**
@@ -699,7 +700,7 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public Object allocateInstance(Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        classActor.makeInitialized();
+        MakeClassInitialized.makeClassInitialized(classActor);
         if (classActor.isArrayClassActor()) {
             return Heap.createArray(classActor.dynamicHub(), 0);
         }

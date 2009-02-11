@@ -42,17 +42,26 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
      */
     public static final String CIR_GUI_PROPERTY = "max.cir.gui";
 
+    /**
+     * The name of the system property that, if non-null when a CIR generator is instantiated, enables the CIR verifier.
+     */
+    public static final String CIR_VERIFY_PROPERTY = "max.cir.verify";
+
     private static final Map<ClassMethodActor, CirMethod> _cirCache = new HashMap<ClassMethodActor, CirMethod>();
+
+    private CirVerifyingObserver _cirVerifyingObserver;
 
     public CirGenerator(CirGeneratorScheme cirGeneratorScheme) {
         super(cirGeneratorScheme, "CIR");
-        IrObserver irObserver = null;
-        final String cirGuiLevel = System.getProperty(CIR_GUI_PROPERTY);
-        if (cirGuiLevel != null) {
+        final String cirGui = System.getProperty(CIR_GUI_PROPERTY);
+        if (cirGui != null) {
             final String irObserverClassName = "com.sun.max.vm.compiler.cir.gui.CirObserverAdapter";
             try {
                 final Class<?> irObserverClass = Class.forName(irObserverClassName);
-                irObserver = (IrObserver) irObserverClass.newInstance();
+                final IrObserver irObserver = (IrObserver) irObserverClass.newInstance();
+                if (irObserver.attach(this)) {
+                    addIrObserver(irObserver);
+                }
             } catch (ClassNotFoundException classNotFoundException) {
                 ProgramWarning.message("Error creating CIR observer (" + irObserverClassName + "): " + classNotFoundException);
             } catch (InstantiationException instantiationException) {
@@ -62,10 +71,31 @@ public abstract class CirGenerator extends IrGenerator<CirGeneratorScheme, CirMe
             }
         }
 
-        if (irObserver != null && irObserver.attach(this)) {
-            addIrObserver(irObserver);
+        final String cirVerify = System.getProperty(CIR_VERIFY_PROPERTY);
+        if (cirVerify != null) {
+            final CirVerifyingObserver cirVerifyingObserver = new CirVerifyingObserver();
+            if (cirVerifyingObserver.attach(this)) {
+                addIrObserver(cirVerifyingObserver);
+                _cirVerifyingObserver = cirVerifyingObserver;
+            }
         }
         return;
+    }
+
+    /**
+     * This method is overridden to ensure that the {@link CirVerifyingObserver} is always the last observer in the
+     * list of observers. This means that an invalid CIR graph will be printed if the appropriate tracing
+     * observer is attached before the exception is thrown indicating the error in the graph.
+     */
+    @Override
+    public synchronized void addIrObserver(IrObserver observer) {
+        if (_cirVerifyingObserver != null && _irObservers.contains(_cirVerifyingObserver)) {
+            removeIrObserver(_cirVerifyingObserver);
+            super.addIrObserver(observer);
+            super.addIrObserver(_cirVerifyingObserver);
+        } else {
+            super.addIrObserver(observer);
+        }
     }
 
     public void removeCirMethod(ClassMethodActor classMethodActor) {

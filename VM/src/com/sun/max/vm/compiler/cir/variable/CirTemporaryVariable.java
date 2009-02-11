@@ -26,7 +26,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * A synthetic variable without directly corresponding Java feature, typically used as a continuation parameter.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class CirTemporaryVariable extends CirVariable {
@@ -37,7 +37,11 @@ public class CirTemporaryVariable extends CirVariable {
 
     @Override
     public String toString() {
-        return "t" + kind().character() + "-" + serial();
+        String s = "t" + kind().character() + "-" + serial();
+        if (CirNode.printingIds()) {
+            s += "_" + id();
+        }
+        return s;
     }
 
     @Override

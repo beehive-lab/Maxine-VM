@@ -68,6 +68,11 @@ public final class CirSelectVirtualMethod extends CirSpecialSnippet {
     }
 
     @Override
+    public Kind[] parameterKinds() {
+        return new Kind[] {null, Kind.REFERENCE};
+    }
+
+    @Override
     public boolean isFoldable(CirOptimizer cirOptimizer, CirValue[] arguments) {
         assert arguments.length == Parameter.VALUES.length();
         return true;
@@ -79,7 +84,7 @@ public final class CirSelectVirtualMethod extends CirSpecialSnippet {
         assert arguments.length == Parameter.VALUES.length();
         if (isConstantArgument(arguments, Parameter.declaredVirtualMethodActor)) {
             final VirtualMethodActor declaredMethod = (VirtualMethodActor) getConstantArgumentValue(arguments, Parameter.declaredVirtualMethodActor).asObject();
-            if (declaredMethod.isFinal() || declaredMethod.holder().isFinal() || Word.class.isAssignableFrom(declaredMethod.holder().toJava())) {
+            if (declaredMethod.isFinal() || declaredMethod.holder().isFinal() || declaredMethod.holder().kind() == Kind.WORD) {
                 return new CirCall(getNormalContinuation(arguments), builtinOrMethod(declaredMethod, cirGenerator));
             }
             if (isConstantArgument(arguments, Parameter.receiver)) {

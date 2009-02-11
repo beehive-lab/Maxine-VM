@@ -29,18 +29,18 @@ import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.type.*;
 
 
-public class NewArray extends JavaResolvableOperator<ClassActor> {
+public class NewArray extends JavaResolvableOperator<ArrayClassActor> {
 
     private final Kind _primitiveElementKind;
 
     public NewArray(int atype) {
-        super(NEGATIVE_ARRAY_SIZE_EXCEPTION, null, 0, Kind.REFERENCE);
+        super(CALL | NEGATIVE_ARRAY_SIZE_CHECK, null, 0, Kind.REFERENCE);
         _primitiveElementKind = Kind.fromNewArrayTag(atype);
-        _actor = _primitiveElementKind.arrayClassActor().elementClassActor();
+        _actor = _primitiveElementKind.arrayClassActor();
     }
 
     public NewArray(ConstantPool constantPool, int index) {
-        super(NEGATIVE_ARRAY_SIZE_EXCEPTION, constantPool, index, Kind.REFERENCE);
+        super(CALL | NEGATIVE_ARRAY_SIZE_CHECK, constantPool, index, Kind.REFERENCE);
         _primitiveElementKind = null;
     }
 
@@ -71,9 +71,21 @@ public class NewArray extends JavaResolvableOperator<ClassActor> {
     }
 
     /**
-     * Gets the class actor for an array type whose component type is {@link #actor()}.
+     * Overrides resolution for non-primitive array creation so that the resolved type is the array type,
+     * not the component type denoted by the constant pool entry.
      */
-    public ArrayClassActor arrayClassActor() {
-        return ArrayClassActor.forComponentClassActor(_actor);
+    @Override
+    public void resolve() {
+        if (_primitiveElementKind == null) {
+            super.resolve();
+            _actor = ArrayClassActor.forComponentClassActor(_actor);
+        }
+    }
+
+    private static final Kind[] _parameterKinds = {Kind.INT};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 }

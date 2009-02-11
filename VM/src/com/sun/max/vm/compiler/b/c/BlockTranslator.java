@@ -92,7 +92,7 @@ final class BlockTranslator {
                 assert blockState.stack() == null;
                 final JavaStack stack = _translation.createStack();
                 // there must be exactly one object on the stack here: the throwable
-                stack.push(Kind.REFERENCE, new BytecodeLocation(_translation.classMethodActor().compilee(), exceptionDispatcher.bytecodeBlock().start()));
+                stack.push(Kind.REFERENCE);
                 blockState.setStack(stack);
 
                 scanReachableBlocks(blockState);

@@ -25,6 +25,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.dir.*;
 import com.sun.max.vm.compiler.dir.transform.*;
 import com.sun.max.vm.compiler.ir.IrBlock.*;
@@ -207,7 +208,8 @@ public class TirToDirTranslator extends TirPipelineFilter  {
         if (state != null) {
             final DirValue[] locals = useMany(state.getLocalSlots());
             final DirValue[] stack = useMany(state.getStackSlots());
-            frameDescriptor = new DirJavaFrameDescriptor(null, state.last().location(), locals, stack);
+            final BytecodeLocation location = state.last().location();
+            frameDescriptor = new DirJavaFrameDescriptor(null, location.classMethodActor(), location.bytecodePosition(), locals, stack);
         } else {
             frameDescriptor = null;
         }
@@ -259,7 +261,7 @@ public class TirToDirTranslator extends TirPipelineFilter  {
     @Override
     public void visit(TirBuiltinCall call) {
         final DirVariable result = _allocator.variable(call);
-        final DirBuiltinCall dirCall = new DirBuiltinCall(result, call.builtin(), useMany(call.operands()), null);
+        final DirBuiltinCall dirCall = new DirBuiltinCall(result, call.builtin(), useMany(call.operands()), null, null);
         emitInstruction(dirCall);
     }
 

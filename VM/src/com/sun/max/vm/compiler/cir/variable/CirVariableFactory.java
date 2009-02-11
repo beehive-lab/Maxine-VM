@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.cir.variable;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -61,12 +60,12 @@ public class CirVariableFactory {
         return _exceptionContinuationParameter;
     }
 
-    public CirVariable createMethodParameter(Kind kind, int index, BytecodeLocation location) {
-        return new CirMethodParameter(makeSerial(), kind, index, location);
+    public CirVariable createMethodParameter(Kind kind, int index) {
+        return new CirMethodParameter(makeSerial(), kind, index);
     }
 
-    public CirVariable createLocalVariable(Kind kind, int localIndex, BytecodeLocation location) {
-        return new CirLocalVariable(makeSerial(), kind, localIndex, location);
+    public CirVariable createLocalVariable(Kind kind, int localIndex) {
+        return new CirLocalVariable(makeSerial(), kind, localIndex);
     }
 
     public CirVariable createStackVariable(Kind kind, int stackSlotIndex) {

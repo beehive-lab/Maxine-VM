@@ -23,7 +23,6 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 
 import com.sun.max.program.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 
 /**
@@ -43,13 +42,6 @@ public @interface BUILTIN {
      * The {@link Builtin} subclass the annotated method is associated with.
      */
     Class<? extends Builtin> builtinClass();
-
-    /**
-     * A value indicating what exceptions the annotated builtin may throw. This is an integer encoding zero or more of
-     * the flags defined in {@link ExceptionThrower}. A value of {@code 0} indicates that the builtin is guaranteed not to throw
-     * any exceptions.
-     */
-    int thrownExceptions() default ExceptionThrower.ANY;
 
     @PROTOTYPE_ONLY
     public static final class Static {

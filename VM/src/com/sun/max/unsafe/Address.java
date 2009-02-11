@@ -25,7 +25,6 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 
 /**
@@ -65,9 +64,9 @@ public abstract class Address extends Word {
         if (Word.width() == WordWidth.BITS_64) {
             final long longValue = value;
             final long n = longValue & 0xffffffffL;
-            return UnsafeLoophole.longToWord(Address.class, n);
+            return UnsafeLoophole.longToWord(n);
         }
-        return UnsafeLoophole.intToWord(Address.class, value);
+        return UnsafeLoophole.intToWord(value);
     }
 
     /**
@@ -85,9 +84,9 @@ public abstract class Address extends Word {
         }
         if (Word.width() == WordWidth.BITS_64) {
             final long n = value;
-            return UnsafeLoophole.longToWord(Address.class, n);
+            return UnsafeLoophole.longToWord(n);
         }
-        return UnsafeLoophole.intToWord(Address.class, value);
+        return UnsafeLoophole.intToWord(value);
     }
 
     @INLINE
@@ -96,10 +95,10 @@ public abstract class Address extends Word {
             return BoxedAddress.from(value);
         }
         if (Word.width() == WordWidth.BITS_64) {
-            return UnsafeLoophole.longToWord(Address.class, value);
+            return UnsafeLoophole.longToWord(value);
         }
         final int n = (int) value;
-        return UnsafeLoophole.intToWord(Address.class, n);
+        return UnsafeLoophole.intToWord(n);
     }
 
     @Override
@@ -208,7 +207,7 @@ public abstract class Address extends Word {
         return lessThan(fromInt(other));
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.LessEqual.class, thrownExceptions = 0)
+    @BUILTIN(builtinClass = AddressBuiltin.LessEqual.class)
     public final boolean lessEqual(Address other) {
         assert Word.isBoxed();
         return !greaterThan(other);
@@ -259,7 +258,7 @@ public abstract class Address extends Word {
         return asOffset().times(factor).asAddress();
     }
 
-    @BUILTIN(builtinClass = AddressBuiltin.DividedByAddress.class, thrownExceptions = ExceptionThrower.ARITHMETIC_EXCEPTION)
+    @BUILTIN(builtinClass = AddressBuiltin.DividedByAddress.class)
     protected abstract Address dividedByAddress(Address divisor);
 
     @INLINE(override = true)

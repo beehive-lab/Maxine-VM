@@ -45,9 +45,13 @@ public class IrMethodFilter extends IrObserverAdapter {
     private final IrObserver _observer;
     private final String[] _filters;
 
-    public IrMethodFilter(IrObserver observer) {
-        _filters = System.getProperty(PROPERTY_FILTER, "").split(",");
+    public IrMethodFilter(IrObserver observer, String[] filters) {
+        _filters = filters;
         _observer = observer;
+    }
+
+    public IrMethodFilter(IrObserver observer) {
+        this(observer, System.getProperty(PROPERTY_FILTER, "").split(","));
     }
 
     @Override
