@@ -103,9 +103,7 @@ public abstract class Snippet extends IrRoutine {
             if (MaxineVM.isPrototyping()) {
                 classActor.makeInitialized();
             } else if (!classActor.isInitialized()) {
-                if (!classActor.isInitialized()) {
-                    classActor.makeInitialized();
-                }
+                classActor.makeInitialized();
             }
         }
         public static final MakeClassInitialized SNIPPET = new MakeClassInitialized();

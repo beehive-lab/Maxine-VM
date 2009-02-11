@@ -659,38 +659,43 @@ public abstract class Actor {
      * accepted specifiers and the actor attribute they denote are described below:
      *
      * <pre>
-     *     Specifier | Description                                        | Example(s)
-     *     ----------+------------------------------------------------------------------------------------------
-     *     'T'       | Qualified return/field type                        | "int" "java.lang.String"
-     *     't'       | Unqualified return/field type                      | "int" "String"
-     *     'R'       | Qualified return/field type                        | "int" "java.lang.String"
-     *     'r'       | Unqualified return/field type                      | "int" "String"
-     *     'H'       | Qualified holder                                   | "java.util.Map.Entry"
-     *     'h'       | Unqualified holder                                 | "Entry"
-     *     'n'       | Method/field/class name                            | "add"
-     *     'P'       | Qualified parameter types, separated by ', '       | "int, java.lang.String"
-     *     'p'       | Unqualified parameter types, separated by ', '     | "int, String"
-     *     'f'       | The flags as a {@linkplain #flagsString() string}  | "public static final" "transient"
-     *     '%'       | A '%' character                                    | "%"
+     *     Specifier | Args         | Description                                        | Example(s)
+     *     ----------+--------------+------------------------------------------------------------------------------------------
+     *     'T'       |              | Qualified return/field type                        | "int" "java.lang.String"
+     *     't'       |              | Unqualified return/field type                      | "int" "String"
+     *     'R'       |              | Qualified return/field type                        | "int" "java.lang.String"
+     *     'r'       |              | Unqualified return/field type                      | "int" "String"
+     *     's'       | bci          | Source file name and line derived from bci         | "String.java:33" "Native Method" "Unknown Source"
+     *     'H'       |              | Qualified holder                                   | "java.util.Map.Entry"
+     *     'h'       |              | Unqualified holder                                 | "Entry"
+     *     'n'       |              | Method/field/class name                            | "add"
+     *     'P'       |              | Qualified parameter types, separated by ', '       | "int, java.lang.String"
+     *     'p'       |              | Unqualified parameter types, separated by ', '     | "int, String"
+     *     'f'       |              | The flags as a {@linkplain #flagsString() string}  | "public static final" "transient"
+     *     '%'       |              | A '%' character                                    | "%"
      * </pre>
      *
      * If a specifier is given for an actor attribute that is not applicable for this actor type, then
-     * the specifier is ignored or causes an {@link IllegalArgumentException} depending on the value of {@code strict}.
+     * the specifier is ignored or causes an {@link IllegalFormatException} depending on the value of {@code strict}.
      * For example, a "%T" in {@code format} is ignored if this object is a {@link ClassActor} instance and {@code strict == false}.
-     *
-     * @param format a format specification
      * @param strict specifies what action to take if actor attributes that don't apply to this actor are encountered in {@code format}
+     * @param format a format specification
+     * @param args arguments referenced by the format specifiers in {@code format}.
+     *        If there are more arguments than consumed by the format specifiers, the
+     *        extra arguments are ignored.
+     *
      * @return the result of formatting this method according to {@code format}
-     * @throws IllegalArgumentException if an illegal specifier is encountered in {@code format}
+     * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
-    public final String format(String format, boolean strict) {
+    public final String format(boolean strict, String format, Object... args) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
+        int argIndex = 0;
         while (index < format.length()) {
             final char ch = format.charAt(index++);
             if (ch == '%') {
                 if (index >= format.length()) {
-                    throw new IllegalArgumentException("An unquoted '%' character cannot terminate a method format specification");
+                    throw new UnknownFormatConversionException("An unquoted '%' character cannot terminate a method format specification");
                 }
                 final char specifier = format.charAt(index++);
                 boolean qualified = false;
@@ -709,7 +714,31 @@ public abstract class Actor {
                             sb.append(fieldActor.descriptor().toJavaString(qualified));
                         } else {
                             if (strict) {
-                                throw new IllegalArgumentException("Cannot use %" + specifier + " in format specification for an instance of " + getClass().getSimpleName());
+                                throw new IllegalFormatConversionException(specifier, getClass());
+                            }
+                        }
+                        break;
+                    }
+                    case 's': {
+                        final Object arg;
+                        try {
+                            arg = args[argIndex++];
+                        } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {
+                            throw new MissingFormatArgumentException(String.valueOf(specifier));
+                        }
+                        final int bci;
+                        try {
+                            bci = (Integer) arg;
+                        } catch (ClassCastException classCastException) {
+                            throw new IllegalFormatConversionException(specifier, arg == null ? Object.class : arg.getClass());
+                        }
+                        if (this instanceof ClassMethodActor) {
+                            final ClassMethodActor classMethodActor = (ClassMethodActor) this;
+                            final String stackTraceLine = classMethodActor.toStackTraceElement(bci).toString();
+                            sb.append(stackTraceLine.substring(stackTraceLine.indexOf('(') + 1, stackTraceLine.lastIndexOf(')')));
+                        } else {
+                            if (strict) {
+                                throw new IllegalFormatConversionException(specifier, getClass());
                             }
                         }
                         break;
@@ -723,7 +752,7 @@ public abstract class Actor {
                             sb.append(memberActor.holder().typeDescriptor().toJavaString(qualified));
                         } else {
                             if (strict) {
-                                throw new IllegalArgumentException("Cannot use %" + specifier + " in format specification for an instance of " + getClass().getSimpleName());
+                                throw new IllegalFormatConversionException(specifier, getClass());
                             }
                         }
                         break;
@@ -745,7 +774,7 @@ public abstract class Actor {
                             }
                         } else {
                             if (strict) {
-                                throw new IllegalArgumentException("Cannot use %" + specifier + " in format specification for an instance of " + getClass().getSimpleName());
+                                throw new IllegalFormatConversionException(specifier, getClass());
                             }
                         }
                         break;
@@ -759,7 +788,7 @@ public abstract class Actor {
                         break;
                     }
                     default: {
-                        throw new IllegalArgumentException("Illegal specifier '" + specifier + "' in a method format specification");
+                        throw new UnknownFormatConversionException(String.valueOf(specifier));
                     }
                 }
             } else {
@@ -770,14 +799,17 @@ public abstract class Actor {
     }
 
     /**
-     * Calling this method is equivalent to calling {@link #format(String) format(format, true)}.
+     * Calling this method is equivalent to calling {@link #format(String, Object...) format(format, true)}.
      *
      * @param format a format specification
+     * @param args arguments referenced by the format specifiers in {@code format}.
+     *        If there are more arguments than consumed by the format specifiers, the
+     *        extra arguments are ignored.
      * @return the result of formatting this method according to {@code format}
-     * @throws IllegalArgumentException if an illegal specifier is encountered in {@code format}
+     * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
-    public final String format(String format) {
-        return format(format, true);
+    public final String format(String format, Object... args) throws IllegalFormatException {
+        return format(true, format, args);
     }
 
     @Override
