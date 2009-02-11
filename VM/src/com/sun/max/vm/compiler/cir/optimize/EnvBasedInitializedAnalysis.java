@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.cir.optimize;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.operator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
@@ -88,52 +87,13 @@ public class EnvBasedInitializedAnalysis extends EnvBasedDFA<InitializedDomain.S
 
     /**
      * Here, we use the results of the analysis that we performed above
-     * in order to mark the flag "canRaiseNullPointerException" in the
-     * different operations which are called with a receiver that's known
-     * to be initialized (i.e., not null).
+     * in order to remove {@link Stoppable#NULL_POINTER_CHECK} as a reason
+     * the operations which are called with a receiver may stop
+     * where the receiver is known to be initialized (i.e., not null).
      *
      * @author Aziz Ghuloum
      */
     public static class InitializedResult {
-        private static class OpVisitor extends HCirOperatorDefaultVisitor {
-            final CirCall _call;
-            InitializedDomain.Set[] _set;
-            private InitializedDomain.Set val(int i) {
-                if (i < _set.length) {
-                    return _set[i];
-                }
-                return InitializedDomain.DOMAIN.getBottom();
-            }
-            OpVisitor(CirCall call, InitializedDomain.Set[] set) {
-                _call = call;
-                _set = set;
-            }
-
-            @Override
-            public void visit(GetField op) {
-                op.setCanRaiseNullPointerException(!val(0).isInitialized());
-            }
-            @Override
-            public void visit(PutField op) {
-                op.setCanRaiseNullPointerException(!val(0).isInitialized());
-            }
-            @Override
-            public void visit(ArrayLength op) {
-                op.setCanRaiseNullPointerException(!val(0).isInitialized());
-            }
-            @Override
-            public void visit(ArrayLoad op) {
-                if (val(0).isInitialized()) {
-                    op.removeThrownExceptions(ExceptionThrower.NULL_POINTER_EXCEPTION);
-                }
-            }
-            @Override
-            public void visit(ArrayStore op) {
-                if (val(0).isInitialized()) {
-                    op.removeThrownExceptions(ExceptionThrower.NULL_POINTER_EXCEPTION);
-                }
-            }
-        }
 
         private static class TreeVisitor extends CirVisitor {
             final IdentityHashMapping<CirCall, InitializedDomain.Set[]> _results;
@@ -146,8 +106,10 @@ public class EnvBasedInitializedAnalysis extends EnvBasedDFA<InitializedDomain.S
                 if (op instanceof JavaOperator) {
                     final InitializedDomain.Set[] set = _results.get(call);
                     if (set != null) {
-                        final OpVisitor vis = new OpVisitor(call, set);
-                        ((JavaOperator) op).acceptVisitor(vis);
+                        if (set.length != 0 && set[0].isInitialized()) {
+                            final JavaOperator javaOperator = (JavaOperator) op;
+                            javaOperator.removeReasonMayStop(Stoppable.NULL_POINTER_CHECK);
+                        }
                     }
                 }
             }

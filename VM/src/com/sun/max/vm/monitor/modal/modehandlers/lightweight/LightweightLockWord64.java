@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 
 /**
@@ -66,12 +65,9 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @INLINE
-    public static LightweightLockWord64 as(Word word) {
-        if (MaxineVM.isPrototyping()) {
-            return new BoxedLightweightLockWord64(word);
-        }
-        return UnsafeLoophole.castWord(LightweightLockWord64.class, word);
+    @UNCHECKED_CAST
+    public static LightweightLockWord64 from(Word word) {
+        return new BoxedLightweightLockWord64(word);
     }
 
     /**
@@ -124,7 +120,7 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
     public final LightweightLockWord64 incrementCount() {
         // So long as the rcount field is within a byte boundary, we can just use addition
         // without any endian issues.
-        return LightweightLockWord64.as(asAddress().plus(RCOUNT_INC_WORD));
+        return LightweightLockWord64.from(asAddress().plus(RCOUNT_INC_WORD));
     }
 
     /**
@@ -134,7 +130,7 @@ public abstract class LightweightLockWord64 extends HashableLockWord64 {
      */
     @INLINE
     public final LightweightLockWord64 decrementCount() {
-        return LightweightLockWord64.as(asAddress().minus(RCOUNT_INC_WORD));
+        return LightweightLockWord64.from(asAddress().minus(RCOUNT_INC_WORD));
     }
 
     /**

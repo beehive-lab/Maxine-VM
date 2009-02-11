@@ -28,7 +28,7 @@ import com.sun.max.vm.type.*;
 public class ArrayLength extends JavaOperator {
 
     public ArrayLength() {
-        super(NULL_POINTER_EXCEPTION);
+        super(CALL | NULL_POINTER_CHECK);
     }
 
     @Override
@@ -46,12 +46,11 @@ public class ArrayLength extends JavaOperator {
         visitor.visit(this);
     }
 
-    private boolean _canRaiseNullPointerException = true;
-    public void setCanRaiseNullPointerException(boolean flag) {
-        _canRaiseNullPointerException = flag;
-    }
-    public boolean canRaiseNullPointerException() {
-        return _canRaiseNullPointerException;
+    private static final Kind[] _parameterKinds = {Kind.REFERENCE};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 
     @Override

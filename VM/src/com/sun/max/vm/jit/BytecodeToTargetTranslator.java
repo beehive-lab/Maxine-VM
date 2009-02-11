@@ -48,7 +48,6 @@ import com.sun.max.vm.jit.Stop.*;
 import com.sun.max.vm.jit.Stops.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.template.*;
 import com.sun.max.vm.template.TemplateChooser.*;
@@ -798,7 +797,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             } catch (LinkageError e) {
                 // This should not happen since the field ref constant is resolvable without class loading (i.e., it
                 // has already been resolved). If it were to happen, the safe thing to do is to fall off to the
-                // "no assumption" case, where a template for unresolved class is taken instead. So do nothing here.
+                // "no assumption" case, where a template for an unresolved class is taken instead. So do nothing here.
             }
         }
         final CompiledBytecodeTemplate template = _templateTable.get(bytecode, fieldKind);
@@ -1869,7 +1868,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
                 } else {
                     final CompiledBytecodeTemplate template = getTemplate(LDC, Kind.REFERENCE, TemplateChooser.Selector.NO_ASSUMPTION);
                     beginBytecode(template);
-                    assignReferenceLiteralTemplateArgument(0, new ReferenceResolutionGuard(_constantPool, index));
+                    assignReferenceLiteralTemplateArgument(0, _constantPool.makeResolutionGuard(index, ResolveClass.SNIPPET));
                     emitAndRecordStops(template);
                 }
                 break;
@@ -2091,7 +2090,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         }
         final CompiledBytecodeTemplate template = getTemplate(NEW, TemplateChooser.Selector.NO_ASSUMPTION);
         beginBytecode(template);
-        assignReferenceLiteralTemplateArgument(0, _constantPool.makeResolutionGuard(index, ResolveClass.SNIPPET));
+        assignReferenceLiteralTemplateArgument(0, _constantPool.makeResolutionGuard(index, ResolveClassForNew.SNIPPET));
         emitAndRecordStops(template);
     }
 

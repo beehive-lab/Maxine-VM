@@ -22,6 +22,8 @@ package com.sun.max.vm.compiler.cir.transform;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.cir.*;
+import com.sun.max.vm.compiler.cir.CirTraceObserver.*;
+import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 
 /**
@@ -47,6 +49,7 @@ public final class CirBlockParameterMerging {
         isSurvivor[parameterIndex] = true;
         for (CirCall call : block.calls()) {
             final CirValue[] arguments = call.arguments();
+            assert arguments.length == parameters.length;
             final CirValue representativeArgument = arguments[parameterIndex];
             for (int i = 0; i < arguments.length; i++) {
                 if (arguments[i] != representativeArgument) {
@@ -86,6 +89,7 @@ public final class CirBlockParameterMerging {
         // Remove all call arguments that correspond to redundant parameters:
         for (CirCall call : block.calls()) {
             final CirValue[] arguments = call.arguments();
+            assert arguments.length == parameters.length;
             final CirValue[] newArguments = CirCall.newArguments(newParameterLength);
             n = 0;
             for (int i = 0; i < arguments.length; i++) {
@@ -93,6 +97,7 @@ public final class CirBlockParameterMerging {
                     newArguments[n++] = arguments[i];
                 }
             }
+            assert n == newParameterLength;
             call.setArguments(newArguments);
         }
         return true;
@@ -114,13 +119,15 @@ public final class CirBlockParameterMerging {
         return false;
     }
 
-    public static boolean apply(Iterable<CirBlock> blocks) {
+    public static boolean apply(CirOptimizer optimizer, CirNode node, Iterable<CirBlock> blocks) {
+        optimizer.notifyBeforeTransformation(node, TransformationType.BLOCK_PARAMETER_MERGING);
         boolean mergedAny = false;
         for (CirBlock block : blocks) {
             while (applyOnce(block)) {
                 mergedAny = true;
             }
         }
+        optimizer.notifyAfterTransformation(node, TransformationType.BLOCK_PARAMETER_MERGING);
         return mergedAny;
     }
 

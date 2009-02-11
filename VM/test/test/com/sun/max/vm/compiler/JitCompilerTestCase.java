@@ -36,6 +36,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.jit.JitTargetMethod.*;
@@ -115,7 +116,7 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
                 assert !MaxineVM.isPrototypeOnly(classToInitialize);
                 final Class targetClass = Classes.load(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER, classToInitialize.getName());
                 final ClassActor classActor = ClassActor.fromJava(targetClass);
-                classActor.makeInitialized();
+                MakeClassInitialized.makeClassInitialized(classActor);
                 return targetClass;
             }
         });

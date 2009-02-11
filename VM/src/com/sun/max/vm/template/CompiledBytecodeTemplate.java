@@ -43,6 +43,7 @@ public final class CompiledBytecodeTemplate implements BytecodeInfo {
     private final Kind _kind;
 
     public CompiledBytecodeTemplate(TargetMethod targetMethod) {
+        assert targetMethod.classMethodActor().isTemplate();
         final Method javaMethod = targetMethod.classMethodActor().toJava();
         final BYTECODE_TEMPLATE bytecodeAnnotation = javaMethod.getAnnotation(BYTECODE_TEMPLATE.class);
 

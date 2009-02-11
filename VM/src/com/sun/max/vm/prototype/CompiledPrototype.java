@@ -371,8 +371,8 @@ public class CompiledPrototype extends Prototype {
             }
         }
         if (methodActor.isBuiltin() && !SpecialBuiltin.class.isAssignableFrom(methodActor.holder().toJava())) {
-            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
-            addMethods(methodActor, stubClassActor.localVirtualMethodActors(), Relationship.INTERFACE_CALL);
+//            final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());
+//            addMethods(methodActor, stubClassActor.localVirtualMethodActors(), Relationship.INTERFACE_CALL);
         }
         _methodActors.put(methodActor, new Link(methodActor, referrer, relationship));
         _worklist.add(methodActor);

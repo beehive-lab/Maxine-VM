@@ -42,9 +42,9 @@ public final class CirHardSafepointBuiltin extends CirSpecialBuiltin {
         return false;
     }
 
-    @Override
-    public boolean needsJavaFrameDescriptor() {
-        return true;
-    }
+//    @Override
+//    public boolean needsJavaFrameDescriptor() {
+//        return true;
+//    }
 
 }

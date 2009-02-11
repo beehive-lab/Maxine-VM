@@ -20,13 +20,14 @@
  */
 package com.sun.max.vm.compiler.cir.transform;
 
-import static com.sun.max.vm.compiler.cir.CirTraceObserver.Transformation.*;
+import static com.sun.max.vm.compiler.cir.CirTraceObserver.TransformationType.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.builtin.SpecialBuiltin.*;
 import com.sun.max.vm.compiler.cir.*;
@@ -76,9 +77,10 @@ public final class CirTemplateChecker extends CirVisitor {
         final StringBuilder sb = new StringBuilder("In a bytecode template, the Java stack or locals array must not be updated before a safepoint or call.\n");
         sb.append("[in " + _classMethodActor.format("%H.%n(%p)") + " ]\n");
         sb.append("Stack/local update: " + call.procedure() + "(" + Arrays.toString(call.arguments(), ", ") + ")\n");
-        sb.append("    at " + call.bytecodeLocation().toSourcePositionString() + "\n");
+        sb.append("    at " + call.javaFrameDescriptor().toStackTraceElement() + "\n");
         sb.append("Safepoint/call:     " + stop.procedure() + "(" + Arrays.toString(stop.arguments(), ", ") + ")\n");
-        sb.append("    at " + stop.bytecodeLocation().toSourcePositionString());
+        sb.append("    at " + stop.javaFrameDescriptor().toStackTraceElement() + "\n");
+        sb.append("Stop reason(s): " + Stoppable.Static.reasonsMayStopToString((Stoppable) stop.procedure()));
         ProgramError.unexpected(sb.toString());
     }
 
@@ -141,7 +143,7 @@ public final class CirTemplateChecker extends CirVisitor {
         final CirValue procedure = call.procedure();
         if (procedure instanceof CirRoutine) {
             final CirRoutine routine = (CirRoutine) procedure;
-            return routine.needsJavaFrameDescriptor();
+            return Stoppable.Static.canStop(routine);
         }
         return false;
     }

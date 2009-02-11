@@ -45,8 +45,8 @@ public final class CirSoftSafepointBuiltin extends CirSpecialBuiltin {
         return false; //TODO: eliminate redundant soft safepoints - requires analysis
     }
 
-    @Override
-    public boolean needsJavaFrameDescriptor() {
-        return true;
-    }
+//    @Override
+//    public boolean needsJavaFrameDescriptor() {
+//        return true;
+//    }
 }

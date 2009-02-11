@@ -36,7 +36,7 @@ import com.sun.max.vm.value.*;
  *
  * "To fold" is a generalization of "to constant-fold". It means "to evaluate", typically "to meta-evaluate".
  */
-public interface CirRoutine extends ExceptionThrower {
+public interface CirRoutine extends Stoppable {
 
     String name();
 
@@ -52,12 +52,7 @@ public interface CirRoutine extends ExceptionThrower {
      */
     MethodActor foldingMethodActor();
 
-    /**
-     * @return whether a call to this CirRoutine needs to be accompanied by a Java frame descriptor
-     */
-    boolean needsJavaFrameDescriptor();
-
-    int thrownExceptions();
+    int reasonsMayStop();
 
     public static final class Static {
         private Static() {

@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
 
@@ -60,12 +59,9 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @INLINE
-    public static ThinLockWord64 as(Word word) {
-        if (MaxineVM.isPrototyping()) {
-            return new BoxedThinLockWord64(word);
-        }
-        return UnsafeLoophole.castWord(ThinLockWord64.class, word);
+    @UNCHECKED_CAST
+    public static ThinLockWord64 from(Word word) {
+        return new BoxedThinLockWord64(word);
     }
 
     /**
@@ -76,7 +72,7 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      */
     @INLINE
     public static final boolean isThinLockWord(ModalLockWord64 lockWord) {
-        return ThinLockWord64.as(lockWord).isLightweight();
+        return ThinLockWord64.from(lockWord).isLightweight();
     }
 
     /**
@@ -86,7 +82,7 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      */
     @INLINE
     public final ThinLockWord64 asUnlocked() {
-        return ThinLockWord64.as(asAddress().and(UNLOCKED_MASK));
+        return ThinLockWord64.from(asAddress().and(UNLOCKED_MASK));
     }
 
     /**
@@ -98,7 +94,7 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      */
     @INLINE
     public final ThinLockWord64 asLockedOnceBy(int threadID) {
-        return ThinLockWord64.as(asUnlocked().asAddress().or(Address.fromInt(threadID).shiftedLeft(THREADID_SHIFT)).or(RCOUNT_INC_WORD));
+        return ThinLockWord64.from(asUnlocked().asAddress().or(Address.fromInt(threadID).shiftedLeft(THREADID_SHIFT)).or(RCOUNT_INC_WORD));
     }
 
     /**
@@ -121,6 +117,6 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      */
     @INLINE
     public static final ThinLockWord64 unlockedFromHashcode(int hashcode) {
-        return ThinLockWord64.as(HashableLockWord64.as(Address.zero()).setHashcode(hashcode));
+        return ThinLockWord64.from(HashableLockWord64.from(Address.zero()).setHashcode(hashcode));
     }
 }

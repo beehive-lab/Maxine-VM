@@ -31,12 +31,17 @@ import com.sun.max.vm.type.*;
 public class CheckCast extends JavaResolvableOperator<ClassActor> {
 
     public CheckCast(ConstantPool constantPool, int index) {
-        super(CLASS_CAST_EXCEPTION, constantPool, index, Kind.VOID);
+        super(CALL | CLASS_CAST_CHECK, constantPool, index, Kind.VOID);
     }
 
     @Override
     public void acceptVisitor(CirVisitor visitor) {
         visitor.visitHCirOperator(this);
+    }
+
+    @Override
+    public Kind[] parameterKinds() {
+        return new Kind[] {_constantPool.classAt(_index).typeDescriptor().toKind()};
     }
 
     @Override

@@ -45,7 +45,7 @@ public class CirTraceObserver extends IrTraceObserver {
         super(CirMethod.class);
     }
 
-    public enum Transformation {
+    public enum TransformationType {
         TEMPLATE_CHECKING("Checking template CIR", 3),
         BUILTIN_VARIANT_OPTIMIZATION("Builtin Variant Optimization", 5),
         OPTIMIZATION("Optimizing", 3),
@@ -54,20 +54,23 @@ public class CirTraceObserver extends IrTraceObserver {
         HCIR_FREE_VARIABLE_CAPTURING("HCIR Free Variable Capturing", 2),
         ALPHA_CONVERSION("Alpha conversion", 2),
         JAVA_LOCALS_PRUNING("Pruning Java locals", 2),
+        COPY_PROPAGATION("Copy propagation", 2),
         HCIR_SPLITTING("Split HCIR", 2),
         HCIR_TO_LCIR("HCIR -> LCIR", 2),
-        FOLDING("Folding", 4),
+        FOLDING("Folding", 3),
         REDUCING("Reducing", 4),
-        DEFLATION("Deflation", 4),
+        DEFLATION("Deflation", 3),
         BETA_REDUCTION("Beta Reduction", 4),
-        BLOCK_UPDATING("Block Updating", 4),
-        METHOD_UPDATING("Method Updating", 4),
-        INLINING("Inlining", 4),
+        BLOCK_INLINING("Block Inlining", 3),
+        BLOCK_PARAMETER_MERGING("Block Parameter Merging", 4),
+        CONSTANT_BLOCK_ARGUMENT_PROPAGATION("Constant Block Argument Propagation", 4),
+        METHOD_INLINING("Method Inlining", 3),
+        INLINING("Inlining", 3),
         LCIR_FREE_VARIABLE_CAPTURING("LCIR Free Variable Capturing", 2),
         WRAPPER_APPLICATION("Applying wrapper", 3);
 
 
-        Transformation(String description, int traceLevel) {
+        TransformationType(String description, int traceLevel) {
             _description = description;
             _traceLevel = traceLevel;
         }
@@ -81,6 +84,46 @@ public class CirTraceObserver extends IrTraceObserver {
         }
     }
 
+    /**
+     * Describes the application of a particular {@linkplain TransformationType type} of transformation.
+     * The description may optionally include more detail about the transformation being applied.
+     * For example, when {@linkplain TransformationType#METHOD_INLINING inlining} a method, the name of
+     * the method being inlined could be part of the description.
+     */
+    public static class Transformation {
+        final TransformationType _type;
+        final String _detail;
+
+        public Transformation(TransformationType type) {
+            this(type, null);
+        }
+
+        public Transformation(TransformationType type, String detail) {
+            _type = type;
+            _detail = detail;
+        }
+
+        @Override
+        public String toString() {
+            if (_detail == null) {
+                return _type.toString();
+            }
+            return _type + " -- " + _detail;
+        }
+    }
+
+    private static final ThreadLocal<String> _lastTrace = new ThreadLocal<String>();
+
+    private String trace(CirNode node) {
+        final String trace = node.traceToString(false);
+        final String lastTrace = _lastTrace.get();
+        if (trace.equals(lastTrace)) {
+            return "[no change from last CIR trace]";
+        }
+        _lastTrace.set(trace);
+        return trace;
+    }
+
     @Override
     public void observeBeforeTransformation(IrMethod irMethod, Object context, Object transform) {
         if (irMethod instanceof CirMethod) {
@@ -89,11 +132,11 @@ public class CirTraceObserver extends IrTraceObserver {
                 if (irMethod instanceof CirMethod) {
                     _out.println(traceString(irMethod, "before transformation: " + transform));
                     final CirMethod cirMethod = (CirMethod) irMethod;
-                    if (cirMethod.isGenerated() || context == null) {
-                        _out.println(irMethod.traceToString());
+                    if (context == null) {
+                        _out.println(trace(cirMethod));
                     } else {
                         final CirNode cirNode = (CirNode) context;
-                        _out.println(cirNode.traceToString(false));
+                        _out.println(trace(cirNode));
                     }
                     _out.flush();
                 }
@@ -109,11 +152,11 @@ public class CirTraceObserver extends IrTraceObserver {
                 if (irMethod instanceof CirMethod) {
                     _out.println(traceString(irMethod, "after transformation: " + transform));
                     final CirMethod cirMethod = (CirMethod) irMethod;
-                    if (cirMethod.isGenerated() || context == null) {
-                        _out.println(irMethod.traceToString());
+                    if (context == null) {
+                        _out.println(trace(cirMethod));
                     } else {
                         final CirNode cirNode = (CirNode) context;
-                        _out.println(cirNode.traceToString(false));
+                        _out.println(trace(cirNode));
                     }
                     _out.flush();
                 }
@@ -123,6 +166,9 @@ public class CirTraceObserver extends IrTraceObserver {
 
     @Override
     protected int transformTraceLevel(Object transform) {
-        return ((Transformation) transform)._traceLevel;
+        if (transform instanceof Transformation) {
+            return ((Transformation) transform)._type._traceLevel;
+        }
+        return ((TransformationType) transform)._traceLevel;
     }
 }

@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.cir.optimize;
 
 import java.util.*;
 
-import com.sun.max.program.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.CirTraceObserver.*;
 import com.sun.max.vm.compiler.cir.builtin.*;
@@ -63,7 +62,7 @@ public class CirDeflation {
             _arguments = arguments;
         }
 
-        abstract Transformation description();
+        abstract TransformationType description();
         abstract String target();
         abstract boolean run();
 
@@ -73,9 +72,10 @@ public class CirDeflation {
          * @return {@code true} if the deflation succeeded, {@code false} otherwise
          */
         final boolean apply() {
-            _optimizer.notifyBeforeTransformation(_call, description());
+            final Transformation transform = new Transformation(description(), _call.procedure().toString());
+            _optimizer.notifyBeforeTransformation(_call.procedure(), transform);
             final boolean result = run();
-            _optimizer.notifyAfterTransformation(_call, description());
+            _optimizer.notifyAfterTransformation(_call.procedure(), transform);
             return result;
         }
     }
@@ -90,14 +90,16 @@ public class CirDeflation {
         }
 
         @Override
-        public Transformation description() {
-            return Transformation.FOLDING;
+        public TransformationType description() {
+            return TransformationType.FOLDING;
         }
 
         @Override
         public boolean run() {
             try {
-                _call.assign(_foldable.fold(_optimizer, _arguments));
+                final CirCall call = _foldable.fold(_optimizer, _arguments);
+                _call.setProcedure(call.procedure());
+                _call.setArguments(call.arguments());
                 return true;
             } catch (CirFoldingException cirFoldingException) {
                 return false;
@@ -120,8 +122,8 @@ public class CirDeflation {
         }
 
         @Override
-        public Transformation description() {
-            return Transformation.REDUCING;
+        public TransformationType description() {
+            return TransformationType.REDUCING;
         }
 
         @Override
@@ -159,21 +161,13 @@ public class CirDeflation {
             return reduceCallByFoldable(call, foldable, arguments);
         }
         if (procedure instanceof CirClosure) {
-            _optimizer.notifyBeforeTransformation(_optimizer.node(), Transformation.BETA_REDUCTION);
-
+            _optimizer.notifyBeforeTransformation(_optimizer.node(), TransformationType.BETA_REDUCTION);
             final CirClosure closure = (CirClosure) procedure;
-            traceReduceCall();
             call.assign(CirBetaReduction.applyMultiple(closure, arguments));
-            _optimizer.notifyAfterTransformation(_optimizer.node(), Transformation.BETA_REDUCTION);
+            _optimizer.notifyAfterTransformation(_optimizer.node(), TransformationType.BETA_REDUCTION);
             return true;
         }
         return false;
-    }
-
-    private void traceReduceCall() {
-        if (Trace.hasLevel(4)) {
-            Trace.line(4, "deflating while compiling: " + _optimizer.classMethodActor());
-        }
     }
 
     protected boolean updateCall(CirCall call) {
@@ -188,10 +182,10 @@ public class CirDeflation {
     }
 
     public static boolean apply(CirOptimizer cirOptimizer, CirNode node) {
-        cirOptimizer.notifyBeforeTransformation(node, Transformation.DEFLATION);
+        cirOptimizer.notifyBeforeTransformation(node, TransformationType.DEFLATION);
         final CirDeflation deflation = new CirDeflation(cirOptimizer, node);
         deflation.reduceCalls();
-        cirOptimizer.notifyAfterTransformation(node, Transformation.DEFLATION);
+        cirOptimizer.notifyAfterTransformation(node, TransformationType.DEFLATION);
         return deflation._reducedAny;
     }
 

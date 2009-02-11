@@ -20,9 +20,9 @@
  */
 package com.sun.max.vm.compiler.cir.operator;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -36,6 +36,7 @@ import com.sun.max.vm.compiler.cir.builtin.*;
 import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.snippet.*;
+import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.type.*;
 
 
@@ -46,62 +47,32 @@ import com.sun.max.vm.type.*;
  * @author Yi Guo
  * @author Aziz Ghuloum
  */
-public abstract class JavaOperator extends CirOperator implements CirRoutine {
+public abstract class JavaOperator extends CirOperator {
 
-    protected int _thrownExceptions;
-
-    /**
-     * Creates an object for the application of an operator that can initially raise any operation
-     * until subsequent analysis proves otherwise.
-     */
-    protected JavaOperator() {
-        this(ANY);
-    }
+    protected int _reasonsMayStop;
 
     /**
-     * Creates an object for the application of an operator that is known a priori to only throw a specific exception.
-     * Subsequent analysis may be able to prove the exception is never thrown for this specific instance of the operator.
-     */
-    protected JavaOperator(int thrownExceptions) {
-        _thrownExceptions = thrownExceptions;
-    }
-
-    public final int thrownExceptions() {
-        return _thrownExceptions;
-    }
-
-    /**
-     * Sets the exception(s) that can be thrown by this operator, overriding any previously set exception(s).
+     * Creates an object for the application of an operator.
      *
-     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower}
+     * @param reasonsMayStop specifies the reasons the translation of this operator may produce one or more
+     *            {@linkplain Stoppable stops}
      */
-    public final void setThrownExceptions(int thrownExceptions) {
-        _thrownExceptions = thrownExceptions;
+    protected JavaOperator(int reasonsMayStop) {
+        _reasonsMayStop = reasonsMayStop;
+    }
+
+    public final int reasonsMayStop() {
+        return _reasonsMayStop;
     }
 
     /**
-     * Adds one or more exceptions to the exceptions that can be thrown by this operator.
+     * Removes one of the reasons this operator may stop.
      *
-     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower} that is added to the
-     *            current set of flags set for this operator
+     * @param reasonMayStop exactly one of the flags defined in {@link Stoppable}
      */
-    public final void addThrownExceptions(int thrownExceptions) {
-        _thrownExceptions |= thrownExceptions;
-    }
-
-    /**
-     * Removes one or more exceptions from the exceptions that can be thrown by this operator.
-     *
-     * @param thrownExceptions a mask of the flags values defined in {@link ExceptionThrower} that is removed from the
-     *            current set of flags set for this operator
-     */
-    public final void removeThrownExceptions(int thrownExceptions) {
-        _thrownExceptions &= ~thrownExceptions;
-    }
-
-    @Override
-    public Kind[] parameterKinds() {
-        throw Problem.unimplemented();
+    public final void removeReasonMayStop(int reasonMayStop) {
+        assert reasonMayStop != 0 && Ints.isPowerOfTwo(reasonMayStop & Stoppable.Static.ALL_REASONS) : "Exactly one reason for stopping must be removed at a time";
+        _reasonsMayStop &= ~reasonMayStop;
     }
 
     @Override
@@ -112,11 +83,6 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
     @Override
     public String name() {
         return "CirOperator";
-    }
-
-    @Override
-    public boolean needsJavaFrameDescriptor() {
-        return true;
     }
 
     @Override
@@ -136,7 +102,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
      *
      * @author Doug Simon
      */
-    abstract static class JavaResolvableOperator<Actor_Type extends Actor> extends JavaOperator {
+    public abstract static class JavaResolvableOperator<Actor_Type extends Actor> extends JavaOperator {
         /**
          * The constant pool entry index.
          */
@@ -149,20 +115,19 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
 
         protected final Kind _resultKind;
 
-        @CONSTANT_WHEN_NOT_ZERO
         protected Actor_Type _actor;
 
-        public JavaResolvableOperator(int thrownExceptions, ConstantPool constantPool, int index, Kind resultKind) {
-            super(thrownExceptions);
+        public JavaResolvableOperator(int reasonsMayStop, ConstantPool constantPool, int index, Kind resultKind) {
+            super(reasonsMayStop);
+            assert (reasonsMayStop & CALL) != 0 : "operator translated by one more snippets must indicate CALL as a stop reason";
             _constantPool = constantPool;
             _index = index;
             _resultKind = resultKind;
             if (constantPool != null) {
                 final ResolvableConstant constant = constantPool.resolvableAt(index);
                 if (constant.isResolved() || constant.isResolvableWithoutClassLoading(constantPool)) {
-                    final Class<Actor_Type> type = null;
                     try {
-                        _actor = StaticLoophole.cast(type, constant.resolve(constantPool, index));
+                        resolve();
                     } catch (PrototypeOnlyFieldError prototypeOnlyFieldError) {
                         // Suppress: will have to be dealt with when 'resolve()' is called
                     } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
@@ -177,6 +142,13 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
          */
         public final ConstantPool constantPool() {
             return _constantPool;
+        }
+
+        /**
+         * Gets the constant pool entry referenced by this operator.
+         */
+        public final ResolvableConstant constant() {
+            return _constantPool.resolvableAt(_index);
         }
 
         /**
@@ -204,7 +176,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         /**
          * Resolves the constant pool entry referenced by this operator. The resolution only happens once.
          */
-        public final void resolve() {
+        public void resolve() {
             final Class<Actor_Type> type = null;
             _actor = StaticLoophole.cast(type, _constantPool.resolvableAt(_index).resolve(_constantPool, _index));
         }
@@ -262,7 +234,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
                 if (!isResolved()) {
                     resolve();
                 }
-                classToBeInitialized().makeInitialized();
+                MakeClassInitialized.makeClassInitialized(classToBeInitialized());
             }
         }
 
@@ -281,15 +253,11 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
      * @author Aziz Ghuloum
      */
     private static final class JavaBuiltinOperator extends JavaOperator implements Lowerable {
-        @Override
-        public boolean needsJavaFrameDescriptor() {
-            return false;
-        }
 
         private final CirBuiltin _cirBuiltin;
 
         private JavaBuiltinOperator(Builtin builtin) {
-            super(builtin.thrownExceptions());
+            super(builtin.reasonsMayStop());
             _cirBuiltin = CirBuiltin.get(builtin);
         }
 
@@ -329,9 +297,8 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
     }
 
     /**
-     * This class is a work around for some {@link Snippet}s that can
-     * appear in the CIR. We list them here explicitly instead of
-     * allowing all {@link Snippet}s to be valid HCir operators.
+     * This class is a work around for some {@link Snippet}s that can appear in HCIR. They are wrapped with an instance
+     * of this class instead of allowing all {@link Snippet}s to be valid HCIR operators.
      *
      * @author Yi Guo
      * @author Aziz Ghuloum
@@ -340,7 +307,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         private final CirSnippet _snippet;
 
         JavaSnippetOperator(Snippet snippet) {
-            super(NONE);
+            super(CALL);
             _snippet = CirSnippet.get(snippet);
         }
 
@@ -389,7 +356,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         private final Builtin _builtin;
         private final Snippet _snippet;
         private JavaBuiltinOrSnippetOperator(Builtin builtin, Snippet snippet) {
-            super(builtin.thrownExceptions());
+            super(VMConfiguration.target().compilerScheme().isBuiltinImplemented(builtin) ? builtin.reasonsMayStop() : CALL);
             _builtin = builtin;
             _snippet = snippet;
         }
@@ -427,7 +394,7 @@ public abstract class JavaOperator extends CirOperator implements CirRoutine {
         }
     }
 
-    public static final JavaOperator PROLOGUE = new JavaBuiltinOperator(SoftSafepoint.BUILTIN);
+    public static final JavaOperator SAFEPOINT_OP = new JavaBuiltinOperator(SoftSafepoint.BUILTIN);
 
     public static final JavaOperator FLOAT_TO_INT = new JavaSnippetOperator(Snippet.ConvertFloatToInt.SNIPPET);
     public static final JavaOperator FLOAT_TO_LONG = new JavaSnippetOperator(Snippet.ConvertFloatToLong.SNIPPET);

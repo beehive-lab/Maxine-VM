@@ -20,13 +20,13 @@
  */
 package com.sun.max.vm.jit;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.compiler.target.*;
@@ -50,6 +50,7 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
         super(vmConfiguration);
     }
 
+    @PROTOTYPE_ONLY
     public void initializeForJitCompilations() {
         targetGenerator().initialize();
     }
@@ -58,10 +59,10 @@ public abstract class JitCompiler extends AbstractVMScheme implements DynamicCom
         return (JitTargetMethod) targetGenerator().makeIrMethod(classMethodActor, compilationDirective);
     }
 
+    @PROTOTYPE_ONLY
     public void gatherCalls(TargetMethod targetMethod, AppendableSequence<MethodActor> directCalls, AppendableSequence<MethodActor> virtualCalls, AppendableSequence<MethodActor> interfaceCalls) {
         try {
-            final ConstantPool pool =  targetMethod.classMethodActor().codeAttribute().constantPool();
-            final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(pool, directCalls, virtualCalls, interfaceCalls);
+            final BytecodeVisitor bytecodeVisitor = new InvokedMethodRecorder(targetMethod.classMethodActor(), directCalls, virtualCalls, interfaceCalls);
             final BytecodeScanner bytecodeScanner = new BytecodeScanner(bytecodeVisitor);
             bytecodeScanner.scan(targetMethod.classMethodActor());
         } catch (Throwable throwable) {

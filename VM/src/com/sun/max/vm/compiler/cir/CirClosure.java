@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.cir;
 
 import com.sun.max.lang.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.type.*;
@@ -52,7 +51,6 @@ public class CirClosure extends CirProcedure {
 
     private CirVariable[] _parameters;
     private CirCall _body;
-    private final BytecodeLocation _location;
 
     /**
      * The value that must be used when passing a zero-length array as the value of {@code parameters} to
@@ -60,8 +58,7 @@ public class CirClosure extends CirProcedure {
      */
     public static final CirVariable[] NO_PARAMETERS = {};
 
-    public CirClosure(BytecodeLocation location) {
-        _location = location;
+    public CirClosure() {
     }
 
     /**
@@ -74,7 +71,6 @@ public class CirClosure extends CirProcedure {
     public CirClosure(CirCall body, CirVariable... parameters) {
         setParameters(parameters);
         _body = body;
-        _location = null;
         assert verifyParameters();
     }
 
@@ -133,7 +129,11 @@ public class CirClosure extends CirProcedure {
 
     @Override
     public Kind[] parameterKinds() {
-        return CirValue.getKinds(_parameters);
+        final Kind[] kinds = new Kind[_parameters.length];
+        for (int i = 0; i != kinds.length; ++i) {
+            kinds[i] = _parameters[i].kind();
+        }
+        return kinds;
     }
 
     public void setBody(CirCall body) {
@@ -142,10 +142,6 @@ public class CirClosure extends CirProcedure {
 
     public CirCall body() {
         return _body;
-    }
-
-    public BytecodeLocation location() {
-        return _location;
     }
 
     /**

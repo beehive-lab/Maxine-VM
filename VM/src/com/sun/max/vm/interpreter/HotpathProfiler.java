@@ -43,7 +43,7 @@ public class HotpathProfiler implements Profiler {
     @Override
     public void jump(BytecodeLocation fromlocation, BytecodeLocation toLocation, BirState state) {
         assert fromlocation.classMethodActor() == toLocation.classMethodActor();
-        if (toLocation.position() < fromlocation.position()) {
+        if (toLocation.bytecodePosition() < fromlocation.bytecodePosition()) {
             backwardJump(fromlocation, toLocation, state);
         }
     }

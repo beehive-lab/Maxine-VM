@@ -54,9 +54,9 @@ public abstract class Offset extends Word {
         }
         if (Word.width() == WordWidth.BITS_64) {
             final long n = value;
-            return UnsafeLoophole.longToWord(Offset.class, n);
+            return UnsafeLoophole.longToWord(n);
         }
-        return UnsafeLoophole.intToWord(Offset.class, value);
+        return UnsafeLoophole.intToWord(value);
     }
 
     @INLINE
@@ -65,10 +65,10 @@ public abstract class Offset extends Word {
             return BoxedOffset.from(value);
         }
         if (Word.width() == WordWidth.BITS_64) {
-            return UnsafeLoophole.longToWord(Offset.class, value);
+            return UnsafeLoophole.longToWord(value);
         }
         final int n = (int) value;
-        return UnsafeLoophole.intToWord(Offset.class, n);
+        return UnsafeLoophole.intToWord(n);
     }
 
     @Override

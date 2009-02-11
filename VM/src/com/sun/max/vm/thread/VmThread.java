@@ -201,7 +201,7 @@ public class VmThread {
     }
 
     public static VmThread fromJava(Thread javaThread) {
-        return Thread_vmThread.read(javaThread);
+        return (VmThread) Thread_vmThread.readObject(javaThread);
     }
 
     public Word nativeThread() {
@@ -408,7 +408,7 @@ public class VmThread {
         if (MaxineVM.isPrototyping()) {
             return _mainVMThread;
         }
-        return UnsafeLoophole.cast(VmThread.class, VM_THREAD.getConstantReference().toJava());
+        return UnsafeLoophole.cast(VM_THREAD.getConstantReference().toJava());
     }
 
     @INLINE
@@ -416,7 +416,7 @@ public class VmThread {
         if (MaxineVM.isPrototyping()) {
             return _mainVMThread;
         }
-        return UnsafeLoophole.cast(VmThread.class, VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
+        return UnsafeLoophole.cast(VmThreadLocal.VM_THREAD.getConstantReference(vmThreadLocals).toJava());
     }
 
     public static final Address TAG = Address.fromLong(0xbabacafecabafebaL);

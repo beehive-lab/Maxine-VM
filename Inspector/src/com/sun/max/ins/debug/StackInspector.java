@@ -311,7 +311,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
         for (StackFrame stackFrame : frames) {
             if (_listModel.size()  >= _maxFramesDisplay) {
                 _listModel.addElement(new TruncatedStackFrame(parentStackFrame, stackFrame));
-                inspection().informationMessage("stack depth exceeds " + _maxFramesDisplay + ": truncated", "Stack Inspector");
+                inspection().informationMessage("stack depth of " + _listModel.size() + " exceeds " + _maxFramesDisplay + ": truncated", "Stack Inspector");
                 break;
             }
             _listModel.addElement(stackFrame);

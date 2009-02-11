@@ -309,10 +309,11 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @return the bytecode locations for the inlining chain rooted at {@code instructionPointer}. This will be null if
      *         no bytecode location can be determined for {@code instructionPointer}.
      */
-    public Iterator<BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
+    public Iterator<? extends BytecodeLocation> getBytecodeLocationsFor(Pointer instructionPointer) {
         final TargetJavaFrameDescriptor targetFrameDescriptor = getJavaFrameDescriptorFor(instructionPointer);
         if (targetFrameDescriptor != null) {
-            return targetFrameDescriptor.bytecodeLocations();
+            final Iterator<JavaFrameDescriptor<TargetLocation>> inlinedFrames = targetFrameDescriptor.inlinedFrames();
+            return inlinedFrames;
         }
         return null;
     }
@@ -325,7 +326,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *         determined for {@code instructionPointer}.
      */
     public BytecodeLocation getBytecodeLocationFor(Pointer instructionPointer) {
-        final Iterator<BytecodeLocation> bytecodeLocationsFor = getBytecodeLocationsFor(instructionPointer);
+        final Iterator<? extends BytecodeLocation> bytecodeLocationsFor = getBytecodeLocationsFor(instructionPointer);
         if (bytecodeLocationsFor != null && bytecodeLocationsFor.hasNext()) {
             return bytecodeLocationsFor.next();
         }
@@ -703,7 +704,8 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         if (MaxineVM.isPrototyping() || object == null) {
             return object;
         }
-        return Cell.plantClone(targetBundle.cell(field), object);
+        final Class<Object_Type> type = null;
+        return StaticLoophole.cast(type, Cell.plantClone(targetBundle.cell(field), object));
     }
 
     public final boolean isGenerated() {
@@ -753,6 +755,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         traceDirectCallees(writer);
         traceScalarBytes(writer, targetBundle);
         traceReferenceLiterals(writer, targetBundle);
+        traceFrameDescriptors(writer);
         writer.println("Code cell: " + targetBundle.cell(ArrayField.code).toString());
     }
 

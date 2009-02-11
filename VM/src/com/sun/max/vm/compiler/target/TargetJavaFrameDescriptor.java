@@ -30,7 +30,6 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -43,8 +42,8 @@ import com.sun.max.vm.runtime.*;
  */
 public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocation> {
 
-    public TargetJavaFrameDescriptor(TargetJavaFrameDescriptor parent, BytecodeLocation bytecodeLocation, TargetLocation[] locals, TargetLocation[] stackSlots) {
-        super(parent, bytecodeLocation, locals, stackSlots);
+    public TargetJavaFrameDescriptor(TargetJavaFrameDescriptor parent, ClassMethodActor classMethodActor, int bytecodePosition, TargetLocation[] locals, TargetLocation[] stackSlots) {
+        super(parent, classMethodActor, bytecodePosition, locals, stackSlots);
     }
 
     @Override
@@ -65,7 +64,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         for (TargetJavaFrameDescriptor descriptor : javaFrameDescriptors) {
             if (descriptor != null) {
                 gatherParents(descriptor.parent(), parents);
-                methods.add(descriptor.bytecodeLocation().classMethodActor());
+                methods.add(descriptor.classMethodActor());
                 maxSlots = Math.max(maxSlots, descriptor.maxSlots());
             }
         }
@@ -73,7 +72,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
         final GrowableMapping<JavaFrameDescriptor, Integer> descriptorToSerial = HashMapping.createIdentityMapping();
         int parentSerial = FIRST_SERIAL;
         for (TargetJavaFrameDescriptor parent : parents) {
-            methods.add(parent.bytecodeLocation().classMethodActor());
+            methods.add(parent.classMethodActor());
             maxSlots = Math.max(maxSlots, parent.maxSlots());
             descriptorToSerial.put(parent, parentSerial);
             parentSerial++;
@@ -193,9 +192,8 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                 final TargetJavaFrameDescriptor parent = parentSerial == NO_PARENT ? null : serialToDescriptor[parentSerial];
 
                 final int methodSerial = reader.readSerial();
-                final int position = stream.readUnsignedShort();
-                final BytecodeLocation bytecodeLocation = new BytecodeLocation(methods[methodSerial], position);
-                size = size.plus(getSize(bytecodeLocation));
+                final int bytecodePosition = stream.readUnsignedShort();
+                final ClassMethodActor classMethodActor = methods[methodSerial];
 
                 final TargetLocation[] locals = reader.readTargetLocations();
                 size = size.plus(getArraySize(locals));
@@ -203,7 +201,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                 final TargetLocation[] stackSlots = reader.readTargetLocations();
                 size = size.plus(getArraySize(locals));
 
-                final TargetJavaFrameDescriptor descriptor = new TargetJavaFrameDescriptor(parent, bytecodeLocation, locals, stackSlots);
+                final TargetJavaFrameDescriptor descriptor = new TargetJavaFrameDescriptor(parent, classMethodActor, bytecodePosition, locals, stackSlots);
                 size = size.plus(getSize(descriptor));
 
                 serialToDescriptor[serial] = descriptor;
@@ -218,9 +216,8 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                     final TargetJavaFrameDescriptor parent = parentSerial == NO_PARENT ? null : serialToDescriptor[parentSerial];
 
                     final int methodSerial = reader.readSerial();
-                    final int position = stream.readUnsignedShort();
-                    final BytecodeLocation bytecodeLocation = new BytecodeLocation(methods[methodSerial], position);
-                    size = size.plus(getSize(bytecodeLocation));
+                    final int bytecodePosition = stream.readUnsignedShort();
+                    final ClassMethodActor classMethodActor = methods[methodSerial];
 
                     final TargetLocation[] locals = reader.readTargetLocations();
                     size = size.plus(getArraySize(locals));
@@ -228,7 +225,7 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                     final TargetLocation[] stackSlots = reader.readTargetLocations();
                     size = size.plus(getArraySize(locals));
 
-                    final TargetJavaFrameDescriptor descriptor = new TargetJavaFrameDescriptor(parent, bytecodeLocation, locals, stackSlots);
+                    final TargetJavaFrameDescriptor descriptor = new TargetJavaFrameDescriptor(parent, classMethodActor, bytecodePosition, locals, stackSlots);
                     size = size.plus(getSize(descriptor));
 
                     descriptors.set(i, descriptor);
@@ -329,10 +326,9 @@ public class TargetJavaFrameDescriptor extends JavaFrameDescriptor<TargetLocatio
                 writeSerial(_descriptorToSerial.get(descriptor.parent()));
             }
 
-            final BytecodeLocation bytecodeLocation = descriptor.bytecodeLocation();
-            final int methodSerial = _methodToSerial.get(bytecodeLocation.classMethodActor());
+            final int methodSerial = _methodToSerial.get(descriptor.classMethodActor());
             writeSerial(methodSerial);
-            _stream.writeShort(bytecodeLocation.position());
+            _stream.writeShort(descriptor.bytecodePosition());
             writeTargetLocations(_stream, descriptor.locals());
             writeTargetLocations(_stream, descriptor.stackSlots());
         }

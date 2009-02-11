@@ -21,13 +21,15 @@
 package com.sun.max.vm.bytecode;
 
 import com.sun.max.collect.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Recorder of invoked methods.
  * A visitor that adds methods referenced by invoke bytecodes to an appendable sequence.
- * 
+ *
  * @author Ben L. Titzer
  * @author Doug Simon
  */
@@ -35,13 +37,15 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
     protected final AppendableSequence<MethodActor> _directCalls;
     protected final AppendableSequence<MethodActor> _virtualCalls;
     protected final AppendableSequence<MethodActor> _interfaceCalls;
+    protected final ClassMethodActor _classMethodActor;
     protected final ConstantPool _constantPool;
 
-    public InvokedMethodRecorder(ConstantPool pool,
+    public InvokedMethodRecorder(ClassMethodActor classMethodActor,
                     AppendableSequence<MethodActor> directCalls,
                     AppendableSequence<MethodActor> virtualCalls,
                     AppendableSequence<MethodActor> interfaceCalls) {
-        _constantPool =  pool;
+        _classMethodActor = classMethodActor;
+        _constantPool = classMethodActor.codeAttribute().constantPool();
         _directCalls = directCalls;
         _virtualCalls = virtualCalls;
         _interfaceCalls = interfaceCalls;
@@ -50,8 +54,18 @@ public class InvokedMethodRecorder extends BytecodeAdapter {
     protected void addMethodCall(int index, AppendableSequence<MethodActor> sequence) {
         final MethodRefConstant methodRefConstant = _constantPool.methodAt(index);
         if (methodRefConstant.isResolvableWithoutClassLoading(_constantPool)) {
-            final MethodActor methodActor = methodRefConstant.resolve(_constantPool, index);
-            sequence.append(methodActor);
+            try {
+                final MethodActor methodActor = methodRefConstant.resolve(_constantPool, index);
+                sequence.append(methodActor);
+            } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
+                ProgramError.unexpected(_classMethodActor.format("%H.%n(%p) calls prototype-only method " + methodRefConstant.valueString(_constantPool)));
+            }
+        } else {
+            final TypeDescriptor holder = methodRefConstant.holder(_constantPool);
+            final String holderName = holder.toJavaString();
+            if (holderName.startsWith(new com.sun.max.Package().name())) {
+                ProgramError.unexpected(_classMethodActor.format("%H.%n(%p) calls unresolved Maxine method " + methodRefConstant.valueString(_constantPool)));
+            }
         }
     }
 

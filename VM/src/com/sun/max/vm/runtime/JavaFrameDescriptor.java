@@ -24,37 +24,64 @@ import java.security.*;
 import java.util.*;
 import java.util.Arrays;
 
-import sun.reflect.*;
-
 import com.sun.max.lang.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 
 /**
- * An abstract description of Java execution state, including information about:
+ * An abstract description of Java execution state, that encapsulates the following:
+ * - method actor
  * - byte code location,
  * - locations that represent Java locals,
  * - locations that represent Java stack slots,
  * - inlining and the abstract state of logical caller frames.
  *
- * One of these descriptors needs to be held at every safepoint and at every call site.
+ * One of these descriptors needs to be held at every safepoint, call site and implicit exception points.
  * When a method has been inlined, all the descriptors in its inlined body
  * must be extended with a "parent" link to the former call site's descriptor.
  * This supports reconstructing Java frames of inlined methods.
  *
- * This will be used to implement dynamic deoptimization,
- * i.e. the transformation of an optimized stack frame at a safepoint
- * to a series of JIT stack frames that mimic the Java execution model.
- *
- * Meanwhile, it is also used to implement such features as {@link AccessController#getStackAccessControlContext()}
- * and {@link Reflection#getCallerClass(int)}.
+ * These frame are used to implement:
+ * - de-optimization
+ * - stack traces
+ * - stack inspection (e.g. {@link AccessController#getStackAccessControlContext()})
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public class JavaFrameDescriptor<Slot_Type> {
+public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
 
+    /**
+     * The Java frame state at the inlined call site of this frame.
+     */
     private final JavaFrameDescriptor<Slot_Type> _parent;
 
+    private final Slot_Type[] _locals;
+
+    private final Slot_Type[] _stackSlots;
+
+    /**
+     * Creates a Java frame descriptor.
+     *
+     * @param parent the descriptor of the logical caller Java frame. This value may be {@code null}.
+     * @param classMethodActor the class method actor of the frame
+     * @param bytecodePosition the bytecode position of the frame
+     * @param locals the locations of all local variables in the Java frame, with corresponding indices in the array
+     * @param stackSlots the locations of all Java expression stack slots in the Java frame, with corresponding indices in the array
+     */
+    public JavaFrameDescriptor(JavaFrameDescriptor<Slot_Type> parent, ClassMethodActor classMethodActor, int bytecodePosition, Slot_Type[] locals, Slot_Type[] stackSlots) {
+        super(classMethodActor, bytecodePosition);
+        assert classMethodActor != null;
+        _parent = parent;
+        _locals = locals;
+        _stackSlots = stackSlots;
+    }
+
+    /**
+     * Gets the Java frame state of the logical frame that called this frame where the call has been inlined.
+     *
+     * @return {@code null} to indicate this is top level frame of an inlining tree
+     */
     public JavaFrameDescriptor<Slot_Type> parent() {
         return _parent;
     }
@@ -72,56 +99,40 @@ public class JavaFrameDescriptor<Slot_Type> {
         return result;
     }
 
-    private final BytecodeLocation _bytecodeLocation;
-
-    public final BytecodeLocation bytecodeLocation() {
-        return _bytecodeLocation;
-    }
-
     /**
-     * Gets an iterator over all the bytecode locations denoted by this Java frame descriptor. The first element
-     * produced by the return iterator is the {@linkplain #bytecodeLocation() bytecode location} for this frame
-     * descriptor, the next is the bytecode location for this frame descriptor's {@linkplain #parent() parent} and so
-     * on.
+     * Gets an iterator over all the frames in the sequence of frames resulting from inlining that are terminated by
+     * this frame. That is, this frame is the inner most call in the inlined sequence. The first element produced by the
+     * return iterator is this frame, the next is this frame's {@linkplain #parent() parent} and so on.
      */
-    public Iterator<BytecodeLocation> bytecodeLocations() {
-        return new Iterator<BytecodeLocation>() {
+    public Iterator<JavaFrameDescriptor<Slot_Type>> inlinedFrames() {
+        return new Iterator<JavaFrameDescriptor<Slot_Type>>() {
             JavaFrameDescriptor<Slot_Type> _next = JavaFrameDescriptor.this;
-            @Override
             public boolean hasNext() {
                 return _next != null;
             }
-
-            @Override
-            public BytecodeLocation next() {
+            public JavaFrameDescriptor<Slot_Type> next() {
                 if (!hasNext()) {
                     throw new NoSuchElementException();
                 }
-                final BytecodeLocation bytecodeLocation = _next._bytecodeLocation;
+                final JavaFrameDescriptor<Slot_Type> next = _next;
                 _next = _next._parent;
-                return bytecodeLocation;
+                return next;
             }
-
-            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }
         };
     }
 
-    private final Slot_Type[] _locals;
-
     /**
-     * @return an array of locations corresponding to the Java locals with the same index as the respective array index
+     * Gets an array of locations mapping to the Java locals at the same index.
      */
     public final Slot_Type[] locals() {
         return _locals;
     }
 
-    private final Slot_Type[] _stackSlots;
-
     /**
-     * @return an array of locations corresponding to the Java expression stack slots with the same index as the respective array index
+     * Gets an array of locations mapping to the Java expression stack slots at the same index.
      */
     public final Slot_Type[] stackSlots() {
         return _stackSlots;
@@ -129,21 +140,6 @@ public class JavaFrameDescriptor<Slot_Type> {
 
     public final int maxSlots() {
         return Math.max(_stackSlots.length, _locals.length);
-    }
-
-    /**
-     * Creates a descriptor with a parent descriptor due to inlining.
-     *
-     * @param parent the descriptor of the logical caller Java frame
-     * @param bytecodeLocation the bytecode location in the callee
-     * @param locals the locations of all local variables in the Java frame, with corresponding indices in the array
-     * @param stackSlots the locations of all Java expression stack slots in the Java frame, with corresponding indices in the array
-     */
-    public JavaFrameDescriptor(JavaFrameDescriptor<Slot_Type> parent, BytecodeLocation bytecodeLocation, Slot_Type[] locals, Slot_Type[] stackSlots) {
-        _parent = parent;
-        _bytecodeLocation = bytecodeLocation;
-        _locals = locals;
-        _stackSlots = stackSlots;
     }
 
     protected boolean slotsEqual(Slot_Type[] slots1, Slot_Type[] slots2) {
@@ -155,7 +151,8 @@ public class JavaFrameDescriptor<Slot_Type> {
         if (getClass().isInstance(other)) {
             final Class<JavaFrameDescriptor<Slot_Type>> type = null;
             final JavaFrameDescriptor<Slot_Type> descriptor = StaticLoophole.cast(type, other);
-            if (_bytecodeLocation.equals(descriptor._bytecodeLocation) &&
+            if (classMethodActor().equals(descriptor.classMethodActor()) &&
+                            bytecodePosition() == descriptor.bytecodePosition() &&
                             slotsEqual(_locals, descriptor._locals) &&
                             slotsEqual(_stackSlots, descriptor._stackSlots)) {
                 if (_parent == null) {
@@ -167,11 +164,6 @@ public class JavaFrameDescriptor<Slot_Type> {
         return false;
     }
 
-    @Override
-    public final int hashCode() {
-        return _locals.length ^ _stackSlots.length;
-    }
-
     public final String toMultiLineString() {
         String s = "";
         JavaFrameDescriptor javaFrameDescriptor = this;
@@ -179,8 +171,8 @@ public class JavaFrameDescriptor<Slot_Type> {
             if (!s.isEmpty()) {
                 s += "\n  ---parent---\n";
             }
-            final ClassMethodActor classMethodActor = javaFrameDescriptor._bytecodeLocation.classMethodActor();
-            s += " where: " + classMethodActor.holder() + "." + classMethodActor.name() + classMethodActor.descriptor().toJavaString(false, true) + "@" + _bytecodeLocation.position();
+            final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
+            s += " where: " + classMethodActor.format("%H.%n(%p)") + "@" + javaFrameDescriptor.bytecodePosition();
             s += "\nlocals:";
             for (int i = 0; i < javaFrameDescriptor._locals.length; i++) {
                 s += " [" + i + "]=" + javaFrameDescriptor._locals[i];
@@ -201,8 +193,8 @@ public class JavaFrameDescriptor<Slot_Type> {
         JavaFrameDescriptor javaFrameDescriptor = this;
 
         do {
-            final ClassMethodActor classMethodActor = javaFrameDescriptor._bytecodeLocation.classMethodActor();
-            s += String.format("<<%s@%s locals:[%s] stack:[%s]>>", classMethodActor.name(), _bytecodeLocation.position(),
+            final ClassMethodActor classMethodActor = javaFrameDescriptor.classMethodActor();
+            s += String.format("<<%s@%s locals:[%s] stack:[%s]>>", classMethodActor.format("%h.%n"), javaFrameDescriptor.bytecodePosition(),
                             com.sun.max.lang.Arrays.toString(javaFrameDescriptor._locals, ", "),
                             com.sun.max.lang.Arrays.toString(javaFrameDescriptor._stackSlots, ", "));
             javaFrameDescriptor = javaFrameDescriptor.parent();

@@ -56,6 +56,14 @@ public class CirOptimizer {
         _cirGenerator.notifyAfterTransformation(_cirMethod, OBSERVE_COMPLETE_IR ? _node : node, transformation);
     }
 
+    public void notifyBeforeTransformation(CirNode node, TransformationType transformationType) {
+        _cirGenerator.notifyBeforeTransformation(_cirMethod, OBSERVE_COMPLETE_IR ? _node : node, transformationType);
+    }
+
+    public void notifyAfterTransformation(CirNode node, TransformationType transformationType) {
+        _cirGenerator.notifyAfterTransformation(_cirMethod, OBSERVE_COMPLETE_IR ? _node : node, transformationType);
+    }
+
     public CirInliningPolicy inliningPolicy() {
         return _inliningPolicy;
     }
@@ -78,19 +86,24 @@ public class CirOptimizer {
     public static void apply(CirGenerator cirGenerator, CirMethod cirMethod, CirNode node, CirInliningPolicy inliningPolicy) {
         final CirOptimizer optimizer = new CirOptimizer(cirGenerator, cirMethod, node, inliningPolicy);
         boolean inflated = true;
+        int count = 0;
         do {
+            int deflations = 0;
             while (CirDeflation.apply(optimizer, node)) {
+                deflations++;
                 // do nothing.
             }
             final Iterable<CirBlock> blocks = CirBlockUpdating.apply(node);
-            CirBlockParameterMerging.apply(blocks);
-            if (CirConstantBlockArgumentsPropagation.apply(blocks)) {
+            CirBlockParameterMerging.apply(optimizer, node, blocks);
+            if (CirConstantBlockArgumentsPropagation.apply(optimizer, node, blocks)) {
                 continue;
             }
-            inflated = false;
+            int inflations = 0;
             while (CirInlining.apply(optimizer, node)) {
-                inflated = true;
+                inflations++;
             }
+            inflated = inflations != 0;
+            count++;
         } while (inflated);
     }
 

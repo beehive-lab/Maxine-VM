@@ -203,11 +203,11 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
                         final TeleTargetMethod teleTargetMethod = (TeleTargetMethod) teleTargetRoutine;
                         final TargetJavaFrameDescriptor javaFrameDescriptor = teleTargetMethod.getJavaFrameDescriptor(stopIndex);
                         if (javaFrameDescriptor != null) {
-                            final BytecodeLocation bytecodeLocation = javaFrameDescriptor.bytecodeLocation();
+                            final BytecodeLocation bytecodeLocation = javaFrameDescriptor;
                             _rowToBytecodeLocation[row] = bytecodeLocation;
                             // TODO (mlvdv) only works for non-inlined calls
                             if (bytecodeLocation.classMethodActor().equals(teleTargetMethod.classMethodActor())) {
-                                _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodeLocation.position());
+                                _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodeLocation.bytecodePosition());
                             }
                         }
                     }

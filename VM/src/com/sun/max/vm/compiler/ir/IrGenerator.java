@@ -33,7 +33,7 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
 
     private final CompilerScheme_Type _compilerScheme;
     private final String _irName;
-    private transient LinkedList<IrObserver> _irObservers; // this field is transient so prototyping observers don't end up in the image
+    protected transient LinkedList<IrObserver> _irObservers; // this field is transient so prototyping observers don't end up in the image
 
     protected IrGenerator(CompilerScheme_Type compilerScheme, String irName) {
         _compilerScheme = compilerScheme;

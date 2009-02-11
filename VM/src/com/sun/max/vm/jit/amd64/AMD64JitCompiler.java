@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -95,7 +94,7 @@ public class AMD64JitCompiler extends JitCompiler {
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
-        if (phase == Phase.PROTOTYPING) {
+        if (MaxineVM.isPrototyping()) {
             _unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"));
         }
     }
@@ -389,7 +388,8 @@ public class AMD64JitCompiler extends JitCompiler {
         final Address throwAddress = isTopFrame ? stackFrameWalker.instructionPointer() : stackFrameWalker.instructionPointer().minus(1);
         final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
         if (!catchAddress.isZero()) {
-            final Throwable throwable = UnsafeLoophole.cast(StackUnwindingContext.class, context)._throwable;
+            final StackUnwindingContext stackUnwindingContext = UnsafeLoophole.cast(context);
+            final Throwable throwable = stackUnwindingContext._throwable;
             final Pointer localVariablesBase = framePointerState.localVariablesBase(stackFrameWalker, targetMethod);
             if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(localVariablesBase)) {
                 // The Java operand stack of the method that handles the exception is always cleared before pushing the

@@ -179,8 +179,10 @@ public abstract class ClassMethodActor extends MethodActor {
 
     public boolean isDeclaredInline(CompilerScheme compilerScheme) {
         if (compilee().isInline()) {
-            if (compilee().isInlineAfterSnippetsAreCompiled()) {
-                return compilerScheme.areSnippetsCompiled();
+            if (MaxineVM.isPrototyping()) {
+                if (compilee().isInlineAfterSnippetsAreCompiled()) {
+                    return compilerScheme.areSnippetsCompiled();
+                }
             }
             return true;
         }
@@ -270,6 +272,35 @@ public abstract class ClassMethodActor extends MethodActor {
             }
         }
         return _compilee;
+    }
+
+    /**
+     * Gets a {@link StackTraceElement} object describing the source code location corresponding to a given bytecode
+     * position in this method.
+     *
+     * @param bytecodePosition a bytecode position in this method's {@linkplain #codeAttribute() code}
+     */
+    public StackTraceElement toStackTraceElement(int bytecodePosition) {
+        final ClassActor holder = holder();
+        return new StackTraceElement(holder.name().string(), name().string(), holder.sourceFileName(), sourceLineNumber(bytecodePosition));
+    }
+
+    /**
+     * Gets the source line number corresponding to a given bytecode position in this method.
+     *
+     * @return -1 if a source line number is not available
+     */
+    public int sourceLineNumber(int bytecodePosition) {
+        return codeAttribute().lineNumberTable().findLineNumber(bytecodePosition);
+    }
+
+    /**
+     * Gets the source file name of this method's holder.
+     *
+     * @return null if a source file name is not available
+     */
+    public String sourceFileName() {
+        return holder().sourceFileName();
     }
 
     /**

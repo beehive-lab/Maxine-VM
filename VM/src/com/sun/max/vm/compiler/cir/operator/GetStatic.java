@@ -25,12 +25,13 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
+import com.sun.max.vm.type.*;
 
 
 public class GetStatic extends JavaResolvableOperator<FieldActor> {
 
     public GetStatic(ConstantPool constantPool, int index) {
-        super(NONE, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
+        super(CALL, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
     }
 
     @Override
@@ -46,5 +47,12 @@ public class GetStatic extends JavaResolvableOperator<FieldActor> {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
+    }
+
+    private static final Kind[] _parameterKinds = {};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 }

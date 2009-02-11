@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.heap.*;
@@ -38,6 +39,7 @@ public class VerboseVMOption extends VMOption {
     private static boolean _verboseJNI;
     private static final VerboseVMOption _verboseOption = new VerboseVMOption();
 
+    @PROTOTYPE_ONLY
     public VerboseVMOption() {
         super("-verbose", "Enables verbose output.", MaxineVM.Phase.PRISTINE);
     }

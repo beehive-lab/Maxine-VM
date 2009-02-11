@@ -28,7 +28,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.b.*;
 import com.sun.max.vm.compiler.cir.*;
@@ -69,12 +68,14 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         return Sequence.Static.appended(super.irGenerators(), _birToCirTranslator);
     }
 
+    @PROTOTYPE_ONLY
     @Override
     public void createBuiltins(PackageLoader packageLoader) {
         super.createBuiltins(packageLoader);
         packageLoader.loadAndInitializeAllAndInstantiateLeaves(CirBuiltin.class);
     }
 
+    @PROTOTYPE_ONLY
     @Override
     public void createSnippets(PackageLoader packageLoader) {
         super.createSnippets(packageLoader);
@@ -82,13 +83,14 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void translateSnippets(CirVariableFactory cirVariableFactory) {
+    private void translateSnippets() {
         Trace.begin(1, "translateSnippets");
         for (int i = 0; i < Snippet.snippets().length(); i++) {
             final CirSnippet cirSnippet = CirSnippet.get(Snippet.snippets().get(i));
             try {
                 cirGenerator().notifyBeforeGeneration(cirSnippet);
                 final ClassMethodActor classMethodActor = cirSnippet.classMethodActor();
+                final CirVariableFactory cirVariableFactory = new CirVariableFactory();
                 final CirClosure cirClosure = _birToCirTranslator.translateMethod(birGenerator().makeIrMethod(classMethodActor), cirSnippet, cirVariableFactory);
                 cirSnippet.setGenerated(cirClosure);
                 cirGenerator().setCirMethod(classMethodActor, cirSnippet);
@@ -101,21 +103,8 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
     }
 
     @PROTOTYPE_ONLY
-    private void optimizeSnippet(Snippet snippet) {
-        final CirSnippet cirSnippet = CirSnippet.get(MethodSelectionSnippet.SelectInterfaceMethod.SNIPPET);
-        final CirClosure closure = cirSnippet.copyClosure();
-        CirOptimizer.apply(cirGenerator(), cirSnippet, closure, CirInliningPolicy.STATIC);
-        cirSnippet.setGenerated(closure);
-    }
-
-    @PROTOTYPE_ONLY
-    private void optimizeSnippets(CirVariableFactory cirVariableFactory) {
+    private void optimizeSnippets() {
         Trace.begin(1, "optimizeSnippets");
-        // Need to optimize these first, in case any other snippets make calls that are not inlined.
-        optimizeSnippet(MethodSelectionSnippet.SelectVirtualMethod.SNIPPET);
-        optimizeSnippet(MethodSelectionSnippet.SelectInterfaceMethod.SNIPPET);
-        optimizeSnippet(MethodSelectionSnippet.ReadHub.SNIPPET);
-
         // Each snippet optimization must proceed without encountering prior folding,
         // so store all results on the side without reusing them yet
         // and then assign them in a separate pass below:
@@ -124,9 +113,9 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
             final CirSnippet cirSnippet = CirSnippet.get(Snippet.snippets().get(i));
             final CirClosure cirClosure = cirSnippet.copyClosure();
             optimizedClosures[i] = cirClosure;
-            cirGenerator().notifyBeforeTransformation(cirSnippet, cirClosure, Transformation.SNIPPET_OPTIMIZATION);
+            cirGenerator().notifyBeforeTransformation(cirSnippet, cirClosure, TransformationType.SNIPPET_OPTIMIZATION);
             CirOptimizer.apply(cirGenerator(), cirSnippet, cirClosure, CirInliningPolicy.STATIC);
-            cirGenerator().notifyAfterTransformation(cirSnippet, cirClosure, Transformation.SNIPPET_OPTIMIZATION);
+            cirGenerator().notifyAfterTransformation(cirSnippet, cirClosure, TransformationType.SNIPPET_OPTIMIZATION);
             if (cirSnippet.snippet() instanceof BuiltinsSnippet) {
                 CirBuiltinCheck.apply(cirClosure, cirSnippet.snippet());
             }
@@ -173,16 +162,17 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         _optimizing = false;
     }
 
+    @PROTOTYPE_ONLY
     @Override
     public void compileSnippets() {
-        final CirVariableFactory cirVariableFactory = new CirVariableFactory();
-        translateSnippets(cirVariableFactory);
+        translateSnippets();
         if (_optimizing) {
-            optimizeSnippets(cirVariableFactory);
+            optimizeSnippets();
         }
         super.compileSnippets();
     }
 
+    @PROTOTYPE_ONLY
     @Override
     public void gatherCalls(final TargetMethod targetMethod,
                     final AppendableSequence<MethodActor> directCalls,
@@ -205,16 +195,14 @@ public class BcCompiler extends BCompiler implements CirGeneratorScheme {
         final CirVisitor collector = new CirVisitor() {
             @Override
             public void visitCall(CirCall call) {
-                final BytecodeLocation location = call.bytecodeLocation();
-                assert location != null || call.javaFrameDescriptor() == null : "Each CirCall with JavaFrameDescriptor must have bytecodelocation";
+                final BytecodeLocation location = call.javaFrameDescriptor();
                 if (location != null) {
-                    final ConstantPool pool = location.classMethodActor().codeAttribute().constantPool();
-                    final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(pool, directCalls, virtualCalls, interfaceCalls);
+                    final InvokedMethodRecorder invokedMethodRecorder = new InvokedMethodRecorder(location.classMethodActor(), directCalls, virtualCalls, interfaceCalls);
                     final BytecodeScanner bytecodeScanner = new BytecodeScanner(invokedMethodRecorder);
                     try {
                         final byte[] bytecode = location.classMethodActor().codeAttribute().code();
-                        if (bytecode != null && location.position() < bytecode.length) {
-                            bytecodeScanner.scanInstruction(bytecode, location.position());
+                        if (bytecode != null && location.bytecodePosition() < bytecode.length) {
+                            bytecodeScanner.scanInstruction(bytecode, location.bytecodePosition());
                         }
                     } catch (Throwable throwable) {
                         ProgramError.unexpected("could not scan byte code in " + targetMethod.classMethodActor().holder().name() + "." + targetMethod.classMethodActor().name(), throwable);

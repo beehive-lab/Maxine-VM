@@ -79,14 +79,13 @@ public class Cell {
      */
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
-    public static <Hybrid_Type extends Hybrid> Hybrid_Type plantHybrid(Pointer cell, Size size, DynamicHub hub) {
+    public static Object plantHybrid(Pointer cell, Size size, DynamicHub hub) {
         DebugHeap.writeCellTag(cell);
         Memory.clear(cell, size);
         final Pointer origin = Layout.hybridCellToOrigin(cell);
         Layout.writeHubReference(origin, Reference.fromJava(hub));
         Layout.writeArrayLength(origin, hub.firstWordIndex());
-        final Class<Hybrid_Type> type = null;
-        return UnsafeLoophole.cast(type, Reference.fromOrigin(origin).toJava());
+        return Reference.fromOrigin(origin).toJava();
     }
 
     /**
@@ -95,7 +94,7 @@ public class Cell {
      */
     @INLINE
     @NO_SAFEPOINTS("avoid inconsistent object contents")
-    public static <Hybrid_Type extends Hybrid> Hybrid_Type plantExpandedHybrid(Pointer cell, Size size, Hybrid_Type hybrid, int length) {
+    public static Hybrid plantExpandedHybrid(Pointer cell, Size size, Hybrid hybrid, int length) {
         DebugHeap.writeCellTag(cell);
         final Pointer oldOrigin = Reference.fromJava(hybrid).toOrigin();
         final Pointer oldCell = Layout.hybridOriginToCell(oldOrigin);
@@ -105,28 +104,26 @@ public class Cell {
         Memory.clear(newOrigin, size);
         Memory.copyBytes(oldCell, cell, oldSize);
         Layout.writeArrayLength(newOrigin, length);
-        final Class<Hybrid_Type> type = null;
-        return UnsafeLoophole.cast(type, Reference.fromOrigin(newOrigin).toJava());
+        return UnsafeLoophole.cast(Reference.fromOrigin(newOrigin).toJava());
     }
 
     /**
      * Write a shallow copy of the given object into an existing cell.
      */
     @NO_SAFEPOINTS("avoid inconsistent object contents")
-    public static <Object_Type> Object_Type plantClone(Pointer cell, Size size, Object_Type object) {
+    public static Object plantClone(Pointer cell, Size size, Object object) {
         DebugHeap.writeCellTag(cell);
         Memory.copyBytes(Layout.originToCell(Reference.fromJava(object).toOrigin()), cell, size);
         final Pointer origin = Layout.cellToOrigin(cell);
         Layout.writeMisc(origin, Word.zero());
-        final Class<Object_Type> type = null;
-        return UnsafeLoophole.cast(type, Reference.fromOrigin(origin).toJava());
+        return Reference.fromOrigin(origin).toJava();
     }
 
     /**
      * Write a shallow copy of the given object into an existing cell.
      */
     @NO_SAFEPOINTS("avoid inconsistent object contents")
-    public static <Object_Type> Object_Type plantClone(Pointer cell, Object_Type object) {
+    public static Object plantClone(Pointer cell, Object object) {
         return plantClone(cell, Layout.size(Reference.fromJava(object)), object);
     }
 }

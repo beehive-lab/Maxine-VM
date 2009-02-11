@@ -68,7 +68,7 @@ public abstract class NonFoldableSnippet extends Snippet {
     }
 
     @INLINE
-    public static Object createArray(ClassActor arrayClassActor, int length) {
+    static Object createArray(ClassActor arrayClassActor, int length) {
         if (length < 0) {
             throw new NegativeArraySizeException();
         }
@@ -134,8 +134,11 @@ public abstract class NonFoldableSnippet extends Snippet {
             return result;
         }
         @SNIPPET
-        public static Object createMultiReferenceArray(ArrayClassActor arrayClassActor, int[] lengths) {
-            return createMultiReferenceArrayAtIndex(0, arrayClassActor, lengths);
+        public static Object createMultiReferenceArray(ClassActor classActor, int[] lengths) {
+            if (!classActor.isArrayClassActor()) {
+                throw new VerifyError("MULTIANEWARRAY cannot be applied to non-array type " + classActor);
+            }
+            return createMultiReferenceArrayAtIndex(0, classActor, lengths);
         }
         public static final CreateMultiReferenceArray SNIPPET = new CreateMultiReferenceArray();
     }

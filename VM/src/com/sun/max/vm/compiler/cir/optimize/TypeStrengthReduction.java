@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.cir.optimize;
 
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.operator.*;
 import com.sun.max.vm.compiler.cir.optimize.TypesetDomain.*;
@@ -43,17 +42,17 @@ public class TypeStrengthReduction {
 
     private class Visitor extends CirVisitor {
 
-        private BytecodeLocation _bytecodeLocation;
+        private CirJavaFrameDescriptor _javaFrameDescriptor;
 
         private CirCall call(CirValue proc, CirValue... args) {
             final CirCall call = new CirCall(proc, args);
-            call.setBytecodeLocation(_bytecodeLocation);
+            call.setJavaFrameDescriptor(_javaFrameDescriptor);
             return call;
         }
 
         @Override
         public void visitCall(CirCall call) {
-            _bytecodeLocation = call.bytecodeLocation();
+            _javaFrameDescriptor = call.javaFrameDescriptor();
             final CirValue op = call.procedure();
 
             final ClassActor classActor;

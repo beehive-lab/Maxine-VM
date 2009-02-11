@@ -136,6 +136,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return layoutFields(superClassActor, fieldActors, headerSize());
     }
 
+    @PROTOTYPE_ONLY
     private void visitFields(ObjectCellVisitor visitor, Object tuple, FieldActor[] fieldActors) {
         for (FieldActor fieldActor : fieldActors) {
             final Value value = HostTupleAccess.readValue(tuple, fieldActor);
@@ -143,6 +144,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         }
     }
 
+    @PROTOTYPE_ONLY
     void visitFields(ObjectCellVisitor visitor, Object tuple) {
         final Hub hub = HostObjectAccess.readHub(tuple);
         ClassActor classActor = hub.classActor();
@@ -156,6 +158,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         }
     }
 
+    @PROTOTYPE_ONLY
     public void visitObjectCell(Object tuple, ObjectCellVisitor visitor) {
         visitHeader(visitor, tuple);
         visitFields(visitor, tuple);

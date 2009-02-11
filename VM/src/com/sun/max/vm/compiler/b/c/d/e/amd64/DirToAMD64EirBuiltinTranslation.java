@@ -48,8 +48,8 @@ import com.sun.max.vm.value.*;
  */
 class DirToAMD64EirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
-    DirToAMD64EirBuiltinTranslation(DirToAMD64EirInstructionTranslation instructionTranslation) {
-        super(instructionTranslation);
+    DirToAMD64EirBuiltinTranslation(DirToAMD64EirInstructionTranslation instructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor) {
+        super(instructionTranslation, javaFrameDescriptor);
     }
 
     private abstract class Unary {

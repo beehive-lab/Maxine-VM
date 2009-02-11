@@ -20,6 +20,6 @@
  */
 package com.sun.max.vm.compiler.cir;
 
-public abstract class CirOperator extends CirProcedure  {
+public abstract class CirOperator extends CirProcedure implements CirRoutine {
 
 }

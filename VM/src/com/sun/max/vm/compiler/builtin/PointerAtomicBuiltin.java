@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.builtin;
 
+import com.sun.max.vm.compiler.*;
+
 
 /**
  * @author Bernd Mathiske
@@ -28,6 +30,11 @@ public abstract class PointerAtomicBuiltin extends PointerBuiltin {
 
     PointerAtomicBuiltin() {
         super();
+    }
+
+    @Override
+    public int reasonsMayStop() {
+        return Stoppable.NULL_POINTER_CHECK;
     }
 
     public static class CompareAndSwapIntAtLongOffset extends PointerAtomicBuiltin {

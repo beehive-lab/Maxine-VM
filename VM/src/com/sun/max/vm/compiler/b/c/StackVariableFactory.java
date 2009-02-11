@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.type.*;
 
@@ -36,7 +35,7 @@ public class StackVariableFactory extends SlotVariableFactory {
     }
 
     @Override
-    public CirVariable createSlotVariable(Kind kind, int slotIndex, BytecodeLocation location) {
+    public CirVariable createSlotVariable(Kind kind, int slotIndex) {
         return _cirVariableFactory.createStackVariable(kind, slotIndex);
     }
 }

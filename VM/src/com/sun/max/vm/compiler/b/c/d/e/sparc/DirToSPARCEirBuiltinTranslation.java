@@ -51,8 +51,8 @@ import com.sun.max.vm.value.*;
  */
 class DirToSPARCEirBuiltinTranslation extends DirToEirBuiltinTranslation {
 
-    DirToSPARCEirBuiltinTranslation(DirToSPARCEirInstructionTranslation instructionTranslation) {
-        super(instructionTranslation);
+    DirToSPARCEirBuiltinTranslation(DirToSPARCEirInstructionTranslation instructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor) {
+        super(instructionTranslation, javaFrameDescriptor);
     }
 
     private abstract class Unary {

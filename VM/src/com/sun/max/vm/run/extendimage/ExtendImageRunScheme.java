@@ -120,7 +120,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            if (phase == MaxineVM.Phase.PROTOTYPING) {
+            if (MaxineVM.isPrototyping()) {
                 extendImage();
             }
         }

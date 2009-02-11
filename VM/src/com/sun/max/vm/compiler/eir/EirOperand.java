@@ -101,6 +101,7 @@ public final class EirOperand implements IrValue {
 
     public void setEirValue(EirValue eirValue) {
         clearEirValue();
+        assert !eirValue.isLocationFixed() || _locationCategories.contains(eirValue.location().category());
         _eirValue = eirValue;
         eirValue.addOperand(this);
     }

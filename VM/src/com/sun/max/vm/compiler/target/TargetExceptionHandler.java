@@ -46,7 +46,7 @@ public class TargetExceptionHandler {
      * if the declared exception class wasn't resolved, an instance of it (or of one of its sub-classes)
      * couldn't be created, hence this handler cannot handle the exception.
      */
-    private final ReferenceResolutionGuard _declaredExceptionResolutionGuard;
+    private final ResolutionGuard _declaredExceptionResolutionGuard;
 
      /**
      * Next handler covering the same range of instructions as this handler.
@@ -55,7 +55,7 @@ public class TargetExceptionHandler {
 
     private final ExceptionHandlerEntry _exceptionHandlerInfo;
 
-    public TargetExceptionHandler(int offsetInTarget, ExceptionHandlerEntry exceptionHandlerEntry, ReferenceResolutionGuard guard, TargetExceptionHandler next) {
+    public TargetExceptionHandler(int offsetInTarget, ExceptionHandlerEntry exceptionHandlerEntry, ResolutionGuard guard, TargetExceptionHandler next) {
         _offsetInTarget = offsetInTarget;
         _declaredExceptionResolutionGuard = guard;
         _next = next;
@@ -100,7 +100,7 @@ public class TargetExceptionHandler {
             }
             _declaredExceptionResolutionGuard.set(constantPool.classAt(index).resolve(constantPool, index));
         }
-        final ClassActor declaredExceptionClassActor = (ClassActor) _declaredExceptionResolutionGuard.value();
+        final ClassActor declaredExceptionClassActor = (ClassActor) _declaredExceptionResolutionGuard.get();
         if (MaxineVM.isPrototyping()) {
             return declaredExceptionClassActor.toJava().isInstance(throwable);
         }

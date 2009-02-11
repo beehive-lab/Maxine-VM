@@ -218,6 +218,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return UnsafeLoophole.wordToGrip(accessor.compareAndSwapWord(_hubOffset, UnsafeLoophole.gripToWord(suspectedGrip), UnsafeLoophole.gripToWord(forwardGrip.marked())));
     }
 
+    @PROTOTYPE_ONLY
     public void visitHeader(ObjectCellVisitor visitor, Object object) {
         final Hub hub = HostObjectAccess.readHub(object);
         visitor.visitHeaderField(_hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));

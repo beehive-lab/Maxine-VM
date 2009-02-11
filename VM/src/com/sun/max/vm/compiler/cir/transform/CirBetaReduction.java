@@ -44,11 +44,11 @@ public abstract class CirBetaReduction {
 
     protected abstract CirNode transformVariable(CirVariable variable);
 
-    private static final class Single extends CirBetaReduction {
+    static final class Single extends CirBetaReduction {
         private final CirVariable _parameter;
         private final CirValue _argument;
 
-        private Single(CirVariable parameter, CirValue argument) {
+        Single(CirVariable parameter, CirValue argument) {
             _parameter = parameter;
             _argument = argument;
         }
@@ -62,11 +62,11 @@ public abstract class CirBetaReduction {
         }
     }
 
-    private static final class Multiple extends CirBetaReduction {
+    static final class Multiple extends CirBetaReduction {
         private final CirVariable[] _parameters;
         private final CirValue[] _arguments;
 
-        private Multiple(CirVariable[] parameters, CirValue[] arguments) {
+        Multiple(CirVariable[] parameters, CirValue[] arguments) {
             assert parameters.length == arguments.length || parameters.length == arguments.length + 2 :  parameters.length + "," + arguments.length;
             _parameters = Arrays.subArray(parameters, 0, arguments.length);
             _arguments = arguments;
@@ -118,9 +118,10 @@ public abstract class CirBetaReduction {
                 if (value instanceof CirVariable) {
                     final CirNode newVariable = transformVariable((CirVariable) value);
                     if (newVariable != value) {
+                        assert newVariable != null;
                         values[i] = (CirValue) newVariable;
                     }
-                } else if (!CirConstant.class.isInstance(value)) {
+                } else if (!(value instanceof CirConstant)) {
                     // Only CirProcedure needs further inspection.
                     inspectionList.add(value);
                 }
@@ -139,7 +140,7 @@ public abstract class CirBetaReduction {
                 if (procedure instanceof CirVariable) {
                     final CirNode newProcedure = transformVariable((CirVariable) procedure);
                     if (newProcedure != procedure) {
-                        call.setProcedure((CirValue) newProcedure, call.bytecodeLocation());
+                        call.setProcedure((CirValue) newProcedure);
                         call.clearJavaFrameDescriptorIfNotNeeded();
                     }
                 } else {

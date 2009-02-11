@@ -138,7 +138,7 @@ public final class CirWrapping {
 
             call.setArguments(newArguments);
         }
-        call.setProcedure(_innerClosure, call.bytecodeLocation());
+        call.setProcedure(_innerClosure);
     }
 
 }

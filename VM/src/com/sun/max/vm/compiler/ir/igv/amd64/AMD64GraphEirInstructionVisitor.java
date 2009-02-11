@@ -118,7 +118,7 @@ public class AMD64GraphEirInstructionVisitor extends AMD64EirInstructionAdapter 
         final GraphWriter.Node node = _node;
         node.getProperties().setProperty("name", "safepoint");
         node.getProperties().setProperty("dump_spec", safepoint.toString());
-        node.getProperties().setProperty("bci", Integer.toString(safepoint.javaFrameDescriptor().bytecodeLocation().position()));
+        node.getProperties().setProperty("bci", Integer.toString(safepoint.javaFrameDescriptor().bytecodePosition()));
 
     }
 }

@@ -26,17 +26,13 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
+import com.sun.max.vm.type.*;
 
 
 public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
 
     public InvokeStatic(ConstantPool constantPool, int index) {
-        super(NONE, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
-    }
-
-    @Override
-    public boolean needsJavaFrameDescriptor() {
-        return true;
+        super(CALL, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
     }
 
     @Override
@@ -47,5 +43,10 @@ public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
     @Override
     public void acceptVisitor(HCirOperatorVisitor visitor) {
         visitor.visit(this);
+    }
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _constantPool.methodAt(_index).signature(_constantPool).getParameterKinds();
     }
 }

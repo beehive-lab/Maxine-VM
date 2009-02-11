@@ -74,6 +74,7 @@ public final class OhmHybridLayout extends OhmWordArrayLayout implements HybridL
         return tupleSize.minus(headerSize()).roundedUpBy(Word.size()).dividedBy(Word.size()).toInt();
     }
 
+    @PROTOTYPE_ONLY
     @Override
     public void visitObjectCell(Object object, ObjectCellVisitor visitor) {
         final Hybrid hybrid = (Hybrid) object;

@@ -101,7 +101,7 @@ public class JavaMonitorManager {
      * @param phase the current VM phase
      */
     public static void initialize(MaxineVM.Phase phase) {
-        if (phase == MaxineVM.Phase.PROTOTYPING) {
+        if (MaxineVM.isPrototyping()) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());
 

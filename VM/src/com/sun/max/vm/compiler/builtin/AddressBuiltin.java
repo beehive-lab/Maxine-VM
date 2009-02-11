@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.*;
 
 public abstract class AddressBuiltin extends Builtin {
 
@@ -80,6 +81,11 @@ public abstract class AddressBuiltin extends Builtin {
             visitor.visitDividedByAddress(this, result, arguments);
         }
         public static final DividedByAddress BUILTIN = new DividedByAddress();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -90,6 +96,11 @@ public abstract class AddressBuiltin extends Builtin {
             visitor.visitDividedByInt(this, result, arguments);
         }
         public static final DividedByInt BUILTIN = new DividedByInt();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -100,6 +111,11 @@ public abstract class AddressBuiltin extends Builtin {
             visitor.visitRemainderByAddress(this, result, arguments);
         }
         public static final RemainderByAddress BUILTIN = new RemainderByAddress();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -110,5 +126,10 @@ public abstract class AddressBuiltin extends Builtin {
             visitor.visitRemainderByInt(this, result, arguments);
         }
         public static final RemainderByInt BUILTIN = new RemainderByInt();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 }

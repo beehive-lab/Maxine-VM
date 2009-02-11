@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.type.*;
 
@@ -36,8 +35,8 @@ final class JavaFrame extends JavaSlots {
         variableFactory.copyParametersInto(_slots);
     }
 
-    public CirVariable makeVariable(Kind kind, int localIndex, BytecodeLocation bytecodeLocation) {
-        final CirVariable var = _variableFactory.makeVariable(kind, localIndex, bytecodeLocation);
+    public CirVariable makeVariable(Kind kind, int localIndex) {
+        final CirVariable var = _variableFactory.makeVariable(kind, localIndex);
         final VariableJavaStackSlot slot = new VariableJavaStackSlot(var);
         _slots[localIndex] = slot;
         return var;

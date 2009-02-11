@@ -26,7 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.cir.*;
 
 /**
- * Reset all reachable blocks and then update their respective call count,
+ * Reset all reachable blocks and update their respective call count,
  * the number of times they are called from within the given CIR graph.
  *
  * Use this after deflationary optimizations,
@@ -39,6 +39,13 @@ public final class CirBlockUpdating {
     private CirBlockUpdating() {
     }
 
+    /**
+     * Recalculates the call count for each reachable block in a given CIR graph.
+     *
+     * @param node the root of the CIR graph to process
+     * @return the list of reachable blocks in the CIR graph rooted at {@code node}. Only these blocks have had there
+     *         call count recalculated.
+     */
     public static Iterable<CirBlock> apply(CirNode node) {
         final IdentityHashSet<CirBlock> visitedBlocks = new IdentityHashSet<CirBlock>();
         final LinkedList<CirCall> blockCalls = new LinkedList<CirCall>();
@@ -48,6 +55,7 @@ public final class CirBlockUpdating {
             if (currentNode instanceof CirCall) {
                 final CirCall call = (CirCall) currentNode;
                 for (CirValue argument : call.arguments()) {
+                    assert argument != null;
                     toDo.add(argument);
                 }
                 currentNode = call.procedure();

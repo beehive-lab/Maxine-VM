@@ -30,6 +30,10 @@ import com.sun.max.vm.type.*;
 
 public class Throw extends JavaOperator implements Lowerable{
 
+    public Throw() {
+        super(CALL);
+    }
+
     @Override
     public Kind resultKind() {
         ProgramError.unexpected();
@@ -42,6 +46,13 @@ public class Throw extends JavaOperator implements Lowerable{
         assert args[args.length - 2] == CirValue.UNDEFINED;
         assert call.procedure() == this;
         call.setProcedure(CirSnippet.get(NonFoldableSnippet.RaiseThrowable.SNIPPET));
+    }
+
+    private static final Kind[] _parameterKinds = {Kind.REFERENCE};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 
     @Override

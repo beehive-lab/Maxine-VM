@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class New extends JavaResolvableOperator<ClassActor> {
 
     public New(ConstantPool constantPool, int index) {
-        super(NONE, constantPool, index, Kind.REFERENCE);
+        super(CALL, constantPool, index, Kind.REFERENCE);
     }
 
     @Override
@@ -47,5 +47,12 @@ public class New extends JavaResolvableOperator<ClassActor> {
     @Override
     public void acceptVisitor(CirVisitor visitor) {
         visitor.visitHCirOperator(this);
+    }
+
+    private static final Kind[] _parameterKinds = {};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 }

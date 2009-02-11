@@ -83,7 +83,7 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
             createJitFrame(d, Deoptimizer.Situation.SAFEPOINT);
         }
         if (_isParentFrameOptimized) {
-            final ClassMethodActor classMethodActor = d.bytecodeLocation().classMethodActor();
+            final ClassMethodActor classMethodActor = d.classMethodActor();
             if (!(classMethodActor.isStatic() && classMethodActor.descriptor().hasNoParameters())) {
                 createAdapterFrame(d);
             }

@@ -110,12 +110,16 @@ public abstract class Word {
         return width().numberOfBytes();
     }
 
-    @INLINE
+    @UNCHECKED_CAST
     public final JniHandle asJniHandle() {
-        return UnsafeLoophole.castWord(JniHandle.class, this);
+        if (this instanceof BoxedJniHandle) {
+            return (BoxedJniHandle) this;
+        }
+        final UnsafeBox box = (UnsafeBox) this;
+        return BoxedJniHandle.from(box.nativeWord());
     }
 
-    @INLINE
+    @UNCHECKED_CAST
     public final Address asAddress() {
         if (this instanceof BoxedAddress) {
             return (BoxedAddress) this;
@@ -124,13 +128,7 @@ public abstract class Word {
         return BoxedAddress.from(box.nativeWord());
     }
 
-    @SURROGATE
-    @INLINE
-    public final Address asAddress_() {
-        return UnsafeLoophole.castWord(Address.class, this);
-    }
-
-    @INLINE
+    @UNCHECKED_CAST
     public final Offset asOffset() {
         if (this instanceof BoxedOffset) {
             return (BoxedOffset) this;
@@ -139,13 +137,7 @@ public abstract class Word {
         return BoxedOffset.from(box.nativeWord());
     }
 
-    @SURROGATE
-    @INLINE
-    public final Offset asOffset_() {
-        return UnsafeLoophole.castWord(Offset.class, this);
-    }
-
-    @INLINE
+    @UNCHECKED_CAST
     public final Size asSize() {
         if (this instanceof BoxedSize) {
             return (BoxedSize) this;
@@ -154,25 +146,13 @@ public abstract class Word {
         return BoxedSize.from(box.nativeWord());
     }
 
-    @SURROGATE
-    @INLINE
-    public final Size asSize_() {
-        return UnsafeLoophole.castWord(Size.class, this);
-    }
-
-    @INLINE
+    @UNCHECKED_CAST
     public final Pointer asPointer() {
         if (this instanceof BoxedPointer) {
             return (BoxedPointer) this;
         }
         final UnsafeBox box = (UnsafeBox) this;
         return BoxedPointer.from(box.nativeWord());
-    }
-
-    @SURROGATE
-    @INLINE
-    public final Pointer asPointer_() {
-        return UnsafeLoophole.castWord(Pointer.class, this);
     }
 
     @PROTOTYPE_ONLY
@@ -196,7 +176,7 @@ public abstract class Word {
             final Constructor constructor = UnsafeBox.Static.getBoxedType(wordType).getConstructor(UnsafeBox.class);
             return wordType.cast(constructor.newInstance((UnsafeBox) this));
         } catch (Throwable throwable) {
-            throw ProgramError.unexpected();
+            throw ProgramError.unexpected(throwable);
         }
     }
 

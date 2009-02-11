@@ -26,16 +26,16 @@ import com.sun.max.vm.grip.*;
 
 /**
  * Reference-based object access methods for mutator use.
- * 
+ *
  * A "reference" is a runtime value of type 'java.lang.Object'.
  * It can be stored in fields and array elements of other objects.
  * The mutator refers to objects and parts thereof by using references.
- * 
+ *
  * A reference is almost the same as a "grip".
  * The difference is that the former's access operations may incur barriers.
- * 
+ *
  * @see Grip
- * 
+ *
  * @author Bernd Mathiske
  */
 public interface ReferenceScheme extends VMScheme {
@@ -126,10 +126,32 @@ public interface ReferenceScheme extends VMScheme {
     void writeReference(Reference reference, int offset, Reference value);
     void setReference(Reference reference, int displacement, int index, Reference value);
 
+    /**
+     * Atomically compares the contents of the memory location addressed by adding {@code offset} to {@code reference}
+     * to a given value and, if they are the same, modifies the contents of that memory location to a given new value.
+     *
+     * @param reference the base of the memory location
+     * @param offset the offset of the memory location
+     * @param suspectedValue the value that must currently exist in the memory location for the update to occur
+     * @param newValue the value to which the memory is updated if its current value is {@code suspectedValue}
+     * @return the value of the memory location before this call; if it is equal to {@code suspectedValue}, then the
+     *         update occurred, otherwise the update did not occur (assuming {@code suspectedValue != newValue})
+     */
     int compareAndSwapInt(Reference reference, Offset offset, int suspectedValue, int newValue);
+
+    /**
+     * @see #compareAndSwapInt(Reference, Offset, int, int)
+     */
     int compareAndSwapInt(Reference reference, int offset, int suspectedValue, int newValue);
 
+    /**
+     * @see #compareAndSwapInt(Reference, Offset, int, int)
+     */
     Word compareAndSwapWord(Reference reference, Offset offset, Word suspectedValue, Word newValue);
+
+    /**
+     * @see #compareAndSwapInt(Reference, Offset, int, int)
+     */
     Word compareAndSwapWord(Reference reference, int offset, Word suspectedValue, Word newValue);
 
     Reference compareAndSwapReference(Reference reference, Offset offset, Reference suspectedValue, Reference newValue);

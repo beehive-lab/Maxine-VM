@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.builtin;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.ir.*;
 import com.sun.max.vm.type.*;
@@ -57,7 +58,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntNegated(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntNegated.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntNegated.class)
         public static int intNegated(int value) {
             return -value;
         }
@@ -72,7 +73,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitFloatNegated(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = FloatNegated.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = FloatNegated.class)
         public static float floatNegated(float value) {
             return -value;
         }
@@ -88,7 +89,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongNegated(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongNegated.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongNegated.class)
         public static long longNegated(long value) {
             return -value;
         }
@@ -104,7 +105,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitDoubleNegated(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = DoubleNegated.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = DoubleNegated.class)
         public static double doubleNegated(double value) {
             return -value;
         }
@@ -120,7 +121,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntPlus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntPlus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntPlus.class)
         public static int intPlus(int a, int b) {
             return a + b;
         }
@@ -136,7 +137,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitFloatPlus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = FloatPlus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = FloatPlus.class)
         public static float floatPlus(float a, float b) {
             return a + b;
         }
@@ -152,7 +153,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongPlus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongPlus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongPlus.class)
         public static long longPlus(long a, long b) {
             return a + b;
         }
@@ -168,7 +169,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitDoublePlus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = DoublePlus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = DoublePlus.class)
         public static double doublePlus(double a, double b) {
             return a + b;
         }
@@ -184,7 +185,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntMinus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntMinus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntMinus.class)
         public static int intMinus(int minuend, int subtrahend) {
             return minuend - subtrahend;
         }
@@ -200,7 +201,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitFloatMinus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = FloatMinus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = FloatMinus.class)
         public static float floatMinus(float minuend, float subtrahend) {
             return minuend - subtrahend;
         }
@@ -216,7 +217,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongMinus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongMinus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongMinus.class)
         public static long longMinus(long minuend, long subtrahend) {
             return minuend - subtrahend;
         }
@@ -232,7 +233,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitDoubleMinus(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = DoubleMinus.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = DoubleMinus.class)
         public static double doubleMinus(double minuend, double subtrahend) {
             return minuend - subtrahend;
         }
@@ -248,7 +249,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntTimes(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntTimes.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntTimes.class)
         public static int intTimes(int a, int b) {
             return a * b;
         }
@@ -264,7 +265,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitFloatTimes(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = FloatTimes.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = FloatTimes.class)
         public static float floatTimes(float a, float b) {
             return a * b;
         }
@@ -280,7 +281,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongTimes(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongTimes.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongTimes.class)
         public static long longTimes(long a, long b) {
             return a * b;
         }
@@ -296,7 +297,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitDoubleTimes(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = DoubleTimes.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = DoubleTimes.class)
         public static double doubleTimes(double a, double b) {
             return a * b;
         }
@@ -318,6 +319,11 @@ public abstract class JavaBuiltin extends Builtin {
         }
 
         public static final IntDivided BUILTIN = new IntDivided();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -334,6 +340,11 @@ public abstract class JavaBuiltin extends Builtin {
         }
 
         public static final FloatDivided BUILTIN = new FloatDivided();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -350,6 +361,11 @@ public abstract class JavaBuiltin extends Builtin {
         }
 
         public static final LongDivided BUILTIN = new LongDivided();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -366,6 +382,11 @@ public abstract class JavaBuiltin extends Builtin {
         }
 
         public static final DoubleDivided BUILTIN = new DoubleDivided();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -382,6 +403,11 @@ public abstract class JavaBuiltin extends Builtin {
         }
 
         public static final IntRemainder BUILTIN = new IntRemainder();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -395,6 +421,11 @@ public abstract class JavaBuiltin extends Builtin {
         @BUILTIN(builtinClass = FloatRemainder.class)
         public static float floatRemainder(float dividend, float divisor) {
             return dividend % divisor;
+        }
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
         }
 
         public static final FloatRemainder BUILTIN = new FloatRemainder();
@@ -415,6 +446,11 @@ public abstract class JavaBuiltin extends Builtin {
         }
 
         public static final LongRemainder BUILTIN = new LongRemainder();
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -432,6 +468,11 @@ public abstract class JavaBuiltin extends Builtin {
 
         public static final DoubleRemainder BUILTIN = new DoubleRemainder();
         public static final Snippet SNIPPET = Snippet.DoubleRemainder.SNIPPET;
+
+        @Override
+        public int reasonsMayStop() {
+            return Stoppable.DIVIDE_BY_ZERO_CHECK;
+        }
     }
 
 
@@ -442,7 +483,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntShiftedLeft(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntShiftedLeft.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntShiftedLeft.class)
         public static int intShiftedLeft(int number, int shift) {
             return number << shift;
         }
@@ -458,7 +499,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongShiftedLeft(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongShiftedLeft.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongShiftedLeft.class)
         public static long longShiftedLeft(long number, int shift) {
             return number << shift;
         }
@@ -474,7 +515,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntSignedShiftedRight(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntSignedShiftedRight.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntSignedShiftedRight.class)
         public static int intSignedShiftedRight(int number, int shift) {
             return number >> shift;
         }
@@ -490,7 +531,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongSignedShiftedRight(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongSignedShiftedRight.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongSignedShiftedRight.class)
         public static long longSignedShiftedRight(long number, int shift) {
             return number >> shift;
         }
@@ -506,7 +547,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntUnsignedShiftedRight(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntUnsignedShiftedRight.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntUnsignedShiftedRight.class)
         public static int intUnsignedShiftedRight(int number, int shift) {
             return number >>> shift;
         }
@@ -522,7 +563,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongUnsignedShiftedRight(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongUnsignedShiftedRight.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongUnsignedShiftedRight.class)
         public static long longUnsignedShiftedRight(long number, int shift) {
             return number >>> shift;
         }
@@ -537,7 +578,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntNot(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntNot.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntNot.class)
         public static int intNot(int value) {
             return ~value;
         }
@@ -552,7 +593,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongNot(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongNot.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongNot.class)
         public static long longNot(long value) {
             return ~value;
         }
@@ -567,7 +608,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntAnd(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntAnd.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntAnd.class)
         public static int intAnd(int addend1, int addend2) {
             return addend1 & addend2;
         }
@@ -583,7 +624,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongAnd(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongAnd.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongAnd.class)
         public static long longAnd(long addend1, long addend2) {
             return addend1 & addend2;
         }
@@ -599,7 +640,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntOr(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntOr.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntOr.class)
         public static int intOr(int addend1, int addend2) {
             return addend1 | addend2;
         }
@@ -615,7 +656,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongOr(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongOr.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongOr.class)
         public static long longOr(long addend1, long addend2) {
             return addend1 | addend2;
         }
@@ -631,7 +672,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitIntXor(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = IntXor.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = IntXor.class)
         public static int intXor(int addend1, int addend2) {
             return addend1 ^ addend2;
         }
@@ -647,7 +688,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongXor(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongXor.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongXor.class)
         public static long longXor(long addend1, long addend2) {
             return addend1 ^ addend2;
         }
@@ -663,7 +704,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitLongCompare(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = LongCompare.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = LongCompare.class)
         public static int longCompare(long greater, long less) {
             final Long n = greater;
             return n.compareTo(less);
@@ -680,7 +721,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitFloatCompareL(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = FloatCompareL.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = FloatCompareL.class)
         public static int floatCompareL(float greater, float less) {
             Problem.todo("NaN treatment");
             final Float f = greater;
@@ -698,7 +739,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitFloatCompareG(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = FloatCompareG.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = FloatCompareG.class)
         public static int floatCompareG(float greater, float less) {
             Problem.todo("NaN treatment");
             final Float f = greater;
@@ -716,7 +757,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitDoubleCompareL(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = DoubleCompareL.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = DoubleCompareL.class)
         public static int doubleCompareL(double greater, double less) {
             Problem.todo("NaN treatment");
             final Double d = greater;
@@ -734,7 +775,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitDoubleCompareG(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = DoubleCompareG.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = DoubleCompareG.class)
         public static int doubleCompareG(double greater, double less) {
             Problem.todo("NaN treatment");
             final Double d = greater;
@@ -752,7 +793,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertByteToInt(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertByteToInt.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertByteToInt.class)
         public static int convertByteToInt(byte byteValue) {
             return byteValue;
         }
@@ -768,7 +809,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertCharToInt(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertCharToInt.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertCharToInt.class)
         public static int convertCharToInt(char charValue) {
             return charValue;
         }
@@ -784,7 +825,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertShortToInt(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertShortToInt.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertShortToInt.class)
         public static int convertShortToInt(short shortValue) {
             return shortValue;
         }
@@ -800,7 +841,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertIntToByte(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertIntToByte.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertIntToByte.class)
         public static byte convertIntToByte(int intValue) {
             return (byte) intValue;
         }
@@ -816,7 +857,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertIntToChar(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertIntToChar.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertIntToChar.class)
         public static char convertIntToChar(int intValue) {
             return (char) intValue;
         }
@@ -832,7 +873,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertIntToShort(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertIntToShort.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertIntToShort.class)
         public static short convertIntToShort(int intValue) {
             return (short) intValue;
         }
@@ -848,7 +889,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertIntToFloat(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertIntToFloat.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertIntToFloat.class)
         public static float convertIntToFloat(int intValue) {
             return intValue;
         }
@@ -864,7 +905,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertIntToLong(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertIntToLong.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertIntToLong.class)
         public static long convertIntToLong(int intValue) {
             return intValue;
         }
@@ -880,7 +921,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertIntToDouble(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertIntToDouble.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertIntToDouble.class)
         public static double convertIntToDouble(int intValue) {
             return intValue;
         }
@@ -895,7 +936,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertFloatToDouble(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertFloatToDouble.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertFloatToDouble.class)
         public static double convertFloatToDouble(float floatValue) {
             return floatValue;
         }
@@ -910,7 +951,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertLongToInt(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertLongToInt.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertLongToInt.class)
         public static int convertLongToInt(long longValue) {
             return (int) longValue;
         }
@@ -926,7 +967,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertLongToFloat(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertLongToFloat.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertLongToFloat.class)
         public static float convertLongToFloat(long longValue) {
             return longValue;
         }
@@ -942,7 +983,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertLongToDouble(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertLongToDouble.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertLongToDouble.class)
         public static double convertLongToDouble(long longValue) {
             return longValue;
         }
@@ -957,7 +998,7 @@ public abstract class JavaBuiltin extends Builtin {
             visitor.visitConvertDoubleToFloat(this, result, arguments);
         }
 
-        @BUILTIN(builtinClass = ConvertDoubleToFloat.class, thrownExceptions = 0)
+        @BUILTIN(builtinClass = ConvertDoubleToFloat.class)
         public static float convertDoubleToFloat(double doubleValue) {
             return (float) doubleValue;
         }

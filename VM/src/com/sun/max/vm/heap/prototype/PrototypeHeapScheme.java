@@ -88,11 +88,11 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
         }
     }
 
-    public <Hybrid_Type extends Hybrid> Hybrid_Type createHybrid(DynamicHub hub) {
+    public Object createHybrid(DynamicHub hub) {
         throw ProgramError.unexpected();
     }
 
-    public <Hybrid_Type extends Hybrid> Hybrid_Type expandHybrid(Hybrid_Type hybrid, int length) {
+    public Hybrid expandHybrid(Hybrid hybrid, int length) {
         throw ProgramError.unexpected();
     }
 

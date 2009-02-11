@@ -31,7 +31,7 @@ import com.sun.max.vm.runtime.*;
  */
 public class TemplateRuntime {
 
-    public static ClassActor resolveClass(ReferenceResolutionGuard guard) {
+    public static ClassActor resolveClass(ResolutionGuard guard) {
         final ConstantPool constantPool = guard.constantPool();
         final int index = guard.constantPoolIndex();
         final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
@@ -39,7 +39,7 @@ public class TemplateRuntime {
         return classActor;
     }
 
-    public static Object resolveMirror(ReferenceResolutionGuard guard) {
+    public static Object resolveMirror(ResolutionGuard guard) {
         return resolveClass(guard).mirror();
     }
 

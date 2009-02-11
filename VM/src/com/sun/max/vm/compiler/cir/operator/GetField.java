@@ -25,12 +25,13 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
 import com.sun.max.vm.compiler.cir.operator.JavaOperator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
+import com.sun.max.vm.type.*;
 
 
 public class GetField extends JavaResolvableOperator<FieldActor> {
 
     public GetField(ConstantPool constantPool, int index) {
-        super(NULL_POINTER_EXCEPTION, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
+        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.fieldAt(index).type(constantPool).toKind());
     }
 
     @Override
@@ -43,11 +44,10 @@ public class GetField extends JavaResolvableOperator<FieldActor> {
         visitor.visit(this);
     }
 
-    private boolean _canRaiseNullPointerException = true;
-    public void setCanRaiseNullPointerException(boolean flag) {
-        _canRaiseNullPointerException = flag;
-    }
-    public boolean canRaiseNullPointerException() {
-        return _canRaiseNullPointerException;
+    private static final Kind[] _parameterKinds = {Kind.REFERENCE};
+
+    @Override
+    public Kind[] parameterKinds() {
+        return _parameterKinds;
     }
 }

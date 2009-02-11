@@ -20,12 +20,11 @@
  */
 package com.sun.max.vm.compiler.b.c;
 
-import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.type.*;
 
 /**
- * An abstract operand stack for abstract byte code interpretation.
+ * An operand stack for abstract byte code interpretation.
  *
  * @author Bernd Mathiske
  */
@@ -37,8 +36,8 @@ final class JavaStack extends JavaSlots {
 
     private int _stackPointer = 0;
 
-    public CirVariable push(Kind kind, BytecodeLocation location) {
-        final CirVariable variable = _variableFactory.makeVariable(kind, _stackPointer, location);
+    public CirVariable push(Kind kind) {
+        final CirVariable variable = _variableFactory.makeVariable(kind, _stackPointer);
         final VariableJavaStackSlot slot = new VariableJavaStackSlot(variable);
         _slots[_stackPointer] = slot;
         _stackPointer++;
@@ -49,12 +48,12 @@ final class JavaStack extends JavaSlots {
         return variable;
     }
 
-    CirVariable get(Kind kind, int nSlotsDown, BytecodeLocation location) {
+    CirVariable get(Kind kind, int nSlotsDown) {
         final int slotIndex = _stackPointer - nSlotsDown;
         final JavaStackSlot slot = _slots[slotIndex];
         assert slot instanceof VariableJavaStackSlot;
         final CirVariable variable = ((VariableJavaStackSlot) slot).cirVariable();
-        assert variable == _variableFactory.makeVariable(kind, slotIndex, location);
+        assert variable == _variableFactory.makeVariable(kind, slotIndex);
         return variable;
     }
 

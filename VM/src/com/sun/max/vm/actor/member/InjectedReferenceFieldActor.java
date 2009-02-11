@@ -24,7 +24,6 @@ import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.reference.*;
@@ -63,16 +62,6 @@ public class InjectedReferenceFieldActor<T> extends ReferenceFieldActor implemen
               ACC_SYNTHETIC + ACC_PRIVATE + INJECTED);
         _holder = JavaTypeDescriptor.forJavaClass(holder);
         Static.registerInjectedFieldActor(this);
-    }
-
-    /**
-     * Reads the value of the field, casting it to the field's declared type.
-     * To write the value of the field, use {@link #writeObject(Object, Object)}.
-     */
-    @INLINE
-    public final T read(Object object) {
-        final Class<T> type = null;
-        return UnsafeLoophole.cast(type, readObject(object));
     }
 
     /**

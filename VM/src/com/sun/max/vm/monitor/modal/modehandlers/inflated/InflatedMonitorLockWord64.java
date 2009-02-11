@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 
@@ -56,12 +55,9 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @INLINE
-    public static final InflatedMonitorLockWord64 as(Word word) {
-        if (MaxineVM.isPrototyping()) {
-            return new BoxedInflatedMonitorLockWord64(word);
-        }
-        return UnsafeLoophole.castWord(InflatedMonitorLockWord64.class, word);
+    @UNCHECKED_CAST
+    public static final InflatedMonitorLockWord64 from(Word word) {
+        return new BoxedInflatedMonitorLockWord64(word);
     }
 
     /**
@@ -72,7 +68,7 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
      */
     @INLINE
     public static final boolean isInflatedMonitorLockWord(ModalLockWord64 lockWord) {
-        return InflatedMonitorLockWord64.as(lockWord).isInflated();
+        return InflatedMonitorLockWord64.from(lockWord).isInflated();
     }
 
     /**
@@ -97,7 +93,7 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
      */
     @INLINE
     public static final InflatedMonitorLockWord64 boundFromMonitor(JavaMonitor monitor) {
-        return as(UnsafeLoophole.objectToWord(monitor).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
+        return from(UnsafeLoophole.objectToWord(monitor).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
     /**
@@ -128,6 +124,6 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
      */
     @INLINE
     public static final InflatedMonitorLockWord64 unboundFromHashcode(int hashcode) {
-        return InflatedMonitorLockWord64.as(HashableLockWord64.as(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
+        return InflatedMonitorLockWord64.from(HashableLockWord64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
     }
 }

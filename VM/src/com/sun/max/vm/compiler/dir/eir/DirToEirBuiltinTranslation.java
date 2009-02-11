@@ -36,6 +36,7 @@ import com.sun.max.vm.value.*;
 public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue> {
 
     private final DirToEirInstructionTranslation _instructionTranslation;
+    private final DirJavaFrameDescriptor _javaFrameDescriptor;
 
     protected DirToEirInstructionTranslation instructionTranslation() {
         return _instructionTranslation;
@@ -45,8 +46,9 @@ public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue
         return _instructionTranslation.methodTranslation();
     }
 
-    protected DirToEirBuiltinTranslation(DirToEirInstructionTranslation instructionTranslation) {
+    protected DirToEirBuiltinTranslation(DirToEirInstructionTranslation instructionTranslation, DirJavaFrameDescriptor javaFrameDescriptor) {
         _instructionTranslation = instructionTranslation;
+        _javaFrameDescriptor = javaFrameDescriptor;
     }
 
     public EirABI abi() {
@@ -114,7 +116,11 @@ public abstract class DirToEirBuiltinTranslation extends BuiltinAdapter<DirValue
         }
         final EirValue result = dirToEirValue(dirResult);
         final EirLocation resultLocation = result == null ? null : methodTranslation().abi().getResultLocation(result.kind());
-        addInstruction(methodTranslation().createCall(eirBlock(), methodTranslation().abi(), result, resultLocation, address, arguments, argumentLocations));
+        final EirCall instruction = methodTranslation().createCall(eirBlock(), methodTranslation().abi(), result, resultLocation, address, arguments, argumentLocations);
+        addInstruction(instruction);
+        if (!methodTranslation().isTemplate()) {
+            instruction.setEirJavaFrameDescriptor(methodTranslation().dirToEirJavaFrameDescriptor(_javaFrameDescriptor, instruction));
+        }
     }
 
     @Override

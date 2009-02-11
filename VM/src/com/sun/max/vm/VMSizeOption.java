@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -40,6 +41,7 @@ public class VMSizeOption extends VMOption {
      * @param help the help text to report for this option
      * @param phase the phase in which this option should be parsed
      */
+    @PROTOTYPE_ONLY
     public VMSizeOption(String prefix, Size defaultValue, String help, MaxineVM.Phase phase) {
         super(prefix, help, phase);
         _value = defaultValue;

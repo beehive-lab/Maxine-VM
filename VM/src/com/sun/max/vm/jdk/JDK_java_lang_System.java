@@ -606,6 +606,7 @@ public final class JDK_java_lang_System {
     static class BootClasspathVMOption extends VMOption {
         private String _path;
 
+        @PROTOTYPE_ONLY
         BootClasspathVMOption(String suffix, String help) {
             super("-Xbootclasspath" + suffix, help, MaxineVM.Phase.STARTING);
         }

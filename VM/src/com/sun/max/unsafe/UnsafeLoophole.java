@@ -25,35 +25,11 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
-import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.type.*;
 
 /**
- * Unsafe type cast without any checks.
- *
- * The compiler "knows" about the {@code public static} methods in this class. Each such method must
- * take at least one parameter and the {@linkplain Kind kind} of its last parameter must have
- * the same {@linkplain Kind#width() width} as the kind of its return value.
- *
- * The compiler must transform calls to these methods to simply replace the use of the result with
- * the last parameter. For example, the following code:
- *
- *     Pointer pointer = ...;
- *     ...
- *     return UnsafeLoophole.castWord(Offset.class, pointer);
- *
- * should be reduced to having the semantics of:
- *
- *     Pointer pointer = ...;
- *     ...
- *     return pointer;
- *
- * <b>USE WITH CAUTION!</b>
- *
- * @see CirMethod#isFoldableCast
- * @see CirMethod#foldCast
+ * A collection of methods used to perform {@link UNCHECKED_CAST unchecked type casts}.
  *
  * @author Bernd Mathiske
  */
@@ -63,53 +39,49 @@ public final class UnsafeLoophole {
     }
 
     @PROTOTYPE_ONLY
-    private static native <Type> Type nativeCastObject(Class<Type> type, Object object);
+    private static native <Type> Type nativeCastObject(Object object);
 
     /**
      * Use this variant, not the one below, if the l-value taking the result of this method is a manifest type.
      */
-    @UNSAFE
+    @UNCHECKED_CAST
     public static <Type> Type cast(Object object) {
         assert MaxineVM.isPrototyping();
         assert !(object instanceof Word);
-        final Class<Type> type = null;
-        return nativeCastObject(type, object);
+        return nativeCastObject(object);
     }
 
-    /**
-     * Use this variant, not the one above, if the l-value taking the result of this method is NOT a manifest type.
-     */
-    @UNSAFE
-    public static <Type> Type cast(Class<Type> type, Object object) {
+    @PROTOTYPE_ONLY
+    public static <Type> Type castObject(Object object) {
         assert MaxineVM.isPrototyping();
         assert !(object instanceof Word);
-        return nativeCastObject(type, object);
+        return nativeCastObject(object);
     }
 
     @PROTOTYPE_ONLY
-    private static native <Word_Type extends Word> Word_Type nativeIntToWord(Class<Word_Type> wordType, int value);
+    private static native <Word_Type extends Word> Word_Type nativeIntToWord(int value);
 
-    @UNSAFE
-    public static <Word_Type extends Word> Word_Type intToWord(Class<Word_Type> wordType, int value) {
+    @UNCHECKED_CAST
+    public static <Word_Type extends Word> Word_Type intToWord(int value) {
         assert MaxineVM.isPrototyping();
         ProgramError.check(Word.width() == WordWidth.BITS_32);
-        return nativeIntToWord(wordType, value);
+        return nativeIntToWord(value);
     }
 
     @PROTOTYPE_ONLY
-    private static native <Word_Type extends Word> Word_Type nativeLongToWord(Class<Word_Type> wordType, long value);
+    private static native <Word_Type extends Word> Word_Type nativeLongToWord(long value);
 
-    @UNSAFE
-    public static <Word_Type extends Word> Word_Type longToWord(Class<Word_Type> wordType, long value) {
+    @UNCHECKED_CAST
+    public static <Word_Type extends Word> Word_Type longToWord(long value) {
         assert MaxineVM.isPrototyping();
         ProgramError.check(Word.width() == WordWidth.BITS_64);
-        return nativeLongToWord(wordType, value);
+        return nativeLongToWord(value);
     }
 
     @PROTOTYPE_ONLY
     private static native int nativeWordToInt(Word word);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static int wordToInt(Word word) {
         assert MaxineVM.isPrototyping();
         ProgramError.check(Word.width() == WordWidth.BITS_32);
@@ -119,7 +91,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native long nativeWordToLong(Word word);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static long wordToLong(Word word) {
         assert MaxineVM.isPrototyping();
         ProgramError.check(Word.width() == WordWidth.BITS_64);
@@ -129,7 +101,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native boolean nativeByteToBoolean(byte value);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static boolean byteToBoolean(byte value) {
         assert MaxineVM.isPrototyping();
         return nativeByteToBoolean(value);
@@ -138,7 +110,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native byte nativeBooleanToByte(boolean value);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static byte booleanToByte(boolean value) {
         assert MaxineVM.isPrototyping();
         return nativeBooleanToByte(value);
@@ -147,7 +119,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native char nativeShortToChar(short value);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static char shortToChar(short value) {
         assert MaxineVM.isPrototyping();
         return nativeShortToChar(value);
@@ -156,7 +128,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native short nativeCharToShort(char value);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static short charToShort(char value) {
         assert MaxineVM.isPrototyping();
         return nativeCharToShort(value);
@@ -166,7 +138,6 @@ public final class UnsafeLoophole {
     private static native float nativeIntToFloat(int value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.IntToFloat.class)
-    @UNSAFE
     public static float intToFloat(int value) {
         assert MaxineVM.isPrototyping();
         return nativeIntToFloat(value);
@@ -176,7 +147,6 @@ public final class UnsafeLoophole {
     private static native int nativeFloatToInt(float value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.FloatToInt.class)
-    @UNSAFE
     public static int floatToInt(float value) {
         assert MaxineVM.isPrototyping();
         return nativeFloatToInt(value);
@@ -186,7 +156,6 @@ public final class UnsafeLoophole {
     private static native double nativeLongToDouble(long value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.LongToDouble.class)
-    @UNSAFE
     public static double longToDouble(long value) {
         assert MaxineVM.isPrototyping();
         return nativeLongToDouble(value);
@@ -196,7 +165,6 @@ public final class UnsafeLoophole {
     private static native long nativeDoubleToLong(double value);
 
     @BUILTIN(builtinClass = SpecialBuiltin.DoubleToLong.class)
-    @UNSAFE
     public static long doubleToLong(double value) {
         assert MaxineVM.isPrototyping();
         return nativeDoubleToLong(value);
@@ -205,7 +173,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Word nativeReferenceToWord(Reference reference);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Word referenceToWord(Reference reference) {
         assert MaxineVM.isPrototyping();
         return nativeReferenceToWord(reference);
@@ -214,7 +182,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Reference nativeWordToReference(Word word);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Reference wordToReference(Word word) {
         assert MaxineVM.isPrototyping();
         return nativeWordToReference(word);
@@ -223,7 +191,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Word nativeObjectToWord(Object object);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Word objectToWord(Object object) {
         assert MaxineVM.isPrototyping();
         return nativeObjectToWord(object);
@@ -232,7 +200,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Reference nativeWordToObject(Word word);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Object wordToObject(Word word) {
         assert MaxineVM.isPrototyping();
         return nativeWordToObject(word);
@@ -241,7 +209,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Word nativeGripToWord(Grip grip);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Word gripToWord(Grip grip) {
         assert MaxineVM.isPrototyping();
         return nativeGripToWord(grip);
@@ -250,7 +218,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Grip nativeWordToGrip(Word word);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Grip wordToGrip(Word word) {
         assert MaxineVM.isPrototyping();
         return nativeWordToGrip(word);
@@ -259,7 +227,7 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Reference nativeGripToReference(Grip grip);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Reference gripToReference(Grip grip) {
         assert MaxineVM.isPrototyping();
         return nativeGripToReference(grip);
@@ -268,18 +236,18 @@ public final class UnsafeLoophole {
     @PROTOTYPE_ONLY
     private static native Grip nativeReferenceToGrip(Reference reference);
 
-    @UNSAFE
+    @UNCHECKED_CAST
     public static Grip referenceToGrip(Reference reference) {
         assert MaxineVM.isPrototyping();
         return nativeReferenceToGrip(reference);
     }
 
     @PROTOTYPE_ONLY
-    private static native <Word_Type extends Word> Word_Type nativeWordCast(Class<Word_Type> wordType, Word word);
+    private static native <Word_Type extends Word> Word_Type nativeWordCast(Word word);
 
-    @UNSAFE
-    public static <Word_Type extends Word> Word_Type castWord(Class<Word_Type> wordType, Word word) {
+    @UNCHECKED_CAST
+    public static <Word_Type extends Word> Word_Type castWord(Word word) {
         assert MaxineVM.isPrototyping();
-        return nativeWordCast(wordType, word);
+        return nativeWordCast(word);
     }
 }

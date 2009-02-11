@@ -20,13 +20,13 @@
  */
 package com.sun.max.vm.compiler.eir;
 
-import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
 
 /**
  * ATTENTION: unlike other Java frame descriptors, EIR Java frame descriptors must NOT share
  * partial structures, because their operands get updated by the register allocator.
- * 
+ *
  * @author Bernd Mathiske
  */
 public class EirJavaFrameDescriptor extends JavaFrameDescriptor<EirOperand> {
@@ -40,8 +40,8 @@ public class EirJavaFrameDescriptor extends JavaFrameDescriptor<EirOperand> {
         return operands;
     }
 
-    public EirJavaFrameDescriptor(EirInstruction instruction, EirJavaFrameDescriptor parent, BytecodeLocation bytecodeLocation, EirValue[] locals, EirValue[] stackSlots) {
-        super(parent, bytecodeLocation, createOperands(instruction, locals), createOperands(instruction, stackSlots));
+    public EirJavaFrameDescriptor(EirInstruction instruction, EirJavaFrameDescriptor parent, ClassMethodActor classMethodActor, int bytecodePosition, EirValue[] locals, EirValue[] stackSlots) {
+        super(parent, classMethodActor, bytecodePosition, createOperands(instruction, locals), createOperands(instruction, stackSlots));
     }
 
     @Override

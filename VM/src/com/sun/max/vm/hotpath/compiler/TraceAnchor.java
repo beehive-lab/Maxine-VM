@@ -43,7 +43,7 @@ public class TraceAnchor extends Anchor {
 
     @Override
     public String toString() {
-        final int line = _location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(_location.position());
+        final int line = _location.classMethodActor().codeAttribute().lineNumberTable().findLineNumber(_location.bytecodePosition());
         return "loc: " + _location.toString() + ", line: " + line + ", count: " + 0;
     }
 

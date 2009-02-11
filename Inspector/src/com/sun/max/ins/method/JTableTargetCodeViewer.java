@@ -696,9 +696,9 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    final BytecodeLocation bytecodeLocation = _lastBytecodeLocation;
-                    if (bytecodeLocation != null) {
-                        inspection().viewSourceExternally(bytecodeLocation);
+                    final BytecodeLocation javaBytecodeLocation = _lastBytecodeLocation;
+                    if (javaBytecodeLocation != null) {
+                        inspection().viewSourceExternally(javaBytecodeLocation);
                     }
                 }
             });
