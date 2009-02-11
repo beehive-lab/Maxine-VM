@@ -294,6 +294,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
             _listModel.clear();
             addToModel(frames);
             _stateChanged = false;
+            super.refreshView(epoch, force);
         }
     }
 
