@@ -34,6 +34,12 @@ public final class TextLabel extends InspectorLabel {
         redisplay();
     }
 
+    public TextLabel(Inspection inspection, String text, String toolTipText) {
+        super(inspection, text);
+        setToolTipText(toolTipText);
+        redisplay();
+    }
+
     public TextLabel(Inspection inspection, int n) {
         this(inspection, Integer.toString(n));
     }

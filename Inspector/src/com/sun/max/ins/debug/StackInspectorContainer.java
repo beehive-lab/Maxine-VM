@@ -112,9 +112,11 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
             final StackInspector selectedInspector = getSelected();
             if (selectedInspector != null) {
                 inspection().focus().setThread(selectedInspector.teleNativeThread());
+                selectedInspector.refreshView(teleVM().epoch(), true);
             }
         }
     };
+
     private StackInspectorContainer(Inspection inspection, Residence residence) {
         super(inspection, residence, inspection.geometry().stacksFrameDefaultLocation(), inspection.geometry().stacksFramePrefSize(), "stacksInspector");
         _threadSetNeedsUpdate = true;
