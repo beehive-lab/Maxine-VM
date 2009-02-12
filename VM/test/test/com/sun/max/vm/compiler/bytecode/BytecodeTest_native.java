@@ -39,7 +39,7 @@ public abstract class BytecodeTest_native<Method_Type extends IrMethod> extends 
         super(name);
     }
 
-    private static native void nop();
+    private static synchronized native void nop();
 
     public void test_nop() {
         final Method_Type method = compileMethod("nop", SignatureDescriptor.create(Void.TYPE));

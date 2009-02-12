@@ -50,10 +50,8 @@ public class MultiANewArray extends JavaResolvableOperator<ArrayClassActor> {
         return _ndimension;
     }
 
-    private static final Kind[] _parameterKinds = {};
-
     @Override
     public Kind[] parameterKinds() {
-        return _parameterKinds;
+        return Kind.NONE;
     }
 }

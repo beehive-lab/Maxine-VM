@@ -48,6 +48,7 @@ public class HCirToLCirTranslation {
             final CirValue procedure = call.procedure();
             if (procedure instanceof JavaOperator) {
                 final JavaOperator operator = (JavaOperator) procedure;
+                assert call.arguments().length == operator.parameterKinds().length + 2;
                 final HCirOperatorLowering visitor = new HCirOperatorLowering(operator, call, _methodTranslation.variableFactory(), _methodTranslation.cirGenerator().compilerScheme());
                 operator.acceptVisitor(visitor);
             }
