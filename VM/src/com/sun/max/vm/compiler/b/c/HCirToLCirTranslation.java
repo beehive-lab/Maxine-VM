@@ -25,6 +25,7 @@ import com.sun.max.vm.compiler.cir.builtin.*;
 import com.sun.max.vm.compiler.cir.operator.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.cir.variable.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Transforms a HCIR tree (containing high-level CIR operators) to the corresponding
@@ -48,7 +49,8 @@ public class HCirToLCirTranslation {
             final CirValue procedure = call.procedure();
             if (procedure instanceof JavaOperator) {
                 final JavaOperator operator = (JavaOperator) procedure;
-                assert call.arguments().length == operator.parameterKinds().length + 2;
+                final Kind[] parameterKinds = operator.parameterKinds();
+                assert call.arguments().length == parameterKinds.length + 2;
                 final HCirOperatorLowering visitor = new HCirOperatorLowering(operator, call, _methodTranslation.variableFactory(), _methodTranslation.cirGenerator().compilerScheme());
                 operator.acceptVisitor(visitor);
             }

@@ -187,10 +187,6 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
                 if (positionToStopIndex[instructionPosition] >= 0) {
                     // the row is at a stop point
                     _rowToBackGroundColor[row] = _rowToBackGroundColor[row].darker();
-                    if (bytecodePosition < _bytecodes.length) {
-                        // Now see if the bytecode is a call.
-                        _rowToCalleeIndex[row] = findCalleeIndex(_bytecodes, bytecodePosition);
-                    }
                 }
             }
         } else {

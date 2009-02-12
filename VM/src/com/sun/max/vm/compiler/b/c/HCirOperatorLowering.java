@@ -352,7 +352,6 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
 
     @Override
     public void visit(final InvokeVirtual operator) {
-        assert _arguments.length == operator.constantPool().methodAt(operator.index()).signature(operator.constantPool()).getNumberOfParameters() + 3;
         final CirValue receiver = _arguments[0];
 
         final Resolvable resolvable = new Resolvable(ResolveVirtualMethod.SNIPPET) {
@@ -785,8 +784,6 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
 
     @Override
     public void visit(CallNative operator) {
-        assert _arguments.length == operator.signatureDescriptor().getNumberOfParameters() + 2;
-
         final MethodActor classMethodActor = operator.classMethodActor();
         final boolean isCFunction = classMethodActor.isCFunction();
 

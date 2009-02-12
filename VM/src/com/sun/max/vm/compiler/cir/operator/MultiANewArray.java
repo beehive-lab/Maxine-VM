@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.cir.operator;
 
+import java.util.*;
+
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.b.c.*;
@@ -52,6 +54,8 @@ public class MultiANewArray extends JavaResolvableOperator<ArrayClassActor> {
 
     @Override
     public Kind[] parameterKinds() {
-        return Kind.NONE;
+        final Kind[] kinds = new Kind[_ndimension];
+        Arrays.fill(kinds, Kind.INT);
+        return kinds;
     }
 }
