@@ -342,7 +342,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      *         descriptor can be determined for {@code instructionPointer}
      */
     public TargetJavaFrameDescriptor getJavaFrameDescriptorFor(Pointer instructionPointer) {
-        if (_stopPositions == null) {
+        if (_stopPositions == null || _compressedJavaFrameDescriptors == null) {
             return null;
         }
         int resultIndex = -1;
