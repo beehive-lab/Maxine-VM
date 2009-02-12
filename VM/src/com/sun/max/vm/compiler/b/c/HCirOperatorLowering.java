@@ -69,7 +69,8 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
     private final JavaOperator _operator;
     private final CirCall _call;
     private final CirVariableFactory _variableFactory;
-    private final CirValue _cc;
+    private final CirValue _originalCC;
+    private final CirValue _originalCE;
     private final CirVariable _ce;
 
     private final CirValue[] _arguments;
@@ -81,8 +82,9 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
         _compilerScheme = compilerScheme;
         _variableFactory = variableFactory;
         _arguments = call.arguments();
-        _cc = _arguments[_arguments.length - 2];
-        final CirValue ce = _arguments[_arguments.length - 1];
+        _originalCC = _arguments[_arguments.length - 2];
+        _originalCE = _arguments[_arguments.length - 1];
+        final CirValue ce = _originalCE;
         if (ce instanceof CirVariable) {
             _ce = (CirVariable) ce;
         } else {
@@ -210,10 +212,11 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
 
     void set(CirCall result) {
         CirCall call = result;
-        final CirValue ce = _arguments[_arguments.length - 1];
-        if (ce() != ce) {
+        assert _arguments[_arguments.length - 2] == _originalCC;
+        assert _arguments[_arguments.length - 1] == _originalCE;
+        if (ce() != _originalCE) {
             _arguments[_arguments.length - 1] = ce();
-            call = new CirCall(closure(call, ce()), ce);
+            call = new CirCall(closure(call, ce()), _originalCE);
         }
         _call.assign(call);
     }
@@ -525,10 +528,10 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
     }
 
     /**
-     * Gets the normal continuation for the current translation scope.
+     * Gets the original normal continuation for the HCIR call being lowered.
      */
     CirValue cc() {
-        return _cc;
+        return _originalCC;
     }
 
     /**
@@ -813,8 +816,8 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
             }
         }
 
-        assert _arguments[_arguments.length - 2] instanceof CirContinuation;
-        final CirContinuation cc = (CirContinuation) _arguments[_arguments.length - 2];
+        assert cc() instanceof CirContinuation;
+        final CirContinuation cc = (CirContinuation) cc();
         final CirCall ccBody = cc.body();
 
         if (!isCFunction) {
@@ -828,8 +831,6 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
         }
 
         cc.setBody(call);
-        _arguments[_arguments.length - 1] = ce();
-
         call = call(callEntryPoint, _arguments);
 
         if (!isCFunction) {
