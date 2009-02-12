@@ -79,17 +79,21 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
      * it analyses the body of the closure and returns a hash map
      * partially mapping each CirCall in the body of the closure
      * to an array of abstract values (typically one per parameter).
+     *
+     * @param initialEnv an initial environment. This may be null.
      */
-    public IdentityHashMapping<CirCall, AV_Type[]> analyse(CirClosure closure) {
+    public IdentityHashMapping<CirCall, AV_Type[]> analyse(CirClosure closure, Environment<CirVariable, AV_Type> initialEnv) {
         final CirVariable[] parameters = closure.parameters();
         /* create an environment */
-        Environment<CirVariable, AV_Type> env = new Environment<CirVariable, AV_Type>();
+        Environment<CirVariable, AV_Type> env = initialEnv == null ? new Environment<CirVariable, AV_Type>() : initialEnv;
         for (CirVariable var : parameters) {
-            /* all parameters are initialized to bottom since they can
+            /* all uninitialized parameters are initialized to bottom since they can
              * effectively be anything (conservative since we assume that
              * a method can be called from anywhere
              */
-            env = env.extend(var, _domain.getBottom());
+            if (env.lookup(var) == null) {
+                env = env.extend(var, _domain.getBottom());
+            }
         }
         /* start it up */
         analyzeCall(closure.body(), env);

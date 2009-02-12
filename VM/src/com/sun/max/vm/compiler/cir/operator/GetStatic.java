@@ -49,10 +49,8 @@ public class GetStatic extends JavaResolvableOperator<FieldActor> {
         visitor.visit(this);
     }
 
-    private static final Kind[] _parameterKinds = {};
-
     @Override
     public Kind[] parameterKinds() {
-        return _parameterKinds;
+        return Kind.NONE;
     }
 }

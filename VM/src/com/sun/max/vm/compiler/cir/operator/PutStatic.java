@@ -51,6 +51,6 @@ public class PutStatic extends JavaResolvableOperator<FieldActor> {
 
     @Override
     public Kind[] parameterKinds() {
-        return new Kind[] {Kind.REFERENCE, _constantPool.fieldAt(_index).type(_constantPool).toKind()};
+        return new Kind[] {_constantPool.fieldAt(_index).type(_constantPool).toKind()};
     }
 }

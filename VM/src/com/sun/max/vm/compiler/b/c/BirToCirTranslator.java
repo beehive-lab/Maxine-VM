@@ -83,7 +83,14 @@ public class BirToCirTranslator extends CirGenerator {
 
         if (true) {
             final EnvBasedInitializedAnalysis analysis = new EnvBasedInitializedAnalysis(InitializedDomain.DOMAIN);
-            final IdentityHashMapping<CirCall, InitializedDomain.Set[]> result = analysis.analyse(cirClosure);
+
+            Environment<CirVariable, InitializedDomain.Set> env = null;
+            if (!cirMethod.classMethodActor().isStatic()) {
+                env = new Environment<CirVariable, InitializedDomain.Set>();
+                final CirVariable receiver = cirClosure.parameters()[0];
+                env = env.extend(receiver, InitializedDomain.DOMAIN.getInitialized());
+            }
+            final IdentityHashMapping<CirCall, InitializedDomain.Set[]> result = analysis.analyse(cirClosure, env);
             EnvBasedInitializedAnalysis.InitializedResult.applyResult(cirClosure, result);
         }
 
