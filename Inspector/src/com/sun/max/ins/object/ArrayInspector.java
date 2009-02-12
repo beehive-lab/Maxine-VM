@@ -49,8 +49,8 @@ public final class ArrayInspector extends ObjectInspector {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        super.refreshView(epoch, force);
         _elementsPane.refresh(epoch, force);
+        super.refreshView(epoch, force);
     }
 
 }

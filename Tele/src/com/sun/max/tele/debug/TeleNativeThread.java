@@ -165,7 +165,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
-     * Determines if the frames of this stack changed in the epoch that completed last time this thread stopped.
+     * Have the frames of this stack changed in the epoch that completed last time this thread stopped.
+     * This may be true even if the objects representing the frames have changed.
+     * @see StackFrame#isSameFrame(StackFrame)
      */
     public boolean framesChanged() {
         return _framesChanged;
@@ -280,6 +282,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
     }
 
+    /**
+     * Update the current list of frames.
+     * As a side effect, set {@link #_framesChanged} to true if the identify of the stack frames has change,
+     * even if the objects representing them are different.
+     * @param clear the current list of frames should be cleared
+     */
     private void refreshFrames(boolean clear) {
         if (clear) {
             _frames = Sequence.Static.empty(StackFrame.class);

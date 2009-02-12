@@ -291,7 +291,6 @@ public class HubInspector extends ObjectInspector {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        super.refreshView(epoch, force);
         _fieldsPane.refresh(epoch, force);
         if (_iTablePane != null) {
             _iTablePane.refresh(epoch, force);
@@ -308,6 +307,7 @@ public class HubInspector extends ObjectInspector {
         if (_classMethodInspectorMenuItems != null) {
             _classMethodInspectorMenuItems.refresh(epoch, force);
         }
+        super.refreshView(epoch, force);
     }
 
 
