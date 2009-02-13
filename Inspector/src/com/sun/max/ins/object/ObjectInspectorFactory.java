@@ -31,6 +31,7 @@ import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.actor.holder.*;
 
 
 /**
@@ -60,19 +61,36 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     private  final VariableMapping<TeleObject, ObjectInspector> _teleObjectToInspector = HashMapping.createVariableIdentityMapping();
 
     /**
-     * ObjectInspector constructors for specific tuple-implemented classes of tuple and hybrid {@link TeleObject}s.
+     * ObjectInspector constructors for specific tuple-implemented subclasses of {@link TeleObject}s.
      * The most specific class that matches a particular {@link TeleObject} will
      * be used, in an emulation of virtual method dispatch.
      */
     private final Map<Class, Constructor> _teleTupleObjectClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
 
+    /**
+     * ObjectInspector constructors for specific array-implemented subclasses of {@link TeleObject}s.
+     * The most specific class that matches a particular array component type will
+     * be used, in an emulation of virtual method dispatch.
+     */
+    private final Map<Class, Constructor> _arrayComponentClassToObjectInspectorConstructor = new HashMap<Class, Constructor>();
+
+    private final Constructor _defaultArrayInspectorConstructor;
+    private final Constructor _defaultTupleInspectorConstructor;
 
     private ObjectInspectorFactory(final Inspection inspection) {
         super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
 
-        // Most general type of tuple-object surrogate, so there will always be a match.
-        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleTupleObject.class, getConstructor(TupleInspector.class));
+        // Use this if there is no subclass of array component type is matched, or if the component type is an interface.
+        _defaultArrayInspectorConstructor = getConstructor(ArrayInspector.class);
+        // Array inspectors for specific subclasses of component type
+        _arrayComponentClassToObjectInspectorConstructor.put(Character.class, getConstructor(CharacterArrayInspector.class));
+
+        // Use this if there is no object type subclass matched
+        _defaultTupleInspectorConstructor = getConstructor(TupleInspector.class);
+        // Tuple inspectors for specific subclasses
+        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleDescriptor.class, getConstructor(DescriptorInspector.class));
+        _teleTupleObjectClassToObjectInspectorConstructor.put(TeleEnum.class, getConstructor(EnumInspector.class));
         _teleTupleObjectClassToObjectInspectorConstructor.put(TeleString.class, getConstructor(StringInspector.class));
         _teleTupleObjectClassToObjectInspectorConstructor.put(TeleStringConstant.class, getConstructor(StringConstantInspector.class));
         _teleTupleObjectClassToObjectInspectorConstructor.put(TeleUtf8Constant.class, getConstructor(Utf8ConstantInspector.class));
@@ -98,7 +116,10 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     break;
                 }
                 case TUPLE: {
-                    final Constructor constructor = lookupTupleObjectInspectorConstructor(teleObject);
+                    Constructor constructor = lookupInspectorConstructor(_teleTupleObjectClassToObjectInspectorConstructor, teleObject.getClass());
+                    if (constructor == null) {
+                        constructor = _defaultTupleInspectorConstructor;
+                    }
                     try {
                         objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, Residence.INTERNAL, teleObject);
                     } catch (InstantiationException e) {
@@ -111,7 +132,24 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     break;
                 }
                 case ARRAY: {
-                    objectInspector = new ArrayInspector(inspection, this, Residence.INTERNAL, teleObject);
+                    ClassActor componentClassActor = teleObject.classActorForType().componentClassActor();
+                    if (componentClassActor.isPrimitiveClassActor()) {
+                        final PrimitiveClassActor primitiveClassActor = (PrimitiveClassActor) componentClassActor;
+                        componentClassActor = primitiveClassActor.toWrapperClassActor();
+                    }
+                    Constructor constructor = lookupInspectorConstructor(_arrayComponentClassToObjectInspectorConstructor, componentClassActor.toJava());
+                    if (constructor == null) {
+                        constructor = _defaultArrayInspectorConstructor;
+                    }
+                    try {
+                        objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, Residence.INTERNAL, teleObject);
+                    } catch (InstantiationException e) {
+                        throw ProgramError.unexpected();
+                    } catch (IllegalAccessException e) {
+                        throw ProgramError.unexpected();
+                    } catch (InvocationTargetException e) {
+                        throw ProgramError.unexpected();
+                    }
                     break;
                 }
             }
@@ -128,18 +166,19 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
         return Classes.getDeclaredConstructor(clazz, Inspection.class, ObjectInspectorFactory.class, Inspector.Residence.class, TeleObject.class);
     }
 
-    private Constructor lookupTupleObjectInspectorConstructor(TeleObject teleObject) {
-        Class javaClass = teleObject.getClass();
+    private Constructor lookupInspectorConstructor(Map<Class, Constructor> map, Class clazz) {
+        Class javaClass = clazz;
         while (javaClass != null) {
-            final Constructor constructor = _teleTupleObjectClassToObjectInspectorConstructor.get(javaClass);
+            final Constructor constructor = map.get(javaClass);
             if (constructor != null) {
                 return constructor;
             }
             javaClass = javaClass.getSuperclass();
         }
-        ProgramError.unexpected(tracePrefix() + " failed to find constructor for class" + javaClass);
         return null;
     }
+
+
 
     void objectInspectorClosing(ObjectInspector objectInspector) {
         _teleObjectToInspector.remove(objectInspector.teleObject());
