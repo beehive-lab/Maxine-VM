@@ -473,6 +473,9 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public boolean objectTableShowVerticalLines() {
         return defaultTableShowVerticalLines();
     }
+    public int objectTableMaxDisplayRows() {
+        return 20;
+    }
 
     public Dimension threadLocalsTableIntercellSpacing() {
         return defaultTableIntercellSpacing();
