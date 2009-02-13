@@ -54,5 +54,4 @@ public class TeleCodeAttribute extends TeleTupleObject {
         return (TeleConstantPool) teleVM().makeTeleObject(constantPoolReference);
     }
 
-
 }
