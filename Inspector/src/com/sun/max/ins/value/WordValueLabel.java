@@ -50,7 +50,15 @@ public class WordValueLabel extends ValueLabel {
      * be one) are derived from this and the word's value.
      */
     public enum ValueMode {
-        WORD, REFERENCE, LITERAL_REFERENCE, INTEGER_REGISTER, FLAGS_REGISTER, FLOATING_POINT, CALL_ENTRY_POINT, ITABLE_ENTRY, CALL_RETURN_POINT;
+        WORD,
+        REFERENCE,
+        LITERAL_REFERENCE,
+        INTEGER_REGISTER,
+        FLAGS_REGISTER,
+        FLOATING_POINT,
+        CALL_ENTRY_POINT,
+        ITABLE_ENTRY,
+        CALL_RETURN_POINT;
     }
 
     private final ValueMode _valueMode;
