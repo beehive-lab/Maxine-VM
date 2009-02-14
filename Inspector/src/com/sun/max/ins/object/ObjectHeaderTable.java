@@ -29,7 +29,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -294,7 +293,7 @@ public class ObjectHeaderTable extends InspectorTable {
             switch (_teleObject.getObjectKind()) {
                 case ARRAY: {
                     final TeleArrayObject teleArrayObject = (TeleArrayObject) _teleObject;
-                    _labels[HEADER_ARRAY_LENGTH_ROW] = new WordValueLabel(_inspection, ValueMode.WORD) {
+                    _labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(_inspection, Kind.INT) {
                         @Override
                         public Value fetchValue() {
                             return IntValue.from(teleArrayObject.getLength());
@@ -304,7 +303,7 @@ public class ObjectHeaderTable extends InspectorTable {
                 }
                 case HYBRID: {
                     final TeleHybridObject teleHybridObject = (TeleHybridObject) _teleObject;
-                    _labels[HEADER_ARRAY_LENGTH_ROW] = new WordValueLabel(_inspection, ValueMode.WORD) {
+                    _labels[HEADER_ARRAY_LENGTH_ROW] = new PrimitiveValueLabel(_inspection, Kind.INT) {
                         @Override
                         public Value fetchValue() {
                             return IntValue.from(teleHybridObject.readArrayLength());
