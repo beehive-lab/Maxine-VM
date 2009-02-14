@@ -61,10 +61,12 @@
 #define PROT                (PROT_EXEC | PROT_READ | PROT_WRITE)
 
 /* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
-#define CHECK_RESULT(result) ((Address) (result == MAP_FAILED ? ALLOC_FAILED : result))
+static Address CHECK_MMAP_RESULT(Word result) {
+    return ((Address) (result == (Word) MAP_FAILED ? ALLOC_FAILED : result));
+}
 
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
-	return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
+	return CHECK_MMAP_RESULT(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
  }
 
 JNIEXPORT Address JNICALL
@@ -73,7 +75,7 @@ Java_com_sun_max_memory_VirtualMemory_mapFile(JNIEnv *env, jclass c, jlong size,
 }
 
 Address virtualMemory_mapFileIn31BitSpace(jint size, jint fd, Size offset) {
-	return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_PRIVATE | MAP_32BIT, fd, (off_t) offset));
+	return CHECK_MMAP_RESULT(mmap(0, (size_t) size, PROT, MAP_PRIVATE | MAP_32BIT, fd, (off_t) offset));
 }
 
 JNIEXPORT Address JNICALL
@@ -82,7 +84,7 @@ Java_com_sun_max_memory_VirtualMemory_mapFileIn31BitSpace(JNIEnv *env, jclass c,
 }
 
 Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd, Size offset) {
-    return CHECK_RESULT(mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset));
+    return CHECK_MMAP_RESULT(mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset));
 }
 
 Address virtualMemory_allocateNoSwap(Size size, int type) {
@@ -90,7 +92,7 @@ Address virtualMemory_allocateNoSwap(Size size, int type) {
 #if log_LOADER
 	log_println(" %d virtualMemory_allocateNoSwap allocated %lx at %p",sizeof(size), size, result);
 #endif
-	return CHECK_RESULT(result);
+	return CHECK_MMAP_RESULT(result);
 }
 
 // end of conditional exclusion of mmap stuff not available (or used) on GUESTVMXEN
@@ -101,13 +103,13 @@ Address virtualMemory_allocate(Size size, int type) {
 #if os_GUESTVMXEN
 	return (Address) guestvmXen_virtualMemory_allocate(size, type);
 #else
-    return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0));
+    return CHECK_MMAP_RESULT(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0));
 #endif
 }
 
 Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 #if os_LINUX
-    return CHECK_RESULT(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0));
+    return CHECK_MMAP_RESULT(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0));
 #elif os_GUESTVMXEN
     return (Address) guestvmXen_virtualMemory_allocateIn31BitSpace(size, type);
 #else
@@ -127,7 +129,7 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 
 Address virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
 #if os_SOLARIS || os_DARWIN
-  return CHECK_RESULT(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0));
+  return CHECK_MMAP_RESULT(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0));
 #else
     c_UNIMPLEMENTED();
     return false;
