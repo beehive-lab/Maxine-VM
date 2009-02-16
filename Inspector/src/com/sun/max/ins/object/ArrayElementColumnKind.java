@@ -29,19 +29,27 @@ import com.sun.max.collect.*;
  * @author Michael Van De Vanter
  */
 public enum ArrayElementColumnKind {
-    ADDRESS("Addr.", "Memory address of element", -1),
-    POSITION("Pos.", "Relative position of element (bytes)", 10),
-    NAME("Elem.", "Array element name", 10),
-    VALUE("Value", "Element value", 5),
-    REGION("Region", "Memory region pointed to by value", -1);
+    TAG("Tag", "Tags: register targets, watchpoints, ...", true, -1) {
+        @Override
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+    },
+    ADDRESS("Addr.", "Memory address of element", true, -1),
+    POSITION("Pos.", "Relative position of element (bytes)", true, 10),
+    NAME("Elem.", "Array element name", true, 10),
+    VALUE("Value", "Element value", true, 5),
+    REGION("Region", "Memory region pointed to by value", true, -1);
 
-    private final String _columnLabel;
+    private final String _label;
     private final String _toolTipText;
+    private final boolean _defaultVisibility;
     private final int _minWidth;
 
-    private ArrayElementColumnKind(String label, String toolTipText, int minWidth) {
-        _columnLabel = label;
+    private ArrayElementColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+        _label = label;
         _toolTipText = toolTipText;
+        _defaultVisibility = defaultVisibility;
         _minWidth = minWidth;
     }
 
@@ -49,7 +57,7 @@ public enum ArrayElementColumnKind {
      * @return text to appear in the column header
      */
     public String label() {
-        return _columnLabel;
+        return _label;
     }
 
     /**
@@ -66,9 +74,23 @@ public enum ArrayElementColumnKind {
         return _minWidth;
     }
 
+    /**
+     * Determines if this column should be visible by default; default true.
+     */
+    public boolean defaultVisibility() {
+        return _defaultVisibility;
+    }
+
+    /**
+     * @return whether this column kind can be made invisible; default true.
+     */
+    public boolean canBeMadeInvisible() {
+        return true;
+    }
+
     @Override
     public String toString() {
-        return _columnLabel;
+        return _label;
     }
 
     public static final IndexedSequence<ArrayElementColumnKind> VALUES = new ArraySequence<ArrayElementColumnKind>(values());

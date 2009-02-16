@@ -26,11 +26,14 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -225,6 +228,7 @@ public final class ArrayElementsTable extends InspectorTable {
     private final class ArrayElementsTableColumnModel extends DefaultTableColumnModel {
 
         ArrayElementsTableColumnModel(ObjectInspector objectInspector) {
+            createColumn(ArrayElementColumnKind.TAG, new TagRenderer(), true);
             createColumn(ArrayElementColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
             createColumn(ArrayElementColumnKind.POSITION, new PositionRenderer(), objectInspector.showOffsets());
             createColumn(ArrayElementColumnKind.NAME, new NameRenderer(), true);
@@ -241,6 +245,41 @@ public final class ArrayElementsTable extends InspectorTable {
                 addColumn(_columns[col]);
             }
             _columns[col].setIdentifier(columnKind);
+        }
+    }
+
+    private final class TagRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+
+        TagRenderer() {
+            super(_inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            String registerNameList = null;
+            final TeleNativeThread thread = focus().thread();
+            if (thread != null) {
+                final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
+                final Address address = _model.rowToAddress(row);
+                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(teleVM().wordSize()));
+                if (registerSymbols.isEmpty()) {
+                    setText("");
+                    setToolTipText("");
+                    setForeground(style().memoryDefaultTagTextColor());
+                } else {
+                    for (Symbol registerSymbol : registerSymbols) {
+                        final String name = registerSymbol.name();
+                        if (registerNameList == null) {
+                            registerNameList = name;
+                        } else {
+                            registerNameList = registerNameList + "," + name;
+                        }
+                    }
+                    setText(registerNameList + "--->");
+                    setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location");
+                    setForeground(style().memoryRegisterTagTextColor());
+                }
+            }
+            return this;
         }
     }
 
