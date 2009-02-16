@@ -206,8 +206,11 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color stringDataColor() {
         return defaultTextColor();
     }
-    public int maxStringDisplayLength() {
-        return 20;
+    public int maxStringInlineDisplayLength() {
+        return 40;
+    }
+    public int maxStringFromCharArrayDisplayLength() {
+        return 200;
     }
 
 
@@ -289,7 +292,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return defaultCodeFontSize();
     }
     public int maxBytecodeOperandDisplayLength() {
-        return maxStringDisplayLength();
+        return maxStringInlineDisplayLength();
     }
     public Color bytecodeColor() {
         return defaultCodeColor();
