@@ -279,6 +279,15 @@ public abstract class TeleVM {
         return _vmConfiguration;
     }
 
+    private final int _wordSize;
+
+    /**
+     * @return size in bytes of a word in the {@link TeleVM}.
+     */
+    public final int wordSize() {
+        return _wordSize;
+    }
+
     private final BootImage _bootImage;
 
     public final BootImage bootImage() {
@@ -402,6 +411,7 @@ public abstract class TeleVM {
         _sourcepath = sourcepath;
         final MaxineVM vm = createVM(_bootImage);
         _vmConfiguration = vm.configuration();
+        _wordSize = _vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes();
         _programFile = new File(bootImageFile.getParent(), _PROGRAM_NAME);
         _teleProcess = createTeleProcess(commandlineArguments, id);
         _bootImageStart = loadBootImage();

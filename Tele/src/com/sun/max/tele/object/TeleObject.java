@@ -92,7 +92,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     private final TeleReference _reference;
 
     /**
-     * @return canonical reference to this object in the {@link teleVM}
+     * @return canonical reference to this object in the {@link TeleVM}
      */
     public TeleReference reference() {
         return _reference;
