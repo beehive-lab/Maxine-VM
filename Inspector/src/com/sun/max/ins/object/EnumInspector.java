@@ -27,21 +27,21 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.object.StringPane.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.classfile.constant.*;
 
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} that implements a {@link Utf8Constant}.
+ * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} that implements a {@link Enum}.
  *
  * @author Michael Van De Vanter
  */
-class Utf8ConstantInspector extends ObjectInspector {
+public class EnumInspector extends ObjectInspector {
 
     private JTabbedPane _tabbedPane;
     private ObjectPane _fieldsPane;
     private StringPane _stringPane;
 
-    Utf8ConstantInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
+
+    EnumInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
         super(inspection, factory, residence, teleObject);
         createFrame(null);
     }
@@ -49,15 +49,15 @@ class Utf8ConstantInspector extends ObjectInspector {
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
+        final TeleEnum teleEnum = (TeleEnum) teleObject();
         _tabbedPane = new JTabbedPane();
-        _fieldsPane = ObjectPane.createFieldsPane(this, teleUtf8Constant);
+        _fieldsPane = ObjectPane.createFieldsPane(this, teleEnum);
         _stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
-                return teleUtf8Constant.getString();
+                return teleEnum.toJava().name();
             }
         });
-        final String name = teleUtf8Constant.classActorForType().javaSignature(false);
+        final String name = teleEnum.classActorForType().javaSignature(false);
         _tabbedPane.add(name, _fieldsPane);
         _tabbedPane.add("string value", _stringPane);
         _tabbedPane.setSelectedComponent(_stringPane);
@@ -72,10 +72,9 @@ class Utf8ConstantInspector extends ObjectInspector {
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        // Only refresh the visible view.
+        // Only refresh the visible pane.
         final Prober pane = (Prober) _tabbedPane.getSelectedComponent();
         pane.refresh(epoch, force);
         super.refreshView(epoch, force);
     }
-
 }

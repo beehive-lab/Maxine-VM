@@ -27,21 +27,19 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.object.StringPane.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.vm.classfile.constant.*;
-
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} that implements a {@link Utf8Constant}.
+ * An object inspector specialized for displaying a Maxine low-level character array in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
-class Utf8ConstantInspector extends ObjectInspector {
+public final class CharacterArrayInspector extends ObjectInspector {
 
     private JTabbedPane _tabbedPane;
-    private ObjectPane _fieldsPane;
+    private ObjectPane _elementsPane;
     private StringPane _stringPane;
 
-    Utf8ConstantInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
+    CharacterArrayInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
         super(inspection, factory, residence, teleObject);
         createFrame(null);
     }
@@ -49,16 +47,19 @@ class Utf8ConstantInspector extends ObjectInspector {
     @Override
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
-        final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
+
+        final TeleArrayObject teleArrayObject = (TeleArrayObject) teleObject();
         _tabbedPane = new JTabbedPane();
-        _fieldsPane = ObjectPane.createFieldsPane(this, teleUtf8Constant);
+        _elementsPane = ObjectPane.createArrayElementsPane(this, teleArrayObject);
+
         _stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
-                return teleUtf8Constant.getString();
+                final char[] chars = (char[]) teleArrayObject.shallowCopy();
+                return new String(chars);
             }
         });
-        final String name = teleUtf8Constant.classActorForType().javaSignature(false);
-        _tabbedPane.add(name, _fieldsPane);
+        final String name = teleArrayObject.classActorForType().componentClassActor().javaSignature(false);
+        _tabbedPane.add(name + "[" + teleArrayObject.getLength() + "]", _elementsPane);
         _tabbedPane.add("string value", _stringPane);
         _tabbedPane.setSelectedComponent(_stringPane);
         _tabbedPane.addChangeListener(new ChangeListener() {
@@ -68,13 +69,12 @@ class Utf8ConstantInspector extends ObjectInspector {
             }
         });
         frame().getContentPane().add(_tabbedPane);
+
     }
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        // Only refresh the visible view.
-        final Prober pane = (Prober) _tabbedPane.getSelectedComponent();
-        pane.refresh(epoch, force);
+        _elementsPane.refresh(epoch, force);
         super.refreshView(epoch, force);
     }
 

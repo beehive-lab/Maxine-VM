@@ -258,6 +258,8 @@ public interface InspectorStyle {
     boolean objectTableShowHorizontalLines();
     /** Choice to display vertical lines in table-based object views. */
     boolean objectTableShowVerticalLines();
+    /** Default number of rows for initial window sizing of table-based objectviews. */
+    int objectTableMaxDisplayRows();
 
     /** Spacing between cells in table-based VM thread locals views. */
     Dimension threadLocalsTableIntercellSpacing();
