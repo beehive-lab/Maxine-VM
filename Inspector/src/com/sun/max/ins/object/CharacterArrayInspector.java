@@ -55,7 +55,8 @@ public final class CharacterArrayInspector extends ObjectInspector {
         _stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 final char[] chars = (char[]) teleArrayObject.shallowCopy();
-                return new String(chars);
+                final int length = Math.min(chars.length, style().maxStringFromCharArrayDisplayLength());
+                return new String(chars, 0, length);
             }
         });
         final String name = teleArrayObject.classActorForType().componentClassActor().javaSignature(false);

@@ -267,10 +267,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color stringDataColor() {
         return defaultTextColor();
     }
-    @Override
-    public int maxStringDisplayLength() {
-        return 20;
-    }
+
 
     // Names for Java entities
     @Override

@@ -146,10 +146,16 @@ public interface InspectorStyle {
     Color charDataColor();
 
     // Display of string values
+    /** Font to use when displaying generic string data. */
     Font stringDataFont();
+    /** Font size to use when displaying generic string data. */
     int stringDataFontSize();
+    /** Foreground color to use when displaying generic string data. */
     Color stringDataColor();
-    int maxStringDisplayLength();
+    /** Maximum number of string characters to display when displaying a "hint" as to string contents. */
+    int maxStringInlineDisplayLength();
+    /** Maximum number of elements from a char array to display when viewing as text. */
+    int maxStringFromCharArrayDisplayLength();
 
     // Names for Java entities
     Font javaNameFont();
