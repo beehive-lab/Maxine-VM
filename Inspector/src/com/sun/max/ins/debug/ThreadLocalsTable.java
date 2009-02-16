@@ -160,8 +160,10 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public int addressToRow(Address address) {
-            if (address.greaterEqual(_values.start()) && address.lessThan(_values.end())) {
-                return address.minus(_values.start()).dividedBy(teleVM().wordSize()).toInt();
+            if (!address.isZero()) {
+                if (address.greaterEqual(_values.start()) && address.lessThan(_values.end())) {
+                    return address.minus(_values.start()).dividedBy(teleVM().wordSize()).toInt();
+                }
             }
             return -1;
         }

@@ -201,12 +201,14 @@ public final class ArrayElementsTable extends InspectorTable {
          * -1 if the address is not in the array, or if that element is currently hidden..
          */
         public int addressToRow(Address address) {
-            final int offset = address.minus(_objectOrigin).minus(_startOffset).toInt();
-            if (offset >= 0 && offset < _arrayLength * _elementSize) {
-                final int elementRow = offset / _elementSize;
-                for (int row = 0; row < _visibleElementCount; row++) {
-                    if (_rowToElementMap[row] == elementRow) {
-                        return elementRow;
+            if (!address.isZero()) {
+                final int offset = address.minus(_objectOrigin).minus(_startOffset).toInt();
+                if (offset >= 0 && offset < _arrayLength * _elementSize) {
+                    final int elementRow = offset / _elementSize;
+                    for (int row = 0; row < _visibleElementCount; row++) {
+                        if (_rowToElementMap[row] == elementRow) {
+                            return elementRow;
+                        }
                     }
                 }
             }
