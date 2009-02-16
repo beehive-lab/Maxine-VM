@@ -58,7 +58,7 @@ public final class StringInspector extends ObjectInspector {
             }
         });
         final String name = teleString.classActorForType().javaSignature(false);
-        _tabbedPane.add("as {" + name + "} object", _fieldsPane);
+        _tabbedPane.add(name, _fieldsPane);
         _tabbedPane.add("string value", _stringPane);
         _tabbedPane.setSelectedComponent(_stringPane);
         _tabbedPane.addChangeListener(new ChangeListener() {

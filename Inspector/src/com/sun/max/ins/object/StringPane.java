@@ -71,8 +71,7 @@ public final class StringPane extends InspectorScrollPane {
             if (newString != _stringValue) {
                 _stringValue = newString;
                 _textArea.selectAll();
-                _textArea.cut();
-                _textArea.append(_stringValue);
+                _textArea.replaceSelection(_stringValue);
             }
         }
     }

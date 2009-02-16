@@ -27,7 +27,7 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * Canonical surrogate for an object of type {@link ObjectReferenceValue} in the tele VM.
+ * Canonical surrogate for an object of type {@link ObjectReferenceValue} in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */

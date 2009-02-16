@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.object;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.*;
@@ -55,14 +57,16 @@ public final class ObjectPane extends InspectorScrollPane {
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleTupleObject} ; never null;
      */
     public static ObjectPane createFieldsPane(ObjectInspector objectInspector, TeleTupleObject teleTupleObject) {
-        return new ObjectPane(objectInspector.inspection(), new ObjectFieldsTable(objectInspector, teleTupleObject.getFieldActors()));
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(objectInspector, teleTupleObject.getFieldActors());
+        return new ObjectPane(objectInspector.inspection(), inspectorTable);
     }
 
     /**
      * @return a new {@link JScrollPane} displaying the fields of a {@link TeleHub} object; never null;
      */
     public static ObjectPane createFieldsPane(ObjectInspector objectInspector, TeleHub teleHub) {
-        return new ObjectPane(objectInspector.inspection(), new ObjectFieldsTable(objectInspector, teleHub.getFieldActors()));
+        final ObjectFieldsTable inspectorTable = new ObjectFieldsTable(objectInspector, teleHub.getFieldActors());
+        return new ObjectPane(objectInspector.inspection(), inspectorTable);
     }
 
     /**
@@ -139,9 +143,20 @@ public final class ObjectPane extends InspectorScrollPane {
 
     private final InspectorTable _inspectorTable;
 
+    /**
+     * Creates a scrollable pane containing the {@link InspectorTable}, with preferred height set to match the size
+     * of the table up to a specified limit.
+     */
     private ObjectPane(Inspection inspection, InspectorTable inspectorTable) {
         super(inspection, inspectorTable);
         _inspectorTable = inspectorTable;
+        // Try to size the scroll pane vertically for just enough space, up to a specified maximum;
+        // this is empirical, based only the fuzziest notion of how these dimensions work
+        final int displayRows = Math.min(style().objectTableMaxDisplayRows(), inspectorTable.getRowCount()) + 1;
+        final int preferredHeight = displayRows * (inspectorTable.getRowHeight() + inspectorTable.getRowMargin()) +
+                                                      inspectorTable.getRowMargin()  + inspectorTable.getTableHeader().getHeight();
+        final int preferredWidth = inspectorTable.getPreferredScrollableViewportSize().width;
+        inspectorTable.setPreferredScrollableViewportSize(new Dimension(preferredWidth, preferredHeight));
     }
 
     @Override
