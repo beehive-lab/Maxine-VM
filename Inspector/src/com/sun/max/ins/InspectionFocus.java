@@ -275,7 +275,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
      * This is a view state change that can happen when there is no change to the {@link TeleVM} state.
      */
     public void setAddress(Address address) {
-
+        ProgramError.check(address != null, "setAddress(null) should use zero Address instead");
         if ((address.isZero() && hasAddress()) || (!address.isZero() && !address.equals(_address))) {
             final Address oldAddress = _address;
             _address = address;
@@ -283,9 +283,9 @@ public class InspectionFocus extends AbstractInspectionHolder {
             for (ViewFocusListener listener : _listeners.clone()) {
                 listener.addressFocusChanged(oldAddress, address);
             }
-            // User Model Policy:  when an address gets selected, select the memory region that contains it
-            // TODO (mlvdv):  implement policy
-
+            // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
+            // If
+            setMemoryRegion(teleVM().memoryRegionContaining(address));
         }
     }
 
@@ -330,12 +330,12 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 listener.memoryRegionFocusChanged(oldMemoryRegion, memoryRegion);
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
-            if (_memoryRegion != null) {
-                final TeleNativeThread teleNativeThread = teleVM().threadContaining(_memoryRegion.start());
-                if (teleNativeThread != null) {
-                    setThread(teleNativeThread);
-                }
-            }
+//            if (_memoryRegion != null) {
+//                final TeleNativeThread teleNativeThread = teleVM().threadContaining(_memoryRegion.start());
+//                if (teleNativeThread != null) {
+//                    setThread(teleNativeThread);
+//                }
+//            }
         }
     }
 

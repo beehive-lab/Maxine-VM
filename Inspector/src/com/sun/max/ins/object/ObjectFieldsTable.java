@@ -189,15 +189,17 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public int addressToRow(Address address) {
-            final int offset = address.minus(_objectOrigin).toInt();
-            if (offset >= _startOffset && offset < _endOffset) {
-                int currentOffset = _startOffset;
-                for (int row = 0; row < _fieldActors.length; row++) {
-                    final int nextOffset = currentOffset + _fieldActors[row].valueSize();
-                    if (offset < nextOffset) {
-                        return row;
+            if (!address.isZero()) {
+                final int offset = address.minus(_objectOrigin).toInt();
+                if (offset >= _startOffset && offset < _endOffset) {
+                    int currentOffset = _startOffset;
+                    for (int row = 0; row < _fieldActors.length; row++) {
+                        final int nextOffset = currentOffset + _fieldActors[row].valueSize();
+                        if (offset < nextOffset) {
+                            return row;
+                        }
+                        currentOffset = nextOffset;
                     }
-                    currentOffset = nextOffset;
                 }
             }
             return -1;

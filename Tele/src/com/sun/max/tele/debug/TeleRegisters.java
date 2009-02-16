@@ -36,6 +36,7 @@ import com.sun.max.vm.*;
  * @author Bernd Mathiske
  * @author Mick Jordan
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public abstract class TeleRegisters {
 
@@ -81,12 +82,18 @@ public abstract class TeleRegisters {
         }
     }
 
+    /**
+     * @return a list of the registers in this set that point into the described area of memory in the {@link TeleVM}.
+     * Empty if region starts at zero.
+     */
     public Sequence<Symbol> find(Address startAddress, Address endAddress) {
         final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
-        for (int index = 0; index < _registerValues.length; index++) {
-            final Address value = _registerValues[index];
-            if (startAddress.lessEqual(value)  && value.lessThan(endAddress)) {
-                symbols.append(_symbolizer.fromValue(index));
+        if (!startAddress.isZero()) {
+            for (int index = 0; index < _registerValues.length; index++) {
+                final Address value = _registerValues[index];
+                if (startAddress.lessEqual(value)  && value.lessThan(endAddress)) {
+                    symbols.append(_symbolizer.fromValue(index));
+                }
             }
         }
         return symbols;

@@ -220,11 +220,13 @@ public class ObjectHeaderTable extends InspectorTable {
         }
 
         public int addressToRow(Address address) {
-            final Address endAddress  = _teleObject.getObjectKind() == ObjectKind.TUPLE
-                ?   _objectOrigin.plus(_miscWordOffset + teleVM().wordSize())
-                            :  _objectOrigin.plus(_arrayLengthOffset + teleVM().wordSize());
-            if (address.greaterEqual(_objectOrigin) && address.lessThan(endAddress)) {
-                return address.minus(_objectOrigin).dividedBy(teleVM().wordSize()).toInt();
+            if (!address.isZero()) {
+                final Address endAddress  = _teleObject.getObjectKind() == ObjectKind.TUPLE
+                    ?   _objectOrigin.plus(_miscWordOffset + teleVM().wordSize())
+                                :  _objectOrigin.plus(_arrayLengthOffset + teleVM().wordSize());
+                if (address.greaterEqual(_objectOrigin) && address.lessThan(endAddress)) {
+                    return address.minus(_objectOrigin).dividedBy(teleVM().wordSize()).toInt();
+                }
             }
             return -1;
         }
