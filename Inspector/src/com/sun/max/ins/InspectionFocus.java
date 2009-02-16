@@ -244,6 +244,52 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
 
+    // never null, zero if none set
+    private Address _address = Address.zero();
+
+    private final Object _addressFocusTracer = new Object() {
+        @Override
+        public String toString() {
+            final StringBuilder name = new StringBuilder();
+            name.append(tracePrefix()).append("Focus (Address): ").append(_address.toHexString());
+            return name.toString();
+        }
+    };
+
+    /**
+     * @return the {@link Address} that is the current user focus (view state), {@link Address#zero()} if none.
+     */
+    public Address address() {
+        return _address;
+    }
+
+    /**
+     * Is there a currently selected {@link Address}.
+     */
+    public boolean hasAddress() {
+        return  !_address.isZero();
+    }
+
+    /**
+     * Shifts the focus of the Inspection to a particular {@link Address}; notify interested inspectors.
+     * This is a view state change that can happen when there is no change to the {@link TeleVM} state.
+     */
+    public void setAddress(Address address) {
+        ProgramError.check(address != null, "setAddress(null) should use zero Address instead");
+        if ((address.isZero() && hasAddress()) || (!address.isZero() && !address.equals(_address))) {
+            final Address oldAddress = _address;
+            _address = address;
+            Trace.line(TRACE_VALUE, _addressFocusTracer);
+            for (ViewFocusListener listener : _listeners.clone()) {
+                listener.addressFocusChanged(oldAddress, address);
+            }
+            // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
+            // If
+            setMemoryRegion(teleVM().memoryRegionContaining(address));
+        }
+    }
+
+
     private MemoryRegion _memoryRegion;
 
     private final Object _memoryRegionFocusTracer = new Object() {
@@ -263,7 +309,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Is there a currently selected {@link Memory Region}.
+     * Is there a currently selected {@link MemoryRegion}.
      */
     public boolean hasMemoryRegion() {
         return _memoryRegion != null;
@@ -284,12 +330,12 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 listener.memoryRegionFocusChanged(oldMemoryRegion, memoryRegion);
             }
             // User Model Policy:  When a stack memory region gets selected for focus, also set focus to the thread owning the stack.
-            if (_memoryRegion != null) {
-                final TeleNativeThread teleNativeThread = teleVM().threadContaining(_memoryRegion.start());
-                if (teleNativeThread != null) {
-                    setThread(teleNativeThread);
-                }
-            }
+//            if (_memoryRegion != null) {
+//                final TeleNativeThread teleNativeThread = teleVM().threadContaining(_memoryRegion.start());
+//                if (teleNativeThread != null) {
+//                    setThread(teleNativeThread);
+//                }
+//            }
         }
     }
 

@@ -21,6 +21,7 @@
 package com.sun.max.ins.object;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -56,7 +57,8 @@ public final class ArrayElementsTable extends InspectorTable {
     private final String _indexPrefix;
     private final WordValueLabel.ValueMode _wordValueMode;
 
-    private int[] _rowToElementMap;  // display row --> element index
+    /** Maps display rows to element rows (indexes) in the table. */
+    private int[] _rowToElementMap;
     private int _visibleElementCount = 0;  // number of array elements being displayed
 
     private final ArrayElementsTableModel _model;
@@ -104,11 +106,35 @@ public final class ArrayElementsTable extends InspectorTable {
         setShowHorizontalLines(style().objectTableShowHorizontalLines());
         setShowVerticalLines(style().objectTableShowVerticalLines());
         setIntercellSpacing(style().objectTableIntercellSpacing());
-        setRowHeight(style().objectTableRowHeight());
-        addMouseListener(new TableCellMouseClickAdapter(_inspection, this));
-
+        setRowSelectionAllowed(true);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        addMouseListener(new TableCellMouseClickAdapter(_inspection, this) {
+            @Override
+            public void procedure(final MouseEvent mouseEvent) {
+                final int selectedRow = getSelectedRow();
+                final int selectedColumn = getSelectedColumn();
+                if (selectedRow != -1 && selectedColumn != -1) {
+                    // Left button selects a table cell; also cause an address selection at the row.
+                    if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
+                        _inspection.focus().setAddress(_model.rowToAddress(selectedRow));
+                    }
+                }
+                super.procedure(mouseEvent);
+            }
+        });
         refresh(_inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+    }
+
+    @Override
+    public void paintChildren(Graphics g) {
+        // Draw a box around the selected row in the table
+        super.paintChildren(g);
+        final int row = getSelectedRow();
+        if (row >= 0) {
+            g.setColor(style().debugSelectedCodeBorderColor());
+            g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
+        }
     }
 
     /**
@@ -130,7 +156,7 @@ public final class ArrayElementsTable extends InspectorTable {
     }
 
     /**
-     * Models the words/rows in a sequence of array elements;
+     * Models (a possible subset of) words/rows in a sequence of array elements;
      * the value of each cell is simply the index into the array
      * elements being displayed.
      */
@@ -151,6 +177,42 @@ public final class ArrayElementsTable extends InspectorTable {
         @Override
         public Class< ? > getColumnClass(int col) {
             return Integer.class;
+        }
+
+        /**
+         * @param row index of a displayed row in the table
+         * @return the offset in memory of the displayed element, relative to the object origin.
+         */
+        public int rowToOffset(int row) {
+            return _startOffset + (_rowToElementMap[row] * _elementSize);
+        }
+
+        /**
+         * @param row index of a displayed row in the table
+         * @return the memory location of the displayed element in the {@link TeleVM}.
+         */
+        public Address rowToAddress(int row) {
+            return _objectOrigin.plus(rowToOffset(row)).asAddress();
+        }
+
+        /**
+         * @param address a memory address in the {@link TeleVM}.
+         * @return the displayed table row that shows the array element at an address;
+         * -1 if the address is not in the array, or if that element is currently hidden..
+         */
+        public int addressToRow(Address address) {
+            if (!address.isZero()) {
+                final int offset = address.minus(_objectOrigin).minus(_startOffset).toInt();
+                if (offset >= 0 && offset < _arrayLength * _elementSize) {
+                    final int elementRow = offset / _elementSize;
+                    for (int row = 0; row < _visibleElementCount; row++) {
+                        if (_rowToElementMap[row] == elementRow) {
+                            return elementRow;
+                        }
+                    }
+                }
+            }
+            return -1;
         }
     }
 
@@ -188,9 +250,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-
-            final int index = _rowToElementMap[row];
-            setValue(_startOffset + (index * _elementSize), _objectOrigin);
+            setValue(_model.rowToOffset(row), _objectOrigin);
             return this;
         }
     }
@@ -202,8 +262,7 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final int index = _rowToElementMap[row];
-            setValue(_startOffset + (index * _elementSize), _objectOrigin);
+            setValue(_model.rowToOffset(row), _objectOrigin);
             return this;
         }
     }
@@ -212,12 +271,10 @@ public final class ArrayElementsTable extends InspectorTable {
 
         public NameRenderer() {
             super(_inspection, _indexPrefix, 0, 0, Address.zero());
-
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final int index = _rowToElementMap[row];
-            setValue(index, _startOffset + (index * _elementSize), _objectOrigin);
+            setValue(row, _model.rowToOffset(row), _objectOrigin);
             return this;
         }
     }
@@ -295,16 +352,16 @@ public final class ArrayElementsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            final int index = _rowToElementMap[row];
-            InspectorLabel label = _labels[index];
+            final int elementRow = _rowToElementMap[row];
+            InspectorLabel label = _labels[elementRow];
             if (label == null) {
                 label = new MemoryRegionValueLabel(_inspection) {
                     @Override
                     public Value fetchValue() {
-                        return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                        return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + elementRow);
                     }
                 };
-                _labels[index] = label;
+                _labels[elementRow] = label;
             }
             return label;
         }
@@ -325,6 +382,7 @@ public final class ArrayElementsTable extends InspectorTable {
         if (epoch > _lastRefreshEpoch || force) {
             _lastRefreshEpoch = epoch;
             _objectOrigin = _teleObject.getCurrentOrigin();
+            // Update the mapping between array elements and displayed rows.
             if (_objectInspector.hideNullArrayElements()) {
                 final int previousVisibleCount = _visibleElementCount;
                 _visibleElementCount = 0;
@@ -345,6 +403,17 @@ public final class ArrayElementsTable extends InspectorTable {
                     _visibleElementCount = _arrayLength;
                 }
             }
+            // Update selection, based on global address focus.
+            final int oldSelectedRow = getSelectedRow();
+            final int newRow = _model.addressToRow(focus().address());
+            if (newRow >= 0) {
+                getSelectionModel().setSelectionInterval(newRow, newRow);
+            } else {
+                if (oldSelectedRow >= 0) {
+                    getSelectionModel().clearSelection();
+                }
+            }
+            //
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(epoch, force);
