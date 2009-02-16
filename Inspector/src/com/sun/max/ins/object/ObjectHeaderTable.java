@@ -242,7 +242,7 @@ public class ObjectHeaderTable extends InspectorTable {
         ObjectHeaderTableColumnModel(ObjectInspector objectInspector) {
             createColumn(ObjectFieldColumnKind.TAG, new TagRenderer(), true);
             createColumn(ObjectFieldColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
-            createColumn(ObjectFieldColumnKind.POSITION, new PositionRenderer(), objectInspector.showOffsets());
+            createColumn(ObjectFieldColumnKind.OFFSET, new PositionRenderer(), objectInspector.showOffsets());
             createColumn(ObjectFieldColumnKind.TYPE, new TypeRenderer(), objectInspector.showTypes());
             createColumn(ObjectFieldColumnKind.NAME, new NameRenderer(), true);
             createColumn(ObjectFieldColumnKind.VALUE, new ValueRenderer(), true);
