@@ -103,9 +103,10 @@ public final class ArrayElementsTable extends InspectorTable {
         setModel(_model);
         setColumnModel(_columnModel);
         setFillsViewportHeight(true);
-        setShowHorizontalLines(style().objectTableShowHorizontalLines());
-        setShowVerticalLines(style().objectTableShowVerticalLines());
-        setIntercellSpacing(style().objectTableIntercellSpacing());
+        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
+        setShowVerticalLines(style().memoryTableShowVerticalLines());
+        setIntercellSpacing(style().memoryTableIntercellSpacing());
+        setRowHeight(style().memoryTableRowHeight());
         setRowSelectionAllowed(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(_inspection, this) {
