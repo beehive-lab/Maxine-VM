@@ -63,7 +63,6 @@ public final class MemoryWordInspector extends Inspector {
     private int _selectedLine = -1;
     private Address _selectedAddress;
     private int _numberOfWords;
-    private final int _wordSize;
     private final int _wordHexChars;
 
     private JComponent createController() {
@@ -96,7 +95,7 @@ public final class MemoryWordInspector extends Inspector {
         // Configure buttons
         final JButton up = new JButton(new AbstractAction("Up") {
             public void actionPerformed(ActionEvent e) {
-                _address = _address.minus(_wordSize);
+                _address = _address.minus(teleVM().wordSize());
                 addressField.setText(_address.toString(16));
                 numberOfWordsField.setText(Integer.toString(++_numberOfWords));
                 MemoryWordInspector.this.reconstructView();
@@ -187,7 +186,7 @@ public final class MemoryWordInspector extends Inspector {
             final int line = Arrays.find(_offsetLabels, source);
             if (line >= 0) {
                 _selectedLine = line;
-                _selectedAddress = _address.plus(line * _wordSize);
+                _selectedAddress = _address.plus(line * teleVM().wordSize());
                 MemoryWordInspector.this.reconstructView();
             }
         }
@@ -236,7 +235,7 @@ public final class MemoryWordInspector extends Inspector {
     public synchronized void refreshView(long epoch, boolean force) {
         final DataAccess dataAccess = teleVM().dataAccess();
         for (int i = 0; i < _numberOfWords; i++) {
-            final Address address = _address.plus(i * _wordSize);
+            final Address address = _address.plus(i * teleVM().wordSize());
             try {
                 _addressLabels[i].clearRegister();
                 _memoryWords[i].setValue(new WordValue(dataAccess.readWord(address)));
@@ -245,7 +244,7 @@ public final class MemoryWordInspector extends Inspector {
                 _memoryWords[i].setValue(VoidValue.VOID);
             }
         }
-        final Address lastAddress = _address.plus(_numberOfWords * _wordSize);
+        final Address lastAddress = _address.plus(_numberOfWords * teleVM().wordSize());
         final TeleNativeThread selectedThread = focus().thread();
         if (selectedThread != null) {
             final TeleRegisters registers = StaticLoophole.cast(RegistersInspector.get(inspection(), selectedThread).integerRegisterPanel().registers());
@@ -254,8 +253,8 @@ public final class MemoryWordInspector extends Inspector {
                 if (registerValue.greaterEqual(_address) && registerValue.lessThan(lastAddress)) {
                     // if the register points into this range, overwrite the address label with the name of the register
                     final Address offset = registerValue.minus(_address);
-                    final int line = offset.dividedBy(_wordSize).toInt();
-                    final int misAlignment = offset.and(_wordSize - 1).toInt();
+                    final int line = offset.dividedBy(teleVM().wordSize()).toInt();
+                    final int misAlignment = offset.and(teleVM().wordSize() - 1).toInt();
                     _addressLabels[line].setRegister(s, misAlignment);
                 }
             }
@@ -326,7 +325,7 @@ public final class MemoryWordInspector extends Inspector {
             _memoryWords[line] = new MemoryWordLabel(inspection(), line);
             view.add(_memoryWords[line]);
 
-            lineAddress = lineAddress.plus(_wordSize);
+            lineAddress = lineAddress.plus(teleVM().wordSize());
         }
 
         refreshView(epoch, true);
@@ -343,11 +342,10 @@ public final class MemoryWordInspector extends Inspector {
 
     private MemoryWordInspector(Inspection inspection, Residence residence, Address address, int numberOfWords) {
         super(inspection, residence);
-        _wordSize = teleVM().vmConfiguration().platform().processorKind().dataModel().wordWidth().numberOfBytes();
         _address = address.aligned();
         _selectedAddress = _address;
         _numberOfWords = numberOfWords;
-        _wordHexChars = _wordSize * 2;
+        _wordHexChars = teleVM().wordSize() * 2;
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(inspection().getDeleteInspectorsAction(_otherMemoryInspectorsPredicate, "Close other Memory Word Inspectors"));

@@ -35,6 +35,7 @@ import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObject.*;
 import com.sun.max.unsafe.*;
@@ -323,6 +324,17 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
     }
 
     @Override
+    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+        // Object inspector displays are sensitive to the current thread selection.
+        refreshView(teleVM().epoch(), true);
+    }
+
+    @Override
+    public void addressFocusChanged(Address oldAddress, Address newAddress) {
+        refreshView(teleVM().epoch(), true);
+    }
+
+    @Override
     public void inspectorGetsWindowFocus() {
         if (_teleObject != inspection().focus().heapObject()) {
             inspection().focus().setHeapObject(_teleObject);
@@ -433,19 +445,17 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
 
     @Override
     public synchronized void refreshView(long epoch, boolean force) {
-        if (isShowing() || force) {
-            final Pointer newOrigin = _teleObject.getCurrentOrigin();
-            if (!newOrigin.equals(_currentObjectOrigin)) {
-                // The object has been relocated in memory
-                _currentObjectOrigin = newOrigin;
-                reconstructView();
-            } else {
-                if (_objectHeaderTable != null) {
-                    _objectHeaderTable.refresh(epoch, force);
-                }
+        final Pointer newOrigin = _teleObject.getCurrentOrigin();
+        if (!newOrigin.equals(_currentObjectOrigin)) {
+            // The object has been relocated in memory
+            _currentObjectOrigin = newOrigin;
+            reconstructView();
+        } else {
+            if (_objectHeaderTable != null) {
+                _objectHeaderTable.refresh(epoch, force);
             }
-            super.refreshView(epoch, force);
         }
+        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {

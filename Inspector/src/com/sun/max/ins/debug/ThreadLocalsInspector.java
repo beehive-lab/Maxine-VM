@@ -27,6 +27,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -147,6 +148,11 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
 
     public void viewConfigurationChanged(long epoch) {
         reconstructView();
+    }
+
+    @Override
+    public void addressFocusChanged(Address oldAddress, Address address) {
+        refreshView(teleVM().epoch(), true);
     }
 
     @Override

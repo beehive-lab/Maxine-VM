@@ -26,6 +26,7 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
@@ -139,6 +140,10 @@ public final class ObjectPane extends InspectorScrollPane {
                         "R",
                         WordValueLabel.ValueMode.WORD);
         return new ObjectPane(objectInspector.inspection(), table);
+    }
+
+    public static ObjectPane createMemoryWordsPane(ObjectInspector objectInspector, TeleObject teleObject) {
+        return new ObjectPane(objectInspector.inspection(), new MemoryWordsTable(objectInspector, teleObject));
     }
 
     private final InspectorTable _inspectorTable;

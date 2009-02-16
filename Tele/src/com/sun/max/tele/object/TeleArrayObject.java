@@ -33,7 +33,7 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Inspector's canonical surrogate for an object implemented as an {@link Array} in the {@link teleVM},
+ * Inspector's canonical surrogate for an object implemented as an {@link Array} in the {@link TeleVM},
  * one of the three kinds of low level Maxine heap implementation objects.
  *
  * @author Michael Van De Vanter
@@ -54,7 +54,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
     }
 
     /**
-     * @return length of this array in the {@link teleVM}.
+     * @return length of this array in the {@link TeleVM}.
      */
     public int getLength() {
         if (_length < 0) {
@@ -74,7 +74,7 @@ public class TeleArrayObject extends TeleObject implements ArrayProvider {
 
     /**
      * @param index
-     * @return the value read from the specified field in this array in the {@link teleVM}
+     * @return the value read from the specified field in this array in the {@link TeleVM}
      */
     public Value readElementValue(int index) {
         return teleVM().getElementValue(componentKind(), reference(), index);

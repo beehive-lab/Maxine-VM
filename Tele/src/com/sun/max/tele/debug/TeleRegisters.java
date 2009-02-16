@@ -22,6 +22,7 @@ package com.sun.max.tele.debug;
 
 import java.io.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -35,6 +36,7 @@ import com.sun.max.vm.*;
  * @author Bernd Mathiske
  * @author Mick Jordan
  * @author Doug Simon
+ * @author Michael Van De Vanter
  */
 public abstract class TeleRegisters {
 
@@ -78,6 +80,23 @@ public abstract class TeleRegisters {
                 ProgramError.unexpected(ioException);
             }
         }
+    }
+
+    /**
+     * @return a list of the registers in this set that point into the described area of memory in the {@link TeleVM}.
+     * Empty if region starts at zero.
+     */
+    public Sequence<Symbol> find(Address startAddress, Address endAddress) {
+        final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
+        if (!startAddress.isZero()) {
+            for (int index = 0; index < _registerValues.length; index++) {
+                final Address value = _registerValues[index];
+                if (startAddress.lessEqual(value)  && value.lessThan(endAddress)) {
+                    symbols.append(_symbolizer.fromValue(index));
+                }
+            }
+        }
+        return symbols;
     }
 
     public Address get(int index) {

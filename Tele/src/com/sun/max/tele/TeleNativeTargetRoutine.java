@@ -58,7 +58,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     /**
-     * @return an already existing surrogate for a block of native code discovered in the {@link teleVM}
+     * @return an already existing surrogate for a block of native code discovered in the {@link TeleVM}
      * whose location includes the specified address, null if not known to be a native routine
      * or if known to be a Java method.
      */
