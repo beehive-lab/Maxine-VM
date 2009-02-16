@@ -244,6 +244,52 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
 
+    // never null, zero if none set
+    private Address _address = Address.zero();
+
+    private final Object _addressFocusTracer = new Object() {
+        @Override
+        public String toString() {
+            final StringBuilder name = new StringBuilder();
+            name.append(tracePrefix()).append("Focus (Address): ").append(_address.toHexString());
+            return name.toString();
+        }
+    };
+
+    /**
+     * @return the {@link Address} that is the current user focus (view state), {@link Address#zero()} if none.
+     */
+    public Address address() {
+        return _address;
+    }
+
+    /**
+     * Is there a currently selected {@link Address}.
+     */
+    public boolean hasAddress() {
+        return  !_address.isZero();
+    }
+
+    /**
+     * Shifts the focus of the Inspection to a particular {@link Address}; notify interested inspectors.
+     * This is a view state change that can happen when there is no change to the {@link TeleVM} state.
+     */
+    public void setAddress(Address address) {
+
+        if ((address.isZero() && hasAddress()) || (!address.isZero() && !address.equals(_address))) {
+            final Address oldAddress = _address;
+            _address = address;
+            Trace.line(TRACE_VALUE, _addressFocusTracer);
+            for (ViewFocusListener listener : _listeners.clone()) {
+                listener.addressFocusChanged(oldAddress, address);
+            }
+            // User Model Policy:  when an address gets selected, select the memory region that contains it
+            // TODO (mlvdv):  implement policy
+
+        }
+    }
+
+
     private MemoryRegion _memoryRegion;
 
     private final Object _memoryRegionFocusTracer = new Object() {
@@ -263,7 +309,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Is there a currently selected {@link Memory Region}.
+     * Is there a currently selected {@link MemoryRegion}.
      */
     public boolean hasMemoryRegion() {
         return _memoryRegion != null;

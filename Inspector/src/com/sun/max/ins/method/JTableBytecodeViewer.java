@@ -465,6 +465,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         @Override
         public void paintChildren(Graphics g) {
+            // Draw a box around the selected row in the table
             super.paintChildren(g);
             final int row = getSelectedRow();
             if (row >= 0) {

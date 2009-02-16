@@ -21,17 +21,21 @@
 package com.sun.max.ins.object;
 
 import java.awt.*;
+import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -50,6 +54,11 @@ public final class ObjectFieldsTable extends InspectorTable {
     private final TeleObject _teleObject;
     private Pointer _objectOrigin;
     private final boolean _isTeleActor;
+
+    /** an offset in bytes for the first field being displayed. */
+    private final int _startOffset;
+    /** an offset in bytes that is one past the last field being displayed.*/
+    private final int _endOffset;
 
     private final ObjectFieldsTableModel _model;
     private final ObjectFieldsTableColumnModel _columnModel;
@@ -77,6 +86,9 @@ public final class ObjectFieldsTable extends InspectorTable {
                 return aOffset.compareTo(b.offset());
             }
         });
+        _startOffset = _fieldActors[0].offset();
+        final FieldActor lastFieldActor = _fieldActors[_fieldActors.length - 1];
+        _endOffset = lastFieldActor.offset() + lastFieldActor.valueSize();
 
         _model = new ObjectFieldsTableModel();
         _columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
@@ -88,10 +100,35 @@ public final class ObjectFieldsTable extends InspectorTable {
         setShowVerticalLines(style().objectTableShowVerticalLines());
         setIntercellSpacing(style().objectTableIntercellSpacing());
         setRowHeight(style().objectTableRowHeight());
-        addMouseListener(new TableCellMouseClickAdapter(_inspection, this));
-
+        setRowSelectionAllowed(true);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        addMouseListener(new TableCellMouseClickAdapter(_inspection, this) {
+            @Override
+            public void procedure(final MouseEvent mouseEvent) {
+                final int selectedRow = getSelectedRow();
+                final int selectedColumn = getSelectedColumn();
+                if (selectedRow != -1 && selectedColumn != -1) {
+                    // Left button selects a table cell; also cause an address selection at the row.
+                    if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
+                        _inspection.focus().setAddress(_model.rowToAddress(selectedRow));
+                    }
+                }
+                super.procedure(mouseEvent);
+            }
+        });
         refresh(_inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+    }
+
+    @Override
+    public void paintChildren(Graphics g) {
+        // Draw a box around the selected row in the table
+        super.paintChildren(g);
+        final int row = getSelectedRow();
+        if (row >= 0) {
+            g.setColor(style().debugSelectedCodeBorderColor());
+            g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
+        }
     }
 
     /**
@@ -134,6 +171,37 @@ public final class ObjectFieldsTable extends InspectorTable {
         public Class< ? > getColumnClass(int col) {
             return FieldActor.class;
         }
+
+        public int rowToOffset(int row) {
+            return _fieldActors[row].offset();
+        }
+
+        public Address rowToAddress(int row) {
+            return _objectOrigin.plus(rowToOffset(row)).asAddress();
+        }
+
+        public TypeDescriptor rowToType(int row) {
+            return _fieldActors[row].descriptor();
+        }
+
+        public String rowToName(int row) {
+            return _fieldActors[row].name().string();
+        }
+
+        public int addressToRow(Address address) {
+            final int offset = address.minus(_objectOrigin).toInt();
+            if (offset >= _startOffset && offset < _endOffset) {
+                int currentOffset = _startOffset;
+                for (int row = 0; row < _fieldActors.length; row++) {
+                    final int nextOffset = currentOffset + _fieldActors[row].valueSize();
+                    if (offset < nextOffset) {
+                        return row;
+                    }
+                    currentOffset = nextOffset;
+                }
+            }
+            return -1;
+        }
     }
 
     /**
@@ -144,6 +212,7 @@ public final class ObjectFieldsTable extends InspectorTable {
     private final class ObjectFieldsTableColumnModel extends DefaultTableColumnModel {
 
         ObjectFieldsTableColumnModel(ObjectInspector objectInspector) {
+            createColumn(ObjectFieldColumnKind.TAG, new TagRenderer(), true);
             createColumn(ObjectFieldColumnKind.ADDRESS, new AddressRenderer(), objectInspector.showAddresses());
             createColumn(ObjectFieldColumnKind.POSITION, new PositionRenderer(), objectInspector.showOffsets());
             createColumn(ObjectFieldColumnKind.TYPE, new TypeRenderer(), objectInspector.showTypes());
@@ -164,6 +233,53 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
     }
 
+    private final class TagRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+
+        TagRenderer() {
+            super(_inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            String registerNameList = null;
+            final TeleNativeThread thread = focus().thread();
+            if (thread != null) {
+                final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
+                final Address address = _model.rowToAddress(row);
+                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(teleVM().wordSize()));
+                if (registerSymbols.isEmpty()) {
+                    setText("");
+                    setToolTipText("");
+                    setForeground(style().debugDefaultTagColor());
+                } else {
+                    for (Symbol registerSymbol : registerSymbols) {
+                        final String name = registerSymbol.name();
+                        if (registerNameList == null) {
+                            registerNameList = name;
+                        } else {
+                            registerNameList = registerNameList + "," + name;
+                        }
+                    }
+                    setText(registerNameList + "--->");
+                    setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(thread) + " point at this location");
+                    setForeground(style().debugCallReturnTagColor());
+                }
+            }
+///            final TeleTargetBreakpoint teleTargetBreakpoint = getTargetBreakpointAtRow(row);
+//            if (teleTargetBreakpoint != null) {
+//                toolTipText.append(teleTargetBreakpoint);
+//                if (teleTargetBreakpoint.isEnabled()) {
+//                    setBorder(style().debugEnabledTargetBreakpointTagBorder());
+//                } else {
+//                    setBorder(style().debugDisabledTargetBreakpointTagBorder());
+//                }
+//            } else {
+//                setBorder(style().debugDefaultTagBorder());
+//            }
+
+            return this;
+        }
+    }
+
     private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
 
         AddressRenderer() {
@@ -171,8 +287,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final FieldActor fieldActor = (FieldActor) value;
-            setValue(fieldActor.offset(), _objectOrigin);
+            setValue(_model.rowToOffset(row), _objectOrigin);
             return this;
         }
     }
@@ -184,8 +299,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final FieldActor fieldActor = (FieldActor) value;
-            setValue(fieldActor.offset(), _objectOrigin);
+            setValue(_model.rowToOffset(row), _objectOrigin);
             return this;
         }
     }
@@ -197,8 +311,7 @@ public final class ObjectFieldsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final FieldActor fieldActor = (FieldActor) value;
-            setValue(fieldActor.descriptor());
+            setValue(_model.rowToType(row));
             return this;
         }
     }
@@ -322,12 +435,20 @@ public final class ObjectFieldsTable extends InspectorTable {
         if (epoch > _lastRefreshEpoch || force) {
             _lastRefreshEpoch = epoch;
             _objectOrigin = _teleObject.getCurrentOrigin();
+            final int oldSelectedRow = getSelectedRow();
+            final int newRow = _model.addressToRow(focus().address());
+            if (newRow >= 0) {
+                getSelectionModel().setSelectionInterval(newRow, newRow);
+            } else {
+                if (oldSelectedRow >= 0) {
+                    getSelectionModel().clearSelection();
+                }
+            }
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(epoch, force);
             }
         }
     }
-
 
 }

@@ -18,57 +18,44 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.debug;
+package com.sun.max.ins.memory;
 
 import com.sun.max.collect.*;
 import com.sun.max.tele.*;
 
-
 /**
- * Defines the columns that can be displayed describing thread local values in the {@link TeleVM}.
+ * Defines the columns that can be displayed describing a region of memory word values in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
-public enum ThreadLocalsColumnKind {
-    TAG("Tag", "Tags: register targets, watchpoints, ...", true, -1) {
-        @Override
-        public boolean canBeMadeInvisible() {
-            return false;
-        }
-    },
-    ADDRESS("Addr.", "Memory address of field", false, -1),
-    POSITION("Pos.", "Relative position of field (bytes)", false, 20),
-    NAME("Field", "Thread local field name", true, -1) {
-        @Override
-        public boolean canBeMadeInvisible() {
-            return false;
-        }
-    },
-    VALUE("Value", "Fieldvalue", true, -1),
-    REGION("Region", "Memory region pointed to by value", false, -1);
+public enum MemoryWordsColumnKind {
+    TAG("Tag", "Additional information", false, -1),
+    ADDRESS("Addr.", "Memory address of field", true, -1),
+    POSITION("Pos.", "Relative position of field (bytes)", true, 20),
+    VALUE("Value", "Field value", true, 20),
+    REGION("Region", "Memory region pointed to by value", false, 20);
 
-    private final String _label;
+    private final String _columnLabel;
     private final String _toolTipText;
     private final boolean _defaultVisibility;
     private final int _minWidth;
 
-    private ThreadLocalsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
-        _label = label;
+    private MemoryWordsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+        _columnLabel = label;
         _toolTipText = toolTipText;
         _defaultVisibility = defaultVisibility;
         _minWidth = minWidth;
-        assert defaultVisibility || canBeMadeInvisible();
     }
 
     /**
      * @return text to appear in the column header
      */
     public String label() {
-        return _label;
+        return _columnLabel;
     }
 
     /**
-     * @return text to appear in the column header's toolTip, null if none specified.
+     * @return text to appear in the column header's toolTip, null if none specified
      */
     public String toolTipText() {
         return _toolTipText;
@@ -83,7 +70,7 @@ public enum ThreadLocalsColumnKind {
 
     @Override
     public String toString() {
-        return _label;
+        return _columnLabel;
     }
 
     /**
@@ -100,5 +87,6 @@ public enum ThreadLocalsColumnKind {
         return _defaultVisibility;
     }
 
-    public static final IndexedSequence<ThreadLocalsColumnKind> VALUES = new ArraySequence<ThreadLocalsColumnKind>(values());
+    public static final IndexedSequence<MemoryWordsColumnKind> VALUES = new ArraySequence<MemoryWordsColumnKind>(values());
+
 }

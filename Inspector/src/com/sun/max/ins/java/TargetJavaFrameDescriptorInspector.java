@@ -40,7 +40,6 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
 
     private final TargetJavaFrameDescriptor _javaFrameDescriptor;
     private final String _framePointer;
-    private final int _wordSize;
 
     private static final int MAX_BYTE_CODE_BITS = 20;
 
@@ -55,7 +54,6 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         super(inspection, residence, LongValue.from(subject(javaFrameDescriptor)));
         _javaFrameDescriptor = javaFrameDescriptor;
         _framePointer = TeleIntegerRegisters.symbolizer(teleVM().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
-        _wordSize = teleVM().vmConfiguration().platform().processorKind().dataModel().wordWidth().numberOfBytes();
         createFrame(null);
     }
 
@@ -89,7 +87,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
             }
             case LOCAL_STACK_SLOT: {
                 final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
-                return _framePointer + "[" + (localStackSlot.index() * _wordSize) + "]";
+                return _framePointer + "[" + (localStackSlot.index() * teleVM().wordSize()) + "]";
             }
             default: {
                 return targetLocation.toString();

@@ -151,7 +151,7 @@ public final class TeleObjectFactory extends AbstractTeleVMHolder{
     }
 
     /**
-     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the {@link teleVM}. Special subclasses are
+     * Factory method for canonical {@link TeleObject} surrogate for heap objects in the {@link TeleVM}. Special subclasses are
      * created for Maxine implementation objects of special interest, and for other objects for which special treatment
      * is desired.
      *

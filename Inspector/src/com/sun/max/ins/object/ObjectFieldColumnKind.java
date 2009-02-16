@@ -29,20 +29,28 @@ import com.sun.max.collect.*;
  * @author Michael Van De Vanter
  */
 public enum ObjectFieldColumnKind {
-    ADDRESS("Addr.", "Memory address of field", -1),
-    POSITION("Pos.", "Relative position of field (bytes)", 20),
-    TYPE("Type", "Type of field", 20),
-    NAME("Field", "Field name", 20),
-    VALUE("Value", "Field value", 20),
-    REGION("Region", "Memory region pointed to by value", 20);
+    TAG("Tag", "Tags: register targets, watchpoints, ...", true, -1) {
+        @Override
+        public boolean canBeMadeInvisible() {
+            return false;
+        }
+    },
+    ADDRESS("Addr.", "Memory address of field", false, -1),
+    POSITION("Pos.", "Relative position of field (bytes)", false, 20),
+    TYPE("Type", "Type of field", true, 20),
+    NAME("Field", "Field name", true, 20),
+    VALUE("Value", "Field value", true, 20),
+    REGION("Region", "Memory region pointed to by value", false, 20);
 
-    private final String _columnLabel;
+    private final String _label;
     private final String _toolTipText;
+    private final boolean _defaultVisibility;
     private final int _minWidth;
 
-    private ObjectFieldColumnKind(String label, String toolTipText, int minWidth) {
-        _columnLabel = label;
+    private ObjectFieldColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+        _label = label;
         _toolTipText = toolTipText;
+        _defaultVisibility = defaultVisibility;
         _minWidth = minWidth;
     }
 
@@ -50,7 +58,7 @@ public enum ObjectFieldColumnKind {
      * @return text to appear in the column header
      */
     public String label() {
-        return _columnLabel;
+        return _label;
     }
 
     /**
@@ -67,9 +75,23 @@ public enum ObjectFieldColumnKind {
         return _minWidth;
     }
 
+    /**
+     * Determines if this column should be visible by default; default true.
+     */
+    public boolean defaultVisibility() {
+        return _defaultVisibility;
+    }
+
+    /**
+     * @return whether this column kind can be made invisible; default true.
+     */
+    public boolean canBeMadeInvisible() {
+        return true;
+    }
+
     @Override
     public String toString() {
-        return _columnLabel;
+        return _label;
     }
 
     public static final IndexedSequence<ObjectFieldColumnKind> VALUES = new ArraySequence<ObjectFieldColumnKind>(values());

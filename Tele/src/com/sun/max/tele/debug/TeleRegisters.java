@@ -22,6 +22,7 @@ package com.sun.max.tele.debug;
 
 import java.io.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -78,6 +79,17 @@ public abstract class TeleRegisters {
                 ProgramError.unexpected(ioException);
             }
         }
+    }
+
+    public Sequence<Symbol> find(Address startAddress, Address endAddress) {
+        final AppendableSequence<Symbol> symbols = new ArrayListSequence<Symbol>(4);
+        for (int index = 0; index < _registerValues.length; index++) {
+            final Address value = _registerValues[index];
+            if (startAddress.lessEqual(value)  && value.lessThan(endAddress)) {
+                symbols.append(_symbolizer.fromValue(index));
+            }
+        }
+        return symbols;
     }
 
     public Address get(int index) {

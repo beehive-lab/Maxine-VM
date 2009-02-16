@@ -21,16 +21,19 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -47,6 +50,7 @@ public final class ThreadLocalsTable extends InspectorTable {
     private final Inspection _inspection;
     private final TeleVMThreadLocalValues _values;
     private final ThreadLocalsViewPreferences _preferences;
+    private final TeleNativeThread _teleNativeThread;
 
     private final ThreadLocalsTableModel _model;
     private final ThreadLocalsTableColumnModel _columnModel;
@@ -60,6 +64,8 @@ public final class ThreadLocalsTable extends InspectorTable {
         _inspection = threadLocalsInspector.inspection();
         _values = values;
         _preferences = preferences;
+        _teleNativeThread = threadLocalsInspector.teleNativeThread();
+
         _model = new ThreadLocalsTableModel();
         _columns = new TableColumn[ThreadLocalsColumnKind.VALUES.length()];
         _columnModel = new ThreadLocalsTableColumnModel(threadLocalsInspector);
@@ -70,13 +76,40 @@ public final class ThreadLocalsTable extends InspectorTable {
         setShowVerticalLines(style().threadLocalsTableShowVerticalLines());
         setIntercellSpacing(style().threadLocalsTableIntercellSpacing());
         setRowHeight(style().threadLocalsTableRowHeight());
-        addMouseListener(new TableCellMouseClickAdapter(_inspection, this));
+        setRowSelectionAllowed(true);
+        setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        addMouseListener(new TableCellMouseClickAdapter(_inspection, this) {
+            @Override
+            public void procedure(final MouseEvent mouseEvent) {
+                final int selectedRow = getSelectedRow();
+                final int selectedColumn = getSelectedColumn();
+                if (selectedRow != -1 && selectedColumn != -1) {
+                    // Left button selects a table cell; also cause an address selection at the row.
+                    if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
+                        final Address address = _values.start().plus(selectedRow * teleVM().wordSize());
+                        _inspection.focus().setAddress(address);
+                    }
+                }
+                super.procedure(mouseEvent);
+            }
+        });
 
         refresh(_inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
-    /**
+    @Override
+    public void paintChildren(Graphics g) {
+        // Draw a box around the selected row in the table
+        super.paintChildren(g);
+        final int row = getSelectedRow();
+        if (row >= 0) {
+            g.setColor(style().debugSelectedCodeBorderColor());
+            g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
+        }
+    }
+
+     /**
      * Add tool tip text to the column headers, as specified by {@link ThreadLocalsColumnKind}.
      *
      * @see javax.swing.JTable#createDefaultTableHeader()
@@ -117,6 +150,21 @@ public final class ThreadLocalsTable extends InspectorTable {
         public Class< ? > getColumnClass(int col) {
             return Integer.class;
         }
+
+        public int rowToOffset(int row) {
+            return row * teleVM().wordSize();
+        }
+
+        public Address rowToAddress(int row) {
+            return _values.start().plus(rowToOffset(row));
+        }
+
+        public int addressToRow(Address address) {
+            if (address.greaterEqual(_values.start()) && address.lessThan(_values.end())) {
+                return address.minus(_values.start()).dividedBy(teleVM().wordSize()).toInt();
+            }
+            return -1;
+        }
     }
 
     /**
@@ -127,6 +175,7 @@ public final class ThreadLocalsTable extends InspectorTable {
     private final class ThreadLocalsTableColumnModel extends DefaultTableColumnModel {
 
         ThreadLocalsTableColumnModel(ThreadLocalsInspector threadLocalsInspector) {
+            createColumn(ThreadLocalsColumnKind.TAG, new TagRenderer());
             createColumn(ThreadLocalsColumnKind.ADDRESS, new AddressRenderer());
             createColumn(ThreadLocalsColumnKind.POSITION, new PositionRenderer());
             createColumn(ThreadLocalsColumnKind.NAME, new NameRenderer());
@@ -146,6 +195,38 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
     }
 
+    private final class TagRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
+
+        TagRenderer() {
+            super(_inspection, null);
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            final Address address = _model.rowToAddress(row);
+            String registerNameList = null;
+            final TeleIntegerRegisters teleIntegerRegisters = _teleNativeThread.integerRegisters();
+            final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(teleVM().wordSize()));
+            if (registerSymbols.isEmpty()) {
+                setText("");
+                setToolTipText("");
+                setForeground(style().debugDefaultTagColor());
+            } else {
+                for (Symbol registerSymbol : registerSymbols) {
+                    final String name = registerSymbol.name();
+                    if (registerNameList == null) {
+                        registerNameList = name;
+                    } else {
+                        registerNameList = registerNameList + "," + name;
+                    }
+                }
+                setText(registerNameList + "--->");
+                setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(_teleNativeThread) + " point at this location");
+                setForeground(style().debugCallReturnTagColor());
+            }
+            return this;
+        }
+    }
+
     private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
 
         AddressRenderer() {
@@ -153,9 +234,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final int offset = row * Word.size();
-            final Address start = _values.start();
-            setValue(offset, start);
+            setValue(_model.rowToOffset(row), _values.start());
             return this;
         }
     }
@@ -167,9 +246,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            final int offset = row * Word.size();
-            final Address start = _values.start();
-            setValue(offset, start);
+            setValue(_model.rowToOffset(row), _values.start());
             return this;
         }
     }
@@ -182,12 +259,10 @@ public final class ThreadLocalsTable extends InspectorTable {
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             setValue(VmThreadLocal.NAMES.get(row));
-            final int offset = row * Word.size();
-            setToolTipText("+" + offset + ", 0x" + _values.start().plus(offset).toHexString());
+            setToolTipText("+" + _model.rowToOffset(row) + ", 0x" + _model.rowToAddress(row).toHexString());
             return this;
         }
     }
-
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
@@ -282,6 +357,16 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     public void refresh(long epoch, boolean force) {
         if (epoch > _lastRefreshEpoch || force) {
+            _lastRefreshEpoch = epoch;
+            final int oldSelectedRow = getSelectedRow();
+            final int newRow = _model.addressToRow(focus().address());
+            if (newRow >= 0) {
+                getSelectionModel().setSelectionInterval(newRow, newRow);
+            } else {
+                if (oldSelectedRow >= 0) {
+                    getSelectionModel().clearSelection();
+                }
+            }
             for (TableColumn column : _columns) {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(epoch, force);

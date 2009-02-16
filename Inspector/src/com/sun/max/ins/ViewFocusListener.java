@@ -24,6 +24,7 @@ import com.sun.max.memory.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -53,7 +54,12 @@ public interface ViewFocusListener {
     void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame);
 
     /**
-     * Notifies that the global {@link MemoryRegionN} focus has been changed (view state only).
+     * Notifies that the global {@link Address} focus has been changed (view state only).
+     */
+    void addressFocusChanged(Address oldAddress, Address address);
+
+    /**
+     * Notifies that the global {@link MemoryRegion} focus has been changed (view state only).
      */
     void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion);
 
