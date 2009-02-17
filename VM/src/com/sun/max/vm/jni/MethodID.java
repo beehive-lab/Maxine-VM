@@ -35,7 +35,7 @@ public abstract class MethodID extends MemberID {
     protected MethodID() {
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static MethodID fromWord(Word word) {
         return new BoxedMethodID(word);
     }

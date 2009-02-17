@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.cir.*;
 
 /**
  * Any method annotated with this annotation exists solely to provide an escape hatch from Java's type checking. All
- * such methods are recognized by the compiler to simply be an unchecked coercion from one type to another.
+ * such methods are recognized by the compiler to simply be an unsafe coercion from one type to another.
  *
  * Any method annotated with this annotation must take exactly one parameter (which will be the receiver if the method
  * is non-static ) and have a non-void return type. The type of the parameter is the type being converted from and the
@@ -45,5 +45,5 @@ import com.sun.max.vm.compiler.cir.*;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface UNCHECKED_CAST {
+public @interface UNSAFE_CAST {
 }

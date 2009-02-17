@@ -59,7 +59,7 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static ThinLockWord64 from(Word word) {
         return new BoxedThinLockWord64(word);
     }
