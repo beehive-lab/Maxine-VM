@@ -119,8 +119,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion("Heap-From");
     private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion("Heap-To");
-    private Address _top;
-    private volatile Address _allocationMark;
+    private static final int SAFETY_ZONE_SIZE = 4096;  // space reserved to allow throw OutOfMemory to complete
+    private Address _top;                                                  // top of allocatable space (less safety zone)
+    private volatile Address _allocationMark;                     // current allocation point
 
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer _allocationMarkPointer;
@@ -257,7 +258,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             }
 
             _allocationMark = _toSpace.start();
-            _top = _toSpace.end();
+            _top = _toSpace.end().minus(SAFETY_ZONE_SIZE);
 
             _allocationMarkPointer = ClassActor.fromJava(SemiSpaceHeapScheme.class).findLocalInstanceFieldActor("_allocationMark").pointer(this);
 
@@ -286,7 +287,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         _toSpace.setAllocationMark(_toSpace.start());  // for debugging
 
         _allocationMark = _toSpace.start();
-        _top = _toSpace.end();
+        _top = _toSpace.end().minus(SAFETY_ZONE_SIZE);
     }
 
     public boolean isGcThread(Thread thread) {
@@ -437,8 +438,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         Code.visitCells(this);
     }
 
-    private boolean _outOfMemory;
-
     private boolean reallocateAlternateSpace() {
         if (_fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize())) {
             _outOfMemory = true;
@@ -517,6 +516,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         return cell;
     }
 
+
+    private boolean _outOfMemory; // This is set true when we have reached the max heap size and can grow no more.
+    private boolean _outOfMemoryThrown; // set when we have thrown the exception
     private static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each
 
     @NEVER_INLINE
@@ -534,7 +536,15 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             end = cell.plus(size);
             if (end.greaterThan(_top)) {
                 if (!Heap.collectGarbage(size)) {
-                    throw _outOfMemoryError;
+                    if (_outOfMemoryThrown) {
+                        Log.println("out of memory again after throwing OutOfMemoryError");
+                        MaxineVM.native_exit(11); // should be symbolic
+                    } else {
+                        // Use our safety region to do the throw
+                        _top = _top.plus(SAFETY_ZONE_SIZE);
+                        _outOfMemoryThrown = true;
+                        throw _outOfMemoryError;
+                    }
                 }
                 oldAllocationMark = _allocationMark.asPointer();
                 if (VMConfiguration.hostOrTarget().debugging()) {
