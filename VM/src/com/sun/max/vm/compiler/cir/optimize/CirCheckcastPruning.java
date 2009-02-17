@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.cir.optimize;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.snippet.*;
 import com.sun.max.vm.compiler.cir.transform.*;
@@ -27,10 +28,10 @@ import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.Snippet.*;
 
 /**
- * Removes the effect of checkcast byte codes from a specific position in CIR.
+ * Removes the checkcast instruction from a specific position in CIR.
  *
- * This is used to implement {@link UnsafeLoophole}.
- * When we use this feature, javac silently injects checkcast bytecodes
+ * This is used to implement {@link UNSAFE_CAST}.
+ * When we use this feature, javac injects checkcast bytecodes
  * even though our generic typing does not seem to explicitly request them at the source code level.
  * Here need to filter these unwanted bytecodes out
  * to effectively produce no-operation type casts.

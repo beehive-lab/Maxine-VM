@@ -101,8 +101,8 @@ public abstract class MethodActor extends MemberActor {
     }
 
     @INLINE
-    public final boolean isUncheckedCast() {
-        return isUncheckedCast(flags());
+    public final boolean isUnsafeCast() {
+        return isUnsafeCast(flags());
     }
 
     @INLINE

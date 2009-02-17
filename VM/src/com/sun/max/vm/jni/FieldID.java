@@ -35,7 +35,7 @@ public abstract class FieldID extends MemberID {
     protected FieldID() {
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static FieldID fromWord(Word word) {
         return new BoxedFieldID(word);
     }

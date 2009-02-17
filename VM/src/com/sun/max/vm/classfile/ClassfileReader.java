@@ -815,10 +815,10 @@ public class ClassfileReader {
                                         ProgramError.unexpected();
                                     }
                                 }
-                            } else if (annotationTypeDescriptor.equals(forJavaClass(UNCHECKED_CAST.class))) {
-                                ProgramError.check(descriptor.getResultKind() != Kind.VOID, "Cannot apply " + UNCHECKED_CAST.class.getName() + " to a void method");
-                                ProgramError.check(descriptor.getNumberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNCHECKED_CAST.class.getName() + " to a method with exactly one parameter");
-                                flags |= UNCHECKED_CAST;
+                            } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE_CAST.class))) {
+                                ProgramError.check(descriptor.getResultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method");
+                                ProgramError.check(descriptor.getNumberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() + " to a method with exactly one parameter");
+                                flags |= UNSAFE_CAST;
                                 codeAttribute = null;
                             } else if (annotationTypeDescriptor.equals(forJavaClass(JNI_FUNCTION.class))) {
                                 ensureSignatureIsPrimitive(descriptor, JNI_FUNCTION.class);

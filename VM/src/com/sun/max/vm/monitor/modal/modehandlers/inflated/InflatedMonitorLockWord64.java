@@ -55,7 +55,7 @@ public abstract class InflatedMonitorLockWord64 extends HashableLockWord64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static final InflatedMonitorLockWord64 from(Word word) {
         return new BoxedInflatedMonitorLockWord64(word);
     }
