@@ -213,7 +213,6 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return 200;
     }
 
-
     // Names for Java entities
     public Font javaNameFont() {
         return defaultFont();
