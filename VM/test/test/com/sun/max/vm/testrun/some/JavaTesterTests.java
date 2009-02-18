@@ -45,6 +45,1990 @@ import com.sun.max.annotate.*;
 @NO_INLINING
 public class JavaTesterTests {
 // GENERATED TEST RUNS
+    static void test_except_BC_aaload() {
+        JavaTesterRunScheme.begin("test.except.BC_aaload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_aaload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_aaload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == null
+            runString = "test(0)";
+            if (null != test.except.BC_aaload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_aastore() {
+        JavaTesterRunScheme.begin("test.except.BC_aastore");
+        String runString = null;
+        try {
+        // test(true,-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(true,-2)";
+                test.except.BC_aastore.test(true, -2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(true,-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(true,-1)";
+                test.except.BC_aastore.test(true, -1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(true,0) == 0
+            runString = "test(true,0)";
+            if (0 != test.except.BC_aastore.test(true, 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(true,1) == 1
+            runString = "test(true,1)";
+            if (1 != test.except.BC_aastore.test(true, 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(true,2) == 2
+            runString = "test(true,2)";
+            if (2 != test.except.BC_aastore.test(true, 2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(true,3) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(true,3)";
+                test.except.BC_aastore.test(true, 3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(false,0) == !java.lang.ArrayStoreException
+            try {
+                runString = "test(false,0)";
+                test.except.BC_aastore.test(false, 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayStoreException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(false,1) == 1
+            runString = "test(false,1)";
+            if (1 != test.except.BC_aastore.test(false, 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(false,2) == 2
+            runString = "test(false,2)";
+            if (2 != test.except.BC_aastore.test(false, 2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(false,3) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(false,3)";
+                test.except.BC_aastore.test(false, 3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_anewarray() {
+        JavaTesterRunScheme.begin("test.except.BC_anewarray");
+        String runString = null;
+        try {
+        // test(-1) == !java.lang.NegativeArraySizeException
+            try {
+                runString = "test(-1)";
+                test.except.BC_anewarray.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.BC_anewarray.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_arraylength() {
+        JavaTesterRunScheme.begin("test.except.BC_arraylength");
+        String runString = null;
+        try {
+        // test(0) == !java.lang.NullPointerException
+            try {
+                runString = "test(0)";
+                test.except.BC_arraylength.test(0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(1) == 3
+            runString = "test(1)";
+            if (3 != test.except.BC_arraylength.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == 4
+            runString = "test(2)";
+            if (4 != test.except.BC_arraylength.test(2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == 5
+            runString = "test(3)";
+            if (5 != test.except.BC_arraylength.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == 42
+            runString = "test(4)";
+            if (42 != test.except.BC_arraylength.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_athrow() {
+        JavaTesterRunScheme.begin("test.except.BC_athrow");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_athrow.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.Throwable
+            try {
+                runString = "test(2)";
+                test.except.BC_athrow.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Throwable.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_athrow1() {
+        JavaTesterRunScheme.begin("test.except.BC_athrow1");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_athrow1.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.BC_athrow1.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.Throwable
+            try {
+                runString = "test(2)";
+                test.except.BC_athrow1.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Throwable.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == 3
+            runString = "test(3)";
+            if (3 != test.except.BC_athrow1.test(3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_athrow2() {
+        JavaTesterRunScheme.begin("test.except.BC_athrow2");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_athrow2.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.Throwable
+            try {
+                runString = "test(2)";
+                test.except.BC_athrow2.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Throwable.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == !java.lang.NullPointerException
+            try {
+                runString = "test(3)";
+                test.except.BC_athrow2.test(3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_athrow3() {
+        JavaTesterRunScheme.begin("test.except.BC_athrow3");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_athrow3.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.Throwable
+            try {
+                runString = "test(2)";
+                test.except.BC_athrow3.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Throwable.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == !java.lang.NullPointerException
+            try {
+                runString = "test(3)";
+                test.except.BC_athrow3.test(3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_baload() {
+        JavaTesterRunScheme.begin("test.except.BC_baload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_baload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_baload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.BC_baload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4)";
+                test.except.BC_baload.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_bastore() {
+        JavaTesterRunScheme.begin("test.except.BC_bastore");
+        String runString = null;
+        try {
+        // test(-2,true) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2,true)";
+                test.except.BC_bastore.test(-2, true);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1,false) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1,false)";
+                test.except.BC_bastore.test(-1, false);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,true) == true
+            runString = "test(0,true)";
+            if (true != test.except.BC_bastore.test(0, true)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4,true) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4,true)";
+                test.except.BC_bastore.test(4, true);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_caload() {
+        JavaTesterRunScheme.begin("test.except.BC_caload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_caload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_caload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == '\0'
+            runString = "test(0)";
+            if ((char) 0 != test.except.BC_caload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4)";
+                test.except.BC_caload.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_castore() {
+        JavaTesterRunScheme.begin("test.except.BC_castore");
+        String runString = null;
+        try {
+        // test(-2,'a') == !java.lang.NullPointerException
+            try {
+                runString = "test(-2,'a')";
+                test.except.BC_castore.test(-2, (char) 97);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1,'c') == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1,'c')";
+                test.except.BC_castore.test(-1, (char) 99);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,'a') == 'a'
+            runString = "test(0,'a')";
+            if ((char) 97 != test.except.BC_castore.test(0, (char) 97)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4,'a') == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4,'a')";
+                test.except.BC_castore.test(4, (char) 97);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_checkcast() {
+        JavaTesterRunScheme.begin("test.except.BC_checkcast");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_checkcast.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.ClassCastException
+            try {
+                runString = "test(2)";
+                test.except.BC_checkcast.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == !java.lang.ClassCastException
+            try {
+                runString = "test(3)";
+                test.except.BC_checkcast.test(3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(4) == 4
+            runString = "test(4)";
+            if (4 != test.except.BC_checkcast.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_checkcast1() {
+        JavaTesterRunScheme.begin("test.except.BC_checkcast1");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_checkcast1.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.ClassCastException
+            try {
+                runString = "test(2)";
+                test.except.BC_checkcast1.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == !java.lang.ClassCastException
+            try {
+                runString = "test(3)";
+                test.except.BC_checkcast1.test(3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(4) == 4
+            runString = "test(4)";
+            if (4 != test.except.BC_checkcast1.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_checkcast2() {
+        JavaTesterRunScheme.begin("test.except.BC_checkcast2");
+        String runString = null;
+        try {
+        // test(0) == -1
+            runString = "test(0)";
+            if (-1 != test.except.BC_checkcast2.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == -1
+            runString = "test(1)";
+            if (-1 != test.except.BC_checkcast2.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(2) == !java.lang.ClassCastException
+            try {
+                runString = "test(2)";
+                test.except.BC_checkcast2.test(2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(3) == !java.lang.ClassCastException
+            try {
+                runString = "test(3)";
+                test.except.BC_checkcast2.test(3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ClassCastException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(4) == 4
+            runString = "test(4)";
+            if (4 != test.except.BC_checkcast2.test(4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_daload() {
+        JavaTesterRunScheme.begin("test.except.BC_daload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_daload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_daload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == 0.0
+            runString = "test(0)";
+            if (0.0 != test.except.BC_daload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4)";
+                test.except.BC_daload.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_dastore() {
+        JavaTesterRunScheme.begin("test.except.BC_dastore");
+        String runString = null;
+        try {
+        // test(-2,0.01) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2,0.01)";
+                test.except.BC_dastore.test(-2, 0.01);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1,-1.4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1,-1.4)";
+                test.except.BC_dastore.test(-1, -1.4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,0.01) == 0.01
+            runString = "test(0,0.01)";
+            if (0.01 != test.except.BC_dastore.test(0, 0.01)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4,0.01) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4,0.01)";
+                test.except.BC_dastore.test(4, 0.01);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_faload() {
+        JavaTesterRunScheme.begin("test.except.BC_faload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_faload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_faload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == 0.0
+            runString = "test(0)";
+            if (0.0f != test.except.BC_faload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4)";
+                test.except.BC_faload.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_fastore() {
+        JavaTesterRunScheme.begin("test.except.BC_fastore");
+        String runString = null;
+        try {
+        // test(-2,0.01) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2,0.01)";
+                test.except.BC_fastore.test(-2, 0.01f);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1,-1.4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1,-1.4)";
+                test.except.BC_fastore.test(-1, -1.4f);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,0.01) == 0.01
+            runString = "test(0,0.01)";
+            if (0.01f != test.except.BC_fastore.test(0, 0.01f)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4,0.01) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4,0.01)";
+                test.except.BC_fastore.test(4, 0.01f);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_getfield() {
+        JavaTesterRunScheme.begin("test.except.BC_getfield");
+        String runString = null;
+        try {
+        // test(0) == 13
+            runString = "test(0)";
+            if (13 != test.except.BC_getfield.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == !java.lang.NullPointerException
+            try {
+                runString = "test(3)";
+                test.except.BC_getfield.test(3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_iaload() {
+        JavaTesterRunScheme.begin("test.except.BC_iaload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_iaload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_iaload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_iaload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4)";
+                test.except.BC_iaload.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_iastore() {
+        JavaTesterRunScheme.begin("test.except.BC_iastore");
+        String runString = null;
+        try {
+        // test(-2,0) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2,0)";
+                test.except.BC_iastore.test(-2, 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1,3) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1,3)";
+                test.except.BC_iastore.test(-1, 3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,0) == 0
+            runString = "test(0,0)";
+            if (0 != test.except.BC_iastore.test(0, 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4,0) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4,0)";
+                test.except.BC_iastore.test(4, 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_idiv() {
+        JavaTesterRunScheme.begin("test.except.BC_idiv");
+        String runString = null;
+        try {
+        // test(1,2) == 0
+            runString = "test(1,2)";
+            if (0 != test.except.BC_idiv.test(1, 2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(11,0) == !java.lang.ArithmeticException
+            try {
+                runString = "test(11,0)";
+                test.except.BC_idiv.test(11, 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArithmeticException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_invokevirtual01() {
+        JavaTesterRunScheme.begin("test.except.BC_invokevirtual01");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.BC_invokevirtual01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.NullPointerException
+            try {
+                runString = "test(1)";
+                test.except.BC_invokevirtual01.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_irem() {
+        JavaTesterRunScheme.begin("test.except.BC_irem");
+        String runString = null;
+        try {
+        // test(1,2) == 1
+            runString = "test(1,2)";
+            if (1 != test.except.BC_irem.test(1, 2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(11,0) == !java.lang.ArithmeticException
+            try {
+                runString = "test(11,0)";
+                test.except.BC_irem.test(11, 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArithmeticException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_laload() {
+        JavaTesterRunScheme.begin("test.except.BC_laload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_laload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_laload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == 0
+            runString = "test(0)";
+            if (0L != test.except.BC_laload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4)";
+                test.except.BC_laload.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_lastore() {
+        JavaTesterRunScheme.begin("test.except.BC_lastore");
+        String runString = null;
+        try {
+        // test(-2,0) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2,0)";
+                test.except.BC_lastore.test(-2, 0L);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1,3) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1,3)";
+                test.except.BC_lastore.test(-1, 3L);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,0) == 0
+            runString = "test(0,0)";
+            if (0L != test.except.BC_lastore.test(0, 0L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4,0) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4,0)";
+                test.except.BC_lastore.test(4, 0L);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_ldiv() {
+        JavaTesterRunScheme.begin("test.except.BC_ldiv");
+        String runString = null;
+        try {
+        // test(1,2) == 0
+            runString = "test(1,2)";
+            if (0L != test.except.BC_ldiv.test(1L, 2L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(11,0) == !java.lang.ArithmeticException
+            try {
+                runString = "test(11,0)";
+                test.except.BC_ldiv.test(11L, 0L);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArithmeticException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_lrem() {
+        JavaTesterRunScheme.begin("test.except.BC_lrem");
+        String runString = null;
+        try {
+        // test(1,2) == 1
+            runString = "test(1,2)";
+            if (1L != test.except.BC_lrem.test(1L, 2L)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(11,0) == !java.lang.ArithmeticException
+            try {
+                runString = "test(11,0)";
+                test.except.BC_lrem.test(11L, 0L);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArithmeticException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_monitorenter() {
+        JavaTesterRunScheme.begin("test.except.BC_monitorenter");
+        String runString = null;
+        try {
+        // test(true) == true
+            runString = "test(true)";
+            if (true != test.except.BC_monitorenter.test(true)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(false) == !java.lang.NullPointerException
+            try {
+                runString = "test(false)";
+                test.except.BC_monitorenter.test(false);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_multianewarray() {
+        JavaTesterRunScheme.begin("test.except.BC_multianewarray");
+        String runString = null;
+        try {
+        // test(0,0) == 0
+            runString = "test(0,0)";
+            if (0 != test.except.BC_multianewarray.test(0, 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1,1) == 1
+            runString = "test(1,1)";
+            if (1 != test.except.BC_multianewarray.test(1, 1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-1,0) == !java.lang.NegativeArraySizeException
+            try {
+                runString = "test(-1,0)";
+                test.except.BC_multianewarray.test(-1, 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,-1) == !java.lang.NegativeArraySizeException
+            try {
+                runString = "test(0,-1)";
+                test.except.BC_multianewarray.test(0, -1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_newarray() {
+        JavaTesterRunScheme.begin("test.except.BC_newarray");
+        String runString = null;
+        try {
+        // test(-1) == !java.lang.NegativeArraySizeException
+            try {
+                runString = "test(-1)";
+                test.except.BC_newarray.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_newarray.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.BC_newarray.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_putfield() {
+        JavaTesterRunScheme.begin("test.except.BC_putfield");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.BC_putfield.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(3) == !java.lang.NullPointerException
+            try {
+                runString = "test(3)";
+                test.except.BC_putfield.test(3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-4) == -4
+            runString = "test(-4)";
+            if (-4 != test.except.BC_putfield.test(-4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_saload() {
+        JavaTesterRunScheme.begin("test.except.BC_saload");
+        String runString = null;
+        try {
+        // test(-2) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2)";
+                test.except.BC_saload.test(-2);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1)";
+                test.except.BC_saload.test(-1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0) == 0
+            runString = "test(0)";
+            if ((short) 0 != test.except.BC_saload.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4)";
+                test.except.BC_saload.test(4);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_BC_sastore() {
+        JavaTesterRunScheme.begin("test.except.BC_sastore");
+        String runString = null;
+        try {
+        // test(-2,0) == !java.lang.NullPointerException
+            try {
+                runString = "test(-2,0)";
+                test.except.BC_sastore.test(-2, (short) 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.NullPointerException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(-1,3) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(-1,3)";
+                test.except.BC_sastore.test(-1, (short) 3);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        // test(0,0) == 0
+            runString = "test(0,0)";
+            if ((short) 0 != test.except.BC_sastore.test(0, (short) 0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(4,0) == !java.lang.ArrayIndexOutOfBoundsException
+            try {
+                runString = "test(4,0)";
+                test.except.BC_sastore.test(4, (short) 0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_NPE_01() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_01");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_NPE_01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.Catch_NPE_01.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2) == -1
+            runString = "test(-2)";
+            if (-1 != test.except.Catch_NPE_01.test(-2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_NPE_02() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_02");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_NPE_02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.Catch_NPE_02.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2) == -1
+            runString = "test(-2)";
+            if (-1 != test.except.Catch_NPE_02.test(-2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_NPE_03() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_03");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_NPE_03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.Catch_NPE_03.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2) == -1
+            runString = "test(-2)";
+            if (-1 != test.except.Catch_NPE_03.test(-2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_NPE_04() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_04");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_NPE_04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.Catch_NPE_04.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2) == -1
+            runString = "test(-2)";
+            if (-1 != test.except.Catch_NPE_04.test(-2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_NPE_05() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_05");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_NPE_05.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.Catch_NPE_05.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(-2) == -1
+            runString = "test(-2)";
+            if (-1 != test.except.Catch_NPE_05.test(-2)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_NPE_06() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_06");
+        String runString = null;
+        try {
+        // test("") == 0
+            runString = "test(\"\")";
+            if (0 != test.except.Catch_NPE_06.test("")) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(null) == -1
+            runString = "test(null)";
+            if (-1 != test.except.Catch_NPE_06.test(null)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_NPE_07() {
+        JavaTesterRunScheme.begin("test.except.Catch_NPE_07");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_NPE_07.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == 1
+            runString = "test(1)";
+            if (1 != test.except.Catch_NPE_07.test(1)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_OutOfMemory01() {
+        JavaTesterRunScheme.begin("test.except.Catch_OutOfMemory01");
+        String runString = null;
+        try {
+        // test(0) == 0
+            runString = "test(0)";
+            if (0 != test.except.Catch_OutOfMemory01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_StackOverflowError_01() {
+        JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_01");
+        String runString = null;
+        try {
+        // test(0) == !java.lang.StackOverflowError
+            try {
+                runString = "test(0)";
+                test.except.Catch_StackOverflowError_01.test(0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.StackOverflowError.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Catch_StackOverflowError_02() {
+        JavaTesterRunScheme.begin("test.except.Catch_StackOverflowError_02");
+        String runString = null;
+        try {
+        // test(0) == !java.lang.StackOverflowError
+            try {
+                runString = "test(0)";
+                test.except.Catch_StackOverflowError_02.test(0);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.StackOverflowError.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_InCatch01() {
+        JavaTesterRunScheme.begin("test.except.Throw_InCatch01");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_InCatch01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_InCatch01.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_InCatch02() {
+        JavaTesterRunScheme.begin("test.except.Throw_InCatch02");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_InCatch02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_InCatch02.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_InCatch03() {
+        JavaTesterRunScheme.begin("test.except.Throw_InCatch03");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_InCatch03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_InCatch03.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_Synchronized01() {
+        JavaTesterRunScheme.begin("test.except.Throw_Synchronized01");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_Synchronized01.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_Synchronized01.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_Synchronized02() {
+        JavaTesterRunScheme.begin("test.except.Throw_Synchronized02");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_Synchronized02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_Synchronized02.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_Synchronized03() {
+        JavaTesterRunScheme.begin("test.except.Throw_Synchronized03");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_Synchronized03.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_Synchronized03.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
+    static void test_except_Throw_Synchronized04() {
+        JavaTesterRunScheme.begin("test.except.Throw_Synchronized04");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.except.Throw_Synchronized04.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(1) == !java.lang.Exception
+            try {
+                runString = "test(1)";
+                test.except.Throw_Synchronized04.test(1);
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            } catch (Throwable e) {
+                if (e.getClass() != java.lang.Exception.class) {
+                    JavaTesterRunScheme.end(runString, e);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
 // END GENERATED TEST RUNS
 
 }
