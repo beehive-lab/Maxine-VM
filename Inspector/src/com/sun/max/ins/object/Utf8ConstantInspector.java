@@ -41,8 +41,15 @@ class Utf8ConstantInspector extends ObjectInspector {
     private ObjectPane _fieldsPane;
     private StringPane _stringPane;
 
+    // Should the alternate visualization be displayed?
+    // Follows user's tab selection, but should persist when view reconstructed.
+    private boolean _alternateDisplay;
+
     Utf8ConstantInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
         super(inspection, factory, residence, teleObject);
+        // This is the default for a newly created inspector.
+        // TODO (mlvdv) make this a global view option?
+        _alternateDisplay = true;
         createFrame(null);
     }
 
@@ -50,21 +57,28 @@ class Utf8ConstantInspector extends ObjectInspector {
     protected synchronized void createView(long epoch) {
         super.createView(epoch);
         final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
+        final String name = teleUtf8Constant.classActorForType().javaSignature(false);
+
         _tabbedPane = new JTabbedPane();
+
         _fieldsPane = ObjectPane.createFieldsPane(this, teleUtf8Constant);
+        _tabbedPane.add(name, _fieldsPane);
+
         _stringPane = StringPane.createStringPane(this, new StringSource() {
             public String fetchString() {
                 return teleUtf8Constant.getString();
             }
         });
-        final String name = teleUtf8Constant.classActorForType().javaSignature(false);
-        _tabbedPane.add(name, _fieldsPane);
         _tabbedPane.add("string value", _stringPane);
-        _tabbedPane.setSelectedComponent(_stringPane);
+
+        _tabbedPane.setSelectedComponent(_alternateDisplay ? _stringPane : _fieldsPane);
         _tabbedPane.addChangeListener(new ChangeListener() {
-            // Do  a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
             public void stateChanged(ChangeEvent event) {
-                refreshView(teleVM().epoch(), true);
+                final Prober prober = (Prober) _tabbedPane.getSelectedComponent();
+                // Remember which display is now selected
+                _alternateDisplay = prober == _stringPane;
+                // Refresh the display that is now visible.
+                prober.refresh(teleVM().epoch(), true);
             }
         });
         frame().getContentPane().add(_tabbedPane);

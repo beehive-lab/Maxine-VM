@@ -72,10 +72,10 @@ public final class ThreadLocalsTable extends InspectorTable {
         setModel(_model);
         setColumnModel(_columnModel);
         setFillsViewportHeight(true);
-        setShowHorizontalLines(style().threadLocalsTableShowHorizontalLines());
-        setShowVerticalLines(style().threadLocalsTableShowVerticalLines());
-        setIntercellSpacing(style().threadLocalsTableIntercellSpacing());
-        setRowHeight(style().threadLocalsTableRowHeight());
+        setShowHorizontalLines(style().memoryTableShowHorizontalLines());
+        setShowVerticalLines(style().memoryTableShowVerticalLines());
+        setIntercellSpacing(style().memoryTableIntercellSpacing());
+        setRowHeight(style().memoryTableRowHeight());
         setRowSelectionAllowed(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(_inspection, this) {
@@ -104,7 +104,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         super.paintChildren(g);
         final int row = getSelectedRow();
         if (row >= 0) {
-            g.setColor(style().debugSelectedCodeBorderColor());
+            g.setColor(style().memorySelectedAddressBorderColor());
             g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
         }
     }
@@ -211,7 +211,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             if (registerSymbols.isEmpty()) {
                 setText("");
                 setToolTipText("");
-                setForeground(style().debugDefaultTagColor());
+                setForeground(style().memoryDefaultTagTextColor());
             } else {
                 for (Symbol registerSymbol : registerSymbols) {
                     final String name = registerSymbol.name();
@@ -223,7 +223,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                 }
                 setText(registerNameList + "--->");
                 setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(_teleNativeThread) + " point at this location");
-                setForeground(style().debugCallReturnTagColor());
+                setForeground(style().memoryRegisterTagTextColor());
             }
             return this;
         }

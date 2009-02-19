@@ -56,6 +56,8 @@ import com.sun.max.vm.type.*;
 public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapScheme, CellVisitor {
 
     private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
+    private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
+    private static final VMIntOption _safetyZoneSizeOption = new VMIntOption("-XX:SemiSpaceGC:szs", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes", MaxineVM.Phase.PRISTINE);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -119,8 +121,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion("Heap-From");
     private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion("Heap-To");
-    private Address _top;
-    private volatile Address _allocationMark;
+    private static int _safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
+    private Address _top;                                                  // top of allocatable space (less safety zone)
+    private volatile Address _allocationMark;                     // current allocation point
 
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer _allocationMarkPointer;
@@ -243,6 +246,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _fromSpace.setSize(size);
             _toSpace.setSize(size);
 
+            _safetyZoneSize = _safetyZoneSizeOption.getValue();
             final boolean useVirtual = _virtualAllocOption.isPresent();
             final Pointer fromStart = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
             final Pointer toStart = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
@@ -257,7 +261,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             }
 
             _allocationMark = _toSpace.start();
-            _top = _toSpace.end();
+            _top = _toSpace.end().minus(_safetyZoneSize);
 
             _allocationMarkPointer = ClassActor.fromJava(SemiSpaceHeapScheme.class).findLocalInstanceFieldActor("_allocationMark").pointer(this);
 
@@ -287,6 +291,11 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
         _allocationMark = _toSpace.start();
         _top = _toSpace.end();
+        // If we are currently using the safety zone, we must not install it in the swapped space
+        // as that could cause gcAllocate to fail trying to copying too much live data.
+        if (!_inSafetyZone) {
+            _top = _top.minus(_safetyZoneSize);
+        }
     }
 
     public boolean isGcThread(Thread thread) {
@@ -437,11 +446,9 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         Code.visitCells(this);
     }
 
-    private boolean _outOfMemory;
-
     private boolean reallocateAlternateSpace() {
         if (_fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize())) {
-            _outOfMemory = true;
+            _cannotGrow = true;
             return false;
         }
         final boolean useVirtual = _virtualAllocOption.isPresent();
@@ -455,12 +462,13 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             Log.print("New heap size: ");
             Log.println(size.toLong());
         }
-        _fromSpace.setSize(size);
-        _fromSpace.setStart(useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size));
-        if (_fromSpace.size().isZero()) {
-            _outOfMemory = true;
+        final Address newSpace = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
+        if (newSpace.isZero()) {
+            _cannotGrow = true;
             return false;
         }
+        _fromSpace.setSize(size);
+        _fromSpace.setStart(newSpace);
         return true;
     }
 
@@ -470,7 +478,11 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             _collectorThread.execute();
         }
     }
+
     private boolean grow() {
+        if (_cannotGrow) {
+            return false;
+        }
         if (Heap.verbose()) {
             Log.println("Trying to grow the heap...");
         }
@@ -482,11 +494,15 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
-        if (_outOfMemory) {
-            return false;
-        }
         executeCollectorThread();
         if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
+            // check to see if we can reset safety zone
+            if (_inSafetyZone) {
+                if (_top.minus(_allocationMark).greaterThan(_safetyZoneSize)) {
+                    _top = _top.minus(_safetyZoneSize);
+                    _inSafetyZone = false;
+                }
+            }
             return true;
         }
         while (grow()) {
@@ -517,7 +533,16 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         return cell;
     }
 
-    private static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each
+    private boolean _cannotGrow;   // This is set true when we have reached the max heap size and can grow no more.
+    private boolean _inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
+
+    /*
+     * The OutOfMemoryError condition happens when we cannot satisfy a request after running a garbage collection and we
+     * cannot grow the heap any further (i.e. we are at the limit set by -Xmx). In that case we raise _top to the actual end of
+     * the active space and set _inSafetyZone  to true. If this happens recursively we fast fail the VM via MaxineVM.native_exit.
+     * On the other hand if a subsequent GC manages to find enough space to allow the safety zone to be re-established
+     * we set _inSafetyZone = false.
+     */
 
     @NEVER_INLINE
     private Pointer retryAllocate(Size size) {
@@ -534,7 +559,16 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             end = cell.plus(size);
             if (end.greaterThan(_top)) {
                 if (!Heap.collectGarbage(size)) {
-                    throw _outOfMemoryError;
+                    if (_inSafetyZone) {
+                        Log.println("out of memory again after throwing OutOfMemoryError");
+                        MaxineVM.native_exit(11); // should be symbolic
+                    } else {
+                        // Use the safety region to do the throw
+                        _top = _top.plus(_safetyZoneSize);
+                        _inSafetyZone = true;
+                        // This new will now be ok
+                        throw new OutOfMemoryError();
+                    }
                 }
                 oldAllocationMark = _allocationMark.asPointer();
                 if (VMConfiguration.hostOrTarget().debugging()) {

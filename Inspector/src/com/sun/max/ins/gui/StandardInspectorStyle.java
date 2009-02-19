@@ -31,8 +31,6 @@ import com.sun.max.ins.*;
  * A fully specified style, designed to be evolve slowly and resemble earlier prototypes.
  *
  * @author Michael Van De Vanter
- * @see <a href="http://en.wikipedia.org/wiki/Web_colors#HTML_color_names">X11 color names</a>
- *
  */
 public class StandardInspectorStyle extends InspectorStyleAdapter {
 
@@ -50,7 +48,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
     private final Color _paleGray = InspectorStyle.CoolGray2;
     private final Color _paleBlue = InspectorStyle.SunBlue3;
-    private final Color _backgroundGray = new Color(238, 238, 238); // very pale
+    private final Color _backgroundGray = new Color(238, 238, 238);
     private final Color _defaultTextColor = InspectorStyle.Black;
 
 
@@ -166,16 +164,16 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     // Special styles for interpreted data values
-    private Color _nullDataColor = new Color(139, 69, 19); // X11 SaddleBrown
-    private Color _wordValidReferenceDataColor = new Color(24, 139, 34); // X11 ForestGreen
-    private Color _wordUncheckedReferenceDataColor = new Color(144, 238, 144); // X11 LightGreen
-    private Color _wordInvalidReferenceDataColor = Color.red;
-    private Color _wordStackLocationDataColor = new Color(186, 85, 211); // X11 MediumOrchid
-    private Color _invalidDataColor = Color.red;
-    private Color _wordCallEntryPointColor = new Color(0, 0, 205); // X11 MediumBlue
+    private Color _nullDataColor = InspectorStyle.SaddleBrown;
+    private Color _wordValidReferenceDataColor = InspectorStyle.ForestGreen;
+    private Color _wordUncheckedReferenceDataColor = InspectorStyle.LightGreen;
+    private Color _wordInvalidReferenceDataColor = InspectorStyle.Red;
+    private Color _wordStackLocationDataColor = InspectorStyle.MediumOrchid;
+    private Color _invalidDataColor = InspectorStyle.Red;
+    private Color _wordCallEntryPointColor = InspectorStyle.MediumBlue;
     private Color _wordCallReturnPointColor = new Color(64, 64, 192);
     private Color _wordUncheckedCallPointColor = new Color(96, 96, 148);
-    private Color _wordSelectedColor = Color.blue;
+    private Color _wordSelectedColor = InspectorStyle.Blue;
 
     @Override
     public Font wordDataFont() {
@@ -269,10 +267,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     public Color stringDataColor() {
         return defaultTextColor();
     }
-    @Override
-    public int maxStringDisplayLength() {
-        return 20;
-    }
+
 
     // Names for Java entities
     @Override
@@ -357,31 +352,31 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
     // Debugger interaction
 
-    private static final Color _vmTerminatedBackgroundColor = new Color(240, 128, 128);  // X11 "LIghtCoral"
+    private static final Color _vmTerminatedBackgroundColor = InspectorStyle.LightCoral;
 
     @Override
     public Color vmStoppedBackgroundColor() {
-        return SunBlue3;
+        return InspectorStyle.SunBlue3;
     }
     @Override
     public Color vmStoppedinGCBackgroundColor() {
-        return SunYellow3;
+        return InspectorStyle.SunYellow3;
     }
     @Override
     public Color vmRunningBackgroundColor() {
-        return SunGreen3;
+        return InspectorStyle.SunGreen3;
     }
     @Override
     public Color vmTerminatedBackgroundColor() {
         return _vmTerminatedBackgroundColor;
     }
 
-    private static final Color _debugSelectionBorderColor = Color.BLUE;
-    private static final Color _debugBreakpointBorderColor = Color.ORANGE;
-    private static final Color _debugIPTextColor = Color.RED;
-    private static final Color _debugIPTagColor = Color.RED;
-    private static final Color _debugCallReturnTextColor = Color.ORANGE;
-    private static final Color _debugCallReturnTagColor = Color.ORANGE;
+    private static final Color _debugSelectionBorderColor = InspectorStyle.Blue;
+    private static final Color _debugBreakpointBorderColor = InspectorStyle.Orange;
+    private static final Color _debugIPTextColor = InspectorStyle.Red;
+    private static final Color _debugIPTagColor = InspectorStyle.Red;
+    private static final Color _debugCallReturnTextColor = InspectorStyle.DarkOrange;
+    private static final Color _debugCallReturnTagColor = InspectorStyle.DarkOrange;
 
     @Override
     public Color debugSelectedCodeBorderColor() {
@@ -434,7 +429,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
     }
 
     // Search
-    private final Color _searchPatternFailedColor = new Color(255, 192, 203); // X11 Pink
+    private final Color _searchPatternFailedColor = InspectorStyle.Pink;
     @Override
     public Color searchFailedBackground() {
         return _searchPatternFailedColor;
@@ -447,7 +442,7 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
 
     // Table-based Views
     @Override
-    public Dimension objectTableIntercellSpacing() {
+    public Dimension memoryTableIntercellSpacing() {
         return zeroTableIntercellSpacing();
     }
     @Override
@@ -455,24 +450,11 @@ public class StandardInspectorStyle extends InspectorStyleAdapter {
         return _defaultRowHeight;
     }
     @Override
-    public boolean objectTableShowHorizontalLines() {
+    public boolean memoryTableShowHorizontalLines() {
         return false;
     }
     @Override
-    public boolean objectTableShowVerticalLines() {
-        return false;
-    }
-
-    @Override
-    public Dimension threadLocalsTableIntercellSpacing() {
-        return zeroTableIntercellSpacing();
-    }
-    @Override
-    public boolean threadLocalsTableShowHorizontalLines() {
-        return false;
-    }
-    @Override
-    public boolean threadLocalsTableShowVerticalLines() {
+    public boolean memoryTableShowVerticalLines() {
         return false;
     }
 

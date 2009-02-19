@@ -36,7 +36,7 @@ public enum ObjectFieldColumnKind {
         }
     },
     ADDRESS("Addr.", "Memory address of field", false, -1),
-    POSITION("Pos.", "Relative position of field (bytes)", false, 20),
+    OFFSET("Offset", "Field location relative to object origin (bytes)", false, 20),
     TYPE("Type", "Type of field", true, 20),
     NAME("Field", "Field name", true, 20),
     VALUE("Value", "Field value", true, 20),

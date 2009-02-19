@@ -45,6 +45,7 @@ import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.prototype.CompiledPrototype.Link.*;
 import com.sun.max.vm.run.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -443,6 +444,12 @@ public class CompiledPrototype extends Prototype {
         addMethods(null, ClassActor.fromJava(JVMFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, ClassActor.fromJava(JniFunctions.class).localStaticMethodActors(), vmEntryPoint);
         addMethods(null, _imageMethodActors, vmEntryPoint);
+        // we would prefer not to invoke stub-generation/compilation for the shutdown hooks procedure, e.g., after an OutOfMemoryError
+        try {
+            registerImageInvocationStub(ClassActor.fromJava(Class.forName("java.lang.Shutdown")).findLocalStaticMethodActor("shutdown"));
+        } catch (ClassNotFoundException classNotFoundException) {
+            FatalError.unexpected("cannot load java.lang.Shutdown");
+        }
 
         for (MethodActor methodActor : _imageInvocationStubMethodActors) {
             if (methodActor.holder().toJava().isEnum() && methodActor.name().equals("values")) {

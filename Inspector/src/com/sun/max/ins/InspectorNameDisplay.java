@@ -565,15 +565,13 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         }
     }
 
-    private static final int _maxStringLength = 40;
-
     private class StringReferenceRenderer implements ReferenceRenderer{
 
         public String referenceLabelText(TeleObject teleObject) {
             final TeleString teleString = (TeleString) teleObject;
             final String s = teleString.getString();
-            if (s.length() > _maxStringLength) {
-                return objectReference(null, teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"...");
+            if (s.length() > style().maxStringInlineDisplayLength()) {
+                return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
             }
             return objectReference(null, teleObject, null, "\"" + s + "\"");
         }
@@ -590,8 +588,8 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject;
             final String s = teleUtf8Constant.getString();
-            if (s.length() > _maxStringLength) {
-                return objectReference(null, teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"...");
+            if (s.length() > style().maxStringInlineDisplayLength()) {
+                return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
             }
             return objectReference(null, teleObject, null, "\"" + s + "\"");
         }
@@ -609,8 +607,8 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         public String referenceLabelText(TeleObject teleObject) {
             final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject;
             final String s = teleStringConstant.getString();
-            if (s.length() > _maxStringLength) {
-                return objectReference(null, teleObject, null, "\"" + s.substring(0, _maxStringLength) + "\"...");
+            if (s.length() > style().maxStringInlineDisplayLength()) {
+                return objectReference(null, teleObject, null, "\"" + s.substring(0, style().maxStringInlineDisplayLength()) + "\"...");
             }
             return objectReference(null, teleObject, null, "\"" + s + "\"");
         }

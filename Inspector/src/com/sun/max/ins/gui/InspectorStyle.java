@@ -29,6 +29,7 @@ import javax.swing.border.*;
  * Visual interaction specification for Inspectors.
  *
  * @author Michael Van De Vanter
+ * @see <a href="http://en.wikipedia.org/wiki/Web_colors#X11_color_names">X11 color names</a>
  */
 public interface InspectorStyle {
 
@@ -145,10 +146,16 @@ public interface InspectorStyle {
     Color charDataColor();
 
     // Display of string values
+    /** Font to use when displaying generic string data. */
     Font stringDataFont();
+    /** Font size to use when displaying generic string data. */
     int stringDataFontSize();
+    /** Foreground color to use when displaying generic string data. */
     Color stringDataColor();
-    int maxStringDisplayLength();
+    /** Maximum number of string characters to display when displaying a "hint" as to string contents. */
+    int maxStringInlineDisplayLength();
+    /** Maximum number of elements from a char array to display when viewing as text. */
+    int maxStringFromCharArrayDisplayLength();
 
     // Names for Java entities
     Font javaNameFont();
@@ -227,6 +234,25 @@ public interface InspectorStyle {
 
     Icon debugActiveRowButtonIcon();
 
+    // Display of memory locations:  object fields, array elements, thread locals, etc.
+
+    /** Color for the border that surrounds the display of a memory location that is the current selected address. */
+    Color memorySelectedAddressBorderColor();
+
+    /** Default color for the "tag" text that appears with a memory location. */
+    Color memoryDefaultTagTextColor();
+    /** Color for the "tag" text that identifies a memory location pointed at by one or more registers. */
+    Color memoryRegisterTagTextColor();
+
+    /** Color for the border in a "tag" memory field that shows an enabled watchpoint at the location. */
+    Border memoryEnabledWatchpointTagBorder();
+    /** Color for the border in a "tag" memory field that shows a disabled watchpoint at the location. */
+    Border memoryDisabledWatchpointTagBorder();
+
+    /** Color for text displaying memory contents at a location where the process has hit a watchpoint. */
+    Color memoryWatchpointTextColor();
+
+
     // Search related
     /** Icon for the search button that selects the next match moving forward.  */
     Icon searchNextMatchButtonIcon();
@@ -250,25 +276,16 @@ public interface InspectorStyle {
     /** Default choice to display vertical lines in table-based views. */
     boolean defaultTableShowVerticalLines();
 
-    /** Spacing between cells in table-based object views. */
-    Dimension objectTableIntercellSpacing();
+    /** Spacing between cells in table-based memory views. */
+    Dimension memoryTableIntercellSpacing();
     /** Row height in table-based object views. */
-    int objectTableRowHeight();
-    /** Choice to display horizontal lines in table-based object views. */
-    boolean objectTableShowHorizontalLines();
-    /** Choice to display vertical lines in table-based object views. */
-    boolean objectTableShowVerticalLines();
-    /** Default number of rows for initial window sizing of table-based objectviews. */
-    int objectTableMaxDisplayRows();
-
-    /** Spacing between cells in table-based VM thread locals views. */
-    Dimension threadLocalsTableIntercellSpacing();
-    /** Row height in table-based VM thread locals views. */
-    int threadLocalsTableRowHeight();
-    /** Choice to display horizontal lines in table-based VM thread locals views. */
-    boolean threadLocalsTableShowHorizontalLines();
-    /** Choice to display vertical lines in table-based VM thread locals views. */
-    boolean threadLocalsTableShowVerticalLines();
+    int memoryTableRowHeight();
+    /** Choice to display horizontal lines in table-based memory views. */
+    boolean memoryTableShowHorizontalLines();
+    /** Choice to display vertical lines in table-based memory views. */
+    boolean memoryTableShowVerticalLines();
+    /** Default number of rows for initial window sizing of table-based memory views. */
+    int memoryTableMaxDisplayRows();
 
     /** Spacing between cells in table-based code views. */
     Dimension codeTableIntercellSpacing();
@@ -296,8 +313,25 @@ public interface InspectorStyle {
     Color SunGreen3 = new Color(197, 213, 169);
     Color SunYellow3 = new Color(248, 213, 131);
     // Neutral Colors
-    Color Black = new Color(0, 0, 0);
     Color CoolGray1 = new Color(112, 114, 119);
     Color CoolGray2 = new Color(189, 190, 192);
+
+    // X11 Colors:
+    Color LightCoral = new Color(240, 128, 128);
+    Color Red = new Color(255, 0, 0);
+    Color Pink = new Color(255, 192, 203);
+    Color OrangeRed = new Color(255, 69, 0);
+    Color DarkOrange = new Color(255, 140, 0);
+    Color Orange = new Color(255, 165, 0);
+    Color MediumOrchid = new Color(186, 85, 211);
+
+    Color LightGreen = new Color(144, 238, 144);
+    Color ForestGreen = new Color(24, 139, 34);
+    Color Blue =  new Color(0, 0, 255);
+    Color MediumBlue =  new Color(0, 0, 205);
+
+    Color SaddleBrown = new Color(139, 69, 19);
     Color White = new Color(255, 255, 255);
+    Color Gainsboro = new Color(220, 220, 220);
+    Color Black = new Color(0, 0, 0);
 }

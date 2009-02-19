@@ -40,13 +40,13 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
 
     // Window, Frame, Desktop attributes
     public Color defaultBackgroundColor() {
-        return Color.WHITE;
+        return InspectorStyle.White;
     }
     public Color defaultBorderColor() {
-        return Color.BLACK;
+        return InspectorStyle.Black;
     }
     public Color frameBorderFlashColor() {
-        return Color.RED;
+        return InspectorStyle.Red;
     }
     private Border _defaultPaneTopBorder = BorderFactory.createMatteBorder(2, 0, 0, 0, defaultBorderColor());
     public Border defaultPaneTopBorder() {
@@ -58,7 +58,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     }
     // Default text
     public Color defaultTextColor() {
-        return Color.BLACK;
+        return InspectorStyle.Black;
     }
     public Color defaultTextBackgroundColor() {
         return defaultBackgroundColor();
@@ -206,10 +206,12 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
     public Color stringDataColor() {
         return defaultTextColor();
     }
-    public int maxStringDisplayLength() {
-        return 20;
+    public int maxStringInlineDisplayLength() {
+        return 40;
     }
-
+    public int maxStringFromCharArrayDisplayLength() {
+        return 200;
+    }
 
     // Names for Java entities
     public Font javaNameFont() {
@@ -289,7 +291,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return defaultCodeFontSize();
     }
     public int maxBytecodeOperandDisplayLength() {
-        return maxStringDisplayLength();
+        return maxStringInlineDisplayLength();
     }
     public Color bytecodeColor() {
         return defaultCodeColor();
@@ -341,7 +343,7 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return _debugDefaultTagBorder;
     }
     public Color debugDefaultTagColor() {
-        return Color.black;
+        return InspectorStyle.Black;
     }
     private static final Icon _debugDefaultTagIcon = IconFactory.createBlank(_debugTagIconSize);
     public Icon debugDefaultTagIcon() {
@@ -422,6 +424,34 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return _debugActiveRowButtonIcon;
     }
 
+    // Display of memory locations:  object fields, array elements, thread locals, etc.
+    // The standard approach is to mimic the way code displays work.
+
+    public Color memorySelectedAddressBorderColor() {
+        return debugSelectedCodeBorderColor();
+    }
+    public Color memoryDefaultTagTextColor() {
+        return debugDefaultTagColor();
+    }
+    public Color memoryRegisterTagTextColor() {
+        //return debugCallReturnTextColor();
+        // the above would be more consistent,
+        // but for now opt for consistency with the memory word inspector
+        // the current colors for return value aren't too good anywy
+        return wordSelectedColor();
+    }
+    public Border memoryEnabledWatchpointTagBorder() {
+        return debugEnabledTargetBreakpointTagBorder();
+    }
+    public Border memoryDisabledWatchpointTagBorder() {
+        return debugDisabledTargetBreakpointTagBorder();
+    }
+
+
+    public Color memoryWatchpointTextColor() {
+        return debugIPTextColor();
+    }
+
 
     // Search related
     private final Icon _searchNextMatchButtonIcon = IconFactory.createDownArrow(14, 14);
@@ -461,33 +491,20 @@ public abstract class InspectorStyleAdapter extends AbstractInspectionHolder imp
         return _defaultTableShowVertictalLines;
     }
 
-    public Dimension objectTableIntercellSpacing() {
+    public Dimension memoryTableIntercellSpacing() {
         return defaultTableIntercellSpacing();
     }
-    public int objectTableRowHeight() {
+    public int memoryTableRowHeight() {
         return defaultTableRowHeight();
     }
-    public boolean objectTableShowHorizontalLines() {
+    public boolean memoryTableShowHorizontalLines() {
         return defaultTableShowHorizontalLines();
     }
-    public boolean objectTableShowVerticalLines() {
+    public boolean memoryTableShowVerticalLines() {
         return defaultTableShowVerticalLines();
     }
-    public int objectTableMaxDisplayRows() {
+    public int memoryTableMaxDisplayRows() {
         return 20;
-    }
-
-    public Dimension threadLocalsTableIntercellSpacing() {
-        return defaultTableIntercellSpacing();
-    }
-    public int threadLocalsTableRowHeight() {
-        return defaultTableRowHeight();
-    }
-    public boolean threadLocalsTableShowHorizontalLines() {
-        return defaultTableShowHorizontalLines();
-    }
-    public boolean threadLocalsTableShowVerticalLines() {
-        return defaultTableShowVerticalLines();
     }
 
     public Dimension codeTableIntercellSpacing() {
