@@ -65,8 +65,6 @@ public final class Trap {
         public static final int ILLEGAL_INSTRUCTION = 2;
         public static final int ARITHMETIC_EXCEPTION = 3;
         public static final int ASYNC_INTERRUPT = 4;
-
-        // These last two numbers are only known by the Java code and are used to
         public static final int NULL_POINTER_EXCEPTION = 5;
         public static final int SAFEPOINT = 6;
 
