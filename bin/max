@@ -466,7 +466,7 @@ function usage() {
     echo " -maxine          specifies base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
     echo " -junit4          class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
-    echo " -make            path to GNU make executable (default: gmake)"
+    echo " -make            path to GNU make executable (default: $(which gmake))"
 }
 
 if [ -n "${unknown_option}" ]; then
