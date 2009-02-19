@@ -110,7 +110,7 @@ public abstract class Word {
         return width().numberOfBytes();
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public final JniHandle asJniHandle() {
         if (this instanceof BoxedJniHandle) {
             return (BoxedJniHandle) this;
@@ -119,7 +119,7 @@ public abstract class Word {
         return BoxedJniHandle.from(box.nativeWord());
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public final Address asAddress() {
         if (this instanceof BoxedAddress) {
             return (BoxedAddress) this;
@@ -128,7 +128,7 @@ public abstract class Word {
         return BoxedAddress.from(box.nativeWord());
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public final Offset asOffset() {
         if (this instanceof BoxedOffset) {
             return (BoxedOffset) this;
@@ -137,7 +137,7 @@ public abstract class Word {
         return BoxedOffset.from(box.nativeWord());
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public final Size asSize() {
         if (this instanceof BoxedSize) {
             return (BoxedSize) this;
@@ -146,7 +146,7 @@ public abstract class Word {
         return BoxedSize.from(box.nativeWord());
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public final Pointer asPointer() {
         if (this instanceof BoxedPointer) {
             return (BoxedPointer) this;

@@ -91,7 +91,7 @@ public abstract class Actor {
     public static final int ACC_STRICT =       0x00000800;
 
     // VM-internal flags for methods:
-    public static final int UNCHECKED_CAST =       0x00020000;
+    public static final int UNSAFE_CAST =          0x00020000;
     public static final int WRAPPER =              0x00100000;
     public static final int CLASS_INITIALIZER =    0x00400000;
     public static final int INSTANCE_INITIALIZER = 0x00800000;
@@ -339,8 +339,8 @@ public abstract class Actor {
     }
 
     @INLINE
-    public static boolean isUncheckedCast(int flags) {
-        return (flags & UNCHECKED_CAST) != 0;
+    public static boolean isUnsafeCast(int flags) {
+        return (flags & UNSAFE_CAST) != 0;
     }
 
     @INLINE

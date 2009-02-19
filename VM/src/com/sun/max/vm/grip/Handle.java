@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  */
 public abstract class Handle extends Word {
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static native Handle from(Word word);
 
     @Override
@@ -48,10 +48,10 @@ public abstract class Handle extends Word {
         asPointer().writeWord(0, origin);
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static native Handle fromGrip(Grip grip);
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public final Grip toGrip() {
         return UnsafeLoophole.wordToGrip(this);
     }

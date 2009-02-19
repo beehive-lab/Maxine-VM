@@ -92,7 +92,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return name();
     }
 
-    private CirCall foldUncheckedCast(CirValue[] arguments) {
+    private CirCall foldUnsafeCast(CirValue[] arguments) {
         assert arguments.length == 3;
         final CirValue result = arguments[0];
         final CirValue normalContinuation = arguments[1];
@@ -109,8 +109,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         }
 
         final CirGenerator cirGenerator = cirOptimizer.cirGenerator();
-        if (_classMethodActor.isUncheckedCast()) {
-            return foldUncheckedCast(arguments);
+        if (_classMethodActor.isUnsafeCast()) {
+            return foldUnsafeCast(arguments);
         }
         if (_classMethodActor.isStatic() && arguments.length == 2) {
             // no application arguments, just the 2 continuations
@@ -125,7 +125,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         if (compilee.isHiddenToReflection()) {
             return false;
         }
-        if (_classMethodActor.isUncheckedCast()) {
+        if (_classMethodActor.isUnsafeCast()) {
             return true;
         }
         if (!compilee.isDeclaredFoldable()) {

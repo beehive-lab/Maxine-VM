@@ -39,7 +39,7 @@ public abstract class BiasedLockEpoch extends Word {
     protected BiasedLockEpoch() {
     }
 
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static BiasedLockEpoch from(Word word) {
         return new BoxedBiasedLockEpoch64(word);
     }

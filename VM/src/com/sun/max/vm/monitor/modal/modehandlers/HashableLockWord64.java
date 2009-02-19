@@ -55,7 +55,7 @@ public abstract class HashableLockWord64 extends ModalLockWord64 {
      * @param word the word to cast
      * @return the cast word
      */
-    @UNCHECKED_CAST
+    @UNSAFE_CAST
     public static HashableLockWord64 from(Word word) {
         return new BoxedHashableLockWord64(word);
     }
