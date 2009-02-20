@@ -166,7 +166,7 @@ public final class Trap {
             Log.print("Trap in native code (or runtime stub) @ ");
             Log.print(instructionPointer);
             Log.println(", exiting.");
-            FatalError.unexpected("Trap in native code");
+            FatalError.unexpected("Trap in native code", instructionPointer);
         }
     }
 
