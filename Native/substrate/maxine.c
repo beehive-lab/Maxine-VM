@@ -84,8 +84,7 @@ static void getExecutablePath(char *result) {
     // read the symbolic link to figure out what the executable is.
     int numberOfChars = readlink(linkName, result, MAX_PATH_LENGTH);
     if (numberOfChars < 0) {
-        fprintf(stderr, "could not read %s\n", linkName);
-        exit(1);
+        log_exit(1, "Could not read %s\n", linkName);
     }
 #endif
 
@@ -171,6 +170,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
 #if os_DARWIN
     _executablePath = executablePath;
+    if (getenv("DYLD_FORCE_FLAT_NAMESPACE") == NULL) {
+        /* Without this, libjava.jnilib library will use link against the JVM_* functions
+         * in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. */
+        log_exit(11, "The environment variable DYLD_FORCE_FLAT_NAMESPACE must be defined.");
+    }
 #endif
 
 #if log_LOADER
