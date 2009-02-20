@@ -261,21 +261,20 @@ void native_exit(jint code) {
     exit(code);
 }
 
-void native_trap_exit(int code, void *address) {
+void native_trap_exit(int code, Address address) {
     Dl_info info;
-    if (dladdr(address, &info) != 0) {
+    if (dladdr((void *) address, &info) != 0) {
         if (info.dli_sname == NULL) {
-            log_println("In %s (address=%p)", info.dli_fname, info.dli_fbase);
+            log_println("In %s (%p)", info.dli_fname, info.dli_fbase);
         } else {
-            log_println("In %s (address=%p) at (or near) %s (address=%p) %+d",
+            log_println("In %s (%p) at %s (%p%+d)",
                             info.dli_fname,
                             info.dli_fbase,
                             info.dli_sname,
                             info.dli_saddr,
-                            address - info.dli_saddr);
+                            address - (Address) info.dli_saddr);
         }
     }
-
     log_exit(code, "Trap in native code at %p\n", address);
 }
 
