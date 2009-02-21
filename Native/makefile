@@ -27,19 +27,19 @@ include platform/platform.mk
 all : prototype substrate launch tele javatest
 
 prototype : build/$(OS)/prototype/makefile
-	(cd build/$(OS)/prototype; gmake all)
+	(cd build/$(OS)/prototype; $(MAKE) all)
 
 substrate : build/$(OS)/substrate/makefile
-	(cd build/$(OS)/substrate; gmake all)
+	(cd build/$(OS)/substrate; $(MAKE) all)
  
 launch : substrate build/$(OS)/launch/makefile
-	(cd build/$(OS)/launch; gmake all)
+	(cd build/$(OS)/launch; $(MAKE) all)
 	
 tele : build/$(OS)/tele/makefile
-	(cd build/$(OS)/tele; gmake all)
+	(cd build/$(OS)/tele; $(MAKE) all)
  
 javatest : build/$(OS)/javatest/makefile
-	(cd build/$(OS)/javatest; gmake all)
+	(cd build/$(OS)/javatest; $(MAKE) all)
 
 build/$(OS)/prototype/makefile : prototype/prototype.mk
 	mkdir -p build/$(OS)/prototype
