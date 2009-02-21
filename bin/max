@@ -25,7 +25,7 @@ jvm_args="$default_jvm_args"
 jvm_args_prefix=""
 jvm_args_suffix=""
 maxine_dir=""
-make=gmake
+make_arg=
 while [ "${1:0:1}" = "-" ]; do
     case $1 in
         -v )
@@ -39,7 +39,7 @@ while [ "${1:0:1}" = "-" ]; do
             ;;
         -make )
             shift
-            make=$1
+            make_arg=$1
             ;;
         -java_home )
             shift
@@ -176,6 +176,33 @@ function run() {
 }
 
 #=======================================
+# Utility to ensure $make points to a
+# GNU make executable
+#=======================================
+
+function config_gnu_make() {
+    for a in $make_arg make gmake gnumake; do
+        if ( sh -c "$a --version" 2>/dev/null | grep GNU >/dev/null ) ; then 
+            make=$(which $a)
+            break
+        fi
+    done
+}
+
+function check_gnu_make() {
+    config_gnu_make
+    if [ -z "$make" ]; then
+        if [ -n "$make_arg" ]; then
+            echo "$make_arg does not denote a GNU make executable"
+        else
+            echo "Could not find a GNU make executable on the current path."
+            echo "Please fix the path or use the -make option."
+        fi
+    exit 1
+    fi
+}
+
+#=======================================
 # 'build' command
 #=======================================
 
@@ -233,6 +260,9 @@ function run_build() {
     # Compile C sources
     if [[ "$projects_to_build" == *Native* ]]; then
         echo "Compiling C sources in ${maxine_dir}/Native..."
+  
+        check_gnu_make      
+        
         pushd . >/dev/null
         cd ${maxine_dir}/Native;
         if $clean ; then
@@ -459,6 +489,7 @@ function usage() {
         fi
         printf " %-16s %s\n" "$command" "$help"
     done
+    config_gnu_make
     echo
     echo "global options:"
     echo " -v               enable verbose output "
@@ -473,7 +504,7 @@ function usage() {
     echo " -maxine          specifies base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
     echo " -junit4          class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
-    echo " -make            path to GNU make executable (default: $(which gmake))"
+    echo " -make            path to GNU make executable (default: $make)"
 }
 
 if [ -n "${unknown_option}" ]; then
