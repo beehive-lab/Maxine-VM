@@ -317,7 +317,7 @@ public final class MaxineVM {
     }
 
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
-    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = new test.com.sun.max.Package().name();
+    private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
 
     /**
      * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
