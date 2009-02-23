@@ -135,15 +135,22 @@ extern int image_load(char *imageFileName);
 /**
  * Must only be called after calling 'load_image()'.
  *
- * @return a pointer to the mmap-ped boot heap region
+ * @return a pointer to the boot heap region
  */
 extern Address image_heap(void);
 
 /**
  * Must only be called after calling 'load_image()'.
  *
- * @return a pointer to the mmap-ped boot code region
+ * @return a pointer to the boot code region
  */
 extern Address image_code(void);
+
+/**
+ * Must only be called after calling 'load_image()'.
+ *
+ * @return a pointer to the end of the boot code region
+ */
+extern Address image_code_end(void);
 
 #endif /*__image_h__*/
