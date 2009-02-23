@@ -130,6 +130,8 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 Address virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
 #if os_SOLARIS || os_DARWIN
   return CHECK_MMAP_RESULT(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0));
+#elif os_GUESTVMXEN
+  return (Address) guestvmXen_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type);
 #else
     c_UNIMPLEMENTED();
     return false;

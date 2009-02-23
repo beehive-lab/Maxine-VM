@@ -58,6 +58,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
     private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
     private static final VMIntOption _safetyZoneSizeOption = new VMIntOption("-XX:SemiSpaceGC:szs", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _minimizeMemoryOption = new VMOption("-XX:SemiSpaceGC:MinimizeMemory", "Minimize memory usage", MaxineVM.Phase.PRISTINE);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -121,6 +122,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
     private SemiSpaceMemoryRegion _fromSpace = new SemiSpaceMemoryRegion("Heap-From");
     private SemiSpaceMemoryRegion _toSpace = new SemiSpaceMemoryRegion("Heap-To");
+    private SemiSpaceMemoryRegion _growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");  // used while growing the heap
+    private SemiSpaceMemoryRegion _growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");          // used while growing the heap
     private static int _safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
     private Address _top;                                                  // top of allocatable space (less safety zone)
     private volatile Address _allocationMark;                     // current allocation point
@@ -238,26 +241,59 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         }
     };
 
+    @INLINE
+    /**
+     * Attempts to allocate memory of given size for given space.
+     * If successful sets region start and size.
+     */
+    private static Address allocateSpace(SemiSpaceMemoryRegion space, Size size) {
+        final Address base = _virtualAllocOption.isPresent() ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
+        if (!base.isZero()) {
+            space.setStart(base);
+            space.setAllocationMark(base); // debugging
+            space.setSize(size);
+        }
+        return base;
+    }
+
+    @INLINE
+    /**
+     * Deallocates the memory associated with the given region.
+     * Sets the region start to zero but does not change the size.
+     */
+    private static void deallocateSpace(SemiSpaceMemoryRegion space) {
+        final Address base = space.start();
+        if (_virtualAllocOption.isPresent()) {
+            VirtualMemory.deallocate(base, space.size(), VirtualMemory.Type.HEAP);
+        } else {
+            Memory.deallocate(base);
+        }
+        space.setStart(Address.zero());
+    }
+
+    @INLINE
+    /**
+     * Copies the state of one space into another.
+     * Used when growing the semispaces.
+     */
+    private static void copySpaceState(SemiSpaceMemoryRegion from, SemiSpaceMemoryRegion to) {
+        to.setStart(from.start());
+        to.setAllocationMark(from.start());
+        to.setSize(from.size());
+    }
+
+
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.PRISTINE) {
             final Size size = Heap.initialSize();
 
-            _fromSpace.setSize(size);
-            _toSpace.setSize(size);
-
             _safetyZoneSize = _safetyZoneSizeOption.getValue();
-            final boolean useVirtual = _virtualAllocOption.isPresent();
-            final Pointer fromStart = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
-            final Pointer toStart = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
-            _fromSpace.setStart(fromStart);
-            _toSpace.setStart(toStart);
-
-            if (_fromSpace.start().isZero() || _toSpace.start().isZero()) {
+            if (allocateSpace(_fromSpace, size).isZero() || allocateSpace(_toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
                 Log.print(size.toLong());
                 Log.println();
-                Log.println("This is only a very simple GC implementation that uses twice the specified amount");
+                FatalError.crash("This is only a very simple GC implementation that uses twice the specified amount");
             }
 
             _allocationMark = _toSpace.start();
@@ -446,29 +482,42 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         Code.visitCells(this);
     }
 
-    private boolean reallocateAlternateSpace() {
+    /**
+     * Grow the semispaces to be of larger size.
+     * @param preGc true if prior to executing collector thread to copy _toSpace  to (grown) _fromSpace
+     * @return true iff both spaces can be grown
+     */
+    private boolean growSpaces(boolean preGc) {
         if (_fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize())) {
             _cannotGrow = true;
             return false;
         }
-        final boolean useVirtual = _virtualAllocOption.isPresent();
-        if (useVirtual) {
-            VirtualMemory.deallocate(_fromSpace.start(), _fromSpace.size(), VirtualMemory.Type.HEAP);
-        } else {
-            Memory.deallocate(_fromSpace.start());
-        }
+        // It is important to know now that we can allocate both spaces of the new size
+        // and, if we cannot, to leave things as they are, so that the VM can continue
+        // using the safety zone and perhaps then free enough space to continue.
         final Size size = Size.min(_fromSpace.size().times(2), Heap.maxSize());
-        if (Heap.verbose()) {
+        if (preGc && Heap.verbose()) {
             Log.print("New heap size: ");
             Log.println(size.toLong());
         }
-        final Address newSpace = useVirtual ? VirtualMemory.allocate(size, VirtualMemory.Type.HEAP) : Memory.allocate(size);
-        if (newSpace.isZero()) {
-            _cannotGrow = true;
-            return false;
+        if (preGc) {
+            final Address fromBase = allocateSpace(_growFromSpace, size);
+            final Address tempBase = allocateSpace(_growToSpace, size);
+            if (fromBase.isZero() || tempBase.isZero()) {
+                _cannotGrow = true;
+                if (!fromBase.isZero()) {
+                    deallocateSpace(_growFromSpace);
+                }
+                return false;
+            }
+            // return memory in _fromSpace
+            deallocateSpace(_fromSpace);
+            copySpaceState(_growFromSpace, _fromSpace);
+        } else {
+            // executing the collector thread swapped the spaces
+            // so we are again updating _fromSpace but with _growToSpace.
+            copySpaceState(_growToSpace, _fromSpace);
         }
-        _fromSpace.setSize(size);
-        _fromSpace.setStart(newSpace);
         return true;
     }
 
@@ -486,11 +535,17 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         if (Heap.verbose()) {
             Log.println("Trying to grow the heap...");
         }
-        if (!reallocateAlternateSpace()) {
-            return false;
+        boolean result = true;
+        if (!growSpaces(true)) {
+            result = false;
+        } else {
+            executeCollectorThread();
+            result = growSpaces(false);
         }
-        executeCollectorThread();
-        return reallocateAlternateSpace();
+        if (Heap.verbose()) {
+            logSpaces();
+        }
+        return result;
     }
 
     public synchronized boolean collectGarbage(Size requestedFreeSpace) {
@@ -560,8 +615,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             if (end.greaterThan(_top)) {
                 if (!Heap.collectGarbage(size)) {
                     if (_inSafetyZone) {
-                        Log.println("out of memory again after throwing OutOfMemoryError");
-                        MaxineVM.native_exit(11); // should be symbolic
+                        FatalError.crash("out of memory again after throwing OutOfMemoryError");
                     } else {
                         // Use the safety region to do the throw
                         _top = _top.plus(_safetyZoneSize);
@@ -744,6 +798,18 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         if (Heap.traceGC()) {
             Log.println("done verifying heap");
         }
+    }
+
+    private void logSpaces() {
+        logSpace(_fromSpace);
+        logSpace(_toSpace);
+    }
+
+    private void logSpace(SemiSpaceMemoryRegion space) {
+        Log.println(space.description());
+        Log.print("start "); Log.print(space.start());
+        Log.print(", size "); Log.print(space.size());
+        Log.println("");
     }
 
     @Override

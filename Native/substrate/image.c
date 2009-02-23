@@ -48,6 +48,7 @@
 
 #if os_GUESTVMXEN
 #define MEMORY_IMAGE 1
+#include <guestvmXen.h>
 #else
 #define MEMORY_IMAGE 0
 #endif
@@ -277,6 +278,10 @@ Address image_code(void) {
     return _code;
 }
 
+Address image_code_end(void) {
+    return _codeEnd;
+}
+
 static void mapHeapAndCode(int fd) {
     int fileOffset = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize);
 #if log_LOADER
@@ -306,6 +311,10 @@ static void mapHeapAndCode(int fd) {
     }
 #else
     c_UNIMPLEMENTED();
+#endif
+#if os_GUESTVMXEN
+    // heap and code must be mapped together (the method offsets in boot image are relative to heap base)
+    _heap = guestvmXen_remap_boot_code_region(_heap, _header->bootHeapSize + _header->bootCodeSize);
 #endif
     _code = _heap + _header->bootHeapSize;
     _codeEnd = _code + _header->bootCodeSize;
