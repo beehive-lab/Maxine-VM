@@ -30,19 +30,22 @@ import com.sun.max.unsafe.*;
  * that is a multiple of RUNTIME_CODE_REGION_SIZE (unlike @See FixedAddressCodeManager)
  * we keep the _runtimeCodeRegions array sorted by increasing address.
  *
+ * In general we cannot easily guarantee the invariant that the regions managed by this manager
+ * are within 32 bits of each other. We assume that the  @see com.sun.max.memory.VirtualMemory.allocate method
+ * preserves the constraint when asked to allocate @See com.sun.max.memory.VirtualMemory.Type.CODE.
+ *
+ *
  * @author Bernd Mathiske
  * @author Mick Jordan
  */
 public class VariableAddressCodeManager extends CodeManager {
 
     /**
-     * Constructs a new code manager with the default number of virtual regions, with
-     * the starting address at {@code 0x00000000}.
+     * Constructs a new code manager with the default number of virtual regions.
+     * N.B. At image build time we have no idea what the actual address range is.
      */
     VariableAddressCodeManager() {
         super(NUMBER_OF_RUNTIME_CODE_REGIONS);
-        setStart(Address.zero());
-        setSize(Size.fromInt(Integer.MAX_VALUE));
     }
 
     /**
@@ -66,12 +69,15 @@ public class VariableAddressCodeManager extends CodeManager {
             Problem.unimplemented("could not allocate runtime code region");
         }
 
+        CodeRegion codeRegion = null;
+
+        // TODO validate that address is within 32 bits of all existing code regions
+
         /* N.B. The mapping between the CodeRegion description "Code-N" and the index in the
         * _runTimeCodeRegions array is not maintained unless memory happens to be allocated
         * at increasing addresses
         */
 
-        CodeRegion codeRegion = null;
         int index = 0;
         while (index < NUMBER_OF_RUNTIME_CODE_REGIONS) {
             codeRegion = getRuntimeCodeRegion(index);
@@ -92,7 +98,18 @@ public class VariableAddressCodeManager extends CodeManager {
         codeRegion.setMark(address);
         codeRegion.setSize(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
         _runtimeCodeRegions[index] = codeRegion;
+
+        if (_numberOfRuntimeCodeRegionsInUse == 0) {
+            setStart(codeRegion.start());
+            setSize(codeRegion.size());
+        } else {
+            final CodeRegion firstRegion = getRuntimeCodeRegion(0);
+            final CodeRegion lastRegion = getRuntimeCodeRegion(_numberOfRuntimeCodeRegionsInUse);
+            setStart(firstRegion.start());
+            setSize(lastRegion.end().minus(firstRegion.start()).asSize());
+        }
         _numberOfRuntimeCodeRegionsInUse++;
+
         return codeRegion;
     }
 
