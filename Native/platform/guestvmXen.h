@@ -49,12 +49,14 @@
     extern void *guestvmXen_virtualMemory_allocate(size_t size, int type);
     extern void *guestvmXen_virtualMemory_deallocate(void *address, size_t size, int type);
     extern void *guestvmXen_virtualMemory_allocateIn31BitSpace(size_t size, int type);
+    extern void *guestvmXen_virtualMemory_allocateAtFixedAddress(unsigned long address, size_t size, int type);
     extern int guestvmXen_virtualMemory_pageSize();
     extern int guestvmXen_virtualMemory_protectPage(unsigned long address);
     extern int guestvmXen_virtualMemory_unProtectPage(unsigned long address);
     extern void guestvmXen_set_javaId(guestvmXen_Thread, int id);
     extern void guestvmXen_initStack(void *threadSpecifics);
     extern void guestvmXen_blue_zone_trap(void *threadSpecifics);
+    extern unsigned long guestvmXen_remap_boot_code_region(unsigned long base, size_t size);
 
 
     typedef unsigned int guestvmXen_SpecificsKey;
