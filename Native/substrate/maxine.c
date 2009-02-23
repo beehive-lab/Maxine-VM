@@ -266,6 +266,7 @@ void native_exit(jint code) {
 }
 
 void native_trap_exit(int code, Address address) {
+#if !os_GUESTVMXEN
     Dl_info info;
     if (dladdr((void *) address, &info) != 0) {
         if (info.dli_sname == NULL) {
@@ -279,6 +280,7 @@ void native_trap_exit(int code, Address address) {
                             address - (Address) info.dli_saddr);
         }
     }
+#endif
     log_exit(code, "Trap in native code at %p\n", address);
 }
 
