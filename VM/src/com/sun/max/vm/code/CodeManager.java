@@ -37,7 +37,7 @@ import com.sun.max.vm.runtime.*;
  *
  * All generated code is position independent as a whole, but target methods may contain direct call references between
  * each other and these must be within 32-bit offsets! Therefore all code regions must be within 32-bit offsets from
- * each other. Hence, we cannot simply malloc() them.
+ * each other. An concrete implementation of this class must enforce this invariant.
  *
  * @author Bernd Mathiske
  */

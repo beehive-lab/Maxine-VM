@@ -67,10 +67,8 @@ public final class Code {
             case LINUX: {
                 return new LowAddressCodeManager();
             }
-            case GUESTVM: {
-                return new VariableAddressCodeManager();
-            }
 
+            case GUESTVM:
             case DARWIN:
             case SOLARIS: {
                 return new FixedAddressCodeManager();
