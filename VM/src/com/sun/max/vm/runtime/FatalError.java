@@ -57,6 +57,11 @@ public final class FatalError extends Error {
         throw unreachable;
     }
 
+    public static void crash(String message) {
+        Log.println(message);
+        MaxineVM.native_exit(11); // should be symbolic
+    }
+
     @INLINE
     public static void check(boolean condition, String message) {
         if (!condition) {
