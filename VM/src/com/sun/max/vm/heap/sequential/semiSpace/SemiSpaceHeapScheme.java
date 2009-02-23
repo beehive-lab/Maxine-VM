@@ -58,7 +58,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
     private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
     private static final VMIntOption _safetyZoneSizeOption = new VMIntOption("-XX:SemiSpaceGC:szs", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes", MaxineVM.Phase.PRISTINE);
-    private static final VMOption _lowMemoryOption = new VMOption("-XX:SemiSpaceGC:LowMemory", "Minimize memory usage", MaxineVM.Phase.PRISTINE);
+    private static final VMOption _minimizeMemoryOption = new VMOption("-XX:SemiSpaceGC:MinimizeMemory", "Minimize memory usage", MaxineVM.Phase.PRISTINE);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
