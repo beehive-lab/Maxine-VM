@@ -27,6 +27,7 @@ import com.sun.max.vm.thread.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 public final class FatalError extends Error {
 
@@ -35,6 +36,10 @@ public final class FatalError extends Error {
     }
 
     public static FatalError unexpected(String message) {
+        throw unexpected(message, Address.zero());
+    }
+
+    public static FatalError unexpected(String message, Address nativeTrapAddress) {
         if (MaxineVM.isPrototyping()) {
             throw new FatalError(message);
         }
@@ -52,7 +57,10 @@ public final class FatalError extends Error {
             Throw.stackScan("stack scan", VMRegister.getCpuStackPointer(), VmThread.current().vmThreadLocals());
         }
         Log.unlock(lockDisabledSafepoints);
-        MaxineVM.native_exit(11);
+        if (nativeTrapAddress.isZero()) {
+            MaxineVM.native_exit(11);
+        }
+        MaxineVM.native_trap_exit(11, nativeTrapAddress);
         final FatalError unreachable = UnsafeLoophole.cast(null);
         throw unreachable;
     }

@@ -37,8 +37,8 @@ import com.sun.max.vm.type.*;
  * The predefined VM thread local variables and mechanisms for accessing them.
  *
  * The memory for these variables is allocated on the stack by the native code that starts a thread (see the function
- * 'thread_runJava' in Native/substrate/threads.c). All thread local variables occupy one word, except the last.
- * The safepoint latch must be first.
+ * 'thread_runJava' in Native/substrate/threads.c). All thread local variables occupy one word and
+ * the {@linkplain #SAFEPOINT_LATCH safepoint latch} must be first.
  * {@linkplain Safepoint safepoint} states for a thread:
  * <dl>
  * <dt>Enabled</dt>
@@ -54,8 +54,6 @@ import com.sun.max.vm.type.*;
  *
  * The memory for the three TLS areas is located on the stack as described in the thread stack layout
  * diagram {@linkplain VmThread here}.
- *
- * All thread local variables occupy one word, except the {@linkplain #LAST_SLOT last}.
  */
 public enum VmThreadLocal {
     /**
@@ -153,7 +151,7 @@ public enum VmThreadLocal {
     DEOPTIMIZER_REFERENCE_OCCURRENCES(Kind.REFERENCE),
 
     /**
-     * In case of Deoptimizer.ReferenceOccurrences.SAFEPOINT, when deoptimization occurs, we remember the instruction
+     * In case of {@link Deoptimizer.Situation#SAFEPOINT}, when deoptimization occurs, we remember the instruction
      * where it was triggered via an illegal instruction trap. This is used in case there is a GC during deoptimization
      * to enable the stack map preparer to find the register reference map to be applied to the register copies in the
      * disabled thread local space. The latter is where the trap saved register values.
@@ -206,8 +204,7 @@ public enum VmThreadLocal {
     private final Kind _kind;
 
     /**
-     * The size of the storage required for a copy of the thread locals defined by this enum (including the registers).
-     * Note that it is <b>not</b> simply the number of enum constants multiplied by the size of a word.
+     * The size of the storage required for a copy of the thread locals defined by this enum.
      * This value is guaranteed to be word-aligned
      */
     public static final Size THREAD_LOCAL_STORAGE_SIZE;
@@ -222,8 +219,8 @@ public enum VmThreadLocal {
     public static final IndexedSequence<String> NAMES;
 
     static {
-        THREAD_LOCAL_STORAGE_SIZE = Size.fromInt((TAG.ordinal() + 1) * Word.size());
-        ProgramError.check(TAG.ordinal() == values().length - 1);
+        THREAD_LOCAL_STORAGE_SIZE = Size.fromInt(VALUES.length() * Word.size());
+        ProgramError.check(TAG.ordinal() == VALUES.length() - 1);
         ProgramError.check(THREAD_LOCAL_STORAGE_SIZE.aligned().equals(THREAD_LOCAL_STORAGE_SIZE), "THREAD_LOCAL_STORAGE_SIZE is not word-aligned");
 
         // The C code in trap.c relies on the following relationships:

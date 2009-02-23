@@ -186,10 +186,7 @@ public class MaxineTesterConfiguration {
     );
 
     static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
-        test.output.FloatNanTest.class,
         test.output.JavacTest.class,
-        test.output.GCTest4.class,
-        test.output.SafepointWhileInNative.class,
         test.output.BlockingQueue.class,
         _expectedAutoTestFailures
     );

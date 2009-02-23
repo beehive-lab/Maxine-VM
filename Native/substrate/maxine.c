@@ -84,8 +84,7 @@ static void getExecutablePath(char *result) {
     // read the symbolic link to figure out what the executable is.
     int numberOfChars = readlink(linkName, result, MAX_PATH_LENGTH);
     if (numberOfChars < 0) {
-        fprintf(stderr, "could not read %s\n", linkName);
-        exit(1);
+        log_exit(1, "Could not read %s\n", linkName);
     }
 #endif
 
@@ -119,17 +118,34 @@ static int loadImage(void) {
 static void *openDynamicLibrary(char *path) {
 #if log_LINKER
     if (path == NULL) {
-        log_println("openDynamicLibrary (null)");
+        log_println("openDynamicLibrary(null)");
     } else {
-        log_println("openDynamicLibrary %s (0x%016lX)", path, path);
+        log_println("openDynamicLibrary(\"%s\")", path);
     }
 #endif
     void *result = dlopen(path, RTLD_LAZY);
 #if log_LINKER
     if (path == NULL) {
-        log_println("openDynamicLibrary (null) = 0x%016lX", result);
+        log_println("openDynamicLibrary(null) = %p", result);
     } else {
-        log_println("openDynamicLibrary %s = 0x%016lX", path, result);
+        log_println("openDynamicLibrary(\"%s\") = %p", path, result);
+    }
+#endif
+    return result;
+}
+
+static void* loadSymbol(void* handle, const char* symbol) {
+#if log_LINKER
+    log_println("loadSymbol(%p, \"%s\")", handle, symbol);
+#endif
+    void* result = dlsym(handle, symbol);
+#if log_LINKER
+    Dl_info info;
+    void* address = result;
+    if (dladdr(address, &info) != 0) {
+        log_println("loadSymbol(%p, \"%s\") = %p from %s", handle, symbol, result, info.dli_fname);
+    } else {
+        log_println("loadSymbol(%p, \"%s\") = %p", handle, symbol, result);
     }
 #endif
     return result;
@@ -154,6 +170,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
 #if os_DARWIN
     _executablePath = executablePath;
+    if (getenv("DYLD_FORCE_FLAT_NAMESPACE") == NULL) {
+        /* Without this, libjava.jnilib library will use link against the JVM_* functions
+         * in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. */
+        log_exit(11, "The environment variable DYLD_FORCE_FLAT_NAMESPACE must be defined.");
+    }
 #endif
 
 #if log_LOADER
@@ -208,9 +229,9 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
 #if log_LOADER
     log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
-                    primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
+                    primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
 #endif
-    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, dlsym, argc, argv);
+    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
@@ -244,12 +265,21 @@ void native_exit(jint code) {
     exit(code);
 }
 
-void native_trap_exit(int code, void *address) {
-    log_exit(code, "MaxineVM: Trap in native code at 0x%lx\n", address);
-}
-
-void native_stack_trap_exit(int code, void *address) {
-    log_exit(code, "MaxineVM: Native code hit the stack overflow guard page at 0x%lx\n", address);
+void native_trap_exit(int code, Address address) {
+    Dl_info info;
+    if (dladdr((void *) address, &info) != 0) {
+        if (info.dli_sname == NULL) {
+            log_println("In %s (%p)", info.dli_fname, info.dli_fbase);
+        } else {
+            log_println("In %s (%p) at %s (%p%+d)",
+                            info.dli_fname,
+                            info.dli_fbase,
+                            info.dli_sname,
+                            info.dli_saddr,
+                            address - (Address) info.dli_saddr);
+        }
+    }
+    log_exit(code, "Trap in native code at %p\n", address);
 }
 
 #if os_DARWIN

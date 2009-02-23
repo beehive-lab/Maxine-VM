@@ -520,7 +520,7 @@ public class MaxineTester {
         out.println("JUnit auto-test: Started " + autoTest);
         out.flush();
         final long start = System.currentTimeMillis();
-        final int exitValue = exec(outputDir, command, outputFile, autoTest, _autoTestTimeOut.getValue());
+        final int exitValue = exec(outputDir, command, null, outputFile, autoTest, _autoTestTimeOut.getValue());
         out.print("JUnit auto-test: Stopped " + autoTest);
 
         final Set<String> unexpectedResults = new HashSet<String>();
@@ -802,15 +802,21 @@ public class MaxineTester {
 
     private static int runMaxineVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = imageDir.getName() + "/maxvm" + (mainClass == null ? "" : " " + mainClass.getName());
-        if (mainClass != null && _javaConfigAlias != null) {
-            return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), outputFile, name, timeout);
+        String[] env = null;
+        if (OperatingSystem.current() == OperatingSystem.DARWIN) {
+            final List<String> envList = new ArrayList<String>();
+            for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
+                envList.add(entry.toString());
+            }
+            envList.add("DYLD_FORCE_FLAT_NAMESPACE=1");
+            env = envList.toArray(new String[envList.size()]);
         }
-        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), outputFile, name, timeout);
+        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), env, outputFile, name, timeout);
     }
 
     private static int runJavaVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = "Executing " + mainClass.getName();
-        return exec(imageDir, appendArgs(new String[] {_javaExecutable.getValue()}, args), outputFile, name, timeout);
+        return exec(imageDir, appendArgs(new String[] {_javaExecutable.getValue()}, args), null, outputFile, name, timeout);
     }
 
     /**
@@ -833,7 +839,7 @@ public class MaxineTester {
         javaArgs = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
         final File outputFile = getOutputFile(imageDir, "IMAGEGEN", imageConfig);
 
-        final int exitValue = exec(null, javaArgs, outputFile, "Building " + imageDir.getName() + "/maxine.vm", _imageBuildTimeOut.getValue());
+        final int exitValue = exec(null, javaArgs, null, outputFile, "Building " + imageDir.getName() + "/maxine.vm", _imageBuildTimeOut.getValue());
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
@@ -923,11 +929,11 @@ public class MaxineTester {
         return cmd.toArray(new String[0]);
     }
 
-    private static int exec(File workingDir, String[] command, File outputFile, String name, int timeout) {
+    private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
         traceExec(workingDir, command);
         try {
             final FileOutputStream outFile = new FileOutputStream(outputFile);
-            final Process process = Runtime.getRuntime().exec(command, null, workingDir);
+            final Process process = Runtime.getRuntime().exec(command, env, workingDir);
             final ProcessThread processThread = new ProcessThread(System.in, outFile, outFile, process, name, timeout);
             final int exitValue = processThread.exitValue();
             outFile.close();
@@ -977,8 +983,8 @@ public class MaxineTester {
             _stdout = Streams.redirect(_process, _process.getInputStream(), out, "[stdout]");
             _stdin = Streams.redirect(_process, System.in, _process.getOutputStream(), "[stdin]");
         }
-        @Override
 
+        @Override
         public void run() {
             final long start = System.currentTimeMillis();
             while (System.currentTimeMillis() - start < _timeoutMillis) {
