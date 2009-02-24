@@ -53,7 +53,7 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  * @author Sunil Soman
  */
-public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapScheme, CellVisitor {
+public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme, CellVisitor {
 
     private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
     private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
@@ -810,6 +810,31 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         Log.print("start "); Log.print(space.start());
         Log.print(", size "); Log.print(space.size());
         Log.println("");
+    }
+
+    private synchronized boolean shrink(Size amount) {
+        final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize();
+        executeCollectorThread();
+        if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
+            // give back part of the existing spaces
+            final int amountAsInt = pageAlignedAmount.toInt();
+            _fromSpace.setSize(_fromSpace.size().minus(amountAsInt));
+            _toSpace.setSize(_toSpace.size().minus(amountAsInt));
+            VirtualMemory.deallocate(_fromSpace.end().minus(amountAsInt), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            VirtualMemory.deallocate(_toSpace.end().minus(amountAsInt), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean decreaseMemory(Size amount) {
+        return shrink(amount);
+    }
+
+    @Override
+    public boolean increaseMemory(Size amount) {
+        return false;
     }
 
     @Override
