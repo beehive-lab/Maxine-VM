@@ -30,6 +30,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.prototype.*;
 
 /**
  * @author Bernd Mathiske
@@ -49,7 +50,7 @@ public final class SolarisTeleProcess extends TeleProcess {
         _pageDataAccess.invalidateCache();
     }
 
-    private static native long nativeCreateChild(long argv);
+    private static native long nativeCreateChild(long argv, int vmAgentPort);
 
     private long _processHandle;
 
@@ -57,10 +58,26 @@ public final class SolarisTeleProcess extends TeleProcess {
         return _processHandle;
     }
 
-    SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, int id) {
-        super(teleVM, platform, programFile, commandLineArguments);
-        _processHandle = nativeCreateChild(commandLineBuffer().toLong());
+    /**
+     * Creates a handle to a native Solaris process by launching a new process with a given set of command line arguments.
+     *
+     * @param teleVM
+     * @param platform
+     * @param programFile
+     * @param commandLineArguments
+     * @param agent TODO
+     * @throws BootImageException
+     */
+    SolarisTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+        super(teleVM, platform);
+        final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
+        _processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
         _pageDataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
+        try {
+            resume();
+        } catch (OSExecutionRequestException e) {
+            throw new BootImageException("Error resuming VM after starting it", e);
+        }
     }
 
     private static native void nativeKill(long processHandle);
@@ -82,7 +99,7 @@ public final class SolarisTeleProcess extends TeleProcess {
     private static native boolean nativeResume(long processHandle);
 
     @Override
-    public void resume() throws OSExecutionRequestException {
+    protected void resume() throws OSExecutionRequestException {
         if (!nativeResume(_processHandle)) {
             throw new OSExecutionRequestException("The VM could not be resumed");
         }

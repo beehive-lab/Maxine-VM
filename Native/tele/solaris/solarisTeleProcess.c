@@ -21,6 +21,8 @@
 /*
  * @author Bernd Mathiske
  */
+
+#include <string.h>
 #include "log.h"
 #include "jni.h"
 
@@ -73,12 +75,22 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWriteBytes(JNIEnv *
 }
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, long commandLineArgumentArray) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, long commandLineArgumentArray, jint vmAgentPort) {
     int error;
     char path[MAX_PATH_LENGTH];
     char **argv = (char**) commandLineArgumentArray;
 
+#if log_TELE
     log_println("argv[0]: %s", argv[0]);
+#endif
+
+    int portDefSize = strlen("MAX_AGENT_PORT=") + 11;
+    char *portDef = (char *) malloc(portDefSize);
+    if (portDef == NULL || snprintf(portDef, portDefSize, "MAX_AGENT_PORT=%u", vmAgentPort) < 0) {
+        log_exit(1, "Could not set MAX_AGENT_PORT environment variable");
+    }
+    putenv(portDef);
+
     struct ps_prochandle *ph = proc_Pcreate(argv[0], argv, &error, path, sizeof(path));
     if (error != 0) {
         log_println("could not create child process: %s", Pcreate_error(error));
@@ -275,7 +287,7 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
         c_ASSERT(_methodID != NULL);
     }
 
-#if log_INSPECTOR_NATIVE
+#if log_TELE
     log_println("gatherThread[lwp id = %d]", lwpId);
     log_printStatusFlags("Status flags: ", lwpStatus->pr_flags, "\n");
     log_printWhyStopped("Why stopped: ", lwpStatus, "\n");

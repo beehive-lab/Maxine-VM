@@ -77,12 +77,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     public static final String[] NO_COMMAND_LINE_ARGUMENTS = {};
 
-    private Pointer _commandLineBuffer;
-
-    protected Pointer commandLineBuffer() {
-        return _commandLineBuffer;
-    }
-
     /**
      * The controller that controls access to this TeleProcess.
      */
@@ -282,13 +276,16 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return _controller;
     }
 
-    protected TeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) {
-        super(teleVM);
-        _platform = platform;
-        _targetBreakpointFactory = new TeleTargetBreakpoint.Factory(this);
-        _watchpointFactory = new TeleWatchpoint.Factory(this);
-        _controller = new TeleProcessController(this);
-
+    /**
+     * Allocates and initializes a buffer in native memory to hold a given set of command line arguments. De-allocating
+     * the memory for the buffer is the responsibility of the caller.
+     *
+     * @param programFile the executable that will be copied into element 0 of the returned buffer
+     * @param commandLineArguments
+     * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
+     *         {@code main} function
+     */
+    public static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
         final String programPath = programFile.getAbsolutePath();
 
         final int argvSize = Word.size() * (2 + commandLineArguments.length);
@@ -296,10 +293,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         for (String commandLineArgument : commandLineArguments) {
             bufferSize += commandLineArgument.length() + 1;
         }
-        _commandLineBuffer = Memory.mustAllocate(bufferSize);
+        final Pointer commandLineArgumentsBuffer = Memory.mustAllocate(bufferSize);
 
-        final Pointer argumentPointer = _commandLineBuffer;
-        Pointer stringPointer = _commandLineBuffer.plus(argvSize);
+        final Pointer argumentPointer = commandLineArgumentsBuffer;
+        Pointer stringPointer = commandLineArgumentsBuffer.plus(argvSize);
         argumentPointer.setWord(0, stringPointer);
         stringPointer = CString.writeUtf8(programPath, stringPointer, programPath.length() + 1);
         int i = 1;
@@ -312,6 +309,16 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             i++;
         }
         argumentPointer.setWord(i, Word.zero());
+        return commandLineArgumentsBuffer;
+    }
+
+    protected TeleProcess(TeleVM teleVM, Platform platform) {
+        super(teleVM);
+        _platform = platform;
+        _targetBreakpointFactory = new TeleTargetBreakpoint.Factory(this);
+        _watchpointFactory = new TeleWatchpoint.Factory(this);
+        _controller = new TeleProcessController(this);
+
         //Initiate the thread that continuously waits on the running process.
         _requestHandlingThread = new RequestHandlingThread();
         _requestHandlingThread.start();

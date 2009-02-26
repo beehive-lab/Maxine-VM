@@ -25,7 +25,7 @@
 
 void condition_initialize(Condition condition) {
 #   if log_CONDITION
-        log_println("condition_initialize(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+        log_println("condition_initialize(%p, %p)", thread_self(), condition);
 #   endif
 #   if os_SOLARIS
         if (cond_init(condition, NULL, NULL) != 0) {
@@ -44,7 +44,7 @@ void condition_initialize(Condition condition) {
 
 void condition_destroy(Condition condition) {
 #   if log_CONDITION
-        log_println("condition_destroy   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+        log_println("condition_destroy   (%p, %p)", thread_self(), condition);
 #   endif
 #   if os_SOLARIS
         if (cond_destroy(condition) != 0) {
@@ -66,7 +66,7 @@ void condition_destroy(Condition condition) {
  */
 Boolean condition_wait(Condition condition, Mutex mutex) {
     #if log_CONDITION
-        log_println("condition_wait      (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition, mutex);
+        log_println("condition_wait      (%p, %p, %p)", thread_self(), condition, mutex);
     #endif
     int error;
 #   if (os_DARWIN || os_LINUX)
@@ -100,7 +100,7 @@ Boolean condition_wait(Condition condition, Mutex mutex) {
  */
 Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
     #if log_CONDITION
-        log_println("condition_timedWait (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ", " ADDRESS_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
+        log_println("condition_timedWait (%p, %p, %p, %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
     #endif
 	int error;
 	if (timeoutMilliSeconds > 0) {
@@ -148,7 +148,7 @@ Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 
 Boolean condition_notify(Condition condition) {
     #if log_CONDITION
-        log_println("condition_notify    (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+        log_println("condition_notify    (%p, %p)", thread_self(), condition);
     #endif
     #if (os_DARWIN || os_LINUX)
         return pthread_cond_signal(condition) == 0;
@@ -163,7 +163,7 @@ Boolean condition_notify(Condition condition) {
 
 Boolean condition_notifyAll(Condition condition) {
     #if log_CONDITION
-        log_println("condition_notifyAll (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), condition);
+        log_println("condition_notifyAll (%p, %p)", thread_self(), condition);
     #endif
     #if (os_DARWIN || os_LINUX)
         return pthread_cond_broadcast(condition) == 0;

@@ -31,6 +31,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <alloca.h>
+#include <errno.h>
 
 #include "log.h"
 #include "image.h"
@@ -39,6 +40,19 @@
 #include "os.h"
 #if os_DARWIN
 #include <crt_externs.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <signal.h>
+#elif os_SOLARIS
+#include <netinet/in.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#define _STRUCTURED_PROC 1 /* Use new definitions in procfs.h instead of those in procfs_old.h */
+#include <sys/procfs.h>
 #endif
 
 #include "maxine.h"
@@ -151,6 +165,66 @@ static void* loadSymbol(void* handle, const char* symbol) {
     return result;
 }
 
+void initializeDebugger() {
+
+    char *port = getenv("MAX_AGENT_PORT");
+    if (port != NULL) {
+        char *hostName = "localhost";
+#if log_TELE
+        log_println("Opening agent socket connection to %s:%s", hostName, port);
+#endif
+        struct addrinfo hints, *res;
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+
+        getaddrinfo(hostName, port, &hints, &res);
+
+        int sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (sockfd == -1) {
+            int error = errno;
+            log_exit(11, "Could not create socket for communicating with debugger: %s", strerror(error));
+        }
+
+        if (connect(sockfd, res->ai_addr, res->ai_addrlen)) {
+            int error = errno;
+            log_exit(11, "Could not connect to debugger at %s:%s [%s]", hostName, port, strerror(error));
+        }
+
+        Address heap = image_heap();
+#if log_TELE
+        log_println("Sending boot heap address %p to debugger", heap);
+#endif
+        if (send(sockfd, &heap, sizeof(heap), 0) != sizeof(heap)) {
+            log_exit(11, "Error sending boot image address to debugger");
+        }
+
+        if (close(sockfd) != 0) {
+            int error = errno;
+            log_exit(11, "Error closing socket to debugger: %s", strerror(error));
+        }
+
+        freeaddrinfo(res);
+
+        /* Stop this process in such a way that control of this process is returned to the debugger. */
+#if log_TELE
+        log_println("Stopping VM for debugger");
+#endif
+#if os_DARWIN
+        kill(getpid(), SIGTRAP);
+#elif os_SOLARIS
+        int ctlfd = open("/proc/self/ctl", O_WRONLY);
+        long controlCode = PCDSTOP;
+        write(ctlfd, &controlCode, sizeof(controlCode));
+#else
+        c_UNIMPLEMENTED();
+#endif
+#if log_TELE
+        log_println("VM resumed by debugger");
+#endif
+    }
+}
+
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
@@ -171,7 +245,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #if os_DARWIN
     _executablePath = executablePath;
     if (getenv("DYLD_FORCE_FLAT_NAMESPACE") == NULL) {
-        /* Without this, libjava.jnilib library will use link against the JVM_* functions
+        /* Without this, libjava.jnilib library will link against the JVM_* functions
          * in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. */
         log_exit(11, "The environment variable DYLD_FORCE_FLAT_NAMESPACE must be defined.");
     }
@@ -194,6 +268,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #endif
 
     fd = loadImage();
+
+    initializeDebugger();
 
     messenger_initialize();
 
