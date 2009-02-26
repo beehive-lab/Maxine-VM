@@ -41,7 +41,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     public ReadOnlyTeleProcess(TeleVM teleVM, Platform platform, File programFile) {
-        super(teleVM, platform, programFile, NO_COMMAND_LINE_ARGUMENTS);
+        super(teleVM, platform);
         _dataAccess = new StreamDataAccess(new MemoryDataStreamFactory(), platform.processorKind().dataModel());
     }
 

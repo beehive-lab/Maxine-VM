@@ -30,22 +30,28 @@ import com.sun.max.vm.prototype.*;
 
 public class GuestVMXenTeleVM extends TeleVM {
 
-    public GuestVMXenTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandlineArguments, int id) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandlineArguments, id);
+    public GuestVMXenTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandlineArguments, int processID) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandlineArguments, processID, null);
     }
 
     private GuestVMXenTeleDomain _domain;
+
     @Override
-    protected TeleProcess createTeleProcess(String[] commandLineArguments, int id) {
+    protected TeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+        return attachToTeleProcess(-1);
+    }
+
+    @Override
+    protected TeleProcess attachToTeleProcess(int processID) {
         if (_domain != null) {
             throw new RuntimeException("Attempt to create multiple XenOSTeleDomains, not allowed.");
         }
-        _domain = new GuestVMXenTeleDomain(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, id);
+        _domain = new GuestVMXenTeleDomain(this, bootImage().vmConfiguration().platform(), processID);
         return _domain;
     }
 
     @Override
-    protected Pointer loadBootImage() throws BootImageException {
+    protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
         return _domain.getBootHeap();
     }
 

@@ -24,83 +24,8 @@
 #include "log.h"
 #include "word.h"
 #include "jni.h"
-
+#include "dataio.h"
 #include "relocation.h"
-
-#if (word_LITTLE_ENDIAN)
-#define GET_LITTLE_ENDIAN_DATUM(type) return *((type *) p);
-#define PUT_LITTLE_ENDIAN_DATUM(type) do { *((type *) p) = value; } while(0)
-#define GET_BIG_ENDIAN_DATUM(type) do { \
-        int i; \
-        type result = 0; \
-        Byte *pByte = (Byte *) p; \
-        for (i = sizeof(type) - 1; i >= 0; --i) { \
-            result |= *pByte++ << (i * 8); \
-        } \
-        return result; \
-    } while(0)
-#define PUT_BIG_ENDIAN_DATUM(type) do { \
-        int i; \
-        Byte *pByte = (Byte *) p; \
-        for (i = sizeof(type) - 1; i >= 0; --i) { \
-            *pByte++ = ((value >> (i * 8)) & 0xff); \
-        } \
-    } while(0)
-#else
-#define GET_BIG_ENDIAN_DATUM(type) return *((type *) p);
-#define PUT_BIG_ENDIAN_DATUM(type) do { *((type *) p) = value; } while(0)
-#define GET_LITTLE_ENDIAN_DATUM(type) do { \
-        int i; \
-        type result = 0; \
-        Byte *pByte = (Byte *) p; \
-        for (i = 0; i < sizeof(type); i++) { \
-            result |= *pByte++ << (i * 8); \
-        } \
-        return result; \
-    } while(0)
-#define PUT_LITTLE_ENDIAN_DATUM(type) do { \
-        int i; \
-        Byte *pByte = (Byte *) p; \
-        for (i = 0; i < sizeof(type); i++) { \
-            *pByte++ = (value & 0xff); \
-            value >>= 8; \
-        } \
-    } while(0)
-#endif
-
-static Unsigned8 getLittleEndianUnsigned8(Address p) {
-    GET_LITTLE_ENDIAN_DATUM(Unsigned8);
-}
-
-static Unsigned8 getBigEndianUnsigned8(Address p) {
-    GET_BIG_ENDIAN_DATUM(Unsigned8);
-}
-
-static Unsigned4 getLittleEndianUnsigned4(Address p) {
-    GET_LITTLE_ENDIAN_DATUM(Unsigned4);
-}
-
-static Unsigned4 getBigEndianUnsigned4(Address p) {
-    GET_BIG_ENDIAN_DATUM(Unsigned4);
-}
-
-
-
-static void putLittleEndianUnsigned8(Address p, Unsigned8 value) {
-    PUT_LITTLE_ENDIAN_DATUM(Unsigned8);
-}
-
-static void putBigEndianUnsigned8(Address p, Unsigned8 value) {
-    PUT_BIG_ENDIAN_DATUM(Unsigned8);
-}
-
-static void putLittleEndianUnsigned4(Address p, Unsigned4 value) {
-    PUT_LITTLE_ENDIAN_DATUM(Unsigned4);
-}
-
-static void putBigEndianUnsigned4(Address p, Unsigned4 value) {
-    PUT_BIG_ENDIAN_DATUM(Unsigned4);
-}
 
 #define RELOCATION_LOOP(wordType, getWord, putWord) do { \
         for (i = 0; i < relocationDataSize; i++) { \
@@ -132,15 +57,15 @@ void relocation_apply(void *heap, int relocationScheme, void *relocationData, in
 
     if (wordSize == sizeof(Unsigned4)) {
         if (isBigEndian) {
-            RELOCATION_LOOP(Unsigned4, getBigEndianUnsigned4, putBigEndianUnsigned4);
+            RELOCATION_LOOP(Unsigned4, readBigEndianUnsigned4, writeBigEndianUnsigned4);
         } else {
-            RELOCATION_LOOP(Unsigned4, getLittleEndianUnsigned4, putLittleEndianUnsigned4);
+            RELOCATION_LOOP(Unsigned4, readLittleEndianUnsigned4, writeLittleEndianUnsigned4);
         }
     } else if (wordSize == sizeof(Unsigned8)) {
         if (isBigEndian) {
-            RELOCATION_LOOP(Unsigned8, getBigEndianUnsigned8, putBigEndianUnsigned8);
+            RELOCATION_LOOP(Unsigned8, readBigEndianUnsigned8, writeBigEndianUnsigned8);
         } else {
-            RELOCATION_LOOP(Unsigned8, getLittleEndianUnsigned8, putLittleEndianUnsigned8);
+            RELOCATION_LOOP(Unsigned8, readLittleEndianUnsigned8, writeLittleEndianUnsigned8);
         }
     } else {
         c_ASSERT(false);

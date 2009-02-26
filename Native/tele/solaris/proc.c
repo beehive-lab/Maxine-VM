@@ -298,7 +298,7 @@ void log_printStatusFlags(const char *prefix, int pr_flags, const char *suffix) 
 	}
 }
 
-void log_printWhyStopped(const char * prefix, lwpstatus_t *lwpStatus, const char * suffix) {
+void log_printWhyStopped(const char * prefix, const lwpstatus_t *lwpStatus, const char * suffix) {
 	int nameLength = SYS2STR_MAX > FLT2STR_MAX ? SYS2STR_MAX : FLT2STR_MAX;
     char name[nameLength];
     uint32_t bits;

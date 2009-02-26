@@ -24,7 +24,6 @@ import java.io.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.prototype.*;
 
 /**
@@ -33,65 +32,12 @@ import com.sun.max.vm.prototype.*;
 public final class LinuxTeleVM extends TeleVM {
 
     @Override
-    protected LinuxTeleProcess createTeleProcess(String[] commandLineArguments, int id) {
+    protected LinuxTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         return new LinuxTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments);
     }
 
-    private Pointer findHeap(String bootImageFileName) {
-        FileReader fileReader = null;
-        final LinuxTeleProcess linuxInferiorProcess = (LinuxTeleProcess) teleProcess();
-        try {
-            fileReader = new FileReader("/proc/" + linuxInferiorProcess.processID() + "/maps");
-            final BufferedReader bufferedReader = new BufferedReader(fileReader);
-            while (true) {
-                final String line = bufferedReader.readLine();
-                if (line == null) {
-                    fileReader.close();
-                    return Pointer.zero();
-                }
-                if (line.contains(bootImageFileName)) {
-                    final String s = line.substring(0, line.indexOf('-'));
-                    fileReader.close();
-                    return Pointer.fromLong(Long.parseLong(s, 16));
-                }
-            }
-        } catch (IOException ioException) {
-            return Pointer.zero();
-        }
-    }
-
-    @Override
-    protected Pointer loadBootImage() throws BootImageException {
-        Pointer heap = Pointer.zero();
-        final LinuxTeleProcess linuxInferiorProcess = (LinuxTeleProcess) teleProcess();
-        try {
-            final int maxSyscallsBeforeGivingUp = 10000;
-            for (int i = 0; i < maxSyscallsBeforeGivingUp; i++) {
-                try {
-                    linuxInferiorProcess.waitForNextSyscall();
-                } catch (IOException ioException) {
-                    // the call in the try block may fail sporadically, but we do not care here and just keep trying
-                }
-                heap = findHeap(bootImageFile().getName());
-                if (!heap.isZero()) {
-                    linuxInferiorProcess.initializeDebugging();
-                    return heap;
-                }
-            }
-        } finally {
-            if (heap.isZero()) {
-                try {
-                    terminate();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return heap;
-    }
-
-    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int id) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, id);
+    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
     }
 
 }

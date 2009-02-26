@@ -322,7 +322,8 @@ function run_image() {
 # 'compile' command
 #=======================================
 
-compile_help="compile a list of classes and/or methods"
+compile_help="compile a list of classes and/or methods using the VM's compiler. \
+The compilation phases are traced and the resulting machine code is disassembled."
 
 function run_compile() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@
@@ -495,16 +496,16 @@ function usage() {
     echo " -v               enable verbose output "
     echo " -d               enable debug output"
     echo " -h               show launcher help"
-    echo " -java_home       specifies JDK installation directory (must be JDK 6 or later)"
+    echo " -java_home <path> specifies JDK installation directory (must be JDK 6 or later)"
     echo "                    (default: value of the JAVA_HOME environment variable)"
-    echo " -jvm             specifies Java VM executable (default: bin/java under JAVA_HOME)"
+    echo " -jvm <path>      specifies Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -J<args>         specifies Java VM arguments (default: ${default_jvm_args})"
     echo " -J/p<args>       prefix Java VM arguments"
     echo " -J/a<args>       suffix Java VM arguments"
-    echo " -maxine          specifies base directory of the Maxine code base"
+    echo " -maxine <path>   specifies base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
-    echo " -junit4          class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
-    echo " -make            path to GNU make executable (default: $make)"
+    echo " -junit4 <cp>     class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
+    echo " -make <path>     path to GNU make executable (default: $make)"
 }
 
 if [ -n "${unknown_option}" ]; then
