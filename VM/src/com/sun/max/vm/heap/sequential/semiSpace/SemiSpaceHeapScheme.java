@@ -58,7 +58,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
     private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
     private static final VMIntOption _safetyZoneSizeOption = new VMIntOption("-XX:SemiSpaceGC:szs", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes", MaxineVM.Phase.PRISTINE);
-    private static final VMOption _minimizeMemoryOption = new VMOption("-XX:SemiSpaceGC:MinimizeMemory", "Minimize memory usage", MaxineVM.Phase.PRISTINE);
+    private static final VMStringOption _growPolicyOption = new VMStringOption("-XX:SemiSpaceGC:GrowPolicy:", false, "Double", "Grow policy for heap", MaxineVM.Phase.STARTING);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -125,6 +125,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private SemiSpaceMemoryRegion _growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");  // used while growing the heap
     private SemiSpaceMemoryRegion _growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");          // used while growing the heap
     private static int _safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
+    private GrowPolicy _growPolicy;
     private Address _top;                                                  // top of allocatable space (less safety zone)
     private volatile Address _allocationMark;                     // current allocation point
 
@@ -305,6 +306,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
             TeleHeapInfo.registerMemoryRegions(_toSpace, _fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
+            final String growPolicy = _growPolicyOption.getValue();
+            if (growPolicy.equals("Double")) {
+                _growPolicy = new DoubleGrowPolicy();
+            } else if (growPolicy.startsWith("Linear")) {
+                _growPolicy = new LinearGrowPolicy(growPolicy);
+            } else {
+                Log.print("Unknown heap growth policy, using default policy");
+                _growPolicy = new DoubleGrowPolicy();
+            }
             _collectorThread = new StopTheWorldDaemon("GC", _collect);
         }
     }
@@ -495,7 +505,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         // It is important to know now that we can allocate both spaces of the new size
         // and, if we cannot, to leave things as they are, so that the VM can continue
         // using the safety zone and perhaps then free enough space to continue.
-        final Size size = Size.min(_fromSpace.size().times(2), Heap.maxSize());
+        final Size size = Size.min(_growPolicy.growth(_fromSpace.size()), Heap.maxSize());
         if (preGc && Heap.verbose()) {
             Log.print("New heap size: ");
             Log.println(size.toLong());
@@ -803,25 +813,38 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private void logSpaces() {
         logSpace(_fromSpace);
         logSpace(_toSpace);
+        Log.print("top "); Log.print(_top);
+        Log.print(", allocation mark "); Log.println(_allocationMark);
     }
 
     private void logSpace(SemiSpaceMemoryRegion space) {
-        Log.println(space.description());
-        Log.print("start "); Log.print(space.start());
+        Log.print(space.description());
+        Log.print(" start "); Log.print(space.start());
+        Log.print(", end "); Log.print(space.end());
         Log.print(", size "); Log.print(space.size());
         Log.println("");
     }
 
     private synchronized boolean shrink(Size amount) {
-        final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize();
+        final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
+        if (Heap.verbose()) {
+            logSpaces();
+        }
         executeCollectorThread();
         if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
             // give back part of the existing spaces
+            if (Heap.verbose()) {
+                logSpaces();
+            }
             final int amountAsInt = pageAlignedAmount.toInt();
             _fromSpace.setSize(_fromSpace.size().minus(amountAsInt));
             _toSpace.setSize(_toSpace.size().minus(amountAsInt));
-            VirtualMemory.deallocate(_fromSpace.end().minus(amountAsInt), pageAlignedAmount, VirtualMemory.Type.HEAP);
-            VirtualMemory.deallocate(_toSpace.end().minus(amountAsInt), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            _top = _top.minus(amountAsInt);
+            VirtualMemory.deallocate(_fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            VirtualMemory.deallocate(_toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            if (Heap.verbose()) {
+                logSpaces();
+            }
             return true;
         }
         return false;
@@ -845,5 +868,49 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
+    }
+
+    /*
+     * This class encapsulates the policy for how to grow the heap.
+     *
+     */
+    private abstract class GrowPolicy {
+        /**
+         * Returns the new size given the old.
+         * @param current the current size
+         * @return the new size
+         */
+        abstract Size growth(Size current);
+    }
+
+    private class DoubleGrowPolicy extends GrowPolicy {
+        @Override
+        Size growth(Size current) {
+            return current.times(2);
+        }
+    }
+
+    private class LinearGrowPolicy extends GrowPolicy {
+        int _amount;
+
+        LinearGrowPolicy(String s) {
+            _amount = Heap.initialSize().toInt();
+        }
+
+        LinearGrowPolicy(Size amount) {
+            _amount = amount.toInt();
+        }
+        LinearGrowPolicy(int amount) {
+            _amount = amount;
+        }
+
+        @Override
+        Size growth(Size current) {
+            return current.plus(_amount);
+        }
+
+        void setAmount(int amount) {
+            _amount = amount;
+        }
     }
 }

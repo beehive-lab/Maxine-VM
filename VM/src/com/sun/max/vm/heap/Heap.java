@@ -57,23 +57,48 @@ public final class Heap {
 
     private static final VMOption _disableGCOption = new VMOption("-XX:DisableGC", "Disable garbage collection.", MaxineVM.Phase.PRISTINE);
 
+    private static Size _maxSize;
+    private static Size _initialSize;
+
+    public static Size maxSize() {
+        if (_maxSize.isZero()) {
+            _maxSize = maxSizeOption();
+        }
+        return _maxSize;
+    }
+
+    public static void setMaxSize(Size size) {
+        _maxSize = size;
+    }
+
     /**
      * Return the maximum heap size specified by the "-Xmx" command line option.
      * @return the size of the maximum heap specified on the command line
      */
-    public static Size maxSize() {
+    public static Size maxSizeOption() {
         if (_maxHeapSizeOption.isPresent() || _maxHeapSizeOption.getValue().greaterThan(_initialHeapSizeOption.getValue())) {
             return _maxHeapSizeOption.getValue();
         }
         return _initialHeapSizeOption.getValue();
     }
 
+    public static Size initialSize() {
+        if (_initialSize.isZero()) {
+            _initialSize = initialSizeOption();
+        }
+        return _initialSize;
+    }
+
+    public static void setInitialSize(Size size) {
+        _initialSize = size;
+    }
+
     /**
      * Return the initial heap size specified by the "-Xms" command line option.
      * @return the size of the initial heap specified on the command line
      */
-    public static Size initialSize() {
-        if (_initialHeapSizeOption.isPresent() || _initialHeapSizeOption.getValue().lessThan(_maxHeapSizeOption.getValue())) {
+    public static Size initialSizeOption() {
+         if (_initialHeapSizeOption.isPresent() || _initialHeapSizeOption.getValue().lessThan(_maxHeapSizeOption.getValue())) {
             return _initialHeapSizeOption.getValue();
         }
         return _maxHeapSizeOption.getValue();
