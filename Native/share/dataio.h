@@ -18,31 +18,18 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.darwin;
+#ifndef __dataio_h__
+#define __dataio_h__    1
 
-import java.io.*;
+extern Unsigned8 readLittleEndianUnsigned8(Address src);
+extern Unsigned8 readBigEndianUnsigned8(Address src);
+extern Unsigned4 readLittleEndianUnsigned4(Address src);
+extern Unsigned4 readBigEndianUnsigned4(Address src);
 
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.vm.prototype.*;
+extern void writeLittleEndianUnsigned8(Address dst, Unsigned8 value);
+extern void writeBigEndianUnsigned8(Address dst, Unsigned8 value);
+extern void writeLittleEndianUnsigned4(Address dst, Unsigned4 value);
+extern void writeBigEndianUnsigned4(Address dst, Unsigned4 value);
 
-/**
- * @author Bernd Mathiske
- */
-public final class DarwinTeleVM extends TeleVM {
+#endif /*__dataio_h__*/
 
-    @Override
-    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, agent);
-    }
-
-    @Override
-    protected TeleProcess attachToTeleProcess(int processID) {
-        throw Problem.unimplemented();
-    }
-
-    public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
-    }
-}

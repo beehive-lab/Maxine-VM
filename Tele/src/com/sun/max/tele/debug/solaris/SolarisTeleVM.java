@@ -24,7 +24,6 @@ import java.io.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.prototype.*;
 
 /**
@@ -33,24 +32,12 @@ import com.sun.max.vm.prototype.*;
 public final class SolarisTeleVM extends TeleVM {
 
     @Override
-    protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments, int id) {
-        return new SolarisTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, id);
+    protected SolarisTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+        return new SolarisTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments);
     }
 
-    private static native long nativeLoadBootHeap(long processHandle, long mappingSize);
-
-    @Override
-    protected Pointer loadBootImage() throws BootImageException {
-        final SolarisTeleProcess solarisTeleProcess = (SolarisTeleProcess) teleProcess();
-        final long heap = nativeLoadBootHeap(solarisTeleProcess.processHandle(), bootImage().header()._bootHeapSize + bootImage().header()._bootCodeSize);
-        if (heap == 0L) {
-            throw new BootImageException("tele VM could not load boot heap");
-        }
-        return Pointer.fromLong(heap);
-    }
-
-    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int id) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, id);
+    public SolarisTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
     }
 
 }

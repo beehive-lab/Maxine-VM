@@ -322,7 +322,8 @@ function run_image() {
 # 'compile' command
 #=======================================
 
-compile_help="compile a list of classes and/or methods"
+compile_help="compile a list of classes and/or methods using the VM's compiler. \
+The compilation phases are traced and the resulting machine code is disassembled."
 
 function run_compile() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@

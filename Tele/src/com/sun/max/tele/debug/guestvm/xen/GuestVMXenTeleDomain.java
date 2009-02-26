@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
-import java.io.*;
-
 import javax.swing.*;
 
 import com.sun.max.collect.*;
@@ -46,8 +44,8 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     private boolean _terminated = false;
 
-    protected GuestVMXenTeleDomain(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, int id) {
-        super(teleVM, platform, programFile, commandLineArguments);
+    protected GuestVMXenTeleDomain(TeleVM teleVM, Platform platform, int id) {
+        super(teleVM, platform);
         if (id < 0) {
             _domainId = Integer.parseInt(JOptionPane.showInputDialog(null, "Enter the domain id"));
         } else {

@@ -21,8 +21,11 @@
 package com.sun.max.tele;
 
 import java.io.*;
+import java.net.*;
 import java.util.*;
 import java.util.logging.*;
+
+import sun.misc.*;
 
 import com.sun.max.*;
 import com.sun.max.collect.*;
@@ -30,6 +33,7 @@ import com.sun.max.ide.*;
 import com.sun.max.jdwp.vm.core.*;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.jdwp.vm.proxy.VMValue.*;
+import com.sun.max.lang.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.program.Classpath.*;
@@ -55,6 +59,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.debug.*;
 import com.sun.max.vm.grip.*;
@@ -100,12 +105,13 @@ public abstract class TeleVM {
             "Additional locations to use when searching for Java source files. These locations are searched before the default locations.");
         public final Option<Boolean> _relocateOption = newBooleanOption("b", false,
             "Specifies if the heap and code in the boot image is to be relocated. Ignored if -" + _debugOption.getName() + " is specified.");
-        public final Option<String> _vmArguments = newStringOption("a", "",
+        public final Option<String> _vmArguments = newStringOption("a", null,
             "Specifies the arguments to the target VM.");
         public final Option<File> _commandFileOption = newFileOption("c", "",
             "Executes the commands in a file on startup.");
         public final Option<Integer> _debuggeeIdOption = newIntegerOption("id", -1,
-            "Id of debuggee to connect to.");
+            "Process id of VM instance to which this debugger should attach. A value of -1 indicates that a new VM " +
+            "process should be started using the arguments specified by the -" + _vmArguments + " option.");
         public final Option<String> _logLevelOption = newStringOption("logLevel", Level.SEVERE.getName(),
             "Level to set for java.util.logging root logger.");
     }
@@ -156,7 +162,7 @@ public abstract class TeleVM {
         checkClasspath(sourcepath);
 
         final String value = options._vmArguments.getValue();
-        final String[] commandLineArguments = "".equals(value) ? new String[0] : value.split(" ");
+        final String[] commandLineArguments = value == null ? null : ("".equals(value) ? new String[0] : value.split(" "));
 
         if (options._debugOption.getValue()) {
             teleVM = create(bootImageFile, sourcepath, commandLineArguments, options._debuggeeIdOption.getValue());
@@ -178,21 +184,21 @@ public abstract class TeleVM {
         return teleVM;
     }
 
-    private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments, int id) throws BootImageException {
+    private static TeleVM create(File bootImageFile, Classpath sourcepath, String[] commandlineArguments, int processID) throws BootImageException {
         final BootImage bootImage = new BootImage(bootImageFile);
         TeleVM teleVM = null;
         switch (bootImage.vmConfiguration().platform().operatingSystem()) {
             case DARWIN:
-                teleVM = new DarwinTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, id);
+                teleVM = new DarwinTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
             case LINUX:
-                teleVM = new LinuxTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, id);
+                teleVM = new LinuxTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
             case SOLARIS:
-                teleVM = new SolarisTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, id);
+                teleVM = new SolarisTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
             case GUESTVM:
-                teleVM = new GuestVMXenTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, id);
+                teleVM = new GuestVMXenTeleVM(bootImageFile, bootImage, sourcepath, commandlineArguments, processID);
                 break;
             default:
                 Problem.unimplemented();
@@ -405,7 +411,22 @@ public abstract class TeleVM {
         return _isInGC;
     }
 
-    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandlineArguments, int id) throws BootImageException {
+    /**
+     * Creates a tele VM instance by creating or attaching to a Maxine VM process.
+     *
+     * @param bootImageFile path to the boot image file loaded by the VM
+     * @param bootImage the metadata describing the contents in the boot image
+     * @param sourcepath path used to search for Java source files
+     * @param commandLineArguments the command line arguments to be used when creating a new VM process. If this value
+     *            is {@code null}, then an attempt is made to attach to the process whose id is {@code processID}.
+     * @param processID the process ID of an existing VM instance to which this debugger should be attached. This
+     *            argument is ignored if {@code commandLineArguments != null}.
+     * @param agent the agent that opens a socket for the VM to communicate the address of the boot image once it has
+     *            been loaded and relocated. This parameter may be null if {@link #loadBootImage(TeleVMAgent)} is
+     *            overridden by this object to use a different mechanism for discovering the boot image address.
+     * @throws BootImageException
+     */
+    protected TeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID, TeleVMAgent agent) throws BootImageException {
         _bootImageFile = bootImageFile;
         _bootImage = bootImage;
         _sourcepath = sourcepath;
@@ -413,8 +434,16 @@ public abstract class TeleVM {
         _vmConfiguration = vm.configuration();
         _wordSize = _vmConfiguration.platform().processorKind().dataModel().wordWidth().numberOfBytes();
         _programFile = new File(bootImageFile.getParent(), _PROGRAM_NAME);
-        _teleProcess = createTeleProcess(commandlineArguments, id);
-        _bootImageStart = loadBootImage();
+
+        if (commandLineArguments == null) {
+            _teleProcess = attachToTeleProcess(processID);
+            Problem.unimplemented("need to get the boot image address from attached process somehow");
+            _bootImageStart = Pointer.zero();
+        } else {
+            _teleProcess = createTeleProcess(commandLineArguments, agent);
+            _bootImageStart = loadBootImage(agent);
+        }
+
         _fields = new TeleFields(this);
         _methods = new TeleMethods(this);
         _teleObjectFactory = TeleObjectFactory.make(this);
@@ -431,15 +460,48 @@ public abstract class TeleVM {
 
     }
 
-    protected abstract TeleProcess createTeleProcess(String[] commandLineArguments, int id);
+    /**
+     * Starts a new VM process and returns a handle to it.
+     *
+     * @param commandLineArguments the command line arguments to use when starting the VM process
+     * @return a handle to the created VM process
+     * @throws BootImageException if there was an error launching the VM process
+     */
+    protected abstract TeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException;
+
+    protected TeleProcess attachToTeleProcess(int processID) {
+        throw Problem.unimplemented();
+    }
 
     /**
-     * Gets a pointer to the boot image in the remote VM. This may require executing the remote VM up to the
-     * point where it loads or memory maps the boot image.
+     * Gets a pointer to the boot image in the remote VM. The implementation of this method in {@link TeleVM} uses a
+     * provided agent to receive the address from the VM via a socket.
      *
      * @throws BootImageException if the address of the boot image could not be obtained
      */
-    protected abstract Pointer loadBootImage() throws BootImageException;
+    protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
+        try {
+            final Socket socket = agent.waitForVM();
+            final InputStream stream = socket.getInputStream();
+            final Endianness endianness = _vmConfiguration.platform().processorKind().dataModel().endianness();
+            final Pointer heap;
+            switch (Word.width().numberOfBytes()) {
+                case 8: {
+                    heap = Pointer.fromLong(endianness.readLong(stream));
+                    break;
+                }
+                case 4: {
+                    heap = Pointer.fromInt(endianness.readInt(stream));
+                    break;
+                }
+                default:
+                    throw ProgramError.unexpected();
+            }
+            return heap;
+        } catch (IOException ioException) {
+            throw new BootImageException("Error while reading boot image address from VM process", ioException);
+        }
+    }
 
     public final int interpreterUseLevel() {
         return _interpreterUseLevel;

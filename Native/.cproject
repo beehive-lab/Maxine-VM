@@ -1,13 +1,10 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <?fileVersion 4.0.0?>
 
 <cproject>
 <storageModule moduleId="org.eclipse.cdt.core.settings">
 <cconfiguration id="converted.config.925327494">
-<storageModule moduleId="org.eclipse.cdt.core.pathentry">
-<pathentry kind="out" path="build"/>
-<pathentry kind="src" path=""/>
-</storageModule>
+
 <storageModule moduleId="cdt_indexer">
 <indexEnabled indexValue="true"/>
 <indexerProblemsEnabled indexProblemsValue="0"/>
@@ -75,11 +72,11 @@
 <externalSettings/>
 <extensions>
 <extension id="org.eclipse.cdt.core.ctagsindexer" point="org.eclipse.cdt.core.CIndexer">
-<attribute key="ctagslocationtype" value="ctags_path_default"/>
-<attribute key="ctagsindexincludes" value="false"/>
-<attribute key="ctagfilelocation" value=""/>
 <attribute key="ctagslocation" value=""/>
 <attribute key="ctagfiletype" value="ctags_internal"/>
+<attribute key="ctagsindexincludes" value="false"/>
+<attribute key="ctagfilelocation" value=""/>
+<attribute key="ctagslocationtype" value="ctags_path_default"/>
 </extension>
 <extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 <extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser">
@@ -89,6 +86,18 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+
+<storageModule moduleId="org.eclipse.cdt.core.pathentry">
+<pathentry include="/usr/include" kind="inc" path="" system="true"/>
+<pathentry base-path="Native" include="share" kind="inc" path="" system="true"/>
+<pathentry base-path="Native" include="substrate" kind="inc" path="" system="true"/>
+<pathentry base-path="Native" include="prototype" kind="inc" path="" system="true"/>
+<pathentry base-path="Native" include="platform" kind="inc" path="" system="true"/>
+<pathentry kind="out" path="build"/>
+<pathentry kind="src" path=""/>
+</storageModule>
 </cconfiguration>
 </storageModule>
 </cproject>

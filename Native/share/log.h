@@ -61,19 +61,16 @@ extern void log_print_double(double d);
     exit(code); \
 } while(0)
 
-#if word_64_BITS
-#define ADDRESS_FORMAT "0x%016lx"
-#else
-#define ADDRESS_FORMAT "0x%08x"
-#endif
+#define log_ALL 0
 
-#define log_LOADER 0
-#define log_TRAP 0
-#define log_MUTEX 0
-#define log_CONDITION 0
-#define log_LINKER 0
-#define log_JVMNI 0
-#define log_THREADS 0
-#define log_INSPECTOR_NATIVE 0
+#define log_LOADER (log_ALL || 0)
+#define log_TRAP (log_ALL || 0)
+#define log_MUTEX (log_ALL || 0)
+#define log_CONDITION (log_ALL || 0)
+#define log_LINKER (log_ALL || 0)
+#define log_JVMNI (log_ALL || 0)
+#define log_THREADS (log_ALL || 0)
+#define log_TELE (log_ALL || 0)
+
 
 #endif /*__log_h__*/

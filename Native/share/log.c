@@ -131,7 +131,7 @@ void log_print_buffer(const char *buffer) {
 }
 
 void log_print_word(Address address) {
-    log_print_format(ADDRESS_FORMAT, address);
+    log_print_format("%p", address);
 }
 
 void log_print_newline() {

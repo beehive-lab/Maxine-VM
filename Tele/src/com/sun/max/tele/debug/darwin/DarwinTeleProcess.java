@@ -30,6 +30,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.prototype.*;
 
 /**
  * @author Bernd Mathiske
@@ -47,7 +48,7 @@ public final class DarwinTeleProcess extends TeleProcess {
         _pageDataAccess.invalidateCache();
     }
 
-    private static native long nativeCreateChild(long argv);
+    private static native long nativeCreateChild(long argv, int vmAgentSocketPort);
     private static native long nativePidToTask(long pid);
     private static native void nativeKill(long pid);
     private static native boolean nativeSuspend(long task);
@@ -66,14 +67,22 @@ public final class DarwinTeleProcess extends TeleProcess {
         return _task;
     }
 
-    DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, int id) {
-        super(teleVM, platform, programFile, commandLineArguments);
-        _pid = nativeCreateChild(commandLineBuffer().toLong());
+    DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+        super(teleVM, platform);
+        final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
+        _pid = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
         _task = nativePidToTask(_pid);
         if (_task == -1) {
-            ProgramError.unexpected(String.format("task_for_pid() permissions problem -- Need to run java as setgid procmod:%n%n    chgrp procmod `which java`;  chmod g+s `which java`%n"));
+            ProgramError.unexpected(String.format("task_for_pid() permissions problem -- Need to run java as setgid procmod:%n%n" +
+                "    chgrp procmod <java executable>;  chmod g+s <java executable>%n%n" +
+                "where <java executable> is the platform dependent executable found under or relative to " + System.getProperty("java.home") + "."));
         }
         _pageDataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
+        try {
+            resume();
+        } catch (OSExecutionRequestException e) {
+            throw new BootImageException("Error resuming VM after starting it", e);
+        }
     }
 
 

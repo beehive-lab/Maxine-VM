@@ -20,10 +20,11 @@
  */
 #include "mutex.h"
 #include "log.h"
+#include "threads.h"
 
 void mutex_initialize(Mutex mutex) {
 #if log_MUTEX
-    log_println("mutex_initialize(" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+    log_println("mutex_initialize(%p, %p)", thread_self(), mutex);
 #endif
 #   if os_SOLARIS
 	    if (mutex_init(mutex, LOCK_RECURSIVE | LOCK_ERRORCHECK, NULL) != 0) {
@@ -54,21 +55,21 @@ void mutex_initialize(Mutex mutex) {
 
     int mutex_enter(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_enter     (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
 #       endif
         return mutex_lock(mutex);
     }
 
     int mutex_exit(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_exit     (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
 #       endif
         return mutex_unlock(mutex);
     }
 
     void mutex_dispose(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_dispose   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
         if (mutex_destroy(mutex) != 0) {
             c_ASSERT(false);
@@ -79,21 +80,21 @@ void mutex_initialize(Mutex mutex) {
 
 	int mutex_enter(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_enter     (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
 #       endif
 		return pthread_mutex_lock(mutex);
 	}
 
 	int mutex_exit(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_exit     (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
 #       endif
 		return pthread_mutex_unlock(mutex);
 	}
 
 	void mutex_dispose(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_dispose   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
 	    if (pthread_mutex_destroy(mutex) != 0) {
 	        c_ASSERT(false);
@@ -104,7 +105,7 @@ void mutex_initialize(Mutex mutex) {
 
 	int mutex_enter(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_dispose   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
 		if (guestvmXen_monitor_enter(*mutex) != 0) {
 			c_ASSERT(false);
@@ -114,7 +115,7 @@ void mutex_initialize(Mutex mutex) {
 
 	int mutex_exit(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_exit     (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
 #       endif
 		if (guestvmXen_monitor_exit(*mutex) != 0) {
 			c_ASSERT(false);
@@ -124,7 +125,7 @@ void mutex_initialize(Mutex mutex) {
 
 	Boolean mutex_isHeld(Mutex mutex) {
 #       if log_MUTEX
-            log_println("mutex_dispose   (" ADDRESS_FORMAT ", " ADDRESS_FORMAT ")", thread_self(), mutex);
+            log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
         return guestvmXen_holds_monitor(*mutex);
 	}
