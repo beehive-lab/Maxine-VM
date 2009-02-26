@@ -31,6 +31,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.prototype.*;
 
 /**
  * @author Bernd Mathiske
@@ -69,10 +70,15 @@ public final class LinuxTeleProcess extends TeleProcess {
         }
     }
 
-    LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) {
-        super(teleVM, platform, programFile, commandLineArguments);
+    LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
+        super(teleVM, platform);
         _ptrace = Ptrace.createChild(programFile.getAbsolutePath());
         _dataAccess = new StreamDataAccess(new PtraceDataStreamFactory(_ptrace), platform.processorKind().dataModel());
+        try {
+            resume();
+        } catch (OSExecutionRequestException e) {
+            throw new BootImageException("Error resuming VM after starting it", e);
+        }
     }
 
     public void waitForNextSyscall() throws IOException {

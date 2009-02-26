@@ -85,7 +85,7 @@ jboolean ptraceWaitForSignal(jlong pid, jlong task, int signalnum) {
 extern char **environ;
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, long commandLineArgumentArray) {
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
     char **argv = (char**) commandLineArgumentArray;
 
     int childPid = fork();
@@ -95,6 +95,18 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
         if (ptrace(PT_TRACE_ME, 0, 0, 0) != 0) {
             log_exit(1, "ptrace failed in child process");
         }
+
+        if (putenv("DYLD_FORCE_FLAT_NAMESPACE=1") != 0) {
+            /* Without this, libjava.jnilib library will link against the JVM_* functions
+             * in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. */
+            log_exit(11, "The environment variable DYLD_FORCE_FLAT_NAMESPACE must be defined.");
+        }
+
+        char *vmAgentPortSetting;
+        if (asprintf(&vmAgentPortSetting, "MAX_AGENT_PORT=%u", vmAgentPort) == -1) {
+            log_exit(1, "Could not allocate space for setting MAX_DEBUGGER_PORT environment variable");
+        }
+        putenv(vmAgentPortSetting);
 
         /* This call does not return if it succeeds: */
         execv(argv[0], argv);
