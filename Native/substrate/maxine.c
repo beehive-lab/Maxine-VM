@@ -254,7 +254,7 @@ typedef jint (*VMRunMethod)(
                 Address auxiliarySpace,
                 void *openDynamicLibrary(char *),
                 void *dlsym(void *, const char *),
-                void *dlerror(void),
+                char *dlerror(void),
                 int argc,
                 char *argv[]);
 
