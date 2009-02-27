@@ -70,9 +70,13 @@ public final class LinuxTeleProcess extends TeleProcess {
         }
     }
 
-    LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments) throws BootImageException {
+    LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform);
-        _ptrace = Ptrace.createChild(programFile.getAbsolutePath());
+        final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
+        _ptrace = Ptrace.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        if (_ptrace == null) {
+            throw new BootImageException("Error launching VM");
+        }
         _dataAccess = new StreamDataAccess(new PtraceDataStreamFactory(_ptrace), platform.processorKind().dataModel());
         try {
             resume();
@@ -81,40 +85,24 @@ public final class LinuxTeleProcess extends TeleProcess {
         }
     }
 
-    public void waitForNextSyscall() throws IOException {
-        _ptrace.syscall();
-    }
-
-    private static native boolean nativeFreeAgent(long agent);
-
     @Override
     protected void kill() throws OSExecutionRequestException {
-        try {
-            SingleThread.execute(new Runnable() {
-                public void run() {
-                    nativeFreeAgent(_agent);
-                }
-            });
-            _agent = 0;
-            _ptrace.kill();
-        } catch (IOException ioException) {
-            throw new TeleError(ioException);
-        }
+        _ptrace.kill();
     }
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        Problem.unimplemented();
+        _ptrace.resume();
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        Problem.unimplemented();
+        _ptrace.suspend();
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        throw Problem.unimplemented();
+        return _ptrace.waitUntilStopped();
     }
 
     private native boolean nativeGatherThreads(long agent, AppendableSequence<TeleNativeThread> threads);

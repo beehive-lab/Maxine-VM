@@ -90,12 +90,14 @@
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 
 
+
 <storageModule moduleId="org.eclipse.cdt.core.pathentry">
 <pathentry include="/usr/include" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="share" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="substrate" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="prototype" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="platform" kind="inc" path="" system="true"/>
+<pathentry base-path="Native" include="jni" kind="inc" path="" system="true"/>
 <pathentry kind="out" path="build"/>
 <pathentry kind="src" path=""/>
 </storageModule>

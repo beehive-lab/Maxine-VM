@@ -23,6 +23,7 @@ package com.sun.max.tele.debug.linux;
 import java.io.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
@@ -41,12 +42,12 @@ public final class Ptrace {
         _processID = processID;
     }
 
-    private static native int nativeCreateChildProcess(String filename);
+    private static native int nativeCreateChildProcess(long argv, int vmAgentSocketPort);
 
-    public static Ptrace createChild(final String filename) {
+    public static Ptrace createChild(final long argv, final int vmAgentSocketPort) {
         return SingleThread.execute(new Function<Ptrace>() {
             public Ptrace call() {
-                final int processID = nativeCreateChildProcess(filename);
+                final int processID = nativeCreateChildProcess(argv, vmAgentSocketPort);
                 if (processID < 0) {
                     return null;
                 }
@@ -90,23 +91,6 @@ public final class Ptrace {
         }
     }
 
-    private static native boolean nativeSyscall(int processID);
-
-    public synchronized void syscall() throws IOException {
-        try {
-            SingleThread.executeWithException(new Function<Void>() {
-                public Void call() throws Exception {
-                    if (!nativeSyscall(_processID)) {
-                        throw new IOException("Ptrace.syscall");
-                    }
-                    return null;
-                }
-            });
-        } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
-        }
-    }
-
     private static native boolean nativeSingleStep(int processID);
 
     public synchronized boolean singleStep() {
@@ -119,35 +103,62 @@ public final class Ptrace {
 
     private static native boolean nativeResume(int processID);
 
-    public synchronized void resume() throws IOException {
+    public synchronized void resume() throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
                     if (!nativeResume(_processID)) {
-                        throw new IOException("Ptrace.resume");
+                        throw new OSExecutionRequestException("Ptrace.resume");
                     }
                     return null;
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
+            throw Exceptions.cast(OSExecutionRequestException.class, exception);
         }
+    }
+
+    private static native boolean nativeSuspend(int processID);
+
+    public synchronized void suspend() throws OSExecutionRequestException {
+        try {
+            SingleThread.executeWithException(new Function<Void>() {
+                public Void call() throws Exception {
+                    if (!nativeSuspend(_processID)) {
+                        throw new OSExecutionRequestException("Ptrace.suspend");
+                    }
+                    return null;
+                }
+            });
+        } catch (Exception exception) {
+            throw Exceptions.cast(OSExecutionRequestException.class, exception);
+        }
+    }
+
+    private static native boolean nativeWait(int processID);
+
+    public synchronized boolean waitUntilStopped() {
+        return SingleThread.execute(new Function<Boolean>() {
+            public Boolean call() throws Exception {
+                return nativeWait(_processID);
+            }
+        });
     }
 
     private static native boolean nativeKill(int processID);
 
-    public synchronized void kill() throws IOException {
+    public synchronized void kill() throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
                     if (!nativeKill(_processID)) {
-                        throw new IOException("Ptrace.kill");
+                        throw new OSExecutionRequestException("Ptrace.kill");
                     }
                     return null;
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
+            throw Exceptions.cast(OSExecutionRequestException.class, exception);
         }
     }
 

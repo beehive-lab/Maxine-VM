@@ -71,6 +71,9 @@ public final class DarwinTeleProcess extends TeleProcess {
         super(teleVM, platform);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         _pid = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        if (_pid < 0) {
+            throw new BootImageException("Error launching VM");
+        }
         _task = nativePidToTask(_pid);
         if (_task == -1) {
             ProgramError.unexpected(String.format("task_for_pid() permissions problem -- Need to run java as setgid procmod:%n%n" +
@@ -84,7 +87,6 @@ public final class DarwinTeleProcess extends TeleProcess {
             throw new BootImageException("Error resuming VM after starting it", e);
         }
     }
-
 
     @Override
     public void suspend() throws OSExecutionRequestException {
