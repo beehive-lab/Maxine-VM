@@ -52,7 +52,7 @@
 #define GET_LITTLE_ENDIAN_DATUM(src, type) do { \
         int i; \
         type result = 0; \
-        Byte *srcByte = (Byte *) p; \
+        Byte *srcByte = (Byte *) src; \
         for (i = 0; i < sizeof(type); i++) { \
             result |= *srcByte++ << (i * 8); \
         } \
