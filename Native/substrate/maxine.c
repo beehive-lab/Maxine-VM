@@ -38,22 +38,6 @@
 #include "threads.h"
 #include "messenger.h"
 #include "os.h"
-#if os_DARWIN
-#include <crt_externs.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <signal.h>
-#elif os_SOLARIS
-#include <netinet/in.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#define _STRUCTURED_PROC 1 /* Use new definitions in procfs.h instead of those in procfs_old.h */
-#include <sys/procfs.h>
-#endif
 
 #include "maxine.h"
 
@@ -139,10 +123,14 @@ static void *openDynamicLibrary(char *path) {
 #endif
     void *result = dlopen(path, RTLD_LAZY);
 #if log_LINKER
+    char* errorMessage = dlerror();
     if (path == NULL) {
         log_println("openDynamicLibrary(null) = %p", result);
     } else {
         log_println("openDynamicLibrary(\"%s\") = %p", path, result);
+    }
+    if (errorMessage != NULL) {
+        log_println("Error message: %s", errorMessage);
     }
 #endif
     return result;
@@ -154,6 +142,7 @@ static void* loadSymbol(void* handle, const char* symbol) {
 #endif
     void* result = dlsym(handle, symbol);
 #if log_LINKER
+    char* errorMessage = dlerror();
     Dl_info info;
     void* address = result;
     if (dladdr(address, &info) != 0) {
@@ -161,11 +150,39 @@ static void* loadSymbol(void* handle, const char* symbol) {
     } else {
         log_println("loadSymbol(%p, \"%s\") = %p", handle, symbol, result);
     }
+    if (errorMessage != NULL) {
+        log_println("Error message: %s", errorMessage);
+    }
 #endif
     return result;
 }
 
-void initializeDebugger() {
+#if os_DARWIN || os_SOLARIS || os_LINUX
+
+#include <netinet/in.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <signal.h>
+
+#if os_DARWIN
+#include <crt_externs.h>
+#elif os_SOLARIS
+#define _STRUCTURED_PROC 1 /* Use new definitions in procfs.h instead of those in procfs_old.h */
+#include <sys/procfs.h>
+#endif
+
+/**
+ * Communicates the boot image address to a debugger that is listening on the port defined by the
+ * MAX_AGENT_PORT environment variable. If this environment variable is not defined, then no
+ * action is taken.
+ *
+ * Once the boot image address has been sent over the socket, this process puts itself into the
+ * 'stopped' state expected by the debugger mechanism being used to control this process. For
+ * example, under 'ptrace' this means raising a SIGTRAP.
+ */
+void debugger_initialize() {
 
     char *port = getenv("MAX_AGENT_PORT");
     if (port != NULL) {
@@ -210,7 +227,7 @@ void initializeDebugger() {
 #if log_TELE
         log_println("Stopping VM for debugger");
 #endif
-#if os_DARWIN
+#if os_DARWIN || os_LINUX
         kill(getpid(), SIGTRAP);
 #elif os_SOLARIS
         int ctlfd = open("/proc/self/ctl", O_WRONLY);
@@ -224,6 +241,9 @@ void initializeDebugger() {
 #endif
     }
 }
+#else
+#define debugger_initialize()
+#endif
 
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
@@ -234,6 +254,7 @@ typedef jint (*VMRunMethod)(
                 Address auxiliarySpace,
                 void *openDynamicLibrary(char *),
                 void *dlsym(void *, const char *),
+                void *dlerror(void),
                 int argc,
                 char *argv[]);
 
@@ -269,7 +290,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     fd = loadImage();
 
-    initializeDebugger();
+    debugger_initialize();
 
     messenger_initialize();
 
@@ -307,7 +328,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
                     primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
 #endif
-    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
+    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);

@@ -56,6 +56,7 @@ public final class TeleCodeRegion extends TeleRuntimeMemoryRegion {
     /**
      * @return how much memory in region has been allocated to code, {@link Size#zero()) if memory for region not allocated.
      */
+    @Override
     public Size allocatedSize() {
         if (isAllocated()) {
             return mark().minus(start()).asSize();

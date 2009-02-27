@@ -84,6 +84,7 @@ public final class TeleCodeManager extends TeleRuntimeMemoryRegion {
         Trace.end(TRACE_VALUE, tracePrefix() + "initializing, contains " + _teleCodeRegions.length + " regions", startTimeMillis);
     }
 
+    @Override
     public void refresh(long processEpoch) {
         // We aren't caching anything yet, other than the identity of the code regions (see above);
     }

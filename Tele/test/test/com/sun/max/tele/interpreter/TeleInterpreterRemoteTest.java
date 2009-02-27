@@ -59,6 +59,7 @@ public class TeleInterpreterRemoteTest extends TeleInterpreterTestCase {
         return new TeleInterpreterTestSetup(suite);
     }
 
+    @Override
     protected TeleInterpreter createInterpreter() {
         return new TeleInterpreter(teleVM());
     }

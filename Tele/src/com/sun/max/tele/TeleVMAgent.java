@@ -55,6 +55,7 @@ public class TeleVMAgent {
             throw new BootImageException("Error opening agent socket", ioException);
         }
         new Thread("ConnectorAgent") {
+            @Override
             public void run() {
                 try {
                     Trace.line(1, "Opening agent socket on port " + _serverSocket.getLocalPort());

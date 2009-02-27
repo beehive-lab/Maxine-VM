@@ -53,6 +53,7 @@ public class LocalTeleGrip extends TeleGrip {
         return _object.toString();
     }
 
+    @Override
     public boolean isLocal() {
         return true;
     }

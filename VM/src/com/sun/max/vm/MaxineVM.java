@@ -347,12 +347,25 @@ public final class MaxineVM {
         return _primordialVmThreadLocals;
     }
 
+    @PROTOTYPE_ONLY
+    private static final Class[] _runMethodParameterTypes;
+    static {
+        Method runMethod = null;
+        for (Method method : MaxineVM.class.getDeclaredMethods()) {
+            if (method.getName().equals("run")) {
+                ProgramError.check(runMethod == null, "There must only be one method named \"run\" in " + MaxineVM.class);
+                runMethod = method;
+            }
+        }
+        _runMethodParameterTypes = runMethod.getParameterTypes();
+    }
+
     /**
      * Used by the inspector only.
      */
     @PROTOTYPE_ONLY
-    public static  Class [] runMethodParameterTypes() {
-        return new Class[] {Pointer.class, Pointer.class, Pointer.class, Word.class, Word.class, int.class, Pointer.class };
+    public static  Class[] runMethodParameterTypes() {
+        return _runMethodParameterTypes.clone();
     }
 
     /**
@@ -371,7 +384,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer primordialVmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, int argc, Pointer argv) {
+    private static int run(Pointer primordialVmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -385,7 +398,7 @@ public final class MaxineVM {
         _primordialVmThreadLocals = primordialVmThreadLocals;
 
         // This must be called first as subsequent actions depend on it to resolve the native symbols
-        DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym);
+        DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
