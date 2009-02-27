@@ -75,11 +75,15 @@ public final class Heap {
      * Return the maximum heap size specified by the "-Xmx" command line option.
      * @return the size of the maximum heap specified on the command line
      */
-    public static Size maxSizeOption() {
+    private static Size maxSizeOption() {
         if (_maxHeapSizeOption.isPresent() || _maxHeapSizeOption.getValue().greaterThan(_initialHeapSizeOption.getValue())) {
             return _maxHeapSizeOption.getValue();
         }
         return _initialHeapSizeOption.getValue();
+    }
+
+    public static boolean maxSizeOptionIsPresent() {
+        return _maxHeapSizeOption.isPresent();
     }
 
     public static Size initialSize() {
@@ -97,11 +101,15 @@ public final class Heap {
      * Return the initial heap size specified by the "-Xms" command line option.
      * @return the size of the initial heap specified on the command line
      */
-    public static Size initialSizeOption() {
-         if (_initialHeapSizeOption.isPresent() || _initialHeapSizeOption.getValue().lessThan(_maxHeapSizeOption.getValue())) {
+    private static Size initialSizeOption() {
+        if (_initialHeapSizeOption.isPresent() || _initialHeapSizeOption.getValue().lessThan(_maxHeapSizeOption.getValue())) {
             return _initialHeapSizeOption.getValue();
         }
         return _maxHeapSizeOption.getValue();
+    }
+
+    public static boolean initialSizeOptionIsPresent() {
+        return _initialHeapSizeOption.isPresent();
     }
 
     /**
