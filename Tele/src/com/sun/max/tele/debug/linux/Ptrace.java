@@ -162,51 +162,24 @@ public final class Ptrace {
         }
     }
 
-    private static native int nativeReadDataByte(int processID, long address);
+    private static native int nativeReadBytes(int processID, long address, byte[] buffer, int offset, int length);
 
-    public synchronized byte readDataByte(final Address address) throws IOException {
-        final int result = SingleThread.execute(new Function<Integer>() {
+    public synchronized int readBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+        return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                return nativeReadDataByte(_processID, address.toLong());
+                return nativeReadBytes(_processID, address.toLong(), buffer, offset, length);
             }
         });
-        if (result < 0) {
-            throw new DataIOError(address, "Ptrace.readDataByte");
-        }
-        return (byte) result;
     }
 
-    private static native int nativeReadTextByte(int processID, long address);
+    private static native int nativeWriteBytes(int processID, long address, byte[] buffer, int offset, int length);
 
-    public synchronized byte readTextByte(final Address address) throws IOException {
-        try {
-            return SingleThread.executeWithException(new Function<Byte>() {
-                public Byte call() throws IOException {
-                    final int result = nativeReadTextByte(_processID, address.toLong());
-                    if (result < 0) {
-                        throw new IOException("Ptrace.readTextByte");
-                    }
-                    return (byte) result;
-                }
-            });
-        } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
-        }
-    }
-
-    /**
-     * Not thread-safe: Reads a word, changes a byte in it and writes the word back.
-     */
-    private static native boolean nativeWriteDataByte(int processID, long address, byte value);
-
-    public synchronized void writeDataByte(final Address address, final byte value) throws IOException {
-        if (!SingleThread.execute(new Function<Boolean>() {
-            public Boolean call() throws Exception {
-                return nativeWriteDataByte(_processID, address.toLong(), value);
+    public synchronized int writeBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+        return SingleThread.execute(new Function<Integer>() {
+            public Integer call() throws Exception {
+                return nativeWriteBytes(_processID, address.toLong(), buffer, offset, length);
             }
-        })) {
-            throw new DataIOError(address, "Ptrace.writeDataByte");
-        }
+        });
     }
 
     private static native boolean nativeSetInstructionPointer(int processID, long instructionPointer);

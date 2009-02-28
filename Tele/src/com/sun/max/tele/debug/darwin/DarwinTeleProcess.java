@@ -44,7 +44,7 @@ public final class DarwinTeleProcess extends TeleProcess {
         return _pageDataAccess;
     }
 
-    public void invalidateCache() {
+    private void invalidateCache() {
         _pageDataAccess.invalidateCache();
     }
 

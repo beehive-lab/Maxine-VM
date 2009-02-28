@@ -357,7 +357,8 @@ void amd64_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters os, amd64_C
     c->rip = (Word) os->__rip;
     c->flags = (Word) os->__rflags;
 #elif os_LINUX
-    // TODO
+    c->rip = (Word) os->rip;
+    c->flags = (Word) os->eflags;
 #elif os_SOLARIS
     c->rip = (Word) os[REG_RIP];
     c->flags = (Word) os[REG_RFL];

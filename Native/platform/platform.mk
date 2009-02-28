@@ -146,8 +146,8 @@ endif
 ifeq ($(OS),linux)
 	CC = gcc -g
 	C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET)
-	CFLAGS = -Wall -Wno-long-long -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
-	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker /home/dsimon/maxine/Native/generated/$(OS) -o $(MAIN)
+	CFLAGS = -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
+	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(PROJECT)/Native/generated/$(OS) -o $(MAIN)
 	LINK_LIB = gcc -g -shared -lc -lm -lthread_db
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so
