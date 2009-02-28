@@ -96,12 +96,6 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
             log_exit(1, "ptrace failed in child process");
         }
 
-        if (putenv("DYLD_FORCE_FLAT_NAMESPACE=1") != 0) {
-            /* Without this, libjava.jnilib library will link against the JVM_* functions
-             * in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. */
-            log_exit(11, "The environment variable DYLD_FORCE_FLAT_NAMESPACE must be defined.");
-        }
-
         char *portDef;
         if (asprintf(&portDef, "MAX_AGENT_PORT=%u", vmAgentPort) == -1) {
             log_exit(1, "Could not allocate space for setting MAX_AGENT_PORT environment variable");

@@ -711,13 +711,13 @@ public final class JDK_java_lang_System {
         }
 
         // 7. set up classpath and library path
-        String earlyNativeLibraryPath;
+        final String[] javaAndZipLibraryPaths = new String[2];
         if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.DARWIN) {
-            earlyNativeLibraryPath = initDarwinPathProperties(properties, javaHome);
+            initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.WINDOWS) {
-            earlyNativeLibraryPath = initWindowsPathProperties(properties, javaHome);
+            initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
-            earlyNativeLibraryPath = initUnixPathProperties(properties, javaHome, isa);
+            initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
         }
         setIfAbsent(properties, "java.library.path", getenvJavaLibraryPath());
 
@@ -734,7 +734,7 @@ public final class JDK_java_lang_System {
         }
 
         // 9. load the native code for zip and java libraries
-        VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(earlyNativeLibraryPath);
+        VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
         // 10. initialize the file system with current runtime values as opposed to prototyping time values
         ClassActor.fromJava(File.class).callInitializer();
@@ -753,10 +753,10 @@ public final class JDK_java_lang_System {
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
-     * @return the value of the sun.boot.library.path system property
+     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the libjava.jnilib will be returned in
+     *            element 0 and the path to libzip.jnilib will be returned in element 1
      */
-    private static String initUnixPathProperties(Properties properties, String javaHome, String isa) {
-        String earlyNativeLibraryPath;
+    private static void initUnixPathProperties(Properties properties, String javaHome, String isa, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/jre"), "The java.home system property should end with \"/jre\"");
         final String jrePath = javaHome;
         final String jreLibPath = asFilesystemPath(jrePath, "lib");
@@ -779,8 +779,8 @@ public final class JDK_java_lang_System {
         }
         setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
 
-        earlyNativeLibraryPath = jreLibIsaPath;
-        return earlyNativeLibraryPath;
+        javaAndZipLibraryPaths[0] = jreLibIsaPath;
+        javaAndZipLibraryPaths[1] = jreLibIsaPath;
     }
 
     static String checkAugmentBootClasspath(final String xBootClassPath) {
@@ -799,9 +799,10 @@ public final class JDK_java_lang_System {
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
-     * @return the value of the sun.boot.library.path system property
+     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the java.dll will be returned in
+     *            element 0 and the path to zip.dll will be returned in element 1
      */
-    private static String initWindowsPathProperties(Properties properties, String javaHome) {
+    private static void initWindowsPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         throw FatalError.unexpected("Initialization of paths on Windows is unimplemented");
     }
 
@@ -810,10 +811,10 @@ public final class JDK_java_lang_System {
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
-     * @return the value of the sun.boot.library.path system property
+     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the libjava.jnilib will be returned in
+     *            element 0 and the path to libzip.jnilib will be returned in element 1
      */
-    private static String initDarwinPathProperties(Properties properties, String javaHome) {
-        String earlyNativeLibraryPath;
+    private static void initDarwinPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/Home"), "The java.home system property should end with \"/Home\"");
         final String javaPath = Strings.chopSuffix(javaHome, "/Home");
 
@@ -835,9 +836,8 @@ public final class JDK_java_lang_System {
                         asFilesystemPath(classesPath, "charsets.jar"));
         }
         setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
-
-        earlyNativeLibraryPath = librariesPath;
-        return earlyNativeLibraryPath;
+        javaAndZipLibraryPaths[0] = getenvExecutablePath();
+        javaAndZipLibraryPaths[1] = librariesPath;
     }
 
     private static void initBasicWindowsProperties(Properties properties) {

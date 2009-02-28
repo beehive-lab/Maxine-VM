@@ -182,13 +182,14 @@ public final class VmClassLoader extends ClassLoader {
         nativeLibraries.addElement(nativeLibrary);
     }
 
-    public void loadJavaAndZipNativeLibraries(String libraryPath) {
+    public void loadJavaAndZipNativeLibraries(String javaLibraryPath, String zipLibraryPath) {
         if (VMConfiguration.hostOrTarget().platform().operatingSystem() == OperatingSystem.GUESTVM) {
             // no native libraries in GuestVM
             return;
         }
-        loadNativeLibrary(libraryPath, "java");
-        loadNativeLibrary(libraryPath, "zip");
+
+        loadNativeLibrary(javaLibraryPath, "java");
+        loadNativeLibrary(zipLibraryPath, "zip");
 
         VMConfiguration.hostOrTarget().runScheme().runNativeInitializationMethods();
     }

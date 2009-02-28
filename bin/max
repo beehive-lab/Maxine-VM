@@ -156,13 +156,6 @@ test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP envi
 maxine_cp=${maxine_cp}:/${JUNIT4_CP}
 
 maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
-if [ "$MAXINE_OS" = "darwin" ]; then
-    # Due to Darwin support for two-level namespaces, libjava.jnilib resolves references to the JVM_* functions
-    # to those in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. Setting this variable
-    # ensures the correct resolution is made. See the man page for dyld(1) for more information.
-    DYLD_FORCE_FLAT_NAMESPACE=1    
-    export DYLD_FORCE_FLAT_NAMESPACE    
-fi
 
 #=======================================
 # Utility for verbose execution

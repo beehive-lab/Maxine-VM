@@ -793,7 +793,7 @@ public class ClassfileReader {
                             } else if (annotationTypeDescriptor.equals(forJavaClass(WRAPPER.class))) {
                                 flags |= WRAPPER;
                             } else if (annotationTypeDescriptor.equals(forJavaClass(BYTECODE_TEMPLATE.class))) {
-                                flags |= TEMPLATE;
+                                flags |= TEMPLATE | UNSAFE;
                             } else if (annotationTypeDescriptor.equals(forJavaClass(INLINE.class))) {
                                 flags |= INLINE;
                                 for (AnnotationInfo.NameElementPair nameElementPair : info.nameElementPairs()) {
