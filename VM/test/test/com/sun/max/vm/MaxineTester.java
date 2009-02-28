@@ -802,16 +802,7 @@ public class MaxineTester {
 
     private static int runMaxineVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = imageDir.getName() + "/maxvm" + (mainClass == null ? "" : " " + mainClass.getName());
-        String[] env = null;
-        if (OperatingSystem.current() == OperatingSystem.DARWIN) {
-            final List<String> envList = new ArrayList<String>();
-            for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-                envList.add(entry.toString());
-            }
-            envList.add("DYLD_FORCE_FLAT_NAMESPACE=1");
-            env = envList.toArray(new String[envList.size()]);
-        }
-        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), env, outputFile, name, timeout);
+        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), null, outputFile, name, timeout);
     }
 
     private static int runJavaVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {

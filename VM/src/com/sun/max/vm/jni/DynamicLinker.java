@@ -73,7 +73,7 @@ public final class DynamicLinker {
      *
      * @param nativeOpenDynamicLibrary
      * @param dlsym
-     * @param dlerror TODO
+     * @param dlerror
     */
     public static void initialize(Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror) {
         _nativeOpenDynamicLibrary = nativeOpenDynamicLibrary;
