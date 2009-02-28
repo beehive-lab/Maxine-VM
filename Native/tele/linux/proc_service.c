@@ -40,19 +40,19 @@ ps_err_e ps_pstop(struct ps_prochandle *ph) {
 
 ps_err_e ps_pcontinue(struct ps_prochandle *ph) {
     /* The Inspector is supposed to control this behavior on its own. */
-    return PS_OK;    
+    return PS_OK;
 }
 
 ps_err_e ps_lstop(struct ps_prochandle *ph, lwpid_t lwpid) {
     /* This routine is allegedly never used by thread_db. */
     log_println("ps_lstop");
-    return PS_ERR;    
+    return PS_ERR;
 }
 
 ps_err_e ps_lcontinue(struct ps_prochandle *ph, lwpid_t lwpid) {
     /* This routine is allegedly never used by thread_db. */
     log_println("ps_lcontinue");
-    return PS_ERR;    
+    return PS_ERR;
 }
 
 ps_err_e ps_pglobal_lookup(struct ps_prochandle *ph, const char *objectName, const char *symbolName, psaddr_t *symbolAddress) {
@@ -72,18 +72,19 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
     char *buf = (char *) buffer;
     long rslt;
     size_t i, words;
-    uintptr_t end_addr = addr + size;
-    uintptr_t aligned_addr = align(addr, sizeof(long));
+    uintptr_t uaddr = (uintptr_t) addr;
+    uintptr_t end_addr = uaddr + size;
+    uintptr_t aligned_addr = align(uaddr, sizeof(long));
 
-    if (aligned_addr != addr) {
+    if (aligned_addr != uaddr) {
         char *ptr = (char *) &rslt;
         errno = 0;
-        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, aligned_addr, 0);
+        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, (Address) aligned_addr, 0);
         if (errno) {
             log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return PS_ERR;
         }
-        for (; aligned_addr != addr; aligned_addr++, ptr++) {
+        for (; aligned_addr != uaddr; aligned_addr++, ptr++) {
         }
         for (; ((intptr_t)aligned_addr % sizeof(long)) && aligned_addr < end_addr; aligned_addr++) {
             *(buf++) = *(ptr++);
@@ -95,8 +96,8 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
     // assert((intptr_t)aligned_addr % sizeof(long) == 0);
     for (i = 0; i < words; i++) {
         errno = 0;
-        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, aligned_addr, 0);
-        if (errno) { 
+        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, (Address) aligned_addr, 0);
+        if (errno) {
             log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return false;
         }
@@ -108,7 +109,7 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
     if (aligned_addr != end_addr) {
         char *ptr = (char *) &rslt;
         errno = 0;
-        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, aligned_addr, 0);
+        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, (Address) aligned_addr, 0);
         if (errno) {
             log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return false;
@@ -164,7 +165,7 @@ void ps_plog (const char *format, ...) {
     va_list a;
 
     va_start(a, format);
-    vfprintf(stderr, format, a);    
+    vfprintf(stderr, format, a);
 }
 
 ps_err_e ps_get_thread_area() {

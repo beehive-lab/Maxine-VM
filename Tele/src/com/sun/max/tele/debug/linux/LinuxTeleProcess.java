@@ -25,10 +25,10 @@ import java.io.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
+import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.prototype.*;
@@ -48,27 +48,20 @@ public final class LinuxTeleProcess extends TeleProcess {
         return _ptrace.processID();
     }
 
-    private final DataAccess _dataAccess;
+    private final PageDataAccess _pageDataAccess;
 
     @Override
-    public DataAccess dataAccess() {
-        return _dataAccess;
+    public PageDataAccess dataAccess() {
+        return _pageDataAccess;
+    }
+
+    private void invalidateCache() {
+        _pageDataAccess.invalidateCache();
     }
 
     private long _agent;
 
     private static native long nativeCreateAgent(int processID);
-
-    public void initializeDebugging() {
-        SingleThread.execute(new Runnable() {
-            public void run() {
-                _agent = nativeCreateAgent(_ptrace.processID());
-            }
-        });
-        if (_agent == 0L) {
-            throw new TeleError("could not create thread_db agent");
-        }
-    }
 
     LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform);
@@ -77,7 +70,7 @@ public final class LinuxTeleProcess extends TeleProcess {
         if (_ptrace == null) {
             throw new BootImageException("Error launching VM");
         }
-        _dataAccess = new StreamDataAccess(new PtraceDataStreamFactory(_ptrace), platform.processorKind().dataModel());
+        _pageDataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
         try {
             resume();
         } catch (OSExecutionRequestException e) {
@@ -102,7 +95,9 @@ public final class LinuxTeleProcess extends TeleProcess {
 
     @Override
     protected boolean waitUntilStopped() {
-        return _ptrace.waitUntilStopped();
+        final boolean result = _ptrace.waitUntilStopped();
+        invalidateCache();
+        return result;
     }
 
     private native boolean nativeGatherThreads(long agent, AppendableSequence<TeleNativeThread> threads);
@@ -112,6 +107,12 @@ public final class LinuxTeleProcess extends TeleProcess {
         try {
             return SingleThread.executeWithException(new Function<Boolean>() {
                 public Boolean call() throws IOException {
+                    if (_agent == 0L) {
+                        _agent = nativeCreateAgent(_ptrace.processID());
+                        if (_agent == 0L) {
+                            throw new TeleError("could not create thread_db agent");
+                        }
+                    }
                     return nativeGatherThreads(_agent, threads);
                 }
             });
@@ -130,19 +131,18 @@ public final class LinuxTeleProcess extends TeleProcess {
             thread = new LinuxTeleNativeThread(this, threadID, lwpId, stackStart, stackSize);
         }
 
-        assert state >= 0 && state < ThreadState.VALUES.length();
+        assert state >= 0 && state < ThreadState.VALUES.length() : state;
         thread.setState(ThreadState.VALUES.get(state));
         threads.append(thread);
     }
 
     @Override
     protected int read0(Address address, byte[] buffer, int offset, int length) {
-        throw Problem.unimplemented();
+        return _ptrace.readBytes(address, buffer, offset, length);
     }
 
     @Override
     protected int write0(byte[] buffer, int offset, int length, Address address) {
-        throw Problem.unimplemented();
+        return _ptrace.writeBytes(address, buffer, offset, length);
     }
-
 }
