@@ -33,5 +33,5 @@ include $(PROJECT)/share/share.mk
 all : $(MAIN)
 	mkdir -p $(PROJECT)/generated/$(OS)
 	cp -f $(PROJECT)/build/$(OS)/launch/$(MAIN) $(PROJECT)/generated/$(OS)
-	@test $(OS) = "darwin" && $(PROJECT)/launch/mod-javalib.sh $(PROJECT)/generated/$(OS) $(JAVA_HOME)
+	@test $(OS) = "darwin" && $(PROJECT)/../bin/mod-javalib.sh $(PROJECT)/generated/$(OS) $(JAVA_HOME)
 	

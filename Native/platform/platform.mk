@@ -137,7 +137,7 @@ ifeq ($(OS),darwin)
 	LINK_MAIN = gcc -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
 	# The version linker flag below ensure are required by the modified version of
 	# libjava.jnilib that is put into the $(PROJECT)/Native/generated/$(OS) directory
-	# by running $(PROJECT)/launch/mod-javalib.sh. This library expects the jvm shared
+	# by running $(PROJECT)/../bin/mod-javalib.sh. This library expects the jvm shared
 	# library to have a certain version number.
 	LINK_LIB = gcc -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
 	    -Xlinker -compatibility_version -Xlinker 1.0.0 \
