@@ -838,6 +838,11 @@ public class MaxineTester {
             copyBinary(imageDir, mapLibraryName("javatest"));
             copyBinary(imageDir, mapLibraryName("prototype"));
             copyBinary(imageDir, mapLibraryName("tele"));
+
+            if (OperatingSystem.current() == OperatingSystem.DARWIN) {
+                exec(null, new String[] {"bin/mod-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, new File("/dev/stdout"), null, 5);
+            }
+
             _generatedImages.put(imageConfig, imageDir);
             return true;
         } else if (exitValue == PROCESS_TIMEOUT) {
@@ -920,12 +925,27 @@ public class MaxineTester {
         return cmd.toArray(new String[0]);
     }
 
+    /**
+     * Executes a command in a sub-process.
+     *
+     * @param workingDir the working directory of the subprocess, or {@code null} if the subprocess should inherit the
+     *            working directory of the current process
+     * @param command the command and arguments to be executed
+     * @param env array of strings, each element of which has environment variable settings in the format
+     *            <i>name</i>=<i>value</i>, or <tt>null</tt> if the subprocess should inherit the environment of the
+     *            current process
+     * @param outputFile the file to which stdout and stderr should be redirected or {@code null} if these output
+     *            streams are to be discarded
+     * @param name a descriptive name for the command or {@code null} if {@code command[0]} should be used instead
+     * @param timeout the timeout in seconds
+     * @return
+     */
     private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
         traceExec(workingDir, command);
         try {
-            final FileOutputStream outFile = new FileOutputStream(outputFile);
+            final OutputStream outFile = outputFile != null ? new FileOutputStream(outputFile) : new NullOutputStream();
             final Process process = Runtime.getRuntime().exec(command, env, workingDir);
-            final ProcessThread processThread = new ProcessThread(System.in, outFile, outFile, process, name, timeout);
+            final ProcessThread processThread = new ProcessThread(System.in, outFile, outFile, process, name != null ? name : command[0], timeout);
             final int exitValue = processThread.exitValue();
             outFile.close();
             return exitValue;

@@ -34,7 +34,7 @@ set -e
 set -u
 
 test $# -eq 2 || {
-    echo "Usage: $0 <directory containing maxvm executable> <jdk-home>"
+    echo "Usage: $0 <directory containing libjvm.dylib> <jdk-home>"
     exit 1
 }
 
@@ -46,13 +46,15 @@ pushd $dir >/dev/null
 # Make $dir absolute
 dir=$(/bin/pwd)
 
+new_jvmlib=$dir/libjvm.dylib
+test -f $new_jvmlib || { echo "No libjvm.dylib in $dir"; exit 1; }
+
 # Copy libjava from JDK installation
 src=$JAVA_HOME/../Libraries/libjava.jnilib
 test -f $src || { echo "Missing $src"; exit 1; }
 cp -f $src .
 
 lib=$dir/libjava.jnilib
-new_jvmlib=$dir/libjvm.dylib
 old_jvmlib=$(otool -l $lib | grep libclient.dylib | awk '{print $2}')
 test -n "$old_jvmlib" || {
     echo "Could not find line containing 'libclient.dylib' in $lib"
