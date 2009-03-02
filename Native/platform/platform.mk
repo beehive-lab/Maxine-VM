@@ -136,7 +136,7 @@ ifeq ($(OS),darwin)
 	CFLAGS = -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
 	LINK_MAIN = gcc -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
 	# The version linker flag below ensure are required by the modified version of
-	# libjava.jnilib that is put into the $(PROJECT)/Native/generated/$(OS) directory
+	# libjava.jnilib that is put into the $(PROJECT)/generated/$(OS) directory
 	# by running $(PROJECT)/../bin/mod-macosx-javalib.sh. This library expects the jvm shared
 	# library to have a certain version number.
 	LINK_LIB = gcc -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
@@ -155,8 +155,8 @@ ifeq ($(OS),linux)
 	C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET)
 	CFLAGS = -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
 	# The -rpath option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
-	# fine Maxine's version of the libjvm.so library. 
-	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(PROJECT)/Native/generated/$(OS) -o $(MAIN)
+	# find Maxine's version of the libjvm.so library. 
+	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
 	LINK_LIB = gcc -g -shared -lc -lm -lthread_db
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so
