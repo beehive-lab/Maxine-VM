@@ -39,7 +39,15 @@ public final class FatalError extends Error {
         throw unexpected(message, Address.zero());
     }
 
+    public static FatalError unexpected(String message, Throwable throwable) {
+        throw unexpected(message, Address.zero(), throwable);
+    }
+
     public static FatalError unexpected(String message, Address nativeTrapAddress) {
+        throw unexpected(message, nativeTrapAddress, null);
+    }
+
+    public static FatalError unexpected(String message, Address nativeTrapAddress, Throwable throwable) {
         if (MaxineVM.isPrototyping()) {
             throw new FatalError(message);
         }
@@ -53,6 +61,10 @@ public final class FatalError extends Error {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("FATAL VM ERROR: ");
         Throw.stackDump(message, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
+        if (throwable != null) {
+            Log.print("Caused by: ");
+            throwable.printStackTrace(Log.out);
+        }
         if (Throw._scanStackOnFatalError.isPresent()) {
             Throw.stackScan("stack scan", VMRegister.getCpuStackPointer(), VmThread.current().vmThreadLocals());
         }

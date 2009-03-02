@@ -403,19 +403,19 @@ typedef struct {
     char *user_name;
     char *user_home;
     char *user_dir;
-} java_props_t;
+} native_props_t;
 
 void *native_properties() {
-    static java_props_t sprops = {0, 0, 0};
-    if (sprops.user_dir != NULL) {
-        return &sprops;
+    static native_props_t nativeProperties = {0, 0, 0};
+    if (nativeProperties.user_dir != NULL) {
+        return &nativeProperties;
     }
 
     /* user properties */
     {
         struct passwd *pwent = getpwuid(getuid());
-        sprops.user_name = pwent ? strdup(pwent->pw_name) : "?";
-        sprops.user_home = pwent ? strdup(pwent->pw_dir) : "?";
+        nativeProperties.user_name = pwent ? strdup(pwent->pw_name) : "?";
+        nativeProperties.user_home = pwent ? strdup(pwent->pw_dir) : "?";
     }
 
     /* Current directory */
@@ -424,15 +424,15 @@ void *native_properties() {
         errno = 0;
         if (getcwd(buf, sizeof(buf)) == NULL) {
             /* Error will be reported by Java caller. */
-            sprops.user_dir = NULL;
+            nativeProperties.user_dir = NULL;
         } else {
-            sprops.user_dir = strdup(buf);
+            nativeProperties.user_dir = strdup(buf);
         }
     }
 #if log_LOADER
-    log_println("native_properties: user_name=%s", sprops.user_name);
-    log_println("native_properties: user_home=%s", sprops.user_home);
-    log_println("native_properties: user_dir=%s", sprops.user_dir);
+    log_println("native_properties: user_name=%s", nativeProperties.user_name);
+    log_println("native_properties: user_home=%s", nativeProperties.user_home);
+    log_println("native_properties: user_dir=%s", nativeProperties.user_dir);
 #endif
-    return &sprops;
+    return &nativeProperties;
 }

@@ -36,7 +36,7 @@ import com.sun.max.vm.compiler.cir.variable.*;
 public class CirCopyPropagation{
     IdentityHashMapping<CirVariable, CirValue> _copies = new IdentityHashMapping<CirVariable, CirValue>();
     LinkedList _queue = null;
-    IdentitySet<CirBlock> _seenBlocks = new IdentitySet<CirBlock>(CirBlock.class);
+    IdentitySet<CirBlock> _seenBlocks = new IdentitySet<CirBlock>();
 
     public static void apply(CirClosure closure) {
         final CirCopyPropagation x = new CirCopyPropagation();

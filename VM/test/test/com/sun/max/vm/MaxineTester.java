@@ -802,7 +802,24 @@ public class MaxineTester {
 
     private static int runMaxineVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = imageDir.getName() + "/maxvm" + (mainClass == null ? "" : " " + mainClass.getName());
-        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), null, outputFile, name, timeout);
+        String[] envp = null;
+        if (OperatingSystem.current() == OperatingSystem.LINUX) {
+            // Since the executable may not be in the default location, then the -rpath linker option used when
+            // building the executable may not point to the location of libjvm.so any more. In this case,
+            // LD_LIBRARY_PATH needs to be set appropriately.
+            final Map<String, String> env = new HashMap<String, String>(System.getenv());
+            String libraryPath = env.get("LD_LIBRARY_PATH");
+            if (libraryPath != null) {
+                libraryPath = libraryPath + File.pathSeparatorChar + imageDir.getAbsolutePath();
+            } else {
+                libraryPath = imageDir.getAbsolutePath();
+            }
+            env.put("LD_LIBRARY_PATH", libraryPath);
+
+            final String string = env.toString();
+            envp = string.substring(1, string.length() - 2).split(", ");
+        }
+        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), envp, outputFile, name, timeout);
     }
 
     private static int runJavaVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {

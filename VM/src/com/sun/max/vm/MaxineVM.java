@@ -472,9 +472,9 @@ public final class MaxineVM {
     public static native Pointer native_environment();
 
     /**
-     * An enum for the properties whose values must be obtained from the native environment
-     * at runtime. The enum constants in this class are used to read values from a C struct returned
-     * by {@link MaxineVM#native_properties()}.
+     * An enum for the properties whose values must be obtained from the native environment at runtime. The enum
+     * constants in this class are used to read values from the native_properties_t struct defined in
+     * Native/substrate/maxine.c returned by {@link MaxineVM#native_properties()}.
      *
      * @author Doug Simon
      */
@@ -503,8 +503,9 @@ public final class MaxineVM {
     }
 
     /**
-     * Gets a pointer to a C struct whose fields are NULL terminated C char arrays. The fields of this struct are
-     * read and converted to {@link String} values by {@link NativeProperty#value(Pointer)}.
+     * Gets a pointer to a C struct whose fields are NULL terminated C char arrays. The fields of this struct are read
+     * and converted to {@link String} values by {@link NativeProperty#value(Pointer)}. The {@code native_properties_t}
+     * struct declaration is in Native/substrate/maxine.c.
      */
     @C_FUNCTION
     public static native Pointer native_properties();
