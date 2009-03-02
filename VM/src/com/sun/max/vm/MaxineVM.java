@@ -424,7 +424,7 @@ public final class MaxineVM {
         try {
             return CString.utf8ToJava(native_executablePath());
         } catch (Utf8Exception e) {
-            throw ProgramError.unexpected(e);
+            throw FatalError.unexpected("Could not convert C string value of executable path to a Java string");
         }
     }
 
@@ -470,6 +470,44 @@ public final class MaxineVM {
 
     @C_FUNCTION
     public static native Pointer native_environment();
+
+    /**
+     * An enum for the properties whose values must be obtained from the native environment
+     * at runtime. The enum constants in this class are used to read values from a C struct returned
+     * by {@link MaxineVM#native_properties()}.
+     *
+     * @author Doug Simon
+     */
+    public enum NativeProperty {
+        USER_NAME,
+        USER_HOME,
+        USER_DIR;
+
+        /**
+         * Gets the value of this property from a given C struct.
+         *
+         * @param cStruct the value returned by a call to {@link MaxineVM#native_properties()}
+         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be {@code null})
+         */
+        public String value(Pointer cStruct) {
+            final Pointer cString = cStruct.readWord(ordinal() * Word.size()).asPointer();
+            if (cString.isZero()) {
+                return null;
+            }
+            try {
+                return CString.utf8ToJava(cString);
+            } catch (Utf8Exception utf8Exception) {
+                throw FatalError.unexpected("Could not convert C string value of " + this + " to a Java string");
+            }
+        }
+    }
+
+    /**
+     * Gets a pointer to a C struct whose fields are NULL terminated C char arrays. The fields of this struct are
+     * read and converted to {@link String} values by {@link NativeProperty#value(Pointer)}.
+     */
+    @C_FUNCTION
+    public static native Pointer native_properties();
 
     @C_FUNCTION
     public static native void native_exit(int code);

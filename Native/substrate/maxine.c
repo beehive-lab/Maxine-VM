@@ -32,6 +32,9 @@
 #include <unistd.h>
 #include <alloca.h>
 #include <errno.h>
+#include <pwd.h>
+#include <time.h>
+#include <sys/param.h>
 
 #include "log.h"
 #include "image.h"
@@ -376,9 +379,15 @@ void native_trap_exit(int code, Address address) {
     log_exit(code, "Trap in native code at %p\n", address);
 }
 
-#if os_DARWIN
+#if !os_DARWIN
+extern
+#endif
+char **environ;
+
 void *native_environment() {
-    void **environ = (void **)*_NSGetEnviron();
+#if os_DARWIN
+    environ = (char **)*_NSGetEnviron();
+#endif
 #if log_LOADER
     int i = 0;
     for (i = 0; environ[i] != NULL; i++)
@@ -386,9 +395,44 @@ void *native_environment() {
 #endif
     return (void *)environ;
 }
-#else
-extern char ** environ;
-void *native_environment() {
-    return environ;
-}
+
+/**
+ * The layout of this struct must be kept in sync with the com.sun.max.vm.MaxineVM.NativeJavaProperty enum.
+ */
+typedef struct {
+    char *user_name;
+    char *user_home;
+    char *user_dir;
+} java_props_t;
+
+void *native_properties() {
+    static java_props_t sprops = {0, 0, 0};
+    if (sprops.user_dir != NULL) {
+        return &sprops;
+    }
+
+    /* user properties */
+    {
+        struct passwd *pwent = getpwuid(getuid());
+        sprops.user_name = pwent ? strdup(pwent->pw_name) : "?";
+        sprops.user_home = pwent ? strdup(pwent->pw_dir) : "?";
+    }
+
+    /* Current directory */
+    {
+        char buf[MAXPATHLEN];
+        errno = 0;
+        if (getcwd(buf, sizeof(buf)) == NULL) {
+            /* Error will be reported by Java caller. */
+            sprops.user_dir = NULL;
+        } else {
+            sprops.user_dir = strdup(buf);
+        }
+    }
+#if log_LOADER
+    log_println("native_properties: user_name=%s", sprops.user_name);
+    log_println("native_properties: user_home=%s", sprops.user_home);
+    log_println("native_properties: user_dir=%s", sprops.user_dir);
 #endif
+    return &sprops;
+}
