@@ -64,7 +64,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
      * not been analysed yet.  the types of the arguments supplied
      * to these blocks are in _blockParameters.
      */
-    private IdentitySet<CirBlock> _blockQueue = new IdentitySet<CirBlock>(CirBlock.class);
+    private IdentitySet<CirBlock> _blockQueue = new IdentitySet<CirBlock>();
 
     /* map a continuation variable -> set of continuations that may
      * be called if the var is used as a continuation.
@@ -311,7 +311,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
         if (ks != null) {
             IdentitySet<CirContinuation> set = _continuationHash.get(var);
             if (set == null) {
-                set = new IdentitySet<CirContinuation>(CirContinuation.class);
+                set = new IdentitySet<CirContinuation>();
                 _continuationHash.put(var, set);
             }
             for (CirContinuation k : ks) {
@@ -323,7 +323,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
     private void recordContinuationFlow(CirContinuationVariable var, CirContinuation k) {
         IdentitySet<CirContinuation> set = _continuationHash.get(var);
         if (set == null) {
-            set = new IdentitySet<CirContinuation>(CirContinuation.class);
+            set = new IdentitySet<CirContinuation>();
             _continuationHash.put(var, set);
         }
         set.add(k);
@@ -340,7 +340,7 @@ public class EnvBasedDFA <AV_Type extends AbstractValue<AV_Type>>{
                 analyzeCall(q._call, q._env);
             }
             final IdentitySet<CirBlock> blockQueue = _blockQueue;
-            _blockQueue = new IdentitySet<CirBlock>(CirBlock.class);
+            _blockQueue = new IdentitySet<CirBlock>();
             for (CirBlock b : blockQueue) {
                 more = true;
                 analyzeCall(b.closure().body(), buildEnv(b.closure().parameters(), _blockParameters.get(b)));

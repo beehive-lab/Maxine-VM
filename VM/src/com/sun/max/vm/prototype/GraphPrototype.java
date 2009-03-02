@@ -49,7 +49,7 @@ public class GraphPrototype extends Prototype {
     public final CompiledPrototype _compiledPrototype;
     private final Map<Object, Link> _objectToParent = new IdentityHashMap<Object, Link>();
     private LinkedList<Object> _worklist = new LinkedList<Object>();
-    private IdentitySet<Object> _objects = new IdentitySet<Object>(Object.class, Ints.M);
+    private IdentitySet<Object> _objects = new IdentitySet<Object>(Ints.M);
 
     private Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
 
