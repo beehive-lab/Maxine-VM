@@ -33,6 +33,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.object.*;
@@ -374,7 +375,7 @@ public final class JDK_java_lang_System {
                 // TODO: Assume we are in the JRE and walk around from there.
 
                 // For now, we just rely on the JAVA_HOME environment variable being set:
-                String javaHome = System.getenv("JAVA_HOME");
+                String javaHome = getenv("JAVA_HOME", false);
                 FatalError.check(javaHome != null, "Environment variable JAVA_HOME not set");
 
                 if (!javaHome.endsWith("/jre")) {
@@ -393,7 +394,7 @@ public final class JDK_java_lang_System {
                 // TODO: Assume we are in the JRE and walk around from there.
 
                 // For now, we just rely on the JAVA_HOME environment variable being set:
-                String javaHome = System.getenv("JAVA_HOME");
+                String javaHome = getenv("JAVA_HOME", false);
                 if (javaHome == null) {
                     javaHome = "/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home";
                 }
@@ -417,7 +418,7 @@ public final class JDK_java_lang_System {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
-                return System.getenv("LD_LIBRARY_PATH");
+                return getenv("LD_LIBRARY_PATH", false);
             }
             case WINDOWS:
             case GUESTVM:
@@ -438,7 +439,7 @@ public final class JDK_java_lang_System {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
-                return System.getenv("CLASSPATH");
+                return getenv("CLASSPATH", false);
             }
             case WINDOWS:
             case GUESTVM:
@@ -446,6 +447,14 @@ public final class JDK_java_lang_System {
                 return "";
             }
         }
+    }
+
+    private static String getenv(String name, boolean mustBePresent) {
+        final String value = System.getenv(name);
+        if (mustBePresent && value == null) {
+            FatalError.unexpected("Required environment variable " + name + " is undefined.");
+        }
+        return value;
     }
 
     /**
@@ -456,34 +465,11 @@ public final class JDK_java_lang_System {
      * by the OS environment
      */
     private static String getenvExecutablePath() {
-        return MaxineVM.getExecutablePath();
-    }
-
-    /**
-     * Retrieves the user's home directory path using OS-specific environment variables.
-     *
-     * @return the user's home directory
-     */
-    private static String getenvUserHomeDirectory() {
-        return System.getenv("HOME");
-    }
-
-    /**
-     * Retrieves the user's working directory using OS-specific environment variables.
-     *
-     * @return the user's working directory
-     */
-    private static String getenvUserWorkingDirectory() {
-        return System.getenv("PWD");
-    }
-
-    /**
-     * Retrieves the name of the user who created the virtual machine.
-     *
-     * @return the user's name (login)
-     */
-    private static String getenvUserName() {
-        return System.getenv("USER");
+        final String executablePath = MaxineVM.getExecutablePath();
+        if (executablePath == null) {
+            FatalError.unexpected("Path to VM executable cannot be null.");
+        }
+        return executablePath;
     }
 
     /**
@@ -697,11 +683,16 @@ public final class JDK_java_lang_System {
         }
 
         // 5. set up user-specific information
-        setIfAbsent(properties, "user.name", getenvUserName());
-        setIfAbsent(properties, "user.home", getenvUserHomeDirectory());
-        setIfAbsent(properties, "user.dir", getenvUserWorkingDirectory());
-        setIfAbsent(properties, "user.timezone", "");
-        setIfAbsent(properties, "java.java2d.fontpath", System.getenv("JAVA2D_FONTPATH"));
+        final Pointer nativeJavaProperties = MaxineVM.native_properties();
+        final String userDir = NativeProperty.USER_DIR.value(nativeJavaProperties);
+        if (userDir == null) {
+            throw FatalError.unexpected("Could not determine current working directory.");
+        }
+
+        setIfAbsent(properties, "user.name", NativeProperty.USER_NAME.value(nativeJavaProperties));
+        setIfAbsent(properties, "user.home", NativeProperty.USER_HOME.value(nativeJavaProperties));
+        setIfAbsent(properties, "user.dir", userDir);
+        setIfAbsent(properties, "java.java2d.fontpath", getenv("JAVA2D_FONTPATH", false));
 
         // 6. set up the java home
         String javaHome = properties.getProperty("java.home");
@@ -869,7 +860,7 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "file.encoding", "UTF-8");
         setIfAbsent(properties, "sun.jnu.encoding", "UTF-8");
 
-        if (System.getenv("GNOME_DESKTOP_SESSION_ID") != null) {
+        if (getenv("GNOME_DESKTOP_SESSION_ID", false) != null) {
             setIfAbsent(properties, "sun.desktop", "gnome");
         }
         setIfAbsent(properties, "user.language", "en"); // TODO
