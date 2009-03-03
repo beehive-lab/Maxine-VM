@@ -55,7 +55,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
             }
             try {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) arguments[0].value().asObject();
-                return !classMethodActor.nativeFunction().isZero();
+                return !classMethodActor.nativeFunction().link().isZero();
             } catch (UnsatisfiedLinkError unsatisfiedLinkError) {
                 return false;
             }
@@ -63,7 +63,7 @@ public abstract class NativeStubSnippet extends NonFoldableSnippet {
 
         @SNIPPET
         public static Word linkNativeMethod(ClassMethodActor classMethodActor) {
-            return classMethodActor.nativeFunction();
+            return classMethodActor.nativeFunction().link();
         }
 
         public static final LinkNativeMethod SNIPPET = new LinkNativeMethod();

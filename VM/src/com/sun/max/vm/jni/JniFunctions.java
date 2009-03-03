@@ -1834,7 +1834,7 @@ public final class JniFunctions {
                 if (classMethodActor == null || !classMethodActor.isNative()) {
                     throw new NoSuchMethodError();
                 }
-                classMethodActor.setNativeFunction(fnPtr);
+                classMethodActor.nativeFunction().setAddress(fnPtr);
 
             } catch (Utf8Exception e) {
                 throw new NoSuchMethodError();
@@ -1851,7 +1851,7 @@ public final class JniFunctions {
         final ClassActor classActor = ClassActor.fromJava((Class) javaType.unhand());
         classActor.forAllClassMethodActors(new Procedure<ClassMethodActor>() {
             public void run(ClassMethodActor classMethodActor) {
-                classMethodActor.setNativeFunction(Word.zero());
+                classMethodActor.nativeFunction().setAddress(Word.zero());
             }
         });
         return 0;
