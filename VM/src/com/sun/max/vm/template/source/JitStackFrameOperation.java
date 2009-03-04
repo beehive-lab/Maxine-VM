@@ -153,13 +153,6 @@ public final class JitStackFrameOperation {
     }
 
     @INLINE
-    static Object popReference() {
-        final Object value = peekReference(0);
-        removeSlots(1);
-        return value;
-    }
-
-    @INLINE
     static void pushWord(final Word value) {
         addSlots(1);
         pokeWord(0, value);

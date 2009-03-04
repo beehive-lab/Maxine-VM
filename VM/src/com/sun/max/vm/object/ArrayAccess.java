@@ -64,7 +64,7 @@ public final class ArrayAccess {
     public static void inlineCheckIndex(Object array, int index) {
         // note that we must read the array length first (implicit null check has precedence over bounds check)
         if (SpecialBuiltin.unsignedIntGreaterEqual(index, readArrayLength(array))) {
-            throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + readArrayLength(array));
+            Throw.arrayIndexOutOfBoundsException(array, index);
         }
     }
 
@@ -81,7 +81,7 @@ public final class ArrayAccess {
     public static void inlineCheckIndexWithoutLiterals(Object array, int index) {
         // note that we must read the array length first (implicit null check has precedence over bounds check)
         if (SpecialBuiltin.unsignedIntGreaterEqual(index, readArrayLength(array))) {
-            Throw.arrayIndexOutOfBoundsException();
+            Throw.arrayIndexOutOfBoundsException(array, index);
         }
     }
 
@@ -92,11 +92,8 @@ public final class ArrayAccess {
      * @param index the index into the array
      */
     @NEVER_INLINE
-    public static void noninlineCheckIndex(Object array, int index) {
-        // note that we must read the array length first (implicit null check has precedence over bounds check)
-        if (SpecialBuiltin.unsignedIntGreaterEqual(index, readArrayLength(array))) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
+    public static void noinlineCheckIndex(Object array, int index) {
+        inlineCheckIndex(array, index);
     }
 
     /**
@@ -111,7 +108,7 @@ public final class ArrayAccess {
         if (value != null) {
             final ClassActor arrayClassActor = ObjectAccess.readClassActor(array);
             if (!arrayClassActor.componentClassActor().isNonNullInstance(value)) {
-                Throw.arrayStoreException();
+                Throw.arrayStoreException(array, value);
             }
         }
     }
