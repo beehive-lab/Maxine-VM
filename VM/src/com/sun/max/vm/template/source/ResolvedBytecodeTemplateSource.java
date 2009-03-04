@@ -63,8 +63,10 @@ public final class ResolvedBytecodeTemplateSource {
     }
 
     @INLINE
-    public static void multianewarray(ArrayClassActor arrayClassActor, int[] lengths) {
-        // TODO: it is not thread-safe to have a per-method lengths array
+    public static void multianewarray(ArrayClassActor arrayClassActor, int[] lengthsShared) {
+        // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
+        // template to have a reference literal in its compiled form.
+        final int[] lengths = UnsafeLoophole.cast(lengthsShared.clone());
         final int numberOfDimensions = lengths.length;
         for (int i = 1; i <= numberOfDimensions; i++) {
             final int length = JitStackFrameOperation.popInt();

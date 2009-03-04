@@ -23,10 +23,12 @@ package com.sun.max.vm.runtime;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.StackFrameWalker.*;
 import com.sun.max.vm.thread.*;
@@ -220,19 +222,44 @@ public final class Throw {
         }
     }
 
+    /**
+     * Raises an {@code ArrayIndexOutOfBoundsException}. This is out-of-line to reduce the amount
+     * of code inlined on the fast path for an array bounds check.
+     *
+     * @param array the array being accessed
+     * @param index the index that is out of the bounds of {@code array}
+     */
     @NEVER_INLINE
-    public static void arrayIndexOutOfBoundsException() {
-        throw new ArrayIndexOutOfBoundsException();
+    public static void arrayIndexOutOfBoundsException(Object array, int index) {
+        FatalError.check(array != null, "Arguments for raising an ArrayIndexOutOfBoundsException cannot be null");
+        throw new ArrayIndexOutOfBoundsException("Index: " + index + ", Array length: " + ArrayAccess.readArrayLength(array));
     }
 
+    /**
+     * Raises an {@code ArrayStoreException}. This is out-of-line to reduce the amount
+     * of code inlined on the fast path for an array store check.
+     *
+     * @param array the array being accessed
+     * @param value the value whose type is not assignable to the component type of {@code array}
+     */
     @NEVER_INLINE
-    public static void arrayStoreException() {
-        throw new ArrayStoreException();
+    public static void arrayStoreException(Object array, Object value) {
+        FatalError.check(array != null && value != null, "Arguments for raising an ArrayStoreException cannot be null");
+        final ClassActor componentClassActor = ObjectAccess.readClassActor(array).componentClassActor();
+        throw new ArrayStoreException(value.getClass().getName() + " is not assignable to " + componentClassActor.name());
     }
 
+    /**
+     * Raises an {@code ClassCastException}. This is out-of-line to reduce the amount
+     * of code inlined on the fast path for a type check.
+     *
+     * @param classActor the type being checked against
+     * @param object the object whose type is not assignable to {@code classActor}
+     */
     @NEVER_INLINE
-    public static void classCastException() {
-        throw new ClassCastException();
+    public static void classCastException(ClassActor classActor, Object object) {
+        FatalError.check(object != null && classActor != null, "Arguments for raising a ClassCastException cannot be null");
+        throw new ClassCastException(object.getClass().getName() + " is not assignable to " + classActor.name());
     }
 
     @NEVER_INLINE
