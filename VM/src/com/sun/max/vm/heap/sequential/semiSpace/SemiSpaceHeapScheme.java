@@ -288,14 +288,14 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.PRISTINE) {
-            final Size size = Heap.initialSize();
+            final Size size = Heap.initialSize().dividedBy(2);
 
             _safetyZoneSize = _safetyZoneSizeOption.getValue();
             if (allocateSpace(_fromSpace, size).isZero() || allocateSpace(_toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
                 Log.print(size.toLong());
                 Log.println();
-                FatalError.crash("This is only a very simple GC implementation that uses twice the specified amount");
+                FatalError.crash("Insufficient memory to initialize SemiSpaceHeapScheme");
             }
 
             _allocationMark = _toSpace.start();
@@ -494,14 +494,17 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         Code.visitCells(this);
     }
 
+    private boolean cannotGrow() {
+        return _fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize());
+    }
+
     /**
      * Grow the semispaces to be of larger size.
      * @param preGc true if prior to executing collector thread to copy _toSpace  to (grown) _fromSpace
      * @return true iff both spaces can be grown
      */
     private boolean growSpaces(boolean preGc, GrowPolicy growPolicy) {
-        if (_fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize())) {
-            _cannotGrow = true;
+        if (cannotGrow()) {
             return false;
         }
         // It is important to know now that we can allocate both spaces of the new size
@@ -516,7 +519,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             final Address fromBase = allocateSpace(_growFromSpace, size);
             final Address tempBase = allocateSpace(_growToSpace, size);
             if (fromBase.isZero() || tempBase.isZero()) {
-                _cannotGrow = true;
                 if (!fromBase.isZero()) {
                     deallocateSpace(_growFromSpace);
                 }
@@ -541,7 +543,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private boolean grow(GrowPolicy growPolicy) {
-        if (_cannotGrow) {
+        if (cannotGrow()) {
             return false;
         }
         if (Heap.verbose()) {
@@ -600,7 +602,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return cell;
     }
 
-    private boolean _cannotGrow;   // This is set true when we have reached the max heap size and can grow no more.
     private boolean _inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
     /*
@@ -857,7 +858,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return shrink(amount);
     }
 
-     @Override
+    @Override
     public synchronized boolean increaseMemory(Size amount) {
         final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
         _increaseGrowPolicy.setAmount(pageAlignedAmount.toInt());
