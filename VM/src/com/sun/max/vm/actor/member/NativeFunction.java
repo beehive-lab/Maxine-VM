@@ -36,7 +36,7 @@ public class NativeFunction {
     private final ClassMethodActor _classMethodActor;
     private String _symbol;
     @CONSTANT_WHEN_NOT_ZERO
-    private Word _address;
+    private Word _address = Address.zero();
 
     public NativeFunction(ClassMethodActor classMethodActor) {
         _classMethodActor = classMethodActor;
