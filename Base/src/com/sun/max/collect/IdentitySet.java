@@ -103,7 +103,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         }
 
         final Class<Element_Type[]> type = null;
-        _table = StaticLoophole.cast(type, new Object[initialCapacity]);
+        _table = StaticLoophole.cast(type, new Object[capacity]);
         setThreshold();
     }
 

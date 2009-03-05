@@ -57,7 +57,11 @@ public class IdentitySetTest extends MaxTestCase {
     public void test_numberOfElements() {
         final IdentitySet<Integer> set = new IdentitySet<Integer>();
         assertEquals(set.numberOfElements(), 0);
-        set.add(null);  // should not be added
+        try {
+            set.add(null);
+            fail();
+        } catch (IllegalArgumentException illegalArgumentException) {
+        }
         for (int i = 0; i < 1000; i++) {
             assertEquals(set.numberOfElements(), i);
             set.add(i);
@@ -66,7 +70,11 @@ public class IdentitySetTest extends MaxTestCase {
 
     private void check_add(IdentitySet<Integer> set) {
         assertEquals(set.numberOfElements(), 0);
-        set.add(null);
+        try {
+            set.add(null);
+            fail();
+        } catch (IllegalArgumentException illegalArgumentException) {
+        }
         assertEquals(set.numberOfElements(), 0);
         set.add(0);
         assertEquals(set.numberOfElements(), 1);
@@ -91,7 +99,6 @@ public class IdentitySetTest extends MaxTestCase {
         for (int i = 0; i < 1000; i++) {
             assertTrue(set.contains(ints[i]));
         }
-        assertFalse(set.contains(null));
         assertFalse(set.contains(new Integer(0)));
     }
 
