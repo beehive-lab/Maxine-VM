@@ -68,13 +68,19 @@ jlong native_nanoTime(void) {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return (uint64_t)tv.tv_sec * (uint64_t)(1000 * 1000 * 1000) + (uint64_t)(tv.tv_usec * 1000);
+#elif os_LINUX
+	 struct timeval time;
+	 int status = gettimeofday(&time, NULL);
+	 c_ASSERT(status != -1);
+	 jlong usecs = ((jlong) time.tv_sec) * (1000 * 1000) + (jlong) time.tv_usec;
+	 return 1000 * usecs;
 #else
 	return 1;
 #endif
 }
 
 jlong native_currentTimeMillis(void) {
-#if os_SOLARIS || os_DARWIN
+#if os_SOLARIS || os_DARWIN || os_LINUX
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
@@ -82,4 +88,3 @@ jlong native_currentTimeMillis(void) {
 	return 1;
 #endif
 }
-
