@@ -539,6 +539,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         } else {
             // executing the collector thread swapped the spaces
             // so we are again updating _fromSpace but with _growToSpace.
+            deallocateSpace(_fromSpace);
             copySpaceState(_growToSpace, _fromSpace);
         }
         if (preGc && Heap.verbose()) {
