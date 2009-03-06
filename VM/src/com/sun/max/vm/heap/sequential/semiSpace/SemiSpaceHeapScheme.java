@@ -504,23 +504,32 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
      * @return true iff both spaces can be grown
      */
     private boolean growSpaces(boolean preGc, GrowPolicy growPolicy) {
+        if (preGc && Heap.verbose()) {
+            Log.println("Trying to grow the heap...");
+        }
         if (cannotGrow()) {
+            if (preGc && Heap.verbose()) {
+                Log.println("...failed, max heap size reached");
+            }
             return false;
         }
-        // It is important to know now that we can allocate both spaces of the new size
-        // and, if we cannot, to leave things as they are, so that the VM can continue
-        // using the safety zone and perhaps then free enough space to continue.
-        final Size size = Size.min(growPolicy.growth(_fromSpace.size()), Heap.maxSize());
-        if (preGc && Heap.verbose()) {
-            Log.print("New heap size: ");
-            Log.println(size.toLong());
-        }
         if (preGc) {
+            // It is important to know now that we can allocate both spaces of the new size
+            // and, if we cannot, to leave things as they are, so that the VM can continue
+            // using the safety zone and perhaps then free enough space to continue.
+            final Size size = Size.min(growPolicy.growth(_fromSpace.size()), Heap.maxSize());
+            if (preGc && Heap.verbose()) {
+                Log.print("...new heap size: ");
+                Log.println(size.toLong());
+            }
             final Address fromBase = allocateSpace(_growFromSpace, size);
             final Address tempBase = allocateSpace(_growToSpace, size);
             if (fromBase.isZero() || tempBase.isZero()) {
                 if (!fromBase.isZero()) {
                     deallocateSpace(_growFromSpace);
+                }
+                if (Heap.verbose()) {
+                    Log.println("...grow failed, can't allocate spaces");
                 }
                 return false;
             }
@@ -531,6 +540,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             // executing the collector thread swapped the spaces
             // so we are again updating _fromSpace but with _growToSpace.
             copySpaceState(_growToSpace, _fromSpace);
+        }
+        if (preGc && Heap.verbose()) {
+            Log.println("...grow ok");
         }
         return true;
     }
@@ -545,9 +557,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private boolean grow(GrowPolicy growPolicy) {
         if (cannotGrow()) {
             return false;
-        }
-        if (Heap.verbose()) {
-            Log.println("Trying to grow the heap...");
         }
         boolean result = true;
         if (!growSpaces(true, growPolicy)) {
@@ -860,9 +869,19 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     @Override
     public synchronized boolean increaseMemory(Size amount) {
+        /* The conservative assumption is that "amount" is the total amount that we could
+         * allocate. Since we can't deallocate our existing spaces until we know we can allocate
+         * the new ones, our new spaces cannot be greater than amount/2 in size.
+         * This could be smaller than the existing spaces so we need to check.
+         * It's unfortunate but that's the nature of the semispace scheme.
+         */
         final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
-        _increaseGrowPolicy.setAmount(pageAlignedAmount.toInt());
-        return grow(_increaseGrowPolicy);
+        if (pageAlignedAmount.greaterThan(_fromSpace.size())) {
+            // grow adds the current space size to the amount in the grow policy
+            _increaseGrowPolicy.setAmount(pageAlignedAmount.minus(_fromSpace.size()));
+            return grow(_increaseGrowPolicy);
+        }
+        return false;
     }
 
     @Override
@@ -912,6 +931,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
         void setAmount(int amount) {
             _amount = amount;
+        }
+
+        void setAmount(Size amount) {
+            _amount = amount.toInt();
         }
     }
 }
