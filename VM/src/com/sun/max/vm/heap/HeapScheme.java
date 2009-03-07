@@ -158,6 +158,20 @@ public interface HeapScheme extends VMScheme {
 
     void runFinalization();
 
+    /**
+     * A request for the heap scheme to attempt to reduce its memory usage..
+     * @param amount suggested amount to reduce
+     * @return true if can/will reduce, false otherwise
+     */
+    boolean decreaseMemory(Size amount);
+
+    /**
+     * A hint that the heap scheme can increase its memory usage.
+     * @param amount suggetsed amount to increase
+     * @return true if can/will increase memory usage, false otherwise
+     */
+    boolean increaseMemory(Size amount);
+
     @INLINE
     void writeBarrier(Reference from, Reference to);
 }

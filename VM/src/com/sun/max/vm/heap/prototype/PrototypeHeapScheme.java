@@ -38,7 +38,7 @@ import com.sun.max.vm.reference.*;
  *
  * @author Bernd Mathiske
  */
-public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme {
+public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
     public PrototypeHeapScheme(VMConfiguration vmConfiguration) {
         super(vmConfiguration);
@@ -145,6 +145,10 @@ public class PrototypeHeapScheme extends AbstractVMScheme implements HeapScheme 
 
     public Pointer gcBumpAllocate(RuntimeMemoryRegion region, Size size) {
         return null;
+    }
+
+    @Override
+    public void finalize(MaxineVM.Phase phase) {
     }
 
     @Override

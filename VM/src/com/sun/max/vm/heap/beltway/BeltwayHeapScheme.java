@@ -43,7 +43,7 @@ import com.sun.max.vm.thread.*;
 /**
  * @author Christos Kotselidis
  */
-public abstract class BeltwayHeapScheme extends AbstractVMScheme implements HeapScheme, Allocator {
+public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements HeapScheme, Allocator {
 
     protected static Action _copyAction;
     protected static Action _verifyAction = new VerifyActionImpl();

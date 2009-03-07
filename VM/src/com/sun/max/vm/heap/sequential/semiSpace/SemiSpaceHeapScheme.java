@@ -53,12 +53,12 @@ import com.sun.max.vm.type.*;
  * @author Bernd Mathiske
  * @author Sunil Soman
  */
-public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapScheme, CellVisitor {
+public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements HeapScheme, CellVisitor {
 
     private static final VMOption _virtualAllocOption = new VMOption("-XX:SemiSpaceGC:Virtual", "Use VirtualMemory.allocate", MaxineVM.Phase.PRISTINE);
     private static final int DEFAULT_SAFETY_ZONE_SIZE = 6144;  // empirically determined to be sufficient for simple VM termination after OutOfMemory condition
     private static final VMIntOption _safetyZoneSizeOption = new VMIntOption("-XX:SemiSpaceGC:szs", DEFAULT_SAFETY_ZONE_SIZE, "Safety zone size in bytes", MaxineVM.Phase.PRISTINE);
-    private static final VMOption _minimizeMemoryOption = new VMOption("-XX:SemiSpaceGC:MinimizeMemory", "Minimize memory usage", MaxineVM.Phase.PRISTINE);
+    private static final VMStringOption _growPolicyOption = new VMStringOption("-XX:SemiSpaceGC:GrowPolicy:", false, "Double", "Grow policy for heap", MaxineVM.Phase.STARTING);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
@@ -125,6 +125,8 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private SemiSpaceMemoryRegion _growFromSpace = new SemiSpaceMemoryRegion("Heap-From-Grow");  // used while growing the heap
     private SemiSpaceMemoryRegion _growToSpace = new SemiSpaceMemoryRegion("Heap-To-Grow");          // used while growing the heap
     private static int _safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
+    private GrowPolicy _growPolicy;
+    private LinearGrowPolicy _increaseGrowPolicy;
     private Address _top;                                                  // top of allocatable space (less safety zone)
     private volatile Address _allocationMark;                     // current allocation point
 
@@ -290,14 +292,14 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (phase == MaxineVM.Phase.PRISTINE) {
-            final Size size = Heap.initialSize();
+            final Size size = Heap.initialSize().dividedBy(2);
 
             _safetyZoneSize = _safetyZoneSizeOption.getValue();
             if (allocateSpace(_fromSpace, size).isZero() || allocateSpace(_toSpace, size).isZero()) {
                 Log.print("Could not allocate object heap of size ");
                 Log.print(size.toLong());
                 Log.println();
-                FatalError.crash("This is only a very simple GC implementation that uses twice the specified amount");
+                FatalError.crash("Insufficient memory to initialize SemiSpaceHeapScheme");
             }
 
             _allocationMark = _toSpace.start();
@@ -309,6 +311,16 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
 
             TeleHeapInfo.registerMemoryRegions(_toSpace, _fromSpace);
         } else if (phase == MaxineVM.Phase.STARTING) {
+            final String growPolicy = _growPolicyOption.getValue();
+            if (growPolicy.equals("Double")) {
+                _growPolicy = new DoubleGrowPolicy();
+            } else if (growPolicy.startsWith("Linear")) {
+                _growPolicy = new LinearGrowPolicy(growPolicy);
+            } else {
+                Log.print("Unknown heap growth policy, using default policy");
+                _growPolicy = new DoubleGrowPolicy();
+            }
+            _increaseGrowPolicy = new LinearGrowPolicy();
             _collectorThread = new StopTheWorldDaemon("GC", _collect);
         }
     }
@@ -486,31 +498,42 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         Code.visitCells(this);
     }
 
+    private boolean cannotGrow() {
+        return _fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize());
+    }
+
     /**
      * Grow the semispaces to be of larger size.
      * @param preGc true if prior to executing collector thread to copy _toSpace  to (grown) _fromSpace
      * @return true iff both spaces can be grown
      */
-    private boolean growSpaces(boolean preGc) {
-        if (_fromSpace.size().isZero() || _fromSpace.size().greaterEqual(Heap.maxSize())) {
-            _cannotGrow = true;
+    private boolean growSpaces(boolean preGc, GrowPolicy growPolicy) {
+        if (preGc && Heap.verbose()) {
+            Log.println("Trying to grow the heap...");
+        }
+        if (cannotGrow()) {
+            if (preGc && Heap.verbose()) {
+                Log.println("...failed, max heap size reached");
+            }
             return false;
         }
-        // It is important to know now that we can allocate both spaces of the new size
-        // and, if we cannot, to leave things as they are, so that the VM can continue
-        // using the safety zone and perhaps then free enough space to continue.
-        final Size size = Size.min(_fromSpace.size().times(2), Heap.maxSize());
-        if (preGc && Heap.verbose()) {
-            Log.print("New heap size: ");
-            Log.println(size.toLong());
-        }
         if (preGc) {
+            // It is important to know now that we can allocate both spaces of the new size
+            // and, if we cannot, to leave things as they are, so that the VM can continue
+            // using the safety zone and perhaps then free enough space to continue.
+            final Size size = Size.min(growPolicy.growth(_fromSpace.size()), Heap.maxSize());
+            if (preGc && Heap.verbose()) {
+                Log.print("...new heap size: ");
+                Log.println(size.toLong());
+            }
             final Address fromBase = allocateSpace(_growFromSpace, size);
             final Address tempBase = allocateSpace(_growToSpace, size);
             if (fromBase.isZero() || tempBase.isZero()) {
-                _cannotGrow = true;
                 if (!fromBase.isZero()) {
                     deallocateSpace(_growFromSpace);
+                }
+                if (Heap.verbose()) {
+                    Log.println("...grow failed, can't allocate spaces");
                 }
                 return false;
             }
@@ -520,7 +543,11 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         } else {
             // executing the collector thread swapped the spaces
             // so we are again updating _fromSpace but with _growToSpace.
+            deallocateSpace(_fromSpace);
             copySpaceState(_growToSpace, _fromSpace);
+        }
+        if (preGc && Heap.verbose()) {
+            Log.println("...grow ok");
         }
         return true;
     }
@@ -532,19 +559,16 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         }
     }
 
-    private boolean grow() {
-        if (_cannotGrow) {
+    private boolean grow(GrowPolicy growPolicy) {
+        if (cannotGrow()) {
             return false;
         }
-        if (Heap.verbose()) {
-            Log.println("Trying to grow the heap...");
-        }
         boolean result = true;
-        if (!growSpaces(true)) {
+        if (!growSpaces(true, growPolicy)) {
             result = false;
         } else {
             executeCollectorThread();
-            result = growSpaces(false);
+            result = growSpaces(false, growPolicy);
         }
         if (Heap.verbose()) {
             logSpaces();
@@ -564,7 +588,7 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
             }
             return true;
         }
-        while (grow()) {
+        while (grow(_growPolicy)) {
             if (immediateFreeSpace().greaterEqual(requestedFreeSpace)) {
                 return true;
             }
@@ -592,7 +616,6 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
         return cell;
     }
 
-    private boolean _cannotGrow;   // This is set true when we have reached the max heap size and can grow no more.
     private boolean _inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
 
     /*
@@ -807,13 +830,63 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     private void logSpaces() {
         logSpace(_fromSpace);
         logSpace(_toSpace);
+        Log.print("top "); Log.print(_top);
+        Log.print(", allocation mark "); Log.println(_allocationMark);
     }
 
     private void logSpace(SemiSpaceMemoryRegion space) {
-        Log.println(space.description());
-        Log.print("start "); Log.print(space.start());
+        Log.print(space.description());
+        Log.print(" start "); Log.print(space.start());
+        Log.print(", end "); Log.print(space.end());
         Log.print(", size "); Log.print(space.size());
         Log.println("");
+    }
+
+    private synchronized boolean shrink(Size amount) {
+        final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
+        if (Heap.verbose()) {
+            logSpaces();
+        }
+        executeCollectorThread();
+        if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
+            // give back part of the existing spaces
+            if (Heap.verbose()) {
+                logSpaces();
+            }
+            final int amountAsInt = pageAlignedAmount.toInt();
+            _fromSpace.setSize(_fromSpace.size().minus(amountAsInt));
+            _toSpace.setSize(_toSpace.size().minus(amountAsInt));
+            _top = _top.minus(amountAsInt);
+            VirtualMemory.deallocate(_fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            VirtualMemory.deallocate(_toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
+            if (Heap.verbose()) {
+                logSpaces();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean decreaseMemory(Size amount) {
+        return shrink(amount);
+    }
+
+    @Override
+    public synchronized boolean increaseMemory(Size amount) {
+        /* The conservative assumption is that "amount" is the total amount that we could
+         * allocate. Since we can't deallocate our existing spaces until we know we can allocate
+         * the new ones, our new spaces cannot be greater than amount/2 in size.
+         * This could be smaller than the existing spaces so we need to check.
+         * It's unfortunate but that's the nature of the semispace scheme.
+         */
+        final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
+        if (pageAlignedAmount.greaterThan(_fromSpace.size())) {
+            // grow adds the current space size to the amount in the grow policy
+            _increaseGrowPolicy.setAmount(pageAlignedAmount.minus(_fromSpace.size()));
+            return grow(_increaseGrowPolicy);
+        }
+        return false;
     }
 
     @Override
@@ -824,5 +897,49 @@ public final class SemiSpaceHeapScheme extends AbstractVMScheme implements HeapS
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
         // do nothing.
+    }
+
+    /*
+     * This class encapsulates the policy for how to grow the heap.
+     *
+     */
+    private abstract class GrowPolicy {
+        /**
+         * Returns the new size given the old.
+         * @param current the current size
+         * @return the new size
+         */
+        abstract Size growth(Size current);
+    }
+
+    private class DoubleGrowPolicy extends GrowPolicy {
+        @Override
+        Size growth(Size current) {
+            return current.times(2);
+        }
+    }
+
+    private class LinearGrowPolicy extends GrowPolicy {
+        int _amount;
+
+        LinearGrowPolicy(String s) {
+            _amount = Heap.initialSize().toInt();
+        }
+
+        LinearGrowPolicy() {
+        }
+
+        @Override
+        Size growth(Size current) {
+            return current.plus(_amount);
+        }
+
+        void setAmount(int amount) {
+            _amount = amount;
+        }
+
+        void setAmount(Size amount) {
+            _amount = amount.toInt();
+        }
     }
 }

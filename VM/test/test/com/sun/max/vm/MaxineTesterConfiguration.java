@@ -144,6 +144,8 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest02.class,
         test.output.Thread_join04.class,
         test.hotpath.HP_series.class, // 333
+        test.except.Catch_StackOverflowError_01.class,
+        test.except.Catch_StackOverflowError_02.class,
         _expectedAutoTestFailures
     );
 
@@ -194,7 +196,9 @@ public class MaxineTesterConfiguration {
         test.reflect.Array_get03.class,
         test.reflect.Array_getBoolean01.class,
         test.output.ExitCode.class,
-        test.hotpath.HP_series.class // 333
+        test.hotpath.HP_series.class, // 333
+        test.except.Catch_StackOverflowError_01.class,
+        test.except.Catch_StackOverflowError_02.class
     );
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();

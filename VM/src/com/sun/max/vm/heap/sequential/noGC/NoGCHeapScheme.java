@@ -47,7 +47,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Bernd Mathiske
  */
-public final class NoGCHeapScheme extends AbstractVMScheme implements HeapScheme {
+public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapScheme {
 
     private static final class NoGCHeapMemoryRegion extends RuntimeMemoryRegion {
 
