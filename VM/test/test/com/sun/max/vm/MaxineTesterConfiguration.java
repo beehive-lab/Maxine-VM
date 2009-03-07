@@ -24,6 +24,7 @@ import java.util.*;
 
 import test.com.sun.max.vm.compiler.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
+import test.hotpath.*;
 
 import junit.framework.*;
 
@@ -143,6 +144,7 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.Thread_join04.class,
+        test.hotpath.HP_array02.class, // 329
         test.hotpath.HP_series.class, // 333
         test.except.Catch_StackOverflowError_01.class,
         test.except.Catch_StackOverflowError_02.class,
