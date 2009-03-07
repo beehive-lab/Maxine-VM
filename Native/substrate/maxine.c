@@ -31,15 +31,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <alloca.h>
+#include <errno.h>
+#include <pwd.h>
+#include <time.h>
+#include <sys/param.h>
 
 #include "log.h"
 #include "image.h"
 #include "threads.h"
 #include "messenger.h"
 #include "os.h"
-#if os_DARWIN
-#include <crt_externs.h>
-#endif
 
 #include "maxine.h"
 
@@ -125,10 +126,14 @@ static void *openDynamicLibrary(char *path) {
 #endif
     void *result = dlopen(path, RTLD_LAZY);
 #if log_LINKER
+    char* errorMessage = dlerror();
     if (path == NULL) {
         log_println("openDynamicLibrary(null) = %p", result);
     } else {
         log_println("openDynamicLibrary(\"%s\") = %p", path, result);
+    }
+    if (errorMessage != NULL) {
+        log_println("Error message: %s", errorMessage);
     }
 #endif
     return result;
@@ -140,6 +145,7 @@ static void* loadSymbol(void* handle, const char* symbol) {
 #endif
     void* result = dlsym(handle, symbol);
 #if log_LINKER
+    char* errorMessage = dlerror();
     Dl_info info;
     void* address = result;
     if (dladdr(address, &info) != 0) {
@@ -147,9 +153,100 @@ static void* loadSymbol(void* handle, const char* symbol) {
     } else {
         log_println("loadSymbol(%p, \"%s\") = %p", handle, symbol, result);
     }
+    if (errorMessage != NULL) {
+        log_println("Error message: %s", errorMessage);
+    }
 #endif
     return result;
 }
+
+#if os_DARWIN || os_SOLARIS || os_LINUX
+
+#include <netinet/in.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <signal.h>
+
+#if os_DARWIN
+#include <crt_externs.h>
+#elif os_SOLARIS
+#define _STRUCTURED_PROC 1 /* Use new definitions in procfs.h instead of those in procfs_old.h */
+#include <sys/procfs.h>
+#endif
+
+/**
+ * Communicates the boot image address to a debugger that is listening on the port defined by the
+ * MAX_AGENT_PORT environment variable. If this environment variable is not defined, then no
+ * action is taken.
+ *
+ * Once the boot image address has been sent over the socket, this process puts itself into the
+ * 'stopped' state expected by the debugger mechanism being used to control this process. For
+ * example, under 'ptrace' this means raising a SIGTRAP.
+ */
+void debugger_initialize() {
+
+    char *port = getenv("MAX_AGENT_PORT");
+    if (port != NULL) {
+        char *hostName = "localhost";
+#if log_TELE
+        log_println("Opening agent socket connection to %s:%s", hostName, port);
+#endif
+        struct addrinfo hints, *res;
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_STREAM;
+
+        getaddrinfo(hostName, port, &hints, &res);
+
+        int sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (sockfd == -1) {
+            int error = errno;
+            log_exit(11, "Could not create socket for communicating with debugger: %s", strerror(error));
+        }
+
+        if (connect(sockfd, res->ai_addr, res->ai_addrlen)) {
+            int error = errno;
+            log_exit(11, "Could not connect to debugger at %s:%s [%s]", hostName, port, strerror(error));
+        }
+
+        Address heap = image_heap();
+#if log_TELE
+        log_println("Sending boot heap address %p to debugger", heap);
+#endif
+        if (send(sockfd, &heap, sizeof(heap), 0) != sizeof(heap)) {
+            log_exit(11, "Error sending boot image address to debugger");
+        }
+
+        if (close(sockfd) != 0) {
+            int error = errno;
+            log_exit(11, "Error closing socket to debugger: %s", strerror(error));
+        }
+
+        freeaddrinfo(res);
+
+        /* Stop this process in such a way that control of this process is returned to the debugger. */
+#if log_TELE
+        log_println("Stopping VM for debugger");
+#endif
+#if os_DARWIN || os_LINUX
+        kill(getpid(), SIGTRAP);
+#elif os_SOLARIS
+        int ctlfd = open("/proc/self/ctl", O_WRONLY);
+        long controlCode = PCDSTOP;
+        write(ctlfd, &controlCode, sizeof(controlCode));
+#else
+        c_UNIMPLEMENTED();
+#endif
+#if log_TELE
+        log_println("VM resumed by debugger");
+#endif
+    }
+}
+#else
+#define debugger_initialize()
+#endif
 
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
@@ -160,6 +257,7 @@ typedef jint (*VMRunMethod)(
                 Address auxiliarySpace,
                 void *openDynamicLibrary(char *),
                 void *dlsym(void *, const char *),
+                char *dlerror(void),
                 int argc,
                 char *argv[]);
 
@@ -170,11 +268,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
 #if os_DARWIN
     _executablePath = executablePath;
-    if (getenv("DYLD_FORCE_FLAT_NAMESPACE") == NULL) {
-        /* Without this, libjava.jnilib library will use link against the JVM_* functions
-         * in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. */
-        log_exit(11, "The environment variable DYLD_FORCE_FLAT_NAMESPACE must be defined.");
-    }
 #endif
 
 #if log_LOADER
@@ -194,6 +287,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #endif
 
     fd = loadImage();
+
+    debugger_initialize();
 
     messenger_initialize();
 
@@ -231,7 +326,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     log_println("entering Java by calling MaxineVM::run(primordialVmThreadLocals=0x%p, bootHeapRegionStart=0x%p, auxiliarySpace=0x%p, openDynamicLibrary=0x%p, dlsym=0x%p, argc=%d, argv=0x%p)",
                     primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
 #endif
-    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, argc, argv);
+    exitCode = (*method)(primordialVmThreadLocals, image_heap(), auxiliarySpace, openDynamicLibrary, loadSymbol, dlerror, argc, argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
@@ -284,9 +379,15 @@ void native_trap_exit(int code, Address address) {
     log_exit(code, "Trap in native code at %p\n", address);
 }
 
-#if os_DARWIN
+#if !os_DARWIN
+extern
+#endif
+char **environ;
+
 void *native_environment() {
-    void **environ = (void **)*_NSGetEnviron();
+#if os_DARWIN
+    environ = (char **)*_NSGetEnviron();
+#endif
 #if log_LOADER
     int i = 0;
     for (i = 0; environ[i] != NULL; i++)
@@ -294,9 +395,44 @@ void *native_environment() {
 #endif
     return (void *)environ;
 }
-#else
-extern char ** environ;
-void *native_environment() {
-    return environ;
-}
+
+/**
+ * The layout of this struct must be kept in sync with the com.sun.max.vm.MaxineVM.NativeJavaProperty enum.
+ */
+typedef struct {
+    char *user_name;
+    char *user_home;
+    char *user_dir;
+} native_props_t;
+
+void *native_properties() {
+    static native_props_t nativeProperties = {0, 0, 0};
+    if (nativeProperties.user_dir != NULL) {
+        return &nativeProperties;
+    }
+
+    /* user properties */
+    {
+        struct passwd *pwent = getpwuid(getuid());
+        nativeProperties.user_name = pwent ? strdup(pwent->pw_name) : "?";
+        nativeProperties.user_home = pwent ? strdup(pwent->pw_dir) : "?";
+    }
+
+    /* Current directory */
+    {
+        char buf[MAXPATHLEN];
+        errno = 0;
+        if (getcwd(buf, sizeof(buf)) == NULL) {
+            /* Error will be reported by Java caller. */
+            nativeProperties.user_dir = NULL;
+        } else {
+            nativeProperties.user_dir = strdup(buf);
+        }
+    }
+#if log_LOADER
+    log_println("native_properties: user_name=%s", nativeProperties.user_name);
+    log_println("native_properties: user_home=%s", nativeProperties.user_home);
+    log_println("native_properties: user_dir=%s", nativeProperties.user_dir);
 #endif
+    return &nativeProperties;
+}

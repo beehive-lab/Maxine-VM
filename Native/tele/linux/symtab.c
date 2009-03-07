@@ -94,7 +94,7 @@ struct symtab* build_symtab(int fd) {
     scn_cache[cnt].c_shdr = cursct;
     if (cursct->sh_type == SHT_SYMTAB || cursct->sh_type == SHT_STRTAB) {
       if ( (scn_cache[cnt].c_data = read_section_data(fd, &ehdr, cursct)) == NULL) {
-         goto quit; 
+         goto quit;
       }
     }
     cursct++;
@@ -192,9 +192,9 @@ void destroy_symtab(struct symtab* symtab) {
 
 uintptr_t search_symbol(struct symtab* symtab, uintptr_t base,
                       const char *sym_name, int *sym_size) {
-  ENTRY item; 
+  ENTRY item;
   ENTRY* ret = NULL;
-  
+
   // library does not have symbol table
   if (!symtab || !symtab->hash_table)
      return (uintptr_t)NULL;
@@ -211,11 +211,11 @@ uintptr_t search_symbol(struct symtab* symtab, uintptr_t base,
 
   free(item.key);
   return (uintptr_t) NULL;
-} 
+}
 
 const char* nearest_symbol(struct symtab* symtab, uintptr_t offset,
                            uintptr_t* poffset) {
-  int n = 0;
+  unsigned n = 0;
   if (!symtab) return NULL;
   for (; n < symtab->num_symbols; n++) {
      struct elf_symbol* sym = &(symtab->symbols[n]);

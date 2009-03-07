@@ -20,10 +20,8 @@
  */
 package com.sun.max.vm.heap;
 
-import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.reference.*;
 
 /**
  * Class to capture common methods for heap scheme implementations.

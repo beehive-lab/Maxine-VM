@@ -33,6 +33,7 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.object.*;
@@ -374,7 +375,7 @@ public final class JDK_java_lang_System {
                 // TODO: Assume we are in the JRE and walk around from there.
 
                 // For now, we just rely on the JAVA_HOME environment variable being set:
-                String javaHome = System.getenv("JAVA_HOME");
+                String javaHome = getenv("JAVA_HOME", false);
                 FatalError.check(javaHome != null, "Environment variable JAVA_HOME not set");
 
                 if (!javaHome.endsWith("/jre")) {
@@ -393,7 +394,7 @@ public final class JDK_java_lang_System {
                 // TODO: Assume we are in the JRE and walk around from there.
 
                 // For now, we just rely on the JAVA_HOME environment variable being set:
-                String javaHome = System.getenv("JAVA_HOME");
+                String javaHome = getenv("JAVA_HOME", false);
                 if (javaHome == null) {
                     javaHome = "/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home";
                 }
@@ -417,7 +418,7 @@ public final class JDK_java_lang_System {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
-                return System.getenv("LD_LIBRARY_PATH");
+                return getenv("LD_LIBRARY_PATH", false);
             }
             case WINDOWS:
             case GUESTVM:
@@ -438,7 +439,7 @@ public final class JDK_java_lang_System {
             case DARWIN:
             case LINUX:
             case SOLARIS: {
-                return System.getenv("CLASSPATH");
+                return getenv("CLASSPATH", false);
             }
             case WINDOWS:
             case GUESTVM:
@@ -446,6 +447,14 @@ public final class JDK_java_lang_System {
                 return "";
             }
         }
+    }
+
+    private static String getenv(String name, boolean mustBePresent) {
+        final String value = System.getenv(name);
+        if (mustBePresent && value == null) {
+            FatalError.unexpected("Required environment variable " + name + " is undefined.");
+        }
+        return value;
     }
 
     /**
@@ -456,34 +465,11 @@ public final class JDK_java_lang_System {
      * by the OS environment
      */
     private static String getenvExecutablePath() {
-        return MaxineVM.getExecutablePath();
-    }
-
-    /**
-     * Retrieves the user's home directory path using OS-specific environment variables.
-     *
-     * @return the user's home directory
-     */
-    private static String getenvUserHomeDirectory() {
-        return System.getenv("HOME");
-    }
-
-    /**
-     * Retrieves the user's working directory using OS-specific environment variables.
-     *
-     * @return the user's working directory
-     */
-    private static String getenvUserWorkingDirectory() {
-        return System.getenv("PWD");
-    }
-
-    /**
-     * Retrieves the name of the user who created the virtual machine.
-     *
-     * @return the user's name (login)
-     */
-    private static String getenvUserName() {
-        return System.getenv("USER");
+        final String executablePath = MaxineVM.getExecutablePath();
+        if (executablePath == null) {
+            FatalError.unexpected("Path to VM executable cannot be null.");
+        }
+        return executablePath;
     }
 
     /**
@@ -697,11 +683,16 @@ public final class JDK_java_lang_System {
         }
 
         // 5. set up user-specific information
-        setIfAbsent(properties, "user.name", getenvUserName());
-        setIfAbsent(properties, "user.home", getenvUserHomeDirectory());
-        setIfAbsent(properties, "user.dir", getenvUserWorkingDirectory());
-        setIfAbsent(properties, "user.timezone", "");
-        setIfAbsent(properties, "java.java2d.fontpath", System.getenv("JAVA2D_FONTPATH"));
+        final Pointer nativeJavaProperties = MaxineVM.native_properties();
+        final String userDir = NativeProperty.USER_DIR.value(nativeJavaProperties);
+        if (userDir == null) {
+            throw FatalError.unexpected("Could not determine current working directory.");
+        }
+
+        setIfAbsent(properties, "user.name", NativeProperty.USER_NAME.value(nativeJavaProperties));
+        setIfAbsent(properties, "user.home", NativeProperty.USER_HOME.value(nativeJavaProperties));
+        setIfAbsent(properties, "user.dir", userDir);
+        setIfAbsent(properties, "java.java2d.fontpath", getenv("JAVA2D_FONTPATH", false));
 
         // 6. set up the java home
         String javaHome = properties.getProperty("java.home");
@@ -711,13 +702,13 @@ public final class JDK_java_lang_System {
         }
 
         // 7. set up classpath and library path
-        String earlyNativeLibraryPath;
+        final String[] javaAndZipLibraryPaths = new String[2];
         if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.DARWIN) {
-            earlyNativeLibraryPath = initDarwinPathProperties(properties, javaHome);
+            initDarwinPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else if (Platform.hostOrTarget().operatingSystem() == OperatingSystem.WINDOWS) {
-            earlyNativeLibraryPath = initWindowsPathProperties(properties, javaHome);
+            initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
-            earlyNativeLibraryPath = initUnixPathProperties(properties, javaHome, isa);
+            initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
         }
         setIfAbsent(properties, "java.library.path", getenvJavaLibraryPath());
 
@@ -734,7 +725,7 @@ public final class JDK_java_lang_System {
         }
 
         // 9. load the native code for zip and java libraries
-        VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(earlyNativeLibraryPath);
+        VmClassLoader.VM_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
         // 10. initialize the file system with current runtime values as opposed to prototyping time values
         ClassActor.fromJava(File.class).callInitializer();
@@ -745,6 +736,19 @@ public final class JDK_java_lang_System {
         Charset.isSupported(sunJnuEncodingValue); // We are only interested in the side effect: loading the char set if supported and initializing related JNU variables
         setIfAbsent(properties, "sun.jnu.encoding", sunJnuEncodingValue); // Now that we have loaded the char set, the recursion is broken and we can move on
 
+        if (VerboseVMOption.verboseProperties()) {
+            Log.println("Initial system properties:");
+            final Map<String, String> sortedProperties = new TreeMap<String, String>();
+            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+                sortedProperties.put((String) entry.getKey(), (String) entry.getValue());
+            }
+            for (Map.Entry<String, String> entry : sortedProperties.entrySet()) {
+                Log.print(entry.getKey());
+                Log.print('=');
+                Log.println(entry.getValue());
+            }
+        }
+
         return properties;
     }
 
@@ -753,10 +757,10 @@ public final class JDK_java_lang_System {
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
-     * @return the value of the sun.boot.library.path system property
+     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the libjava.jnilib will be returned in
+     *            element 0 and the path to libzip.jnilib will be returned in element 1
      */
-    private static String initUnixPathProperties(Properties properties, String javaHome, String isa) {
-        String earlyNativeLibraryPath;
+    private static void initUnixPathProperties(Properties properties, String javaHome, String isa, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/jre"), "The java.home system property should end with \"/jre\"");
         final String jrePath = javaHome;
         final String jreLibPath = asFilesystemPath(jrePath, "lib");
@@ -779,8 +783,8 @@ public final class JDK_java_lang_System {
         }
         setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
 
-        earlyNativeLibraryPath = jreLibIsaPath;
-        return earlyNativeLibraryPath;
+        javaAndZipLibraryPaths[0] = jreLibIsaPath;
+        javaAndZipLibraryPaths[1] = jreLibIsaPath;
     }
 
     static String checkAugmentBootClasspath(final String xBootClassPath) {
@@ -799,9 +803,10 @@ public final class JDK_java_lang_System {
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
-     * @return the value of the sun.boot.library.path system property
+     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the java.dll will be returned in
+     *            element 0 and the path to zip.dll will be returned in element 1
      */
-    private static String initWindowsPathProperties(Properties properties, String javaHome) {
+    private static void initWindowsPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         throw FatalError.unexpected("Initialization of paths on Windows is unimplemented");
     }
 
@@ -810,15 +815,15 @@ public final class JDK_java_lang_System {
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
-     * @return the value of the sun.boot.library.path system property
+     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the {@code libjava.jnilib} will be returned in
+     *            element 0 and the path to {@code libzip.jnilib} will be returned in element 1
      */
-    private static String initDarwinPathProperties(Properties properties, String javaHome) {
-        String earlyNativeLibraryPath;
+    private static void initDarwinPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/Home"), "The java.home system property should end with \"/Home\"");
         final String javaPath = Strings.chopSuffix(javaHome, "/Home");
 
         final String librariesPath = javaPath + "/Libraries";
-        setIfAbsent(properties, "sun.boot.library.path", librariesPath);
+        setIfAbsent(properties, "sun.boot.library.path", asClasspath(getenvExecutablePath(), librariesPath));
 
         final String classesPath = javaPath + "/Classes";
         String bootClassPath = null;
@@ -835,9 +840,8 @@ public final class JDK_java_lang_System {
                         asFilesystemPath(classesPath, "charsets.jar"));
         }
         setIfAbsent(properties, "sun.boot.class.path", checkAugmentBootClasspath(bootClassPath));
-
-        earlyNativeLibraryPath = librariesPath;
-        return earlyNativeLibraryPath;
+        javaAndZipLibraryPaths[0] = getenvExecutablePath();
+        javaAndZipLibraryPaths[1] = librariesPath;
     }
 
     private static void initBasicWindowsProperties(Properties properties) {
@@ -869,7 +873,7 @@ public final class JDK_java_lang_System {
         setIfAbsent(properties, "file.encoding", "UTF-8");
         setIfAbsent(properties, "sun.jnu.encoding", "UTF-8");
 
-        if (System.getenv("GNOME_DESKTOP_SESSION_ID") != null) {
+        if (getenv("GNOME_DESKTOP_SESSION_ID", false) != null) {
             setIfAbsent(properties, "sun.desktop", "gnome");
         }
         setIfAbsent(properties, "user.language", "en"); // TODO

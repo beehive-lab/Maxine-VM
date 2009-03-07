@@ -140,7 +140,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 try {
                     ClassActor.fromJava(System.class).findLocalStaticMethodActor("initializeSystemClass").invoke();
                 } catch (Throwable throwable) {
-                    ProgramError.unexpected("error in initializeSystemClass", throwable);
+                    FatalError.unexpected("error in initializeSystemClass", throwable);
                 }
 
                 // Normally, we would have to initialize tracing this late,

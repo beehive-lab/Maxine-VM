@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <mach/mach.h>
 #include <mach/mach_types.h>
@@ -85,7 +86,7 @@ jboolean ptraceWaitForSignal(jlong pid, jlong task, int signalnum) {
 extern char **environ;
 
 JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, long commandLineArgumentArray) {
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
     char **argv = (char**) commandLineArgumentArray;
 
     int childPid = fork();
@@ -95,6 +96,12 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
         if (ptrace(PT_TRACE_ME, 0, 0, 0) != 0) {
             log_exit(1, "ptrace failed in child process");
         }
+
+        char *portDef;
+        if (asprintf(&portDef, "MAX_AGENT_PORT=%u", vmAgentPort) == -1) {
+            log_exit(1, "Could not allocate space for setting MAX_AGENT_PORT environment variable");
+        }
+        putenv(portDef);
 
         /* This call does not return if it succeeds: */
         execv(argv[0], argv);
@@ -181,7 +188,15 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jlong task) {
-    return task_suspend((task_t) task) == KERN_SUCCESS;
+    int pid;
+    if (pid_for_task((task_t) task, &pid) != KERN_SUCCESS) {
+        log_println("Could not get PID for task %d", task);
+    }
+    int error = kill(pid, SIGTRAP);
+    if (error != 0) {
+        log_println("Error sending SIGTRAP to process %d: %s", pid, strerror(error));
+    }
+    return error == 0;
 }
 
 JNIEXPORT jboolean JNICALL

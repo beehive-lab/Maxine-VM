@@ -145,10 +145,10 @@ public abstract class Snippet extends IrRoutine {
         public static void checkCast(ClassActor classActor, Object object) {
             if (MaxineVM.isPrototyping()) {
                 if (object != null && !classActor.toJava().isAssignableFrom(object.getClass())) {
-                    Throw.classCastException();
+                    Throw.classCastException(classActor, object);
                 }
             } else if (!classActor.isNullOrInstance(object)) {
-                Throw.classCastException();
+                Throw.classCastException(classActor, object);
             }
         }
         public static final CheckCast SNIPPET = new CheckCast();

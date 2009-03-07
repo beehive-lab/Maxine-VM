@@ -35,6 +35,7 @@ public class VerboseVMOption extends VMOption {
     private static boolean _verboseClass;
     private static boolean _verboseCompilation;
     private static boolean _verboseGC;
+    private static boolean _verboseProperties;
     private boolean _timeGC;
     private static boolean _verboseJNI;
     private static final VerboseVMOption _verboseOption = new VerboseVMOption();
@@ -51,6 +52,7 @@ public class VerboseVMOption extends VMOption {
             _verboseGC = true;
             _verboseJNI = true;
             _verboseCompilation = true;
+            _verboseProperties = true;
         } else if (CString.equals(optionValue, ":gc")) {
             _verboseGC = true;
         } else if (CString.equals(optionValue, ":class")) {
@@ -59,6 +61,8 @@ public class VerboseVMOption extends VMOption {
             _verboseJNI = true;
         } else if (CString.equals(optionValue, ":comp")) {
             _verboseCompilation = true;
+        } else if (CString.equals(optionValue, ":props")) {
+            _verboseProperties = true;
         } else {
             return false;
         }
@@ -97,6 +101,14 @@ public class VerboseVMOption extends VMOption {
      */
     public static boolean verboseCompilation() {
         return _verboseCompilation;
+    }
+
+    /**
+     * Determines if information should be displayed about the {@linkplain System#getProperties() system properties} when
+     * they initialized during VM startup.
+     */
+    public static boolean verboseProperties() {
+        return _verboseProperties;
     }
 
     @Override

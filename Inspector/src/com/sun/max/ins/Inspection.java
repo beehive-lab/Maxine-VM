@@ -134,7 +134,7 @@ public class Inspection extends JFrame {
         SYNCHRONOUS;
     }
 
-    private DebugMode _debugMode = DebugMode.SYNCHRONOUS;
+    private DebugMode _debugMode = DebugMode.ASYNCHRONOUS;
 
     public DebugMode debugMode() {
         return _debugMode;

@@ -135,7 +135,14 @@ ifeq ($(OS),darwin)
 	C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET)
 	CFLAGS = -Wall -Wextra -Werror -Wno-main -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET)
 	LINK_MAIN = gcc -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -o $(MAIN)
-	LINK_LIB = gcc -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup -lc -lm
+	# The version linker flag below ensure are required by the modified version of
+	# libjava.jnilib that is put into the $(PROJECT)/generated/$(OS) directory
+	# by running $(PROJECT)/../bin/mod-macosx-javalib.sh. This library expects the jvm shared
+	# library to have a certain version number.
+	LINK_LIB = gcc -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
+	    -Xlinker -compatibility_version -Xlinker 1.0.0 \
+	    -Xlinker -current_version -Xlinker 1.0.0 \
+	    -lc -lm
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .dylib
 	ifndef JAVA_HOME
@@ -146,8 +153,10 @@ endif
 ifeq ($(OS),linux)
 	CC = gcc -g
 	C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET)
-	CFLAGS = -Wall -Wno-long-long -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
-	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -o $(MAIN)
+	CFLAGS = -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET)
+	# The -rpath option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
+	# find Maxine's version of the libjvm.so library. 
+	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
 	LINK_LIB = gcc -g -shared -lc -lm -lthread_db
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so

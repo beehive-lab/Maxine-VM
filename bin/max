@@ -156,13 +156,6 @@ test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP envi
 maxine_cp=${maxine_cp}:/${JUNIT4_CP}
 
 maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
-if [ "$MAXINE_OS" = "darwin" ]; then
-    # Due to Darwin support for two-level namespaces, libjava.jnilib resolves references to the JVM_* functions
-    # to those in lib[client|server].dylib instead of those in Maxine's libjvm.dylib. Setting this variable
-    # ensures the correct resolution is made. See the man page for dyld(1) for more information.
-    DYLD_FORCE_FLAT_NAMESPACE=1    
-    export DYLD_FORCE_FLAT_NAMESPACE    
-fi
 
 #=======================================
 # Utility for verbose execution
@@ -322,7 +315,8 @@ function run_image() {
 # 'compile' command
 #=======================================
 
-compile_help="compile a list of classes and/or methods"
+compile_help="compile a list of classes and/or methods using the VM's compiler. \
+The compilation phases are traced and the resulting machine code is disassembled."
 
 function run_compile() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@
@@ -334,7 +328,9 @@ function run_compile() {
 
 vm_help="launch the Maxine VM"
 
-function run_vm() {
+# Parses the positional parameters to extract 'pseudo' VM options
+# that actually manifest themselves to the VM as environment variables.
+function parse_vm_args() {
     vm_args=""
     while [ "$1" != "" ]; do
         case $1 in
@@ -351,6 +347,10 @@ function run_vm() {
         esac
         shift
     done    
+}
+
+function run_vm() {
+    parse_vm_args $@
     run ${maxine_vm} $vm_args
 }
 
@@ -384,7 +384,8 @@ function run_dis() {
 inspect_help="launch a given program under the inspector"
 
 function run_inspect() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$@"\"
+    parse_vm_args $@
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$vm_args"\"
 }
 
 #=======================================
@@ -495,16 +496,16 @@ function usage() {
     echo " -v               enable verbose output "
     echo " -d               enable debug output"
     echo " -h               show launcher help"
-    echo " -java_home       specifies JDK installation directory (must be JDK 6 or later)"
+    echo " -java_home <path> specifies JDK installation directory (must be JDK 6 or later)"
     echo "                    (default: value of the JAVA_HOME environment variable)"
-    echo " -jvm             specifies Java VM executable (default: bin/java under JAVA_HOME)"
+    echo " -jvm <path>      specifies Java VM executable (default: bin/java under JAVA_HOME)"
     echo " -J<args>         specifies Java VM arguments (default: ${default_jvm_args})"
     echo " -J/p<args>       prefix Java VM arguments"
     echo " -J/a<args>       suffix Java VM arguments"
-    echo " -maxine          specifies base directory of the Maxine code base"
+    echo " -maxine <path>   specifies base directory of the Maxine code base"
     echo "                    (default: ${maxine_dir})"
-    echo " -junit4          class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
-    echo " -make            path to GNU make executable (default: $make)"
+    echo " -junit4 <cp>     class path for Junit 4 classes (default: value of JUNIT4_CP environment variable)"
+    echo " -make <path>     path to GNU make executable (default: $make)"
 }
 
 if [ -n "${unknown_option}" ]; then

@@ -195,6 +195,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 moveReachableObjects();
                 _copyTimer.stop();
 
+                if (Heap.traceGC()) {
+                    Log.println("Processing weak references...");
+                }
+
                 _weakRefTimer.start();
                 SpecialReferenceManager.processDiscoveredSpecialReferences(_gripForwarder);
                 _weakRefTimer.stop();

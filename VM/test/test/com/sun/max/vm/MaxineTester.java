@@ -802,16 +802,24 @@ public class MaxineTester {
 
     private static int runMaxineVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
         final String name = imageDir.getName() + "/maxvm" + (mainClass == null ? "" : " " + mainClass.getName());
-        String[] env = null;
-        if (OperatingSystem.current() == OperatingSystem.DARWIN) {
-            final List<String> envList = new ArrayList<String>();
-            for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
-                envList.add(entry.toString());
+        String[] envp = null;
+        if (OperatingSystem.current() == OperatingSystem.LINUX) {
+            // Since the executable may not be in the default location, then the -rpath linker option used when
+            // building the executable may not point to the location of libjvm.so any more. In this case,
+            // LD_LIBRARY_PATH needs to be set appropriately.
+            final Map<String, String> env = new HashMap<String, String>(System.getenv());
+            String libraryPath = env.get("LD_LIBRARY_PATH");
+            if (libraryPath != null) {
+                libraryPath = libraryPath + File.pathSeparatorChar + imageDir.getAbsolutePath();
+            } else {
+                libraryPath = imageDir.getAbsolutePath();
             }
-            envList.add("DYLD_FORCE_FLAT_NAMESPACE=1");
-            env = envList.toArray(new String[envList.size()]);
+            env.put("LD_LIBRARY_PATH", libraryPath);
+
+            final String string = env.toString();
+            envp = string.substring(1, string.length() - 2).split(", ");
         }
-        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), env, outputFile, name, timeout);
+        return exec(imageDir, appendArgs(new String[] {"./maxvm"}, args), envp, outputFile, name, timeout);
     }
 
     private static int runJavaVM(Class mainClass, String[] args, File imageDir, File outputFile, int timeout) {
@@ -835,7 +843,8 @@ public class MaxineTester {
         }
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final String[] imageArguments = appendArgs(new String[] {"-output-dir=" + imageDir, "-trace=1"}, generatorArguments);
-        String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, javaVMArgs(), imageArguments, null);
+        final String[] javaVMArgs = appendArgs(new String[] {"-XX:CompileCommand=exclude,com/sun/max/vm/jit/JitReferenceMapEditor,fillInMaps"}, javaVMArgs());
+        String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, javaVMArgs, imageArguments, null);
         javaArgs = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
         final File outputFile = getOutputFile(imageDir, "IMAGEGEN", imageConfig);
 
@@ -847,6 +856,11 @@ public class MaxineTester {
             copyBinary(imageDir, mapLibraryName("javatest"));
             copyBinary(imageDir, mapLibraryName("prototype"));
             copyBinary(imageDir, mapLibraryName("tele"));
+
+            if (OperatingSystem.current() == OperatingSystem.DARWIN) {
+                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, new File("/dev/stdout"), null, 5);
+            }
+
             _generatedImages.put(imageConfig, imageDir);
             return true;
         } else if (exitValue == PROCESS_TIMEOUT) {
@@ -929,12 +943,27 @@ public class MaxineTester {
         return cmd.toArray(new String[0]);
     }
 
+    /**
+     * Executes a command in a sub-process.
+     *
+     * @param workingDir the working directory of the subprocess, or {@code null} if the subprocess should inherit the
+     *            working directory of the current process
+     * @param command the command and arguments to be executed
+     * @param env array of strings, each element of which has environment variable settings in the format
+     *            <i>name</i>=<i>value</i>, or <tt>null</tt> if the subprocess should inherit the environment of the
+     *            current process
+     * @param outputFile the file to which stdout and stderr should be redirected or {@code null} if these output
+     *            streams are to be discarded
+     * @param name a descriptive name for the command or {@code null} if {@code command[0]} should be used instead
+     * @param timeout the timeout in seconds
+     * @return
+     */
     private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
         traceExec(workingDir, command);
         try {
-            final FileOutputStream outFile = new FileOutputStream(outputFile);
+            final OutputStream outFile = outputFile != null ? new FileOutputStream(outputFile) : new NullOutputStream();
             final Process process = Runtime.getRuntime().exec(command, env, workingDir);
-            final ProcessThread processThread = new ProcessThread(System.in, outFile, outFile, process, name, timeout);
+            final ProcessThread processThread = new ProcessThread(System.in, outFile, outFile, process, name != null ? name : command[0], timeout);
             final int exitValue = processThread.exitValue();
             outFile.close();
             return exitValue;

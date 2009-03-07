@@ -104,6 +104,18 @@ public class MaxineTesterConfiguration {
         _expectedAutoTestFailures
     );
 
+    static final Set<String> _expectedFailuresLinuxAMD64 = toTestNames(
+        test.output.JavacTest.class,
+        test.output.BlockingQueue.class,
+        _expectedAutoTestFailures
+    );
+
+    static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
+        test.output.JavacTest.class,
+        test.output.BlockingQueue.class,
+        _expectedAutoTestFailures
+    );
+
     static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
@@ -189,13 +201,6 @@ public class MaxineTesterConfiguration {
         test.except.Catch_StackOverflowError_02.class
     );
 
-    static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
-        test.output.JavacTest.class,
-        test.output.BlockingQueue.class,
-        test.output.SafepointWhileInNative.class,
-        _expectedAutoTestFailures
-    );
-
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
 
@@ -248,6 +253,11 @@ public class MaxineTesterConfiguration {
                     return _expectedJitFailuresSolarisSPARCV9.contains(testName);
                 }
                 return _expectedFailuresSolarisSPARCV9.contains(testName);
+            }
+        } else if (platform.operatingSystem() == OperatingSystem.LINUX) {
+            final ProcessorKind processorKind = platform.processorKind();
+            if (processorKind.processorModel() == ProcessorModel.AMD64) {
+                return _expectedFailuresLinuxAMD64.contains(testName);
             }
         } else if (platform.operatingSystem() == OperatingSystem.DARWIN) {
             final ProcessorKind processorKind = platform.processorKind();

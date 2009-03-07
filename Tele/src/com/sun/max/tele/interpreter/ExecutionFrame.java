@@ -144,6 +144,7 @@ class ExecutionFrame {
         return _method;
     }
 
+    @Override
     public String toString() {
         return _method.format("%H.%n(%p) @ " + _currentBytePosition);
     }

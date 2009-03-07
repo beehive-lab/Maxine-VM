@@ -50,7 +50,7 @@ public final class ReadOnlyTeleVM extends TeleVM {
      * @param relocate specifies if the heap and code sections in the boot image are to be relocated
      */
     public ReadOnlyTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, boolean relocate) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, TeleProcess.NO_COMMAND_LINE_ARGUMENTS, -1);
+        super(bootImageFile, bootImage, sourcepath, TeleProcess.NO_COMMAND_LINE_ARGUMENTS, -1, null);
         _relocate = relocate;
     }
 
@@ -60,12 +60,12 @@ public final class ReadOnlyTeleVM extends TeleVM {
     }
 
     @Override
-    protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments, int id) {
+    protected ReadOnlyTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         return new ReadOnlyTeleProcess(this, bootImage().vmConfiguration().platform(), programFile());
     }
 
     @Override
-    protected Pointer loadBootImage() throws BootImageException {
+    protected Pointer loadBootImage(TeleVMAgent agent) throws BootImageException {
         if (bootImage().vmConfiguration().platform().operatingSystem() != OperatingSystem.GUESTVM) {
             try {
                 return bootImage().map(bootImageFile(), _relocate);

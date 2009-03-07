@@ -24,7 +24,7 @@ import java.io.*;
 
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.vm.prototype.*;
 
 /**
@@ -33,24 +33,16 @@ import com.sun.max.vm.prototype.*;
 public final class DarwinTeleVM extends TeleVM {
 
     @Override
-    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments, int id) {
-        return new DarwinTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, id);
+    protected DarwinTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
+        return new DarwinTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, agent);
     }
-
-    private static native long nativeLoadBootHeap(long childPID, long task, long mappingSize);
 
     @Override
-    protected Pointer loadBootImage() throws BootImageException {
-        final DarwinTeleProcess darwinTeleProcess = (DarwinTeleProcess) teleProcess();
-        final long heap = nativeLoadBootHeap(darwinTeleProcess.pid(), darwinTeleProcess.task(), bootImage().header()._bootHeapSize + bootImage().header()._bootCodeSize);
-        if (heap == 0L) {
-            throw new BootImageException("Could not trace remote process up to image mapping.");
-        }
-        return Pointer.fromLong(heap);
+    protected TeleProcess attachToTeleProcess(int processID) {
+        throw Problem.unimplemented();
     }
 
-    public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int id) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, id);
+    public DarwinTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
+        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
     }
-
 }

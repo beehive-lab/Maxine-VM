@@ -47,7 +47,9 @@ public final class BranchBytecodeSource {
 
     @INLINE
     private static void acmp0_prefix() {
-        SpecialBuiltin.compareReferences(JitStackFrameOperation.popReference(), null);
+        final Object value = JitStackFrameOperation.peekReference(0);
+        JitStackFrameOperation.removeSlots(1);
+        SpecialBuiltin.compareReferences(value, null);
     }
 
     @INLINE
