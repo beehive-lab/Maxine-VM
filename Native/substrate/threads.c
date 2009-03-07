@@ -416,13 +416,23 @@ Java_com_sun_max_vm_thread_VmThread_nativeYield(JNIEnv *env, jclass c) {
 
 JNIEXPORT void JNICALL
 Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Address nativeThread) {
+#if log_MONITORS
+    log_println("Interrupting thread %p", nativeThread);
+#endif
 #if os_SOLARIS
     // Signals the thread
     int result = thr_kill(nativeThread, SIGUSR1);
     if (result != 0) {
+        log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
+    }
+#elif os_LINUX || os_DARWIN
+    // Signals the thread
+    int result = pthread_kill((pthread_t) nativeThread, SIGUSR1);
+    if (result != 0) {
+        log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
     }
 #elif os_GUESTVMXEN
-	guestvmXen_interrupt((void*)nativeThread);
+	guestvmXen_interrupt((void*) nativeThread);
 #else
     log_println("nativeInterrupt ignored!");
  #endif

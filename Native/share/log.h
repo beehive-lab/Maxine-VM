@@ -65,8 +65,7 @@ extern void log_print_double(double d);
 
 #define log_LOADER (log_ALL || 0)
 #define log_TRAP (log_ALL || 0)
-#define log_MUTEX (log_ALL || 0)
-#define log_CONDITION (log_ALL || 0)
+#define log_MONITORS (log_ALL || 0)
 #define log_LINKER (log_ALL || 0)
 #define log_JVMNI (log_ALL || 0)
 #define log_THREADS (log_ALL || 0)

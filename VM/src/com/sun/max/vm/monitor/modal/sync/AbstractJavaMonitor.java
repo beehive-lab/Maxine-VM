@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.*;
 import com.sun.max.vm.object.*;
@@ -174,4 +175,104 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         Log.print(_bindingProtection.name());
     }
 
+    protected void traceStartMonitorEnter(final VmThread currentThread) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Acquiring monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    protected void traceEndMonitorEnter(final VmThread currentThread) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Acquired monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    protected void traceStartMonitorExit(final VmThread currentThread) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Releasing monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    protected void traceEndMonitorExit(final VmThread currentThread) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Released monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    protected void traceStartMonitorWait(final VmThread currentThread) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Start wait on monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    protected void traceEndMonitorWait(final VmThread currentThread, final boolean interrupted, boolean timedOut) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("End wait on monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            if (interrupted) {
+                Log.print(" *interrupted*");
+            } else if (timedOut) {
+                Log.print(" *timed-out*");
+            }
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    protected void traceEndMonitorNotify(final VmThread currentThread) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("End notify monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
+
+    protected void traceStartMonitorNotify(final VmThread currentThread) {
+        if (Monitor.traceMonitors()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Start notify monitor for ");
+            Log.print(currentThread.getName());
+            Log.print(" [");
+            dump();
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
 }

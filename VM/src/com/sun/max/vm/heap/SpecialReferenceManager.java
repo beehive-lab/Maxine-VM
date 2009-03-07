@@ -20,14 +20,20 @@
  */
 package com.sun.max.vm.heap;
 
+import java.lang.ref.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
 
 /**
  * This class implements supports for collecting and processing special references
- * (i.e. instances of {@link java.lang.ref.Reference} and its subclasses) which
+ * (i.e. instances of {@link Reference} and its subclasses) which
  * implement weak references and finalizers.
  * The routines in this class are called by the GC as it discovers reachable special
  * references, and after live objects have been processed.
@@ -56,10 +62,11 @@ public class SpecialReferenceManager {
     private static Grip _discoveredList;
 
     /**
-     * This method processes the special reference objects that were discovered during the
-     * GC's exploration of the heap. These live reference objects must be check to see whether
+     * This method processes the special reference objects that were
+     * {@linkplain #discoverSpecialReference(Grip) discovered} during the
+     * GC's exploration of the heap. These live reference objects must be checked to see whether
      * their "referent" objects have been collected. If so, they must be enqueued as "pending"
-     * so that the {@link java.lang.ref.Reference.ReferenceHandler} thread can pick them up
+     * so that the {@link Reference.ReferenceHandler} thread can pick them up
      * and add them to their respective queues later.
      *
      * @param gripForwarder an object from the GC algorithm that can detect whether a grip
@@ -80,6 +87,23 @@ public class SpecialReferenceManager {
                 _nextField.writeObject(ref, last);
                 last = ref;
             }
+            if (Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Processed ");
+                Log.print(ObjectAccess.readClassActor(ref).name().string());
+                Log.print(" at ");
+                Log.print(ObjectAccess.toOrigin(ref));
+                Log.print(" whose referrent ");
+                Log.print(referrent.toOrigin());
+                final Object newReferrent = _referentField.readObject(ref);
+                if (newReferrent == null) {
+                    Log.println(" was unreachable");
+                } else {
+                    Log.print(" moved to ");
+                    Log.println(ObjectAccess.toOrigin(newReferrent));
+                }
+                Log.unlock(lockDisabledSafepoints);
+            }
             ref = UnsafeLoophole.cast(_discoveredField.readObject(ref));
         }
         _pendingField.writeStatic(last);
@@ -96,13 +120,20 @@ public class SpecialReferenceManager {
     public static void discoverSpecialReference(Grip grip) {
         if (grip.readGrip(_nextField.offset()).isZero()) {
             // the "next" field of this object is null, queue it for later processing
-            if (!_discoveredList.isZero()) {
-                grip.writeGrip(_discoveredField.offset(), _discoveredList);
-            }
+            grip.writeGrip(_discoveredField.offset(), _discoveredList);
             _discoveredList = grip;
+            if (Heap.traceGC()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Added ");
+                final Hub hub = UnsafeLoophole.cast(Layout.readHubReference(grip).toJava());
+                Log.print(hub.classActor().name().string());
+                Log.println(" to list of discovered references");
+                Log.unlock(lockDisabledSafepoints);
+            }
         }
     }
 
+    @PROTOTYPE_ONLY
     private static ReferenceFieldActor getReferenceClassField(String name) {
         final ClassActor referenceClass = ClassActor.fromJava(java.lang.ref.Reference.class);
         FieldActor fieldActor = referenceClass.findLocalStaticFieldActor(name);
