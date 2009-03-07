@@ -110,6 +110,12 @@ public class MaxineTesterConfiguration {
         _expectedAutoTestFailures
     );
 
+    static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
+        test.output.JavacTest.class,
+        test.output.BlockingQueue.class,
+        _expectedAutoTestFailures
+    );
+
     static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
@@ -189,14 +195,6 @@ public class MaxineTesterConfiguration {
         test.reflect.Array_getBoolean01.class,
         test.output.ExitCode.class,
         test.hotpath.HP_series.class // 333
-    );
-
-    static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
-        test.output.JavacTest.class,
-        test.output.BlockingQueue.class,
-        test.output.SafepointWhileInNative.class,
-        test.output.SafepointWhileInJava.class,
-        _expectedAutoTestFailures
     );
 
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();

@@ -857,7 +857,7 @@ public class MaxineTester {
             copyBinary(imageDir, mapLibraryName("tele"));
 
             if (OperatingSystem.current() == OperatingSystem.DARWIN) {
-                exec(null, new String[] {"bin/mod-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, new File("/dev/stdout"), null, 5);
+                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, new File("/dev/stdout"), null, 5);
             }
 
             _generatedImages.put(imageConfig, imageDir);

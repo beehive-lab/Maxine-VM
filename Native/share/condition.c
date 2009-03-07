@@ -28,7 +28,7 @@
 #include "condition.h"
 
 void condition_initialize(Condition condition) {
-#if log_CONDITION
+#if log_MONITORS
     log_println("condition_initialize(%p, %p)", thread_self(), condition);
 #endif
 #if os_SOLARIS
@@ -47,7 +47,7 @@ void condition_initialize(Condition condition) {
 }
 
 void condition_destroy(Condition condition) {
-#if log_CONDITION
+#if log_MONITORS
     log_println("condition_destroy   (%p, %p)", thread_self(), condition);
 #endif
 #if os_SOLARIS
@@ -65,27 +65,34 @@ void condition_destroy(Condition condition) {
 #   define ETIMEDOUT -1
 #endif
 
-/*
- * This function returns false if the thread was interrupted or an error occurred, true otherwise
+/**
+ * Atomically blocks the current thread waiting on a given condition variable and unblocks a given mutex.
+ * The waiting thread unblocks only after another thread calls 'condition_notify' or 'condition_notifyAll'
+ * with the same condition variable.
+ *
+ * @param condition a condition variable on which the current thread will wait
+ * @param mutex a mutex locked by the current thread
+ * @return false if the thread was interrupted or an error occurred, true otherwise (i.e. the thread was notified).
+ *        In either case, the current thread has reacquired the lock on 'mutex'.
  */
 Boolean condition_wait(Condition condition, Mutex mutex) {
-#if log_CONDITION
+#if log_MONITORS
     log_println("condition_wait      (%p, %p, %p)", thread_self(), condition, mutex);
 #endif
     int error;
 #if (os_DARWIN || os_LINUX)
     error = pthread_cond_wait(condition, mutex);
     if (error == EINTR) {
-#if log_CONDITION
-        log_println("condition_wait: interrupted");
+#if log_MONITORS
+        log_println("condition_wait      (%p, %p, %p) interrupted", thread_self(), condition, mutex);
 #endif
         return false;
     }
 #elif os_SOLARIS
     error = cond_wait(condition, mutex);
     if (error == EINTR) {
-#if log_CONDITION
-        log_println("condition_wait: interrupted");
+#if log_MONITORS
+        log_println("condition_wait      (%p, %p, %p) interrupted", thread_self(), condition, mutex);
 #endif
         return false;
     }
@@ -96,16 +103,19 @@ Boolean condition_wait(Condition condition, Mutex mutex) {
     }
 #endif
     if (error != 0) {
-        log_println("condition_wait: unexpected error code %d", error);
+        log_println("condition_wait      (%p, %p, %p) unexpected error code %d [%s]", thread_self(), condition, mutex, error, strerror(error));
         return false;
     }
-#if log_CONDITION
-   log_println("condition_wait: finished");
+#if log_MONITORS
+    log_println("condition_wait      (%p, %p, %p) finished", thread_self(), condition, mutex);
 #endif
     return true;
 }
 
-#if os_LINUX
+#if (os_DARWIN || os_LINUX)
+/*
+ * This function is taken from HotSpot (os_linux.cpp).
+ */
 static struct timespec* compute_abstime(struct timespec* abstime, jlong millis) {
     if (millis < 0) {
         millis = 0;
@@ -129,77 +139,86 @@ static struct timespec* compute_abstime(struct timespec* abstime, jlong millis) 
 }
 #endif
 
-/*
- * This function returns false if the thread was interrupted or an error occurred, true otherwise
+/**
+ * Atomically blocks the current thread waiting on a given condition variable and unblocks a given mutex.
+ * The waiting thread unblocks only after another thread calls 'condition_notify' or 'condition_notifyAll'
+ * with the same condition variable, or a given amount of time specified in milliseconds has elapsed.
+ *
+ * @param condition a condition variable on which the current thread will wait
+ * @param mutex a mutex locked by the current thread
+ * @param timeoutMilliSeconds the maximum amount of time (in milliseconds) that the wait should last for.
+ *        A value of 0 means an infinite timeout.
+ * @return false if the thread was interrupted or an error occurred, true otherwise (i.e. the thread was notified or the timeout expired).
+ *        In either case, the current thread has reacquired the lock on 'mutex'.
  */
 Boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutMilliSeconds) {
-#if log_CONDITION
+    if (timeoutMilliSeconds <= 0) {
+        return condition_wait(condition, mutex);
+    }
+#if log_MONITORS
     log_println("condition_timedWait (%p, %p, %p, %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	int error;
-	if (timeoutMilliSeconds > 0) {
 #if (os_DARWIN || os_LINUX)
-        struct timeval now;
-        int status = gettimeofday(&now, NULL);
-        c_ASSERT(status != -1);
-        struct timespec abstime;
-        compute_abstime(&abstime, timeoutMilliSeconds);
-        error = pthread_cond_timedwait(condition, mutex, &abstime);
-        if (error == ETIMEDOUT) {
-#if log_CONDITION
-            log_println("condition_timedWait: timedout");
+	struct timeval now;
+	int status = gettimeofday(&now, NULL);
+	c_ASSERT(status != -1);
+	struct timespec abstime;
+	compute_abstime(&abstime, timeoutMilliSeconds);
+	error = pthread_cond_timedwait(condition, mutex, &abstime);
+	if (error == ETIMEDOUT) {
+#if log_MONITORS
+	    log_println("condition_timedWait (%p, %p, %p, %d) timed-out", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
-            return true;
-        }
-        if (error == EINTR) {
-#if log_CONDITION
-            log_println("condition_timedWait: interrupted");
+	    return true;
+	}
+	if (error == EINTR) {
+#if log_MONITORS
+	    log_println("condition_timedWait (%p, %p, %p, %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
-            return false;
-        }
+	    return false;
+	}
 #elif os_SOLARIS
-        timestruc_t reltime;
-        reltime.tv_sec = timeoutMilliSeconds / 1000;
-        reltime.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
-        error = cond_reltimedwait(condition, mutex, &reltime);
-        if (error == ETIME) {
-#if log_CONDITION
-            log_println("condition_timedWait: timedout");
+	timestruc_t reltime;
+	reltime.tv_sec = timeoutMilliSeconds / 1000;
+	reltime.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
+	error = cond_reltimedwait(condition, mutex, &reltime);
+	if (error == ETIME) {
+#if log_MONITORS
+	    log_println("condition_timedWait (%p, %p, %p, %d) timed-out", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
-            return true;
-        }
-        if (error == EINTR) {
-#if log_CONDITION
-            log_println("condition_timedWait: interrupted");
+	    return true;
+	}
+	if (error == EINTR) {
+#if log_MONITORS
+	    log_println("condition_timedWait (%p, %p, %p, %d) interrupted", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
-            return false;
-        }
+	    return false;
+	}
 #elif os_GUESTVMXEN
-        struct guestvmXen_TimeSpec reltime;
-        reltime.tv_sec = timeoutMilliSeconds / 1000;
-        reltime.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
-        error = guestvmXen_condition_wait(*condition, *mutex, &reltime);
-        if (error == 1) {
-            return false;
-        }
+	struct guestvmXen_TimeSpec reltime;
+	reltime.tv_sec = timeoutMilliSeconds / 1000;
+	reltime.tv_nsec = (timeoutMilliSeconds % 1000) * 1000000;
+	error = guestvmXen_condition_wait(*condition, *mutex, &reltime);
+	if (error == 1) {
+	    return false;
+	}
 #else
 #    error
 #endif
-	} else {
-		return condition_wait(condition, mutex);
-	}
 	if (error != 0) {
-	    log_println("condition_timedWait: unexpected error code %d [%s]", error, strerror(error));
+        log_println("condition_timedWait (%p, %p, %p, %d) unexpected error code %d [%s]",
+                        thread_self(), condition, mutex, timeoutMilliSeconds, error, strerror(error));
 	    return false;
     }
-#if log_CONDITION
-    log_println("condition_timedWait: finished");
+#if log_MONITORS
+    log_println("condition_timedWait (%p, %p, %p, %d) finished", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	return true;
 }
 
 Boolean condition_notify(Condition condition) {
-#if log_CONDITION
+#if log_MONITORS
     log_println("condition_notify    (%p, %p)", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)
@@ -214,7 +233,7 @@ Boolean condition_notify(Condition condition) {
 }
 
 Boolean condition_notifyAll(Condition condition) {
-#if log_CONDITION
+#if log_MONITORS
     log_println("condition_notifyAll (%p, %p)", thread_self(), condition);
 #endif
 #if (os_DARWIN || os_LINUX)

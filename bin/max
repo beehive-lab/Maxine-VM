@@ -328,7 +328,9 @@ function run_compile() {
 
 vm_help="launch the Maxine VM"
 
-function run_vm() {
+# Parses the positional parameters to extract 'pseudo' VM options
+# that actually manifest themselves to the VM as environment variables.
+function parse_vm_args() {
     vm_args=""
     while [ "$1" != "" ]; do
         case $1 in
@@ -345,6 +347,10 @@ function run_vm() {
         esac
         shift
     done    
+}
+
+function run_vm() {
+    parse_vm_args $@
     run ${maxine_vm} $vm_args
 }
 
@@ -378,7 +384,8 @@ function run_dis() {
 inspect_help="launch a given program under the inspector"
 
 function run_inspect() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$@"\"
+    parse_vm_args $@
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$vm_args"\"
 }
 
 #=======================================

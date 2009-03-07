@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <mach/mach.h>
 #include <mach/mach_types.h>
@@ -187,7 +188,15 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jlong task) {
-    return task_suspend((task_t) task) == KERN_SUCCESS;
+    int pid;
+    if (pid_for_task((task_t) task, &pid) != KERN_SUCCESS) {
+        log_println("Could not get PID for task %d", task);
+    }
+    int error = kill(pid, SIGTRAP);
+    if (error != 0) {
+        log_println("Error sending SIGTRAP to process %d: %s", pid, strerror(error));
+    }
+    return error == 0;
 }
 
 JNIEXPORT jboolean JNICALL

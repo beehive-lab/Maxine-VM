@@ -21,19 +21,19 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.vm.*;
+import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * A StandardJavaMonitor provides Java monitor services on behalf of another object (the <b>bound</b> object).
+ * Provides Java monitor services on behalf of a {@linkplain #boundObject() bound} object.
  *
- * Monitor enter and exit are implemented via a per-monitor mutex.
- * Wait and notify are implemented via a per-monitor waiting list and a per-thread condition variable
- * on which a thread suspends itself. A per-thread condition variable is necessary in order to implement
- * single thread notification.
+ * The {@link Bytecode#MONITORENTER} and {@link Bytecode#MONITOREXIT} instructions are implemented via a per-monitor
+ * mutex. {@linkplain Object#wait() Wait} and {@linkplain Object#notify() notify} are implemented via a per-monitor
+ * waiting list and a per-thread {@linkplain VmThread#waitingCondition() condition variable} on which a thread suspends
+ * itself. A per-thread condition variable is necessary in order to implement single thread notification.
  *
  * @author Simon Wilkinson
  */
@@ -56,26 +56,10 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     @Override
     public void monitorEnter() {
         final VmThread currentThread = VmThread.current();
-        if (Monitor.traceMonitors()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Acquiring monitor for ");
-            Log.print(currentThread.getName());
-            Log.print(" [");
-            dump();
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-        }
+        traceStartMonitorEnter(currentThread);
         if (_ownerThread == currentThread) {
             _recursionCount++;
-            if (Monitor.traceMonitors()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Acquired monitor for ");
-                Log.print(currentThread.getName());
-                Log.print(" [");
-                dump();
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
-            }
+            traceEndMonitorEnter(currentThread);
             return;
         }
         currentThread.setState(Thread.State.BLOCKED);
@@ -84,82 +68,94 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         _bindingProtection = BindingProtection.PROTECTED;
         _ownerThread = currentThread;
         _recursionCount = 1;
-        if (Monitor.traceMonitors()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Acquired monitor for ");
-            Log.print(currentThread.getName());
-            Log.print(" [");
-            dump();
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-        }
+        traceEndMonitorEnter(currentThread);
     }
 
     @Override
     public void monitorExit() {
         final VmThread currentThread = VmThread.current();
-        if (Monitor.traceMonitors()) {
-            final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Releasing monitor for ");
-            Log.print(currentThread.getName());
-            Log.print(" [");
-            dump();
-            Log.println("]");
-            Log.unlock(lockDisabledSafepoints);
-        }
+        traceStartMonitorExit(currentThread);
         if (_ownerThread != currentThread) {
             raiseIllegalMonitorStateException(_ownerThread);
         }
         if (--_recursionCount == 0) {
             _bindingProtection = BindingProtection.UNPROTECTED;
             _ownerThread = null;
+            traceEndMonitorExit(currentThread);
             _mutex.unlock();
-            if (Monitor.traceMonitors()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Released monitor for ");
-                Log.print(currentThread.getName());
-                Log.print(" [");
-                dump();
-                Log.println("]");
-                Log.unlock(lockDisabledSafepoints);
-            }
         }
     }
 
     @Override
     public void monitorWait(long timeoutMilliSeconds) throws InterruptedException {
-        if (_ownerThread != VmThread.current()) {
+        final VmThread currentThread = VmThread.current();
+        traceStartMonitorWait(currentThread);
+        if (_ownerThread != currentThread) {
             raiseIllegalMonitorStateException(_ownerThread);
         }
         final int recursionCount = _recursionCount;
         final VmThread ownerThread = _ownerThread;
         if (timeoutMilliSeconds == 0L) {
-            _ownerThread.setState(Thread.State.WAITING);
+            ownerThread.setState(Thread.State.WAITING);
         } else {
-            _ownerThread.setState(Thread.State.TIMED_WAITING);
+            ownerThread.setState(Thread.State.TIMED_WAITING);
         }
 
         final ConditionVariable waitingCondition  = _ownerThread.waitingCondition();
         if (waitingCondition.requiresAllocation()) {
             waitingCondition.allocate();
         }
-        _ownerThread.setNextWaitingThread(_waitingThreads);
-        _waitingThreads = _ownerThread;
+        ownerThread.setNextWaitingThread(_waitingThreads);
+        _waitingThreads = ownerThread;
         _ownerThread = null;
         final boolean interrupted = !waitingCondition.threadWait(_mutex, timeoutMilliSeconds);
         _ownerThread = ownerThread;
-        _ownerThread.setState(Thread.State.RUNNABLE);
+        ownerThread.setState(Thread.State.RUNNABLE);
         _recursionCount = recursionCount;
 
-        if (interrupted) {
-            _ownerThread.setInterrupted();
+        boolean timedOut = false;
+        if (!interrupted) {
+            if (ownerThread.nextWaitingThread() != ownerThread) {
+                // The thread is still on the _waitingThreads list: remove it
+                timedOut = true;
+
+                if (ownerThread == _waitingThreads) {
+                    // Common case: owner is at the head of the list
+                    _waitingThreads = ownerThread.nextWaitingThread();
+                    ownerThread.setNextWaitingThread(ownerThread);
+                } else {
+                    if (_waitingThreads == null) {
+                        FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
+                    }
+                    // Must now search the list and remove ownerThread
+                    VmThread previous = _waitingThreads;
+                    VmThread waiter = previous.nextWaitingThread();
+                    while (waiter != ownerThread) {
+                        if (waiter == null) {
+                            FatalError.unexpected("Thread woken from wait by timeout not in waiting threads list");
+                        }
+                        previous = waiter;
+                        waiter = waiter.nextWaitingThread();
+                    }
+                    // ownerThread
+                    previous.setNextWaitingThread(ownerThread.nextWaitingThread());
+                    ownerThread.setNextWaitingThread(ownerThread);
+                }
+            }
+        }
+
+        traceEndMonitorWait(currentThread, interrupted, timedOut);
+
+        if (interrupted || _ownerThread.isInterrupted(true)) {
             throw new InterruptedException();
         }
     }
 
     @Override
     public void monitorNotify(boolean all) {
-        if (_ownerThread != VmThread.current()) {
+        final VmThread currentThread = VmThread.current();
+        traceStartMonitorNotify(currentThread);
+        if (_ownerThread != currentThread) {
             raiseIllegalMonitorStateException(_ownerThread);
         }
         if (all) {
@@ -169,7 +165,11 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
                 waiter.waitingCondition().threadNotify(false);
                 final VmThread previous = waiter;
                 waiter = waiter.nextWaitingThread();
-                previous.setNextWaitingThread(null);
+
+                // This is the idiom for indicating that the thread is no longer on a waiters list.
+                // which in turn makes it easy to determine in 'monitorWait' if the thread was
+                // notified or woke up because the timeout expired.
+                previous.setNextWaitingThread(previous);
             }
             _waitingThreads = null;
         } else {
@@ -178,11 +178,12 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
                 waiter.setState(Thread.State.BLOCKED);
                 waiter.waitingCondition().threadNotify(false);
                 _waitingThreads = waiter.nextWaitingThread();
-                waiter.setNextWaitingThread(null);
+
+                // See comment above.
+                waiter.setNextWaitingThread(waiter);
             }
         }
-
-
+        traceEndMonitorNotify(currentThread);
     }
 
     @Override

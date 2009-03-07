@@ -736,6 +736,19 @@ public final class JDK_java_lang_System {
         Charset.isSupported(sunJnuEncodingValue); // We are only interested in the side effect: loading the char set if supported and initializing related JNU variables
         setIfAbsent(properties, "sun.jnu.encoding", sunJnuEncodingValue); // Now that we have loaded the char set, the recursion is broken and we can move on
 
+        if (VerboseVMOption.verboseProperties()) {
+            Log.println("Initial system properties:");
+            final Map<String, String> sortedProperties = new TreeMap<String, String>();
+            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+                sortedProperties.put((String) entry.getKey(), (String) entry.getValue());
+            }
+            for (Map.Entry<String, String> entry : sortedProperties.entrySet()) {
+                Log.print(entry.getKey());
+                Log.print('=');
+                Log.println(entry.getValue());
+            }
+        }
+
         return properties;
     }
 
@@ -802,15 +815,15 @@ public final class JDK_java_lang_System {
      *
      * @param properties the system properties
      * @param javaHome the value of the java.home system property
-     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the libjava.jnilib will be returned in
-     *            element 0 and the path to libzip.jnilib will be returned in element 1
+     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the {@code libjava.jnilib} will be returned in
+     *            element 0 and the path to {@code libzip.jnilib} will be returned in element 1
      */
     private static void initDarwinPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
         FatalError.check(javaHome.endsWith("/Home"), "The java.home system property should end with \"/Home\"");
         final String javaPath = Strings.chopSuffix(javaHome, "/Home");
 
         final String librariesPath = javaPath + "/Libraries";
-        setIfAbsent(properties, "sun.boot.library.path", librariesPath);
+        setIfAbsent(properties, "sun.boot.library.path", asClasspath(getenvExecutablePath(), librariesPath));
 
         final String classesPath = javaPath + "/Classes";
         String bootClassPath = null;

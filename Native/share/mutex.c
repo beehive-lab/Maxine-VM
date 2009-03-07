@@ -23,7 +23,7 @@
 #include "threads.h"
 
 void mutex_initialize(Mutex mutex) {
-#if log_MUTEX
+#if log_MONITORS
     log_println("mutex_initialize(%p, %p)", thread_self(), mutex);
 #endif
 #   if os_SOLARIS
@@ -54,21 +54,21 @@ void mutex_initialize(Mutex mutex) {
 #if os_SOLARIS
 
     int mutex_enter(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
 #       endif
         return mutex_lock(mutex);
     }
 
     int mutex_exit(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
 #       endif
         return mutex_unlock(mutex);
     }
 
     void mutex_dispose(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
         if (mutex_destroy(mutex) != 0) {
@@ -79,21 +79,21 @@ void mutex_initialize(Mutex mutex) {
 #elif os_LINUX || os_DARWIN
 
 	int mutex_enter(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_enter     (%p, %p)", thread_self(), mutex);
 #       endif
 		return pthread_mutex_lock(mutex);
 	}
 
 	int mutex_exit(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
 #       endif
 		return pthread_mutex_unlock(mutex);
 	}
 
 	void mutex_dispose(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
 	    if (pthread_mutex_destroy(mutex) != 0) {
@@ -104,7 +104,7 @@ void mutex_initialize(Mutex mutex) {
 #elif os_GUESTVMXEN
 
 	int mutex_enter(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
 		if (guestvmXen_monitor_enter(*mutex) != 0) {
@@ -114,7 +114,7 @@ void mutex_initialize(Mutex mutex) {
 	}
 
 	int mutex_exit(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_exit     (%p, %p)", thread_self(), mutex);
 #       endif
 		if (guestvmXen_monitor_exit(*mutex) != 0) {
@@ -124,7 +124,7 @@ void mutex_initialize(Mutex mutex) {
 	}
 
 	Boolean mutex_isHeld(Mutex mutex) {
-#       if log_MUTEX
+#       if log_MONITORS
             log_println("mutex_dispose   (%p, %p)", thread_self(), mutex);
 #       endif
         return guestvmXen_holds_monitor(*mutex);

@@ -70,7 +70,7 @@ public final class ConditionVariable {
     }
 
     /**
-     * Performs native allocation for this <code>ConditionVariable</code>.
+     * Performs native allocation for this {@code ConditionVariable}.
      */
     public void allocate() {
         _condition =  Memory.mustAllocate(_size);
@@ -82,18 +82,16 @@ public final class ConditionVariable {
     }
 
     /**
-     * Causes the current thread to wait until this <code>ConditionVariable</code>
-     * is signaled via {@link #threadNotify(boolean all) threadNotify()}.
-     * If a timeout > 0 is specified, then the thread may return after this timeout
-     * has elapsed without being signaled.
+     * Causes the current thread to wait until this {@code ConditionVariable} is signaled via
+     * {@link #threadNotify(boolean all) threadNotify()}. If a timeout > 0 is specified, then the thread may return
+     * after this timeout has elapsed without being signaled.
      *
-     * The current thread must own the given mutex when calling this method, otherwise the
-     * results are undefined. Before blocking, the current thread will release the mutex.
-     * On return, the current thread is guaranteed to own the mutex.
+     * The current thread must own the given mutex when calling this method, otherwise the results are undefined. Before
+     * blocking, the current thread will release the mutex. On return, the current thread is guaranteed to own the
+     * mutex.
      *
-     * The thread may return early if its <code>java.lang.Thread</code> is interrupted via
-     * {@link java.lang.Thread#interrupt() interrupt()} whilst blocking.
-     * In this case, this method returns returns true. In all other cases it returns false.
+     * The thread may return early if it is {@linkplain java.lang.Thread#interrupt() interrupt() interrupted} whilst
+     * blocking. In this case, this method returns returns true. In all other cases it returns false.
      *
      * @param mutex the mutex on which to block
      * @param timeoutMilliSeconds the maximum time to block. No timeout is used if timeoutMilliSeconds == 0.
@@ -105,8 +103,8 @@ public final class ConditionVariable {
     }
 
     /**
-     * Causes one or all of the threads {@link #threadWait(Mutex mutex, long timeoutMilliSeconds) waiting} on this <code>ConditionVariable</code> to
-     * wake-up.
+     * Causes one or all of the threads {@link #threadWait(Mutex mutex, long timeoutMilliSeconds) waiting} on this
+     * {@code ConditionVariable} to wake-up.
      *
      * @param all notify all threads
      * @return true if an error occured in native code; false otherwise
@@ -117,7 +115,7 @@ public final class ConditionVariable {
     }
 
     /**
-     * Returns a pointer to this <code>ConditionVariable</code>'s native data structure.
+     * Returns a pointer to this {@code ConditionVariable}'s native data structure.
      * @return
      */
     @INLINE

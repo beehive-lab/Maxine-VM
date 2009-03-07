@@ -43,9 +43,9 @@ import com.sun.max.vm.value.*;
  * defined in dlfcn.h).
  *
  * This class plays a key role in the VM bootstrap by providing a simple path to resolve critical
- * native symbols, e.g., for debugging and monitor support. Eveything actually hinges on two native functions,
- * "dlsym' and "nativeOpenDynamicLibrary", which are passed to the @see initialize method. Every other native
- *  symbol  can be found from there, including other "dlxxx" symbols.
+ * native symbols, e.g., for debugging and monitor support. Eveything actually hinges on three native functions,
+ * "dlsym", "dlerror" and "nativeOpenDynamicLibrary", which are passed to the {@link #initialize} method. Every other native
+ *  symbol  can be found from there.
  *
  * @author Doug Simon
  * @author Bernd Mathiske
