@@ -20,7 +20,7 @@
 verbose=false
 unknown_option=""
 show_help=false
-default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g -XX:CompileCommand=exclude,com/sun/max/vm/jit/JitReferenceMapEditor,fillInMaps"
+default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
 jvm_args="$default_jvm_args"
 jvm_args_prefix=""
 jvm_args_suffix=""

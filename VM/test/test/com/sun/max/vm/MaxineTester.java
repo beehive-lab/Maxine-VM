@@ -843,7 +843,8 @@ public class MaxineTester {
         }
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final String[] imageArguments = appendArgs(new String[] {"-output-dir=" + imageDir, "-trace=1"}, generatorArguments);
-        String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, javaVMArgs(), imageArguments, null);
+        final String[] javaVMArgs = appendArgs(new String[] {"-XX:CompileCommand=exclude,com/sun/max/vm/jit/JitReferenceMapEditor,fillInMaps"}, javaVMArgs());
+        String[] javaArgs = buildJavaArgs(BinaryImageGenerator.class, javaVMArgs, imageArguments, null);
         javaArgs = appendArgs(new String[] {_javaExecutable.getValue()}, javaArgs);
         final File outputFile = getOutputFile(imageDir, "IMAGEGEN", imageConfig);
 
