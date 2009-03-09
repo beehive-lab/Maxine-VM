@@ -22,11 +22,9 @@ package test.com.sun.max.vm;
 
 import java.util.*;
 
+import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
-import test.hotpath.*;
-
-import junit.framework.*;
 
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
@@ -108,6 +106,9 @@ public class MaxineTesterConfiguration {
     static final Set<String> _expectedFailuresLinuxAMD64 = toTestNames(
         test.output.JavacTest.class,
         test.output.BlockingQueue.class,
+        test.output.FileReader.class,
+        test.output.ZipFileReader.class,
+        test.threads.Thread_isInterrupted02.class,
         _expectedAutoTestFailures
     );
 
