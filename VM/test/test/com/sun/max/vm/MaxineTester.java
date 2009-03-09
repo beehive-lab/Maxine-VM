@@ -101,7 +101,7 @@ public class MaxineTester {
                     "A pattern for selecting which auto-tests are run. If absent, all auto-tests on the class path are run. " +
                     "Otherwise only those whose name contains this value as a substring are run.");
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
-                    "Stop execution as soon a non-zero exit value will be the results of the tests.");
+                    "Stop execution as soon as a single test fails.");
 
     private static String _javaConfigAlias = null;
 
