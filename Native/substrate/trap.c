@@ -219,14 +219,14 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     Word *stackPointer = (Word *)getStackPointer(ucontext);
 
 
-    if (isInGuardZone((Address)stackPointer, threadSpecifics->stackYellowZone)) {
+    if (isInGuardZone((Address)stackPointer, threadSpecifics->stackRedZone)) {
+    	/* if the stack pointer is in the red zone, (we shouldn't be alive) */
+        log_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
+    } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackYellowZone)) {
         /* if the stack pointer is in the yellow zone, assume this is a stack fault */
     	virtualMemory_unprotectPage(threadSpecifics->stackYellowZone);
         trapNumber = STACK_FAULT;
-    } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackRedZone)) {
-        /* if the stack pointer is in the red zone, (we shouldn't be alive) */
-        log_exit(-20, "SIGSEGV: (stack pointer is in fatal red zone)");
-    } else if (isInGuardZone((Address)stackPointer, threadSpecifics->stackBlueZone)) {
+    } else  if (isInGuardZone((Address)stackPointer, threadSpecifics->stackBlueZone)) {
     	/* need to map more of the stack? */
     	blueZoneTrap(threadSpecifics);
     	return;

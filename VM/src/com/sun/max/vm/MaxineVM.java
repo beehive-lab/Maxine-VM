@@ -347,12 +347,25 @@ public final class MaxineVM {
         return _primordialVmThreadLocals;
     }
 
+    @PROTOTYPE_ONLY
+    private static final Class[] _runMethodParameterTypes;
+    static {
+        Method runMethod = null;
+        for (Method method : MaxineVM.class.getDeclaredMethods()) {
+            if (method.getName().equals("run")) {
+                ProgramError.check(runMethod == null, "There must only be one method named \"run\" in " + MaxineVM.class);
+                runMethod = method;
+            }
+        }
+        _runMethodParameterTypes = runMethod.getParameterTypes();
+    }
+
     /**
      * Used by the inspector only.
      */
     @PROTOTYPE_ONLY
-    public static  Class [] runMethodParameterTypes() {
-        return new Class[] {Pointer.class, Pointer.class, Pointer.class, Word.class, Word.class, int.class, Pointer.class };
+    public static  Class[] runMethodParameterTypes() {
+        return _runMethodParameterTypes.clone();
     }
 
     /**
@@ -371,7 +384,7 @@ public final class MaxineVM {
      * @return zero if everything works so far or an exit code if something goes wrong
      */
     @C_FUNCTION
-    private static int run(Pointer primordialVmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, int argc, Pointer argv) {
+    private static int run(Pointer primordialVmThreadLocals, Pointer bootHeapRegionStart, Pointer auxiliarySpace, Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror, int argc, Pointer argv) {
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -385,7 +398,7 @@ public final class MaxineVM {
         _primordialVmThreadLocals = primordialVmThreadLocals;
 
         // This must be called first as subsequent actions depend on it to resolve the native symbols
-        DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym);
+        DynamicLinker.initialize(nativeOpenDynamicLibrary, dlsym, dlerror);
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
@@ -411,7 +424,7 @@ public final class MaxineVM {
         try {
             return CString.utf8ToJava(native_executablePath());
         } catch (Utf8Exception e) {
-            throw ProgramError.unexpected(e);
+            throw FatalError.unexpected("Could not convert C string value of executable path to a Java string");
         }
     }
 
@@ -457,6 +470,45 @@ public final class MaxineVM {
 
     @C_FUNCTION
     public static native Pointer native_environment();
+
+    /**
+     * An enum for the properties whose values must be obtained from the native environment at runtime. The enum
+     * constants in this class are used to read values from the native_properties_t struct defined in
+     * Native/substrate/maxine.c returned by {@link MaxineVM#native_properties()}.
+     *
+     * @author Doug Simon
+     */
+    public enum NativeProperty {
+        USER_NAME,
+        USER_HOME,
+        USER_DIR;
+
+        /**
+         * Gets the value of this property from a given C struct.
+         *
+         * @param cStruct the value returned by a call to {@link MaxineVM#native_properties()}
+         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be {@code null})
+         */
+        public String value(Pointer cStruct) {
+            final Pointer cString = cStruct.readWord(ordinal() * Word.size()).asPointer();
+            if (cString.isZero()) {
+                return null;
+            }
+            try {
+                return CString.utf8ToJava(cString);
+            } catch (Utf8Exception utf8Exception) {
+                throw FatalError.unexpected("Could not convert C string value of " + this + " to a Java string");
+            }
+        }
+    }
+
+    /**
+     * Gets a pointer to a C struct whose fields are NULL terminated C char arrays. The fields of this struct are read
+     * and converted to {@link String} values by {@link NativeProperty#value(Pointer)}. The {@code native_properties_t}
+     * struct declaration is in Native/substrate/maxine.c.
+     */
+    @C_FUNCTION
+    public static native Pointer native_properties();
 
     @C_FUNCTION
     public static native void native_exit(int code);

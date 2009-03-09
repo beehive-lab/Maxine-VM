@@ -26,7 +26,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.jni.*;
 
 /**
  * This class represents a critical native method that is used by the virtual machine
@@ -37,9 +36,6 @@ import com.sun.max.vm.jni.*;
  * @author Ben L. Titzer
  */
 public class CriticalNativeMethod extends CriticalMethod {
-
-    protected Address _nativeFunction;
-    protected final String _symbol;
 
     private static CriticalNativeMethod[] _criticalNativeMethods = {};
 
@@ -61,7 +57,7 @@ public class CriticalNativeMethod extends CriticalMethod {
     public CriticalNativeMethod(Class javaClass, String methodName) {
         super(javaClass, methodName, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
-        this._symbol = _classMethodActor.nativeSymbol();
+        _classMethodActor.nativeFunction().makeSymbol();
     }
 
     /**
@@ -72,7 +68,7 @@ public class CriticalNativeMethod extends CriticalMethod {
     public CriticalNativeMethod(ClassMethodActor classMethodActor) {
         super(classMethodActor, CallEntryPoint.C_ENTRY_POINT);
         registerCriticalNativeMethod(this);
-        this._symbol = _classMethodActor.nativeSymbol();
+        _classMethodActor.nativeFunction().makeSymbol();
     }
 
     /**
@@ -89,10 +85,6 @@ public class CriticalNativeMethod extends CriticalMethod {
      * @return the address of the native function's implementation
      */
     public Address link() {
-        if (_nativeFunction.isZero()) {
-            _nativeFunction = DynamicLinker.lookup(_classMethodActor, _symbol).asAddress();
-            _classMethodActor.setNativeFunction(_nativeFunction);
-        }
-        return _nativeFunction;
+        return _classMethodActor.nativeFunction().link().asAddress();
     }
 }

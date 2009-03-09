@@ -21,8 +21,9 @@
 /**
  * Making calls to 'ptrace()' available via JNI.
  * This way, request constants (e.g. PTRACE_CONT) do not need to be replicated in Java and maintained there.
- * 
+ *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -33,6 +34,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "os.h"
 
@@ -43,8 +45,41 @@
 #include "isa.h"
 #include "jni.h"
 
+jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
+    while (1) {
+        int status;
+        int error = waitpid(pid, &status, 0);
+
+        if (error != pid) {
+            log_println("waitpid failed with errno: %d", errno);
+            return false;
+        }
+        if (WIFEXITED(status)) {
+            return false;
+        }
+        if (WIFSIGNALED(status)) {
+            return false;
+        }
+        if (WIFSTOPPED(status)) {
+            // check whether the process received a signal, and continue with it if so.
+            int signal = WSTOPSIG(status);
+
+            if (signal == 0 || signal == signalnum) {
+                return true;
+            } else {
+                error = ptrace(PT_CONTINUE, pid, (char*) 1, signal);
+                if (error != 0) {
+                    log_println("ptrace(PT_CONTINUE) failed = %d", error);
+                    return false;
+                }
+            }
+        }
+    }
+}
+
+#if 0 /* See ptrace.h */
 /* Linux ptrace() is unreliable, but apparently retrying after descheduling helps. */
-long ptrace_withRetries(int request, int processID, void *address, void *data) {
+long ptrace_withRetries(int request, int processID, Address address, void *data) {
     int microSeconds = 100000;
     int i = 0;
     while (true) {
@@ -58,29 +93,36 @@ long ptrace_withRetries(int request, int processID, void *address, void *data) {
         usleep(microSeconds);
         i++;
         if (i % 10 == 0) {
-            fprintf(stderr, "ptrace retrying\n");
+            log_println("ptrace retrying");
         }
     }
 }
+#endif
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeCreateChildProcess(JNIEnv *env, jclass c, jstring javaFilename) {
+Java_com_sun_max_tele_debug_linux_Ptrace_nativeCreateChildProcess(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
+    char **argv = (char**) commandLineArgumentArray;
+
     int childProcessID = fork();
     if (childProcessID == 0) {
         /*child:*/
-        jboolean isCopy;
-        const char *filename = (*env)->GetStringUTFChars(env, javaFilename, &isCopy);
-         
+#if log_TELE
+        log_println("Launching VM process: %s", argv[0]);
+#endif
         if (ptrace(PTRACE_TRACEME, 0, 0, 0) != 0) {
-            fprintf(stderr, "ptrace failed in child process\n");
-            exit(1);
+            log_exit(1, "ptrace failed in child process");
         }
-        
+
+        char *portDef;
+        if (asprintf(&portDef, "MAX_AGENT_PORT=%u", vmAgentPort) == -1) {
+            log_exit(1, "Could not allocate space for setting MAX_AGENT_PORT environment variable");
+        }
+        putenv(portDef);
+
         /* This call does not return if it succeeds: */
-        execl(filename, NULL, NULL); 
-        
-        fprintf(stderr, "execve failed in child process\n");
-        exit(1);
+        execv(argv[0], argv);
+
+        log_exit(1, "ptrace failed in child process");
     } else {
         /*parent:*/
         int status;
@@ -91,203 +133,157 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeCreateChildProcess(JNIEnv *env, j
     return -1;
 }
 
+/**
+ * Checks that the result of a ptrace operation was 0, printing a warning message if it wasn't.
+ *
+ * @param result the result of a call to ptrace
+ * @param processID the identifier of the process or LWP (i.e. thread) on which the operation was performed
+ * @param action a descriptive name for the operation (e.g. "Stepping" or "Resuming")
+ * @return true if the call to ptrace returned 0, false otherwise
+ */
+static jboolean check_result_0(int result, jint processID, const char *action) {
+    if (result != 0) {
+        int error = errno;
+        log_println("%s process %d failed: %s", action, processID, strerror(error));
+        return false;
+    }
+    return true;
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_Ptrace_nativeAttach(JNIEnv *env, jclass c, jint processID) {
-    return ptrace(PTRACE_ATTACH, processID, 0, 0) == 0;
+    return check_result_0(ptrace(PTRACE_ATTACH, processID, 0, 0), processID, "Attaching");
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_Ptrace_nativeDetach(JNIEnv *env, jclass c, jint processID) {
-    return ptrace(PTRACE_DETACH, processID, 0, 0) == 0;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeSyscall(JNIEnv *env, jclass c, jint processID) {
-	long result = ptrace(PTRACE_SYSCALL, processID, 0, 0);
-	int status;
-	wait(&status);
-    return result == 0;
+    return check_result_0(ptrace(PTRACE_DETACH, processID, 0, 0), processID, "Detaching");
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_Ptrace_nativeSingleStep(JNIEnv *env, jclass c, jint processID) {
-    return ptrace(PTRACE_SINGLESTEP, processID, 0, 0) == 0;
+    return check_result_0(ptrace(PTRACE_SINGLESTEP, processID, 0, 0), processID, "Stepping");
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_Ptrace_nativeSuspend(JNIEnv *env, jclass c, jint processID) {
+    return check_result_0(kill(processID, SIGTRAP), processID, "Suspending");
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_Ptrace_nativeResume(JNIEnv *env, jclass c, jint processID) {
-    return ptrace(PTRACE_CONT, processID, 0, 0) == 0;
+    return check_result_0(ptrace(PTRACE_CONT, processID, 0, 0), processID, "Resuming");
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_Ptrace_nativeWait(JNIEnv *env, jclass c, jint processID) {
+    return ptraceWaitForSignal(processID, SIGTRAP);
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_Ptrace_nativeKill(JNIEnv *env, jclass c, jint processID) {
-    return ptrace(PTRACE_KILL, processID, 0, 0) == 0;
+    return check_result_0(ptrace(PTRACE_KILL, processID, 0, 0), processID, "Killing");
 }
 
-static jint readByte(jint request, jint processID, Address address) {
-    int index = address % sizeof(Word);
-    Address base = address - index;
-    Address result = ptrace(request, processID, (void *) base, 0);
-    if (errno != 0) {
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteBytes(JNIEnv *env, jclass c, jint processID, jlong address, jbyteArray byteArray, jint offset, jint length) {
+    jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
+    if (buffer == 0) {
+        log_println("failed to malloc byteArray of %d bytes", length);
         return -1;
     }
-#if word_BIG_ENDIAN
-    return (result >> ((sizeof(Word) - (index + 1)) * 8)) & 0xff;
-#else
-    return (result >> (index * 8)) & 0xff;
-#endif
-}
 
-JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadDataByte(JNIEnv *env, jclass c, jint processID, jlong address) {
-    return readByte(PTRACE_PEEKDATA, processID, (Address) address);
-}
-
-JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadTextByte(JNIEnv *env, jclass c, jint processID, jlong address) {
-    return readByte(PTRACE_PEEKTEXT, processID, (Address) address);
-}
-
-static jboolean writeByte(jint readRequest, jint writeRequest, jint processID, Address address, jbyte value) {
-    Address word;
-    long index = address % sizeof(Word);  
-    Address base = address - index;
-    Address mask = (Address) 0x000000ff;
-    Address data = (Address) value & 0x000000ff;
-
-#if word_BIG_ENDIAN
-    mask <<= (sizeof(Word) - (index + 1)) * 8;  
-    data <<= (sizeof(Word) - (index + 1)) * 8;
-#else
-    mask <<= index * 8;
-    data <<= index * 8;
-#endif
-
-    word = ptrace(readRequest, processID, (void *) base, 0);
-    if (errno != 0) {
-        return false;
+    (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
+    if ((*env)->ExceptionOccurred(env) != NULL) {
+        log_println("failed to copy %d bytes from byteArray into buffer", length);
+        return -1;
     }
-    word &= ~mask;
-    word |= data;
-    return ptrace(writeRequest, processID, (void *) base, (void *) word) == 0;
-}
 
-static jboolean writeByteWithRetries(jint readRequest, jint writeRequest, jint processID, Address address, jbyte value) {
-    int n = 0;
-    while (true) {
-        if (writeByte(readRequest, writeRequest, processID, address, value)) {
-            jbyte r = readByte(readRequest, processID, address);
-            if (r == value) {
-                return true;
+    int bytesWritten = 0;
+    Boolean ok = true;
+    int wholeWords = length / sizeof(Word);
+    if (wholeWords > 0) {
+        Word* wordBuffer = (Word *) buffer;
+        int i;
+        for (i = 0 ; i < wholeWords; i++) {
+            if (!check_result_0(ptrace(PTRACE_POKEDATA, processID, (Address) address + bytesWritten, wordBuffer[i]), processID, "Writing data to")) {
+                log_println("Only wrote %d of %d bytes", bytesWritten, length);
+                ok = false;
+                break;
             }
+            bytesWritten += sizeof(Word);
         }
-        if (n++ >= 10) {
-            return false;
+    }
+    int remainingBytes = length - bytesWritten;
+    if (ok && remainingBytes != 0) {
+        Address highAddress = address + bytesWritten;
+        /* Write remaining bytes */
+        Address word = ptrace(PTRACE_PEEKDATA, processID, highAddress, NULL);
+        if (errno != 0) {
+            log_println("Could not read word at %p into which remaining bytes will be masked", highAddress);
+        } else {
+            Address allOnes = -1;
+            Address mask = allOnes << (remainingBytes * 8);
+            Address *remainingBuffer = (Address *) (buffer + bytesWritten);
+            Address data = *((Address *) remainingBuffer);
+
+            Address result = (data & ~mask) | (word & mask);
+
+            if (!check_result_0(ptrace(PTRACE_POKEDATA, processID, (Address) highAddress, result), processID, "Writing data to")) {
+                log_println("Failed to write remaining bytes");
+                ok = false;
+            }
+            bytesWritten += remainingBytes;
         }
-        fprintf(stderr, "ptrace retrying write\n");
-        usleep(100000);
     }
+
+    free(buffer);
+    return bytesWritten;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteDataByte(JNIEnv *env, jclass c, jint processID, jlong address, jbyte value) {
-    return writeByte(PTRACE_PEEKDATA, PTRACE_POKEDATA, processID, (Address) address, value);
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteTextByte(JNIEnv *env, jclass c, jint processID, jlong address, jbyte value) {
-    return writeByte(PTRACE_PEEKTEXT, PTRACE_POKETEXT, processID, (Address) address, value);
-}
-
-typedef struct Status {
-    int pid;
-    char comm[256];
-    char state;
-    int ppid;
-    int pgrp;
-    int session;
-    int tty_nr;
-    int tpgid;
-    unsigned long flags;
-    unsigned long minflt;
-    unsigned long cminflt;
-    unsigned long majflt;
-    unsigned long cmajflt;
-    unsigned long utime;
-    unsigned long stime;
-    int cutime;
-    int cstime;
-    int priority;
-    int nice;
-    int zero;
-    int itrealvalue;
-    unsigned long starttime;
-    unsigned long vsize;
-    int rss;
-    unsigned long rlim;
-    unsigned long startcode;
-    unsigned long endcode;
-    unsigned long startstack;
-    unsigned long kstkesp;
-    unsigned long kstkeip;
-    unsigned long signal;
-    unsigned long blocked;
-    unsigned long sigignore;
-    unsigned long sigcatch;
-    unsigned long wchan;
-    unsigned long nswap;
-    unsigned long cnswap;
-    int exit_signal;
-    int processor;
-} *Status;
-
-static Boolean readStatus(int processID, Status s) {
-    char filename[256];
-    FILE *f;
-    int n;
-    
-    sprintf(filename, "/proc/%d/stat", processID);    
-    f = fopen(filename, "r");
-    if (f == NULL) {
-        return false;
-    }
-    n = fscanf(f, "%d %s %c %d %d %d %d %d %lu %lu %lu %lu %lu %lu %lu %d %d %d %d %d %d %lu %lu %d %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %d %d", 
-               &s->pid, s->comm, &s->state, &s->ppid, &s->pgrp, &s->session, &s->tty_nr, &s->tpgid, &s->flags, 
-               &s->minflt, &s->cminflt, &s->majflt, &s->cmajflt, &s->utime, &s->stime, &s->cutime, &s->cstime,
-               &s->priority, &s->nice, &s->zero, &s->itrealvalue, &s->starttime, &s->vsize, &s->rss, &s->rlim,
-               &s->startcode, &s->endcode, &s->startstack, &s->kstkesp, &s->kstkeip, &s->signal, &s->blocked,
-               &s->sigignore, &s->sigcatch, &s->wchan, &s->nswap, &s->cnswap, &s->exit_signal, &s->processor);
-    fclose(f);
-    return n == 39;
-}
-
-static jlong getInstructionPointerFromProc(int processID) {
-    struct Status statusStruct;
-    
-    if (!readStatus(processID, &statusStruct)) {
+JNIEXPORT jint JNICALL
+Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadBytes(JNIEnv *env, jclass c, jint processID, jlong address, jbyteArray byteArray, jint offset, jint length) {
+    int alignedLength = wordAlign(length);
+    jbyte* buffer = (jbyte *) malloc(alignedLength);
+    if (buffer == 0) {
+        log_println("failed to malloc byteArray of %d bytes", alignedLength);
         return -1;
     }
-    return statusStruct.kstkeip;
-}
 
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeGetInstructionPointer(JNIEnv *env, jclass c, jint processID) {
-    struct user_regs_struct registers;
-    if (ptrace(PTRACE_GETREGS, processID, 0, &registers) == 0) {
-        return registers.rip;
+    int bytesRead = 0;
+
+    int wholeWords = alignedLength / sizeof(Word);
+    Boolean ok = true;
+    Address* wordBuffer = (Address *) buffer;
+    int i;
+    for (i = 0; i < wholeWords; i++) {
+        int off = (i * sizeof(Word));
+        Address word = ptrace(PTRACE_PEEKDATA, processID, (Address) address + off, NULL);
+        if (errno != 0) {
+            log_println("Could not read word at %p+%d", address, off);
+            ok = false;
+            break;
+        }
+        wordBuffer[i] = word;
+        bytesRead += sizeof(Word);
     }
-    /* ptrace() is unreliable, but we can fall back on a different method of getting the same result.
-     * This one has the disadvantage that it sometimes reports an outdated result if we tried it first.
-     * But using it second, it usually works. 
-     */
-    fprintf(stderr, "ptrace fallback on /proc\n");
-    return getInstructionPointerFromProc(processID);
+
+    if (bytesRead > length) {
+        bytesRead = length;
+    }
+
+    if ((jint) bytesRead > 0) {
+        (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
+    }
+    free(buffer);
+
+    return bytesRead;
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_Ptrace_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint processID, jlong instructionPointer) {
     struct user_regs_struct registers;
-    
+
     if (ptrace(PTRACE_GETREGS, processID, 0, &registers) != 0) {
         return false;
     }
@@ -295,65 +291,46 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeSetInstructionPointer(JNIEnv *env
     return ptrace(PTRACE_SETREGS, processID, 0, &registers) == 0;
 }
 
-static jlong getStackPointerFromProc(int processID) {
-    struct Status statusStruct;
-    
-    if (!readStatus(processID, &statusStruct)) {
-        return -1;
-    }
-    return statusStruct.kstkesp;
-}
-
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeGetStackPointer(JNIEnv *env, jclass c, jint processID) {
-    struct user_regs_struct registers;
-    if (ptrace(PTRACE_GETREGS, processID, 0, &registers) == 0) {
-        return registers.rsp;
-    }
-    /* ptrace() is unreliable, but we can fall back on a different method of getting the same result.
-     * This one has the disadvantage that it sometimes reports an outdated result if we tried it first.
-     * But using it second, it usually works. 
-     */
-    fprintf(stderr, "ptrace fallback on /proc\n");
-    return getStackPointerFromProc(processID);
-}
-
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadIntegerRegisters(JNIEnv *env, jclass c, jint processID, jbyteArray buffer, jint length) {
+Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadRegisters(JNIEnv *env, jclass c, jint processID,
+                jbyteArray integerRegisters, jint integerRegistersLength,
+                jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
+                jbyteArray stateRegisters, jint stateRegistersLength) {
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
+    isa_CanonicalStateRegistersStruct canonicalStateRegisters;
+    isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
 
-    if (length > sizeof(canonicalIntegerRegisters)) {
-        log_println("buffer for register data is too large");
+    if (integerRegistersLength > (jint) sizeof(canonicalIntegerRegisters)) {
+        log_println("buffer for integer register data is too large");
         return false;
     }
 
-    struct user_regs_struct osRegisters;
-    if (ptrace(PTRACE_GETREGS, processID, 0, &osRegisters) != 0) {
+    if (stateRegistersLength > (jint) sizeof(canonicalStateRegisters)) {
+        log_println("buffer for state register data is too large");
         return false;
     }
 
-	isa_canonicalizeTeleIntegerRegisters(&osRegisters, &canonicalIntegerRegisters);    
-
-    (*env)->SetByteArrayRegion(env, buffer, 0, length, (void *) &canonicalIntegerRegisters);
-    return true;	
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadFloatingPointRegisters(JNIEnv *env, jclass c, jint processID, jbyteArray buffer, jint length) {
-    isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
-
-    if (length > sizeof(canonicalIntegerRegisters)) {
-        log_println("buffer for register data is too large");
+    if (floatingPointRegistersLength > (jint) sizeof(canonicalFloatingPointRegisters)) {
+        log_println("buffer for floating point register data is too large");
         return false;
     }
 
-    struct user_regs_struct osRegisters;
-    if (ptrace(PTRACE_GETREGS, processID, 0, &osRegisters) != 0) {
+    struct user_regs_struct osIntegerRegisters;
+    if (ptrace(PTRACE_GETREGS, processID, 0, &osIntegerRegisters) != 0) {
         return false;
     }
 
-    isa_canonicalizeTeleIntegerRegisters(&osRegisters, &canonicalIntegerRegisters);    
+    struct user_fpregs_struct osFloatRegisters;
+    if (ptrace(PTRACE_GETREGS, processID, 0, &osFloatRegisters) != 0) {
+        return false;
+    }
 
-    (*env)->SetByteArrayRegion(env, buffer, 0, length, (void *) &canonicalIntegerRegisters);
-    return true;    
+    isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, &canonicalIntegerRegisters);
+    isa_canonicalizeTeleStateRegisters(&osIntegerRegisters, &canonicalStateRegisters);
+    isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, &canonicalFloatingPointRegisters);
+
+    (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
+    (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
+    (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
+    return true;
 }

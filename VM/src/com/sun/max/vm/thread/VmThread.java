@@ -255,7 +255,14 @@ public class VmThread {
         _waitingCondition = waitingCondition;
     }
 
-    private VmThread _nextWaitingThread;
+    /**
+     * A link in a list of threads waiting on a monitor. If this field points to this thread, then the thread is not on
+     * a list. If it is {@code null}, then this thread is at the end of a list. A thread can be on at most one list.
+     *
+     * @see StandardJavaMonitor#monitorWait(long)
+     * @see StandardJavaMonitor#monitorNotify(boolean)
+     */
+    private VmThread _nextWaitingThread = this;
 
     @INLINE
     public final VmThread nextWaitingThread() {
@@ -854,7 +861,6 @@ public class VmThread {
     public static native void nativeInterrupt(Word nativeThread);
 
     public void interrupt0() {
-        // Problem.unimplemented();
         if (_nativeThread.isZero()) {
             // Native thread does not exist yet
         } else {

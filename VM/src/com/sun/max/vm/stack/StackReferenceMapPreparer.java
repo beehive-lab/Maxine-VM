@@ -128,11 +128,20 @@ public final class StackReferenceMapPreparer {
             Log.printVmThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
-            Log.println(highestStackSlot);
+            Log.print(highestStackSlot);
+            Log.print(" [index=");
+            Log.print(referenceMapBitIndex(highestStackSlot));
+            Log.println("]");
             Log.print("  Lowest active slot: ");
-            Log.println(stackPointer);
+            Log.print(stackPointer);
+            Log.print(" [index=");
+            Log.print(referenceMapBitIndex(stackPointer));
+            Log.println("]");
             Log.print("  Lowest slot: ");
-            Log.println(_lowestStackSlot);
+            Log.print(_lowestStackSlot);
+            Log.print(" [index=");
+            Log.print(referenceMapBitIndex(_lowestStackSlot));
+            Log.println("]");
             Log.print("  Current thread is ");
             Log.printVmThread(VmThread.current(), true);
         }
@@ -153,7 +162,7 @@ public final class StackReferenceMapPreparer {
 
     /**
      * Completes the stack reference map for a thread that was suspended by a safepoint while executing Java code. The
-     * reference map covering the frames between the frame in which the safepoint trap occurred and the and the JNI stub
+     * reference map covering the stack between the frame in which the safepoint trap occurred and the JNI stub
      * that enters into the native code for blocking on VmThreadMap.ACTIVE's monitor is not yet prepared. This method
      * completes this part of the threads stack reference map.
      *
@@ -187,11 +196,20 @@ public final class StackReferenceMapPreparer {
             Log.printVmThread(vmThread, false);
             Log.println(":");
             Log.print("  Highest slot: ");
-            Log.println(highestSlot);
+            Log.print(highestSlot);
+            Log.print(" [index=");
+            Log.print(referenceMapBitIndex(highestSlot));
+            Log.println("]");
             Log.print("  Lowest active slot: ");
-            Log.println(stackPointer);
+            Log.print(stackPointer);
+            Log.print(" [index=");
+            Log.print(referenceMapBitIndex(stackPointer));
+            Log.println("]");
             Log.print("  Lowest slot: ");
-            Log.println(_lowestStackSlot);
+            Log.print(_lowestStackSlot);
+            Log.print(" [index=");
+            Log.print(referenceMapBitIndex(_lowestStackSlot));
+            Log.println("]");
             Log.print("  Current thread is ");
             Log.printVmThread(VmThread.current(), true);
         }
@@ -742,6 +760,15 @@ public final class StackReferenceMapPreparer {
             for (int refMapByteIndex = lowestRefMapByteIndex + 1; refMapByteIndex < highestRefMapByteIndex; refMapByteIndex++) {
                 referenceMap.writeByte(refMapByteIndex, (byte) 0);
             }
+        }
+        if (Heap.traceGCRootScanning()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Cleared refmap indexes [");
+            Log.print(lowestBitIndex);
+            Log.print(" .. ");
+            Log.print(highestBitIndex);
+            Log.println("]");
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 

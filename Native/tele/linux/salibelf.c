@@ -40,7 +40,7 @@ int read_elf_header(int fd, ELF_EHDR* ehdr) {
 Boolean is_elf_file(int fd) {
    ELF_EHDR ehdr;
    return read_elf_header(fd, &ehdr);
-}   
+}
 
 // read program header table of an ELF file
 ELF_PHDR* read_program_header_table(int fd, ELF_EHDR* hdr) {
@@ -53,7 +53,7 @@ ELF_PHDR* read_program_header_table(int fd, ELF_EHDR* hdr) {
       return NULL;
    }
 
-   if (pread(fd, phbuf, nbytes, hdr->e_phoff) != nbytes) {
+   if ((size_t) pread(fd, phbuf, nbytes, hdr->e_phoff) != nbytes) {
       log_println("ELF file is truncated! can't read program header table");
       free(phbuf);
       return NULL;
@@ -73,7 +73,7 @@ ELF_SHDR* read_section_header_table(int fd, ELF_EHDR* hdr) {
       return NULL;
    }
 
-   if (pread(fd, shbuf, nbytes, hdr->e_shoff) != nbytes) {
+   if ((size_t) pread(fd, shbuf, nbytes, hdr->e_shoff) != nbytes) {
       log_println("ELF file is truncated! can't read section header table");
       free(shbuf);
       return NULL;
@@ -92,7 +92,7 @@ void* read_section_data(int fd, ELF_EHDR* ehdr, ELF_SHDR* shdr) {
      log_println("can't allocate memory for reading section data");
      return NULL;
   }
-  if (pread(fd, buf, shdr->sh_size, shdr->sh_offset) != shdr->sh_size) {
+  if ((size_t) pread(fd, buf, shdr->sh_size, shdr->sh_offset) != shdr->sh_size) {
      free(buf);
      log_println("section data read failed");
      return NULL;

@@ -45,6 +45,7 @@ import com.sun.max.lang.*;
 public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Type, Value_Type> implements VariableMapping<Key_Type, Value_Type> {
 
     // Note: this implementation is partly derived from java.util.HashMap in the standard JDK
+    // In particular, it uses a table whose length is guaranteed to be a power of 2.
 
     /**
      * The default initial capacity - MUST be a power of two.

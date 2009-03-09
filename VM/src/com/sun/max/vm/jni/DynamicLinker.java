@@ -43,9 +43,9 @@ import com.sun.max.vm.value.*;
  * defined in dlfcn.h).
  *
  * This class plays a key role in the VM bootstrap by providing a simple path to resolve critical
- * native symbols, e.g., for debugging and monitor support. Eveything actually hinges on two native functions,
- * "dlsym' and "nativeOpenDynamicLibrary", which are passed to the @see initialize method. Every other native
- *  symbol  can be found from there, including other "dlxxx" symbols.
+ * native symbols, e.g., for debugging and monitor support. Eveything actually hinges on three native functions,
+ * "dlsym", "dlerror" and "nativeOpenDynamicLibrary", which are passed to the {@link #initialize} method. Every other native
+ *  symbol  can be found from there.
  *
  * @author Doug Simon
  * @author Bernd Mathiske
@@ -63,6 +63,9 @@ public final class DynamicLinker {
     private static Word _dlsym = Word.zero();
 
     @CONSTANT_WHEN_NOT_ZERO
+    private static Word _dlerror = Word.zero();
+
+    @CONSTANT_WHEN_NOT_ZERO
     private static Word _mainHandle = Word.zero();
 
     /**
@@ -70,10 +73,12 @@ public final class DynamicLinker {
      *
      * @param nativeOpenDynamicLibrary
      * @param dlsym
+     * @param dlerror
     */
-    public static void initialize(Word nativeOpenDynamicLibrary, Word dlsym) {
+    public static void initialize(Word nativeOpenDynamicLibrary, Word dlsym, Word dlerror) {
         _nativeOpenDynamicLibrary = nativeOpenDynamicLibrary;
         _dlsym = dlsym;
+        _dlerror = dlerror;
         _mainHandle = nativeOpenDynamicLibrary(Address.zero());
     }
 
@@ -101,7 +106,11 @@ public final class DynamicLinker {
         }
         if (handle.isZero()) {
             try {
-                throw new UnsatisfiedLinkError(CString.utf8ToJava(dlerror().asPointer()));
+                final Pointer errorMessage = dlerror().asPointer();
+                if (errorMessage.isZero()) {
+                    throw new UnsatisfiedLinkError(absolutePath);
+                }
+                throw new UnsatisfiedLinkError(absolutePath + ": " + CString.utf8ToJava(errorMessage));
             } catch (Utf8Exception utf8Exception) {
                 throw new UnsatisfiedLinkError();
             }
@@ -142,6 +151,8 @@ public final class DynamicLinker {
                 return _nativeOpenDynamicLibrary;
             } else if ("dlsym".equals(name)) {
                 return _dlsym;
+            } else if ("dlerror".equals(name)) {
+                return _dlerror;
             }
             h = _mainHandle;
             if (MaxineVM.isPrimordialOrPristine()) {

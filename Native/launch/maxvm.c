@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 	strncpy(libraryPath, programPath, prefixLength);
 	strcpy(libraryPath + prefixLength, LIBRARY_NAME);
 
-	void *handle = dlopen(libraryPath, RTLD_LAZY | RTLD_GLOBAL);
+    void *handle = dlopen(libraryPath, RTLD_LAZY | RTLD_GLOBAL);
 	if (handle == 0) {
 		fprintf(stderr, "could not load libjvm.so: %s\n", dlerror());
 		exit(1);

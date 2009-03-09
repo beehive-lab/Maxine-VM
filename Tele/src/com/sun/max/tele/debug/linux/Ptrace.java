@@ -23,6 +23,7 @@ package com.sun.max.tele.debug.linux;
 import java.io.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
@@ -41,12 +42,12 @@ public final class Ptrace {
         _processID = processID;
     }
 
-    private static native int nativeCreateChildProcess(String filename);
+    private static native int nativeCreateChildProcess(long argv, int vmAgentSocketPort);
 
-    public static Ptrace createChild(final String filename) {
+    public static Ptrace createChild(final long argv, final int vmAgentSocketPort) {
         return SingleThread.execute(new Function<Ptrace>() {
             public Ptrace call() {
-                final int processID = nativeCreateChildProcess(filename);
+                final int processID = nativeCreateChildProcess(argv, vmAgentSocketPort);
                 if (processID < 0) {
                     return null;
                 }
@@ -90,23 +91,6 @@ public final class Ptrace {
         }
     }
 
-    private static native boolean nativeSyscall(int processID);
-
-    public synchronized void syscall() throws IOException {
-        try {
-            SingleThread.executeWithException(new Function<Void>() {
-                public Void call() throws Exception {
-                    if (!nativeSyscall(_processID)) {
-                        throw new IOException("Ptrace.syscall");
-                    }
-                    return null;
-                }
-            });
-        } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
-        }
-    }
-
     private static native boolean nativeSingleStep(int processID);
 
     public synchronized boolean singleStep() {
@@ -119,83 +103,83 @@ public final class Ptrace {
 
     private static native boolean nativeResume(int processID);
 
-    public synchronized void resume() throws IOException {
+    public synchronized void resume() throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
                     if (!nativeResume(_processID)) {
-                        throw new IOException("Ptrace.resume");
+                        throw new OSExecutionRequestException("Ptrace.resume");
                     }
                     return null;
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
+            throw Exceptions.cast(OSExecutionRequestException.class, exception);
         }
+    }
+
+    private static native boolean nativeSuspend(int processID);
+
+    public synchronized void suspend() throws OSExecutionRequestException {
+        try {
+            SingleThread.executeWithException(new Function<Void>() {
+                public Void call() throws Exception {
+                    if (!nativeSuspend(_processID)) {
+                        throw new OSExecutionRequestException("Ptrace.suspend");
+                    }
+                    return null;
+                }
+            });
+        } catch (Exception exception) {
+            throw Exceptions.cast(OSExecutionRequestException.class, exception);
+        }
+    }
+
+    private static native boolean nativeWait(int processID);
+
+    public synchronized boolean waitUntilStopped() {
+        return SingleThread.execute(new Function<Boolean>() {
+            public Boolean call() throws Exception {
+                return nativeWait(_processID);
+            }
+        });
     }
 
     private static native boolean nativeKill(int processID);
 
-    public synchronized void kill() throws IOException {
+    public synchronized void kill() throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
                     if (!nativeKill(_processID)) {
-                        throw new IOException("Ptrace.kill");
+                        throw new OSExecutionRequestException("Ptrace.kill");
                     }
                     return null;
                 }
             });
         } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
+            throw Exceptions.cast(OSExecutionRequestException.class, exception);
         }
     }
 
-    private static native int nativeReadDataByte(int processID, long address);
+    private static native int nativeReadBytes(int processID, long address, byte[] buffer, int offset, int length);
 
-    public synchronized byte readDataByte(final Address address) throws IOException {
-        final int result = SingleThread.execute(new Function<Integer>() {
+    public synchronized int readBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+        return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                return nativeReadDataByte(_processID, address.toLong());
+                return nativeReadBytes(_processID, address.toLong(), buffer, offset, length);
             }
         });
-        if (result < 0) {
-            throw new DataIOError(address, "Ptrace.readDataByte");
-        }
-        return (byte) result;
     }
 
-    private static native int nativeReadTextByte(int processID, long address);
+    private static native int nativeWriteBytes(int processID, long address, byte[] buffer, int offset, int length);
 
-    public synchronized byte readTextByte(final Address address) throws IOException {
-        try {
-            return SingleThread.executeWithException(new Function<Byte>() {
-                public Byte call() throws IOException {
-                    final int result = nativeReadTextByte(_processID, address.toLong());
-                    if (result < 0) {
-                        throw new IOException("Ptrace.readTextByte");
-                    }
-                    return (byte) result;
-                }
-            });
-        } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
-        }
-    }
-
-    /**
-     * Not thread-safe: Reads a word, changes a byte in it and writes the word back.
-     */
-    private static native boolean nativeWriteDataByte(int processID, long address, byte value);
-
-    public synchronized void writeDataByte(final Address address, final byte value) throws IOException {
-        if (!SingleThread.execute(new Function<Boolean>() {
-            public Boolean call() throws Exception {
-                return nativeWriteDataByte(_processID, address.toLong(), value);
+    public synchronized int writeBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+        return SingleThread.execute(new Function<Integer>() {
+            public Integer call() throws Exception {
+                return nativeWriteBytes(_processID, address.toLong(), buffer, offset, length);
             }
-        })) {
-            throw new DataIOError(address, "Ptrace.writeDataByte");
-        }
+        });
     }
 
     private static native boolean nativeSetInstructionPointer(int processID, long instructionPointer);

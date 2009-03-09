@@ -78,21 +78,9 @@ int pathmap_open(const char* name) {
    return -1;
 }
 
-static void destroy_LibInfo(struct ps_prochandle* ph) {
-   LibInfo* lib = ph->libs;
-   while (lib) {
-     LibInfo *next = lib->next;
-     if (lib->symtab) {
-        destroy_symtab(lib->symtab);
-     }
-     free(lib);
-     lib = next;
-   }
-}
-
 static LibInfo* add_LibInfo_fd(struct ps_prochandle* ph, const char* libname, int fd, uintptr_t base) {
    LibInfo* newlib;
-  
+
    newlib = (LibInfo *) calloc(1, sizeof(struct LibInfo));
    if (newlib == NULL) {
       log_println("can't allocate memory for LibInfo");
@@ -112,14 +100,14 @@ static LibInfo* add_LibInfo_fd(struct ps_prochandle* ph, const char* libname, in
    } else {
       newlib->fd = fd;
    }
-   
+
    // check whether we have got an ELF file. /proc/<pid>/map
    // gives out all file mappings and not just shared objects
    if (is_elf_file(newlib->fd) == false) {
       close(newlib->fd);
       free(newlib);
       return NULL;
-   } 
+   }
 
    newlib->symtab = build_symtab(newlib->fd);
    if (newlib->symtab == NULL) {
@@ -129,10 +117,10 @@ static LibInfo* add_LibInfo_fd(struct ps_prochandle* ph, const char* libname, in
    // even if symbol table building fails, we add the LibInfo.
    // This is because we may need to read from the ELF file for core file
    // address read functionality. lookup_symbol checks for NULL symtab.
-   if (ph->libs) { 
+   if (ph->libs) {
       ph->lib_tail->next = newlib;
       ph->lib_tail = newlib;
-   }  else { 
+   }  else {
       ph->libs = ph->lib_tail = newlib;
    }
    ph->num_libs++;
@@ -141,7 +129,7 @@ static LibInfo* add_LibInfo_fd(struct ps_prochandle* ph, const char* libname, in
 }
 
 static LibInfo* add_LibInfo(struct ps_prochandle* ph, const char* libname, uintptr_t base) {
-   return add_LibInfo_fd(ph, libname, -1, base);
+    return add_LibInfo_fd(ph, libname, -1, base);
 }
 
 /*
@@ -173,14 +161,14 @@ static int split_n_str(char * str, int n, char ** ptrs, char delim, char new_del
     if (str == NULL || n < 1 ) {
         return 0;
     }
-   
+
     i = 0;
 
     // skipping leading blanks
     while(*str&& * str == delim) {
         str++;
     }
-   
+
     while(*str && i < n) {
         ptrs[i++] = str;
         while(*str&& * str != delim) {
@@ -190,7 +178,7 @@ static int split_n_str(char * str, int n, char ** ptrs, char delim, char new_del
             *(str++) = new_delim;
         }
     }
-   
+
     return i;
 }
 
@@ -211,6 +199,8 @@ Boolean read_LibInfo(struct ps_prochandle* ph) {
     FILE *file = NULL;
 
     sprintf(fname, "/proc/%d/maps", ph->pid);
+
+
     file = fopen(fname, "r");
     if (file == NULL) {
         log_println("can't open /proc/%d/maps file", ph->pid);
@@ -228,7 +218,7 @@ Boolean read_LibInfo(struct ps_prochandle* ph) {
             if (lib == NULL) {
                 continue; // ignore, add_LibInfo prints error
             }
-            
+
             // we don't need to keep the library open, symtab is already
             // built. Only for core dump we need to keep the fd open.
             close(lib->fd);
@@ -239,7 +229,7 @@ Boolean read_LibInfo(struct ps_prochandle* ph) {
     return true;
 }
 
-uintptr_t lookup_symbol(struct ps_prochandle* ph, const char* sym_name) {    
+uintptr_t lookup_symbol(struct ps_prochandle* ph, const char* sym_name) {
    LibInfo* lib = ph->libs;
    while (lib) {
       if (lib->symtab) {
@@ -266,12 +256,12 @@ const char* symbol_for_pc(struct ps_prochandle* ph, uintptr_t addr, uintptr_t* p
 }
 
 
-// get number of shared objects 
+// get number of shared objects
 int get_num_libs(struct ps_prochandle* ph) {
    return ph->num_libs;
 }
 
-// get name of n'th solib 
+// get name of n'th solib
 const char* get_lib_name(struct ps_prochandle* ph, int index) {
    int count = 0;
    LibInfo* lib = ph->libs;

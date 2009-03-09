@@ -21,6 +21,14 @@
 #ifndef _ptrace_h_
 #define _ptrace_h_ 1
 
-extern long ptrace_withRetries(int request, int processID, void *address, void *data);
+#if 0
+/*
+ * This was apparently needed at some point but no longer seems necessary.
+ * Still, best to leave it around just in case...
+ */
+extern long ptrace_withRetries(int request, int processID, Address address, void *data);
+#else
+#define ptrace_withRetries(request, processID, address, data) ptrace(request, processID, address, data)
+#endif
 
 #endif /*_ptrace_h_*/

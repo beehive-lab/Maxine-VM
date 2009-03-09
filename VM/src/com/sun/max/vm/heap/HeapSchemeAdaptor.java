@@ -18,25 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug.linux;
+package com.sun.max.vm.heap;
 
-import java.io.*;
-
-import com.sun.max.program.*;
-import com.sun.max.tele.*;
-import com.sun.max.vm.prototype.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 
 /**
- * @author Bernd Mathiske
+ * Class to capture common methods for heap scheme implementations.
+ *
+ * @author Mick Jordan
  */
-public final class LinuxTeleVM extends TeleVM {
+
+public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements HeapScheme {
+
+    public HeapSchemeAdaptor(VMConfiguration vmConfiguration) {
+        super(vmConfiguration);
+    }
 
     @Override
-    protected LinuxTeleProcess createTeleProcess(String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
-        return new LinuxTeleProcess(this, bootImage().vmConfiguration().platform(), programFile(), commandLineArguments, agent);
+    public boolean decreaseMemory(Size amount) {
+        return false;
     }
 
-    public LinuxTeleVM(File bootImageFile, BootImage bootImage, Classpath sourcepath, String[] commandLineArguments, int processID) throws BootImageException {
-        super(bootImageFile, bootImage, sourcepath, commandLineArguments, processID, new TeleVMAgent());
+    @Override
+    public boolean increaseMemory(Size amount) {
+        return false;
     }
+
+
 }

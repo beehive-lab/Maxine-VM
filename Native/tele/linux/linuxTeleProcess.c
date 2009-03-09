@@ -30,14 +30,10 @@
 #include "threads.h"
 
 #include "teleProcess.h"
+#include "teleNativeThread.h"
 
 void teleProcess_initialize(void) {
     td_init();
-}
-
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jint processID) {
-    kill(processID, SIGINT);
 }
 
 JNIEXPORT jlong JNICALL
@@ -99,7 +95,6 @@ static jmethodID _methodID = NULL;
 static int gatherThread(const td_thrhandle_t *th, void *data) {
     Argument a = (Argument) data;
     td_thrinfo_t info;
-    jboolean isSuspended;
 
     td_err_e error = td_thr_get_info(th, &info);
     if (error != TD_OK) {
@@ -110,17 +105,21 @@ static int gatherThread(const td_thrhandle_t *th, void *data) {
     if (_javaThreadStartFunction == NULL) {
         _javaThreadStartFunction = (void *) lookup_symbol(a->ph, STRINGIZE(thread_runJava));
     }
-    isSuspended = info.ti_db_suspended != 0;
 
     if (_methodID == NULL) {
         jclass c = (*a->env)->GetObjectClass(a->env, a->process);
-        _methodID = (*a->env)->GetMethodID(a->env, c, "jniGatherThread",
-                                           "(Ljava/util/Map;ZJIJJ)V");
+        _methodID = (*a->env)->GetMethodID(a->env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIIJJ)V");
         c_ASSERT(_methodID != NULL);
     }
 
-    (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, isSuspended,
-                              (jlong) info.ti_tid, (jint) info.ti_lid, (jlong) info.ti_stkbase, (jlong) info.ti_stksize);
+    ThreadState_t state = TS_SUSPENDED;
+    (*a->env)->CallVoidMethod(a->env, a->process, _methodID,
+                    a->result,               /* threads    */
+                    (jlong) info.ti_tid,     /* threadID   */
+                    (jint) info.ti_lid,      /* lwpId      */
+                    (jint) state,            /* state      */
+                    (jlong) info.ti_stkbase, /* stackStart */
+                    (jlong) info.ti_stksize  /* stackSize  */);
     return 0;
 }
 

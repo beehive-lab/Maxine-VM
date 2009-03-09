@@ -39,7 +39,7 @@
     typedef greg_t *amd64_OsSignalIntegerRegisters;
     typedef fpregset_t amd64_OsSignalFloatingPointRegisters;
     typedef struct user_regs_struct *amd64_OsTeleIntegerRegisters;
-    typedef struct user_regs_struct *amd64_OsTeleFloatingPointRegisters;
+    typedef struct user_fpregs_struct *amd64_OsTeleFloatingPointRegisters;
     typedef struct user_regs_struct *amd64_OsTeleStateRegisters;
 #elif os_SOLARIS
 #   include <sys/procfs.h>
