@@ -1458,6 +1458,10 @@ public abstract class ClassActor extends Actor {
         return _clinit != null;
     }
 
+    public final StaticMethodActor classInitializer() {
+        return _clinit;
+    }
+
     public void callInitializer() {
         if (_clinit != null) {
             SpecialBuiltin.call(CompilationScheme.Static.compile(_clinit, CallEntryPoint.OPTIMIZED_ENTRY_POINT, CompilationDirective.DEFAULT));
@@ -1546,17 +1550,6 @@ public abstract class ClassActor extends Actor {
                 throw error;
             }
         }
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        ClassID.clear(id());
-        if (_arrayClassIDs != null) {
-            for (int id : _arrayClassIDs) {
-                ClassID.clear(id);
-            }
-        }
-        super.finalize();
     }
 
     private Object[] _signers;

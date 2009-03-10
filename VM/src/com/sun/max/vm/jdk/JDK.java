@@ -50,9 +50,11 @@ public class JDK {
     public static final ClassRef java_lang_Thread                    = new ClassRef(Thread.class);
     public static final ClassRef java_lang_Throwable                 = new ClassRef(Throwable.class);
 
-    public static final ClassRef java_lang_ref_Finalizer             = new ClassRef("java.lang.ref.Finalizer");
-    public static final ClassRef java_lang_ref_Reference             = new ClassRef(java.lang.ref.Reference.class);
-    public static final ClassRef java_lang_ref_ReferenceQueue        = new ClassRef(java.lang.ref.ReferenceQueue.class);
+    public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
+    public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");
+    public static final ClassRef java_lang_ref_Reference                   = new ClassRef(java.lang.ref.Reference.class);
+    public static final ClassRef java_lang_ref_Reference$ReferenceHandler  = new ClassRef(java.lang.ref.Reference.class, "ReferenceHandler");
+    public static final ClassRef java_lang_ref_ReferenceQueue              = new ClassRef(java.lang.ref.ReferenceQueue.class);
 
     public static final ClassRef java_io_BufferedInputStream         = new ClassRef(java.io.BufferedInputStream.class);
     public static final ClassRef java_io_Serializable                = new ClassRef(java.io.Serializable.class);
@@ -110,10 +112,16 @@ public class JDK {
 
         @INLINE
         public final ClassActor classActor() {
-            if (_classActor != null) {
+            if (_classActor == null) {
                 getClassActor();
             }
             return _classActor;
+        }
+
+        public void resolveClassActor() {
+            if (_javaClass != null) {
+                classActor();
+            }
         }
 
         private void getClassActor() {

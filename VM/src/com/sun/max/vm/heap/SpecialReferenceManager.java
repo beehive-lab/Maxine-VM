@@ -21,15 +21,21 @@
 package com.sun.max.vm.heap;
 
 import java.lang.ref.*;
+import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.grip.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * This class implements supports for collecting and processing special references
@@ -41,6 +47,8 @@ import com.sun.max.vm.object.*;
  * @author Ben L. Titzer
  */
 public class SpecialReferenceManager {
+
+    private static final boolean FINALIZERS_SUPPORTED = true;
 
     /**
      * This interface forms a contract between the GC algorithm and the implementation of special
@@ -58,6 +66,10 @@ public class SpecialReferenceManager {
     private static final ReferenceFieldActor _discoveredField = getReferenceClassField("discovered");
     private static final ReferenceFieldActor _referentField = getReferenceClassField("referent");
     private static final ReferenceFieldActor _pendingField = getReferenceClassField("pending");
+    private static final ReferenceFieldActor _lockField = getReferenceClassField("lock");
+    private static final Object _lock = getLockObject();
+    // this method should be available and compiled
+    private static final CriticalMethod _registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register");
 
     private static Grip _discoveredList;
 
@@ -108,6 +120,11 @@ public class SpecialReferenceManager {
         }
         _pendingField.writeStatic(last);
         _discoveredList = Grip.fromOrigin(Pointer.zero());
+        if (last != null) {
+            // if there are pending special references, notify the reference handler thread.
+            // (note that the GC must already hold the lock object)
+            getLockObject().notifyAll();
+        }
     }
 
     /**
@@ -131,6 +148,64 @@ public class SpecialReferenceManager {
                 Log.unlock(lockDisabledSafepoints);
             }
         }
+    }
+
+    /**
+     * Registers an object that has a finalizer with the special reference manager.
+     * A call to this method is inserted after allocation of such objects.
+     * @param object the object that has a finalizers
+     */
+    public static void registerFinalizee(Object object) {
+        if (FINALIZERS_SUPPORTED) {
+            try {
+                final Method method = _registerMethod.classMethodActor().toJava();
+                method.setAccessible(true);
+                method.invoke(null, object);
+            } catch (Exception e) {
+                throw ProgramError.unexpected(e);
+            }
+        }
+    }
+
+    /**
+     * Initialize the SpecialReferenceManager when starting the VM. Normally, on the host
+     * VM, the {@link java.lang.Reference} and {@link java.lang.Finalizer} classes create
+     * threads in their static initializers to handle weak references and finalizable objects.
+     * However, in the target VM, these classes have already been initialized and these
+     * threads need to be started manually.
+     *
+     * @param phase the phase in which the VM is in
+     */
+    public static void initialize(Phase phase) {
+        // explicitly call the class initializers of reference and finalizer
+        JDK.java_lang_ref_Reference.classActor().callInitializer();
+        // the initializer reallocated the lock object. set it back to what it was at prototyping time
+        _lockField.writeStatic(getLockObject());
+
+        if (FINALIZERS_SUPPORTED && phase == Phase.STARTING) {
+            JDK.java_lang_ref_Finalizer.classActor().callInitializer();
+        }
+    }
+
+    /**
+     * This method gets the lock object associated with managing special references. This lock must
+     * be held by the GC when it is updating the list of pending special references. This lock object
+     * is allocated in {@link java.lang.Reference} and stored in its <code>lock</code> field.
+     * Like {@link VmThread.ACTIVE}, this lock is special and requires a sticky monitor.
+     *
+     * @return the object that must be held by the GC
+     */
+    public static Object getLockObject() {
+        if (MaxineVM.isPrototyping()) {
+            try {
+                final Field lockField = JDK.java_lang_ref_Reference.javaClass().getDeclaredField("lock");
+                lockField.setAccessible(true);
+                return lockField.get(null);
+            } catch (Exception e) {
+                throw ProgramError.unexpected(e);
+            }
+        }
+        return _lock;
     }
 
     @PROTOTYPE_ONLY

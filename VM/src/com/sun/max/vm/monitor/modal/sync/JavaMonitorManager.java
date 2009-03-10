@@ -24,6 +24,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
@@ -104,6 +105,7 @@ public class JavaMonitorManager {
         if (MaxineVM.isPrototyping()) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());
+            prototypeBindStickyMonitor(SpecialReferenceManager.getLockObject(), new StandardJavaMonitor());
 
             if (_gcDeadlockDetection) {
                 prototypeBindStickyMonitor(MaxineVM.hostOrTarget().configuration().heapScheme(), new StandardJavaMonitor.HeapSchemeDeadlockDetectionJavaMonitor());
