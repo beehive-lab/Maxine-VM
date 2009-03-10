@@ -62,7 +62,11 @@ public abstract class NonFoldableSnippet extends Snippet {
             if (classActor.isHybridClassActor()) {
                 return Heap.createHybrid(classActor.dynamicHub());
             }
-            return Heap.createTuple(classActor.dynamicHub());
+            final Object object = Heap.createTuple(classActor.dynamicHub());
+            if (classActor.hasFinalizer()) {
+                SpecialReferenceManager.registerFinalizee(object);
+            }
+            return object;
         }
         public static final CreateTupleOrHybrid SNIPPET = new CreateTupleOrHybrid();
     }

@@ -24,6 +24,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.sync.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -134,12 +135,15 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
 
     private final Runnable _gcRequest = new Runnable() {
         public void run() {
-            synchronized (VmThreadMap.ACTIVE) {
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _triggerSafepoint);
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _waitUntilNonMutating);
-                VmThreadLocal.prepareCurrentStackReferenceMap();
-                _procedure.run();
-                VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
+            synchronized (SpecialReferenceManager.getLockObject()) {
+                // the lock for the special reference manager must be held before starting GC
+                synchronized (VmThreadMap.ACTIVE) {
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _triggerSafepoint);
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _waitUntilNonMutating);
+                    VmThreadLocal.prepareCurrentStackReferenceMap();
+                    _procedure.run();
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
+                }
             }
         }
     };
