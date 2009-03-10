@@ -32,6 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.HackJDK.*;
 import com.sun.max.vm.type.*;
@@ -77,7 +78,6 @@ public class GraphPrototype extends Prototype {
     static class ClassInfo {
         final Class _class;
         final AppendableSequence<Field> _mutableReferenceFields = new LinkSequence<Field>();
-        final AppendableSequence<Field> _immutableReferenceFields = new LinkSequence<Field>();
         final AppendableSequence<SpecialField> _specialReferenceFields = new LinkSequence<SpecialField>();
         final AppendableSequence<ClassInfo> _subClasses = new ArrayListSequence<ClassInfo>();
 
@@ -433,7 +433,6 @@ public class GraphPrototype extends Prototype {
             if (superInfo != null) {
                 // propagate information from super class field lists to this new class info
                 superInfo._subClasses.append(classInfo);
-                AppendableSequence.Static.appendAll(classInfo._immutableReferenceFields, superInfo._immutableReferenceFields);
                 AppendableSequence.Static.appendAll(classInfo._mutableReferenceFields, superInfo._mutableReferenceFields);
                 AppendableSequence.Static.appendAll(classInfo._specialReferenceFields, superInfo._specialReferenceFields);
             }
@@ -473,10 +472,13 @@ public class GraphPrototype extends Prototype {
 
         if (object instanceof Class) {
             // must ensure that any Class instances in the image are referenced by the mirror field of the ClassActor
-            exploreClass(object);
+            exploreClass((Class) object);
         } else if (object instanceof ClassActor) {
             // must ensure that any ClassActor instances reference the java.lang.Class instance
-            exploreClassActor(object);
+            exploreClassActor((ClassActor) object);
+        } else if (object instanceof JDK.ClassRef) {
+            // resolve class ref's at prototyping type
+            exploreClassRef((JDK.ClassRef) object);
         }
 
         // walk the reference fields of the object
@@ -491,16 +493,14 @@ public class GraphPrototype extends Prototype {
         }
     }
 
-    private void exploreClassActor(Object object) {
-        final ClassActor classActor = (ClassActor) object;
+    private void exploreClassActor(ClassActor classActor) {
         final Class<?> javaClass = classActor.toJava();
         classActor.setMirror(javaClass);
         // add the class actor object
-        add(object, javaClass, "mirror");
+        add(classActor, javaClass, "mirror");
     }
 
-    private void exploreClass(Object object) throws ProgramError {
-        final Class<?> javaClass = (Class<?>) object;
+    private void exploreClass(Class javaClass) throws ProgramError {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         if (classActor == null) {
             if (MaxineVM.isPrototypeOnly(javaClass)) {
@@ -510,13 +510,16 @@ public class GraphPrototype extends Prototype {
         }
         classActor.setMirror(javaClass);
         // add the class actor object
-        add(object, classActor, "classActor");
+        add(javaClass, classActor, "classActor");
         // walk the static fields of the class
-        walkFields(object, makeClassInfo(javaClass)._classClassInfo);
+        walkFields(javaClass, makeClassInfo(javaClass)._classClassInfo);
+    }
+
+    private void exploreClassRef(JDK.ClassRef classRef) {
+        classRef.resolveClassActor();
     }
 
     private void walkFields(Object object, ClassInfo classInfo) throws ProgramError {
-        // TODO: mutable vs. immutable fields
         for (Field field : classInfo._mutableReferenceFields) {
             try {
                 final Object value = HostObjectAccess.hostToTarget(field.get(object));
