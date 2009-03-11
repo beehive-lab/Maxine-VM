@@ -38,26 +38,36 @@
 
 #include "os.h"
 
-#include <sys/ptrace.h>
-
 #include "log.h"
 #include "word.h"
 #include "isa.h"
 #include "jni.h"
+#include "ptrace.h"
 
-jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
+#if log_TELE
+#define tele_log_println log_println
+#else
+#define log_null(format, ...)
+#define tele_log_println log_null
+#endif
+
+jboolean waitForSignal(pid_t pid, int signalnum) {
     while (1) {
         int status;
+        tele_log_println("Waiting for process %d to receive signal %d [%s]", pid, signalnum, strsignal(signalnum));
         int error = waitpid(pid, &status, 0);
 
         if (error != pid) {
-            log_println("waitpid failed with errno: %d", errno);
+            log_println("waitpid failed with error: %d [%s]", errno, strerror(error));
             return false;
         }
         if (WIFEXITED(status)) {
+            log_println("Process %d exited with exit status %d", pid, WEXITSTATUS(status));
             return false;
         }
         if (WIFSIGNALED(status)) {
+            int signal = WTERMSIG(status);
+            log_println("Process %d terminated by signal %d [%s]", pid, signal, strsignal(signal));
             return false;
         }
         if (WIFSTOPPED(status)) {
@@ -65,11 +75,13 @@ jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
             int signal = WSTOPSIG(status);
 
             if (signal == 0 || signal == signalnum) {
+                tele_log_println("Process %d stopped by signal %d [%s]", pid, signal, strsignal(signal));
                 return true;
             } else {
-                error = ptrace(PT_CONTINUE, pid, (char*) 1, signal);
+                ptrace(PT_CONTINUE, pid, (char*) 1, signal);
+                error = errno;
                 if (error != 0) {
-                    log_println("ptrace(PT_CONTINUE) failed = %d", error);
+                    log_println("Continuing process %d failed: %s", pid, strerror(error));
                     return false;
                 }
             }
@@ -77,40 +89,16 @@ jboolean ptraceWaitForSignal(jlong pid, int signalnum) {
     }
 }
 
-#if 0 /* See ptrace.h */
-/* Linux ptrace() is unreliable, but apparently retrying after descheduling helps. */
-long ptrace_withRetries(int request, int processID, Address address, void *data) {
-    int microSeconds = 100000;
-    int i = 0;
-    while (true) {
-        long result = ptrace(request, processID, address, data);
-        if (result != -1 || errno == 0) {
-            return result;
-        }
-        if (errno != ESRCH || i >= 150) {
-            return -1;
-        }
-        usleep(microSeconds);
-        i++;
-        if (i % 10 == 0) {
-            log_println("ptrace retrying");
-        }
-    }
-}
-#endif
-
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeCreateChildProcess(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeCreateChildProcess(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
     char **argv = (char**) commandLineArgumentArray;
 
-    int childProcessID = fork();
-    if (childProcessID == 0) {
+    int childPid = fork();
+    if (childPid == 0) {
         /*child:*/
-#if log_TELE
-        log_println("Launching VM process: %s", argv[0]);
-#endif
-        if (ptrace(PTRACE_TRACEME, 0, 0, 0) != 0) {
-            log_exit(1, "ptrace failed in child process");
+        tele_log_println("Attaching ptrace to VM process %d", getpid());
+        if (ptrace(PT_TRACEME, 0, 0, 0) != 0) {
+            log_exit(1, "Failed to attach ptrace to VM process %d", getpid());
         }
 
         char *portDef;
@@ -120,82 +108,73 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeCreateChildProcess(JNIEnv *env, j
         putenv(portDef);
 
         /* This call does not return if it succeeds: */
+        tele_log_println("Launching VM executable: %s", argv[0]);
         execv(argv[0], argv);
 
         log_exit(1, "ptrace failed in child process");
     } else {
         /*parent:*/
         int status;
-        if (waitpid(childProcessID, &status, 0) == childProcessID && WIFSTOPPED(status)) {
-            return childProcessID;
+        if (waitpid(childPid, &status, 0) == childPid && WIFSTOPPED(status)) {
+            /* The child traps as starts new threads */
+            ptrace(PT_SETOPTIONS, childPid, 0, PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXIT);
+            return childPid;
         }
     }
     return -1;
 }
 
-/**
- * Checks that the result of a ptrace operation was 0, printing a warning message if it wasn't.
- *
- * @param result the result of a call to ptrace
- * @param processID the identifier of the process or LWP (i.e. thread) on which the operation was performed
- * @param action a descriptive name for the operation (e.g. "Stepping" or "Resuming")
- * @return true if the call to ptrace returned 0, false otherwise
- */
-static jboolean check_result_0(int result, jint processID, const char *action) {
-    if (result != 0) {
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeAttach(JNIEnv *env, jclass c, jint pid) {
+    return ptrace(PT_ATTACH, pid, 0, 0) == 0;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeDetach(JNIEnv *env, jclass c, jint pid) {
+    return ptrace(PT_DETACH, pid, 0, 0) == 0;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeSingleStep(JNIEnv *env, jclass c, jint pid) {
+    return ptrace(PT_STEP, pid, 0, 0) == 0;
+}
+
+JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeSuspend(JNIEnv *env, jclass c, jint pid) {
+    if (kill(pid, SIGTRAP) != 0) {
         int error = errno;
-        log_println("%s process %d failed: %s", action, processID, strerror(error));
+        log_println("Error sending SIGTRAP to suspend process %d: %s", pid, strerror(error));
         return false;
     }
     return true;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeAttach(JNIEnv *env, jclass c, jint processID) {
-    return check_result_0(ptrace(PTRACE_ATTACH, processID, 0, 0), processID, "Attaching");
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeResume(JNIEnv *env, jclass c, jint pid) {
+    return ptrace(PT_CONTINUE, pid, 0, 0) == 0;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeDetach(JNIEnv *env, jclass c, jint processID) {
-    return check_result_0(ptrace(PTRACE_DETACH, processID, 0, 0), processID, "Detaching");
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeWait(JNIEnv *env, jclass c, jint pid) {
+    return waitForSignal(pid, SIGTRAP);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeSingleStep(JNIEnv *env, jclass c, jint processID) {
-    return check_result_0(ptrace(PTRACE_SINGLESTEP, processID, 0, 0), processID, "Stepping");
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeSuspend(JNIEnv *env, jclass c, jint processID) {
-    return check_result_0(kill(processID, SIGTRAP), processID, "Suspending");
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeResume(JNIEnv *env, jclass c, jint processID) {
-    return check_result_0(ptrace(PTRACE_CONT, processID, 0, 0), processID, "Resuming");
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeWait(JNIEnv *env, jclass c, jint processID) {
-    return ptraceWaitForSignal(processID, SIGTRAP);
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeKill(JNIEnv *env, jclass c, jint processID) {
-    return check_result_0(ptrace(PTRACE_KILL, processID, 0, 0), processID, "Killing");
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeKill(JNIEnv *env, jclass c, jint pid) {
+    return ptrace(PT_KILL, pid, 0, 0) == 0;
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteBytes(JNIEnv *env, jclass c, jint processID, jlong address, jbyteArray byteArray, jint offset, jint length) {
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeWriteBytes(JNIEnv *env, jclass c, jint pid, jlong address, jbyteArray byteArray, jint offset, jint length) {
     jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
     if (buffer == 0) {
-        log_println("failed to malloc byteArray of %d bytes", length);
+        log_println("Failed to malloc byteArray of %d bytes", length);
         return -1;
     }
 
     (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
     if ((*env)->ExceptionOccurred(env) != NULL) {
-        log_println("failed to copy %d bytes from byteArray into buffer", length);
+        log_println("Failed to copy %d bytes from byteArray into buffer", length);
         return -1;
     }
 
@@ -206,7 +185,7 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteBytes(JNIEnv *env, jclass c,
         Word* wordBuffer = (Word *) buffer;
         int i;
         for (i = 0 ; i < wholeWords; i++) {
-            if (!check_result_0(ptrace(PTRACE_POKEDATA, processID, (Address) address + bytesWritten, wordBuffer[i]), processID, "Writing data to")) {
+            if (ptrace(PT_WRITE_D, pid, (Address) address + bytesWritten, wordBuffer[i]) != 0) {
                 log_println("Only wrote %d of %d bytes", bytesWritten, length);
                 ok = false;
                 break;
@@ -218,7 +197,7 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteBytes(JNIEnv *env, jclass c,
     if (ok && remainingBytes != 0) {
         Address highAddress = address + bytesWritten;
         /* Write remaining bytes */
-        Address word = ptrace(PTRACE_PEEKDATA, processID, highAddress, NULL);
+        Address word = ptrace(PT_READ_D, pid, highAddress, NULL);
         if (errno != 0) {
             log_println("Could not read word at %p into which remaining bytes will be masked", highAddress);
         } else {
@@ -229,7 +208,17 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteBytes(JNIEnv *env, jclass c,
 
             Address result = (data & ~mask) | (word & mask);
 
-            if (!check_result_0(ptrace(PTRACE_POKEDATA, processID, (Address) highAddress, result), processID, "Writing data to")) {
+#if 0
+            log_println("allOnes: %p", allOnes);
+            log_println("mask: %p", mask);
+            log_println("remainingBuffer: %p", remainingBuffer);
+            log_println("data: %p", data);
+            log_println("data & ~mask: %p", (data & ~mask));
+            log_println("word & ~mask: %p", (word & ~mask));
+            log_println("result: %p", result);
+#endif
+
+            if (ptrace(PT_WRITE_D, pid, (Address) highAddress, result) != 0) {
                 log_println("Failed to write remaining bytes");
                 ok = false;
             }
@@ -242,11 +231,11 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeWriteBytes(JNIEnv *env, jclass c,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadBytes(JNIEnv *env, jclass c, jint processID, jlong address, jbyteArray byteArray, jint offset, jint length) {
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeReadBytes(JNIEnv *env, jclass c, jint pid, jlong address, jbyteArray byteArray, jint offset, jint length) {
     int alignedLength = wordAlign(length);
     jbyte* buffer = (jbyte *) malloc(alignedLength);
     if (buffer == 0) {
-        log_println("failed to malloc byteArray of %d bytes", alignedLength);
+        log_println("Failed to malloc byteArray of %d bytes", alignedLength);
         return -1;
     }
 
@@ -258,7 +247,7 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadBytes(JNIEnv *env, jclass c, 
     int i;
     for (i = 0; i < wholeWords; i++) {
         int off = (i * sizeof(Word));
-        Address word = ptrace(PTRACE_PEEKDATA, processID, (Address) address + off, NULL);
+        Address word = ptrace(PT_READ_D, pid, (Address) address + off, NULL);
         if (errno != 0) {
             log_println("Could not read word at %p+%d", address, off);
             ok = false;
@@ -281,18 +270,18 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadBytes(JNIEnv *env, jclass c, 
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint processID, jlong instructionPointer) {
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint pid, jlong instructionPointer) {
     struct user_regs_struct registers;
 
-    if (ptrace(PTRACE_GETREGS, processID, 0, &registers) != 0) {
+    if (ptrace(PT_GETREGS, pid, 0, &registers) != 0) {
         return false;
     }
     registers.rip = instructionPointer;
-    return ptrace(PTRACE_SETREGS, processID, 0, &registers) == 0;
+    return ptrace(PT_SETREGS, pid, 0, &registers) == 0;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadRegisters(JNIEnv *env, jclass c, jint processID,
+Java_com_sun_max_tele_debug_linux_PTracedProcess_nativeReadRegisters(JNIEnv *env, jclass c, jint pid,
                 jbyteArray integerRegisters, jint integerRegistersLength,
                 jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
                 jbyteArray stateRegisters, jint stateRegistersLength) {
@@ -316,12 +305,12 @@ Java_com_sun_max_tele_debug_linux_Ptrace_nativeReadRegisters(JNIEnv *env, jclass
     }
 
     struct user_regs_struct osIntegerRegisters;
-    if (ptrace(PTRACE_GETREGS, processID, 0, &osIntegerRegisters) != 0) {
+    if (ptrace(PT_GETREGS, pid, 0, &osIntegerRegisters) != 0) {
         return false;
     }
 
     struct user_fpregs_struct osFloatRegisters;
-    if (ptrace(PTRACE_GETREGS, processID, 0, &osFloatRegisters) != 0) {
+    if (ptrace(PT_GETFPREGS, pid, 0, &osFloatRegisters) != 0) {
         return false;
     }
 

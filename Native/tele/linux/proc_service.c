@@ -19,7 +19,6 @@
  * Company, Ltd.
  */
 #include <errno.h>
-#include <sys/ptrace.h>
 #include <stdarg.h>
 
 #include "log.h"
@@ -79,7 +78,7 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
     if (aligned_addr != uaddr) {
         char *ptr = (char *) &rslt;
         errno = 0;
-        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, (Address) aligned_addr, 0);
+        rslt = ptrace(PT_READ_D, ph->pid, (Address) aligned_addr, 0);
         if (errno) {
             log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return PS_ERR;
@@ -96,7 +95,7 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
     // assert((intptr_t)aligned_addr % sizeof(long) == 0);
     for (i = 0; i < words; i++) {
         errno = 0;
-        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, (Address) aligned_addr, 0);
+        rslt = ptrace(PT_READ_D, ph->pid, (Address) aligned_addr, 0);
         if (errno) {
             log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return false;
@@ -109,7 +108,7 @@ ps_err_e ps_pdread(struct ps_prochandle *ph, psaddr_t addr, void *buffer, size_t
     if (aligned_addr != end_addr) {
         char *ptr = (char *) &rslt;
         errno = 0;
-        rslt = ptrace_withRetries(PTRACE_PEEKDATA, ph->pid, (Address) aligned_addr, 0);
+        rslt = ptrace(PT_READ_D, ph->pid, (Address) aligned_addr, 0);
         if (errno) {
             log_println("ptrace(PTRACE_PEEKDATA, ..) failed for %d bytes @ %lx", size, addr);
             return false;

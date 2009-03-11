@@ -202,7 +202,11 @@ static int isInGuardZone(Address address, Address zoneBegin) {
 
 static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
 #if log_TRAP
-    log_println("SIGNAL: %0d", signal);
+    char *sigName = signalName(signal);
+    if (sigName == NULL) {
+        sigName = "<unknown>";
+    }
+    log_println("SIGNAL: %0d [%s]", signal, sigName);
 #endif
     thread_Specifics *threadSpecifics = (thread_Specifics *) thread_currentSpecifics();
     if (threadSpecifics == 0) {
@@ -252,7 +256,6 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
 #endif
 
 #if log_TRAP
-    char *sigName = signalName(signal);
     if (sigName != NULL) {
         log_println("thread %d: %s (trapInfo @ %p)", threadSpecifics->id, sigName, trapInfo);
         log_println("trapInfo[0] (trap number)         = %p", trapInfo[0]);

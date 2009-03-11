@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.builtin.MakeStackVariable.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -167,6 +168,22 @@ public final class JniNativeInterface {
         if (VMConfiguration.hostOrTarget().buildLevel() == BuildLevel.DEBUG) {
             checkInvariants();
         }
+    }
+
+    /**
+     * Gets the target method of the JNI function that contains a given instruction address.
+     *
+     * @param instructionPointer
+     * @return {@code null} if {@code code instructionPointer} is not within any JNI function
+     */
+    public static TargetMethod jniTargetMethod(Address instructionPointer) {
+        for (int i = 0; i < _jniFunctions.length; i++) {
+            final TargetMethod targetMethod = _jniFunctions[i].targetMethod();
+            if (targetMethod != null && targetMethod.contains(instructionPointer)) {
+                return targetMethod;
+            }
+        }
+        return null;
     }
 
     private static void check(StackVariable stackVariable) {
