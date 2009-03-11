@@ -26,6 +26,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 
 /**
  * This class represents a method that is a critical entrypoint in the virtual machine, which means
@@ -102,5 +103,14 @@ public class CriticalMethod {
 
     public ClassMethodActor classMethodActor() {
         return _classMethodActor;
+    }
+
+    /**
+     * Gets the target method compiled for this critical method.
+     *
+     * @return {@code null} if this critical method has not been compiled.
+     */
+    public TargetMethod targetMethod() {
+        return CompilationScheme.Static.getCurrentTargetMethod(_classMethodActor);
     }
 }

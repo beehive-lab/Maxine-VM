@@ -36,12 +36,10 @@
 
 #   include "sparc.h"
 
-    typedef sparc_OsSignalIntegerRegisters isa_OsSignalIntegerRegisters;
     typedef sparc_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
     typedef struct sparc_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
     typedef sparc_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
 
-    typedef sparc_OsSignalFloatingPointRegisters isa_OsSignalFloatingPointRegisters;
     typedef sparc_OsTeleFloatingPointRegisters isa_OsTeleFloatingPointRegisters;
     typedef struct sparc_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegistersStruct;
     typedef sparc_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegisters;
@@ -57,12 +55,10 @@
 
 #   include "amd64.h"
 
-    typedef amd64_OsSignalIntegerRegisters isa_OsSignalIntegerRegisters;
     typedef amd64_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
     typedef struct amd64_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
     typedef amd64_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
 
-    typedef amd64_OsSignalFloatingPointRegisters isa_OsSignalFloatingPointRegisters;
     typedef amd64_OsTeleFloatingPointRegisters isa_OsTeleFloatingPointRegisters;
     typedef struct amd64_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegistersStruct;
     typedef amd64_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegisters;
@@ -78,7 +74,6 @@
 
 #   include "ia32.h"
 
-    typedef ia32_OsSignalIntegerRegisters isa_OsSignalIntegerRegisters;
     typedef ia32_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
     typedef struct ia32_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
     typedef ia32_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
@@ -106,28 +101,6 @@
 #   error
 #endif
 
-
-
-/*  Set of integer registers state passed to OS signal handlers.
- */
-#if defined(__sparc) || defined(sparc)
-    /* On sparc, this set is different from the total set of integer registers */
-    typedef struct sparc_OsSignalCanonicalIntegerRegisters isa_OsSignalCanonicalIntegerRegistersStruct;
-    typedef sparc_OsSignalCanonicalIntegerRegisters isa_OsSignalCanonicalIntegerRegisters;
-#else
-    /* On all other supported isa, they're the same */
-    typedef isa_CanonicalIntegerRegistersStruct isa_OsSignalCanonicalIntegerRegistersStruct;
-    typedef isa_CanonicalIntegerRegisters isa_OsSignalCanonicalIntegerRegisters;
-#endif
-
-
-/*
- * Canonicalization of registers in signal handlers.
- */
-extern void isa_decanonicalizeSignalIntegerRegisters(isa_OsSignalCanonicalIntegerRegisters canonicalIntegerRegisters, isa_OsSignalIntegerRegisters osSignalIntegerRegisters);
-extern void isa_canonicalizeSignalIntegerRegisters(isa_OsSignalIntegerRegisters osSignalIntegerRegisters, isa_OsSignalCanonicalIntegerRegisters canonicalIntegerRegisters);
-extern void isa_canonicalizeSignalFloatingPointRegisters(isa_OsSignalFloatingPointRegisters osSignalFloatingPointRegisters, isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-
 /*
  * Canonicalization of registers in normal running mode.
  */
@@ -140,5 +113,6 @@ extern void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters osTeleSt
  */
 extern void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters canonicalIntegerRegisters);
 extern void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+extern void isa_printCanonicalStateRegisters(isa_CanonicalStateRegisters canonicalStateRegisters);
 
 #endif /*__isa_h__*/

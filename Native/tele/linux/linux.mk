@@ -19,4 +19,4 @@
 # Company, Ltd.
 #
 
-OS_SOURCES = libInfo.c linuxTeleProcess.c linuxTeleNativeThread.c proc_service.c ptrace.c salibelf.c symtab.c
+OS_SOURCES = ptrace.c libInfo.c linuxTeleProcess.c linuxTeleNativeThread.c proc_service.c ptracedProcess.c salibelf.c symtab.c

@@ -162,7 +162,7 @@ public abstract class TeleVM {
         checkClasspath(sourcepath);
 
         final String value = options._vmArguments.getValue();
-        final String[] commandLineArguments = value == null ? null : ("".equals(value) ? new String[0] : value.split(" "));
+        final String[] commandLineArguments = value == null ? null : ("".equals(value) ? new String[0] : value.trim().split(" "));
 
         if (options._debugOption.getValue()) {
             teleVM = create(bootImageFile, sourcepath, commandLineArguments, options._debuggeeIdOption.getValue());

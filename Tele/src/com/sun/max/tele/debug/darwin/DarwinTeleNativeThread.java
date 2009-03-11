@@ -43,7 +43,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
         return nativeSetInstructionPointer(teleProcess().task(), id(), address.toLong());
     }
 
-    private static native boolean nativeReadRegisters(long task, long lwpId,
+    private static native boolean nativeReadRegisters(long lwpId,
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
@@ -53,7 +53,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
                     byte[] integerRegisters,
                     byte[] floatingPointRegisters,
                     byte[] stateRegisters) {
-        return nativeReadRegisters(teleProcess().task(), id(),
+        return nativeReadRegisters(id(),
                         integerRegisters, integerRegisters.length,
                         floatingPointRegisters, floatingPointRegisters.length,
                         stateRegisters, stateRegisters.length);
@@ -61,7 +61,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
 
     @Override
     public boolean singleStep() {
-        return nativeSingleStep(teleProcess().pid(), teleProcess().task(), id());
+        return nativeSingleStep(teleProcess().task(), id());
     }
 
     @Override
@@ -74,6 +74,6 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
         throw Problem.unimplemented();
     }
 
-    private static native boolean nativeSingleStep(long pid, long task, long threadID);
+    private static native boolean nativeSingleStep(long task, long threadID);
     private static native boolean nativeSetInstructionPointer(long task, long threadID, long address);
 }

@@ -46,11 +46,16 @@
 
     typedef _STRUCT_X86_THREAD_STATE64 OsIntegerRegistersStruct;
     typedef _STRUCT_X86_THREAD_STATE64 OsStateRegistersStruct;
-    typedef _STRUCT_X86_FLOAT_STATE64 OsFloatingPointRegistersStruct;    
+    typedef _STRUCT_X86_FLOAT_STATE64 OsFloatingPointRegistersStruct;
     typedef x86_thread_state64_t ThreadState;
 #else
 #   error "Only x64 is supported on Darwin for now"
 #endif
+
+extern Boolean readRegisters(thread_t thread,
+        isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
+        isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters,
+        isa_CanonicalStateRegistersStruct *canonicalStateRegisters);
 
 
 #endif /*__darwinTeleNativeThread_h__*/

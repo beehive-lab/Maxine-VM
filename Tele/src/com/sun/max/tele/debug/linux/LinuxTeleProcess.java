@@ -38,9 +38,9 @@ import com.sun.max.vm.prototype.*;
  */
 public final class LinuxTeleProcess extends TeleProcess {
 
-    private final Ptrace _ptrace;
+    private final PTracedProcess _ptrace;
 
-    Ptrace ptrace() {
+    PTracedProcess ptrace() {
         return _ptrace;
     }
 
@@ -66,7 +66,7 @@ public final class LinuxTeleProcess extends TeleProcess {
     LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
-        _ptrace = Ptrace.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        _ptrace = PTracedProcess.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
         if (_ptrace == null) {
             throw new BootImageException("Error launching VM");
         }

@@ -19,17 +19,16 @@
  * Company, Ltd.
  */
 
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
 
 #include "word.h"
 #include "log.h"
 
 static const char* requestToString(int request) {
-#define MATCH(req) do { if (request == req) { return STRINGIZE(req); } } while (0)
+#define MATCH(req) if (request == req) return #req
     MATCH(PT_TRACE_ME);
     MATCH(PT_READ_I);
     MATCH(PT_READ_D);
@@ -45,68 +44,33 @@ static const char* requestToString(int request) {
     MATCH(PT_STEP);
     MATCH(PT_ATTACH);
     MATCH(PT_DETACH);
-    MATCH(PT_GETREGS);
-    MATCH(PT_SETREGS);
-    MATCH(PT_GETFPREGS);
-    MATCH(PT_SETOPTIONS);
     return NULL;
-#undef MATCH
 }
 
-#if 0
-/* Linux ptrace() is unreliable, but apparently retrying after descheduling helps. */
-long ptrace_withRetries(int request, int processID, void *address, void *data) {
-    int microSeconds = 100000;
-    int i = 0;
-    while (true) {
-        long result = ptrace(request, processID, address, data);
-        int error = errno;
-        if (error == 0) {
-            return result;
-        }
-        if (error != ESRCH || i >= 150) {
-            return -1;
-        }
-        usleep(microSeconds);
-        i++;
-        if (i % 10 == 0) {
-            log_println("ptrace retrying");
-        }
-    }
-}
-#else
-#define ptrace_withRetries ptrace
-#endif
-
-long _ptrace(const char *file, const char *func, int line, int request, pid_t pid, void *address, void *data) {
-    long result;
-    static int lastRequest = 0;
-
-    Boolean trace = log_TELE && (request != PT_READ_D || lastRequest != PT_READ_D);
+int _ptrace(const char *file, int line, int request, pid_t pid, caddr_t address, int data) {
+    int result;
 
     const char *requestName;
     char unknownRequestNameBuf[100];
 
-    if (trace) {
+    if (log_TELE) {
         requestName = requestToString(request);
         if (requestName == NULL) {
             sprintf(unknownRequestNameBuf, "<unknown:%d>", request);
             requestName = unknownRequestNameBuf;
         }
-        log_print("%s:%d ptrace(%s, %d, %p, %p)", file, line, requestName, pid, address, data);
+        log_print("%s:%d ptrace(%s, %d, %p, %d)", file, line, requestName, pid, address, data);
     }
-    result = ptrace_withRetries(request, pid, address, data);
+
+    errno = 0;
+    result = ptrace(request, pid, address, data);
     int error = errno;
-    if (trace) {
-        if (request == PT_READ_D || request == PT_READ_I || request == PT_READ_U) {
-            log_println(" = %p", result);
-        } else {
-            log_print_newline();
-        }
+
+    if (log_TELE) {
+        log_println(" = %p", result);
     }
     if (error != 0) {
-        log_println("%s:%d ptrace(%s, %d, %p, %d) caused an error [%s]", file, line, requestName, pid, address, data, strerror(error));
+        log_println("%s:%d ptrace(%s, %d, %p, %d) caused error %d [%s]", file, line, requestName, pid, address, data, error, strerror(error));
     }
-    lastRequest = request;
     return result;
 }

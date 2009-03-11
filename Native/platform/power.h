@@ -35,4 +35,12 @@ typedef struct power_CanonicalIntegerRegisters {
 
 extern void power_canonicalizeTeleIntegerRegisters(power_OsTeleIntegerRegisters osTeleIntegerRegisters, power_CanonicalIntegerRegisters canonicalIntegerRegisters);
 
+extern void power_canonicalizeTeleFloatingPointRegisters(power_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, power_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+
+extern void power_canonicalizeTeleStateRegisters(power_OsTeleStateRegisters osTeleStateRegisters, power_CanonicalStateRegisters canonicalStateRegisters);
+
+extern void power_printCanonicalIntegerRegisters(power_CanonicalIntegerRegisters canonicalIntegerRegisters);
+
+extern void power_printCanonicalFloatingPointRegisters(power_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+
 #endif /*__power_h__*/

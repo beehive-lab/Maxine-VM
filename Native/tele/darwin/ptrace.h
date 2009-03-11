@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 
-#ifndef __debugPtrace_h__
-#define __debugPtrace_h__ 1
+#ifndef __ptrace_h__
+#define __ptrace_h__ 1
 
 #define PT_TRACE_ME 0   /* child declares it's being traced */
 #define PT_READ_I   1   /* read word in child's I space */
@@ -43,7 +43,7 @@
 
 #define PT_FIRSTMACH    32  /* for machine-specific requests */
 
-extern int log_ptrace(const char *func, int line, int _request, pid_t _pid, caddr_t _addr, int _data);
-#define ptrace(request, pid, address, data) log_ptrace(__func__, __LINE__, request, pid, address, data)
+extern int _ptrace(const char *file, int line, int _request, pid_t _pid, caddr_t _addr, int _data);
+#define ptrace(request, pid, address, data) _ptrace(__FILE__, __LINE__, request, pid, address, data)
 
 #endif
