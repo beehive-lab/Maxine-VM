@@ -21,7 +21,6 @@
 /*
  * @author Bernd Mathiske
  */
-#include "amd64.h"
 #include "isa.h"
 #include "log.h"
 

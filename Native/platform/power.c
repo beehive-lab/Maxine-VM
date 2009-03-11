@@ -21,8 +21,29 @@
 /*
  * @author Bernd Mathiske
  */
-#include "power.h"
+#include "isa.h"
+#include "log.h"
 
-void power_canonicalizeTeleIntegerRegisters(power_OsTeleIntegerRegisters os, power_CanonicalIntegerRegisters c) {
+void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters osTeleIntegerRegisters, isa_CanonicalIntegerRegisters canonicalIntegerRegisters) {
+    c_UNIMPLEMENTED();
+}
+
+void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
+    c_UNIMPLEMENTED();
+}
+
+void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters osTeleStateRegisters, isa_CanonicalStateRegisters canonicalStateRegisters) {
+    c_UNIMPLEMENTED();
+}
+
+extern void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters canonicalIntegerRegisters) {
+    c_UNIMPLEMENTED();
+}
+
+void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
+    c_UNIMPLEMENTED();
+}
+
+void isa_printCanonicalStateRegisters(isa_CanonicalStateRegisters canonicalStateRegisters) {
     c_UNIMPLEMENTED();
 }

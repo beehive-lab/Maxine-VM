@@ -18,7 +18,10 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
+
 /**
+ * Types and functions for dealing with type ISA specific registers.
+ *
  * @author Bernd Mathiske
  */
 #ifndef __isa_h__

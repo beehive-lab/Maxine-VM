@@ -22,10 +22,10 @@
  * @author Bernd Mathiske
  * @author Laurent Daynes
  */
-#include "sparc.h"
+#include "isa.h"
 #include "log.h"
 
-void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters os, sparc_CanonicalIntegerRegisters c) {
+void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters os, isa_CanonicalIntegerRegisters c) {
 #if os_SOLARIS
     // See procfs_isa.h
     int r = R_G0;
@@ -39,7 +39,7 @@ void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters os, spa
 #endif
 }
 
-void sparc_canonicalizeTeleStateRegisters(sparc_OsTeleStateRegisters os, sparc_CanonicalStateRegisters c) {
+void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters os, isa_CanonicalStateRegisters c) {
 #if os_SOLARIS
     c->ccr = (Word) os[R_CCR];
     c->pc = (Word) os[R_PC];
@@ -49,7 +49,7 @@ void sparc_canonicalizeTeleStateRegisters(sparc_OsTeleStateRegisters os, sparc_C
 #endif
 }
 
-void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegisters os, sparc_CanonicalFloatingPointRegisters c) {
+void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters os, isa_CanonicalFloatingPointRegisters c) {
 #if os_SOLARIS
     int r = 0;
     while (r < 32) {
@@ -61,7 +61,7 @@ void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegis
 #endif
 }
 
-void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters c) {
+void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters c) {
 #if os_SOLARIS
     // See procfs_isa.h
     static char registerNames[] = "GOLI";
@@ -78,7 +78,7 @@ void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters c) {
 #endif
 }
 
-void sparc_printCanonicalFloatingPointRegisters(sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
+void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
 #if os_SOLARIS
 #define PRINT_FPR(r) log_println("F%-2d = %p [%lf]", r, canonicalFloatingPointRegisters->dRegs[r], canonicalFloatingPointRegisters->dRegs[r])
     int r = 0;
@@ -91,7 +91,7 @@ void sparc_printCanonicalFloatingPointRegisters(sparc_CanonicalFloatingPointRegi
 #endif
 }
 
-void sparc_printCanonicalStatePointRegisters(sparc_CanonicalTeleStateRegisters canonicalStateRegisters) {
+void isa_printCanonicalStatePointRegisters(isa_CanonicalStateRegisters canonicalStateRegisters) {
 #if os_SOLARIS
     log_println("%%ccr = %p [%ld]", canonicalStateRegisters->ccr, canonicalStateRegisters->ccr);
     log_println("%%pc  = %p [%ld]", canonicalStateRegisters->pc, canonicalStateRegisters->pc);
