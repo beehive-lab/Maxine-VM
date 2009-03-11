@@ -26,7 +26,7 @@ import com.sun.max.program.*;
 
 /**
  * Bypass access checks for reflective operations.
- * 
+ *
  * @author Bernd Mathiske
  */
 public final class WithoutAccessCheck {
@@ -86,6 +86,16 @@ public final class WithoutAccessCheck {
             field.set(javaClass, value);
         } catch (IllegalAccessException illegalAccessException) {
             accessError(field);
+        }
+    }
+
+    public static Object newInstance(Class<?> javaClass) {
+        try {
+            final Constructor constructor = javaClass.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+        } catch (Exception e) {
+            throw ProgramError.unexpected(e);
         }
     }
 
