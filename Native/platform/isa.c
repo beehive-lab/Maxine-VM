@@ -19,57 +19,7 @@
  * Company, Ltd.
  */
 #include "isa.h"
-
-void isa_decanonicalizeSignalIntegerRegisters(isa_OsSignalCanonicalIntegerRegisters canonicalIntegerRegisters, isa_OsSignalIntegerRegisters osSignalIntegerRegisters) {
-#if isa_AMD64
-	amd64_decanonicalizeSignalIntegerRegisters(canonicalIntegerRegisters, osSignalIntegerRegisters);
-#elif isa_SPARC
-	sparc_decanonicalizeSignalIntegerRegisters(canonicalIntegerRegisters, osSignalIntegerRegisters);
-#else
-    c_UNIMPLEMENTED();
-#endif
-}
-
-void isa_canonicalizeSignalIntegerRegisters(isa_OsSignalIntegerRegisters osSignalIntegerRegisters, isa_OsSignalCanonicalIntegerRegisters canonicalIntegerRegisters) {
-#if isa_AMD64
-	amd64_canonicalizeSignalIntegerRegisters(osSignalIntegerRegisters, canonicalIntegerRegisters);
-#elif isa_SPARC
-   sparc_canonicalizeSignalIntegerRegisters(osSignalIntegerRegisters, canonicalIntegerRegisters);
-#else
-    c_UNIMPLEMENTED();
-#endif
-}
-
-void isa_canonicalizeSignalFloatingPointRegisters(isa_OsSignalFloatingPointRegisters osSignalFloatingPointRegisters, isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
-#if isa_AMD64
-	amd64_canonicalizeSignalFloatingPointRegisters(osSignalFloatingPointRegisters, canonicalFloatingPointRegisters);
-#elif isa_SPARC
-	sparc_canonicalizeSignalFloatingPointRegisters(osSignalFloatingPointRegisters, canonicalFloatingPointRegisters);
-#else
-    c_UNIMPLEMENTED();
-#endif
-}
-
-void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters canonicalIntegerRegisters) {
-#if isa_AMD64
-    amd64_printCanonicalIntegerRegisters(canonicalIntegerRegisters);
-#elif isa_SPARC
-    sparc_printCanonicalIntegerRegisters(canonicalIntegerRegisters);
-#else
-    c_UNIMPLEMENTED();
-#endif
-}
-
-void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
-#if isa_AMD64
-    amd64_printCanonicalFloatingPointRegisters(canonicalFloatingPointRegisters);
-#elif isa_SPARC
-    sparc_printCanonicalFloatingPointRegisters(canonicalFloatingPointRegisters);
-#else
-    c_UNIMPLEMENTED();
-#endif
-}
-
+#if 0
 void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters osTeleIntegerRegisters, isa_CanonicalIntegerRegisters canonicalIntegerRegisters) {
 #if isa_AMD64
 	amd64_canonicalizeTeleIntegerRegisters(osTeleIntegerRegisters, canonicalIntegerRegisters);
@@ -103,3 +53,34 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
     c_UNIMPLEMENTED();
 #endif
 }
+
+void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters canonicalIntegerRegisters) {
+#if isa_AMD64
+    amd64_printCanonicalIntegerRegisters(canonicalIntegerRegisters);
+#elif isa_SPARC
+    sparc_printCanonicalIntegerRegisters(canonicalIntegerRegisters);
+#else
+    c_UNIMPLEMENTED();
+#endif
+}
+
+void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
+#if isa_AMD64
+    amd64_printCanonicalFloatingPointRegisters(canonicalFloatingPointRegisters);
+#elif isa_SPARC
+    sparc_printCanonicalFloatingPointRegisters(canonicalFloatingPointRegisters);
+#else
+    c_UNIMPLEMENTED();
+#endif
+}
+
+void isa_printCanonicalStateRegisters(isa_CanonicalStateRegisters canonicalStateRegisters) {
+#if isa_AMD64
+    amd64_printCanonicalStateRegisters(canonicalStateRegisters);
+#elif isa_SPARC
+    sparc_printCanonicalStateRegisters(canonicalStateRegisters);
+#else
+    c_UNIMPLEMENTED();
+#endif
+}
+#endif

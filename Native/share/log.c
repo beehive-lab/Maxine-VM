@@ -106,6 +106,15 @@ void log_print_format(const char *format, ...) {
 #endif
 }
 
+void log_print_vformat(const char *format, va_list ap) {
+#if !os_GUESTVMXEN
+    FILE* out = getFileStream();
+    vfprintf(out, format, ap);
+#else
+    vprintf(format, ap);
+#endif
+}
+
 void log_print_int(int val) {
     log_print_format("%d", val);
 }
