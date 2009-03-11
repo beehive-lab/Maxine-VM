@@ -20,12 +20,11 @@
  */
 
 #include <sys/types.h>
-/*#include <sys/ptrace.h>*/
 #include <mach/mach.h>
 
 #include <unistd.h>
 #include <stdlib.h>
 
 #include "log.h"
-#include "debugPtrace.h"
+#include "ptrace.h"
 #include "jni.h"

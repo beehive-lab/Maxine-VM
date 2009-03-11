@@ -49,17 +49,10 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     private static native long nativeCreateChild(long argv, int vmAgentSocketPort);
-    private static native long nativePidToTask(long pid);
-    private static native void nativeKill(long pid);
+    private static native void nativeKill(long task);
     private static native boolean nativeSuspend(long task);
-    private static native boolean nativeResume(long pid);
+    private static native boolean nativeResume(long task);
     private static native boolean nativeWait(long pid, long task);
-
-    private final long _pid;
-
-    public long pid() {
-        return _pid;
-    }
 
     private final long _task;
 
@@ -70,11 +63,7 @@ public final class DarwinTeleProcess extends TeleProcess {
     DarwinTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
-        _pid = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        if (_pid < 0) {
-            throw new BootImageException("Error launching VM");
-        }
-        _task = nativePidToTask(_pid);
+        _task = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
         if (_task == -1) {
             ProgramError.unexpected(String.format("task_for_pid() permissions problem -- Need to run java as setgid procmod:%n%n" +
                 "    chgrp procmod <java executable>;  chmod g+s <java executable>%n%n" +
@@ -97,21 +86,21 @@ public final class DarwinTeleProcess extends TeleProcess {
 
     @Override
     public void resume() throws OSExecutionRequestException {
-        if (!nativeResume(_pid)) {
+        if (!nativeResume(_task)) {
             throw new OSExecutionRequestException("Resume could not be completed");
         }
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        final boolean ok = nativeWait(_pid, _task);
+        final boolean ok = nativeWait(_task, _task);
         invalidateCache();
         return ok;
     }
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        nativeKill(_pid);
+        nativeKill(_task);
     }
 
     private native boolean nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads);

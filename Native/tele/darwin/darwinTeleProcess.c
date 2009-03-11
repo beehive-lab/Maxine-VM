@@ -20,7 +20,6 @@
  */
 
 #include <sys/types.h>
-/*#include <sys/ptrace.h>*/
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -37,7 +36,8 @@
 
 #include "darwinTeleNativeThread.h"
 #include "log.h"
-#include "debugPtrace.h"
+#include "ptrace.h"
+#include "debugMach.h"
 #include "jni.h"
 #include "word.h"
 #include "virtualMemory.h"
@@ -47,24 +47,101 @@
 
 extern jboolean disableSingleStepping(jlong task);
 
-jboolean ptraceWaitForSignal(jlong pid, jlong task, int signalnum) {
+#if 0
+const char *threadRunStateAsString(int state) {
+    switch (state) {
+        case TH_STATE_RUNNING: return "RUNNING";
+        case TH_STATE_STOPPED: return "STOPPED";
+        case TH_STATE_WAITING: return "WAITING";
+        case TH_STATE_UNINTERRUPTIBLE: return "UNINTERRUPTIBLE";
+        case TH_STATE_HALTED: return "HALTED";
+        default: return NULL;
+    }
+}
+
+void log_thread_info(thread_t thread) {
+    struct thread_basic_info info;
+    unsigned int info_count = THREAD_BASIC_INFO_COUNT;
+    thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    log_print("  Thread[%d]: suspend_count=%d, user_time=%u, system_time=%u, cpu_usage=%d, run_state=",
+               thread, info.suspend_count, info.user_time, info.system_time, info.cpu_usage);
+
+    const char *runState = threadRunStateAsString(info.run_state);
+    if (runState == NULL) {
+        log_print("%d", info.run_state);
+    } else {
+        log_print("%s", runState);
+    }
+    log_println(", flags=0x%x, sleep_time=%d", info.flags, info.system_time);
+
+    isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
+    isa_CanonicalStateRegistersStruct canonicalStateRegisters;
+    isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
+
+    readRegisters(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters);
+}
+
+typedef void (*thread_visitor)(thread_t thread);
+
+void forall_threads(task_t task, thread_visitor visitor) {
+    thread_array_t thread_list = NULL;
+    unsigned int nthreads = 0;
+    unsigned i;
+
+    task_threads((task_t) task, &thread_list, &nthreads);
+    for (i = 0; i < nthreads; i++) {
+        thread_t thread = thread_list[i];
+        (*visitor)(thread);
+    }
+
+    // deallocate thread list
+    vm_deallocate(mach_task_self(), (vm_address_t) thread_list, (nthreads * sizeof(int)));
+}
+
+void log_task_info(const char *file, int line, task_t task) {
+    struct task_basic_info info;
+    unsigned int info_count = TASK_BASIC_INFO_COUNT;
+    task_info(task, TASK_BASIC_INFO, (task_info_t) &info, &info_count);
+    log_println("\n\n%s:%d", file, line);
+    log_println("Task[%d]: suspend_count=%d, virtual_size=%u, resident_size=%u, user_time=%u, system_time=%u", task,
+                    info.suspend_count, info.virtual_size, info.resident_size, info.user_time, info.system_time);
+    forall_threads(task, log_thread_info);
+}
+#endif
+
+#if log_TELE
+#define tele_log_println log_println
+#else
+#define log_null(format, ...)
+#define tele_log_println log_null
+#endif
+
+jboolean waitForSignal(jlong task, int signalnum) {
+    int pid;
+    Pid_for_task(POS, task, &pid);
     while (1) {
         int status;
         int error = waitpid(pid, &status, 0);
-
         if (error != pid) {
-            log_println("waitpid failed with errno: %d", errno);
+            log_println("waitpid failed with error: %d [%s]", errno, strerror(error));
             return false;
         }
         if (WIFEXITED(status)) {
+            log_println("Process %d exited with exit code %d", pid, WEXITSTATUS(status));
             return false;
         }
         if (WIFSIGNALED(status)) {
+            int signal = WTERMSIG(status);
+            log_println("Process %d terminated due to signal %d [%s]", pid, signal, strsignal(signal));
             return false;
         }
         if (WIFSTOPPED(status)) {
             // check whether the process received a signal, and continue with it if so.
             int signal = WSTOPSIG(status);
+
+            tele_log_println("Process %d stopped due to signal %d [%s]", pid, signal, strsignal(signal));
+
+            //log_task_info(__FILE__, __LINE__, task);
 
             if (signalnum == signal && signalnum == SIGTRAP) {
                 disableSingleStepping(task);
@@ -73,9 +150,11 @@ jboolean ptraceWaitForSignal(jlong pid, jlong task, int signalnum) {
             if (signal == 0 || signal == signalnum) {
                 return true;
             } else {
-                error = ptrace(PT_CONTINUE, pid, (char*) 1, signal);
+                ptrace(PT_CONTINUE, pid, (char*) 1, signal);
+
+                error = errno;
                 if (error != 0) {
-                    log_println("ptrace(PT_CONTINUE) failed = %d", error);
+                    log_println("Continuing process %d failed: %d [%s]", error, strerror(error));
                     return false;
                 }
             }
@@ -94,7 +173,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
         /*child:*/
 
         if (ptrace(PT_TRACE_ME, 0, 0, 0) != 0) {
-            log_exit(1, "ptrace failed in child process");
+            log_exit(1, "Failed to create initialize ptrace for VM process %d");
         }
 
         char *portDef;
@@ -114,23 +193,20 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeCreateChild(JNIEnv *e
         /* parent: */
         int status;
         if (waitpid(childPid, &status, 0) == childPid && WIFSTOPPED(status)) {
-            return (jlong) childPid;
+            task_t childTask;
+            if (Task_for_pid(POS, mach_task_self(), childPid, &childTask) != KERN_SUCCESS) {
+                return -1;
+            }
+            return (jlong) childTask;
         }
     }
     return -1L;
 }
 
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativePidToTask(JNIEnv *env, jclass c, jlong pid) {
-    task_t task;
-    if (task_for_pid(mach_task_self(), pid, &task) != KERN_SUCCESS) {
-        return -1;
-    }
-    return (jlong) task;
-}
-
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jclass c, jint pid) {
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jclass c, jint task) {
+    int pid;
+    Pid_for_task(POS, (task_t) task, &pid);
     return ptrace(PT_KILL, pid, 0, 0) == 0;
 }
 
@@ -138,10 +214,10 @@ static jmethodID _methodID = NULL;
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result) {
-    thread_act_port_array_t threads;
+    thread_act_array_t threads;
     mach_msg_type_number_t numberOfThreads, i;
 
-    if (task_threads(task, &threads, &numberOfThreads) != KERN_SUCCESS) {
+    if (task_threads((task_t) task, &threads, &numberOfThreads) != KERN_SUCCESS) {
         return false;
     }
 
@@ -159,7 +235,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         thread_act_port_t thread = threads[i];
 
         mach_msg_type_number_t count = THREAD_STATE_COUNT;
-        kern_return_t error = thread_get_state(thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
+        kern_return_t error = Thread_get_state(POS, thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
         if (error != KERN_SUCCESS) {
             log_println("thread_get_state failed, error: %d, %s", error, mach_error_string(error));
             return false;
@@ -170,7 +246,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         mach_port_t objectName;
         vm_region_basic_info_data_64_t info;
         count = VM_REGION_BASIC_INFO_COUNT_64;
-        error = mach_vm_region((vm_map_t) task, &stackBase, &stackSize, VM_REGION_BASIC_INFO_64, (vm_region_info_t) &info, &count, &objectName);
+        error = Mach_vm_region(POS, (vm_map_t) task, &stackBase, &stackSize, VM_REGION_BASIC_INFO_64, (vm_region_info_t) &info, &count, &objectName);
         if (error != KERN_SUCCESS) {
             log_println("mach_vm_region failed, error: %d, %s", error, mach_error_string(error));
             return false;
@@ -179,7 +255,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         (*env)->CallVoidMethod(env, process, _methodID, result, (long) thread, state, (jlong) stackBase, (jlong) stackSize);
     }
 
-    if (vm_deallocate(mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {
+    if (Vm_deallocate(POS, mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {
         log_println("vm_deallocate failed");
         return false;
     }
@@ -189,7 +265,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, jclass c, jlong task) {
     int pid;
-    if (pid_for_task((task_t) task, &pid) != KERN_SUCCESS) {
+    if (Pid_for_task(POS, (task_t) task, &pid) != KERN_SUCCESS) {
         log_println("Could not get PID for task %d", task);
     }
     int error = kill(pid, SIGTRAP);
@@ -201,17 +277,14 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeSuspend(JNIEnv *env, 
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWait(JNIEnv *env, jclass c, jlong pid, jlong task) {
-    return ptraceWaitForSignal(pid, task, SIGTRAP);
+    return waitForSignal(task, SIGTRAP);
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong pid) {
-    int error = ptrace(PT_CONTINUE, pid, (char*) 1, 0);
-    if (error != 0) {
-        log_println("ptrace(PT_CONTINUE) failed = %d", error);
-        return false;
-    }
-
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, jclass c, jlong task) {
+    int pid;
+    Pid_for_task(POS, task, &pid);
+    ptrace(PT_CONTINUE, pid, (char*) 1, 0);
     return true;
 }
 
@@ -221,7 +294,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env
 
   jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
   if (buffer == 0) {
-      log_println("failed to malloc byteArray of %d bytes", length);
+      log_println("Failed to malloc byteArray of %d bytes", length);
       return -1;
   }
 

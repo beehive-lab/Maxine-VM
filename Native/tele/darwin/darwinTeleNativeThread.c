@@ -36,22 +36,53 @@
 
 #include "darwinTeleNativeThread.h"
 #include "log.h"
-#include "debugPtrace.h"
+#include "ptrace.h"
 #include "jni.h"
 #include "word.h"
 
+Boolean readRegisters(thread_t thread,
+    isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
+    isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters,
+    isa_CanonicalStateRegistersStruct *canonicalStateRegisters) {
+
+    OsIntegerRegistersStruct osIntegerRegisters;
+    OsFloatingPointRegistersStruct osFloatRegisters;
+    OsStateRegistersStruct osStateRegisters;
+
+    mach_msg_type_number_t count = INTEGER_REGISTER_COUNT;
+    if (thread_get_state((thread_act_t) thread, INTEGER_REGISTER_FLAVOR, (thread_state_t) &osIntegerRegisters, &count) != KERN_SUCCESS) {
+        return false;
+    }
+    count = STATE_REGISTER_COUNT;
+    if (thread_get_state((thread_act_t) thread, STATE_REGISTER_FLAVOR, (thread_state_t) &osStateRegisters, &count) != KERN_SUCCESS) {
+        return false;
+    }
+    count = FLOATING_POINT_REGISTER_COUNT;
+    if (thread_get_state((thread_act_t) thread, FLOAT_REGISTER_FLAVOR, (thread_state_t) &osFloatRegisters, &count) != KERN_SUCCESS) {
+        return false;
+    }
+
+    isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, canonicalIntegerRegisters);
+    isa_canonicalizeTeleStateRegisters(&osStateRegisters, canonicalStateRegisters);
+    isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, canonicalFloatingPointRegisters);
+
+#if log_TELE
+    log_println("Read registers for thread %ld", thread);
+    isa_printCanonicalIntegerRegisters(canonicalIntegerRegisters);
+    isa_printCanonicalFloatingPointRegisters(canonicalFloatingPointRegisters);
+    isa_printCanonicalStateRegisters(canonicalStateRegisters);
+#endif
+    return TRUE;
+}
+
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JNIEnv *env, jclass c, jlong task, jlong thread,
+Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JNIEnv *env, jclass c, jlong thread,
                 jbyteArray integerRegisters, jint integerRegistersLength,
                 jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
                 jbyteArray stateRegisters, jint stateRegistersLength) {
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
     isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
-
-    OsIntegerRegistersStruct osIntegerRegisters;
-    OsFloatingPointRegistersStruct osFloatRegisters;
-    OsStateRegistersStruct osStateRegisters;
 
     if (integerRegistersLength > (jint) sizeof(canonicalIntegerRegisters)) {
         log_println("buffer for integer register data is too large");
@@ -68,22 +99,9 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JN
         return false;
     }
 
-    mach_msg_type_number_t count = INTEGER_REGISTER_COUNT;
-    if (thread_get_state((thread_act_t) thread, INTEGER_REGISTER_FLAVOR, (thread_state_t) &osIntegerRegisters, &count) != KERN_SUCCESS) {
+    if (!readRegisters(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters)) {
         return false;
     }
-    count = STATE_REGISTER_COUNT;
-    if (thread_get_state((thread_act_t) thread, STATE_REGISTER_FLAVOR, (thread_state_t) &osStateRegisters, &count) != KERN_SUCCESS) {
-        return false;
-    }
-    count = FLOATING_POINT_REGISTER_COUNT;
-    if (thread_get_state((thread_act_t) thread, FLOAT_REGISTER_FLAVOR, (thread_state_t) &osFloatRegisters, &count) != KERN_SUCCESS) {
-        return false;
-    }
-
-    isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, &canonicalIntegerRegisters);
-    isa_canonicalizeTeleStateRegisters(&osStateRegisters, &canonicalStateRegisters);
-    isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, &canonicalFloatingPointRegisters);
 
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
@@ -213,7 +231,7 @@ jboolean disableSingleStepping(jlong task) {
     return true;
 }
 
-static jboolean resumeThread(jlong pid, jlong task, thread_t current) {
+static jboolean resumeThread(jlong task, thread_t current) {
     kern_return_t kret;
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
@@ -248,9 +266,12 @@ static jboolean resumeThread(jlong pid, jlong task, thread_t current) {
  * After the TRAP signal is received the single stepping flag is cleared for all threads using the disableSingleStepping() method.
  */
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong pid, jlong task, jlong thread) {
-  return setSingleStep((thread_act_t) thread, true)
-      && suspendOtherThreads(task, (thread_t) thread)
-      && resumeThread(pid, task, (thread_t) thread)
-      && unsuspendOtherThreads(task, (thread_t) thread);
+Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEnv *env, jclass c, jlong task, jlong thread) {
+#if log_TELE
+    log_println("Single stepping");
+#endif
+    return setSingleStep((thread_act_t) thread, true)
+        && suspendOtherThreads(task, (thread_t) thread)
+        && resumeThread(task, (thread_t) thread)
+        && unsuspendOtherThreads(task, (thread_t) thread);
 }

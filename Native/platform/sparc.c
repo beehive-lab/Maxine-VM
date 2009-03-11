@@ -25,111 +25,78 @@
 #include "sparc.h"
 #include "log.h"
 
-void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIntegerRegisters c, sparc_OsSignalIntegerRegisters os) {
-#if os_SOLARIS
-  int r = REG_G1;
-  Word *p = &c->g1;
-  while (r <= REG_O7) {
-	 os[r] = (greg_t) *p;
-	 p++;
-	 r++;
-  }
-#else
-  c_UNIMPLEMENTED();
-#endif
-}
-
-void sparc_canonicalizeSignalIntegerRegisters(sparc_OsSignalIntegerRegisters os, sparc_OsSignalCanonicalIntegerRegisters c) {
-#if os_SOLARIS
-  int r = REG_G1;
-  c->g0 = 0;               // always
-  Word *p = &c->g1;
-  while (r <= REG_O7) {
-	 *p = (Word) os[r];
-    p++;
-	 r++;
-  }
-#else
-  c_UNIMPLEMENTED();
-#endif
-}
-
-void sparc_canonicalizeSignalFloatingPointRegisters(sparc_OsSignalFloatingPointRegisters os, sparc_CanonicalFloatingPointRegisters c) {
-#if os_SOLARIS
-  int r = 0;
-  Word *osRegister = (Word*) &os->fpu_fr.fpu_dregs[0];
-  while (r < 32) {
-	 c->dRegs[r] = osRegister[r];
-	 r++;
-  }
-#else
-  c_UNIMPLEMENTED();
-#endif
-}
-
-void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters c) {
-#if os_SOLARIS
-  // See procfs_isa.h
-  static char registerNames[] = "GOLI";
-  int r = R_G0;
-  Word *p = &c->g0;
-  while (r <= R_I7) {
-    char rn = registerNames[r / 8];
-    for (int i = 0; i < 8; i++, r++) {
-   	 log_println("%%%c%d = 0x%016lx [%ld]", rn, i, p[r], p[r]);
-	 }
-  }
-#else
-  c_UNIMPLEMENTED();
-#endif
-}
-
 void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters os, sparc_CanonicalIntegerRegisters c) {
 #if os_SOLARIS
-  // See procfs_isa.h
-  int r = R_G0;
-  Word *p = &c->g0;
-  while (r <= R_I7) {
-	 p[r] = (Word) os[r];
-	 r++;
-  }
+    // See procfs_isa.h
+    int r = R_G0;
+    Word *p = &c->g0;
+    while (r <= R_I7) {
+        p[r] = (Word) os[r];
+        r++;
+    }
 #else
-  c_UNIMPLEMENTED();
+    c_UNIMPLEMENTED();
 #endif
 }
 
 void sparc_canonicalizeTeleStateRegisters(sparc_OsTeleStateRegisters os, sparc_CanonicalStateRegisters c) {
 #if os_SOLARIS
-  c->ccr = (Word) os[R_CCR];
-  c->pc = (Word) os[R_PC];
-  c->npc = (Word) os[R_nPC];
+    c->ccr = (Word) os[R_CCR];
+    c->pc = (Word) os[R_PC];
+    c->npc = (Word) os[R_nPC];
 #else
-  c_UNIMPLEMENTED();
+    c_UNIMPLEMENTED();
 #endif
 }
 
 void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegisters os, sparc_CanonicalFloatingPointRegisters c) {
 #if os_SOLARIS
-  int r = 0;
-  while (r < 32) {
-	 c->dRegs[r] = (Word) os->pr_fr.pr_regs[r];
-	 r++;
-  }
+    int r = 0;
+    while (r < 32) {
+        c->dRegs[r] = (Word) os->pr_fr.pr_regs[r];
+        r++;
+    }
 #else
-  c_UNIMPLEMENTED();
+    c_UNIMPLEMENTED();
+#endif
+}
+
+void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters c) {
+#if os_SOLARIS
+    // See procfs_isa.h
+    static char registerNames[] = "GOLI";
+    int r = R_G0;
+    Word *p = &c->g0;
+    while (r <= R_I7) {
+        char rn = registerNames[r / 8];
+        for (int i = 0; i < 8; i++, r++) {
+            log_println("%%%c%d = %p [%ld]", rn, i, p[r], p[r]);
+        }
+    }
+#else
+    c_UNIMPLEMENTED();
 #endif
 }
 
 void sparc_printCanonicalFloatingPointRegisters(sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters) {
 #if os_SOLARIS
-#define PRINT_FPR(r) log_println("F%-2d =  0x%016lx [%lf]", r, canonicalFloatingPointRegisters->dRegs[r], canonicalFloatingPointRegisters->dRegs[r])
-  int r = 0;
-  while (r < 32) {
-    PRINT_FPR(r);
-	 r++;
-  }
+#define PRINT_FPR(r) log_println("F%-2d = %p [%lf]", r, canonicalFloatingPointRegisters->dRegs[r], canonicalFloatingPointRegisters->dRegs[r])
+    int r = 0;
+    while (r < 32) {
+        PRINT_FPR(r);
+        r++;
+    }
 #else
-  c_UNIMPLEMENTED();
+    c_UNIMPLEMENTED();
 #endif
 }
 
+void sparc_printCanonicalStatePointRegisters(sparc_CanonicalTeleStateRegisters canonicalStateRegisters) {
+#if os_SOLARIS
+    log_println("%%ccr = %p [%ld]", canonicalStateRegisters->ccr, canonicalStateRegisters->ccr);
+    log_println("%%pc  = %p [%ld]", canonicalStateRegisters->pc, canonicalStateRegisters->pc);
+    log_println("%%npc = %p [%ld]", canonicalStateRegisters->npc, canonicalStateRegisters->npc);
+#else
+    c_UNIMPLEMENTED();
+#endif
+}

@@ -33,42 +33,12 @@
 #elif os_SOLARIS
 #   include <sys/types.h>
 #   include <sys/procfs.h>
-	typedef greg_t *sparc_OsSignalIntegerRegisters;
-	typedef fpregset_t *sparc_OsSignalFloatingPointRegisters;
 	typedef prgreg_t *sparc_OsTeleIntegerRegisters;
 	typedef prgreg_t *sparc_OsTeleStateRegisters;
 	typedef prfpregset_t *sparc_OsTeleFloatingPointRegisters;
 #endif
 
 #include "word.h"
-
-/**
- * The machine state reported in ucontext only comprises registers not saved in the saving area of the trapped context.
- * That is, all the %o and %g (excluding %g0 which never needs to be saved).
- * 
- * We nevertheless keep space for %g0 due to the way trap handler code is being written: it assumes that the array of integer registers
- * passed can be indexed by the value of the encoding of the register. To make this work, we need to have the "save at signal" set of integer 
- * registers coincide with the total set of registers so that indexing work. 
- * 
- */
-typedef struct sparc_OsSignalCanonicalIntegerRegisters {
-  Word g0;
-  Word g1; /* r[1] = gregset_t [R_G1] -- see regset.h */
-  Word g2;
-  Word g3;
-  Word g4;
-  Word g5;
-  Word g6;
-  Word g7;
-  Word o0;  /* r[8] */
-  Word o1;
-  Word o2;
-  Word o3;
-  Word o4;
-  Word o5;
-  Word o6;
-  Word o7;
-} *sparc_OsSignalCanonicalIntegerRegisters;
 
 typedef struct sparc_CanonicalIntegerRegisters {
   Word g0;  /* r[0] = prgreg_t[] */
@@ -105,12 +75,6 @@ typedef struct sparc_CanonicalIntegerRegisters {
   Word i7;
 } sparc_CanonicalIntegerRegistersAggregate, *sparc_CanonicalIntegerRegisters;
 
-extern void sparc_decanonicalizeSignalIntegerRegisters(sparc_OsSignalCanonicalIntegerRegisters c, sparc_OsSignalIntegerRegisters os);
-extern void sparc_canonicalizeSignalIntegerRegisters(sparc_OsSignalIntegerRegisters os, sparc_OsSignalCanonicalIntegerRegisters c);
-
-extern void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters osTeleIntegerRegisters, sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
-extern void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
-
 typedef struct sparc_CanonicalFloatingPointRegisters {
 #ifdef	__sparcv9
   Word dRegs[32]; /* Double precision floating point register, f0, f2, ... f62. */
@@ -118,17 +82,22 @@ typedef struct sparc_CanonicalFloatingPointRegisters {
 #endif
 } sparc_CanonicalFloatingRegistersAggregate, *sparc_CanonicalFloatingPointRegisters;
 
-extern void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-
 typedef struct sparc_CanonicalStateRegisters {
   Word ccr; /* Condition Code Register */
   Word pc;  /* PC register */
   Word npc; /* nPC register */
 } sparc_CanonicalStateRegistersAggregate, *sparc_CanonicalStateRegisters;
 
-extern void sparc_printCanonicalFloatingPointRegisters(sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-extern void sparc_canonicalizeSignalFloatingPointRegisters(sparc_OsSignalFloatingPointRegisters os, sparc_CanonicalFloatingPointRegisters c);
+extern void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters osTeleIntegerRegisters, sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
+
+extern void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
 
 extern void sparc_canonicalizeTeleStateRegisters(sparc_OsTeleStateRegisters osTeleStateRegisters, sparc_CanonicalStateRegisters canonicalStateRegisters);
+
+extern void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
+
+extern void sparc_printCanonicalFloatingPointRegisters(sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+
+extern void sparc_printCanonicalStatePointRegisters(sparc_CanonicalTeleStateRegisters canonicalStateRegisters);
 
 #endif /*__sparc_h__*/

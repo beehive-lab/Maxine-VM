@@ -28,31 +28,27 @@
 
 #if os_DARWIN
 #   include <sys/ucontext.h>
-    typedef _STRUCT_X86_THREAD_STATE64 *amd64_OsSignalIntegerRegisters;
-    typedef _STRUCT_X86_FLOAT_STATE64 *amd64_OsSignalFloatingPointRegisters;
     typedef _STRUCT_X86_THREAD_STATE64 *amd64_OsTeleIntegerRegisters;
     typedef _STRUCT_X86_THREAD_STATE64 *amd64_OsTeleStateRegisters;
     typedef _STRUCT_X86_FLOAT_STATE64 *amd64_OsTeleFloatingPointRegisters;
 #elif os_LINUX
 #   include <sys/ucontext.h>
 #   include <sys/user.h>
-    typedef greg_t *amd64_OsSignalIntegerRegisters;
-    typedef fpregset_t amd64_OsSignalFloatingPointRegisters;
     typedef struct user_regs_struct *amd64_OsTeleIntegerRegisters;
     typedef struct user_fpregs_struct *amd64_OsTeleFloatingPointRegisters;
     typedef struct user_regs_struct *amd64_OsTeleStateRegisters;
+    typedef struct {
+        Word high;
+        Word low;
+    } XMMRegister;
 #elif os_SOLARIS
 #   include <sys/procfs.h>
-	typedef greg_t *amd64_OsSignalIntegerRegisters;
-	typedef fpregset_t *amd64_OsSignalFloatingPointRegisters;
 	typedef prgreg_t *amd64_OsTeleIntegerRegisters;
 	typedef prfpregset_t *amd64_OsTeleFloatingPointRegisters;
 	typedef prgreg_t *amd64_OsTeleStateRegisters;
 #elif os_GUESTVMXEN
 #   include <guestvmXen_db.h>
 #   include <guestvmXen.h>
-    typedef struct fault_regs* amd64_OsSignalIntegerRegisters;
-    typedef struct fault_regs* amd64_OsSignalFloatingPointRegisters;
     typedef struct db_regs* amd64_OsTeleIntegerRegisters;
     typedef struct db_regs* amd64_OsTeleStateRegisters;
     typedef struct db_regs* amd64_OsTeleFloatingPointRegisters;
@@ -79,11 +75,6 @@ typedef struct amd64_CanonicalIntegerRegisters {
 	Word r15;
 } amd64_CanonicalIntegerRegistersAggregate, *amd64_CanonicalIntegerRegisters;
 
-extern void amd64_decanonicalizeSignalIntegerRegisters(amd64_CanonicalIntegerRegisters c, amd64_OsSignalIntegerRegisters os);
-extern void amd64_canonicalizeSignalIntegerRegisters(amd64_OsSignalIntegerRegisters osSignalIntegerRegisters, amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
-extern void amd64_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters osTeleIntegerRegisters, amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
-extern void amd64_printCanonicalIntegerRegisters(amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
-
 typedef struct amd64_CanonicalFloatingPointRegisters {
 	Word xmm0;
 	Word xmm1;
@@ -103,15 +94,21 @@ typedef struct amd64_CanonicalFloatingPointRegisters {
 	Word xmm15;
 } amd64_CanonicalFloatingPointRegistersAggregate, *amd64_CanonicalFloatingPointRegisters;
 
-extern void amd64_canonicalizeSignalFloatingPointRegisters(amd64_OsSignalFloatingPointRegisters osSignalFloatingPointRegisters, amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-extern void amd64_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-extern void amd64_printCanonicalFloatingPointRegisters(amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-
 typedef struct amd64_CanonicalStateRegisters {
 	Word rip;
 	Word flags;
 } amd64_CanonicalStateRegistersAggregate, *amd64_CanonicalStateRegisters;
 
+extern void amd64_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters osTeleIntegerRegisters, amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
+
+extern void amd64_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+
 extern void amd64_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters osTeleStateRegisters, amd64_CanonicalStateRegisters canonicalStateRegisters);
+
+extern void amd64_printCanonicalIntegerRegisters(amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
+
+extern void amd64_printCanonicalFloatingPointRegisters(amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+
+extern void amd64_printCanonicalStateRegisters(amd64_CanonicalStateRegisters canonicalStateRegisters);
 
 #endif /*__amd64_h__*/
