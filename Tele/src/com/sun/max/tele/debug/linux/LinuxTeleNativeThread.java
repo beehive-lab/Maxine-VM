@@ -39,10 +39,6 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
 
     private int _lwpID;
 
-    public int lwpID() {
-        return _lwpID;
-    }
-
     private int _type;
 
     public int type() {
@@ -61,15 +57,15 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
         return _priority;
     }
 
-    private Ptrace _ptrace;
+    private PTracedProcess _ptrace;
 
-    private Ptrace ptrace() {
+    private PTracedProcess ptrace() {
         if (_ptrace == null) {
             if (this == teleProcess().primordialThread()) {
                 _ptrace = teleProcess().ptrace();
             } else {
                 try {
-                    _ptrace = Ptrace.attach(_lwpID);
+                    _ptrace = PTracedProcess.attach(_lwpID);
                 } catch (IOException ioException) {
                     throw new TeleError("could not attach to lwp", ioException);
                 }

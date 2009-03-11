@@ -28,9 +28,15 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
 /**
+ * A native process that is controlled and accessed via the Linux {@code ptrace} facility.
+ * This is separated out from {@link LinuxTeleProcess} as threads in Linux are implemented
+ * as processes and thus need to be attached to {@code ptrace} individually.
+ * The methods that interact with the traced process (or thread) always execute on a
+ * {@linkplain SingleThread single dedicated thread}.
+ *
  * @author Bernd Mathiske
  */
-public final class Ptrace {
+public final class PTracedProcess {
 
     private final int _processID;
 
@@ -38,27 +44,35 @@ public final class Ptrace {
         return _processID;
     }
 
-    private Ptrace(int processID) {
+    private PTracedProcess(int processID) {
         _processID = processID;
     }
 
     private static native int nativeCreateChildProcess(long argv, int vmAgentSocketPort);
 
-    public static Ptrace createChild(final long argv, final int vmAgentSocketPort) {
-        return SingleThread.execute(new Function<Ptrace>() {
-            public Ptrace call() {
+    /**
+     * Creates a new traced process via {@code fork()} and {@code execve()}.
+     *
+     * @param argv the arguments with which to start the new process
+     * @param vmAgentSocketPort the port on which the debugger agent is listening for a connection from the VM.
+     * @return an instance of {@link PTracedProcess} representing the new process or {@code null} if there was an error
+     *         creating the new process. If a new process was created, it is paused at the call to {@code execve}
+     */
+    public static PTracedProcess createChild(final long argv, final int vmAgentSocketPort) {
+        return SingleThread.execute(new Function<PTracedProcess>() {
+            public PTracedProcess call() {
                 final int processID = nativeCreateChildProcess(argv, vmAgentSocketPort);
                 if (processID < 0) {
                     return null;
                 }
-                return new Ptrace(processID);
+                return new PTracedProcess(processID);
             }
         });
     }
 
     private static native boolean nativeAttach(int processID);
 
-    public static Ptrace attach(final int processID) throws IOException {
+    public static PTracedProcess attach(final int processID) throws IOException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
@@ -68,7 +82,7 @@ public final class Ptrace {
                     return null;
                 }
             });
-            return new Ptrace(processID);
+            return new PTracedProcess(processID);
         } catch (Exception exception) {
             throw Exceptions.cast(IOException.class, exception);
         }

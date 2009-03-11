@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.collect.*;
@@ -195,6 +196,19 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _table.setColumnSelectionAllowed(true);
         _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         _table.addMouseListener(new MyInspectorMouseClickAdapter(_inspection));
+
+        // Add listener to adjust the global code location focus when selected row changes
+        _table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                    final int selectedRow = _table.getSelectedRow();
+                    if (selectedRow >= 0 && selectedRow < instructions().length()) {
+                        _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeInstructionAt(selectedRow).address()), true);
+                    }
+                }
+            }
+        });
 
         // Set up toolbar
         JButton button = new InspectorButton(_inspection, _inspection.actions().toggleTargetCodeBreakpoint());
@@ -482,14 +496,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
         @Override
         public void procedure(final MouseEvent mouseEvent) {
-            final int selectedRow = getSelectedRow();
-            final int selectedColumn = _table.getSelectedColumn();
-            if (selectedRow != -1 && selectedColumn != -1) {
-                // Left button selects a table cell; also cause a code selection at the row.
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                    _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeInstructionAt(selectedRow).address()), true);
-                }
-            }
             // Locate the renderer under the event location, and pass along the mouse click if appropriate
             final Point p = mouseEvent.getPoint();
             final int hitColumnIndex = _table.columnAtPoint(p);

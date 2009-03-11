@@ -26,6 +26,9 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -78,6 +81,44 @@ public final class JniFunctionWrapper {
         LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, ip);
     }
 
+    private static void traceCurrentThreadPrefix() {
+        Log.print("[Thread \"");
+        Log.print(VmThread.current().getName());
+    }
+
+    private static TargetMethod traceEntry(Address instructionPointer) {
+        if (VerboseVMOption.verboseJNI()) {
+            final TargetMethod jniTargetMethod = JniNativeInterface.jniTargetMethod(instructionPointer);
+            traceCurrentThreadPrefix();
+            Log.print("\" entering JNI upcall: ");
+            if (jniTargetMethod != null) {
+                Log.printMethodActor(jniTargetMethod.classMethodActor(), false);
+            } else {
+                Log.print("<unknown @ ");
+                Log.print(instructionPointer);
+                Log.print(">");
+            }
+            Log.println("]");
+            return jniTargetMethod;
+        }
+        return null;
+    }
+
+    private static void traceExit(TargetMethod jniTargetMethod, Address instructionPointer) {
+        if (VerboseVMOption.verboseJNI()) {
+            traceCurrentThreadPrefix();
+            Log.print("\" exit JNI upcall: ");
+            if (jniTargetMethod != null) {
+                Log.printMethodActor(jniTargetMethod.classMethodActor(), false);
+            } else {
+                Log.print("<unknown @ ");
+                Log.print(instructionPointer);
+                Log.print(">");
+            }
+            Log.println("]");
+        }
+    }
+
     @WRAPPER
     public static void void_wrapper(Pointer env) {
         // start-prologue
@@ -93,11 +134,13 @@ public final class JniFunctionWrapper {
         exitThreadInNative(vmThreadLocals);
         // end-prologue
 
+        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
         try {
             void_wrapper(env);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
         }
+        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
 
         // start-epilogue
         MemoryBarrier.storeStore(); // must happen after call to exitThreadInNative()
@@ -124,6 +167,7 @@ public final class JniFunctionWrapper {
         exitThreadInNative(vmThreadLocals);
         // end-prologue
 
+        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
         int result;
         try {
             result = int_wrapper(env);
@@ -131,6 +175,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
+        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
 
         // start-epilogue
         MemoryBarrier.storeStore();
@@ -158,6 +203,7 @@ public final class JniFunctionWrapper {
         exitThreadInNative(vmThreadLocals);
         // end-prologue
 
+        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
         float result;
         try {
             result = float_wrapper(env);
@@ -165,6 +211,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
+        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
 
         // start-epilogue
         MemoryBarrier.storeStore();
@@ -192,6 +239,7 @@ public final class JniFunctionWrapper {
         exitThreadInNative(vmThreadLocals);
         // end-prologue
 
+        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
         long result;
         try {
             result = long_wrapper(env);
@@ -199,6 +247,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
+        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
 
         // start-epilogue
         MemoryBarrier.storeStore();
@@ -226,6 +275,7 @@ public final class JniFunctionWrapper {
         exitThreadInNative(vmThreadLocals);
         // end-prologue
 
+        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
         double result;
         try {
             result = double_wrapper(env);
@@ -233,6 +283,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
+        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
 
         // start-epilogue
         MemoryBarrier.storeStore();
@@ -260,6 +311,7 @@ public final class JniFunctionWrapper {
         exitThreadInNative(vmThreadLocals);
         // end-prologue
 
+        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
         Word result;
         try {
             result = word_wrapper(env);
@@ -267,6 +319,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = Word.zero();
         }
+        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
 
         // start-epilogue
         MemoryBarrier.storeStore();
