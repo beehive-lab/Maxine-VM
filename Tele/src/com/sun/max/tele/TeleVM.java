@@ -437,8 +437,7 @@ public abstract class TeleVM {
 
         if (commandLineArguments == null) {
             _teleProcess = attachToTeleProcess(processID);
-            Problem.unimplemented("need to get the boot image address from attached process somehow");
-            _bootImageStart = Pointer.zero();
+            _bootImageStart = loadBootImage(agent);
         } else {
             if (agent != null) {
                 agent.start();
