@@ -437,7 +437,14 @@ public abstract class TeleVM {
 
         if (commandLineArguments == null) {
             _teleProcess = attachToTeleProcess(processID);
-            _bootImageStart = loadBootImage(agent);
+            switch (bootImage.vmConfiguration().platform().operatingSystem()) {
+                case GUESTVM:
+                    _bootImageStart = loadBootImage(agent);
+                    break;
+                default:
+                    Problem.unimplemented("need to get the boot image address from attached process somehow");
+                    _bootImageStart = Pointer.zero();
+            }
         } else {
             if (agent != null) {
                 agent.start();
