@@ -26,7 +26,7 @@ LIB = prototype
 SOURCES = address.c arithmeticException.c boxedMemory.c boxedPointer.c c.c log.c jni.c loophole.c \
           platform.c prototype.c relocation.c dataio.c tests.c mutex.c
 
-SOURCE_DIRS = jni platform prototype share
+SOURCE_DIRS = jni platform prototype share substrate
 
 include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/share/share.mk
