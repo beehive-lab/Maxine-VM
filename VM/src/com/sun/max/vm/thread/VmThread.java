@@ -111,7 +111,8 @@ public class VmThread {
 
     private static final VMSizeOption _stackSizeOption = new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads.", MaxineVM.Phase.PRISTINE);
 
-    private final Thread _javaThread;
+    @CONSTANT_WHEN_NOT_ZERO
+    private Thread _javaThread;
     private volatile Thread.State _state = Thread.State.NEW;
     private volatile boolean _interrupted = false;
     private Throwable _terminationCause;
@@ -128,7 +129,8 @@ public class VmThread {
     private String _name;
 
     @INSPECTED
-    private final long _serial;
+    @CONSTANT_WHEN_NOT_ZERO
+    private long _serial;
 
     @CONSTANT
     protected Word _nativeThread = Word.zero();
@@ -281,9 +283,11 @@ public class VmThread {
     /**
      * The pool of JNI local references allocated for this thread.
      */
-    private final JniHandles _jniHandles;
+    @CONSTANT_WHEN_NOT_ZERO
+    private JniHandles _jniHandles;
 
-    private final boolean _isGCThread;
+    @CONSTANT_WHEN_NOT_ZERO
+    private boolean _isGCThread;
 
     /**
      * Determines if this thread is owned by the garbage collector.
@@ -292,7 +296,25 @@ public class VmThread {
         return _isGCThread;
     }
 
+    /**
+     * Create an unbound VmThread that will be bound later.
+     */
+    public VmThread() {
+    }
+
+    /**
+     * Create a bound VmThread.
+     * @param javaThread
+     */
     public VmThread(Thread javaThread) {
+        setJavaThread(javaThread);
+    }
+
+    /**
+     * Bind the given @see java.lang.Thread to this VmThread.
+     * @param javaThread thread to be bound
+     */
+    public VmThread setJavaThread(Thread javaThread) {
         _isGCThread = Heap.isGcThread(javaThread);
         _waitingCondition = new ConditionVariable();
         synchronized (VmThread.class) {
@@ -301,6 +323,7 @@ public class VmThread {
         _javaThread = javaThread;
         _name = javaThread.getName();
         _jniHandles = new JniHandles();
+        return this;
     }
 
     private static final boolean _useUnsafeBeTerminated = !(VMConfiguration.target().monitorScheme() instanceof ModalMonitorScheme);
