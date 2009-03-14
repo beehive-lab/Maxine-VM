@@ -117,11 +117,11 @@ public final class SolarisTeleProcess extends TeleProcess {
         return result;
     }
 
-    private native boolean nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads);
+    private native void nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads);
 
     @Override
-    protected boolean gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        return nativeGatherThreads(_processHandle, threads);
+    protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
+        nativeGatherThreads(_processHandle, threads);
     }
 
     /**

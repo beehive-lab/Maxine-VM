@@ -90,7 +90,10 @@ public class PageDataAccess extends DataAccessAdapter {
         }
     }
 
-    public void invalidate(Address address, int size) {
+    public void invalidateForWrite(Address address, int size) {
+        if (address.isZero()) {
+            throw new NullPointerException("Cannot write to Address ZERO");
+        }
         invalidate(address, Size.fromInt(size));
     }
 
@@ -124,6 +127,9 @@ public class PageDataAccess extends DataAccessAdapter {
     }
 
     public synchronized byte readByte(Address address) {
+        if (address.isZero()) {
+            throw new NullPointerException("Can't read from Address ZERO");
+        }
         return getPage(address).readByte(getOffset(address));
     }
 
@@ -156,31 +162,31 @@ public class PageDataAccess extends DataAccessAdapter {
     }
 
     public synchronized int write(byte[] buffer, int offset, int length, Address address) {
-        invalidate(address, buffer.length);
+        invalidateForWrite(address, buffer.length);
         DataIO.Static.checkRead(buffer, offset, length);
-        return  _teleIO.write(buffer, offset, buffer.length, address);
+        return _teleIO.write(buffer, offset, buffer.length, address);
     }
 
     public synchronized void writeByte(Address address, byte value) {
-        invalidate(address, Bytes.SIZE);
+        invalidateForWrite(address, Bytes.SIZE);
         final byte[] buffer = _endianness.toBytes(value);
         _teleIO.write(buffer, 0, buffer.length, address);
     }
 
     public synchronized void writeShort(Address address, short value) {
-        invalidate(address, Shorts.SIZE);
+        invalidateForWrite(address, Shorts.SIZE);
         final byte[] buffer = _endianness.toBytes(value);
         _teleIO.write(buffer, 0, buffer.length, address);
     }
 
     public synchronized void writeInt(Address address, int value) {
-        invalidate(address, Ints.SIZE);
+        invalidateForWrite(address, Ints.SIZE);
         final byte[] buffer = _endianness.toBytes(value);
         _teleIO.write(buffer, 0, buffer.length, address);
     }
 
     public synchronized void writeLong(Address address, long value) {
-        invalidate(address, Longs.SIZE);
+        invalidateForWrite(address, Longs.SIZE);
         final byte[] buffer = _endianness.toBytes(value);
         _teleIO.write(buffer, 0, buffer.length, address);
     }

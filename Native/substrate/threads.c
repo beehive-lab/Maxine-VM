@@ -176,7 +176,7 @@ void thread_initSegments(thread_Specifics *threadSpecifics) {
     int id = threadSpecifics->id;
     log_println("thread %3d: stackBase = %p", id, threadSpecifics->stackBase);
     log_println("thread %3d: stackBase (aligned) = %p", id, virtualMemory_pageAlign(threadSpecifics->stackBase));
-    log_println("thread %3d: stackSize = %d (0x%x)", id, threadSpecifics->stackSize, threadSpecifics->stackSize);
+    log_println("thread %3d: stackSize = %d (%p)", id, threadSpecifics->stackSize, threadSpecifics->stackSize);
     log_println("thread %3d: stackBottom = %p", id, stackBottom);
     log_println("thread %3d: triggeredVmThreadLocals = %p", id, threadSpecifics->triggeredVmThreadLocals);
     log_println("thread %3d: enabledVmThreadLocals   = %p", id, threadSpecifics->enabledVmThreadLocals);
@@ -240,7 +240,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     }
 
 #if log_THREADS
-    log_println("thread_create: stack base %lx", threadSpecifics->stackBase);
+    log_println("thread_create: stack base %p", threadSpecifics->stackBase);
 #endif
 
 #if os_GUESTVMXEN
@@ -260,7 +260,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     pthread_attr_destroy(&attributes);
     if (error != 0) {
         log_println("pthread_create failed with error: %d", error);
-	thread_destroySegments(threadSpecifics);
+        thread_destroySegments(threadSpecifics);
         return (Thread) 0;
     }
 #elif os_SOLARIS
@@ -331,7 +331,7 @@ void *thread_runJava(void *arg) {
     thread_setSpecific(_specificsKey, threadSpecifics);
 
 #if log_THREADS
-    log_println("thread_runJava: BEGIN t=%lx", nativeThread);
+    log_println("thread_runJava: BEGIN t=%p", nativeThread);
 #endif
 
     /* set up the vm thread locals, guard pages, etc */
@@ -345,7 +345,7 @@ void *thread_runJava(void *arg) {
     VMThreadRunMethod method = (VMThreadRunMethod) (image_heap() + (Address) image_header()->vmThreadRunMethodOffset);
 
 #if log_THREADS
-    log_print("thread_runJava: id=%d, t=%lx, calling method: ", threadSpecifics->id, nativeThread);
+    log_print("thread_runJava: id=%d, t=%p, calling method: ", threadSpecifics->id, nativeThread);
     void image_printAddress(Address address);
     image_printAddress((Address) method);
     log_println("");
@@ -370,7 +370,7 @@ void *thread_runJava(void *arg) {
     thread_destroySegments(threadSpecifics);
 
 #if log_THREADS
-    log_println("thread_runJava: END t=%lx", nativeThread);
+    log_println("thread_runJava: END t=%p", nativeThread);
 #endif
     /* Successful thread exit */
     return NULL;
@@ -391,14 +391,14 @@ Address nativeThreadCreate(jint id, Size stackSize, jint priority) {
  */
 jboolean nativeJoin(Address thread) {
 #if log_THREADS
-    log_println("BEGIN nativeJoin: %lx", thread);
+    log_println("BEGIN nativeJoin: %p", thread);
 #endif
     if (thread == 0L) {
         return false;
     }
     jboolean result = thread_join((Thread) thread) == 0;
 #if log_THREADS
-    log_println("END nativeJoin: %lx", thread);
+    log_println("END nativeJoin: %p", thread);
 #endif
     return result;
 }
@@ -480,28 +480,3 @@ Java_com_sun_max_vm_thread_VmThread_nativeSetPriority(JNIEnv *env, jclass c, Add
     log_println("nativeSetPriority %d ignored!", priority);
 #endif
 }
-
-void nativeSetupAlternateSignalStack(Address base, long size) {
-	c_ASSERT(wordAlign(base) == base);
-#if log_THREADS
-    log_println("nativeSetupAlternateSignalStack: alternate stack at %lx, size %lx ", base, size);
-#endif
-#if os_DARWIN || os_LINUX || os_SOLARIS
-
-	stack_t	signalStack;
-
-	signalStack.ss_size = size;
-	signalStack.ss_flags = 0;
-	signalStack.ss_sp = (Word) base;
-
-
-	if (sigaltstack(&signalStack, (stack_t *) NULL) < 0) {
-		log_exit(1, "signalstack failed");
-	}
-#elif os_GUESTVMXEN
-	/* Nothing to do */
-#else
-	c_UNIMPLEMENTED();
-#endif
-}
-

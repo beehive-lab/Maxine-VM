@@ -443,7 +443,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     private void updateState(State newState) {
-        updateState(newState, new LinkSequence<TeleNativeThread>(), null);
+        updateState(newState, Sequence.Static.empty(TeleNativeThread.class), null);
     }
 
     /**
@@ -539,7 +539,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     private final Set<TeleNativeThread> _deadThreads = new TreeSet<TeleNativeThread>();
 
-    protected abstract boolean gatherThreads(AppendableSequence<TeleNativeThread> threads);
+    protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
 
     private long _epoch;
 

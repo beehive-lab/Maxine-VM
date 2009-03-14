@@ -50,7 +50,6 @@ public final class VMTeleMessenger extends AbstractTeleVMHolder implements TeleM
     public boolean activate() {
         if (!_maxineMessenger.isActivated()) {
             final Pointer info = teleVM().dataAccess().readWord(_infoPointer).asPointer();
-
             final Size dataSize = teleVM().dataAccess().getWord(info, 0, 0).asSize();
 
             // Note that in/out are crossed over.

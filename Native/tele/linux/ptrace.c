@@ -28,29 +28,45 @@
 #include "word.h"
 #include "log.h"
 
-static const char* requestToString(int request) {
-#define MATCH(req) do { if (request == req) { return STRINGIZE(req); } } while (0)
-    MATCH(PT_TRACE_ME);
-    MATCH(PT_READ_I);
-    MATCH(PT_READ_D);
-    MATCH(PT_READ_U);
-    MATCH(PT_WRITE_I);
-    MATCH(PT_WRITE_D);
-    MATCH(PT_WRITE_U);
-    MATCH(PT_READ_I);
-    MATCH(PT_READ_I);
-    MATCH(PT_READ_I);
-    MATCH(PT_CONTINUE);
-    MATCH(PT_KILL);
-    MATCH(PT_STEP);
-    MATCH(PT_ATTACH);
-    MATCH(PT_DETACH);
-    MATCH(PT_GETREGS);
-    MATCH(PT_SETREGS);
-    MATCH(PT_GETFPREGS);
-    MATCH(PT_SETOPTIONS);
-    return NULL;
-#undef MATCH
+static const char* requestToString(int request, char *unknownRequestNameBuf, int unknownRequestNameBufLength) {
+#define CASE(req) case req: return STRINGIZE(req)
+    switch (request) {
+        CASE(PT_TRACE_ME);
+        CASE(PT_READ_I);
+        CASE(PT_READ_D);
+        CASE(PT_READ_U);
+        CASE(PT_WRITE_I);
+        CASE(PT_WRITE_D);
+        CASE(PT_WRITE_U);
+        CASE(PT_CONTINUE);
+        CASE(PT_KILL);
+        CASE(PT_STEP);
+        CASE(PT_ATTACH);
+        CASE(PT_DETACH);
+        CASE(PT_GETREGS);
+        CASE(PT_SETREGS);
+        CASE(PT_GETFPREGS);
+        CASE(PT_SETOPTIONS);
+        CASE(PT_GETEVENTMSG);
+    }
+    snprintf(unknownRequestNameBuf, unknownRequestNameBufLength, "<unknown:%d>", request);
+    return unknownRequestNameBuf;
+#undef CASE
+}
+
+const char* ptraceEventName(int event) {
+#define CASE(evt) case evt: return STRINGIZE(evt)
+    switch (event) {
+        case 0: return "NONE";
+        CASE(PTRACE_EVENT_FORK);
+        CASE(PTRACE_EVENT_VFORK);
+        CASE(PTRACE_EVENT_CLONE);
+        CASE(PTRACE_EVENT_EXEC);
+        CASE(PTRACE_EVENT_VFORK_DONE);
+        CASE(PTRACE_EVENT_EXIT);
+    }
+    return "<unknown>";
+#undef CASE
 }
 
 #if 0
@@ -78,21 +94,28 @@ long ptrace_withRetries(int request, int processID, void *address, void *data) {
 #define ptrace_withRetries ptrace
 #endif
 
+/*
+ * Used to enforce the constraint that all access of the ptraced process from the same process.
+ * This value is initialized linuxTask.c.
+ */
+pid_t _ptracer = 0;
+
 long _ptrace(const char *file, const char *func, int line, int request, pid_t pid, void *address, void *data) {
+    if (request != PT_TRACE_ME && _ptracer != getpid()) {
+        log_println("%s:%d: Can only ptrace %d from parent process %d, not process %d", file, line, pid, _ptracer, getpid());
+        errno = EINVAL;
+        return -1;
+    }
     long result;
     static int lastRequest = 0;
 
     Boolean trace = log_TELE && (request != PT_READ_D || lastRequest != PT_READ_D);
 
-    const char *requestName;
+    const char *requestName = NULL;
     char unknownRequestNameBuf[100];
 
     if (trace) {
-        requestName = requestToString(request);
-        if (requestName == NULL) {
-            sprintf(unknownRequestNameBuf, "<unknown:%d>", request);
-            requestName = unknownRequestNameBuf;
-        }
+        requestName = requestToString(request, unknownRequestNameBuf, sizeof(unknownRequestNameBuf));
         log_print("%s:%d ptrace(%s, %d, %p, %p)", file, line, requestName, pid, address, data);
     }
     result = ptrace_withRetries(request, pid, address, data);
@@ -105,8 +128,13 @@ long _ptrace(const char *file, const char *func, int line, int request, pid_t pi
         }
     }
     if (error != 0) {
+        requestName = requestToString(request, unknownRequestNameBuf, sizeof(unknownRequestNameBuf));
         log_println("%s:%d ptrace(%s, %d, %p, %d) caused an error [%s]", file, line, requestName, pid, address, data, strerror(error));
     }
     lastRequest = request;
+
+    /* Reset errno to its state immediately after the real ptrace call. */
+    errno = error;
+
     return result;
 }

@@ -38,14 +38,10 @@ import com.sun.max.vm.prototype.*;
  */
 public final class LinuxTeleProcess extends TeleProcess {
 
-    private final PTracedProcess _ptrace;
+    private final LinuxTask _task;
 
-    PTracedProcess ptrace() {
-        return _ptrace;
-    }
-
-    public int processID() {
-        return _ptrace.processID();
+    LinuxTask task() {
+        return _task;
     }
 
     private final PageDataAccess _pageDataAccess;
@@ -59,15 +55,11 @@ public final class LinuxTeleProcess extends TeleProcess {
         _pageDataAccess.invalidateCache();
     }
 
-    private long _agent;
-
-    private static native long nativeCreateAgent(int processID);
-
     LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
-        _ptrace = PTracedProcess.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        if (_ptrace == null) {
+        _task = LinuxTask.createChild(commandLineArgumentsBuffer.toLong(), agent.port());
+        if (_task == null) {
             throw new BootImageException("Error launching VM");
         }
         _pageDataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
@@ -80,55 +72,56 @@ public final class LinuxTeleProcess extends TeleProcess {
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        _ptrace.kill();
+        _task.kill();
     }
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        _ptrace.resume();
+        _task.resume();
+        for (TeleNativeThread thread : threads()) {
+            final LinuxTeleNativeThread linuxThread = (LinuxTeleNativeThread) thread;
+            final LinuxTask threadTask = linuxThread.task();
+            if (!threadTask.equals(_task)) {
+                threadTask.resume();
+            }
+        }
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        _ptrace.suspend();
+        _task.suspend(true);
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        final boolean result = _ptrace.waitUntilStopped();
+        final boolean result = _task.waitUntilStopped();
         invalidateCache();
         return result;
     }
 
-    private native boolean nativeGatherThreads(long agent, AppendableSequence<TeleNativeThread> threads);
+    private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads);
 
     @Override
-    protected boolean gatherThreads(final AppendableSequence<TeleNativeThread> threads) {
+    protected void gatherThreads(final AppendableSequence<TeleNativeThread> threads) {
         try {
-            return SingleThread.executeWithException(new Function<Boolean>() {
-                public Boolean call() throws IOException {
-                    if (_agent == 0L) {
-                        _agent = nativeCreateAgent(_ptrace.processID());
-                        if (_agent == 0L) {
-                            throw new TeleError("could not create thread_db agent");
-                        }
-                    }
-                    return nativeGatherThreads(_agent, threads);
+            SingleThread.executeWithException(new Function<Void>() {
+                public Void call() throws IOException {
+                    nativeGatherThreads(_task.tgid(), threads);
+                    return null;
                 }
             });
         } catch (Exception exception) {
             exception.printStackTrace();
-            return false;
         }
     }
 
     /**
      * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
      */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long threadID, int lwpId, int state, long stackStart, long stackSize) {
-        LinuxTeleNativeThread thread = (LinuxTeleNativeThread) idToThread(threadID);
+    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int tid, int state, long stackStart, long stackSize) {
+        LinuxTeleNativeThread thread = (LinuxTeleNativeThread) idToThread(tid);
         if (thread == null) {
-            thread = new LinuxTeleNativeThread(this, threadID, lwpId, stackStart, stackSize);
+            thread = new LinuxTeleNativeThread(this, tid, stackStart, stackSize);
         }
 
         assert state >= 0 && state < ThreadState.VALUES.length() : state;
@@ -138,11 +131,11 @@ public final class LinuxTeleProcess extends TeleProcess {
 
     @Override
     protected int read0(Address address, byte[] buffer, int offset, int length) {
-        return _ptrace.readBytes(address, buffer, offset, length);
+        return _task.readBytes(address, buffer, offset, length);
     }
 
     @Override
     protected int write0(byte[] buffer, int offset, int length, Address address) {
-        return _ptrace.writeBytes(address, buffer, offset, length);
+        return _task.writeBytes(address, buffer, offset, length);
     }
 }

@@ -149,7 +149,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected boolean gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        return GuestVMXenDBChannel.gatherThreads(threads, _domainId);
+    protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
+        GuestVMXenDBChannel.gatherThreads(threads, _domainId);
     }
 }

@@ -28,73 +28,95 @@ import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
 
 /**
- * A native process that is controlled and accessed via the Linux {@code ptrace} facility.
- * This is separated out from {@link LinuxTeleProcess} as threads in Linux are implemented
- * as processes and thus need to be attached to {@code ptrace} individually.
- * The methods that interact with the traced process (or thread) always execute on a
- * {@linkplain SingleThread single dedicated thread}.
+ * A native Linux task (process or thread; threads are implemented as processes on Linux) that is controlled and
+ * accessed via the Linux {@code ptrace} facility. The methods that interact with the traced task always execute on a
+ * {@linkplain SingleThread single dedicated thread} fulfilling a requirement of ptrace.
  *
  * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public final class PTracedProcess {
+public final class LinuxTask {
 
-    private final int _processID;
+    /**
+     * The task group identifier (TGID) of this task. This is the process identifier shared by all tasks in a
+     * process and is the value returned by getpid(2) since Linux 2.4.
+     */
+    private final int _tgid;
 
-    public int processID() {
-        return _processID;
+    /**
+     * The (system-wide) unique task identifier (TID( of this task. The first task in a task group is
+     * the <i>leader</i> of the new task group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
+     *
+     * Note that this is <b>not<b> the identifier returned by pthread_create(3p).
+     */
+    private final int _tid;
+
+    /**
+     * Gets the task group identifier (TGID) of this task. This is the process identifier shared by all
+     * tasks in a process and is the value returned by getpid(2) since Linux 2.4.
+     */
+    public int tgid() {
+        return _tgid;
     }
 
-    private PTracedProcess(int processID) {
-        _processID = processID;
+    /**
+     * Gets the (system-wide) unique task identifier (TID( of this task. The first task in a task group is
+     * the <i>leader</i> of the new task group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
+     *
+     * Note that this is <b>not<b> the identifier returned by pthread_create(3p).
+     */
+    public int tid() {
+        return _tid;
+    }
+
+    LinuxTask(int tgid, int tid) {
+        _tgid = tgid;
+        _tid = tid;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof LinuxTask) {
+            final LinuxTask other = (LinuxTask) obj;
+            return tid() == other.tid();
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return tid();
     }
 
     private static native int nativeCreateChildProcess(long argv, int vmAgentSocketPort);
 
     /**
-     * Creates a new traced process via {@code fork()} and {@code execve()}.
+     * Creates a new traced task via {@code fork()} and {@code execve()}.
      *
      * @param argv the arguments with which to start the new process
      * @param vmAgentSocketPort the port on which the debugger agent is listening for a connection from the VM.
-     * @return an instance of {@link PTracedProcess} representing the new process or {@code null} if there was an error
+     * @return an instance of {@link LinuxTask} representing the new process or {@code null} if there was an error
      *         creating the new process. If a new process was created, it is paused at the call to {@code execve}
      */
-    public static PTracedProcess createChild(final long argv, final int vmAgentSocketPort) {
-        return SingleThread.execute(new Function<PTracedProcess>() {
-            public PTracedProcess call() {
-                final int processID = nativeCreateChildProcess(argv, vmAgentSocketPort);
-                if (processID < 0) {
+    public static LinuxTask createChild(final long argv, final int vmAgentSocketPort) {
+        return SingleThread.execute(new Function<LinuxTask>() {
+            public LinuxTask call() {
+                final int tgid = nativeCreateChildProcess(argv, vmAgentSocketPort);
+                if (tgid < 0) {
                     return null;
                 }
-                return new PTracedProcess(processID);
+                return new LinuxTask(tgid, tgid);
             }
         });
     }
 
-    private static native boolean nativeAttach(int processID);
-
-    public static PTracedProcess attach(final int processID) throws IOException {
-        try {
-            SingleThread.executeWithException(new Function<Void>() {
-                public Void call() throws Exception {
-                    if (!nativeAttach(processID)) {
-                        throw new IOException("Ptrace.attach");
-                    }
-                    return null;
-                }
-            });
-            return new PTracedProcess(processID);
-        } catch (Exception exception) {
-            throw Exceptions.cast(IOException.class, exception);
-        }
-    }
-
-    private static native boolean nativeDetach(int processID);
+    private static native boolean nativeDetach(int tgid, int tid);
 
     public synchronized void detach() throws IOException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeDetach(_processID)) {
+                    if (!nativeDetach(_tgid, _tid)) {
                         throw new IOException("Ptrace.detach");
                     }
                     return null;
@@ -105,23 +127,23 @@ public final class PTracedProcess {
         }
     }
 
-    private static native boolean nativeSingleStep(int processID);
+    private static native boolean nativeSingleStep(int tgid, int tid);
 
     public synchronized boolean singleStep() {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeSingleStep(_processID);
+                return nativeSingleStep(_tgid, _tid);
             }
         });
     }
 
-    private static native boolean nativeResume(int processID);
+    private static native boolean nativeResume(int tgid, int tid);
 
     public synchronized void resume() throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeResume(_processID)) {
+                    if (!nativeResume(_tgid, _tid)) {
                         throw new OSExecutionRequestException("Ptrace.resume");
                     }
                     return null;
@@ -132,13 +154,13 @@ public final class PTracedProcess {
         }
     }
 
-    private static native boolean nativeSuspend(int processID);
+    private static native boolean nativeSuspend(int tgid, int tid, boolean allTasks);
 
-    public synchronized void suspend() throws OSExecutionRequestException {
+    public synchronized void suspend(final boolean allTasks) throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeSuspend(_processID)) {
+                    if (!nativeSuspend(_tgid, _tid, allTasks)) {
                         throw new OSExecutionRequestException("Ptrace.suspend");
                     }
                     return null;
@@ -149,23 +171,23 @@ public final class PTracedProcess {
         }
     }
 
-    private static native boolean nativeWait(int processID);
+    private static native boolean nativeWait(int tgid, int tid);
 
     public synchronized boolean waitUntilStopped() {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeWait(_processID);
+                return nativeWait(_tgid, _tid);
             }
         });
     }
 
-    private static native boolean nativeKill(int processID);
+    private static native boolean nativeKill(int tgid, int tid);
 
     public synchronized void kill() throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeKill(_processID)) {
+                    if (!nativeKill(_tgid, _tid)) {
                         throw new OSExecutionRequestException("Ptrace.kill");
                     }
                     return null;
@@ -176,37 +198,38 @@ public final class PTracedProcess {
         }
     }
 
-    private static native int nativeReadBytes(int processID, long address, byte[] buffer, int offset, int length);
+    private static native int nativeReadBytes(int tgid, int tid, long address, byte[] buffer, int offset, int length);
 
     public synchronized int readBytes(final Address address, final byte[] buffer, final int offset, final int length) {
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                return nativeReadBytes(_processID, address.toLong(), buffer, offset, length);
+                assert !address.isZero();
+                return nativeReadBytes(_tgid, _tid, address.toLong(), buffer, offset, length);
             }
         });
     }
 
-    private static native int nativeWriteBytes(int processID, long address, byte[] buffer, int offset, int length);
+    private static native int nativeWriteBytes(int tgid, int tid, long address, byte[] buffer, int offset, int length);
 
     public synchronized int writeBytes(final Address address, final byte[] buffer, final int offset, final int length) {
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                return nativeWriteBytes(_processID, address.toLong(), buffer, offset, length);
+                return nativeWriteBytes(_tgid, _tid, address.toLong(), buffer, offset, length);
             }
         });
     }
 
-    private static native boolean nativeSetInstructionPointer(int processID, long instructionPointer);
+    private static native boolean nativeSetInstructionPointer(int tid, long instructionPointer);
 
     public synchronized boolean setInstructionPointer(final Address instructionPointer) {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeSetInstructionPointer(_processID, instructionPointer.toLong());
+                return nativeSetInstructionPointer(_tid, instructionPointer.toLong());
             }
         });
     }
 
-    private static native boolean nativeReadRegisters(int processID,
+    private static native boolean nativeReadRegisters(int tid,
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
@@ -217,7 +240,7 @@ public final class PTracedProcess {
                     final byte[] stateRegisters) {
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeReadRegisters(_processID, integerRegisters, integerRegisters.length,
+                return nativeReadRegisters(_tid, integerRegisters, integerRegisters.length,
                                 floatingPointRegisters, floatingPointRegisters.length,
                                 stateRegisters, stateRegisters.length);
             }
