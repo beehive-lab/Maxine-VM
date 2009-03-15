@@ -27,7 +27,7 @@
 #include "word.h"
 #include "log.h"
 
-static const char* requestToString(int request) {
+static const char* requestToString(int request, char *unknownRequestNameBuf, int unknownRequestNameBufLength) {
 #define MATCH(req) if (request == req) return #req
     MATCH(PT_TRACE_ME);
     MATCH(PT_READ_I);
@@ -44,7 +44,8 @@ static const char* requestToString(int request) {
     MATCH(PT_STEP);
     MATCH(PT_ATTACH);
     MATCH(PT_DETACH);
-    return NULL;
+    snprintf(unknownRequestNameBuf, unknownRequestNameBufLength, "<unknown:%d>", request);
+    return unknownRequestNameBuf;
 }
 
 int _ptrace(const char *file, int line, int request, pid_t pid, caddr_t address, int data) {
@@ -54,11 +55,7 @@ int _ptrace(const char *file, int line, int request, pid_t pid, caddr_t address,
     char unknownRequestNameBuf[100];
 
     if (log_TELE) {
-        requestName = requestToString(request);
-        if (requestName == NULL) {
-            sprintf(unknownRequestNameBuf, "<unknown:%d>", request);
-            requestName = unknownRequestNameBuf;
-        }
+        requestName = requestToString(request, unknownRequestNameBuf, sizeof(unknownRequestNameBuf));
         log_print("%s:%d ptrace(%s, %d, %p, %d)", file, line, requestName, pid, address, data);
     }
 
@@ -70,6 +67,7 @@ int _ptrace(const char *file, int line, int request, pid_t pid, caddr_t address,
         log_println(" = %p", result);
     }
     if (error != 0) {
+        requestName = requestToString(request, unknownRequestNameBuf, sizeof(unknownRequestNameBuf));
         log_println("%s:%d ptrace(%s, %d, %p, %d) caused error %d [%s]", file, line, requestName, pid, address, data, error, strerror(error));
     }
     return result;

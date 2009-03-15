@@ -72,5 +72,15 @@ extern void log_print_double(double d);
 #define log_THREADS (log_ALL || 0)
 #define log_TELE (log_ALL || 0)
 
+#if log_TELE
+#define tele_log_println log_println
+#define tele_log_print log_print
+#else
+#define log_null(format, ...)
+#define tele_log_println log_null
+#define tele_log_print log_null
+#endif
+
+
 
 #endif /*__log_h__*/

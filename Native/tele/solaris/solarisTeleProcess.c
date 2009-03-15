@@ -297,7 +297,7 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     return 0;
 }
 
-JNIEXPORT jint JNICALL
+JNIEXPORT void JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong processHandle, jobject result) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
@@ -312,9 +312,11 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
     a.result = result;
 
     int error = Plwp_iter(ph, gatherThread, &a);
+    if (error != 0) {
+        log_println("Error iterating over threads of process");
+    }
 
     Pdestroy_agent(ph);
-    return error;
 }
 
 JNIEXPORT jboolean JNICALL

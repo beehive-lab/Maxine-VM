@@ -20,10 +20,7 @@
  */
 package com.sun.max.tele.debug.linux;
 
-import java.io.*;
-
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 
@@ -36,8 +33,6 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
     public LinuxTeleProcess teleProcess() {
         return (LinuxTeleProcess) super.teleProcess();
     }
-
-    private int _lwpID;
 
     private int _type;
 
@@ -57,41 +52,30 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
         return _priority;
     }
 
-    private PTracedProcess _ptrace;
+    private final LinuxTask _task;
 
-    private PTracedProcess ptrace() {
-        if (_ptrace == null) {
-            if (this == teleProcess().primordialThread()) {
-                _ptrace = teleProcess().ptrace();
-            } else {
-                try {
-                    _ptrace = PTracedProcess.attach(_lwpID);
-                } catch (IOException ioException) {
-                    throw new TeleError("could not attach to lwp", ioException);
-                }
-            }
-        }
-        return _ptrace;
+    LinuxTask task() {
+        return _task;
     }
 
-    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, long threadID, int lwpID, long stackStart, long stackSize) {
-        super(teleProcess, stackStart, stackSize, threadID);
-        _lwpID = lwpID;
+    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int tid, long stackStart, long stackSize) {
+        super(teleProcess, stackStart, stackSize, tid);
+        _task = new LinuxTask(teleProcess.task().tgid(), tid);
     }
 
     @Override
     public boolean updateInstructionPointer(Address address) {
-        return ptrace().setInstructionPointer(address);
+        return task().setInstructionPointer(address);
     }
 
     @Override
     protected boolean readRegisters(byte[] integerRegisters, byte[] floatingPointRegisters, byte[] stateRegisters) {
-        return ptrace().readRegisters(integerRegisters, floatingPointRegisters, stateRegisters);
+        return task().readRegisters(integerRegisters, floatingPointRegisters, stateRegisters);
     }
 
     @Override
     public boolean singleStep() {
-        return ptrace().singleStep();
+        return task().singleStep();
     }
 
     @Override

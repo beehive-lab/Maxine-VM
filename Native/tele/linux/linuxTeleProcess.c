@@ -21,124 +21,93 @@
 #include <malloc.h>
 #include <signal.h>
 #include <string.h>
-#include <thread_db.h>
+#include <dirent.h>
+#include <errno.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <sys/user.h>
 
 #include "log.h"
 #include "jni.h"
-#include "libInfo.h"
+#include "isa.h"
 #include "threads.h"
+#include "ptrace.h"
 
 #include "teleProcess.h"
 #include "teleNativeThread.h"
+#include "linuxTask.h"
 
 void teleProcess_initialize(void) {
-    td_init();
 }
 
-JNIEXPORT jlong JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeCreateAgent(JNIEnv *env, jclass c, jint processID) {
-    td_err_e error;
-    td_thragent_t *ta = NULL;
-
-    struct ps_prochandle *ph = (struct ps_prochandle *) calloc(1, sizeof(*ph));
-    if (ph == NULL) {
-        log_println("could not calloc ps_prochandle");
-        return 0L;
-    }
-    ph->pid = processID;
-
-    if (!read_LibInfo(ph)) {
-        log_println("could not read lib info");
-        return 0L;
-    }
-
-    error = td_ta_new(ph, &ta);
-    if (error != TD_OK || ta == NULL) {
-        log_println("td_ta_new failed");
-        free(ph);
-        return 0L;
-    }
-
-    return (long) ta;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeFreeAgent(JNIEnv *env, jclass c, jlong agent) {
-    struct ps_prochandle *ph = NULL;
-    td_thragent_t *ta = (td_thragent_t *) agent;
-    td_err_e error = td_ta_get_ph(ta, &ph);
-    if (error != TD_OK || ph == NULL) {
-        return false;
-    }
-
-    error = td_ta_delete(ta);
-    if (error != TD_OK) {
-        return false;
-    }
-
-    free(ph);
-    memset(ph, 0, sizeof(*ph));
-    return true;
-}
-
-typedef struct Argument {
-    struct ps_prochandle *ph;
-    JNIEnv *env;
-    jobject process;
-    jobject result;
-} *Argument;
-
-static void *_javaThreadStartFunction = NULL;
 static jmethodID _methodID = NULL;
 
-static int gatherThread(const td_thrhandle_t *th, void *data) {
-    Argument a = (Argument) data;
-    td_thrinfo_t info;
-
-    td_err_e error = td_thr_get_info(th, &info);
-    if (error != TD_OK) {
-        log_println("td_thr_get_info failed: %d", error);
-        return -1;
-    }
-
-    if (_javaThreadStartFunction == NULL) {
-        _javaThreadStartFunction = (void *) lookup_symbol(a->ph, STRINGIZE(thread_runJava));
-    }
-
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threads) {
     if (_methodID == NULL) {
-        jclass c = (*a->env)->GetObjectClass(a->env, a->process);
-        _methodID = (*a->env)->GetMethodID(a->env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIIJJ)V");
+        jclass c = (*env)->GetObjectClass(env, linuxTeleProcess);
+        _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJ)V");
         c_ASSERT(_methodID != NULL);
     }
 
-    ThreadState_t state = TS_SUSPENDED;
-    (*a->env)->CallVoidMethod(a->env, a->process, _methodID,
-                    a->result,               /* threads    */
-                    (jlong) info.ti_tid,     /* threadID   */
-                    (jint) info.ti_lid,      /* lwpId      */
-                    (jint) state,            /* state      */
-                    (jlong) info.ti_stkbase, /* stackStart */
-                    (jlong) info.ti_stksize  /* stackSize  */);
-    return 0;
+    task_wait_for_state(tgid, tid, "T");
+
+    isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
+    task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL);
+
+    Address rsp = (Address) canonicalIntegerRegisters.rsp;
+
+    Address mask = (1024 * 1024) - 1;
+    jlong stackStart = rsp & ~mask;
+    jlong stackSize = rsp - stackStart;
+
+    tele_log_println("Gathered thread[tid=%d, state=%c, stackStart=%p, stackSize=%ul, rsp=%p, mask=%p]", tid, task_state(tgid, tid), stackStart, stackSize, rsp, ~mask);
+
+    (*env)->CallVoidMethod(env, linuxTeleProcess, _methodID,
+                    threads,               /* threads    */
+                    tid,                   /* tid        */
+                    (jint) TS_SUSPENDED,   /* state      */
+                    stackStart,    /* stackStart */
+                    stackSize  /* stackSize  */);
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong agent, jobject result) {
-    td_thragent_t *ta = (td_thragent_t *) agent;
-    struct ps_prochandle *ph = NULL;
-    td_err_e error = td_ta_get_ph(ta, &ph);
-    if (error != TD_OK || ph == NULL) {
-        log_println("td_ta_get_ph failed");
-        return false;
+JNIEXPORT void JNICALL
+Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject linuxTeleProcess, jlong pid, jobject threads) {
+
+    char *taskDirPath;
+    asprintf(&taskDirPath, "/proc/%d/task", (pid_t) pid);
+    c_ASSERT(taskDirPath != NULL);
+    DIR *taskDir = opendir(taskDirPath);
+    if (taskDir == NULL) {
+        int error = errno;
+        log_println("Error opening %d: %s", taskDirPath, strerror(error));
+        free(taskDirPath);
+        return;
     }
 
-    struct Argument argument;
-    argument.ph = ph;
-    argument.env = env;
-    argument.process = process;
-    argument.result = result;
-
-    error = td_ta_thr_iter(ta, gatherThread, &argument, TD_THR_ANY_STATE, TD_THR_LOWEST_PRIORITY, TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS);
-    return error == TD_OK;
+    do {
+        errno = 0;
+        struct dirent *task = readdir(taskDir);
+        if (task == NULL) {
+            int error = errno;
+            if (error != 0) {
+                log_println("Error reading entry in %s directory: %s", taskDirPath, strerror(error));
+            }
+            break;
+        }
+        char *endptr;
+        pid_t tid = (pid_t) strtol(task->d_name, &endptr, 10);
+        if (*endptr == '\0') {
+            c_ASSERT(tid > 0);
+            if (errno != 0) {
+                log_println("Error converting %s to a task id: %s", task->d_name, strerror(errno));
+            } else {
+                gatherThread(env, pid, tid, linuxTeleProcess, threads);
+            }
+        }
+    } while (true);
+    closedir(taskDir);
+    if (errno != 0) {
+        log_println("Error closing %s directory: %s", taskDirPath, strerror(errno));
+    }
+    free(taskDirPath);
 }

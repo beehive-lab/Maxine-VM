@@ -44,6 +44,6 @@
 #define PT_FIRSTMACH    32  /* for machine-specific requests */
 
 extern int _ptrace(const char *file, int line, int _request, pid_t _pid, caddr_t _addr, int _data);
-#define ptrace(request, pid, address, data) _ptrace(__FILE__, __LINE__, request, pid, address, data)
+#define ptrace(request, pid, address, data) _ptrace(__FILE__, __LINE__, (request), (pid), (address), (data))
 
 #endif

@@ -38,31 +38,47 @@
 #define PT_ATTACH   16  /* trace some running process */
 #define PT_DETACH   17  /* stop tracing a process */
 
+#define PT_SETOPTIONS  0x4200
+#define PT_GETEVENTMSG 0x4201
+
 /* Options set using PTRACE_SETOPTIONS.  */
 enum __ptrace_setoptions {
-  PTRACE_O_TRACESYSGOOD = 0x00000001,
-  PTRACE_O_TRACEFORK    = 0x00000002,
-  PTRACE_O_TRACEVFORK   = 0x00000004,
-  PTRACE_O_TRACECLONE   = 0x00000008,
-  PTRACE_O_TRACEEXEC    = 0x00000010,
-  PTRACE_O_TRACEVFORKDONE = 0x00000020,
-  PTRACE_O_TRACEEXIT    = 0x00000040,
-  PTRACE_O_MASK     = 0x0000007f
+    PTRACE_O_TRACESYSGOOD = 0x00000001,
+    PTRACE_O_TRACEFORK    = 0x00000002,
+    PTRACE_O_TRACEVFORK   = 0x00000004,
+    PTRACE_O_TRACECLONE   = 0x00000008,
+    PTRACE_O_TRACEEXEC    = 0x00000010,
+    PTRACE_O_TRACEVFORKDONE = 0x00000020,
+    PTRACE_O_TRACEEXIT    = 0x00000040,
+    PTRACE_O_MASK     = 0x0000007f
 };
 
 /* Wait extended result codes for the above trace options.  */
 enum __ptrace_eventcodes {
-  PTRACE_EVENT_FORK = 1,
-  PTRACE_EVENT_VFORK    = 2,
-  PTRACE_EVENT_CLONE    = 3,
-  PTRACE_EVENT_EXEC = 4,
-  PTRACE_EVENT_VFORK_DONE = 5,
-  PTRACE_EVENT_EXIT = 6
+    PTRACE_EVENT_FORK = 1,
+    PTRACE_EVENT_VFORK    = 2,
+    PTRACE_EVENT_CLONE    = 3,
+    PTRACE_EVENT_EXEC = 4,
+    PTRACE_EVENT_VFORK_DONE = 5,
+    PTRACE_EVENT_EXIT = 6
 };
 
 #define PT_SETOPTIONS 0x4200
 
 extern long _ptrace(const char *file, const char* func, int line, int request, pid_t pid, void *address, void *data);
-#define ptrace(request, pid, address, data) _ptrace(__FILE__, __func__, __LINE__, request, pid, (void *) (Address) (address), (void *) (Address) (data))
+#define ptrace(request, pid, address, data) _ptrace(__FILE__, __func__, __LINE__, (request), (pid), (void *) (Address) (address), (void *) (Address) (data))
+
+/**
+ * Extracts the ptrace event code from the status value returned by a call to waitpid.
+ */
+#define ptraceEvent(waitpidStatus) (((waitpidStatus) & 0xFF0000) >> 16)
+
+/**
+ * Gets the name of a given ptrace event.
+ *
+ * @param event a ptrace event code
+ * @return "<unknown>" if 'event' is not a valid __ptrace_eventcodes value
+ */
+extern const char* ptraceEventName(int event);
 
 #endif

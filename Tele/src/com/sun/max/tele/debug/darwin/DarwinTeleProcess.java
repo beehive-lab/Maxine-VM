@@ -103,11 +103,11 @@ public final class DarwinTeleProcess extends TeleProcess {
         nativeKill(_task);
     }
 
-    private native boolean nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads);
+    private native void nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads);
 
     @Override
-    protected boolean gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        return nativeGatherThreads(_task, threads);
+    protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
+        nativeGatherThreads(_task, threads);
     }
 
     /**

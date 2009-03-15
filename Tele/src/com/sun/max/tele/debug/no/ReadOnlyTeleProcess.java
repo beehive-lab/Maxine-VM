@@ -46,7 +46,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected boolean gatherThreads(AppendableSequence<TeleNativeThread> threads) {
+    protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
         throw new TeleVMCannotBeModifiedError();
     }
 

@@ -29,7 +29,7 @@
 #include "debugMach.h"
 #include "log.h"
 
-void report_mach_result(const char *file, int line, kern_return_t krn, const char* name, const char* argsFormat, ...) {
+void report_mach_error(const char *file, int line, kern_return_t krn, const char* name, const char* argsFormat, ...) {
     log_print("%s:%d %s(", file, line, name);
     va_list ap;
     va_start(ap, argsFormat);
@@ -50,7 +50,7 @@ void report_mach_result(const char *file, int line, kern_return_t krn, const cha
     } \
     kern_return_t krn = name(arg1, ##__VA_ARGS__ ); \
     if (krn != KERN_SUCCESS)  { \
-        report_mach_result(file, line, krn, STRINGIZE(name), argsFormat, ##__VA_ARGS__); \
+        report_mach_error(file, line, krn, STRINGIZE(name), argsFormat, ##__VA_ARGS__); \
     } \
     return krn; \
 }
@@ -67,8 +67,40 @@ wrapped_mach_call(task_threads, "%d, %p, %p", task, thread_list, thread_count)
 kern_return_t Vm_deallocate(POS_PARAMS, vm_map_t target_task, vm_address_t address, vm_size_t size)
 wrapped_mach_call(vm_deallocate, "%d, %p, %d", target_task, address, size)
 
-kern_return_t Thread_get_state(POS_PARAMS, thread_act_t thread, thread_state_flavor_t flavor, thread_state_t old, mach_msg_type_number_t *count)
-wrapped_mach_call(thread_get_state, "%d, %d, %p, %p", thread, flavor, old, count)
+kern_return_t Thread_get_state(POS_PARAMS,
+    thread_act_t thread,
+    thread_state_flavor_t flavor,
+    thread_state_t old,
+    mach_msg_type_number_t *count)
+wrapped_mach_call(thread_get_state, "%d, %d, %p, %p",
+                thread,
+                flavor,
+                old,
+                count)
+
+kern_return_t Mach_vm_write(POS_PARAMS,
+    vm_map_t target_task,
+    vm_address_t address,
+    vm_offset_t data,
+    mach_msg_type_number_t dataCnt)
+wrapped_mach_call(mach_vm_write, "%d, %p, %p, %d",
+                target_task,
+                address,
+                data,
+                dataCnt)
+
+kern_return_t Mach_vm_read_overwrite(POS_PARAMS,
+    vm_map_t target_task,
+    vm_address_t address,
+    mach_vm_size_t size,
+    mach_vm_address_t data,
+    mach_vm_size_t *outsize)
+wrapped_mach_call(mach_vm_read_overwrite, "%d, %p, %d, %p, %p",
+                target_task,
+                address,
+                size,
+                data,
+                outsize)
 
 kern_return_t Mach_vm_region(POS_PARAMS,
     vm_map_t target_task,
@@ -78,4 +110,11 @@ kern_return_t Mach_vm_region(POS_PARAMS,
     vm_region_info_t info,
     mach_msg_type_number_t *infoCnt,
     mach_port_t *object_name)
-wrapped_mach_call(mach_vm_region, "%d, %p, %p, %d, %p, %p, %p", target_task, address, size, flavor, info, infoCnt, object_name)
+wrapped_mach_call(mach_vm_region, "%d, %p, %p, %d, %p, %p, %p",
+                target_task,
+                address,
+                size,
+                flavor,
+                info,
+                infoCnt,
+                object_name)

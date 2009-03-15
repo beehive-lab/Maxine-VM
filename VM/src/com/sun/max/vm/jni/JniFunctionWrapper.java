@@ -27,6 +27,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -87,7 +88,7 @@ public final class JniFunctionWrapper {
     }
 
     private static TargetMethod traceEntry(Address instructionPointer) {
-        if (VerboseVMOption.verboseJNI()) {
+        if (ClassMethodActor.traceJNI()) {
             final TargetMethod jniTargetMethod = JniNativeInterface.jniTargetMethod(instructionPointer);
             traceCurrentThreadPrefix();
             Log.print("\" entering JNI upcall: ");
@@ -105,7 +106,7 @@ public final class JniFunctionWrapper {
     }
 
     private static void traceExit(TargetMethod jniTargetMethod, Address instructionPointer) {
-        if (VerboseVMOption.verboseJNI()) {
+        if (ClassMethodActor.traceJNI()) {
             traceCurrentThreadPrefix();
             Log.print("\" exit JNI upcall: ");
             if (jniTargetMethod != null) {

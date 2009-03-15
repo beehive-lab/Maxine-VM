@@ -83,8 +83,8 @@ public final class GuestVMXenDBChannel {
     }
 
 
-    public static synchronized boolean gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId) {
-        return nativeGatherThreads(threads, domainId);
+    public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId) {
+        nativeGatherThreads(threads, domainId);
     }
 
     public static synchronized int resume(int domainId) {

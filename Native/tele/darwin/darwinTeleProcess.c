@@ -212,13 +212,13 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jcl
 
 static jmethodID _methodID = NULL;
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT void JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result) {
     thread_act_array_t threads;
     mach_msg_type_number_t numberOfThreads, i;
 
-    if (task_threads((task_t) task, &threads, &numberOfThreads) != KERN_SUCCESS) {
-        return false;
+    if (Task_threads(POS, (task_t) task, &threads, &numberOfThreads) != KERN_SUCCESS) {
+        return;
     }
 
     if (_methodID == NULL) {
@@ -235,10 +235,8 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         thread_act_port_t thread = threads[i];
 
         mach_msg_type_number_t count = THREAD_STATE_COUNT;
-        kern_return_t error = Thread_get_state(POS, thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count);
-        if (error != KERN_SUCCESS) {
-            log_println("thread_get_state failed, error: %d, %s", error, mach_error_string(error));
-            return false;
+        if (Thread_get_state(POS, thread, THREAD_STATE_FLAVOR, (natural_t *) &threadState, &count) != KERN_SUCCESS) {
+            return;
         }
 
         mach_vm_address_t stackBase = threadState.__rsp;
@@ -246,20 +244,16 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         mach_port_t objectName;
         vm_region_basic_info_data_64_t info;
         count = VM_REGION_BASIC_INFO_COUNT_64;
-        error = Mach_vm_region(POS, (vm_map_t) task, &stackBase, &stackSize, VM_REGION_BASIC_INFO_64, (vm_region_info_t) &info, &count, &objectName);
-        if (error != KERN_SUCCESS) {
-            log_println("mach_vm_region failed, error: %d, %s", error, mach_error_string(error));
-            return false;
+        if (Mach_vm_region(POS, (vm_map_t) task, &stackBase, &stackSize, VM_REGION_BASIC_INFO_64, (vm_region_info_t) &info, &count, &objectName) != KERN_SUCCESS) {
+            return;
         }
 
         (*env)->CallVoidMethod(env, process, _methodID, result, (long) thread, state, (jlong) stackBase, (jlong) stackSize);
     }
 
     if (Vm_deallocate(POS, mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {
-        log_println("vm_deallocate failed");
-        return false;
+        return;
     }
-    return true;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -298,7 +292,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env
       return -1;
   }
 
-  kern_return_t result = mach_vm_read_overwrite(task, (vm_address_t) address, length, (vm_address_t) buffer, &bytesRead);
+  kern_return_t result = Mach_vm_read_overwrite(POS, task, (vm_address_t) address, length, (vm_address_t) buffer, &bytesRead);
   if (result == KERN_SUCCESS && bytesRead > 0) {
       (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
   }
@@ -322,7 +316,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWriteBytes(JNIEnv *en
     }
 
 
-    kern_return_t result = mach_vm_write(task, (vm_address_t) address, (vm_offset_t) buffer, length);
+    kern_return_t result = Mach_vm_write(POS, task, (vm_address_t) address, (vm_offset_t) buffer, length);
     free(buffer);
     return result == KERN_SUCCESS ? length : -1;
 }
