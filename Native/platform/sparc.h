@@ -88,16 +88,4 @@ typedef struct sparc_CanonicalStateRegisters {
   Word npc; /* nPC register */
 } sparc_CanonicalStateRegistersAggregate, *sparc_CanonicalStateRegisters;
 
-extern void sparc_canonicalizeTeleIntegerRegisters(sparc_OsTeleIntegerRegisters osTeleIntegerRegisters, sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
-
-extern void sparc_canonicalizeTeleFloatingPointRegisters(sparc_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-
-extern void sparc_canonicalizeTeleStateRegisters(sparc_OsTeleStateRegisters osTeleStateRegisters, sparc_CanonicalStateRegisters canonicalStateRegisters);
-
-extern void sparc_printCanonicalIntegerRegisters(sparc_CanonicalIntegerRegisters canonicalIntegerRegisters);
-
-extern void sparc_printCanonicalFloatingPointRegisters(sparc_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-
-extern void sparc_printCanonicalStatePointRegisters(sparc_CanonicalTeleStateRegisters canonicalStateRegisters);
-
 #endif /*__sparc_h__*/

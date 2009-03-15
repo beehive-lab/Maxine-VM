@@ -353,15 +353,7 @@ public final class HackJDK {
         public Value getValue(Object object, FieldActor fieldActor) {
             Object result = _newValues.get(object);
             if (result == null) {
-                Constructor<?> constructor;
-                try {
-                    final Class<?> javaClass = JDK.java_io_ExpiringCache.javaClass();
-                    constructor = javaClass.getDeclaredConstructor();
-                    constructor.setAccessible(true);
-                    result = constructor.newInstance();
-                } catch (Exception e) {
-                    throw ProgramError.unexpected(e);
-                }
+                result = WithoutAccessCheck.newInstance(JDK.java_io_ExpiringCache.javaClass());
                 _newValues.put(object, result);
             }
             return ReferenceValue.from(result);

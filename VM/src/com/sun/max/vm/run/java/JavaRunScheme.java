@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.run.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.tele.*;
@@ -197,6 +198,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
             VMConfiguration.hostOrTarget().initializeSchemes(MaxineVM.Phase.STARTING);
+            SpecialReferenceManager.initialize(MaxineVM.Phase.STARTING);
         }
     }
 
