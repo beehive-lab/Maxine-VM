@@ -37,17 +37,6 @@ struct ps_lwphandle {
     int		lwp_statfd;	/* /proc/<pid>/lwp/<lwpid>/lwpstatus */
 };
 
-/*
- * Convenience macro for initializing a variable to hold the handle to a LWP denoted by a process handle and a LWP identifier.
- */
-#define INIT_LWP_HANDLE(lh, ph, lwpId, errorReturnValue) \
-	int error; \
-	struct ps_lwphandle *lh = proc_Lgrab((struct ps_prochandle *) ph, (lwpid_t) lwpId, &error); \
-	if (error != 0) { \
-    	log_println("Lgrab failed: %s", Lgrab_error(error)); \
-		return errorReturnValue; \
-	}
-
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeReadRegisters(JNIEnv *env, jclass c, jlong processHandle, jlong lwpId,
 		jbyteArray integerRegisters, jint integerRegistersLength,
@@ -93,27 +82,6 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeReadRegisters(
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
     (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
     return true;
-}
-
-static long getRegister(jlong processHandle, jlong lwpId, int registerIndex) {
-	struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
-	INIT_LWP_HANDLE(lh, processHandle, lwpId, false);
-
-	if (proc_Lwait(lh, 0) != 0) {
-    	log_println("Lwait failed");
-    	proc_Lfree(lh);
-		return -1L;
-	}
-	proc_Lsync(lh);
-
-	jlong result = -1L;
-	if (proc_Lgetareg(lh, registerIndex, &result) != 0) {
-    	log_println("Lgetareg failed");
-    	proc_Lfree(lh);
-    	return -1L;
-	}
-	proc_Lfree(lh);
-	return result;
 }
 
 static jboolean setRegister(jlong processHandle, jlong lwpId, int registerIndex, jlong value) {

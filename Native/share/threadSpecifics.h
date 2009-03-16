@@ -106,9 +106,9 @@ int task_read(task_t task, vm_address_t src, void *dst, size_t size);
 #define PROCESS_MEMORY_PARAMS task_t task,
 #define READ_PROCESS_MEMORY(src, dst, size) task_read(task, (vm_address_t) src, (void *) dst, (size_t) size)
 #elif os_SOLARIS
-ssize_t _proc_Pread(const char *func, int line, struct ps_prochandle *ph, void *dst, size_t size, uintptr_t src);
+#include "proc.h"
 #define PROCESS_MEMORY_PARAMS struct ps_prochandle *ph,
-#define READ_PROCESS_MEMORY(src, dst, size) _proc_Pread(__FUNC__, __LINE, ph, (void *) dst, (size_t) size, (uintptr_t) src)
+#define READ_PROCESS_MEMORY(src, dst, size) proc_Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
 #elif os_GUESTVMXEN
 uint16_t readbytes(unsigned long address, char *buffer, uint16_t n);
 #define PROCESS_MEMORY_PARAMS

@@ -292,7 +292,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     messenger_initialize();
 
-    method = image_read_value(VMRunMethod, vmRunMethodOffset);
+    method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
     // Allocate the primordial VM thread locals:
     Address primordialVmThreadLocals = (Address) alloca(image_header()->vmThreadLocalsSize + sizeof(Address));

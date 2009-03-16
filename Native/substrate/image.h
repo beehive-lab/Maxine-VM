@@ -155,6 +155,19 @@ extern Address image_code(void);
  */
 extern Address image_code_end(void);
 
+
+/**
+ * Gets an address in the boot image based on a known offset in the image.
+ *
+ * Must only be called after calling 'load_image()'.
+ *
+ * @param type the type of the value
+ * @param offset an offset in the image
+ *
+ * @return the effective address computed by 'image_heap() + offset', cast to 'type'
+ */
+#define image_offset_as_address(type, offset) ((type) (image_heap() + image_header()->offset))
+
 /**
  * Reads a value from the boot image whose address is at a known offset from the start of the image.
  *
@@ -163,9 +176,9 @@ extern Address image_code_end(void);
  * @param type the type of the value
  * @param offset the offset of the value. This denotes a member of the image_Header struct whose name end with "Offset".
  *
- * @return the value at the address in the boot image derived from 'name', cast to 'type'
+ * @return the value at 'image_heap() + offset', cast to 'type'
  */
-#define image_read_value(type, offset) ((type) (image_heap() + image_header()->offset))
+#define image_read_value(type, offset) (*((type *) (image_heap() + image_header()->offset)))
 
 /**
  * Writes a value in the boot image whose address is at a known offset from the start of the image.
@@ -175,8 +188,6 @@ extern Address image_code_end(void);
  * @param type the type of the value
  * @param offset the offset of the value. This denotes a member of the image_Header struct whose name end with "Offset".
  * @param value the value to write
- *
- * @return the value at the address in the boot image derived from 'name', cast to 'type'
  */
 #define image_write_value(type, offset, value) do { \
     type *__fieldAddress = (type *) (image_heap() + image_header()->offset); \
