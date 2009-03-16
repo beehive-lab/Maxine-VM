@@ -24,6 +24,7 @@
 #include "os.h"
 #include "jni.h"
 #include "word.h"
+#include "threadSpecifics.h"
 
 /*
  * This file should have been called "thread.c" and its header file "thread.h".
@@ -56,31 +57,11 @@ typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
-extern void threads_initialize(void);
+extern void threads_initialize(Address primordialVmThreadLocals);
 
 #define STACK_GUARD_PAGES 2
 
-typedef struct {
-    jint id;
-    Address stackBase;
-    Size stackSize;
-    Address triggeredVmThreadLocals;
-    Address enabledVmThreadLocals;
-    Address disabledVmThreadLocals;
-    Address refMapArea;
-    Address stackYellowZone; // unmapped to cause a trap on access
-    Address stackRedZone;    // unmapped always - fatal exit if accessed
-    /*
-     * The blue zone is a page that is much closer to the base of the stack and is optionally protected.
-     * This can be used, e.g., to determine the actual stack size needed by a thread, or to avoid
-     * reserving actual real memory until it is needed.
-     */
-
-    Address stackBlueZone;
-    void *osData;  // place to hang miscellaneous OS dependent record keeping data.
-} thread_Specifics;
-
-extern thread_Specifics *thread_currentSpecifics(void);
+extern ThreadSpecifics thread_currentSpecifics(void);
 
 /**
  * For debugging purposes:

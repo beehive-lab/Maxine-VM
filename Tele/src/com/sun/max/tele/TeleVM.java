@@ -602,7 +602,9 @@ public abstract class TeleVM {
             regions.append(region);
         }
         for (TeleNativeThread thread : threads) {
-            regions.append(thread.stack());
+            if (thread.isJava()) {
+                regions.append(thread.stack());
+            }
         }
         return regions;
     }

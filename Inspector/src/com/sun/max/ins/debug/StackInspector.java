@@ -62,11 +62,12 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
     /**
      * Displays and highlights a StackInspector for a thread.
-     * @return a possibly new inspector
      */
     public static StackInspector make(Inspection inspection, TeleNativeThread teleNativeThread) {
         final StackInspector stackInspector = StackInspectorContainer.makeInspector(inspection, teleNativeThread);
-        stackInspector.highlight();
+        if (stackInspector != null) {
+            stackInspector.highlight();
+        }
         return stackInspector;
     }
 
@@ -136,6 +137,7 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
     public StackInspector(Inspection inspection, TeleNativeThread teleNativeThread, Residence residence, StackInspectorContainer parent) {
         super(inspection, residence, LongValue.from(teleNativeThread.id()));
+        assert teleNativeThread.isJava() : "Cannot create StackInspector for non-Java thread";
         _inspection = inspection;
         _teleNativeThread = teleNativeThread;
         _parent = parent;

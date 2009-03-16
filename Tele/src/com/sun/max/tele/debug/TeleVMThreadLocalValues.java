@@ -25,7 +25,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import java.util.*;
 
 import com.sun.max.program.*;
-import com.sun.max.tele.debug.TeleNativeStack.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.Safepoint.*;
@@ -42,32 +41,16 @@ public class TeleVMThreadLocalValues {
 
     private final Safepoint.State _safepointState;
 
-    public TeleVMThreadLocalValues(Safepoint.State safepointState) {
+    public TeleVMThreadLocalValues(Safepoint.State safepointState, Pointer start) {
+        assert !start.isZero();
         for (String name : VmThreadLocal.NAMES) {
             _values.put(name, null);
         }
         _safepointState = safepointState;
+        _start = start;
     }
 
-    boolean refresh(DataAccess dataAccess, StackScanner stackScanner) {
-        if (_start.isZero()) {
-            final Pointer vmThreadLocals = stackScanner.vmThreadLocals();
-            if (!vmThreadLocals.isZero()) {
-                _start = dataAccess.readWord(vmThreadLocals, _safepointState.offset()).asPointer();
-            }
-        }
-        if (!_start.isZero()) {
-            final Word tag = dataAccess.readWord(_start, VmThreadLocal.TAG.offset());
-            if (tag.equals(VmThread.TAG)) {
-                refresh(dataAccess);
-                return true;
-            }
-        }
-        invalidate();
-        return false;
-    }
-
-    private void refresh(DataAccess dataAccess) {
+    public void refresh(DataAccess dataAccess) {
         int offset = 0;
         for (String name : VmThreadLocal.NAMES) {
             if (offset != 0 || _safepointState != State.TRIGGERED) {
@@ -80,24 +63,6 @@ public class TeleVMThreadLocalValues {
             }
             offset += Word.size();
         }
-    }
-
-    /**
-     * Invalidates the values represented by this object.
-     */
-    void invalidate() {
-        _start = Address.zero();
-        for (Map.Entry<String, Long> entry : _values.entrySet()) {
-            entry.setValue(null);
-        }
-    }
-
-    /**
-     * Determines if the values represented by this object are valid with respect the current state of the
-     * associated thread stack.
-     */
-    public boolean isValid() {
-        return !_start.isZero();
     }
 
     /**
@@ -124,9 +89,8 @@ public class TeleVMThreadLocalValues {
 
     /**
      * Determines if a given name denotes a VM thread local slot that has a valid value.
-     * A VM thread local slot will not have a valid value if this object is {@linkplain #isValid() invalid}
-     * or if the value denoted by {@code name} is in mprotected memory (e.g. the safepoint latch
-     * in the safepoints-triggered VM thread locals).
+     * A VM thread local slot will not have a valid value if the value denoted by {@code name}
+     * is in mprotected memory (e.g. the safepoint latch in the safepoints-triggered VM thread locals).
      */
     public boolean isValid(String name) {
         assert _values.containsKey(name) : "Unknown VM thread local: " + name;
@@ -142,7 +106,7 @@ public class TeleVMThreadLocalValues {
     }
 
     public boolean isInJavaCode() {
-        return isValid() && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER) == 0 && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C) == 0;
+        return get(LAST_JAVA_CALLER_INSTRUCTION_POINTER) == 0 && get(LAST_JAVA_CALLER_INSTRUCTION_POINTER_FOR_C) == 0;
     }
 
     @Override
@@ -150,7 +114,7 @@ public class TeleVMThreadLocalValues {
         return _values.toString();
     }
 
-    private Address _start = Address.zero();
+    private final Address _start;
 
     /**
      * Gets the base of address of the VM thread locals represented by this object.

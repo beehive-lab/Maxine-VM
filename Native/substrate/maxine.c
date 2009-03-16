@@ -292,9 +292,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     messenger_initialize();
 
-    threads_initialize();
-
-    method = (VMRunMethod) (image_heap() + (Address) image_header()->vmRunMethodOffset);
+    method = image_read_value(VMRunMethod, vmRunMethodOffset);
 
     // Allocate the primordial VM thread locals:
     Address primordialVmThreadLocals = (Address) alloca(image_header()->vmThreadLocalsSize + sizeof(Address));
@@ -304,6 +302,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     // Initialize all primordial VM thread locals to 0/null:
     memset((char *) primordialVmThreadLocals, 0, image_header()->vmThreadLocalsSize);
+
+    threads_initialize(primordialVmThreadLocals);
 
 #if log_LOADER
     log_println("primordial VM thread locals allocated at: %p", primordialVmThreadLocals);

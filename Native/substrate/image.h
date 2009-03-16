@@ -65,13 +65,15 @@ typedef struct image_Header {
     jint heapRegionsPointerOffset;
     jint codeRegionsPointerOffset;
 
-    /**
-     * Some extra space that the substrate allocates by malloc().
-     * Used e.g. for the primordial card table.
-     */
+    /* Some extra space that the substrate allocates by malloc().
+     * Used e.g. for the primordial card table. */
     jint auxiliarySpaceSize;
 
+    /* See the comment for the '_info' static field in the MaxineMessenger class. */
     jint messengerInfoOffset;
+
+    /* See the comment for the '_threadSpecificsList' static field in the VmThread class. */
+    jint threadSpecificsListOffset;
 } *image_Header;
 
 /**
@@ -152,5 +154,33 @@ extern Address image_code(void);
  * @return a pointer to the end of the boot code region
  */
 extern Address image_code_end(void);
+
+/**
+ * Reads a value from the boot image whose address is at a known offset from the start of the image.
+ *
+ * Must only be called after calling 'load_image()'.
+ *
+ * @param type the type of the value
+ * @param offset the offset of the value. This denotes a member of the image_Header struct whose name end with "Offset".
+ *
+ * @return the value at the address in the boot image derived from 'name', cast to 'type'
+ */
+#define image_read_value(type, offset) ((type) (image_heap() + image_header()->offset))
+
+/**
+ * Writes a value in the boot image whose address is at a known offset from the start of the image.
+ *
+ * Must only be called after calling 'load_image()'.
+ *
+ * @param type the type of the value
+ * @param offset the offset of the value. This denotes a member of the image_Header struct whose name end with "Offset".
+ * @param value the value to write
+ *
+ * @return the value at the address in the boot image derived from 'name', cast to 'type'
+ */
+#define image_write_value(type, offset, value) do { \
+    type *__fieldAddress = (type *) (image_heap() + image_header()->offset); \
+    *__fieldAddress = value; \
+} while(0)
 
 #endif /*__image_h__*/

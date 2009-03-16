@@ -138,13 +138,19 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private final TeleFloatingPointRegisters _floatingPointRegisters;
 
     private boolean _framesChanged;
+
+    /**
+     * The stack of a Java thread; {@code null} if this is a non-Java thread.
+     */
     private final TeleNativeStack _stack;
+
     private ThreadState _state = SUSPENDED;
     private TeleTargetBreakpoint _breakpoint;
     private final long _id;
     private FrameProvider[] _frameCache;
 
-    protected TeleNativeThread(TeleProcess teleProcess, long stackBase, long stackSize, long id) {
+    protected TeleNativeThread(TeleProcess teleProcess, long stackBase, long stackSize, long id,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         _teleProcess = teleProcess;
         _teleVM = teleProcess.teleVM();
         _id = id;
@@ -152,7 +158,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         _integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         _floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         _stateRegisters = new TeleStateRegisters(vmConfiguration);
-        _stack = new TeleNativeStack(Address.fromLong(stackBase), Size.fromLong(stackSize), this);
+        _stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize),
+            Pointer.fromLong(triggeredVmThreadLocals), Pointer.fromLong(enabledVmThreadLocals), Pointer.fromLong(disabledVmThreadLocals));
         _breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
     }
 
@@ -211,7 +218,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     public final void refresh(long epoch) {
         if (_state == DEAD) {
-            _stack.invalidate();
             refreshFrames(true);
             _breakpoint = null;
             _teleVmThread = null;
@@ -219,9 +225,11 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
 
         refreshRegisters();
-        refreshStack();
-        refreshBreakpoint();
-        refreshFrames(false);
+        if (isJava()) {
+            refreshStack();
+            refreshBreakpoint();
+            refreshFrames(false);
+        }
     }
 
     /**
@@ -241,10 +249,11 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * This method also updates the reference to the {@linkplain #teleVmThread() tele VmThread}.
      */
     private void refreshStack() {
+        assert isJava() : "Can't refresh stack of a non-Java thread";
         _stack.refresh();
         final TeleVMThreadLocalValues enableVmThreadLocalValues = _stack.enabledVmThreadLocalValues();
-        if (enableVmThreadLocalValues.isValid()) {
-            final Long threadLocalValue = enableVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
+        final Long threadLocalValue = enableVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
+        if (threadLocalValue != 0) {
             final Reference vmThreadReference = _teleVM.wordToReference(Address.fromLong(threadLocalValue));
             _teleVmThread = (TeleVmThread) _teleVM.makeTeleObject(vmThreadReference);
         } else {
@@ -258,6 +267,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * instruction on which the breakpoint was set.
      */
     private void refreshBreakpoint() {
+        assert isJava() : "Can't refresh breakpoints of a non-Java thread";
         final Factory breakpointFactory = teleProcess().targetBreakpointFactory();
         TeleTargetBreakpoint breakpoint = null;
         try {
@@ -289,6 +299,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @param clear the current list of frames should be cleared
      */
     private void refreshFrames(boolean clear) {
+        assert isJava() : "Can't refresh frames of a non-Java thread";
         if (clear) {
             _frames = Sequence.Static.empty(StackFrame.class);
             _framesChanged = true;
@@ -297,7 +308,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
         final TeleVM teleVM = _teleProcess.teleVM();
         final Sequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
-        //if (frames.isEmpty()) return; // DELETEME
         assert !frames.isEmpty();
         if (_frames != null && frames.length() == _frames.length()) {
             _framesChanged = false;
@@ -382,8 +392,13 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     /**
      * Gets the surrogate for the {@link VmThread} in the tele process denoted by this object.
+     * This method returns {@code null} for any of the following reasons:
      *
-     * @return null if this thread is not associated with VmThread (e.g. it's a non-Java thread created by native code called by JNI)
+     * 1. The thread is a non-Java thread
+     * 2. The thread is a Java thread that has not yet reached the execution point (somewhere in {@link VmThread#run})
+     *    that initializes {@link VmThreadLocal#VM_THREAD}.
+     *
+     * @return null if this thread is not (yet) associated with VmThread
      */
     public TeleVmThread teleVmThread() {
         return _teleVmThread;
@@ -453,19 +468,22 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     @Override
     public final String toString() {
-        final String name = _teleVmThread == null ? "native" : _teleVmThread.name();
-        return name +
+        String name = _teleVmThread == null ? "native" : _teleVmThread.name();
+        name +=
             "[id=" + id() +
             ",state=" + _state +
             ",type=" + (isJava() ? "Java" : "native") +
-            ",ip=0x" + instructionPointer().toHexString() +
-            ",stack_start=0x" + stack().start().toHexString() +
-            ",stack_size=" + stack().size().toLong() +
-            "]";
+            ",ip=0x" + instructionPointer().toHexString();
+        if (isJava()) {
+            name +=
+                ",stack_start=0x" + stack().start().toHexString() +
+                ",stack_size=" + stack().size().toLong();
+        }
+        return name + "]";
     }
 
     public final boolean isJava() {
-        return _stack.enabledVmThreadLocalValues().isValid();
+        return _stack != null;
     }
 
     /**

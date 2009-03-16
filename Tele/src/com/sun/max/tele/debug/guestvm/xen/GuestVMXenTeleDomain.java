@@ -76,7 +76,8 @@ public class GuestVMXenTeleDomain extends TeleProcess {
      * @param threadId
      * @param name
      */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize) {
+    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idToThread(threadId);
         if (thread == null) {
             /* Need to align and skip over the guard page at the base of the stack.
@@ -85,7 +86,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
             final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
             final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
             final long adjStackSize = stackSize - (stackBottom - stackBase);
-            thread = new GuestVMXenNativeThread(this, threadId, stackBottom, adjStackSize);
+            thread = new GuestVMXenNativeThread(this, threadId, stackBottom, adjStackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         } else {
             thread.setMarked(false);
         }
@@ -150,6 +151,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        GuestVMXenDBChannel.gatherThreads(threads, _domainId);
+        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
+        GuestVMXenDBChannel.gatherThreads(threads, _domainId, threadSpecificsList.asAddress().toLong());
     }
 }

@@ -52,7 +52,7 @@
 #   error "Only x64 is supported on Darwin for now"
 #endif
 
-extern Boolean readRegisters(thread_t thread,
+extern Boolean thread_read_registers(thread_t thread,
         isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
         isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters,
         isa_CanonicalStateRegistersStruct *canonicalStateRegisters);

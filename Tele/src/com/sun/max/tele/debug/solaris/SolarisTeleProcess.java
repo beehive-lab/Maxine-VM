@@ -117,20 +117,22 @@ public final class SolarisTeleProcess extends TeleProcess {
         return result;
     }
 
-    private native void nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads);
+    private native void nativeGatherThreads(long processHandle, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        nativeGatherThreads(_processHandle, threads);
+        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
+        nativeGatherThreads(_processHandle, threads, threadSpecificsList.asAddress().toLong());
     }
 
     /**
      * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
      */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long lwpID, int state, long stackStart, long stackSize) {
+    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long lwpID, int state, long stackStart, long stackSize,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         SolarisTeleNativeThread thread = (SolarisTeleNativeThread) idToThread(lwpID);
         if (thread == null) {
-            thread = new SolarisTeleNativeThread(this, lwpID, stackStart, stackSize);
+            thread = new SolarisTeleNativeThread(this, lwpID, stackStart, stackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         }
 
         assert state >= 0 && state < ThreadState.VALUES.length();

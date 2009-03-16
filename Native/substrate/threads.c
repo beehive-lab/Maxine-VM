@@ -38,8 +38,10 @@
 #include "image.h"
 #include "jni.h"
 #include "word.h"
+#include "messenger.h"
 
 #include "threads.h"
+#include "threadSpecifics.h"
 #include <sys/mman.h>
 
 #if (os_DARWIN || os_LINUX)
@@ -62,48 +64,94 @@
 
 static SpecificsKey _specificsKey;
 
-void threads_initialize() {
-#   if os_DARWIN || os_LINUX
-        pthread_key_create(&_specificsKey, free);
-#   elif os_SOLARIS
-        thr_keycreate(&_specificsKey, free);
-#   elif os_GUESTVMXEN
-        guestvmXen_thread_initializeSpecificsKey(&_specificsKey, free);
-#   else
-        c_UNIMPLEMENTED();
-#   endif
-}
+/**
+ * The list of 'threadSpecifics' for the active Java threads. This list is only allocated and
+ * updated if a debugger is attached to the VM. All modifications to the list are synchronized.
+ *
+ * Once 'threads_initialize()' has been called, the address of this list is accessible from Java
+ * via the '_threadSpecificsList' static field in the VmThread class.
+ */
+static ThreadSpecificsList _threadSpecificsList = NULL;
 
-thread_Specifics *thread_currentSpecifics() {
-#   if os_DARWIN || os_LINUX
-        return (thread_Specifics*) pthread_getspecific(_specificsKey);
-#   elif os_SOLARIS
-        thread_Specifics *value;
-        int result = thr_getspecific(_specificsKey, (void**) &value);
-        if (result != 0) {
-            log_exit(result, "thr_getspecific failed");
+void threads_initialize(Address primordialVmThreadLocals) {
+#if os_DARWIN || os_LINUX
+    pthread_key_create(&_specificsKey, free);
+#elif os_SOLARIS
+    thr_keycreate(&_specificsKey, free);
+#elif os_GUESTVMXEN
+    guestvmXen_thread_initializeSpecificsKey(&_specificsKey, free);
+#else
+    c_UNIMPLEMENTED();
+#endif
+    if (debugger_attached()) {
+        _threadSpecificsList = calloc(1, sizeof(ThreadSpecificsListStruct));
+        if (_threadSpecificsList == NULL) {
+            log_exit(11, "Could not allocate memory for 'threadSpecificsList'");
         }
-        return value;
-#   elif os_GUESTVMXEN
-        return (thread_Specifics*) guestvmXen_thread_getSpecific(_specificsKey);
-#   else
-        c_UNIMPLEMENTED();
-#   endif
+        mutex_initialize(&(_threadSpecificsList->lock));
+
+        /* Set the pointer in the boot image to the global thread specifics list
+         * so that it can be found by the debugger. */
+        image_write_value(ThreadSpecificsList, threadSpecificsListOffset, _threadSpecificsList);
+
+        /* Create dummy thread specifics for the primordial thread so that its VM thread locals
+         * can be acessed by the debugger. */
+        ThreadSpecifics primordialThreadSpecifics = calloc(1, sizeof(ThreadSpecificsStruct));
+        if (primordialThreadSpecifics == NULL) {
+            log_exit(11, "Could not allocate primoridial thread specifics.");
+        }
+        primordialThreadSpecifics->id = -1;
+        primordialThreadSpecifics->next = primordialThreadSpecifics;
+        primordialThreadSpecifics->stackBase = primordialVmThreadLocals;
+        primordialThreadSpecifics->triggeredVmThreadLocals = primordialVmThreadLocals;
+        primordialThreadSpecifics->enabledVmThreadLocals = primordialVmThreadLocals;
+        primordialThreadSpecifics->disabledVmThreadLocals = primordialVmThreadLocals;
+
+        threadSpecificsList_add(_threadSpecificsList, primordialThreadSpecifics);
+
+#if log_THREADS
+        log_println("Allocated thread specifics list at %p", _threadSpecificsList);
+#endif
+    }
 }
 
-thread_Specifics *thread_createSegments(int id, Size stackSize) {
-    thread_Specifics *threadSpecifics = calloc(1, sizeof(thread_Specifics));
+ThreadSpecifics thread_currentSpecifics() {
+#if os_DARWIN || os_LINUX
+    return (ThreadSpecifics) pthread_getspecific(_specificsKey);
+#elif os_SOLARIS
+    ThreadSpecifics value;
+    int result = thr_getspecific(_specificsKey, (void**) &value);
+    if (result != 0) {
+        log_exit(result, "thr_getspecific failed");
+    }
+    return value;
+#elif os_GUESTVMXEN
+    return (ThreadSpecifics*) guestvmXen_thread_getSpecific(_specificsKey);
+#else
+    c_UNIMPLEMENTED();
+#endif
+}
+
+ThreadSpecifics thread_createSegments(int id, Size stackSize) {
+    ThreadSpecifics threadSpecifics = calloc(1, sizeof(ThreadSpecificsStruct));
     if (threadSpecifics == NULL) {
     	return NULL;
     }
     threadSpecifics->id = id;
+    threadSpecifics->next = threadSpecifics;
+
+    if (_threadSpecificsList != NULL) {
+        /* Add 'threadSpecifics' to the global list so that the debugger can find it. */
+        /* It is removed when a thread terminates; see the end of 'thread_runJava()'. */
+        threadSpecificsList_add(_threadSpecificsList, threadSpecifics);
+    }
 
 #if os_SOLARIS
     // stack is allocated as part of Solaris thread creation
 #else
 #if (os_LINUX || os_DARWIN)
     threadSpecifics->stackBase = (Address) malloc(stackSize);
-#  elif os_GUESTVMXEN
+#elif os_GUESTVMXEN
     threadSpecifics->stackBase = (Address) guestvmXen_allocate_stack(threadSpecifics, stackSize);
 #endif
     if (threadSpecifics->stackBase == 0) {
@@ -116,7 +164,7 @@ thread_Specifics *thread_createSegments(int id, Size stackSize) {
     return threadSpecifics;
 }
 
-void initStackProtection(thread_Specifics *threadSpecifics) {
+void initStackProtection(ThreadSpecifics threadSpecifics) {
 #if os_GUESTVMXEN
 	// all page protection is handled in following call
 	guestvmXen_initStack(threadSpecifics);
@@ -131,7 +179,7 @@ void initStackProtection(thread_Specifics *threadSpecifics) {
 
 }
 
-void thread_initSegments(thread_Specifics *threadSpecifics) {
+void thread_initSegments(ThreadSpecifics threadSpecifics) {
     Address stackBottom;
 #if os_SOLARIS
     /* we let the thread library allocate the stack for us. */
@@ -200,7 +248,7 @@ void tryUnprotectPage(Address address) {
     }
 }
 
-void thread_destroySegments(thread_Specifics *threadSpecifics) {
+void thread_destroySegments(ThreadSpecifics threadSpecifics) {
 #if !os_GUESTVMXEN
     /* unprotect pages so some other unfortunate soul doesn't get zapped when reusing the space */
     tryUnprotectPage(threadSpecifics->stackRedZone);
@@ -234,7 +282,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 #endif
 
     /* create the native thread locals and allocate stack if necessary */
-    thread_Specifics *threadSpecifics = thread_createSegments(id, stackSize);
+    ThreadSpecifics threadSpecifics = thread_createSegments(id, stackSize);
     if (threadSpecifics == NULL) {
     	return (Thread) 0;
     }
@@ -323,8 +371,11 @@ static int thread_join(Thread thread) {
     return error;
 }
 
+/**
+ * The start routine called by the native threading library once the new thread starts.
+ */
 void *thread_runJava(void *arg) {
-    thread_Specifics *threadSpecifics = (thread_Specifics *) arg;
+    ThreadSpecifics threadSpecifics = (ThreadSpecifics) arg;
     Address nativeThread = (Address) thread_current();
 
     c_ASSERT(threadSpecifics != NULL);
@@ -342,7 +393,7 @@ void *thread_runJava(void *arg) {
     guestvmXen_set_javaId((Thread)nativeThread, threadSpecifics->id);
 #endif
 
-    VMThreadRunMethod method = (VMThreadRunMethod) (image_heap() + (Address) image_header()->vmThreadRunMethodOffset);
+    VMThreadRunMethod method = image_read_value(VMThreadRunMethod, vmThreadRunMethodOffset);
 
 #if log_THREADS
     log_print("thread_runJava: id=%d, t=%p, calling method: ", threadSpecifics->id, nativeThread);
@@ -366,11 +417,17 @@ void *thread_runJava(void *arg) {
     guestvmXen_set_javaId((Thread)nativeThread, -1);
 #endif
 
+    if (_threadSpecificsList != NULL) {
+        /* remove 'threadSpecifics' from the list known by the debugger; from this point on
+         * the thread will be detected as a non-Java thread. */
+        threadSpecificsList_remove(_threadSpecificsList, threadSpecifics);
+    }
+
     /* destroy thread locals, deallocate stack, restore guard pages */
     thread_destroySegments(threadSpecifics);
 
 #if log_THREADS
-    log_println("thread_runJava: END t=%p", nativeThread);
+    log_println("thread_runJava: END t=%lx", nativeThread);
 #endif
     /* Successful thread exit */
     return NULL;

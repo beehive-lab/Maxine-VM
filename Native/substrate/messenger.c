@@ -30,7 +30,7 @@
 /**
  * Creates and initializes the memory block for a ring buffer.
  * The first two words must be pointers to the third word.
- * 
+ *
  * @see RingBufferPipe.java
  */
 static void *createRingBufferData() {
@@ -41,12 +41,20 @@ static void *createRingBufferData() {
 	return data;
 }
 
+static int _debugger_attached = false;
+
 void messenger_initialize() {
-	messenger_Info *info = (messenger_Info *) (image_heap() + image_header()->messengerInfoOffset);
-	if (*info != 0) {
-		*info = malloc(sizeof(messenger_InfoStruct));
-		(*info)->dataSize = (Size) DATA_SIZE;
-		(*info)->inData = (Address) createRingBufferData();
-		(*info)->outData = (Address) createRingBufferData();
+    messenger_Info info = image_read_value(messenger_Info, messengerInfoOffset);
+	if (info != 0) {
+		info = malloc(sizeof(messenger_InfoStruct));
+		info->dataSize = (Size) DATA_SIZE;
+		info->inData = (Address) createRingBufferData();
+		info->outData = (Address) createRingBufferData();
+		image_write_value(messenger_Info, messengerInfoOffset, info);
+		_debugger_attached = true;
 	}
+}
+
+int debugger_attached() {
+    return _debugger_attached;
 }
