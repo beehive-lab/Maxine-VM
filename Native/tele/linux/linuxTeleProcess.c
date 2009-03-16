@@ -42,7 +42,7 @@ void teleProcess_initialize(void) {
 
 static jmethodID _methodID = NULL;
 
-static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threads) {
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threads, jlong threadSpecificsListAddress) {
     if (_methodID == NULL) {
         jclass c = (*env)->GetObjectClass(env, linuxTeleProcess);
         _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJJJJ)V");
@@ -58,7 +58,8 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
     ThreadSpecificsStruct tss;
     threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &tss);
 
-    tele_log_println("Gathered thread[id=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+    tele_log_println("Gathered thread[id=%d, tid=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+                    tss.id,
                     tid,
                     tss.stackBase,
                     tss.stackBase + tss.stackSize,
@@ -79,7 +80,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject linuxTeleProcess, jlong pid, jobject threads) {
+Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject linuxTeleProcess, jlong pid, jobject threads, long threadSpecificsListAddress) {
 
     char *taskDirPath;
     asprintf(&taskDirPath, "/proc/%d/task", (pid_t) pid);
@@ -109,7 +110,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *e
             if (errno != 0) {
                 log_println("Error converting %s to a task id: %s", task->d_name, strerror(errno));
             } else {
-                gatherThread(env, pid, tid, linuxTeleProcess, threads);
+                gatherThread(env, pid, tid, linuxTeleProcess, threads, threadSpecificsListAddress);
             }
         }
     } while (true);

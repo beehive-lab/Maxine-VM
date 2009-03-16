@@ -97,7 +97,8 @@ extern void threadSpecificsList_printList(ThreadSpecificsList threadSpecificsLis
 #ifdef TELE
 
 #if os_LINUX
-task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size);
+#include <sys/types.h>
+size_t task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size);
 #define PROCESS_MEMORY_PARAMS pid_t tgid, pid_t tid,
 #define READ_PROCESS_MEMORY(src, dst, size) task_read(tgid, tid, (void *) src, (void *) dst, (size_t) size)
 #elif os_DARWIN

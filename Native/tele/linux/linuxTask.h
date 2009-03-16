@@ -24,6 +24,9 @@
  *
  * @author Doug Simon
  */
+#ifndef __linuxTask_h__
+#define __linuxTask_h__ 1
+
 #include "isa.h"
 
 int task_read_registers(pid_t tid,
@@ -80,3 +83,4 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
     } \
 } while(0)
 
+#endif
