@@ -393,7 +393,7 @@ void *thread_runJava(void *arg) {
     guestvmXen_set_javaId((Thread)nativeThread, threadSpecifics->id);
 #endif
 
-    VMThreadRunMethod method = image_read_value(VMThreadRunMethod, vmThreadRunMethodOffset);
+    VMThreadRunMethod method = image_offset_as_address(VMThreadRunMethod, vmThreadRunMethodOffset);
 
 #if log_THREADS
     log_print("thread_runJava: id=%d, t=%p, calling method: ", threadSpecifics->id, nativeThread);

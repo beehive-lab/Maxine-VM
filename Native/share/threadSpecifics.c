@@ -39,7 +39,9 @@
  * @param separator the string to be printed between elements
  */
 void threadSpecifics_print(ThreadSpecifics ts) {
-    log_print("ThreadSpecifics[%d: stackBase=%p, stackEnd=%p]", ts->id, ts->stackBase, ts->stackBase + ts->stackSize);
+    log_print("ThreadSpecifics[%d: base=%p, end=%p, size=%lu, triggered=%p, enabled=%p, disabled=%p]",
+                    ts->id, ts->stackBase, ts->stackBase + ts->stackSize, ts->stackSize,
+                    ts->triggeredVmThreadLocals, ts->enabledVmThreadLocals, ts->disabledVmThreadLocals);
 }
 
 void threadSpecificsList_printList(ThreadSpecificsList threadSpecificsList, const char *separator) {
@@ -124,7 +126,6 @@ void threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsLis
 
     ThreadSpecificsList threadSpecificsList = &threadSpecificsListStruct;
     READ_PROCESS_MEMORY(threadSpecificsListAddress, threadSpecificsList, sizeof(ThreadSpecificsListStruct));
-
     Address threadSpecificsAddress = (Address) threadSpecificsList->head;
     while (threadSpecificsAddress != 0) {
         READ_PROCESS_MEMORY(threadSpecificsAddress, threadSpecifics, sizeof(ThreadSpecificsStruct));
@@ -141,8 +142,8 @@ void threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsLis
         }
         threadSpecificsAddress = (Address) threadSpecifics->next;
     }
-    memset((void *) threadSpecifics, 0, sizeof(ThreadSpecificsStruct));
 
+    memset((void *) threadSpecifics, 0, sizeof(ThreadSpecificsStruct));
     threadSpecifics->stackBase = stackPointer;
 }
 

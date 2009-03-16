@@ -277,7 +277,7 @@ public class BootImage {
             _auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(_bootHeapSize + _bootCodeSize);
 
             _messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "_info");
-            _threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "_threadSpecifics");
+            _threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "_threadSpecificsList");
         }
 
         @Override

@@ -122,6 +122,7 @@ public final class SolarisTeleProcess extends TeleProcess {
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
         final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
+        assert !threadSpecificsList.isZero();
         nativeGatherThreads(_processHandle, threads, threadSpecificsList.asAddress().toLong());
     }
 
