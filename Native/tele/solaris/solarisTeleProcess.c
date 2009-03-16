@@ -260,25 +260,8 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     jlong lwpId = lwpStatus->pr_lwpid;
     ThreadState_t threadState = lwpStatusToThreadState(lwpStatus);
 
-    int error;
-    struct ps_lwphandle *lh = proc_Lgrab(a->ph, (lwpid_t) lwpId, &error);
-    if (error != 0) {
-        log_println("gather threads");
-        log_println("Lgrab failed: %s", Lgrab_error(error));
-        return error;
-    }
-
-    stack_t stack;
-
-    if (proc_Lmain_stack(lh, &stack) != 0) {
-        log_println("Lmain_stack failed");
-        stack.ss_sp = 0;
-        stack.ss_size = 0;
-        proc_Lfree(lh);
-        return -1L;
-    }
-
-    proc_Lfree(lh);
+    ThreadSpecificsStruct tss;
+    threadSpecificsList_search(ph, threadSpecificsListAddress, threadState.__rsp, &tss);
 
     if (_methodID == NULL) {
         jclass c = (*a->env)->GetObjectClass(a->env, a->process);
@@ -287,13 +270,21 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
         c_ASSERT(_methodID != NULL);
     }
 
-#if log_TELE
-    log_println("gatherThread[lwp id = %d]", lwpId);
-    log_printStatusFlags("Status flags: ", lwpStatus->pr_flags, "\n");
-    log_printWhyStopped("Why stopped: ", lwpStatus, "\n");
-#endif
+    tele_log_println("Gathered thread[id=%lu, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+                    lwpId,
+                    tss.stackBase,
+                    tss.stackBase + tss.stackSize,
+                    tss.stackSize,
+                    tss.triggeredVmThreadLocals,
+                    tss.enabledVmThreadLocals,
+                    tss.disabledVmThreadLocals);
 
-    (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, lwpId, threadState, stack.ss_sp, stack.ss_size);
+    (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, lwpId, threadState,
+                    tss.stackBase,
+                    tss.stackSize,
+                    tss.triggeredVmThreadLocals,
+                    tss.enabledVmThreadLocals,
+                    tss.disabledVmThreadLocals);
     return 0;
 }
 

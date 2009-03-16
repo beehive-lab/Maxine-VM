@@ -162,6 +162,7 @@ public final class BootImageInspector extends Inspector {
         addInfo("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart.plus(header._codeRegionsPointerOffset)));
 
         addInfo("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootImageStart.plus(header._messengerInfoOffset)));
+        addInfo("thread specifics list pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootImageStart.plus(header._threadSpecificsListOffset)));
         SpringUtilities.makeCompactGrid(_infoPanel, 2);
     }
 

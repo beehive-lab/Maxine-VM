@@ -81,6 +81,4 @@ extern void log_print_double(double d);
 #define tele_log_print log_null
 #endif
 
-
-
 #endif /*__log_h__*/

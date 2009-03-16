@@ -103,20 +103,23 @@ public final class DarwinTeleProcess extends TeleProcess {
         nativeKill(_task);
     }
 
-    private native void nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads);
+    private native void nativeGatherThreads(long task, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
 
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        nativeGatherThreads(_task, threads);
+        final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
+        nativeGatherThreads(_task, threads, threadSpecificsList.asAddress().toLong());
     }
 
     /**
      * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
      */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long threadID, int state, long stackBase, long stackSize) {
+    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long threadID, int state, long stackBase, long stackSize,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         DarwinTeleNativeThread thread = (DarwinTeleNativeThread) idToThread(threadID);
         if (thread == null) {
-            thread = new DarwinTeleNativeThread(this, threadID, stackBase, stackSize);
+            thread = new DarwinTeleNativeThread(this, threadID, stackBase, stackSize,
+                triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         }
 
         assert state >= 0 && state < ThreadState.VALUES.length();

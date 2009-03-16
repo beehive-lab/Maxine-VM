@@ -120,7 +120,7 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
         _tabbedPane.add("Triggered", _triggeredThreadLocalsPanel);
 
         _tabbedPane.addChangeListener(new ChangeListener() {
-            // Do  a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
+            // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
             public void stateChanged(ChangeEvent event) {
                 refreshView(teleVM().epoch(), true);
             }

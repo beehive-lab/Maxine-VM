@@ -213,8 +213,7 @@ public enum VmThreadLocal {
 
     /**
      * A sequence with an entry for each word in a VM thread locals storage area. The entry at index {@code i} denotes the name for
-     * the VM thread local whose {@linkplain #index() index} is also {@code i}. In addition, the entries at the end of the sequence
-     * give the names for the saved registers (which do not have a unique {@link VmThreadLocal} constant value).
+     * the VM thread local whose {@linkplain #index() index} is also {@code i}.
      */
     public static final IndexedSequence<String> NAMES;
 

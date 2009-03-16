@@ -650,7 +650,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      */
     public final TeleNativeThread threadContaining(Address address) {
         for (TeleNativeThread thread : _threadMap.values()) {
-            if (thread.stack().contains(address)) {
+            if (thread.isJava() && thread.stack().contains(address)) {
                 return thread;
             }
         }

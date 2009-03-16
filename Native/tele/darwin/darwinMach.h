@@ -19,8 +19,8 @@
  * Company, Ltd.
  */
 
-#ifndef __debugMach_h__
-#define __debugMach_h__ 1
+#ifndef __darwinMach_h__
+#define __darwinMach_h__ 1
 
 #define POS_PARAMS const char *file, int line
 #define POS __FILE__, __LINE__

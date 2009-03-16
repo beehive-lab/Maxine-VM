@@ -189,7 +189,7 @@ char *signalName(int signal) {
 }
 #endif
 
-static void blueZoneTrap(thread_Specifics *threadSpecifics) {
+static void blueZoneTrap(ThreadSpecifics threadSpecifics) {
 #if os_GUESTVMXEN
 	guestvmXen_blue_zone_trap(threadSpecifics);
 #endif
@@ -208,7 +208,7 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     }
     log_println("SIGNAL: %0d [%s]", signal, sigName);
 #endif
-    thread_Specifics *threadSpecifics = (thread_Specifics *) thread_currentSpecifics();
+    ThreadSpecifics threadSpecifics = (ThreadSpecifics) thread_currentSpecifics();
     if (threadSpecifics == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
     }

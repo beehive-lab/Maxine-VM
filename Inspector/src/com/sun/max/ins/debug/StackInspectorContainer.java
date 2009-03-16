@@ -58,7 +58,9 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
             Trace.begin(1, "[StackInspector] initializing");
             stackInspectorContainer = new StackInspectorContainer(inspection, Residence.INTERNAL);
             for (TeleNativeThread thread : inspection.teleVM().threads()) {
-                stackInspectorContainer.add(new StackInspector(inspection, thread, stackInspectorContainer.residence(), stackInspectorContainer));
+                if (thread.isJava()) {
+                    stackInspectorContainer.add(new StackInspector(inspection, thread, stackInspectorContainer.residence(), stackInspectorContainer));
+                }
             }
             Trace.end(1, "[StackInspector] initializing");
         }
@@ -69,13 +71,16 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
     /**
      * Find an existing stack inspector for a thread in the {@link TeleVM}.
      * Will create a fully populated ThreadsInspector if one doesn't already exist.
-     * @return null if stack inspector for thread doesn't exist
+     *
+     * @return null if stack inspector for thread doesn't exist of it's not a {@linkplain TeleNativeThread#isJava() Java} thread
      */
     public static StackInspector getInspector(Inspection inspection, TeleNativeThread teleNativeThread) {
         final StackInspectorContainer stackInspectorContainer = make(inspection);
-        for (StackInspector stackInspector : stackInspectorContainer) {
-            if (stackInspector.teleNativeThread().equals(teleNativeThread)) {
-                return stackInspector;
+        if (teleNativeThread.isJava()) {
+            for (StackInspector stackInspector : stackInspectorContainer) {
+                if (stackInspector.teleNativeThread().equals(teleNativeThread)) {
+                    return stackInspector;
+                }
             }
         }
         return null;

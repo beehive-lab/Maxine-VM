@@ -85,6 +85,9 @@ public final class ThreadLocalsInspectorContainer extends TabbedInspector<Thread
      */
     public static ThreadLocalsInspector makeInspector(Inspection inspection, TeleNativeThread teleNativeThread) {
         final ThreadLocalsInspectorContainer threadLocalsInspectorContainer = make(inspection);
+        if (!teleNativeThread.isJava()) {
+            return null;
+        }
         // if the container is newly created, it will create an inspector for every thread, so wait to check
         ThreadLocalsInspector threadLocalsInspector = getInspector(inspection, teleNativeThread);
         if (threadLocalsInspector == null) {

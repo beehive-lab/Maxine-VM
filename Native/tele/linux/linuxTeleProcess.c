@@ -45,7 +45,7 @@ static jmethodID _methodID = NULL;
 static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threads) {
     if (_methodID == NULL) {
         jclass c = (*env)->GetObjectClass(env, linuxTeleProcess);
-        _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJ)V");
+        _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJJJJ)V");
         c_ASSERT(_methodID != NULL);
     }
 
@@ -54,20 +54,28 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL);
 
-    Address rsp = (Address) canonicalIntegerRegisters.rsp;
+    Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
+    ThreadSpecificsStruct tss;
+    threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &tss);
 
-    Address mask = (1024 * 1024) - 1;
-    jlong stackStart = rsp & ~mask;
-    jlong stackSize = rsp - stackStart;
-
-    tele_log_println("Gathered thread[tid=%d, state=%c, stackStart=%p, stackSize=%ul, rsp=%p, mask=%p]", tid, task_state(tgid, tid), stackStart, stackSize, rsp, ~mask);
+    tele_log_println("Gathered thread[id=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+                    tid,
+                    tss.stackBase,
+                    tss.stackBase + tss.stackSize,
+                    tss.stackSize,
+                    tss.triggeredVmThreadLocals,
+                    tss.enabledVmThreadLocals,
+                    tss.disabledVmThreadLocals);
 
     (*env)->CallVoidMethod(env, linuxTeleProcess, _methodID,
-                    threads,               /* threads    */
-                    tid,                   /* tid        */
-                    (jint) TS_SUSPENDED,   /* state      */
-                    stackStart,    /* stackStart */
-                    stackSize  /* stackSize  */);
+                    threads,
+                    tid,
+                    (jint) TS_SUSPENDED,
+                    tss.stackBase,
+                    tss.stackSize,
+                    tss.triggeredVmThreadLocals,
+                    tss.enabledVmThreadLocals,
+                    tss.disabledVmThreadLocals);
 }
 
 JNIEXPORT void JNICALL

@@ -99,14 +99,15 @@ public final class LinuxTeleProcess extends TeleProcess {
         return result;
     }
 
-    private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads);
+    private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
 
     @Override
     protected void gatherThreads(final AppendableSequence<TeleNativeThread> threads) {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws IOException {
-                    nativeGatherThreads(_task.tgid(), threads);
+                    final Word threadSpecificsList = dataAccess().readWord(teleVM().bootImageStart().plus(teleVM().bootImage().header()._threadSpecificsListOffset));
+                    nativeGatherThreads(_task.tgid(), threads, threadSpecificsList.asAddress().toLong());
                     return null;
                 }
             });
@@ -118,10 +119,11 @@ public final class LinuxTeleProcess extends TeleProcess {
     /**
      * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
      */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int tid, int state, long stackStart, long stackSize) {
+    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int tid, int state, long stackStart, long stackSize,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         LinuxTeleNativeThread thread = (LinuxTeleNativeThread) idToThread(tid);
         if (thread == null) {
-            thread = new LinuxTeleNativeThread(this, tid, stackStart, stackSize);
+            thread = new LinuxTeleNativeThread(this, tid, stackStart, stackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         }
 
         assert state >= 0 && state < ThreadState.VALUES.length() : state;

@@ -35,8 +35,9 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
         return (SolarisTeleProcess) super.teleProcess();
     }
 
-    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, long lwpID, long stackBase, long stackSize) {
-        super(teleProcess, stackBase, stackSize, lwpID);
+    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, long lwpID, long stackBase, long stackSize,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
+        super(teleProcess, stackBase, stackSize, lwpID, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
     }
 
     private static native boolean nativeSetInstructionPointer(long processHandle, long lwpId, long address);

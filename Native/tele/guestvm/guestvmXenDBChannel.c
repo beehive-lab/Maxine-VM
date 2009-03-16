@@ -198,16 +198,22 @@ static ThreadState_t toThreadState(int state) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject threadSeq, jint domainId) {
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject threadSeq, jint domainId, jlong threadSpecificsList) {
     struct db_thread *threads;
     int num_threads, i;
     jmethodID gather_thread_method;
 
     threads = gather_threads(&num_threads);
-    gather_thread_method = (*env)->GetStaticMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJ)V");
+    gather_thread_method = (*env)->GetStaticMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJJJJ)V");
     c_ASSERT(gather_thread_method != NULL);
     for (i=0; i<num_threads; i++) {
-            (*env)->CallStaticVoidMethod(env, c, gather_thread_method, threadSeq, threads[i].id, toThreadState(threads[i].flags), threads[i].stack, threads[i].stack_size);
+        Address triggeredVmThreadLocals;
+        Address enabledVmThreadLocals;
+        Address disabledVmThreadLocals;
+        // Mick, I'll have to show you what to do here -Doug
+        c_UNIMPLEMENTED();
+        (*env)->CallStaticVoidMethod(env, c, gather_thread_method, threadSeq, threads[i].id, toThreadState(threads[i].flags), threads[i].stack, threads[i].stack_size,
+                        triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
     }
 
     free(threads);
@@ -227,9 +233,9 @@ void trace_thread(struct db_thread *thread) {
     int state = thread->flags;
     if (trace) {
         log_println("thread %d, ra %d, r %d, dying %d, rds %d, ds %d, mw %d, nw %d, jw %d, sl %d",
-            thread->id, is_state(state, RUNNABLE_FLAG), is_state(state, RUNNING_FLAG), 
+            thread->id, is_state(state, RUNNABLE_FLAG), is_state(state, RUNNING_FLAG),
             is_state(state, DYING_FLAG), is_state(state, REQ_DEBUG_SUSPEND_FLAG),
-            is_state(state, DEBUG_SUSPEND_FLAG), is_state(state, AUX1_FLAG), 
+            is_state(state, DEBUG_SUSPEND_FLAG), is_state(state, AUX1_FLAG),
             is_state(state, AUX2_FLAG), is_state(state, JOIN_FLAG), is_state(state, SLEEP_FLAG));
     }
 }

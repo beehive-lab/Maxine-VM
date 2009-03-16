@@ -181,7 +181,15 @@ public class BootImage {
 
         public final int _auxiliarySpaceSize;
 
+        /**
+         * @see MaxineMessenger#_info
+         */
         public final int _messengerInfoOffset;
+
+        /**
+         * @see VmThread#_threadSpecificsList
+         */
+        public final int _threadSpecificsListOffset;
 
         public WordWidth wordWidth() {
             return WordWidth.fromInt(_wordSize * 8);
@@ -231,6 +239,7 @@ public class BootImage {
             _auxiliarySpaceSize = endian.readInt(dataInputStream);
 
             _messengerInfoOffset = endian.readInt(dataInputStream);
+            _threadSpecificsListOffset = endian.readInt(dataInputStream);
         }
 
         private int staticFieldPointerOffset(DataPrototype dataPrototype, Class javaClass, String staticFieldName) {
@@ -268,6 +277,7 @@ public class BootImage {
             _auxiliarySpaceSize = vmConfiguration.heapScheme().auxiliarySpaceSize(_bootHeapSize + _bootCodeSize);
 
             _messengerInfoOffset = staticFieldPointerOffset(dataPrototype, MaxineMessenger.class, "_info");
+            _threadSpecificsListOffset = staticFieldPointerOffset(dataPrototype, VmThread.class, "_threadSpecifics");
         }
 
         @Override

@@ -40,7 +40,7 @@
 #include "jni.h"
 #include "word.h"
 
-Boolean readRegisters(thread_t thread,
+Boolean thread_read_registers(thread_t thread,
     isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
     isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters,
     isa_CanonicalStateRegistersStruct *canonicalStateRegisters) {
@@ -49,29 +49,31 @@ Boolean readRegisters(thread_t thread,
     OsFloatingPointRegistersStruct osFloatRegisters;
     OsStateRegistersStruct osStateRegisters;
 
-    mach_msg_type_number_t count = INTEGER_REGISTER_COUNT;
-    if (thread_get_state((thread_act_t) thread, INTEGER_REGISTER_FLAVOR, (thread_state_t) &osIntegerRegisters, &count) != KERN_SUCCESS) {
-        return false;
-    }
-    count = STATE_REGISTER_COUNT;
-    if (thread_get_state((thread_act_t) thread, STATE_REGISTER_FLAVOR, (thread_state_t) &osStateRegisters, &count) != KERN_SUCCESS) {
-        return false;
-    }
-    count = FLOATING_POINT_REGISTER_COUNT;
-    if (thread_get_state((thread_act_t) thread, FLOAT_REGISTER_FLAVOR, (thread_state_t) &osFloatRegisters, &count) != KERN_SUCCESS) {
-        return false;
+    mach_msg_type_number_t count;
+    if (canonicalIntegerRegisters != NULL) {
+        count = INTEGER_REGISTER_COUNT;
+        if (thread_get_state((thread_act_t) thread, INTEGER_REGISTER_FLAVOR, (thread_state_t) &osIntegerRegisters, &count) != KERN_SUCCESS) {
+            return false;
+        }
+        isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, canonicalIntegerRegisters);
     }
 
-    isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, canonicalIntegerRegisters);
-    isa_canonicalizeTeleStateRegisters(&osStateRegisters, canonicalStateRegisters);
-    isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, canonicalFloatingPointRegisters);
+    if (canonicalStateRegisters != NULL) {
+        count = STATE_REGISTER_COUNT;
+        if (thread_get_state((thread_act_t) thread, STATE_REGISTER_FLAVOR, (thread_state_t) &osStateRegisters, &count) != KERN_SUCCESS) {
+            return false;
+        }
+        isa_canonicalizeTeleStateRegisters(&osStateRegisters, canonicalStateRegisters);
+    }
 
-#if log_TELE
-    log_println("Read registers for thread %ld", thread);
-    isa_printCanonicalIntegerRegisters(canonicalIntegerRegisters);
-    isa_printCanonicalFloatingPointRegisters(canonicalFloatingPointRegisters);
-    isa_printCanonicalStateRegisters(canonicalStateRegisters);
-#endif
+    if (canonicalFloatingPointRegisters != NULL) {
+        count = FLOATING_POINT_REGISTER_COUNT;
+        if (thread_get_state((thread_act_t) thread, FLOAT_REGISTER_FLAVOR, (thread_state_t) &osFloatRegisters, &count) != KERN_SUCCESS) {
+            return false;
+        }
+        isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, canonicalFloatingPointRegisters);
+    }
+
     return TRUE;
 }
 
@@ -99,7 +101,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeReadRegisters(JN
         return false;
     }
 
-    if (!readRegisters(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters)) {
+    if (!thread_read_registers(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters)) {
         return false;
     }
 
@@ -123,7 +125,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSetInstructionPo
     return true;
 }
 
-jboolean setSingleStep(thread_act_t thread, jboolean isEnabled) {
+jboolean thread_set_single_step(thread_act_t thread, jboolean isEnabled) {
     ThreadState threadState;
 
     mach_msg_type_number_t count = THREAD_STATE_COUNT;
@@ -146,7 +148,7 @@ jboolean setSingleStep(thread_act_t thread, jboolean isEnabled) {
     return true;
 }
 
-static jboolean suspendOtherThreads(jlong task, thread_t current) {
+static jboolean task_suspend_other_threads(jlong task, thread_t current) {
     thread_array_t thread_list = NULL;
     unsigned int nthreads = 0;
     kern_return_t kret;
@@ -181,7 +183,7 @@ static jboolean suspendOtherThreads(jlong task, thread_t current) {
     return true;
 }
 
-static jboolean unsuspendOtherThreads(jlong task, thread_t current) {
+static jboolean task_unsuspend_other_threads(jlong task, thread_t thread) {
     thread_array_t thread_list = NULL;
     unsigned int nthreads = 0;
     kern_return_t kret;
@@ -192,7 +194,7 @@ static jboolean unsuspendOtherThreads(jlong task, thread_t current) {
 
     kret = task_threads((task_t) task, &thread_list, &nthreads);
     for (i = 0; i < nthreads; i++) {
-        if (thread_list[i] != current) {
+        if (thread_list[i] != thread) {
             kret = thread_info(thread_list[i], THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
             if (kret != KERN_SUCCESS) {
                 log_println("thread_info() failed when single stepping");
@@ -213,7 +215,7 @@ static jboolean unsuspendOtherThreads(jlong task, thread_t current) {
     return true;
 }
 
-jboolean disableSingleStepping(jlong task) {
+jboolean task_disable_single_stepping(jlong task) {
     thread_array_t thread_list = NULL;
     unsigned int nthreads = 0;
     kern_return_t kret;
@@ -222,7 +224,7 @@ jboolean disableSingleStepping(jlong task) {
     kret = task_threads((task_t) task, &thread_list, &nthreads);
 
     for (i = 0; i < nthreads; i++) {
-        setSingleStep(thread_list[i], false);
+        thread_set_single_step(thread_list[i], false);
     }
 
     // deallocate thread list
@@ -231,14 +233,14 @@ jboolean disableSingleStepping(jlong task) {
     return true;
 }
 
-static jboolean resumeThread(jlong task, thread_t current) {
+static jboolean task_resume_thread(jlong task, thread_t thread) {
     kern_return_t kret;
     struct thread_basic_info info;
     unsigned int info_count = THREAD_BASIC_INFO_COUNT;
     unsigned int j;
 
     // get info for the current thread
-    kret = thread_info(current, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
+    kret = thread_info(thread, THREAD_BASIC_INFO, (thread_info_t) &info, &info_count);
     if (kret != KERN_SUCCESS) {
         log_println("thread_info() failed on thread to step");
         return false;
@@ -250,12 +252,12 @@ static jboolean resumeThread(jlong task, thread_t current) {
     // if the thread is WAITING it will not resume unless we abort it first
     // the thread is WAITING if if stopped because of a trap
     if (info.run_state == TH_STATE_WAITING) {
-        thread_abort(current);
+        thread_abort(thread);
     }
 
     // resume the thread
     for (j = 0; j < (unsigned) info.suspend_count; j++) {
-        thread_resume(current);
+        thread_resume(thread);
     }
 
     return true;
@@ -270,8 +272,8 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleNativeThread_nativeSingleStep(JNIEn
 #if log_TELE
     log_println("Single stepping");
 #endif
-    return setSingleStep((thread_act_t) thread, true)
-        && suspendOtherThreads(task, (thread_t) thread)
-        && resumeThread(task, (thread_t) thread)
-        && unsuspendOtherThreads(task, (thread_t) thread);
+    return thread_set_single_step((thread_act_t) thread, true)
+        && task_suspend_other_threads(task, (thread_t) thread)
+        && task_resume_thread(task, (thread_t) thread)
+        && task_unsuspend_other_threads(task, (thread_t) thread);
 }

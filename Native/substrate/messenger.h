@@ -32,4 +32,10 @@ typedef struct {
 
 extern void messenger_initialize();
 
+/**
+ * Determines if a debugger has attached.
+ * This function should only be called after 'messenger_initialize' has been called.
+ */
+extern int debugger_attached();
+
 #endif /*__messenger_h__*/

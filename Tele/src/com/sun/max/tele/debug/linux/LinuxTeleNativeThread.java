@@ -58,8 +58,9 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
         return _task;
     }
 
-    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int tid, long stackStart, long stackSize) {
-        super(teleProcess, stackStart, stackSize, tid);
+    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int tid, long stackStart, long stackSize,
+        long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
+        super(teleProcess, stackStart, stackSize, tid, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         _task = new LinuxTask(teleProcess.task().tgid(), tid);
     }
 

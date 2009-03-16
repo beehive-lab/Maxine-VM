@@ -37,15 +37,16 @@
 #include "darwinTeleNativeThread.h"
 #include "log.h"
 #include "ptrace.h"
-#include "debugMach.h"
+#include "darwinMach.h"
 #include "jni.h"
 #include "word.h"
 #include "virtualMemory.h"
+#include "threads.h"
 
 #include "teleProcess.h"
 #include "teleNativeThread.h"
 
-extern jboolean disableSingleStepping(jlong task);
+extern jboolean task_disable_single_stepping(jlong task);
 
 #if 0
 const char *threadRunStateAsString(int state) {
@@ -78,7 +79,7 @@ void log_thread_info(thread_t thread) {
     isa_CanonicalStateRegistersStruct canonicalStateRegisters;
     isa_CanonicalFloatingPointRegistersStruct canonicalFloatingPointRegisters;
 
-    readRegisters(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters);
+    thread_read_registers(thread, &canonicalIntegerRegisters, &canonicalFloatingPointRegisters, &canonicalStateRegisters);
 }
 
 typedef void (*thread_visitor)(thread_t thread);
@@ -109,12 +110,11 @@ void log_task_info(const char *file, int line, task_t task) {
 }
 #endif
 
-#if log_TELE
-#define tele_log_println log_println
-#else
-#define log_null(format, ...)
-#define tele_log_println log_null
-#endif
+int task_read(task_t task, vm_address_t src, void *dst, size_t size) {
+  mach_vm_size_t bytesRead;
+  kern_return_t result = Mach_vm_read_overwrite(POS, task, src, size, (vm_address_t) dst, &bytesRead);
+  return result == KERN_SUCCESS ? (jint) bytesRead : -1;
+}
 
 jboolean waitForSignal(jlong task, int signalnum) {
     int pid;
@@ -144,7 +144,7 @@ jboolean waitForSignal(jlong task, int signalnum) {
             //log_task_info(__FILE__, __LINE__, task);
 
             if (signalnum == signal && signalnum == SIGTRAP) {
-                disableSingleStepping(task);
+                task_disable_single_stepping(task);
             }
 
             if (signal == 0 || signal == signalnum) {
@@ -213,7 +213,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jcl
 static jmethodID _methodID = NULL;
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result) {
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadSpecificsListAddress) {
     thread_act_array_t threads;
     mach_msg_type_number_t numberOfThreads, i;
 
@@ -221,10 +221,12 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         return;
     }
 
+    c_ASSERT(threadSpecificsListAddress != 0);
+
     if (_methodID == NULL) {
         jclass c = (*env)->GetObjectClass(env, process);
         c_ASSERT(c != NULL);
-        _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIJJ)V");
+        _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIJJJJJ)V");
         c_ASSERT(_methodID != NULL);
     }
 
@@ -239,16 +241,26 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
             return;
         }
 
-        mach_vm_address_t stackBase = threadState.__rsp;
-        mach_vm_size_t stackSize = 16; // initialized to something small
-        mach_port_t objectName;
-        vm_region_basic_info_data_64_t info;
-        count = VM_REGION_BASIC_INFO_COUNT_64;
-        if (Mach_vm_region(POS, (vm_map_t) task, &stackBase, &stackSize, VM_REGION_BASIC_INFO_64, (vm_region_info_t) &info, &count, &objectName) != KERN_SUCCESS) {
-            return;
-        }
+        ThreadSpecificsStruct tss;
+        threadSpecificsList_search(task, threadSpecificsListAddress, threadState.__rsp, &tss);
 
-        (*env)->CallVoidMethod(env, process, _methodID, result, (long) thread, state, (jlong) stackBase, (jlong) stackSize);
+        tele_log_println("Gathered thread[id=%lu, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+                        thread,
+                        tss.stackBase,
+                        tss.stackBase + tss.stackSize,
+                        tss.stackSize,
+                        tss.triggeredVmThreadLocals,
+                        tss.enabledVmThreadLocals,
+                        tss.disabledVmThreadLocals);
+
+        (*env)->CallVoidMethod(env, process, _methodID, result,
+                        (long) thread,
+                        state,
+                        tss.stackBase,
+                        tss.stackSize,
+                        tss.triggeredVmThreadLocals,
+                        tss.enabledVmThreadLocals,
+                        tss.disabledVmThreadLocals);
     }
 
     if (Vm_deallocate(POS, mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {
@@ -284,21 +296,18 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, j
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong task, jlong address, jbyteArray byteArray, jint offset, jint length) {
-  mach_vm_size_t bytesRead = length;
-
-  jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
+  void* buffer = (void *) malloc(length * sizeof(jbyte));
   if (buffer == 0) {
       log_println("Failed to malloc byteArray of %d bytes", length);
       return -1;
   }
-
-  kern_return_t result = Mach_vm_read_overwrite(POS, task, (vm_address_t) address, length, (vm_address_t) buffer, &bytesRead);
-  if (result == KERN_SUCCESS && bytesRead > 0) {
+  jint bytesRead = task_read(task, address, buffer, length);
+  if (bytesRead > 0) {
       (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
   }
   free(buffer);
 
-  return result == KERN_SUCCESS ? (jint) bytesRead : -1;
+  return bytesRead;
 }
 
 JNIEXPORT jint JNICALL

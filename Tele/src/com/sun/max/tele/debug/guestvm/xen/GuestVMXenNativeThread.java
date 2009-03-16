@@ -33,8 +33,9 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
         return (GuestVMXenTeleDomain) super.teleProcess();
     }
 
-    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, int id, long stackBase, long stackSize) {
-        super(teleDomain, stackBase, stackSize, id);
+    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, int id, long stackBase, long stackSize,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
+        super(teleDomain, stackBase, stackSize, id, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
     }
 
     @Override

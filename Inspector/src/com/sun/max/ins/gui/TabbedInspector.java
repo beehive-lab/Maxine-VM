@@ -140,8 +140,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         if (inspectorFrame instanceof Component) {
             final Component component = (Component) inspectorFrame;
             _tabbedPane.addTab(tabTitle, component);
-            final int index = _tabbedPane.indexOfComponent(component);
             if (tabToolTipText != null) {
+                final int index = _tabbedPane.indexOfComponent(component);
                 _tabbedPane.setToolTipTextAt(index, tabToolTipText);
             }
         }

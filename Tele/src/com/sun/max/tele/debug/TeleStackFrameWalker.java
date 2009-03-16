@@ -106,7 +106,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public boolean isThreadInNative() {
-        return _teleEnabledVmThreadLocalValues.isValid() && !_teleEnabledVmThreadLocalValues.isInJavaCode();
+        return !_teleEnabledVmThreadLocalValues.isInJavaCode();
     }
 
     @Override

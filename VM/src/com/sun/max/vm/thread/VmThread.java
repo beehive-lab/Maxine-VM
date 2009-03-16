@@ -690,6 +690,17 @@ public class VmThread {
         return nativeJoin(_nativeThread);
     }
 
+    // Access to native thread locals (aka "thread specifics")
+
+    /**
+     * The address of a global ThreadSpecificsListStruct (defined in threadSpecifics.h).
+     * This list is only used by a debugger attached to the VM to discover Java threads.
+     * Communicating stack details of Java threads this way obviates the need to rely on platform specific
+     * mechanisms (such as thread_db on Solaris and Linux or Mach APIs on Darwin) for debugging threads
+     * across process boundaries.
+     */
+    private static Pointer _threadSpecificsList = Pointer.zero();
+
     // Access to thread local variables
 
     // Only used by the EIR interpreter(s)
