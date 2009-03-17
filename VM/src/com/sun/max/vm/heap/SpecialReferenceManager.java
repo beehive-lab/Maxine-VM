@@ -67,8 +67,8 @@ public class SpecialReferenceManager {
     private static final ReferenceFieldActor _referentField = getReferenceClassField("referent");
     private static final ReferenceFieldActor _pendingField = getReferenceClassField("pending");
     private static final ReferenceFieldActor _lockField = getReferenceClassField("lock");
-    private static final Object _lock = getLockObject();
     // this method should be available and compiled
+    private static final Object _lock = getLockObject();
     private static final CriticalMethod _registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register");
 
     private static Grip _discoveredList;
@@ -177,13 +177,9 @@ public class SpecialReferenceManager {
      * @param phase the phase in which the VM is in
      */
     public static void initialize(Phase phase) {
-        // explicitly call the class initializers of reference and finalizer
-        JDK.java_lang_ref_Reference.classActor().callInitializer();
-        // the initializer reallocated the lock object. set it back to what it was at prototyping time
-        _lockField.writeStatic(getLockObject());
-
-        if (FINALIZERS_SUPPORTED && phase == Phase.STARTING) {
-            JDK.java_lang_ref_Finalizer.classActor().callInitializer();
+        if (phase == Phase.STARTING) {
+            startReferenceHandlerThread();
+            startFinalizerThread();
         }
     }
 
@@ -216,5 +212,41 @@ public class SpecialReferenceManager {
             fieldActor = referenceClass.findLocalInstanceFieldActor(name);
         }
         return (ReferenceFieldActor) fieldActor;
+    }
+
+    /**
+     * Allocate and start a new thread to handle enqueuing weak references.
+     */
+    private static void startReferenceHandlerThread() {
+        // Note: this code is stolen from java.lang.Reference <clinit>
+        // we cannot simply rerun static initialization because it would allocate a new lock object
+        ThreadGroup tg = Thread.currentThread().getThreadGroup();
+        for (ThreadGroup tgn = tg; tgn != null; tg = tgn, tgn = tg.getParent()) {
+            // do nothing; get the root thread group
+        }
+        final Class<?> javaClass = JDK.java_lang_ref_Reference$ReferenceHandler.javaClass();
+        try {
+            final Constructor constructor = javaClass.getDeclaredConstructor(ThreadGroup.class, String.class);
+            constructor.setAccessible(true);
+            final Thread handler = (Thread) constructor.newInstance(tg, "Reference Handler");
+            /* If there were a special system-only priority greater than
+             * MAX_PRIORITY, it would be used here
+             */
+            handler.setPriority(Thread.MAX_PRIORITY);
+            handler.setDaemon(true);
+            handler.start();
+        } catch (Exception e) {
+            throw ProgramError.unexpected(e);
+        }
+    }
+
+    /**
+     * Allocate and start a new thread to handle invocation of finalizers.
+     */
+    private static void startFinalizerThread() {
+        if (FINALIZERS_SUPPORTED) {
+            // it is sufficient just to reinitialize the finalizer class
+            JDK.java_lang_ref_Finalizer.classActor().callInitializer();
+        }
     }
 }
