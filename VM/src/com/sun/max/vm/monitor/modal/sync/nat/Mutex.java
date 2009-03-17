@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync.nat;
 
+import java.lang.ref.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -29,12 +30,30 @@ import com.sun.max.vm.runtime.*;
 /**
  * Java wrapper for a native mutex.
  *
+ * TODO: Decide how to keep the NativeReference instances reachable and how to manage disposal.
+ *
  * @author Simon Wilkinson
+ * @author Mick Jordan
  */
 public final class Mutex {
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private Pointer _mutex = Pointer.zero();
+    static class NativeReference extends WeakReference<Mutex> {
+
+        @CONSTANT_WHEN_NOT_ZERO
+        private Pointer _mutex = Pointer.zero();
+
+        NativeReference(Mutex m) {
+            super(m, _refQueue);
+        }
+
+        private void disposeNative() {
+            Memory.deallocate(_mutex);
+        }
+    }
+
+    private static ReferenceQueue<Mutex> _refQueue = new ReferenceQueue<Mutex>();
+
+    private NativeReference _native;
 
     private static int _size;
 
@@ -62,14 +81,15 @@ public final class Mutex {
     }
 
     public Mutex() {
+        _native = new NativeReference(this);
     }
 
     /**
      * Performs native allocation for this <code>Mutex</code>.
      */
     public void alloc() {
-        _mutex =  Memory.mustAllocate(_size);
-        nativeMutexInitialize(_mutex);
+        _native._mutex =  Memory.mustAllocate(_size);
+        nativeMutexInitialize(_native._mutex);
     }
 
     /**
@@ -82,7 +102,7 @@ public final class Mutex {
      */
     @INLINE
     public boolean lock() {
-        return nativeMutexLock(_mutex);
+        return nativeMutexLock(_native._mutex);
     }
 
     /**
@@ -96,7 +116,7 @@ public final class Mutex {
      */
     @INLINE
     public boolean unlock() {
-        return nativeMutexUnlock(_mutex);
+        return nativeMutexUnlock(_native._mutex);
     }
 
     /**
@@ -105,12 +125,7 @@ public final class Mutex {
      */
     @INLINE
     public Pointer asPointer() {
-        return _mutex;
+        return _native._mutex;
     }
 
-    @Override
-    public void finalize() throws Throwable {
-        super.finalize();
-        Memory.deallocate(_mutex);
-    }
 }
