@@ -34,6 +34,7 @@ import org.junit.runner.notification.*;
 import org.junit.runners.AllTests;
 
 import sun.management.*;
+import test.com.sun.max.vm.MaxineTesterConfiguration.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
@@ -234,22 +235,24 @@ public class MaxineTester {
      *
      * @param testName the unique name of the test
      * @param failure a failure message or null if the test passed
-     * @param expectedFailure {@code true} if this test was expected to fail.
      * @return {@code true} if the result (pass or fail) of the test matches the expected result, {@code false} otherwise
      */
-    private static boolean addTestResult(String testName, String failure, boolean expectedFailure) {
-        if (expectedFailure && failure == null) {
-            _unexpectedPasses.put(testName, failure);
-            return false;
-        } else if (!expectedFailure && failure != null) {
-            _unexpectedFailures.put(testName, failure);
+    private static boolean addTestResult(String testName, String failure, ExpectedResult expectedResult) {
+        final boolean passed = failure == null;
+        if (!expectedResult.matchesActualResult(passed)) {
+            if (expectedResult == ExpectedResult.FAIL) {
+                _unexpectedPasses.put(testName, failure);
+            } else {
+                assert expectedResult == ExpectedResult.PASS;
+                _unexpectedFailures.put(testName, failure);
+            }
             return false;
         }
         return true;
     }
 
     private static boolean addTestResult(String testName, String failure) {
-        return addTestResult(testName, failure, MaxineTesterConfiguration.isExpectedFailure(testName, null));
+        return addTestResult(testName, failure, MaxineTesterConfiguration.expectedResult(testName, null));
     }
 
     /**
@@ -428,8 +431,7 @@ public class MaxineTester {
             final Sequence<String> lines = Files.readLines(resultsFile);
             for (String line : lines) {
                 final String testName = line;
-                final boolean expectedFailure = MaxineTesterConfiguration.isExpectedFailure(testName, null);
-                final boolean expectedResult = addTestResult(testName, passed ? null : "failed", expectedFailure);
+                final boolean expectedResult = addTestResult(testName, passed ? null : "failed", MaxineTesterConfiguration.expectedResult(testName, null));
                 if (unexpectedResults != null && !expectedResult) {
                     unexpectedResults.add("unexpectedly "  + (passed ? "passed " : "failed ") + testName);
                 }
@@ -659,26 +661,30 @@ public class MaxineTester {
         return Strings.padLengthWithSpaces(str, 16);
     }
 
-    private static boolean printFailed(Class mainClass, String config) {
-        final boolean expected = MaxineTesterConfiguration.isExpectedFailure(mainClass.getName(), config);
-        if (expected) {
+    private static ExpectedResult printFailed(Class mainClass, String config) {
+        final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(mainClass.getName(), config);
+        if (expectedResult == ExpectedResult.FAIL) {
             out().print(left16(config + ": (normal)"));
+        } else if (expectedResult == ExpectedResult.NONDETERMINISTIC) {
+            out().print(left16(config + ": (lucky) "));
         } else {
             out().print(left16(config + ": (failed)"));
         }
         out().flush();
-        return expected;
+        return expectedResult;
     }
 
-    private static boolean printSuccess(Class mainClass, String config) {
-        final boolean expected = MaxineTesterConfiguration.isExpectedFailure(mainClass.getName(), config);
-        if (expected) {
+    private static ExpectedResult printSuccess(Class mainClass, String config) {
+        final ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(mainClass.getName(), config);
+        if (expectedResult == ExpectedResult.PASS) {
             out().print(left16(config + ": (passed)"));
+        } else if (expectedResult == ExpectedResult.NONDETERMINISTIC) {
+            out().print(left16(config + ": (lucky) "));
         } else {
             out().print(left16(config + ": OK"));
         }
         out().flush();
-        return expected;
+        return expectedResult;
     }
 
     private static void runMaxineVMOutputTest(String config, File outputDir, File imageDir, Class mainClass, final File javaOutput, final int javaExitValue) {
@@ -688,17 +694,17 @@ public class MaxineTester {
         final int maxineExitValue = runMaxineVM(mainClass, args, imageDir, maxvmOutput, _javaRunTimeOut.getValue());
         if (javaExitValue != maxineExitValue) {
             if (maxineExitValue == PROCESS_TIMEOUT) {
-                final boolean expected = printFailed(mainClass, config);
+                final ExpectedResult expected = printFailed(mainClass, config);
                 addTestResult(mainClass.getName(), String.format("timed out", maxineExitValue, javaExitValue), expected);
             } else {
-                final boolean expected = printFailed(mainClass, config);
+                final ExpectedResult expected = printFailed(mainClass, config);
                 addTestResult(mainClass.getName(), String.format("bad exit value [received %d, expected %d; see %s and %s ]", maxineExitValue, javaExitValue, fileRef(javaOutput), fileRef(maxvmOutput)), expected);
             }
         } else if (compareFiles(javaOutput, maxvmOutput)) {
-            final boolean expected = printSuccess(mainClass, config);
+            final ExpectedResult expected = printSuccess(mainClass, config);
             addTestResult(mainClass.getName(), null, expected);
         } else {
-            final boolean expected = printFailed(mainClass, config);
+            final ExpectedResult expected = printFailed(mainClass, config);
             addTestResult(mainClass.getName(), String.format("output did not match [compare %s with %s ]", fileRef(javaOutput), fileRef(maxvmOutput)), expected);
         }
     }
