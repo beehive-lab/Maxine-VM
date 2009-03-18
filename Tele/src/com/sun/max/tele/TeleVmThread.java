@@ -63,10 +63,14 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
         if (teleVM().epoch() > _epoch) {
             final Reference nameReference = teleVM().fields().VmThread_name.readReference(reference());
             if (_nameReference == null || !nameReference.equals(_nameReference)) {
-                // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
-                // if we've already seen the string (depends on canonical references).
-                _nameReference = nameReference;
-                _name = teleVM().getString(_nameReference);
+                if (nameReference.isZero()) {
+                    _name = "*unset*";
+                } else {
+                    // Assume strings in the {@link TeleVM} don't change, so we don't need to re-read
+                    // if we've already seen the string (depends on canonical references).
+                    _nameReference = nameReference;
+                    _name = teleVM().getString(_nameReference);
+                }
             }
             _epoch = teleVM().epoch();
         }

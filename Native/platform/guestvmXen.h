@@ -22,6 +22,7 @@
 #define __guestvmXen_h__ 1
 
 #include "os.h"
+#include <maxine.h>
 
 #if os_GUESTVMXEN
     typedef void *guestvmXen_Thread;
@@ -57,6 +58,7 @@
     extern void guestvmXen_initStack(void *threadSpecifics);
     extern void guestvmXen_blue_zone_trap(void *threadSpecifics);
     extern unsigned long guestvmXen_remap_boot_code_region(unsigned long base, size_t size);
+    extern void guestvmXen_native_props(native_props_t *native_props);
 
 
     typedef unsigned int guestvmXen_SpecificsKey;

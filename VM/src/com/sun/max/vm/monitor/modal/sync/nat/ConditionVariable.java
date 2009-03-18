@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.monitor.modal.sync.nat;
 
+import java.lang.ref.*;
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
@@ -29,12 +30,29 @@ import com.sun.max.vm.runtime.*;
 /**
  * Java wrapper for a native condition variable.
  *
+ * TODO: Decide how to keep the NativeReference instances reachable and how to manage disposal.
+ *
  * @author Simon Wilkinson
+ * @author Mick Jordan
  */
 public final class ConditionVariable {
 
-    @CONSTANT_WHEN_NOT_ZERO
-    private Pointer _condition = Pointer.zero();
+    static class NativeReference extends WeakReference<ConditionVariable> {
+
+        @CONSTANT_WHEN_NOT_ZERO
+        private Pointer _condition = Pointer.zero();
+
+        NativeReference(ConditionVariable c) {
+            super(c, _refQueue);
+        }
+
+        private void disposeNative() {
+            Memory.deallocate(_condition);
+        }
+    }
+
+    private static ReferenceQueue<ConditionVariable> _refQueue = new ReferenceQueue<ConditionVariable>();
+    private NativeReference _native;
 
     private static int _size;
 
@@ -67,18 +85,19 @@ public final class ConditionVariable {
     }
 
     public ConditionVariable() {
+        _native = new NativeReference(this);
     }
 
     /**
      * Performs native allocation for this {@code ConditionVariable}.
      */
     public void allocate() {
-        _condition =  Memory.mustAllocate(_size);
-        nativeConditionInitialize(_condition);
+        _native._condition =  Memory.mustAllocate(_size);
+        nativeConditionInitialize(_native._condition);
     }
 
     public boolean requiresAllocation() {
-        return _condition.isZero();
+        return _native._condition.isZero();
     }
 
     /**
@@ -99,7 +118,7 @@ public final class ConditionVariable {
      */
     @INLINE
     public boolean threadWait(Mutex mutex, long timeoutMilliSeconds) {
-        return nativeConditionWait(mutex.asPointer(), _condition, timeoutMilliSeconds);
+        return nativeConditionWait(mutex.asPointer(), _native._condition, timeoutMilliSeconds);
     }
 
     /**
@@ -111,7 +130,7 @@ public final class ConditionVariable {
      */
     @INLINE
     public boolean threadNotify(boolean all) {
-        return nativeConditionNotify(_condition, all);
+        return nativeConditionNotify(_native._condition, all);
     }
 
     /**
@@ -120,12 +139,7 @@ public final class ConditionVariable {
      */
     @INLINE
     public Pointer asPointer() {
-        return _condition;
+        return _native._condition;
     }
 
-    @Override
-    public void finalize() throws Throwable {
-        super.finalize();
-        Memory.deallocate(_condition);
-    }
 }

@@ -28,7 +28,7 @@ include $(PROJECT)/tele/$(OS)/$(OS).mk
 
 SOURCES = $(OS_SOURCES) address.c arithmeticException.c boxedMemory.c boxedPointer.c c.c log.c tele.c mutex.c threadSpecifics.c $(ISA).c jni.c loophole.c platform.c relocation.c virtualMemory.c
 
-SOURCE_DIRS = tele tele/$(OS) jni platform prototype share
+SOURCE_DIRS = tele tele/$(OS) jni platform prototype share substrate
 
 include $(PROJECT)/share/share.mk
 

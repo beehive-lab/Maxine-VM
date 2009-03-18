@@ -60,8 +60,8 @@ import com.sun.max.vm.thread.*;
 public class JavaMonitorManager {
 
     // Image build time properties
-    private static final String UNBOUNDLIST_IMAGE_QTY_PROPERTY = "max.monitor.unboundpool.imagesize";
-    private static final String UNBOUNDLIST_GROW_QTY_PROPERTY = "max.monitor.unboundpool.grow";
+    public static final String UNBOUNDLIST_IMAGE_QTY_PROPERTY = "max.monitor.unboundpool.imagesize";
+    public static final String UNBOUNDLIST_GROW_QTY_PROPERTY = "max.monitor.unboundpool.grow";
 
     private static final int _UNBOUNDLIST_MIN_QTY = 25;      // minimum to keep in case gc or monitor allocation needs
     private static final int _UNBOUNDLIST_IMAGE_QTY = 50; // Initial allocation in image
