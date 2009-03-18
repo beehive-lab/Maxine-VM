@@ -138,7 +138,7 @@ void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSiz
         threadSpecificsList_add(_threadSpecificsList, primordialThreadSpecifics);
 #if log_THREADS
         log_print("Added to global thread specifics list: ");
-        threadSpecifics_println(threadSpecifics);
+        threadSpecifics_println(primordialThreadSpecifics);
 #endif
     }
 }
