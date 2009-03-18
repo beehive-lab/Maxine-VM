@@ -44,6 +44,10 @@
 
 #include "maxine.h"
 
+#if os_GUESTVMXEN
+#include "guestvmXen.h"
+#endif
+
 #define IMAGE_FILE_NAME  "maxine.vm"
 #define DARWIN_STACK_ALIGNMENT ((Address) 16)
 #define ENABLE_CARD_TABLE_VERIFICATION 0
@@ -397,21 +401,14 @@ void *native_environment() {
     return (void *)environ;
 }
 
-/**
- * The layout of this struct must be kept in sync with the com.sun.max.vm.MaxineVM.NativeJavaProperty enum.
- */
-typedef struct {
-    char *user_name;
-    char *user_home;
-    char *user_dir;
-} native_props_t;
-
-void *native_properties() {
+void *native_properties(void) {
     static native_props_t nativeProperties = {0, 0, 0};
     if (nativeProperties.user_dir != NULL) {
         return &nativeProperties;
     }
-
+#if os_GUESTVMXEN
+    guestvmXen_native_props(&nativeProperties);
+#else
     /* user properties */
     {
         struct passwd *pwent = getpwuid(getuid());
@@ -430,6 +427,7 @@ void *native_properties() {
             nativeProperties.user_dir = strdup(buf);
         }
     }
+#endif
 #if log_LOADER
     log_println("native_properties: user_name=%s", nativeProperties.user_name);
     log_println("native_properties: user_home=%s", nativeProperties.user_home);

@@ -59,6 +59,7 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
+        test.output.WeakReferenceTest03.class,
     };
 
     static void addTestName(Object object, Set<String> testNames) {
@@ -144,6 +145,7 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
+        test.output.WeakReferenceTest03.class,
         test.output.Thread_join04.class,
         test.hotpath.HP_array02.class, // 329
         test.hotpath.HP_series.class, // 333
@@ -178,6 +180,7 @@ public class MaxineTesterConfiguration {
         test.output.JavacTest.class,
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
+        test.output.WeakReferenceTest03.class,
         test.bytecode.BC_frem.class,  // 45
         test.except.Catch_NPE_03.class, // 202
         test.except.Catch_NPE_04.class, // 203
