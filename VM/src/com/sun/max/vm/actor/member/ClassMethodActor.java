@@ -272,13 +272,13 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     /**
-     * @see InliningAnnotationsValidator#apply(Method)
+     * @see InliningAnnotationsValidator#apply(ClassMethodActor)
      */
     @PROTOTYPE_ONLY
     private void validateInlineAnnotation() {
         if (!_compilee.holder().isGenerated()) {
             try {
-                InliningAnnotationsValidator.apply(_compilee.toJava());
+                InliningAnnotationsValidator.apply(_compilee);
             } catch (LinkageError linkageError) {
                 ProgramWarning.message("Error while validating INLINE annotation for " + _compilee + ": " + linkageError);
             }

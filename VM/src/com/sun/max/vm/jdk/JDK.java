@@ -83,6 +83,7 @@ public class JDK {
     public static final ClassRef sun_reflect_annotation_AnnotationParser    = new ClassRef(sun.reflect.annotation.AnnotationParser.class);
     public static final ClassRef sun_reflect_Reflection                     = new ClassRef(sun.reflect.Reflection.class);
     public static final ClassRef sun_reflect_ReflectionFactory              = new ClassRef(sun.reflect.ReflectionFactory.class);
+    public static final ClassRef sun_reflect_ConstantPool                   = new ClassRef(sun.reflect.ConstantPool.class);
 
     public static final ClassRef sun_security_action_GetPropertyAction      = new ClassRef(sun.security.action.GetPropertyAction.class);
 

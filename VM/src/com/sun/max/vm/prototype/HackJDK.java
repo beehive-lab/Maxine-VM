@@ -153,9 +153,11 @@ public final class HackJDK {
             "booted",
             "finalRefCount",
             "peakFinalRefCount",
+        JDK.sun_reflect_ConstantPool,
+            "constantPoolOop",
         JDK.sun_reflect_Reflection,
-            new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class,String[]>())),
-            new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class,String[]>())),
+            new ValueField("fieldFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())),
+            new ValueField("methodFilterMap", ReferenceValue.from(new HashMap<Class, String[]>())),
         JDK.java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl,
             new AtomicFieldUpdaterOffsetRecomputation("offset"),
         JDK.java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl,
@@ -277,9 +279,9 @@ public final class HackJDK {
 
     public abstract static class SpecialField {
         private final String _name;
-        public Field _field;
+        public FieldActor _fieldActor;
         SpecialField(String name) {
-            this._name = name;
+            _name = name;
         }
         public String getName() {
             return _name;
