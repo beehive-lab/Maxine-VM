@@ -22,8 +22,6 @@ package com.sun.max.vm.compiler.b.c;
 
 import static com.sun.max.vm.compiler.cir.CirTraceObserver.TransformationType.*;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
@@ -148,18 +146,17 @@ public class BirToCirTranslator extends CirGenerator {
     @PROTOTYPE_ONLY
     private CirClosure applyWrapping(final ClassMethodActor classMethodActor, final CirClosure cirClosure) {
         if (!classMethodActor.isInitializer()) {
-            final Method wrappedMethod = classMethodActor.toJava();
             Class wrapperHolder = null;
             if (classMethodActor.isJniFunction()) {
                 wrapperHolder = JniFunctionWrapper.class;
             } else {
-                final WRAPPED wrapped = wrappedMethod.getAnnotation(WRAPPED.class);
+                final WRAPPED wrapped = classMethodActor.getAnnotation(WRAPPED.class);
                 if (wrapped != null) {
                     wrapperHolder = wrapped.value();
                 }
             }
             if (wrapperHolder != null) {
-                final ClassMethodActor wrapperClassMethodActor = (ClassMethodActor) MethodActor.fromJava(WRAPPED.Static.getWrapper(wrappedMethod, wrapperHolder));
+                final ClassMethodActor wrapperClassMethodActor = (ClassMethodActor) MethodActor.fromJava(WRAPPED.Static.getWrapper(classMethodActor.toJava(), wrapperHolder));
                 final CirMethod wrapperCirMethod = makeIrMethod(wrapperClassMethodActor);
                 notifyBeforeTransformation(wrapperCirMethod, null, WRAPPER_APPLICATION);
                 final CirClosure wrappedCirClosure = CirWrapping.apply(wrapperCirMethod, cirClosure);
@@ -203,8 +200,7 @@ public class BirToCirTranslator extends CirGenerator {
         if (compilerScheme().optimizing()) {
             CirInliningPolicy cirInliningPolicy = CirInliningPolicy.DYNAMIC;
             if (MaxineVM.isPrototyping() && !cirMethod.classMethodActor().isHiddenToReflection()) {
-                final Method javaMethod = cirMethod.classMethodActor().toJava();
-                final ACCESSOR accessorAnnotation = javaMethod.getAnnotation(ACCESSOR.class);
+                final ACCESSOR accessorAnnotation = cirMethod.classMethodActor().getAnnotation(ACCESSOR.class);
                 if (accessorAnnotation != null) {
                     cirInliningPolicy = new CirInliningPolicy(accessorAnnotation.value());
                 }
