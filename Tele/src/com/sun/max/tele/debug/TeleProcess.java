@@ -117,7 +117,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     continuing = false;
                     final boolean ok = waitUntilStopped();
                     if (!ok) {
-                        Trace.line(TRACE_VALUE, tracePrefix() + "Error in native code waiting for process to stop: " + request);
+                        Trace.end(TRACE_VALUE, tracePrefix() + "waiting for execution to stop: " + request + " (PROCESS TERMINATED)");
+                        updateState(TERMINATED);
+                        return;
                     }
 
                     teleVM().refresh(_epoch);
