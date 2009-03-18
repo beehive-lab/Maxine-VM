@@ -103,7 +103,7 @@
     typedef struct fault_regs UContext;
     extern void register_fault_handler(int fault, fault_handler_t fault_handler);
     typedef	struct {
-    	void	*ss_sp;
+    	unsigned long ss_sp;
     	size_t	ss_size;
     } stackinfo_t;
 

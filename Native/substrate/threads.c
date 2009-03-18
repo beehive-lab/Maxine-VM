@@ -132,13 +132,18 @@ void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSiz
         primordialThreadSpecifics->stackBase = stackEnd - stackSize;
         primordialThreadSpecifics->stackSize = stackSize;
         pthread_attr_destroy(&attr);
+#elif os_GUESTVMXEN
+        stackinfo_t stackInfo;
+        guestvmXen_get_stack_info(&stackInfo);
+        primordialThreadSpecifics->stackBase = stackInfo.ss_sp - stackInfo.ss_size;
+        primordialThreadSpecifics->stackSize = stackInfo.ss_size;
 #else
         c_UNIMPLEMENTED();
 #endif
         threadSpecificsList_add(_threadSpecificsList, primordialThreadSpecifics);
 #if log_THREADS
         log_print("Added to global thread specifics list: ");
-        threadSpecifics_println(threadSpecifics);
+        threadSpecifics_println(primordialThreadSpecifics);
 #endif
     }
 }
@@ -154,7 +159,7 @@ ThreadSpecifics thread_currentSpecifics() {
     }
     return value;
 #elif os_GUESTVMXEN
-    return (ThreadSpecifics*) guestvmXen_thread_getSpecific(_specificsKey);
+    return (ThreadSpecifics) guestvmXen_thread_getSpecific(_specificsKey);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -162,6 +167,7 @@ ThreadSpecifics thread_currentSpecifics() {
 
 ThreadSpecifics thread_createSegments(int id, Size stackSize) {
     ThreadSpecifics threadSpecifics = calloc(1, sizeof(ThreadSpecificsStruct));
+    log_println("thread_createSegments %d %lx", id, threadSpecifics);
     if (threadSpecifics == NULL) {
     	return NULL;
     }
