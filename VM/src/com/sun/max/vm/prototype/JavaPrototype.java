@@ -355,12 +355,8 @@ public class JavaPrototype extends Prototype {
             final Class[] parameterTypes = descriptor.getParameterTypes(holder.getClassLoader());
             final ClassLoader classLoader = holder.getClassLoader();
             final String name = methodActor.isSurrogate() ? com.sun.max.annotate.SURROGATE.Static.toSurrogateName(methodActor.name().toString()) : methodActor.name().toString();
-            try {
-                javaMethod = Classes.getDeclaredMethod(holder, descriptor.getResultDescriptor().toJava(classLoader), name, parameterTypes);
-                _methodActorMap.put(methodActor, javaMethod);
-            } catch (NoSuchMethodException e) {
-                throw ProgramError.unexpected(e);
-            }
+            javaMethod = Classes.getDeclaredMethod(holder, descriptor.getResultDescriptor().toJava(classLoader), name, parameterTypes);
+            _methodActorMap.put(methodActor, javaMethod);
         }
         assert MethodActor.fromJava(javaMethod) == methodActor;
         return javaMethod;

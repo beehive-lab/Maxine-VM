@@ -115,11 +115,6 @@
             <property name="format" value=" ,"/>
             <property name="ignoreComments" value="true"/>
         </module>
-        <module name="GenericIllegalRegexp">
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Checks for non well formed VCS identifiers"/>
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.customMessage" value="Illegal VCS identifier, most likely the result of formatting the whole file"/>
-            <property name="format" value="^/\* VCSID="/>
-        </module>
     </module>
     <module name="NewlineAtEndOfFile"/>
     <module name="Translation"/>

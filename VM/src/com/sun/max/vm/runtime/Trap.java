@@ -96,7 +96,7 @@ public final class Trap {
      */
     public static boolean isTrapStub(MethodActor methodActor) {
         if (MaxineVM.isPrototyping()) {
-            return !methodActor.isInitializer() && methodActor.toJava().equals(_trapStubMethod);
+            return !methodActor.isInitializer() && MaxineVM.isMaxineClass(methodActor.holder()) && methodActor.toJava().equals(_trapStubMethod);
         }
         return methodActor == _trapStub.classMethodActor();
     }

@@ -22,8 +22,6 @@ package com.sun.max.lang;
 
 import java.lang.reflect.*;
 
-import com.sun.max.program.*;
-
 /**
  * Methods that might be members of java.lang.Class.
  *
@@ -87,7 +85,7 @@ public final class Classes {
                 final Class<?> linkedClass = Class.forName(c.getName(), false, c.getClassLoader());
                 assert linkedClass == c;
             } catch (ClassNotFoundException classNotFoundException) {
-                ProgramError.unexpected(classNotFoundException);
+                throw (NoClassDefFoundError) new NoClassDefFoundError(c.getName()).initCause(classNotFoundException);
             }
         }
     }
@@ -103,7 +101,7 @@ public final class Classes {
         try {
             Class.forName(c.getName(), true, c.getClassLoader());
         } catch (ClassNotFoundException classNotFoundException) {
-            ProgramError.unexpected(classNotFoundException);
+            throw (NoClassDefFoundError) new NoClassDefFoundError(c.getName()).initCause(classNotFoundException);
         }
     }
 
@@ -229,7 +227,7 @@ public final class Classes {
                         throw new AbstractMethodError();
                     }
                     return method;
-                } catch (NoSuchMethodException e) {
+                } catch (NoSuchMethodError e) {
                     declaringClass = declaringClass.getSuperclass();
                 }
             } while (declaringClass != null);
@@ -252,7 +250,7 @@ public final class Classes {
         do {
             try {
                 return getDeclaredField(declaringClass, name, type);
-            } catch (NoSuchFieldException e) {
+            } catch (NoSuchFieldError e) {
                 for (Class superInterface : javaClass.getInterfaces()) {
                     try {
                         return resolveField(superInterface, type, name);
@@ -348,7 +346,7 @@ public final class Classes {
      * Similar to {@link Class#getDeclaredMethod(String, Class...)} except that
      * the search takes into account the return type.
      */
-    public static Method getDeclaredMethod(Class<?> clazz, Class returnType, String name, Class... parameterTypes)  throws NoSuchMethodException {
+    public static Method getDeclaredMethod(Class<?> clazz, Class returnType, String name, Class... parameterTypes)  throws NoSuchMethodError {
         for (Method javaMethod : clazz.getDeclaredMethods()) {
             if (javaMethod.getName().equals(name) && javaMethod.getReturnType().equals(returnType)) {
                 final Class[] declaredParameterTypes = javaMethod.getParameterTypes();
@@ -357,7 +355,7 @@ public final class Classes {
                 }
             }
         }
-        throw new NoSuchMethodException(returnType.getName() + " " + clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")");
+        throw new NoSuchMethodError(returnType.getName() + " " + clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")");
     }
 
     /**
@@ -367,7 +365,7 @@ public final class Classes {
         try {
             return clazz.getDeclaredMethod(name, parameterTypes);
         } catch (NoSuchMethodException noSuchMethodException) {
-            throw ProgramError.unexpected("could not find required method: " + clazz.getName() + "." + name + "(" + Arrays.toString(parameterTypes, ",") + ")", noSuchMethodException);
+            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "(" + Arrays.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
         }
     }
 
@@ -378,7 +376,7 @@ public final class Classes {
         try {
             return clazz.getDeclaredConstructor(parameterTypes);
         } catch (NoSuchMethodException noSuchMethodException) {
-            throw ProgramError.unexpected("could not find required constructor: " + clazz.getName() + "(" + Arrays.toString(parameterTypes, ",") + ")", noSuchMethodException);
+            throw (NoSuchMethodError) new NoSuchMethodError(clazz.getName() + "(" + Arrays.toString(parameterTypes, ",") + ")").initCause(noSuchMethodException);
         }
     }
 
@@ -389,20 +387,20 @@ public final class Classes {
         try {
             return clazz.getDeclaredField(name);
         } catch (NoSuchFieldException noSuchFieldException) {
-            throw ProgramError.unexpected("could not find required field: " + clazz.getName() + "." + name, noSuchFieldException);
+            throw (NoSuchFieldError) new NoSuchFieldError(clazz.getName() + "." + name).initCause(noSuchFieldException);
         }
     }
 
     /**
      * Similar to {@link Class#getDeclaredField(String)} except that the lookup takes into account a given field type.
      */
-    public static Field getDeclaredField(Class<?> clazz, String name, Class type) throws NoSuchFieldException {
+    public static Field getDeclaredField(Class<?> clazz, String name, Class type) throws NoSuchFieldError {
         for (Field field : clazz.getDeclaredFields()) {
             if (field.getName().equals(name) && field.getType().equals(type)) {
                 return field;
             }
         }
-        throw new NoSuchFieldException(type.getName() + " " + clazz.getName() + "." + name);
+        throw new NoSuchFieldError(type.getName() + " " + clazz.getName() + "." + name);
     }
 
     public static void main(Class<?> classToRun, String[] args) {
@@ -410,7 +408,7 @@ public final class Classes {
             final Method mainMethod = classToRun.getMethod("main", String[].class);
             mainMethod.invoke(null, (Object) args);
         } catch (Exception e) {
-            ProgramError.unexpected(e);
+            throw (Error) new Error().initCause(e);
         }
     }
 

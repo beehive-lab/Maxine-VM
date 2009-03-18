@@ -299,6 +299,10 @@ public abstract class MethodActor extends MemberActor {
 
     @Override
     public final <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+        final TypeDescriptor annotationTypeDescriptor = JavaTypeDescriptor.forJavaClass(annotationClass);
+        if (MaxineVM.isMaxineClass(annotationTypeDescriptor) && !MaxineVM.isMaxineClass(holder())) {
+            return null;
+        }
         if (isInstanceInitializer()) {
             return toJavaConstructor().getAnnotation(annotationClass);
         }
