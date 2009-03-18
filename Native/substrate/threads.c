@@ -131,7 +131,6 @@ void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSiz
         Address stackEnd = primordialVmThreadLocals + vmThreadLocalsSize;
         primordialThreadSpecifics->stackBase = stackEnd - stackSize;
         primordialThreadSpecifics->stackSize = stackSize;
-        log_println("vmThreadLocalsSize: %d", vmThreadLocalsSize);
         pthread_attr_destroy(&attr);
 #else
         c_UNIMPLEMENTED();
