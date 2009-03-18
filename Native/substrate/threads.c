@@ -73,7 +73,7 @@ static SpecificsKey _specificsKey;
  */
 static ThreadSpecificsList _threadSpecificsList = NULL;
 
-void threads_initialize(Address primordialVmThreadLocals) {
+void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSize) {
 #if os_DARWIN || os_LINUX
     pthread_key_create(&_specificsKey, free);
 #elif os_SOLARIS
@@ -94,23 +94,52 @@ void threads_initialize(Address primordialVmThreadLocals) {
          * so that it can be found by the debugger. */
         image_write_value(ThreadSpecificsList, threadSpecificsListOffset, _threadSpecificsList);
 
-        /* Create dummy thread specifics for the primordial thread so that its VM thread locals
-         * can be acessed by the debugger. */
+#if log_THREADS
+        log_println("Allocated global thread specifics list at %p", _threadSpecificsList);
+#endif
+
+        /* Create thread specifics for the primordial thread so that its VM thread locals
+         * can be accessed by the debugger. */
         ThreadSpecifics primordialThreadSpecifics = calloc(1, sizeof(ThreadSpecificsStruct));
         if (primordialThreadSpecifics == NULL) {
             log_exit(11, "Could not allocate primoridial thread specifics.");
         }
         primordialThreadSpecifics->id = -1;
         primordialThreadSpecifics->next = primordialThreadSpecifics;
-        primordialThreadSpecifics->stackBase = primordialVmThreadLocals;
         primordialThreadSpecifics->triggeredVmThreadLocals = primordialVmThreadLocals;
         primordialThreadSpecifics->enabledVmThreadLocals = primordialVmThreadLocals;
         primordialThreadSpecifics->disabledVmThreadLocals = primordialVmThreadLocals;
 
-        threadSpecificsList_add(_threadSpecificsList, primordialThreadSpecifics);
+#if os_SOLARIS
+        stack_t stackInfo;
+        int result = thr_stksegment(&stackInfo);
 
+        if (result != 0) {
+            log_exit(result, "thr_stksegment failed");
+        }
+
+        primordialThreadSpecifics->stackSize = stackInfo.ss_size;
+        primordialThreadSpecifics->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
+#elif os_DARWIN || os_LINUX
+        /* There's no support for finding the base and size of the current thread's stack in Linux or Darwin
+         * so we simply make a guess based the stack memory allocated (via alloca)
+         * in the stack frame maxine() in maxine.c and the default stack size for a pthread. */
+        pthread_attr_t attr;
+        size_t stackSize;
+        pthread_attr_init(&attr);
+        pthread_attr_getstacksize (&attr, &stackSize);
+        Address stackEnd = primordialVmThreadLocals + vmThreadLocalsSize;
+        primordialThreadSpecifics->stackBase = stackEnd - stackSize;
+        primordialThreadSpecifics->stackSize = stackSize;
+        log_println("vmThreadLocalsSize: %d", vmThreadLocalsSize);
+        pthread_attr_destroy(&attr);
+#else
+        c_UNIMPLEMENTED();
+#endif
+        threadSpecificsList_add(_threadSpecificsList, primordialThreadSpecifics);
 #if log_THREADS
-        log_println("Allocated thread specifics list at %p", _threadSpecificsList);
+        log_print("Added to global thread specifics list: ");
+        threadSpecifics_println(threadSpecifics);
 #endif
     }
 }
@@ -139,12 +168,6 @@ ThreadSpecifics thread_createSegments(int id, Size stackSize) {
     }
     threadSpecifics->id = id;
     threadSpecifics->next = threadSpecifics;
-
-    if (_threadSpecificsList != NULL) {
-        /* Add 'threadSpecifics' to the global list so that the debugger can find it. */
-        /* It is removed when a thread terminates; see the end of 'thread_runJava()'. */
-        threadSpecificsList_add(_threadSpecificsList, threadSpecifics);
-    }
 
 #if os_SOLARIS
     // stack is allocated as part of Solaris thread creation
@@ -287,9 +310,15 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     	return (Thread) 0;
     }
 
+    if (_threadSpecificsList != NULL) {
+        /* Add 'threadSpecifics' to the global list so that the debugger can find it. */
+        /* It is removed when a thread terminates; see the end of 'thread_runJava()'. */
+        threadSpecificsList_add(_threadSpecificsList, threadSpecifics);
 #if log_THREADS
-    log_println("thread_create: stack base %p", threadSpecifics->stackBase);
+        log_print("Added to global thread specifics list: ");
+        threadSpecifics_println(threadSpecifics);
 #endif
+    }
 
 #if os_GUESTVMXEN
     thread = guestvmXen_create_thread_with_stack("java_thread",
@@ -421,6 +450,10 @@ void *thread_runJava(void *arg) {
         /* remove 'threadSpecifics' from the list known by the debugger; from this point on
          * the thread will be detected as a non-Java thread. */
         threadSpecificsList_remove(_threadSpecificsList, threadSpecifics);
+#if log_THREADS
+        log_print("Removed from global thread specifics list: ");
+        threadSpecifics_println(threadSpecifics);
+#endif
     }
 
     /* destroy thread locals, deallocate stack, restore guard pages */

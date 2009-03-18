@@ -40,6 +40,8 @@
 
 #define PT_SETOPTIONS  0x4200
 #define PT_GETEVENTMSG 0x4201
+#define PT_GETSIGINFO  0x4202
+#define PT_SETSIGINFO  0x4203
 
 /* Options set using PTRACE_SETOPTIONS.  */
 enum __ptrace_setoptions {
@@ -65,8 +67,11 @@ enum __ptrace_eventcodes {
 
 #define PT_SETOPTIONS 0x4200
 
-extern long _ptrace(const char *file, const char* func, int line, int request, pid_t pid, void *address, void *data);
-#define ptrace(request, pid, address, data) _ptrace(__FILE__, __func__, __LINE__, (request), (pid), (void *) (Address) (address), (void *) (Address) (data))
+#define POS_PARAMS const char *file, int line
+#define POS __FILE__, __LINE__
+
+extern long _ptrace(POS_PARAMS, int request, pid_t pid, void *address, void *data);
+#define ptrace(request, pid, address, data) _ptrace(POS, (request), (pid), (void *) (Address) (address), (void *) (Address) (data))
 
 /**
  * Extracts the ptrace event code from the status value returned by a call to waitpid.
@@ -80,5 +85,11 @@ extern long _ptrace(const char *file, const char* func, int line, int request, p
  * @return "<unknown>" if 'event' is not a valid __ptrace_eventcodes value
  */
 extern const char* ptraceEventName(int event);
+
+/**
+ * Checks that the current task/thread is the one designated as the parent of the ptraced process 'pid'.
+ * The ptraced process can only be accessed from this parent.
+ */
+void ptrace_check_tracer(POS_PARAMS, pid_t pid);
 
 #endif

@@ -38,20 +38,17 @@
  * @param threadSpecificsList the ThreadSpecificsList whose elements are to be printed
  * @param separator the string to be printed between elements
  */
-void threadSpecifics_print(ThreadSpecifics ts) {
-    log_print("ThreadSpecifics[%d: base=%p, end=%p, size=%lu, triggered=%p, enabled=%p, disabled=%p]",
+void threadSpecifics_println(ThreadSpecifics ts) {
+    log_println("ThreadSpecifics[%d: base=%p, end=%p, size=%lu, triggered=%p, enabled=%p, disabled=%p]",
                     ts->id, ts->stackBase, ts->stackBase + ts->stackSize, ts->stackSize,
                     ts->triggeredVmThreadLocals, ts->enabledVmThreadLocals, ts->disabledVmThreadLocals);
 }
 
-void threadSpecificsList_printList(ThreadSpecificsList threadSpecificsList, const char *separator) {
+void threadSpecificsList_printList(ThreadSpecificsList threadSpecificsList) {
     ThreadSpecifics threadSpecifics = threadSpecificsList->head;
     while (threadSpecifics != NULL) {
-        threadSpecifics_print(threadSpecifics);
+        threadSpecifics_println(threadSpecifics);
         threadSpecifics = threadSpecifics->next;
-        if (threadSpecifics != NULL) {
-            log_print("%s", separator);
-        }
     }
 }
 
@@ -67,12 +64,6 @@ void threadSpecificsList_add(ThreadSpecificsList threadSpecificsList, ThreadSpec
 
     // Ensure that 'threadSpecifics' is not already on the list
     c_ASSERT(threadSpecifics->next == threadSpecifics);
-
-#if log_THREADS
-    log_print("Added ");
-    threadSpecifics_print(threadSpecifics);
-    log_println(" to global list");
-#endif
 
     threadSpecifics->next = threadSpecificsList->head;
     threadSpecificsList->head = threadSpecifics;
@@ -104,24 +95,12 @@ void threadSpecificsList_remove(ThreadSpecificsList threadSpecificsList, ThreadS
     // Denote that 'threadSpecifics' is no longer on a list
     threadSpecifics->next = threadSpecifics;
 
-#if log_THREADS
-    log_print("Removed ");
-    threadSpecifics_print(threadSpecifics);
-    log_println(" from global list");
-#endif
-
     TSL_MUTEX_DO(threadSpecificList, mutex_exit);
 }
 
 #if TELE
 
-/**
- * Searches a ThreadSpecificsList (see threadSpecifics.h) in the VM's address space for the ThreadSpecifics entry whose
- * 'stackBase' and 'stackSize' imply that its stack contains 'stackPointer'. If such an entry is found, then its contents
- * are copied from the VM to the 'threadSpecifics' struct. If no such entry is found, then the fields
- * of 'threadSpecifics' are zeroed except for 'stackBase' which is assigned 'stackPointer'.
- */
-void threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
+Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
     ThreadSpecificsListStruct threadSpecificsListStruct;
 
     ThreadSpecificsList threadSpecificsList = &threadSpecificsListStruct;
@@ -129,22 +108,24 @@ void threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsLis
     Address threadSpecificsAddress = (Address) threadSpecificsList->head;
     while (threadSpecificsAddress != 0) {
         READ_PROCESS_MEMORY(threadSpecificsAddress, threadSpecifics, sizeof(ThreadSpecificsStruct));
-        if (threadSpecifics->id == -1) {
-            /* primordial thread: adjust stack size based on current stack pointer */
-            Size stackSize = (threadSpecifics->triggeredVmThreadLocals - stackPointer);
-            threadSpecifics->stackSize = stackSize;
-            threadSpecifics->stackBase = stackPointer;
-        }
+#if 0
+        log_print("threadSpecificsList_search(%p): ", stackPointer);
+        threadSpecifics_println(threadSpecifics);
+#endif
         Address stackBase = threadSpecifics->stackBase;
         Size stackSize = threadSpecifics->stackSize;
-        if (stackBase <= stackPointer && stackPointer < (stackBase + stackSize)) {
-            return;
+        if (stackBase <= stackPointer &&
+            stackPointer < (stackBase + stackSize) &&
+            threadSpecifics->triggeredVmThreadLocals != 0 &&
+            threadSpecifics->enabledVmThreadLocals != 0 &&
+            threadSpecifics->disabledVmThreadLocals != 0) {
+            return true;
         }
         threadSpecificsAddress = (Address) threadSpecifics->next;
     }
 
     memset((void *) threadSpecifics, 0, sizeof(ThreadSpecificsStruct));
-    threadSpecifics->stackBase = stackPointer;
+    return false;
 }
 
 #endif

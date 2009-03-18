@@ -27,11 +27,11 @@ import com.sun.max.program.*;
 
 /**
  * Compute given functions in always one and the same single thread.
- * 
+ *
  * This is for example necessary in Linux where one and
  * the same thread needs to be reused to represent the whole process in certain contexts,
  * e.g. when using the ptrace interface.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -47,8 +47,10 @@ public class SingleThread extends Thread {
         }
     });
 
+    private static final boolean _disabled = false;
+
     public static synchronized <Result_Type> Result_Type execute(Function<Result_Type> function) {
-        if (Thread.currentThread() == _worker) {
+        if (_disabled || Thread.currentThread() == _worker) {
             try {
                 return function.call();
             } catch (Exception exception) {
@@ -68,7 +70,7 @@ public class SingleThread extends Thread {
     }
 
     public static <Result_Type> Result_Type executeWithException(Function<Result_Type> function) throws Exception {
-        if (Thread.currentThread() == _worker) {
+        if (_disabled || Thread.currentThread() == _worker) {
             return function.call();
         }
         synchronized (_executorService) {
@@ -90,7 +92,7 @@ public class SingleThread extends Thread {
     }
 
     public static void execute(final Runnable runnable) {
-        if (Thread.currentThread() == _worker) {
+        if (_disabled || Thread.currentThread() == _worker) {
             runnable.run();
         }
         synchronized (_executorService) {
