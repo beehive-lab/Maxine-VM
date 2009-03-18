@@ -286,13 +286,16 @@ function run_build() {
             pushd . >/dev/null
             cd ${maxine_dir}/${project_dir}/${source_dir}
             echo "Compiling Java sources in ${maxine_dir}/${project_dir}/${source_dir}..."
-            run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin `find . -name *.java` 2>&1 | \
+            javac_input=/tmp/javacfiles.txt.$$
+            find . -name *.java >$javac_input
+            run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin @$javac_input 2>&1 | \
                awk ' BEGIN                    { s=0; c=-1}
                      /is Sun proprietary API/ { s++; c=2; }
                                               { if (c-- >= 0) next; print; }
                      END                      { if (s > 0) print "Suppressed " s " warnings about use of Sun implementation classes" }'
             
             result=$?
+            rm $javac_input
             for file in `find . -type f | grep -v '.java$'`; do
                 if [ -d ../bin/$(dirname $file) ]; then
                    run cp $file ../bin/$file
