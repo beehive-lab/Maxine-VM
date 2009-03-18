@@ -19,11 +19,13 @@
  * Company, Ltd.
  */
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <syscall.h>
 
 #include "word.h"
 #include "log.h"
@@ -48,6 +50,8 @@ static const char* requestToString(int request, char *unknownRequestNameBuf, int
         CASE(PT_GETFPREGS);
         CASE(PT_SETOPTIONS);
         CASE(PT_GETEVENTMSG);
+        CASE(PT_GETSIGINFO);
+        CASE(PT_SETSIGINFO);
     }
     snprintf(unknownRequestNameBuf, unknownRequestNameBufLength, "<unknown:%d>", request);
     return unknownRequestNameBuf;
@@ -95,16 +99,26 @@ long ptrace_withRetries(int request, int processID, void *address, void *data) {
 #endif
 
 /*
- * Used to enforce the constraint that all access of the ptraced process from the same process.
- * This value is initialized linuxTask.c.
+ * Used to enforce the constraint that all access of the ptraced process from the same task/thread.
+ * This value is initialized in linuxTask.c.
  */
-pid_t _ptracer = 0;
+static pid_t _ptracerTask = 0;
 
-long _ptrace(const char *file, const char *func, int line, int request, pid_t pid, void *address, void *data) {
-    if (request != PT_TRACE_ME && _ptracer != getpid()) {
-        log_println("%s:%d: Can only ptrace %d from parent process %d, not process %d", file, line, pid, _ptracer, getpid());
-        errno = EINVAL;
-        return -1;
+#define POS_PARAMS const char *file, int line
+#define POS __FILE__, __LINE__
+
+void ptrace_check_tracer(POS_PARAMS, pid_t pid) {
+    pid_t tid = syscall(__NR_gettid);
+    if (_ptracerTask == 0) {
+        _ptracerTask = tid;
+    } else if(_ptracerTask != tid) {
+        log_exit(11, "%s:%d: Can only ptrace %d from task %d, not task %d", file, line, pid, _ptracerTask, tid);
+    }
+}
+
+long _ptrace(POS_PARAMS, int request, pid_t pid, void *address, void *data) {
+    if (request != PT_TRACE_ME) {
+        ptrace_check_tracer(POS, pid);
     }
     long result;
     static int lastRequest = 0;
@@ -118,6 +132,7 @@ long _ptrace(const char *file, const char *func, int line, int request, pid_t pi
         requestName = requestToString(request, unknownRequestNameBuf, sizeof(unknownRequestNameBuf));
         log_print("%s:%d ptrace(%s, %d, %p, %p)", file, line, requestName, pid, address, data);
     }
+    errno = 0;
     result = ptrace_withRetries(request, pid, address, data);
     int error = errno;
     if (trace) {

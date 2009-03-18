@@ -64,7 +64,11 @@ int _ptrace(const char *file, int line, int request, pid_t pid, caddr_t address,
     int error = errno;
 
     if (log_TELE) {
-        log_println(" = %p", result);
+        if (request == PT_READ_D || request == PT_READ_I || request == PT_READ_U) {
+            log_println(" = %p", result);
+        } else {
+            log_print_newline();
+        }
     }
     if (error != 0) {
         requestName = requestToString(request, unknownRequestNameBuf, sizeof(unknownRequestNameBuf));

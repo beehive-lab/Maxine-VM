@@ -57,7 +57,7 @@ typedef void (*VMThreadRunMethod)(jint id, Address nativeThread,
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
 
-extern void threads_initialize(Address primordialVmThreadLocals);
+extern void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSize);
 
 #define STACK_GUARD_PAGES 2
 

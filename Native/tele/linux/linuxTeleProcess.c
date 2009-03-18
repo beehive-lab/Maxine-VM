@@ -56,9 +56,9 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
 
     Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
     ThreadSpecificsStruct tss;
-    threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &tss);
 
-    tele_log_println("Gathered thread[id=%d, tid=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+    if (threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &tss)) {
+        tele_log_println("Gathered thread[id=%d, tid=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
                     tss.id,
                     tid,
                     tss.stackBase,
@@ -68,7 +68,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
                     tss.enabledVmThreadLocals,
                     tss.disabledVmThreadLocals);
 
-    (*env)->CallVoidMethod(env, linuxTeleProcess, _methodID,
+        (*env)->CallVoidMethod(env, linuxTeleProcess, _methodID,
                     threads,
                     tid,
                     (jint) TS_SUSPENDED,
@@ -77,6 +77,9 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
                     tss.triggeredVmThreadLocals,
                     tss.enabledVmThreadLocals,
                     tss.disabledVmThreadLocals);
+    } else {
+        tele_log_println("Ignoring native/terminated thread denoted by stack pointer %p", stackPointer);
+    }
 }
 
 JNIEXPORT void JNICALL

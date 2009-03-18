@@ -77,7 +77,6 @@ public final class LinuxTeleProcess extends TeleProcess {
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        _task.resume();
         for (TeleNativeThread thread : threads()) {
             final LinuxTeleNativeThread linuxThread = (LinuxTeleNativeThread) thread;
             final LinuxTask threadTask = linuxThread.task();
@@ -85,16 +84,32 @@ public final class LinuxTeleProcess extends TeleProcess {
                 threadTask.resume();
             }
         }
+        _task.resume();
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        _task.suspend(true);
+        for (TeleNativeThread thread : threads()) {
+            final LinuxTeleNativeThread linuxThread = (LinuxTeleNativeThread) thread;
+            final LinuxTask threadTask = linuxThread.task();
+            if (!threadTask.equals(_task)) {
+                threadTask.suspend(false);
+            }
+        }
+        _task.suspend(false);
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        final boolean result = _task.waitUntilStopped();
+        boolean result = true;
+        for (TeleNativeThread thread : threads()) {
+            final LinuxTeleNativeThread linuxThread = (LinuxTeleNativeThread) thread;
+            final LinuxTask threadTask = linuxThread.task();
+            if (!threadTask.equals(_task)) {
+                result = threadTask.waitUntilStopped() && result;
+            }
+        }
+        result = _task.waitUntilStopped() && result;
         invalidateCache();
         return result;
     }

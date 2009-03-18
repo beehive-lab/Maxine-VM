@@ -31,6 +31,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <signal.h>
+#include <syscall.h>
 
 #include "log.h"
 #include "ptrace.h"
@@ -84,7 +86,7 @@ static jboolean handleNewThread(int tid) {
         return false;
     }
 
-    ptrace(PT_SETOPTIONS, tid, 0, PTRACE_O_TRACECLONE);
+    ptrace(PT_SETOPTIONS, tid, 0, PTRACE_O_TRACEEXIT | PTRACE_O_TRACECLONE);
     ptrace(PT_CONTINUE, tid, 0, 0);
     return true;
 }
@@ -114,23 +116,204 @@ void task_stat(pid_t tgid, pid_t tid, const char* format, ...) {
     free(buf);
 }
 
+/**
+ * Prints the set of signals implied by a given signal mask in a human readable form to the log stream.
+ */
+void log_signal_mask(unsigned long signalMask) {
+    size_t signal;
+    Boolean first = true;
+    for (signal = 0; signal < sizeof(signalMask); ++signal) {
+        if ((signalMask & (1 << signal)) != 0) {
+            if (first) {
+                first = false;
+            } else {
+                log_print(", ");
+            }
+            log_print("%d [%s]", signal, strsignal(signal));
+        }
+    }
+}
+
+/**
+ * Prints the contents of /proc/<tgid>/task/<tid>/stat in a human readable to the log stream.
+ *
+ * @param tgid a task group id
+ * @param tid a task id
+ * @param messageFormat the format specification of the message to be printed to the log prior to the stat details
+ */
+void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
+    char *buf;
+    if (asprintf(&buf, "/proc/%d/task/%d/stat", tid, tid) < 0) {
+        log_println("Error calling asprintf(): %s", strerror(errno));
+        return;
+    }
+    FILE *sp = fopen(buf, "r");
+    va_list ap;
+    va_start(ap,messageFormat);
+    log_print_vformat(messageFormat, ap);
+    va_end(ap);
+    log_print_newline();
+
+#define _STAT_FIELD(type, name, format, print) do { \
+    type name; \
+    fscanf(sp, format " ", &name); \
+    if (print) { \
+        log_println("  %20s: " format, STRINGIZE(name), name); \
+    } \
+} while (0)
+
+#define STAT_FIELD(type, name, format) _STAT_FIELD(type, name, format, true)
+#define STAT_FIELD_SKIP(type, name, format) _STAT_FIELD(type, name, format, false)
+
+#define STAT_STRING_FIELD(name) do { \
+    char *name; \
+    fscanf(sp, "%as ", &name); \
+        log_println("  %20s: %s", STRINGIZE(name), name); \
+} while (0)
+
+#define STAT_SIGNAL_MASK_FIELD(name) do { \
+    unsigned long name; \
+    fscanf(sp, "%lu ", &name); \
+    log_print("  %20s: ", STRINGIZE(name)); \
+    log_signal_mask(name); \
+    log_print_newline(); \
+} while (0)
+
+    STAT_FIELD(pid_t, TID, "%d");
+    STAT_STRING_FIELD(comm);
+    STAT_FIELD(char, State, "%c");
+    STAT_FIELD(pid_t, PPID, "%d");
+    STAT_FIELD(pid_t, TGID, "%d");
+    STAT_FIELD_SKIP(int, Session, "%d");
+    STAT_FIELD_SKIP(int, TTY, "%d");
+    STAT_FIELD_SKIP(int, TTY_PGID, "%d");
+    STAT_FIELD_SKIP(unsigned, Flags, "%u");
+    STAT_FIELD_SKIP(unsigned long, MinorFaults, "%lu");
+    STAT_FIELD_SKIP(unsigned long, MinorFaultsInChildren, "%lu");
+    STAT_FIELD_SKIP(unsigned long, MajorFaults, "%lu");
+    STAT_FIELD_SKIP(unsigned long, MajorFaultsInChildren, "%lu");
+    STAT_FIELD_SKIP(unsigned long, UserTime, "%lu");
+    STAT_FIELD_SKIP(unsigned long, KernelTime, "%lu");
+    STAT_FIELD_SKIP(long, UserTimeChildren, "%ld");
+    STAT_FIELD_SKIP(long, KernelTimeChildren, "%ld");
+    STAT_FIELD_SKIP(long, priority, "%ld");
+    STAT_FIELD_SKIP(long, Nice, "%ld");
+    STAT_FIELD(long, NumberThreads, "%ld");
+    STAT_FIELD_SKIP(long, SigAlarmCountdown, "%ld");
+    STAT_FIELD_SKIP(unsigned long long, StartTime, "%llu");
+    STAT_FIELD_SKIP(unsigned long, VirtualMemory, "%lu");
+    STAT_FIELD_SKIP(long, RSS, "%ld");
+    STAT_FIELD_SKIP(unsigned long, RSSLimit, "%lu");
+    STAT_FIELD_SKIP(void *, StartCode, "%p");
+    STAT_FIELD_SKIP(void *, EndCode, "%p");
+    STAT_FIELD(void *, StartStack, "%p");
+    STAT_FIELD(void *, KernelStackPointer, "%p");
+    STAT_FIELD_SKIP(void *, KernelInstructionPointer, "%p");
+    STAT_SIGNAL_MASK_FIELD(PendingSignals);
+    STAT_SIGNAL_MASK_FIELD(BlockedSignals);
+    STAT_SIGNAL_MASK_FIELD(IgnoredSignals);
+    STAT_SIGNAL_MASK_FIELD(CaughtSignals);
+    STAT_FIELD(void *, WaitChannel, "%p");
+    STAT_FIELD_SKIP(unsigned long, SwappedPages, "%lu");
+    STAT_FIELD_SKIP(unsigned long, SwappedPagesChildren, "%lu");
+    STAT_FIELD(int, ExitSignal, "%d");
+    STAT_FIELD(int, CPU, "%d");
+    STAT_FIELD_SKIP(unsigned long, RealtimePriority, "%lu");
+    STAT_FIELD_SKIP(unsigned long, SchedulingPolicy, "%lu");
+    STAT_FIELD_SKIP(unsigned long long, BlockIODelays, "%llu");
+#undef STAT_FIELD
+
+    if (fclose(sp) == EOF) {
+        log_println("Error closing %s: %s", buf, strerror(errno));
+    }
+    free(buf);
+}
+
+/**
+ * Gets the state of a given task.
+ *
+ * @param tgid the task group id of the task
+ * @param tid the id of the task
+ * @return one of the following characters denoting the state of task 'tid':
+ *     R: running
+ *     S: sleeping in an interruptible wait
+ *     D: waiting in uninterruptible disk sleep
+ *     Z: zombie
+ *     T: traced or stopped (on a signal)
+ *     W: is paging
+ */
 char task_state(pid_t tgid, pid_t tid) {
     char state = 'Z';
     task_stat(tgid, tid, "%*d %*s %c", &state);
     return state;
 }
 
+/**
+ *
+ */
 static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
+#define RETRY_COUNT 100
+#define RETRY(format, ...) do { \
+    if (retries-- <= 0) { \
+        log_println("Gave up after %d attempts", RETRY_COUNT); \
+        return false;\
+    } else { \
+        log_println(format, ##__VA_ARGS__); \
+        log_println("Retrying in %dms ...", TASK_RETRY_PAUSE_MICROSECONDS / 1000); \
+        usleep(TASK_RETRY_PAUSE_MICROSECONDS); \
+        continue; \
+    } \
+} while(0)
+
+    int retries = RETRY_COUNT;
     while (1) {
         int status;
 
-        tele_log_println("Waiting for task %d to receive signal %d [%s]", tid, signalnum, strsignal(signalnum));
+#if log_TELE
+        log_task_stat(tgid, tid, "waitForSignal(%d, %d): status of %d:", tgid, tid, tid);
+#endif
+        char state = task_state(tgid, tid);
+        switch (state) {
+            case 'D': {
+                RETRY("Task %d is in uninterruptible disk sleep", tid);
+            }
+            case 'W': {
+                RETRY("Task %d is paging", tid);
+            }
+            case 'Z': {
+                log_println("Task %d is in zombie state", tid);
+                return true;
+            }
+            case 'S': {
+                /* If this task is sleeping when another task hits a breakpoint or performs a single step, then this
+                 * task will not receive the SIGTRAP for some unknown reason. So, we generate one manually to put it
+                 * in the trapped state. */
+                tele_log_println("Task %d is sleeping - Sending SIGTRAP to jog it into TRAPPED state", tid);
+                if (kill(tid, SIGTRAP) != 0) {
+                    int error = errno;
+                    log_println("Error sending SIGTRAP to jog task %d: %s", tid, strerror(error));
+                    return false;
+                }
+                break;
+            }
+            case 'T': {
+#if log_TELE
+                siginfo_t siginfo;
+                if (ptrace(PT_GETSIGINFO, tid, NULL, &siginfo) == 0) {
+                    tele_log_println("Signal info: signo=%d, code=%d, errno=%d", siginfo.si_signo, siginfo.si_code, siginfo.si_errno);
+                }
+                tele_log_println("Task %d is stopped at breakpoint or on signal", tid);
+#endif
+                return true;
+            }
+        }
+
+        tele_log_println("Waiting for task %d which is in state '%c' to receive signal %d [%s]", tid, task_state(tgid, tid), signalnum, strsignal(signalnum));
 
         int result = waitpid(tid, &status, 0);
-        int error = errno;
         if (result != tid) {
-            log_println("waitpid failed with error %d [%s], status %p", error, strerror(error), status);
-            return false;
+            int error = errno;
+            RETRY("waitpid(%d) failed with result %d, error %d [%s]", tid, result, error, strerror(error));
         }
 
         if (WIFEXITED(status)) {
@@ -165,10 +348,10 @@ static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
                 return true;
             }
 
+            /* The signal is now delivered to the VM. */
             tele_log_println("Continuing task %d", tid);
-            ptrace(PT_CONTINUE, tid, NULL, signal);
-            error = errno;
-            if (error != 0) {
+            if (ptrace(PT_CONTINUE, tid, NULL, signal) != 0) {
+                int error = errno;
                 log_println("Continuing task %d failed: %s", tid, strerror(error));
                 return false;
             }
@@ -176,15 +359,9 @@ static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
     }
 }
 
-/* Used to enforce the constraint that all access of the ptraced process from the same process. */
-extern pid_t _ptracer;
-
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
     char **argv = (char**) commandLineArgumentArray;
-
-    c_ASSERT(_ptracer == 0);
-    _ptracer = getpid();
 
     int childPid = fork();
     if (childPid == 0) {
@@ -200,8 +377,8 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env
         }
         putenv(portDef);
 
-        /* Make the VM in its own process group. */
-        //setpgid(0, 0);
+        /* Put the VM in its own process group. */
+        setpgid(0, 0);
 
         /* This call does not return if it succeeds: */
         tele_log_println("Launching VM executable: %s", argv[0]);
@@ -212,7 +389,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env
         /*parent:*/
         int status;
         if (waitpid(childPid, &status, 0) == childPid && WIFSTOPPED(status)) {
-            /* Configure child so that it traps when it exits or as it starts new threads */
+            /* Configure child so that it traps when it exits or starts new threads */
             ptrace(PT_SETOPTIONS, childPid, 0, PTRACE_O_TRACEEXIT | PTRACE_O_TRACECLONE);
             return childPid;
         }
@@ -223,15 +400,6 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeDetach(JNIEnv *env, jclass c, jint tgid, jint tid) {
     return ptrace(PT_DETACH, tid, 0, 0) == 0;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSingleStep(JNIEnv *env, jclass c, jint tgid, int tid) {
-    if (ptrace(PT_STEP, tid, 0, 0) != 0) {
-        return false;
-    }
-    task_wait_for_state(tgid, tid, "T");
-    return true;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -246,8 +414,18 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSuspend(JNIEnv *env, jclass c,
 }
 
 JNIEXPORT jboolean JNICALL
+Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSingleStep(JNIEnv *env, jclass c, jint tgid, int tid) {
+    if (ptrace(PT_STEP, tid, 0, 0) != 0) {
+        return false;
+    }
+    task_wait_for_state(tgid, tid, "T");
+    return true;
+}
+
+JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeResume(JNIEnv *env, jclass c, jint tgid, jint tid) {
-    return ptrace(PT_CONTINUE, tid, NULL, 0) == 0;
+    int result = ptrace(PT_CONTINUE, tid, NULL, 0);
+    return result == 0;
 }
 
 JNIEXPORT jboolean JNICALL
@@ -270,11 +448,7 @@ static pid_t _task_memory_pid;
  * TODO: Ensure that the file descriptor is closed once tracing is complete.
  */
 int task_memory_read_fd(int tgid, void *address) {
-    if (_ptracer != getpid()) {
-        log_println("Can only read memory of %d from tracer process %d, not process %d", tgid, _ptracer, getpid());
-        errno = EINVAL;
-        return -1;
-    }
+    ptrace_check_tracer(POS, tgid);
     if (_task_memory_read_fd == 0) {
         _task_memory_pid = tgid;
         char *memoryFileName;

@@ -158,9 +158,15 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         _integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         _floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         _stateRegisters = new TeleStateRegisters(vmConfiguration);
-        _stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize),
-            Pointer.fromLong(triggeredVmThreadLocals), Pointer.fromLong(enabledVmThreadLocals), Pointer.fromLong(disabledVmThreadLocals));
-        _breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
+        if (triggeredVmThreadLocals == 0) {
+            assert enabledVmThreadLocals == 0;
+            assert disabledVmThreadLocals == 0;
+            _stack = null;
+        } else {
+            _stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize),
+                Pointer.fromLong(triggeredVmThreadLocals), Pointer.fromLong(enabledVmThreadLocals), Pointer.fromLong(disabledVmThreadLocals));
+            _breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
+        }
     }
 
     /**

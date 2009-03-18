@@ -65,7 +65,7 @@ typedef struct {
  *
  * @param threadSpecifics the ThreadSpecifics to be printed
  */
-extern void threadSpecifics_print(ThreadSpecifics threadSpecifics);
+extern void threadSpecifics_println(ThreadSpecifics threadSpecifics);
 
 /**
  * Adds a given ThreadSpecifics object to a given ThreadSpecificsList.
@@ -90,9 +90,8 @@ extern void threadSpecificsList_remove(ThreadSpecificsList threadSpecificsList, 
  * Prints the elements in a ThreadSpecificsList to the log stream.
  *
  * @param threadSpecificsList the ThreadSpecificsList whose elements are to be printed
- * @param separator the string to be printed between elements
  */
-extern void threadSpecificsList_printList(ThreadSpecificsList threadSpecificsList, const char *separator);
+extern void threadSpecificsList_printList(ThreadSpecificsList threadSpecificsList);
 
 #ifdef TELE
 
@@ -119,12 +118,17 @@ uint16_t readbytes(unsigned long address, char *buffer, uint16_t n);
 #endif
 
 /**
- * Searches a ThreadSpecificsList (see threadSpecifics.h) in the VM process address space for the ThreadSpecifics entry whose
- * 'stackBase' and 'stackSize' imply that its stack contains 'stackPointer'. If such an entry is found, then its contents
- * are copied from the VM to the 'threadSpecifics' struct. If no such entry is found, then the fields
- * of 'threadSpecifics' are zeroed except for 'stackBase' which is assigned the value of 'stackPointer'.
+ * Searches a ThreadSpecificsList (see threadSpecifics.h) in the VM's address space for a ThreadSpecifics
+ * entry 'ts' that meets the following criteria:
+ *
+ * 1. ts.stackBase <= stackPointer && stackPointer < (ts.stackBase + ts.stackSize)
+ * 2. ts.triggeredVmThreadLocals != NULL && ts.enabledVmThreadLocals != NULL && ts.disabledVmThreadLocals != NULL
+ *
+ * If such an entry is found, then its contents are copied from the VM to the given 'threadSpecifics' struct.
+ *
+ * @return true if an entry was found, false otherwise. If no entry is found, then the contents of 'threadSpecifics' are zeroed.
  */
-extern void threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
+extern Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
 
 #endif
 

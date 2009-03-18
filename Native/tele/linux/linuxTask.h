@@ -42,10 +42,23 @@ int task_read_registers(pid_t tid,
  */
 void task_stat(pid_t tgid, pid_t tid, const char* format, ...);
 
+/**
+ * Gets the state of a given task.
+ *
+ * @param tgid the task group id of the task
+ * @param tid the id of the task
+ * @return one of the following characters denoting the state of task 'tid':
+ *     R: running
+ *     S: sleeping in an interruptible wait
+ *     D: waiting in uninterruptible disk sleep
+ *     Z: zombie
+ *     T: traced or stopped (on a signal)
+ *     W: is paging
+ */
 char task_state(pid_t tgid, pid_t tid);
 
 /* Used to enforce the constraint that all access of the ptraced process from the same process. */
-extern pid_t _ptracer;
+extern pid_t _ptracerTask;
 
 /* Required to make lseek64 and off64_t available. */
 #define _LARGEFILE64_SOURCE 1
@@ -74,12 +87,23 @@ int task_write_subword(jint tgid, jint tid, void *dst, const void *src, size_t s
  */
 size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size);
 
+/**
+ * Prints the contents of /proc/<tgid>/task/<tid>/stat in a human readable to the log stream.
+ *
+ * @param tgid a task group id
+ * @param tid a task id
+ * @param messageFormat the format specification of the message to be printed to the log prior to the stat details
+ */
+void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...);
+
+#define TASK_RETRY_PAUSE_MICROSECONDS 2000000
+
 #include <unistd.h>
 #define task_wait_for_state(tgid, tid, states) do { \
     char state; \
     while (strchr(states, state = task_state(tgid, tid)) == NULL) { \
         tele_log_println("%s:%d: Task %d waiting for one of \"%s\" states, current state is %c", __FILE__, __LINE__, tid, states, state); \
-        usleep(2000000); \
+        usleep(TASK_RETRY_PAUSE_MICROSECONDS); \
     } \
 } while(0)
 

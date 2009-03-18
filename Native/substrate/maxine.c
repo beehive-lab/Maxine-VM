@@ -295,7 +295,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
     // Allocate the primordial VM thread locals:
-    Address primordialVmThreadLocals = (Address) alloca(image_header()->vmThreadLocalsSize + sizeof(Address));
+    Size vmThreadLocalsSize = image_header()->vmThreadLocalsSize;
+    Address primordialVmThreadLocals = (Address) alloca(vmThreadLocalsSize + sizeof(Address));
 
     // Align primordial VM thread locals to Word boundary:
     primordialVmThreadLocals = wordAlign(primordialVmThreadLocals);
@@ -303,7 +304,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     // Initialize all primordial VM thread locals to 0/null:
     memset((char *) primordialVmThreadLocals, 0, image_header()->vmThreadLocalsSize);
 
-    threads_initialize(primordialVmThreadLocals);
+    threads_initialize(primordialVmThreadLocals, vmThreadLocalsSize);
 
 #if log_LOADER
     log_println("primordial VM thread locals allocated at: %p", primordialVmThreadLocals);
