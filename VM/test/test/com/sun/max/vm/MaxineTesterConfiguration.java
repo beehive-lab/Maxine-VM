@@ -113,10 +113,19 @@ public class MaxineTesterConfiguration {
         _expectedAutoTestFailures
     );
 
+    static final Set<String> _nonDeterministicFailuresLinuxAMD64 = toTestNames(
+        test.output.SafepointWhileInNative.class,
+        test.output.SafepointWhileInJava.class
+    );
+
     static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
         test.output.JavacTest.class,
         test.output.BlockingQueue.class,
         _expectedAutoTestFailures
+    );
+
+    static final Set<String> _nonDeterministicFailuresDarwinAMD64 = toTestNames(
+        test.output.ZipFileReader.class
     );
 
     static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
@@ -242,36 +251,65 @@ public class MaxineTesterConfiguration {
         return DEFAULT_JAVA_TESTER_CONFIGS;
     }
 
+    public enum ExpectedResult {
+        PASS {
+            @Override
+            public boolean matchesActualResult(boolean passed) {
+                return passed;
+            }
+        },
+        FAIL {
+            @Override
+            public boolean matchesActualResult(boolean passed) {
+                return !passed;
+            }
+        },
+        NONDETERMINISTIC {
+            @Override
+            public boolean matchesActualResult(boolean passed) {
+                return true;
+            }
+        };
+
+        public abstract boolean matchesActualResult(boolean passed);
+    }
+
     /**
      * Determines if a given test is known to fail.
      *
      * @param testName a unique identifier for the test
      * @param config the {@linkplain #_maxvmConfigs maxvm} configuration used during the test execution. This value may be null.
      */
-    public static boolean isExpectedFailure(String testName, String config) {
+    public static ExpectedResult expectedResult(String testName, String config) {
         final Platform platform = Platform.host();
         if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
             final ProcessorKind processorKind = platform.processorKind();
             if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                return _expectedFailuresSolarisAMD64.contains(testName);
+                return _expectedFailuresSolarisAMD64.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
             } else if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
                 if (config != null && config.contains("jit")) {
-                    return _expectedJitFailuresSolarisSPARCV9.contains(testName);
+                    return _expectedJitFailuresSolarisSPARCV9.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
                 }
-                return _expectedFailuresSolarisSPARCV9.contains(testName);
+                return _expectedFailuresSolarisSPARCV9.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
             }
         } else if (platform.operatingSystem() == OperatingSystem.LINUX) {
             final ProcessorKind processorKind = platform.processorKind();
             if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                return _expectedFailuresLinuxAMD64.contains(testName);
+                if (_nonDeterministicFailuresLinuxAMD64.contains(testName)) {
+                    return ExpectedResult.NONDETERMINISTIC;
+                }
+                return _expectedFailuresLinuxAMD64.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
             }
         } else if (platform.operatingSystem() == OperatingSystem.DARWIN) {
             final ProcessorKind processorKind = platform.processorKind();
+            if (_nonDeterministicFailuresDarwinAMD64.contains(testName)) {
+                return ExpectedResult.NONDETERMINISTIC;
+            }
             if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                return _expectedFailuresDarwinAMD64.contains(testName);
+                return _expectedFailuresDarwinAMD64.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
             }
         }
-        return false;
+        return ExpectedResult.PASS;
     }
 
 

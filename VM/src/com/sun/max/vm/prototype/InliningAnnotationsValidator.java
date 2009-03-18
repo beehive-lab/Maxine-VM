@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 
 /**
  * A utility class for validating a given method with respect to usage of the {@link INLINE} and {@link NEVER_INLINE} annotations.
@@ -42,7 +43,11 @@ public final class InliningAnnotationsValidator {
      * This check is expensive and so should only be performed when
      * {@linkplain MaxineVM#isPrototyping() prototyping}.
      */
-    public static void apply(Method javaMethod) {
+    public static void apply(ClassMethodActor classMethodActor) {
+        if (!MaxineVM.isMaxineClass(classMethodActor.holder())) {
+            return;
+        }
+        final Method javaMethod = classMethodActor.toJava();
         if (_checked.contains(javaMethod)) {
             return;
         }
