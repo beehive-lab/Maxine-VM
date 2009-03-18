@@ -167,7 +167,6 @@ ThreadSpecifics thread_currentSpecifics() {
 
 ThreadSpecifics thread_createSegments(int id, Size stackSize) {
     ThreadSpecifics threadSpecifics = calloc(1, sizeof(ThreadSpecificsStruct));
-    log_println("thread_createSegments %d %lx", id, threadSpecifics);
     if (threadSpecifics == NULL) {
     	return NULL;
     }
