@@ -437,19 +437,31 @@ public class GraphPrototype extends Prototype {
                 AppendableSequence.Static.appendAll(classInfo._specialReferenceFields, superInfo._specialReferenceFields);
             }
 
-            for (Field field : javaClass.getDeclaredFields()) {
-                if (isReferenceField(field) && !MaxineVM.isPrototypeOnly(field)) {
-                    field.setAccessible(true);
-                    final ClassInfo info = isStatic(field) ? staticInfo : classInfo;
-                    final SpecialField specialField = HackJDK.getSpecialField(field);
-                    if (specialField != null) {
-                        specialField._field = field;
-                        if (!(specialField instanceof ZeroField)) {
-                            info._specialReferenceFields.append(specialField);
+            // Need to iterate over the fields using actors instead of reflection otherwise we'll
+            // miss fields that are hidden to reflection (see sun.reflection.Reflection.filterFields(Class, Field[])).
+            final ClassActor classActor = ClassActor.fromJava(javaClass);
+            for (FieldActor[] fieldActors : new FieldActor[][] {classActor.localInstanceFieldActors(), classActor.localStaticFieldActors()}) {
+                for (FieldActor fieldActor : fieldActors) {
+                    if (fieldActor.kind() == Kind.REFERENCE) {
+                        final ClassInfo info = fieldActor.isStatic() ? staticInfo : classInfo;
+                        final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
+                        if (specialField != null) {
+                            specialField._fieldActor = fieldActor;
+                            if (!(specialField instanceof ZeroField)) {
+                                info._specialReferenceFields.append(specialField);
+                            }
+                        } else {
+                            if (!fieldActor.isInjected()) {
+                                try {
+                                    final Field field = fieldActor.toJava();
+                                    field.setAccessible(true);
+                                    // TODO: mutable vs. immutable fields
+                                    info._mutableReferenceFields.append(field);
+                                } catch (NoSuchFieldError noSuchFieldError) {
+                                    ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
+                                }
+                            }
                         }
-                    } else {
-                        // TODO: mutable vs. immutable fields
-                        info._mutableReferenceFields.append(field);
                     }
                 }
             }
@@ -532,7 +544,7 @@ public class GraphPrototype extends Prototype {
         }
 
         for (SpecialField specialField : classInfo._specialReferenceFields) {
-            final Value value = specialField.getValue(object, FieldActor.fromJava(specialField._field));
+            final Value value = specialField.getValue(object, specialField._fieldActor);
             final Object result = value.unboxObject();
             add(object, result, specialField.getName());
         }

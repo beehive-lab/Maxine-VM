@@ -222,8 +222,13 @@ JVM_IsSupportedJNIVersion(jint version) {
  * java.lang.Float and java.lang.Double
  */
 jboolean
-JVM_IsNaN(jdouble d) {
-    return d != d;
+JVM_IsNaN(jdouble x) {
+    int hx,lx;
+    hx = (MATH_HI(x)&0x7fffffff);
+    lx = MATH_LO(x);
+    hx |= (unsigned)(lx|(-lx))>>31;
+    hx = 0x7ff00000 - hx;
+    return ((unsigned)(hx))>>31;
 }
 
 /*
