@@ -162,8 +162,8 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     }
 
     private final Inspection _inspection;
-    private final JTable _table;
-    private final MyTableModel _model;
+    private final TargetCodeTable _table;
+    private final TargetCodeTableModel _model;
     private final TargetCodeTableColumnModel _columnModel;
     private final TableColumn[] _columns;
     private final OperandsRenderer _operandsRenderer;
@@ -174,41 +174,16 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _inspection = inspection;
         _operandsRenderer = new OperandsRenderer();
         _sourceLineRenderer = new SourceLineRenderer();
-        _model = new MyTableModel();
+        _model = new TargetCodeTableModel(teleTargetRoutine.getInstructions());
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new TargetCodeTableColumnModel();
-        _table = new TargetCodeTable(_model, _columnModel);
+        _table = new TargetCodeTable(inspection, _model, _columnModel);
         createView(teleVM().epoch());
     }
 
     @Override
     protected void createView(long epoch) {
         super.createView(epoch);
-
-        _table.setOpaque(true);
-        _table.setBackground(style().defaultBackgroundColor());
-        _table.setFillsViewportHeight(true);
-        _table.setShowHorizontalLines(style().codeTableShowHorizontalLines());
-        _table.setShowVerticalLines(style().codeTableShowVerticalLines());
-        _table.setIntercellSpacing(style().codeTableIntercellSpacing());
-        _table.setRowHeight(style().codeTableRowHeight());
-        _table.setRowSelectionAllowed(true);
-        _table.setColumnSelectionAllowed(true);
-        _table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        _table.addMouseListener(new MyInspectorMouseClickAdapter(_inspection));
-
-        // Add listener to adjust the global code location focus when selected row changes
-        _table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    final int selectedRow = _table.getSelectedRow();
-                    if (selectedRow >= 0 && selectedRow < instructions().length()) {
-                        _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeInstructionAt(selectedRow).address()), true);
-                    }
-                }
-            }
-        });
 
         // Set up toolbar
         JButton button = new InspectorButton(_inspection, _inspection.actions().toggleTargetCodeBreakpoint());
@@ -293,7 +268,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeInstructionAt(row).address()), false);
+        _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), _model.getTargetCodeInstruction(row).address()), false);
     }
 
     @Override
@@ -308,51 +283,30 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     @Override
     public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
-        final int oldSelectedRow = getSelectedRow();
-        if (teleCodeLocation.hasTargetCodeLocation()) {
-            final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddresss();
-            if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
-                final int row = addressToRow(targetCodeInstructionAddress);
-                if (row >= 0) {
-                    if (row != oldSelectedRow) {
-                        _table.getSelectionModel().setSelectionInterval(row, row);
-                    }
-                    scrollToRows(row, row);
-                    return true;
-                }
-            }
-        }
-        if (oldSelectedRow >= 0) {
-            _table.getSelectionModel().clearSelection();
-        }
-        return false;
+        return _table.updateCodeFocus(teleCodeLocation);
     }
 
-    private void scrollToRows(int firstRow, int lastRow) {
-        assert firstRow <= lastRow;
-        final int rowHeight = _table.getHeight() / instructions().length();
-        final int width = _table.getWidth() - 2;
-        final int height = rowHeight - 2;
-        // Create a rectangle in the table view to use as a scroll target; include
-        // the row immediately before and the row immediately after so that the row of interest
-        // doesn't land at the very beginning or very end of the view, if possible.
-        final Rectangle rectangle = new Rectangle(0, (firstRow - 1) * rowHeight, width, 3 * height);
-        // System.out.println("row=" + firstRow + " rect=" + rectangle);
-        _table.scrollRectToVisible(rectangle);
-    }
+    /**
+     * Data model representing a block of disassembled code, one row per instruction.
+     */
+    private final class TargetCodeTableModel extends AbstractTableModel {
 
-    private final class MyTableModel extends AbstractTableModel {
+        private final IndexedSequence<TargetCodeInstruction> _instructions;
+
+        public TargetCodeTableModel(IndexedSequence<TargetCodeInstruction> instructions) {
+            _instructions = instructions;
+        }
 
         public int getColumnCount() {
             return ColumnKind.VALUES.length();
         }
 
         public int getRowCount() {
-            return instructions().length();
+            return _instructions.length();
         }
 
         public Object getValueAt(int row, int col) {
-            final TargetCodeInstruction targetCodeInstruction = targetCodeInstructionAt(row);
+            final TargetCodeInstruction targetCodeInstruction = getTargetCodeInstruction(row);
             switch (ColumnKind.VALUES.get(col)) {
                 case TAG:
                     return null;
@@ -400,12 +354,43 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     throw new RuntimeException("Column out of range: " + col);
             }
         }
+
+        public TargetCodeInstruction getTargetCodeInstruction(int row) {
+            return _instructions.get(row);
+        }
+
+        /**
+         * @param address a code address in the {@link TeleVM}.
+         * @return the row in this block of code containing an instruction starting at the address, -1 if none.
+         */
+        public int getRowAtAddress(Address address) {
+            int row = 0;
+            for (TargetCodeInstruction targetCodeInstruction : _instructions) {
+                if (targetCodeInstruction.address().equals(address)) {
+                    return row;
+                }
+                row++;
+            }
+            return -1;
+        }
     }
 
-    private final class TargetCodeTable extends JTable {
+    /**
+     * A table specialized for displaying a block of disassembled target code, one instruction per line.
+     */
+    private final class TargetCodeTable extends InspectorTable {
 
-        TargetCodeTable(TableModel model, TableColumnModel tableColumnModel) {
-            super(model, tableColumnModel);
+        TargetCodeTable(Inspection inspection, TargetCodeTableModel model, TargetCodeTableColumnModel tableColumnModel) {
+            super(inspection, model, tableColumnModel);
+            setFillsViewportHeight(true);
+            setShowHorizontalLines(style().codeTableShowHorizontalLines());
+            setShowVerticalLines(style().codeTableShowVerticalLines());
+            setIntercellSpacing(style().codeTableIntercellSpacing());
+            setRowHeight(style().codeTableRowHeight());
+            setRowSelectionAllowed(true);
+            setColumnSelectionAllowed(true);
+            setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
         }
 
         @Override
@@ -414,22 +399,75 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             final int row = getSelectedRow();
             if (row >= 0) {
                 g.setColor(style().debugSelectedCodeBorderColor());
-                g.drawRect(0, row * _table.getRowHeight(row), getWidth() - 1, _table.getRowHeight(row) - 1);
+                g.drawRect(0, row * getRowHeight(row), getWidth() - 1, getRowHeight(row) - 1);
             }
         }
 
         @Override
         protected JTableHeader createDefaultTableHeader() {
-            return new JTableHeader(_columnModel) {
+            return new JTableHeader(getColumnModel()) {
                 @Override
                 public String getToolTipText(MouseEvent mouseEvent) {
                     final Point p = mouseEvent.getPoint();
-                    final int index = _columnModel.getColumnIndexAtX(p.x);
-                    final int modelIndex = _columnModel.getColumn(index).getModelIndex();
+                    final int index = getColumnModel().getColumnIndexAtX(p.x);
+                    final int modelIndex = getColumnModel().getColumn(index).getModelIndex();
                     return ColumnKind.VALUES.get(modelIndex).toolTipText();
                 }
             };
         }
+
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            // The selection in the table has changed; might have happened via user action (click, arrow) or
+            // as a side effect of a focus change.
+            super.valueChanged(e);
+            if (!e.getValueIsAdjusting()) {
+                final int selectedRow = getSelectedRow();
+                final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
+                if (selectedRow >= 0 && selectedRow < targetCodeTableModel.getRowCount()) {
+                    inspection().focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeTableModel.getTargetCodeInstruction(selectedRow).address()), true);
+                }
+            }
+        }
+
+        /**
+         * Global code selection has been set; return true iff the view contains selection.
+         * Update even when the selection is set to the same value, because we want
+         * that to force a scroll to make the selection visible.
+         */
+        public boolean updateCodeFocus(TeleCodeLocation teleCodeLocation) {
+            final int oldSelectedRow = getSelectedRow();
+            if (teleCodeLocation.hasTargetCodeLocation()) {
+                final Address targetCodeInstructionAddress = inspection().focus().codeLocation().targetCodeInstructionAddresss();
+                if (teleTargetRoutine().targetCodeRegion().contains(targetCodeInstructionAddress)) {
+                    final TargetCodeTableModel model = (TargetCodeTableModel) getModel();
+                    final int row = model.getRowAtAddress(targetCodeInstructionAddress);
+                    if (row >= 0) {
+                        if (row != oldSelectedRow) {
+                            changeSelection(row, row, false, false);
+                        }
+                        scrollToRows(row, row);
+                        return true;
+                    }
+                }
+            }
+            // View doesn't contain the focus; clear any old selection
+            if (oldSelectedRow >= 0) {
+                clearSelection();
+            }
+            return false;
+        }
+
+        @Override
+        public void redisplay() {
+            // not used pending further refactoring
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            // not used pending further refactoring
+        }
+
     }
 
     private final class TargetCodeTableColumnModel extends DefaultTableColumnModel {
@@ -452,11 +490,12 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 }
             };
 
+            final Address startAddress = _model.getTargetCodeInstruction(0).address();
             createColumn(ColumnKind.TAG, new TagRenderer());
             createColumn(ColumnKind.NUMBER, new NumberRenderer());
-            createColumn(ColumnKind.ADDRESS, new AddressRenderer(targetCodeInstructionAt(0).address()));
-            createColumn(ColumnKind.POSITION, new PositionRenderer(targetCodeInstructionAt(0).address()));
-            createColumn(ColumnKind.LABEL, new LabelRenderer(targetCodeInstructionAt(0).address()));
+            createColumn(ColumnKind.ADDRESS, new AddressRenderer(startAddress));
+            createColumn(ColumnKind.POSITION, new PositionRenderer(startAddress));
+            createColumn(ColumnKind.LABEL, new LabelRenderer(startAddress));
             createColumn(ColumnKind.INSTRUCTION, new InstructionRenderer(_inspection));
             createColumn(ColumnKind.OPERANDS, _operandsRenderer);
             createColumn(ColumnKind.SOURCE_LINE, _sourceLineRenderer);
@@ -488,27 +527,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
      */
     private Color getRowTextColor(int row) {
         return isInstructionPointer(row) ? style().debugIPTextColor() : (isCallReturn(row) ? style().debugCallReturnTextColor() : style().defaultCodeColor());
-    }
-
-    private final class MyInspectorMouseClickAdapter extends InspectorMouseClickAdapter {
-        MyInspectorMouseClickAdapter(Inspection inspection) {
-            super(inspection);
-        }
-        @Override
-        public void procedure(final MouseEvent mouseEvent) {
-            // Locate the renderer under the event location, and pass along the mouse click if appropriate
-            final Point p = mouseEvent.getPoint();
-            final int hitColumnIndex = _table.columnAtPoint(p);
-            final int hitRowIndex = _table.rowAtPoint(p);
-            if ((hitColumnIndex != -1) && (hitRowIndex != -1)) {
-                final TableCellRenderer tableCellRenderer = _table.getCellRenderer(hitRowIndex, hitColumnIndex);
-                final Object cellValue = _table.getValueAt(hitRowIndex, hitColumnIndex);
-                final Component component = tableCellRenderer.getTableCellRendererComponent(_table, cellValue, false, true, hitRowIndex, hitColumnIndex);
-                if (component != null) {
-                    component.dispatchEvent(mouseEvent);
-                }
-            }
-        }
     }
 
     private final class TagRenderer extends JLabel implements TableCellRenderer, TextSearchable, Prober {
@@ -755,7 +773,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public Component getTableCellRendererComponent(JTable table, Object ignore, boolean isSelected, boolean hasFocus, int row, int col) {
             InspectorLabel inspectorLabel = _wordValueLabels[row];
             if (inspectorLabel == null) {
-                final TargetCodeInstruction targetCodeInstruction = targetCodeInstructionAt(row);
+                final TargetCodeInstruction targetCodeInstruction = _model.getTargetCodeInstruction(row);
                 final String text = targetCodeInstruction.operands();
                 if (targetCodeInstruction._targetAddress != null && !teleTargetRoutine().targetCodeRegion().contains(targetCodeInstruction._targetAddress)) {
                     inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress);

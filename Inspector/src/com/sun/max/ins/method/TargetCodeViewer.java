@@ -266,25 +266,6 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
         return _methodRefIndexFinder.methodRefIndex();
     }
 
-    protected TargetCodeInstruction targetCodeInstructionAt(int row) {
-        return _instructions.get(row);
-    }
-
-    /**
-     * Return the row containing the instruction at an address.
-     */
-    protected int addressToRow(Address instructionPointer) {
-        int row = 0;
-        for (TargetCodeInstruction targetCodeInstruction : _instructions) {
-            final Address address = targetCodeInstruction.address();
-            if (address.equals(instructionPointer)) {
-                return row;
-            }
-            row++;
-        }
-        return -1;
-    }
-
     /**
      * Rebuilds the cache of stack information if needed, based on the thread that is the current focus.
      * Identifies for each instruction in the method a stack frame (if any) whose instruction pointer is at the address of the instruction.
@@ -327,7 +308,7 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
      * Does the instruction address have a target code breakpoint set in the {@link TeleVM}.
      */
     protected TeleTargetBreakpoint getTargetBreakpointAtRow(int row) {
-        return teleVM().getTargetBreakpoint(targetCodeInstructionAt(row).address());
+        return teleVM().getTargetBreakpoint(_instructions.get(row).address());
     }
 
     protected final Color rowToBackgroundColor(int row) {
