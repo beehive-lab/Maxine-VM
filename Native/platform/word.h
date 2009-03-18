@@ -32,9 +32,13 @@
 #if defined(__x86) || defined(__x86_64) || defined(_X86_) || defined(i386)
 #   define word_LITTLE_ENDIAN 1
 #   define word_BIG_ENDIAN    0
+#   define MATH_HI(x) *(1+(int*)&x)
+#   define MATH_LO(x) *((int*)&x)
 #else
 #   define word_LITTLE_ENDIAN 0
 #   define word_BIG_ENDIAN    1
+#   define MATH_HI(x) (*(int*)&x)
+#   define MATH_LO(x) *(1+(int*)&x)
 #endif
 
 #undef word_64_BITS
