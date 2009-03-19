@@ -117,9 +117,9 @@ int task_read(task_t task, vm_address_t src, void *dst, size_t size);
 #define PROCESS_MEMORY_PARAMS struct ps_prochandle *ph,
 #define READ_PROCESS_MEMORY(src, dst, size) proc_Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
 #elif os_GUESTVMXEN
-uint16_t readbytes(unsigned long address, char *buffer, uint16_t n);
+extern unsigned short readbytes(unsigned long address, char *buffer, unsigned short n);
 #define PROCESS_MEMORY_PARAMS
-#define READ_PROCESS_MEMORY(src, dst, size) readbytes((unsigned long) src, (char *) dst, (uint16_t) size)
+#define READ_PROCESS_MEMORY(src, dst, size) readbytes((unsigned long) src, (char *) dst, (unsigned short) size)
 #else
 #error
 #endif

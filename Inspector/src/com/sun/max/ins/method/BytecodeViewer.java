@@ -177,51 +177,19 @@ public abstract class BytecodeViewer extends CodeViewer {
 
     }
 
-    protected BytecodeInstruction bytecodeInstructionAt(int row) {
-        return bytecodeInstructions().get(row);
-    }
-
-    /**
-     * Return the row containing the instruction starting at a bytecode position.
-     */
-    protected int positionToRow(int position) {
-        for (BytecodeInstruction instruction : bytecodeInstructions()) {
-            if (instruction.position() == position) {
-                return instruction.row();
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Return the row containing the instruction at an address.
-     */
-    protected int addressToRow(Address instructionPointer) {
-        if (_haveTargetCodeAddresses) {
-            for (BytecodeInstruction instruction : bytecodeInstructions()) {
-                int row = instruction.row();
-                if (rowContainsAddress(row, instructionPointer)) {
-                    return row;
-                }
-                row++;
-            }
-        }
-        return -1;
-    }
-
     /**
      * @return Whether the compiled code in the {@link TeleVM} for the bytecode at specified row contains the specified address.
      */
     protected boolean rowContainsAddress(int row, Address address) {
         if (_haveTargetCodeAddresses) {
-            final BytecodeInstruction bytecodeInstruction = bytecodeInstructionAt(row);
+            final BytecodeInstruction bytecodeInstruction = _bytecodeInstructions.get(row);
             if (address.lessThan(bytecodeInstruction._targetCodeFirstAddress)) {
                 // before the first byte location of the first target instruction for this bytecode
                 return false;
             }
             if (row < (_bytecodeInstructions.length() - 1)) {
                 // All but last bytecode instruction: see if before the first byte location of the first target instruction for the next bytecode
-                return address.lessThan(bytecodeInstructionAt(row + 1)._targetCodeFirstAddress);
+                return address.lessThan(_bytecodeInstructions.get(row + 1)._targetCodeFirstAddress);
             }
             // Last bytecode instruction:  see if before the end of the target code
             final TargetCodeInstruction lastTargetCodeInstruction = _targetCodeInstructions.last();
