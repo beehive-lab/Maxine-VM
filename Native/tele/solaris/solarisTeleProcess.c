@@ -279,7 +279,10 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
 
     ThreadSpecificsStruct tss;
     Address stackPointer = getRegister(a->ph, lwpId, R_SP);
-    threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &tss);
+    if (!threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &tss)) {
+        memset(&tss, 0, sizeof(tss));
+        tss.id = -2;
+    }
 
     if (_methodID == NULL) {
         jclass c = (*a->env)->GetObjectClass(a->env, a->process);

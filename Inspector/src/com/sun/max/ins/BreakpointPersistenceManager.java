@@ -114,7 +114,8 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
         int index = 0;
         for (TeleTargetBreakpoint breakpoint : targetBreakpoints) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
-            settings.save(prefix + "." + ADDRESS_KEY, breakpoint.address().toLong());
+            final Address bootImageOffset = breakpoint.address().minus(_inspection.teleVM().bootImageStart());
+            settings.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
             settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             final BreakpointCondition condition = breakpoint.condition();
             if (condition != null) {
@@ -127,7 +128,8 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
         final int numberOfBreakpoints = settings.get(this, TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, OptionTypes.INT_TYPE, 0);
         for (int i = 0; i < numberOfBreakpoints; i++) {
             final String prefix = TARGET_BREAKPOINT_KEY + i;
-            final Address address = Address.fromLong(settings.get(this, prefix + "." + ADDRESS_KEY, OptionTypes.LONG_TYPE, null));
+            final Address bootImageOffset = Address.fromLong(settings.get(this, prefix + "." + ADDRESS_KEY, OptionTypes.LONG_TYPE, null));
+            final Address address = _inspection.teleVM().bootImageStart().plus(bootImageOffset);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, null);
             final String condition = settings.get(this, prefix + "." + CONDITION_KEY, OptionTypes.STRING_TYPE, null);
             if (_inspection.teleVM().containsInCode(address)) {

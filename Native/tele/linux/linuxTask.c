@@ -179,6 +179,8 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
     log_print_newline(); \
 } while (0)
 
+#define STAT_SIGNAL_MASK_FIELD_SKIP(name) _STAT_FIELD(unsigned long, name, "%lu", false)
+
     STAT_FIELD(pid_t, TID, "%d");
     STAT_STRING_FIELD(comm);
     STAT_FIELD(char, State, "%c");
@@ -206,17 +208,17 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
     STAT_FIELD_SKIP(unsigned long, RSSLimit, "%lu");
     STAT_FIELD_SKIP(void *, StartCode, "%p");
     STAT_FIELD_SKIP(void *, EndCode, "%p");
-    STAT_FIELD(void *, StartStack, "%p");
-    STAT_FIELD(void *, KernelStackPointer, "%p");
+    STAT_FIELD_SKIP(void *, StartStack, "%p");
+    STAT_FIELD_SKIP(void *, KernelStackPointer, "%p");
     STAT_FIELD_SKIP(void *, KernelInstructionPointer, "%p");
-    STAT_SIGNAL_MASK_FIELD(PendingSignals);
-    STAT_SIGNAL_MASK_FIELD(BlockedSignals);
-    STAT_SIGNAL_MASK_FIELD(IgnoredSignals);
-    STAT_SIGNAL_MASK_FIELD(CaughtSignals);
-    STAT_FIELD(void *, WaitChannel, "%p");
+    STAT_SIGNAL_MASK_FIELD_SKIP(PendingSignals);
+    STAT_SIGNAL_MASK_FIELD_SKIP(BlockedSignals);
+    STAT_SIGNAL_MASK_FIELD_SKIP(IgnoredSignals);
+    STAT_SIGNAL_MASK_FIELD_SKIP(CaughtSignals);
+    STAT_FIELD_SKIP(void *, WaitChannel, "%p");
     STAT_FIELD_SKIP(unsigned long, SwappedPages, "%lu");
     STAT_FIELD_SKIP(unsigned long, SwappedPagesChildren, "%lu");
-    STAT_FIELD(int, ExitSignal, "%d");
+    STAT_FIELD_SKIP(int, ExitSignal, "%d");
     STAT_FIELD(int, CPU, "%d");
     STAT_FIELD_SKIP(unsigned long, RealtimePriority, "%lu");
     STAT_FIELD_SKIP(unsigned long, SchedulingPolicy, "%lu");
@@ -300,7 +302,7 @@ static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
 #if log_TELE
                 siginfo_t siginfo;
                 if (ptrace(PT_GETSIGINFO, tid, NULL, &siginfo) == 0) {
-                    tele_log_println("Signal info: signo=%d, code=%d, errno=%d", siginfo.si_signo, siginfo.si_code, siginfo.si_errno);
+                    tele_log_println("Signal info: signo=%d, code=%d [%p]", siginfo.si_signo, siginfo.si_code, siginfo.si_code);
                 }
                 tele_log_println("Task %d is stopped at breakpoint or on signal", tid);
 #endif

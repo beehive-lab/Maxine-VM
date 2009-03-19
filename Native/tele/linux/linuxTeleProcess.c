@@ -52,13 +52,20 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
     task_wait_for_state(tgid, tid, "T");
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
-    task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL);
+    isa_CanonicalStateRegistersStruct canonicalStateRegisters;
+    task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL);
+
+    tele_log_println("%d: rsp=%p, rip=%p, *rip=%p", tid, (Address) canonicalIntegerRegisters.rsp, (Address) canonicalStateRegisters.rip, ptrace(PT_READ_D, tid, canonicalStateRegisters.rip, NULL));
 
     Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
     ThreadSpecificsStruct tss;
 
-    if (threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &tss)) {
-        tele_log_println("Gathered thread[id=%d, tid=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+    if (!threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &tss)) {
+        memset(&tss, 0, sizeof(tss));
+        tss.id = -2;
+    }
+
+    tele_log_println("Gathered thread[id=%d, tid=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
                     tss.id,
                     tid,
                     tss.stackBase,
@@ -68,7 +75,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
                     tss.enabledVmThreadLocals,
                     tss.disabledVmThreadLocals);
 
-        (*env)->CallVoidMethod(env, linuxTeleProcess, _methodID,
+    (*env)->CallVoidMethod(env, linuxTeleProcess, _methodID,
                     threads,
                     tid,
                     (jint) TS_SUSPENDED,
@@ -77,9 +84,6 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
                     tss.triggeredVmThreadLocals,
                     tss.enabledVmThreadLocals,
                     tss.disabledVmThreadLocals);
-    } else {
-        tele_log_println("Ignoring native/terminated thread denoted by stack pointer %p", stackPointer);
-    }
 }
 
 JNIEXPORT void JNICALL

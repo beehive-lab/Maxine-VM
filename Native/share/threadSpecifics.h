@@ -61,6 +61,13 @@ typedef struct {
 } ThreadSpecificsListStruct, *ThreadSpecificsList;
 
 /**
+ * Determines if a given thread specifics denotes a Java thread. A thread specifics 'ts' denotes a Java thread if:
+ *
+ *   ts.triggeredVmThreadLocals != NULL && ts.enabledVmThreadLocals != NULL && ts.disabledVmThreadLocals != NULL
+ */
+extern Boolean threadSpecifics_isJava(ThreadSpecifics threadSpecifics);
+
+/**
  * Prints a selection of the fields in a given ThreadSpecifics object.
  *
  * @param threadSpecifics the ThreadSpecifics to be printed
@@ -119,14 +126,13 @@ uint16_t readbytes(unsigned long address, char *buffer, uint16_t n);
 
 /**
  * Searches a ThreadSpecificsList (see threadSpecifics.h) in the VM's address space for a ThreadSpecifics
- * entry 'ts' that meets the following criteria:
+ * entry 'ts' such that:
  *
- * 1. ts.stackBase <= stackPointer && stackPointer < (ts.stackBase + ts.stackSize)
- * 2. ts.triggeredVmThreadLocals != NULL && ts.enabledVmThreadLocals != NULL && ts.disabledVmThreadLocals != NULL
+ *   ts.stackBase <= stackPointer && stackPointer < (ts.stackBase + ts.stackSize)
  *
  * If such an entry is found, then its contents are copied from the VM to the given 'threadSpecifics' struct.
  *
- * @return true if an entry was found, false otherwise. If no entry is found, then the contents of 'threadSpecifics' are zeroed.
+ * @return true if an entry was found, false otherwise
  */
 extern Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
 

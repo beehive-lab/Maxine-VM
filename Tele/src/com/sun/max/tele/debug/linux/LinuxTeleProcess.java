@@ -136,7 +136,7 @@ public final class LinuxTeleProcess extends TeleProcess {
      */
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int tid, int state, long stackStart, long stackSize,
                     long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        LinuxTeleNativeThread thread = (LinuxTeleNativeThread) idToThread(tid);
+        LinuxTeleNativeThread thread = (LinuxTeleNativeThread) idAndStateToThread(tid, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         if (thread == null) {
             thread = new LinuxTeleNativeThread(this, tid, stackStart, stackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         }

@@ -174,6 +174,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * thread last stopped.
      */
     public Sequence<StackFrame> frames() {
+        if (!isJava()) {
+            return Sequence.Static.empty(StackFrame.class);
+        }
         return _frames;
     }
 

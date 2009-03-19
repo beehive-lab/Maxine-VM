@@ -78,7 +78,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
      */
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize,
                     long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idToThread(threadId);
+        GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idAndStateToThread(threadId, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         if (thread == null) {
             /* Need to align and skip over the guard page at the base of the stack.
              * N.B. "base" is low address (i.e., actually the end of the stack!).
