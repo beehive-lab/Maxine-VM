@@ -248,16 +248,6 @@ public final class VmThreadMap {
     };
 
     /**
-     * Looks up a thread based on its serial number.
-     *
-     * @param serial the serial number of the thread
-     * @return the VmThread with the specified serial number
-     */
-    public VmThread getThreadFromSerial(long serial) {
-        return _idMap.getThreadFromSerial(serial);
-    }
-
-    /**
      * Gets the {@code VmThread} object associated with the specified thread id.
      *
      * @param id the thread id
@@ -271,9 +261,10 @@ public final class VmThreadMap {
     /**
      * The {@code IDMap} class manages thread ids and a mapping between thread ids and
      * the corresponding {@code VmThread} instance.
+     * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockWord64}).
      */
     private final class IDMap {
-        private int _nextID;
+        private int _nextID = 1;
         private int[] _freeList;
         private VmThread[] _vmThreads;
 
@@ -322,13 +313,5 @@ public final class VmThreadMap {
             return UnsafeLoophole.cast(ArrayAccess.getObject(_vmThreads, id));
         }
 
-        VmThread getThreadFromSerial(long serial) {
-            for (int i = 0; i < _vmThreads.length; i++) {
-                if (_vmThreads[i].serial() == serial) {
-                    return _vmThreads[i];
-                }
-            }
-            return null;
-        }
     }
 }

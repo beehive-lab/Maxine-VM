@@ -110,7 +110,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public static boolean _outOfMemory = false;
 
     public static BeltwayCollectorThread[] _gcThreads = new BeltwayCollectorThread[BeltwayConfiguration._numberOfGCThreads];
-    public static long _lastThreadAllocated;
+    public static int _lastThreadAllocated;
 
     public static volatile long _allocatedTLABS = 0;
     public static Object _tlabCounterMutex = new Object();
@@ -406,7 +406,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public Pointer gcTlabAllocate(RuntimeMemoryRegion gcRegion, Size size) {
         final VmThread thread = VmThread.current();
         final TLAB tlab = thread.getTLAB();
-        _lastThreadAllocated = thread.serial();
+        _lastThreadAllocated = thread.threadMapID();
         if (tlab.isSet()) { // If the TLABS has been set
             final Pointer pointer = tlab.allocate(size);
 
@@ -635,14 +635,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public void fillLastTLAB() {
-        // TODO: why not use the thread id?
-        final TLAB tlab = VmThreadMap.ACTIVE.getThreadFromSerial(_lastThreadAllocated).getTLAB();
+        final TLAB tlab = VmThreadMap.ACTIVE.getVmThreadForID(_lastThreadAllocated).getTLAB();
         tlab.fillTLAB();
     }
 
     public void markSideTableLastTLAB() {
-        // TODO: why not use the thread id?
-        final TLAB tlab = VmThreadMap.ACTIVE.getThreadFromSerial(_lastThreadAllocated).getTLAB();
+        final TLAB tlab = VmThreadMap.ACTIVE.getVmThreadForID(_lastThreadAllocated).getTLAB();
         SideTable.markStartSideTable(tlab.start());
     }
 
