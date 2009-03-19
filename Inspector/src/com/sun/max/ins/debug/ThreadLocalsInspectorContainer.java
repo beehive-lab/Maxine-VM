@@ -139,12 +139,14 @@ public final class ThreadLocalsInspectorContainer extends TabbedInspector<Thread
                     threadLocalsInspector.setMarked(true);
                 }
                 for (TeleNativeThread thread : teleVM().threads()) {
-                    final UniqueInspector.Key<ThreadLocalsInspector> key = UniqueInspector.Key.create(ThreadLocalsInspector.class, LongValue.from(thread.id()));
-                    final ThreadLocalsInspector threadLocalsInspector = UniqueInspector.find(inspection(), key);
-                    if (threadLocalsInspector == null) {
-                        add(new ThreadLocalsInspector(inspection(), thread, this));
-                    } else {
-                        threadLocalsInspector.setMarked(false);
+                    if (thread.isJava()) {
+                        final UniqueInspector.Key<ThreadLocalsInspector> key = UniqueInspector.Key.create(ThreadLocalsInspector.class, LongValue.from(thread.id()));
+                        final ThreadLocalsInspector threadLocalsInspector = UniqueInspector.find(inspection(), key);
+                        if (threadLocalsInspector == null) {
+                            add(new ThreadLocalsInspector(inspection(), thread, this));
+                        } else {
+                            threadLocalsInspector.setMarked(false);
+                        }
                     }
                 }
                 // Any remaining marked inspectors should be deleted as the threads have gone away

@@ -242,7 +242,10 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         }
 
         ThreadSpecificsStruct tss;
-        threadSpecificsList_search(task, threadSpecificsListAddress, threadState.__rsp, &tss);
+        if (!threadSpecificsList_search(task, threadSpecificsListAddress, threadState.__rsp, &tss)) {
+            memset(&tss, 0, sizeof(tss));
+            tss.id = -2;
+        }
 
         tele_log_println("Gathered thread[id=%d, thread=%lu, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
                         tss.id,

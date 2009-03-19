@@ -1101,7 +1101,10 @@ public class Inspection extends JFrame {
                 InspectorError.check(teleVM().isValidThread(focus().thread()), "Selected thread no longer valid");
             }
             // Reset focus to new IP.
-            focus().setStackFrame(focus().thread(), focus().thread().frames().first(), true);
+            final TeleNativeThread focusThread = focus().thread();
+            if (focusThread.isJava()) {
+                focus().setStackFrame(focusThread, focusThread.frames().first(), true);
+            }
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);
         } finally {

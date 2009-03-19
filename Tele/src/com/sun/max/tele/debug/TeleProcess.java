@@ -541,6 +541,20 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
 
+    /**
+     * Gets the thread corresponding to a given thread id and state.
+     */
+    protected final TeleNativeThread idAndStateToThread(long id, long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
+        final TeleNativeThread thread = (TeleNativeThread) idToThread(id);
+        if (thread != null) {
+            final boolean isJava = triggeredVmThreadLocals != 0 && enabledVmThreadLocals != 0 && disabledVmThreadLocals != 0;
+            if (thread.isJava() != isJava) {
+                return null;
+            }
+        }
+        return thread;
+    }
+
     private long _epoch;
 
     /**
@@ -588,7 +602,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             newThreadMap.put(thread.id(), thread);
             final TeleNativeThread oldThread = _threadMap.get(thread.id());
             if (oldThread != null) {
-                assert oldThread == thread;
+                assert oldThread == thread || (oldThread.isJava() != thread.isJava());
                 _deadThreads.remove(thread);
                 Trace.line(TRACE_VALUE, "    "  + thread);
             } else {

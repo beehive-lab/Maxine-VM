@@ -116,7 +116,7 @@ public final class DarwinTeleProcess extends TeleProcess {
      */
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long threadID, int state, long stackBase, long stackSize,
                     long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        DarwinTeleNativeThread thread = (DarwinTeleNativeThread) idToThread(threadID);
+        DarwinTeleNativeThread thread = (DarwinTeleNativeThread) idAndStateToThread(threadID, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         if (thread == null) {
             thread = new DarwinTeleNativeThread(this, threadID, stackBase, stackSize,
                 triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);

@@ -131,7 +131,7 @@ public final class SolarisTeleProcess extends TeleProcess {
      */
     void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long lwpID, int state, long stackStart, long stackSize,
                     long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        SolarisTeleNativeThread thread = (SolarisTeleNativeThread) idToThread(lwpID);
+        SolarisTeleNativeThread thread = (SolarisTeleNativeThread) idAndStateToThread(lwpID, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         if (thread == null) {
             thread = new SolarisTeleNativeThread(this, lwpID, stackStart, stackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
         }
