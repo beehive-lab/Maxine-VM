@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.lang.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -51,7 +52,10 @@ public final class TargetMethodSearchDialog extends TeleObjectSearchDialog {
 
         for (TeleClassMethodActor teleClassMethodActor : _localTeleClassMethodActors) {
             final MethodActor methodActor = teleClassMethodActor.methodActor();
-            if (filterLowerCase.isEmpty() || methodActor.name().toString().toLowerCase().contains(filterLowerCase)) {
+            final String methodNameLowerCase = methodActor.name().toString().toLowerCase();
+            if (filterLowerCase.isEmpty() ||
+                (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
+                methodNameLowerCase.contains(filterLowerCase)) {
                 for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
                     final String name = inspection().nameDisplay().shortName(teleTargetMethod, ReturnTypeSpecification.AS_SUFFIX);
                     namedTeleTargetMethods.add(new NamedTeleObject(name, teleTargetMethod));
