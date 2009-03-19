@@ -20,7 +20,10 @@
  */
 package com.sun.max.ins.gui;
 
+import java.awt.*;
+
 import javax.swing.*;
+import javax.swing.table.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
@@ -53,12 +56,27 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     protected InspectorTable(Inspection inspection) {
         super();
         _inspection = inspection;
-        setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
-        getTableHeader().setBackground(inspection.style().defaultBackgroundColor());
-        getTableHeader().setFont(style().defaultTextFont());
+        initialize();
     }
 
+    /**
+     * Creates a new {@JTable} for use in the {@link Inspection}.
+     *
+     * @param model a model for the table
+     * @param tableColumnModel a column model for the table
+     */
+    protected InspectorTable(Inspection inspection, TableModel model, TableColumnModel tableColumnModel) {
+        super(model, tableColumnModel);
+        _inspection = inspection;
+        initialize();
+    }
+
+    private void initialize() {
+        setOpaque(true);
+        setBackground(_inspection.style().defaultBackgroundColor());
+        getTableHeader().setBackground(_inspection.style().defaultBackgroundColor());
+        getTableHeader().setFont(style().defaultTextFont());
+    }
     public final Inspection inspection() {
         return _inspection;
     }
@@ -106,6 +124,24 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         for (ColumnChangeListener listener : _columnChangeListeners.clone()) {
             listener.columnPreferenceChanged();
         }
+    }
+
+
+    /**
+     * Scrolls the table to display the specified range (with a few rows before or after if possible).
+     * @param firstRow first row of the range that should be made visible
+     * @param lastRow last row of the range that should be made visible
+     */
+    protected void scrollToRows(int firstRow, int lastRow) {
+        assert firstRow <= lastRow;
+        final int width = getWidth() - 2;
+        final int height = getRowHeight() - 2;
+        // Create a rectangle in the table view to use as a scroll target; include
+        // the row immediately before and the row immediately after so that the row of interest
+        // doesn't land at the very beginning or very end of the view, if possible.
+        final Rectangle rectangle = new Rectangle(0, (firstRow - 1) * getRowHeight(), width, 3 * height);
+        // System.out.println("row=" + firstRow + " rect=" + rectangle);
+        scrollRectToVisible(rectangle);
     }
 
 }
