@@ -96,7 +96,7 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
  */
 void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...);
 
-#define TASK_RETRY_PAUSE_MICROSECONDS 2000000
+#define TASK_RETRY_PAUSE_MICROSECONDS 200 * 1000
 
 #include <unistd.h>
 #define task_wait_for_state(tgid, tid, states) do { \
