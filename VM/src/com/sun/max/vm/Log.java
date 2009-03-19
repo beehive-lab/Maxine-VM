@@ -407,8 +407,8 @@ public final class Log {
             lockDisabledSafepoints = lock();
         }
         print(vmThread.getName());
-        print("[serial=");
-        print(vmThread.serial());
+        print("[id=");
+        print(vmThread.threadMapID());
         print("]", withNewline);
         if (!MaxineVM.isPrototyping()) {
             unlock(lockDisabledSafepoints);

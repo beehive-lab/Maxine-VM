@@ -22,6 +22,7 @@ package com.sun.max.vm;
 
 
 import java.lang.reflect.*;
+import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -316,16 +317,36 @@ public final class MaxineVM {
         return host().phase() == Phase.RUNNING;
     }
 
+    private static final List<String> _maxineCodeBaseList = new ArrayList<String>();
+
     private static final String MAXINE_CLASS_PACKAGE_PREFIX = new com.sun.max.Package().name();
     private static final String MAXINE_TEST_CLASS_PACKAGE_PREFIX = "test." + MAXINE_CLASS_PACKAGE_PREFIX;
+    private static final String EXTENDED_CODEBASE_PROPERTY = "max.extended.codebase";
+
+    static {
+        _maxineCodeBaseList.add(MAXINE_CLASS_PACKAGE_PREFIX);
+        _maxineCodeBaseList.add(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
+        final String p = System.getProperty(EXTENDED_CODEBASE_PROPERTY);
+        if (p != null) {
+            final String[] parts = p.split(",");
+            for (int i = 0; i < parts.length; i++) {
+                _maxineCodeBaseList.add(parts[i]);
+            }
+        }
+    }
 
     /**
      * Determines if a given type descriptor denotes a class that is part of the Maxine code base.
      */
     public static boolean isMaxineClass(TypeDescriptor typeDescriptor) {
         final String className = typeDescriptor.toJavaString();
-        return className.startsWith(MAXINE_CLASS_PACKAGE_PREFIX) ||
-             className.startsWith(MAXINE_TEST_CLASS_PACKAGE_PREFIX);
+        for (int i = 0; i < _maxineCodeBaseList.size(); i++) {
+            final String prefix = _maxineCodeBaseList.get(i);
+            if (className.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -149,6 +149,9 @@ static void* loadSymbol(void* handle, const char* symbol) {
 #endif
     void* result = dlsym(handle, symbol);
 #if log_LINKER
+#if os_GUESTVMXEN
+    log_println("loadSymbol(%p, \"%s\") = %p", handle, symbol, result);
+#else
     char* errorMessage = dlerror();
     Dl_info info;
     void* address = result;
@@ -160,6 +163,7 @@ static void* loadSymbol(void* handle, const char* symbol) {
     if (errorMessage != NULL) {
         log_println("Error message: %s", errorMessage);
     }
+#endif
 #endif
     return result;
 }

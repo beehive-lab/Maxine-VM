@@ -127,10 +127,6 @@ public class VmThread {
     @INSPECTED
     private String _name;
 
-    @INSPECTED
-    @CONSTANT_WHEN_NOT_ZERO
-    private long _serial;
-
     @CONSTANT
     protected Word _nativeThread = Word.zero();
 
@@ -189,14 +185,6 @@ public class VmThread {
         _tlab = tlab;
     }
 
-    /**
-     * Gets the unique identifier for this thread. This identifier
-     * is unique for the lifetime of this thread.
-     */
-    public long serial() {
-        return _serial;
-    }
-
     public Thread javaThread() {
         return _javaThread;
     }
@@ -215,7 +203,7 @@ public class VmThread {
      * a thread that has been terminated and removed from the map will have an identifier
      * of -1.
      */
-    int threadMapID() {
+    public int threadMapID() {
         return _threadMapID;
     }
 
@@ -316,9 +304,6 @@ public class VmThread {
     public VmThread setJavaThread(Thread javaThread) {
         _isGCThread = Heap.isGcThread(javaThread);
         _waitingCondition = new ConditionVariable();
-        synchronized (VmThread.class) {
-            _serial = _counter++;
-        }
         _javaThread = javaThread;
         _name = javaThread.getName();
         _jniHandles = new JniHandles();
@@ -551,8 +536,8 @@ public class VmThread {
             final Pointer stackRedZone = stackYellowZone.minus(guardPageSize());
             final Pointer stackEnd = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(enabledVmThreadLocals).asPointer();
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Initialization completed for thread[serial=");
-            Log.print(_serial);
+            Log.print("Initialization completed for thread[id=");
+            Log.print(_threadMapID);
             Log.print(", name=\"");
             Log.print(_name);
             Log.println("\"]:");
@@ -619,8 +604,8 @@ public class VmThread {
     private void traceThreadForUncaughtException(Throwable throwable) {
         if (traceThreads()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("VmThread[serial=");
-            Log.print(_serial);
+            Log.print("VmThread[id=");
+            Log.print(_threadMapID);
             Log.print(", name=\"");
             Log.print(_name);
             Log.print("] Uncaught exception of type ");
@@ -632,8 +617,8 @@ public class VmThread {
     private void traceThreadAfterTermination() {
         if (traceThreads()) {
             final boolean lockDisabledSafepoints = Log.lock();
-            Log.print("Thread terminated [serial=");
-            Log.print(_serial);
+            Log.print("Thread terminated [id=");
+            Log.print(_threadMapID);
             Log.print(", name=\"");
             Log.print(_name);
             Log.println("\"]");
