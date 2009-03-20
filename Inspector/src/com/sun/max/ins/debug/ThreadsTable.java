@@ -28,7 +28,6 @@ import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
@@ -90,7 +89,7 @@ public final class ThreadsTable extends InspectorTable {
                 final Point p = mouseEvent.getPoint();
                 final int index = _columnModel.getColumnIndexAtX(p.x);
                 final int modelIndex = _columnModel.getColumn(index).getModelIndex();
-                return MemoryRegionsColumnKind.VALUES.get(modelIndex).toolTipText();
+                return ThreadsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
     }

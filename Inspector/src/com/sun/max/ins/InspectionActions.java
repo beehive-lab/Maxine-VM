@@ -2858,6 +2858,39 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
+
+
+
+    /**
+     * Action:  makes visible the {@link FocusInspector}.
+     */
+    final class ViewFocusAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "View User Focus";
+
+        ViewFocusAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        }
+
+        @Override
+        protected void procedure() {
+            FocusInspector.make(inspection());
+        }
+    }
+
+    private InspectorAction _viewFocus = new ViewFocusAction(null);
+
+    /**
+     * @return an Action that will make visible the {@link FocusInspector}.
+     */
+    public final InspectorAction viewFocus() {
+        return _viewFocus;
+    }
+
+
+
+
+
     /**
      * Action:  lists to the console all entries in the {@link TeleCodeRegistry}.
      */
