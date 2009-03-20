@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug;
 
 import java.io.*;
+import java.util.Arrays;
 
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
@@ -57,6 +58,7 @@ public abstract class TeleRegisters {
         _registerValues = new Address[symbolizer.numberOfValues()];
         _registerData = new byte[symbolizer.numberOfValues() * Address.size()];
         _registerDataInputStream = new ByteArrayInputStream(_registerData);
+        Arrays.fill(_registerValues, Address.zero());
     }
 
     /**
