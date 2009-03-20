@@ -406,7 +406,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public Pointer gcTlabAllocate(RuntimeMemoryRegion gcRegion, Size size) {
         final VmThread thread = VmThread.current();
         final TLAB tlab = thread.getTLAB();
-        _lastThreadAllocated = thread.threadMapID();
+        _lastThreadAllocated = thread.id();
         if (tlab.isSet()) { // If the TLABS has been set
             final Pointer pointer = tlab.allocate(size);
 

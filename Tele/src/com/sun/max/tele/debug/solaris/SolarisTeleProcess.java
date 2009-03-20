@@ -21,13 +21,13 @@
 package com.sun.max.tele.debug.solaris;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.prototype.*;
@@ -126,19 +126,9 @@ public final class SolarisTeleProcess extends TeleProcess {
         nativeGatherThreads(_processHandle, threads, threadSpecificsList.asAddress().toLong());
     }
 
-    /**
-     * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
-     */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long lwpID, int state, long stackStart, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        SolarisTeleNativeThread thread = (SolarisTeleNativeThread) idAndStateToThread(lwpID, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
-        if (thread == null) {
-            thread = new SolarisTeleNativeThread(this, lwpID, stackStart, stackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
-        }
-
-        assert state >= 0 && state < ThreadState.VALUES.length();
-        thread.setState(ThreadState.VALUES.get(state));
-        threads.append(thread);
+    @Override
+    protected TeleNativeThread createTeleNativeThread(int id, long lwpId, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
+        return new SolarisTeleNativeThread(this, id, lwpId, stackBase, stackSize, vmThreadLocals);
     }
 
     private static native int nativeReadBytes(long processHandle, long address, byte[] buffer, int offset, int length);

@@ -160,7 +160,6 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess TupleClassActor_constantPool = new TeleInstanceReferenceFieldAccess(TupleClassActor.class, "_constantPool", ConstantPool.class);
     public final TeleInstanceReferenceFieldAccess Utf8Constant_string = new TeleInstanceReferenceFieldAccess(Utf8Constant.class, "_string", String.class);
     public final TeleInstanceReferenceFieldAccess VmThread_name = new TeleInstanceReferenceFieldAccess(VmThread.class, "_name", String.class);
-    public final TeleInstanceLongFieldAccess VmThread_serial = new TeleInstanceLongFieldAccess(VmThread.class, "_serial");
     // END GENERATED CONTENT
 
     // Injected JDK fields:

@@ -31,8 +31,8 @@ import com.sun.max.tele.*;
  */
 public enum ThreadsColumnKind {
 
-    ID("ID", "ID assigned by OS", true, -1),
-    SERIAL("VM ID", "ID assigned by VM, none if native", true, -1),
+    ID("ID", "ID assigned by VM, none if native", true, -1),
+    HANDLE("Handle", "Native thread library handle", true, -1),
     KIND("Kind", null, true, -1),
     NAME("Name", null, true, -1) {
         @Override

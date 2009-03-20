@@ -19,4 +19,4 @@
 # Company, Ltd.
 #
 
-OS_SOURCES = ptrace.c linuxTeleProcess.c linuxTeleNativeThread.c linuxTask.c
+OS_SOURCES = ptrace.c teleProcess.c linuxTeleProcess.c linuxTeleNativeThread.c linuxTask.c

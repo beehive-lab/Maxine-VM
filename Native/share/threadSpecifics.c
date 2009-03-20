@@ -104,7 +104,7 @@ Boolean threadSpecifics_isJava(ThreadSpecifics threadSpecifics) {
 
 #if TELE
 
-Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
+ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
     ThreadSpecificsListStruct threadSpecificsListStruct;
 
     ThreadSpecificsList threadSpecificsList = &threadSpecificsListStruct;
@@ -119,12 +119,12 @@ Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecifics
         Address stackBase = threadSpecifics->stackBase;
         Size stackSize = threadSpecifics->stackSize;
         if (stackBase <= stackPointer && stackPointer < (stackBase + stackSize)) {
-            return true;
+            return threadSpecifics;
         }
         threadSpecificsAddress = (Address) threadSpecifics->next;
     }
 
-    return false;
+    return NULL;
 }
 
 #endif

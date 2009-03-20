@@ -69,7 +69,7 @@ public final class RegistersInspector extends UniqueInspector<RegistersInspector
     private RegisterPanel _floatingPointRegisterPanel;
 
     public RegistersInspector(Inspection inspection, TeleNativeThread teleNativeThread, RegistersInspectorContainer parent) {
-        super(inspection, parent.residence(),  LongValue.from(teleNativeThread.id()));
+        super(inspection, parent.residence(),  LongValue.from(teleNativeThread.handle()));
         _parent = parent;
         _teleNativeThread = teleNativeThread;
         createFrame(null);

@@ -28,7 +28,6 @@
 #include <mach/vm_map.h>
 
 #include "isa.h"
-#include "teleProcess.h"
 
 #if isa_AMD64
 #   include <mach/x86_64/thread_act.h>
