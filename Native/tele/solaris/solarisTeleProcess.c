@@ -28,9 +28,10 @@
 
 #include "proc.h"
 
-#include "teleProcess.h"
+#include "threadSpecifics.h"
 #include "teleNativeThread.h"
 #include "threads.h"
+#include "teleProcess.h"
 
 void teleProcess_initialize(void) {
 }
@@ -244,8 +245,8 @@ WaitResult_t reasonForStopping(lwpstatus_t *lwpStatus) {
 typedef struct Argument {
     struct ps_prochandle *ph;
     JNIEnv *env;
-    jobject process;
-    jobject result;
+    jobject teleProcess;
+    jobject threadSequence;
     Address threadSpecificsListAddress;
 } *Argument;
 
@@ -276,14 +277,15 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     ThreadState_t threadState = lwpStatusToThreadState(lwpStatus);
 
     ThreadSpecificsStruct threadSpecificsStruct;
+    Address stackPointer = getRegister(a->ph, lwpId, R_SP);
     ThreadSpecifics threadSpecifics = threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
-    teleProcess_jniGatherThread(env, process, result, threadSequence, state, threadSpecifics);
+    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, threadSpecifics);
 
     return 0;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong processHandle, jobject threads, long threadSpecificsListAddress) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject teleProcess, jlong processHandle, jobject threadSequence, long threadSpecificsListAddress) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     if (Pcreate_agent(ph) != 0) {
@@ -293,8 +295,8 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
     struct Argument a;
     a.ph = ph;
     a.env = env;
-    a.process = process;
-    a.result = threads;
+    a.teleProcess = teleProcess;
+    a.threadSequence = threadSequence;
     a.threadSpecificsListAddress = threadSpecificsListAddress;
 
     int error = Plwp_iter(ph, gatherThread, &a);

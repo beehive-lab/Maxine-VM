@@ -18,15 +18,14 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-/**
- * @author Bernd Mathiske
- */
+#include <string.h>
 
 #include "c.h"
 #include "log.h"
 #include "jni.h"
 #include "threadSpecifics.h"
 #include "teleProcess.h"
+
 
 static jmethodID _jniGatherThreadID = NULL;
 

@@ -19,4 +19,4 @@
 # Company, Ltd.
 #
 
-OS_SOURCES = guestvmXenDBChannel.c
+OS_SOURCES = teleProcess.c guestvmXenDBChannel.c

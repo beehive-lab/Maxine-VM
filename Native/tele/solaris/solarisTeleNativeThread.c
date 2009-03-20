@@ -23,6 +23,7 @@
 #include "isa.h"
 #include "jni.h"
 #include "os.h"
+#include "threadSpecifics.h"
 #include "solarisTeleProcess.h"
 
 struct ps_lwphandle {
