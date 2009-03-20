@@ -202,11 +202,8 @@ JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jint domainId, jlong threadSpecificsListAddress) {
     struct db_thread *threads;
     int num_threads, i;
-    jmethodID gather_thread_method;
-
     threads = gather_threads(&num_threads);
-    c_ASSERT(gather_thread_method != NULL);
-    for (i=0; i<num_threads; i++) {
+     for (i=0; i<num_threads; i++) {
         ThreadSpecificsStruct threadSpecificsStruct;
         ThreadSpecifics threadSpecifics = threadSpecificsList_search(threadSpecificsListAddress, threads[i].stack, &threadSpecificsStruct);
         teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), threadSpecifics);
