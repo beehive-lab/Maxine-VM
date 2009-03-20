@@ -115,7 +115,7 @@ public class VmThread {
     private volatile Thread.State _state = Thread.State.NEW;
     private volatile boolean _interrupted = false;
     private Throwable _terminationCause;
-    private int _threadMapID;
+    private int _id;
 
     private  TLAB _tlab = new TLAB();
 
@@ -171,8 +171,6 @@ public class VmThread {
         return _compactReferenceMapInterpreter;
     }
 
-    private static long _counter = 0;
-
     public Thread.State state() {
         return _state;
     }
@@ -203,12 +201,12 @@ public class VmThread {
      * a thread that has been terminated and removed from the map will have an identifier
      * of -1.
      */
-    public int threadMapID() {
-        return _threadMapID;
+    public int id() {
+        return _id;
     }
 
-    void setThreadMapID(int id) {
-        _threadMapID = id;
+    void setID(int id) {
+        _id = id;
     }
 
     public String getName() {
@@ -326,7 +324,7 @@ public class VmThread {
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset _state to RUNNABLE
         _nativeThread = Address.zero();
         _vmThreadLocals = Pointer.zero();
-        _threadMapID = -1;
+        _id = -1;
         _waitingCondition = null;
     }
 
@@ -365,7 +363,7 @@ public class VmThread {
     public static void createAndRunMainThread() {
         final Size requestedStackSize = _stackSizeOption.getValue().aligned(Platform.host().pageSize()).asSize();
 
-        final Word nativeThread = nativeThreadCreate(_mainVMThread._threadMapID, requestedStackSize, Thread.NORM_PRIORITY);
+        final Word nativeThread = nativeThreadCreate(_mainVMThread._id, requestedStackSize, Thread.NORM_PRIORITY);
         if (nativeThread.isZero()) {
             FatalError.unexpected("Could not start main native thread.");
         } else {
@@ -537,7 +535,7 @@ public class VmThread {
             final Pointer stackEnd = HIGHEST_STACK_SLOT_ADDRESS.getConstantWord(enabledVmThreadLocals).asPointer();
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Initialization completed for thread[id=");
-            Log.print(_threadMapID);
+            Log.print(_id);
             Log.print(", name=\"");
             Log.print(_name);
             Log.println("\"]:");
@@ -605,7 +603,7 @@ public class VmThread {
         if (traceThreads()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("VmThread[id=");
-            Log.print(_threadMapID);
+            Log.print(_id);
             Log.print(", name=\"");
             Log.print(_name);
             Log.print("] Uncaught exception of type ");
@@ -618,7 +616,7 @@ public class VmThread {
         if (traceThreads()) {
             final boolean lockDisabledSafepoints = Log.lock();
             Log.print("Thread terminated [id=");
-            Log.print(_threadMapID);
+            Log.print(_id);
             Log.print(", name=\"");
             Log.print(_name);
             Log.println("\"]");

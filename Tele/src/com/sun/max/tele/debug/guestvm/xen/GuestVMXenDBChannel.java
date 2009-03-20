@@ -84,7 +84,7 @@ public final class GuestVMXenDBChannel {
 
 
     public static synchronized void gatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId, long threadSpecificsList) {
-        nativeGatherThreads(threads, domainId, threadSpecificsList);
+        nativeGatherThreads(_teleDomain, threads, domainId, threadSpecificsList);
     }
 
     public static synchronized int resume(int domainId) {
@@ -126,28 +126,13 @@ public final class GuestVMXenDBChannel {
         return nativeSuspend(threadId);
     }
 
-    /**
-     * This is upcalled from nativeGatherThreads.
-     *
-     * @param threads
-     * @param threadId
-     * @param name
-     * @param state
-     * @param stackBase
-     * @param stackSize
-     */
-    static void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        _teleDomain.jniGatherThread(threads, threadId, state, stackBase, stackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
-    }
-
     private static native boolean nativeAttach(int domId);
     private static native long nativeGetBootHeapStart();
     private static native int nativeSetTransportDebugLevel(int level);
     private static native int nativeReadBytes(long address, byte[] buffer, int offset, int length);
     private static native int nativeWriteBytes(long address, byte[] buffer, int offset, int length);
     private static native int nativeMaxByteBufferSize();
-    private static native boolean nativeGatherThreads(AppendableSequence<TeleNativeThread> threads, int domainId, long threadSpecificsList);
+    private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, int domainId, long threadSpecificsList);
     private static native int nativeResume(int domainId);
     private static native int nativeReadByte(long domainId, long address);
     private static native long nativeReadInt(int domainId, long address);

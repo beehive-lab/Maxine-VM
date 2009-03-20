@@ -20,9 +20,12 @@
  */
 package com.sun.max.tele.debug.darwin;
 
+import java.util.*;
+
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -34,17 +37,20 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
         return (DarwinTeleProcess) super.teleProcess();
     }
 
-    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, long threadID, long stackStart, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        super(teleProcess, stackStart, stackSize, threadID, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
+    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, int id, long machThread, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals) {
+        super(teleProcess, id, machThread, stackBase, stackSize, vmThreadLocals);
     }
 
     @Override
     public boolean updateInstructionPointer(Address address) {
-        return nativeSetInstructionPointer(teleProcess().task(), id(), address.toLong());
+        return nativeSetInstructionPointer(teleProcess().task(), machThread(), address.toLong());
     }
 
-    private static native boolean nativeReadRegisters(long lwpId,
+    private long machThread() {
+        return handle();
+    }
+
+    private static native boolean nativeReadRegisters(long machThread,
                     byte[] integerRegisters, int integerRegistersSize,
                     byte[] floatingPointRegisters, int floatingPointRegistersSize,
                     byte[] stateRegisters, int stateRegistersSize);
@@ -54,7 +60,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
                     byte[] integerRegisters,
                     byte[] floatingPointRegisters,
                     byte[] stateRegisters) {
-        return nativeReadRegisters(id(),
+        return nativeReadRegisters(machThread(),
                         integerRegisters, integerRegisters.length,
                         floatingPointRegisters, floatingPointRegisters.length,
                         stateRegisters, stateRegisters.length);
@@ -62,7 +68,7 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
 
     @Override
     public boolean singleStep() {
-        return nativeSingleStep(teleProcess().task(), id());
+        return nativeSingleStep(teleProcess().task(), machThread());
     }
 
     @Override

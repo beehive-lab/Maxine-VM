@@ -20,8 +20,11 @@
  */
 package com.sun.max.tele.debug.solaris;
 
+import java.util.*;
+
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -35,16 +38,19 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
         return (SolarisTeleProcess) super.teleProcess();
     }
 
-    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, long lwpID, long stackBase, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        super(teleProcess, stackBase, stackSize, lwpID, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
+    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, int id, long lwpId, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals) {
+        super(teleProcess, id, lwpId, stackBase, stackSize, vmThreadLocals);
     }
 
     private static native boolean nativeSetInstructionPointer(long processHandle, long lwpId, long address);
 
+    private long lwpId() {
+        return handle();
+    }
+
     @Override
     public boolean updateInstructionPointer(Address address) {
-        return nativeSetInstructionPointer(teleProcess().processHandle(), id(), address.toLong());
+        return nativeSetInstructionPointer(teleProcess().processHandle(), lwpId(), address.toLong());
     }
 
     private static native boolean nativeReadRegisters(long processHandle, long lwpId,
@@ -57,7 +63,7 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
                     byte[] integerRegisters,
                     byte[] floatingPointRegisters,
                     byte[] stateRegisters) {
-        return nativeReadRegisters(teleProcess().processHandle(), id(),
+        return nativeReadRegisters(teleProcess().processHandle(), lwpId(),
                         integerRegisters, integerRegisters.length,
                         floatingPointRegisters, floatingPointRegisters.length,
                         stateRegisters, stateRegisters.length);
@@ -65,7 +71,7 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
 
     @Override
     public boolean singleStep() {
-        return nativeSingleStep(teleProcess().processHandle(), id());
+        return nativeSingleStep(teleProcess().processHandle(), lwpId());
     }
 
     /**
@@ -84,13 +90,13 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
 
     @Override
     public boolean threadResume() {
-        return nativeResume(teleProcess().processHandle(), id());
+        return nativeResume(teleProcess().processHandle(), lwpId());
     }
 
     private static native boolean nativeSuspend(long processHandle, long lwpId);
 
     @Override
     public boolean threadSuspend() {
-        return nativeSuspend(teleProcess().processHandle(), id());
+        return nativeSuspend(teleProcess().processHandle(), lwpId());
     }
 }

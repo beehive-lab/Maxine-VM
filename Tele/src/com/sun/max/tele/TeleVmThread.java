@@ -20,7 +20,6 @@
  */
 package com.sun.max.tele;
 
-import com.sun.max.lang.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.reference.*;
@@ -34,13 +33,7 @@ import com.sun.max.vm.thread.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmThread> {
-
-    private final long _serial;
-
-    public long serial() {
-        return _serial;
-    }
+public class TeleVmThread extends TeleTupleObject {
 
     private String _name;
 
@@ -53,7 +46,6 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
 
     public TeleVmThread(TeleVM teleVM, Reference vmThreadReference) {
         super(teleVM, vmThreadReference);
-        _serial = teleVM().fields().VmThread_serial.readLong(vmThreadReference);
     }
 
     /**
@@ -87,23 +79,5 @@ public class TeleVmThread extends TeleTupleObject implements Comparable<TeleVmTh
             }
         }
         return null;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof TeleVmThread) {
-            final TeleVmThread teleVmThread = (TeleVmThread) other;
-            return _serial == teleVmThread._serial;
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return (int) _serial;
-    }
-
-    public int compareTo(TeleVmThread other) {
-        return Longs.compare(_serial, other._serial);
     }
 }

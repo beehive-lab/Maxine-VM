@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
+import java.util.*;
+
 import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
@@ -36,16 +38,19 @@ public class TeleNativeStack extends FixedMemoryRegion {
 
     private final TeleNativeThread _teleNativeThread;
 
+    private final Map<Safepoint.State, TeleVMThreadLocalValues> _teleVmThreadLocals;
+
     public TeleNativeThread teleNativeThread() {
         return _teleNativeThread;
     }
 
-    public TeleNativeStack(TeleNativeThread teleNativeThread, Address base, Size size, Pointer triggeredVmThreadLocals, Pointer enabledVmThreadLocals, Pointer disabledVmThreadLocals) {
-        super(base, size, "Thread-" + teleNativeThread.id());
+    public TeleNativeStack(TeleNativeThread teleNativeThread, Address base, Size size, Map<Safepoint.State, Pointer> vmThreadLocals) {
+        super(base, size, "Thread-" + teleNativeThread.handle());
         _teleNativeThread = teleNativeThread;
-        _triggeredVmThreadLocalValues = new TeleVMThreadLocalValues(Safepoint.State.TRIGGERED, triggeredVmThreadLocals);
-        _enabledVmThreadLocalValues = new TeleVMThreadLocalValues(Safepoint.State.ENABLED, enabledVmThreadLocals);
-        _disabledVmThreadLocalValues = new TeleVMThreadLocalValues(Safepoint.State.DISABLED, disabledVmThreadLocals);
+        _teleVmThreadLocals = new EnumMap<Safepoint.State, TeleVMThreadLocalValues>(Safepoint.State.class);
+        for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
+            _teleVmThreadLocals.put(safepointState, new TeleVMThreadLocalValues(safepointState, vmThreadLocals.get(safepointState)));
+        }
     }
 
     /**
@@ -53,9 +58,9 @@ public class TeleNativeStack extends FixedMemoryRegion {
      */
     void refresh() {
         final DataAccess dataAccess = _teleNativeThread.teleProcess().dataAccess();
-        _enabledVmThreadLocalValues.refresh(dataAccess);
-        _disabledVmThreadLocalValues.refresh(dataAccess);
-        _triggeredVmThreadLocalValues.refresh(dataAccess);
+        for (TeleVMThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
+            teleVmThreadLocalValues.refresh(dataAccess);
+        }
     }
 
     /**
@@ -63,7 +68,7 @@ public class TeleNativeStack extends FixedMemoryRegion {
      *         associated with a {@link VmThread}, null otherwise
      */
     public TeleVMThreadLocalValues enabledVmThreadLocalValues() {
-        return _enabledVmThreadLocalValues;
+        return _teleVmThreadLocals.get(Safepoint.State.ENABLED);
     }
 
     /**
@@ -71,17 +76,13 @@ public class TeleNativeStack extends FixedMemoryRegion {
      *         associated with a {@link VmThread}, null otherwise
      */
     public TeleVMThreadLocalValues disabledVmThreadLocalValues() {
-        return _disabledVmThreadLocalValues;
+        return _teleVmThreadLocals.get(Safepoint.State.DISABLED);
     }
     /**
      * @return the values of the safepoints-triggered {@linkplain VmThreadLocal thread local variables} on this stack if this stack is
      *         associated with a {@link VmThread}, null otherwise
      */
     public TeleVMThreadLocalValues triggeredVmThreadLocalValues() {
-        return _triggeredVmThreadLocalValues;
+        return _teleVmThreadLocals.get(Safepoint.State.TRIGGERED);
     }
-
-    private final TeleVMThreadLocalValues _enabledVmThreadLocalValues;
-    private final TeleVMThreadLocalValues _disabledVmThreadLocalValues;
-    private final TeleVMThreadLocalValues _triggeredVmThreadLocalValues;
 }

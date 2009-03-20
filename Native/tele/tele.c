@@ -19,11 +19,12 @@
  * Company, Ltd.
  */
 #include "c.h"
-#include "teleProcess.h"
 #include "jni.h"
+#include "threadSpecifics.h"
+#include "teleProcess.h"
 
 JNIEXPORT void JNICALL
-JVM_OnLoad(JavaVM *vm, char *options, void *arg) 
+JVM_OnLoad(JavaVM *vm, char *options, void *arg)
 {
     c_initialize();
     teleProcess_initialize();

@@ -140,7 +140,7 @@ public final class ThreadLocalsInspectorContainer extends TabbedInspector<Thread
                 }
                 for (TeleNativeThread thread : teleVM().threads()) {
                     if (thread.isJava()) {
-                        final UniqueInspector.Key<ThreadLocalsInspector> key = UniqueInspector.Key.create(ThreadLocalsInspector.class, LongValue.from(thread.id()));
+                        final UniqueInspector.Key<ThreadLocalsInspector> key = UniqueInspector.Key.create(ThreadLocalsInspector.class, LongValue.from(thread.handle()));
                         final ThreadLocalsInspector threadLocalsInspector = UniqueInspector.find(inspection(), key);
                         if (threadLocalsInspector == null) {
                             add(new ThreadLocalsInspector(inspection(), thread, this));

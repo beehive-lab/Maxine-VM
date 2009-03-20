@@ -142,7 +142,7 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
             }
             for (TeleNativeThread thread : teleVM().threads()) {
                 if (thread.isJava()) {
-                    final UniqueInspector.Key<StackInspector> key = UniqueInspector.Key.create(StackInspector.class, LongValue.from(thread.id()));
+                    final UniqueInspector.Key<StackInspector> key = UniqueInspector.Key.create(StackInspector.class, LongValue.from(thread.handle()));
                     final StackInspector stackInspector = UniqueInspector.find(inspection(), key);
                     if (stackInspector == null) {
                         add(new StackInspector(inspection(), thread, residence(), this));

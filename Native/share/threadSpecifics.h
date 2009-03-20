@@ -32,7 +32,7 @@
 
 typedef struct thread_SpecificsStruct {
     struct thread_SpecificsStruct *next; // Points to self if not on a list
-    jint id; // -1 denotes the thread specifics for the primordial thread created when a debugger is attached
+    jint id; // 0 denotes the thread specifics for the primordial thread created when a debugger is attached
     Address stackBase;
     Size stackSize;
     Address triggeredVmThreadLocals;
@@ -132,9 +132,13 @@ extern unsigned short readbytes(unsigned long address, char *buffer, unsigned sh
  *
  * If such an entry is found, then its contents are copied from the VM to the given 'threadSpecifics' struct.
  *
- * @return true if an entry was found, false otherwise
+ * @param threadSpecificsListAddress the address of the ThreadSpecificsList in the VM's address space
+ * @param stackPointer the stack pointer to search with
+ * @param threadSpecifics pointer to storage for a ThreadSpecificsStruct into which the found entry
+ *        (if any) will be copied from the VM's address space
+ * @return the entry that was found, NULL otherwise
  */
-extern Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
+extern ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
 
 #endif
 

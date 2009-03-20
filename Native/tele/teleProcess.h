@@ -24,6 +24,19 @@
 #ifndef __teleProcess_h__
 #define __teleProcess_h__ 1
 
+#include "teleNativeThread.h"
+
 extern void teleProcess_initialize(void);
+
+/**
+ * Makes the upcall to TeleProcess.jniGatherThread
+ *
+ * @param teleProcess the TeleProcess object gathering the threads
+ * @param threads a Sequence<TeleNativeThread> object used to gather the threads
+ * @param handle the native thread library handle to a thread (e.g. the LWP of a Solaris thread)
+ * @param state the execution state of the thread
+ * @param threadSpecifics the thread specifics foudn based on the stack pointer of the thread or NULL if no such thread specifics were found
+ */
+extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, ThreadSpecifics threadSpecifics);
 
 #endif /*__teleProcess_h__*/

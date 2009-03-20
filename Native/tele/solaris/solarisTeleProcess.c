@@ -249,8 +249,6 @@ typedef struct Argument {
     Address threadSpecificsListAddress;
 } *Argument;
 
-static jmethodID _methodID = NULL;
-
 static long getRegister(struct ps_prochandle *ph, jlong lwpId, int registerIndex) {
     INIT_LWP_HANDLE(lh, ph, lwpId, false);
 
@@ -277,36 +275,10 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     jlong lwpId = lwpStatus->pr_lwpid;
     ThreadState_t threadState = lwpStatusToThreadState(lwpStatus);
 
-    ThreadSpecificsStruct tss;
-    Address stackPointer = getRegister(a->ph, lwpId, R_SP);
-    if (!threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &tss)) {
-        memset(&tss, 0, sizeof(tss));
-        tss.id = -2;
-    }
+    ThreadSpecificsStruct threadSpecificsStruct;
+    ThreadSpecifics threadSpecifics = threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
+    teleProcess_jniGatherThread(env, process, result, threadSequence, state, threadSpecifics);
 
-    if (_methodID == NULL) {
-        jclass c = (*a->env)->GetObjectClass(a->env, a->process);
-        c_ASSERT(c != NULL);
-        _methodID = (*a->env)->GetMethodID(a->env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIJJJJJ)V");
-        c_ASSERT(_methodID != NULL);
-    }
-
-    tele_log_println("Gathered thread[id=%d, lwpId=%p, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
-                    tss.id,
-                    lwpId,
-                    tss.stackBase,
-                    tss.stackBase + tss.stackSize,
-                    tss.stackSize,
-                    tss.triggeredVmThreadLocals,
-                    tss.enabledVmThreadLocals,
-                    tss.disabledVmThreadLocals);
-
-    (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, lwpId, threadState,
-                    tss.stackBase,
-                    tss.stackSize,
-                    tss.triggeredVmThreadLocals,
-                    tss.enabledVmThreadLocals,
-                    tss.disabledVmThreadLocals);
     return 0;
 }
 
