@@ -113,7 +113,7 @@ public final class ThreadsTable extends InspectorTable {
                 }
             };
             createColumn(ThreadsColumnKind.ID, new IDCellRenderer(inspection()));
-            createColumn(ThreadsColumnKind.SERIAL, new SerialCellRenderer(inspection()));
+            createColumn(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()));
             createColumn(ThreadsColumnKind.KIND, new KindCellRenderer(inspection()));
             createColumn(ThreadsColumnKind.NAME, new NameCellRenderer(inspection()));
             createColumn(ThreadsColumnKind.STATUS, new StatusCellRenderer(inspection()));
@@ -181,9 +181,15 @@ public final class ThreadsTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final String threadIdText = Long.toString(teleNativeThread.id());
-            setText(threadIdText);
-            setToolTipText("Native thread ID:  " + threadIdText);
+            final int id = teleNativeThread.id();
+            if (id < 0) {
+                setText("");
+                setToolTipText("Not a VM thread");
+            } else {
+                final String threadIdText = Long.toString(id);
+                setText(threadIdText);
+                setToolTipText("VM thread ID:  " + threadIdText);
+            }
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
@@ -193,24 +199,18 @@ public final class ThreadsTable extends InspectorTable {
         }
     }
 
-    private final class SerialCellRenderer extends PlainLabel implements TableCellRenderer {
+    private final class HandleCellRenderer extends PlainLabel implements TableCellRenderer {
 
-        SerialCellRenderer(Inspection inspection) {
+        HandleCellRenderer(Inspection inspection) {
             super(inspection, null);
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final TeleVmThread teleVmThread    = teleNativeThread.teleVmThread();
-            if (teleVmThread != null) {
-                final String serialString = Long.toString(teleVmThread.serial());
-                setText(serialString);
-                setToolTipText("VM thread serial ID:  " + serialString);
-            } else {
-                setText("");
-                setToolTipText("Not a VM thread");
-            }
+            final String handleString = Long.toString(teleNativeThread.handle());
+            setText(handleString);
+            setToolTipText("Native thread handle:  " + handleString);
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {
@@ -229,7 +229,7 @@ public final class ThreadsTable extends InspectorTable {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            final TeleVmThread teleVmThread    = teleNativeThread.teleVmThread();
+            final TeleVmThread teleVmThread = teleNativeThread.teleVmThread();
             String kind;
             if (teleVmThread != null) {
                 kind = "Java";

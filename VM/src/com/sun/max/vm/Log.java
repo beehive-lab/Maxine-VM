@@ -408,7 +408,7 @@ public final class Log {
         }
         print(vmThread.getName());
         print("[id=");
-        print(vmThread.threadMapID());
+        print(vmThread.id());
         print("]", withNewline);
         if (!MaxineVM.isPrototyping()) {
             unlock(lockDisabledSafepoints);

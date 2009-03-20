@@ -28,9 +28,10 @@
 
 #include "proc.h"
 
-#include "teleProcess.h"
+#include "threadSpecifics.h"
 #include "teleNativeThread.h"
 #include "threads.h"
+#include "teleProcess.h"
 
 void teleProcess_initialize(void) {
 }
@@ -244,12 +245,10 @@ WaitResult_t reasonForStopping(lwpstatus_t *lwpStatus) {
 typedef struct Argument {
     struct ps_prochandle *ph;
     JNIEnv *env;
-    jobject process;
-    jobject result;
+    jobject teleProcess;
+    jobject threadSequence;
     Address threadSpecificsListAddress;
 } *Argument;
-
-static jmethodID _methodID = NULL;
 
 static long getRegister(struct ps_prochandle *ph, jlong lwpId, int registerIndex) {
     INIT_LWP_HANDLE(lh, ph, lwpId, false);
@@ -277,38 +276,16 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
     jlong lwpId = lwpStatus->pr_lwpid;
     ThreadState_t threadState = lwpStatusToThreadState(lwpStatus);
 
-    ThreadSpecificsStruct tss;
+    ThreadSpecificsStruct threadSpecificsStruct;
     Address stackPointer = getRegister(a->ph, lwpId, R_SP);
-    threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &tss);
+    ThreadSpecifics threadSpecifics = threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
+    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, threadSpecifics);
 
-    if (_methodID == NULL) {
-        jclass c = (*a->env)->GetObjectClass(a->env, a->process);
-        c_ASSERT(c != NULL);
-        _methodID = (*a->env)->GetMethodID(a->env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIJJJJJ)V");
-        c_ASSERT(_methodID != NULL);
-    }
-
-    tele_log_println("Gathered thread[id=%d, lwpId=%p, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
-                    tss.id,
-                    lwpId,
-                    tss.stackBase,
-                    tss.stackBase + tss.stackSize,
-                    tss.stackSize,
-                    tss.triggeredVmThreadLocals,
-                    tss.enabledVmThreadLocals,
-                    tss.disabledVmThreadLocals);
-
-    (*a->env)->CallVoidMethod(a->env, a->process, _methodID, a->result, lwpId, threadState,
-                    tss.stackBase,
-                    tss.stackSize,
-                    tss.triggeredVmThreadLocals,
-                    tss.enabledVmThreadLocals,
-                    tss.disabledVmThreadLocals);
     return 0;
 }
 
 JNIEXPORT void JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong processHandle, jobject threads, long threadSpecificsListAddress) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEnv *env, jobject teleProcess, jlong processHandle, jobject threadSequence, long threadSpecificsListAddress) {
     struct ps_prochandle *ph = (struct ps_prochandle *) processHandle;
 
     if (Pcreate_agent(ph) != 0) {
@@ -318,8 +295,8 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeGatherThreads(JNIEn
     struct Argument a;
     a.ph = ph;
     a.env = env;
-    a.process = process;
-    a.result = threads;
+    a.teleProcess = teleProcess;
+    a.threadSequence = threadSequence;
     a.threadSpecificsListAddress = threadSpecificsListAddress;
 
     int error = Plwp_iter(ph, gatherThread, &a);

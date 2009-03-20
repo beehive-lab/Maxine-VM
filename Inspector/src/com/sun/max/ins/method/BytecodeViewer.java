@@ -206,18 +206,20 @@ public abstract class BytecodeViewer extends CodeViewer {
     protected void updateStackCache() {
         if (haveTargetCodeAddresses()) {
             final TeleNativeThread teleNativeThread = inspection().focus().thread();
-            final Sequence<StackFrame> frames = teleNativeThread.frames();
-            for (int row = 0; row < _bytecodeInstructions.length(); row++) {
-                int stackPosition = 0;
-                StackFrameInfo stackFrameInfo = null;
-                for (StackFrame frame : frames) {
-                    if (rowContainsAddress(row, frame.instructionPointer())) {
-                        stackFrameInfo = new StackFrameInfo(frame, teleNativeThread, stackPosition);
-                        break;
+            if (teleNativeThread.isJava()) {
+                final Sequence<StackFrame> frames = teleNativeThread.frames();
+                for (int row = 0; row < _bytecodeInstructions.length(); row++) {
+                    int stackPosition = 0;
+                    StackFrameInfo stackFrameInfo = null;
+                    for (StackFrame frame : frames) {
+                        if (rowContainsAddress(row, frame.instructionPointer())) {
+                            stackFrameInfo = new StackFrameInfo(frame, teleNativeThread, stackPosition);
+                            break;
+                        }
+                        stackPosition++;
                     }
-                    stackPosition++;
+                    _rowToStackFrameInfo[row] = stackFrameInfo;
                 }
-                _rowToStackFrameInfo[row] = stackFrameInfo;
             }
         }
     }

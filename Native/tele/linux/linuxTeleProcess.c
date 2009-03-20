@@ -40,46 +40,16 @@
 void teleProcess_initialize(void) {
 }
 
-static jmethodID _methodID = NULL;
-
-static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threads, jlong threadSpecificsListAddress) {
-    if (_methodID == NULL) {
-        jclass c = (*env)->GetObjectClass(env, linuxTeleProcess);
-        _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJJJJ)V");
-        c_ASSERT(_methodID != NULL);
-    }
-
-    task_wait_for_state(tgid, tid, "T");
+static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadSequence, jlong threadSpecificsListAddress) {
+    //task_wait_for_state(tgid, tid, "T");
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL);
 
     Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
-    ThreadSpecificsStruct tss;
-
-    if (threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &tss)) {
-        tele_log_println("Gathered thread[id=%d, tid=%d, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
-                    tss.id,
-                    tid,
-                    tss.stackBase,
-                    tss.stackBase + tss.stackSize,
-                    tss.stackSize,
-                    tss.triggeredVmThreadLocals,
-                    tss.enabledVmThreadLocals,
-                    tss.disabledVmThreadLocals);
-
-        (*env)->CallVoidMethod(env, linuxTeleProcess, _methodID,
-                    threads,
-                    tid,
-                    (jint) TS_SUSPENDED,
-                    tss.stackBase,
-                    tss.stackSize,
-                    tss.triggeredVmThreadLocals,
-                    tss.enabledVmThreadLocals,
-                    tss.disabledVmThreadLocals);
-    } else {
-        tele_log_println("Ignoring native/terminated thread denoted by stack pointer %p", stackPointer);
-    }
+    ThreadSpecificsStruct threadSpecificsStruct;
+    ThreadSpecifics threadSpecifics = threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
+    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, (jint) TS_SUSPENDED, threadSpecifics);
 }
 
 JNIEXPORT void JNICALL

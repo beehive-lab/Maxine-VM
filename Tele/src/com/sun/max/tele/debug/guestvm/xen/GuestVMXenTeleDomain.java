@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
+import java.util.*;
+
 import javax.swing.*;
 
 import com.sun.max.collect.*;
@@ -27,7 +29,6 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -70,30 +71,15 @@ public class GuestVMXenTeleDomain extends TeleProcess {
         return GuestVMXenDBChannel.getBootHeapStart();
     }
 
-    /**
-     * This is called from nativeGatherThreads.
-     *
-     * @param threadId
-     * @param name
-     */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int threadId, int state, long stackBase, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        GuestVMXenNativeThread thread = (GuestVMXenNativeThread) idToThread(threadId);
-        if (thread == null) {
-            /* Need to align and skip over the guard page at the base of the stack.
-             * N.B. "base" is low address (i.e., actually the end of the stack!).
-             */
-            final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
-            final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
-            final long adjStackSize = stackSize - (stackBottom - stackBase);
-            thread = new GuestVMXenNativeThread(this, threadId, stackBottom, adjStackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
-        } else {
-            thread.setMarked(false);
-        }
-
-        assert state >= 0 && state < ThreadState.VALUES.length();
-        thread.setState(ThreadState.VALUES.get(state));
-        threads.append(thread);
+    @Override
+    protected TeleNativeThread createTeleNativeThread(int id, long threadId, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
+        /* Need to align and skip over the guard page at the base of the stack.
+         * N.B. "base" is low address (i.e., actually the end of the stack!).
+         */
+        final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
+        final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
+        final long adjStackSize = stackSize - (stackBottom - stackBase);
+        return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize, vmThreadLocals);
     }
 
     private static long pageAlign(long address, int pageSize) {

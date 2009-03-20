@@ -141,12 +141,14 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
                 stackInspector.setMarked(true);
             }
             for (TeleNativeThread thread : teleVM().threads()) {
-                final UniqueInspector.Key<StackInspector> key = UniqueInspector.Key.create(StackInspector.class, LongValue.from(thread.id()));
-                final StackInspector stackInspector = UniqueInspector.find(inspection(), key);
-                if (stackInspector == null) {
-                    add(new StackInspector(inspection(), thread, residence(), this));
-                } else {
-                    stackInspector.setMarked(false);
+                if (thread.isJava()) {
+                    final UniqueInspector.Key<StackInspector> key = UniqueInspector.Key.create(StackInspector.class, LongValue.from(thread.handle()));
+                    final StackInspector stackInspector = UniqueInspector.find(inspection(), key);
+                    if (stackInspector == null) {
+                        add(new StackInspector(inspection(), thread, residence(), this));
+                    } else {
+                        stackInspector.setMarked(false);
+                    }
                 }
             }
             // Any remaining marked inspectors should be deleted as the threads have gone away

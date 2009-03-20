@@ -105,7 +105,7 @@ public final class VmThreadMap {
      * @param vmThread the vmThread representing the main thread
      */
     public void addMainVmThread(VmThread vmThread) {
-        vmThread.setThreadMapID(_idMap.acquire(vmThread));
+        vmThread.setID(_idMap.acquire(vmThread));
     }
 
     // Helper routines to manipulate the linked list of vm thread locals
@@ -277,7 +277,7 @@ public final class VmThreadMap {
         }
 
         synchronized int acquire(VmThread vmThread) {
-            FatalError.check(vmThread.threadMapID() == 0, "VmThread already has an ID");
+            FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
             final int length = _freeList.length;
             if (_nextID >= length) {
                 // grow the free list and initialize the new part
@@ -297,7 +297,7 @@ public final class VmThreadMap {
             final int id = _nextID;
             _nextID = _freeList[_nextID];
             _vmThreads[id] = vmThread;
-            vmThread.setThreadMapID(id);
+            vmThread.setID(id);
             return id;
         }
 
@@ -312,6 +312,5 @@ public final class VmThreadMap {
             // this operation may be performance critical, so avoid the bounds check
             return UnsafeLoophole.cast(ArrayAccess.getObject(_vmThreads, id));
         }
-
     }
 }

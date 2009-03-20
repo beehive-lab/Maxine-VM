@@ -35,6 +35,8 @@ import com.sun.max.tele.*;
 import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Models the remote process being controlled.
@@ -167,16 +169,11 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                 throwable.printStackTrace();
                 ThrowableDialog.showLater(throwable, null, tracePrefix() + "Uncaught exception while processing " + request);
             } finally {
-                synchronized (_synchronizedWaitersLock) {
-                    if (_synchronizedWaiters > 0) {
-                        _synchronizedWaitersLock.notifyAll();
-                    }
-                }
+                Trace.begin(TRACE_VALUE, tracePrefix() + "notifying completion of request: " + request);
+                request.notifyOfCompletion();
+                Trace.end(TRACE_VALUE, tracePrefix() + "notifying completion of request: " + request);
             }
         }
-
-        private int _synchronizedWaiters;
-        private final Object _synchronizedWaitersLock = new Object();
 
         private String traceSuffix(boolean synchronous) {
             return " (" + (synchronous ? "synchronous" : "asynchronous") + ")";
@@ -211,18 +208,9 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
 
         private void waitForSynchronousRequestToComplete(TeleEventRequest request) {
-            synchronized (_synchronizedWaitersLock) {
-                _synchronizedWaiters++;
-                Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
-                try {
-                    // Wait for tele process event handling thread to handle this process request:
-                    _synchronizedWaitersLock.wait();
-                    _synchronizedWaiters--;
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
-                Trace.end(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
-            }
+            Trace.begin(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
+            request.waitUntilComplete();
+            Trace.end(TRACE_VALUE, tracePrefix() + "waiting for synchronous request to complete: " + request);
         }
 
         private void execute(TeleEventRequest request, boolean isNested) {
@@ -533,13 +521,56 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return _instructionPointers.contains(address.toLong());
     }
 
-    private SortedMap<Long, TeleNativeThread> _threadMap = new TreeMap<Long, TeleNativeThread>();
+    private SortedMap<Long, TeleNativeThread> _handleToThreadMap = new TreeMap<Long, TeleNativeThread>();
 
     private final Set<TeleNativeThread> _startedThreads = new TreeSet<TeleNativeThread>();
 
     private final Set<TeleNativeThread> _deadThreads = new TreeSet<TeleNativeThread>();
 
     protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
+
+    protected abstract TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals);
+
+    /**
+     * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
+     *
+     * @param threads the sequence being used to collect the threads
+     * @param id the {@link VmThread#id() id} of the thread. If {@code id > 0}, then this thread corresponds to a
+     *            {@link VmThread Java thread}. If {@code id == 0}, then this is the primordial thread. Otherwise, this
+     *            is a native thread.
+     * @param handle the native thread library {@linkplain TeleNativeThread#handle() handle} to this thread (e.g. the
+     *            LWP of a Solaris thread)
+     * @param state
+     * @param stackBase the lowest known address of the stack. This may be 0 for an native thread that has not been
+     *            attached to the VM via the AttachCurrentThread function that is part of the JNI Invocation API. .
+     * @param stackSize the size of the stack in bytes
+     * @param triggeredVmThreadLocals the address of the native memory holding the safepoints-triggered VM thread locals
+     * @param enabledVmThreadLocals the address of the native memory holding the safepoints-enabled VM thread locals
+     * @param disabledVmThreadLocals the address of the native memory holding the safepoints-disabled VM thread locals
+     */
+    public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int id, long handle, int state, long stackBase, long stackSize,
+                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
+        assert state >= 0 && state < ThreadState.VALUES.length() : state;
+        TeleNativeThread thread = _handleToThreadMap.get(handle);
+
+        final Map<Safepoint.State, Pointer> vmThreadLocals;
+        if (triggeredVmThreadLocals != 0 && enabledVmThreadLocals != 0 && disabledVmThreadLocals != 0) {
+            vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
+            vmThreadLocals.put(Safepoint.State.ENABLED, Pointer.fromLong(enabledVmThreadLocals));
+            vmThreadLocals.put(Safepoint.State.DISABLED, Pointer.fromLong(disabledVmThreadLocals));
+            vmThreadLocals.put(Safepoint.State.TRIGGERED, Pointer.fromLong(triggeredVmThreadLocals));
+        } else {
+            vmThreadLocals = null;
+        }
+
+        if (thread == null || thread.isJava() != (vmThreadLocals != null)) {
+            thread = createTeleNativeThread(id, handle, stackBase, stackSize, vmThreadLocals);
+        }
+
+        thread.setState(ThreadState.VALUES.get(state));
+        threads.append(thread);
+    }
+
 
     private long _epoch;
 
@@ -566,7 +597,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         final long startTimeMillis = System.currentTimeMillis();
         _epoch++;
-        final AppendableSequence<TeleNativeThread> threads = new ArrayListSequence<TeleNativeThread>(_threadMap.size());
+        final AppendableSequence<TeleNativeThread> threads = new ArrayListSequence<TeleNativeThread>(_handleToThreadMap.size());
         gatherThreads(threads);
 
         if (!threads.isEmpty()) {
@@ -578,17 +609,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
         _startedThreads.clear();
         _deadThreads.clear();
-        _deadThreads.addAll(_threadMap.values());
+        _deadThreads.addAll(_handleToThreadMap.values());
 
         for (TeleNativeThread thread : threads) {
 
             // Refresh the thread
             thread.refresh(epoch());
 
-            newThreadMap.put(thread.id(), thread);
-            final TeleNativeThread oldThread = _threadMap.get(thread.id());
+            newThreadMap.put(thread.handle(), thread);
+            final TeleNativeThread oldThread = _handleToThreadMap.get(thread.handle());
             if (oldThread != null) {
-                assert oldThread == thread;
+                final boolean startingOrTerminatingJavaThread = oldThread.isJava() != thread.isJava();
+                assert oldThread == thread || startingOrTerminatingJavaThread : "old=" + oldThread + ", new=" + thread;
                 _deadThreads.remove(thread);
                 Trace.line(TRACE_VALUE, "    "  + thread);
             } else {
@@ -606,7 +638,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             Trace.line(TRACE_VALUE, "    "  + thread + " DEAD");
         }
         Trace.end(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:", startTimeMillis);
-        _threadMap = newThreadMap;
+        _handleToThreadMap = newThreadMap;
         _instructionPointers = newInstructionPointers;
     }
 
@@ -616,7 +648,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @return the set of threads in the process
      */
     public final IterableWithLength<TeleNativeThread> threads() {
-        return Iterables.toIterableWithLength(_threadMap.values());
+        return Iterables.toIterableWithLength(_handleToThreadMap.values());
     }
 
     /**
@@ -636,7 +668,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     public final TeleNativeThread idToThread(long id) {
-        return _threadMap.get(id);
+        return _handleToThreadMap.get(id);
     }
 
     private TeleNativeThread _primordialThread;
@@ -649,7 +681,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * Gets the thread whose stack contains the memory location, null if none.
      */
     public final TeleNativeThread threadContaining(Address address) {
-        for (TeleNativeThread thread : _threadMap.values()) {
+        for (TeleNativeThread thread : _handleToThreadMap.values()) {
             if (thread.isJava() && thread.stack().contains(address)) {
                 return thread;
             }

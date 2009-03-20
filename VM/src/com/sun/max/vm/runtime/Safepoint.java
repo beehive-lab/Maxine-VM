@@ -63,6 +63,8 @@ public abstract class Safepoint {
         DISABLED(SAFEPOINTS_DISABLED_THREAD_LOCALS),
         TRIGGERED(SAFEPOINTS_TRIGGERED_THREAD_LOCALS);
 
+        public static final IndexedSequence<State> CONSTANTS = new ArraySequence<State>(values());
+
         private final VmThreadLocal _key;
 
         State(VmThreadLocal key) {

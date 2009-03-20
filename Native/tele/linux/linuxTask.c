@@ -25,7 +25,6 @@
  * @author Bernd Mathiske
  * @author Doug Simon
  */
-#include <sys/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -33,6 +32,8 @@
 #include <string.h>
 #include <signal.h>
 #include <syscall.h>
+#include <sys/wait.h>
+#include <sys/time.h>
 
 #include "log.h"
 #include "ptrace.h"
@@ -86,7 +87,7 @@ static jboolean handleNewThread(int tid) {
         return false;
     }
 
-    ptrace(PT_SETOPTIONS, tid, 0, PTRACE_O_TRACEEXIT | PTRACE_O_TRACECLONE);
+    ptrace(PT_SETOPTIONS, tid, 0, PTRACE_O_TRACECLONE);
     ptrace(PT_CONTINUE, tid, 0, 0);
     return true;
 }
@@ -179,6 +180,8 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
     log_print_newline(); \
 } while (0)
 
+#define STAT_SIGNAL_MASK_FIELD_SKIP(name) _STAT_FIELD(unsigned long, name, "%lu", false)
+
     STAT_FIELD(pid_t, TID, "%d");
     STAT_STRING_FIELD(comm);
     STAT_FIELD(char, State, "%c");
@@ -206,17 +209,17 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
     STAT_FIELD_SKIP(unsigned long, RSSLimit, "%lu");
     STAT_FIELD_SKIP(void *, StartCode, "%p");
     STAT_FIELD_SKIP(void *, EndCode, "%p");
-    STAT_FIELD(void *, StartStack, "%p");
-    STAT_FIELD(void *, KernelStackPointer, "%p");
+    STAT_FIELD_SKIP(void *, StartStack, "%p");
+    STAT_FIELD_SKIP(void *, KernelStackPointer, "%p");
     STAT_FIELD_SKIP(void *, KernelInstructionPointer, "%p");
-    STAT_SIGNAL_MASK_FIELD(PendingSignals);
-    STAT_SIGNAL_MASK_FIELD(BlockedSignals);
-    STAT_SIGNAL_MASK_FIELD(IgnoredSignals);
-    STAT_SIGNAL_MASK_FIELD(CaughtSignals);
-    STAT_FIELD(void *, WaitChannel, "%p");
+    STAT_SIGNAL_MASK_FIELD_SKIP(PendingSignals);
+    STAT_SIGNAL_MASK_FIELD_SKIP(BlockedSignals);
+    STAT_SIGNAL_MASK_FIELD_SKIP(IgnoredSignals);
+    STAT_SIGNAL_MASK_FIELD_SKIP(CaughtSignals);
+    STAT_FIELD_SKIP(void *, WaitChannel, "%p");
     STAT_FIELD_SKIP(unsigned long, SwappedPages, "%lu");
     STAT_FIELD_SKIP(unsigned long, SwappedPagesChildren, "%lu");
-    STAT_FIELD(int, ExitSignal, "%d");
+    STAT_FIELD_SKIP(int, ExitSignal, "%d");
     STAT_FIELD(int, CPU, "%d");
     STAT_FIELD_SKIP(unsigned long, RealtimePriority, "%lu");
     STAT_FIELD_SKIP(unsigned long, SchedulingPolicy, "%lu");
@@ -248,9 +251,6 @@ char task_state(pid_t tgid, pid_t tid) {
     return state;
 }
 
-/**
- *
- */
 static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
 #define RETRY_COUNT 100
 #define RETRY(format, ...) do { \
@@ -267,8 +267,6 @@ static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
 
     int retries = RETRY_COUNT;
     while (1) {
-        int status;
-
 #if log_TELE
         log_task_stat(tgid, tid, "waitForSignal(%d, %d): status of %d:", tgid, tid, tid);
 #endif
@@ -296,24 +294,20 @@ static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
                 }
                 break;
             }
-            case 'T': {
-#if log_TELE
-                siginfo_t siginfo;
-                if (ptrace(PT_GETSIGINFO, tid, NULL, &siginfo) == 0) {
-                    tele_log_println("Signal info: signo=%d, code=%d, errno=%d", siginfo.si_signo, siginfo.si_code, siginfo.si_errno);
-                }
-                tele_log_println("Task %d is stopped at breakpoint or on signal", tid);
-#endif
-                return true;
-            }
         }
 
         tele_log_println("Waiting for task %d which is in state '%c' to receive signal %d [%s]", tid, task_state(tgid, tid), signalnum, strsignal(signalnum));
-
+        int status;
         int result = waitpid(tid, &status, 0);
-        if (result != tid) {
+        if (result == -1) {
             int error = errno;
-            RETRY("waitpid(%d) failed with result %d, error %d [%s]", tid, result, error, strerror(error));
+            if (error == ECHILD) {
+                tele_log_println("Going to wait again for task %d which is in state '%c' to receive signal %d [%s]", tid, task_state(tgid, tid), signalnum, strsignal(signalnum));
+                result = waitpid(tid, &status, __WCLONE);
+            }
+            if (result == -1 && error == ECHILD) {
+                RETRY("waitpid(%d) failed with result %d, error %d [%s]", tid, result, error, strerror(error));
+            }
         }
 
         if (WIFEXITED(status)) {
@@ -390,7 +384,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env
         int status;
         if (waitpid(childPid, &status, 0) == childPid && WIFSTOPPED(status)) {
             /* Configure child so that it traps when it exits or starts new threads */
-            ptrace(PT_SETOPTIONS, childPid, 0, PTRACE_O_TRACEEXIT | PTRACE_O_TRACECLONE);
+            ptrace(PT_SETOPTIONS, childPid, 0, PTRACE_O_TRACECLONE);
             return childPid;
         }
     }
@@ -418,7 +412,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSingleStep(JNIEnv *env, jclass
     if (ptrace(PT_STEP, tid, 0, 0) != 0) {
         return false;
     }
-    task_wait_for_state(tgid, tid, "T");
+//    task_wait_for_state(tgid, tid, "T");
     return true;
 }
 
@@ -472,7 +466,7 @@ int task_memory_read_fd(int tgid, void *address) {
  * Copies 'size' bytes from 'src' in the address space of 'tgid' to 'dst' in the caller's address space.
  */
 size_t task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size) {
-    task_wait_for_state(tgid, tgid, "T");
+    //task_wait_for_state(tgid, tgid, "T");
     //tele_log_println("Reading %d bytes from memory of task %d at %p", size, tid, src);
     if (size <= sizeof(Address)) {
         Address word = ptrace(PT_READ_D, tid, (Address) src, NULL);
@@ -536,7 +530,7 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
     if (size == 0) {
         return 0;
     }
-    task_wait_for_state(tgid, tid, "T");
+    //task_wait_for_state(tgid, tid, "T");
 
     size_t bytesWritten = 0;
     const size_t wholeWords = size / sizeof(Word);

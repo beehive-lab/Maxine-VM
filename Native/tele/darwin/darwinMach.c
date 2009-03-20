@@ -49,12 +49,12 @@ void report_mach_error(const char *file, int line, kern_return_t krn, const char
 	static void* lastCall = 0; \
     Boolean trace = log_TELE && (name != (void *) mach_vm_read_overwrite || lastCall != (void *) mach_vm_read_overwrite); \
     if (trace) { \
-        log_println("%s:%d: %s(" argsFormat ")", file, line, STRINGIZE(name), ##__VA_ARGS__); \
+        log_println("%s:%d: %s(" argsFormat ")", file, line, STRINGIZE(name), arg1, ##__VA_ARGS__); \
     } \
     kern_return_t krn = name(arg1, ##__VA_ARGS__ ); \
     int error = errno; \
     if (krn != KERN_SUCCESS)  { \
-        report_mach_error(file, line, krn, STRINGIZE(name), argsFormat, ##__VA_ARGS__); \
+        report_mach_error(file, line, krn, STRINGIZE(name), argsFormat, arg1, ##__VA_ARGS__); \
     } \
     lastCall = name; \
     errno = error; \
