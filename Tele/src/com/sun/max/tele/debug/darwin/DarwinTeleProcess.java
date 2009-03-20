@@ -21,13 +21,13 @@
 package com.sun.max.tele.debug.darwin;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.prototype.*;
@@ -111,20 +111,9 @@ public final class DarwinTeleProcess extends TeleProcess {
         nativeGatherThreads(_task, threads, threadSpecificsList.asAddress().toLong());
     }
 
-    /**
-     * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
-     */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, long threadID, int state, long stackBase, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        DarwinTeleNativeThread thread = (DarwinTeleNativeThread) idToThread(threadID);
-        if (thread == null) {
-            thread = new DarwinTeleNativeThread(this, threadID, stackBase, stackSize,
-                triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
-        }
-
-        assert state >= 0 && state < ThreadState.VALUES.length();
-        thread.setState(ThreadState.VALUES.get(state));
-        threads.append(thread);
+    @Override
+    protected TeleNativeThread createTeleNativeThread(int id, long machThread, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
+        return new DarwinTeleNativeThread(this, id, machThread, stackBase, stackSize, vmThreadLocals);
     }
 
     private static native int nativeReadBytes(long task, long address, byte[] buffer, int offset, int length);

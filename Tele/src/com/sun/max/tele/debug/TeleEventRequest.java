@@ -43,6 +43,8 @@ public abstract class TeleEventRequest {
      */
     public final String _name;
 
+    private boolean _complete = false;
+
     public TeleEventRequest(String name, TeleNativeThread thread) {
         _name = name;
         _thread = thread;
@@ -64,5 +66,20 @@ public abstract class TeleEventRequest {
     @Override
     public String toString() {
         return _name;
+    }
+
+    public synchronized void notifyOfCompletion() {
+        _complete = true;
+        notify();
+    }
+
+    public synchronized void waitUntilComplete() {
+        while (!_complete) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

@@ -21,10 +21,12 @@
 package com.sun.max.ins.method;
 
 import java.util.*;
+import java.util.Arrays;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.lang.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
@@ -55,7 +57,10 @@ public final class MethodActorSearchDialog extends TeleObjectSearchDialog {
         while (teleMethodActors.hasNext()) {
             final TeleMethodActor teleMethodActor = teleMethodActors.next();
             final MethodActor methodActor = teleMethodActor.methodActor();
-            if (filterLowerCase.isEmpty() || methodActor.name().toString().toLowerCase().contains(filterLowerCase)) {
+            final String methodNameLowerCase = methodActor.name().toString().toLowerCase();
+            if (filterLowerCase.isEmpty() ||
+                (filterLowerCase.endsWith(" ") && methodNameLowerCase.equals(Strings.chopSuffix(filterLowerCase, 1))) ||
+                methodNameLowerCase.contains(filterLowerCase)) {
                 final String signature = methodActor.name() + methodActor.descriptor().toJavaString(false, true);
                 methods[i++] = new NamedTeleObject(signature, teleMethodActor);
             }

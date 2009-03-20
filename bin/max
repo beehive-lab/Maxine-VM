@@ -393,7 +393,7 @@ inspect_help="launch a given program under the inspector"
 
 function run_inspect() {
     parse_vm_args $@
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=1 -d -a=\""$vm_args"\"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=${TRACE:-1} -d -a=\""$vm_args"\"
 }
 
 #=======================================

@@ -142,7 +142,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     public String longName(TeleVmThread teleVmThread) {
         final TeleNativeThread teleNativeThread = teleVmThread.teleNativeThread();
         if (teleNativeThread != null) {
-            return shortName(teleVmThread) + " [" + teleNativeThread.id() + "]";
+            return shortName(teleVmThread) + " [" + teleNativeThread.handle() + "]";
         }
         return shortName(teleVmThread);
     }
@@ -173,7 +173,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (teleNativeThread.teleVmThread() != null) {
             return longName(teleNativeThread.teleVmThread());
         }
-        return shortName(teleNativeThread) + " [" + teleNativeThread.id() + "]";
+        return shortName(teleNativeThread) + " [" + teleNativeThread.handle() + "]";
     }
 
     /**

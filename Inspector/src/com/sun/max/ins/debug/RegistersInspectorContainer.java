@@ -135,7 +135,7 @@ public final class RegistersInspectorContainer extends TabbedInspector<Registers
                     registersInspector.setMarked(true);
                 }
                 for (TeleNativeThread thread : teleVM().threads()) {
-                    final UniqueInspector.Key<RegistersInspector> key = UniqueInspector.Key.create(RegistersInspector.class, LongValue.from(thread.id()));
+                    final UniqueInspector.Key<RegistersInspector> key = UniqueInspector.Key.create(RegistersInspector.class, LongValue.from(thread.handle()));
                     final RegistersInspector registersInspector = UniqueInspector.find(inspection(), key);
                     if (registersInspector == null) {
                         add(new RegistersInspector(inspection(), thread, this));

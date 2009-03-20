@@ -210,7 +210,6 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeKill(JNIEnv *env, jcl
     return ptrace(PT_KILL, pid, 0, 0) == 0;
 }
 
-static jmethodID _methodID = NULL;
 
 JNIEXPORT void JNICALL
 Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv *env, jobject process, jlong task, jobject result, jlong threadSpecificsListAddress) {
@@ -223,13 +222,6 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
 
     c_ASSERT(threadSpecificsListAddress != 0);
 
-    if (_methodID == NULL) {
-        jclass c = (*env)->GetObjectClass(env, process);
-        c_ASSERT(c != NULL);
-        _methodID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;JIJJJJJ)V");
-        c_ASSERT(_methodID != NULL);
-    }
-
     for (i = 0; i < numberOfThreads; i++) {
         ThreadState_t state = TS_SUSPENDED;
 
@@ -241,27 +233,9 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
             return;
         }
 
-        ThreadSpecificsStruct tss;
-        threadSpecificsList_search(task, threadSpecificsListAddress, threadState.__rsp, &tss);
-
-        tele_log_println("Gathered thread[id=%d, thread=%lu, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
-                        tss.id,
-                        thread,
-                        tss.stackBase,
-                        tss.stackBase + tss.stackSize,
-                        tss.stackSize,
-                        tss.triggeredVmThreadLocals,
-                        tss.enabledVmThreadLocals,
-                        tss.disabledVmThreadLocals);
-
-        (*env)->CallVoidMethod(env, process, _methodID, result,
-                        (long) thread,
-                        state,
-                        tss.stackBase,
-                        tss.stackSize,
-                        tss.triggeredVmThreadLocals,
-                        tss.enabledVmThreadLocals,
-                        tss.disabledVmThreadLocals);
+        ThreadSpecificsStruct threadSpecificsStruct;
+        ThreadSpecifics threadSpecifics = threadSpecificsList_search(task, threadSpecificsListAddress, threadState.__rsp, &threadSpecificsStruct);
+        teleProcess_jniGatherThread(env, process, result, thread, state, threadSpecifics);
     }
 
     if (Vm_deallocate(POS, mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {

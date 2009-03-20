@@ -78,7 +78,7 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
     private final ThreadLocalsViewPreferences _instancePreferences;
 
     public ThreadLocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, ThreadLocalsInspectorContainer parent) {
-        super(inspection, parent.residence(),  LongValue.from(teleNativeThread.id()));
+        super(inspection, parent.residence(),  LongValue.from(teleNativeThread.handle()));
         _parent = parent;
         _teleNativeThread = teleNativeThread;
 

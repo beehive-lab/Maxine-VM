@@ -104,7 +104,6 @@ void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSiz
         if (primordialThreadSpecifics == NULL) {
             log_exit(11, "Could not allocate primoridial thread specifics.");
         }
-        primordialThreadSpecifics->id = -1;
         primordialThreadSpecifics->next = primordialThreadSpecifics;
         primordialThreadSpecifics->triggeredVmThreadLocals = primordialVmThreadLocals;
         primordialThreadSpecifics->enabledVmThreadLocals = primordialVmThreadLocals;

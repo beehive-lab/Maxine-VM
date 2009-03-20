@@ -21,13 +21,13 @@
 package com.sun.max.tele.debug.linux;
 
 import java.io.*;
+import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.debug.TeleNativeThread.*;
 import com.sun.max.tele.page.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -117,6 +117,11 @@ public final class LinuxTeleProcess extends TeleProcess {
     private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
 
     @Override
+    protected TeleNativeThread createTeleNativeThread(int id, long tid, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
+        return new LinuxTeleNativeThread(this, id, tid, stackBase, stackSize, vmThreadLocals);
+    }
+
+    @Override
     protected void gatherThreads(final AppendableSequence<TeleNativeThread> threads) {
         try {
             SingleThread.executeWithException(new Function<Void>() {
@@ -129,21 +134,6 @@ public final class LinuxTeleProcess extends TeleProcess {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
-    }
-
-    /**
-     * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
-     */
-    void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int tid, int state, long stackStart, long stackSize,
-                    long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
-        LinuxTeleNativeThread thread = (LinuxTeleNativeThread) idToThread(tid);
-        if (thread == null) {
-            thread = new LinuxTeleNativeThread(this, tid, stackStart, stackSize, triggeredVmThreadLocals, enabledVmThreadLocals, disabledVmThreadLocals);
-        }
-
-        assert state >= 0 && state < ThreadState.VALUES.length() : state;
-        thread.setState(ThreadState.VALUES.get(state));
-        threads.append(thread);
     }
 
     @Override

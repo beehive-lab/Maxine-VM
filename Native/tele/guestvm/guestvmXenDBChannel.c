@@ -25,9 +25,9 @@
 #include "isa.h"
 #include "log.h"
 #include "jni.h"
+#include "threadSpecifics.h"
 #include "teleProcess.h"
 #include "teleNativeThread.h"
-#include "threadSpecifics.h"
 
 extern void gather_and_trace_threads(void);
 
@@ -199,19 +199,14 @@ static ThreadState_t toThreadState(int state) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject threadSeq, jint domainId, jlong threadSpecificsListAddress) {
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(JNIEnv *env, jclass c, jobject teleDomain, jobject threadSeq, jint domainId, jlong threadSpecificsListAddress) {
     struct db_thread *threads;
     int num_threads, i;
-    jmethodID gather_thread_method;
-    ThreadSpecificsStruct tss;
-
     threads = gather_threads(&num_threads);
-    gather_thread_method = (*env)->GetStaticMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IIJJJJJ)V");
-    c_ASSERT(gather_thread_method != NULL);
-    for (i=0; i<num_threads; i++) {
-    	threadSpecificsList_search(threadSpecificsListAddress, threads[i].stack, &tss);
-         (*env)->CallStaticVoidMethod(env, c, gather_thread_method, threadSeq, threads[i].id, toThreadState(threads[i].flags), threads[i].stack, threads[i].stack_size,
-                        tss.triggeredVmThreadLocals, tss.enabledVmThreadLocals, tss.disabledVmThreadLocals);
+     for (i=0; i<num_threads; i++) {
+        ThreadSpecificsStruct threadSpecificsStruct;
+        ThreadSpecifics threadSpecifics = threadSpecificsList_search(threadSpecificsListAddress, threads[i].stack, &threadSpecificsStruct);
+        teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), threadSpecifics);
     }
 
     free(threads);

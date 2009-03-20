@@ -32,7 +32,7 @@
 
 typedef struct thread_SpecificsStruct {
     struct thread_SpecificsStruct *next; // Points to self if not on a list
-    jint id; // -1 denotes the thread specifics for the primordial thread created when a debugger is attached
+    jint id; // 0 denotes the thread specifics for the primordial thread created when a debugger is attached
     Address stackBase;
     Size stackSize;
     Address triggeredVmThreadLocals;
@@ -59,6 +59,13 @@ typedef struct {
     mutex_Struct lock;
     ThreadSpecifics head;
 } ThreadSpecificsListStruct, *ThreadSpecificsList;
+
+/**
+ * Determines if a given thread specifics denotes a Java thread. A thread specifics 'ts' denotes a Java thread if:
+ *
+ *   ts.triggeredVmThreadLocals != NULL && ts.enabledVmThreadLocals != NULL && ts.disabledVmThreadLocals != NULL
+ */
+extern Boolean threadSpecifics_isJava(ThreadSpecifics threadSpecifics);
 
 /**
  * Prints a selection of the fields in a given ThreadSpecifics object.
@@ -119,16 +126,19 @@ extern unsigned short readbytes(unsigned long address, char *buffer, unsigned sh
 
 /**
  * Searches a ThreadSpecificsList (see threadSpecifics.h) in the VM's address space for a ThreadSpecifics
- * entry 'ts' that meets the following criteria:
+ * entry 'ts' such that:
  *
- * 1. ts.stackBase <= stackPointer && stackPointer < (ts.stackBase + ts.stackSize)
- * 2. ts.triggeredVmThreadLocals != NULL && ts.enabledVmThreadLocals != NULL && ts.disabledVmThreadLocals != NULL
+ *   ts.stackBase <= stackPointer && stackPointer < (ts.stackBase + ts.stackSize)
  *
  * If such an entry is found, then its contents are copied from the VM to the given 'threadSpecifics' struct.
  *
- * @return true if an entry was found, false otherwise. If no entry is found, then the contents of 'threadSpecifics' are zeroed.
+ * @param threadSpecificsListAddress the address of the ThreadSpecificsList in the VM's address space
+ * @param stackPointer the stack pointer to search with
+ * @param threadSpecifics pointer to storage for a ThreadSpecificsStruct into which the found entry
+ *        (if any) will be copied from the VM's address space
+ * @return the entry that was found, NULL otherwise
  */
-extern Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
+extern ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
 
 #endif
 

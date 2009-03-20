@@ -98,9 +98,13 @@ void threadSpecificsList_remove(ThreadSpecificsList threadSpecificsList, ThreadS
     TSL_MUTEX_DO(threadSpecificList, mutex_exit);
 }
 
+Boolean threadSpecifics_isJava(ThreadSpecifics threadSpecifics) {
+    return threadSpecifics->triggeredVmThreadLocals != 0 && threadSpecifics->enabledVmThreadLocals != 0 && threadSpecifics->disabledVmThreadLocals != 0;
+}
+
 #if TELE
 
-Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
+ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
     ThreadSpecificsListStruct threadSpecificsListStruct;
 
     ThreadSpecificsList threadSpecificsList = &threadSpecificsListStruct;
@@ -114,18 +118,13 @@ Boolean threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecifics
 #endif
         Address stackBase = threadSpecifics->stackBase;
         Size stackSize = threadSpecifics->stackSize;
-        if (stackBase <= stackPointer &&
-            stackPointer < (stackBase + stackSize) &&
-            threadSpecifics->triggeredVmThreadLocals != 0 &&
-            threadSpecifics->enabledVmThreadLocals != 0 &&
-            threadSpecifics->disabledVmThreadLocals != 0) {
-            return true;
+        if (stackBase <= stackPointer && stackPointer < (stackBase + stackSize)) {
+            return threadSpecifics;
         }
         threadSpecificsAddress = (Address) threadSpecifics->next;
     }
 
-    memset((void *) threadSpecifics, 0, sizeof(ThreadSpecificsStruct));
-    return false;
+    return NULL;
 }
 
 #endif
