@@ -25,9 +25,9 @@
 #include "isa.h"
 #include "log.h"
 #include "jni.h"
+#include "threadSpecifics.h"
 #include "teleProcess.h"
 #include "teleNativeThread.h"
-#include "threadSpecifics.h"
 
 extern void gather_and_trace_threads(void);
 
