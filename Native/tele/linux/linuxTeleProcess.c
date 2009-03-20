@@ -41,7 +41,7 @@ void teleProcess_initialize(void) {
 }
 
 static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadSequence, jlong threadSpecificsListAddress) {
-    task_wait_for_state(tgid, tid, "T");
+    //task_wait_for_state(tgid, tid, "T");
 
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
     task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL);
@@ -49,7 +49,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
     Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
     ThreadSpecificsStruct threadSpecificsStruct;
     ThreadSpecifics threadSpecifics = threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
-    teleProcess_jniGatherThread(env, process, result, threadSequence, state, threadSpecifics);
+    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, (jint) TS_SUSPENDED, threadSpecifics);
 }
 
 JNIEXPORT void JNICALL
