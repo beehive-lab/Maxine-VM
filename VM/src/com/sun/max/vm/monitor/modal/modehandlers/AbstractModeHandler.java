@@ -78,18 +78,19 @@ public abstract class AbstractModeHandler implements ModeHandler {
      */
     @INLINE
     protected static final int encodeCurrentThreadIDForLockword() {
-        return VmThreadLocal.ID.getConstantWord().asAddress().toInt() + 1;
+        return VmThreadLocal.ID.getConstantWord().asAddress().toInt();
     }
 
     /**
      * Decodes the given lockword thread id into a VMThreadMap id.
+     * Now that thread ids are always >= 1 this is a no-op.
      *
      * @param lockwordThreadID the lockword thread id
      * @return the VMThreadMap id
      */
     @INLINE
     protected static final int decodeLockwordThreadID(int lockwordThreadID) {
-        return lockwordThreadID - 1;
+        return lockwordThreadID;
     }
 
     public void initialize(MaxineVM.Phase phase) {

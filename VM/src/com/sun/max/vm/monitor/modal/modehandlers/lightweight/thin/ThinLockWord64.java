@@ -41,7 +41,7 @@ public abstract class ThinLockWord64 extends LightweightLockWord64 {
      *     [                 Undefined               ][m][1]     Inflated
      *
      * Note:
-     * A valid thread ID must be >= 1.
+     * A valid thread ID must be >= 1. This is enforced by VmThreadMap.
      * The per-shape mode bit, m, is not used and is always masked.
      * The 'util' field is not used and is always masked.
      */
