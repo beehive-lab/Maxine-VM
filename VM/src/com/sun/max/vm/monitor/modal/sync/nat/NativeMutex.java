@@ -26,6 +26,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 
 /**
  * Java wrapper for a native mutex.
@@ -35,14 +36,14 @@ import com.sun.max.vm.runtime.*;
  * @author Simon Wilkinson
  * @author Mick Jordan
  */
-public final class Mutex {
+public final class NativeMutex extends Mutex {
 
-    static class NativeReference extends WeakReference<Mutex> {
+    static class NativeReference extends WeakReference<NativeMutex> {
 
         @CONSTANT_WHEN_NOT_ZERO
         private Pointer _mutex = Pointer.zero();
 
-        NativeReference(Mutex m) {
+        NativeReference(NativeMutex m) {
             super(m, _refQueue);
         }
 
@@ -51,17 +52,17 @@ public final class Mutex {
         }
     }
 
-    private static ReferenceQueue<Mutex> _refQueue = new ReferenceQueue<Mutex>();
+    private static ReferenceQueue<NativeMutex> _refQueue = new ReferenceQueue<NativeMutex>();
 
     private NativeReference _native;
 
     private static int _size;
 
     static {
-        new CriticalNativeMethod(Mutex.class, "nativeMutexSize");
-        new CriticalNativeMethod(Mutex.class, "nativeMutexInitialize");
-        new CriticalNativeMethod(Mutex.class, "nativeMutexLock");
-        new CriticalNativeMethod(Mutex.class, "nativeMutexUnlock");
+        new CriticalNativeMethod(NativeMutex.class, "nativeMutexSize");
+        new CriticalNativeMethod(NativeMutex.class, "nativeMutexInitialize");
+        new CriticalNativeMethod(NativeMutex.class, "nativeMutexLock");
+        new CriticalNativeMethod(NativeMutex.class, "nativeMutexUnlock");
     }
 
     @C_FUNCTION
@@ -75,32 +76,33 @@ public final class Mutex {
 
     private static native boolean nativeMutexLock(Pointer mutex);
 
-    public static void initialize() {
+    static void initialize() {
         assert MaxineVM.hostOrTarget().phase() == MaxineVM.Phase.PRIMORDIAL;
         _size = nativeMutexSize();
     }
 
-    public Mutex() {
+    NativeMutex() {
         _native = new NativeReference(this);
     }
 
     /**
      * Performs native allocation for this <code>Mutex</code>.
      */
-    public void alloc() {
-        _native._mutex =  Memory.mustAllocate(_size);
-        nativeMutexInitialize(_native._mutex);
+    @Override
+    public Mutex init() {
+        if (_native._mutex.isZero()) {
+            _native._mutex =  Memory.mustAllocate(_size);
+            nativeMutexInitialize(_native._mutex);
+        }
+        return this;
     }
 
-    /**
-     * Causes the current thread to perform a lock on the mutex.
-     *
-     * This is not intended for recursive locking, even though the native mutex implementation
-     * may support it.
-     *
-     * @return true if an error occured in native code; false otherwise
-     */
-    @INLINE
+    @Override
+    public void cleanup() {
+        _native.disposeNative();
+    }
+
+    @Override
     public boolean lock() {
         return nativeMutexLock(_native._mutex);
     }
@@ -112,20 +114,25 @@ public final class Mutex {
      * results are undefined.
      *
      * @return true if an error occured in native code; false otherwise
-     * @see Mutex#lock()
+     * @see NativeMutex#lock()
      */
-    @INLINE
+    @Override
     public boolean unlock() {
         return nativeMutexUnlock(_native._mutex);
     }
 
     /**
-     * Returns a pointer to this <code>Mutex</code>'s native data structure.
+     * Returns a pointer to this {@code NativeMutex}'s native data structure.
      * @return
      */
     @INLINE
-    public Pointer asPointer() {
+    Pointer asPointer() {
         return _native._mutex;
+    }
+
+    @Override
+    public long logId() {
+        return _native._mutex.toLong();
     }
 
 }
