@@ -33,6 +33,38 @@ import com.sun.max.program.*;
 
 public class MaxineTesterConfiguration {
 
+    static final String[] _dacapoTests = {
+        "antlr",
+        "bloat",
+        "xalan",
+        "hsqldb",
+        "luindex",
+        "lusearch",
+        "jython",
+        "chart",
+        "eclipse",
+        "fop",
+        "pmd"
+    };
+
+    static final String[] _specjvm98Tests = {
+        "_201_compress",
+        "_202_jess",
+        "_205_raytrace",
+        "_209_db",
+        "_213_javac",
+        "_222_mpegaudio",
+        "_227_mtrt",
+        "_228_jack"
+    };
+
+    static final String[] _specjvm98IgnoredLinePatterns = {
+        "Total memory",
+        "## IO time",
+        "Finished in",
+        "Decoding time:"
+    };
+
     static final Class[] _outputTestClasses = {
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,

@@ -376,14 +376,7 @@ public final class HackJDK {
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
-            Field field;
-            try {
-                final Class<?> javaClass = _classRef.javaClass();
-                field = javaClass.getDeclaredField(_fieldName);
-            } catch (Exception e) {
-                throw ProgramError.unexpected(e);
-            }
-            return LongValue.from(_unsafe.objectFieldOffset(field));
+            return LongValue.from(fieldActor.offset());
         }
     }
 }

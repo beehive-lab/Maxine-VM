@@ -113,7 +113,7 @@ public class Stops {
             final int numberOfIndirectCalls = targetMethod.numberOfIndirectCalls();
             final int numberOfSafepoints = targetMethod.numberOfSafepoints();
 
-            ensureCapacity(_count + numberOfDirectCalls + numberOfDirectCalls + numberOfSafepoints);
+            ensureCapacity(_count + numberOfDirectCalls + numberOfIndirectCalls + numberOfSafepoints);
 
             for (int i = 0; i < numberOfDirectCalls; i++) {
                 final int stopPosition = targetCodePosition + DIRECT_CALL.stopPosition(targetMethod, i);
