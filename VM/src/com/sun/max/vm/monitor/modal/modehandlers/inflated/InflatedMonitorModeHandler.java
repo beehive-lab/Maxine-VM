@@ -185,6 +185,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             while (true) {
                 if (lockWord.isBound()) {
                     if (monitor != null) {
+                        monitor.monitorExit();
                         JavaMonitorManager.unbindMonitor(monitor);
                     }
                     final JavaMonitor boundMonitor = lockWord.getBoundMonitor();

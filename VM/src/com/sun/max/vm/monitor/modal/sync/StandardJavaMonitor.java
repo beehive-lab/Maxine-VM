@@ -232,10 +232,13 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         public void monitorEnter() {
             final VmThread currentThread = VmThread.current();
             if (currentThread.state() == Thread.State.TERMINATED) {
-                assert _ownerThread != currentThread;
-                _mutex.lock();
-                _ownerThread = currentThread;
-                _recursionCount = 1;
+                if (_ownerThread != currentThread) {
+                    _mutex.lock();
+                    _ownerThread = currentThread;
+                    _recursionCount = 1;
+                } else {
+                    _recursionCount++;
+                }
             } else {
                 super.monitorEnter();
             }

@@ -318,9 +318,6 @@ public class VmThread {
         // It is the monitor scheme's responsibility to ensure that this thread isn't reset to RUNNABLE if it blocks
         // here.
         VmThreadMap.ACTIVE.removeVmThreadLocals(_vmThreadLocals);
-        // But in case it doesn't we reset it here.
-        // TODO figure this out properly.
-        _state = Thread.State.TERMINATED;
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset _state to RUNNABLE
         _nativeThread = Address.zero();
         _vmThreadLocals = Pointer.zero();

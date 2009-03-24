@@ -45,16 +45,25 @@ public class PlainLabel extends InspectorLabel {
         redisplay();
     }
 
-    public void setValue(int n) {
-        setText(Integer.toString(n));
+    public void setValue(String text, String toolTipText) {
+        setText(text);
+        setToolTipText(toolTipText);
     }
 
     public void setValue(String text) {
-        setText(text);
+        setValue(text, null);
     }
 
-    public final void refresh(long epoch, boolean force) {
-        // No remote data to refresh
+    public void setValue(int n, String toolTipText) {
+        setValue(Integer.toString(n), toolTipText);
+    }
+
+    public void setValue(int n) {
+        setValue(n, null);
+    }
+
+    public void refresh(long epoch, boolean force) {
+        // No data to refresh in ordinary cases.
     }
 
     public void redisplay() {
