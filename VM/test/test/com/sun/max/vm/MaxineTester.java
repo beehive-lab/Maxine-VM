@@ -1194,7 +1194,17 @@ public class MaxineTester {
         traceExec(workingDir, command);
         try {
             final OutputStream outFile = outputFile != null ? new FileOutputStream(outputFile) : new NullOutputStream();
-            final OutputStream errFile = outputFile != null ? new FileOutputStream(outputFile.getAbsolutePath() + ".stderr") : new NullOutputStream();
+            final OutputStream errFile;
+            if (outputFile == null) {
+                errFile = new NullOutputStream();
+            } else {
+                if (outputFile.getPath().equals("/dev/stdout")) {
+                    errFile = new FileOutputStream("/dev/stderr");
+                } else {
+                    errFile = new FileOutputStream(outputFile.getAbsolutePath() + ".stderr");
+                }
+            }
+
             final Process process = Runtime.getRuntime().exec(command, env, workingDir);
             final ProcessThread processThread = new ProcessThread(System.in, outFile, errFile, process, name != null ? name : command[0], timeout);
             final int exitValue = processThread.exitValue();
