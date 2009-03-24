@@ -151,7 +151,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         // The JavaTesterRunScheme no longer overrides run.
         // Instead it checks whether  to run tests in the STARTING
         // phase of the initialize method.
-        if (_tester == null || VMOptions.parseMain(false)) {
+        if (_tester == null) {
             super.run();
         } else {
             initializeBasicFeatures();
