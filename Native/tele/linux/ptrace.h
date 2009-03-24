@@ -76,7 +76,7 @@ extern long _ptrace(POS_PARAMS, int request, pid_t pid, void *address, void *dat
 /**
  * Extracts the ptrace event code from the status value returned by a call to waitpid.
  */
-#define ptraceEvent(waitpidStatus) (((waitpidStatus) & 0xFF0000) >> 16)
+#define PTRACE_EVENT(waitpidStatus) (((waitpidStatus) & 0xFF0000) >> 16)
 
 /**
  * Gets the name of a given ptrace event.

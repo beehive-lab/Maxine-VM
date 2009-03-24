@@ -1102,9 +1102,7 @@ public class Inspection extends JFrame {
             }
             // Reset focus to new IP.
             final TeleNativeThread focusThread = focus().thread();
-            if (focusThread.isJava()) {
-                focus().setStackFrame(focusThread, focusThread.frames().first(), true);
-            }
+            focus().setStackFrame(focusThread, focusThread.frames().first(), true);
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);
         } finally {

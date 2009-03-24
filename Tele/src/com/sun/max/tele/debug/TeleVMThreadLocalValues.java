@@ -65,6 +65,10 @@ public class TeleVMThreadLocalValues {
         }
     }
 
+    public Safepoint.State safepointState() {
+        return _safepointState;
+    }
+
     /**
      * Gets the value of a given thread local variable as a word.
      */

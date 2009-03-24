@@ -31,7 +31,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <signal.h>
-#include <syscall.h>
+#include <dirent.h>
 #include <sys/wait.h>
 #include <sys/time.h>
 
@@ -39,7 +39,11 @@
 #include "ptrace.h"
 #include "linuxTask.h"
 
-int task_read_registers(pid_t tid,
+/* The set of signals intercepted by the debugger to implement breakpoints,
+ * task stopping/suspension. */
+static sigset_t _caughtSignals;
+
+Boolean task_read_registers(pid_t tid,
     isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
     isa_CanonicalStateRegistersStruct *canonicalStateRegisters,
     isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters) {
@@ -47,7 +51,7 @@ int task_read_registers(pid_t tid,
     if (canonicalIntegerRegisters != NULL || canonicalStateRegisters != NULL) {
         struct user_regs_struct osIntegerRegisters;
         if (ptrace(PT_GETREGS, tid, 0, &osIntegerRegisters) != 0) {
-            return -1;
+            return false;
         }
         if (canonicalIntegerRegisters != NULL) {
             isa_canonicalizeTeleIntegerRegisters(&osIntegerRegisters, canonicalIntegerRegisters);
@@ -60,36 +64,46 @@ int task_read_registers(pid_t tid,
     if (canonicalFloatingPointRegisters != NULL) {
         struct user_fpregs_struct osFloatRegisters;
         if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
-            return -1;
+            return false;
         }
         isa_canonicalizeTeleFloatingPointRegisters(&osFloatRegisters, canonicalFloatingPointRegisters);
     }
 
-    return 0;
+    return true;
 }
 
-static jboolean handleNewThread(int tid) {
-    /* Most likely a new thread. */
+/**
+ * Waits for a newly started thread to stop (via a SIGSTOP), configures it for ptracing
+ * and resumes the new thread as well as the thread that started it (which is currently
+ * stopped on a SIGTRAP).
+ *
+ * @param newTid the PID of the new thread
+ * @param starterTid the thread from which 'newTid' was started (via pthread_start()).
+ */
+static void task_attach_ptrace_to_new_task(int newTid, int starterTid) {
     int result;
     int status;
     do {
-        tele_log_println("Waiting for new task %d to stop", tid);
-        result = waitpid(tid, &status, __WALL);
+        tele_log_println("Waiting for new task %d to stop", newTid);
+        result = waitpid(newTid, &status, __WALL);
     } while (result == -1 && errno == EINTR);
 
     if (result == -1) {
-        log_exit(11, "Error waiting for new task %d [%s]", tid, strerror(errno));
-    } else if (result != tid) {
+        perror("Error waiting for new task to stop");
+        exit(1);
+    } else if (result != newTid) {
         log_println("Wait returned unexpected PID %d", result);
-        return false;
+        exit(1);
     } else if (!WIFSTOPPED(status) || WSTOPSIG(status) != SIGSTOP) {
         log_println("Wait returned status %p", status);
-        return false;
+        exit(1);
     }
 
-    ptrace(PT_SETOPTIONS, tid, 0, PTRACE_O_TRACECLONE);
-    ptrace(PT_CONTINUE, tid, 0, 0);
-    return true;
+    ptrace(PT_SETOPTIONS, newTid, 0, PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXIT);
+
+    tele_log_println("Resuming tasks %d and %d", newTid, starterTid);
+    ptrace(PT_CONTINUE, newTid, 0, 0);
+    ptrace(PT_CONTINUE, starterTid, 0, 0);
 }
 
 /**
@@ -251,111 +265,414 @@ char task_state(pid_t tgid, pid_t tid) {
     return state;
 }
 
-static jboolean waitForSignal(pid_t tgid, pid_t tid, int signalnum) {
-#define RETRY_COUNT 100
-#define RETRY(format, ...) do { \
-    if (retries-- <= 0) { \
-        log_println("Gave up after %d attempts", RETRY_COUNT); \
-        return false;\
-    } else { \
-        log_println(format, ##__VA_ARGS__); \
-        log_println("Retrying in %dms ...", TASK_RETRY_PAUSE_MICROSECONDS / 1000); \
-        usleep(TASK_RETRY_PAUSE_MICROSECONDS); \
-        continue; \
-    } \
-} while(0)
+/**
+ * Converts a directory entry to a numeric PID.
+ *
+ * @param entry the directory entry to convert
+ * @return the numeric PID corresponding to 'entry->d_name' or 0 if the name
+ *         is not a valid PID or entry does is not a directory
+ */
+int dirent_task_pid(const struct dirent *entry) {
+    char *endptr;
+    if (entry->d_type == DT_DIR) {
+        errno = 0;
+        pid_t tid = (pid_t) strtol(entry->d_name, &endptr, 10);
+        if (errno != 0) {
+            log_println("Error converting dirent name \"%s\"to a long value: %s", entry->d_name, strerror(errno));
+            return 0;
+        }
+        if (*endptr == '\0') {
+            return tid;
+        }
+    }
+    return 0;
+}
 
-    int retries = RETRY_COUNT;
+/**
+ * Scans a directory in the /proc filesystem for task subdirectories.
+ *
+ * @param pid the PID of the process whose /proc/<pid>/task directory will be scanned
+ * @param tasks [out] an array of PIDs corresponding to the entries in the scanned directory
+ *        for which dirent_task_pid() returns a non-zero result. The memory allocated for this
+ *        array needs to be reclaimed by the caller.
+ * @return the number of entries returned in 'tasks' or -1 if an error occurs. If an error occurs,
+ *        no memory has been allocated and the value of '*tasks' is undefined.
+ */
+int scan_process_tasks(pid_t pid, pid_t **tasks) {
+    char *taskDirPath;
+    asprintf(&taskDirPath, "/proc/%d/task", (pid_t) pid);
+    c_ASSERT(taskDirPath != NULL);
+
+    struct dirent **entries = NULL;
+    const int nEntries = scandir(taskDirPath, &entries, dirent_task_pid, alphasort);
+    if (nEntries > 0) {
+        (*tasks) = (pid_t *) malloc(nEntries * sizeof(pid_t *));
+        int n = 0;
+        while (n < nEntries) {
+            pid_t tid = dirent_task_pid(entries[n]);
+            (*tasks)[n] = tid;
+            free(entries[n]);
+            n++;
+        }
+        free(entries);
+    }
+    int error = errno;
+    free(taskDirPath);
+    errno = error;
+    return nEntries;
+}
+
+/* The pause time between each poll of the VM to see if at least one thread has stopped */
+#define PROCESS_POLL_PAUSE_NANOSECONDS (200 * 1000)
+
+jboolean process_resume_all_threads(pid_t pid) {
+    pid_t *tasks = NULL;
+    const int nTasks = scan_process_tasks(pid, &tasks);
+    if (nTasks < 0) {
+        log_println("Error scanning /proc/%d/task directory: %s", pid, strerror(errno));
+        return false;
+    }
+
+    Boolean result = true;
+    int n = 0;
+    while (n < nTasks) {
+        pid_t tid = tasks[n];
+
+        /* Clear any left over SIGSTOP or SIGTRAP signals. */
+        siginfo_t siginfo;
+        ptrace(PT_GETSIGINFO, tid, NULL, &siginfo);
+        int signal = siginfo.si_signo;
+        if (signal != 0) {
+            if (!sigismember(&_caughtSignals, signal)) {
+                log_println("Error: Task %d with pending signal %d [%s] should not have been stopped by debugger", tid, signal, strsignal(signal));
+            } else {
+                tele_log_println("Clearing signal %d [%s] for task %d before resuming it", signal, strsignal(signal), tid);
+                siginfo.si_signo = 0;
+                siginfo.si_code = 0;
+                siginfo.si_errno = 0;
+                ptrace(PT_SETSIGINFO, tid, NULL, &siginfo);
+            }
+        }
+
+        tele_log_println("Resuming task %d", tid);
+        if (ptrace(PT_CONTINUE, tid, 0, 0) != 0) {
+            result = false;
+        }
+        n++;
+    }
+    free(tasks);
+    return result;
+}
+
+int process_wait_all_threads_stopped(pid_t pid) {
+    pid_t pgid = getpgid(pid);
+
+    Boolean stopping = false;
     while (1) {
-#if log_TELE
-        log_task_stat(tgid, tid, "waitForSignal(%d, %d): status of %d:", tgid, tid, tid);
-#endif
-        char state = task_state(tgid, tid);
-        switch (state) {
-            case 'D': {
-                RETRY("Task %d is in uninterruptible disk sleep", tid);
+
+        pid_t *tasks;
+        const int nTasks = scan_process_tasks(pid, &tasks);
+        if (nTasks < 0) {
+            log_println("Error scanning /proc/%d/task directory: %s", pid, strerror(errno));
+            return -1;
+        }
+
+        if (stopping) {
+            tele_log_println("Stopping %d tasks...", nTasks);
+        } else {
+            tele_log_println("Scanning %d tasks...", nTasks);
+        }
+
+        int nStopped = 0;
+        int nExited = 0;
+        int n = 0;
+        while (n < nTasks) {
+            pid_t tid = tasks[n];
+
+            /* The WNOHANG option means that we won't be blocked on the waitpid() call if the signal
+             * state of the task has not changed since the last time waitpid() was called on it.
+             * The __WALL option is necessary so that we can wait on a thread not directly
+             * created by the primordial VM thread. This strangeness is due to the way threads
+             * are implemented on Linux. See the waitpid(2) man page for more detail. */
+            int waitOptions = WNOHANG | __WALL;
+            if (stopping) {
+                tele_log_println("Waiting for %d", tid);
             }
-            case 'W': {
-                RETRY("Task %d is paging", tid);
-            }
-            case 'Z': {
-                log_println("Task %d is in zombie state", tid);
-                return true;
-            }
-            case 'S': {
-                /* If this task is sleeping when another task hits a breakpoint or performs a single step, then this
-                 * task will not receive the SIGTRAP for some unknown reason. So, we generate one manually to put it
-                 * in the trapped state. */
-                tele_log_println("Task %d is sleeping - Sending SIGTRAP to jog it into TRAPPED state", tid);
-                if (kill(tid, SIGTRAP) != 0) {
-                    int error = errno;
-                    log_println("Error sending SIGTRAP to jog task %d: %s", tid, strerror(error));
-                    return false;
+            int status = 0;
+            int result = waitpid(tid, &status, waitOptions);
+            if (result == 0) {
+                char state = task_state(pid, tid);
+                if (state == 'T') {
+                    nStopped++;
                 }
-                break;
-            }
-        }
+                tele_log_println("No change in task %d since waitpid last called on it", tid);
+            } else if (result < 0) {
+                log_println("Error calling waitpid(%d): %s", tid, strerror(errno));
+            } else if (WIFEXITED(status)) {
+                log_println("Task %d exited with exit status %d", tid, WEXITSTATUS(status));
+            } else if (WIFSIGNALED(status)) {
+                int signal = WTERMSIG(status);
+                log_println("Task %d terminated by signal %d [%s]", tid, signal, strsignal(signal));
+            } else if (WIFSTOPPED(status)) {
+                int signal = WSTOPSIG(status);
+                tele_log_println("Task %d stopped by signal %d [%s]", tid, signal, strsignal(signal));
 
-        tele_log_println("Waiting for task %d which is in state '%c' to receive signal %d [%s]", tid, task_state(tgid, tid), signalnum, strsignal(signalnum));
-        int status;
-        int result = waitpid(tid, &status, 0);
-        if (result == -1) {
-            int error = errno;
-            if (error == ECHILD) {
-                tele_log_println("Going to wait again for task %d which is in state '%c' to receive signal %d [%s]", tid, task_state(tgid, tid), signalnum, strsignal(signalnum));
-                result = waitpid(tid, &status, __WCLONE);
-            }
-            if (result == -1 && error == ECHILD) {
-                RETRY("waitpid(%d) failed with result %d, error %d [%s]", tid, result, error, strerror(error));
-            }
-        }
-
-        if (WIFEXITED(status)) {
-            log_println("Task %d exited with exit status %d", tid, WEXITSTATUS(status));
-            return false;
-        }
-        if (WIFSIGNALED(status)) {
-            int signal = WTERMSIG(status);
-            log_println("Task %d terminated by signal %d [%s]", tid, signal, strsignal(signal));
-            return false;
-        }
-        if (WIFSTOPPED(status)) {
-            // check whether the task received a signal, and continue with it if so.
-            int signal = WSTOPSIG(status);
-            tele_log_println("Task %d stopped by signal %d [%s]", tid, signal, strsignal(signal));
-
-            int event = ptraceEvent(status);
-            Boolean newThreadStarted = false;
-            if (event != 0) {
-                unsigned long eventMsg;
-                ptrace(PT_GETEVENTMSG, tid, NULL, &eventMsg);
-                tele_log_println("Task %d received ptrace event %d [%s] with message %ul", tid, event, ptraceEventName(event), eventMsg);
-                if (event == PTRACE_EVENT_CLONE) {
-                    newThreadStarted = true;
-                    if (!handleNewThread(eventMsg)) {
-                        return false;
+                if (!sigismember(&_caughtSignals, signal)) {
+                    tele_log_println("Resuming task %d with signal %d [%s]", tid, signal, strsignal(signal));
+                    ptrace(PT_CONTINUE, tid, NULL, signal);
+                } else {
+                    if (signal == SIGTRAP) {
+                        nStopped++;
+                        int event = PTRACE_EVENT(status);
+                        if (event != 0) {
+                            unsigned long eventMsg;
+                            ptrace(PT_GETEVENTMSG, tid, NULL, &eventMsg);
+                            if (event == PTRACE_EVENT_CLONE) {
+                                /* This is the SIGTRAP event denoting that a new thread has been started. */
+                                int newTid = eventMsg;
+                                task_attach_ptrace_to_new_task(newTid, tid);
+                                nStopped--;
+                            } else if (event == PTRACE_EVENT_EXIT) {
+                                /* This is the SIGTRAP event denoting that a thread is about to exit
+                                 * and needs to be detached from ptrace. */
+                                nExited++;
+                                nStopped--;
+                                tele_log_println("Detaching exiting task %d", tid);
+                                ptrace(PT_DETACH, tid, NULL, 0);
+                            } else {
+                                log_println("Task %d received unexpected ptrace event %d with message %ul", tid, event, eventMsg);
+                            }
+                        }
+                    } else {
+                        nStopped++;
                     }
                 }
+            } else {
+                char state = task_state(pid, tid);
+                tele_log_println("Task %d not yet stopped; state = '%c'", tid, state);
+                if (state == 'Z') {
+                    /* Missed the PTRACE_EVENT_EXIT event for this task somehow. Still need to account
+                     * for it as exited. However, we cannot no longer PT_DETACH it. */
+                    tele_log_println("Missed exit event for task %d: cleaning up anyway", tid);
+                    nExited++;
+                }
             }
-
-            if (signal == 0 || signal == signalnum) {
-                return true;
-            }
-
-            /* The signal is now delivered to the VM. */
-            tele_log_println("Continuing task %d", tid);
-            if (ptrace(PT_CONTINUE, tid, NULL, signal) != 0) {
-                int error = errno;
-                log_println("Continuing task %d failed: %s", tid, strerror(error));
-                return false;
-            }
+            n++;
         }
+        free(tasks);
+
+        if (nExited == nTasks) {
+            tele_log_println("All threads have exited");
+            return 0;
+        }
+
+        if (nStopped == 0) {
+            /* No tasks are stopped yet: continue after a brief sleep */
+            usleep(PROCESS_POLL_PAUSE_NANOSECONDS);
+            continue;
+        }
+
+        if (nStopped != nTasks) {
+            /* Give all tasks a brief chance to receive the last SIGSTOP (if any) */
+            usleep(PROCESS_POLL_PAUSE_NANOSECONDS);
+
+            /* Stop all threads by sending SIGSTOP to the process group (which is why the VM
+             * must run in a separate process group from the debugger!). Note that the tasks
+             * already be stopped due to a previous SIGSTOP will simply ignore this SIGSTOP.
+             * However, the SIGSTOP must be sent until all tasks have stopped so that we can
+             * tasks that start in between each SIGSTOP. */
+            tele_log_println("Not all tasks stopped yet - sending SIGSTOP to process group %d", pgid);
+            kill(-pgid, SIGSTOP);
+            stopping = true;
+            continue;
+        }
+
+        /* Re-scan tasks to ensure we've got them all and they are all stopped. */
+        const int mTasks = scan_process_tasks(pid, &tasks);
+        if (mTasks < 0) {
+            log_println("Error scanning /proc/%d/task directory: %s", pid, strerror(errno));
+            continue;
+        }
+        free(tasks);
+
+        int nNewTasks = mTasks - nTasks;
+        if (nNewTasks != 0) {
+            tele_log_println("%d new tasks started since last scan - continuing...", mTasks - nTasks);
+            continue;
+        }
+
+        /* We are now sure that we have stopped all the tasks. */
+        stopping = false;
+        tele_log_println("Stopped all tasks...");
+        return mTasks;
+    }
+}
+
+/* An alternative version that reduces the amount of calls to waitpid() by polling the state
+ * of each task first and only calling waitpid() that are known to be in the 'T' state. I'm
+ * not yet sure which version performs better once there are lots of threads so I'm leaving
+ * it around for now [Doug]. */
+int process_wait_all_threads_stopped_alternative(pid_t pid) {
+    pid_t pgid = getpgid(pid);
+
+    /* The debugging related signals we want to intercept. */
+    sigset_t caughtSignals;
+    sigemptyset(&caughtSignals);
+    sigaddset(&caughtSignals, SIGTRAP);
+    sigaddset(&caughtSignals, SIGSTOP);
+
+    Boolean stopping = false;
+    while (1) {
+
+        pid_t *tasks;
+        const int nTasks = scan_process_tasks(pid, &tasks);
+        if (nTasks < 0) {
+            log_println("Error scanning /proc/%d/task directory: %s", pid, strerror(errno));
+            return -1;
+        }
+
+        if (stopping) {
+            tele_log_println("Stopping %d tasks...", nTasks);
+        } else {
+            tele_log_println("Scanning %d tasks...", nTasks);
+        }
+
+        int nStopped = 0;
+        int nExited = 0;
+        Boolean allStopped = true;
+        int n = 0;
+        while (n < nTasks) {
+            pid_t tid = tasks[n];
+            char state = task_state(pid, tid);
+            if (state == 'T') {
+                nStopped++;
+
+                /* The WNOHANG option means that we won't be blocked on the waitpid() call if the signal
+                 * state of the task has not changed since the last time waitpid() was called on it.
+                 * The __WALL option is necessary so that we can wait on a thread not directly
+                 * created by the primordial VM thread. This strangeness is due to the way threads
+                 * are implemented on Linux. See the waitpid(2) man page for more detail. */
+                int waitOptions = WNOHANG | __WALL;
+                if (stopping) {
+                    tele_log_println("Waiting for %d", tid);
+                }
+                int status = 0;
+                int result = waitpid(tid, &status, waitOptions);
+                if (result == 0) {
+                    tele_log_println("No change in task %d since waitpid last called on it", tid);
+                } else if (result < 0) {
+                    log_println("Error calling waitpid(%d): %s", tid, strerror(errno));
+                } else {
+                    c_ASSERT(result == tid);
+                    if (WIFEXITED(status)) {
+                        log_println("Task %d exited with exit status %d", tid, WEXITSTATUS(status));
+                    } else if (WIFSIGNALED(status)) {
+                        int signal = WTERMSIG(status);
+                        log_println("Task %d terminated by signal %d [%s]", tid, signal, strsignal(signal));
+                    } else {
+                        if (!WIFSTOPPED(status)) {
+                            log_println("Task %d should be stopped!", tid);
+                        }
+                        int signal = WSTOPSIG(status);
+                        tele_log_println("Task %d stopped by signal %d [%s]", tid, signal, strsignal(signal));
+
+                        if (!sigismember(&caughtSignals, signal)) {
+                            tele_log_println("Resuming task %d with signal %d [%s]", tid, signal, strsignal(signal));
+                            allStopped = false;
+                            nStopped--;
+                            ptrace(PT_CONTINUE, tid, NULL, signal);
+                        } else {
+                            if (signal == SIGTRAP) {
+                                int event = PTRACE_EVENT(status);
+                                if (event != 0) {
+                                    unsigned long eventMsg;
+                                    ptrace(PT_GETEVENTMSG, tid, NULL, &eventMsg);
+                                    if (event == PTRACE_EVENT_CLONE) {
+                                        /* This is the SIGTRAP event denoting that a new thread has been started. */
+                                        allStopped = false;
+                                        nStopped--;
+                                        int newTid = eventMsg;
+                                        task_attach_ptrace_to_new_task(newTid, tid);
+                                    } else if (event == PTRACE_EVENT_EXIT) {
+                                        /* This is the SIGTRAP event denoting that a thread is about to exit
+                                         * and needs to be detached from ptrace. */
+                                        nStopped--;
+                                        nExited++;
+                                        tele_log_println("Detaching exiting task %d", tid);
+                                        ptrace(PT_DETACH, tid, NULL, 0);
+                                    } else {
+                                        log_println("Task %d received unexpected ptrace event %d with message %ul", tid, event, eventMsg);
+                                    }
+                                }
+                            } else {
+                                c_ASSERT(signal == SIGSTOP);
+                            }
+                        }
+                    }
+                }
+            } else {
+                allStopped = false;
+                tele_log_println("Task %d not yet stopped; state = '%c'", tid, state);
+            }
+            n++;
+        }
+        free(tasks);
+
+        if (nExited == nTasks) {
+            tele_log_println("All threads have exited");
+            return 0;
+        }
+
+        if (nStopped == 0) {
+            /* No tasks are stopped yet: continue after a brief sleep */
+            usleep(PROCESS_POLL_PAUSE_NANOSECONDS);
+            continue;
+        }
+
+        if (!allStopped) {
+            /* Give all tasks a brief chance to receive the last SIGSTOP (if any) */
+            usleep(PROCESS_POLL_PAUSE_NANOSECONDS);
+
+            /* Stop all threads by sending SIGSTOP to the process group (which is why the VM
+             * must run in a separate process group from the debugger!). Note that the tasks
+             * already be stopped due to a previous SIGSTOP will simply ignore this SIGSTOP.
+             * However, the SIGSTOP must be sent until all tasks have stopped so that we can
+             * tasks that start in between each SIGSTOP. */
+            tele_log_println("Not all tasks stopped yet - sending SIGSTOP to process group %d", pgid);
+            kill(-pgid, SIGSTOP);
+            stopping = true;
+            continue;
+        }
+
+        /* Re-scan tasks to ensure we've got them all and they are all stopped. */
+        const int mTasks = scan_process_tasks(pid, &tasks);
+        if (mTasks < 0) {
+            log_println("Error scanning /proc/%d/task directory: %s", pid, strerror(errno));
+            continue;
+        }
+        free(tasks);
+
+        int nNewTasks = mTasks - nTasks;
+        if (nNewTasks != 0) {
+            tele_log_println("%d new tasks started since last scan - continuing...", mTasks - nTasks);
+            continue;
+        }
+
+        /* We are now sure that we have stopped all the tasks. */
+        stopping = false;
+        tele_log_println("Stopped all tasks...");
+        return mTasks;
     }
 }
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
     char **argv = (char**) commandLineArgumentArray;
+
+    /* Configure the debugging related signals we want to intercept. */
+    sigemptyset(&_caughtSignals);
+    sigaddset(&_caughtSignals, SIGTRAP);
+    sigaddset(&_caughtSignals, SIGSTOP);
 
     int childPid = fork();
     if (childPid == 0) {
@@ -371,7 +688,8 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env
         }
         putenv(portDef);
 
-        /* Put the VM in its own process group. */
+        /* Put the VM in its own process group so that SIGSTOP can be used to
+         * stop all threads in the child. */
         setpgid(0, 0);
 
         /* This call does not return if it succeeds: */
@@ -383,8 +701,9 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env
         /*parent:*/
         int status;
         if (waitpid(childPid, &status, 0) == childPid && WIFSTOPPED(status)) {
+
             /* Configure child so that it traps when it exits or starts new threads */
-            ptrace(PT_SETOPTIONS, childPid, 0, PTRACE_O_TRACECLONE);
+            ptrace(PT_SETOPTIONS, childPid, 0, PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXIT);
             return childPid;
         }
     }
@@ -399,9 +718,9 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeDetach(JNIEnv *env, jclass c, 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSuspend(JNIEnv *env, jclass c, jint tgid, jint tid, jboolean allTasks) {
     pid_t killID = allTasks ? -getpgid(tgid) : tid;
+    tele_log_println("Sending SIGTRAP to %d", tid, killID);
     if (kill(killID, SIGTRAP) != 0) {
-        int error = errno;
-        log_println("Error sending SIGTRAP to suspend %s %d: %s", tid, (allTasks ? "all tasks in group" : "task"), strerror(error));
+        log_println("Error sending SIGTRAP to suspend %s %d: %s", tid, (allTasks ? "all tasks in group" : "task"), strerror(errno));
         return false;
     }
     return true;
@@ -412,61 +731,76 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSingleStep(JNIEnv *env, jclass
     if (ptrace(PT_STEP, tid, 0, 0) != 0) {
         return false;
     }
-//    task_wait_for_state(tgid, tid, "T");
     return true;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTask_nativeResume(JNIEnv *env, jclass c, jint tgid, jint tid) {
+Java_com_sun_max_tele_debug_linux_LinuxTask_nativeResume(JNIEnv *env, jclass c, jint tgid, jint tid, jboolean allTasks) {
+    if (allTasks) {
+        return process_resume_all_threads(tgid);
+    }
     int result = ptrace(PT_CONTINUE, tid, NULL, 0);
     return result == 0;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTask_nativeWait(JNIEnv *env, jclass c, jint tgid, jint tid) {
-    return waitForSignal(tgid, tid, SIGTRAP);
+Java_com_sun_max_tele_debug_linux_LinuxTask_nativeWait(JNIEnv *env, jclass c, jint tgid, jint tid, jboolean allTasks) {
+    if (allTasks) {
+        return process_wait_all_threads_stopped(tgid) > 0;
+    }
+    c_UNIMPLEMENTED();
+    return false;
 }
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeKill(JNIEnv *env, jclass c, jint tgid, jint tid) {
-    return ptrace(PT_KILL, tid, 0, 0) == 0;
+    pid_t killID = -getpgid(tgid);
+    tele_log_println("Sending SIGKILL to %d", tid, killID);
+    if (kill(killID, SIGKILL) != 0) {
+        log_println("Error sending SIGKILL to kill process %d: %s", tgid, strerror(errno));
+        return false;
+    }
+    return true;
 }
-
-static int _task_memory_read_fd = 0;
-static pid_t _task_memory_pid;
 
 /**
  * Gets an open file descriptor on /proc/<pid>/mem for reading the memory of the traced process 'tgid'.
- * Unfortunately, this mechanism cannot be used for writing; ptrace must be used instead.
  *
- * TODO: Ensure that the file descriptor is closed once tracing is complete.
+ * @param tgid the task group id of the traced process
+ * @param address the address at which the memory of tgid is to be read
+ * @return a file descriptor opened on the memory file and positioned at 'address' or -1 if there was an error.
+ *        If there was no error, it is the caller's responsibility to close the file descriptor.
  */
 int task_memory_read_fd(int tgid, void *address) {
     ptrace_check_tracer(POS, tgid);
-    if (_task_memory_read_fd == 0) {
-        _task_memory_pid = tgid;
-        char *memoryFileName;
-        asprintf(&memoryFileName, "/proc/%d/mem", tgid);
-        c_ASSERT(memoryFileName != NULL);
-        _task_memory_read_fd = open(memoryFileName, O_RDONLY);
-        c_ASSERT(_task_memory_read_fd != -1);
-        free(memoryFileName);
-    } else {
-        c_ASSERT(tgid == _task_memory_pid);
+    char *memoryFileName;
+    asprintf(&memoryFileName, "/proc/%d/mem", tgid);
+    c_ASSERT(memoryFileName != NULL);
+    int fd = open(memoryFileName, O_RDONLY);
+    if (fd < 0) {
+        log_println("Error opening %s: %s", memoryFileName, strerror(errno));
+        return fd;
     }
+    free(memoryFileName);
     off64_t fdOffset = (off64_t) address;
-    if (lseek64(_task_memory_read_fd, fdOffset, SEEK_SET) != fdOffset) {
-        int error = errno;
-        log_println("Error seeking memory file for process %d to %p [%ul]: %s", tgid, address, fdOffset, strerror(error));
+    if (lseek64(fd, fdOffset, SEEK_SET) != fdOffset) {
+        log_println("Error seeking memory file for process %d to %p [%ul]: %s", tgid, address, fdOffset, strerror(errno));
+        close(fd);
+        return -1;
     }
-    return _task_memory_read_fd;
+    return fd;
 }
 
 /**
  * Copies 'size' bytes from 'src' in the address space of 'tgid' to 'dst' in the caller's address space.
  */
 size_t task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size) {
-    //task_wait_for_state(tgid, tgid, "T");
+    char state;
+    if ((state = task_state(tgid, tid)) != 'T') {
+        log_println("Cannot read memory of task %d while it is in state '%c'", tid, state);
+        return 0;
+    }
+
     //tele_log_println("Reading %d bytes from memory of task %d at %p", size, tid, src);
     if (size <= sizeof(Address)) {
         Address word = ptrace(PT_READ_D, tid, (Address) src, NULL);
@@ -479,11 +813,15 @@ size_t task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size) {
         }
         return size;
     } else {
-        size_t bytesRead = read(task_memory_read_fd(tgid, src), dst, size);
-        if (bytesRead != size) {
-            int error = errno;
-            log_println("Only read %d of %d bytes from %p: %s", bytesRead, size, src, strerror(error));
+        int fd = task_memory_read_fd(tgid, src);
+        if (fd < 0) {
+            return -1;
         }
+        size_t bytesRead = read(fd, dst, size);
+        if (bytesRead != size) {
+            log_println("Only read %d of %d bytes from %p: %s", bytesRead, size, src, strerror(errno));
+        }
+        close(fd);
         return bytesRead;
     }
 }
@@ -530,7 +868,11 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
     if (size == 0) {
         return 0;
     }
-    //task_wait_for_state(tgid, tid, "T");
+    char state;
+    if ((state = task_state(tgid, tid)) != 'T') {
+        log_println("Cannot write to memory of task %d while it is in state '%c'", tid, state);
+        return 0;
+    }
 
     size_t bytesWritten = 0;
     const size_t wholeWords = size / sizeof(Word);
@@ -644,7 +986,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadRegisters(JNIEnv *env, jcl
         return false;
     }
 
-    if (task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, &canonicalFloatingPointRegisters) != 0) {
+    if (!task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, &canonicalFloatingPointRegisters) != 0) {
         return false;
     }
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);

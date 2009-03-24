@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug.darwin;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.platform.*;
@@ -112,8 +111,8 @@ public final class DarwinTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long machThread, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
-        return new DarwinTeleNativeThread(this, id, machThread, stackBase, stackSize, vmThreadLocals);
+    protected TeleNativeThread createTeleNativeThread(int id, long machThread, long stackBase, long stackSize) {
+        return new DarwinTeleNativeThread(this, id, machThread, stackBase, stackSize);
     }
 
     private static native int nativeReadBytes(long task, long address, byte[] buffer, int offset, int length);

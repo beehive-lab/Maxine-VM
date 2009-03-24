@@ -20,8 +20,6 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
-import java.util.*;
-
 import javax.swing.*;
 
 import com.sun.max.collect.*;
@@ -72,14 +70,14 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long threadId, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
+    protected TeleNativeThread createTeleNativeThread(int id, long threadId, long stackBase, long stackSize) {
         /* Need to align and skip over the guard page at the base of the stack.
          * N.B. "base" is low address (i.e., actually the end of the stack!).
          */
         final int pageSize = VMConfiguration.hostOrTarget().platform().pageSize();
         final long stackBottom = pageAlign(stackBase, pageSize) + pageSize;
         final long adjStackSize = stackSize - (stackBottom - stackBase);
-        return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize, vmThreadLocals);
+        return new GuestVMXenNativeThread(this, id, threadId, stackBottom, adjStackSize);
     }
 
     private static long pageAlign(long address, int pageSize) {

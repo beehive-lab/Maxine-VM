@@ -29,7 +29,16 @@
 
 #include "isa.h"
 
-int task_read_registers(pid_t tid,
+/**
+ * Copies the general purpose, state and floating-point registers from 'tid'.
+ * If any of the parameters to this function are NULL, then the corresponding set of registers are not copied.
+ *
+ * @param canonicalIntegerRegisters the backing storage into which the integer registers should be copied
+ * @param canonicalStateRegisters the backing storage into which the state registers should be copied
+ * @param canonicalFloatingPointRegisters the backing storage into which the floating point registers should be copied
+ * @return true if the requested copy was successful, false otherwise
+ */
+Boolean task_read_registers(pid_t tid,
     isa_CanonicalIntegerRegistersStruct *canonicalIntegerRegisters,
     isa_CanonicalStateRegistersStruct *canonicalStateRegisters,
     isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters);
@@ -88,6 +97,37 @@ int task_write_subword(jint tgid, jint tid, void *dst, const void *src, size_t s
 size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size);
 
 /**
+ * Waits for at least one thread in a given process to stop on a SIGTRAP or SIGSTOP at which
+ * time, all threads in the process group will be stopped (via SIGSTOP).
+ *
+ * @param pid the PID of the process whose threads are to stopped once any one of them hits a
+ *        breakpoint or receives some other debugger related signal
+ * @return the number of stopped threads or -1 if an error occurred
+ */
+int process_wait_all_threads_stopped(pid_t pid);
+
+/**
+ * Converts a directory entry to a numeric PID.
+ *
+ * @param entry the directory entry to convert
+ * @return the numeric PID corresponding to 'entry->d_name' or 0 if the name
+ *         is not a valid PID or entry does is not a directory
+ */
+int dirent_task_pid(const struct dirent *entry);
+
+/**
+ * Scans a directory in the /proc filesystem for task subdirectories.
+ *
+ * @param pid the PID of the process whose /proc/<pid>/task directory will be scanned
+ * @param tasks [out] an array of PIDs corresponding to the entries in the scanned directory
+ *        for which dirent_task_pid() returns a non-zero result. The memory allocated for this
+ *        array needs to be reclaimed by the caller.
+ * @return the number of entries returned in 'tasks' or -1 if an error occurs. If an error occurs,
+ *        no memory has been allocated and the value of '*tasks' is undefined.
+ */
+int scan_process_tasks(pid_t pid, pid_t **tasks);
+
+/**
  * Prints the contents of /proc/<tgid>/task/<tid>/stat in a human readable to the log stream.
  *
  * @param tgid a task group id
@@ -97,14 +137,5 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
 void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...);
 
 #define TASK_RETRY_PAUSE_MICROSECONDS 200 * 1000
-
-#include <unistd.h>
-#define task_wait_for_state(tgid, tid, states) do { \
-    char state; \
-    while (strchr(states, state = task_state(tgid, tid)) == NULL) { \
-        tele_log_println("%s:%d: Task %d waiting for one of \"%s\" states, current state is %c", __FILE__, __LINE__, tid, states, state); \
-        usleep(TASK_RETRY_PAUSE_MICROSECONDS); \
-    } \
-} while(0)
 
 #endif

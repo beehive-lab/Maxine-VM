@@ -99,7 +99,7 @@ public final class TeleStateRegisters extends TeleRegisters {
         private static final int _USED_FLAGS = 22;
 
         public static String flagsToString(long flags) {
-            final char[] chars = new char[2 * _USED_FLAGS];
+            final char[] chars = new char[_USED_FLAGS];
             long f = flags;
             int charIndex = chars.length - 1;
             for (int i = 0; i < _USED_FLAGS; i++) {

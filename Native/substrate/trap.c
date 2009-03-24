@@ -96,10 +96,10 @@ void setHandler(int signal, SignalHandlerFunction handler) {
     memset((char *) &newSigaction, 0, sizeof(newSigaction));
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
-#if os_SOLARIS
-	 if (signal==SIGUSR1) {
-		newSigaction.sa_flags = SA_SIGINFO | SA_ONSTACK;
-	 }
+#if os_SOLARIS || os_LINUX || os_DARWIN
+    if (signal == SIGUSR1) {
+        newSigaction.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    }
 #endif
     newSigaction.sa_sigaction = handler;
 

@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug.solaris;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
@@ -127,8 +126,8 @@ public final class SolarisTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long lwpId, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
-        return new SolarisTeleNativeThread(this, id, lwpId, stackBase, stackSize, vmThreadLocals);
+    protected TeleNativeThread createTeleNativeThread(int id, long lwpId, long stackBase, long stackSize) {
+        return new SolarisTeleNativeThread(this, id, lwpId, stackBase, stackSize);
     }
 
     private static native int nativeReadBytes(long processHandle, long address, byte[] buffer, int offset, int length);

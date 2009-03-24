@@ -23,6 +23,7 @@ package com.sun.max.tele.debug.linux;
 import java.io.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -137,13 +138,13 @@ public final class LinuxTask {
         });
     }
 
-    private static native boolean nativeResume(int tgid, int tid);
+    private static native boolean nativeResume(int tgid, int tid, boolean allTasks);
 
-    public synchronized void resume() throws OSExecutionRequestException {
+    public synchronized void resume(final boolean allTasks) throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {
-                    if (!nativeResume(_tgid, _tid)) {
+                    if (!nativeResume(_tgid, _tid, allTasks)) {
                         throw new OSExecutionRequestException("Ptrace.resume");
                     }
                     return null;
@@ -156,34 +157,45 @@ public final class LinuxTask {
 
     private static native boolean nativeSuspend(int tgid, int tid, boolean allTasks);
 
-    public synchronized void suspend(final boolean allTasks) throws OSExecutionRequestException {
-        try {
-            SingleThread.executeWithException(new Function<Void>() {
-                public Void call() throws Exception {
-                    if (!nativeSuspend(_tgid, _tid, allTasks)) {
-                        throw new OSExecutionRequestException("Ptrace.suspend");
-                    }
-                    return null;
-                }
-            });
-        } catch (Exception exception) {
-            throw Exceptions.cast(OSExecutionRequestException.class, exception);
+    /**
+     * Suspends one or more tasks.
+     *
+     * Note: This operation is not synchronized otherwise there would be no way to interrupt
+     * {@link #waitUntilStopped(boolean)}
+     *
+     * @param allTasks {@code true} if all tasks should be suspended, {@code false} if only this task should be suspended
+     * @throws OSExecutionRequestException
+     */
+    public void suspend(boolean allTasks) throws OSExecutionRequestException {
+        if (!nativeSuspend(_tgid, _tid, allTasks)) {
+            throw new OSExecutionRequestException("Ptrace.suspend");
         }
     }
 
-    private static native boolean nativeWait(int tgid, int tid);
+    private static native boolean nativeWait(int tgid, int tid, boolean allTasks);
 
-    public synchronized boolean waitUntilStopped() {
+    public synchronized boolean waitUntilStopped(final boolean allTasks) {
+        if (!allTasks) {
+            Problem.unimplemented();
+        }
         return SingleThread.execute(new Function<Boolean>() {
             public Boolean call() throws Exception {
-                return nativeWait(_tgid, _tid);
+                return nativeWait(_tgid, _tid, allTasks);
             }
         });
     }
 
     private static native boolean nativeKill(int tgid, int tid);
 
-    public synchronized void kill() throws OSExecutionRequestException {
+    /**
+     * Kills all tasks.
+     *
+     * Note: This operation is not synchronized otherwise there would be no way to interrupt
+     * {@link #waitUntilStopped(boolean)}
+     *
+     * @throws OSExecutionRequestException
+     */
+    public void kill() throws OSExecutionRequestException {
         try {
             SingleThread.executeWithException(new Function<Void>() {
                 public Void call() throws Exception {

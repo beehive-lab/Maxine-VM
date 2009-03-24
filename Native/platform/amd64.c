@@ -60,7 +60,7 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
 #if os_DARWIN
 #define CANONICALIZE(reg) c->xmm##reg = (*((Word *) (&os->__fpu_xmm##reg)))
 #elif os_LINUX
-#define CANONICALIZE(reg) c->xmm##reg = (Word) ((XMMRegister *) &os->xmm_space)[0].low
+#define CANONICALIZE(reg) c->xmm##reg = (Word) ((XMMRegister *) &os->xmm_space)[reg].low
 #elif os_SOLARIS
 #define CANONICALIZE(reg) c->xmm##reg = (Word) (Word *) &os->fp_reg_set.fpchip_state.xmm[reg]
 #elif os_GUESTVMXEN
@@ -127,24 +127,22 @@ void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters c) {
 }
 
 void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegisters c) {
-#define PRINT_XMM(id) log_println("XMM%-2d = %p [%lf]", id, CONCATENATE(c->xmm, id), CONCATENATE(c->xmm, id))
-    PRINT_XMM(0);
-    PRINT_XMM(1);
-    PRINT_XMM(2);
-    PRINT_XMM(3);
-    PRINT_XMM(4);
-    PRINT_XMM(5);
-    PRINT_XMM(6);
-    PRINT_XMM(7);
-    PRINT_XMM(8);
-    PRINT_XMM(9);
-    PRINT_XMM(10);
-    PRINT_XMM(11);
-    PRINT_XMM(12);
-    PRINT_XMM(13);
-    PRINT_XMM(14);
-    PRINT_XMM(15);
-#undef PRINT_XMM
+    log_println("XMM0  = %p [%g]", c->xmm0, c->xmm0);
+    log_println("XMM1  = %p [%g]", c->xmm1, c->xmm1);
+    log_println("XMM2  = %p [%g]", c->xmm2, c->xmm2);
+    log_println("XMM3  = %p [%g]", c->xmm3, c->xmm3);
+    log_println("XMM4  = %p [%g]", c->xmm4, c->xmm4);
+    log_println("XMM5  = %p [%g]", c->xmm5, c->xmm5);
+    log_println("XMM6  = %p [%g]", c->xmm6, c->xmm6);
+    log_println("XMM7  = %p [%g]", c->xmm7, c->xmm7);
+    log_println("XMM8  = %p [%g]", c->xmm8, c->xmm8);
+    log_println("XMM9  = %p [%g]", c->xmm9, c->xmm9);
+    log_println("XMM10 = %p [%g]", c->xmm10, c->xmm10);
+    log_println("XMM11 = %p [%g]", c->xmm11, c->xmm11);
+    log_println("XMM12 = %p [%g]", c->xmm12, c->xmm12);
+    log_println("XMM13 = %p [%g]", c->xmm13, c->xmm13);
+    log_println("XMM14 = %p [%g]", c->xmm14, c->xmm14);
+    log_println("XMM15 = %p [%g]", c->xmm15, c->xmm15);
 }
 
 void isa_printCanonicalStateRegisters(isa_CanonicalStateRegisters canonicalStateRegisters) {

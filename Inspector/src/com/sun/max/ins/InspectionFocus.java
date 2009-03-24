@@ -181,7 +181,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
                 if (breakpoint != null) {
                     // thread is at a breakpoint; focus on the breakpoint, which should also cause focus on code and frame
                     setBreakpoint(breakpoint);
-                } else if (thread.isJava()) {
+                } else {
                     // default is to focus on the top frame
                     setStackFrame(thread, thread.frames().first(), false);
                 }
