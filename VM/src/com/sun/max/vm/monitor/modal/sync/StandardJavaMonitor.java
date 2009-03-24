@@ -43,7 +43,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     private VmThread _waitingThreads;
 
     public StandardJavaMonitor() {
-        _mutex = new Mutex();
+        _mutex = MutexFactory.create();
     }
 
     private static void raiseIllegalMonitorStateException(VmThread owner) {
@@ -101,10 +101,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             ownerThread.setState(Thread.State.TIMED_WAITING);
         }
 
-        final ConditionVariable waitingCondition  = _ownerThread.waitingCondition();
-        if (waitingCondition.requiresAllocation()) {
-            waitingCondition.allocate();
-        }
+        final ConditionVariable waitingCondition  = _ownerThread.waitingCondition().init();
         ownerThread.setNextWaitingThread(_waitingThreads);
         _waitingThreads = ownerThread;
         _ownerThread = null;
@@ -198,14 +195,14 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
 
     @Override
     public void allocate() {
-        _mutex.alloc();
+        _mutex.init();
     }
 
     @Override
     public void dump() {
         super.dump();
         Log.print(" mutex=");
-        Log.print(_mutex.asPointer());
+        Log.print(_mutex.logId());
         Log.print(" waiters={");
         VmThread waiter = _waitingThreads;
         while (waiter != null) {

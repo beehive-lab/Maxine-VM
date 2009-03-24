@@ -301,7 +301,7 @@ public class VmThread {
      */
     public VmThread setJavaThread(Thread javaThread) {
         _isGCThread = Heap.isGcThread(javaThread);
-        _waitingCondition = new ConditionVariable();
+        _waitingCondition = ConditionVariableFactory.create();
         _javaThread = javaThread;
         _name = javaThread.getName();
         _jniHandles = new JniHandles();

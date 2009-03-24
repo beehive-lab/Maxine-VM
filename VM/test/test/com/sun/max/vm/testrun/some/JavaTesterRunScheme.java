@@ -44,58 +44,32 @@ public class JavaTesterRunScheme extends AbstractTester {
     @PROTOTYPE_ONLY
 // GENERATED TEST RUNS
     private static final Class<?>[] _classList = {
-        test.except.BC_aaload.class,
-        test.except.BC_aastore.class,
-        test.except.BC_anewarray.class,
-        test.except.BC_arraylength.class,
-        test.except.BC_athrow.class,
-        test.except.BC_athrow1.class,
-        test.except.BC_athrow2.class,
-        test.except.BC_athrow3.class,
-        test.except.BC_baload.class,
-        test.except.BC_bastore.class,
-        test.except.BC_caload.class,
-        test.except.BC_castore.class,
-        test.except.BC_checkcast.class,
-        test.except.BC_checkcast1.class,
-        test.except.BC_checkcast2.class,
-        test.except.BC_daload.class,
-        test.except.BC_dastore.class,
-        test.except.BC_faload.class,
-        test.except.BC_fastore.class,
-        test.except.BC_getfield.class,
-        test.except.BC_iaload.class,
-        test.except.BC_iastore.class,
-        test.except.BC_idiv.class,
-        test.except.BC_invokevirtual01.class,
-        test.except.BC_irem.class,
-        test.except.BC_laload.class,
-        test.except.BC_lastore.class,
-        test.except.BC_ldiv.class,
-        test.except.BC_lrem.class,
-        test.except.BC_monitorenter.class,
-        test.except.BC_multianewarray.class,
-        test.except.BC_newarray.class,
-        test.except.BC_putfield.class,
-        test.except.BC_saload.class,
-        test.except.BC_sastore.class,
-        test.except.Catch_NPE_01.class,
-        test.except.Catch_NPE_02.class,
-        test.except.Catch_NPE_03.class,
-        test.except.Catch_NPE_04.class,
-        test.except.Catch_NPE_05.class,
-        test.except.Catch_NPE_06.class,
-        test.except.Catch_NPE_07.class,
-        test.except.Catch_OutOfMemory01.class,
-        test.except.Catch_StackOverflowError_01.class,
-        test.except.Catch_StackOverflowError_02.class,
-        test.except.Throw_InCatch01.class,
-        test.except.Throw_InCatch02.class,
-        test.except.Throw_InCatch03.class,
-        test.except.Throw_Synchronized01.class,
-        test.except.Throw_Synchronized02.class,
-        test.except.Throw_Synchronized03.class,
-        test.except.Throw_Synchronized04.class
+        test.threads.Monitor_contended01.class,
+        test.threads.Monitor_notowner01.class,
+        test.threads.Monitorenter01.class,
+        test.threads.Monitorenter02.class,
+        test.threads.Object_wait01.class,
+        test.threads.Object_wait02.class,
+        test.threads.Object_wait03.class,
+        test.threads.Object_wait04.class,
+        test.threads.Thread_currentThread01.class,
+        test.threads.Thread_getState01.class,
+        test.threads.Thread_getState02.class,
+        test.threads.Thread_holdsLock01.class,
+        test.threads.Thread_isAlive01.class,
+        test.threads.Thread_isInterrupted01.class,
+        test.threads.Thread_isInterrupted02.class,
+        test.threads.Thread_isInterrupted03.class,
+        test.threads.Thread_isInterrupted04.class,
+        test.threads.Thread_join01.class,
+        test.threads.Thread_join02.class,
+        test.threads.Thread_join03.class,
+        test.threads.Thread_new01.class,
+        test.threads.Thread_new02.class,
+        test.threads.Thread_setPriority01.class,
+        test.threads.Thread_sleep01.class,
+        test.threads.Thread_start01.class,
+        test.threads.Thread_yield01.class
     };
     @Override
     public void runTests() {
@@ -104,160 +78,82 @@ public class JavaTesterRunScheme extends AbstractTester {
         while (_testNum < _testEnd) {
             switch(_testNum) {
                 case 0:
-                    JavaTesterTests.test_except_BC_aaload();
+                    JavaTesterTests.test_threads_Monitor_contended01();
                     break;
                 case 1:
-                    JavaTesterTests.test_except_BC_aastore();
+                    JavaTesterTests.test_threads_Monitor_notowner01();
                     break;
                 case 2:
-                    JavaTesterTests.test_except_BC_anewarray();
+                    JavaTesterTests.test_threads_Monitorenter01();
                     break;
                 case 3:
-                    JavaTesterTests.test_except_BC_arraylength();
+                    JavaTesterTests.test_threads_Monitorenter02();
                     break;
                 case 4:
-                    JavaTesterTests.test_except_BC_athrow();
+                    JavaTesterTests.test_threads_Object_wait01();
                     break;
                 case 5:
-                    JavaTesterTests.test_except_BC_athrow1();
+                    JavaTesterTests.test_threads_Object_wait02();
                     break;
                 case 6:
-                    JavaTesterTests.test_except_BC_athrow2();
+                    JavaTesterTests.test_threads_Object_wait03();
                     break;
                 case 7:
-                    JavaTesterTests.test_except_BC_athrow3();
+                    JavaTesterTests.test_threads_Object_wait04();
                     break;
                 case 8:
-                    JavaTesterTests.test_except_BC_baload();
+                    JavaTesterTests.test_threads_Thread_currentThread01();
                     break;
                 case 9:
-                    JavaTesterTests.test_except_BC_bastore();
+                    JavaTesterTests.test_threads_Thread_getState01();
                     break;
                 case 10:
-                    JavaTesterTests.test_except_BC_caload();
+                    JavaTesterTests.test_threads_Thread_getState02();
                     break;
                 case 11:
-                    JavaTesterTests.test_except_BC_castore();
+                    JavaTesterTests.test_threads_Thread_holdsLock01();
                     break;
                 case 12:
-                    JavaTesterTests.test_except_BC_checkcast();
+                    JavaTesterTests.test_threads_Thread_isAlive01();
                     break;
                 case 13:
-                    JavaTesterTests.test_except_BC_checkcast1();
+                    JavaTesterTests.test_threads_Thread_isInterrupted01();
                     break;
                 case 14:
-                    JavaTesterTests.test_except_BC_checkcast2();
+                    JavaTesterTests.test_threads_Thread_isInterrupted02();
                     break;
                 case 15:
-                    JavaTesterTests.test_except_BC_daload();
+                    JavaTesterTests.test_threads_Thread_isInterrupted03();
                     break;
                 case 16:
-                    JavaTesterTests.test_except_BC_dastore();
+                    JavaTesterTests.test_threads_Thread_isInterrupted04();
                     break;
                 case 17:
-                    JavaTesterTests.test_except_BC_faload();
+                    JavaTesterTests.test_threads_Thread_join01();
                     break;
                 case 18:
-                    JavaTesterTests.test_except_BC_fastore();
+                    JavaTesterTests.test_threads_Thread_join02();
                     break;
                 case 19:
-                    JavaTesterTests.test_except_BC_getfield();
+                    JavaTesterTests.test_threads_Thread_join03();
                     break;
                 case 20:
-                    JavaTesterTests.test_except_BC_iaload();
+                    JavaTesterTests.test_threads_Thread_new01();
                     break;
                 case 21:
-                    JavaTesterTests.test_except_BC_iastore();
+                    JavaTesterTests.test_threads_Thread_new02();
                     break;
                 case 22:
-                    JavaTesterTests.test_except_BC_idiv();
+                    JavaTesterTests.test_threads_Thread_setPriority01();
                     break;
                 case 23:
-                    JavaTesterTests.test_except_BC_invokevirtual01();
+                    JavaTesterTests.test_threads_Thread_sleep01();
                     break;
                 case 24:
-                    JavaTesterTests.test_except_BC_irem();
+                    JavaTesterTests.test_threads_Thread_start01();
                     break;
                 case 25:
-                    JavaTesterTests.test_except_BC_laload();
-                    break;
-                case 26:
-                    JavaTesterTests.test_except_BC_lastore();
-                    break;
-                case 27:
-                    JavaTesterTests.test_except_BC_ldiv();
-                    break;
-                case 28:
-                    JavaTesterTests.test_except_BC_lrem();
-                    break;
-                case 29:
-                    JavaTesterTests.test_except_BC_monitorenter();
-                    break;
-                case 30:
-                    JavaTesterTests.test_except_BC_multianewarray();
-                    break;
-                case 31:
-                    JavaTesterTests.test_except_BC_newarray();
-                    break;
-                case 32:
-                    JavaTesterTests.test_except_BC_putfield();
-                    break;
-                case 33:
-                    JavaTesterTests.test_except_BC_saload();
-                    break;
-                case 34:
-                    JavaTesterTests.test_except_BC_sastore();
-                    break;
-                case 35:
-                    JavaTesterTests.test_except_Catch_NPE_01();
-                    break;
-                case 36:
-                    JavaTesterTests.test_except_Catch_NPE_02();
-                    break;
-                case 37:
-                    JavaTesterTests.test_except_Catch_NPE_03();
-                    break;
-                case 38:
-                    JavaTesterTests.test_except_Catch_NPE_04();
-                    break;
-                case 39:
-                    JavaTesterTests.test_except_Catch_NPE_05();
-                    break;
-                case 40:
-                    JavaTesterTests.test_except_Catch_NPE_06();
-                    break;
-                case 41:
-                    JavaTesterTests.test_except_Catch_NPE_07();
-                    break;
-                case 42:
-                    JavaTesterTests.test_except_Catch_OutOfMemory01();
-                    break;
-                case 43:
-                    JavaTesterTests.test_except_Catch_StackOverflowError_01();
-                    break;
-                case 44:
-                    JavaTesterTests.test_except_Catch_StackOverflowError_02();
-                    break;
-                case 45:
-                    JavaTesterTests.test_except_Throw_InCatch01();
-                    break;
-                case 46:
-                    JavaTesterTests.test_except_Throw_InCatch02();
-                    break;
-                case 47:
-                    JavaTesterTests.test_except_Throw_InCatch03();
-                    break;
-                case 48:
-                    JavaTesterTests.test_except_Throw_Synchronized01();
-                    break;
-                case 49:
-                    JavaTesterTests.test_except_Throw_Synchronized02();
-                    break;
-                case 50:
-                    JavaTesterTests.test_except_Throw_Synchronized03();
-                    break;
-                case 51:
-                    JavaTesterTests.test_except_Throw_Synchronized04();
+                    JavaTesterTests.test_threads_Thread_yield01();
             }
         }
         reportPassed(_passed, _total);
