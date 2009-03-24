@@ -20,11 +20,8 @@
  */
 package com.sun.max.tele.debug.solaris;
 
-import java.util.*;
-
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -38,8 +35,8 @@ public class SolarisTeleNativeThread extends TeleNativeThread {
         return (SolarisTeleProcess) super.teleProcess();
     }
 
-    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, int id, long lwpId, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals) {
-        super(teleProcess, id, lwpId, stackBase, stackSize, vmThreadLocals);
+    public SolarisTeleNativeThread(SolarisTeleProcess teleProcess, int id, long lwpId, long stackBase, long stackSize) {
+        super(teleProcess, id, lwpId, stackBase, stackSize);
     }
 
     private static native boolean nativeSetInstructionPointer(long processHandle, long lwpId, long address);

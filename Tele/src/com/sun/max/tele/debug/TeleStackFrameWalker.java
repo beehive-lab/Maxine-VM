@@ -51,7 +51,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
         super(teleVM.compilerScheme());
         _teleVM = teleVM;
         _teleNativeThread = teleNativeThread;
-        _teleEnabledVmThreadLocalValues = teleNativeThread.stack().enabledVmThreadLocalValues();
+        _teleEnabledVmThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
         _dataAccess = teleVM.dataAccess();
         _cpuInstructionPointer = teleNativeThread.instructionPointer();
         _cpuStackPointer = teleNativeThread.stackPointer();
@@ -106,7 +106,7 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
 
     @Override
     public boolean isThreadInNative() {
-        return !_teleEnabledVmThreadLocalValues.isInJavaCode();
+        return _teleEnabledVmThreadLocalValues != null && !_teleEnabledVmThreadLocalValues.isInJavaCode();
     }
 
     @Override

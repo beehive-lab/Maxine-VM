@@ -154,7 +154,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (teleNativeThread == null) {
             return "null";
         }
-        if (teleNativeThread == teleNativeThread.teleProcess().primordialThread()) {
+        if (teleNativeThread.isPrimordial()) {
             return "primordial";
         }
         if (teleNativeThread.teleVmThread() != null) {

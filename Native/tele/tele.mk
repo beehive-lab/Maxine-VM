@@ -32,4 +32,8 @@ SOURCE_DIRS = tele tele/$(OS) jni platform prototype share substrate
 
 include $(PROJECT)/share/share.mk
 
-all : $(LIBRARY)
+all : $(LIBRARY) ptraceTest
+
+ptraceTest: ptraceTest.c
+	gcc -Wall -o ptraceTest -lc -lm -lpthread $<
+

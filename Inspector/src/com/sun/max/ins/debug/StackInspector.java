@@ -137,7 +137,6 @@ public class StackInspector extends UniqueInspector<StackInspector> {
 
     public StackInspector(Inspection inspection, TeleNativeThread teleNativeThread, Residence residence, StackInspectorContainer parent) {
         super(inspection, residence, LongValue.from(teleNativeThread.handle()));
-        assert teleNativeThread.isJava() : "Cannot create StackInspector for non-Java thread";
         _inspection = inspection;
         _teleNativeThread = teleNativeThread;
         _parent = parent;

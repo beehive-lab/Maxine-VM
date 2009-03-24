@@ -234,7 +234,11 @@ public final class ThreadsTable extends InspectorTable {
             if (teleVmThread != null) {
                 kind = "Java";
             } else {
-                kind = "native";
+                if (teleNativeThread.isPrimordial()) {
+                    kind = "primordial";
+                } else {
+                    kind = "native";
+                }
             }
             setText(kind);
             setToolTipText("Kind:  " + kind);

@@ -58,9 +58,7 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
             Trace.begin(1, "[StackInspector] initializing");
             stackInspectorContainer = new StackInspectorContainer(inspection, Residence.INTERNAL);
             for (TeleNativeThread thread : inspection.teleVM().threads()) {
-                if (thread.isJava()) {
-                    stackInspectorContainer.add(new StackInspector(inspection, thread, stackInspectorContainer.residence(), stackInspectorContainer));
-                }
+                stackInspectorContainer.add(new StackInspector(inspection, thread, stackInspectorContainer.residence(), stackInspectorContainer));
             }
             Trace.end(1, "[StackInspector] initializing");
         }
@@ -76,11 +74,9 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
      */
     public static StackInspector getInspector(Inspection inspection, TeleNativeThread teleNativeThread) {
         final StackInspectorContainer stackInspectorContainer = make(inspection);
-        if (teleNativeThread.isJava()) {
-            for (StackInspector stackInspector : stackInspectorContainer) {
-                if (stackInspector.teleNativeThread().equals(teleNativeThread)) {
-                    return stackInspector;
-                }
+        for (StackInspector stackInspector : stackInspectorContainer) {
+            if (stackInspector.teleNativeThread().equals(teleNativeThread)) {
+                return stackInspector;
             }
         }
         return null;
@@ -141,14 +137,12 @@ public final class StackInspectorContainer extends TabbedInspector<StackInspecto
                 stackInspector.setMarked(true);
             }
             for (TeleNativeThread thread : teleVM().threads()) {
-                if (thread.isJava()) {
-                    final UniqueInspector.Key<StackInspector> key = UniqueInspector.Key.create(StackInspector.class, LongValue.from(thread.handle()));
-                    final StackInspector stackInspector = UniqueInspector.find(inspection(), key);
-                    if (stackInspector == null) {
-                        add(new StackInspector(inspection(), thread, residence(), this));
-                    } else {
-                        stackInspector.setMarked(false);
-                    }
+                final UniqueInspector.Key<StackInspector> key = UniqueInspector.Key.create(StackInspector.class, LongValue.from(thread.handle()));
+                final StackInspector stackInspector = UniqueInspector.find(inspection(), key);
+                if (stackInspector == null) {
+                    add(new StackInspector(inspection(), thread, residence(), this));
+                } else {
+                    stackInspector.setMarked(false);
                 }
             }
             // Any remaining marked inspectors should be deleted as the threads have gone away

@@ -179,8 +179,9 @@ public class MemoryRegionsTable extends InspectorTable {
             }
 
             for (TeleNativeThread thread : teleVM().threads()) {
-                if (thread.isJava()) {
-                    _sortedMemoryRegions.add(new StackRegionDisplay(thread.stack()));
+                final TeleNativeStack stack = thread.stack();
+                if (!stack.size().isZero()) {
+                    _sortedMemoryRegions.add(new StackRegionDisplay(stack));
                 }
             }
 

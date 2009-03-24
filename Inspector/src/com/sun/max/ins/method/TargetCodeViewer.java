@@ -273,7 +273,7 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
     @Override
     protected void updateStackCache() {
         final TeleNativeThread teleNativeThread = inspection().focus().thread();
-        if (teleNativeThread == null || !teleNativeThread.isJava()) {
+        if (teleNativeThread == null) {
             return;
         }
         final Sequence<StackFrame> frames = teleNativeThread.frames();

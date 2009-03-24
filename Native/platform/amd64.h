@@ -38,8 +38,8 @@
     typedef struct user_fpregs_struct *amd64_OsTeleFloatingPointRegisters;
     typedef struct user_regs_struct *amd64_OsTeleStateRegisters;
     typedef struct {
-        Word high;
         Word low;
+        Word high;
     } XMMRegister;
 #elif os_SOLARIS
 #   include <sys/procfs.h>

@@ -41,55 +41,49 @@ void teleProcess_initialize(void) {
 }
 
 static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTeleProcess, jobject threadSequence, jlong threadSpecificsListAddress) {
-    //task_wait_for_state(tgid, tid, "T");
 
+    ThreadSpecifics threadSpecifics = NULL;
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
-    task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL);
 
-    Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
-    ThreadSpecificsStruct threadSpecificsStruct;
-    ThreadSpecifics threadSpecifics = threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
-    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, (jint) TS_SUSPENDED, threadSpecifics);
+    ThreadState_t threadState;
+    char taskState;
+    switch ((taskState = task_state(tgid, tid))) {
+        case 'W':
+        case 'D':
+        case 'S': threadState = TS_SLEEPING; break;
+        case 'R': threadState = TS_RUNNING; break;
+        case 'T': threadState = TS_SUSPENDED; break;
+        case 'Z': threadState = TS_DEAD; break;
+        default:
+            log_println("Unknown task state '%c' for task %d interpreted as thread state TS_DEAD", taskState, tid);
+            threadState = TS_DEAD;
+            break;
+    }
+
+
+    if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL)) {
+        Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
+        ThreadSpecificsStruct threadSpecificsStruct;
+        threadSpecifics = threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
+    }
+    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, threadSpecifics);
 }
 
 JNIEXPORT void JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTeleProcess_nativeGatherThreads(JNIEnv *env, jobject linuxTeleProcess, jlong pid, jobject threads, long threadSpecificsListAddress) {
 
-    char *taskDirPath;
-    asprintf(&taskDirPath, "/proc/%d/task", (pid_t) pid);
-    c_ASSERT(taskDirPath != NULL);
-    DIR *taskDir = opendir(taskDirPath);
-    if (taskDir == NULL) {
-        int error = errno;
-        log_println("Error opening %d: %s", taskDirPath, strerror(error));
-        free(taskDirPath);
+    pid_t *tasks;
+    const int nTasks = scan_process_tasks(pid, &tasks);
+    if (nTasks < 0) {
+        log_println("Error scanning /proc/%d/task directory: %s", pid, strerror(errno));
         return;
     }
 
-    do {
-        errno = 0;
-        struct dirent *task = readdir(taskDir);
-        if (task == NULL) {
-            int error = errno;
-            if (error != 0) {
-                log_println("Error reading entry in %s directory: %s", taskDirPath, strerror(error));
-            }
-            break;
-        }
-        char *endptr;
-        pid_t tid = (pid_t) strtol(task->d_name, &endptr, 10);
-        if (*endptr == '\0') {
-            c_ASSERT(tid > 0);
-            if (errno != 0) {
-                log_println("Error converting %s to a task id: %s", task->d_name, strerror(errno));
-            } else {
-                gatherThread(env, pid, tid, linuxTeleProcess, threads, threadSpecificsListAddress);
-            }
-        }
-    } while (true);
-    closedir(taskDir);
-    if (errno != 0) {
-        log_println("Error closing %s directory: %s", taskDirPath, strerror(errno));
+    int n = 0;
+    while (n < nTasks) {
+        pid_t tid = tasks[n];
+        gatherThread(env, pid, tid, linuxTeleProcess, threads, threadSpecificsListAddress);
+        n++;
     }
-    free(taskDirPath);
+    free(tasks);
 }

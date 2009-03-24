@@ -85,7 +85,7 @@ public final class ThreadLocalsInspectorContainer extends TabbedInspector<Thread
      */
     public static ThreadLocalsInspector makeInspector(Inspection inspection, TeleNativeThread teleNativeThread) {
         final ThreadLocalsInspectorContainer threadLocalsInspectorContainer = make(inspection);
-        if (!teleNativeThread.isJava()) {
+        if (!teleNativeThread.hasThreadLocals()) {
             return null;
         }
         // if the container is newly created, it will create an inspector for every thread, so wait to check
@@ -139,7 +139,7 @@ public final class ThreadLocalsInspectorContainer extends TabbedInspector<Thread
                     threadLocalsInspector.setMarked(true);
                 }
                 for (TeleNativeThread thread : teleVM().threads()) {
-                    if (thread.isJava()) {
+                    if (thread.hasThreadLocals()) {
                         final UniqueInspector.Key<ThreadLocalsInspector> key = UniqueInspector.Key.create(ThreadLocalsInspector.class, LongValue.from(thread.handle()));
                         final ThreadLocalsInspector threadLocalsInspector = UniqueInspector.find(inspection(), key);
                         if (threadLocalsInspector == null) {

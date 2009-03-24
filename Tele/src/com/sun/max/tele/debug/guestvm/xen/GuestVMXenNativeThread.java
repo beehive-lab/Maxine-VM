@@ -20,12 +20,9 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
-import java.util.*;
-
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 public class GuestVMXenNativeThread extends TeleNativeThread {
 
@@ -34,8 +31,8 @@ public class GuestVMXenNativeThread extends TeleNativeThread {
         return (GuestVMXenTeleDomain) super.teleProcess();
     }
 
-    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, int id, long handle, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals) {
-        super(teleDomain, id, handle, stackBase, stackSize, vmThreadLocals);
+    protected GuestVMXenNativeThread(GuestVMXenTeleDomain teleDomain, int id, long handle, long stackBase, long stackSize) {
+        super(teleDomain, id, handle, stackBase, stackSize);
     }
 
     @Override
