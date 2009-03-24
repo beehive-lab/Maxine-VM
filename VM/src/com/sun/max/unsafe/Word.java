@@ -35,6 +35,7 @@ import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A machine word, opaque.
@@ -49,9 +50,11 @@ public abstract class Word {
     /**
      * ATTENTION: all (non-strict) subclasses of 'Word' must be registered here for class loading to work properly.
      */
+    private static final String MAX_EXTEND_WORDTYPES_PROPERTY = "max.extend.wordtypes";
+
     @PROTOTYPE_ONLY
     public static Class[] getSubclasses() {
-        return new Class[]{
+        final Class[] defaultClasses = new Class[]{
             Address.class, Offset.class, Pointer.class, Size.class, Word.class,
             BoxedAddress.class, BoxedOffset.class, BoxedPointer.class, BoxedSize.class, BoxedWord.class,
             MemberID.class, FieldID.class, MethodID.class,
@@ -62,6 +65,21 @@ public abstract class Word {
             BiasedLockEpoch.class, BoxedBiasedLockEpoch64.class,
             InflatedMonitorLockWord64.class, BoxedInflatedMonitorLockWord64.class
         };
+        final String p = System.getProperty(MAX_EXTEND_WORDTYPES_PROPERTY);
+        if (p != null) {
+            final String[] split = p.split(",");
+            final Class[] extendedClasses = new Class[defaultClasses.length + split.length];
+            System.arraycopy(defaultClasses, 0, extendedClasses, 0, defaultClasses.length);
+            for (int i = 0; i < split.length; i++) {
+                try {
+                    extendedClasses[defaultClasses.length + i] = Class.forName(split[i]);
+                } catch (Exception ex) {
+                    FatalError.unexpected("failed to find extended word type: " + split[i]);
+                }
+            }
+            return extendedClasses;
+        }
+        return defaultClasses;
     }
 
     protected Word() {
