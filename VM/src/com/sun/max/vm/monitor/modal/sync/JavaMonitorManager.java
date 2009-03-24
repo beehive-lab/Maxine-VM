@@ -126,8 +126,8 @@ public class JavaMonitorManager {
             }
             _unBoundMonitorsHwm = unBoundListImageQty;
         } else if (phase == MaxineVM.Phase.PRIMORDIAL) {
-            Mutex.initialize();
-            ConditionVariable.initialize();
+            NativeMutexFactory.initialize();
+            NativeConditionVariableFactory.initialize();
             for (int i = 0; i < _numberOfBindableMonitors; i++) {
                 final ManagedMonitor monitor = _bindableMonitors[i];
                 monitor.allocate();
