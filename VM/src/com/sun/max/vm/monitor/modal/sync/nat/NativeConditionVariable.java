@@ -26,6 +26,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 
 /**
  * Java wrapper for a native condition variable.
@@ -35,14 +36,14 @@ import com.sun.max.vm.runtime.*;
  * @author Simon Wilkinson
  * @author Mick Jordan
  */
-public final class ConditionVariable {
+public final class NativeConditionVariable extends ConditionVariable {
 
-    static class NativeReference extends WeakReference<ConditionVariable> {
+    static class NativeReference extends WeakReference<NativeConditionVariable> {
 
         @CONSTANT_WHEN_NOT_ZERO
         private Pointer _condition = Pointer.zero();
 
-        NativeReference(ConditionVariable c) {
+        NativeReference(NativeConditionVariable c) {
             super(c, _refQueue);
         }
 
@@ -51,16 +52,16 @@ public final class ConditionVariable {
         }
     }
 
-    private static ReferenceQueue<ConditionVariable> _refQueue = new ReferenceQueue<ConditionVariable>();
+    private static ReferenceQueue<NativeConditionVariable> _refQueue = new ReferenceQueue<NativeConditionVariable>();
     private NativeReference _native;
 
     private static int _size;
 
     static {
-        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionSize");
-        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionInitialize");
-        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionWait");
-        new CriticalNativeMethod(ConditionVariable.class, "nativeConditionSize");
+        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionSize");
+        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionInitialize");
+        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionWait");
+        new CriticalNativeMethod(NativeConditionVariable.class, "nativeConditionSize");
     }
 
     @C_FUNCTION
@@ -79,56 +80,37 @@ public final class ConditionVariable {
      */
     private static native boolean nativeConditionWait(Pointer mutex, Pointer condition, long timeoutMilliSeconds);
 
-    public static void initialize() {
+    static void initialize() {
         assert MaxineVM.hostOrTarget().phase() == MaxineVM.Phase.PRIMORDIAL;
         _size = nativeConditionSize();
     }
 
-    public ConditionVariable() {
+    NativeConditionVariable() {
         _native = new NativeReference(this);
     }
 
     /**
      * Performs native allocation for this {@code ConditionVariable}.
      */
-    public void allocate() {
-        _native._condition =  Memory.mustAllocate(_size);
-        nativeConditionInitialize(_native._condition);
+    @Override
+    public ConditionVariable init() {
+        if (_native._condition.isZero()) {
+            _native._condition =  Memory.mustAllocate(_size);
+            nativeConditionInitialize(_native._condition);
+        }
+        return this;
     }
 
     public boolean requiresAllocation() {
         return _native._condition.isZero();
     }
 
-    /**
-     * Causes the current thread to wait until this {@code ConditionVariable} is signaled via
-     * {@link #threadNotify(boolean all) threadNotify()}. If a timeout > 0 is specified, then the thread may return
-     * after this timeout has elapsed without being signaled.
-     *
-     * The current thread must own the given mutex when calling this method, otherwise the results are undefined. Before
-     * blocking, the current thread will release the mutex. On return, the current thread is guaranteed to own the
-     * mutex.
-     *
-     * The thread may return early if it is {@linkplain java.lang.Thread#interrupt() interrupt() interrupted} whilst
-     * blocking. In this case, this method returns returns true. In all other cases it returns false.
-     *
-     * @param mutex the mutex on which to block
-     * @param timeoutMilliSeconds the maximum time to block. No timeout is used if timeoutMilliSeconds == 0.
-     * @return true if the current thread was interrupted whilst blocking; false otherwise
-     */
-    @INLINE
+    @Override
     public boolean threadWait(Mutex mutex, long timeoutMilliSeconds) {
-        return nativeConditionWait(mutex.asPointer(), _native._condition, timeoutMilliSeconds);
+        return nativeConditionWait(((NativeMutex) mutex).asPointer(), _native._condition, timeoutMilliSeconds);
     }
 
-    /**
-     * Causes one or all of the threads {@link #threadWait(Mutex mutex, long timeoutMilliSeconds) waiting} on this
-     * {@code ConditionVariable} to wake-up.
-     *
-     * @param all notify all threads
-     * @return true if an error occured in native code; false otherwise
-     */
-    @INLINE
+    @Override
     public boolean threadNotify(boolean all) {
         return nativeConditionNotify(_native._condition, all);
     }
@@ -138,8 +120,13 @@ public final class ConditionVariable {
      * @return
      */
     @INLINE
-    public Pointer asPointer() {
+    Pointer asPointer() {
         return _native._condition;
+    }
+
+    @Override
+    public long logId() {
+        return _native._condition.toLong();
     }
 
 }
