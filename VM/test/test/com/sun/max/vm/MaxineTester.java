@@ -1242,7 +1242,8 @@ public class MaxineTester {
 
         private final Process _process;
         private final int _timeoutMillis;
-        protected int _exitValue;
+        protected Integer _exitValue;
+        private boolean _timedOut;
         private final InputStream _stdout;
         private final InputStream _stderr;
         private final OutputStream _stdoutTo;
@@ -1258,46 +1259,40 @@ public class MaxineTester {
             _stderrTo = err;
         }
 
-        private void redirect(InputStream from, OutputStream to) throws IOException {
+        private int redirect(InputStream from, OutputStream to) throws IOException {
             final byte[] buf = new byte[1024];
+            int total = 0;
             while (from.available() > 0) {
                 final int count = from.read(buf);
-                to.write(buf, 0, count);
+                if (count > 0) {
+                    to.write(buf, 0, count);
+                    total += count;
+                }
             }
+            return total;
         }
 
         @Override
         public void run() {
             try {
                 final long start = System.currentTimeMillis();
-                while (System.currentTimeMillis() - start < _timeoutMillis) {
-                    try {
-                        Thread.yield();
-                        redirect(_stdout, _stdoutTo);
-                        redirect(_stderr, _stderrTo);
-                        _exitValue = _process.exitValue();
-                        Thread.sleep(5);
-                        _stdoutTo.close();
-                        _stderrTo.close();
-                        synchronized (this) {
-                            notifyAll();
+                while (_exitValue == null && System.currentTimeMillis() - start < _timeoutMillis) {
+                    if (redirect(_stdout, _stdoutTo) + redirect(_stderr, _stderrTo) == 0) {
+                        try {
+                            // wait for a few milliseconds to avoid eating too much CPU.
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            // do nothing.
                         }
-                        return;
-                    } catch (IllegalThreadStateException e) {
-                        // do nothing.
-                    } catch (InterruptedException e) {
-                        // do nothing.
                     }
                 }
-                _exitValue = PROCESS_TIMEOUT;
-                _stdout.close();
-                _stderr.close();
-                synchronized (this) {
+                if (_exitValue == null) {
+                    _timedOut = true;
                     // Timed out:
                     _process.destroy();
-                    notifyAll();
                 }
-                return;
+                _stdout.close();
+                _stderr.close();
             } catch (IOException ioException) {
                 throw ProgramError.unexpected(ioException);
             }
@@ -1305,12 +1300,14 @@ public class MaxineTester {
 
         public int exitValue() {
             start();
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                    // do nothing.
-                }
+            try {
+                _exitValue = _process.waitFor();
+            } catch (InterruptedException interruptedException) {
+                // do nothing.
+            }
+
+            if (_timedOut) {
+                _exitValue = PROCESS_TIMEOUT;
             }
             return _exitValue;
         }
