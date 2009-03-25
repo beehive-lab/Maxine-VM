@@ -59,18 +59,16 @@ static const char* requestToString(int request, char *unknownRequestNameBuf, int
 }
 
 const char* ptraceEventName(int event) {
-#define CASE(evt) case evt: return STRINGIZE(evt)
     switch (event) {
         case 0: return "NONE";
-        CASE(PTRACE_EVENT_FORK);
-        CASE(PTRACE_EVENT_VFORK);
-        CASE(PTRACE_EVENT_CLONE);
-        CASE(PTRACE_EVENT_EXEC);
-        CASE(PTRACE_EVENT_VFORK_DONE);
-        CASE(PTRACE_EVENT_EXIT);
+        case 1: return "PTRACE_EVENT_FORK";
+        case 2: return "PTRACE_EVENT_VFORK";
+        case 3: return "PTRACE_EVENT_CLONE";
+        case 4: return "PTRACE_EVENT_EXEC";
+        case 5: return "PTRACE_EVENT_VFORK_DONE";
+        case 6: return "PTRACE_EVENT_EXIT";
     }
     return "<unknown>";
-#undef CASE
 }
 
 #if 0
