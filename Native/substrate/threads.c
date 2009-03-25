@@ -420,11 +420,6 @@ void *thread_runJava(void *arg) {
     /* set up the vm thread locals, guard pages, etc */
     thread_initSegments(threadSpecifics);
 
-#if (os_GUESTVMXEN)
-    /* mark this thread as a java thread */
-    guestvmXen_set_javaId((Thread)nativeThread, threadSpecifics->id);
-#endif
-
     VMThreadRunMethod method = image_offset_as_address(VMThreadRunMethod, vmThreadRunMethodOffset);
 
 #if log_THREADS
