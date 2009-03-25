@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import com.sun.max.annotate.*;
 
 /**
  * Abstract class defining the interface to a condiion variable as used by JavaMonitors.

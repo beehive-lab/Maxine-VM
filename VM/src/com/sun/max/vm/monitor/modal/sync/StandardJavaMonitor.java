@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.sync;
 import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.monitor.modal.sync;
 
-import com.sun.max.annotate.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 
 /**

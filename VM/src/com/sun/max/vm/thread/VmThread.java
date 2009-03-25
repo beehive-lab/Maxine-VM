@@ -38,7 +38,6 @@ import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.sync.*;
-import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
