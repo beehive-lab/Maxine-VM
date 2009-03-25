@@ -67,7 +67,14 @@ public class JDK {
     public static final ClassRef java_lang_reflect_Proxy             = new LazyClassRef(java.lang.reflect.Proxy.class);
 
     public static final ClassRef java_util_EnumMap                   = new ClassRef(java.util.EnumMap.class);
+    public static final ClassRef java_util_Random                    = new ClassRef(java.util.Random.class);
 
+    public static final ClassRef java_util_concurrent_ConcurrentSkipListSet = new ClassRef(java.util.concurrent.ConcurrentSkipListSet.class);
+    public static final ClassRef java_util_concurrent_CopyOnWriteArrayList = new ClassRef(java.util.concurrent.CopyOnWriteArrayList.class);
+
+    public static final ClassRef java_util_concurrent_atomic_AtomicBoolean = new ClassRef(java.util.concurrent.atomic.AtomicBoolean.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicInteger = new ClassRef(java.util.concurrent.atomic.AtomicInteger.class);
+    public static final ClassRef java_util_concurrent_atomic_AtomicReference = new ClassRef(java.util.concurrent.atomic.AtomicReference.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class, "AtomicReferenceFieldUpdaterImpl");
     public static final ClassRef java_util_concurrent_atomic_AtomicIntegerFieldUpdater$AtomicIntegerFieldUpdaterImpl = new ClassRef(java.util.concurrent.atomic.AtomicIntegerFieldUpdater.class, "AtomicIntegerFieldUpdaterImpl");
     public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$CASUpdater = new ClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "CASUpdater");
@@ -75,6 +82,9 @@ public class JDK {
 
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer = new ClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class);
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer$Node = new ClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class, "Node");
+    public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer = new ClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class);
+    public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node = new ClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class, "Node");
+    public static final ClassRef java_util_concurrent_locks_LockSupport = new ClassRef(java.util.concurrent.locks.LockSupport.class);
 
     public static final ClassRef sun_misc_VM                         = new ClassRef(sun.misc.VM.class);
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
