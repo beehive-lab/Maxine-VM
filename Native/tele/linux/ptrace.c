@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/ptrace.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
@@ -29,32 +28,12 @@
 
 #include "word.h"
 #include "log.h"
-
-/* Some Linux versions are missing the following constants in <sys/ptrace.h>  */
-#ifndef PTRACE_EVENT_FORK
-
-#define PTRACE_O_TRACESYSGOOD   0x00000001
-#define PTRACE_O_TRACEFORK      0x00000002
-#define PTRACE_O_TRACEVFORK     0x00000004
-#define PTRACE_O_TRACECLONE     0x00000008
-#define PTRACE_O_TRACEEXEC      0x00000010
-#define PTRACE_O_TRACEVFORKDONE 0x00000020
-#define PTRACE_O_TRACEEXIT      0x00000040
-#define PTRACE_O_MASK           0x0000007f
-
-#define PTRACE_EVENT_FORK       1
-#define PTRACE_EVENT_VFORK      2
-#define PTRACE_EVENT_CLONE      3
-#define PTRACE_EVENT_EXEC       4
-#define PTRACE_EVENT_VFORK_DONE 5
-#define PTRACE_EVENT_EXIT       6
-
-#endif
+#include "ptrace.h"
 
 static const char* requestToString(int request, char *unknownRequestNameBuf, int unknownRequestNameBufLength) {
 #define CASE(req) case req: return STRINGIZE(req)
     switch (request) {
-        CASE(PT_TRACE_ME);
+        CASE(PT_TRACEME);
         CASE(PT_READ_I);
         CASE(PT_READ_D);
         CASE(PT_READ_U);
@@ -136,7 +115,7 @@ void ptrace_check_tracer(POS_PARAMS, pid_t pid) {
 }
 
 long _ptrace(POS_PARAMS, int request, pid_t pid, void *address, void *data) {
-    if (request != PT_TRACE_ME) {
+    if (request != PT_TRACEME) {
         ptrace_check_tracer(POS, pid);
     }
     long result;

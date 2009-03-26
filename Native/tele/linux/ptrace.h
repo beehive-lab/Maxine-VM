@@ -19,10 +19,22 @@
  * Company, Ltd.
  */
 
+/**
+ * This header is a collection of the definitions and macros normal found in <sys/ptrace.h>.
+ * The reason that <sys/ptrace.h> can simply be used is that its content is inconsistent
+ * across various versions of glibc found in Linux distros. As such, all
+ * ptrace functionality that the tele code depends on is included here.
+ *
+ * This header also includes a mechanism for interposing on ptrace for the
+ * purpose of tracing and/or error checking calls to ptrace. To use this mechanism,
+ * define the macro INTERPOSE_PTRACE and supply a definition of the _ptrace() function
+ * declared in this header.
+ */
+
 #ifndef __ptrace_h__
 #define __ptrace_h__ 1
 
-#define PT_TRACEME 0   /* child declares it's being traced */
+#define PT_TRACEME  0   /* child declares it's being traced */
 #define PT_READ_I   1   /* read word in child's I space */
 #define PT_READ_D   2   /* read word in child's D space */
 #define PT_READ_U   3   /* read word in child's user structure */
@@ -62,8 +74,16 @@
 #define POS_PARAMS const char *file, int line
 #define POS __FILE__, __LINE__
 
+#ifdef INTERPOSE_PTRACE
+/**
+ * The signature of a function that wraps a call to ptrace().
+ */
 extern long _ptrace(POS_PARAMS, int request, pid_t pid, void *address, void *data);
-#define ptrace(request, pid, address, data) _ptrace(POS, (request), (pid), (void *) (Address) (address), (void *) (Address) (data))
+
+#define ptrace(request, pid, address, data) _ptrace(POS, (request), (pid), (void *) (address), (void *) (data))
+#else
+extern long int ptrace (int request, pid_t pid, void *address, void *data);
+#endif
 
 /**
  * Extracts the ptrace event code from the status value returned by a call to waitpid.
