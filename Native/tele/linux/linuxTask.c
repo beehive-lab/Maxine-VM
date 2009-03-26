@@ -419,7 +419,7 @@ int process_wait_all_threads_stopped(pid_t pid) {
 
                 if (!sigismember(&_caughtSignals, signal)) {
                     tele_log_println("Resuming task %d with signal %d [%s]", tid, signal, strsignal(signal));
-                    ptrace(PT_CONTINUE, tid, NULL, signal);
+                    ptrace(PT_CONTINUE, tid, NULL, (Address) signal);
                 } else {
                     if (signal == SIGTRAP) {
                         nStopped++;
@@ -580,7 +580,7 @@ int process_wait_all_threads_stopped_alternative(pid_t pid) {
                             tele_log_println("Resuming task %d with signal %d [%s]", tid, signal, strsignal(signal));
                             allStopped = false;
                             nStopped--;
-                            ptrace(PT_CONTINUE, tid, NULL, signal);
+                            ptrace(PT_CONTINUE, tid, NULL, (Address) signal);
                         } else {
                             if (signal == SIGTRAP) {
                                 int event = PTRACE_EVENT(status);

@@ -20,3 +20,5 @@
 #
 
 OS_SOURCES = ptrace.c teleProcess.c linuxTeleProcess.c linuxTeleNativeThread.c linuxTask.c
+
+CFLAGS += -DINTERPOSE_PTRACE
