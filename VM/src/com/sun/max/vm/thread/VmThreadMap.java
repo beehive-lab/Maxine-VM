@@ -31,6 +31,12 @@ import com.sun.max.vm.runtime.*;
 /**
  * The VmThreadMap class contains all the active threads in the MaxineVM.
  *
+ * N.B. The (singleton) ACTIVE VmThreadMap object is bound with a
+ * special JavaMonitor that prevents a terminated thread's state from
+ * changing from TERMINATED during removeThreadLocals.
+ * It is therefore imperiative that all synchronization in this class use the
+ * ACTIVE object.
+ *
  * @author Ben L. Titzer
  * @author Bernd Mathiske
  */
@@ -262,6 +268,9 @@ public final class VmThreadMap {
      * The {@code IDMap} class manages thread ids and a mapping between thread ids and
      * the corresponding {@code VmThread} instance.
      * The id 0 is reserved and never used to aid the modal monitor scheme ({@see ThinLockWord64}).
+     *
+     * Note that we synchronize explicitly on ACTIVE to ensure that we don't disturb the TERMINATED state
+     * during thread tear down.
      */
     private final class IDMap {
         private int _nextID = 1;
@@ -276,35 +285,39 @@ public final class VmThreadMap {
             }
         }
 
-        synchronized int acquire(VmThread vmThread) {
-            FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
-            final int length = _freeList.length;
-            if (_nextID >= length) {
-                // grow the free list and initialize the new part
-                final int[] newFreeList = Arrays.grow(_freeList, length * 2);
-                for (int i = length; i < newFreeList.length; i++) {
-                    newFreeList[i] = i + 1;
-                }
-                _freeList = newFreeList;
+        int acquire(VmThread vmThread) {
+            synchronized (ACTIVE) {
+                FatalError.check(vmThread.id() == 0, "VmThread already has an ID");
+                final int length = _freeList.length;
+                if (_nextID >= length) {
+                    // grow the free list and initialize the new part
+                    final int[] newFreeList = Arrays.grow(_freeList, length * 2);
+                    for (int i = length; i < newFreeList.length; i++) {
+                        newFreeList[i] = i + 1;
+                    }
+                    _freeList = newFreeList;
 
-                // grow the vmThreads list and copy
-                final VmThread[] newVmThreads = new VmThread[length * 2];
-                for (int i = 0; i < length; i++) {
-                    newVmThreads[i] = _vmThreads[i];
+                    // grow the vmThreads list and copy
+                    final VmThread[] newVmThreads = new VmThread[length * 2];
+                    for (int i = 0; i < length; i++) {
+                        newVmThreads[i] = _vmThreads[i];
+                    }
+                    _vmThreads = newVmThreads;
                 }
-                _vmThreads = newVmThreads;
+                final int id = _nextID;
+                _nextID = _freeList[_nextID];
+                _vmThreads[id] = vmThread;
+                vmThread.setID(id);
+                return id;
             }
-            final int id = _nextID;
-            _nextID = _freeList[_nextID];
-            _vmThreads[id] = vmThread;
-            vmThread.setID(id);
-            return id;
         }
 
-        synchronized void release(int id) {
-            _freeList[id] = _nextID;
-            _vmThreads[id] = null;
-            _nextID = id;
+        void release(int id) {
+            synchronized (ACTIVE) {
+                _freeList[id] = _nextID;
+                _vmThreads[id] = null;
+                _nextID = id;
+            }
         }
 
         @INLINE

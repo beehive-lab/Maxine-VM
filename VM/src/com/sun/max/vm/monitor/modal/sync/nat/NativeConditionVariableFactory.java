@@ -18,28 +18,25 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.vm.monitor.modal.sync.nat;
 
-import com.sun.max.memory.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.vm.monitor.modal.sync.*;
 
-/**
- * Encapsulates a snapshot of the frames on a stack.
- *
- * @author Bernd Mathiske
- * @author Doug Simon
- * @author Aritra Bandyopadhyay
- */
-public class TeleNativeStack extends FixedMemoryRegion {
 
-    private final TeleNativeThread _teleNativeThread;
-
-    public TeleNativeThread teleNativeThread() {
-        return _teleNativeThread;
+public class NativeConditionVariableFactory extends ConditionVariableFactory {
+    /**
+     * Creates a NativeConditionVariable.
+     * @return a NativeConditionVariable object
+     */
+    @Override
+    protected ConditionVariable newConditionVariable() {
+        return new NativeConditionVariable();
     }
 
-    public TeleNativeStack(TeleNativeThread teleNativeThread, Address base, Size size) {
-        super(base, size, "Thread-" + teleNativeThread.handle());
-        _teleNativeThread = teleNativeThread;
+    @Override
+    protected void initializeImpl() {
+        NativeConditionVariable.initialize();
     }
+
+
 }

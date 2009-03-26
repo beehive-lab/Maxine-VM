@@ -38,7 +38,6 @@ import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.sync.*;
-import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
@@ -301,7 +300,7 @@ public class VmThread {
      */
     public VmThread setJavaThread(Thread javaThread) {
         _isGCThread = Heap.isGcThread(javaThread);
-        _waitingCondition = new ConditionVariable();
+        _waitingCondition = ConditionVariableFactory.create();
         _javaThread = javaThread;
         _name = javaThread.getName();
         _jniHandles = new JniHandles();
@@ -315,12 +314,10 @@ public class VmThread {
             _state = Thread.State.TERMINATED;
             _javaThread.notifyAll();
         }
+        terminationComplete();
         // It is the monitor scheme's responsibility to ensure that this thread isn't reset to RUNNABLE if it blocks
         // here.
         VmThreadMap.ACTIVE.removeVmThreadLocals(_vmThreadLocals);
-        // But in case it doesn't we reset it here.
-        // TODO figure this out properly.
-        _state = Thread.State.TERMINATED;
         // Monitor acquisition after point this MUST NOT HAPPEN as it may reset _state to RUNNABLE
         _nativeThread = Address.zero();
         _vmThreadLocals = Pointer.zero();
@@ -493,6 +490,8 @@ public class VmThread {
         STACK_REFERENCE_MAP.setConstantWord(triggeredVmThreadLocals, refMapArea);
 
         vmThread._guardPage = stackYellowZone;
+
+        vmThread.initializationComplete();
 
         // Enable safepoints:
         Safepoint.enable();
@@ -913,5 +912,23 @@ public class VmThread {
     public boolean hasSufficentStackToReprotectGuardPage(Pointer stackPointer) {
         final Pointer limit = stackPointer.minus(VmThread.MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING);
         return limit.greaterThan(guardPageEnd());
+    }
+
+    /**
+     * This method is called when the VmThread initialization is complete.
+     * A subclass can override this method to do whatever subclass-specific
+     * initialization that depends on that invariant.
+     */
+    protected void initializationComplete() {
+
+    }
+
+    /**
+     * This method is called when the VmThread termination is complete.
+     * A subclass can override this method to do whatever subclass-specific
+     * termination that depends on that invariant.
+     */
+    protected void terminationComplete() {
+
     }
 }

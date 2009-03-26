@@ -41,7 +41,7 @@ void nativeMutexInitialize(Mutex mutex) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_vm_monitor_modal_sync_nat_Mutex_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
+Java_com_sun_max_vm_monitor_modal_sync_nat_NativeMutex_nativeMutexLock(JNIEnv *env, jclass c, Mutex mutex) {
 	return mutex_enter(mutex) == 0;
 }
 
@@ -60,7 +60,7 @@ void nativeConditionInitialize(Condition condition) {
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_sun_max_vm_monitor_modal_sync_nat_ConditionVariable_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
+Java_com_sun_max_vm_monitor_modal_sync_nat_NativeConditionVariable_nativeConditionWait(JNIEnv *env, jclass c, Mutex mutex, Condition condition, jlong timeoutMilliSeconds) {
 	return condition_timedWait(condition, mutex, timeoutMilliSeconds);
 }
 

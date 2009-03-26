@@ -529,7 +529,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
 
     protected abstract void gatherThreads(AppendableSequence<TeleNativeThread> threads);
 
-    protected abstract TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals);
+    protected abstract TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize);
 
     /**
      * Callback from JNI: creates new thread object or updates existing thread object with same thread ID.
@@ -552,19 +552,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
                     long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         assert state >= 0 && state < ThreadState.VALUES.length() : state;
         TeleNativeThread thread = _handleToThreadMap.get(handle);
+        if (thread == null) {
+            thread = createTeleNativeThread(id, handle, stackBase, stackSize);
+        }
 
-        final Map<Safepoint.State, Pointer> vmThreadLocals;
-        if (triggeredVmThreadLocals != 0 && enabledVmThreadLocals != 0 && disabledVmThreadLocals != 0) {
+        if (id >= 0) {
+            final Map<Safepoint.State, Pointer> vmThreadLocals;
             vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
             vmThreadLocals.put(Safepoint.State.ENABLED, Pointer.fromLong(enabledVmThreadLocals));
             vmThreadLocals.put(Safepoint.State.DISABLED, Pointer.fromLong(disabledVmThreadLocals));
             vmThreadLocals.put(Safepoint.State.TRIGGERED, Pointer.fromLong(triggeredVmThreadLocals));
-        } else {
-            vmThreadLocals = null;
-        }
-
-        if (thread == null || thread.isJava() != (vmThreadLocals != null)) {
-            thread = createTeleNativeThread(id, handle, stackBase, stackSize, vmThreadLocals);
+            thread.setVmThreadLocals(vmThreadLocals);
         }
 
         thread.setState(ThreadState.VALUES.get(state));
@@ -582,27 +580,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return _epoch;
     }
 
-    /**
-     * Sets the {@linkplain #primordialThread() primordial thread} if it has already been set.
-     *
-     * @param thread the primordial thread
-     */
-    protected void initPrimordialThread(TeleNativeThread thread) {
-        if (_primordialThread == null) {
-            _primordialThread = thread;
-        }
-    }
-
     private void refreshThreads() {
         Trace.begin(TRACE_VALUE, tracePrefix() + "Refreshing remote threads:");
         final long startTimeMillis = System.currentTimeMillis();
         _epoch++;
         final AppendableSequence<TeleNativeThread> threads = new ArrayListSequence<TeleNativeThread>(_handleToThreadMap.size());
         gatherThreads(threads);
-
-        if (!threads.isEmpty()) {
-            initPrimordialThread(threads.first());
-        }
 
         final SortedMap<Long, TeleNativeThread> newThreadMap = new TreeMap<Long, TeleNativeThread>();
         final Set<Long> newInstructionPointers = new HashSet<Long>();
@@ -619,8 +602,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             newThreadMap.put(thread.handle(), thread);
             final TeleNativeThread oldThread = _handleToThreadMap.get(thread.handle());
             if (oldThread != null) {
-                final boolean startingOrTerminatingJavaThread = oldThread.isJava() != thread.isJava();
-                assert oldThread == thread || startingOrTerminatingJavaThread : "old=" + oldThread + ", new=" + thread;
+                assert oldThread == thread;
                 _deadThreads.remove(thread);
                 Trace.line(TRACE_VALUE, "    "  + thread);
             } else {
@@ -671,18 +653,12 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return _handleToThreadMap.get(id);
     }
 
-    private TeleNativeThread _primordialThread;
-
-    public final TeleNativeThread primordialThread() {
-        return _primordialThread;
-    }
-
     /**
      * Gets the thread whose stack contains the memory location, null if none.
      */
     public final TeleNativeThread threadContaining(Address address) {
         for (TeleNativeThread thread : _handleToThreadMap.values()) {
-            if (thread.isJava() && thread.stack().contains(address)) {
+            if (thread.stack().contains(address)) {
                 return thread;
             }
         }

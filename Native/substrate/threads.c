@@ -420,11 +420,6 @@ void *thread_runJava(void *arg) {
     /* set up the vm thread locals, guard pages, etc */
     thread_initSegments(threadSpecifics);
 
-#if (os_GUESTVMXEN)
-    /* mark this thread as a java thread */
-    guestvmXen_set_javaId((Thread)nativeThread, threadSpecifics->id);
-#endif
-
     VMThreadRunMethod method = image_offset_as_address(VMThreadRunMethod, vmThreadRunMethodOffset);
 
 #if log_THREADS
@@ -444,10 +439,6 @@ void *thread_runJava(void *arg) {
               threadSpecifics->stackRedZone,
               threadSpecifics->stackYellowZone,
               threadSpecifics->stackBase + threadSpecifics->stackSize);
-#if (os_GUESTVMXEN)
-    /* mark this thread as a non-java thread */
-    guestvmXen_set_javaId((Thread)nativeThread, -1);
-#endif
 
     if (_threadSpecificsList != NULL) {
         /* remove 'threadSpecifics' from the list known by the debugger; from this point on

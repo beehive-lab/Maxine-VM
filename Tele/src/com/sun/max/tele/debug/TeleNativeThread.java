@@ -145,6 +145,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private final TeleNativeStack _stack;
 
+    private final Map<Safepoint.State, TeleVMThreadLocalValues> _teleVmThreadLocals;
+
     private ThreadState _state = SUSPENDED;
     private TeleTargetBreakpoint _breakpoint;
     private FrameProvider[] _frameCache;
@@ -156,7 +158,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     private final long _handle;
 
-    protected TeleNativeThread(TeleProcess teleProcess, int id, long handle, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals) {
+    protected TeleNativeThread(TeleProcess teleProcess, int id, long handle, long stackBase, long stackSize) {
         _teleProcess = teleProcess;
         _teleVM = teleProcess.teleVM();
         _id = id;
@@ -165,12 +167,10 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         _integerRegisters = new TeleIntegerRegisters(vmConfiguration);
         _floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         _stateRegisters = new TeleStateRegisters(vmConfiguration);
-        if (vmThreadLocals == null) {
-            _stack = null;
-        } else {
-            _stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize), vmThreadLocals);
-            _breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
-        }
+
+        _teleVmThreadLocals = id >= 0 ? new EnumMap<Safepoint.State, TeleVMThreadLocalValues>(Safepoint.State.class) : null;
+        _stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize));
+        _breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
     }
 
     /**
@@ -178,9 +178,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * thread last stopped.
      */
     public Sequence<StackFrame> frames() {
-        if (!isJava()) {
-            return Sequence.Static.empty(StackFrame.class);
-        }
         return _frames;
     }
 
@@ -199,6 +196,18 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     public TeleVM teleVM() {
         return _teleVM;
+    }
+
+    public boolean hasThreadLocals() {
+        return _teleVmThreadLocals != null;
+    }
+
+    /**
+     * Gets the VM thread locals corresponding to a given safepoint state.
+     */
+    public TeleVMThreadLocalValues threadLocalsFor(Safepoint.State state) {
+        assert hasThreadLocals();
+        return _teleVmThreadLocals.get(state);
     }
 
     public TeleIntegerRegisters integerRegisters() {
@@ -223,6 +232,22 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
+     * Updates the addresses of this thread's state VM thread locals.
+     * This does not cause a {@linkplain #refresh(long) refresh}.
+     */
+    public final void setVmThreadLocals(Map<Safepoint.State, Pointer> vmThreadLocals) {
+        assert hasThreadLocals();
+        for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
+            final Pointer vmThreadLocalsPointer = vmThreadLocals.get(safepointState);
+            if (vmThreadLocalsPointer.isZero()) {
+                _teleVmThreadLocals.put(safepointState, null);
+            } else {
+                _teleVmThreadLocals.put(safepointState, new TeleVMThreadLocalValues(safepointState, vmThreadLocalsPointer));
+            }
+        }
+    }
+
+    /**
      * Refreshes the contents of this object to reflect the data of the corresponding thread in the tele process.
      * If {@code this.state() == DEAD}, then this object represents a thread that has died in the tele process and
      * all state is flushed accordingly.
@@ -237,9 +262,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             return;
         }
 
-        refreshRegisters();
-        if (isJava()) {
-            refreshStack();
+        if (_state == WATCHPOINT || _state == SUSPENDED || _state == BREAKPOINT) {
+            refreshRegisters();
+            refreshThreadLocals();
             refreshBreakpoint();
             refreshFrames(false);
         }
@@ -258,19 +283,28 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
-     * Refreshes the cached state of this thread's {@linkplain #stack() stack} from the corresponding thread in the tele process.
+     * Refreshes the values of the cached VM thread local variables for this thread.
      * This method also updates the reference to the {@linkplain #teleVmThread() tele VmThread}.
      */
-    private void refreshStack() {
-        assert isJava() : "Can't refresh stack of a non-Java thread";
-        _stack.refresh();
-        final TeleVMThreadLocalValues enabledVmThreadLocalValues = _stack.enabledVmThreadLocalValues();
-        final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
-        if (threadLocalValue != 0) {
-            final Reference vmThreadReference = _teleVM.wordToReference(Address.fromLong(threadLocalValue));
-            _teleVmThread = (TeleVmThread) _teleVM.makeTeleObject(vmThreadReference);
-        } else {
-            _teleVmThread = null;
+    private void refreshThreadLocals() {
+        if (_teleVmThreadLocals == null) {
+            return;
+        }
+        final DataAccess dataAccess = teleProcess().dataAccess();
+        for (TeleVMThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
+            if (teleVmThreadLocalValues != null) {
+                teleVmThreadLocalValues.refresh(dataAccess);
+            }
+        }
+
+        final TeleVMThreadLocalValues enabledVmThreadLocalValues = threadLocalsFor(Safepoint.State.ENABLED);
+        _teleVmThread = null;
+        if (enabledVmThreadLocalValues != null) {
+            final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
+            if (threadLocalValue != 0) {
+                final Reference vmThreadReference = _teleVM.wordToReference(Address.fromLong(threadLocalValue));
+                _teleVmThread = (TeleVmThread) _teleVM.makeTeleObject(vmThreadReference);
+            }
         }
     }
 
@@ -280,7 +314,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * instruction on which the breakpoint was set.
      */
     private void refreshBreakpoint() {
-        assert isJava() : "Can't refresh breakpoints of a non-Java thread";
         final Factory breakpointFactory = teleProcess().targetBreakpointFactory();
         TeleTargetBreakpoint breakpoint = null;
         try {
@@ -312,7 +345,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @param clear the current list of frames should be cleared
      */
     private void refreshFrames(boolean clear) {
-        assert isJava() : "Can't refresh frames of a non-Java thread";
         if (clear) {
             _frames = Sequence.Static.empty(StackFrame.class);
             _framesChanged = true;
@@ -362,13 +394,20 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
+     * Determines if this is the primordial VM thread. The primordial VM thread is the native thread on which the VM was
+     * launched. It is not associated with a {@link VmThread} instance but does have {@linkplain #hasThreadLocals() VM
+     * thread locals}.
+     */
+    public final boolean isPrimordial() {
+        return id() == 0;
+    }
+
+    /**
      * Gets the identifier passed to {@link VmThread#run} when the thread was started. Note that this is different from
-     * the platform dependent thread {@linkplain #handle() handle}. This value is only guaranteed to be unique for
-     * running Java threads.
+     * the platform dependent thread {@linkplain #handle() handle}.
      *
-     * @return the id of this thread. If this thread corresponds to a {@link VmThread Java thread} then this return
-     *         value equals the value returned by {@link VmThread#id()} for the VmThread. If this is the primordial
-     *         thread, then 0 is returned. Otherwise, this is a non-JNI attached native thread.
+     * @return the id of this thread. A value less than, equal to or greater than 0 denotes a native thread, the
+     *         primoridial thread or a Java thread respectively.
      */
     public final int id() {
         return _id;
@@ -498,12 +537,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     @Override
     public final String toString() {
-        String name = _teleVmThread == null ? "native" : _teleVmThread.name();
+        String name = isPrimordial() ? "primordial" : (_teleVmThread == null ? "native" : _teleVmThread.name());
         name +=
             "[id=" + id() +
             ",handle=" + handle() +
             ",state=" + _state +
-            ",type=" + (isJava() ? "Java" : "native") +
+            ",type=" + (isPrimordial() ? "primordial" : (isJava() ? "Java" : "native")) +
             ",ip=0x" + instructionPointer().toHexString();
         if (isJava()) {
             name +=
@@ -514,15 +553,13 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
-     * Determines if this thread can execute Java code.
-     *
-     * For all but the primordial thread, a return value of {@code true} means that this thread corresponds to a
-     * {@link VmThread} object in the VM. However, even for these threads, the {@link #teleVmThread()} method will
-     * return {@code null} if the thread is has been started but not reached the execution point in {@link VmThread#run}
-     * where the {@linkplain VmThreadLocal#VM_THREAD reference} to the {@link VmThread} object has been initialized.
+     * Determines if this thread is associated with a {@link VmThread} instance. Note that even if this method returns
+     * {@code true}, the {@link #teleVmThread()} method will return {@code null} if the thread has not reached the
+     * execution point in {@link VmThread#run} where the {@linkplain VmThreadLocal#VM_THREAD reference} to the
+     * {@link VmThread} object has been initialized.
      */
     public final boolean isJava() {
-        return _stack != null;
+        return _id > 0;
     }
 
     /**

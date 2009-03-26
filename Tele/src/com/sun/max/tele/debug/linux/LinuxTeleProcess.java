@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug.linux;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -77,39 +76,17 @@ public final class LinuxTeleProcess extends TeleProcess {
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        for (TeleNativeThread thread : threads()) {
-            final LinuxTeleNativeThread linuxThread = (LinuxTeleNativeThread) thread;
-            final LinuxTask threadTask = linuxThread.task();
-            if (!threadTask.equals(_task)) {
-                threadTask.resume();
-            }
-        }
-        _task.resume();
+        _task.resume(true);
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        for (TeleNativeThread thread : threads()) {
-            final LinuxTeleNativeThread linuxThread = (LinuxTeleNativeThread) thread;
-            final LinuxTask threadTask = linuxThread.task();
-            if (!threadTask.equals(_task)) {
-                threadTask.suspend(false);
-            }
-        }
-        _task.suspend(false);
+        _task.suspend(true);
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        boolean result = true;
-        for (TeleNativeThread thread : threads()) {
-            final LinuxTeleNativeThread linuxThread = (LinuxTeleNativeThread) thread;
-            final LinuxTask threadTask = linuxThread.task();
-            if (!threadTask.equals(_task)) {
-                result = threadTask.waitUntilStopped() && result;
-            }
-        }
-        result = _task.waitUntilStopped() && result;
+        final boolean result = _task.waitUntilStopped(true);
         invalidateCache();
         return result;
     }
@@ -117,8 +94,8 @@ public final class LinuxTeleProcess extends TeleProcess {
     private native void nativeGatherThreads(long pid, AppendableSequence<TeleNativeThread> threads, long threadSpecificsList);
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long tid, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
-        return new LinuxTeleNativeThread(this, id, tid, stackBase, stackSize, vmThreadLocals);
+    protected TeleNativeThread createTeleNativeThread(int id, long tid, long stackBase, long stackSize) {
+        return new LinuxTeleNativeThread(this, id, tid, stackBase, stackSize);
     }
 
     @Override

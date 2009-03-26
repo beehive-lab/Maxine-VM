@@ -102,6 +102,7 @@
 <pathentry base-path="Native" include="tele/linux" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="tele/darwin" kind="inc" path="" system="true"/>
 <pathentry base-path="Native" include="tele/solaris" kind="inc" path="" system="true"/>
+<pathentry include="/usr/local/include" kind="inc" path="" system="true"/>
 <pathentry kind="out" path="build"/>
 <pathentry kind="src" path=""/>
 </storageModule>

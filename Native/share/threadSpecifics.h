@@ -32,7 +32,8 @@
 
 typedef struct thread_SpecificsStruct {
     struct thread_SpecificsStruct *next; // Points to self if not on a list
-    jint id; // 0 denotes the thread specifics for the primordial thread created when a debugger is attached
+    jint id; //  0: denotes the thread specifics for the primordial thread created when a debugger is attached
+             // >0: denotes a VmThread
     Address stackBase;
     Size stackSize;
     Address triggeredVmThreadLocals;
@@ -59,13 +60,6 @@ typedef struct {
     mutex_Struct lock;
     ThreadSpecifics head;
 } ThreadSpecificsListStruct, *ThreadSpecificsList;
-
-/**
- * Determines if a given thread specifics denotes a Java thread. A thread specifics 'ts' denotes a Java thread if:
- *
- *   ts.triggeredVmThreadLocals != NULL && ts.enabledVmThreadLocals != NULL && ts.disabledVmThreadLocals != NULL
- */
-extern Boolean threadSpecifics_isJava(ThreadSpecifics threadSpecifics);
 
 /**
  * Prints a selection of the fields in a given ThreadSpecifics object.

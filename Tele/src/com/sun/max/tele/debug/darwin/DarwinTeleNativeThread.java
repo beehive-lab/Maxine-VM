@@ -20,12 +20,9 @@
  */
 package com.sun.max.tele.debug.darwin;
 
-import java.util.*;
-
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -37,8 +34,8 @@ public class DarwinTeleNativeThread extends TeleNativeThread {
         return (DarwinTeleProcess) super.teleProcess();
     }
 
-    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, int id, long machThread, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals) {
-        super(teleProcess, id, machThread, stackBase, stackSize, vmThreadLocals);
+    public DarwinTeleNativeThread(DarwinTeleProcess teleProcess, int id, long machThread, long stackBase, long stackSize) {
+        super(teleProcess, id, machThread, stackBase, stackSize);
     }
 
     @Override

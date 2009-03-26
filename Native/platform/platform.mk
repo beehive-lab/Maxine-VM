@@ -157,7 +157,7 @@ ifeq ($(OS),linux)
 	# The -rpath option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
 	# find Maxine's version of the libjvm.so library. 
 	LINK_MAIN = gcc -g -lc -lm -lpthread -ldl -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
-	LINK_LIB = gcc -g -shared -lc -lm -lthread_db
+	LINK_LIB = gcc -g -shared -lc -lm
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so
 endif

@@ -21,7 +21,6 @@
 package com.sun.max.tele.debug.no;
 
 import java.io.*;
-import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.platform.*;
@@ -52,7 +51,7 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize, Map<com.sun.max.vm.runtime.Safepoint.State, Pointer> vmThreadLocals) {
+    protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize) {
         throw new TeleVMCannotBeModifiedError();
     }
 

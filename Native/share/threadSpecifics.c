@@ -98,10 +98,6 @@ void threadSpecificsList_remove(ThreadSpecificsList threadSpecificsList, ThreadS
     TSL_MUTEX_DO(threadSpecificList, mutex_exit);
 }
 
-Boolean threadSpecifics_isJava(ThreadSpecifics threadSpecifics) {
-    return threadSpecifics->triggeredVmThreadLocals != 0 && threadSpecifics->enabledVmThreadLocals != 0 && threadSpecifics->disabledVmThreadLocals != 0;
-}
-
 #if TELE
 
 ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
@@ -112,7 +108,7 @@ ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadS
     Address threadSpecificsAddress = (Address) threadSpecificsList->head;
     while (threadSpecificsAddress != 0) {
         READ_PROCESS_MEMORY(threadSpecificsAddress, threadSpecifics, sizeof(ThreadSpecificsStruct));
-#if 0
+#if log_TELE
         log_print("threadSpecificsList_search(%p): ", stackPointer);
         threadSpecifics_println(threadSpecifics);
 #endif

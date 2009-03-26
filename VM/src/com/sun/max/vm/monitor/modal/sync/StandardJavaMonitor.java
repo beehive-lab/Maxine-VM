@@ -23,7 +23,6 @@ package com.sun.max.vm.monitor.modal.sync;
 import com.sun.max.vm.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.debug.*;
-import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -43,7 +42,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     private VmThread _waitingThreads;
 
     public StandardJavaMonitor() {
-        _mutex = new Mutex();
+        _mutex = MutexFactory.create();
     }
 
     private static void raiseIllegalMonitorStateException(VmThread owner) {
@@ -101,10 +100,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
             ownerThread.setState(Thread.State.TIMED_WAITING);
         }
 
-        final ConditionVariable waitingCondition  = _ownerThread.waitingCondition();
-        if (waitingCondition.requiresAllocation()) {
-            waitingCondition.allocate();
-        }
+        final ConditionVariable waitingCondition  = _ownerThread.waitingCondition().init();
         ownerThread.setNextWaitingThread(_waitingThreads);
         _waitingThreads = ownerThread;
         _ownerThread = null;
@@ -198,14 +194,14 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
 
     @Override
     public void allocate() {
-        _mutex.alloc();
+        _mutex.init();
     }
 
     @Override
     public void dump() {
         super.dump();
         Log.print(" mutex=");
-        Log.print(_mutex.asPointer());
+        Log.print(_mutex.logId());
         Log.print(" waiters={");
         VmThread waiter = _waitingThreads;
         while (waiter != null) {
@@ -232,10 +228,13 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
         public void monitorEnter() {
             final VmThread currentThread = VmThread.current();
             if (currentThread.state() == Thread.State.TERMINATED) {
-                assert _ownerThread != currentThread;
-                _mutex.lock();
-                _ownerThread = currentThread;
-                _recursionCount = 1;
+                if (_ownerThread != currentThread) {
+                    _mutex.lock();
+                    _ownerThread = currentThread;
+                    _recursionCount = 1;
+                } else {
+                    _recursionCount++;
+                }
             } else {
                 super.monitorEnter();
             }

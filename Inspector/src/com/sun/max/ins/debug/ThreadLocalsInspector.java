@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.debug;
 
+import java.awt.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -28,6 +30,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -70,10 +73,6 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
     private ThreadLocalsInspectorContainer _parent;
     private JTabbedPane _tabbedPane;
 
-    private ThreadLocalsPanel _enabledThreadLocalsPanel;
-    private ThreadLocalsPanel _disabledThreadLocalsPanel;
-    private ThreadLocalsPanel _triggeredThreadLocalsPanel;
-
     private final ThreadLocalsViewPreferences _globalPreferences;
     private final ThreadLocalsViewPreferences _instancePreferences;
 
@@ -107,17 +106,13 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
 
         _tabbedPane = new JTabbedPane();
 
-        final TeleVMThreadLocalValues enabledVmThreadLocalValues = _teleNativeThread.stack().enabledVmThreadLocalValues();
-        final TeleVMThreadLocalValues disabledVmThreadLocalValues = _teleNativeThread.stack().disabledVmThreadLocalValues();
-        final TeleVMThreadLocalValues triggeredVmThreadLocalValues = _teleNativeThread.stack().triggeredVmThreadLocalValues();
-
-        _enabledThreadLocalsPanel = new ThreadLocalsPanel(this, enabledVmThreadLocalValues, _instancePreferences);
-        _disabledThreadLocalsPanel = new ThreadLocalsPanel(this, disabledVmThreadLocalValues, _instancePreferences);
-        _triggeredThreadLocalsPanel = new ThreadLocalsPanel(this, triggeredVmThreadLocalValues, _instancePreferences);
-
-        _tabbedPane.add("Enabled", _enabledThreadLocalsPanel);
-        _tabbedPane.add("Disabled", _disabledThreadLocalsPanel);
-        _tabbedPane.add("Triggered", _triggeredThreadLocalsPanel);
+        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            final TeleVMThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+            if (values != null) {
+                final ThreadLocalsPanel panel = new ThreadLocalsPanel(this, values, _instancePreferences);
+                _tabbedPane.add(state.toString(), panel);
+            }
+        }
 
         _tabbedPane.addChangeListener(new ChangeListener() {
             // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
@@ -138,11 +133,44 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
         }
     }
 
+    private ThreadLocalsPanel threadLocalsPanelFor(Safepoint.State state) {
+        for (Component component : _tabbedPane.getComponents()) {
+            final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) component;
+            if (threadLocalsPanel._teleVMThreadLocalValues.safepointState() == state) {
+                return threadLocalsPanel;
+            }
+        }
+        return null;
+    }
+
     @Override
     public void refreshView(long epoch, boolean force) {
+
+        boolean panelsAddedOrRemoved = false;
+        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+            final TeleVMThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+            final ThreadLocalsPanel panel = threadLocalsPanelFor(state);
+            if (values != null) {
+                if (panel == null) {
+                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(this, values, _instancePreferences));
+                    panelsAddedOrRemoved = true;
+                }
+            } else {
+                if (panel != null) {
+                    _tabbedPane.remove(panel);
+                    panelsAddedOrRemoved = true;
+                }
+            }
+        }
+        if (panelsAddedOrRemoved) {
+            reconstructView();
+        }
+
         // Only need to refresh the panel that's visible, as long as we refresh them when they become visible
         final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) _tabbedPane.getSelectedComponent();
-        threadLocalsPanel.refresh(epoch, force);
+        if (threadLocalsPanel != null) {
+            threadLocalsPanel.refresh(epoch, force);
+        }
         super.refreshView(epoch, force);
     }
 
@@ -167,7 +195,7 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
                 }
                 moveToFront();
             } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle("Registers " + getTextForTitle());
+                frame().setTitle("Thread Locals View " + getTextForTitle());
             }
         }
     }

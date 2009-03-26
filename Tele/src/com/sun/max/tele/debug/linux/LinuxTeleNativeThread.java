@@ -20,12 +20,9 @@
  */
 package com.sun.max.tele.debug.linux;
 
-import java.util.*;
-
 import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -61,8 +58,8 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
         return _task;
     }
 
-    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int id, long tid, long stackBase, long stackSize, Map<Safepoint.State, Pointer> vmThreadLocals) {
-        super(teleProcess, id, tid, stackBase, stackSize, vmThreadLocals);
+    LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int id, long tid, long stackBase, long stackSize) {
+        super(teleProcess, id, tid, stackBase, stackSize);
         _task = new LinuxTask(teleProcess.task().tgid(), (int) tid);
     }
 

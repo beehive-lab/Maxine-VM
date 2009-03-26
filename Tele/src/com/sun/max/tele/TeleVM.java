@@ -506,7 +506,7 @@ public abstract class TeleVM {
                 default:
                     throw ProgramError.unexpected();
             }
-            Trace.line(1, "Received boot image address from VM: " + heap.toHexString());
+            Trace.line(1, "Received boot image address from VM: 0x" + heap.toHexString());
             socket.close();
             return heap;
         } catch (IOException ioException) {
@@ -608,8 +608,9 @@ public abstract class TeleVM {
             regions.append(region);
         }
         for (TeleNativeThread thread : threads) {
-            if (thread.isJava()) {
-                regions.append(thread.stack());
+            final TeleNativeStack stack = thread.stack();
+            if (!stack.size().isZero()) {
+                regions.append(stack);
             }
         }
         return regions;

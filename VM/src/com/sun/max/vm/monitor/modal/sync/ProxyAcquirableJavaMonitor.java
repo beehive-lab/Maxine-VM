@@ -21,7 +21,6 @@
 package com.sun.max.vm.monitor.modal.sync;
 
 import com.sun.max.vm.*;
-import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -95,8 +94,8 @@ import com.sun.max.vm.thread.*;
  */
 class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
 
-    private static final Mutex _proxyMutex = new Mutex();
-    private static final ConditionVariable _proxyVar = new ConditionVariable();
+    private static final Mutex _proxyMutex = MutexFactory.create();
+    private static final ConditionVariable _proxyVar = ConditionVariableFactory.create();
 
     private volatile boolean _ownerAcquired;
 
@@ -170,8 +169,8 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
     @Override
     public void allocate() {
         super.allocate();
-        _proxyMutex.alloc();
-        _proxyVar.allocate();
+        _proxyMutex.init();
+        _proxyVar.init();
     }
 
     @Override
@@ -186,8 +185,8 @@ class ProxyAcquirableJavaMonitor extends StandardJavaMonitor {
         Log.print(" ownerAcquired=");
         Log.print(_ownerAcquired);
         Log.print(" proxyMutex=");
-        Log.print(_proxyMutex.asPointer());
+        Log.print(_proxyMutex.logId());
         Log.print(" proxyCondVar=");
-        Log.print(_proxyVar.asPointer());
+        Log.print(_proxyVar.logId());
     }
 }

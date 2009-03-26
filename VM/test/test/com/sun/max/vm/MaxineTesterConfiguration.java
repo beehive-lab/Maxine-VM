@@ -33,6 +33,38 @@ import com.sun.max.program.*;
 
 public class MaxineTesterConfiguration {
 
+    static final String[] _dacapoTests = {
+        "antlr",
+        "bloat",
+        "xalan",
+        "hsqldb",
+        "luindex",
+        "lusearch",
+        "jython",
+        "chart",
+        "eclipse",
+        "fop",
+        "pmd"
+    };
+
+    static final String[] _specjvm98Tests = {
+        "_201_compress",
+        "_202_jess",
+        "_205_raytrace",
+        "_209_db",
+        "_213_javac",
+        "_222_mpegaudio",
+        "_227_mtrt",
+        "_228_jack"
+    };
+
+    static final String[] _specjvm98IgnoredLinePatterns = {
+        "Total memory",
+        "## IO time",
+        "Finished in",
+        "Decoding time:"
+    };
+
     static final Class[] _outputTestClasses = {
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
@@ -107,8 +139,6 @@ public class MaxineTesterConfiguration {
     static final Set<String> _expectedFailuresLinuxAMD64 = toTestNames(
         test.output.JavacTest.class,
         test.output.BlockingQueue.class,
-        test.output.FileReader.class,
-        test.output.ZipFileReader.class,
         test.threads.Thread_isInterrupted02.class,
         _expectedAutoTestFailures
     );
@@ -124,9 +154,7 @@ public class MaxineTesterConfiguration {
         _expectedAutoTestFailures
     );
 
-    static final Set<String> _nonDeterministicFailuresDarwinAMD64 = toTestNames(
-        test.output.ZipFileReader.class
-    );
+    static final Set<String> _nonDeterministicFailuresDarwinAMD64 = toTestNames();
 
     static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
         test.output.HelloWorld.class,
