@@ -314,6 +314,7 @@ public class VmThread {
             _state = Thread.State.TERMINATED;
             _javaThread.notifyAll();
         }
+        terminationComplete();
         // It is the monitor scheme's responsibility to ensure that this thread isn't reset to RUNNABLE if it blocks
         // here.
         VmThreadMap.ACTIVE.removeVmThreadLocals(_vmThreadLocals);
@@ -919,6 +920,15 @@ public class VmThread {
      * initialization that depends on that invariant.
      */
     protected void initializationComplete() {
+
+    }
+
+    /**
+     * This method is called when the VmThread termination is complete.
+     * A subclass can override this method to do whatever subclass-specific
+     * termination that depends on that invariant.
+     */
+    protected void terminationComplete() {
 
     }
 }
