@@ -490,6 +490,8 @@ public class VmThread {
 
         vmThread._guardPage = stackYellowZone;
 
+        vmThread.initializationComplete();
+
         // Enable safepoints:
         Safepoint.enable();
 
@@ -909,5 +911,14 @@ public class VmThread {
     public boolean hasSufficentStackToReprotectGuardPage(Pointer stackPointer) {
         final Pointer limit = stackPointer.minus(VmThread.MIN_STACK_SPACE_FOR_GUARD_PAGE_RESETTING);
         return limit.greaterThan(guardPageEnd());
+    }
+
+    /**
+     * This method is called when the VmThread initialization is complete.
+     * A subclass can override this method to do whatever subclass-specific
+     * initialization that depends on that invariant.
+     */
+    protected void initializationComplete() {
+
     }
 }
