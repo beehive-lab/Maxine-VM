@@ -439,10 +439,6 @@ void *thread_runJava(void *arg) {
               threadSpecifics->stackRedZone,
               threadSpecifics->stackYellowZone,
               threadSpecifics->stackBase + threadSpecifics->stackSize);
-#if (os_GUESTVMXEN)
-    /* mark this thread as a non-java thread */
-    guestvmXen_set_javaId((Thread)nativeThread, -1);
-#endif
 
     if (_threadSpecificsList != NULL) {
         /* remove 'threadSpecifics' from the list known by the debugger; from this point on
