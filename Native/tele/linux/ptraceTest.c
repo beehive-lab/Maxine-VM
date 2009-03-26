@@ -55,31 +55,10 @@
 #include <syscall.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <sys/ptrace.h>
+#include <dirent.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <dirent.h>
-
-/* Some Linux versions are missing the following constants in the system <sys/ptrace.h>  */
-#ifndef PTRACE_EVENT_FORK
-
-#define PTRACE_O_TRACESYSGOOD   0x00000001
-#define PTRACE_O_TRACEFORK      0x00000002
-#define PTRACE_O_TRACEVFORK     0x00000004
-#define PTRACE_O_TRACECLONE     0x00000008
-#define PTRACE_O_TRACEEXEC      0x00000010
-#define PTRACE_O_TRACEVFORKDONE 0x00000020
-#define PTRACE_O_TRACEEXIT      0x00000040
-#define PTRACE_O_MASK           0x0000007f
-
-#define PTRACE_EVENT_FORK       1
-#define PTRACE_EVENT_VFORK      2
-#define PTRACE_EVENT_CLONE      3
-#define PTRACE_EVENT_EXEC       4
-#define PTRACE_EVENT_VFORK_DONE 5
-#define PTRACE_EVENT_EXIT       6
-
-#endif
+#include "ptrace.h"
 
 #define PAUSE_NANOSECONDS (200 * 1000)
 #define NTHREADS 5
@@ -114,8 +93,6 @@ static void _print(const char *format, ...) {
 #else
 #define println(format, ...) _print(format "\n", ##__VA_ARGS__);
 #endif
-
-#define Ptrace(request, pid, address, data) ptrace(request, pid, address, data)
 
 typedef struct {
     int done;
@@ -191,11 +168,11 @@ static void parent_attach_new_thread(int newTid, int starterTid) {
         exit(1);
     }
 
-    Ptrace(PT_SETOPTIONS, newTid, 0, PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXIT);
+    ptrace(PT_SETOPTIONS, newTid, 0, (void *) (PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXIT));
 
     println("Resuming tasks %d and %d", newTid, starterTid);
-    Ptrace(PT_CONTINUE, newTid, 0, 0);
-    Ptrace(PT_CONTINUE, starterTid, 0, 0);
+    ptrace(PT_CONTINUE, newTid, 0, 0);
+    ptrace(PT_CONTINUE, starterTid, 0, 0);
 }
 
 /**
@@ -364,7 +341,7 @@ void parent_run(pid_t pid) {
 
                 if (!sigismember(&caughtSignals, signal)) {
                     println("Resuming task %d with signal %d [%s]", tid, signal, strsignal(signal));
-                    ptrace(PT_CONTINUE, tid, NULL, signal);
+                    ptrace(PT_CONTINUE, tid, NULL, (void *) (unsigned long) signal);
                 } else {
                     if (signal == SIGTRAP) {
                         nStopped++;
@@ -474,7 +451,7 @@ void parent_run(pid_t pid) {
             }
 
             println("Continuing task %d", tid);
-            if (Ptrace(PT_CONTINUE, tid, NULL, 0) != 0) {
+            if (ptrace(PT_CONTINUE, tid, NULL, 0) != 0) {
                 perror("PT_CONTINUE failed");
                 exit(1);
             }
@@ -501,7 +478,7 @@ int main(int argc, char** argv) {
     int childPid = fork();
     if (childPid == 0) {
         /*child:*/
-        if (Ptrace(PTRACE_TRACEME, 0, 0, 0) != 0) {
+        if (ptrace(PT_TRACEME, 0, 0, 0) != 0) {
             perror("Failed to attach ptrace to child");
             exit(1);
         }
@@ -523,8 +500,8 @@ int main(int argc, char** argv) {
             _child = childPid;
 
             /* Configure child so that it traps when it exits or starts new threads */
-            Ptrace(PT_SETOPTIONS, childPid, 0, PTRACE_O_TRACECLONE);
-            Ptrace(PT_CONTINUE, childPid, NULL, 0);
+            ptrace(PT_SETOPTIONS, childPid, 0, (void *) (PTRACE_O_TRACEEXIT | PTRACE_O_TRACECLONE));
+            ptrace(PT_CONTINUE, childPid, NULL, 0);
 
             /* Catch CTRL-C so that child can be stopped before parent exits. */
             struct sigaction sa;
