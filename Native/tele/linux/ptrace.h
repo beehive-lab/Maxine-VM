@@ -43,29 +43,21 @@
 #define PT_GETSIGINFO  0x4202
 #define PT_SETSIGINFO  0x4203
 
-/* Options set using PTRACE_SETOPTIONS.  */
-enum __ptrace_setoptions {
-    PTRACE_O_TRACESYSGOOD = 0x00000001,
-    PTRACE_O_TRACEFORK    = 0x00000002,
-    PTRACE_O_TRACEVFORK   = 0x00000004,
-    PTRACE_O_TRACECLONE   = 0x00000008,
-    PTRACE_O_TRACEEXEC    = 0x00000010,
-    PTRACE_O_TRACEVFORKDONE = 0x00000020,
-    PTRACE_O_TRACEEXIT    = 0x00000040,
-    PTRACE_O_MASK     = 0x0000007f
-};
+#define PTRACE_O_TRACESYSGOOD   0x00000001
+#define PTRACE_O_TRACEFORK      0x00000002
+#define PTRACE_O_TRACEVFORK     0x00000004
+#define PTRACE_O_TRACECLONE     0x00000008
+#define PTRACE_O_TRACEEXEC      0x00000010
+#define PTRACE_O_TRACEVFORKDONE 0x00000020
+#define PTRACE_O_TRACEEXIT      0x00000040
+#define PTRACE_O_MASK           0x0000007f
 
-/* Wait extended result codes for the above trace options.  */
-enum __ptrace_eventcodes {
-    PTRACE_EVENT_FORK = 1,
-    PTRACE_EVENT_VFORK    = 2,
-    PTRACE_EVENT_CLONE    = 3,
-    PTRACE_EVENT_EXEC = 4,
-    PTRACE_EVENT_VFORK_DONE = 5,
-    PTRACE_EVENT_EXIT = 6
-};
-
-#define PT_SETOPTIONS 0x4200
+#define PTRACE_EVENT_FORK       1
+#define PTRACE_EVENT_VFORK      2
+#define PTRACE_EVENT_CLONE      3
+#define PTRACE_EVENT_EXEC       4
+#define PTRACE_EVENT_VFORK_DONE 5
+#define PTRACE_EVENT_EXIT       6
 
 #define POS_PARAMS const char *file, int line
 #define POS __FILE__, __LINE__
