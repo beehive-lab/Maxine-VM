@@ -28,6 +28,8 @@
 
 #include "word.h"
 #include "log.h"
+
+#undef INTERPOSE_PTRACE
 #include "ptrace.h"
 
 static const char* requestToString(int request, char *unknownRequestNameBuf, int unknownRequestNameBufLength) {
