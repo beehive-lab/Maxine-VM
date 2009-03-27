@@ -88,6 +88,9 @@ public final class LinuxTeleProcess extends TeleProcess {
     protected boolean waitUntilStopped() {
         final boolean result = _task.waitUntilStopped(true);
         invalidateCache();
+        if (!result) {
+            _task.close();
+        }
         return result;
     }
 
