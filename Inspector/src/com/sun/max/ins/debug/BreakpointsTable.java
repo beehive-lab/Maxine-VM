@@ -50,11 +50,11 @@ public final class BreakpointsTable extends InspectorTable {
     private BreakpointsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    public BreakpointsTable(Inspection inspection) {
+    public BreakpointsTable(Inspection inspection, BreakpointsViewPreferences viewPreferences) {
         super(inspection);
         _model = new BreakpointsTableModel();
         _columns = new TableColumn[BreakpointsColumnKind.VALUES.length()];
-        _columnModel = new BreakpointsColumnModel();
+        _columnModel = new BreakpointsColumnModel(viewPreferences);
 
         setModel(_model);
         setColumnModel(_columnModel);
@@ -108,28 +108,12 @@ public final class BreakpointsTable extends InspectorTable {
         };
     }
 
-    BreakpointsViewPreferences preferences() {
-        return _columnModel.localPreferences();
-    }
-
     private final class BreakpointsColumnModel extends DefaultTableColumnModel {
 
-        private final BreakpointsViewPreferences _localPreferences;
+        private final BreakpointsViewPreferences _viewPreferences;
 
-        private BreakpointsColumnModel() {
-            _localPreferences = new BreakpointsViewPreferences(BreakpointsViewPreferences.globalPreferences(inspection())) {
-                @Override
-                public void setIsVisible(BreakpointsColumnKind columnKind, boolean visible) {
-                    super.setIsVisible(columnKind, visible);
-                    final int col = columnKind.ordinal();
-                    if (visible) {
-                        addColumn(_columns[col]);
-                    } else {
-                        removeColumn(_columns[col]);
-                    }
-                    fireColumnPreferenceChanged();
-                }
-            };
+        private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
+            _viewPreferences = viewPreferences;
             createColumn(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
             createColumn(BreakpointsColumnKind.ENABLED, null, new DefaultCellEditor(new JCheckBox()));
             createColumn(BreakpointsColumnKind.METHOD, new MethodCellRenderer(inspection()), null);
@@ -138,16 +122,12 @@ public final class BreakpointsTable extends InspectorTable {
             createColumn(BreakpointsColumnKind.TRIGGER_THREAD, new TriggerThreadCellRenderer(inspection()), null);
         }
 
-        private BreakpointsViewPreferences localPreferences() {
-            return _localPreferences;
-        }
-
         private void createColumn(BreakpointsColumnKind columnKind, TableCellRenderer renderer, TableCellEditor editor) {
             final int col = columnKind.ordinal();
             _columns[col] = new TableColumn(col, 0, renderer, editor);
             _columns[col].setHeaderValue(columnKind.label());
             _columns[col].setMinWidth(columnKind.minWidth());
-            if (_localPreferences.isVisible(columnKind)) {
+            if (_viewPreferences.isVisible(columnKind)) {
                 addColumn(_columns[col]);
             }
             _columns[col].setIdentifier(columnKind);

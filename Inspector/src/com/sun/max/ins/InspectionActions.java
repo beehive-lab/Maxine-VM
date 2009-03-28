@@ -2888,9 +2888,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
 
-
-
-
     /**
      * Action:  lists to the console all entries in the {@link TeleCodeRegistry}.
      */

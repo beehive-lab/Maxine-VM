@@ -22,8 +22,6 @@ package com.sun.max.ins.gui;
 
 import java.awt.*;
 
-import javax.swing.*;
-
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.memory.*;
@@ -161,15 +159,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected abstract void createView(long epoch);
 
-    protected void updateSize() {
-        final Container contentPane = frame().getContentPane();
-        if (contentPane instanceof JScrollPane) {
-            final JScrollPane scrollPane = (JScrollPane) contentPane;
-            final Dimension size = scrollPane.getViewport().getPreferredSize();
-            frame().setMaximumSize(new Dimension(size.width + 40, size.height + 40));
-        }
-    }
-
     /**
      * Creates a frame for the inspector, internal or external depending on the residence,
      * calls {@link createView()} to populate it; adds the inspector to the update
@@ -195,7 +184,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         frame().setTitle(getTextForTitle());
         createView(teleVM().epoch());
         _frame.pack();
-        updateSize();
         switch (_residence) {
             case INTERNAL:
                 inspection().desktopPane().add((Component) _frame);
@@ -223,7 +211,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     public synchronized void refreshView(long epoch, boolean force) {
         _frame.refresh(epoch, force);
-        updateSize();
         _frame.invalidate();
         _frame.repaint();
     }
@@ -243,9 +230,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * configuration of the view changes enough to require creating a new one.
      */
     protected synchronized void reconstructView() {
+        final Dimension size = _frame.getSize();
         createView(teleVM().epoch());
+        _frame.setPreferredSize(size);
         frame().pack();
-        updateSize();
     }
 
     public void vmStateChanged(long epoch, boolean force) {

@@ -54,7 +54,7 @@ public final class FocusInspector extends Inspector {
 
     private FocusTable _focusTable;
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "_focusInspector");
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "focusInspector");
 
     private FocusInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);

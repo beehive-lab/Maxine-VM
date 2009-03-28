@@ -86,6 +86,10 @@ public interface InspectorFrame extends Prober {
 
     void pack();
 
+    Dimension getSize();
+
+    void setPreferredSize(Dimension dimension);
+
     Rectangle getBounds();
 
     void setBounds(Rectangle bounds);

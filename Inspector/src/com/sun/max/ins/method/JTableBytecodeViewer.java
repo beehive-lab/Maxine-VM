@@ -164,7 +164,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             final boolean needToSave = mode != _operandDisplayMode;
             _operandDisplayMode = mode;
             if (needToSave) {
-                _inspection.settings().save();
+                inspection().settings().save();
             }
         }
 
@@ -176,8 +176,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         @Override
         public JPanel getPanel() {
-            final JRadioButton javapButton = new InspectorRadioButton(_inspection, "javap style", "Display bytecode operands in a style similar to the 'javap' tool and the JVM spec book");
-            final JRadioButton terseButton = new InspectorRadioButton(_inspection, "terse style", "Display bytecode operands in a terse style");
+            final JRadioButton javapButton = new InspectorRadioButton(inspection(), "javap style", "Display bytecode operands in a style similar to the 'javap' tool and the JVM spec book");
+            final JRadioButton terseButton = new InspectorRadioButton(inspection(), "terse style", "Display bytecode operands in a terse style");
             final ButtonGroup group = new ButtonGroup();
             group.add(javapButton);
             group.add(terseButton);
@@ -197,15 +197,15 @@ public class JTableBytecodeViewer extends BytecodeViewer {
             javapButton.addActionListener(styleActionListener);
             terseButton.addActionListener(styleActionListener);
 
-            final JPanel panel2 = new InspectorPanel(_inspection, new BorderLayout());
+            final JPanel panel2 = new InspectorPanel(inspection(), new BorderLayout());
 
-            final JPanel operandStylePanel = new InspectorPanel(_inspection);
-            operandStylePanel.add(new TextLabel(_inspection, "Operand Style:  "));
+            final JPanel operandStylePanel = new InspectorPanel(inspection());
+            operandStylePanel.add(new TextLabel(inspection(), "Operand Style:  "));
             operandStylePanel.add(javapButton);
             operandStylePanel.add(terseButton);
             panel2.add(operandStylePanel, BorderLayout.WEST);
 
-            final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
+            final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
             panel.add(super.getPanel(), BorderLayout.NORTH);
             panel.add(operandStylePanel, BorderLayout.SOUTH);
             return panel;

@@ -23,6 +23,7 @@ package com.sun.max.ins;
 import javax.swing.*;
 
 import com.sun.max.gui.*;
+import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
@@ -55,6 +56,8 @@ public final class BootImageInspector extends Inspector {
         return _bootImageInspector;
     }
 
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "bootImageInspector");
+
     private JPanel _infoPanel;
 
     private BootImageInspector(Inspection inspection, Residence residence) {
@@ -62,6 +65,11 @@ public final class BootImageInspector extends Inspector {
         Trace.begin(1, tracePrefix() + "initializing");
         createFrame(null);
         Trace.end(1, tracePrefix() + "initializing");
+    }
+
+    @Override
+    public SaveSettingsListener saveSettingsListener() {
+        return _saveSettingsListener;
     }
 
     @Override

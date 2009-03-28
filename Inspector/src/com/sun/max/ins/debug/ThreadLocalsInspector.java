@@ -26,111 +26,98 @@ import javax.swing.*;
 import javax.swing.event.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.value.*;
 
 /**
- * An inspector for VM thread locals in the {@link TeleVM}.
+ * A singleton inspector that displays thread local storage for the thread the {@link TeleVM} that is the current user focus.
  *
- * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsInspector> {
+public final class ThreadLocalsInspector extends Inspector implements TableColumnViewPreferenceListener {
+
+    // Set to null when inspector closed.
+    private static ThreadLocalsInspector _threadLocalsInspector;
 
     /**
-     * Finds an existing thread locals inspector for a thread.
-     *
-     * @return null if doesn't exist
-     */
-    public static ThreadLocalsInspector get(Inspection inspection, TeleNativeThread teleNativeThread) {
-        return ThreadLocalsInspectorContainer.getInspector(inspection, teleNativeThread);
-    }
-
-    /**
-     * Displays and highlights a thread locals inspector for the currently selected thread.
+     * Displays and highlights the (singleton) thread locals inspector, creating it if needed.
      */
     public static ThreadLocalsInspector make(Inspection inspection) {
-        return make(inspection, inspection.focus().thread());
-    }
-
-    /**
-     * Display and highlight a thread locals inspector for a thread.
-     */
-    public static ThreadLocalsInspector make(Inspection inspection, TeleNativeThread teleNativeThread) {
-        final ThreadLocalsInspector threadLocalsInspector = ThreadLocalsInspectorContainer.makeInspector(inspection, teleNativeThread);
-        if (threadLocalsInspector != null) {
-            threadLocalsInspector.highlight();
-            return threadLocalsInspector;
+        if (_threadLocalsInspector == null) {
+            _threadLocalsInspector = new ThreadLocalsInspector(inspection, Residence.INTERNAL);
         }
-        return null;
+        _threadLocalsInspector.highlight();
+        return _threadLocalsInspector;
     }
 
-    private final TeleNativeThread _teleNativeThread;
-    private ThreadLocalsInspectorContainer _parent;
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "threadlocalsInspector");
+
+    // This is a singleton viewer, so only use a single level of view preferences.
+    private final ThreadLocalsViewPreferences _viewPreferences;
+
+    private TeleNativeThread _teleNativeThread;
     private JTabbedPane _tabbedPane;
 
-    private final ThreadLocalsViewPreferences _globalPreferences;
-    private final ThreadLocalsViewPreferences _instancePreferences;
-
-    public ThreadLocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, ThreadLocalsInspectorContainer parent) {
-        super(inspection, parent.residence(),  LongValue.from(teleNativeThread.handle()));
-        _parent = parent;
-        _teleNativeThread = teleNativeThread;
-
-        _globalPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
-        _instancePreferences = new ThreadLocalsViewPreferences(_globalPreferences) {
-            @Override
-            public void setIsVisible(ThreadLocalsColumnKind columnKind, boolean visible) {
-                super.setIsVisible(columnKind, visible);
-                reconstructView();
-            }
-        };
-
-        createFrame(new InspectorMenu());
+    private ThreadLocalsInspector(Inspection inspection, Residence residence) {
+        super(inspection, residence);
+        Trace.begin(1,  tracePrefix() + " initializing");
+        _viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
+        _viewPreferences.addListener(this);
+        createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(new InspectorAction(inspection, "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", _instancePreferences, _globalPreferences);
+                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", _viewPreferences);
             }
         });
         refreshView(inspection.teleVM().epoch(), true);
+        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
+            frame().setLocation(inspection().geometry().threadLocalsFrameDefaultLocation());
+            frame().getContentPane().setPreferredSize(inspection().geometry().threadLocalsFramePrefSize());
+        }
+        Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
-    public void createView(long epoch) {
+    public SaveSettingsListener saveSettingsListener() {
+        return _saveSettingsListener;
+    }
 
-        _tabbedPane = new JTabbedPane();
-
-        for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final TeleVMThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
-            if (values != null) {
-                final ThreadLocalsPanel panel = new ThreadLocalsPanel(this, values, _instancePreferences);
-                _tabbedPane.add(state.toString(), panel);
+    @Override
+    protected void createView(long epoch) {
+        _teleNativeThread = inspection().focus().thread();
+        if (_teleNativeThread == null) {
+            _tabbedPane = null;
+            frame().setTitle(getTextForTitle());
+        } else {
+            _tabbedPane = new JTabbedPane();
+            for (Safepoint.State state : Safepoint.State.CONSTANTS) {
+                final TeleVMThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+                if (values != null) {
+                    final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _teleNativeThread, values, _viewPreferences);
+                    _tabbedPane.add(state.toString(), panel);
+                }
             }
+            _tabbedPane.addChangeListener(new ChangeListener() {
+                // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
+                public void stateChanged(ChangeEvent event) {
+                    refreshView(teleVM().epoch(), true);
+                }
+            });
+            frame().setTitle(getTextForTitle() + " " + inspection().nameDisplay().longName(_teleNativeThread));
         }
-
-        _tabbedPane.addChangeListener(new ChangeListener() {
-            // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
-            public void stateChanged(ChangeEvent event) {
-                refreshView(teleVM().epoch(), true);
-            }
-        });
-
         frame().setContentPane(_tabbedPane);
     }
 
     @Override
-    public void moveToFront() {
-        if (_parent != null) {
-            _parent.setSelected(this);
-        } else {
-            super.moveToFront();
-        }
+    public String getTextForTitle() {
+        return "Thread Locals: ";
     }
 
     private ThreadLocalsPanel threadLocalsPanelFor(Safepoint.State state) {
@@ -152,7 +139,7 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
             final ThreadLocalsPanel panel = threadLocalsPanelFor(state);
             if (values != null) {
                 if (panel == null) {
-                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(this, values, _instancePreferences));
+                    _tabbedPane.add(state.toString(), new ThreadLocalsPanel(inspection(), _teleNativeThread, values, _viewPreferences));
                     panelsAddedOrRemoved = true;
                 }
             } else {
@@ -174,39 +161,26 @@ public final class ThreadLocalsInspector extends UniqueInspector<ThreadLocalsIns
         super.refreshView(epoch, force);
     }
 
+    @Override
     public void viewConfigurationChanged(long epoch) {
         reconstructView();
     }
 
     @Override
-    public void addressFocusChanged(Address oldAddress, Address address) {
-        refreshView(teleVM().epoch(), true);
+    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativThread) {
+        reconstructView();
+    }
+
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
     }
 
     @Override
-    public synchronized void setResidence(Residence residence) {
-        final Residence current = residence();
-        super.setResidence(residence);
-        if (current != residence) {
-            if (residence == Residence.INTERNAL) {
-                if (_parent != null) {
-                    // coming back from EXTERNAL, need to redock
-                    _parent.add(this);
-                }
-                moveToFront();
-            } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle("Thread Locals View " + getTextForTitle());
-            }
-        }
-    }
-
-    TeleNativeThread teleNativeThread() {
-        return _teleNativeThread;
-    }
-
-    @Override
-    public String getTextForTitle() {
-        return inspection().nameDisplay().longName(_teleNativeThread);
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        _threadLocalsInspector = null;
+        _viewPreferences.removeListener(this);
+        super.inspectorClosing();
     }
 
 }
