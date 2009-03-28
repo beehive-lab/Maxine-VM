@@ -31,11 +31,11 @@ import javax.swing.*;
 import com.sun.max.collect.*;
 import com.sun.max.gui.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -247,7 +247,7 @@ public final class MemoryWordInspector extends Inspector {
         final Address lastAddress = _address.plus(_numberOfWords * teleVM().wordSize());
         final TeleNativeThread selectedThread = focus().thread();
         if (selectedThread != null) {
-            final TeleRegisters registers = StaticLoophole.cast(RegistersInspector.get(inspection(), selectedThread).integerRegisterPanel().registers());
+            final TeleIntegerRegisters registers = selectedThread.integerRegisters();
             for (Symbol s : registers.symbolizer()) {
                 final Address registerValue = registers.get(s);
                 if (registerValue.greaterEqual(_address) && registerValue.lessThan(lastAddress)) {
@@ -259,7 +259,6 @@ public final class MemoryWordInspector extends Inspector {
                 }
             }
         }
-
         super.refreshView(epoch, force);
     }
 

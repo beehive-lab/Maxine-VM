@@ -739,7 +739,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            StackInspector.make(inspection(), focus().thread());
+            StackInspector.make(inspection());
         }
 
         @Override
