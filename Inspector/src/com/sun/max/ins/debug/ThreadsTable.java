@@ -24,12 +24,18 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.memory.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
+import com.sun.max.tele.object.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.stack.*;
 
 
 /**
@@ -37,7 +43,7 @@ import com.sun.max.tele.debug.*;
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadsTable extends InspectorTable {
+public final class ThreadsTable extends InspectorTable implements ViewFocusListener {
 
     private final ThreadsTableModel _model;
     private final ThreadsColumnModel _columnModel;
@@ -58,22 +64,19 @@ public final class ThreadsTable extends InspectorTable {
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        addMouseListener(new ThreadsInspectorMouseClickAdapter(inspection()));
-
+        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
         refresh(teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+        updateSelection();
     }
 
-    void selectThread(TeleNativeThread selectedThread) {
-        int row = 0;
-        for (TeleNativeThread teleNativeThread : teleVM().threads()) {
-            if (teleNativeThread == selectedThread) {
-                if (getSelectedRow() != row) {
-                    setRowSelectionInterval(row, row);
-                }
-                break;
-            }
-            row++;
+    private void updateSelection() {
+        final TeleNativeThread teleNativeThread = inspection().focus().thread();
+        final int row = _model.findRow(teleNativeThread);
+        if (row < 0) {
+            clearSelection();
+        } else  if (row != getSelectedRow()) {
+            setRowSelectionInterval(row, row);
         }
     }
 
@@ -88,6 +91,19 @@ public final class ThreadsTable extends InspectorTable {
                 return ThreadsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent listSelectionEvent) {
+        super.valueChanged(listSelectionEvent);
+        if (!listSelectionEvent.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                final int column = getSelectedColumn();
+                final TeleNativeThread teleNativeThread = (TeleNativeThread) getValueAt(row, column);
+                focus().setThread(teleNativeThread);
+            }
+        }
     }
 
     private final class ThreadsColumnModel extends DefaultTableColumnModel {
@@ -150,6 +166,18 @@ public final class ThreadsTable extends InspectorTable {
         public Class< ? > getColumnClass(int c) {
             return TeleNativeThread.class;
         }
+
+        public int findRow(TeleNativeThread teleNativeThread) {
+            int row = 0;
+            for (TeleNativeThread thread : teleVM().threads()) {
+                if (thread == teleNativeThread) {
+                    return row;
+                }
+                row++;
+            }
+            return -1;
+        }
+
     }
 
     private final class IDCellRenderer extends PlainLabel implements TableCellRenderer {
@@ -276,25 +304,6 @@ public final class ThreadsTable extends InspectorTable {
         }
     }
 
-    private final class ThreadsInspectorMouseClickAdapter extends InspectorMouseClickAdapter {
-
-        ThreadsInspectorMouseClickAdapter(Inspection inspection) {
-            super(inspection);
-        }
-
-        @Override
-        public void procedure(final MouseEvent mouseEvent) {
-            switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
-                case MouseEvent.BUTTON1: {
-                    final int row = getSelectedRow();
-                    final int column = getSelectedColumn();
-                    final TeleNativeThread teleNativeThread = (TeleNativeThread) getValueAt(row, column);
-                    focus().setThread(teleNativeThread);
-                }
-            }
-        }
-    };
-
     public void redisplay() {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
@@ -315,5 +324,27 @@ public final class ThreadsTable extends InspectorTable {
                 prober.refresh(epoch, force);
             }
         }
+    }
+
+    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+    }
+
+    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+    }
+
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    }
+
+    public void addressFocusChanged(Address oldAddress, Address address) {
+    }
+
+    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
+    }
+
+    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    }
+
+    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+        updateSelection();
     }
 }
