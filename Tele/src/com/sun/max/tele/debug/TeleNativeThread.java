@@ -69,58 +69,68 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         /**
          * Denotes that a thread is waiting to acquire ownership of a monitor.
          */
-        MONITOR_WAIT("Monitor"),
+        MONITOR_WAIT("Monitor", false),
 
         /**
          * Denotes that a thread is waiting to be {@linkplain Object#notify() notified}.
          */
-        NOTIFY_WAIT("Wait"),
+        NOTIFY_WAIT("Wait", false),
 
         /**
          * Denotes that a thread is waiting for another
          * {@linkplain Thread#join(long, int) thread to die or a timer to expire}.
          */
-        JOIN_WAIT("Join"),
+        JOIN_WAIT("Join", false),
 
         /**
          * Denotes that a thread is {@linkplain Thread#sleep(long) sleeping}.
          */
-        SLEEPING("Sleeping"),
+        SLEEPING("Sleeping", false),
 
         /**
          * Denotes that a thread is suspended at a breakpoint.
          */
-        BREAKPOINT("Breakpoint"),
+        BREAKPOINT("Breakpoint", true),
 
         /**
          * A thread is suspended at a watchpoint.
          */
-        WATCHPOINT("Watchpoint"),
+        WATCHPOINT("Watchpoint", true),
 
         /**
          * Denotes that a thread is suspended for some reason other than {@link #MONITOR_WAIT}, {@link #NOTIFY_WAIT},
          * {@link #JOIN_WAIT}, {@link #SLEEPING} or {@link #BREAKPOINT}.
          */
-        SUSPENDED("Suspended"),
+        SUSPENDED("Suspended", true),
 
-        DEAD("Dead"),
+        DEAD("Dead", false),
 
         /**
          * Denotes that a thread is not suspended.
          */
-        RUNNING("Running");
+        RUNNING("Running", false);
 
         public static final IndexedSequence<ThreadState> VALUES = new ArraySequence<ThreadState>(values());
 
         private final String _asString;
+        private final boolean _allowsDataAccess;
 
-        ThreadState(String asString) {
+        ThreadState(String asString, boolean allowsDataAccess) {
             _asString = asString;
+            _allowsDataAccess = allowsDataAccess;
         }
 
         @Override
         public String toString() {
             return _asString;
+        }
+
+        /**
+         * Determines whether a thread in this state allows thread specific data to be accessed in the remote process.
+         * Thread specific data includes register values, stack memory, and {@linkplain VmThreadLocal VM thread locals}.
+         */
+        public final boolean allowsDataAccess() {
+            return _allowsDataAccess;
         }
     }
 
@@ -131,13 +141,20 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private TeleVmThread _teleVmThread;
     private int _suspendCount;
 
-    private Sequence<StackFrame> _frames;
-    private Sequence<StackFrame> _oldFrames;
-
     private final TeleIntegerRegisters _integerRegisters;
     private final TeleStateRegisters _stateRegisters;
     private final TeleFloatingPointRegisters _floatingPointRegisters;
 
+    /**
+     * A cached stack trace for this thread.
+     */
+    private Sequence<StackFrame> _frames;
+
+    /**
+     * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
+     * the {@link #refreshFrames(boolean)} method do anything.
+     */
+    private long _framesEpoch;
     private boolean _framesChanged;
 
     /**
@@ -146,6 +163,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private final TeleNativeStack _stack;
 
     private final Map<Safepoint.State, TeleVMThreadLocalValues> _teleVmThreadLocals;
+
+    /**
+     * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
+     * the {@link #refreshThreadLocals()} method do anything.
+     */
+    private long _teleVmThreadLocalsEpoch;
 
     private ThreadState _state = SUSPENDED;
     private TeleTargetBreakpoint _breakpoint;
@@ -178,6 +201,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * thread last stopped.
      */
     public Sequence<StackFrame> frames() {
+        refreshFrames(false);
         return _frames;
     }
 
@@ -187,6 +211,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @see StackFrame#isSameFrame(StackFrame)
      */
     public boolean framesChanged() {
+        refreshFrames(false);
         return _framesChanged;
     }
 
@@ -207,6 +232,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     public TeleVMThreadLocalValues threadLocalsFor(Safepoint.State state) {
         assert hasThreadLocals();
+        refreshThreadLocals();
         return _teleVmThreadLocals.get(state);
     }
 
@@ -262,11 +288,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             return;
         }
 
-        if (_state == WATCHPOINT || _state == SUSPENDED || _state == BREAKPOINT) {
+        if (_state.allowsDataAccess()) {
             refreshRegisters();
-            refreshThreadLocals();
             refreshBreakpoint();
-            refreshFrames(false);
         }
     }
 
@@ -286,24 +310,28 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * Refreshes the values of the cached VM thread local variables for this thread.
      * This method also updates the reference to the {@linkplain #teleVmThread() tele VmThread}.
      */
-    private void refreshThreadLocals() {
+    private synchronized void refreshThreadLocals() {
         if (_teleVmThreadLocals == null) {
             return;
         }
-        final DataAccess dataAccess = teleProcess().dataAccess();
-        for (TeleVMThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
-            if (teleVmThreadLocalValues != null) {
-                teleVmThreadLocalValues.refresh(dataAccess);
+        final long processEpoch = teleProcess().epoch();
+        if (_teleVmThreadLocalsEpoch < processEpoch) {
+            _teleVmThreadLocalsEpoch = processEpoch;
+            final DataAccess dataAccess = teleProcess().dataAccess();
+            for (TeleVMThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
+                if (teleVmThreadLocalValues != null) {
+                    teleVmThreadLocalValues.refresh(dataAccess);
+                }
             }
-        }
 
-        final TeleVMThreadLocalValues enabledVmThreadLocalValues = threadLocalsFor(Safepoint.State.ENABLED);
-        _teleVmThread = null;
-        if (enabledVmThreadLocalValues != null) {
-            final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
-            if (threadLocalValue != 0) {
-                final Reference vmThreadReference = _teleVM.wordToReference(Address.fromLong(threadLocalValue));
-                _teleVmThread = (TeleVmThread) _teleVM.makeTeleObject(vmThreadReference);
+            final TeleVMThreadLocalValues enabledVmThreadLocalValues = threadLocalsFor(Safepoint.State.ENABLED);
+            _teleVmThread = null;
+            if (enabledVmThreadLocalValues != null) {
+                final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
+                if (threadLocalValue != 0) {
+                    final Reference vmThreadReference = _teleVM.wordToReference(Address.fromLong(threadLocalValue));
+                    _teleVmThread = (TeleVmThread) _teleVM.makeTeleObject(vmThreadReference);
+                }
             }
         }
     }
@@ -344,32 +372,36 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * even if the objects representing them are different.
      * @param clear the current list of frames should be cleared
      */
-    private void refreshFrames(boolean clear) {
+    private synchronized void refreshFrames(boolean clear) {
         if (clear) {
             _frames = Sequence.Static.empty(StackFrame.class);
             _framesChanged = true;
             return;
         }
 
-        final TeleVM teleVM = _teleProcess.teleVM();
-        final Sequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
-        assert !frames.isEmpty();
-        if (_frames != null && frames.length() == _frames.length()) {
-            _framesChanged = false;
-            final Iterator<StackFrame> oldFrames = _frames.iterator();
-            final Iterator<StackFrame> newFrames = frames.iterator();
-            while (oldFrames.hasNext()) {
-                final StackFrame oldFrame = oldFrames.next();
-                final StackFrame newFrame = newFrames.next();
-                if (!oldFrame.isSameFrame(newFrame)) {
-                    _framesChanged = true;
-                    break;
+        final long processEpoch = teleProcess().epoch();
+        if (_framesEpoch < processEpoch) {
+            _framesEpoch = processEpoch;
+            final TeleVM teleVM = _teleProcess.teleVM();
+            final Sequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
+            assert !frames.isEmpty();
+            if (_frames != null && frames.length() == _frames.length()) {
+                _framesChanged = false;
+                final Iterator<StackFrame> oldFrames = _frames.iterator();
+                final Iterator<StackFrame> newFrames = frames.iterator();
+                while (oldFrames.hasNext()) {
+                    final StackFrame oldFrame = oldFrames.next();
+                    final StackFrame newFrame = newFrames.next();
+                    if (!oldFrame.isSameFrame(newFrame)) {
+                        _framesChanged = true;
+                        break;
+                    }
                 }
+            } else {
+                _framesChanged = true;
             }
-        } else {
-            _framesChanged = true;
+            _frames = frames;
         }
-        _frames = frames;
     }
 
     /**
@@ -470,6 +502,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @return null if this thread is not (yet) associated with VmThread
      */
     public TeleVmThread teleVmThread() {
+        refreshThreadLocals();
         return _teleVmThread;
     }
 
@@ -740,6 +773,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     public FrameProvider getFrame(int depth) {
         return getFrames()[depth];
     }
+
+    private Sequence<StackFrame> _oldFrames;
 
     public synchronized FrameProvider[] getFrames() {
 
