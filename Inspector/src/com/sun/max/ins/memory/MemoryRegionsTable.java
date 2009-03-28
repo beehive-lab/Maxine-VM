@@ -59,7 +59,7 @@ public class MemoryRegionsTable extends InspectorTable {
     private final MemoryRegionsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    MemoryRegionsTable(Inspection inspection) {
+    MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
         _bootHeapRegionDisplay = new HeapRegionDisplay(teleVM().teleBootHeapRegion());
         _bootCodeRegionDisplay = new CodeRegionDisplay(teleVM().teleBootCodeRegion(), -1);
@@ -67,7 +67,7 @@ public class MemoryRegionsTable extends InspectorTable {
         _heapSchemeName = _heapScheme.getClass().getSimpleName();
         _model = new MemoryRegionsTableModel();
         _columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
-        _columnModel = new MemoryRegionsColumnModel();
+        _columnModel = new MemoryRegionsColumnModel(viewPreferences);
 
         setModel(_model);
         setColumnModel(_columnModel);
@@ -82,10 +82,6 @@ public class MemoryRegionsTable extends InspectorTable {
 
         refresh(teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
-    }
-
-    MemoryRegionsViewPreferences preferences() {
-        return _columnModel.localPreferences();
     }
 
     void selectMemoryRegion(MemoryRegion memoryRegion) {
@@ -113,22 +109,10 @@ public class MemoryRegionsTable extends InspectorTable {
 
     private final class MemoryRegionsColumnModel extends DefaultTableColumnModel {
 
-        private final MemoryRegionsViewPreferences _localPreferences;
+        private final MemoryRegionsViewPreferences _viewPreferences;
 
-        private MemoryRegionsColumnModel() {
-            _localPreferences = new MemoryRegionsViewPreferences(MemoryRegionsViewPreferences.globalPreferences(inspection())) {
-                @Override
-                public void setIsVisible(MemoryRegionsColumnKind columnKind, boolean visible) {
-                    super.setIsVisible(columnKind, visible);
-                    final int col = columnKind.ordinal();
-                    if (visible) {
-                        addColumn(_columns[col]);
-                    } else {
-                        removeColumn(_columns[col]);
-                    }
-                    fireColumnPreferenceChanged();
-                }
-            };
+        private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
+            _viewPreferences = viewPreferences;
             createColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(inspection()));
             createColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer());
             createColumn(MemoryRegionsColumnKind.END, new EndAddressCellRenderer());
@@ -136,16 +120,12 @@ public class MemoryRegionsTable extends InspectorTable {
             createColumn(MemoryRegionsColumnKind.ALLOC, new AllocCellRenderer());
         }
 
-        private MemoryRegionsViewPreferences localPreferences() {
-            return _localPreferences;
-        }
-
         private void createColumn(MemoryRegionsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
             _columns[col] = new TableColumn(col, 0, renderer, null);
             _columns[col].setHeaderValue(columnKind.label());
             _columns[col].setMinWidth(columnKind.minWidth());
-            if (_localPreferences.isVisible(columnKind)) {
+            if (_viewPreferences.isVisible(columnKind)) {
                 addColumn(_columns[col]);
             }
             _columns[col].setIdentifier(columnKind);

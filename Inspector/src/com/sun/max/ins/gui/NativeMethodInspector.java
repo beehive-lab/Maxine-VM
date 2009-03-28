@@ -81,7 +81,6 @@ public final class NativeMethodInspector extends MethodInspector {
     public void createView(long epoch) {
         _targetCodeViewer =  new JTableTargetCodeViewer(inspection(), this, _teleTargetRoutine);
         frame().getContentPane().add(_targetCodeViewer);
-        updateSize();
         frame().pack();
         frame().invalidate();
         frame().repaint();

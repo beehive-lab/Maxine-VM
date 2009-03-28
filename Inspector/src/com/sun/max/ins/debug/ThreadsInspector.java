@@ -25,24 +25,21 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.InspectorTable.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 
 /**
  * A singleton inspector that displays the list of threads running in the process of the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
-public final class ThreadsInspector extends Inspector {
+public final class ThreadsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
     private static ThreadsInspector _threadsInspector;
     /**
-     * Display and highlight the (singleton) threads inspector.
-     *
-     * @return  The threads inspector, possibly newly created.
+     * Display and highlight the (singleton) threads inspector, creating it if needed.
      */
     public static ThreadsInspector make(Inspection inspection) {
         if (_threadsInspector == null) {
@@ -52,22 +49,30 @@ public final class ThreadsInspector extends Inspector {
         return _threadsInspector;
     }
 
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "threadsInspector");
+
     private ThreadsTable _table;
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "_threadsInspector");
+    // This is a singleton viewer, so only use a single level of view preferences.
+    private final ThreadsViewPreferences _viewPreferences;
 
     private ThreadsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
         Trace.begin(1,  tracePrefix() + " initializing");
+        _viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
+        _viewPreferences.addListener(this);
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(new InspectorAction(inspection, "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _table.preferences());
+                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _viewPreferences);
             }
         });
-        //frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
+        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
+            frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
+            frame().getContentPane().setPreferredSize(inspection().geometry().threadsFramePrefSize());
+        }
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -83,16 +88,14 @@ public final class ThreadsInspector extends Inspector {
 
     @Override
     public void createView(long epoch) {
-        _table = new ThreadsTable(inspection());
-        _table.addColumnChangeListener(new ColumnChangeListener() {
-            public void columnPreferenceChanged() {
-                reconstructView();
-            }
-        });
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
+        _table = new ThreadsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         frame().setContentPane(scrollPane);
     }
-
 
     @Override
     public void refreshView(long epoch, boolean force) {
@@ -100,12 +103,11 @@ public final class ThreadsInspector extends Inspector {
         super.refreshView(epoch, force);
     }
 
-    @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
-        _table.selectThread(teleNativeThread);
+    public void viewConfigurationChanged(long epoch) {
+        reconstructView();
     }
 
-    public void viewConfigurationChanged(long epoch) {
+    public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
@@ -113,6 +115,8 @@ public final class ThreadsInspector extends Inspector {
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         _threadsInspector = null;
+        _viewPreferences.removeListener(this);
+        focus().removeListener(_table);
         super.inspectorClosing();
     }
 

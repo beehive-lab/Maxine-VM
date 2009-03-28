@@ -47,7 +47,6 @@ import com.sun.max.vm.value.*;
   */
 public final class ThreadLocalsTable extends InspectorTable {
 
-    private final Inspection _inspection;
     private final TeleVMThreadLocalValues _values;
     private final ThreadLocalsViewPreferences _preferences;
     private final TeleNativeThread _teleNativeThread;
@@ -59,16 +58,14 @@ public final class ThreadLocalsTable extends InspectorTable {
     /**
      * A {@link JTable} specialized to display Maxine thread local fields.
      */
-    public ThreadLocalsTable(ThreadLocalsInspector threadLocalsInspector, TeleVMThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
-        super(threadLocalsInspector.inspection());
-        _inspection = threadLocalsInspector.inspection();
+    public ThreadLocalsTable(Inspection inspection, TeleNativeThread teleNativeThread, TeleVMThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+        super(inspection);
+        _teleNativeThread = teleNativeThread;
         _values = values;
         _preferences = preferences;
-        _teleNativeThread = threadLocalsInspector.teleNativeThread();
-
         _model = new ThreadLocalsTableModel();
         _columns = new TableColumn[ThreadLocalsColumnKind.VALUES.length()];
-        _columnModel = new ThreadLocalsTableColumnModel(threadLocalsInspector);
+        _columnModel = new ThreadLocalsTableColumnModel(inspection);
         setModel(_model);
         setColumnModel(_columnModel);
         setFillsViewportHeight(true);
@@ -78,7 +75,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         setRowHeight(style().memoryTableRowHeight());
         setRowSelectionAllowed(true);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        addMouseListener(new TableCellMouseClickAdapter(_inspection, this) {
+        addMouseListener(new TableCellMouseClickAdapter(inspection, this) {
             @Override
             public void procedure(final MouseEvent mouseEvent) {
                 final int selectedRow = getSelectedRow();
@@ -87,15 +84,19 @@ public final class ThreadLocalsTable extends InspectorTable {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
                         final Address address = _values.start().plus(selectedRow * teleVM().wordSize());
-                        _inspection.focus().setAddress(address);
+                        setAddressFocus(address);
                     }
                 }
                 super.procedure(mouseEvent);
             }
         });
 
-        refresh(_inspection.teleVM().epoch(), true);
+        refresh(inspection.teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+    }
+
+    private void setAddressFocus(Address address) {
+        inspection().focus().setAddress(address);
     }
 
     @Override
@@ -170,17 +171,17 @@ public final class ThreadLocalsTable extends InspectorTable {
     }
 
     /**
-     * A column model for thread local values, to be displayed in an enclosing {@link ThreadLocalsInspector}.
-     * Column selection is driven by choices in the parent {@link ThreadLocalsInspector}.
+     * A column model for thread local values.
+     * Column selection is driven by choices in the parent.
      * This implementation cannot update column choices dynamically.
      */
     private final class ThreadLocalsTableColumnModel extends DefaultTableColumnModel {
 
-        ThreadLocalsTableColumnModel(ThreadLocalsInspector threadLocalsInspector) {
-            createColumn(ThreadLocalsColumnKind.TAG, new TagRenderer());
-            createColumn(ThreadLocalsColumnKind.ADDRESS, new AddressRenderer());
-            createColumn(ThreadLocalsColumnKind.POSITION, new PositionRenderer());
-            createColumn(ThreadLocalsColumnKind.NAME, new NameRenderer());
+        ThreadLocalsTableColumnModel(Inspection inspection) {
+            createColumn(ThreadLocalsColumnKind.TAG, new TagRenderer(inspection));
+            createColumn(ThreadLocalsColumnKind.ADDRESS, new AddressRenderer(inspection));
+            createColumn(ThreadLocalsColumnKind.POSITION, new PositionRenderer(inspection));
+            createColumn(ThreadLocalsColumnKind.NAME, new NameRenderer(inspection));
             createColumn(ThreadLocalsColumnKind.VALUE, new ValueRenderer());
             createColumn(ThreadLocalsColumnKind.REGION, new RegionRenderer());
         }
@@ -199,8 +200,8 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class TagRenderer extends PlainLabel implements TableCellRenderer, TextSearchable, Prober {
 
-        TagRenderer() {
-            super(_inspection, null);
+        TagRenderer(Inspection inspection) {
+            super(inspection, null);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -231,8 +232,8 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class AddressRenderer extends LocationLabel.AsAddressWithOffset implements TableCellRenderer {
 
-        AddressRenderer() {
-            super(_inspection);
+        AddressRenderer(Inspection inspection) {
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -243,8 +244,8 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class PositionRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
 
-        public PositionRenderer() {
-            super(_inspection);
+        public PositionRenderer(Inspection inspection) {
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -255,8 +256,8 @@ public final class ThreadLocalsTable extends InspectorTable {
 
     private final class NameRenderer extends JavaNameLabel implements TableCellRenderer {
 
-        public NameRenderer() {
-            super(_inspection);
+        public NameRenderer(Inspection inspection) {
+            super(inspection);
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -331,7 +332,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             InspectorLabel label = _labels[row];
             if (label == null) {
                 final String name = VmThreadLocal.NAMES.get(row);
-                label = new MemoryRegionValueLabel(_inspection) {
+                label = new MemoryRegionValueLabel(inspection()) {
                     @Override
                     public Value fetchValue() {
                         if (_values.isValid(name)) {
