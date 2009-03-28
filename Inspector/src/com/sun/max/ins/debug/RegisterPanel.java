@@ -48,7 +48,7 @@ public abstract class RegisterPanel extends InspectorPanel {
 
     private final TextLabel[] _nameLabels;
     private final int[] _heat;
-    private final WordValueLabel[] _registerInspectors;
+    private final WordValueLabel[] _registerValueLabels;
     private Address[] _oldValues;
 
     protected abstract WordValueLabel.ValueMode registerLabelValueMode(Symbol register);
@@ -56,11 +56,11 @@ public abstract class RegisterPanel extends InspectorPanel {
     protected RegisterPanel(Inspection inspection, TeleRegisters registers) {
         super(inspection);
         _registers = registers;
-        final int n = _registers.symbolizer().numberOfValues();
-        _nameLabels = new TextLabel[n];
-        _heat = new int[n];
-        _registerInspectors = new WordValueLabel[n];
-        _oldValues = new Address[n];
+        final int registerCount = _registers.symbolizer().numberOfValues();
+        _nameLabels = new TextLabel[registerCount];
+        _heat = new int[registerCount];
+        _registerValueLabels = new WordValueLabel[registerCount];
+        _oldValues = new Address[registerCount];
         setLayout(new SpringLayout());
         for (Symbol register : _registers.symbolizer()) {
             final int index = register.value();
@@ -71,7 +71,7 @@ public abstract class RegisterPanel extends InspectorPanel {
 
             final WordValueLabel wordValueLabel = new WordValueLabel(inspection, registerLabelValueMode(register));
             add(wordValueLabel);
-            _registerInspectors[index] = wordValueLabel;
+            _registerValueLabels[index] = wordValueLabel;
             _oldValues[index] = Address.zero();
         }
         refresh(teleVM().epoch(), true);
@@ -107,7 +107,7 @@ public abstract class RegisterPanel extends InspectorPanel {
             } else {
                 _oldValues[index] = newValue;
                 _heat[index] = _heatColors.length - 1;
-                _registerInspectors[index].setValue(new WordValue(newValue));
+                _registerValueLabels[index].setValue(new WordValue(newValue));
                 _nameLabels[index].setForeground(_heatColors[_heat[index]]);
             }
         }
@@ -115,7 +115,7 @@ public abstract class RegisterPanel extends InspectorPanel {
 
     @Override
     public final void redisplay() {
-        for (WordValueLabel wordValueLabel : _registerInspectors) {
+        for (WordValueLabel wordValueLabel : _registerValueLabels) {
             wordValueLabel.redisplay();
         }
         // when heat colors become configurable, revise those if needed.

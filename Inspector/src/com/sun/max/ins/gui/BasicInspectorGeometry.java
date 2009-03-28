@@ -67,10 +67,10 @@ public class BasicInspectorGeometry implements InspectorGeometry {
     // Stacks Inspection (container) frame
     private static final Point _stacksFrameDefaultLocation = new Point(235, 0);
     private static final Dimension _stacksFramePrefSize = new Dimension(250, 1000);
-    public Point stacksFrameDefaultLocation() {
+    public Point stackFrameDefaultLocation() {
         return _stacksFrameDefaultLocation;
     }
-    public Dimension stacksFramePrefSize() {
+    public Dimension stackFramePrefSize() {
         return _stacksFramePrefSize;
     }
 

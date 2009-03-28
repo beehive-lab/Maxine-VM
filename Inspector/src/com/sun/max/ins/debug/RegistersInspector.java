@@ -23,137 +23,119 @@ package com.sun.max.ins.debug;
 import javax.swing.*;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.vm.value.*;
 
 /**
- * An inspector for thread specific registers in the {@link TeleVM}.
+ * A singleton inspector that displays specific register contents for the thread in the {@link TeleVM} that is the current user focus.
  *
  * @author Doug Simon
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class RegistersInspector extends UniqueInspector<RegistersInspector> {
+public final class RegistersInspector extends Inspector {
+
+    // Set to null when inspector closed.
+    private static RegistersInspector _registersInspector;
 
     /**
-     * Finds an existing registers inspector for a thread.
-     * @return null if doesn't exist
-     */
-    public static RegistersInspector get(Inspection inspection, TeleNativeThread teleNativeThread) {
-        return RegistersInspectorContainer.getInspector(inspection, teleNativeThread);
-    }
-
-    /**
-     * Displays and highlights a RegistersInspector for the currently selected thread.
-     * @return a possibly new inspector
+     * Displays and highlights the (singleton) inspector, creating it if needed.
      */
     public static RegistersInspector make(Inspection inspection) {
-        return make(inspection, inspection.focus().thread());
+        if (_registersInspector == null) {
+            _registersInspector = new RegistersInspector(inspection, Residence.INTERNAL);
+        }
+        _registersInspector.highlight();
+        return _registersInspector;
     }
 
-    /**
-     * Display and highlight a RegistersInspector for a thread.
-     * @return a possibly new inspector
-     */
-    public static RegistersInspector make(Inspection inspection, TeleNativeThread teleNativeThread) {
-        final RegistersInspector registersInspector = RegistersInspectorContainer.makeInspector(inspection, teleNativeThread);
-        registersInspector.highlight();
-        return registersInspector;
-    }
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "registersInspector");
 
-    private final TeleNativeThread _teleNativeThread;
-    private RegistersInspectorContainer _parent;
+    private TeleNativeThread _teleNativeThread;
+    private InspectorPanel _contentPane;
     private RegisterPanel _integerRegisterPanel;
     private RegisterPanel _stateRegisterPanel;
     private RegisterPanel _floatingPointRegisterPanel;
 
-    public RegistersInspector(Inspection inspection, TeleNativeThread teleNativeThread, RegistersInspectorContainer parent) {
-        super(inspection, parent.residence(),  LongValue.from(teleNativeThread.handle()));
-        _parent = parent;
-        _teleNativeThread = teleNativeThread;
+    public RegistersInspector(Inspection inspection, Residence residence) {
+        super(inspection, residence);
+        Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
+        refreshView(inspection.teleVM().epoch(), true);
+        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
+            frame().setLocation(inspection().geometry().registersFrameDefaultLocation());
+            frame().getContentPane().setPreferredSize(inspection().geometry().registersFramePrefSize());
+        }
+        Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
-    public void createView(long epoch) {
-        final JPanel contentPane = new InspectorPanel(inspection());
-        contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
-
-        final TeleIntegerRegisters integerRegisters = _teleNativeThread.integerRegisters();
-        _integerRegisterPanel = RegisterPanel.createIntegerRegisterPanel(inspection(), integerRegisters);
-        contentPane.add(_integerRegisterPanel);
-
-        final TeleStateRegisters stateRegisters = _teleNativeThread.stateRegisters();
-        _stateRegisterPanel = RegisterPanel.createStateRegisterPanel(inspection(), stateRegisters);
-        contentPane.add(_stateRegisterPanel);
-
-        final TeleFloatingPointRegisters floatingPointRegisters = _teleNativeThread.floatingPointRegisters();
-        _floatingPointRegisterPanel = RegisterPanel.createFloatingPointRegisterPanel(inspection(), floatingPointRegisters);
-        contentPane.add(_floatingPointRegisterPanel);
-
-        frame().getContentPane().add(new InspectorScrollPane(inspection(), contentPane));
-        redisplay();
-        refreshView(epoch, true);
-    }
-
-    private void redisplay() {
-        _integerRegisterPanel.redisplay();
-        _stateRegisterPanel.redisplay();
-        _floatingPointRegisterPanel.redisplay();
+    public SaveSettingsListener saveSettingsListener() {
+        return _saveSettingsListener;
     }
 
     @Override
-    public void moveToFront() {
-        if (_parent != null) {
-            _parent.setSelected(this);
+    protected void createView(long epoch) {
+        _teleNativeThread = inspection().focus().thread();
+        if (_teleNativeThread == null) {
+            _contentPane = null;
+            frame().setTitle(getTextForTitle());
         } else {
-            super.moveToFront();
+            _contentPane = new InspectorPanel(inspection());
+            _contentPane.setLayout(new BoxLayout(_contentPane, BoxLayout.Y_AXIS));
+            frame().setTitle(getTextForTitle() + " " + inspection().nameDisplay().longName(_teleNativeThread));
+
+            final TeleIntegerRegisters integerRegisters = _teleNativeThread.integerRegisters();
+            _integerRegisterPanel = RegisterPanel.createIntegerRegisterPanel(inspection(), integerRegisters);
+            _contentPane.add(_integerRegisterPanel);
+
+            final TeleStateRegisters stateRegisters = _teleNativeThread.stateRegisters();
+            _stateRegisterPanel = RegisterPanel.createStateRegisterPanel(inspection(), stateRegisters);
+            _contentPane.add(_stateRegisterPanel);
+
+            final TeleFloatingPointRegisters floatingPointRegisters = _teleNativeThread.floatingPointRegisters();
+            _floatingPointRegisterPanel = RegisterPanel.createFloatingPointRegisterPanel(inspection(), floatingPointRegisters);
+            _contentPane.add(_floatingPointRegisterPanel);
         }
-    }
-
-    @Override
-    public void refreshView(long epoch, boolean force) {
-        if (isShowing() || force) {
-            _integerRegisterPanel.refresh(epoch, force);
-            _stateRegisterPanel.refresh(epoch, force);
-            _floatingPointRegisterPanel.refresh(epoch, force);
-            super.refreshView(epoch, force);
-        }
-    }
-
-    public void viewConfigurationChanged(long epoch) {
-        redisplay();
-    }
-
-    @Override
-    public synchronized void setResidence(Residence residence) {
-        final Residence current = residence();
-        super.setResidence(residence);
-        if (current != residence) {
-            if (residence == Residence.INTERNAL) {
-                if (_parent != null) {
-                    // coming back from EXTERNAL, need to redock
-                    _parent.add(this);
-                }
-                moveToFront();
-            } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle("Registers " + getTextForTitle());
-            }
-        }
-    }
-
-    public RegisterPanel integerRegisterPanel() {
-        return _integerRegisterPanel;
-    }
-
-    TeleNativeThread teleNativeThread() {
-        return _teleNativeThread;
+        frame().getContentPane().add(new InspectorScrollPane(inspection(), _contentPane));
     }
 
     @Override
     public String getTextForTitle() {
-        return inspection().nameDisplay().longName(_teleNativeThread);
+        return "Registers: ";
+    }
+
+    private long _lastRefreshEpoch = -1;
+
+    @Override
+    public void refreshView(long epoch, boolean force) {
+        if (epoch > _lastRefreshEpoch || force) {
+            _lastRefreshEpoch = epoch;
+            _integerRegisterPanel.refresh(epoch, force);
+            _stateRegisterPanel.refresh(epoch, force);
+            _floatingPointRegisterPanel.refresh(epoch, force);
+        }
+        super.refreshView(epoch, force);
+    }
+
+    @Override
+    public void viewConfigurationChanged(long epoch) {
+        reconstructView();
+    }
+
+    @Override
+    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativThread) {
+        reconstructView();
+    }
+
+    @Override
+    public void inspectorClosing() {
+        Trace.line(1, tracePrefix() + " closing");
+        _registersInspector = null;
+        super.inspectorClosing();
     }
 
 }
