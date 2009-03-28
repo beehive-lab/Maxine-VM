@@ -23,7 +23,7 @@ package com.sun.max.ins.memory;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.InspectorTable.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -34,14 +34,13 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
  */
-public final class MemoryRegionsInspector extends Inspector {
+public final class MemoryRegionsInspector extends Inspector  implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
     private static MemoryRegionsInspector _memoryRegionsInspector;
 
     /**
      * Display and highlight the (singleton) MemoryRegions inspector.
-     *
      * @return  The MemoryRegions inspector, possibly newly created.
      */
     public static MemoryRegionsInspector make(Inspection inspection) {
@@ -52,19 +51,24 @@ public final class MemoryRegionsInspector extends Inspector {
         return _memoryRegionsInspector;
     }
 
-    private MemoryRegionsTable _table;
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "memoryRegionsInspector");
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "MemoryRegionsInspector");
+    // This is a singleton viewer, so only use a single level of view preferences.
+    private final MemoryRegionsViewPreferences _viewPreferences;
+
+    private MemoryRegionsTable _table;
 
     private MemoryRegionsInspector(Inspection inspection, Residence residence) {
         super(inspection, residence);
         Trace.begin(1, tracePrefix() + "initializing");
+        _viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
+        _viewPreferences.addListener(this);
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(new InspectorAction(inspection, "View Options") {
             @Override
             public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", _table.preferences());
+                new TableColumnVisibilityPreferences.Dialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", _viewPreferences);
             }
         });
         Trace.end(1, tracePrefix() + "initializing");
@@ -82,12 +86,7 @@ public final class MemoryRegionsInspector extends Inspector {
 
     @Override
     public void createView(long epoch) {
-        _table = new MemoryRegionsTable(inspection());
-        _table.addColumnChangeListener(new ColumnChangeListener() {
-            public void columnPreferenceChanged() {
-                reconstructView();
-            }
-        });
+        _table = new MemoryRegionsTable(inspection(), _viewPreferences);
         frame().setContentPane(new InspectorScrollPane(inspection(), _table));
     }
 
@@ -113,10 +112,15 @@ public final class MemoryRegionsInspector extends Inspector {
         _table.selectMemoryRegion(selectedMemoryRegion);
     }
 
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
+    }
+
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         _memoryRegionsInspector = null;
+        _viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 
@@ -124,6 +128,7 @@ public final class MemoryRegionsInspector extends Inspector {
     public void vmProcessTerminated() {
         Trace.line(1, tracePrefix() + " closing - process terminated");
         _memoryRegionsInspector = null;
+        _viewPreferences.removeListener(this);
         dispose();
     }
 

@@ -30,8 +30,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
   */
-public class ThreadLocalsViewPreferences extends TableColumnVisibilityPreferences<ThreadLocalsColumnKind> {
-
+public final class ThreadLocalsViewPreferences extends TableColumnVisibilityPreferences<ThreadLocalsColumnKind> {
 
     private static ThreadLocalsViewPreferences _globalPreferences;
 
@@ -50,10 +49,6 @@ public class ThreadLocalsViewPreferences extends TableColumnVisibilityPreference
      */
     private ThreadLocalsViewPreferences(Inspection inspection) {
         super(inspection, "threadLocalsViewPrefs", ThreadLocalsColumnKind.class, ThreadLocalsColumnKind.VALUES);
-    }
-
-    ThreadLocalsViewPreferences(ThreadLocalsViewPreferences otherPreferences) {
-        super(otherPreferences);
     }
 
     @Override

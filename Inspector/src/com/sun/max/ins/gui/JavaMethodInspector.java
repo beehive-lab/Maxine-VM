@@ -229,7 +229,6 @@ public class JavaMethodInspector extends MethodInspector {
                 // final Component newComponent = (Component) newInspectorFrame;
                 if (codeViewerCount() == 0) {
                     frame().getContentPane().add(newViewer);
-                    updateSize();
                     frame().pack();
                     frame().invalidate();
                     frame().repaint();

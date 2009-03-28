@@ -260,6 +260,14 @@ public class InspectionSettings {
         }
     }
 
+    /**
+     * @param saveSettingsListener
+     * @return is there a saved component location setting associated with this listener.
+     */
+    public boolean hasComponentLocation(SaveSettingsListener saveSettingsListener) {
+        return get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0;
+    }
+
     private boolean _needsSaving;
 
     /**

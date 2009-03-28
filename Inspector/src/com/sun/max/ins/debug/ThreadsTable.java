@@ -43,11 +43,11 @@ public final class ThreadsTable extends InspectorTable {
     private final ThreadsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    ThreadsTable(Inspection inspection) {
+    ThreadsTable(Inspection inspection, ThreadsViewPreferences viewPreferences) {
         super(inspection);
         _model = new ThreadsTableModel();
         _columns = new TableColumn[ThreadsColumnKind.VALUES.length()];
-        _columnModel = new ThreadsColumnModel();
+        _columnModel = new ThreadsColumnModel(viewPreferences);
 
         setModel(_model);
         setColumnModel(_columnModel);
@@ -62,10 +62,6 @@ public final class ThreadsTable extends InspectorTable {
 
         refresh(teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
-    }
-
-    ThreadsViewPreferences preferences() {
-        return _columnModel.localPreferences();
     }
 
     void selectThread(TeleNativeThread selectedThread) {
@@ -96,22 +92,10 @@ public final class ThreadsTable extends InspectorTable {
 
     private final class ThreadsColumnModel extends DefaultTableColumnModel {
 
-        private final ThreadsViewPreferences _localPreferences;
+        private final ThreadsViewPreferences _viewPreferences;
 
-        private ThreadsColumnModel() {
-            _localPreferences = new ThreadsViewPreferences(ThreadsViewPreferences.globalPreferences(inspection())) {
-                @Override
-                public void setIsVisible(ThreadsColumnKind columnKind, boolean visible) {
-                    super.setIsVisible(columnKind, visible);
-                    final int col = columnKind.ordinal();
-                    if (visible) {
-                        addColumn(_columns[col]);
-                    } else {
-                        removeColumn(_columns[col]);
-                    }
-                    fireColumnPreferenceChanged();
-                }
-            };
+        private ThreadsColumnModel(ThreadsViewPreferences viewPreferences) {
+            _viewPreferences = viewPreferences;
             createColumn(ThreadsColumnKind.ID, new IDCellRenderer(inspection()));
             createColumn(ThreadsColumnKind.HANDLE, new HandleCellRenderer(inspection()));
             createColumn(ThreadsColumnKind.KIND, new KindCellRenderer(inspection()));
@@ -119,16 +103,12 @@ public final class ThreadsTable extends InspectorTable {
             createColumn(ThreadsColumnKind.STATUS, new StatusCellRenderer(inspection()));
         }
 
-        private ThreadsViewPreferences localPreferences() {
-            return _localPreferences;
-        }
-
         private void createColumn(ThreadsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
             _columns[col] = new TableColumn(col, 0, renderer, null);
             _columns[col].setHeaderValue(columnKind.label());
             _columns[col].setMinWidth(columnKind.minWidth());
-            if (_localPreferences.isVisible(columnKind)) {
+            if (_viewPreferences.isVisible(columnKind)) {
                 addColumn(_columns[col]);
             }
             _columns[col].setIdentifier(columnKind);
