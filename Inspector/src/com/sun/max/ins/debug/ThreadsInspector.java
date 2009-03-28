@@ -28,7 +28,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 
 /**
  * A singleton inspector that displays the list of threads running in the process of the {@link TeleVM}.
@@ -89,21 +88,19 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
 
     @Override
     public void createView(long epoch) {
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
         _table = new ThreadsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         frame().setContentPane(scrollPane);
     }
-
 
     @Override
     public void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
         super.refreshView(epoch, force);
-    }
-
-    @Override
-    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
-        _table.selectThread(teleNativeThread);
     }
 
     public void viewConfigurationChanged(long epoch) {
@@ -119,6 +116,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         Trace.line(1, tracePrefix() + " closing");
         _threadsInspector = null;
         _viewPreferences.removeListener(this);
+        focus().removeListener(_table);
         super.inspectorClosing();
     }
 
