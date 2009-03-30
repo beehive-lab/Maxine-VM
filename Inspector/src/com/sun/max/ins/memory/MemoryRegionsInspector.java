@@ -86,7 +86,11 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
 
     @Override
     public void createView(long epoch) {
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
         _table = new MemoryRegionsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
         frame().setContentPane(new InspectorScrollPane(inspection(), _table));
     }
 
@@ -100,18 +104,6 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         reconstructView();
     }
 
-    @Override
-    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
-        updateMemoryRegionFocus(memoryRegion);
-    }
-
-    /**
-     * Changes the Inspector's selected row to agree with the global thread selection.
-     */
-    private void updateMemoryRegionFocus(MemoryRegion selectedMemoryRegion) {
-        _table.selectMemoryRegion(selectedMemoryRegion);
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
@@ -121,6 +113,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         Trace.line(1, tracePrefix() + " closing");
         _memoryRegionsInspector = null;
         _viewPreferences.removeListener(this);
+        focus().removeListener(_table);
         super.inspectorClosing();
     }
 

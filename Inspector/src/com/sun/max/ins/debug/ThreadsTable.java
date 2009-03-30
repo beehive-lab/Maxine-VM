@@ -105,8 +105,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         if (!listSelectionEvent.getValueIsAdjusting()) {
             final int row = getSelectedRow();
             if (row >= 0) {
-                final int column = getSelectedColumn();
-                final TeleNativeThread teleNativeThread = (TeleNativeThread) getValueAt(row, column);
+                final TeleNativeThread teleNativeThread = (TeleNativeThread) getValueAt(row, 0);
                 focus().setThread(teleNativeThread);
             }
         }
