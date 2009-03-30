@@ -44,6 +44,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
 
     ThreadSpecifics threadSpecifics = NULL;
     isa_CanonicalIntegerRegistersStruct canonicalIntegerRegisters;
+    isa_CanonicalStateRegistersStruct canonicalStateRegisters;
 
     ThreadState_t threadState;
     char taskState;
@@ -61,12 +62,12 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
     }
 
 
-    if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL)) {
+    if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL)) {
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
         ThreadSpecificsStruct threadSpecificsStruct;
         threadSpecifics = teleProcess_findThreadSpecifics(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
     }
-    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, threadSpecifics);
+    teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, (jlong) canonicalStateRegisters.rip, threadSpecifics);
 }
 
 JNIEXPORT void JNICALL

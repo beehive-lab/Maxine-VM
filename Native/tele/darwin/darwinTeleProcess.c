@@ -241,7 +241,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
 
         ThreadSpecificsStruct threadSpecificsStruct;
         ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(task, threadSpecificsListAddress, threadState.__rsp, &threadSpecificsStruct);
-        teleProcess_jniGatherThread(env, process, result, thread, state, threadSpecifics);
+        teleProcess_jniGatherThread(env, process, result, thread, state, threadState.__rip, threadSpecifics);
     }
 
     if (Vm_deallocate(POS, mach_task_self(), (vm_address_t) threads, (numberOfThreads * sizeof(thread_act_port_t))) != KERN_SUCCESS) {
