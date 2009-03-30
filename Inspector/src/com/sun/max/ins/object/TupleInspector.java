@@ -38,8 +38,8 @@ public class TupleInspector extends ObjectInspector {
     private final InspectorMenuItems _classMethodInspectorMenuItems;
     private final InspectorMenuItems _targetMethodInspectorMenuItems;
 
-    TupleInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
-        super(inspection, factory, residence, teleObject);
+    TupleInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+        super(inspection, factory, teleObject);
         createFrame(null);
         final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
         if (teleClassMethodActor != null) {

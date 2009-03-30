@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.ins.memory.MemoryInspector.*;
 import com.sun.max.ins.memory.MemoryWordInspector.*;
@@ -348,21 +347,22 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
 
     public void makeMemoryInspector() {
         final TargetCodeRegion targetCodeRegion = _teleTargetRoutine.targetCodeRegion();
-        MemoryInspector.create(inspection(), Residence.INTERNAL, targetCodeRegion.start(), targetCodeRegion.size().toInt(), 1, 8);
+        MemoryInspector.create(inspection(), targetCodeRegion.start(), targetCodeRegion.size().toInt(), 1, 8);
     }
 
     public InspectorAction getMemoryInspectorAction() {
         return new InspectorAction(inspection(), "Inspect Memory") {
             @Override
             protected void procedure() {
-                makeMemoryInspector();
+                final TargetCodeRegion targetCodeRegion = _teleTargetRoutine.targetCodeRegion();
+                MemoryWordInspector.create(inspection(), targetCodeRegion.start(), targetCodeRegion.size().toInt()).highlight();
             }
         };
     }
 
     public void makeMemoryWordInspector() {
         final TargetCodeRegion targetCodeRegion = _teleTargetRoutine.targetCodeRegion();
-        MemoryWordInspector.create(inspection(), Residence.INTERNAL, targetCodeRegion.start(), targetCodeRegion.size().toInt());
+        MemoryWordInspector.create(inspection(), targetCodeRegion.start(), targetCodeRegion.size().toInt());
     }
 
     public InspectorAction getMemoryWordInspectorAction() {

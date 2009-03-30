@@ -249,23 +249,23 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         return _key;
     }
 
-    protected UniqueInspector(Inspection inspection, Residence residence, Value subject) {
-        super(inspection, residence);
+    protected UniqueInspector(Inspection inspection, Value subject) {
+        super(inspection);
         final Class<Class<Inspector_Type>> classType = null;
         final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
         _key = new ValueKey<Inspector_Type>(frameType, subject);
     }
 
-    protected UniqueInspector(Inspection inspection, Residence residence, Reference subject) {
-        this(inspection, residence, TeleReferenceValue.from(inspection.teleVM(), subject));
+    protected UniqueInspector(Inspection inspection, Reference subject) {
+        this(inspection, TeleReferenceValue.from(inspection.teleVM(), subject));
     }
 
-    protected UniqueInspector(Inspection inspection, Residence residence) {
-        this(inspection, residence, VoidValue.VOID);
+    protected UniqueInspector(Inspection inspection) {
+        this(inspection, VoidValue.VOID);
     }
 
-    protected UniqueInspector(Inspection inspection, Residence residence, File file) {
-        super(inspection, residence);
+    protected UniqueInspector(Inspection inspection, File file) {
+        super(inspection);
         final Class<Class<Inspector_Type>> classType = null;
         final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());
         _key = new FileKey<Inspector_Type>(frameType, file);
@@ -276,14 +276,13 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
      * from {@code teleTargetMethod} if it is not null, otherwise it derived from {@code teleRoutine}.
      *
      * @param inspection the inspection context
-     * @param residence
      * @param teleTargetMethod the target method in the tele VM containing the code being inspected. This value may be
      *            null if the code being inspected is bytecode and has no compiled form.
      * @param teleRoutine the {@linkplain TeleMethodActor method actor} or {@linkplain TeleNativeRoutine native routine}
      *            containing the code. This value must not be null if {@code teleTargetMethod} is null.
      */
-    protected UniqueInspector(Inspection inspection, Residence residence, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
-        super(inspection, residence);
+    protected UniqueInspector(Inspection inspection, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
+        super(inspection);
         if (teleTargetMethod != null) {
             final Class<Class<Inspector_Type>> classType = null;
             final Class<Inspector_Type> frameType = StaticLoophole.cast(classType, getClass());

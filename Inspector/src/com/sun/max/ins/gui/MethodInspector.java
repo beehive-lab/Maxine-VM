@@ -79,6 +79,8 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
                             SwingUtilities.invokeLater(new Runnable() {
                                 public void run() {
                                     methodInspector.setCodeLocationFocus();
+                                    // Highlight the inspector if it is not the selected one (this happens when the inspector already existed).
+                                    methodInspector.highlightIfNotVisible();
                                 }
                             });
                         }
@@ -134,9 +136,6 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
                 }
             }
         }
-        if (methodInspector != null) {
-            methodInspector.highlight();
-        }
         return methodInspector;
     }
 
@@ -147,7 +146,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
      * @param teleCodeLocation a code location
      * @return A possibly new inspector, null if unable to view.
      */
-    public static MethodInspector make(Inspection inspection, TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
+    private static MethodInspector make(Inspection inspection, TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
         if (teleCodeLocation.hasTargetCodeLocation()) {
             return make(inspection, teleCodeLocation.targetCodeInstructionAddresss(), interactiveForNative);
         }
@@ -404,7 +403,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
     }
 
     public MethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
-        super(inspection, parent.residence(), teleTargetMethod, teleRoutine);
+        super(inspection, teleTargetMethod, teleRoutine);
         _parent = parent;
     }
 
@@ -484,23 +483,6 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         return false;
     }
 
-    @Override
-    public synchronized void setResidence(Residence residence) {
-        final Residence current = residence();
-        super.setResidence(residence);
-        if (current != residence) {
-            if (residence == Residence.INTERNAL) {
-                // coming back from EXTERNAL, need to redock
-                if (parent() != null) {
-                    parent().add(this);
-                }
-                moveToFront();
-            } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle(getTextForTitle());
-            }
-        }
-    }
-
     /**
      * @return Local {@link TeleTargetRoutine} for the method in the {@link TeleVM}; null if not bound to target code yet.
      */
@@ -525,7 +507,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
 
     public void makeMemoryInspector() {
         if (teleTargetRoutine() != null) {
-            MemoryInspector.create(inspection(), _parent.residence(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt(), 1, 8);
+            MemoryInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt(), 1, 8).highlight();
         }
     }
 
@@ -534,14 +516,14 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
 
             @Override
             protected void procedure() {
-                makeMemoryInspector();
+                MemoryWordInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt()).highlight();
             }
         };
     }
 
     public void makeMemoryWordInspector() {
         if (teleTargetRoutine() != null) {
-            MemoryWordInspector.create(inspection(), _parent.residence(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt());
+            MemoryWordInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt());
         }
     }
 

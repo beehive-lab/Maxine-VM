@@ -35,7 +35,6 @@ import com.sun.max.vm.stack.*;
 
 /**
  * An inspector combines an aggregation of {@link Prober}s in a frame.
- * It can switch between using an internal or external frame (External frames are deprecated).
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -90,20 +89,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * Enum containing constants denoting whether an inspector should be viewed with an {@linkplain #INTERNAL internal}
-     * or {@linkplain #EXTERNAL external} frame.
-     */
-    public enum Residence {
-        INTERNAL, EXTERNAL;
-    }
-
-    private Residence _residence;
-
-    public synchronized Residence residence() {
-        return _residence;
-    }
-
-    /**
      * Set frame location to a point displaced by a default amount from the most recently known mouse position.
      */
     public void setLocationRelativeToMouse() {
@@ -126,31 +111,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         _frame.setLocationOnScreen(location);
     }
 
-    public synchronized void setResidence(Residence residence) {
-        if (residence == _residence) {
-            return;
-        }
-        Point location = null;
-        if (_frame != null) {
-            location = _frame.getLocationOnScreen();
-            _frame.dispose();
-        }
-        _residence = residence;
-        createFrame(_frame.menu());
-        if (location != null) {
-            _frame.setLocationOnScreen(location);
-        } else {
-            setLocationRelativeToMouse();
-        }
-    }
-
-    public synchronized void toggleResidence() {
-        setResidence(Residence.values()[(_residence.ordinal() + 1) % Residence.values().length]);
-    }
-
-    protected Inspector(Inspection inspection, Residence residence) {
+    protected Inspector(Inspection inspection) {
         super(inspection);
-        _residence = residence;
     }
 
     /**
@@ -160,7 +122,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     protected abstract void createView(long epoch);
 
     /**
-     * Creates a frame for the inspector, internal or external depending on the residence,
+     * Creates a frame for the inspector
      * calls {@link createView()} to populate it; adds the inspector to the update
      * listeners; makes it all visible.
      *
@@ -170,30 +132,12 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param menu  optional menu to replace the default frame menu
      */
     protected void createFrame(InspectorMenu menu) {
-        switch (_residence) {
-            case INTERNAL:
-                _frame = new InternalInspectorFrame(this, menu);
-                break;
-            case EXTERNAL:
-                assert menu == null;
-                // Any inspector that needs a custom menu shouldn't really be undockable,
-                // so it shoudn't ever be put in an external frame.
-                _frame = new ExternalInspectorFrame(this);
-                break;
-        }
+        _frame = new InternalInspectorFrame(this, menu);
         frame().setTitle(getTextForTitle());
         createView(teleVM().epoch());
         _frame.pack();
-        switch (_residence) {
-            case INTERNAL:
-                inspection().desktopPane().add((Component) _frame);
-                _frame.setVisible(true);
-                break;
-            case EXTERNAL:
-                _frame.setVisible(true);
-                _frame.moveToFront();
-                break;
-        }
+        inspection().desktopPane().add((Component) _frame);
+        _frame.setVisible(true);
         inspection().addInspectionListener(this);
         inspection().focus().addListener(this);
 
@@ -359,11 +303,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
         @Override
         public void procedure() {
-            if (frame() instanceof InternalInspectorFrame) {
-                inspection().desktopPane().removeAll();
-                inspection().desktopPane().add((InternalInspectorFrame) frame());
-                inspection().repaint();
-            }
+            inspection().desktopPane().removeAll();
+            inspection().desktopPane().add((InternalInspectorFrame) frame());
+            inspection().repaint();
         }
     }
 
@@ -380,28 +322,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         public void procedure() {
             Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
             refreshView(true);
-        }
-    }
-
-    public ToggleResidenceAction createToggleResidenceAction() {
-        return new ToggleResidenceAction();
-    }
-
-    private String toggleResidenceTitle() {
-        if (_residence == Residence.INTERNAL) {
-            return "Undock";
-        }
-        return "Dock";
-    }
-
-    public final class ToggleResidenceAction extends InspectorAction {
-        private ToggleResidenceAction() {
-            super(inspection(), toggleResidenceTitle());
-        }
-
-        @Override
-        public void procedure() {
-            toggleResidence();
         }
     }
 

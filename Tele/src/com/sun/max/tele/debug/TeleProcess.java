@@ -542,6 +542,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @param handle the native thread library {@linkplain TeleNativeThread#handle() handle} to this thread (e.g. the
      *            LWP of a Solaris thread)
      * @param state
+     * @param instructionPointer the current value of the instruction pointer
      * @param stackBase the lowest known address of the stack. This may be 0 for an native thread that has not been
      *            attached to the VM via the AttachCurrentThread function that is part of the JNI Invocation API. .
      * @param stackSize the size of the stack in bytes
@@ -549,7 +550,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      * @param enabledVmThreadLocals the address of the native memory holding the safepoints-enabled VM thread locals
      * @param disabledVmThreadLocals the address of the native memory holding the safepoints-disabled VM thread locals
      */
-    public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int id, long handle, int state, long stackBase, long stackSize,
+    public final void jniGatherThread(AppendableSequence<TeleNativeThread> threads, int id, long handle, int state, long instructionPointer, long stackBase, long stackSize,
                     long triggeredVmThreadLocals, long enabledVmThreadLocals, long disabledVmThreadLocals) {
         assert state >= 0 && state < ThreadState.VALUES.length() : state;
         TeleNativeThread thread = _handleToThreadMap.get(handle);
@@ -557,16 +558,17 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
             thread = createTeleNativeThread(id, handle, stackBase, stackSize);
         }
 
+        final Map<Safepoint.State, Pointer> vmThreadLocals;
         if (id >= 0) {
-            final Map<Safepoint.State, Pointer> vmThreadLocals;
             vmThreadLocals = new EnumMap<Safepoint.State, Pointer>(Safepoint.State.class);
             vmThreadLocals.put(Safepoint.State.ENABLED, Pointer.fromLong(enabledVmThreadLocals));
             vmThreadLocals.put(Safepoint.State.DISABLED, Pointer.fromLong(disabledVmThreadLocals));
             vmThreadLocals.put(Safepoint.State.TRIGGERED, Pointer.fromLong(triggeredVmThreadLocals));
-            thread.setVmThreadLocals(vmThreadLocals);
+        } else {
+            vmThreadLocals = null;
         }
 
-        thread.setState(ThreadState.VALUES.get(state));
+        thread.updateAfterGather(ThreadState.VALUES.get(state), Pointer.fromLong(instructionPointer), vmThreadLocals);
         threads.append(thread);
     }
 

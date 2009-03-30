@@ -52,9 +52,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         final UniqueInspector.Key<LocalsInspector> key = UniqueInspector.Key.create(LocalsInspector.class, localsBasePointer.toLong());
         LocalsInspector localsInspector = UniqueInspector.find(inspection, key);
         if (localsInspector == null) {
-            localsInspector = new LocalsInspector(inspection, Residence.INTERNAL, teleNativeThread, jitStackFrame);
+            localsInspector = new LocalsInspector(inspection, teleNativeThread, jitStackFrame);
         }
-        localsInspector.highlight();
         return localsInspector;
     }
 
@@ -75,8 +74,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
      */
     private boolean _showAll;
 
-    public LocalsInspector(Inspection inspection, Residence residence, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
-        super(inspection, residence, LongValue.from(jitStackFrame.framePointer().toLong()));
+    public LocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
+        super(inspection, LongValue.from(jitStackFrame.framePointer().toLong()));
         assert jitStackFrame.targetMethod().compilerScheme() == teleVM().vmConfiguration().jitScheme();
         _dataAccess = teleVM().dataAccess();
         _teleNativeThread = teleNativeThread;

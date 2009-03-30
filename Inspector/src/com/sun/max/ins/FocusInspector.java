@@ -40,15 +40,14 @@ public final class FocusInspector extends Inspector {
     // Set to null when inspector closed.
     private static FocusInspector _focusInspector;
     /**
-     * Display and highlight the (singleton) Focus inspector.
+     * Display the (singleton) Focus inspector.
      *
      * @return  The Focus inspector, possibly newly created.
      */
     public static FocusInspector make(Inspection inspection) {
         if (_focusInspector == null) {
-            _focusInspector = new FocusInspector(inspection, Residence.INTERNAL);
+            _focusInspector = new FocusInspector(inspection);
         }
-        _focusInspector.highlight();
         return _focusInspector;
     }
 
@@ -56,8 +55,8 @@ public final class FocusInspector extends Inspector {
 
     private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "focusInspector");
 
-    private FocusInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private FocusInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
         Trace.end(1,  tracePrefix() + " initializing");

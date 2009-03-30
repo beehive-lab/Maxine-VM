@@ -45,14 +45,13 @@ public final class BootImageInspector extends Inspector {
     private static BootImageInspector _bootImageInspector;
 
     /**
-     * Display and highlight the (singleton) Boot Image inspector.
+     * Display the (singleton) Boot Image inspector.
      * @return  The Boot Image inspector, possibly newly created.
      */
     public static BootImageInspector make(Inspection inspection) {
         if (_bootImageInspector == null) {
-            _bootImageInspector = new BootImageInspector(inspection, Residence.INTERNAL);
+            _bootImageInspector = new BootImageInspector(inspection);
         }
-        _bootImageInspector.highlight();
         return _bootImageInspector;
     }
 
@@ -60,8 +59,8 @@ public final class BootImageInspector extends Inspector {
 
     private JPanel _infoPanel;
 
-    private BootImageInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private BootImageInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
         createFrame(null);
         Trace.end(1, tracePrefix() + "initializing");

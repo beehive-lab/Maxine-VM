@@ -77,9 +77,10 @@ extern ThreadSpecifics teleProcess_findThreadSpecifics(PROCESS_MEMORY_PARAMS Add
  * @param threads a Sequence<TeleNativeThread> object used to gather the threads
  * @param handle the native thread library handle to a thread (e.g. the LWP of a Solaris thread)
  * @param state the execution state of the thread
+ * @param instructionPointer
  * @param threadSpecifics the thread specifics found based on the stack pointer of the thread or NULL if no such thread specifics were found
  */
-extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, ThreadSpecifics threadSpecifics);
+extern void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, jlong instructionPointer, ThreadSpecifics threadSpecifics);
 
 /**
  * Copies bytes from the tele process into a given direct ByteBuffer or byte array.

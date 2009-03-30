@@ -233,8 +233,8 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
 
     private InspectorTable _objectHeaderTable;
 
-    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, Residence residence, final TeleObject teleObject) {
-        super(inspection, residence);
+    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
+        super(inspection);
         _factory = factory;
         final ObjectInspectorPreferences preferences = globalPreferences(inspection);
         _teleObject = teleObject;
@@ -492,7 +492,7 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
         return new InspectorAction(inspection(), "Inspect Memory") {
             @Override
             protected void procedure() {
-                makeMemoryInspector();
+                MemoryInspector.create(inspection(), _teleObject).highlight();
             }
         };
     }
@@ -505,7 +505,7 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
         return new InspectorAction(inspection(), "Inspect Memory Words") {
             @Override
             protected void procedure() {
-                makeMemoryWordInspector();
+                MemoryWordInspector.create(inspection(), _teleObject).highlight();
             }
         };
     }

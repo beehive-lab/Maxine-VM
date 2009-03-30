@@ -38,8 +38,8 @@ public abstract class FileInspector extends UniqueInspector {
         return _file;
     }
 
-    protected FileInspector(Inspection inspection, Residence residence, File file) {
-        super(inspection, residence, file);
+    protected FileInspector(Inspection inspection, File file) {
+        super(inspection, file);
         _file = file;
     }
 
