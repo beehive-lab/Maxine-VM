@@ -42,14 +42,13 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     private static BreakpointsInspector _breakpointsInspector;
 
     /**
-     * Displays and highlights the (singleton) breakpoints inspector.
+     * Displays the (singleton) breakpoints inspector.
      * @return  The breakpoints inspector, possibly newly created.
      */
     public static BreakpointsInspector make(Inspection inspection) {
         if (_breakpointsInspector == null) {
             _breakpointsInspector = new BreakpointsInspector(inspection);
         }
-        _breakpointsInspector.highlight();
         return _breakpointsInspector;
     }
 

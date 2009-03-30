@@ -48,7 +48,6 @@ public final class RegistersInspector extends Inspector {
         if (_registersInspector == null) {
             _registersInspector = new RegistersInspector(inspection);
         }
-        _registersInspector.highlight();
         return _registersInspector;
     }
 

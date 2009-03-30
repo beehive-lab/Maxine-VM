@@ -54,7 +54,6 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         if (localsInspector == null) {
             localsInspector = new LocalsInspector(inspection, teleNativeThread, jitStackFrame);
         }
-        localsInspector.highlight();
         return localsInspector;
     }
 

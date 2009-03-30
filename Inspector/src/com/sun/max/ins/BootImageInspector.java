@@ -45,14 +45,13 @@ public final class BootImageInspector extends Inspector {
     private static BootImageInspector _bootImageInspector;
 
     /**
-     * Display and highlight the (singleton) Boot Image inspector.
+     * Display the (singleton) Boot Image inspector.
      * @return  The Boot Image inspector, possibly newly created.
      */
     public static BootImageInspector make(Inspection inspection) {
         if (_bootImageInspector == null) {
             _bootImageInspector = new BootImageInspector(inspection);
         }
-        _bootImageInspector.highlight();
         return _bootImageInspector;
     }
 

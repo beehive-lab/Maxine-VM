@@ -1057,7 +1057,7 @@ public class Inspection extends JFrame {
      * Determines what happened in {@link TeleVM} execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped(long epoch) {
-        assert _teleVM.state() == State.STOPPED;
+        ProgramError.check(_teleVM.state() == State.STOPPED, "State should be stopped, but is " + _teleVM.state());
         setBusy(true);
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set

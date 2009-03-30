@@ -64,13 +64,12 @@ public class StackInspector extends Inspector {
     private static StackInspector _stackInspector;
 
     /**
-     * Displays and highlights the (singleton) inspector, creating it if needed.
+     * Displays the (singleton) inspector, creating it if needed.
      */
     public static StackInspector make(Inspection inspection) {
         if (_stackInspector == null) {
             _stackInspector = new StackInspector(inspection);
         }
-        _stackInspector.highlight();
         return _stackInspector;
     }
 
@@ -691,7 +690,7 @@ public class StackInspector extends Inspector {
                 if (index >= 0 && index < _stackFrameListModel.getSize()) {
                     final StackFrame stackFrame = (StackFrame) _stackFrameListModel.get(index);
                     if (stackFrame instanceof JitStackFrame) {
-                        LocalsInspector.make(inspection(), _teleNativeThread, (JitStackFrame) stackFrame);
+                        LocalsInspector.make(inspection(), _teleNativeThread, (JitStackFrame) stackFrame).highlight();
                     }
                 }
             }

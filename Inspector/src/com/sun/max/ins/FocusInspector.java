@@ -40,7 +40,7 @@ public final class FocusInspector extends Inspector {
     // Set to null when inspector closed.
     private static FocusInspector _focusInspector;
     /**
-     * Display and highlight the (singleton) Focus inspector.
+     * Display the (singleton) Focus inspector.
      *
      * @return  The Focus inspector, possibly newly created.
      */
@@ -48,7 +48,6 @@ public final class FocusInspector extends Inspector {
         if (_focusInspector == null) {
             _focusInspector = new FocusInspector(inspection);
         }
-        _focusInspector.highlight();
         return _focusInspector;
     }
 

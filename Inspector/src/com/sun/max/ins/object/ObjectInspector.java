@@ -492,7 +492,7 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
         return new InspectorAction(inspection(), "Inspect Memory") {
             @Override
             protected void procedure() {
-                makeMemoryInspector();
+                MemoryInspector.create(inspection(), _teleObject).highlight();
             }
         };
     }
@@ -505,7 +505,7 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
         return new InspectorAction(inspection(), "Inspect Memory Words") {
             @Override
             protected void procedure() {
-                makeMemoryWordInspector();
+                MemoryWordInspector.create(inspection(), _teleObject).highlight();
             }
         };
     }

@@ -354,7 +354,8 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
         return new InspectorAction(inspection(), "Inspect Memory") {
             @Override
             protected void procedure() {
-                makeMemoryInspector();
+                final TargetCodeRegion targetCodeRegion = _teleTargetRoutine.targetCodeRegion();
+                MemoryWordInspector.create(inspection(), targetCodeRegion.start(), targetCodeRegion.size().toInt()).highlight();
             }
         };
     }

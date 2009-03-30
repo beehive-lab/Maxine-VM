@@ -39,13 +39,12 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     // Set to null when inspector closed.
     private static ThreadsInspector _threadsInspector;
     /**
-     * Display and highlight the (singleton) threads inspector, creating it if needed.
+     * Display the (singleton) threads inspector, creating it if needed.
      */
     public static ThreadsInspector make(Inspection inspection) {
         if (_threadsInspector == null) {
             _threadsInspector = new ThreadsInspector(inspection);
         }
-        _threadsInspector.highlight();
         return _threadsInspector;
     }
 

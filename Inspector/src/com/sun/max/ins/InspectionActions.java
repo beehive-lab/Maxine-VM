@@ -571,7 +571,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link BootImageInspector}.
+     * Action:  makes visible and highlights the {@link BootImageInspector}.
      */
     final class ViewBootImageAction extends InspectorAction {
 
@@ -583,7 +583,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            BootImageInspector.make(inspection());
+            BootImageInspector.make(inspection()).highlight();
         }
     }
 
@@ -598,7 +598,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link BreakpointsInspector}.
+     * Action:  makes visible and highlights the {@link BreakpointsInspector}.
      */
     final class ViewBreakpointsAction extends InspectorAction {
 
@@ -611,7 +611,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            BreakpointsInspector.make(inspection());
+            BreakpointsInspector.make(inspection()).highlight();
         }
 
         @Override
@@ -631,7 +631,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link MemoryRegionsInspector}.
+     * Action:  makes visible and highlights the {@link MemoryRegionsInspector}.
      */
     final class ViewMemoryRegionsAction extends InspectorAction {
 
@@ -644,7 +644,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryRegionsInspector.make(inspection());
+            MemoryRegionsInspector.make(inspection()).highlight();
         }
 
         @Override
@@ -693,7 +693,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link RegistersInspector}.
+     * Action:  makes visible and highlights the {@link RegistersInspector}.
      */
     final class ViewRegistersAction extends InspectorAction {
 
@@ -706,7 +706,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            RegistersInspector.make(inspection());
+            RegistersInspector.make(inspection()).highlight();
         }
 
         @Override
@@ -726,7 +726,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link StackInspector}.
+     * Action:  makes visible and highlights the {@link StackInspector}.
      */
     final class ViewStackAction extends InspectorAction {
 
@@ -739,7 +739,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            StackInspector.make(inspection());
+            StackInspector.make(inspection()).highlight();
         }
 
         @Override
@@ -759,7 +759,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link ThreadsInspector}.
+     * Action:  makes visible and highlights the {@link ThreadsInspector}.
      */
     final class ViewThreadsAction extends InspectorAction {
 
@@ -772,7 +772,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            ThreadsInspector.make(inspection());
+            ThreadsInspector.make(inspection()).highlight();
         }
 
         @Override
@@ -792,7 +792,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link ThreadLocalsInspector}.
+     * Action:  makes visible and highlights the {@link ThreadLocalsInspector}.
      */
     final class ViewVmThreadLocalsAction extends InspectorAction {
 
@@ -805,7 +805,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            ThreadLocalsInspector.make(inspection());
+            ThreadLocalsInspector.make(inspection()).highlight();
         }
 
         @Override
@@ -905,14 +905,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (_teleObject != null) {
-                MemoryInspector.create(inspection(), _teleObject);
+                MemoryInspector.create(inspection(), _teleObject).highlight();
             } else if (_address != null) {
-                MemoryInspector.create(inspection(), _address);
+                MemoryInspector.create(inspection(), _address).highlight();
             } else {
                 new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Inspect memory at address...", "Inspect") {
                     @Override
                     public void entered(Address address) {
-                        MemoryInspector.create(inspection(), address);
+                        MemoryInspector.create(inspection(), address).highlight();
                     }
                 };
             }
@@ -1031,16 +1031,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             if (_teleObject != null) {
-                MemoryWordInspector.create(inspection(), _teleObject);
+                MemoryWordInspector.create(inspection(), _teleObject).highlight();
             }
             if (_address != null) {
-                MemoryWordInspector.create(inspection(), _address);
+                MemoryWordInspector.create(inspection(), _address).highlight();
             } else {
                 new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Inspect memory words at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
-                        MemoryWordInspector.create(inspection(), address);
+                        MemoryWordInspector.create(inspection(), address).highlight();
                     }
                 };
             }
@@ -1089,7 +1089,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), teleVM().bootImageStart());
+            MemoryWordInspector.create(inspection(), teleVM().bootImageStart()).highlight();
         }
     }
 
@@ -1116,7 +1116,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), teleVM().teleBootCodeRegion().start());
+            MemoryWordInspector.create(inspection(), teleVM().teleBootCodeRegion().start()).highlight();
         }
     }
 
@@ -2793,7 +2793,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  displays an inspection of the current Java frame descriptor.
+     * Action:  displays and highlights an inspection of the current Java frame descriptor.
      */
     final class InspectJavaFrameDescriptorAction extends InspectorAction {
         private static final String DEFAULT_TITLE = "Inspect Java frame descriptor";
@@ -2814,7 +2814,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             assert _targetJavaFrameDescriptor != null;
-            TargetJavaFrameDescriptorInspector.make(inspection(), _targetJavaFrameDescriptor, _abi);
+            TargetJavaFrameDescriptorInspector.make(inspection(), _targetJavaFrameDescriptor, _abi).highlight();
         }
 
         /**
@@ -2862,7 +2862,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  makes visible the {@link FocusInspector}.
+     * Action:  makes visible and highlight the {@link FocusInspector}.
      */
     final class ViewFocusAction extends InspectorAction {
 
@@ -2874,7 +2874,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            FocusInspector.make(inspection());
+            FocusInspector.make(inspection()).highlight();
         }
     }
 
