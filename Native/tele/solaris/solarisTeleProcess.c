@@ -38,13 +38,13 @@ void teleProcess_initialize(void) {
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong handle, jlong src, jobject dst, jint dstOffset, jint length) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong handle, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     struct ps_prochandle *ph = (struct ps_prochandle *) handle;
     return teleProcess_read(ph, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong handle, jlong dst, jobject src, jint srcOffset, jint length) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong handle, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
     struct ps_prochandle *ph = (struct ps_prochandle *) handle;
     return teleProcess_write(ph, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
