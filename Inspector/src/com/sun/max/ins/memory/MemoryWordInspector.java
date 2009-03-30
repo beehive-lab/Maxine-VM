@@ -339,8 +339,8 @@ public final class MemoryWordInspector extends Inspector {
         return style().wordDataBackgroundColor().darker();
     }
 
-    private MemoryWordInspector(Inspection inspection, Residence residence, Address address, int numberOfWords) {
-        super(inspection, residence);
+    private MemoryWordInspector(Inspection inspection, Address address, int numberOfWords) {
+        super(inspection);
         _address = address.aligned();
         _selectedAddress = _address;
         _numberOfWords = numberOfWords;
@@ -366,8 +366,8 @@ public final class MemoryWordInspector extends Inspector {
     /**
      * Displays and highlights a new word inspector for a region of memory in the {@link TeleVM}.
      */
-    public static MemoryWordInspector create(Inspection inspection, Residence residence, Address address, int numberOfWords) {
-        final MemoryWordInspector memoryWordInspector = new MemoryWordInspector(inspection, residence, address, numberOfWords);
+    public static MemoryWordInspector create(Inspection inspection, Address address, int numberOfWords) {
+        final MemoryWordInspector memoryWordInspector = new MemoryWordInspector(inspection, address, numberOfWords);
         memoryWordInspector.highlight();
         return memoryWordInspector;
     }
@@ -376,7 +376,7 @@ public final class MemoryWordInspector extends Inspector {
      * Displays and highlights a new word inspector for a region of memory in the {@link TeleVM}.
      */
     public static MemoryWordInspector create(Inspection inspection, Address address) {
-        return create(inspection, Residence.INTERNAL, address, 10);
+        return create(inspection, address, 10);
     }
 
     /**
@@ -385,7 +385,7 @@ public final class MemoryWordInspector extends Inspector {
     public static MemoryWordInspector create(Inspection inspection, TeleObject teleObject) {
         final Pointer cell = teleObject.getCurrentCell();
         final int size = teleObject.getCurrentSize().toInt();
-        return create(inspection, Residence.INTERNAL, cell, size);
+        return create(inspection, cell, size);
     }
 
     @Override

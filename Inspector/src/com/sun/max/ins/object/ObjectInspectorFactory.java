@@ -25,8 +25,6 @@ import java.util.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -112,7 +110,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
         if (objectInspector == null) {
             switch (teleObject.getObjectKind()) {
                 case HYBRID: {
-                    objectInspector = new HubInspector(inspection, this, Residence.INTERNAL, teleObject);
+                    objectInspector = new HubInspector(inspection, this, teleObject);
                     break;
                 }
                 case TUPLE: {
@@ -121,7 +119,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                         constructor = _defaultTupleInspectorConstructor;
                     }
                     try {
-                        objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, Residence.INTERNAL, teleObject);
+                        objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
                     } catch (InstantiationException e) {
                         throw ProgramError.unexpected();
                     } catch (IllegalAccessException e) {
@@ -142,7 +140,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                         constructor = _defaultArrayInspectorConstructor;
                     }
                     try {
-                        objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, Residence.INTERNAL, teleObject);
+                        objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, teleObject);
                     } catch (InstantiationException e) {
                         throw ProgramError.unexpected();
                     } catch (IllegalAccessException e) {
@@ -163,7 +161,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
     }
 
     private Constructor getConstructor(Class clazz) {
-        return Classes.getDeclaredConstructor(clazz, Inspection.class, ObjectInspectorFactory.class, Inspector.Residence.class, TeleObject.class);
+        return Classes.getDeclaredConstructor(clazz, Inspection.class, ObjectInspectorFactory.class, TeleObject.class);
     }
 
     private Constructor lookupInspectorConstructor(Map<Class, Constructor> map, Class clazz) {

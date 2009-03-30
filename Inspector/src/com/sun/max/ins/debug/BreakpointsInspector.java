@@ -47,7 +47,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
      */
     public static BreakpointsInspector make(Inspection inspection) {
         if (_breakpointsInspector == null) {
-            _breakpointsInspector = new BreakpointsInspector(inspection, Residence.INTERNAL);
+            _breakpointsInspector = new BreakpointsInspector(inspection);
         }
         _breakpointsInspector.highlight();
         return _breakpointsInspector;
@@ -60,8 +60,8 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     private BreakpointsTable _table;
 
-    private BreakpointsInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private BreakpointsInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         _viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);

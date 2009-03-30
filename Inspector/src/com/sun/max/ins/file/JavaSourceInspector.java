@@ -59,8 +59,8 @@ public final class JavaSourceInspector  extends FileInspector {
         frame().moveToMiddle();
     }
 
-    private JavaSourceInspector(Inspection inspection, Residence residence, File file) {
-        super(inspection, residence, file);
+    private JavaSourceInspector(Inspection inspection, File file) {
+        super(inspection, file);
         createFrame(null);
     }
 
@@ -73,7 +73,7 @@ public final class JavaSourceInspector  extends FileInspector {
         final UniqueInspector.Key<JavaSourceInspector> key = UniqueInspector.Key.create(JavaSourceInspector.class, sourceFile);
         javaSourceInspector = UniqueInspector.find(inspection, key);
         if (javaSourceInspector == null) {
-            javaSourceInspector = new JavaSourceInspector(inspection, Residence.INTERNAL, sourceFile);
+            javaSourceInspector = new JavaSourceInspector(inspection, sourceFile);
         }
         javaSourceInspector.highlight();
         return javaSourceInspector;
