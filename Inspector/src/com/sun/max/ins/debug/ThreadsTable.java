@@ -70,6 +70,9 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         updateSelection();
     }
 
+    /**
+     * Sets table selection to thread, if any, that is the current user focus.
+     */
     private void updateSelection() {
         final TeleNativeThread teleNativeThread = inspection().focus().thread();
         final int row = _model.findRow(teleNativeThread);
@@ -82,6 +85,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
     @Override
     protected JTableHeader createDefaultTableHeader() {
+        // Custom table header with tooltips that describe the column data.
         return new JTableHeader(_columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
@@ -95,6 +99,8 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
     @Override
     public void valueChanged(ListSelectionEvent listSelectionEvent) {
+        // Row selection changed, perhaps by user mouse click or navigation;
+        // update user focus to follow the selection.
         super.valueChanged(listSelectionEvent);
         if (!listSelectionEvent.getValueIsAdjusting()) {
             final int row = getSelectedRow();
@@ -131,10 +137,10 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         }
     }
 
+    /**
+     * A table data model wrapped around the thread list in the {@link TeleVM}.
+     */
     private final class ThreadsTableModel extends AbstractTableModel {
-
-        public ThreadsTableModel() {
-        }
 
         void refresh() {
             fireTableDataChanged();
