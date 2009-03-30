@@ -452,21 +452,20 @@ public final class MaxineVM {
     /**
      * Request the given method to be statically compiled in the boot image.
      */
+    @PROTOTYPE_ONLY
     public static void registerImageMethod(ClassMethodActor imageMethod) {
-        if (isPrototyping()) {
-            CompiledPrototype.registerImageMethod(imageMethod);
-        }
+        CompiledPrototype.registerImageMethod(imageMethod);
     }
 
     /**
      * Request the given method to be statically compiled in the boot image.
      */
+    @PROTOTYPE_ONLY
     public static void registerImageInvocationStub(MethodActor imageMethodActorWithInvocationStub) {
-        if (isPrototyping()) {
-            CompiledPrototype.registerImageInvocationStub(imageMethodActorWithInvocationStub);
-        }
+        CompiledPrototype.registerImageInvocationStub(imageMethodActorWithInvocationStub);
     }
 
+    @PROTOTYPE_ONLY
     public static void registerCriticalMethod(CriticalMethod criticalEntryPoint) {
         registerImageMethod(criticalEntryPoint.classMethodActor());
     }

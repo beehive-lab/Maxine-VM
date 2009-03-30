@@ -283,14 +283,14 @@ Address image_code_end(void) {
 }
 
 static void mapHeapAndCode(int fd) {
-    int fileOffset = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize);
+    int heapOffsetInImage = pageAligned(sizeof(struct image_Header) + _header->stringDataSize + _header->relocationDataSize);
 #if log_LOADER
     log_println("image.mapHeapAndCode");
 #endif
 #if MEMORY_IMAGE
-    _heap = (Address) &maxvm_image_start + fileOffset;
+    _heap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_LINUX
-    _heap = virtualMemory_mapFileIn31BitSpace(_header->bootHeapSize + _header->bootCodeSize, fd, fileOffset);
+    _heap = virtualMemory_mapFileIn31BitSpace(_header->bootHeapSize + _header->bootCodeSize, fd, heapOffsetInImage);
     if (_heap == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
@@ -306,7 +306,7 @@ static void mapHeapAndCode(int fd) {
     log_println("reserved address space ends at %p", _heap + TERA_BYTE);
 #endif
 
-    if (virtualMemory_mapFileAtFixedAddress(_heap, _header->bootHeapSize + _header->bootCodeSize, fd, fileOffset) == ALLOC_FAILED) {
+    if (virtualMemory_mapFileAtFixedAddress(_heap, _header->bootHeapSize + _header->bootCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
 #else

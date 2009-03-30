@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.page;
 
+import java.nio.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -41,15 +43,15 @@ public class PageDataAccess extends DataAccessAdapter {
     private final TeleIO _teleIO;
     private final int _indexShift;
     private final int _offsetMask;
-    private Endianness _endianness;
+    private final ByteBuffer _writeBuffer;
 
-    public PageDataAccess(DataModel dataModel, TeleIO teleIO) {
-        super(dataModel);
-        _teleIO = teleIO;
+    public PageDataAccess(TeleIO teleProcess, DataModel dataModel) {
+        super(dataModel.wordWidth());
+        _teleIO = teleProcess;
         ProgramError.check(Integer.bitCount(_teleIO.pageSize()) == 1, "Page size is not a power of 2: " + _teleIO.pageSize());
-        _indexShift = Integer.numberOfTrailingZeros(teleIO.pageSize());
-        _offsetMask = teleIO.pageSize() - 1;
-        _endianness = dataModel.endianness();
+        _indexShift = Integer.numberOfTrailingZeros(teleProcess.pageSize());
+        _offsetMask = teleProcess.pageSize() - 1;
+        _writeBuffer = ByteBuffer.wrap(new byte[Longs.SIZE]).order(dataModel.endianness().asByteOrder());
     }
 
     public int pageSize() {
@@ -66,21 +68,21 @@ public class PageDataAccess extends DataAccessAdapter {
 
     private final VariableMapping<Long, Page> _indexToPage = HashMapping.createVariableEqualityMapping();
 
-    public synchronized void invalidateCache() {
-        _indexToPage.clear();
+    private static void checkNullPointer(Address address) {
+        if (address.isZero()) {
+            throw new NullPointerException("Cannot access address ZERO");
+        }
     }
 
     private void invalidatePage(long index) {
-        _indexToPage.remove(index);
+        final Page page = _indexToPage.get(index);
+        if (page != null) {
+            page.invalidate();
+        }
     }
-
-    private static final int _MAX_PAGE_INVALIDATIONS = 1024;
 
     public synchronized void invalidate(Address address, Size size) {
         long numberOfPages = getIndex(size);
-        if (numberOfPages > _MAX_PAGE_INVALIDATIONS) {
-            invalidateCache();
-        }
         if (getOffset(address) + getOffset(size) > pageSize()) {
             numberOfPages++;
         }
@@ -91,16 +93,14 @@ public class PageDataAccess extends DataAccessAdapter {
     }
 
     public void invalidateForWrite(Address address, int size) {
-        if (address.isZero()) {
-            throw new NullPointerException("Cannot write to Address ZERO");
-        }
+        checkNullPointer(address);
         invalidate(address, Size.fromInt(size));
     }
 
     private Page getPage(long index) {
         Page page = _indexToPage.get(index);
         if (page == null) {
-            page = new Page(_teleIO, index);
+            page = new Page(_teleIO, index, _writeBuffer.order());
             _indexToPage.put(index, page);
             if ((_indexToPage.length() % 1000) == 0) {
                 Trace.line(TRACE_VALUE, tracePrefix() + "Memory cache: " + _indexToPage.length() + " pages");
@@ -113,8 +113,8 @@ public class PageDataAccess extends DataAccessAdapter {
         return getPage(getIndex(address));
     }
 
-    public synchronized int read(Address address, byte[] buffer, int offset, int length) {
-        final int toRead = Math.min(length, buffer.length - offset);
+    public synchronized int read(Address address, ByteBuffer buffer, int offset, int length) {
+        final int toRead = Math.min(length, buffer.limit() - offset);
         long pageIndex = getIndex(address);
         int pageOffset = getOffset(address);
         int i = 0;
@@ -127,67 +127,53 @@ public class PageDataAccess extends DataAccessAdapter {
     }
 
     public synchronized byte readByte(Address address) {
-        if (address.isZero()) {
-            throw new NullPointerException("Can't read from Address ZERO");
-        }
+        checkNullPointer(address);
         return getPage(address).readByte(getOffset(address));
     }
 
+
     public synchronized short readShort(Address address) {
-        final int a = readByte(address);
-        final int b = readByte(address.plus(Bytes.SIZE));
-        switch (_endianness) {
-            case LITTLE:
-                return (short) ((a & Bytes.MASK) | (b << Bytes.WIDTH));
-            case BIG:
-                return (short) ((a << Bytes.WIDTH) | (b & Bytes.MASK));
-            default:
-                ProgramError.unknownCase();
-                return -1;
-        }
+        checkNullPointer(address);
+        return getPage(address).readShort(getOffset(address));
     }
 
     public synchronized int readInt(Address address) {
-        final int a = readShort(address);
-        final int b = readShort(address.plus(Shorts.SIZE));
-        switch (_endianness) {
-            case LITTLE:
-                return (a & Shorts.MASK) | (b << Shorts.WIDTH);
-            case BIG:
-                return (a << Shorts.WIDTH) | (b & Shorts.MASK);
-            default:
-                ProgramError.unknownCase();
-                return -1;
-        }
+        checkNullPointer(address);
+        return getPage(address).readInt(getOffset(address));
     }
 
-    public synchronized int write(byte[] buffer, int offset, int length, Address address) {
-        invalidateForWrite(address, buffer.length);
+    public long readLong(Address address) {
+        checkNullPointer(address);
+        return getPage(address).readLong(getOffset(address));
+    }
+
+    public synchronized int write(ByteBuffer buffer, int offset, int length, Address address) {
+        invalidateForWrite(address, buffer.limit());
         DataIO.Static.checkRead(buffer, offset, length);
-        return _teleIO.write(buffer, offset, buffer.length, address);
+        return _teleIO.write(buffer, offset, buffer.limit(), address);
     }
 
     public synchronized void writeByte(Address address, byte value) {
         invalidateForWrite(address, Bytes.SIZE);
-        final byte[] buffer = _endianness.toBytes(value);
-        _teleIO.write(buffer, 0, buffer.length, address);
+        _writeBuffer.put(0, value);
+        _teleIO.write(_writeBuffer, 0, Bytes.SIZE, address);
     }
 
     public synchronized void writeShort(Address address, short value) {
         invalidateForWrite(address, Shorts.SIZE);
-        final byte[] buffer = _endianness.toBytes(value);
-        _teleIO.write(buffer, 0, buffer.length, address);
+        _writeBuffer.putShort(0, value);
+        _teleIO.write(_writeBuffer, 0, Shorts.SIZE, address);
     }
 
     public synchronized void writeInt(Address address, int value) {
         invalidateForWrite(address, Ints.SIZE);
-        final byte[] buffer = _endianness.toBytes(value);
-        _teleIO.write(buffer, 0, buffer.length, address);
+        _writeBuffer.putInt(0, value);
+        _teleIO.write(_writeBuffer, 0, Ints.SIZE, address);
     }
 
     public synchronized void writeLong(Address address, long value) {
         invalidateForWrite(address, Longs.SIZE);
-        final byte[] buffer = _endianness.toBytes(value);
-        _teleIO.write(buffer, 0, buffer.length, address);
+        _writeBuffer.putLong(0, value);
+        _teleIO.write(_writeBuffer, 0, Longs.SIZE, address);
     }
 }

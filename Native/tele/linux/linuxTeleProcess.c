@@ -64,7 +64,7 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
     if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, NULL, NULL)) {
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
         ThreadSpecificsStruct threadSpecificsStruct;
-        threadSpecifics = threadSpecificsList_search(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
+        threadSpecifics = teleProcess_findThreadSpecifics(tgid, tid, threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
     }
     teleProcess_jniGatherThread(env, linuxTeleProcess, threadSequence, tid, threadState, threadSpecifics);
 }

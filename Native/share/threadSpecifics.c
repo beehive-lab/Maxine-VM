@@ -97,30 +97,3 @@ void threadSpecificsList_remove(ThreadSpecificsList threadSpecificsList, ThreadS
 
     TSL_MUTEX_DO(threadSpecificList, mutex_exit);
 }
-
-#if TELE
-
-ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics) {
-    ThreadSpecificsListStruct threadSpecificsListStruct;
-
-    ThreadSpecificsList threadSpecificsList = &threadSpecificsListStruct;
-    READ_PROCESS_MEMORY(threadSpecificsListAddress, threadSpecificsList, sizeof(ThreadSpecificsListStruct));
-    Address threadSpecificsAddress = (Address) threadSpecificsList->head;
-    while (threadSpecificsAddress != 0) {
-        READ_PROCESS_MEMORY(threadSpecificsAddress, threadSpecifics, sizeof(ThreadSpecificsStruct));
-#if log_TELE
-        log_print("threadSpecificsList_search(%p): ", stackPointer);
-        threadSpecifics_println(threadSpecifics);
-#endif
-        Address stackBase = threadSpecifics->stackBase;
-        Size stackSize = threadSpecifics->stackSize;
-        if (stackBase <= stackPointer && stackPointer < (stackBase + stackSize)) {
-            return threadSpecifics;
-        }
-        threadSpecificsAddress = (Address) threadSpecifics->next;
-    }
-
-    return NULL;
-}
-
-#endif

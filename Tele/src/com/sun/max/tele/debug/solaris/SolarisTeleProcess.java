@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug.solaris;
 
 import java.io.*;
+import java.nio.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.memory.*;
@@ -45,10 +46,6 @@ public final class SolarisTeleProcess extends TeleProcess {
         return _pageDataAccess;
     }
 
-    public void invalidateCache() {
-        _pageDataAccess.invalidateCache();
-    }
-
     private static native long nativeCreateChild(long argv, int vmAgentPort);
 
     private long _processHandle;
@@ -71,7 +68,7 @@ public final class SolarisTeleProcess extends TeleProcess {
         super(teleVM, platform);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         _processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        _pageDataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
+        _pageDataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
         try {
             resume();
         } catch (OSExecutionRequestException e) {
@@ -112,7 +109,6 @@ public final class SolarisTeleProcess extends TeleProcess {
     @Override
     protected boolean waitUntilStopped() {
         final boolean result = nativeWait(_processHandle);
-        invalidateCache();
         return result;
     }
 
@@ -130,18 +126,51 @@ public final class SolarisTeleProcess extends TeleProcess {
         return new SolarisTeleNativeThread(this, id, lwpId, stackBase, stackSize);
     }
 
-    private static native int nativeReadBytes(long processHandle, long address, byte[] buffer, int offset, int length);
+    /**
+     * Copies bytes from the tele process into a given {@linkplain ByteBuffer#isDirect() direct ByteBuffer} or byte
+     * array.
+     *
+     * @param src the address in the tele process to copy from
+     * @param dst the destination of the copy operation. This is a direct {@link ByteBuffer} or {@code byte[]}
+     *            depending on the value of {@code isDirectByteBuffer}
+     * @param isDirectByteBuffer
+     * @param dstOffset the offset in {@code dst} at which to start writing
+     * @param length the number of bytes to copy
+     * @return the number of bytes copied or -1 if there was an error
+     */
+    private static native int nativeReadBytes(long processHandle, long src, Object dst, boolean isDirectByteBuffer, int offset, int length);
 
     @Override
-    protected int read0(Address address, byte[] buffer, int offset, int length) {
-        return nativeReadBytes(_processHandle, address.toLong(), buffer, offset, length);
+    protected int read0(Address src, ByteBuffer dst, int offset, int length) {
+        assert dst.limit() - offset >= length;
+        if (dst.isDirect()) {
+            return nativeReadBytes(_processHandle, src.toLong(), dst, true, offset, length);
+        }
+        assert dst.array() != null;
+        return nativeReadBytes(_processHandle, src.toLong(), dst.array(), false, dst.arrayOffset() + offset, length);
     }
 
-    private static native int nativeWriteBytes(long processHandle, long address, byte[] buffer, int offset, int length);
+    /**
+     * Copies bytes from a given {@linkplain ByteBuffer#isDirect() direct ByteBuffer} or byte array into the tele process.
+     *
+     * @param dst the address in the tele process to copy to
+     * @param src the source of the copy operation. This is a direct {@link ByteBuffer} or {@code byte[]}
+     *            depending on the value of {@code isDirectByteBuffer}
+     * @param isDirectByteBuffer
+     * @param srcOffset the offset in {@code src} at which to start reading
+     * @param length the number of bytes to copy
+     * @return the number of bytes copied or -1 if there was an error
+     */
+    private static native int nativeWriteBytes(long processHandle, long dst, Object src, boolean isDirectByteBuffer, int offset, int length);
 
     @Override
-    protected int write0(byte[] buffer, int offset, int length, Address address) {
-        return nativeWriteBytes(_processHandle, address.toLong(), buffer, offset, length);
+    protected int write0(ByteBuffer src, int offset, int length, Address dst) {
+        assert src.limit() - offset >= length;
+        if (src.isDirect()) {
+            return nativeWriteBytes(_processHandle, dst.toLong(), src, true, offset, length);
+        }
+        assert src.array() != null;
+        return nativeWriteBytes(_processHandle, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
     }
 
     private native boolean nativeActivateWatchpoint(long processHandle, long start, long size);

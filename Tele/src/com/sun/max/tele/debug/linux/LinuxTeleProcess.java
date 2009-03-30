@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug.linux;
 
 import java.io.*;
+import java.nio.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -50,10 +51,6 @@ public final class LinuxTeleProcess extends TeleProcess {
         return _pageDataAccess;
     }
 
-    private void invalidateCache() {
-        _pageDataAccess.invalidateCache();
-    }
-
     LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
         super(teleVM, platform);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
@@ -61,7 +58,7 @@ public final class LinuxTeleProcess extends TeleProcess {
         if (_task == null) {
             throw new BootImageException("Error launching VM");
         }
-        _pageDataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
+        _pageDataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
         try {
             resume();
         } catch (OSExecutionRequestException e) {
@@ -87,7 +84,6 @@ public final class LinuxTeleProcess extends TeleProcess {
     @Override
     protected boolean waitUntilStopped() {
         final boolean result = _task.waitUntilStopped(true);
-        invalidateCache();
         if (!result) {
             _task.close();
         }
@@ -117,12 +113,12 @@ public final class LinuxTeleProcess extends TeleProcess {
     }
 
     @Override
-    protected int read0(Address address, byte[] buffer, int offset, int length) {
+    protected int read0(Address address, ByteBuffer buffer, int offset, int length) {
         return _task.readBytes(address, buffer, offset, length);
     }
 
     @Override
-    protected int write0(byte[] buffer, int offset, int length, Address address) {
+    protected int write0(ByteBuffer buffer, int offset, int length, Address address) {
         return _task.writeBytes(address, buffer, offset, length);
     }
 }

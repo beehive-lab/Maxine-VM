@@ -116,6 +116,12 @@ int task_read(task_t task, vm_address_t src, void *dst, size_t size) {
   return result == KERN_SUCCESS ? (jint) bytesRead : -1;
 }
 
+
+int task_write(task_t task, vm_address_t dst, void *src, size_t size) {
+  kern_return_t result = Mach_vm_write(POS, task, (vm_address_t) dst, (vm_offset_t) src, size);
+  return result == KERN_SUCCESS ? (int) size : -1;
+}
+
 jboolean waitForSignal(jlong task, int signalnum) {
     int pid;
     Pid_for_task(POS, task, &pid);
@@ -234,7 +240,7 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeGatherThreads(JNIEnv 
         }
 
         ThreadSpecificsStruct threadSpecificsStruct;
-        ThreadSpecifics threadSpecifics = threadSpecificsList_search(task, threadSpecificsListAddress, threadState.__rsp, &threadSpecificsStruct);
+        ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(task, threadSpecificsListAddress, threadState.__rsp, &threadSpecificsStruct);
         teleProcess_jniGatherThread(env, process, result, thread, state, threadSpecifics);
     }
 
@@ -270,37 +276,11 @@ Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeResume(JNIEnv *env, j
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong task, jlong address, jbyteArray byteArray, jint offset, jint length) {
-  void* buffer = (void *) malloc(length * sizeof(jbyte));
-  if (buffer == 0) {
-      log_println("Failed to malloc byteArray of %d bytes", length);
-      return -1;
-  }
-  jint bytesRead = task_read(task, address, buffer, length);
-  if (bytesRead > 0) {
-      (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
-  }
-  free(buffer);
-
-  return bytesRead;
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong task, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
+    return teleProcess_read(task, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong task, jlong address, jbyteArray byteArray, jint offset, jint length) {
-    jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
-    if (buffer == 0) {
-        log_println("failed to malloc byteArray of %d bytes", length);
-        return -1;
-    }
-
-    (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
-    if ((*env)->ExceptionOccurred(env) != NULL) {
-        log_println("failed to copy %d bytes from byteArray into buffer", length);
-        return -1;
-    }
-
-
-    kern_return_t result = Mach_vm_write(POS, task, (vm_address_t) address, (vm_offset_t) buffer, length);
-    free(buffer);
-    return result == KERN_SUCCESS ? length : -1;
+Java_com_sun_max_tele_debug_darwin_DarwinTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong task, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
+    return teleProcess_write(task, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }

@@ -27,7 +27,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.transform.*;
 import com.sun.max.vm.compiler.dir.*;
-import com.sun.max.vm.compiler.dir.transform.*;
 
 /**
  * A DIR generator that translates from CIR.
@@ -66,7 +65,6 @@ public class CirToDirTranslator extends DirGenerator {
         }
 
         dirMethod.setGenerated(dirParameters, dirBlocks);
-        MethodTrace.instrument(dirMethod);
 
         Trace.end(3, "CIR->DIR " + cirMethod.getQualifiedName());
     }

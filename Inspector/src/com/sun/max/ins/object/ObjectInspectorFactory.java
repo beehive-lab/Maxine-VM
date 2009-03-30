@@ -123,11 +123,11 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
                     try {
                         objectInspector = (ObjectInspector) constructor.newInstance(inspection, this, Residence.INTERNAL, teleObject);
                     } catch (InstantiationException e) {
-                        throw ProgramError.unexpected();
+                        throw ProgramError.unexpected(e);
                     } catch (IllegalAccessException e) {
-                        throw ProgramError.unexpected();
+                        throw ProgramError.unexpected(e);
                     } catch (InvocationTargetException e) {
-                        throw ProgramError.unexpected();
+                        throw ProgramError.unexpected(e.getTargetException());
                     }
                     break;
                 }

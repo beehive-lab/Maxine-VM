@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug;
 
+import java.nio.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -29,14 +31,14 @@ import com.sun.max.unsafe.*;
  */
 public abstract class DataAccessAdapter implements DataAccess {
 
-    private final DataModel _dataModel;
+    private final WordWidth _wordWidth;
 
-    protected DataAccessAdapter(DataModel dataModel) {
-        _dataModel = dataModel;
+    protected DataAccessAdapter(WordWidth wordWidth) {
+        _wordWidth = wordWidth;
     }
 
-    protected DataModel dataModel() {
-        return _dataModel;
+    public void readFully(Address address, ByteBuffer buffer) {
+        DataIO.Static.readFully(this, address, buffer);
     }
 
     public byte[] readFully(Address address, int length) {
@@ -44,7 +46,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void readFully(Address address, byte[] buffer) {
-        DataIO.Static.readFully(this, address, buffer);
+        DataIO.Static.readFully(this, address, ByteBuffer.wrap(buffer));
     }
 
     public byte readByte(Address address, Offset offset) {
@@ -131,20 +133,6 @@ public abstract class DataAccessAdapter implements DataAccess {
         return readFloat(address.plus(displacement).plus(index * Floats.SIZE));
     }
 
-    public long readLong(Address address) {
-        final long a = readInt(address) & Longs.INT_MASK;
-        final long b = readInt(address.plus(Ints.SIZE)) & Longs.INT_MASK;
-        switch (_dataModel.endianness()) {
-            case LITTLE:
-                return a | (b << 32);
-            case BIG:
-                return (a << 32) | b;
-            default:
-                ProgramError.unknownCase();
-                return -1L;
-        }
-    }
-
     public long readLong(Address address, Offset offset) {
         return readLong(address.plus(offset));
     }
@@ -174,7 +162,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public Word readWord(Address address) {
-        switch (_dataModel.wordWidth()) {
+        switch (_wordWidth) {
             case BITS_32:
                 return Offset.fromInt(readInt(address));
             case BITS_64:
@@ -193,18 +181,23 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public Word getWord(Address address, int displacement, int index) {
-        return readWord(address.plus(displacement).plus(index * _dataModel.wordWidth().numberOfBytes()));
+        return readWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()));
     }
 
-    public void writeBytes(Address address, byte[] bytes) {
-        final int length = bytes.length;
-        final int bytesWritten = write(bytes, 0, length, address);
+    @Override
+    public void writeBuffer(Address address, ByteBuffer buffer) {
+        final int length = buffer.capacity();
+        final int bytesWritten = write(buffer, 0, length, address);
         if (bytesWritten < 0) {
             throw new DataIOError(address);
         }
         if (bytesWritten != length) {
             throw new DataIOError(address, (length - bytesWritten) + " of " + length + " bytes unwritten");
         }
+    }
+
+    public void writeBytes(Address address, byte[] bytes) {
+        writeBuffer(address, ByteBuffer.wrap(bytes));
     }
 
     public void writeByte(Address address, Offset offset, byte value) {
@@ -320,7 +313,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void writeWord(Address address, Word value) {
-        switch (_dataModel.wordWidth()) {
+        switch (_wordWidth) {
             case BITS_32:
                 writeInt(address, value.asOffset().toInt());
                 break;
@@ -341,7 +334,7 @@ public abstract class DataAccessAdapter implements DataAccess {
     }
 
     public void setWord(Address address, int displacement, int index, Word value) {
-        writeWord(address.plus(displacement).plus(index * _dataModel.wordWidth().numberOfBytes()), value);
+        writeWord(address.plus(displacement).plus(index * _wordWidth.numberOfBytes()), value);
     }
 
 }

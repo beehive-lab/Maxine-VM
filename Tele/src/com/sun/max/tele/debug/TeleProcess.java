@@ -23,6 +23,7 @@ package com.sun.max.tele.debug;
 import static com.sun.max.tele.debug.TeleProcess.State.*;
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -669,7 +670,7 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         return platform().pageSize();
     }
 
-    public final int read(Address address, byte[] buffer, int offset, int length) {
+    public final int read(Address address, ByteBuffer buffer, int offset, int length) {
         if (_state == TERMINATED) {
             throw new DataIOError(address, "Attempt to read the memory when the process is in state " + TERMINATED);
         }
@@ -685,20 +686,20 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * Reads bytes from an address into a given byte array.
+     * Reads bytes from an address into a given byte buffer.
      *
      * Precondition:
-     * {@code buffer != null && offset >= 0 && offset < buffer.length && length >= 0 && offset + length <= buffer.length}
+     * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
      *
      * @param address the address from which reading should start
-     * @param buffer the array into which the bytes are read
+     * @param buffer the buffer into which the bytes are read
      * @param offset the offset in {@code buffer} at which the bytes are read
      * @param length the number of bytes to be read
      * @return the number of bytes read into {@code buffer} or -1 if there was an error while trying to read the data
      */
-    protected abstract int read0(Address address, byte[] buffer, int offset, int length);
+    protected abstract int read0(Address address, ByteBuffer buffer, int offset, int length);
 
-    public final int write(byte[] buffer, int offset, int length, Address address) {
+    public final int write(ByteBuffer buffer, int offset, int length, Address address) {
         if (_state == TERMINATED) {
             throw new DataIOError(address, "Attempt to write to memory when the process is in state " + TERMINATED);
         }
@@ -717,18 +718,18 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
     }
 
     /**
-     * Writes bytes from a given byte array to a given address.
+     * Writes bytes from a given byte buffer to a given address.
      *
      * Precondition:
-     * {@code buffer != null && offset >= 0 && offset < buffer.length && length >= 0 && offset + length <= buffer.length}
+     * {@code buffer != null && offset >= 0 && offset < buffer.capacity() && length >= 0 && offset + length <= buffer.capacity()}
      *
      * @param address the address at which writing should start
-     * @param buffer the array from which the bytes are written
+     * @param buffer the buffer from which the bytes are written
      * @param offset the offset in {@code buffer} from which the bytes are written
      * @param length the maximum number of bytes to be written
      * @return the number of bytes written to {@code address} or -1 if there was an error while trying to write the data
      */
-    protected abstract int write0(byte[] buffer, int offset, int length, Address address);
+    protected abstract int write0(ByteBuffer buffer, int offset, int length, Address address);
 
     protected boolean activateWatchpoint(MemoryRegion memoryRegion) {
         return false;
