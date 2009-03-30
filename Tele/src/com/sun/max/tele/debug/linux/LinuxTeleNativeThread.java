@@ -60,7 +60,7 @@ public class LinuxTeleNativeThread extends TeleNativeThread {
 
     LinuxTeleNativeThread(LinuxTeleProcess teleProcess, int id, long tid, long stackBase, long stackSize) {
         super(teleProcess, id, tid, stackBase, stackSize);
-        _task = new LinuxTask(teleProcess.task().tgid(), (int) tid);
+        _task = new LinuxTask(teleProcess.task(), (int) tid);
     }
 
     @Override
