@@ -55,8 +55,8 @@ public final class MemoryInspector extends Inspector {
     /**
      * Displays and highlights a new inspector for a region of memory.
      */
-    public static MemoryInspector create(Inspection inspection, Residence residence, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        final MemoryInspector memoryInspector = new MemoryInspector(inspection, residence, address, numberOfGroups, numberOfBytesPerGroup, numberOfGroupsPerLine);
+    public static MemoryInspector create(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
+        final MemoryInspector memoryInspector = new MemoryInspector(inspection, address, numberOfGroups, numberOfBytesPerGroup, numberOfGroupsPerLine);
         memoryInspector.highlight();
         return memoryInspector;
     }
@@ -65,7 +65,7 @@ public final class MemoryInspector extends Inspector {
      * Displays and highlights a new inspector for a region of memory.
      */
     public static MemoryInspector create(Inspection inspection, Address address) {
-        return create(inspection, Residence.INTERNAL, address, 10, 8, 1);
+        return create(inspection, address, 10, 8, 1);
     }
 
     /**
@@ -74,11 +74,11 @@ public final class MemoryInspector extends Inspector {
     public static MemoryInspector create(Inspection inspection, TeleObject teleObject) {
         final Pointer cell = teleObject.getCurrentCell();
         final int size = teleObject.getCurrentSize().toInt();
-        return create(inspection, Residence.INTERNAL, cell, size, 1, 16);
+        return create(inspection, cell, size, 1, 16);
     }
 
-    private MemoryInspector(Inspection inspection, Residence residence, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        super(inspection, residence);
+    private MemoryInspector(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
+        super(inspection);
         _address = address;
         _numberOfGroups = numberOfGroups;
         _numberOfBytesPerGroup = numberOfBytesPerGroup;

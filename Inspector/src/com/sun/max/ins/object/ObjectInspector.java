@@ -233,8 +233,8 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
 
     private InspectorTable _objectHeaderTable;
 
-    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, Residence residence, final TeleObject teleObject) {
-        super(inspection, residence);
+    protected ObjectInspector(final Inspection inspection, ObjectInspectorFactory factory, final TeleObject teleObject) {
+        super(inspection);
         _factory = factory;
         final ObjectInspectorPreferences preferences = globalPreferences(inspection);
         _teleObject = teleObject;

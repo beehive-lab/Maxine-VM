@@ -68,7 +68,7 @@ public class StackInspector extends Inspector {
      */
     public static StackInspector make(Inspection inspection) {
         if (_stackInspector == null) {
-            _stackInspector = new StackInspector(inspection, Residence.INTERNAL);
+            _stackInspector = new StackInspector(inspection);
         }
         _stackInspector.highlight();
         return _stackInspector;
@@ -230,8 +230,8 @@ public class StackInspector extends Inspector {
         }
     }
 
-    public StackInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    public StackInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
         frame().menu().addSeparator();

@@ -24,7 +24,6 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.Inspector.*;
 import com.sun.max.ins.memory.MemoryInspector.*;
 import com.sun.max.ins.memory.MemoryWordInspector.*;
 
@@ -56,9 +55,7 @@ public final class InspectorMenu implements Prober {
         _popupMenu = popupMenu == null ? new JPopupMenu() : popupMenu;
         _standardMenu = standardMenu == null ? new JMenu() : standardMenu;
         if (inspector != null) {
-            if (inspector.residence() == Residence.INTERNAL) {
-                add(inspector.getCloseOtherInspectorsAction());
-            }
+            add(inspector.getCloseOtherInspectorsAction());
             // Undocking isn't supported at this time (mlvdv Jan 2009)
             //add(inspector.createToggleResidenceAction());
             if (inspector instanceof MemoryInspectable) {
@@ -74,9 +71,7 @@ public final class InspectorMenu implements Prober {
         _popupMenu =  new JPopupMenu(name);
         _standardMenu = new JMenu(name);
         if (inspector != null) {
-            if (inspector.residence() == Residence.INTERNAL) {
-                add(inspector.getCloseOtherInspectorsAction());
-            }
+            add(inspector.getCloseOtherInspectorsAction());
             // undocking isn't supported at this time  mlvdv Jan 2009
             //add(inspector.createToggleResidenceAction());
             if (inspector instanceof MemoryInspectable) {

@@ -50,7 +50,7 @@ public final class BootImageInspector extends Inspector {
      */
     public static BootImageInspector make(Inspection inspection) {
         if (_bootImageInspector == null) {
-            _bootImageInspector = new BootImageInspector(inspection, Residence.INTERNAL);
+            _bootImageInspector = new BootImageInspector(inspection);
         }
         _bootImageInspector.highlight();
         return _bootImageInspector;
@@ -60,8 +60,8 @@ public final class BootImageInspector extends Inspector {
 
     private JPanel _infoPanel;
 
-    private BootImageInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private BootImageInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
         createFrame(null);
         Trace.end(1, tracePrefix() + "initializing");

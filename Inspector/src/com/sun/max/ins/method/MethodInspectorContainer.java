@@ -40,15 +40,16 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     public static MethodInspectorContainer make(Inspection inspection) {
         MethodInspectorContainer methodInspectorContainer = UniqueInspector.find(inspection, MethodInspectorContainer.class);
         if (methodInspectorContainer == null) {
-            methodInspectorContainer = new MethodInspectorContainer(inspection, Residence.INTERNAL);
+            methodInspectorContainer = new MethodInspectorContainer(inspection);
         }
         return methodInspectorContainer;
     }
 
-    private MethodInspectorContainer(Inspection inspection, Residence residence) {
-        super(inspection, residence, inspection.geometry().methodsFrameDefaultLocation(), inspection.geometry().methodsFramePrefSize(), "methodsInspector");
+    private MethodInspectorContainer(Inspection inspection) {
+        super(inspection, inspection.geometry().methodsFrameDefaultLocation(), inspection.geometry().methodsFramePrefSize(), "methodsInspector");
         frame().add(new MethodsMenuItems());
     }
+
 
     @Override
     public String getTextForTitle() {

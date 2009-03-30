@@ -404,7 +404,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
     }
 
     public MethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleRoutine teleRoutine) {
-        super(inspection, parent.residence(), teleTargetMethod, teleRoutine);
+        super(inspection, teleTargetMethod, teleRoutine);
         _parent = parent;
     }
 
@@ -484,23 +484,6 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         return false;
     }
 
-    @Override
-    public synchronized void setResidence(Residence residence) {
-        final Residence current = residence();
-        super.setResidence(residence);
-        if (current != residence) {
-            if (residence == Residence.INTERNAL) {
-                // coming back from EXTERNAL, need to redock
-                if (parent() != null) {
-                    parent().add(this);
-                }
-                moveToFront();
-            } else if (residence == Residence.EXTERNAL) {
-                frame().setTitle(getTextForTitle());
-            }
-        }
-    }
-
     /**
      * @return Local {@link TeleTargetRoutine} for the method in the {@link TeleVM}; null if not bound to target code yet.
      */
@@ -525,7 +508,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
 
     public void makeMemoryInspector() {
         if (teleTargetRoutine() != null) {
-            MemoryInspector.create(inspection(), _parent.residence(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt(), 1, 8);
+            MemoryInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt(), 1, 8);
         }
     }
 
@@ -541,7 +524,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
 
     public void makeMemoryWordInspector() {
         if (teleTargetRoutine() != null) {
-            MemoryWordInspector.create(inspection(), _parent.residence(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt());
+            MemoryWordInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt());
         }
     }
 

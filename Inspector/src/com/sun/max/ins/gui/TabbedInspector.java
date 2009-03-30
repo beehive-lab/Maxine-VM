@@ -56,8 +56,8 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         _tabbedPane.removeChangeListener(listener);
     }
 
-    protected TabbedInspector(Inspection inspection, Residence residence, Point initialLocation, Dimension initialSize, final String settingsClientName) {
-        super(inspection, residence);
+    protected TabbedInspector(Inspection inspection, Point initialLocation, Dimension initialSize, final String settingsClientName) {
+        super(inspection);
         _tabbedPane = new JTabbedPane();
         if (settingsClientName != null) {
             _saveSettingsListener = createBasicSettingsClient(this, settingsClientName);

@@ -46,7 +46,7 @@ public final class RegistersInspector extends Inspector {
      */
     public static RegistersInspector make(Inspection inspection) {
         if (_registersInspector == null) {
-            _registersInspector = new RegistersInspector(inspection, Residence.INTERNAL);
+            _registersInspector = new RegistersInspector(inspection);
         }
         _registersInspector.highlight();
         return _registersInspector;
@@ -60,8 +60,8 @@ public final class RegistersInspector extends Inspector {
     private RegisterPanel _stateRegisterPanel;
     private RegisterPanel _floatingPointRegisterPanel;
 
-    public RegistersInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    public RegistersInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
         refreshView(inspection.teleVM().epoch(), true);

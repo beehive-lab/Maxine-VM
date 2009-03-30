@@ -143,8 +143,8 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         _contentPane.add(createController(), BorderLayout.SOUTH);
     }
 
-    private ObjectAggregatorInspector(Inspection inspection, Residence residence, ObjectAggregator objectAggregator) {
-        super(inspection, residence, ReferenceValue.from(objectAggregator.type()));
+    private ObjectAggregatorInspector(Inspection inspection, ObjectAggregator objectAggregator) {
+        super(inspection, ReferenceValue.from(objectAggregator.type()));
         _objectAggregator = objectAggregator;
         _end = Math.min(100, _objectAggregator.count() - 1);
         _contentPane = new InspectorPanel(inspection);
@@ -160,7 +160,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         final UniqueInspector.Key<? extends ObjectAggregatorInspector> key = UniqueInspector.Key.create(ObjectAggregatorInspector.class, ReferenceValue.from(objectAggregator.type()));
         ObjectAggregatorInspector objectAggregatorInspector = UniqueInspector.find(inspection, key);
         if (objectAggregatorInspector == null) {
-            objectAggregatorInspector = new ObjectAggregatorInspector(inspection, Residence.INTERNAL, objectAggregator);
+            objectAggregatorInspector = new ObjectAggregatorInspector(inspection, objectAggregator);
         }
         objectAggregatorInspector.highlight();
         return objectAggregatorInspector;

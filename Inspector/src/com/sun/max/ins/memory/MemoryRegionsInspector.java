@@ -45,7 +45,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
      */
     public static MemoryRegionsInspector make(Inspection inspection) {
         if (_memoryRegionsInspector == null) {
-            _memoryRegionsInspector = new MemoryRegionsInspector(inspection, Residence.INTERNAL);
+            _memoryRegionsInspector = new MemoryRegionsInspector(inspection);
         }
         _memoryRegionsInspector.highlight();
         return _memoryRegionsInspector;
@@ -58,8 +58,8 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
 
     private MemoryRegionsTable _table;
 
-    private MemoryRegionsInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private MemoryRegionsInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
         _viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);

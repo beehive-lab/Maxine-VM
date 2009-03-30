@@ -43,7 +43,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
      */
     public static ThreadsInspector make(Inspection inspection) {
         if (_threadsInspector == null) {
-            _threadsInspector = new ThreadsInspector(inspection, Residence.INTERNAL);
+            _threadsInspector = new ThreadsInspector(inspection);
         }
         _threadsInspector.highlight();
         return _threadsInspector;
@@ -56,8 +56,8 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadsViewPreferences _viewPreferences;
 
-    private ThreadsInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private ThreadsInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         _viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
