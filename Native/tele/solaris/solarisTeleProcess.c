@@ -220,8 +220,9 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
 
     ThreadSpecificsStruct threadSpecificsStruct;
     Address stackPointer = getRegister(a->ph, lwpId, R_SP);
+    Address instructionPointer = getRegister(a->ph, lwpId, R_PC);
     ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(a->ph, a->threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
-    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, threadSpecifics);
+    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, instructionPointer, threadSpecifics);
 
     return 0;
 }

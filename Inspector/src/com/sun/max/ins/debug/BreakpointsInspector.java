@@ -28,7 +28,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 
 /**
  * Singleton inspector that displays information about all kinds of breakpoints that might be set in the {@link TeleVM}.
@@ -43,14 +42,13 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     private static BreakpointsInspector _breakpointsInspector;
 
     /**
-     * Displays and highlights the (singleton) breakpoints inspector.
+     * Displays the (singleton) breakpoints inspector.
      * @return  The breakpoints inspector, possibly newly created.
      */
     public static BreakpointsInspector make(Inspection inspection) {
         if (_breakpointsInspector == null) {
-            _breakpointsInspector = new BreakpointsInspector(inspection, Residence.INTERNAL);
+            _breakpointsInspector = new BreakpointsInspector(inspection);
         }
-        _breakpointsInspector.highlight();
         return _breakpointsInspector;
     }
 
@@ -61,8 +59,8 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     private BreakpointsTable _table;
 
-    private BreakpointsInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private BreakpointsInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         _viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
@@ -94,7 +92,11 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     public void createView(long epoch) {
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
         _table = new BreakpointsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         frame().setContentPane(scrollPane);
     }
@@ -143,11 +145,6 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         refreshView(true);
     }
 
-    @Override
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        _table.selectBreakpoint(teleBreakpoint);
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
@@ -157,6 +154,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         Trace.line(1, tracePrefix() + " closing");
         _breakpointsInspector = null;
         _viewPreferences.removeListener(this);
+        focus().removeListener(_table);
         super.inspectorClosing();
     }
 

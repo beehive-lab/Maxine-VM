@@ -45,13 +45,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     private static ThreadLocalsInspector _threadLocalsInspector;
 
     /**
-     * Displays and highlights the (singleton) thread locals inspector, creating it if needed.
+     * Displays the (singleton) thread locals inspector, creating it if needed.
      */
     public static ThreadLocalsInspector make(Inspection inspection) {
         if (_threadLocalsInspector == null) {
-            _threadLocalsInspector = new ThreadLocalsInspector(inspection, Residence.INTERNAL);
+            _threadLocalsInspector = new ThreadLocalsInspector(inspection);
         }
-        _threadLocalsInspector.highlight();
         return _threadLocalsInspector;
     }
 
@@ -63,8 +62,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     private TeleNativeThread _teleNativeThread;
     private JTabbedPane _tabbedPane;
 
-    private ThreadLocalsInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private ThreadLocalsInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         _viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);

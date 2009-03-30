@@ -34,8 +34,8 @@ public final class ArrayInspector extends ObjectInspector {
 
     private ObjectPane _elementsPane;
 
-    ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
-        super(inspection, factory, residence, teleObject);
+    ArrayInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+        super(inspection, factory, teleObject);
         createFrame(null);
     }
 

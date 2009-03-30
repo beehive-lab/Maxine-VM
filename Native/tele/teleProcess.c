@@ -30,12 +30,12 @@
 
 static jmethodID _jniGatherThreadID = NULL;
 
-void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, ThreadSpecifics threadSpecifics) {
+void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threadSequence, jlong handle, ThreadState_t state, jlong instructionPointer, ThreadSpecifics threadSpecifics) {
 
     if (_jniGatherThreadID == NULL) {
         jclass c = (*env)->GetObjectClass(env, teleProcess);
         c_ASSERT(c != NULL);
-        _jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJIJJJJJ)V");
+        _jniGatherThreadID = (*env)->GetMethodID(env, c, "jniGatherThread", "(Lcom/sun/max/collect/AppendableSequence;IJIJJJJJJ)V");
         c_ASSERT(_jniGatherThreadID != NULL);
     }
 
@@ -48,9 +48,10 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
         threadSpecifics->id = id < 0 ? id : -id;
     }
 
-    tele_log_println("Gathered thread[id=%d, handle=%lu, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
+    tele_log_println("Gathered thread[id=%d, handle=%lu, pc=%p, stackBase=%p, stackEnd=%p, stackSize=%lu, triggeredVmThreadLocals=%p, enabledVmThreadLocals=%p, disabledVmThreadLocals=%p]",
                     threadSpecifics->id,
                     handle,
+                    instructionPointer,
                     threadSpecifics->stackBase,
                     threadSpecifics->stackBase + threadSpecifics->stackSize,
                     threadSpecifics->stackSize,
@@ -62,6 +63,7 @@ void teleProcess_jniGatherThread(JNIEnv *env, jobject teleProcess, jobject threa
                     threadSpecifics->id,
                     handle,
                     state,
+                    instructionPointer,
                     threadSpecifics->stackBase,
                     threadSpecifics->stackSize,
                     threadSpecifics->triggeredVmThreadLocals,

@@ -25,16 +25,19 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.stack.*;
 
 
 /**
@@ -42,9 +45,7 @@ import com.sun.max.unsafe.*;
  *
  * @author Michael Van De Vanter
  */
-public final class BreakpointsTable extends InspectorTable {
-
-    private final Set<BreakpointData> _breakpoints = new TreeSet<BreakpointData>();
+public final class BreakpointsTable extends InspectorTable  implements ViewFocusListener {
 
     private final BreakpointsTableModel _model;
     private BreakpointsColumnModel _columnModel;
@@ -66,9 +67,22 @@ public final class BreakpointsTable extends InspectorTable {
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
-
         refresh(teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+        updateSelection();
+    }
+
+    /**
+     * Sets table selection to breakpoint, if any, that is the current user focus.
+     */
+    private void updateSelection() {
+        final TeleBreakpoint teleBreakpoint = inspection().focus().breakpoint();
+        final int row = _model.findRow(teleBreakpoint);
+        if (row < 0) {
+            clearSelection();
+        } else  if (row != getSelectedRow()) {
+            setRowSelectionInterval(row, row);
+        }
     }
 
     private long _lastRefreshEpoch = -1;
@@ -97,6 +111,7 @@ public final class BreakpointsTable extends InspectorTable {
 
     @Override
     protected JTableHeader createDefaultTableHeader() {
+        // Custom table header with tooltips that describe the column data.
         return new JTableHeader(_columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
@@ -106,6 +121,23 @@ public final class BreakpointsTable extends InspectorTable {
                 return BreakpointsColumnKind.VALUES.get(modelIndex).toolTipText();
             }
         };
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent listSelectionEvent) {
+        // Row selection changed, perhaps by user mouse click or navigation;
+        // update user focus to follow the selection.
+        super.valueChanged(listSelectionEvent);
+        if (!listSelectionEvent.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                final BreakpointData breakpointData = _model.get(row);
+                if (breakpointData != null) {
+                    final TeleBreakpoint teleBreakpoint = breakpointData.teleBreakpoint();
+                    focus().setBreakpoint(teleBreakpoint);
+                }
+            }
+        }
     }
 
     private final class BreakpointsColumnModel extends DefaultTableColumnModel {
@@ -134,10 +166,15 @@ public final class BreakpointsTable extends InspectorTable {
         }
     }
 
+    /**
+     * A table data model built around the list of current breakpoints in the {@link TeleVM}.
+     * @author Michael Van De Vanter
+     *
+     */
     private final class BreakpointsTableModel extends DefaultTableModel {
 
-        BreakpointsTableModel() {
-        }
+        // Cache of information objects for each known breakpoint
+        private final Set<BreakpointData> _breakpoints = new TreeSet<BreakpointData>();
 
         void refresh() {
             // Check for current and added breakpoints
@@ -176,8 +213,8 @@ public final class BreakpointsTable extends InspectorTable {
                     iter.remove();
                 }
             }
+            //updateSelection();
             fireTableDataChanged();
-            selectBreakpoint(focus().breakpoint());
         }
 
         @Override
@@ -187,7 +224,10 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public int getRowCount() {
-            return _breakpoints.size();
+            // This gets called during superclass initialiation, before the local
+            // data has been initialized, even  if you try to set row size to 0
+            // in the constructor.
+            return _breakpoints == null ? 0 : _breakpoints.size();
         }
 
         @Override
@@ -269,6 +309,63 @@ public final class BreakpointsTable extends InspectorTable {
                 default:
             }
         }
+
+        private BreakpointData get(int row) {
+            int count = 0;
+            for (BreakpointData breakpointData : _breakpoints) {
+                if (count == row) {
+                    return breakpointData;
+                }
+                count++;
+            }
+            Problem.error("BreakpointsInspector.get(" + row + ") failed");
+            return null;
+        }
+
+        /**
+         * Return the table row in which a breakpoint is displayed.
+         */
+        private int findRow(TeleBreakpoint breakpoint) {
+            int row = 0;
+            for (BreakpointData breakpointData : _breakpoints) {
+                if (breakpointData.teleBreakpoint() == breakpoint) {
+                    return row;
+                }
+                row++;
+            }
+            return -1;
+        }
+
+        /**
+         * Locates a target code breakpoint already known to the inspector.
+         */
+        TargetBreakpointData findTargetBreakpoint(Address address) {
+            for (BreakpointData breakpointData : _breakpoints) {
+                if (breakpointData instanceof TargetBreakpointData) {
+                    final TargetBreakpointData targetBreakpointData = (TargetBreakpointData) breakpointData;
+                    if (targetBreakpointData.address().toLong() == address.toLong()) {
+                        return targetBreakpointData;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Locates a bytecode breakpoint already known to the inspector.
+         */
+        BytecodeBreakpointData findBytecodeBreakpoint(TeleBytecodeBreakpoint.Key key) {
+            for (BreakpointData breakpointData : _breakpoints) {
+                if (breakpointData instanceof BytecodeBreakpointData) {
+                    final BytecodeBreakpointData bytecodeBreakpointData = (BytecodeBreakpointData) breakpointData;
+                    if (bytecodeBreakpointData.key() == key) {
+                        return bytecodeBreakpointData;
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 
     private final class TagCellRenderer extends PlainLabel implements TableCellRenderer {
@@ -279,7 +376,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = get(row);
+            final BreakpointData breakpointData = _model.get(row);
             setText(breakpointData.kindTag());
             setToolTipText(breakpointData.kindName() + ", Enabled=" + (breakpointData.enabled() ? "true" : "false"));
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -299,7 +396,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = get(row);
+            final BreakpointData breakpointData = _model.get(row);
             setValue(breakpointData.shortName(), breakpointData.longName());
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
@@ -318,7 +415,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = get(row);
+            final BreakpointData breakpointData = _model.get(row);
             setText(Integer.toString(breakpointData.location()));
             setToolTipText("Location: " + breakpointData.locationDescription());
             if (row == getSelectionModel().getMinSelectionIndex()) {
@@ -338,7 +435,7 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            setToolTipText(get(row).conditionStatus());
+            setToolTipText(_model.get(row).conditionStatus());
             final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 component.setBackground(style().defaultCodeAlternateBackgroundColor());
@@ -365,7 +462,7 @@ public final class BreakpointsTable extends InspectorTable {
         }
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            final BreakpointData breakpointData = get(row);
+            final BreakpointData breakpointData = _model.get(row);
             if (breakpointData.triggerThread() != null) {
                 setText(breakpointData.triggerThreadName());
                 setToolTipText("Thread \"" + breakpointData.triggerThreadName() + "\" stopped at this breakpoint");
@@ -443,118 +540,22 @@ public final class BreakpointsTable extends InspectorTable {
 
         @Override
         public void procedure(final MouseEvent mouseEvent) {
-            switch (MaxineInspector.mouseButtonWithModifiers(mouseEvent)) {
-                case MouseEvent.BUTTON1: {
-                    final int row = getSelectedRow();
-                    final int column = getSelectedColumn();
-                    final BreakpointData breakpointData = get(row);
-                    switch (BreakpointsColumnKind.VALUES.get(column)) {
-                        case TAG:
-                        case METHOD:
-                        case LOCATION:
-                        case CONDITION:
-                        case TRIGGER_THREAD:
-                            focus().setBreakpoint(breakpointData.teleBreakpoint());
-                            break;
-                        case ENABLED:
-                            break;
-                    }
-                    break;
-                }
-                case MouseEvent.BUTTON3: {
-                    final Point p = mouseEvent.getPoint();
-                    final int row = rowAtPoint(p);
-                    final BreakpointData breakpointData = get(row);
-                    final InspectorMenu menu = getButton3Menu(breakpointData);
-                    menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                    break;
-                }
+            if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
+                final Point p = mouseEvent.getPoint();
+                final int row = rowAtPoint(p);
+                final BreakpointData breakpointData = _model.get(row);
+                final InspectorMenu menu = getButton3Menu(breakpointData);
+                menu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
             }
         }
     };
-
-    /**
-     * Global breakpoint focus has changed; revise selection in inspector if needed.
-     */
-    void selectBreakpoint(TeleBreakpoint teleBreakpoint) {
-        TeleBreakpoint selectedBreakpoint = null;
-        final int selectedRow = getSelectedRow();
-        if (selectedRow >= 0) {
-            selectedBreakpoint = get(selectedRow).teleBreakpoint();
-        }
-        if (selectedBreakpoint != teleBreakpoint) {
-            final int row = breakpointToRow(teleBreakpoint);
-            if (row >= 0) {
-                getSelectionModel().setSelectionInterval(row, row);
-            } else {
-                getSelectionModel().clearSelection();
-            }
-        }
-    }
-
-
-    /**
-     * Locates a target code breakpoint already known to the inspector.
-     */
-    private TargetBreakpointData findTargetBreakpoint(Address address) {
-        for (BreakpointData breakpointData : _breakpoints) {
-            if (breakpointData instanceof TargetBreakpointData) {
-                final TargetBreakpointData targetBreakpointData = (TargetBreakpointData) breakpointData;
-                if (targetBreakpointData.address().toLong() == address.toLong()) {
-                    return targetBreakpointData;
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Locates a bytecode breakpoint already known to the inspector.
-     */
-    private BytecodeBreakpointData findBytecodeBreakpoint(TeleBytecodeBreakpoint.Key key) {
-        for (BreakpointData breakpointData : _breakpoints) {
-            if (breakpointData instanceof BytecodeBreakpointData) {
-                final BytecodeBreakpointData bytecodeBreakpointData = (BytecodeBreakpointData) breakpointData;
-                if (bytecodeBreakpointData.key() == key) {
-                    return bytecodeBreakpointData;
-                }
-            }
-        }
-        return null;
-    }
-
-    private BreakpointData get(int row) {
-        int count = 0;
-        for (BreakpointData breakpointData : _breakpoints) {
-            if (count == row) {
-                return breakpointData;
-            }
-            count++;
-        }
-        Problem.error("BreakpointsInspector.get(" + row + ") failed");
-        return null;
-    }
-
-    /**
-     * Return the table row in which a breakpoint is displayed.
-     */
-    private int breakpointToRow(TeleBreakpoint breakpoint) {
-        int row = 0;
-        for (BreakpointData breakpointData : _breakpoints) {
-            if (breakpointData.teleBreakpoint() == breakpoint) {
-                return row;
-            }
-            row++;
-        }
-        return -1;
-    }
 
     /**
      * Summary of information about a breakpoint that is useful for inspection.
      *
      * @author Michael Van De Vanter
      */
-    private abstract class BreakpointData implements Comparable{
+    private abstract class BreakpointData implements Comparable {
 
         /**
          * @return the breakpoint in the {@link TeleVM} being described
@@ -859,4 +860,27 @@ public final class BreakpointsTable extends InspectorTable {
             return _key;
         }
     }
+
+    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+        updateSelection();
+    }
+
+    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+    }
+
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    }
+
+    public void addressFocusChanged(Address oldAddress, Address address) {
+    }
+
+    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
+    }
+
+    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    }
+
+    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
+    }
+
 }

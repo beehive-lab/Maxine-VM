@@ -88,7 +88,11 @@ public class TeleVMThreadLocalValues {
      */
     public long get(VmThreadLocal threadLocalVariable) {
         final String name = VmThreadLocal.NAMES.get(threadLocalVariable.index());
-        return _values.get(name);
+        final Long value = _values.get(name);
+        if (value == null) {
+            System.console();
+        }
+        return value;
     }
 
     /**
