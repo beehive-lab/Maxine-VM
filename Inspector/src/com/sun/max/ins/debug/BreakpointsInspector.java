@@ -28,7 +28,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 
 /**
  * Singleton inspector that displays information about all kinds of breakpoints that might be set in the {@link TeleVM}.
@@ -94,7 +93,11 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
 
     @Override
     public void createView(long epoch) {
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
         _table = new BreakpointsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
         final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
         frame().setContentPane(scrollPane);
     }
@@ -143,11 +146,6 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         refreshView(true);
     }
 
-    @Override
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        _table.selectBreakpoint(teleBreakpoint);
-    }
-
     public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
@@ -157,6 +155,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         Trace.line(1, tracePrefix() + " closing");
         _breakpointsInspector = null;
         _viewPreferences.removeListener(this);
+        focus().removeListener(_table);
         super.inspectorClosing();
     }
 
