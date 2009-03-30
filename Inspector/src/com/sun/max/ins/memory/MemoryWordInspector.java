@@ -367,20 +367,18 @@ public final class MemoryWordInspector extends Inspector {
      * Displays and highlights a new word inspector for a region of memory in the {@link TeleVM}.
      */
     public static MemoryWordInspector create(Inspection inspection, Address address, int numberOfWords) {
-        final MemoryWordInspector memoryWordInspector = new MemoryWordInspector(inspection, address, numberOfWords);
-        memoryWordInspector.highlight();
-        return memoryWordInspector;
+        return new MemoryWordInspector(inspection, address, numberOfWords);
     }
 
     /**
-     * Displays and highlights a new word inspector for a region of memory in the {@link TeleVM}.
+     * Displays a new word inspector for a region of memory in the {@link TeleVM}.
      */
     public static MemoryWordInspector create(Inspection inspection, Address address) {
         return create(inspection, address, 10);
     }
 
     /**
-     * Displays and highlights a new word inspector for a region of memory at the beginning of an object in the {@link TeleVM}.
+     * Displays a new word inspector for a region of memory at the beginning of an object in the {@link TeleVM}.
      */
     public static MemoryWordInspector create(Inspection inspection, TeleObject teleObject) {
         final Pointer cell = teleObject.getCurrentCell();

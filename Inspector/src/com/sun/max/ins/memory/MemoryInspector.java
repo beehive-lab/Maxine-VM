@@ -53,23 +53,21 @@ public final class MemoryInspector extends Inspector {
     private static final IdentityHashSet<MemoryInspector> _memoryInspectors = new IdentityHashSet<MemoryInspector>();
 
     /**
-     * Displays and highlights a new inspector for a region of memory.
+     * Displays a new inspector for a region of memory.
      */
     public static MemoryInspector create(Inspection inspection, Address address, int numberOfGroups, int numberOfBytesPerGroup, int numberOfGroupsPerLine) {
-        final MemoryInspector memoryInspector = new MemoryInspector(inspection, address, numberOfGroups, numberOfBytesPerGroup, numberOfGroupsPerLine);
-        memoryInspector.highlight();
-        return memoryInspector;
+        return new MemoryInspector(inspection, address, numberOfGroups, numberOfBytesPerGroup, numberOfGroupsPerLine);
     }
 
     /**
-     * Displays and highlights a new inspector for a region of memory.
+     * Displays a new inspector for a region of memory.
      */
     public static MemoryInspector create(Inspection inspection, Address address) {
         return create(inspection, address, 10, 8, 1);
     }
 
     /**
-     * Displays and highlights a new inspector for the currently allocated memory of a heap object in the {@link TeleVM}.
+     * Displays a new inspector for the currently allocated memory of a heap object in the {@link TeleVM}.
      */
     public static MemoryInspector create(Inspection inspection, TeleObject teleObject) {
         final Pointer cell = teleObject.getCurrentCell();

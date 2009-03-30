@@ -61,8 +61,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
         final String longTitle = methodInspector.getToolTip();
         add(methodInspector, methodInspector.getTextForTitle(), longTitle, longTitle);
         addCloseIconToTab(methodInspector);
-        methodInspector.frame().invalidate();
-        methodInspector.frame().repaint();
+        methodInspector.highlight();
     }
 
     private final class MethodsMenuItems implements InspectorMenuItems {

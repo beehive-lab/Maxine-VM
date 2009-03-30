@@ -45,13 +45,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     private static ThreadLocalsInspector _threadLocalsInspector;
 
     /**
-     * Displays and highlights the (singleton) thread locals inspector, creating it if needed.
+     * Displays the (singleton) thread locals inspector, creating it if needed.
      */
     public static ThreadLocalsInspector make(Inspection inspection) {
         if (_threadLocalsInspector == null) {
             _threadLocalsInspector = new ThreadLocalsInspector(inspection);
         }
-        _threadLocalsInspector.highlight();
         return _threadLocalsInspector;
     }
 

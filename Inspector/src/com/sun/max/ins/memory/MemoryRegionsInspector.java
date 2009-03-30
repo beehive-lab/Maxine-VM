@@ -40,14 +40,13 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     private static MemoryRegionsInspector _memoryRegionsInspector;
 
     /**
-     * Display and highlight the (singleton) MemoryRegions inspector.
+     * Displays the (singleton) MemoryRegions inspector.
      * @return  The MemoryRegions inspector, possibly newly created.
      */
     public static MemoryRegionsInspector make(Inspection inspection) {
         if (_memoryRegionsInspector == null) {
             _memoryRegionsInspector = new MemoryRegionsInspector(inspection);
         }
-        _memoryRegionsInspector.highlight();
         return _memoryRegionsInspector;
     }
 

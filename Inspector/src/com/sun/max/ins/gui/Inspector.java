@@ -303,11 +303,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
         @Override
         public void procedure() {
-            if (frame() instanceof InternalInspectorFrame) {
-                inspection().desktopPane().removeAll();
-                inspection().desktopPane().add((InternalInspectorFrame) frame());
-                inspection().repaint();
-            }
+            inspection().desktopPane().removeAll();
+            inspection().desktopPane().add((InternalInspectorFrame) frame());
+            inspection().repaint();
         }
     }
 

@@ -67,7 +67,6 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         if (inspector == null) {
             inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, abi);
         }
-        inspector.highlight();
         return inspector;
     }
 

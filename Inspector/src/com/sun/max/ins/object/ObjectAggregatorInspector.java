@@ -153,7 +153,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
     }
 
     /**
-     * Display and highlight an inspector for an ObjectAggregator.
+     * Displays an inspector for an ObjectAggregator.
      * @return the possibly new inspector
      */
     public static ObjectAggregatorInspector make(Inspection inspection, ObjectAggregator objectAggregator) {
@@ -162,7 +162,6 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         if (objectAggregatorInspector == null) {
             objectAggregatorInspector = new ObjectAggregatorInspector(inspection, objectAggregator);
         }
-        objectAggregatorInspector.highlight();
         return objectAggregatorInspector;
     }
 

@@ -65,7 +65,7 @@ public final class JavaSourceInspector  extends FileInspector {
     }
 
     /**
-     * Display and highlight an inspector containing the source code for a Java class.
+     * Displays an inspector containing the source code for a Java class.
      */
     public static JavaSourceInspector make(Inspection inspection, ClassActor classActor, File sourceFile) {
         assert sourceFile != null;
@@ -75,7 +75,6 @@ public final class JavaSourceInspector  extends FileInspector {
         if (javaSourceInspector == null) {
             javaSourceInspector = new JavaSourceInspector(inspection, sourceFile);
         }
-        javaSourceInspector.highlight();
         return javaSourceInspector;
     }
 

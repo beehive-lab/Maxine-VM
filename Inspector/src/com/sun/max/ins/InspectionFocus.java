@@ -113,6 +113,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             for (StackFrame stackFrame : frames) {
                 if (stackFrame.instructionPointer().equals(address)) {
                     setStackFrame(_thread, stackFrame, false);
+                    break;
                 }
             }
         }
