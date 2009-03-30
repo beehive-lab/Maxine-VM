@@ -30,8 +30,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
-import com.sun.max.ins.memory.MemoryInspector.*;
-import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
@@ -49,7 +47,7 @@ import com.sun.max.vm.actor.member.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class ObjectInspector extends Inspector implements MemoryInspectable, MemoryWordInspectable {
+public abstract class ObjectInspector extends Inspector {
 
     private static ObjectInspectorPreferences _globalPreferences;
 
@@ -286,6 +284,9 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
         super.createFrame(menu);
         setLocationRelativeToMouse(inspection().geometry().objectInspectorNewFrameDiagonalOffset());
         frame().menu().addSeparator();
+        frame().menu().add(getMemoryInspectorAction());
+        frame().menu().add(getMemoryWordInspectorAction());
+        frame().menu().addSeparator();
         frame().menu().add(_showHeaderMenuCheckBox);
         frame().menu().add(_showAddressesMenuCheckBox);
         frame().menu().add(_showOffsetsMenuCheckBox);
@@ -497,10 +498,6 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
         };
     }
 
-    public void makeMemoryInspector() {
-        MemoryInspector.create(inspection(), _teleObject);
-    }
-
     public InspectorAction getMemoryWordInspectorAction() {
         return new InspectorAction(inspection(), "Inspect Memory Words") {
             @Override
@@ -508,10 +505,6 @@ public abstract class ObjectInspector extends Inspector implements MemoryInspect
                 MemoryWordInspector.create(inspection(), _teleObject).highlight();
             }
         };
-    }
-
-    public void makeMemoryWordInspector() {
-        MemoryWordInspector.create(inspection(), _teleObject);
     }
 
     @Override

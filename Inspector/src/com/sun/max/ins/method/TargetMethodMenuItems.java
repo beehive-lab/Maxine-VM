@@ -22,6 +22,7 @@ package com.sun.max.ins.method;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.memory.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 
@@ -45,7 +46,7 @@ public final class TargetMethodMenuItems implements InspectorMenuItems {
 
     private final class InspectTargetMethodAction extends InspectorAction {
         private InspectTargetMethodAction() {
-            super(inspection(), "Inspect Target Method");
+            super(inspection(), "Inspect Target Method Object");
         }
 
         @Override
@@ -101,6 +102,20 @@ public final class TargetMethodMenuItems implements InspectorMenuItems {
 
         menu.addSeparator();
         menu.add(_inspectTargetMethodAction);
+        menu.add(new InspectorAction(inspection(), "Inspect Target Code Region Memory") {
+
+            @Override
+            protected void procedure() {
+                MemoryInspector.create(inspection(), _teleTargetMethod.targetCodeRegion().start(), _teleTargetMethod.targetCodeRegion().size().toInt(), 1, 8).highlight();
+            }
+        });
+        menu.add(new InspectorAction(inspection(), "Inspect Target Code Region Memory Words") {
+
+            @Override
+            protected void procedure() {
+                MemoryWordInspector.create(inspection(), _teleTargetMethod.targetCodeRegion().start(), _teleTargetMethod.targetCodeRegion().size().toInt()).highlight();
+            }
+        });
     }
 
     public void refresh(long epoch, boolean force) {

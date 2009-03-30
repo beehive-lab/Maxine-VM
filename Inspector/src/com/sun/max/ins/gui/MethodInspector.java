@@ -29,9 +29,6 @@ import javax.swing.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.memory.*;
-import com.sun.max.ins.memory.MemoryInspector.*;
-import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -48,7 +45,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public abstract class MethodInspector extends UniqueInspector<MethodInspector> implements MemoryInspectable, MemoryWordInspectable {
+public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     private static final int TRACE_VALUE = 2;
 
@@ -505,35 +502,4 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         super.inspectorClosing();
     }
 
-    public void makeMemoryInspector() {
-        if (teleTargetRoutine() != null) {
-            MemoryInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt(), 1, 8).highlight();
-        }
-    }
-
-    public InspectorAction getMemoryInspectorAction() {
-        return new InspectorAction(inspection(), "Inspect Memory") {
-
-            @Override
-            protected void procedure() {
-                MemoryWordInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt()).highlight();
-            }
-        };
-    }
-
-    public void makeMemoryWordInspector() {
-        if (teleTargetRoutine() != null) {
-            MemoryWordInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt());
-        }
-    }
-
-    public InspectorAction getMemoryWordInspectorAction() {
-        return new InspectorAction(inspection(), "Inspect Memory Words") {
-
-            @Override
-            protected void procedure() {
-                makeMemoryWordInspector();
-            }
-        };
-    }
 }

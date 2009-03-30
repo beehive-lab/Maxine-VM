@@ -362,4 +362,5 @@ public class JavaMethodInspector extends MethodInspector {
             codeViewer.updateThreadFocus(teleNativeThread);
         }
     }
+
 }
