@@ -46,8 +46,8 @@ import com.sun.max.vm.stack.*;
 public abstract class TargetCodeViewer extends CodeViewer {
 
     @Override
-    public  MethodInspector.CodeKind codeKind() {
-        return MethodInspector.CodeKind.TARGET_CODE;
+    public  MethodCodeKind codeKind() {
+        return MethodCodeKind.TARGET_CODE;
     }
 
     @Override

@@ -56,6 +56,18 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
         return "Methods";
     }
 
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                MethodInspectorPreferences.globalPreferences(inspection()).showDialog();
+            }
+        };
+    }
+
+
     @Override
     public void add(MethodInspector methodInspector) {
         final String longTitle = methodInspector.getToolTip();

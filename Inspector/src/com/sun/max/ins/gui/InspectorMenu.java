@@ -53,8 +53,10 @@ public final class InspectorMenu implements Prober {
         _popupMenu =  new JPopupMenu(name);
         _standardMenu = new JMenu(name);
         if (inspector != null) {
-            add(inspector.getCloseOtherInspectorsAction());
+            add(inspector.getViewOptionsAction());
             add(inspector.getRefreshAction());
+            add(inspector.getCloseAction());
+            add(inspector.getCloseOtherInspectorsAction());
         }
     }
 
