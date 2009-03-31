@@ -25,7 +25,9 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.border.*;
 
+import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectorNameDisplay.*;
 import com.sun.max.ins.method.*;
@@ -44,8 +46,10 @@ import com.sun.max.vm.actor.member.*;
  */
 public class JavaMethodInspector extends MethodInspector {
 
+    private final MethodInspectorPreferences _methodInspectorPreferences;
+
     private final TeleClassMethodActor _teleClassMethodActor;
-    private final CodeKind _requestedCodeKind;
+    private final MethodCodeKind _requestedCodeKind;
 
     /**
      * A particular compilation of the method, to which this Inspector is permanently bound, and which distinguishes
@@ -64,7 +68,7 @@ public class JavaMethodInspector extends MethodInspector {
      * @param teleTargetMethod surrogate for the compilation of the method in the {@link TeleVM}
      * @param codeKind request for a particular code view to be displayed initially
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, CodeKind codeKind) {
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
         this(inspection, parent, teleTargetMethod, teleTargetMethod.getTeleClassMethodActor(), codeKind);
     }
 
@@ -79,51 +83,40 @@ public class JavaMethodInspector extends MethodInspector {
      * @param teleClassMethodActor surrogate for the specified Java method in the {@link TeleVM}
      * @param codeKind requested kind of code view: either source code or bytecodes
      */
-    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleClassMethodActor teleClassMethodActor, CodeKind codeKind) {
+    public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
         this(inspection, parent, null, teleClassMethodActor, codeKind);
-        assert codeKind != CodeKind.TARGET_CODE;
+        assert codeKind != MethodCodeKind.TARGET_CODE;
     }
 
-    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleClassMethodActor teleClassMethodActor, CodeKind requestedCodeKind) {
+    private JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, TeleClassMethodActor teleClassMethodActor, MethodCodeKind requestedCodeKind) {
         super(inspection, parent, teleTargetMethod, teleClassMethodActor);
+
+        _methodInspectorPreferences = MethodInspectorPreferences.globalPreferences(inspection);
         _teleClassMethodActor = teleClassMethodActor;
         _teleTargetMethod = teleTargetMethod;
         _requestedCodeKind = requestedCodeKind;
 
         // enable choice if target code is present, even though this Inspector is not bound to a TargetMethod
-        _codeKindEnabled.put(CodeKind.TARGET_CODE, teleTargetMethod != null || teleClassMethodActor.hasTargetMethod());
+        _codeKindEnabled.put(MethodCodeKind.TARGET_CODE, teleTargetMethod != null || teleClassMethodActor.hasTargetMethod());
         // enable if bytecodes present
-        _codeKindEnabled.put(CodeKind.BYTECODES, _teleClassMethodActor.hasCodeAttribute());
+        _codeKindEnabled.put(MethodCodeKind.BYTECODES, _teleClassMethodActor.hasCodeAttribute());
         // not implemented yet
-        _codeKindEnabled.put(CodeKind.JAVA_SOURCE, false);
+        _codeKindEnabled.put(MethodCodeKind.JAVA_SOURCE, false);
+
+        createFrame(null);
 
         // Assemble menu: override the standard frame menu by starting with an empty one and adding
         // view-specific commands.
-        final InspectorMenu menu = new InspectorMenu();
-        _menuCheckBoxes = new JCheckBoxMenuItem[CodeKind.VALUES.length()];
-        for (CodeKind codeKind : CodeKind.VALUES) {
-            final JCheckBoxMenuItem menuCheckBox = new JCheckBoxMenuItem(" Display " + codeKind);
-            menuCheckBox.addActionListener(_menuCheckBoxActionListener);
-            _menuCheckBoxes[codeKind.ordinal()] = menuCheckBox;
-            menu.add(menuCheckBox);
-        }
-
-        menu.add(new InspectorAction(inspection(), "Method Code Display Prefs") {
-            @Override
-            public void procedure() {
-                globalPreferences(inspection()).showDialog();
-            }
-        });
         _classMethodMenuItems = new ClassMethodMenuItems(inspection(), _teleClassMethodActor);
-        menu.add(_classMethodMenuItems);
+        frame().menu().add(_classMethodMenuItems);
         if (teleTargetMethod != null) {
             _targetMethodMenuItems = new TargetMethodMenuItems(inspection(), teleTargetMethod);
-            menu.add(_targetMethodMenuItems);
+            frame().menu().add(_targetMethodMenuItems);
         } else {
             _targetMethodMenuItems = null;
         }
 
-        createFrame(menu);
+
     }
 
     @Override
@@ -145,6 +138,15 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            protected void procedure() {
+                new JavaMethodInspectorViewOptionsDialog(inspection());
+            }
+        };
+    }
+    @Override
     public String getToolTip() {
         String result;
         if (_teleTargetMethod != null) {
@@ -159,13 +161,12 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     /** Is it possible to display this source kind: code kind exists and the viewer is implemented. */
-    private final Map<CodeKind, Boolean> _codeKindEnabled = new EnumMap<CodeKind, Boolean>(CodeKind.class);
+    private final Map<MethodCodeKind, Boolean> _codeKindEnabled = new EnumMap<MethodCodeKind, Boolean>(MethodCodeKind.class);
 
     /** Code viewers being displayed in the inspector. */
-    private final Map<CodeKind, CodeViewer> _codeViewers = new EnumMap<CodeKind, CodeViewer>(CodeKind.class);
+    private final Map<MethodCodeKind, CodeViewer> _codeViewers = new EnumMap<MethodCodeKind, CodeViewer>(MethodCodeKind.class);
 
     private JSplitPane _splitPane;
-    private JCheckBoxMenuItem[] _menuCheckBoxes;
     private final ClassMethodMenuItems _classMethodMenuItems;
     private final TargetMethodMenuItems _targetMethodMenuItems;
 
@@ -175,27 +176,19 @@ public class JavaMethodInspector extends MethodInspector {
         if (_requestedCodeKind != null && _codeKindEnabled.get(_requestedCodeKind)) {
             addCodeViewer(_requestedCodeKind);
         }
-        for (CodeKind codeKind : CodeKind.VALUES) {
-            if (_codeKindEnabled.get(codeKind) && globalPreferences(inspection()).isVisible(codeKind)) {
+        for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+            if (_codeKindEnabled.get(codeKind) && _methodInspectorPreferences.isVisible(codeKind)) {
                 if (!_codeViewers.containsKey(codeKind)) {
                     addCodeViewer(codeKind);
                 }
             }
         }
         if (codeViewerCount() == 0) {
-            addCodeViewer(CodeKind.TARGET_CODE);
-        }
-        refreshMenu();
-    }
-
-    private void refreshMenu() {
-        for (CodeKind codeKind : CodeKind.VALUES) {
-            _menuCheckBoxes[codeKind.ordinal()].setSelected(_codeViewers.containsKey(codeKind));
-            _menuCheckBoxes[codeKind.ordinal()].setEnabled(_codeKindEnabled.get(codeKind));
+            addCodeViewer(MethodCodeKind.TARGET_CODE);
         }
     }
 
-    private CodeViewer codeViewerFactory(CodeKind codeKind) {
+    private CodeViewer codeViewerFactory(MethodCodeKind codeKind) {
         switch (codeKind) {
             case TARGET_CODE:
                 return new JTableTargetCodeViewer(inspection(), this, _teleTargetMethod);
@@ -205,7 +198,7 @@ public class JavaMethodInspector extends MethodInspector {
                 Problem.unimplemented();
                 return null;
             default:
-                ProgramError.unexpected("Unexpected CodeKind");
+                ProgramError.unexpected("Unexpected MethodCodeKind");
         }
         return null;
     }
@@ -213,13 +206,13 @@ public class JavaMethodInspector extends MethodInspector {
     /**
      * Adds a code view to this inspector, if possible.
      */
-    public void viewCodeKind(CodeKind kind) {
+    public void viewCodeKind(MethodCodeKind kind) {
         if (!_codeViewers.containsKey(kind) && _codeKindEnabled.get(kind)) {
             addCodeViewer(kind);
         }
     }
 
-    private void addCodeViewer(CodeKind kind) {
+    private void addCodeViewer(MethodCodeKind kind) {
         if (kind != null && !_codeViewers.containsKey(kind)) {
             final CodeViewer newViewer = codeViewerFactory(kind);
             if (newViewer != null) {
@@ -250,7 +243,6 @@ public class JavaMethodInspector extends MethodInspector {
                     frame().repaint();
                 }
                 _codeViewers.put(kind, newViewer);
-                refreshMenu();
             }
         }
     }
@@ -272,31 +264,8 @@ public class JavaMethodInspector extends MethodInspector {
             _codeViewers.remove(viewer.codeKind());
             frame().pack();
             frame().repaint();
-            refreshMenu();
         }
     }
-
-    private ActionListener _menuCheckBoxActionListener = new ActionListener() {
-        public void actionPerformed(ActionEvent actionEvent) {
-            final Object source = actionEvent.getSource();
-            if (source instanceof JCheckBoxMenuItem) {
-                for (CodeKind codeKind : CodeKind.VALUES) {
-                    final JCheckBoxMenuItem checkBox = _menuCheckBoxes[codeKind.ordinal()];
-                    if (source == checkBox) {
-                        globalPreferences(inspection()).setIsVisible(codeKind, checkBox.isSelected());
-                        if (checkBox.isSelected()) {
-                            if (!_codeViewers.containsKey(codeKind)) {
-                                addCodeViewer(codeKind);
-                            }
-                        } else if (_codeViewers.containsKey(codeKind)) {
-                            closeCodeViewer(_codeViewers.get(codeKind));
-                        }
-                        return;
-                    }
-                }
-            }
-        }
-    };
 
     @Override
     public void refreshView(long epoch, boolean force) {
@@ -305,7 +274,6 @@ public class JavaMethodInspector extends MethodInspector {
             if (_classMethodMenuItems != null) {
                 _classMethodMenuItems.refresh(epoch, force);
             }
-            refreshMenu();
             for (CodeViewer codeViewer : _codeViewers.values()) {
                 codeViewer.refresh(epoch, force);
             }
@@ -363,4 +331,90 @@ public class JavaMethodInspector extends MethodInspector {
         }
     }
 
+    private final class ViewOptionsPanel extends InspectorPanel {
+
+        public ViewOptionsPanel(Inspection inspection) {
+            super(inspection, new BorderLayout());
+            final JCheckBox[] checkBoxes = new JCheckBox[MethodCodeKind.VALUES.length()];
+
+            final ItemListener itemListener = new ItemListener() {
+                public void itemStateChanged(ItemEvent e) {
+                    final Object source = e.getItemSelectable();
+                    for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+                        final JCheckBox checkBox = checkBoxes[codeKind.ordinal()];
+                        if (source == checkBox) {
+                            if (checkBox.isSelected()) {
+                                if (!_codeViewers.containsKey(codeKind)) {
+                                    addCodeViewer(codeKind);
+                                }
+                            } else if (_codeViewers.containsKey(codeKind)) {
+                                closeCodeViewer(_codeViewers.get(codeKind));
+                            }
+                            break;
+                        }
+                    }
+                }
+            };
+            final JPanel content = new InspectorPanel(inspection());
+            content.add(new TextLabel(inspection(), "View:  "));
+            final String toolTipText = "Should new Method inspectors initially display this code, when available?";
+            for (MethodCodeKind codeKind : MethodCodeKind.VALUES) {
+                final boolean currentValue = _codeViewers.containsKey(codeKind);
+                final JCheckBox checkBox =
+                    new InspectorCheckBox(inspection(), codeKind.toString(), toolTipText, currentValue);
+                checkBox.addItemListener(itemListener);
+                checkBoxes[codeKind.ordinal()] = checkBox;
+                content.add(checkBox);
+            }
+            add(content, BorderLayout.WEST);
+        }
+    }
+
+
+    private final class JavaMethodInspectorViewOptionsDialog extends InspectorDialog {
+        JavaMethodInspectorViewOptionsDialog(Inspection inspection) {
+            super(inspection, "Java Method Inspector View Options", false);
+
+            final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
+
+            final JPanel prefPanel = new InspectorPanel(inspection, new SpringLayout());
+
+            final Border border = BorderFactory.createLineBorder(Color.black);
+
+            final JPanel thisLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+            thisLabelPanel.setBorder(border);
+            thisLabelPanel.add(new TextLabel(inspection, "This Method"), BorderLayout.WEST);
+            prefPanel.add(thisLabelPanel);
+
+            final JPanel thisOptionsPanel = new ViewOptionsPanel(inspection);
+            thisOptionsPanel.setBorder(border);
+            prefPanel.add(thisOptionsPanel);
+
+            final JPanel prefslLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+            prefslLabelPanel.setBorder(border);
+            prefslLabelPanel.add(new TextLabel(inspection, "Preferences"), BorderLayout.WEST);
+            prefPanel.add(prefslLabelPanel);
+
+            final JPanel prefsOptionsPanel = MethodInspectorPreferences.globalPreferences(inspection).getPanel();
+            prefsOptionsPanel.setBorder(border);
+            prefPanel.add(prefsOptionsPanel);
+
+            SpringUtilities.makeCompactGrid(prefPanel, 2);
+
+            final JPanel buttons = new InspectorPanel(inspection);
+            buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
+                @Override
+                protected void procedure() {
+                    dispose();
+                }
+            }));
+
+            dialogPanel.add(prefPanel, BorderLayout.CENTER);
+            dialogPanel.add(buttons, BorderLayout.SOUTH);
+            setContentPane(dialogPanel);
+            pack();
+            inspection().moveToMiddle(this);
+            setVisible(true);
+        }
+    }
 }

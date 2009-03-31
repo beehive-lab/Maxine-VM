@@ -65,19 +65,23 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         _viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        frame().menu().addSeparator();
-        frame().menu().add(new InspectorAction(inspection, "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", _viewPreferences);
-            }
-        });
         frame().add(new BreakpointFrameMenuItems());
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
             frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
             frame().getContentPane().setPreferredSize(inspection().geometry().breakpointsFramePrefSize());
         }
         Trace.end(1,  tracePrefix() + " initializing");
+    }
+
+    @Override
+    public void createView(long epoch) {
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
+        _table = new BreakpointsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        frame().setContentPane(scrollPane);
     }
 
     @Override
@@ -91,14 +95,13 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    public void createView(long epoch) {
-        if (_table != null) {
-            focus().removeListener(_table);
-        }
-        _table = new BreakpointsTable(inspection(), _viewPreferences);
-        focus().addListener(_table);
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
-        frame().setContentPane(scrollPane);
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", _viewPreferences);
+            }
+        };
     }
 
     /**
