@@ -44,10 +44,10 @@ public final class ThreadLocalsPanel extends InspectorPanel {
     private final ThreadLocalsTable _threadLocalsTable;
     final TeleVMThreadLocalValues _teleVMThreadLocalValues;
 
-    ThreadLocalsPanel(ThreadLocalsInspector threadLocalsInspector, TeleVMThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
-        super(threadLocalsInspector.inspection());
-        _threadLocalsHeaderPanel = new ThreadLocalsHeaderPanel(inspection(), values);
-        _threadLocalsTable = new ThreadLocalsTable(threadLocalsInspector, values, preferences);
+    ThreadLocalsPanel(Inspection inspection, TeleNativeThread teleNativeThread, TeleVMThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+        super(inspection);
+        _threadLocalsHeaderPanel = new ThreadLocalsHeaderPanel(inspection, values);
+        _threadLocalsTable = new ThreadLocalsTable(inspection, teleNativeThread, values, preferences);
         _teleVMThreadLocalValues = values;
 
         setLayout(new BorderLayout());

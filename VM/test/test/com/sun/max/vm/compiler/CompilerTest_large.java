@@ -30,7 +30,7 @@ import com.sun.max.vm.type.*;
 
 /**
  * Tests for individual methods that exposed limits in the compiler's use of resources, mostly causing OutOfMemoryErrors.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -38,6 +38,9 @@ public abstract class CompilerTest_large<Method_Type extends IrMethod> extends C
 
     public CompilerTest_large(String name) {
         super(name);
+        // Set the system property that overrides the default behaviour of ClassfileReader when it encounters
+        // a <clinit> while MaxineVM.isPrototying() returns true. The default behaviour is to discard such methods.
+        System.setProperty("max.loader.preserveClinitMethods", "");
     }
 
     public void test_ReducedHexByte_clinit() {

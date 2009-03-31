@@ -189,8 +189,8 @@ public class HubInspector extends ObjectInspector {
 
     private final InspectorMenuItems _classMethodInspectorMenuItems;
 
-    HubInspector(Inspection inspection, ObjectInspectorFactory factory, Residence residence, TeleObject teleObject) {
-        super(inspection, factory, residence, teleObject);
+    HubInspector(Inspection inspection, ObjectInspectorFactory factory, TeleObject teleObject) {
+        super(inspection, factory, teleObject);
         _teleHub = (TeleHub) teleObject;
 
         // Initialize instance preferences from the global preferences

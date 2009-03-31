@@ -47,6 +47,9 @@ import com.sun.max.vm.value.*;
  */
 public class FocusTable extends InspectorTable implements ViewFocusListener {
 
+    /**
+     * Columns to display when viewing focus data.
+     */
     public enum FocusColumnKind {
 
         NAME("Name", "Inspector user focus kind", -1),
@@ -92,6 +95,9 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
     }
 
 
+    /**
+     * Rows to display when viewing focus data: one for each aspect of the focus.
+     */
     public enum FocusRowKind {
 
         THREAD("Thread", "Current thread of interest in the Inspector"),
@@ -209,11 +215,15 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
 
         @Override
         public Object getValueAt(int row, int col) {
+            // Don't use cell values; all interaction is driven by row number.
             return null;
         }
 
     }
 
+    /**
+     * Renders the name of an aspect of the user focus.
+     */
     private final class NameCellRenderer extends PlainLabel implements TableCellRenderer {
 
         NameCellRenderer(Inspection inspection) {
@@ -230,8 +240,12 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
     }
 
 
+    /**
+     * Renders the current value of an aspect of the user focus.
+     */
     private final class ValueCellRenderer  implements TableCellRenderer, Prober {
 
+        // A "value" label per row, each suitable for the particular kind of value.
         private InspectorLabel[] _labels = new InspectorLabel[FocusRowKind.VALUES.length()];
 
         public ValueCellRenderer(Inspection inspection) {
@@ -343,7 +357,6 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         }
     }
 
-    @Override
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
         refresh(teleVM().epoch(), true);
     }
@@ -382,7 +395,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                 final Prober prober = (Prober) column.getCellRenderer();
                 prober.refresh(epoch, force);
             }
-            _model.fireTableDataChanged();
+            _model.refresh();
         }
     }
 

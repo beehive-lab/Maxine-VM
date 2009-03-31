@@ -18,45 +18,53 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.file;
+package com.sun.max.ins.gui;
 
-import java.io.*;
+import com.sun.max.collect.*;
 
-import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
 
 /**
- * Base class for inspectors that display information from files.
+ * Constants denoting the kinds of code that can be inspected for a method.
  *
  * @author Michael Van De Vanter
  */
-public abstract class FileInspector extends UniqueInspector {
+public enum MethodCodeKind {
+    TARGET_CODE("Target Code", true),
+    BYTECODES("Bytecodes", false),
+    JAVA_SOURCE("Java Source", false);
 
-    private File _file;
+    private final String _label;
+    private final boolean _defaultVisibility;
 
-    public File file() {
-        return _file;
+    private MethodCodeKind(String label, boolean defaultVisibility) {
+        _label = label;
+        _defaultVisibility = defaultVisibility;
     }
 
-    protected FileInspector(Inspection inspection, File file) {
-        super(inspection, file);
-        _file = file;
+    /**
+     * Determines if it the display of this source kind is implemented.
+     *
+     * TODO (mlvdv) This is a hack until source code viewing is implemented
+     */
+    public boolean isImplemented() {
+        return this != JAVA_SOURCE;
     }
 
-    public abstract void highlightLine(int lineNumber);
-
-    protected String readFile() {
-        String text = null;
-        try {
-            final FileInputStream fileInputStream = new FileInputStream(_file);
-            final int length = fileInputStream.available();
-            final byte[] bytes = new byte[length];
-            fileInputStream.read(bytes);
-            text = new String(bytes);
-        } catch (IOException exception) {
-            new InspectorError(exception);
-        }
-        return text;
+    public String label() {
+        return _label;
     }
 
+    @Override
+    public String toString() {
+        return _label;
+    }
+
+    /**
+     * Determines if this kind should be visible by default in new inspectors.
+     */
+    public boolean defaultVisibility() {
+        return _defaultVisibility;
+    }
+
+    public static final IndexedSequence<MethodCodeKind> VALUES = new ArraySequence<MethodCodeKind>(values());
 }

@@ -1119,7 +1119,7 @@ public class MaxineTester {
     }
 
     private static File getOutputFile(File outputDir, String outputFileName, String imageConfig) {
-        return getOutputFile(outputDir, outputFileName, imageConfig, ".output");
+        return getOutputFile(outputDir, outputFileName, imageConfig, ".stdout");
     }
 
     private static String[] appendArgs(String[] args, String... extraArgs) {
@@ -1193,22 +1193,9 @@ public class MaxineTester {
     private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
         traceExec(workingDir, command);
         try {
-            final OutputStream outFile = outputFile != null ? new FileOutputStream(outputFile) : new NullOutputStream();
-            final OutputStream errFile;
-            if (outputFile == null) {
-                errFile = new NullOutputStream();
-            } else {
-                if (outputFile.getPath().equals("/dev/stdout")) {
-                    errFile = new FileOutputStream("/dev/stderr");
-                } else {
-                    errFile = new FileOutputStream(outputFile.getAbsolutePath() + ".stderr");
-                }
-            }
-
             final Process process = Runtime.getRuntime().exec(command, env, workingDir);
-            final ProcessThread processThread = new ProcessThread(System.in, outFile, errFile, process, name != null ? name : command[0], timeout);
+            final ProcessThread processThread = new ProcessThread(outputFile, process, name != null ? name : command[0], timeout);
             final int exitValue = processThread.exitValue();
-            outFile.close();
             return exitValue;
         } catch (IOException e) {
             throw ProgramError.unexpected(e);
@@ -1248,24 +1235,45 @@ public class MaxineTester {
         private final InputStream _stderr;
         private final OutputStream _stdoutTo;
         private final OutputStream _stderrTo;
+        private Throwable _exception;
 
-        public ProcessThread(InputStream in, OutputStream out, OutputStream err, Process process, String name, int timeoutSeconds) {
+        private final File _stdoutToFile;
+        private final File _stderrToFile;
+
+        public ProcessThread(File outputFile, Process process, String name, int timeoutSeconds) throws FileNotFoundException {
             super(name);
             _process = process;
             _timeoutMillis = 1000 * timeoutSeconds;
-            _stdout = _process.getInputStream();
-            _stderr = _process.getErrorStream();
-            _stdoutTo = out;
-            _stderrTo = err;
+            _stdout = new BufferedInputStream(_process.getInputStream());
+            _stderr = new BufferedInputStream(_process.getErrorStream());
+
+            _stdoutToFile = outputFile;
+            _stdoutTo = outputFile != null ? new FileOutputStream(outputFile) : new NullOutputStream();
+
+            if (outputFile == null) {
+                _stderrTo = new NullOutputStream();
+                _stderrToFile = null;
+            } else {
+                if (outputFile.getName().endsWith("stdout")) {
+                    _stderrToFile = new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "stderr");
+                } else {
+                    _stderrToFile = new File(outputFile.getAbsolutePath() + ".stderr");
+                }
+                _stderrTo = new FileOutputStream(_stderrToFile);
+            }
         }
 
-        private int redirect(InputStream from, OutputStream to) throws IOException {
+        private int redirect(InputStream from, OutputStream to, File toFile) throws IOException {
             final byte[] buf = new byte[1024];
             int total = 0;
             while (from.available() > 0) {
                 final int count = from.read(buf);
                 if (count > 0) {
-                    to.write(buf, 0, count);
+                    try {
+                        to.write(buf, 0, count);
+                    } catch (IOException ioException) {
+                        throw new IOException("IO error writing to " + (toFile == null ? "[null]" : toFile.getAbsolutePath()), ioException);
+                    }
                     total += count;
                 }
             }
@@ -1277,7 +1285,7 @@ public class MaxineTester {
             try {
                 final long start = System.currentTimeMillis();
                 while (_exitValue == null && System.currentTimeMillis() - start < _timeoutMillis) {
-                    if (redirect(_stdout, _stdoutTo) + redirect(_stderr, _stderrTo) == 0) {
+                    if (redirect(_stdout, _stdoutTo, _stdoutToFile) + redirect(_stderr, _stderrTo, _stderrToFile) == 0) {
                         try {
                             // wait for a few milliseconds to avoid eating too much CPU.
                             Thread.sleep(10);
@@ -1294,11 +1302,11 @@ public class MaxineTester {
                 _stdout.close();
                 _stderr.close();
             } catch (IOException ioException) {
-                throw ProgramError.unexpected(ioException);
+                _exception = ioException;
             }
         }
 
-        public int exitValue() {
+        public int exitValue() throws IOException {
             start();
             try {
                 _exitValue = _process.waitFor();
@@ -1306,6 +1314,20 @@ public class MaxineTester {
                 // do nothing.
             }
 
+            try {
+                // Wait for redirecting thread to finish
+                join();
+
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+            }
+
+            _stdout.close();
+            _stderr.close();
+
+            if (_exception != null) {
+                throw ProgramError.unexpected(_exception);
+            }
             if (_timedOut) {
                 _exitValue = PROCESS_TIMEOUT;
             }

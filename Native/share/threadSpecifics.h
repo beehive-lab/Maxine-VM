@@ -94,46 +94,4 @@ extern void threadSpecificsList_remove(ThreadSpecificsList threadSpecificsList, 
  */
 extern void threadSpecificsList_printList(ThreadSpecificsList threadSpecificsList);
 
-#ifdef TELE
-
-#if os_LINUX
-#include <sys/types.h>
-size_t task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size);
-#define PROCESS_MEMORY_PARAMS pid_t tgid, pid_t tid,
-#define READ_PROCESS_MEMORY(src, dst, size) task_read(tgid, tid, (void *) src, (void *) dst, (size_t) size)
-#elif os_DARWIN
-#include <mach/mach.h>
-int task_read(task_t task, vm_address_t src, void *dst, size_t size);
-#define PROCESS_MEMORY_PARAMS task_t task,
-#define READ_PROCESS_MEMORY(src, dst, size) task_read(task, (vm_address_t) src, (void *) dst, (size_t) size)
-#elif os_SOLARIS
-#include "proc.h"
-#define PROCESS_MEMORY_PARAMS struct ps_prochandle *ph,
-#define READ_PROCESS_MEMORY(src, dst, size) proc_Pread(ph, (void *) dst, (size_t) size, (uintptr_t) src)
-#elif os_GUESTVMXEN
-extern unsigned short readbytes(unsigned long address, char *buffer, unsigned short n);
-#define PROCESS_MEMORY_PARAMS
-#define READ_PROCESS_MEMORY(src, dst, size) readbytes((unsigned long) src, (char *) dst, (unsigned short) size)
-#else
-#error
-#endif
-
-/**
- * Searches a ThreadSpecificsList (see threadSpecifics.h) in the VM's address space for a ThreadSpecifics
- * entry 'ts' such that:
- *
- *   ts.stackBase <= stackPointer && stackPointer < (ts.stackBase + ts.stackSize)
- *
- * If such an entry is found, then its contents are copied from the VM to the given 'threadSpecifics' struct.
- *
- * @param threadSpecificsListAddress the address of the ThreadSpecificsList in the VM's address space
- * @param stackPointer the stack pointer to search with
- * @param threadSpecifics pointer to storage for a ThreadSpecificsStruct into which the found entry
- *        (if any) will be copied from the VM's address space
- * @return the entry that was found, NULL otherwise
- */
-extern ThreadSpecifics threadSpecificsList_search(PROCESS_MEMORY_PARAMS Address threadSpecificsListAddress, Address stackPointer, ThreadSpecifics threadSpecifics);
-
-#endif
-
 #endif /*__threadSpecifics_h__*/

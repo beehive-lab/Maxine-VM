@@ -67,10 +67,10 @@ public class BasicInspectorGeometry implements InspectorGeometry {
     // Stacks Inspection (container) frame
     private static final Point _stacksFrameDefaultLocation = new Point(235, 0);
     private static final Dimension _stacksFramePrefSize = new Dimension(250, 1000);
-    public Point stacksFrameDefaultLocation() {
+    public Point stackFrameDefaultLocation() {
         return _stacksFrameDefaultLocation;
     }
-    public Dimension stacksFramePrefSize() {
+    public Dimension stackFramePrefSize() {
         return _stacksFramePrefSize;
     }
 
@@ -97,8 +97,8 @@ public class BasicInspectorGeometry implements InspectorGeometry {
     }
 
     // Thread Locals Inspection (container) frame
-    private static final Point _threadLocalsFrameDefaultLocation = new Point(1095, 280);
-    private static final Dimension _threadLocalsFramePrefSize = new Dimension(500, 750);
+    private static final Point _threadLocalsFrameDefaultLocation = new Point(1099, 435);
+    private static final Dimension _threadLocalsFramePrefSize = new Dimension(500, 450);
     public Point threadLocalsFrameDefaultLocation() {
         return _threadLocalsFrameDefaultLocation;
     }

@@ -29,7 +29,7 @@ import javax.swing.plaf.metal.*;
 import com.sun.max.ins.*;
 
 /**
- * A frame, external or internal, controlled by an {@linkplain Inspector inspector}.
+ * A frame controlled by an {@linkplain Inspector inspector}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -85,6 +85,10 @@ public interface InspectorFrame extends Prober {
     void repaint();
 
     void pack();
+
+    Dimension getSize();
+
+    void setPreferredSize(Dimension dimension);
 
     Rectangle getBounds();
 

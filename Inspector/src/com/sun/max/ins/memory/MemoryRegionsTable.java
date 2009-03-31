@@ -24,6 +24,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.event.*;
 import javax.swing.table.*;
 
 import com.sun.max.collect.*;
@@ -35,10 +36,12 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.stack.*;
 import com.sun.max.vm.value.*;
 
 
@@ -47,7 +50,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public class MemoryRegionsTable extends InspectorTable {
+public class MemoryRegionsTable extends InspectorTable  implements ViewFocusListener {
 
     private final HeapRegionDisplay _bootHeapRegionDisplay;
     private final CodeRegionDisplay _bootCodeRegionDisplay;
@@ -59,7 +62,7 @@ public class MemoryRegionsTable extends InspectorTable {
     private final MemoryRegionsColumnModel _columnModel;
     private final TableColumn[] _columns;
 
-    MemoryRegionsTable(Inspection inspection) {
+    MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
         _bootHeapRegionDisplay = new HeapRegionDisplay(teleVM().teleBootHeapRegion());
         _bootCodeRegionDisplay = new CodeRegionDisplay(teleVM().teleBootCodeRegion(), -1);
@@ -67,7 +70,7 @@ public class MemoryRegionsTable extends InspectorTable {
         _heapSchemeName = _heapScheme.getClass().getSimpleName();
         _model = new MemoryRegionsTableModel();
         _columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
-        _columnModel = new MemoryRegionsColumnModel();
+        _columnModel = new MemoryRegionsColumnModel(viewPreferences);
 
         setModel(_model);
         setColumnModel(_columnModel);
@@ -78,28 +81,28 @@ public class MemoryRegionsTable extends InspectorTable {
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        addMouseListener(new MemoryRegionsInspectorMouseClickAdapter(inspection()));
-
+        addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
         refresh(teleVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
+        updateSelection();
     }
 
-    MemoryRegionsViewPreferences preferences() {
-        return _columnModel.localPreferences();
-    }
-
-    void selectMemoryRegion(MemoryRegion memoryRegion) {
-        if (memoryRegion == null) {
+    /**
+     * Sets table selection to the memory region, if any, that is the current user focus.
+     */
+    private void updateSelection() {
+        final MemoryRegion memoryRegion = inspection().focus().memoryRegion();
+        final int row = _model.findRow(memoryRegion);
+        if (row < 0) {
             clearSelection();
-        } else {
-            final MemoryRegionsTableModel model = (MemoryRegionsTableModel) getModel();
-            final int row = model.findRow(memoryRegion);
+        } else  if (row != getSelectedRow()) {
             setRowSelectionInterval(row, row);
         }
     }
 
     @Override
     protected JTableHeader createDefaultTableHeader() {
+        // Custom table header with tooltips that describe the column data.
         return new JTableHeader(_columnModel) {
             @Override
             public String getToolTipText(MouseEvent mouseEvent) {
@@ -111,24 +114,26 @@ public class MemoryRegionsTable extends InspectorTable {
         };
     }
 
+    @Override
+    public void valueChanged(ListSelectionEvent listSelectionEvent) {
+        // Row selection changed, perhaps by user mouse click or navigation;
+        // update user focus to follow the selection.
+        super.valueChanged(listSelectionEvent);
+        if (!listSelectionEvent.getValueIsAdjusting()) {
+            final int row = getSelectedRow();
+            if (row >= 0) {
+                final MemoryRegionDisplay memoryRegionDisplay = (MemoryRegionDisplay) getValueAt(row, 0);
+                focus().setMemoryRegion(memoryRegionDisplay.memoryRegion());
+            }
+        }
+    }
+
     private final class MemoryRegionsColumnModel extends DefaultTableColumnModel {
 
-        private final MemoryRegionsViewPreferences _localPreferences;
+        private final MemoryRegionsViewPreferences _viewPreferences;
 
-        private MemoryRegionsColumnModel() {
-            _localPreferences = new MemoryRegionsViewPreferences(MemoryRegionsViewPreferences.globalPreferences(inspection())) {
-                @Override
-                public void setIsVisible(MemoryRegionsColumnKind columnKind, boolean visible) {
-                    super.setIsVisible(columnKind, visible);
-                    final int col = columnKind.ordinal();
-                    if (visible) {
-                        addColumn(_columns[col]);
-                    } else {
-                        removeColumn(_columns[col]);
-                    }
-                    fireColumnPreferenceChanged();
-                }
-            };
+        private MemoryRegionsColumnModel(MemoryRegionsViewPreferences viewPreferences) {
+            _viewPreferences = viewPreferences;
             createColumn(MemoryRegionsColumnKind.NAME, new NameCellRenderer(inspection()));
             createColumn(MemoryRegionsColumnKind.START, new StartAddressCellRenderer());
             createColumn(MemoryRegionsColumnKind.END, new EndAddressCellRenderer());
@@ -136,16 +141,12 @@ public class MemoryRegionsTable extends InspectorTable {
             createColumn(MemoryRegionsColumnKind.ALLOC, new AllocCellRenderer());
         }
 
-        private MemoryRegionsViewPreferences localPreferences() {
-            return _localPreferences;
-        }
-
         private void createColumn(MemoryRegionsColumnKind columnKind, TableCellRenderer renderer) {
             final int col = columnKind.ordinal();
             _columns[col] = new TableColumn(col, 0, renderer, null);
             _columns[col].setHeaderValue(columnKind.label());
             _columns[col].setMinWidth(columnKind.minWidth());
-            if (_localPreferences.isVisible(columnKind)) {
+            if (_viewPreferences.isVisible(columnKind)) {
                 addColumn(_columns[col]);
             }
             _columns[col].setIdentifier(columnKind);
@@ -201,9 +202,9 @@ public class MemoryRegionsTable extends InspectorTable {
         @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (MemoryRegionDisplay memoryRegionData : _sortedMemoryRegions.memoryRegions()) {
+            for (MemoryRegionDisplay memoryRegionDisplay : _sortedMemoryRegions.memoryRegions()) {
                 if (count == row) {
-                    return memoryRegionData;
+                    return memoryRegionDisplay;
                 }
                 count++;
             }
@@ -541,38 +542,6 @@ public class MemoryRegionsTable extends InspectorTable {
 
     }
 
-    private final class MemoryRegionsInspectorMouseClickAdapter extends InspectorMouseClickAdapter {
-
-        MemoryRegionsInspectorMouseClickAdapter(Inspection inspection) {
-            super(inspection);
-        }
-
-        @Override
-        public void procedure(final MouseEvent mouseEvent) {
-            final int selectedRow = getSelectedRow();
-            final int selectedColumn = getSelectedColumn();
-            if (selectedRow != -1 && selectedColumn != -1) {
-                // Left button selects a table cell; also cause a code selection at the row.
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                    final MemoryRegionDisplay memoryRegionData = (MemoryRegionDisplay) getValueAt(selectedRow, selectedColumn);
-                    focus().setMemoryRegion(memoryRegionData.memoryRegion());
-                }
-            }
-            // Locate the renderer under the event location, and pass along the mouse click if appropriate
-            final Point p = mouseEvent.getPoint();
-            final int hitColumnIndex = columnAtPoint(p);
-            final int hitRowIndex = rowAtPoint(p);
-            if ((hitColumnIndex != -1) && (hitRowIndex != -1)) {
-                final TableCellRenderer tableCellRenderer = getCellRenderer(hitRowIndex, hitColumnIndex);
-                final Object cellValue = getValueAt(hitRowIndex, hitColumnIndex);
-                final Component component = tableCellRenderer.getTableCellRendererComponent(MemoryRegionsTable.this, cellValue, false, true, hitRowIndex, hitColumnIndex);
-                if (component != null) {
-                    component.dispatchEvent(mouseEvent);
-                }
-            }
-        }
-    };
-
     public void redisplay() {
         for (TableColumn column : _columns) {
             final Prober prober = (Prober) column.getCellRenderer();
@@ -593,5 +562,27 @@ public class MemoryRegionsTable extends InspectorTable {
                 prober.refresh(epoch, force);
             }
         }
+    }
+
+    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
+    }
+
+    public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
+    }
+
+    public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
+    }
+
+    public void addressFocusChanged(Address oldAddress, Address address) {
+    }
+
+    public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
+        updateSelection();
+    }
+
+    public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
+    }
+
+    public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
     }
 }

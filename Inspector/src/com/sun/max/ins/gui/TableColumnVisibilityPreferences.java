@@ -32,6 +32,7 @@ import com.sun.max.gui.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.option.*;
+import com.sun.max.tele.*;
 
 /**
  * Encapsulates preferences about which columns should be visible in a table-based viewer.
@@ -46,7 +47,11 @@ import com.sun.max.program.option.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<Column_Type>> {
+public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<Column_Type>> implements InspectionHolder {
+
+    public interface TableColumnViewPreferenceListener {
+        void tableColumnViewPreferencesChanged();
+    }
 
     /**
      * A predicate specifying which columns are to be displayed in the table-based viewer.
@@ -58,10 +63,13 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
      */
     protected final SaveSettingsListener _saveSettingsListener;
 
-    protected final Inspection _inspection;
+    private final IdentityHashSet<TableColumnViewPreferenceListener> _tableColumnViewPreferenceListeners =
+        new IdentityHashSet<TableColumnViewPreferenceListener>();
 
-    protected final IndexedSequence<Column_Type> _columnTypeValues;
-    protected final Class<Column_Type> _columnTypeClass;
+    private final Inspection _inspection;
+
+    private final IndexedSequence<Column_Type> _columnTypeValues;
+    private final Class<Column_Type> _columnTypeClass;
 
     /**
      * Mode 1:  Global, persistent preferences.
@@ -104,8 +112,8 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
      * The returned object does not persist itself via the inspection's {@linkplain InspectionSettings settings}. That is, this
      * constructor should be used to create a set of preferences specific to an individual instance of a viewer.
      *
-     *
      * @param defaultPreferences the preferences from which the returned object should get its default values
+     * @param singletonInstance when true, the instance preferences are shared with the global, so there are no per-instance variations.
      */
     public TableColumnVisibilityPreferences(TableColumnVisibilityPreferences<Column_Type> defaultPreferences, boolean singletonInstance) {
         _inspection = defaultPreferences._inspection;
@@ -123,6 +131,55 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         this (defaultPreferences, false);
     }
 
+    /**
+     * @return holder of the interactive inspection state for the session
+     */
+    public final Inspection inspection() {
+        return _inspection;
+    }
+
+    /**
+     * @return visual specifications for user interaction during the session
+     */
+    public final InspectorStyle style() {
+        return _inspection.style();
+    }
+
+    /**
+     * @return information about the user focus of attention in the view state.
+     */
+    public final InspectionFocus focus() {
+        return _inspection.focus();
+    }
+
+    /**
+     * @return access to {@link InspectorAction}s of general use.
+     */
+    public final InspectionActions actions() {
+        return _inspection.actions();
+    }
+
+    public final TeleVM teleVM() {
+        return _inspection.teleVM();
+    }
+
+    /**
+     * Adds a listener for view update when a preference changes.
+     */
+    public void addListener(TableColumnViewPreferenceListener listener) {
+        synchronized (this) {
+            _tableColumnViewPreferenceListeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes a listener for view update when a preference changes.
+     */
+    public void removeListener(TableColumnViewPreferenceListener listener) {
+        synchronized (this) {
+            _tableColumnViewPreferenceListeners.remove(listener);
+        }
+    }
 
     protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {
         for (Map.Entry<Column_Type, Boolean> entry : _visibleColumns.entrySet()) {
@@ -146,27 +203,31 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
     protected abstract boolean canBeMadeInvisible(Column_Type columnType);
 
     /**
-     * Gets the label to be used for a a given column type.
+     * Gets the label to be used for a given column type.
      *
      * @param columnType denotes a column in a table-base viewer
      */
     protected abstract String label(Column_Type columnType);
 
     /**
-     * Determines if this preferences object indicates that a given column type should be made visible.
+     * Updates this preferences object to indicate whether a given column type should be made visible;
+     * notifies any change listeners.
      */
-    public boolean isVisible(Column_Type columnType) {
-        return _visibleColumns.get(columnType);
-    }
-
-    /**
-     * Updates this preferences object to indicate whether a given column type should be made visible.
-     */
-    public void setIsVisible(Column_Type columnType, boolean flag) {
+    protected void setIsVisible(Column_Type columnType, boolean flag) {
         _visibleColumns.put(columnType, flag);
         if (_saveSettingsListener != null) {
             _inspection.settings().save();
         }
+        for (TableColumnViewPreferenceListener listener : _tableColumnViewPreferenceListeners) {
+            listener.tableColumnViewPreferencesChanged();
+        }
+    }
+
+    /**
+     * Determines if this preferences object indicates that a given column type should be made visible.
+     */
+    public boolean isVisible(Column_Type columnType) {
+        return _visibleColumns.get(columnType);
     }
 
     /**

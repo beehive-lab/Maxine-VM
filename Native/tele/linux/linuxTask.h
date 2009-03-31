@@ -74,16 +74,18 @@ extern pid_t _ptracerTask;
 
 /**
  * Gets an open file descriptor on /proc/<pid>/mem for reading the memory of the traced process 'tgid'.
- * Unfortunately, this mechanism cannot be used for writing; ptrace must be used instead.
  *
- * TODO: Ensure that the file descriptor is closed once tracing is complete.
+ * @param tgid the task group id of the traced process
+ * @param address the address at which the memory of tgid is to be read
+ * @return a file descriptor opened on the memory file and positioned at 'address' or -1 if there was an error.
+ *        If there was no error, it is the caller's responsibility to close the file descriptor.
  */
-int task_memory_read_fd(int tgid, void *address);
+int task_memory_read_fd(int tgid, const void *address);
 
 /**
  * Copies 'size' bytes from 'src' in the address space of 'tgid' to 'dst' in the caller's address space.
  */
-size_t task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size);
+size_t task_read(pid_t tgid, pid_t tid, const void *src, void *dst, size_t size);
 
 /**
  * Copies 'size' bytes from 'src' in the caller's address space to 'dst' in the address space of 'tgid'.

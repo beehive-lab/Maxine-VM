@@ -205,7 +205,7 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeGatherThreads(
     threads = gather_threads(&num_threads);
      for (i=0; i<num_threads; i++) {
         ThreadSpecificsStruct threadSpecificsStruct;
-        ThreadSpecifics threadSpecifics = threadSpecificsList_search(threadSpecificsListAddress, threads[i].stack, &threadSpecificsStruct);
+        ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(threadSpecificsListAddress, threads[i].stack, &threadSpecificsStruct);
         teleProcess_jniGatherThread(env, teleDomain, threadSeq, threads[i].id, toThreadState(threads[i].flags), threadSpecifics);
     }
 
@@ -323,39 +323,13 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeSetTransportDe
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadBytes(JNIEnv *env, jclass c, jlong address, jbyteArray byteArray, jint offset, jint length) {
-    jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
-    if (buffer == 0) {
-        log_println("failed to malloc buffer of %d bytes", length);
-        return -1;
-    }
-
-    uint16_t bytesRead = readbytes(address, (char*)buffer, length);
-
-    if (bytesRead > 0) {
-        (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
-    }
-    free(buffer);
-    return bytesRead;
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jint dstOffset, jint length) {
+    return teleProcess_read(env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeWriteBytes(JNIEnv *env, jclass c, jlong address, jbyteArray byteArray, jint offset, jint length) {
-    jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
-    if (buffer == 0) {
-        log_println("failed to malloc byteArray of %d bytes", length);
-        return -1;
-    }
-
-    (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
-    if ((*env)->ExceptionOccurred(env) != NULL) {
-        log_println("failed to copy %d bytes from byteArray into buffer", length);
-        return -1;
-    }
-
-    uint16_t bytesWritten = writebytes(address, (char*)buffer, length);
-    free(buffer);
-    return bytesWritten;
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jobject src, jint srcOffset, jint length) {
+    return teleProcess_write(env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
 JNIEXPORT jint JNICALL

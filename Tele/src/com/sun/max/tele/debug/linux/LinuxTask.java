@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug.linux;
 
 import java.io.*;
+import java.nio.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -39,30 +40,32 @@ import com.sun.max.util.*;
 public final class LinuxTask {
 
     /**
-     * The task group identifier (TGID) of this task. This is the process identifier shared by all tasks in a
+     * The thread group identifier (TGID) of this task. This is the process identifier shared by all tasks in a
      * process and is the value returned by getpid(2) since Linux 2.4.
      */
     private final int _tgid;
 
     /**
-     * The (system-wide) unique task identifier (TID( of this task. The first task in a task group is
-     * the <i>leader</i> of the new task group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
+     * The (system-wide) unique task identifier (TID) of this task. The first task in a thread group is
+     * the <i>leader</i> of the new thread group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
      *
      * Note that this is <b>not<b> the identifier returned by pthread_create(3p).
      */
     private final int _tid;
 
     /**
-     * Gets the task group identifier (TGID) of this task. This is the process identifier shared by all
+     * Gets the thread group identifier (TGID) of this task. This is the process identifier shared by all
      * tasks in a process and is the value returned by getpid(2) since Linux 2.4.
      */
     public int tgid() {
         return _tgid;
     }
 
+    private final LinuxTask _leader;
+
     /**
-     * Gets the (system-wide) unique task identifier (TID( of this task. The first task in a task group is
-     * the <i>leader</i> of the new task group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
+     * Gets the (system-wide) unique task identifier (TID) of this task. The first task in a thread group is
+     * the <i>leader</i> of the new thread group and its {@link #_tgid TGID} is the same as its {@link #_tid TID}.
      *
      * Note that this is <b>not<b> the identifier returned by pthread_create(3p).
      */
@@ -70,9 +73,45 @@ public final class LinuxTask {
         return _tid;
     }
 
+    /**
+     * Gets the leader task from the thread group this task is a member of. The leader of a thread group is
+     * the first task created by clone(2) in a thread group.
+     * @return
+     */
+    public LinuxTask leader() {
+        return _leader;
+    }
+
+    /**
+     * Determines if this task is the {@linkplain #leader() leader} in its thread group.
+     */
+    public boolean isLeader() {
+        return _leader == this;
+    }
+
+    /**
+     * Creates the <i>leader</i> task for a Linux process.
+     *
+     * @param tgid
+     * @param tid
+     */
     LinuxTask(int tgid, int tid) {
+        assert tgid == tid : "TGID must match TID for leader task";
         _tgid = tgid;
         _tid = tid;
+        _leader = this;
+    }
+
+    /**
+     * Creates a <i>non-leader</i> task for a Linux process.
+     *
+     * @param leader the leader task for the process
+     * @param tid
+     */
+    LinuxTask(LinuxTask leader, int tid) {
+        _tgid = leader._tgid;
+        _tid = tid;
+        _leader = leader;
     }
 
     @Override
@@ -210,23 +249,80 @@ public final class LinuxTask {
         }
     }
 
-    private static native int nativeReadBytes(int tgid, int tid, long address, byte[] buffer, int offset, int length);
+    /**
+     * The file in /proc through which the memory of this task can be read. As Linux does not
+     * support writing to the memory of a process via /proc, it's still necessary to use
+     * ptrace for {@linkplain #writeBytes(Address, ByteBuffer, int, int) writing}.
+     */
+    private RandomAccessFile _memory;
 
-    public synchronized int readBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+    /**
+     * Copies bytes from the tele process into a given {@linkplain ByteBuffer#isDirect() direct ByteBuffer} or byte
+     * array.
+     *
+     * @param src the address in the tele process to copy from
+     * @param dst the destination of the copy operation. This is a direct {@link ByteBuffer} or {@code byte[]}
+     *            depending on the value of {@code isDirectByteBuffer}
+     * @param isDirectByteBuffer
+     * @param dstOffset the offset in {@code dst} at which to start writing
+     * @param length the number of bytes to copy
+     * @return the number of bytes copied or -1 if there was an error
+     */
+    private static native int nativeReadBytes(int tgid, int tid, long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
+
+    public synchronized int readBytes(final Address src, final ByteBuffer dst, final int offset, final int length) {
+        if (!isLeader()) {
+            return leader().readBytes(src, dst, offset, length);
+        }
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                assert !address.isZero();
-                return nativeReadBytes(_tgid, _tid, address.toLong(), buffer, offset, length);
+                assert !src.isZero();
+                final long addr = src.toLong();
+                if (addr < 0) {
+                    // RandomAccessFile.see() can't handle unsigned long offsets: have to resort to a JNI call
+                    if (dst.isDirect()) {
+                        return nativeReadBytes(_tgid, _tid, addr, dst, true, offset, length);
+                    }
+                    assert dst.array() != null;
+                    return nativeReadBytes(_tgid, _tid, addr, dst.array(), false, offset, length);
+                } else {
+                    if (_memory == null) {
+                        _memory = new RandomAccessFile("/proc/" + tgid() + "/mem", "r");
+                    }
+                    try {
+                        final ByteBuffer dstView = (ByteBuffer) dst.duplicate().position(offset).limit(offset + length);
+                        dstView.position(offset);
+                        return _memory.getChannel().read(dstView, addr);
+                    } catch (IOException ioException) {
+                        throw new DataIOError(src, ioException.toString());
+                    }
+                }
             }
         });
     }
 
-    private static native int nativeWriteBytes(int tgid, int tid, long address, byte[] buffer, int offset, int length);
+    /**
+     * Copies bytes from a given {@linkplain ByteBuffer#isDirect() direct ByteBuffer} or byte array into the tele process.
+     *
+     * @param dst the address in the tele process to copy to
+     * @param src the source of the copy operation. This is a direct {@link ByteBuffer} or {@code byte[]}
+     *            depending on the value of {@code isDirectByteBuffer}
+     * @param isDirectByteBuffer
+     * @param srcOffset the offset in {@code src} at which to start reading
+     * @param length the number of bytes to copy
+     * @return the number of bytes copied or -1 if there was an error
+     */
+    private static native int nativeWriteBytes(int tgid, int tid, long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
 
-    public synchronized int writeBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+    public synchronized int writeBytes(final Address dst, final ByteBuffer src, final int offset, final int length) {
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                return nativeWriteBytes(_tgid, _tid, address.toLong(), buffer, offset, length);
+                assert src.limit() - offset >= length;
+                if (src.isDirect()) {
+                    return nativeWriteBytes(_tgid, _tid, dst.toLong(), src, true, offset, length);
+                }
+                assert src.array() != null;
+                return nativeWriteBytes(_tgid, _tid, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
             }
         });
     }
@@ -257,5 +353,15 @@ public final class LinuxTask {
                                 stateRegisters, stateRegisters.length);
             }
         });
+    }
+
+    public void close() {
+        if (_memory != null) {
+            try {
+                _memory.close();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
     }
 }

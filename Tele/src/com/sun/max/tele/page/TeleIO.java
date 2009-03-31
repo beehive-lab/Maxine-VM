@@ -29,4 +29,6 @@ import com.sun.max.unsafe.*;
 public interface TeleIO extends DataIO {
 
     int pageSize();
+
+    long epoch();
 }

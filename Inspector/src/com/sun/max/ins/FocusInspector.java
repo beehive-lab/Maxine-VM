@@ -24,6 +24,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
+import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 
@@ -39,25 +40,31 @@ public final class FocusInspector extends Inspector {
     // Set to null when inspector closed.
     private static FocusInspector _focusInspector;
     /**
-     * Display and highlight the (singleton) Focus inspector.
+     * Display the (singleton) Focus inspector.
      *
      * @return  The Focus inspector, possibly newly created.
      */
     public static FocusInspector make(Inspection inspection) {
         if (_focusInspector == null) {
-            _focusInspector = new FocusInspector(inspection, Residence.INTERNAL);
+            _focusInspector = new FocusInspector(inspection);
         }
-        _focusInspector.highlight();
         return _focusInspector;
     }
 
-    private FocusTable _table;
+    private FocusTable _focusTable;
 
-    private FocusInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "focusInspector");
+
+    private FocusInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
         createFrame(null);
         Trace.end(1,  tracePrefix() + " initializing");
+    }
+
+    @Override
+    public SaveSettingsListener saveSettingsListener() {
+        return _saveSettingsListener;
     }
 
     @Override
@@ -67,19 +74,19 @@ public final class FocusInspector extends Inspector {
 
     @Override
     protected void createView(long epoch) {
-        _table = new FocusTable(inspection());
+        _focusTable = new FocusTable(inspection());
         refreshView(epoch, true);
-        JTableColumnResizer.adjustColumnPreferredWidths(_table);
+        JTableColumnResizer.adjustColumnPreferredWidths(_focusTable);
         final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(_table.getTableHeader(), BorderLayout.NORTH);
-        panel.add(_table, BorderLayout.CENTER);
+        panel.add(_focusTable.getTableHeader(), BorderLayout.NORTH);
+        panel.add(_focusTable, BorderLayout.CENTER);
         frame().setContentPane(panel);
-        focus().addListener(_table);
+        focus().addListener(_focusTable);
     }
 
     @Override
     public void refreshView(long epoch, boolean force) {
-        _table.refresh(epoch, force);
+        _focusTable.refresh(epoch, force);
         super.refreshView(epoch, force);
     }
 
@@ -92,7 +99,7 @@ public final class FocusInspector extends Inspector {
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         _focusInspector = null;
-        focus().removeListener(_table);
+        focus().removeListener(_focusTable);
         super.inspectorClosing();
     }
 

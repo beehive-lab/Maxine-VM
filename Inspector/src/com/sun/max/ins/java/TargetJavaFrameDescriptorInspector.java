@@ -50,8 +50,8 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         return (MethodID.fromMethodActor(javaFrameDescriptor.classMethodActor()).asAddress().toLong() << MAX_BYTE_CODE_BITS) | javaFrameDescriptor.bytecodePosition();
     }
 
-    private TargetJavaFrameDescriptorInspector(Inspection inspection, Residence residence, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
-        super(inspection, residence, LongValue.from(subject(javaFrameDescriptor)));
+    private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
+        super(inspection, LongValue.from(subject(javaFrameDescriptor)));
         _javaFrameDescriptor = javaFrameDescriptor;
         _framePointer = TeleIntegerRegisters.symbolizer(teleVM().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
         createFrame(null);
@@ -65,9 +65,8 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         final UniqueInspector.Key<TargetJavaFrameDescriptorInspector> key = UniqueInspector.Key.create(TargetJavaFrameDescriptorInspector.class, subject(javaFrameDescriptor));
         TargetJavaFrameDescriptorInspector inspector = UniqueInspector.find(inspection, key);
         if (inspector == null) {
-            inspector = new TargetJavaFrameDescriptorInspector(inspection, Residence.INTERNAL, javaFrameDescriptor, abi);
+            inspector = new TargetJavaFrameDescriptorInspector(inspection, javaFrameDescriptor, abi);
         }
-        inspector.highlight();
         return inspector;
     }
 

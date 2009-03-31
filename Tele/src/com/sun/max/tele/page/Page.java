@@ -20,7 +20,8 @@
  */
 package com.sun.max.tele.page;
 
-import com.sun.max.lang.*;
+import java.nio.*;
+
 import com.sun.max.unsafe.*;
 
 /**
@@ -30,15 +31,35 @@ import com.sun.max.unsafe.*;
 public class Page {
 
     private TeleIO _teleIO;
-
+    private long _epoch = -1;
     private final long _index;
 
-    private final byte[] _bytes;
+    private final ByteBuffer _buffer;
 
-    public Page(TeleIO teleIO, long index) {
+    private static final boolean _useDirectBuffers = true; //System.getProperty("max.tele.page.useDirectBuffers") != null;
+
+    private static ByteBuffer _globalBuffer;;
+
+    private static synchronized ByteBuffer allocate(TeleIO teleIO, ByteOrder byteOrder, long index) {
+        final int pageSize = teleIO.pageSize();
+        if (_globalBuffer == null) {
+            _globalBuffer = ByteBuffer.allocate(1024 * 1024 * 100).order(byteOrder);
+        }
+        if (_useDirectBuffers) {
+            if (_globalBuffer.remaining() >= pageSize) {
+                final ByteBuffer buffer = _globalBuffer.slice().order(byteOrder);
+                _globalBuffer.position(_globalBuffer.position() + pageSize);
+                buffer.limit(pageSize);
+                return buffer;
+            }
+        }
+        return ByteBuffer.allocate(pageSize).order(byteOrder);
+    }
+
+    public Page(TeleIO teleIO, long index, ByteOrder byteOrder) {
         _teleIO = teleIO;
         _index = index;
-        _bytes = new byte[teleIO.pageSize()];
+        _buffer = allocate(teleIO, byteOrder, index);
     }
 
     public int size() {
@@ -49,24 +70,60 @@ public class Page {
         return Address.fromLong(_index * size());
     }
 
-    boolean _isReadDirty = true;
+    public void invalidate() {
+        _epoch = -1;
+    }
 
     private void refreshRead() throws DataIOError {
-        if (_isReadDirty) {
-            DataIO.Static.readFully(_teleIO, address(), _bytes);
-            _isReadDirty = false;
+        if (_epoch < _teleIO.epoch()) {
+            DataIO.Static.readFully(_teleIO, address(), _buffer);
+            _epoch = _teleIO.epoch();
         }
     }
 
     public byte readByte(int offset) throws DataIOError {
         refreshRead();
-        return _bytes[offset];
+        return _buffer.get(offset);
     }
 
-    public int readBytes(int fromOffset, byte[] buffer, int toStart) throws DataIOError {
+    public short readShort(int offset) {
         refreshRead();
-        final int n = Math.min(buffer.length - toStart, size() - fromOffset);
-        Bytes.copy(_bytes, fromOffset, buffer, toStart, n);
+        return _buffer.getShort(offset);
+    }
+
+    public int readInt(int offset) {
+        refreshRead();
+        final int result = _buffer.getInt(offset);
+        return result;
+    }
+
+    public long readLong(int offset) {
+        refreshRead();
+        final long result = _buffer.getLong(offset);
+        return result;
+    }
+
+    /**
+     * Transfers {@code n} bytes from this page to a given buffer where
+     * {@code n == min(dst.limit() - dstOffset, size() - offset)}.
+     *
+     * @param offset the offset in this page from which to start reading
+     * @param dst the buffer into which the bytes will be copied
+     * @param dstOffset the offset in {@code dst} at which to start writing
+     * @return the number of bytes copied
+     */
+    public int readBytes(int offset, ByteBuffer dst, int dstOffset) throws DataIOError {
+        refreshRead();
+
+        final int n = Math.min(dst.limit() - dstOffset, size() - offset);
+
+        final ByteBuffer srcSlice = _buffer.duplicate();
+        final ByteBuffer dstSlice = dst.duplicate();
+
+        srcSlice.position(offset).limit(offset + n);
+        dstSlice.position(dstOffset).limit(dstOffset + n);
+
+        dstSlice.put(srcSlice);
         return n;
     }
 }

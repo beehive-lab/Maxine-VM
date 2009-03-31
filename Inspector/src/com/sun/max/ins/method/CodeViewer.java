@@ -66,7 +66,7 @@ public abstract class CodeViewer extends InspectorPanel {
         return _toolBar;
     }
 
-    public abstract MethodInspector.CodeKind codeKind();
+    public abstract MethodCodeKind codeKind();
 
     public abstract String codeViewerKindName();
 

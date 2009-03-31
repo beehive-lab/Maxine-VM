@@ -25,10 +25,9 @@ import javax.swing.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.gui.InspectorTable.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
-import com.sun.max.tele.debug.*;
 
 /**
  * Singleton inspector that displays information about all kinds of breakpoints that might be set in the {@link TeleVM}.
@@ -37,42 +36,53 @@ import com.sun.max.tele.debug.*;
  * @author Mick Jordan
  * @author Michael Van De Vanter
  */
-public final class BreakpointsInspector extends Inspector {
+public final class BreakpointsInspector extends Inspector implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
     private static BreakpointsInspector _breakpointsInspector;
 
     /**
-     * Displays and highlights the (singleton) breakpoints inspector.
+     * Displays the (singleton) breakpoints inspector.
      * @return  The breakpoints inspector, possibly newly created.
      */
     public static BreakpointsInspector make(Inspection inspection) {
         if (_breakpointsInspector == null) {
-            _breakpointsInspector = new BreakpointsInspector(inspection, Residence.INTERNAL);
+            _breakpointsInspector = new BreakpointsInspector(inspection);
         }
-        _breakpointsInspector.highlight();
         return _breakpointsInspector;
     }
 
+    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "breakpointsInspector");
+
+    // This is a singleton viewer, so only use a single level of view preferences.
+    private final BreakpointsViewPreferences _viewPreferences;
+
     private BreakpointsTable _table;
 
-    private BreakpointsInspector(Inspection inspection, Residence residence) {
-        super(inspection, residence);
+    private BreakpointsInspector(Inspection inspection) {
+        super(inspection);
         Trace.begin(1,  tracePrefix() + " initializing");
+        _viewPreferences = BreakpointsViewPreferences.globalPreferences(inspection());
+        _viewPreferences.addListener(this);
         createFrame(null);
-        //frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
-        frame().menu().addSeparator();
-        frame().menu().add(new InspectorAction(inspection, "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", _table.preferences());
-            }
-        });
         frame().add(new BreakpointFrameMenuItems());
+        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
+            frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
+            frame().getContentPane().setPreferredSize(inspection().geometry().breakpointsFramePrefSize());
+        }
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "breakpointsInspector");
+    @Override
+    public void createView(long epoch) {
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
+        _table = new BreakpointsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
+        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
+        frame().setContentPane(scrollPane);
+    }
 
     @Override
     public SaveSettingsListener saveSettingsListener() {
@@ -85,17 +95,13 @@ public final class BreakpointsInspector extends Inspector {
     }
 
     @Override
-    public void createView(long epoch) {
-        _table = new BreakpointsTable(inspection());
-        _table.addColumnChangeListener(new ColumnChangeListener() {
-            public void columnPreferenceChanged() {
-                reconstructView();
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", _viewPreferences);
             }
-        });
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _table);
-        scrollPane.setPreferredSize(inspection().geometry().breakpointsFramePrefSize());
-        frame().setContentPane(scrollPane);
-        frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
+        };
     }
 
     /**
@@ -142,21 +148,23 @@ public final class BreakpointsInspector extends Inspector {
         refreshView(true);
     }
 
-    @Override
-    public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        _table.selectBreakpoint(teleBreakpoint);
+    public void tableColumnViewPreferencesChanged() {
+        reconstructView();
     }
 
     @Override
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         _breakpointsInspector = null;
+        _viewPreferences.removeListener(this);
+        focus().removeListener(_table);
         super.inspectorClosing();
     }
 
     @Override
     public void vmProcessTerminated() {
         _breakpointsInspector = null;
+        _viewPreferences.removeListener(this);
         dispose();
     }
 }

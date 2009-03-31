@@ -308,7 +308,7 @@ public class Inspection extends JFrame {
                     _style = style;
                 }
 
-                DebugMode defaultDebugMode = DebugMode.SYNCHRONOUS;
+                DebugMode defaultDebugMode = DebugMode.ASYNCHRONOUS;
                 switch (teleVM().vmConfiguration().platform().operatingSystem()) {
                     case SOLARIS:
                         defaultDebugMode = DebugMode.ASYNCHRONOUS;
@@ -316,7 +316,8 @@ public class Inspection extends JFrame {
                     default:
                         break;
                 }
-                _debugMode = _settings.get(this, DEBUG_MODE_PREFERENCE, new OptionTypes.EnumType<DebugMode>(DebugMode.class), defaultDebugMode);
+                //_debugMode = _settings.get(this, DEBUG_MODE_PREFERENCE, new OptionTypes.EnumType<DebugMode>(DebugMode.class), defaultDebugMode);
+                _debugMode = defaultDebugMode;
                 _investigateWordValues = _settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
                 _externalViewerType = _settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
                 for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
@@ -436,8 +437,14 @@ public class Inspection extends JFrame {
 
             final JPanel interiorPanel = new InspectorPanel(Inspection.this);
             interiorPanel.add(new TextLabel(Inspection.this, "Debugging:  "));
+
+            /*
+             * Until there's a good reason for supporting the synchronous debugging mode, it's no longer selectable.
+             * This prevents any user confusion as to why the GUI seems to freeze when the VM is running. [Doug]
             interiorPanel.add(synchButton);
             interiorPanel.add(asynchButton);
+             */
+
             interiorPanel.add(wordValueCheckBox);
             panel.add(interiorPanel, BorderLayout.WEST);
 
@@ -1057,7 +1064,7 @@ public class Inspection extends JFrame {
      * Determines what happened in {@link TeleVM} execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped(long epoch) {
-        assert _teleVM.state() == State.STOPPED;
+        ProgramError.check(_teleVM.state() == State.STOPPED, "State should be stopped, but is " + _teleVM.state());
         setBusy(true);
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set

@@ -50,7 +50,7 @@ public final class HubLabel extends InspectorLabel {
             public void procedure(MouseEvent mouseEvent) {
                 if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
                     if (mouseEvent.isControlDown()) {
-                        MemoryInspector.create(inspection(), _teleHub);
+                        MemoryInspector.create(inspection(), _teleHub).highlight();
                     } else {
                         inspection().focus().setHeapObject(_teleHub);
                     }
