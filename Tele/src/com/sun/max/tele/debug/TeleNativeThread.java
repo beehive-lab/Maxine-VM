@@ -141,6 +141,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private TeleVmThread _teleVmThread;
     private int _suspendCount;
 
+    private long _registersEpoch;
     private final TeleIntegerRegisters _integerRegisters;
     private final TeleStateRegisters _stateRegisters;
     private final TeleFloatingPointRegisters _floatingPointRegisters;
@@ -237,14 +238,17 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     public TeleIntegerRegisters integerRegisters() {
+        refreshRegisters();
         return _integerRegisters;
     }
 
     public TeleFloatingPointRegisters floatingPointRegisters() {
+        refreshRegisters();
         return _floatingPointRegisters;
     }
 
     public TeleStateRegisters stateRegisters() {
+        refreshRegisters();
         return _stateRegisters;
     }
 
@@ -258,6 +262,38 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
+     * Updates this thread with the information information made available while
+     * {@linkplain TeleProcess#gatherThreads(AppendableSequence) gathering} threads. This information is made available
+     * by the native tele layer as threads are discovered. Subsequent refreshing of cached thread state (such a
+     * {@linkplain #refreshRegisters() registers}, {@linkplain #refreshFrames(boolean) stack frames} and
+     * {@linkplain #refreshThreadLocals() VM thread locals}) depends on this information being available and up to date.
+     *
+     * @param state the state of the thread
+     * @param instructionPointer the current value of the instruction pointer for the thread
+     * @param vmThreadLocals the address of the various VM thread locals storage areas
+     */
+    public final void updateAfterGather(ThreadState state, Pointer instructionPointer, Map<Safepoint.State, Pointer> vmThreadLocals) {
+        _state = state;
+        _stateRegisters.setInstructionPointer(instructionPointer);
+        if (vmThreadLocals != null) {
+            assert hasThreadLocals();
+            for (Safepoint.State safepointState : Safepoint.State.CONSTANTS) {
+                final Pointer vmThreadLocalsPointer = vmThreadLocals.get(safepointState);
+                if (vmThreadLocalsPointer.isZero()) {
+                    _teleVmThreadLocals.put(safepointState, null);
+                } else {
+                    // Only create a new TeleVMThreadLocalValues if the start address has changed which
+                    // should only happen once going from 0 to a non-zero value.
+                    final TeleVMThreadLocalValues teleVMThreadLocalValues = _teleVmThreadLocals.get(safepointState);
+                    if (teleVMThreadLocalValues == null || !teleVMThreadLocalValues.start().equals(vmThreadLocalsPointer)) {
+                        _teleVmThreadLocals.put(safepointState, new TeleVMThreadLocalValues(safepointState, vmThreadLocalsPointer));
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Updates the addresses of this thread's state VM thread locals.
      * This does not cause a {@linkplain #refresh(long) refresh}.
      */
@@ -268,7 +304,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             if (vmThreadLocalsPointer.isZero()) {
                 _teleVmThreadLocals.put(safepointState, null);
             } else {
-                _teleVmThreadLocals.put(safepointState, new TeleVMThreadLocalValues(safepointState, vmThreadLocalsPointer));
+                // Only create a new TeleVMThreadLocalValues if the start address has changed which
+                // should only happen once going from 0 to a non-zero value.
+                final TeleVMThreadLocalValues teleVMThreadLocalValues = _teleVmThreadLocals.get(safepointState);
+                if (teleVMThreadLocalValues == null || !teleVMThreadLocalValues.start().equals(vmThreadLocalsPointer)) {
+                    _teleVmThreadLocals.put(safepointState, new TeleVMThreadLocalValues(safepointState, vmThreadLocalsPointer));
+                }
             }
         }
     }
@@ -289,21 +330,28 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
 
         if (_state.allowsDataAccess()) {
-            refreshRegisters();
             refreshBreakpoint();
         }
     }
 
+    private static final int REFRESH_TRACE_LEVEL = 2;
+
     /**
      * Refreshes the cached state of this thread's registers from the corresponding thread in the tele process.
      */
-    private void refreshRegisters() {
-        if (!readRegisters(_integerRegisters.registerData(), _floatingPointRegisters.registerData(), _stateRegisters.registerData())) {
-            throw new TeleError("Error while updating registers for thread: " + this);
+    private synchronized void refreshRegisters() {
+        final long processEpoch = teleProcess().epoch();
+        if (_registersEpoch < processEpoch) {
+            _registersEpoch = processEpoch;
+            Trace.line(REFRESH_TRACE_LEVEL, "Refreshing registers for " + this);
+
+            if (!readRegisters(_integerRegisters.registerData(), _floatingPointRegisters.registerData(), _stateRegisters.registerData())) {
+                throw new TeleError("Error while updating registers for thread: " + this);
+            }
+            _integerRegisters.refresh();
+            _floatingPointRegisters.refresh();
+            _stateRegisters.refresh();
         }
-        _integerRegisters.refresh();
-        _floatingPointRegisters.refresh();
-        _stateRegisters.refresh();
     }
 
     /**
@@ -317,6 +365,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         final long processEpoch = teleProcess().epoch();
         if (_teleVmThreadLocalsEpoch < processEpoch) {
             _teleVmThreadLocalsEpoch = processEpoch;
+
+            Trace.line(REFRESH_TRACE_LEVEL, "Refreshing thread locals for " + this);
+
             final DataAccess dataAccess = teleProcess().dataAccess();
             for (TeleVMThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
                 if (teleVmThreadLocalValues != null) {
@@ -382,6 +433,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         final long processEpoch = teleProcess().epoch();
         if (_framesEpoch < processEpoch) {
             _framesEpoch = processEpoch;
+
+            Trace.line(REFRESH_TRACE_LEVEL, "Refreshing frames for " + this);
+
+            // The stack walk requires the VM thread locals to be up to date
+            //refreshThreadLocals();
+
             final TeleVM teleVM = _teleProcess.teleVM();
             final Sequence<StackFrame> frames = new TeleStackFrameWalker(teleVM, this).frames();
             assert !frames.isEmpty();
@@ -454,10 +511,12 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     public final Pointer stackPointer() {
+        refreshRegisters();
         return _integerRegisters.stackPointer();
     }
 
     public final Pointer framePointer() {
+        refreshRegisters();
         return _integerRegisters.framePointer();
     }
 
@@ -469,6 +528,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     public final Pointer instructionPointer() {
+        // No need to call refreshRegisters(): the instruction pointer is updated by updateAfterGather() which
+        // ensures that it is always in sync.
         return _stateRegisters.instructionPointer();
     }
 
@@ -502,7 +563,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @return null if this thread is not (yet) associated with VmThread
      */
     public TeleVmThread teleVmThread() {
-        refreshThreadLocals();
+        if (_teleVmThread == null) {
+            refreshThreadLocals();
+        }
         return _teleVmThread;
     }
 

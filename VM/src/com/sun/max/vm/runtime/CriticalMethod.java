@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.runtime;
 
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -49,6 +50,7 @@ public class CriticalMethod {
      * @param methodName the name of the method as a string
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */
+    @PROTOTYPE_ONLY
     public CriticalMethod(Class javaClass, String methodName) {
         this(javaClass, methodName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
@@ -62,6 +64,7 @@ public class CriticalMethod {
      * @param callEntryPoint the entrypoint in the method that is desired
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */
+    @PROTOTYPE_ONLY
     public CriticalMethod(Class javaClass, String methodName, CallEntryPoint callEntryPoint) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final Utf8Constant name = SymbolTable.makeSymbol(methodName);
@@ -83,6 +86,7 @@ public class CriticalMethod {
      * @param classMethodActor the method for which to create an entrypoint
      * @param callEntryPoint the call entrypoint of the method that is desired
      */
+    @PROTOTYPE_ONLY
     public CriticalMethod(ClassMethodActor classMethodActor, CallEntryPoint callEntryPoint) {
         _classMethodActor = classMethodActor;
         _callEntryPoint = callEntryPoint;

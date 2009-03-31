@@ -44,7 +44,6 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.bytecode.*;
-import com.sun.max.vm.compiler.dir.transform.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.type.*;
 
@@ -98,16 +97,17 @@ public final class BinaryImageGenerator {
     private final Option<String> _methodTreeFileOption = _options.newStringOption("method-tree-file", DEFAULT_IMAGE_METHOD_TREE_FILE_NAME,
             "Specifies the name of the method tree file generated (if any).");
 
-    private final Option<Boolean> _methodTraceOption = _options.newBooleanOption("methodTrace", false,
-            "Activates method tracing instrumentation.");
     private final Option<Boolean> _testCallerJit = _options.newBooleanOption("test-caller-jit", false,
             "For the Java tester, this option specifies that each test case's harness should be compiled " +
             "with the JIT compiler (helpful for testing JIT->JIT and JIT->opt calls).");
+
     private final Option<Boolean> _testCalleeJit = _options.newBooleanOption("test-callee-jit", false,
             "For the Java tester, this option specifies that each test case's method should be compiled " +
             "with the JIT compiler (helpful for testing JIT->JIT and opt->JIT calls).");
+
     private final Option<Boolean> _testUnlinked = _options.newBooleanOption("test-unlinked", false,
             "For the Java tester, this option specifies that each test case method should be unlinked.");
+
     private final Option<Boolean> _testNative = _options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
@@ -195,10 +195,6 @@ public final class BinaryImageGenerator {
 
             final File outputDirectory = _outputDirectoryOption.getValue();
             outputDirectory.mkdirs();
-
-            if (_methodTraceOption.getValue()) {
-                MethodTrace.enable();
-            }
 
             final DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(_treeOption.getValue());
             VMConfiguration.target().finalizeSchemes(MaxineVM.Phase.PROTOTYPING);

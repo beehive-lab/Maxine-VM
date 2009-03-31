@@ -20,7 +20,10 @@
  */
 package com.sun.max.unsafe;
 
+import java.nio.*;
+
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 
 /**
  * Implementation of {@link DataAccess} by direct main memory access.
@@ -34,24 +37,29 @@ public final class MemoryDataAccess implements DataAccess {
 
     public static final MemoryDataAccess POINTER_DATA_ACCESS = new MemoryDataAccess();
 
+    public void readFully(Address address, ByteBuffer buffer) {
+        DataIO.Static.readFully(this, address, buffer);
+    }
+
     public byte[] readFully(Address address, int length) {
         return DataIO.Static.readFully(this, address, length);
     }
 
     public void readFully(Address address, byte[] buffer) {
-        DataIO.Static.readFully(this, address, buffer);
+        readFully(address, ByteBuffer.wrap(buffer));
     }
 
-    public int read(Address address, byte[] buffer, int offset, int length) {
-        DataIO.Static.checkRead(buffer, offset, length);
-        Memory.readBytes(address.asPointer(), length, buffer, offset);
-        return length;
+    public int read(Address address, ByteBuffer buffer, int offset, int length) {
+        throw Problem.unimplemented();
     }
 
-    public int write(byte[] buffer, int offset, int length, Address toAddress) throws DataIOError {
-        DataIO.Static.checkWrite(buffer, offset, length);
-        Memory.writeBytes(buffer, offset, length, toAddress.asPointer());
-        return length;
+    public int write(ByteBuffer buffer, int offset, int length, Address toAddress) throws DataIOError {
+        throw Problem.unimplemented();
+    }
+
+    @Override
+    public void writeBuffer(Address address, ByteBuffer buffer) {
+        throw Problem.unimplemented();
     }
 
     public byte readByte(Address address) {

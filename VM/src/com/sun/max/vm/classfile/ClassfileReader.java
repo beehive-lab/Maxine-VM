@@ -770,8 +770,9 @@ public class ClassfileReader {
                 int substituteeIndex = -1;
                 if (MaxineVM.isPrototyping()) {
                     if (isClinit) {
-                        // Class initializer's for all Maxine class are run while prototyping and do no need to be in the boot image
-                        if (MaxineVM.isMaxineClass(_classDescriptor)) {
+                        // Class initializer's for all Maxine class are run while prototyping and do not need to be in the boot image.
+                        // The "max.loader.preserveClinitMethods" system property can be used to override this default behaviour.
+                        if (MaxineVM.isMaxineClass(_classDescriptor) && System.getProperty("max.loader.preserveClinitMethods") == null) {
                             continue nextMethod;
                         }
                     }

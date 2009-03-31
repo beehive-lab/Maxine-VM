@@ -22,6 +22,7 @@ package com.sun.max.tele;
 
 import java.io.*;
 import java.net.*;
+import java.nio.*;
 import java.util.*;
 import java.util.logging.*;
 
@@ -1903,10 +1904,10 @@ public abstract class TeleVM {
         }
 
         public byte[] accessMemory(long start, int length) {
-            final byte[] result = new byte[length];
+            final ByteBuffer buffer = ByteBuffer.wrap(new byte[length]);
             final Address address = Address.fromLong(start);
-            dataAccess().read(address, result, 0, length);
-            return result;
+            dataAccess().read(address, buffer, 0, length);
+            return buffer.array();
         }
 
         public VMValue createBooleanValue(boolean b) {
