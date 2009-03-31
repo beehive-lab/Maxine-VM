@@ -129,9 +129,6 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
             // because we created Miranda methods for the TupleClassActor.
             // If we did not come across any of those above,
             // then there isn't any matching interface method either.
-            if (pool.holder().name().string().contains("BFactory")) {
-                System.console();
-            }
             final MethodActor classMethodActor = classActor.findClassMethodActor(name, signature);
             if (classMethodActor != null) {
                 if (classMethodActor.isAbstract() && !classActor.isAbstract()) {
