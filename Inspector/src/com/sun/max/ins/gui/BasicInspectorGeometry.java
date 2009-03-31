@@ -44,7 +44,7 @@ public class BasicInspectorGeometry implements InspectorGeometry {
         return _inspectionFramePrefSize;
     }
 
-    // Thread Inspection (container) frame
+    // Thread Inspection frame
     private static final Point _threadsFrameDefaultLocation = new Point(0, 0);
     private static final Dimension _threadsFramePrefSize = new Dimension(225, 170);
     public Point threadsFrameDefaultLocation() {
@@ -54,7 +54,7 @@ public class BasicInspectorGeometry implements InspectorGeometry {
         return _threadsFramePrefSize;
     }
 
-    // Register Inspection (container) frame
+    // Register Inspection frame
     private static final Point _registersFrameDefaultLocation = new Point(0, 200);
     private static final Dimension _registersFramePrefSize = new Dimension(225, 800);
     public Point registersFrameDefaultLocation() {
@@ -64,7 +64,7 @@ public class BasicInspectorGeometry implements InspectorGeometry {
         return _registersFramePrefSize;
     }
 
-    // Stacks Inspection (container) frame
+    // Stacks Inspection frame
     private static final Point _stacksFrameDefaultLocation = new Point(235, 0);
     private static final Dimension _stacksFramePrefSize = new Dimension(250, 1000);
     public Point stackFrameDefaultLocation() {
@@ -74,7 +74,7 @@ public class BasicInspectorGeometry implements InspectorGeometry {
         return _stacksFramePrefSize;
     }
 
-    // Target method Inspector (container) frame
+    // Method Inspector (container) frame
     private static final Point _methodsFrameDefaultLocation = new Point(490, 0);
     private static final Dimension _methodsFramePrefSize = new Dimension(600, 1000);
 

@@ -35,19 +35,19 @@ public interface InspectorGeometry {
     Dimension inspectorFrameMinSize();
     Dimension inspectorFramePrefSize();
 
-    // Threads Inspection (container) frame
+    // Threads Inspection frame
     Point threadsFrameDefaultLocation();
     Dimension threadsFramePrefSize();
 
-    // Registers Inspection (container) frame
+    // Registers Inspection frame
     Point registersFrameDefaultLocation();
     Dimension registersFramePrefSize();
 
-    // Stacks Inspection (container) frame
+    // Stacks Inspection frame
     Point stackFrameDefaultLocation();
     Dimension stackFramePrefSize();
 
-    // Thread locals Inspection (container) frame
+    // Thread locals Inspection frame
     Dimension threadLocalsFramePrefSize();
     Point threadLocalsFrameDefaultLocation();
 
