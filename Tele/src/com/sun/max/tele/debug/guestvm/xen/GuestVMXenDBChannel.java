@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
+import java.nio.*;
+
 import com.sun.max.collect.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
@@ -48,13 +50,22 @@ public final class GuestVMXenDBChannel {
         nativeSetTransportDebugLevel(level);
     }
 
-    public static synchronized int readBytes(Address address, byte[] buffer, int offset, int length) {
+    private static int readBytes0(long src, ByteBuffer dst, int dstOffset, int length) {
+        assert dst.limit() - dstOffset >= length;
+        if (dst.isDirect()) {
+            return nativeReadBytes(src, dst, true, dstOffset, length);
+        }
+        assert dst.array() != null;
+        return nativeReadBytes(src, dst.array(), false, dst.arrayOffset() + dstOffset, length);
+    }
+
+    public static synchronized int readBytes(Address src, ByteBuffer dst, int dstOffset, int length) {
         int lengthLeft = length;
-        int localOffset = offset;
-        long localAddress = address.toLong();
+        int localOffset = dstOffset;
+        long localAddress = src.toLong();
         while (lengthLeft > 0) {
             final int toDo = lengthLeft > _maxByteBufferSize ? _maxByteBufferSize : lengthLeft;
-            final int r = nativeReadBytes(localAddress, buffer, localOffset, toDo);
+            final int r = readBytes0(localAddress, dst, localOffset, toDo);
             if (r != toDo) {
                 return -1;
             }
@@ -65,13 +76,23 @@ public final class GuestVMXenDBChannel {
         return length;
     }
 
-    public static synchronized int writeBytes(byte[] buffer, int offset, int length, Address address) {
+    private static int writeBytes0(long dst, ByteBuffer src, int srcOffset, int length) {
+        assert src.limit() - srcOffset >= length;
+        if (src.isDirect()) {
+            return nativeWriteBytes(dst, src, true, srcOffset, length);
+        }
+        assert src.array() != null;
+        return nativeWriteBytes(dst, src.array(), false, src.arrayOffset() + srcOffset, length);
+
+    }
+
+    public static synchronized int writeBytes(ByteBuffer buffer, int offset, int length, Address address) {
         int lengthLeft = length;
         int localOffset = offset;
         long localAddress = address.toLong();
         while (lengthLeft > 0) {
             final int toDo = lengthLeft > _maxByteBufferSize ? _maxByteBufferSize : lengthLeft;
-            final int r = nativeWriteBytes(localAddress, buffer, localOffset, toDo);
+            final int r = writeBytes0(localAddress, buffer, localOffset, toDo);
             if (r != toDo) {
                 return -1;
             }
@@ -129,8 +150,8 @@ public final class GuestVMXenDBChannel {
     private static native boolean nativeAttach(int domId);
     private static native long nativeGetBootHeapStart();
     private static native int nativeSetTransportDebugLevel(int level);
-    private static native int nativeReadBytes(long address, byte[] buffer, int offset, int length);
-    private static native int nativeWriteBytes(long address, byte[] buffer, int offset, int length);
+    private static native int nativeReadBytes(long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
+    private static native int nativeWriteBytes(long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
     private static native int nativeMaxByteBufferSize();
     private static native boolean nativeGatherThreads(GuestVMXenTeleDomain teleDomain, AppendableSequence<TeleNativeThread> threads, int domainId, long threadSpecificsList);
     private static native int nativeResume(int domainId);

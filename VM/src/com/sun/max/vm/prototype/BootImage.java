@@ -30,7 +30,6 @@ import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
-import com.sun.max.memory.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
@@ -553,7 +552,7 @@ public class BootImage {
 
     private final DataPrototype _dataPrototype;
 
-    private int pagePaddingSize(int numberOfBytesSoFar) throws IOException {
+    public int pagePaddingSize(int numberOfBytesSoFar) throws IOException {
         final int pageSize = vmConfiguration().platform().pageSize();
         final int rest = numberOfBytesSoFar % pageSize;
         if (rest == 0) {
@@ -606,39 +605,6 @@ public class BootImage {
         } catch (IOException ioException) {
             throw new BootImageException(ioException);
         }
-    }
-
-    /**
-     * Maps the heap and code sections of the boot image in a given file into memory.
-     *
-     * @param file the file containing the heap and code sections to map into memory
-     * @param relocate specifies if the mapped sections should be relocated according to the relocation data in {@code
-     *            file} after the mapping has occurred
-     * @return the address at which the heap and code sections in {@code file} were mapped
-     * @throws IOException if an IO error occurs while performing the memory mapping
-     */
-    public Pointer map(File file, boolean relocate) throws IOException {
-        final RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-
-        int fileOffset = _header.size() + _header._stringInfoSize;
-        randomAccessFile.seek(fileOffset);
-
-        final byte[] relocationData = new byte[_header._relocationDataSize];
-        randomAccessFile.read(relocationData);
-
-        fileOffset += _header._relocationDataSize;
-        fileOffset += pagePaddingSize(fileOffset);
-        final Pointer heap = VirtualMemory.mapFile(Size.fromInt(_header._bootHeapSize + _header._bootCodeSize), randomAccessFile.getFD(), Address.fromInt(fileOffset));
-
-        if (heap.isZero() || heap.toLong() == -1L) {
-            throw new IOException("could not mmap boot heap and code");
-        }
-        if (relocate) {
-            Trace.line(1, "BEGIN: relocating heap");
-            relocate(heap, relocationData);
-            Trace.line(1, "END: relocating heap");
-        }
-        return heap;
     }
 
     /**

@@ -38,42 +38,15 @@ void teleProcess_initialize(void) {
 
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong handle, jlong address, jbyteArray byteArray, jint offset, jint length) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeReadBytes(JNIEnv *env, jclass c, jlong handle, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
     struct ps_prochandle *ph = (struct ps_prochandle *) handle;
-
-    jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
-    if (buffer == 0) {
-        log_println("failed to malloc byteArray of %d bytes", length);
-        return -1;
-    }
-
-    ssize_t bytesRead = proc_Pread(ph, buffer, length, (uintptr_t) address);
-    if (bytesRead > 0) {
-        (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
-    }
-    free(buffer);
-    return bytesRead;
+    return teleProcess_read(ph, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong handle, jlong address, jbyteArray byteArray, jint offset, jint length) {
+Java_com_sun_max_tele_debug_solaris_SolarisTeleProcess_nativeWriteBytes(JNIEnv *env, jclass c, jlong handle, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
     struct ps_prochandle *ph = (struct ps_prochandle *) handle;
-
-    jbyte* buffer = (jbyte *) malloc(length * sizeof(jbyte));
-    if (buffer == 0) {
-        log_println("failed to malloc byteArray of %d bytes", length);
-        return -1;
-    }
-
-    (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
-    if ((*env)->ExceptionOccurred(env) != NULL) {
-        log_println("failed to copy %d bytes from byteArray into buffer", length);
-        return -1;
-    }
-
-    ssize_t bytesWritten = proc_Pwrite(ph, buffer, length, (uintptr_t) address);
-    free(buffer);
-    return bytesWritten;
+    return teleProcess_write(ph, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
 JNIEXPORT jlong JNICALL
@@ -204,43 +177,12 @@ ThreadState_t lwpStatusToThreadState(const lwpstatus_t *lwpStatus) {
 
     ThreadState_t result = TS_SUSPENDED;
     if (why == PR_FAULTED) {
-        if (what == FLTBPT){
-            result = TS_BREAKPOINT;
-        } else if (what == FLTWATCH) {
+        if (what == FLTWATCH) {
             result = TS_WATCHPOINT;
         }
     }
     return result;
 }
-
-#if 0
-WaitResult_t reasonForStopping(lwpstatus_t *lwpStatus) {
-    short why = lwpStatus->pr_why;
-    short what = lwpStatus->pr_what;
-
-
-    log_printWhyStopped("LWP stopped: reason = ", lwpStatus, "\n");
-
-    if (why == PR_REQUESTED) {
-        /* TODO: need to find out why this is the right answer! */
-        return SYSTEM_CALL;
-    }
-
-    if (why == PR_SIGNALLED) {
-        return SIGNAL;
-    }
-
-    if (why == PR_FAULTED && what == FLTBPT){
-        return BREAKPOINT;
-    }
-
-    if (why == PR_FAULTED && what == FLTWATCH) {
-        return WATCHPOINT;
-    }
-
-    return DEFAULT;
-}
-#endif
 
 typedef struct Argument {
     struct ps_prochandle *ph;
@@ -278,8 +220,9 @@ static int gatherThread(void *data, const lwpstatus_t *lwpStatus) {
 
     ThreadSpecificsStruct threadSpecificsStruct;
     Address stackPointer = getRegister(a->ph, lwpId, R_SP);
-    ThreadSpecifics threadSpecifics = threadSpecificsList_search(a->ph, a->threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
-    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, threadSpecifics);
+    Address instructionPointer = getRegister(a->ph, lwpId, R_PC);
+    ThreadSpecifics threadSpecifics = teleProcess_findThreadSpecifics(a->ph, a->threadSpecificsListAddress, stackPointer, &threadSpecificsStruct);
+    teleProcess_jniGatherThread(a->env, a->teleProcess, a->threadSequence, lwpId, threadState, instructionPointer, threadSpecifics);
 
     return 0;
 }

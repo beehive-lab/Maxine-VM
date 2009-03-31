@@ -21,6 +21,7 @@
 package com.sun.max.tele.debug.linux;
 
 import java.io.*;
+import java.nio.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -251,37 +252,77 @@ public final class LinuxTask {
     /**
      * The file in /proc through which the memory of this task can be read. As Linux does not
      * support writing to the memory of a process via /proc, it's still necessary to use
-     * ptrace for {@linkplain #writeBytes(Address, byte[], int, int) writing}.
+     * ptrace for {@linkplain #writeBytes(Address, ByteBuffer, int, int) writing}.
      */
     private RandomAccessFile _memory;
 
-    public synchronized int readBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+    /**
+     * Copies bytes from the tele process into a given {@linkplain ByteBuffer#isDirect() direct ByteBuffer} or byte
+     * array.
+     *
+     * @param src the address in the tele process to copy from
+     * @param dst the destination of the copy operation. This is a direct {@link ByteBuffer} or {@code byte[]}
+     *            depending on the value of {@code isDirectByteBuffer}
+     * @param isDirectByteBuffer
+     * @param dstOffset the offset in {@code dst} at which to start writing
+     * @param length the number of bytes to copy
+     * @return the number of bytes copied or -1 if there was an error
+     */
+    private static native int nativeReadBytes(int tgid, int tid, long src, Object dst, boolean isDirectByteBuffer, int dstOffset, int length);
+
+    public synchronized int readBytes(final Address src, final ByteBuffer dst, final int offset, final int length) {
         if (!isLeader()) {
-            return leader().readBytes(address, buffer, offset, length);
+            return leader().readBytes(src, dst, offset, length);
         }
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                assert !address.isZero();
-                if (_memory == null) {
-                    _memory = new RandomAccessFile("/proc/" + tgid() + "/mem", "r");
-
-                }
-                try {
-                    _memory.seek(address.toLong());
-                    return _memory.read(buffer, offset, length);
-                } catch (IOException ioException) {
-                    throw new DataIOError(address, ioException.toString());
+                assert !src.isZero();
+                final long addr = src.toLong();
+                if (addr < 0) {
+                    // RandomAccessFile.see() can't handle unsigned long offsets: have to resort to a JNI call
+                    if (dst.isDirect()) {
+                        return nativeReadBytes(_tgid, _tid, addr, dst, true, offset, length);
+                    }
+                    assert dst.array() != null;
+                    return nativeReadBytes(_tgid, _tid, addr, dst.array(), false, offset, length);
+                } else {
+                    if (_memory == null) {
+                        _memory = new RandomAccessFile("/proc/" + tgid() + "/mem", "r");
+                    }
+                    try {
+                        final ByteBuffer dstView = (ByteBuffer) dst.duplicate().position(offset).limit(offset + length);
+                        dstView.position(offset);
+                        return _memory.getChannel().read(dstView, addr);
+                    } catch (IOException ioException) {
+                        throw new DataIOError(src, ioException.toString());
+                    }
                 }
             }
         });
     }
 
-    private static native int nativeWriteBytes(int tgid, int tid, long address, byte[] buffer, int offset, int length);
+    /**
+     * Copies bytes from a given {@linkplain ByteBuffer#isDirect() direct ByteBuffer} or byte array into the tele process.
+     *
+     * @param dst the address in the tele process to copy to
+     * @param src the source of the copy operation. This is a direct {@link ByteBuffer} or {@code byte[]}
+     *            depending on the value of {@code isDirectByteBuffer}
+     * @param isDirectByteBuffer
+     * @param srcOffset the offset in {@code src} at which to start reading
+     * @param length the number of bytes to copy
+     * @return the number of bytes copied or -1 if there was an error
+     */
+    private static native int nativeWriteBytes(int tgid, int tid, long dst, Object src, boolean isDirectByteBuffer, int srcOffset, int length);
 
-    public synchronized int writeBytes(final Address address, final byte[] buffer, final int offset, final int length) {
+    public synchronized int writeBytes(final Address dst, final ByteBuffer src, final int offset, final int length) {
         return SingleThread.execute(new Function<Integer>() {
             public Integer call() throws Exception {
-                return nativeWriteBytes(_tgid, _tid, address.toLong(), buffer, offset, length);
+                assert src.limit() - offset >= length;
+                if (src.isDirect()) {
+                    return nativeWriteBytes(_tgid, _tid, dst.toLong(), src, true, offset, length);
+                }
+                assert src.array() != null;
+                return nativeWriteBytes(_tgid, _tid, dst.toLong(), src.array(), false, src.arrayOffset() + offset, length);
             }
         });
     }

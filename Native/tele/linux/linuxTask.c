@@ -37,6 +37,8 @@
 
 #include "log.h"
 #include "ptrace.h"
+#include "threadSpecifics.h"
+#include "teleProcess.h"
 #include "linuxTask.h"
 
 /* The set of signals intercepted by the debugger to implement breakpoints,
@@ -771,7 +773,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeKill(JNIEnv *env, jclass c, ji
  * @return a file descriptor opened on the memory file and positioned at 'address' or -1 if there was an error.
  *        If there was no error, it is the caller's responsibility to close the file descriptor.
  */
-int task_memory_read_fd(int tgid, void *address) {
+int task_memory_read_fd(int tgid, const void *address) {
     ptrace_check_tracer(POS, tgid);
     char *memoryFileName;
     asprintf(&memoryFileName, "/proc/%d/mem", tgid);
@@ -794,7 +796,7 @@ int task_memory_read_fd(int tgid, void *address) {
 /**
  * Copies 'size' bytes from 'src' in the address space of 'tgid' to 'dst' in the caller's address space.
  */
-size_t task_read(pid_t tgid, pid_t tid, void *src, void *dst, size_t size) {
+size_t task_read(pid_t tgid, pid_t tid, const void *src, void *dst, size_t size) {
     char state;
     if ((state = task_state(tgid, tid)) != 'T') {
         log_println("Cannot read memory of task %d while it is in state '%c'", tid, state);
@@ -896,60 +898,14 @@ size_t task_write(pid_t tgid, pid_t tid, void *dst, const void *src, size_t size
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTask_nativeWriteBytes(JNIEnv *env, jclass c, jint tgid, jint tid, jlong address, jbyteArray byteArray, jint offset, jint length) {
-    void* buffer;
-    Word bufferWord;
-    size_t size = (size_t) length;
-    if (size > sizeof(Address)) {
-        buffer = (void *) malloc(size * sizeof(jbyte));
-        if (buffer == NULL) {
-            log_println("Failed to malloc buffer of %d bytes", size);
-            return -1;
-        }
-    } else {
-        buffer = (void *) &bufferWord;
-    }
-
-    (*env)->GetByteArrayRegion(env, byteArray, offset, length, buffer);
-    if ((*env)->ExceptionOccurred(env) != NULL) {
-        log_println("Failed to copy %d bytes from byteArray into buffer", size);
-        return -1;
-    }
-
-    size_t bytesWritten = task_write(tgid, tid, (void *) address, buffer, size);
-    if (buffer != &bufferWord) {
-        free(buffer);
-    }
-    return bytesWritten;
+Java_com_sun_max_tele_debug_linux_LinuxTask_nativeWriteBytes(JNIEnv *env, jclass c, jint tgid, jint tid, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
+    return teleProcess_write(tgid, tid, env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
-
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadBytes(JNIEnv *env, jclass c, jint tgid, jint tid, jlong address, jbyteArray byteArray, jint offset, jint length) {
-    void* buffer;
-    Word bufferWord;
-    size_t size = (size_t) length;
-    if (size > sizeof(Word)) {
-        buffer = (void *) malloc(size);
-        if (buffer == 0) {
-            log_println("Failed to malloc byteArray of %d bytes", size);
-            return -1;
-        }
-    } else {
-        buffer = (void *) &bufferWord;
-    }
-
-    size_t bytesRead = task_read(tgid, tid, (void *) address, buffer, size);
-    if ((jint) bytesRead > 0) {
-        (*env)->SetByteArrayRegion(env, byteArray, offset, bytesRead, buffer);
-    }
-    if (size > sizeof(Word)) {
-        free(buffer);
-    }
-
-    return bytesRead;
+Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadBytes(JNIEnv *env, jclass c, jint tgid, jint tid, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
+    return teleProcess_read(tgid, tid, env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
-
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint tid, jlong instructionPointer) {

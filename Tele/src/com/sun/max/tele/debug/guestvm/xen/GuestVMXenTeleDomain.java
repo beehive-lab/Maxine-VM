@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
+import java.nio.*;
+
 import javax.swing.*;
 
 import com.sun.max.collect.*;
@@ -51,18 +53,12 @@ public class GuestVMXenTeleDomain extends TeleProcess {
             _domainId = id;
         }
         GuestVMXenDBChannel.attach(this, _domainId);
-        _dataAccess = new PageDataAccess(platform.processorKind().dataModel(), this);
+        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
     }
 
     @Override
     public DataAccess dataAccess() {
         return _dataAccess;
-    }
-
-    public void invalidateCache() {
-        if (_dataAccess instanceof PageDataAccess) {
-            ((PageDataAccess) _dataAccess).invalidateCache();
-        }
     }
 
     public Pointer getBootHeap() {
@@ -96,9 +92,6 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected boolean waitUntilStopped() {
-        if (!_terminated) {
-            invalidateCache();
-        }
         return !_terminated;
     }
 
@@ -124,12 +117,12 @@ public class GuestVMXenTeleDomain extends TeleProcess {
     }
 
     @Override
-    protected int read0(Address address, byte[] buffer, int offset, int length) {
+    protected int read0(Address address, ByteBuffer buffer, int offset, int length) {
         return GuestVMXenDBChannel.readBytes(address, buffer, offset, length);
     }
 
     @Override
-    protected int write0(byte[] buffer, int offset, int length, Address address) {
+    protected int write0(ByteBuffer buffer, int offset, int length, Address address) {
         return GuestVMXenDBChannel.writeBytes(buffer, offset, length, address);
     }
 

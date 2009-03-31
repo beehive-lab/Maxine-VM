@@ -20,6 +20,8 @@
  */
 package com.sun.max.tele.debug.guestvm.xen;
 
+import java.nio.*;
+
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -31,7 +33,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     private final int _domainId;
 
     protected GuestVMXenDataAccess(DataModel dataModel, int domainId) {
-        super(dataModel);
+        super(dataModel.wordWidth());
         _domainId = domainId;
     }
 
@@ -47,7 +49,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
         return (byte) result;
     }
 
-    public int read(Address address, byte[] buffer, int offset, int length) {
+    public int read(Address address, ByteBuffer buffer, int offset, int length) {
         DataIO.Static.checkRead(buffer, offset, length);
         return GuestVMXenDBChannel.readBytes(address, buffer, offset, length);
     }
@@ -68,13 +70,17 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
         return (short) result;
     }
 
+    public long readLong(Address address) {
+        throw Problem.unimplemented();
+    }
+
     public void writeByte(Address address, byte value) {
         if (!GuestVMXenDBChannel.writeByte(_domainId, address.toLong(), value)) {
             throw error(address);
         }
     }
 
-    public int write(byte[] buffer, int offset, int length, Address address) {
+    public int write(ByteBuffer buffer, int offset, int length, Address address) {
         DataIO.Static.checkWrite(buffer, offset, length);
         return GuestVMXenDBChannel.writeBytes(buffer, offset, length, address);
     }
@@ -90,5 +96,4 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     public void writeShort(Address address, short value) {
         throw Problem.unimplemented();
     }
-
 }

@@ -20,73 +20,78 @@
  */
 package com.sun.max.unsafe;
 
+import java.nio.*;
+
 
 public interface DataIO {
 
     /**
-     * Reads bytes from an address into a given byte array.
+     * Reads bytes from an address into a given byte buffer.
      *
-     * @param address the address from which reading should start
-     * @param buffer the array into which the bytes are read
-     * @param offset the offset in {@code buffer} at which the bytes are read
+     * @param src the address from which reading should start
+     * @param dst the buffer into which the bytes are read
+     * @param dstOffset the offset in {@code dst} at which the bytes are read
      * @param length the maximum number of bytes to be read
-     * @return the number of bytes read into {@code buffer}
+     * @return the number of bytes read into {@code dst}
+     *
      * @throws DataIOError if some IO error occurs
      * @throws IndexOutOfBoundsException if {@code offset} is negative, {@code length} is negative, or
-     *             {@code length > buffer.length - offset}
+     *             {@code length > buffer.limit() - offset}
      */
-    int read(Address address, byte[] buffer, int offset, int length) throws DataIOError;
+    int read(Address src, ByteBuffer dst, int dstOffset, int length) throws DataIOError;
 
     /**
-     * Writes bytes from a given byte array to a given address.
+     * Writes bytes from a given byte buffer to a given address.
      *
-     * @param address the address at which writing should start
-     * @param buffer the array from which the bytes are written
-     * @param offset the offset in {@code buffer} from which the bytes are written
+     * @param src the buffer from which the bytes are written
+     * @param srcOffset the offset in {@code src} from which the bytes are written
      * @param length the maximum number of bytes to be written
-     * @return the number of bytes written to {@code address}
+     * @param dst the address at which writing should start
+     * @return the number of bytes written to {@code dst}
+     *
      * @throws DataIOError if some IO error occurs
-     * @throws IndexOutOfBoundsException if {@code offset} is negative, {@code length} is negative, or
-     *             {@code length > buffer.length - offset}
+     * @throws IndexOutOfBoundsException if {@code srcOffset} is negative, {@code length} is negative, or
+     *             {@code length > src.limit() - srcOffset}
      */
-    int write(byte[] buffer, int offset, int length, Address toAddress) throws DataIOError;
+    int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError;
 
     public static class Static {
-        public static byte[] readFully(DataIO dataIO, Address address, int length) {
-            final byte[] buffer = new byte[length];
-            readFully(dataIO, address, buffer);
-            return buffer;
-        }
 
-        public static void readFully(DataIO dataIO, Address address, byte[] buffer) {
-            final int length = buffer.length;
+        public static void readFully(DataIO dataIO, Address src, ByteBuffer dst) {
+            final int length = dst.limit();
             int n = 0;
             while (n < length) {
-                final int count = dataIO.read(address.plus(n), buffer, n, length - n);
+                final int count = dataIO.read(src.plus(n), dst, n, length - n);
                 if (count <= 0) {
-                    throw new DataIOError(address, (length - n) + " of " + length + " bytes unread");
+                    throw new DataIOError(src, (length - n) + " of " + length + " bytes unread");
                 }
                 n += count;
             }
         }
 
+        public static byte[] readFully(DataIO dataIO, Address src, int length) {
+            final ByteBuffer buffer = ByteBuffer.wrap(new byte[length]);
+            readFully(dataIO, src, buffer);
+            return buffer.array();
+        }
+
         /**
-         * Checks the preconditions related to the destination buffer for {@link DataIO#read(Address, byte[], int, int)}.
+         * Checks the preconditions related to the destination buffer for {@link DataIO#read(Address, ByteBuffer, int, int)}.
          */
-        public static void checkRead(byte[] buffer, int offset, int length) {
-            if (buffer == null) {
+        public static void checkRead(ByteBuffer dst, int dstOffset, int length) {
+            if (dst == null) {
                 throw new NullPointerException();
-            } else if (offset < 0 || length < 0 || length > buffer.length - offset) {
+            } else if (dstOffset < 0 || length < 0 || length > dst.limit() - dstOffset) {
                 throw new IndexOutOfBoundsException();
             }
         }
 
         /**
-         * Checks the preconditions related to the destination buffer for {@link DataIO#write(byte[], int, int, Address)}.
+         * Checks the preconditions related to the source buffer for {@link DataIO#write(ByteBuffer, int, int, Address)}.
          */
-        public static void checkWrite(byte[] buffer, int offset, int length) {
-            if ((offset < 0) || (offset > buffer.length) || (length < 0) ||
-                            ((offset + length) > buffer.length) || ((offset + length) < 0)) {
+        public static void checkWrite(ByteBuffer src, int srcOffset, int length) {
+            if ((srcOffset < 0) || (srcOffset > src.limit()) || (length < 0) ||
+                            ((srcOffset + length) > src.limit()) || ((srcOffset + length) < 0)) {
                 throw new IndexOutOfBoundsException();
             }
         }

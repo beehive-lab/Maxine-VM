@@ -21,6 +21,7 @@
 package com.sun.max.lang;
 
 import java.io.*;
+import java.nio.*;
 
 /**
  * Enumerated type with values for the most common more ways to arrange bits, bytes, etc.
@@ -169,6 +170,10 @@ public enum Endianness {
             return 0;
         }
 
+        @Override
+        public ByteOrder asByteOrder() {
+            return ByteOrder.LITTLE_ENDIAN;
+        }
     },
     BIG {
         @Override
@@ -299,6 +304,11 @@ public enum Endianness {
             assert wordWidth.numberOfBytes() >= dataWidth.numberOfBytes();
             return wordWidth.numberOfBytes() - dataWidth.numberOfBytes();
         }
+
+        @Override
+        public ByteOrder asByteOrder() {
+            return ByteOrder.BIG_ENDIAN;
+        }
     };
 
     @Override
@@ -351,4 +361,6 @@ public enum Endianness {
     public abstract void toBytes(long value, byte[] result, int offset);
 
     public abstract int offsetWithinWord(WordWidth wordWith, WordWidth dataWidth);
+
+    public abstract ByteOrder asByteOrder();
 }

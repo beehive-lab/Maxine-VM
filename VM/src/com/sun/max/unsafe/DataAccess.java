@@ -20,13 +20,17 @@
  */
 package com.sun.max.unsafe;
 
+import java.nio.*;
+
 /**
  * @author Bernd Mathiske
  */
 public interface DataAccess extends DataIO {
 
+    void readFully(Address address, ByteBuffer buffer);
     void readFully(Address address, byte[] bytes);
     byte[] readFully(Address address, int length);
+
 
     byte readByte(Address address);
     byte readByte(Address address, Offset offset);
@@ -74,6 +78,7 @@ public interface DataAccess extends DataIO {
     Word getWord(Address address, int displacement, int index);
 
     void writeBytes(Address address, byte[] bytes);
+    void writeBuffer(Address address, ByteBuffer buffer);
 
     void writeByte(Address address, byte value);
     void writeByte(Address address, Offset offset, byte value);
