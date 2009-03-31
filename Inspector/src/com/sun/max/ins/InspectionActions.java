@@ -142,11 +142,6 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         // non-op
     }
 
-    private boolean isSynchronousMode() {
-        return inspection().isSynchronousMode();
-    }
-
-
     /**
      * Action:  displays the {@link AboutDialog}.
      */
@@ -2453,7 +2448,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(focus().hasThread() && !isSynchronousMode() && inspection().isVMRunning());
+            setEnabled(focus().hasThread() && inspection().isVMRunning());
         }
     }
 
@@ -2479,7 +2474,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                teleVM().controller().resume(isSynchronousMode(), false);
+                teleVM().controller().resume(false, false);
             } catch (Exception exception) {
                 inspection().errorMessage("Run to instruction could not be performed.", exception.toString());
             }
@@ -2520,7 +2515,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    teleVM().controller().runToInstruction(returnAddress, isSynchronousMode(), true);
+                    teleVM().controller().runToInstruction(returnAddress, false, true);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
                 }
@@ -2562,7 +2557,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    teleVM().controller().runToInstruction(returnAddress, isSynchronousMode(), false);
+                    teleVM().controller().runToInstruction(returnAddress, false, false);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame could not be performed.", exception.toString());
                 }
@@ -2604,7 +2599,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    teleVM().controller().runToInstruction(selectedAddress, isSynchronousMode(), true);
+                    teleVM().controller().runToInstruction(selectedAddress, false, true);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
@@ -2648,7 +2643,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    teleVM().controller().runToInstruction(selectedAddress, isSynchronousMode(), false);
+                    teleVM().controller().runToInstruction(selectedAddress, false, false);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction could not be performed.", exception);
                 }
@@ -2690,7 +2685,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         public  void procedure() {
             final TeleNativeThread selectedThread = focus().thread();
             try {
-                teleVM().controller().singleStep(selectedThread, isSynchronousMode());
+                teleVM().controller().singleStep(selectedThread, false);
             } catch (Exception exception) {
                 inspection().errorMessage("Couldn't single step", exception.toString());
             }
@@ -2729,7 +2724,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
             try {
-                teleVM().controller().stepOver(thread, isSynchronousMode(), true);
+                teleVM().controller().stepOver(thread, false, true);
             } catch (Exception exception) {
                 inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
             }
@@ -2769,7 +2764,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
             try {
-                teleVM().controller().stepOver(thread, isSynchronousMode(), false);
+                teleVM().controller().stepOver(thread, false, false);
             } catch (Exception exception) {
                 inspection().errorMessage("Step over could not be performed.", exception.toString());
             }
