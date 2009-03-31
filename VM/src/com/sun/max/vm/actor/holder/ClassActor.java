@@ -906,7 +906,7 @@ public abstract class ClassActor extends Actor {
             if (methodActor != null) {
                 return methodActor;
             }
-            if (name().equals(SymbolTable.INIT) || name().equals(SymbolTable.CLINIT)) {
+            if (name.equals(SymbolTable.INIT) || name.equals(SymbolTable.CLINIT)) {
                 return null;
             }
             classActor = classActor.superClassActor();
