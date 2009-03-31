@@ -91,7 +91,7 @@ public class PreferenceDialog extends InspectorDialog {
         objectLabelPanel.add(new TextLabel(inspection, "Objects"), BorderLayout.WEST);
         prefPanel.add(objectLabelPanel);
 
-        final JPanel objectInspectorPanel = ObjectInspector.globalPreferences(inspection).getPanel();
+        final JPanel objectInspectorPanel = ObjectInspectorPreferences.globalPreferences(inspection).getPanel();
         objectInspectorPanel.setBorder(border);
         prefPanel.add(objectInspectorPanel);
 
