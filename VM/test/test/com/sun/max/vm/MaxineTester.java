@@ -1255,9 +1255,9 @@ public class MaxineTester {
                 _stderrToFile = null;
             } else {
                 if (outputFile.getName().endsWith("stdout")) {
-                    _stderrToFile = new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + ".stderr");
+                    _stderrToFile = new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "stderr");
                 } else {
-                    _stderrToFile = new File(outputFile.getAbsolutePath() + ".stderr");
+                    _stderrToFile = new File(outputFile.getAbsolutePath() + "stderr");
                 }
                 _stderrTo = new FileOutputStream(_stderrToFile);
             }
