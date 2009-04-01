@@ -20,30 +20,51 @@
  */
 package com.sun.max.ins.gui;
 
-import javax.swing.*;
-
-import com.sun.max.ins.*;
+import com.sun.max.collect.*;
 
 
 /**
- * A checkbox specialized for use in the Maxine Inspector.
+ * Constants denoting the kinds of code that can be inspected for a method.
  *
  * @author Michael Van De Vanter
  */
-public final class InspectorCheckBox extends JCheckBox {
+public enum MethodCodeKind {
+    TARGET_CODE("Target Code", true),
+    BYTECODES("Bytecodes", false),
+    JAVA_SOURCE("Java Source", false);
 
-    /**
-     *  Creates a new {@link JCheckBox} specialized for use in the Maxine Inspector.
-     * @param inspection
-     * @param text the text to appear in the label
-     * @param selected whether the check box is currently selected.
-     */
-    public InspectorCheckBox(Inspection inspection, String text, String toolTipText, boolean selected) {
-        super(text, selected);
-        setToolTipText(toolTipText);
-        setOpaque(true);
-        setFont(inspection.style().textLabelFont());
-        setBackground(inspection.style().defaultBackgroundColor());
+    private final String _label;
+    private final boolean _defaultVisibility;
+
+    private MethodCodeKind(String label, boolean defaultVisibility) {
+        _label = label;
+        _defaultVisibility = defaultVisibility;
     }
 
+    /**
+     * Determines if it the display of this source kind is implemented.
+     *
+     * TODO (mlvdv) This is a hack until source code viewing is implemented
+     */
+    public boolean isImplemented() {
+        return this != JAVA_SOURCE;
+    }
+
+    public String label() {
+        return _label;
+    }
+
+    @Override
+    public String toString() {
+        return _label;
+    }
+
+    /**
+     * Determines if this kind should be visible by default in new inspectors.
+     */
+    public boolean defaultVisibility() {
+        return _defaultVisibility;
+    }
+
+    public static final IndexedSequence<MethodCodeKind> VALUES = new ArraySequence<MethodCodeKind>(values());
 }
