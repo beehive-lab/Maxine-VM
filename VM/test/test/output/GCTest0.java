@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,24 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.monitor.modal.sync.nat;
+package test.output;
 
-import com.sun.max.*;
-import com.sun.max.vm.*;
 
 /**
- * @see MaxPackage
+ * Executes the equivalent of HelloWorld with two GCs between two calls.
  *
- * @author Simon Wilkinson
- * @author Mick Jordan
+ * @author Ben L. Titzer
  */
-public class Package extends VMPackage {
-    public Package() {
-        super();
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.monitorPackage().isSubPackageOf(this.superPackage().superPackage());
+public final class GCTest0 {
+    public static void main(String[] args) {
+        System.out.println(GCTest0.class.getSimpleName() + " started.");
+        System.gc();
+        System.gc();
+        System.out.println(GCTest0.class.getSimpleName() + " done.");
     }
 }
