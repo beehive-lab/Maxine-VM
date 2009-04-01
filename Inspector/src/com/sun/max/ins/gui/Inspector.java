@@ -292,6 +292,64 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         }
     }
 
+    /**
+     * @return an action that will present a dialog that enables selection of view options;
+     * returns a disabled dummy action if not overridden.
+     */
+    public InspectorAction getViewOptionsAction() {
+        return new DummyViewOptionsAction(inspection());
+    }
+
+    private static final class DummyViewOptionsAction extends InspectorAction {
+        DummyViewOptionsAction(Inspection inspection) {
+            super(inspection, "View Options");
+            setEnabled(false);
+        }
+
+        @Override
+        protected void procedure() {
+        }
+    }
+
+    /**
+     * @return an action that will refresh any state from the {@link TeleVM}.
+     */
+    public RefreshAction getRefreshAction() {
+        return new RefreshAction();
+    }
+
+    public final class RefreshAction extends InspectorAction {
+        private RefreshAction() {
+            super(inspection(), "Refresh");
+        }
+
+        @Override
+        public void procedure() {
+            Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
+            refreshView(true);
+        }
+    }
+
+    /**
+     * @return an action that will close this inspector
+     */
+    public CloseAction getCloseAction() {
+        return new CloseAction(inspection(), "Close");
+    }
+
+    private final class CloseAction extends InspectorAction {
+
+        public CloseAction(Inspection inspection, String title) {
+            super(inspection, title);
+        }
+
+        @Override
+        protected void procedure() {
+            frame().dispose();
+        }
+
+    }
+
     public CloseOthersAction getCloseOtherInspectorsAction() {
         return new CloseOthersAction();
     }
@@ -309,21 +367,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         }
     }
 
-    public RefreshAction getRefreshAction() {
-        return new RefreshAction();
-    }
-
-    public final class RefreshAction extends InspectorAction {
-        private RefreshAction() {
-            super(inspection(), "Refresh");
-        }
-
-        @Override
-        public void procedure() {
-            Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
-            refreshView(true);
-        }
-    }
 
     @Override
     public String toString() {

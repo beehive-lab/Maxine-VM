@@ -72,11 +72,6 @@ public final class RegistersInspector extends Inspector {
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
-    }
-
-    @Override
     protected void createView(long epoch) {
         _teleNativeThread = inspection().focus().thread();
         if (_teleNativeThread == null) {
@@ -100,6 +95,11 @@ public final class RegistersInspector extends Inspector {
             _contentPane.add(_floatingPointRegisterPanel);
         }
         frame().getContentPane().add(new InspectorScrollPane(inspection(), _contentPane));
+    }
+
+    @Override
+    public SaveSettingsListener saveSettingsListener() {
+        return _saveSettingsListener;
     }
 
     @Override

@@ -41,15 +41,6 @@ import com.sun.max.util.*;
  */
 public final class MemoryInspector extends Inspector {
 
-    /**
-     * Implemented by something that can inspected by a memory inspector.
-     */
-    public static interface MemoryInspectable {
-        void makeMemoryInspector();
-
-        InspectorAction getMemoryInspectorAction();
-    }
-
     private static final IdentityHashSet<MemoryInspector> _memoryInspectors = new IdentityHashSet<MemoryInspector>();
 
     /**

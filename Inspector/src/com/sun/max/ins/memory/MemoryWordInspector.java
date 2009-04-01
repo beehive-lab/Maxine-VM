@@ -50,15 +50,6 @@ import com.sun.max.vm.value.*;
  */
 public final class MemoryWordInspector extends Inspector {
 
-    /**
-     * Implemented by something that can inspected by a memory inspector.
-     */
-    public static interface MemoryWordInspectable {
-        void makeMemoryWordInspector();
-
-        InspectorAction getMemoryWordInspectorAction();
-    }
-
     private Address _address;
     private int _selectedLine = -1;
     private Address _selectedAddress;

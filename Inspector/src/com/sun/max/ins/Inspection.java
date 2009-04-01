@@ -117,44 +117,6 @@ public class Inspection extends JFrame {
         return !(_inspectionState == InspectionState.NO_PROCESS || _inspectionState == InspectionState.TERMINATED);
     }
 
-    /**
-     * Constants specifying how commands that control the debuggee process are executed with respect to the AWT event
-     * handling thread that spawned the command request.
-     */
-    public enum DebugMode {
-        /**
-         * Constant denoting that a command is only started on the AWT event handling thread that spawned it. The action
-         * to be taken once the debuggee process stops is performed on another thread.
-         */
-        ASYNCHRONOUS,
-
-        /**
-         * Constant denoting that a command is executed to completion on the AWT event handling thread that spawned it.
-         */
-        SYNCHRONOUS;
-    }
-
-    private DebugMode _debugMode = DebugMode.ASYNCHRONOUS;
-
-    public DebugMode debugMode() {
-        return _debugMode;
-    }
-
-    public void setDebugMode(DebugMode debugMode) {
-        final boolean needToSave = debugMode != _debugMode;
-        _debugMode = debugMode;
-        if (needToSave) {
-            settings().save();
-        }
-    }
-
-    /**
-     * @return Does the Inspector wait for debugging commands to complete?
-     */
-    public boolean isSynchronousMode() {
-        return _debugMode == DebugMode.SYNCHRONOUS;
-    }
-
     private boolean _investigateWordValues = true;
 
     /**
@@ -262,7 +224,6 @@ public class Inspection extends JFrame {
     private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
     private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
     private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
-    private static final String DEBUG_MODE_PREFERENCE = "debugMode";
     private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
 
     public class InspectionPreferences extends AbstractSaveSettingsListener {
@@ -275,7 +236,6 @@ public class Inspection extends JFrame {
             settings.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
             settings.save(DISPLAY_STYLE_PREFERENCE, style().name());
             settings.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
-            settings.save(DEBUG_MODE_PREFERENCE, debugMode().name());
             settings.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = _externalViewerConfig.get(externalViewerType);
@@ -308,16 +268,6 @@ public class Inspection extends JFrame {
                     _style = style;
                 }
 
-                DebugMode defaultDebugMode = DebugMode.ASYNCHRONOUS;
-                switch (teleVM().vmConfiguration().platform().operatingSystem()) {
-                    case SOLARIS:
-                        defaultDebugMode = DebugMode.ASYNCHRONOUS;
-                        break;
-                    default:
-                        break;
-                }
-                //_debugMode = _settings.get(this, DEBUG_MODE_PREFERENCE, new OptionTypes.EnumType<DebugMode>(DebugMode.class), defaultDebugMode);
-                _debugMode = defaultDebugMode;
                 _investigateWordValues = _settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
                 _externalViewerType = _settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
                 for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
@@ -389,35 +339,9 @@ public class Inspection extends JFrame {
         }
 
         /**
-         * @return a GUI panel for setting the debugging mode
+         * @return a GUI panel for setting debugging preferences
          */
         private JPanel getDebugPanel() {
-            final JRadioButton synchButton =
-                new InspectorRadioButton(Inspection.this, "synchronous", "Inspector waits during VM execution");
-            final JRadioButton asynchButton =
-                new InspectorRadioButton(Inspection.this, "asynchronous", "Inspector runs during VM execution");
-            final ButtonGroup group = new ButtonGroup();
-            group.add(synchButton);
-            group.add(asynchButton);
-
-            if (_debugMode == DebugMode.SYNCHRONOUS) {
-                synchButton.setSelected(true);
-            } else if (_debugMode == DebugMode.ASYNCHRONOUS) {
-                asynchButton.setSelected(true);
-            }
-
-            final ActionListener styleActionListener = new ActionListener() {
-
-                public void actionPerformed(ActionEvent e) {
-                    if (synchButton.isSelected()) {
-                        setDebugMode(DebugMode.SYNCHRONOUS);
-                    } else if (asynchButton.isSelected()) {
-                        setDebugMode(DebugMode.ASYNCHRONOUS);
-                    }
-                }
-            };
-            synchButton.addActionListener(styleActionListener);
-            asynchButton.addActionListener(styleActionListener);
 
             final JCheckBox wordValueCheckBox =
                 new InspectorCheckBox(Inspection.this,

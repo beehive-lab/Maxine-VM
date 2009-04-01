@@ -26,9 +26,6 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
-import com.sun.max.ins.memory.MemoryInspector.*;
-import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
@@ -46,11 +43,11 @@ import com.sun.max.vm.stack.*;
  * @author Doug Simon
  * @author Michael Van De Vanter
  */
-public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspectable, MemoryWordInspectable {
+public abstract class TargetCodeViewer extends CodeViewer {
 
     @Override
-    public  MethodInspector.CodeKind codeKind() {
-        return MethodInspector.CodeKind.TARGET_CODE;
+    public  MethodCodeKind codeKind() {
+        return MethodCodeKind.TARGET_CODE;
     }
 
     @Override
@@ -343,35 +340,6 @@ public abstract class TargetCodeViewer extends CodeViewer implements MemoryInspe
      */
     protected final int rowToCalleeIndex(int row) {
         return _rowToCalleeIndex[row];
-    }
-
-    public void makeMemoryInspector() {
-        final TargetCodeRegion targetCodeRegion = _teleTargetRoutine.targetCodeRegion();
-        MemoryInspector.create(inspection(), targetCodeRegion.start(), targetCodeRegion.size().toInt(), 1, 8);
-    }
-
-    public InspectorAction getMemoryInspectorAction() {
-        return new InspectorAction(inspection(), "Inspect Memory") {
-            @Override
-            protected void procedure() {
-                final TargetCodeRegion targetCodeRegion = _teleTargetRoutine.targetCodeRegion();
-                MemoryWordInspector.create(inspection(), targetCodeRegion.start(), targetCodeRegion.size().toInt()).highlight();
-            }
-        };
-    }
-
-    public void makeMemoryWordInspector() {
-        final TargetCodeRegion targetCodeRegion = _teleTargetRoutine.targetCodeRegion();
-        MemoryWordInspector.create(inspection(), targetCodeRegion.start(), targetCodeRegion.size().toInt());
-    }
-
-    public InspectorAction getMemoryWordInspectorAction() {
-        return new InspectorAction(inspection(), "Inspect Memory Words") {
-            @Override
-            protected void procedure() {
-                makeMemoryWordInspector();
-            }
-        };
     }
 
 }
