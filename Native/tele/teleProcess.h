@@ -46,10 +46,10 @@ int task_write(task_t task, vm_address_t dst, void *src, size_t size);
 #define WRITE_PROCESS_MEMORY(dst, src, size) proc_Pwrite(ph, src, length, (uintptr_t) dst);
 #elif os_GUESTVMXEN
 extern unsigned short readbytes(unsigned long src, char *dst, unsigned short n);
-extern unsigned short readbytes(unsigned long dst, char *src, unsigned short n);
+extern unsigned short writebytes(unsigned long dst, char *src, unsigned short n);
 #define PROCESS_MEMORY_PARAMS
 #define READ_PROCESS_MEMORY(src, dst, size) readbytes((unsigned long) src, (char *) dst, (unsigned short) size)
-#define WRITE_PROCESS_MEMORY(dst, src, size) writes((unsigned long) dst, (char *) src, (unsigned short) size);
+#define WRITE_PROCESS_MEMORY(dst, src, size) writebytes((unsigned long) dst, (char *) src, (unsigned short) size);
 #else
 #error
 #endif
