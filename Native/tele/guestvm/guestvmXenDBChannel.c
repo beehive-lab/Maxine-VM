@@ -325,13 +325,11 @@ Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeSetTransportDe
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeReadBytes(JNIEnv *env, jclass c, jlong src, jobject dst, jboolean isDirectByteBuffer, jint dstOffset, jint length) {
-//	log_println("nativeReadBytes %lx, %lx, %d, %d, %d\n", src, dst, isDirectByteBuffer, dstOffset, length);
     return teleProcess_read(env, c, src, dst, isDirectByteBuffer, dstOffset, length);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jboolean isDirectByteBuffer, jobject src, jint srcOffset, jint length) {
-//	log_println("nativeWriteBytes %lx, %d, %lx, %d, %d\n", dst, isDirectByteBuffer, src, srcOffset, length);
+Java_com_sun_max_tele_debug_guestvm_xen_GuestVMXenDBChannel_nativeWriteBytes(JNIEnv *env, jclass c, jlong dst, jobject src, jboolean isDirectByteBuffer, jint srcOffset, jint length) {
     return teleProcess_write(env, c, dst, src, isDirectByteBuffer, srcOffset, length);
 }
 
