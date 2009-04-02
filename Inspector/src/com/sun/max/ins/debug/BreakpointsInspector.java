@@ -67,8 +67,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         createFrame(null);
         frame().add(new BreakpointFrameMenuItems());
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setLocation(inspection().geometry().breakpointsFrameDefaultLocation());
-            frame().getContentPane().setPreferredSize(inspection().geometry().breakpointsFramePrefSize());
+            frame().setBounds(inspection().geometry().breakpointsFrameDefaultBounds());
         }
         Trace.end(1,  tracePrefix() + " initializing");
     }

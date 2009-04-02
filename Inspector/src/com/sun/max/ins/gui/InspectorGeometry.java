@@ -36,28 +36,22 @@ public interface InspectorGeometry {
     Dimension inspectorFramePrefSize();
 
     // Threads Inspection frame
-    Point threadsFrameDefaultLocation();
-    Dimension threadsFramePrefSize();
+    Rectangle threadsFrameDefaultBounds();
 
     // Registers Inspection frame
-    Point registersFrameDefaultLocation();
-    Dimension registersFramePrefSize();
+    Rectangle registersFrameDefaultBounds();
 
     // Stacks Inspection frame
-    Point stackFrameDefaultLocation();
-    Dimension stackFramePrefSize();
-
-    // Thread locals Inspection frame
-    Dimension threadLocalsFramePrefSize();
-    Point threadLocalsFrameDefaultLocation();
+    Rectangle stackFrameDefaultBounds();
 
     // Methods Inspection (container) frame
-    Point methodsFrameDefaultLocation();
-    Dimension methodsFramePrefSize();
+    Rectangle methodsFrameDefaultBounds();
 
     // Breakpoints Inspector frame
-    Point breakpointsFrameDefaultLocation();
-    Dimension breakpointsFramePrefSize();
+    Rectangle breakpointsFrameDefaultBounds();
+
+    // Thread locals Inspection frame
+    Rectangle threadLocalsFrameDefaultBounds();
 
     // Java Source Inspector frame
     Point javaSourceFrameDefaultLocation();
