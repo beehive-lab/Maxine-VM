@@ -21,48 +21,48 @@
 package com.sun.max.ins.debug;
 
 import com.sun.max.ins.*;
+import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
-
 /**
- * Persistent preferences for viewing threads in the {@link TeleVM}.
+ * Persistent preferences for viewing register values in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
   */
-public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<ThreadsColumnKind> {
+public final class RegistersViewPreferences extends TableColumnVisibilityPreferences<RegistersColumnKind> {
 
-    private static ThreadsViewPreferences _globalPreferences;
+    private static RegistersViewPreferences _globalPreferences;
 
     /**
-     * @return the global, persistent set of user preferences for viewing a table of memory regions.
+     * @return the global, persistent set of user preferences for viewing a table of breakpoints.
      */
-    public static synchronized ThreadsViewPreferences globalPreferences(Inspection inspection) {
+    public static synchronized RegistersViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
-            _globalPreferences = new ThreadsViewPreferences(inspection);
+            _globalPreferences = new RegistersViewPreferences(inspection);
         }
         return _globalPreferences;
     }
 
     /**
-    * Creates a set of preferences specified for use by singleton instances, where local and
-    * persistent global choices are identical.
-    */
-    private ThreadsViewPreferences(Inspection inspection) {
-        super(inspection, "threadsViewPrefs", ThreadsColumnKind.class, ThreadsColumnKind.VALUES);
+     * Creates a set of preferences specified for use by singleton instances, where local and
+     * persistent global choices are identical.
+     */
+    private RegistersViewPreferences(Inspection inspection) {
+        super(inspection, "registerssViewPrefs", RegistersColumnKind.class, RegistersColumnKind.VALUES);
     }
 
     @Override
-    protected boolean canBeMadeInvisible(ThreadsColumnKind columnType) {
+    protected boolean canBeMadeInvisible(RegistersColumnKind columnType) {
         return columnType.canBeMadeInvisible();
     }
 
     @Override
-    protected boolean defaultVisibility(ThreadsColumnKind columnType) {
+    protected boolean defaultVisibility(RegistersColumnKind columnType) {
         return columnType.defaultVisibility();
     }
 
     @Override
-    protected String label(ThreadsColumnKind columnType) {
+    protected String label(RegistersColumnKind columnType) {
         return columnType.label();
     }
 }

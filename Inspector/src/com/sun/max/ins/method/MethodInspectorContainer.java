@@ -46,7 +46,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     }
 
     private MethodInspectorContainer(Inspection inspection) {
-        super(inspection, inspection.geometry().methodsFrameDefaultLocation(), inspection.geometry().methodsFramePrefSize(), "methodsInspector");
+        super(inspection, inspection.geometry().methodsFrameDefaultBounds(), "methodsInspector");
         frame().add(new MethodsMenuItems());
     }
 
