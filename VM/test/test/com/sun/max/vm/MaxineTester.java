@@ -811,6 +811,13 @@ public class MaxineTester {
     }
 
     private static void runOutputTests(final File outputDir, final File imageDir) {
+        out().println("Output tests key:");
+        out().println("      OK: positive test passed");
+        out().println("  normal: negative test failed");
+        out().println("  passed: negative test passed");
+        out().println("  failed: positive test failed");
+        out().println("  noluck: non-deterministic test failed");
+        out().println("   lucky: non-deterministic test passed");
         for (Class mainClass : MaxineTesterConfiguration._outputTestClasses) {
             runOutputTest(outputDir, imageDir, mainClass);
         }
