@@ -57,7 +57,11 @@ public final class TeleClassInfo {
             if (_classActorCount == _classActors.length) {
                 _classActors = Arrays.extend(_classActors, _classActorCount * 2);
             }
-            _classActors[_classActorCount++] = classActor;
+            // The classActor needs to be set up before we increment _classActorCount
+            // else inspecting this code sequence will get an address fault
+            // as the inspector watches this state!
+            _classActors[_classActorCount] = classActor;
+            _classActorCount++;
         }
     }
 
