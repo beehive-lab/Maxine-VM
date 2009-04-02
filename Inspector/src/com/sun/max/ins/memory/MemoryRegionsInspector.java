@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.memory;
 
+import java.awt.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
@@ -63,6 +65,9 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         _viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
+        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
+            frame().setBounds(new Rectangle(100, 100, 300, 300));
+        }
         Trace.end(1, tracePrefix() + "initializing");
     }
 

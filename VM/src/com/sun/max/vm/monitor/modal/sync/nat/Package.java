@@ -21,7 +21,6 @@
 package com.sun.max.vm.monitor.modal.sync.nat;
 
 import com.sun.max.*;
-import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 
 /**

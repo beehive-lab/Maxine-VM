@@ -131,6 +131,15 @@ public class PreferenceDialog extends InspectorDialog {
         memoryRegionsInspectorPanel.setBorder(border);
         prefPanel.add(memoryRegionsInspectorPanel);
 
+        final JPanel registersLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        registersLabelPanel.setBorder(border);
+        registersLabelPanel.add(new TextLabel(inspection, "Registers"), BorderLayout.WEST);
+        prefPanel.add(registersLabelPanel);
+
+        final JPanel registersInspectorPanel = RegistersViewPreferences.globalPreferences(inspection).getPanel();
+        registersInspectorPanel.setBorder(border);
+        prefPanel.add(registersInspectorPanel);
+
         final JPanel vmThreadLocalsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         vmThreadLocalsLabelPanel.setBorder(border);
         vmThreadLocalsLabelPanel.add(new TextLabel(inspection, "VM Thread Locals"), BorderLayout.WEST);

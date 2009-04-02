@@ -40,6 +40,11 @@ public class TargetCodeLabel extends InspectorLabel {
         // no remote data to refresh.
     }
 
+    public void setValue(String text, String toolTipText) {
+        setText(text);
+        setToolTipText(toolTipText);
+    }
+
     public final void redisplay() {
         setFont(style().defaultTextFont());
         setForeground(style().targetCodeColor());
