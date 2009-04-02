@@ -25,30 +25,26 @@ import com.sun.max.tele.*;
 
 
 /**
- * Defines the columns that can be displayed describing a thread in the {@link TeleVM}.
+ * Defines the columns that can be displayed describing register values in the {@link TeleVM}.
  *
  * @author Michael Van De Vanter
  */
-public enum ThreadsColumnKind {
-
-    ID("ID", "ID assigned by VM, none if native", true, 15),
-    HANDLE("Handle", "Native thread library handle", true, 15),
-    KIND("Kind", null, true, -1),
-    NAME("Name", null, true, -1) {
+public enum RegistersColumnKind {
+    NAME("Name", "Register name", true, -1) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;
         }
     },
-    STATUS("Status", null, true, -1);
-
+    VALUE("Value", "Register value", true, -1),
+    REGION("Region", "Memory region pointed to by value", false, -1);
 
     private final String _label;
     private final String _toolTipText;
     private final boolean _defaultVisibility;
     private final int _minWidth;
 
-    private ThreadsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    private RegistersColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         _label = label;
         _toolTipText = toolTipText;
         _defaultVisibility = defaultVisibility;
@@ -96,5 +92,5 @@ public enum ThreadsColumnKind {
         return _defaultVisibility;
     }
 
-    public static final IndexedSequence<ThreadsColumnKind> VALUES = new ArraySequence<ThreadsColumnKind>(values());
+    public static final IndexedSequence<RegistersColumnKind> VALUES = new ArraySequence<RegistersColumnKind>(values());
 }

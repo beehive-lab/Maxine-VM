@@ -648,8 +648,8 @@ public class VmThread {
      * <li>a {@linkplain NativeCallEpilogue#nativeCallEpilogue(Pointer) native call epilogue} and is before the
      * instruction that resets the 'in native' flag.</li>
      * <li>a {@linkplain JniFunctionWrapper JNI function wrapper} and is before the
-     * {@linkplain JniFunctionWrapper#exitThreadInNative(Pointer) instruction} that resets the 'in native' flag or after
-     * the {@linkplain JniFunctionWrapper#reenterThreadInNative(Pointer, Word) instruction} that sets the 'in native'
+     * {@linkplain JniFunctionWrapper#reenterJavaFromNative(Pointer) instruction} that resets the 'in native' flag or after
+     * the {@linkplain JniFunctionWrapper#exitJavaToNative instruction} that sets the 'in native'
      * flag.</li>
      * <li>code in or called from a {@linkplain C_FUNCTION#isSignalHandler() Java trap handler} when a trap occurs with
      * the 'in native' already set. This mostly cause of this is a trap occuring while executing native code called via

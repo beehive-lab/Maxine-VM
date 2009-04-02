@@ -39,7 +39,7 @@ import com.sun.max.vm.value.*;
 public class MemoryRegionValueLabel extends ValueLabel {
 
     private Address _address;
-    private MemoryRegion _memoryRegion;
+    private MemoryRegion _memoryRegion = null;
 
 
     private final InspectorMouseClickAdapter _inspectorMouseClickAdapter;
@@ -85,8 +85,10 @@ public class MemoryRegionValueLabel extends ValueLabel {
 
     @Override
     protected void updateText() {
-        _address = value().toWord().asAddress();
-        _memoryRegion = teleVM().memoryRegionContaining(_address);
+        if (value() != null) {
+            _address = value().toWord().asAddress();
+            _memoryRegion = teleVM().memoryRegionContaining(_address);
+        }
         if (_memoryRegion == null) {
             setText("");
             setToolTipText("");

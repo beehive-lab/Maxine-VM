@@ -44,8 +44,6 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
     implements InspectorContainer<Inspector_Type> {
 
     private final JTabbedPane _tabbedPane;
-    private final Point _initialLocation;
-    private final Dimension _initialSize;
     private final SaveSettingsListener _saveSettingsListener;
 
     protected void addChangeListener(ChangeListener listener) {
@@ -56,7 +54,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         _tabbedPane.removeChangeListener(listener);
     }
 
-    protected TabbedInspector(Inspection inspection, Point initialLocation, Dimension initialSize, final String settingsClientName) {
+    protected TabbedInspector(Inspection inspection, Rectangle defaultBounds, final String settingsClientName) {
         super(inspection);
         _tabbedPane = new JTabbedPane();
         if (settingsClientName != null) {
@@ -64,11 +62,11 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         } else {
             _saveSettingsListener = null;
         }
-
-        _initialLocation = initialLocation;
-        _initialSize = initialSize;
         createFrame(null);
         addChangeListener(_tabChangeListener);
+        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
+            frame().setBounds(defaultBounds);
+        }
     }
 
     @Override
@@ -181,9 +179,7 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
 
     @Override
     public void createView(long epoch) {
-        _tabbedPane.setPreferredSize(_initialSize);
         frame().setContentPane(_tabbedPane);
-        frame().setLocation(_initialLocation);
     }
 
     public void viewConfigurationChanged(long epoch) {

@@ -70,8 +70,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         createFrame(null);
         refreshView(inspection.teleVM().epoch(), true);
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setLocation(inspection().geometry().threadLocalsFrameDefaultLocation());
-            frame().getContentPane().setPreferredSize(inspection().geometry().threadLocalsFramePrefSize());
+            frame().setBounds(inspection().geometry().threadLocalsFrameDefaultBounds());
         }
         Trace.end(1,  tracePrefix() + " initializing");
     }
