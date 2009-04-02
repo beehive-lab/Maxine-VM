@@ -6,7 +6,7 @@
 # environment variable JAVA_HOME to point to a JDK installation directory.
 # The '-java_home' global option can be used instead.
 #
-# To add a new launchable command, write a function named 'run_<command>' and
+# To add a new command, write a function named 'run_<command>' and
 # define a variable named '<command>_help'. See the existing commands for examples.
 # Once added, the command can be launched as follows:
 #
@@ -199,19 +199,26 @@ function check_gnu_make() {
 # 'build' command
 #=======================================
 
-build_help="compile the Maxine Java and C sources, linking the latter"
+build_usage="[options] projects..."
+build_help="compile the Maxine Java and C sources, linking the latter
+
+   Compile all or some of the Maxine source code using the appropriate compilers
+   and linkers for the various source code types.
+   
+options:
+ -clean     removes existing binaries and class files before building projects
+ -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac
+
+If no projects are given, then all projects are built."
+
 function run_build() {
     javac=${JAVA_HOME}/bin/javac
-    show_build_help=false
     native_only=false
     exit_after_help=false
     clean=false
     projects_to_build=""
     while [ "$1" != "" ]; do
         case $1 in
-            -h )
-                show_build_help=true
-                ;;
             -javac )
                 shift
                 javac=$1
@@ -236,18 +243,6 @@ function run_build() {
             projects_to_build="$projects_to_build $project_dir"
         done
         projects_to_build="Native $projects_to_build"
-    fi
-    
-    if $show_build_help ; then
-        echo "Usage: build [-options] projects..."
-        echo
-        echo "where options include:"
-        echo " -h         show help message"
-        echo " -clean     removes existing binaries and class files before building projects"
-        echo " -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac"
-        echo
-        echo "If no projects are given, then all projects are built."
-        return
     fi
     
     # Compile C sources
@@ -287,7 +282,7 @@ function run_build() {
             cd ${maxine_dir}/${project_dir}/${source_dir}
             echo "Compiling Java sources in ${maxine_dir}/${project_dir}/${source_dir}..."
             javac_input=/tmp/javacfiles.txt.$$
-            find . -name *.java >$javac_input
+            find . -name *.java | grep -v 'package-info.java' >$javac_input
             run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin @$javac_input 2>&1 | \
                awk ' BEGIN                    { s=0; c=-1}
                      /is Sun proprietary API/ { s++; c=2; }
@@ -313,7 +308,12 @@ function run_build() {
 # 'image' command
 #=======================================
 
-image_help="build a VM image"
+image_usage="[options]"
+image_help="build a boot image
+
+    Run the com.sun.max.vm.prototype.BinaryImageGenerator class to build a Maxine boot image.
+    
+    Use \"max image -help\" to see what other options this command accepts."
 
 function run_image() {
     run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -build=DEBUG -run=java $@
@@ -323,8 +323,25 @@ function run_image() {
 # 'compile' command
 #=======================================
 
-compile_help="compile a list of classes and/or methods using the VM's compiler. \
-The compilation phases are traced and the resulting machine code is disassembled."
+compile_usage="[options] compilation_specs..."
+compile_help="compile a list of classes and/or methods using the VM's compiler
+
+    A compilation spec is a class name pattern followed by an optional method name
+    pattern separated by a ':'. For example:
+
+        Object:wait String
+
+    will compile all methods in a class whose name contains "Object" where the
+    method name contains "wait" as well as all methods in a class whose name
+    contains "String". The classes searched are those on the class path.
+    
+    The compilation phases are traced and the resulting machine code is disassembled.
+    
+    The output traced by this command is not guaranteed to be the same as the output
+    for a compilation done at runtime. The code produced by a compiler is very sensitive
+    to the compilation context such as what classes have been resolved etc.
+    
+    Use \"max compile -help\" to see what other options this command accepts."
 
 function run_compile() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.compiler.CompilerRunner $@
@@ -334,7 +351,12 @@ function run_compile() {
 # 'vm' command
 #=======================================
 
-vm_help="launch the Maxine VM"
+vm_usage="[options] [class | -jar jarfile]  [args...]"
+vm_help="launch the Maxine VM
+
+    Run the Maxine VM with the given options and arguments.
+    
+    Use \"max vm -help\" to see what other options this command accepts."
 
 # Parses the positional parameters to extract 'pseudo' VM options
 # that actually manifest themselves to the VM as environment variables.
@@ -366,7 +388,14 @@ function run_vm() {
 # 'javap' command
 #=======================================
 
-javap_help="launch javap with a -classpath option denoting all the Maxine classes"
+javap_usage="[options] classes..."
+javap_help="launch javap with a -classpath option denoting all the Maxine classes
+
+    Run the JDK javap class file disassembler with the following prepended options:
+    
+        -private -verbose -classpath <path to Maxine classes>
+    
+    Use \"max javap -help\" to see what other options this command accepts."
 
 function run_javap() {
     run ${JAVA_HOME}/bin/javap -private -verbose -classpath ${maxine_cp}:${JCK_CLASSPATH} "$@"
@@ -376,8 +405,19 @@ function run_javap() {
 # 'dis' command
 #=======================================
 
-dis_help="preprocess class files with the Maxine VM and disassembles the result with javap"
+dis_usage="[options] classes..."
+dis_help="preprocess class files with the Maxine VM and disassembles the result with javap
 
+    Run Maxine in boot image building mode to load one or more classes (which performs
+    preprocessing of the bytecode in the classes for implementing JNI stubs, exception
+    dispatchers and sychronized methods, etc), writes the classes back to valid Java
+    class files and feeds them into javap.
+    
+    This is an easy way to see how Maxine implements certain VM features via bytecode
+    preprocessing or generation.
+
+    Use \"max dis -help\" to see what other options this command accepts."
+    
 function run_dis() {
     TMP_DIR=/tmp/${USER}/generated.$$
     run mkdir -p ${TMP_DIR}
@@ -389,11 +429,33 @@ function run_dis() {
 # 'inspect' command
 #=======================================
 
-inspect_help="launch a given program under the inspector"
+inspect_usage="[options] [class | -jar jarfile]  [args...]"
+inspect_help="launch a given program under the inspector
+
+    Run the Maxine VM under the inspector. The arguments accepted by this command
+    are exactly those accepted by the 'max vm' command. To debug a program in the
+    inspector, simply replace 'vm' on the command line that launches the program
+    with 'inspect'."
 
 function run_inspect() {
     parse_vm_args $@
     run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=${TRACE:-1} -d -a=\""$vm_args"\"
+}
+
+#=======================================
+# 'inspector' command
+#=======================================
+
+inspector_usage="[options]"
+inspector_help="launch the inspector
+
+    Run the inspector. This allows you to run supply inspector specific options as opposed
+    to the \"max inspect\" command which only supports VM options.
+    
+    Use \"max inspector -help\" to see what other options this command accepts."
+
+function run_inspector() {
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector "$@"
 }
 
 #=======================================
@@ -441,8 +503,15 @@ function run_helloworld() {
 # 'objecttree' command
 #=======================================
 
-objecttree_help="print the causality spanning-tree of the object graph in the VM image"
+objecttree_usage="[options]"
+objecttree_help="print the causality spanning-tree of the object graph in the boot image
 
+    The causality spanning-tree allows one to audit the boot image with respect
+    to why any given object is in the image. This is useful when trying to reduce
+    the size of the image.
+
+    Use \"max objecttree -help\" to see what other options this command accepts."
+    
 function run_objecttree() {
     run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageObjectTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.object.tree "$@"
 }
@@ -451,7 +520,14 @@ function run_objecttree() {
 # 'methodtree' command
 #=======================================
 
-methodtree_help="print the causality spanning-tree of the method graph in the VM image"
+methodtree_usage="[options]"
+methodtree_help="print the causality spanning-tree of the method graph in the boot image
+
+    The causality spanning-tree allows one to audit the boot image with respect
+    to why any given method is (or isn't) in the image. This is useful when
+    trying to reduce the size of the image.
+
+    Use \"max methodtree -help\" to see what other options this command accepts."
 
 function run_methodtree() {
     run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageMethodTree -in=${maxine_dir}/Native/generated/${MAXINE_OS}/maxine.method.tree "$@"
@@ -471,10 +547,45 @@ function run_maxinetester() {
 # 'gate' command
 #=======================================
 
-gate_help="run the tests used to validate a push to the stable Maxine repository"
+gate_usage="[options]"
+gate_help="run the tests used to validate a push to the stable Maxine repository
+
+    If this commands exits with a 0 exit code, then the source code is in
+    a state that would be accepted for integration into the main repository.
+    
+    Use \"max gate -help\" to see what other options this command accepts."
 
 function run_gate() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-config-alias=optopt -java-executable="${jvm}" "-java-vm-args=\"${jvm_args}\"" "$@"
+}
+
+#=======================================
+# 'help' command
+#=======================================
+
+help_usage="[command]"
+help_help="show help for a given command
+
+    With no arguments, print a list of commands and short help for each command.
+
+    Given a command name, print help for that command."
+
+function run_help() {
+    if [ $# -eq 0 ]; then
+        usage
+    else
+        command="$1"
+        
+        usage_var="${command}_usage"
+        usage=${!usage_var}
+        
+        help_var="${command}_help"
+        help=${!help_var}
+        if [ -z "$help" ]; then
+            help="[no description available]"
+        fi
+        printf "max %s %s\n\n%s\n" "$command" "$usage" "$help"
+    fi
 }
 
 #=======================================
@@ -496,7 +607,7 @@ function usage() {
         if [ -z "$help" ]; then
             help="[no description available]"
         fi
-        printf " %-16s %s\n" "$command" "$help"
+        printf " %-16s %s\n" "$command" "$help" | head -n 1
     done
     config_gnu_make
     echo

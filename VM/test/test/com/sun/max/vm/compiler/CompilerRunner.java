@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm.compiler;
 
+import java.io.*;
 import java.lang.reflect.*;
 
 import junit.framework.*;
@@ -56,7 +57,22 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         super(test);
     }
 
-    private static final OptionSet _options = new OptionSet();
+    private static final OptionSet _options = new OptionSet() {
+        @Override
+        protected void printHelpHeader(PrintStream stream) {
+            stream.println("Usage: " + CompilerRunner.class.getSimpleName() + " [-options] <compilation specs>");
+            stream.println("    A compilation spec is a class name pattern followed by an optional method name");
+            stream.println("    pattern separated by a ':'. For example:");
+            stream.println();
+            stream.println("        Object:wait String");
+            stream.println();
+            stream.println("    will compile all methods in a class whose name contains \"Object\" where the");
+            stream.println("    method name contains \"wait\" as well as all methods in a class whose name");
+            stream.println("    contains \"String\". The classes searched are those on the class path.");
+            stream.println();
+            stream.println("where options include:");
+        }
+    };
 
     private static final Option<Integer> _irTraceLevel = _options.newIntegerOption("ir-trace", 3, "The detail level for IR tracing.");
     private static final Option<Boolean> _cirGui = _options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");

@@ -30,6 +30,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
+import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
 import com.sun.max.tele.debug.*;
@@ -155,7 +156,14 @@ public final class MaxineInspector {
         initializeSwing();
         final Options options = new Options();
         Trace.addTo(options);
+        final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
         options.parseArguments(args);
+
+        if (helpOption.getValue()) {
+            options.printHelp(System.out, 80);
+            return;
+        }
+
         final TeleVM teleVM = TeleVM.create(options);
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
