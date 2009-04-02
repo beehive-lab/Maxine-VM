@@ -657,9 +657,17 @@ public class ClassfileWriter {
             "Specifies where to place generated class files");
         final Option<Boolean> javapOption = options.newBooleanOption("javap", false,
             "Runs javap on the generated class file(s).");
+        final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exits.");
+
         Trace.addTo(options);
         final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(options);
         options.parseArguments(args);
+
+        if (helpOption.getValue()) {
+            options.printHelp(System.out, 80);
+            return;
+        }
+
         final String[] arguments = options.getArguments();
         if (arguments.length == 0) {
             options.printHelp(System.out, 80);
