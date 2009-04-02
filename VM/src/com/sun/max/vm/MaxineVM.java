@@ -389,6 +389,8 @@ public final class MaxineVM {
         return _runMethodParameterTypes.clone();
     }
 
+    private static final VMOption _helpOption = new VMOption("-help", "Prints this help message.", MaxineVM.Phase.PRISTINE);
+
     /**
      * Entry point called by the substrate.
      *
@@ -436,7 +438,11 @@ public final class MaxineVM {
         hostOrTarget().setPhase(MaxineVM.Phase.PRISTINE);
 
         if (VMOptions.parsePristine(argc, argv)) {
-            VmThread.createAndRunMainThread();
+            if (_helpOption.isPresent()) {
+                VMOptions.printUsage();
+            } else {
+                VmThread.createAndRunMainThread();
+            }
         }
         return _exitCode;
     }
