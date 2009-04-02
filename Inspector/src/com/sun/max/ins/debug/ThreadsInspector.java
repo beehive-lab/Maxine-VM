@@ -62,8 +62,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         _viewPreferences.addListener(this);
         createFrame(null);
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
-            frame().getContentPane().setPreferredSize(inspection().geometry().threadsFramePrefSize());
+            frame().setBounds(inspection().geometry().threadsFrameDefaultBounds());
         }
         Trace.end(1,  tracePrefix() + " initializing");
     }

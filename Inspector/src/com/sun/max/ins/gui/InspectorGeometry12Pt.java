@@ -23,16 +23,16 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 
 /**
- * Standard choices and policies for layout.
+ * Standard choices and policies for layout, tiled for use with 12 pt. font.
  *
  * @author Michael Van De Vanter
  */
-public class BasicInspectorGeometry implements InspectorGeometry {
+public class InspectorGeometry12Pt implements InspectorGeometry {
 
     // Main Inspection frame
     private static final Point _inspectionFrameDefaultLocation = new Point(100, 100);
     private static final Dimension _inspectionFrameMinSize = new Dimension(100, 100);
-    private static final Dimension _inspectionFramePrefSize = new Dimension(1625, 1040);
+    private static final Dimension _inspectionFramePrefSize = new Dimension(1600, 900);
 
     public Point inspectorFrameDefaultLocation() {
         return _inspectionFrameDefaultLocation;
@@ -45,65 +45,33 @@ public class BasicInspectorGeometry implements InspectorGeometry {
     }
 
     // Thread Inspection frame
-    private static final Point _threadsFrameDefaultLocation = new Point(0, 0);
-    private static final Dimension _threadsFramePrefSize = new Dimension(225, 170);
-    public Point threadsFrameDefaultLocation() {
-        return _threadsFrameDefaultLocation;
-    }
-    public Dimension threadsFramePrefSize() {
-        return _threadsFramePrefSize;
+    public Rectangle threadsFrameDefaultBounds() {
+        return new Rectangle(0, 0, 225, 170);
     }
 
     // Register Inspection frame
-    private static final Point _registersFrameDefaultLocation = new Point(0, 200);
-    private static final Dimension _registersFramePrefSize = new Dimension(225, 800);
-    public Point registersFrameDefaultLocation() {
-        return _registersFrameDefaultLocation;
-    }
-    public Dimension registersFramePrefSize() {
-        return _registersFramePrefSize;
+    public Rectangle registersFrameDefaultBounds() {
+        return new Rectangle(0, 170, 225, 730);
     }
 
     // Stacks Inspection frame
-    private static final Point _stacksFrameDefaultLocation = new Point(235, 0);
-    private static final Dimension _stacksFramePrefSize = new Dimension(250, 1000);
-    public Point stackFrameDefaultLocation() {
-        return _stacksFrameDefaultLocation;
-    }
-    public Dimension stackFramePrefSize() {
-        return _stacksFramePrefSize;
+    public Rectangle stackFrameDefaultBounds() {
+        return new Rectangle(225, 0, 225, 900);
     }
 
     // Method Inspector (container) frame
-    private static final Point _methodsFrameDefaultLocation = new Point(490, 0);
-    private static final Dimension _methodsFramePrefSize = new Dimension(600, 1000);
-
-    public Point methodsFrameDefaultLocation() {
-        return _methodsFrameDefaultLocation;
-    }
-    public Dimension methodsFramePrefSize() {
-        return _methodsFramePrefSize;
+    public Rectangle methodsFrameDefaultBounds() {
+        return new Rectangle(450, 0, 700, 900);
     }
 
     // Breakpoint Inspector frame
-    private static final Point _breakpointsFrameDefaultLocation = new Point(1099, 0);
-    private static final Dimension _breakpointsFramePrefSize = new Dimension(490, 250);
-
-    public Point breakpointsFrameDefaultLocation() {
-        return _breakpointsFrameDefaultLocation;
-    }
-    public Dimension breakpointsFramePrefSize() {
-        return _breakpointsFramePrefSize;
+    public Rectangle breakpointsFrameDefaultBounds() {
+        return new Rectangle(1150, 0, 450, 170);
     }
 
     // Thread Locals Inspection (container) frame
-    private static final Point _threadLocalsFrameDefaultLocation = new Point(1099, 435);
-    private static final Dimension _threadLocalsFramePrefSize = new Dimension(500, 450);
-    public Point threadLocalsFrameDefaultLocation() {
-        return _threadLocalsFrameDefaultLocation;
-    }
-    public Dimension threadLocalsFramePrefSize() {
-        return _threadLocalsFramePrefSize;
+    public Rectangle threadLocalsFrameDefaultBounds() {
+        return new Rectangle(1150, 170, 450, 730);
     }
 
     // Java Source Inspector frame

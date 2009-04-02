@@ -66,8 +66,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         createFrame(null);
         refreshView(inspection.teleVM().epoch(), true);
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setLocation(inspection().geometry().registersFrameDefaultLocation());
-            frame().getContentPane().setPreferredSize(inspection().geometry().registersFramePrefSize());
+            frame().setBounds(inspection().geometry().registersFrameDefaultBounds());
         }
         Trace.end(1,  tracePrefix() + " initializing");
     }
