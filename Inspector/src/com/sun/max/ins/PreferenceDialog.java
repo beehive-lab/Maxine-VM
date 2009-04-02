@@ -64,7 +64,7 @@ public class PreferenceDialog extends InspectorDialog {
         methodLabelPanel.add(new TextLabel(inspection, "Methods"), BorderLayout.WEST);
         prefPanel.add(methodLabelPanel);
 
-        final JPanel methodInspectorPanel = MethodInspector.globalPreferences(inspection).getPanel();
+        final JPanel methodInspectorPanel = MethodInspectorPreferences.globalPreferences(inspection).getPanel();
         methodInspectorPanel.setBorder(border);
         prefPanel.add(methodInspectorPanel);
 
@@ -91,7 +91,7 @@ public class PreferenceDialog extends InspectorDialog {
         objectLabelPanel.add(new TextLabel(inspection, "Objects"), BorderLayout.WEST);
         prefPanel.add(objectLabelPanel);
 
-        final JPanel objectInspectorPanel = ObjectInspector.globalPreferences(inspection).getPanel();
+        final JPanel objectInspectorPanel = ObjectInspectorPreferences.globalPreferences(inspection).getPanel();
         objectInspectorPanel.setBorder(border);
         prefPanel.add(objectInspectorPanel);
 
@@ -130,6 +130,15 @@ public class PreferenceDialog extends InspectorDialog {
         final JPanel memoryRegionsInspectorPanel = MemoryRegionsViewPreferences.globalPreferences(inspection).getPanel();
         memoryRegionsInspectorPanel.setBorder(border);
         prefPanel.add(memoryRegionsInspectorPanel);
+
+        final JPanel registersLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        registersLabelPanel.setBorder(border);
+        registersLabelPanel.add(new TextLabel(inspection, "Registers"), BorderLayout.WEST);
+        prefPanel.add(registersLabelPanel);
+
+        final JPanel registersInspectorPanel = RegistersViewPreferences.globalPreferences(inspection).getPanel();
+        registersInspectorPanel.setBorder(border);
+        prefPanel.add(registersInspectorPanel);
 
         final JPanel vmThreadLocalsLabelPanel = new InspectorPanel(inspection, new BorderLayout());
         vmThreadLocalsLabelPanel.setBorder(border);

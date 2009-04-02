@@ -18,24 +18,53 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.debug;
+package com.sun.max.ins.gui;
 
-import com.sun.max.ins.*;
-import com.sun.max.ins.value.*;
-import com.sun.max.tele.debug.*;
-import com.sun.max.util.*;
+import com.sun.max.collect.*;
+
 
 /**
- * @author Bernd Mathiske
+ * Constants denoting the kinds of code that can be inspected for a method.
+ *
+ * @author Michael Van De Vanter
  */
-public final class FloatingPointRegisterPanel extends RegisterPanel {
+public enum MethodCodeKind {
+    TARGET_CODE("Target Code", true),
+    BYTECODES("Bytecodes", false),
+    JAVA_SOURCE("Java Source", false);
 
-    public FloatingPointRegisterPanel(Inspection inspection, TeleFloatingPointRegisters registers) {
-        super(inspection, registers);
+    private final String _label;
+    private final boolean _defaultVisibility;
+
+    private MethodCodeKind(String label, boolean defaultVisibility) {
+        _label = label;
+        _defaultVisibility = defaultVisibility;
+    }
+
+    /**
+     * Determines if it the display of this source kind is implemented.
+     *
+     * TODO (mlvdv) This is a hack until source code viewing is implemented
+     */
+    public boolean isImplemented() {
+        return this != JAVA_SOURCE;
+    }
+
+    public String label() {
+        return _label;
     }
 
     @Override
-    protected WordValueLabel.ValueMode registerLabelValueMode(Symbol register) {
-        return WordValueLabel.ValueMode.FLOATING_POINT;
+    public String toString() {
+        return _label;
     }
+
+    /**
+     * Determines if this kind should be visible by default in new inspectors.
+     */
+    public boolean defaultVisibility() {
+        return _defaultVisibility;
+    }
+
+    public static final IndexedSequence<MethodCodeKind> VALUES = new ArraySequence<MethodCodeKind>(values());
 }

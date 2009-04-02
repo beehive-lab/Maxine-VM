@@ -62,6 +62,8 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
 
     /**
      * The states a thread can be in.
+     * N.B. Many platforms will not be able to detect all these states, e.g., MONITOR_WAIT,
+     * in which case the generic SUSPENDED is appropriate.
      *
      * Note: This enum must be kept in sync the one of the same name in MaxineNative/inspector/teleNativeThread.h.
      */
@@ -69,23 +71,23 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         /**
          * Denotes that a thread is waiting to acquire ownership of a monitor.
          */
-        MONITOR_WAIT("Monitor", false),
+        MONITOR_WAIT("Monitor", true),
 
         /**
          * Denotes that a thread is waiting to be {@linkplain Object#notify() notified}.
          */
-        NOTIFY_WAIT("Wait", false),
+        NOTIFY_WAIT("Wait", true),
 
         /**
          * Denotes that a thread is waiting for another
          * {@linkplain Thread#join(long, int) thread to die or a timer to expire}.
          */
-        JOIN_WAIT("Join", false),
+        JOIN_WAIT("Join", true),
 
         /**
          * Denotes that a thread is {@linkplain Thread#sleep(long) sleeping}.
          */
-        SLEEPING("Sleeping", false),
+        SLEEPING("Sleeping", true),
 
         /**
          * Denotes that a thread is suspended at a breakpoint.
@@ -334,7 +336,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
     }
 
-    private static final int REFRESH_TRACE_LEVEL = 2;
+    private static final int REFRESH_TRACE_LEVEL = 1;
 
     /**
      * Refreshes the cached state of this thread's registers from the corresponding thread in the tele process.

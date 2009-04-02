@@ -28,9 +28,12 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.builtin.*;
+import com.sun.max.vm.compiler.snippet.NativeStubSnippet.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -72,32 +75,91 @@ public final class JniFunctionWrapper {
     private JniFunctionWrapper() {
     }
 
+    /**
+     * This method implements part of the prologue for entering a JNI upcall from native code. Because
+     * safepoints may already be triggered, this method cannot trap.
+     *
+     * @param vmThreadLocals
+     */
     @INLINE
-    public static void exitThreadInNative(Pointer vmThreadLocals) {
-        LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, Word.zero());
+    public static void reenterJavaFromNative(Pointer vmThreadLocals) {
+        // a JNI upcall is similar to a native method returning; reuse the native call epilogue sequence
+        NativeCallEpilogue.nativeCallEpilogue(vmThreadLocals);
     }
 
+    /**
+     * This method implements the epilogue for leaving an JNI upcall. The steps performed are to
+     * reset the thread-local information which stores the last Java caller SP, FP, and IP, and
+     * print a trace if necessary.
+     *
+     * @param vmThreadLocals the pointer to the VMThreadLocals to update
+     * @param sp the stack pointer to which the last java SP should be reset
+     * @param fp the frame pointer to which the last java FP should be reset
+     * @param ip the instruction pointer to which the last java IP should be reset
+     * @param jniTargetMethod the method which was called (for tracing only)
+     */
     @INLINE
-    public static void reenterThreadInNative(Pointer vmThreadLocals, Word ip) {
+    private static void jniWrapperEpilogue(final Pointer vmThreadLocals, final Word sp, final Word fp, final Word ip, final TargetMethod jniTargetMethod) {
+        traceExit(jniTargetMethod);
+        MemoryBarrier.storeStore();
+        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
+        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
+        MemoryBarrier.storeStore();
         LAST_JAVA_CALLER_INSTRUCTION_POINTER.setVariableWord(vmThreadLocals, ip);
     }
 
-    private static void traceCurrentThreadPrefix() {
-        Log.print("[Thread \"");
-        Log.print(VmThread.current().getName());
+    /**
+     * Gets the current value of the instruction pointer at the call site.
+     */
+    @INLINE
+    private static Pointer ip() {
+        return SpecialBuiltin.getInstructionPointer();
     }
 
-    private static TargetMethod traceEntry(Address instructionPointer) {
+    /**
+     * Gets the current value of the stack pointer at the call site.
+     */
+    @INLINE
+    private static Pointer sp() {
+        return SpecialBuiltin.getIntegerRegister(Role.CPU_STACK_POINTER).asPointer();
+    }
+
+    /**
+     * Gets the current value of the frame pointer at the call site.
+     */
+    @INLINE
+    private static Pointer fp() {
+        return SpecialBuiltin.getIntegerRegister(Role.CPU_FRAME_POINTER).asPointer();
+    }
+
+    /**
+     * Traces the entry to an upcall if the {@linkplain ClassMethodActor#traceJNI() JNI tracing flag} has been set.
+     *
+     * @param instructionPointer the instruction pointer denoting a code location anywhere in the JNI function being traced
+     * @param stackPointer the stack pointer of the JNI function frame. The value is used to read variables saved to in
+     *            the frame via the {@link MakeStackVariable} builtin.
+     * @param framePointer the stack pointer of the JNI function frame. The value is used to read variables saved to in
+     *            the frame via the {@link MakeStackVariable} builtin.
+     * @return the target method for the JNI function denoted by {@code instructionPointer} or null if JNI tracing is
+     *         not enabled
+     */
+    private static TargetMethod traceEntry(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         if (ClassMethodActor.traceJNI()) {
             final TargetMethod jniTargetMethod = JniNativeInterface.jniTargetMethod(instructionPointer);
-            traceCurrentThreadPrefix();
+            Log.print("[Thread \"");
+            Log.print(VmThread.current().getName());
             Log.print("\" entering JNI upcall: ");
             if (jniTargetMethod != null) {
                 Log.printMethodActor(jniTargetMethod.classMethodActor(), false);
+
+                final Pointer namedVariablesBasePointer = VMConfiguration.target().compilerScheme().namedVariablesBasePointer(stackPointer, framePointer);
+                final Word nativeMethodIP = savedLastJavaCallerInstructionPointer().address(jniTargetMethod, namedVariablesBasePointer).asPointer().readWord(0);
+                final TargetMethod nativeMethod = Code.codePointerToTargetMethod(nativeMethodIP.asAddress());
+                Log.print(", last down call: ");
+                FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
+                Log.printMethodActor(nativeMethod.classMethodActor(), false);
             } else {
-                Log.print("<unknown @ ");
-                Log.print(instructionPointer);
-                Log.print(">");
+                FatalError.unexpected("Could not find TargetMethod for a JNI function");
             }
             Log.println("]");
             return jniTargetMethod;
@@ -105,17 +167,18 @@ public final class JniFunctionWrapper {
         return null;
     }
 
-    private static void traceExit(TargetMethod jniTargetMethod, Address instructionPointer) {
+    /**
+     * Traces the exit from an upcall if the {@linkplain ClassMethodActor#traceJNI() JNI tracing flag} has been set.
+     *
+     * @param jniTargetMethod the target method for the JNI function denoted by {@code instructionPointer}
+     */
+    private static void traceExit(TargetMethod jniTargetMethod) {
         if (ClassMethodActor.traceJNI()) {
-            traceCurrentThreadPrefix();
+            Log.print("[Thread \"");
+            Log.print(VmThread.current().getName());
             Log.print("\" exit JNI upcall: ");
-            if (jniTargetMethod != null) {
-                Log.printMethodActor(jniTargetMethod.classMethodActor(), false);
-            } else {
-                Log.print("<unknown @ ");
-                Log.print(instructionPointer);
-                Log.print(">");
-            }
+            FatalError.check(jniTargetMethod != null, "Cannot trace method from unknown JNI function");
+            Log.printMethodActor(jniTargetMethod.classMethodActor(), false);
             Log.println("]");
         }
     }
@@ -125,32 +188,22 @@ public final class JniFunctionWrapper {
         // start-prologue
         final Pointer vmThreadLocals = fromJniEnv(env);
         Safepoint.setLatchRegister(vmThreadLocals);
-        Safepoint.hard(); // must happen before call to exitThreadInNative()
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
         makeStackVariable(sp, _savedLastJavaCallerStackPointer);
         makeStackVariable(fp, _savedLastJavaCallerFramePointer);
         makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
-        exitThreadInNative(vmThreadLocals);
+        reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
-        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
+        final TargetMethod jniTargetMethod = traceEntry(ip(), sp(), fp());
         try {
             void_wrapper(env);
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setPendingException(t);
         }
-        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
-
-        // start-epilogue
-        MemoryBarrier.storeStore(); // must happen after call to exitThreadInNative()
-        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
-        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
-        MemoryBarrier.storeStore(); // The following assignment must be last:
-        // Re-enters the 'thread in native' state of the thread
-        reenterThreadInNative(vmThreadLocals, ip);
-        // end-epilogue
+        jniWrapperEpilogue(vmThreadLocals, sp, fp, ip, jniTargetMethod);
     }
 
     @WRAPPER
@@ -158,17 +211,16 @@ public final class JniFunctionWrapper {
         // start-prologue
         final Pointer vmThreadLocals = fromJniEnv(env);
         Safepoint.setLatchRegister(vmThreadLocals);
-        Safepoint.hard(); // must happen before call to exitThreadInNative()
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
         makeStackVariable(sp, _savedLastJavaCallerStackPointer);
         makeStackVariable(fp, _savedLastJavaCallerFramePointer);
         makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
-        exitThreadInNative(vmThreadLocals);
+        reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
-        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
+        final TargetMethod jniTargetMethod = traceEntry(ip(), sp(), fp());
         int result;
         try {
             result = int_wrapper(env);
@@ -176,15 +228,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
-        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
-
-        // start-epilogue
-        MemoryBarrier.storeStore();
-        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
-        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
-        MemoryBarrier.storeStore();
-        reenterThreadInNative(vmThreadLocals, ip);
-        // end-epilogue
+        jniWrapperEpilogue(vmThreadLocals, sp, fp, ip, jniTargetMethod);
 
         return result;
     }
@@ -194,17 +238,16 @@ public final class JniFunctionWrapper {
         // start-prologue
         final Pointer vmThreadLocals = fromJniEnv(env);
         Safepoint.setLatchRegister(vmThreadLocals);
-        Safepoint.hard(); // must happen before call to exitThreadInNative()
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
         makeStackVariable(sp, _savedLastJavaCallerStackPointer);
         makeStackVariable(fp, _savedLastJavaCallerFramePointer);
         makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
-        exitThreadInNative(vmThreadLocals);
+        reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
-        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
+        final TargetMethod jniTargetMethod = traceEntry(ip(), sp(), fp());
         float result;
         try {
             result = float_wrapper(env);
@@ -212,15 +255,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
-        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
-
-        // start-epilogue
-        MemoryBarrier.storeStore();
-        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
-        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
-        MemoryBarrier.storeStore();
-        reenterThreadInNative(vmThreadLocals, ip);
-        // end-epilogue
+        jniWrapperEpilogue(vmThreadLocals, sp, fp, ip, jniTargetMethod);
 
         return result;
     }
@@ -230,17 +265,16 @@ public final class JniFunctionWrapper {
         // start-prologue
         final Pointer vmThreadLocals = fromJniEnv(env);
         Safepoint.setLatchRegister(vmThreadLocals);
-        Safepoint.hard(); // must happen before call to exitThreadInNative()
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
         makeStackVariable(sp, _savedLastJavaCallerStackPointer);
         makeStackVariable(fp, _savedLastJavaCallerFramePointer);
         makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
-        exitThreadInNative(vmThreadLocals);
+        reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
-        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
+        final TargetMethod jniTargetMethod = traceEntry(ip(), sp(), fp());
         long result;
         try {
             result = long_wrapper(env);
@@ -248,15 +282,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
-        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
-
-        // start-epilogue
-        MemoryBarrier.storeStore();
-        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
-        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
-        MemoryBarrier.storeStore();
-        reenterThreadInNative(vmThreadLocals, ip);
-        // end-epilogue
+        jniWrapperEpilogue(vmThreadLocals, sp, fp, ip, jniTargetMethod);
 
         return result;
     }
@@ -266,17 +292,16 @@ public final class JniFunctionWrapper {
         // start-prologue
         final Pointer vmThreadLocals = fromJniEnv(env);
         Safepoint.setLatchRegister(vmThreadLocals);
-        Safepoint.hard(); // must happen before call to exitThreadInNative()
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
         makeStackVariable(sp, _savedLastJavaCallerStackPointer);
         makeStackVariable(fp, _savedLastJavaCallerFramePointer);
         makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
-        exitThreadInNative(vmThreadLocals);
+        reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
-        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
+        final TargetMethod jniTargetMethod = traceEntry(ip(), sp(), fp());
         double result;
         try {
             result = double_wrapper(env);
@@ -284,16 +309,9 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = JniFunctions.JNI_ERR;
         }
-        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
 
-        // start-epilogue
-        MemoryBarrier.storeStore();
-        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
-        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
-        MemoryBarrier.storeStore();
-        reenterThreadInNative(vmThreadLocals, ip);
-        // end-epilogue
-
+        // finally exit back to the native method that called this upcall
+        jniWrapperEpilogue(vmThreadLocals, sp, fp, ip, jniTargetMethod);
         return result;
     }
 
@@ -302,17 +320,16 @@ public final class JniFunctionWrapper {
         // start-prologue
         final Pointer vmThreadLocals = fromJniEnv(env);
         Safepoint.setLatchRegister(vmThreadLocals);
-        Safepoint.hard(); // must happen before call to exitThreadInNative()
         final Word sp = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals);
         final Word fp = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals);
         final Word ip = LAST_JAVA_CALLER_INSTRUCTION_POINTER.getVariableWord(vmThreadLocals);
         makeStackVariable(sp, _savedLastJavaCallerStackPointer);
         makeStackVariable(fp, _savedLastJavaCallerFramePointer);
         makeStackVariable(ip, _savedLastJavaCallerInstructionPointer);
-        exitThreadInNative(vmThreadLocals);
+        reenterJavaFromNative(vmThreadLocals);
         // end-prologue
 
-        final TargetMethod jniTargetMethod = traceEntry(SpecialBuiltin.getInstructionPointer());
+        final TargetMethod jniTargetMethod = traceEntry(ip(), sp(), fp());
         Word result;
         try {
             result = word_wrapper(env);
@@ -320,15 +337,7 @@ public final class JniFunctionWrapper {
             VmThread.fromJniEnv(env).setPendingException(t);
             result = Word.zero();
         }
-        traceExit(jniTargetMethod, SpecialBuiltin.getInstructionPointer());
-
-        // start-epilogue
-        MemoryBarrier.storeStore();
-        LAST_JAVA_CALLER_STACK_POINTER.setVariableWord(vmThreadLocals, sp);
-        LAST_JAVA_CALLER_FRAME_POINTER.setVariableWord(vmThreadLocals, fp);
-        MemoryBarrier.storeStore();
-        reenterThreadInNative(vmThreadLocals, ip);
-        // end-epilogue
+        jniWrapperEpilogue(vmThreadLocals, sp, fp, ip, jniTargetMethod);
 
         return result;
     }

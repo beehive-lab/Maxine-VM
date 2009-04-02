@@ -29,6 +29,7 @@ import sun.misc.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
@@ -243,23 +244,32 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             error = false;
 
         } catch (ClassNotFoundException classNotFoundException) {
-            System.err.println("could not load main class: " + classNotFoundException);
+            error = true;
+            System.err.println("Could not load main class: " + classNotFoundException);
         } catch (NoClassDefFoundError noClassDefFoundError) {
-            System.err.println("error loading main class: " + noClassDefFoundError);
+            error = true;
+            System.err.println("Error loading main class: " + noClassDefFoundError);
         } catch (NoSuchMethodException noSuchMethodException) {
-            System.err.println("could not find main method: " + noSuchMethodException);
+            error = true;
+            System.err.println("Could not find main method: " + noSuchMethodException);
         } catch (InvocationTargetException invocationTargetException) {
-            invocationTargetException.getTargetException().printStackTrace();
+            // This is an application exception: let VmThread.run() handle this.
+            // We only catch it here to set the VM exit code to a non-zero value.
+            error = true;
+            throw Exceptions.cast(RuntimeException.class, invocationTargetException.getCause());
         } catch (IllegalAccessException illegalAccessException) {
-            System.err.println("illegal access trying to invoke main method: " + illegalAccessException);
+            error = true;
+            System.err.println("Illegal access trying to invoke main method: " + illegalAccessException);
         } catch (IOException ioException) {
+            error = true;
             System.err.println("error reading jar file: " + ioException);
         } catch (ProgramError programError) {
+            error = true;
             Log.print("ProgramError: ");
             Log.println(programError.getMessage());
         } finally {
             if (error) {
-                MaxineVM.setExitCode(1);
+                MaxineVM.setExitCode(-1);
             }
 
             VMConfiguration.hostOrTarget().finalizeSchemes(MaxineVM.Phase.RUNNING);

@@ -237,8 +237,7 @@ public class StackInspector extends Inspector {
         frame().menu().add(_copyStackToClipboardAction);
         refreshView(inspection.teleVM().epoch(), true);
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setLocation(inspection().geometry().stackFrameDefaultLocation());
-            frame().getContentPane().setPreferredSize(inspection().geometry().stackFramePrefSize());
+            frame().setBounds(inspection().geometry().stackFrameDefaultBounds());
         }
         Trace.end(1,  tracePrefix() + " initializing");
     }

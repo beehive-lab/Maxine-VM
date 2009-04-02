@@ -61,16 +61,8 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         _viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        frame().menu().addSeparator();
-        frame().menu().add(new InspectorAction(inspection, "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _viewPreferences);
-            }
-        });
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setLocation(inspection().geometry().threadsFrameDefaultLocation());
-            frame().getContentPane().setPreferredSize(inspection().geometry().threadsFramePrefSize());
+            frame().setBounds(inspection().geometry().threadsFrameDefaultBounds());
         }
         Trace.end(1,  tracePrefix() + " initializing");
     }
@@ -83,6 +75,16 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     @Override
     public String getTextForTitle() {
         return "Threads";
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _viewPreferences);
+            }
+        };
     }
 
     @Override

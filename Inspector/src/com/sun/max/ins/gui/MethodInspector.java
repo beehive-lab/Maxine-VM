@@ -20,22 +20,12 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-
 import javax.swing.*;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.memory.*;
-import com.sun.max.ins.memory.MemoryInspector.*;
-import com.sun.max.ins.memory.MemoryWordInspector.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -48,7 +38,7 @@ import com.sun.max.unsafe.*;
  * @author Michael Van De Vanter
  * @author Doug Simon
  */
-public abstract class MethodInspector extends UniqueInspector<MethodInspector> implements MemoryInspectable, MemoryWordInspectable {
+public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     private static final int TRACE_VALUE = 2;
 
@@ -106,7 +96,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(inspection.teleVM(), address);
         if (teleTargetMethod != null) {
             // Java method
-            methodInspector = make(inspection, teleTargetMethod, CodeKind.TARGET_CODE);
+            methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
         } else {
             final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(inspection.teleVM(), address);
             if (teleRuntimeStub != null) {
@@ -152,7 +142,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         }
         if (teleCodeLocation.hasBytecodeLocation()) {
             // TODO (mlvdv)  Select the specified bytecode position
-            return make(inspection, teleCodeLocation.teleBytecodeLocation().teleClassMethodActor(), CodeKind.BYTECODES);
+            return make(inspection, teleCodeLocation.teleBytecodeLocation().teleClassMethodActor(), MethodCodeKind.BYTECODES);
         }
         // Has neither target nor bytecode location specified.
         return null;
@@ -165,7 +155,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
      *
      * @return A possibly new inspector for the method.
      */
-    private static JavaMethodInspector make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, CodeKind codeKind) {
+    private static JavaMethodInspector make(Inspection inspection, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
         // If there are compilations, then inspect in association with the most recent
         final TeleTargetMethod teleTargetMethod = teleClassMethodActor.getCurrentJavaTargetMethod();
@@ -188,7 +178,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
      * @return a possibly new {@link MethodInspector} associated with a specific compilation of a Java method in the
      *         {@link TeleVM}, and with the requested code view visible.
      */
-    private static JavaMethodInspector make(Inspection inspection, TeleTargetMethod teleTargetMethod, CodeKind codeKind) {
+    private static JavaMethodInspector make(Inspection inspection, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
         final UniqueInspector.Key<? extends MethodInspector> targetMethodKey = UniqueInspector.Key.create(JavaMethodInspector.class, teleTargetMethod);
         // Is there already an inspection open that is bound to this compilation?
@@ -233,169 +223,6 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         return nativeMethodInspector;
     }
 
-    /**
-     * Constants denoting the kinds of code that can be inspected.
-     */
-    public enum CodeKind {
-        TARGET_CODE("Target Code", true),
-        BYTECODES("Bytecodes", false),
-        JAVA_SOURCE("Java Source", false);
-
-        private final String _label;
-        private final boolean _defaultVisibility;
-
-        private CodeKind(String label, boolean defaultVisibility) {
-            _label = label;
-            _defaultVisibility = defaultVisibility;
-        }
-
-        /**
-         * Determines if it the display of this source kind is implemented.
-         *
-         * TODO (mlvdv) This is a hack until source code viewing is implemented
-         */
-        public boolean isImplemented() {
-            return this != JAVA_SOURCE;
-        }
-
-        public String label() {
-            return _label;
-        }
-
-        @Override
-        public String toString() {
-            return _label;
-        }
-
-        /**
-         * Determines if this kind should be visible by default in new inspectors.
-         */
-        public boolean defaultVisibility() {
-            return _defaultVisibility;
-        }
-
-        public static final IndexedSequence<CodeKind> VALUES = new ArraySequence<CodeKind>(values());
-    }
-
-    // Preference
-
-    /**
-     * Encapsulates the user-settable preferences governing various aspects of how (or what) code is displayed.
-     */
-    public static class MethodInspectorPreferences {
-        /**
-         * A predicate specifying which kinds of code are to be displayed in a method inspector.
-         */
-        private final Map<CodeKind, Boolean> _visibleCodeKinds = new EnumMap<CodeKind, Boolean>(CodeKind.class);
-        private final Inspection _inspection;
-        MethodInspectorPreferences(Inspection inspection) {
-            _inspection = inspection;
-            final InspectionSettings settings = inspection.settings();
-            final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("methodInspectorPrefs", null) {
-                public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-                    for (Map.Entry<CodeKind, Boolean> entry : _visibleCodeKinds.entrySet()) {
-                        saveSettingsEvent.save(entry.getKey().name().toLowerCase(), entry.getValue());
-                    }
-                }
-            };
-            settings.addSaveSettingsListener(saveSettingsListener);
-            for (CodeKind codeKind : CodeKind.VALUES) {
-                final boolean defaultVisibility = codeKind.defaultVisibility();
-                _visibleCodeKinds.put(codeKind, settings.get(saveSettingsListener, codeKind.name().toLowerCase(), OptionTypes.BOOLEAN_TYPE, defaultVisibility));
-            }
-        }
-
-        /**
-         * Determines if this preferences object indicates that a {@linkplain CodeViewer code viewer} should be created
-         * for a given code kind.
-         */
-        public boolean isVisible(CodeKind codeKind) {
-            return _visibleCodeKinds.get(codeKind);
-        }
-
-        /**
-         * Updates this preferences object to indicate whether a {@linkplain CodeViewer code viewer} should be created
-         * for a given code kind.
-         */
-        public void setIsVisible(CodeKind codeKind, boolean visible) {
-            final boolean needToSave = _visibleCodeKinds.get(codeKind) != visible;
-            _visibleCodeKinds.put(codeKind, visible);
-            if (needToSave) {
-                _inspection.settings().save();
-            }
-        }
-
-        /**
-         * @return a GUI panel for setting these preferences
-         */
-        public JPanel getPanel() {
-            final JCheckBox[] checkBoxes = new JCheckBox[CodeKind.VALUES.length()];
-
-            final MethodInspectorPreferences preferences = globalPreferences(_inspection);
-            final ItemListener itemListener = new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    final Object source = e.getItemSelectable();
-                    for (CodeKind codeKind : CodeKind.VALUES) {
-                        final JCheckBox checkBox = checkBoxes[codeKind.ordinal()];
-                        if (source == checkBox) {
-                            preferences.setIsVisible(codeKind, checkBox.isSelected());
-                            return;
-                        }
-                    }
-                }
-            };
-            final JPanel content = new InspectorPanel(_inspection);
-            content.add(new TextLabel(_inspection, "View:  "));
-            for (CodeKind codeKind : CodeKind.VALUES) {
-                final JCheckBox checkBox =
-                    new InspectorCheckBox(_inspection, codeKind.toString(), "Should new Method inspectors initially display this code, when available?", codeKind.isImplemented());
-                checkBox.addItemListener(itemListener);
-                checkBoxes[codeKind.ordinal()] = checkBox;
-                content.add(checkBox);
-            }
-            final JPanel panel = new InspectorPanel(_inspection, new BorderLayout());
-            panel.add(content, BorderLayout.WEST);
-            return panel;
-        }
-
-        public void showDialog() {
-            new Dialog(_inspection);
-        }
-
-        private final class Dialog extends InspectorDialog {
-            Dialog(Inspection inspection) {
-                super(inspection, "Method Code Display Preferences", false);
-
-                final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
-
-                final JPanel buttons = new InspectorPanel(inspection);
-                buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
-                    @Override
-                    protected void procedure() {
-                        dispose();
-                    }
-                }));
-
-                dialogPanel.add(getPanel(), BorderLayout.NORTH);
-                dialogPanel.add(buttons, BorderLayout.SOUTH);
-
-                setContentPane(dialogPanel);
-                pack();
-                inspection().moveToMiddle(this);
-                setVisible(true);
-            }
-        }
-    }
-
-    private static MethodInspectorPreferences _globalPreferences;
-
-    public static synchronized MethodInspectorPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new MethodInspectorPreferences(inspection);
-        }
-        return _globalPreferences;
-    }
-
     private final MethodInspectorContainer _parent;
 
     protected MethodInspectorContainer parent() {
@@ -408,19 +235,20 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
     }
 
     @Override
-    public void createFrame(InspectorMenu baseMenu) {
-        InspectorMenu menu = baseMenu;
-        if (menu == null) {
-            // Ensure that the default frame menu is not used; this shouldn't really be an Inspector at all.
-            menu = new InspectorMenu();
-        }
-        super.createFrame(menu);
-        frame().menu().addSeparator();
+    public void createFrame(InspectorMenu menu) {
+        super.createFrame(new InspectorMenu());
+        frame().menu().add(getViewOptionsAction());
         frame().menu().add(new InspectorAction(inspection(), "Refresh") {
             @Override
             public void procedure() {
                 refreshView(true);
                 Trace.line(TRACE_VALUE, tracePrefix() + "Refreshing view: " + getTextForTitle());
+            }
+        });
+        frame().menu().add(new InspectorAction(inspection(), "Close tab") {
+            @Override
+            protected void procedure() {
+                close();
             }
         });
         frame().menu().add(new InspectorAction(inspection(), "Close all other tabs") {
@@ -436,6 +264,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
             }
         });
     }
+
 
     /**
      * Updates the code selection to agree with the current focus.
@@ -505,35 +334,4 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> i
         super.inspectorClosing();
     }
 
-    public void makeMemoryInspector() {
-        if (teleTargetRoutine() != null) {
-            MemoryInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt(), 1, 8).highlight();
-        }
-    }
-
-    public InspectorAction getMemoryInspectorAction() {
-        return new InspectorAction(inspection(), "Inspect Memory") {
-
-            @Override
-            protected void procedure() {
-                MemoryWordInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt()).highlight();
-            }
-        };
-    }
-
-    public void makeMemoryWordInspector() {
-        if (teleTargetRoutine() != null) {
-            MemoryWordInspector.create(inspection(), teleTargetRoutine().targetCodeRegion().start(), teleTargetRoutine().targetCodeRegion().size().toInt());
-        }
-    }
-
-    public InspectorAction getMemoryWordInspectorAction() {
-        return new InspectorAction(inspection(), "Inspect Memory Words") {
-
-            @Override
-            protected void procedure() {
-                makeMemoryWordInspector();
-            }
-        };
-    }
 }

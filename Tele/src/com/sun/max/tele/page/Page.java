@@ -22,11 +22,19 @@ package com.sun.max.tele.page;
 
 import java.nio.*;
 
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * A cached page of memory from the VM's address space.
+ *
+ * To avoid double buffering of {@code byte} arrays in the native code that copies bytes from the VM address space,
+ * NIO {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s can be used. This option is exercised by
+ *
+ *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
+ * @author Doug Simon
  */
 public class Page {
 
@@ -34,18 +42,48 @@ public class Page {
     private long _epoch = -1;
     private final long _index;
 
+    /**
+     * The buffer for this page.
+     */
     private final ByteBuffer _buffer;
 
-    private static final boolean _useDirectBuffers = true; //System.getProperty("max.tele.page.useDirectBuffers") != null;
+    /**
+     * A global option set according to the {@code "max.tele.page.noDirectBuffers"} system property.
+     * If this property is {@code null} then the {@link #_buffer} for each page each allocated from
+     * {@link #_globalBuffer this} global buffer until the global buffer is exhausted. If the property
+     * is non-{@code null} or the global buffer has been exhausted, then the buffer for each page is
+     * backed by a heap allocated byte array.
+     */
+    private static final boolean _noDirectBuffers = System.getProperty("max.tele.page.noDirectBuffers") != null;
 
-    private static ByteBuffer _globalBuffer;;
+    private static final long DEFAULT_GLOBAL_DIRECTBUFFER_POOL_SIZE = 100 * 1024 * 1024;
 
+    public static final long _globalDirectBufferPoolSize;
+    static {
+        long size = DEFAULT_GLOBAL_DIRECTBUFFER_POOL_SIZE;
+        final String value = System.getProperty("max.tele.page.directBufferPoolSize");
+        if (value != null) {
+            try {
+                size = Long.parseLong(value);
+            } catch (NumberFormatException numberFormatException) {
+                ProgramWarning.message("Malformed value for the \"max.tele.page.directBuffersPoolSize\" property: " + numberFormatException.getMessage());
+            }
+        }
+        _globalDirectBufferPoolSize = size;
+    }
+
+    private static ByteBuffer _globalBuffer;
+
+    /**
+     * Allocates the buffer for a page according to whether or not {@linkplain Page#_noDirectBuffers direct buffers}
+     * are being used.
+     */
     private static synchronized ByteBuffer allocate(TeleIO teleIO, ByteOrder byteOrder, long index) {
         final int pageSize = teleIO.pageSize();
-        if (_globalBuffer == null) {
-            _globalBuffer = ByteBuffer.allocate(1024 * 1024 * 100).order(byteOrder);
-        }
-        if (_useDirectBuffers) {
+        if (!_noDirectBuffers) {
+            if (_globalBuffer == null) {
+                _globalBuffer = ByteBuffer.allocateDirect(1024 * 1024 * 100).order(byteOrder);
+            }
             if (_globalBuffer.remaining() >= pageSize) {
                 final ByteBuffer buffer = _globalBuffer.slice().order(byteOrder);
                 _globalBuffer.position(_globalBuffer.position() + pageSize);
@@ -53,6 +91,7 @@ public class Page {
                 return buffer;
             }
         }
+        // Not using direct buffers or global buffer is exhausted
         return ByteBuffer.allocate(pageSize).order(byteOrder);
     }
 

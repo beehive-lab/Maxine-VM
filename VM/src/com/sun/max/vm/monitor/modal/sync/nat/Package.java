@@ -21,7 +21,6 @@
 package com.sun.max.vm.monitor.modal.sync.nat;
 
 import com.sun.max.*;
-import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 
 /**
@@ -37,7 +36,6 @@ public class Package extends VMPackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.monitorPackage().isSubPackageOf(this.superPackage().superPackage()) &&
-                    vmConfiguration.platform().operatingSystem() != OperatingSystem.GUESTVM;
+        return vmConfiguration.monitorPackage().isSubPackageOf(this.superPackage().superPackage());
     }
 }

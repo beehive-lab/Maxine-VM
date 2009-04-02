@@ -33,7 +33,7 @@ import com.sun.max.ins.*;
 public final class InspectorCheckBox extends JCheckBox {
 
     /**
-     *  Creates a new {@JCheckBox} specialized for use in the Maxine Inspector.
+     *  Creates a new {@link JCheckBox} specialized for use in the Maxine Inspector.
      * @param inspection
      * @param text the text to appear in the label
      * @param selected whether the check box is currently selected.
