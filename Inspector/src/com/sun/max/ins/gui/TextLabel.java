@@ -27,7 +27,7 @@ import com.sun.max.ins.*;
  *
  * @author Michael Van De Vanter
   */
-public final class TextLabel extends InspectorLabel {
+public class TextLabel extends InspectorLabel {
 
     public TextLabel(Inspection inspection, String text) {
         super(inspection, text);
