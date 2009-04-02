@@ -58,8 +58,8 @@ public final class TeleClassInfo {
                 _classActors = Arrays.extend(_classActors, _classActorCount * 2);
             }
             // The classActor needs to be set up before we increment _classActorCount
-            // else inspecting this code sequence will get an address fault
-            // as the inspector watches this state!
+            // otherwise we have a race condition where the Inspector might see
+            // a null classActor.
             _classActors[_classActorCount] = classActor;
             _classActorCount++;
         }
