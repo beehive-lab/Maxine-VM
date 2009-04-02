@@ -21,7 +21,6 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
 
@@ -30,7 +29,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
   */
-public class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryRegionsColumnKind> {
+public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<MemoryRegionsColumnKind> {
 
     private static MemoryRegionsViewPreferences _globalPreferences;
 
@@ -48,10 +47,6 @@ public class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.TableColum
     * Creates a set of preferences specified for use by singleton instances, where local and
     * persistent global choices are identical.
     */
-    public MemoryRegionsViewPreferences(TableColumnVisibilityPreferences<MemoryRegionsColumnKind> otherPreferences) {
-        super(otherPreferences, true);
-    }
-
     private MemoryRegionsViewPreferences(Inspection inspection) {
         super(inspection, "memoryRegionsViewPrefs", MemoryRegionsColumnKind.class, MemoryRegionsColumnKind.VALUES);
     }

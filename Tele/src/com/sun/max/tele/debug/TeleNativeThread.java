@@ -334,7 +334,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
     }
 
-    private static final int REFRESH_TRACE_LEVEL = 2;
+    private static final int REFRESH_TRACE_LEVEL = 1;
 
     /**
      * Refreshes the cached state of this thread's registers from the corresponding thread in the tele process.
