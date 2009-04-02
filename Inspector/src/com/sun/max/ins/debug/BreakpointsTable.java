@@ -169,7 +169,6 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
     /**
      * A table data model built around the list of current breakpoints in the {@link TeleVM}.
      * @author Michael Van De Vanter
-     *
      */
     private final class BreakpointsTableModel extends DefaultTableModel {
 

@@ -24,8 +24,6 @@ import javax.swing.*;
 
 import com.sun.max.collect.*;
 import com.sun.max.ins.*;
-import com.sun.max.ins.memory.MemoryInspector.*;
-import com.sun.max.ins.memory.MemoryWordInspector.*;
 
 /**
  * A menu that can be manifest in the GUI by a {@linkplain JPopupMenu pop-up menu} or a {@linkplain JMenu standard menu}.
@@ -50,39 +48,15 @@ public final class InspectorMenu implements Prober {
         return _standardMenu;
     }
 
-    public InspectorMenu(Inspector inspector, JPopupMenu popupMenu, JMenu standardMenu) {
-        _inspector = inspector;
-        _popupMenu = popupMenu == null ? new JPopupMenu() : popupMenu;
-        _standardMenu = standardMenu == null ? new JMenu() : standardMenu;
-        if (inspector != null) {
-            add(inspector.getCloseOtherInspectorsAction());
-            // Undocking isn't supported at this time (mlvdv Jan 2009)
-            //add(inspector.createToggleResidenceAction());
-            if (inspector instanceof MemoryInspectable) {
-                final MemoryInspectable memoryInspectable = (MemoryInspectable) inspector;
-                add(memoryInspectable.getMemoryInspectorAction());
-            }
-            add(inspector.getRefreshAction());
-        }
-    }
-
     public InspectorMenu(Inspector inspector, String name) {
         _inspector = inspector;
         _popupMenu =  new JPopupMenu(name);
         _standardMenu = new JMenu(name);
         if (inspector != null) {
-            add(inspector.getCloseOtherInspectorsAction());
-            // undocking isn't supported at this time  mlvdv Jan 2009
-            //add(inspector.createToggleResidenceAction());
-            if (inspector instanceof MemoryInspectable) {
-                final MemoryInspectable memoryInspectable = (MemoryInspectable) inspector;
-                add(memoryInspectable.getMemoryInspectorAction());
-            }
-            if (inspector instanceof MemoryWordInspectable) {
-                final MemoryWordInspectable memoryWordInspectable = (MemoryWordInspectable) inspector;
-                add(memoryWordInspectable.getMemoryWordInspectorAction());
-            }
+            add(inspector.getViewOptionsAction());
             add(inspector.getRefreshAction());
+            add(inspector.getCloseAction());
+            add(inspector.getCloseOtherInspectorsAction());
         }
     }
 

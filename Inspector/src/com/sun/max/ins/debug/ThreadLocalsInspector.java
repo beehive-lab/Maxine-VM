@@ -68,24 +68,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        frame().menu().addSeparator();
-        frame().menu().add(new InspectorAction(inspection, "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", _viewPreferences);
-            }
-        });
         refreshView(inspection.teleVM().epoch(), true);
         if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setLocation(inspection().geometry().threadLocalsFrameDefaultLocation());
-            frame().getContentPane().setPreferredSize(inspection().geometry().threadLocalsFramePrefSize());
+            frame().setBounds(inspection().geometry().threadLocalsFrameDefaultBounds());
         }
         Trace.end(1,  tracePrefix() + " initializing");
-    }
-
-    @Override
-    public SaveSettingsListener saveSettingsListener() {
-        return _saveSettingsListener;
     }
 
     @Override
@@ -115,8 +102,23 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
+    public SaveSettingsListener saveSettingsListener() {
+        return _saveSettingsListener;
+    }
+
+    @Override
     public String getTextForTitle() {
         return "Thread Locals: ";
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<ThreadLocalsColumnKind>(inspection(), "Thread Locals View Options", _viewPreferences);
+            }
+        };
     }
 
     private ThreadLocalsPanel threadLocalsPanelFor(Safepoint.State state) {

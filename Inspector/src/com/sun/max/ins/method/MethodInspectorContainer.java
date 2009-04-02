@@ -46,7 +46,7 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     }
 
     private MethodInspectorContainer(Inspection inspection) {
-        super(inspection, inspection.geometry().methodsFrameDefaultLocation(), inspection.geometry().methodsFramePrefSize(), "methodsInspector");
+        super(inspection, inspection.geometry().methodsFrameDefaultBounds(), "methodsInspector");
         frame().add(new MethodsMenuItems());
     }
 
@@ -55,6 +55,18 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     public String getTextForTitle() {
         return "Methods";
     }
+
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                MethodInspectorPreferences.globalPreferences(inspection()).showDialog();
+            }
+        };
+    }
+
 
     @Override
     public void add(MethodInspector methodInspector) {

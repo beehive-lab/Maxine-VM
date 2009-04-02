@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.memory;
 
+import java.awt.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
@@ -63,14 +65,20 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         _viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        frame().menu().addSeparator();
-        frame().menu().add(new InspectorAction(inspection, "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", _viewPreferences);
-            }
-        });
+        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
+            frame().setBounds(new Rectangle(100, 100, 300, 300));
+        }
         Trace.end(1, tracePrefix() + "initializing");
+    }
+
+    @Override
+    public void createView(long epoch) {
+        if (_table != null) {
+            focus().removeListener(_table);
+        }
+        _table = new MemoryRegionsTable(inspection(), _viewPreferences);
+        focus().addListener(_table);
+        frame().setContentPane(new InspectorScrollPane(inspection(), _table));
     }
 
     @Override
@@ -84,13 +92,13 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
-    public void createView(long epoch) {
-        if (_table != null) {
-            focus().removeListener(_table);
-        }
-        _table = new MemoryRegionsTable(inspection(), _viewPreferences);
-        focus().addListener(_table);
-        frame().setContentPane(new InspectorScrollPane(inspection(), _table));
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", _viewPreferences);
+            }
+        };
     }
 
     @Override

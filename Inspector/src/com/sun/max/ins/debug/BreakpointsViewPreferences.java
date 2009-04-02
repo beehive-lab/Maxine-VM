@@ -21,7 +21,6 @@
 package com.sun.max.ins.debug;
 
 import com.sun.max.ins.*;
-import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 
 
@@ -30,7 +29,7 @@ import com.sun.max.tele.*;
  *
  * @author Michael Van De Vanter
   */
-public class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<BreakpointsColumnKind> {
+public final class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableColumnVisibilityPreferences<BreakpointsColumnKind> {
 
     private static BreakpointsViewPreferences _globalPreferences;
 
@@ -48,10 +47,6 @@ public class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableColumnV
     * Creates a set of preferences specified for use by singleton instances, where local and
     * persistent global choices are identical.
     */
-    public BreakpointsViewPreferences(TableColumnVisibilityPreferences<BreakpointsColumnKind> otherPreferences) {
-        super(otherPreferences, true);
-    }
-
     private BreakpointsViewPreferences(Inspection inspection) {
         super(inspection, "breakpointsViewPrefs", BreakpointsColumnKind.class, BreakpointsColumnKind.VALUES);
     }

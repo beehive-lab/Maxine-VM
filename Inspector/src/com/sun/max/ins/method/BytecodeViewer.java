@@ -49,8 +49,8 @@ import com.sun.max.vm.type.*;
 public abstract class BytecodeViewer extends CodeViewer {
 
     @Override
-    public MethodInspector.CodeKind codeKind() {
-        return MethodInspector.CodeKind.BYTECODES;
+    public MethodCodeKind codeKind() {
+        return MethodCodeKind.BYTECODES;
     }
 
     @Override
