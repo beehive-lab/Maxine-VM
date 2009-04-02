@@ -167,7 +167,7 @@ public class MakeStackVariable extends SpecialBuiltin {
          * @param namedVariablesBasePointer the stack frame address that is the base for all stack variable's accessed
          *            via this mechanism
          */
-        public Address address(TargetMethod targetMethod, Pointer namedVariablesBasePointer) {
+        public Pointer address(TargetMethod targetMethod, Pointer namedVariablesBasePointer) {
             final Integer offset = offset(targetMethod.classMethodActor());
             FatalError.check(offset != null, "Could not find offset of stack variable");
             return namedVariablesBasePointer.plus(offset);
