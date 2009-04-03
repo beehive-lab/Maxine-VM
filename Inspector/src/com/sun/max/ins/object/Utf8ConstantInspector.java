@@ -85,7 +85,7 @@ class Utf8ConstantInspector extends ObjectInspector {
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         // Only refresh the visible view.
         final Prober pane = (Prober) _tabbedPane.getSelectedComponent();
         pane.refresh(epoch, force);

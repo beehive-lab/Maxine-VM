@@ -146,7 +146,7 @@ public final class MemoryInspector extends Inspector {
     private TextLabel[] _charLabels;
 
     @Override
-    public synchronized void refreshView(long epoch, boolean force) {
+    protected synchronized void refreshView(long epoch, boolean force) {
         final byte[] bytes = new byte[_numberOfBytesPerGroup];
         for (int i = 0; i < _numberOfGroups; i++) {
             final Address address = _address.plus(i * _numberOfBytesPerGroup);
