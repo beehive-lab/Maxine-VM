@@ -54,7 +54,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         return _threadLocalsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "threadlocalsInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "threadlocalsInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final ThreadLocalsViewPreferences _viewPreferences;
@@ -69,10 +69,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _viewPreferences.addListener(this);
         createFrame(null);
         refreshView(inspection.teleVM().epoch(), true);
-        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setBounds(inspection().geometry().threadLocalsFrameDefaultBounds());
-        }
         Trace.end(1,  tracePrefix() + " initializing");
+    }
+
+    @Override
+    protected Rectangle defaultFrameBounds() {
+        return inspection().geometry().threadLocalsFrameDefaultBounds();
     }
 
     @Override
@@ -102,7 +104,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
@@ -132,7 +134,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {

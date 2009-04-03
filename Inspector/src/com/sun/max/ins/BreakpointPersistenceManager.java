@@ -20,8 +20,6 @@
  */
 package com.sun.max.ins;
 
-import java.awt.*;
-
 import com.sun.max.collect.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
@@ -41,7 +39,7 @@ import com.sun.max.vm.type.*;
  *
  * @author Michael Van De Vanter
  */
-public final class BreakpointPersistenceManager implements TeleViewModel.Listener, SaveSettingsListener {
+public final class BreakpointPersistenceManager extends AbstractSaveSettingsListener implements TeleViewModel.Listener  {
 
     private static BreakpointPersistenceManager _breakpointPersistenceManager;
 
@@ -58,6 +56,7 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
     private final Inspection _inspection;
 
     private BreakpointPersistenceManager(Inspection inspection) {
+        super("breakpoints");
         _inspection = inspection;
 
         final InspectionSettings settings = _inspection.settings();
@@ -76,14 +75,6 @@ public final class BreakpointPersistenceManager implements TeleViewModel.Listene
 
         // Once load-in is finished, register for notification of subsequent breakpoint changes in the {@link TeleVM}.
         _inspection.teleVM().addBreakpointListener(this);
-    }
-
-    public String name() {
-        return "breakpoints";
-    }
-
-    public Component component() {
-        return null;
     }
 
     public void refreshView(long epoch) {

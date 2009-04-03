@@ -56,7 +56,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
     public MethodInspectorPreferences(Inspection inspection) {
         super(inspection);
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("methodInspectorPrefs", null) {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("methodInspectorPrefs") {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 for (Map.Entry<MethodCodeKind, Boolean> entry : _visibleCodeKinds.entrySet()) {
                     saveSettingsEvent.save(entry.getKey().name().toLowerCase(), entry.getValue());

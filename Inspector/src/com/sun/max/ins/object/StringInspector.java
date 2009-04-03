@@ -84,7 +84,7 @@ public final class StringInspector extends ObjectInspector {
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         super.refreshView(epoch, force);
         // Only refresh the visible pane
         final Prober pane = (Prober) _tabbedPane.getSelectedComponent();

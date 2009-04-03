@@ -53,7 +53,7 @@ public final class FocusInspector extends Inspector {
 
     private FocusTable _focusTable;
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "focusInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "focusInspector");
 
     private FocusInspector(Inspection inspection) {
         super(inspection);
@@ -63,7 +63,7 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
@@ -85,7 +85,7 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _focusTable.refresh(epoch, force);
         super.refreshView(epoch, force);
     }

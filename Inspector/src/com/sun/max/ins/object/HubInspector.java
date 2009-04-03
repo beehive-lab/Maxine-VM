@@ -72,7 +72,7 @@ public class HubInspector extends ObjectInspector {
         GlobalHubPreferences(Inspection inspection) {
             _inspection = inspection;
             final InspectionSettings settings = inspection.settings();
-            final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("hubInspectorPrefs", null) {
+            final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("hubInspectorPrefs") {
                 public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                     saveSettingsEvent.save(SHOW_FIELDS_PREFERENCE, _showFields);
                     saveSettingsEvent.save(SHOW_VTABLES_PREFERENCE, _showVTables);
@@ -311,7 +311,7 @@ public class HubInspector extends ObjectInspector {
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _fieldsPane.refresh(epoch, force);
         if (_iTablePane != null) {
             _iTablePane.refresh(epoch, force);

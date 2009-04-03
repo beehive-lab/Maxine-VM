@@ -54,23 +54,20 @@ public abstract class TabbedInspector<Inspector_Type extends Inspector, TabbedIn
         _tabbedPane.removeChangeListener(listener);
     }
 
-    protected TabbedInspector(Inspection inspection, Rectangle defaultBounds, final String settingsClientName) {
+    protected TabbedInspector(Inspection inspection, final String settingsClientName) {
         super(inspection);
         _tabbedPane = new JTabbedPane();
         if (settingsClientName != null) {
-            _saveSettingsListener = createBasicSettingsClient(this, settingsClientName);
+            _saveSettingsListener = createGeometrySettingsClient(this, settingsClientName);
         } else {
             _saveSettingsListener = null;
         }
         createFrame(null);
         addChangeListener(_tabChangeListener);
-        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setBounds(defaultBounds);
-        }
     }
 
     @Override
-    public final SaveSettingsListener saveSettingsListener() {
+    protected final SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
