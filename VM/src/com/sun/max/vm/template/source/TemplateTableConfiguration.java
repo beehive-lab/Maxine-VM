@@ -27,11 +27,11 @@ public class TemplateTableConfiguration {
     /**
      * Basic set of sources for a template table where templates make no assumptions.
      */
-    public static final Class[] UNOPTIMIZED_TEMPLATE_SOURCES = new Class[]{UnoptimizedBytecodeTemplateSource.class, BranchBytecodeSource.class};
-    public static final Class[] RESOLVED_TEMPLATE_SOURCES = new Class[]{ResolvedBytecodeTemplateSource.class, ResolvedInvokeTemplateSource.class, ResolvedFieldAccessTemplateSource.class };
-    public static final Class[] INITIALIZED_TEMPLATE_SOURCES = new Class[]{InitializedBytecodeTemplateSource.class, InitializedStaticFieldAccessTemplateSource.class };
-    public static final Class[] INSTRUMENTED_TEMPLATE_SOURCES = new Class[]{InstrumentedBytecodeSource.class, InstrumentedInvokeTemplateSource.class};
-    public static final Class[] TRACED_TEMPLATE_SOURCES = new Class[]{TracedBytecodeTemplateSource.class};
+    public static final Class[] UNOPTIMIZED_TEMPLATE_SOURCES = new Class[] {UnoptimizedBytecodeTemplateSource.class, BranchBytecodeSource.class};
+    public static final Class[] RESOLVED_TEMPLATE_SOURCES = new Class[] {ResolvedBytecodeTemplateSource.class, ResolvedInvokeTemplateSource.class, ResolvedFieldAccessTemplateSource.class };
+    public static final Class[] INITIALIZED_TEMPLATE_SOURCES = new Class[] {InitializedBytecodeTemplateSource.class, InitializedStaticFieldAccessTemplateSource.class };
+    public static final Class[] INSTRUMENTED_TEMPLATE_SOURCES = new Class[] {InstrumentedBytecodeSource.class, InstrumentedInvokeTemplateSource.class};
+    public static final Class[] TRACED_TEMPLATE_SOURCES = new Class[] {TracedBytecodeTemplateSource.class};
     public static final Class[] OPTIMIZED_TEMPLATE_SOURCES = Arrays.append(
                                                              Arrays.append(
                                                              Arrays.append(

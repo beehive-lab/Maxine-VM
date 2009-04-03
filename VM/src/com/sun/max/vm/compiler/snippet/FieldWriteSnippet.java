@@ -171,7 +171,7 @@ public class FieldWriteSnippet extends BuiltinsSnippet {
         }
 
         @NEVER_INLINE
-        public static void noinlineWriteReference(Object tuple, ReferenceFieldActor referenceFieldActor, Object value) {
+        public static void noninlineWriteReference(Object tuple, ReferenceFieldActor referenceFieldActor, Object value) {
             writeReference(tuple, referenceFieldActor, value);
         }
 

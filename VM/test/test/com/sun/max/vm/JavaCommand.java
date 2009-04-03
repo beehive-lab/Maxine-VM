@@ -60,6 +60,14 @@ public class JavaCommand {
         }
     }
 
+    private JavaCommand(String[] mainArgs, List<String> vmOptions, List<String> sysProps, List<String> classPaths, List<String> arguments) {
+        _mainArgs = mainArgs.clone();
+        _vmOptions.addAll(vmOptions);
+        _sysProps.addAll(sysProps);
+        _classPaths.addAll(classPaths);
+        _arguments.addAll(arguments);
+    }
+
     /**
      * Create a java command with the specified jar file.
      * @param jarFile
@@ -130,5 +138,14 @@ public class JavaCommand {
         }
         list.addAll(_arguments);
         return list.toArray(new String[list.size()]);
+    }
+
+    /**
+     * Returns a new copy of this JavaCommand object with identical options. Further updates to
+     * this object will not affect the copy, and vice versa.
+     * @return a new copy of this JavaCommand
+     */
+    public JavaCommand copy() {
+        return new JavaCommand(_mainArgs, _vmOptions, _sysProps, _classPaths, _arguments);
     }
 }
