@@ -99,7 +99,6 @@ public class BootImageTable extends InspectorTable {
         };
     }
 
-    //TODO (mlvdv) hoist createColumn into a new InspectorTableColumnModel
     private final class BootImageColumnModel extends DefaultTableColumnModel {
 
         private final TableColumnVisibilityPreferences<BootImageColumnKind> _viewPreferences;
