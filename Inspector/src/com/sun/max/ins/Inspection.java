@@ -157,10 +157,12 @@ public class Inspection extends JFrame {
         updateViewConfiguration();
     }
 
-    private InspectorGeometry _geometry;
+    // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
+    //private InspectorGeometry _geometry = new InspectorGeometry10Pt();
+    private InspectorGeometry _geometry = new InspectorGeometry12Pt();
 
     /**
-     * Layout configurations, generally only the defaults.
+     * Default size and layout for windows; overridden by persistent settings from previous sessions.
      */
     public InspectorGeometry geometry() {
         return _geometry;
@@ -631,7 +633,7 @@ public class Inspection extends JFrame {
         return result;
     }
 
-    public Inspection(TeleVM teleVM, InspectorGeometry geometry) throws IOException {
+    public Inspection(TeleVM teleVM) throws IOException {
         super(_inspectorName);
         _teleVM = teleVM;
         _bootImageFileName = _teleVM.bootImageFile().getAbsolutePath().toString();
@@ -643,7 +645,6 @@ public class Inspection extends JFrame {
         _nameDisplay = new InspectorNameDisplay(this);
         _styleFactory = new InspectorStyleFactory(this);
         _style = _styleFactory.defaultStyle();
-        _geometry = geometry;
         _scrollPane = new InspectorScrollPane(this, _desktopPane);
         _focus = new InspectionFocus(this);
         _settings = new InspectionSettings(this, new File(teleVM.programFile().getParentFile(), _SETTINGS_FILE_NAME));
