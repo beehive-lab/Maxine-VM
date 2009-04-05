@@ -149,6 +149,15 @@ public class PreferenceDialog extends InspectorDialog {
         vmThreadLocalsInspectorPanel.setBorder(border);
         prefPanel.add(vmThreadLocalsInspectorPanel);
 
+        final JPanel bootImageLabelPanel = new InspectorPanel(inspection, new BorderLayout());
+        bootImageLabelPanel.setBorder(border);
+        bootImageLabelPanel.add(new TextLabel(inspection, "Boot Image"), BorderLayout.WEST);
+        prefPanel.add(bootImageLabelPanel);
+
+        final JPanel bootImageInspectorPanel = BootImageViewPreferences.globalPreferences(inspection).getPanel();
+        bootImageInspectorPanel.setBorder(border);
+        prefPanel.add(bootImageInspectorPanel);
+
         SpringUtilities.makeCompactGrid(prefPanel, 2);
 
         final JPanel buttonsPanel = new InspectorPanel(inspection);
