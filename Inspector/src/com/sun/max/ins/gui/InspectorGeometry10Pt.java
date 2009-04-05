@@ -72,6 +72,10 @@ public class InspectorGeometry10Pt implements InspectorGeometry {
         return new Rectangle(100, 100, 400, 200);
     }
 
+    public Rectangle bootImageFrameDefaultBounds() {
+        return new Rectangle(75, 0, 350, 725);
+    }
+
     // Java Source Inspector frame
     private static final Point _javaSourceFrameDefaultLocation = new Point(100, 100);
     private static final Dimension _javaSourceFramePrefSize = new Dimension(500, 500);
