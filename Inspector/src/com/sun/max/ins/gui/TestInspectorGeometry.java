@@ -76,6 +76,10 @@ public class TestInspectorGeometry implements InspectorGeometry {
         return _testFrameDefaultBounds;
     }
 
+    public Rectangle bootImageFrameDefaultBounds() {
+        return _testFrameDefaultBounds;
+    }
+
     // Java Source Inspector frame
     public Point javaSourceFrameDefaultLocation() {
         return _testFrameDefaultLocation;

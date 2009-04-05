@@ -41,12 +41,9 @@ public class MemoryRegionValueLabel extends ValueLabel {
     private Address _address;
     private MemoryRegion _memoryRegion = null;
 
+    private final class MemoryRegionMouseClickAdapter extends InspectorMouseClickAdapter {
 
-    private final InspectorMouseClickAdapter _inspectorMouseClickAdapter;
-
-    private final class MyMouseClickAdapter extends InspectorMouseClickAdapter {
-
-        public MyMouseClickAdapter(Inspection inspection) {
+        public MemoryRegionMouseClickAdapter(Inspection inspection) {
             super(inspection);
         }
 
@@ -77,11 +74,14 @@ public class MemoryRegionValueLabel extends ValueLabel {
     public MemoryRegionValueLabel(Inspection inspection) {
         super(inspection);
         initializeValue();
-        _inspectorMouseClickAdapter = new MyMouseClickAdapter(inspection);
-        addMouseListener(_inspectorMouseClickAdapter);
+        addMouseListener(new MemoryRegionMouseClickAdapter(inspection));
         redisplay();
     }
 
+    public MemoryRegionValueLabel(Inspection inspection, Address address) {
+        super(inspection, new WordValue(address));
+        addMouseListener(new MemoryRegionMouseClickAdapter(inspection));
+    }
 
     @Override
     protected void updateText() {
