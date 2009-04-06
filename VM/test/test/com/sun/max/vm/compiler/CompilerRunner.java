@@ -77,6 +77,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     private static final Option<Integer> _irTraceLevel = _options.newIntegerOption("ir-trace", 3, "The detail level for IR tracing.");
     private static final Option<Boolean> _cirGui = _options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");
     private static final Option<Boolean> _useJit = _options.newBooleanOption("use-jit", false, "Compile with the JIT compiler.");
+    private static final Option<Boolean> _help = _options.newBooleanOption("help", false, "Show help message and exits.");
 
     private static final PrototypeGenerator _prototypeGenerator = new PrototypeGenerator(_options);
 
@@ -88,6 +89,11 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     public static void main(String[] args) {
         Trace.addTo(_options);
         _options.parseArguments(args);
+
+        if (_help.getValue()) {
+            _options.printHelp(System.out, 80);
+            return;
+        }
 
         System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, _irTraceLevel.getValue() + ":");
         if (_cirGui.getValue()) {

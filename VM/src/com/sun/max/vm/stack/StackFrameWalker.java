@@ -316,6 +316,17 @@ public abstract class StackFrameWalker {
             }
         }
         if (fatalIfNotFound) {
+            if (nativeStubTargetMethod == null) {
+                Log.print("Could not find native stub for instruction pointer ");
+                Log.println(instructionPointer);
+            } else {
+                Log.print("Could not find native function call after ");
+                Log.print(nativeStubTargetMethod.codeStart());
+                Log.print("+");
+                Log.print(instructionPointer.minus(nativeStubTargetMethod.codeStart()).toLong());
+                Log.print(" in ");
+                Log.printMethodActor(nativeStubTargetMethod.classMethodActor(), true);
+            }
             throw FatalError.unexpected("Could not find native function call in native stub");
         }
         return instructionPointer;

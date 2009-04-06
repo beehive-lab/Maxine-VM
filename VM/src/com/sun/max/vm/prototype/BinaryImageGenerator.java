@@ -72,6 +72,9 @@ public final class BinaryImageGenerator {
 
     private final OptionSet _options = new OptionSet();
 
+    private final Option<Boolean> _help = _options.newBooleanOption("help", false,
+            "Show help message and exits.");
+
     private final Option<Boolean> _treeOption = _options.newBooleanOption("tree", false,
             "Create a file showing the connectivity of objects in the image.");
 
@@ -188,6 +191,12 @@ public final class BinaryImageGenerator {
             final PrototypeGenerator prototypeGenerator = new PrototypeGenerator(_options);
             Trace.addTo(_options);
             _options.parseArguments(programArguments);
+
+            if (_help.getValue()) {
+                _options.printHelp(System.out, 80);
+                return;
+            }
+
             BinaryImageGenerator._calleeJit = _testCalleeJit.getValue();
             BinaryImageGenerator._callerJit = _testCallerJit.getValue();
             BinaryImageGenerator._unlinked = _testUnlinked.getValue();

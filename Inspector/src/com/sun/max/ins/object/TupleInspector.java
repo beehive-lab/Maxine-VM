@@ -70,7 +70,7 @@ public class TupleInspector extends ObjectInspector {
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         if (isShowing() || force) {
             _fieldsPane.refresh(epoch, force);
             if (_classMethodInspectorMenuItems != null) {

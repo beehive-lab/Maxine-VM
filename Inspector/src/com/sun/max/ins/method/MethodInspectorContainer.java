@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.method;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.*;
@@ -46,16 +48,19 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     }
 
     private MethodInspectorContainer(Inspection inspection) {
-        super(inspection, inspection.geometry().methodsFrameDefaultBounds(), "methodsInspector");
+        super(inspection, "methodsInspector");
         frame().add(new MethodsMenuItems());
     }
 
+    @Override
+    protected Rectangle defaultFrameBounds() {
+        return  inspection().geometry().methodsFrameDefaultBounds();
+    }
 
     @Override
     public String getTextForTitle() {
         return "Methods";
     }
-
 
     @Override
     public InspectorAction getViewOptionsAction() {
@@ -66,7 +71,6 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
             }
         };
     }
-
 
     @Override
     public void add(MethodInspector methodInspector) {

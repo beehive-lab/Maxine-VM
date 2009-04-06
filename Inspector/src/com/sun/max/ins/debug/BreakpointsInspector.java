@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.debug;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.*;
@@ -52,7 +54,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         return _breakpointsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "breakpointsInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "breakpointsInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final BreakpointsViewPreferences _viewPreferences;
@@ -66,14 +68,16 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
         _viewPreferences.addListener(this);
         createFrame(null);
         frame().add(new BreakpointFrameMenuItems());
-        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setBounds(inspection().geometry().breakpointsFrameDefaultBounds());
-        }
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
-    public void createView(long epoch) {
+    protected Rectangle defaultFrameBounds() {
+        return inspection().geometry().breakpointsFrameDefaultBounds();
+    }
+
+    @Override
+    protected void createView(long epoch) {
         if (_table != null) {
             focus().removeListener(_table);
         }
@@ -84,7 +88,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
@@ -133,7 +137,7 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
         super.refreshView(epoch, force);
     }

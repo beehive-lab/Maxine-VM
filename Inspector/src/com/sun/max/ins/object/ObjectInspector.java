@@ -266,7 +266,7 @@ public abstract class ObjectInspector extends Inspector {
     };
 
     @Override
-    public synchronized void refreshView(long epoch, boolean force) {
+    protected synchronized void refreshView(long epoch, boolean force) {
         final Pointer newOrigin = _teleObject.getCurrentOrigin();
         if (!newOrigin.equals(_currentObjectOrigin)) {
             // The object has been relocated in memory

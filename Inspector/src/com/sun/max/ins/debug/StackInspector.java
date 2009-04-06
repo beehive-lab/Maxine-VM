@@ -121,7 +121,7 @@ public class StackInspector extends Inspector {
         }
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "stackInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "stackInspector");
 
     private TeleNativeThread _teleNativeThread = null;
     private InspectorPanel _contentPane = null;
@@ -236,14 +236,16 @@ public class StackInspector extends Inspector {
         frame().menu().addSeparator();
         frame().menu().add(_copyStackToClipboardAction);
         refreshView(inspection.teleVM().epoch(), true);
-        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setBounds(inspection().geometry().stackFrameDefaultBounds());
-        }
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected Rectangle defaultFrameBounds() {
+        return inspection().geometry().stackFrameDefaultBounds();
+    }
+
+    @Override
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
@@ -324,7 +326,7 @@ public class StackInspector extends Inspector {
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         final Sequence<StackFrame> frames = _teleNativeThread.frames();
         assert !frames.isEmpty();
         if (_stateChanged || force) {

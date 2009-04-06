@@ -35,23 +35,40 @@ public interface InspectorGeometry {
     Dimension inspectorFrameMinSize();
     Dimension inspectorFramePrefSize();
 
-    // Threads Inspection frame
+    /**
+     * @return default geometry for the {@link ThreadsInspector}.
+     */
     Rectangle threadsFrameDefaultBounds();
 
-    // Registers Inspection frame
+    /**
+     * @return default geometry for the {@link RegistersInspector}.
+     */
     Rectangle registersFrameDefaultBounds();
 
-    // Stacks Inspection frame
+    /**
+     * @return default geometry for the {@link StackInspector}.
+     */
     Rectangle stackFrameDefaultBounds();
 
-    // Methods Inspection (container) frame
+    /**
+     * @return default geometry for the {@link MethodInspector}.
+     */
     Rectangle methodsFrameDefaultBounds();
 
-    // Breakpoints Inspector frame
+    /**
+     * @return default geometry for the {@link BreakpointsInspector}.
+     */
     Rectangle breakpointsFrameDefaultBounds();
 
-    // Thread locals Inspection frame
+    /**
+     * @return default geometry for the {@link ThreadLocalsInspector}.
+     */
     Rectangle threadLocalsFrameDefaultBounds();
+
+    /**
+     * @return default geometry for the {@link MemoryRegionsInspector}.
+     */
+    Rectangle memoryRegionsFrameDefaultBounds();
 
     // Java Source Inspector frame
     Point javaSourceFrameDefaultLocation();
