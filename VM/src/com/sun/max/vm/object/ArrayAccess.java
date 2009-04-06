@@ -92,7 +92,7 @@ public final class ArrayAccess {
      * @param index the index into the array
      */
     @NEVER_INLINE
-    public static void noinlineCheckIndex(Object array, int index) {
+    public static void noninlineCheckIndex(Object array, int index) {
         inlineCheckIndex(array, index);
     }
 
@@ -448,7 +448,7 @@ public final class ArrayAccess {
     }
 
     @NEVER_INLINE
-    public static void noinlineSetObject(Object array, int index, Object value) {
+    public static void noninlineSetObject(Object array, int index, Object value) {
         setObject(array, index, value);
     }
 }

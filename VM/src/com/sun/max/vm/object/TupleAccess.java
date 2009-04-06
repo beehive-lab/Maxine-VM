@@ -478,7 +478,7 @@ public final class TupleAccess {
     }
 
     @NEVER_INLINE
-    public static void noinlineWriteObject(Object tuple, int offset, Object value) {
+    public static void noninlineWriteObject(Object tuple, int offset, Object value) {
         writeObject(tuple, offset, value);
     }
 }
