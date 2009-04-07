@@ -66,7 +66,7 @@ public class VariableAddressCodeManager extends CodeManager {
 
         final Address address = allocateCodeRegionMemory(Size.fromInt(RUNTIME_CODE_REGION_SIZE));
         if (address.isZero() || address.isAllOnes()) {
-            Problem.unimplemented("could not allocate runtime code region");
+            throw ProgramError.unexpected("could not allocate runtime code region");
         }
 
         CodeRegion codeRegion = null;

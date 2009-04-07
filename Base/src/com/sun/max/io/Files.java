@@ -22,8 +22,10 @@ package com.sun.max.io;
 
 import java.io.*;
 import java.util.*;
+import java.util.zip.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.program.*;
 import com.sun.max.util.*;
 
 /**
@@ -322,6 +324,84 @@ public final class Files {
             }
         }
         return listing;
+    }
+
+    public static void unzip(File zip, File destDir) {
+        if (!destDir.exists() && !destDir.mkdirs()) {
+            ProgramError.unexpected("Could not make directory " + destDir);
+        }
+        Enumeration entries;
+        ZipFile zipFile;
+        try {
+            Trace.line(2, "Extracting contents of " + zip.getAbsolutePath() + " to " + destDir);
+            zipFile = new ZipFile(zip);
+            entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                final ZipEntry entry = (ZipEntry) entries.nextElement();
+                final File parentDir;
+                if (entry.isDirectory()) {
+                    parentDir = new File(destDir, entry.getName());
+                } else {
+                    final String relParentDir = new File(entry.getName()).getParent();
+                    if (relParentDir != null) {
+                        parentDir = new File(destDir, relParentDir);
+                    } else {
+                        parentDir = destDir;
+                    }
+                }
+                if (!parentDir.exists() && !parentDir.mkdirs()) {
+                    ProgramError.unexpected("Could not make directory " + parentDir);
+                }
+                if (!entry.isDirectory()) {
+                    final File destFile = new File(destDir, entry.getName());
+                    Trace.line(2, "  inflating: " + entry.getName() + " ...");
+                    Streams.copy(zipFile.getInputStream(entry), new FileOutputStream(destFile));
+                }
+            }
+            zipFile.close();
+        } catch (IOException ioe) {
+            ProgramError.unexpected("Error extracting " + zip.getAbsolutePath() + " to " + destDir, ioe);
+        }
+    }
+
+    public static boolean compareFiles(File f1, File f2, String[] ignoredLinePatterns) {
+        try {
+            final BufferedReader f1Reader = new BufferedReader(new FileReader(f1));
+            final BufferedReader f2Reader = new BufferedReader(new FileReader(f2));
+            try {
+                String line1;
+                String line2;
+            nextLine:
+                while (true) {
+                    line1 = f1Reader.readLine();
+                    line2 = f2Reader.readLine();
+                    if (line1 == null) {
+                        if (line2 == null) {
+                            return true;
+                        }
+                        return false;
+                    }
+                    if (!line1.equals(line2)) {
+                        if (line2 == null) {
+                            return false;
+                        }
+                        if (ignoredLinePatterns != null) {
+                            for (String pattern : ignoredLinePatterns) {
+                                if (line1.contains(pattern) && line2.contains(pattern)) {
+                                    continue nextLine;
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                }
+            } finally {
+                f1Reader.close();
+                f2Reader.close();
+            }
+        } catch (IOException e) {
+            return false;
+        }
     }
 }
 

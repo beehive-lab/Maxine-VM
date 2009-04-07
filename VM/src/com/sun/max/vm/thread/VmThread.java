@@ -115,6 +115,7 @@ public class VmThread {
     private volatile boolean _interrupted = false;
     private Throwable _terminationCause;
     private int _id;
+    private int _parkState;
 
     private  TLAB _tlab = new TLAB();
 
@@ -930,5 +931,45 @@ public class VmThread {
      */
     protected void terminationComplete() {
 
+    }
+
+    /**
+     * This method parks the current thread according to the semantics of {@link Unsafe#park()}.
+     * @throws InterruptedException
+     */
+    public void park() throws InterruptedException {
+        synchronized (this) {
+            if (_parkState == 1) {
+                _parkState = 0;
+            } else {
+                _parkState = 2;
+                wait();
+            }
+        }
+    }
+
+    /**
+     * This method parks the current thread according to the semantics of {@link Unsafe#park()}.
+     * @throws InterruptedException
+     */
+    public void park(long wait) throws InterruptedException {
+        synchronized (this) {
+            if (_parkState == 1) {
+                _parkState = 0;
+            } else {
+                _parkState = 2;
+                wait(wait / 1000000, (int) (wait % 1000000));
+            }
+        }
+    }
+
+    /**
+     * This method unparks the current thread according to the semantics of {@link Unsafe#unpark()}.
+     */
+    public void unpark() {
+        synchronized (this) {
+            _parkState = 1;
+            notifyAll();
+        }
     }
 }
