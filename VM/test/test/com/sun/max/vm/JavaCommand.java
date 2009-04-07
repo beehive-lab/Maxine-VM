@@ -82,7 +82,11 @@ public class JavaCommand {
      * @param value the value of the property
      */
     public void addSystemProperty(String name, String value) {
-        _sysProps.add("-D" + name + "=" + value);
+        if (value != null) {
+            _sysProps.add("-D" + name + "=" + value);
+        } else {
+            _sysProps.add("-D" + name);
+        }
     }
 
     /**
@@ -94,12 +98,37 @@ public class JavaCommand {
     }
 
     /**
+     * Add the arguments to this java command. The arguments appear after the main class.
+     * @param arg the argument to add to the main class
+     */
+    public void addArguments(String[] arg) {
+        if (arg != null) {
+            for (String s : arg) {
+                _arguments.add(s);
+            }
+        }
+    }
+
+    /**
      * Add an option to the VM, which appears before the main class or java file.
      * @param option the option to add to the java command
      */
     public void addVMOption(String option) {
         _vmOptions.add(option);
     }
+
+    /**
+     * Add options to the VM, which appear before the main class or java file.
+     * @param option the options to add to the java command
+     */
+    public void addVMOptions(String[] option) {
+        if (option != null) {
+            for (String s : option) {
+                _vmOptions.add(s);
+            }
+        }
+    }
+
 
     /**
      * Add a classpath entry to this java command.

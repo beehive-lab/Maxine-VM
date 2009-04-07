@@ -148,16 +148,16 @@ public final class JniFunctionWrapper {
             final TargetMethod jniTargetMethod = JniNativeInterface.jniTargetMethod(instructionPointer);
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
-            Log.print("\" entering JNI upcall: ");
+            Log.print("\" --> JNI upcall: ");
             if (jniTargetMethod != null) {
-                Log.printMethodActor(jniTargetMethod.classMethodActor(), false);
+                printUpCall(jniTargetMethod);
 
                 final Pointer namedVariablesBasePointer = VMConfiguration.target().compilerScheme().namedVariablesBasePointer(stackPointer, framePointer);
                 final Word nativeMethodIP = savedLastJavaCallerInstructionPointer().address(jniTargetMethod, namedVariablesBasePointer).asPointer().readWord(0);
                 final TargetMethod nativeMethod = Code.codePointerToTargetMethod(nativeMethodIP.asAddress());
                 Log.print(", last down call: ");
                 FatalError.check(nativeMethod != null, "Could not find Java down call when entering JNI upcall");
-                Log.printMethodActor(nativeMethod.classMethodActor(), false);
+                printUpCall(nativeMethod);
             } else {
                 FatalError.unexpected("Could not find TargetMethod for a JNI function");
             }
@@ -165,6 +165,13 @@ public final class JniFunctionWrapper {
             return jniTargetMethod;
         }
         return null;
+    }
+
+    private static void printUpCall(final TargetMethod jniTargetMethod) {
+        boolean lockDisabledSafepoints = false;
+        lockDisabledSafepoints = Log.lock();
+        Log.print(jniTargetMethod.classMethodActor().name().string());
+        Log.unlock(lockDisabledSafepoints);
     }
 
     /**
@@ -176,9 +183,9 @@ public final class JniFunctionWrapper {
         if (ClassMethodActor.traceJNI()) {
             Log.print("[Thread \"");
             Log.print(VmThread.current().getName());
-            Log.print("\" exit JNI upcall: ");
+            Log.print("\" <-- JNI upcall: ");
             FatalError.check(jniTargetMethod != null, "Cannot trace method from unknown JNI function");
-            Log.printMethodActor(jniTargetMethod.classMethodActor(), false);
+            printUpCall(jniTargetMethod);
             Log.println("]");
         }
     }

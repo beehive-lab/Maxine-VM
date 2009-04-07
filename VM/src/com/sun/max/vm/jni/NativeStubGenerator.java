@@ -289,7 +289,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
     private void traceJniEntry() {
         invokestatic(_traceCurrentThreadPrefix, 0, 0);
-        ldc(PoolConstantFactory.createStringConstant("\" entering JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
+        ldc(PoolConstantFactory.createStringConstant("\" --> JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
         invokestatic(_logPrintln_String, 1, 0);
     }
 
@@ -313,7 +313,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
     private void traceJniExit() {
         invokestatic(_traceCurrentThreadPrefix, 0, 0);
-        ldc(PoolConstantFactory.createStringConstant("\" exiting JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
+        ldc(PoolConstantFactory.createStringConstant("\" <-- JNI: " + _classMethodActor.format("%H.%n(%P)") + "]"));
         invokestatic(_logPrintln_String, 1, 0);
     }
 
