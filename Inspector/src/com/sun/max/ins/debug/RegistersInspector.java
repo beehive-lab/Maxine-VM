@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.debug;
 
+import java.awt.*;
+
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
@@ -50,7 +52,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         return _registersInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "registersInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "registersInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final RegistersViewPreferences _viewPreferences;
@@ -65,10 +67,12 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         _viewPreferences.addListener(this);
         createFrame(null);
         refreshView(inspection.teleVM().epoch(), true);
-        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setBounds(inspection().geometry().registersFrameDefaultBounds());
-        }
         Trace.end(1,  tracePrefix() + " initializing");
+    }
+
+    @Override
+    protected Rectangle defaultFrameBounds() {
+        return inspection().geometry().registersFrameDefaultBounds();
     }
 
     @Override
@@ -85,7 +89,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
@@ -105,7 +109,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
         super.refreshView(epoch, force);
     }

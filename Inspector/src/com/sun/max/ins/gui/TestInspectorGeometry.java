@@ -23,16 +23,16 @@ package com.sun.max.ins.gui;
 import java.awt.*;
 
 /**
- * Standard choices and policies for layout, tiled for use with 12 pt. font.
+ * A set of layout parameters for testing GUI code.
  *
  * @author Michael Van De Vanter
  */
-public class InspectorGeometry12Pt implements InspectorGeometry {
+public class TestInspectorGeometry implements InspectorGeometry {
 
-    // Main Inspection frame
+    // Main Inspector Frame
     private static final Point _inspectionFrameDefaultLocation = new Point(100, 100);
     private static final Dimension _inspectionFrameMinSize = new Dimension(100, 100);
-    private static final Dimension _inspectionFramePrefSize = new Dimension(1600, 900);
+    private static final Dimension _inspectionFramePrefSize = new Dimension(1625, 1040);
 
     public Point inspectorFrameDefaultLocation() {
         return _inspectionFrameDefaultLocation;
@@ -44,43 +44,44 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
         return _inspectionFramePrefSize;
     }
 
-    public Rectangle threadsFrameDefaultBounds() {
-        return new Rectangle(0, 0, 225, 170);
+    private static final Point _testFrameDefaultLocation = new Point(100, 100);
+    private static final Dimension _testFramePrefSize = new Dimension(300, 300);
+    private static final Rectangle _testFrameDefaultBounds = new Rectangle(100, 100, 300, 300);
+
+    public  Rectangle threadsFrameDefaultBounds() {
+        return _testFrameDefaultBounds;
     }
 
     public Rectangle registersFrameDefaultBounds() {
-        return new Rectangle(0, 170, 225, 730);
+        return  _testFrameDefaultBounds;
     }
 
     public Rectangle stackFrameDefaultBounds() {
-        return new Rectangle(225, 0, 225, 900);
+        return _testFrameDefaultBounds;
     }
 
     public Rectangle methodsFrameDefaultBounds() {
-        return new Rectangle(450, 0, 700, 900);
+        return _testFrameDefaultBounds;
     }
 
     public Rectangle breakpointsFrameDefaultBounds() {
-        return new Rectangle(1150, 0, 450, 170);
+        return _testFrameDefaultBounds;
     }
 
     public Rectangle threadLocalsFrameDefaultBounds() {
-        return new Rectangle(1150, 170, 450, 730);
+        return _testFrameDefaultBounds;
     }
 
     public Rectangle memoryRegionsFrameDefaultBounds() {
-        return new Rectangle(100, 100, 450, 250);
+        return _testFrameDefaultBounds;
     }
 
     // Java Source Inspector frame
-    private static final Point _javaSourceFrameDefaultLocation = new Point(1270, 0);
-    private static final Dimension _javaSourceFramePrefSize = new Dimension(605, 400);
-
     public Point javaSourceFrameDefaultLocation() {
-        return _javaSourceFrameDefaultLocation;
+        return _testFrameDefaultLocation;
     }
     public Dimension javaSourceFramePrefSize() {
-        return _javaSourceFramePrefSize;
+        return _testFramePrefSize;
     }
 
     // Offset from mouse location for new frames
@@ -96,5 +97,6 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
     public int objectInspectorNewFrameDiagonalOffset() {
         return _objectInspectorNewFrameDiagonalOffset;
     }
+
 
 }

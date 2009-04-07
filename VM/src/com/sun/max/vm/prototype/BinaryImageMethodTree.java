@@ -36,7 +36,7 @@ import com.sun.max.vm.prototype.CompiledPrototype.Link.*;
  * {@linkplain #printTree(com.sun.max.vm.prototype.BinaryImageMethodTree.Node, boolean, PrintWriter, boolean) printing}
  * the causality spanning-tree of the {@linkplain CompiledPrototype#links() method graph} in an
  * {@linkplain BinaryImageGenerator image}.
- * 
+ *
  * @author Doug Simon
  */
 public final class BinaryImageMethodTree {
@@ -56,7 +56,7 @@ public final class BinaryImageMethodTree {
 
         /**
          * Creates a new node with the specified name.
-         * 
+         *
          * @param name the name of the node
          */
         public Node(String name) {
@@ -65,7 +65,7 @@ public final class BinaryImageMethodTree {
 
         /**
          * Adds a link from this node to a child node.
-         * 
+         *
          * @param referent the node that is a new child
          * @param relationshipToReferent the relationship that caused the child to be added
          */
@@ -79,7 +79,7 @@ public final class BinaryImageMethodTree {
 
         /**
          * Returns a sequence of all the referents from this node.
-         * 
+         *
          * @return a sequence of all the nodes that are children of this node
          */
         public Sequence<Node> referents() {
@@ -91,7 +91,7 @@ public final class BinaryImageMethodTree {
 
         /**
          * Remove all children nodes of this node that do not match the specified predicate.
-         * 
+         *
          * @param predicate a predicate which decides whether a node should be included
          * @return {@code null} if the predicate is not true for this object or any
          * of its descendants; this node, with the children that do not match the predicate
@@ -121,7 +121,7 @@ public final class BinaryImageMethodTree {
 
         /**
          * Print the tree out in a textual form.
-         * 
+         *
          * @param node the node to print
          * @param showTreeLines a boolean indicating whether to draw the tree lines
          * @param printWriter the writer to which to print this tree
@@ -162,7 +162,7 @@ public final class BinaryImageMethodTree {
 
     /**
      * Save this tree to a file in a compact, binary format.
-     * 
+     *
      * @param dataOutputStream the data output stream to which to write the tree
      * @param links the links to write to the data output stream
      * @throws IOException if there is a problem writing to the output stream
@@ -211,7 +211,7 @@ public final class BinaryImageMethodTree {
 
     /**
      * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, IterableWithLength) this method}.
-     * 
+     *
      * @param dataInputStream
      *                a stream containing a saved tree
      * @return the roots of the loaded tree
@@ -244,7 +244,7 @@ public final class BinaryImageMethodTree {
     /**
      * Prints the tree rooted at a given node to a given print writer. The format of the dump is similar to the output
      * of the tree(1) utility that list contents of directories in a tree-like format.
-     * 
+     *
      * @param node
      *                the root of the tree to dump
      * @param printWriter
@@ -268,6 +268,8 @@ public final class BinaryImageMethodTree {
             "filter for pruning the graph before printing");
     private static final Option<Boolean> SHOW_TREE_LINES = options.newBooleanOption("lines", true,
            "show lines (instead of indentation only) to indicate relationships between nodes");
+    private static final Option<Boolean> HELP = options.newBooleanOption("help", false,
+           "show help message and exits.");
 
     private static File getDefaultOutputFile() {
         return new File(BinaryImageGenerator.getDefaultBootImageMethodTreeFilePath().getAbsolutePath() + ".txt");
@@ -276,11 +278,15 @@ public final class BinaryImageMethodTree {
     /**
      * Command line interface for loading a saved graph and printing it, optionally pruning it with a provided filter
      * first.
-     * 
+     *
      * @param args
      */
     public static void main(String[] args) throws IOException {
         options.parseArguments(args);
+        if (HELP.getValue()) {
+            options.printHelp(System.out, 80);
+            return;
+        }
         Trace.on(TRACE.getValue());
 
         final InputStream inputStream = new FileInputStream(INPUT_FILE.getValue());

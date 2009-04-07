@@ -268,7 +268,7 @@ public class JavaMethodInspector extends MethodInspector {
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         if (isShowing() || force) {
             _teleClassMethodActor.refreshView();
             if (_classMethodMenuItems != null) {

@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.debug;
 
+import java.awt.*;
+
 import javax.swing.*;
 
 import com.sun.max.ins.*;
@@ -48,7 +50,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         return _threadsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "threadsInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "threadsInspector");
 
     private ThreadsTable _table;
 
@@ -61,14 +63,16 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
         _viewPreferences = ThreadsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setBounds(inspection().geometry().threadsFrameDefaultBounds());
-        }
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected Rectangle defaultFrameBounds() {
+        return inspection().geometry().threadsFrameDefaultBounds();
+    }
+
+    @Override
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
@@ -99,7 +103,7 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
         super.refreshView(epoch, force);
     }

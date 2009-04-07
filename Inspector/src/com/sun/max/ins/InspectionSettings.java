@@ -121,6 +121,11 @@ public class InspectionSettings {
          * settings.
          */
         Component component();
+
+        /**
+         * @return geometry to apply to a newly shown component when there have been no geometry settings saved.
+         */
+        Rectangle defaultBounds();
     }
 
     /**
@@ -129,10 +134,20 @@ public class InspectionSettings {
     public abstract static class AbstractSaveSettingsListener implements SaveSettingsListener {
         protected final String _name;
         protected final Component _component;
+        protected final Rectangle _defaultBounds;
 
-        protected AbstractSaveSettingsListener(String name, Component component) {
+        protected AbstractSaveSettingsListener(String name, Component component, Rectangle defaultBounds) {
             _name = name;
             _component = component;
+            _defaultBounds = defaultBounds;
+        }
+
+        protected AbstractSaveSettingsListener(String name, Component component) {
+            this(name, component, null);
+        }
+
+        protected AbstractSaveSettingsListener(String name) {
+            this (name, null, null);
         }
 
         public Component component() {
@@ -142,6 +157,11 @@ public class InspectionSettings {
         public String name() {
             return _name;
         }
+
+        public Rectangle defaultBounds() {
+            return _defaultBounds;
+        }
+
         @Override
         public String toString() {
             return name();
@@ -169,7 +189,7 @@ public class InspectionSettings {
         }
 
         final TeleVM teleVM = inspection.teleVM();
-        _bootimageClient = new AbstractSaveSettingsListener("bootimage", null) {
+        _bootimageClient = new AbstractSaveSettingsListener("bootimage") {
             public void saveSettings(SaveSettingsEvent settings) {
                 settings.save(BOOT_VERSION_KEY, String.valueOf(teleVM.bootImage().header()._version));
                 settings.save(BOOT_ID_KEY, String.valueOf(teleVM.bootImage().header()._randomID));
@@ -215,12 +235,15 @@ public class InspectionSettings {
         final Component component = saveSettingsListener.component();
         if (component != null) {
             final Rectangle oldBounds = component.getBounds();
-            final Rectangle newBounds = new Rectangle(
-                            get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x),
-                            get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y),
-                            get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
-                            get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
-            if (!newBounds.equals(oldBounds)) {
+            Rectangle newBounds = saveSettingsListener.defaultBounds();
+            if (get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0) {
+                newBounds = new Rectangle(
+                    get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, oldBounds.x),
+                    get(saveSettingsListener, COMPONENT_Y_KEY, OptionTypes.INT_TYPE, oldBounds.y),
+                    get(saveSettingsListener, COMPONENT_WIDTH_KEY, OptionTypes.INT_TYPE, oldBounds.width),
+                    get(saveSettingsListener, COMPONENT_HEIGHT_KEY, OptionTypes.INT_TYPE, oldBounds.height));
+            }
+            if (newBounds != null && !newBounds.equals(oldBounds)) {
                 component.setBounds(newBounds);
             }
         }
@@ -258,14 +281,6 @@ public class InspectionSettings {
         } catch (Option.Error optionError) {
             throw new Option.Error(String.format("Problem occurred while parsing %s setting:%n%s", clientKey, optionError.getMessage()));
         }
-    }
-
-    /**
-     * @param saveSettingsListener
-     * @return is there a saved component location setting associated with this listener.
-     */
-    public boolean hasComponentLocation(SaveSettingsListener saveSettingsListener) {
-        return get(saveSettingsListener, COMPONENT_X_KEY, OptionTypes.INT_TYPE, -1) >= 0;
     }
 
     private boolean _needsSaving;

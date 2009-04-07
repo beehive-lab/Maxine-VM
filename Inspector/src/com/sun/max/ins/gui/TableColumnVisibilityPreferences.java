@@ -93,7 +93,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         _columnTypeValues = columnTypeValues;
         _columnTypeClass = columnTypeClass;
         final InspectionSettings settings = inspection.settings();
-        _saveSettingsListener = new AbstractSaveSettingsListener(name, null) {
+        _saveSettingsListener = new AbstractSaveSettingsListener(name) {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 TableColumnVisibilityPreferences.this.saveSettings(saveSettingsEvent);
             }

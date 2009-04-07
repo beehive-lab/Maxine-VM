@@ -55,7 +55,7 @@ public final class BootImageInspector extends Inspector {
         return _bootImageInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "bootImageInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "bootImageInspector");
 
     private JPanel _infoPanel;
 
@@ -67,7 +67,7 @@ public final class BootImageInspector extends Inspector {
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 

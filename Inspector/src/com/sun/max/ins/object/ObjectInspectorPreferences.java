@@ -91,7 +91,7 @@ public class ObjectInspectorPreferences extends AbstractInspectionHolder {
     public ObjectInspectorPreferences(Inspection inspection) {
         super(inspection);
         final InspectionSettings settings = inspection.settings();
-        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("objectInspectorPrefs", null) {
+        final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("objectInspectorPrefs") {
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
                 saveSettingsEvent.save(SHOW_HEADER_PREFERENCE, _showHeader);
                 saveSettingsEvent.save(SHOW_ADDRESSES_PREFERENCE, _showAddresses);

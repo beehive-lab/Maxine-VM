@@ -37,7 +37,7 @@ import com.sun.max.vm.prototype.GraphPrototype.*;
  * {@linkplain #loadTree(DataInputStream) loading} and
  * {@linkplain #printTree(com.sun.max.vm.prototype.BinaryImageObjectTree.Node, PrintWriter, boolean) printing} the
  * causality spanning-tree of the object graph in an {@linkplain BinaryImageGenerator image}.
- * 
+ *
  * @author Doug Simon
  */
 public final class BinaryImageObjectTree {
@@ -53,7 +53,7 @@ public final class BinaryImageObjectTree {
 
     /**
      * The form of an object's {@linkplain Object#toString() string} representation included in the saved tree.
-     * 
+     *
      * @author Doug Simon
      */
     enum TO_STRING_TAG {
@@ -93,7 +93,7 @@ public final class BinaryImageObjectTree {
 
         /**
          * Creates a new node with the specified class name, address, size, and verbose string.
-         * 
+         *
          * @param className the name of the class of this object
          * @param address the address of this object
          * @param size the size of this object in bytes
@@ -108,7 +108,7 @@ public final class BinaryImageObjectTree {
 
         /**
          * Adds a child to this node.
-         * 
+         *
          * @param child the child node
          * @param link the name of the link that links this child to its parent, e.g.
          * the name of an object field
@@ -123,7 +123,7 @@ public final class BinaryImageObjectTree {
 
         /**
          * Returns a sequence of the children of this node.
-         * 
+         *
          * @return a sequence of the children
          */
         public Sequence<Node> children() {
@@ -133,7 +133,7 @@ public final class BinaryImageObjectTree {
         /**
          * Prune this graph so that only nodes that match the specified predicate (and their
          * parent nodes) are retained.
-         * 
+         *
          * @param predicate the predicate to apply to each node recursively
          * @return {@code null} if the predicate does not apply to either this
          * node or any child node; this node with the non-matching children removed if
@@ -159,7 +159,7 @@ public final class BinaryImageObjectTree {
 
         /**
          * Computes the total size, including the size of the children.
-         * 
+         *
          * @return the size of this node plus the sum of the sizes of all its children nodes
          */
         public long aggregateSize() {
@@ -179,7 +179,7 @@ public final class BinaryImageObjectTree {
 
         /**
          * Print this thee to the specified print writer.
-         * 
+         *
          * @param node the node to print
          * @param showTreeLines a boolean indicating whether to print the tree lines
          * @param printWriter the writer to which to print the output
@@ -231,7 +231,7 @@ public final class BinaryImageObjectTree {
 
     /**
      * Saves the spanning tree of an object graph as represented by the links in the graph that were traversed.
-     * 
+     *
      * @param dataOutputStream
      *                where to save the tree
      * @param links
@@ -319,7 +319,7 @@ public final class BinaryImageObjectTree {
 
     /**
      * Loads a tree that was saved by {@linkplain #saveTree(DataOutputStream, Set) this method}.
-     * 
+     *
      * @param dataInputStream
      *                a stream containing a saved tree
      * @return the roots of the loaded tree
@@ -382,7 +382,7 @@ public final class BinaryImageObjectTree {
     /**
      * Prints the tree rooted at a given node to a given print writer. The format of the dump is similar to the output
      * of the tree(1) utility that list contents of directories in a tree-like format.
-     * 
+     *
      * @param node
      *                the root of the tree to dump
      * @param printWriter
@@ -413,6 +413,8 @@ public final class BinaryImageObjectTree {
             "relocation addresses by the specified amount while printing");
     private static final Option<Boolean> SHOW_TREE_LINES = options.newBooleanOption("lines", true,
            "show lines (instead of indentation only) to indicate relationships between nodes");
+    private static final Option<Boolean> HELP = options.newBooleanOption("help", false,
+           "show help message and exits.");
 
     /**
      * Gets the default file name to which to output the image object tree.
@@ -425,11 +427,15 @@ public final class BinaryImageObjectTree {
     /**
      * Command line interface for loading a saved graph and printing it, optionally pruning it with a provided filter
      * first.
-     * 
+     *
      * @param args
      */
     public static void main(String[] args) throws IOException {
         options.parseArguments(args);
+        if (HELP.getValue()) {
+            options.printHelp(System.out, 80);
+            return;
+        }
         Trace.on(TRACE.getValue());
 
         final InputStream inputStream = new FileInputStream(INPUT_FILE.getValue());

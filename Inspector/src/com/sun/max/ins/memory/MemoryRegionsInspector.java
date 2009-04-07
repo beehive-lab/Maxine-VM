@@ -52,7 +52,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         return _memoryRegionsInspector;
     }
 
-    private final SaveSettingsListener _saveSettingsListener = createBasicSettingsClient(this, "memoryRegionsInspector");
+    private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "memoryRegionsInspector");
 
     // This is a singleton viewer, so only use a single level of view preferences.
     private final MemoryRegionsViewPreferences _viewPreferences;
@@ -65,14 +65,16 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
         _viewPreferences = MemoryRegionsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        if (!inspection.settings().hasComponentLocation(_saveSettingsListener)) {
-            frame().setBounds(new Rectangle(100, 100, 300, 300));
-        }
         Trace.end(1, tracePrefix() + "initializing");
     }
 
     @Override
-    public void createView(long epoch) {
+    protected Rectangle defaultFrameBounds() {
+        return inspection().geometry().memoryRegionsFrameDefaultBounds();
+    }
+
+    @Override
+    protected void createView(long epoch) {
         if (_table != null) {
             focus().removeListener(_table);
         }
@@ -82,7 +84,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
-    public SaveSettingsListener saveSettingsListener() {
+    protected SaveSettingsListener saveSettingsListener() {
         return _saveSettingsListener;
     }
 
@@ -102,7 +104,7 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
-    public void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
         super.refreshView(epoch, force);
     }

@@ -53,24 +53,37 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
+     * @return default geometry for this inspector, to be used if no prior settings; null if no default specified.
+     */
+    protected Rectangle defaultFrameBounds() {
+        return null;
+    }
+
+    /**
      * Gets an object that is an adapter between the inspection's persistent {@linkplain Inspection#settings()}
      * and this inspector. If the object's {@link SaveSettingsListener#component()} , then the
      * size and location of this inspector are adjusted according to the settings as well as being
      * persisted any time this inspector is moved or resized.
      */
-    public SaveSettingsListener saveSettingsListener() {
+    protected SaveSettingsListener saveSettingsListener() {
         return null;
     }
 
     /**
      * Creates a settings client for this inspector that causes window geometry to be saved & restored.
      */
-    public static SaveSettingsListener createBasicSettingsClient(final Inspector inspector, final String name) {
-        return new AbstractSaveSettingsListener(name, null) {
+    protected static SaveSettingsListener createGeometrySettingsClient(final Inspector inspector, final String name) {
+        return new AbstractSaveSettingsListener(name) {
             @Override
             public Component component() {
                 return (Component) inspector.frame();
             }
+
+            @Override
+            public Rectangle defaultBounds() {
+                return inspector.defaultFrameBounds();
+            }
+
             public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
             }
         };
@@ -84,31 +97,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     /**
      * @return the string currently appearing in the title of the Inspector's window frame
      */
-    public String getCurrentTitle() {
+    protected final String getCurrentTitle() {
         return frame().getTitle();
-    }
-
-    /**
-     * Set frame location to a point displaced by a default amount from the most recently known mouse position.
-     */
-    public void setLocationRelativeToMouse() {
-        setLocationRelativeToMouse(inspection().geometry().defaultNewFrameXOffset(), inspection().geometry().defaultNewFrameYOffset());
-    }
-
-    /**
-     * Set frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
-     */
-    public void setLocationRelativeToMouse(int offset) {
-        setLocationRelativeToMouse(offset, offset);
-    }
-
-    /**
-     * Set frame location to a point displaced by specified amount from the most recently known mouse position.
-     */
-    public void setLocationRelativeToMouse(int xOffset, int yOffset) {
-        final Point location = InspectorFrame.TitleBarListener.recentMouseLocationOnScreen();
-        location.translate(xOffset, yOffset);
-        _frame.setLocationOnScreen(location);
     }
 
     protected Inspector(Inspection inspection) {
@@ -153,7 +143,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param epoch the execution epoch of the {@link TeleVM}, {@see TeleProcess#epoch()}.
      * @param force suspend caching behavior; read state unconditionally.
      */
-    public synchronized void refreshView(long epoch, boolean force) {
+    protected synchronized void refreshView(long epoch, boolean force) {
         _frame.refresh(epoch, force);
         _frame.invalidate();
         _frame.repaint();
@@ -218,24 +208,48 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
+     * Set frame location to a point displaced by a default amount from the most recently known mouse position.
+     */
+    protected final void setLocationRelativeToMouse() {
+        setLocationRelativeToMouse(inspection().geometry().defaultNewFrameXOffset(), inspection().geometry().defaultNewFrameYOffset());
+    }
+
+    /**
+     * Set frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
+     */
+    protected final void setLocationRelativeToMouse(int offset) {
+        setLocationRelativeToMouse(offset, offset);
+    }
+
+    /**
+     * Set frame location to a point displaced by specified amount from the most recently known mouse position.
+     */
+    protected final void setLocationRelativeToMouse(int xOffset, int yOffset) {
+        final Point location = InspectorFrame.TitleBarListener.recentMouseLocationOnScreen();
+        location.translate(xOffset, yOffset);
+        _frame.setLocationOnScreen(location);
+    }
+
+    /**
      * @return whether the inspector's view can be seen on the screen.
      */
-    public boolean isShowing() {
+    protected final boolean isShowing() {
         return _frame.isShowing();
     }
 
-    public void moveToFront() {
+    protected void moveToFront() {
         _frame.moveToFront();
     }
 
-    public void moveToMiddle() {
+    protected final void moveToMiddle() {
         _frame.moveToMiddle();
     }
 
-    public boolean isSelected() {
+    protected boolean isSelected() {
         return _frame.isSelected();
     }
-    public void setSelected() {
+
+    protected void setSelected() {
         _frame.setSelected();
     }
 
@@ -251,7 +265,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     /**
      * If not already visible and selected, calls this inspector to the users attention:  move to front, select, and flash.
      */
-    public void highlightIfNotVisible() {
+    protected void highlightIfNotVisible() {
         moveToFront();
         if (!isSelected()) {
             setSelected();
@@ -271,19 +285,19 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     /**
      * Receives notification that the the frame has acquired focus in the window system.
      */
-    public void inspectorGetsWindowFocus() {
+    protected void inspectorGetsWindowFocus() {
     }
 
     /**
      * Receives notification that the the frame has acquired focus in the window system.
      */
-    public void inspectorLosesWindowFocus() {
+    protected void inspectorLosesWindowFocus() {
     }
 
     /**
      * Receives notification that the window system is closing this inspector.
      */
-    public void inspectorClosing() {
+    protected void inspectorClosing() {
         inspection().removeInspectionListener(this);
         inspection().focus().removeListener(this);
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
