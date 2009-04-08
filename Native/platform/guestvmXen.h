@@ -101,7 +101,7 @@
     typedef void *SigInfo; // address of faulting memory reference, illegal instruction, etc.
     typedef void (*fault_handler_t)(int fault, SigInfo sigInfo, struct fault_regs regs);
     typedef struct fault_regs UContext;
-    extern void register_fault_handler(int fault, fault_handler_t fault_handler);
+    extern void guestvmXen_register_fault_handler(int fault, fault_handler_t fault_handler);
     typedef	struct {
     	unsigned long ss_sp;
     	size_t	ss_size;
