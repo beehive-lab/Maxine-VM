@@ -133,13 +133,11 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
         test.output.JavacTest.class,
-        test.output.BlockingQueue.class,
         _expectedAutoTestFailures
     );
 
     static final Set<String> _expectedFailuresLinuxAMD64 = toTestNames(
         test.output.JavacTest.class,
-        test.output.BlockingQueue.class,
         test.threads.Thread_isInterrupted02.class,
         _expectedAutoTestFailures
     );
@@ -151,7 +149,6 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
         test.output.JavacTest.class,
-        test.output.BlockingQueue.class,
         _expectedAutoTestFailures
     );
 
