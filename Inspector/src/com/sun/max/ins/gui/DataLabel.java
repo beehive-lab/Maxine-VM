@@ -23,7 +23,6 @@ package com.sun.max.ins.gui;
 import java.awt.event.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.stack.*;
 
@@ -221,11 +220,17 @@ public abstract class DataLabel extends InspectorLabel {
         }
     }
 
-    // TODO (mlvdv) implement FloatAsText
     public static final class FloatAsText extends DataLabel {
         public FloatAsText(Inspection inspection, float f) {
-            super(inspection, "");
-            Problem.unimplemented("FloatAsText");
+            super(inspection, Float.toString(f), "0x" + Integer.toHexString(Float.floatToIntBits(f)));
+            redisplay();
+        }
+        @Override
+        public void redisplay() {
+            // TODO: define a font, color, and background for floats
+            setFont(style().hexDataFont());
+            setForeground(style().hexDataColor());
+            setBackground(style().hexDataBackgroundColor());
         }
     }
 
@@ -261,11 +266,17 @@ public abstract class DataLabel extends InspectorLabel {
         }
     }
 
-    // TODO (mlvdv) implement DoubleAsText
     public static final class DoubleAsText extends DataLabel {
         public DoubleAsText(Inspection inspection, double f) {
-            super(inspection, "");
-            Problem.unimplemented("DoubleAsText");
+            super(inspection, Double.toString(f), "0x" + Long.toHexString(Double.doubleToLongBits(f)));
+            redisplay();
+        }
+        @Override
+        public void redisplay() {
+            // TODO: define a font, color, and background for doubles
+            setFont(style().hexDataFont());
+            setForeground(style().hexDataColor());
+            setBackground(style().hexDataBackgroundColor());
         }
     }
 

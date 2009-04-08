@@ -84,7 +84,7 @@ public class GuestVMXenTeleDomain extends TeleProcess {
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        Problem.unimplementedWarning("cannot kill target domain from Inspector");
+        ProgramWarning.message("unimplemented: " + "cannot kill target domain from Inspector");
     }
 
     // In the current synchronous connection with the target domain, we only ever stop at a breakpoint

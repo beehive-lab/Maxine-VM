@@ -20,7 +20,6 @@
  */
 package com.sun.max.program;
 
-
 /**
  * Attention markers for programmers.
  *
@@ -40,10 +39,6 @@ public final class Problem {
 
     public static ProgramError unimplemented() {
         throw ProgramError.unexpected("unimplemented");
-    }
-
-    public static void unimplementedWarning(String message) {
-        ProgramWarning.message("unimplemented: " + message);
     }
 
     public static void error(String message) {

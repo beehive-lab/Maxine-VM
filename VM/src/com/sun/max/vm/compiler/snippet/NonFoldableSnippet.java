@@ -92,7 +92,7 @@ public abstract class NonFoldableSnippet extends Snippet {
 
     public static final class CreatePrimitiveArray extends NonFoldableSnippet {
         @NEVER_INLINE
-        public static Object neverInlineCreatePrimitiveArray(Kind kind, int length) {
+        public static Object noninlineCreatePrimitiveArray(Kind kind, int length) {
             return createArray(kind.arrayClassActor(), length);
         }
 
@@ -105,7 +105,7 @@ public abstract class NonFoldableSnippet extends Snippet {
 
     public static final class CreateReferenceArray extends NonFoldableSnippet {
         @NEVER_INLINE
-        public static Object neverInlineCreateReferenceArray(ArrayClassActor arrayClassActor, int length) {
+        public static Object noninlineCreateReferenceArray(ArrayClassActor arrayClassActor, int length) {
             return createArray(arrayClassActor, length);
         }
 

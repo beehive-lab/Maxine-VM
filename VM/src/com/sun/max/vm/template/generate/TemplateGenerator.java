@@ -81,7 +81,7 @@ public class TemplateGenerator {
 
     protected boolean qualifiesAsTemplate(Method m) {
         final int modifiers = m.getModifiers();
-        return Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers) && !(Modifier.isNative(modifiers) ||  Modifier.isAbstract(modifiers));
+        return Modifier.isPublic(modifiers) && Modifier.isStatic(modifiers) && !(Modifier.isNative(modifiers) || Modifier.isAbstract(modifiers));
     }
 
     protected void verifyInvariants() throws IllegalStateException {

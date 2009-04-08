@@ -49,6 +49,7 @@ public class BlockingQueue {
         final ArrayBlockingQueue<Integer> _queue;
         final int _messages;
         Producer(ArrayBlockingQueue<Integer> queue, int messages) {
+            super("Producer");
             _queue = queue;
             _messages = messages;
         }
@@ -69,6 +70,7 @@ public class BlockingQueue {
         final ArrayBlockingQueue<Integer> _queue;
         final int _messages;
         Consumer(ArrayBlockingQueue<Integer> queue, int messages) {
+            super("Consumer");
             _queue = queue;
             _messages = messages;
         }

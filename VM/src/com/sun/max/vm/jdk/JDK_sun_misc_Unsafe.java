@@ -28,7 +28,6 @@ import sun.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -38,6 +37,7 @@ import com.sun.max.vm.compiler.snippet.Snippet.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Method substitutions for {@link sun.misc.Unsafe}, which provides
@@ -1001,17 +1001,27 @@ final class JDK_sun_misc_Unsafe {
      * @param thread
      */
     @SUBSTITUTE
-    public void unpark(Object thread) {
-        Problem.unimplemented();
+    public void unpark(Object javaThread) {
+        final VmThread thread = VmThread.fromJava((Thread) javaThread);
+        thread.unpark();
     }
 
     /**
      * @see Unsafe#park(boolean, long)
      * @param isAbsolute
-     * @param milliseconds
+     * @param time
      */
     @SUBSTITUTE
-    public void park(boolean isAbsolute, long milliseconds) {
-        Problem.unimplemented();
+    public void park(boolean isAbsolute, long time) {
+        final VmThread thread = VmThread.current();
+        try {
+            if (!isAbsolute) {
+                thread.park(time);
+            } else {
+                thread.park();
+            }
+        } catch (InterruptedException e) {
+            // do nothing.
+        }
     }
 }
