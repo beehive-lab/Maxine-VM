@@ -197,7 +197,7 @@ ifeq ($(OS),guestvm)
 	LIB_SUFFIX = .so
 	LIBA_SUFFIX = .a
 	LINK_AR = gar r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
-	LINK_LIB = gcc -g -shared -lc -lm -m64  -lminios_db
+	LINK_LIB = gcc -g -shared -lc -lm -m64  -lguestvm-ukernel_db
 endif
 
 ifndef JAVA_HOME 
