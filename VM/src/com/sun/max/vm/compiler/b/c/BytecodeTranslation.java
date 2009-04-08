@@ -22,8 +22,6 @@ package com.sun.max.vm.compiler.b.c;
 
 import static com.sun.max.vm.compiler.Stoppable.Static.*;
 
-import java.lang.reflect.*;
-
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -43,6 +41,7 @@ import com.sun.max.vm.compiler.cir.variable.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.compiler.snippet.FieldReadSnippet.*;
 import com.sun.max.vm.compiler.snippet.MethodSelectionSnippet.*;
+import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -1172,9 +1171,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                     // This can be transformed directly into a constant value if the field holder has been initialized
                     final Value fieldValue;
                     if (MaxineVM.isPrototyping()) {
-                        final Field field = fieldActor.toJava();
-                        field.setAccessible(true);
-                        fieldValue = Value.fromBoxedJavaValue(field.get(null));
+                        fieldValue = HostTupleAccess.readValue(null, fieldActor);
                     } else {
                         fieldValue = fieldActor.readValue(Reference.fromJava(fieldActor.holder().staticTuple()));
                     }
@@ -1183,8 +1180,6 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 }
                 // all other cases, fall off to general getstatic, including when failing reflective access.
             } catch (LinkageError e) {
-                // do nothing.
-            } catch (IllegalAccessException e) {
                 // do nothing.
             }
         }

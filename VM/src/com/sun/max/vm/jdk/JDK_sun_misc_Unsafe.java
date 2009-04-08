@@ -1003,11 +1003,6 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public void unpark(Object javaThread) {
         final VmThread thread = VmThread.fromJava((Thread) javaThread);
-        Log.print("[Thread \"");
-        Log.print(VmThread.current().getName());
-        Log.print("\" unpark ");
-        Log.print(thread.getName());
-        Log.println("]");
         thread.unpark();
     }
 
@@ -1019,12 +1014,6 @@ final class JDK_sun_misc_Unsafe {
     @SUBSTITUTE
     public void park(boolean isAbsolute, long time) {
         final VmThread thread = VmThread.current();
-        Log.print("[Thread \"");
-        Log.print(thread.getName());
-        Log.print("\" park");
-        Log.print(isAbsolute ? "(absolute, " : "(relative, ");
-        Log.print(time);
-        Log.println(")]");
         try {
             if (!isAbsolute) {
                 thread.park(time);
