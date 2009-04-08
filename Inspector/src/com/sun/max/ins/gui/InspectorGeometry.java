@@ -70,6 +70,11 @@ public interface InspectorGeometry {
      */
     Rectangle memoryRegionsFrameDefaultBounds();
 
+    /**
+     * @return default geometry for the {@link BootImageInspector}.
+     */
+    Rectangle bootImageFrameDefaultBounds();
+
     // Java Source Inspector frame
     Point javaSourceFrameDefaultLocation();
     Dimension javaSourceFramePrefSize();

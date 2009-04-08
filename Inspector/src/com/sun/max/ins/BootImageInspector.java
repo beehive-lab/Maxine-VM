@@ -20,33 +20,29 @@
  */
 package com.sun.max.ins;
 
-import javax.swing.*;
+import java.awt.*;
 
-import com.sun.max.gui.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.value.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
+import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.tele.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
+
 
 /**
- * Singleton inspector for the boot image from which the {@link TeleVM} was started.
+ * A singleton inspector that displays {@link VMConfiguration}  information in the {@link TeleVM} boot image.
  *
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public final class BootImageInspector extends Inspector {
+public final class BootImageInspector extends Inspector  implements TableColumnViewPreferenceListener {
 
     // Set to null when inspector closed.
     private static BootImageInspector _bootImageInspector;
 
     /**
-     * Display the (singleton) Boot Image inspector.
-     * @return  The Boot Image inspector, possibly newly created.
+     * Displays the (singleton) BootImage inspector.
+     * @return  The BootImage inspector, possibly newly created.
      */
     public static BootImageInspector make(Inspection inspection) {
         if (_bootImageInspector == null) {
@@ -57,13 +53,29 @@ public final class BootImageInspector extends Inspector {
 
     private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "bootImageInspector");
 
-    private JPanel _infoPanel;
+    // This is a singleton viewer, so only use a single level of view preferences.
+    private final BootImageViewPreferences _viewPreferences;
+
+    private BootImageTable _table;
 
     private BootImageInspector(Inspection inspection) {
         super(inspection);
         Trace.begin(1, tracePrefix() + "initializing");
+        _viewPreferences = BootImageViewPreferences.globalPreferences(inspection());
+        _viewPreferences.addListener(this);
         createFrame(null);
         Trace.end(1, tracePrefix() + "initializing");
+    }
+
+    @Override
+    protected Rectangle defaultFrameBounds() {
+        return inspection().geometry().bootImageFrameDefaultBounds();
+    }
+
+    @Override
+    protected void createView(long epoch) {
+        _table = new BootImageTable(inspection(), _viewPreferences);
+        frame().setContentPane(new InspectorScrollPane(inspection(), _table));
     }
 
     @Override
@@ -77,14 +89,26 @@ public final class BootImageInspector extends Inspector {
     }
 
     @Override
-    public void createView(long epoch) {
-        _infoPanel = new InspectorPanel(inspection(), new SpringLayout());
-        populateInfoPanel();
-        final JScrollPane scrollPane = new InspectorScrollPane(inspection(), _infoPanel);
-        frame().setContentPane(scrollPane);
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<BootImageColumnKind>(inspection(), "Boot Image View Options", _viewPreferences);
+            }
+        };
+    }
+
+    @Override
+    protected void refreshView(long epoch, boolean force) {
+        _table.refresh(epoch, force);
+        super.refreshView(epoch, force);
     }
 
     public void viewConfigurationChanged(long epoch) {
+        reconstructView();
+    }
+
+    public void tableColumnViewPreferencesChanged() {
         reconstructView();
     }
 
@@ -92,85 +116,16 @@ public final class BootImageInspector extends Inspector {
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         _bootImageInspector = null;
+        _viewPreferences.removeListener(this);
         super.inspectorClosing();
     }
 
-    private void addInfo(String name, InspectorLabel label) {
-        _infoPanel.add(new TextLabel(inspection(), name));
-        _infoPanel.add(label);
-    }
-
-    private void populateInfoPanel() {
-        final BootImage bootImage = teleVM().bootImage();
-        final BootImage.Header header = bootImage.header();
-        final VMConfiguration vmConfiguration = bootImage.vmConfiguration();
-        final Platform platform = vmConfiguration.platform();
-        final ProcessorKind processorKind = platform.processorKind();
-        final DataModel dataModel = processorKind.dataModel();
-
-        addInfo("identification:", new DataLabel.IntAsHex(inspection(), header._identification));
-        addInfo("version:", new DataLabel.IntAsDecimal(inspection(),  header._version));
-        addInfo("random ID:", new DataLabel.IntAsHex(inspection(), header._randomID));
-
-        addInfo("build level:", new DataLabel.EnumAsText(inspection(), vmConfiguration.buildLevel()));
-
-        addInfo("processor model:", new DataLabel.EnumAsText(inspection(), processorKind.processorModel()));
-        addInfo("instruction set:", new DataLabel.EnumAsText(inspection(), processorKind.instructionSet()));
-
-        addInfo("bits/word:", new DataLabel.IntAsDecimal(inspection(), dataModel.wordWidth().numberOfBits()));
-        addInfo("endianness:", new DataLabel.EnumAsText(inspection(), dataModel.endianness()));
-        addInfo("alignment:", new DataLabel.IntAsDecimal(inspection(), dataModel.alignment().numberOfBytes()));
-
-        addInfo("operating system:", new DataLabel.EnumAsText(inspection(), platform.operatingSystem()));
-        addInfo("page size:", new DataLabel.IntAsDecimal(inspection(), platform.pageSize()));
-
-        addInfo("grip scheme:", new JavaNameLabel(inspection(), vmConfiguration.gripScheme().name(), vmConfiguration.gripScheme().getClass().getName()));
-        addInfo("reference scheme:", new JavaNameLabel(inspection(), vmConfiguration.referenceScheme().name(), vmConfiguration.referenceScheme().getClass().getName()));
-        addInfo("layout scheme:",  new JavaNameLabel(inspection(), vmConfiguration.layoutScheme().name(), vmConfiguration.layoutScheme().getClass().getName()));
-        addInfo("heap scheme:", new JavaNameLabel(inspection(), vmConfiguration.heapScheme().name(), vmConfiguration.heapScheme().getClass().getName()));
-        addInfo("monitor scheme:", new JavaNameLabel(inspection(), vmConfiguration.monitorScheme().name(), vmConfiguration.monitorScheme().getClass().getName()));
-        addInfo("compilation scheme:", new JavaNameLabel(inspection(), vmConfiguration.compilationScheme().name(), vmConfiguration.compilationScheme().getClass().getName()));
-        addInfo("optimizing compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.compilerScheme().name(), vmConfiguration.compilerScheme().getClass().getName()));
-        addInfo("JIT compiler scheme:", new JavaNameLabel(inspection(), vmConfiguration.jitScheme().name(), vmConfiguration.jitScheme().getClass().getName()));
-        addInfo("interpreter scheme:", new JavaNameLabel(inspection(), vmConfiguration.interpreterScheme().name(), vmConfiguration.interpreterScheme().getClass().getName()));
-        addInfo("trampoline scheme:", new JavaNameLabel(inspection(), vmConfiguration.trampolineScheme().name(), vmConfiguration.trampolineScheme().getClass().getName()));
-        addInfo("target ABIs scheme:", new JavaNameLabel(inspection(), vmConfiguration.targetABIsScheme().name(), vmConfiguration.targetABIsScheme().getClass().getName()));
-        addInfo("run scheme:", new JavaNameLabel(inspection(), vmConfiguration.runScheme().name(), vmConfiguration.runScheme().getClass().getName()));
-
-        addInfo("relocation scheme:", new DataLabel.IntAsHex(inspection(), header._relocationScheme));
-        addInfo("relocation data size:", new DataLabel.IntAsHex(inspection(), header._relocationDataSize));
-        addInfo("string data size:", new DataLabel.IntAsHex(inspection(), header._stringInfoSize));
-
-        final Pointer bootImageStart = teleVM().bootImageStart();
-
-        final Pointer bootHeapStart = bootImageStart;
-        final Pointer bootHeapEnd = bootHeapStart.plus(header._bootHeapSize);
-
-        addInfo("boot heap start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart));
-        addInfo("boot heap size:", new DataLabel.IntAsHex(inspection(), header._bootHeapSize));
-        addInfo("boot heap end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapEnd));
-
-        final Pointer bootCodeStart = bootHeapEnd;
-        final Pointer bootCodeEnd = bootCodeStart.plus(header._bootCodeSize);
-
-        addInfo("boot code start:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart));
-        addInfo("boot code size:", new DataLabel.IntAsHex(inspection(), header._bootCodeSize));
-        addInfo("boot code end:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeEnd));
-
-        addInfo("code cache size:", new DataLabel.IntAsHex(inspection(), header._codeCacheSize));
-        addInfo("thread local space size:", new DataLabel.IntAsHex(inspection(), header._vmThreadLocalsSize));
-
-        addInfo("vmStartupMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT,  bootImageStart.plus(header._vmRunMethodOffset)));
-        addInfo("vmThreadRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, bootImageStart.plus(header._vmThreadRunMethodOffset)));
-        addInfo("runSchemeRunMethod:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.CALL_ENTRY_POINT, bootImageStart.plus(header._runSchemeRunMethodOffset)));
-
-        addInfo("class registry:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.REFERENCE, bootHeapStart.plus(header._classRegistryOffset)));
-        addInfo("heap regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootHeapStart.plus(header._heapRegionsPointerOffset)));
-        addInfo("code regions pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootCodeStart.plus(header._codeRegionsPointerOffset)));
-
-        addInfo("messenger info pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootImageStart.plus(header._messengerInfoOffset)));
-        addInfo("thread specifics list pointer:", new WordValueLabel(inspection(), WordValueLabel.ValueMode.WORD, bootImageStart.plus(header._threadSpecificsListOffset)));
-        SpringUtilities.makeCompactGrid(_infoPanel, 2);
+    @Override
+    public void vmProcessTerminated() {
+        Trace.line(1, tracePrefix() + " closing - process terminated");
+        _bootImageInspector = null;
+        _viewPreferences.removeListener(this);
+        dispose();
     }
 
 }
