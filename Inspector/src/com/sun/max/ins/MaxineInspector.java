@@ -75,7 +75,7 @@ public final class MaxineInspector {
 
             TeleDisassembler.initialize(teleVM);
 
-            _inspection = new Inspection(teleVM, new InspectorGeometry12Pt());
+            _inspection = new Inspection(teleVM);
 
             _inspection.initialize();
 
