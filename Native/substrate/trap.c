@@ -87,7 +87,7 @@ typedef void (*SignalHandlerFunction)(int signal, SigInfo *signalInfo, void *uco
 
 void setHandler(int signal, SignalHandlerFunction handler) {
 #if os_GUESTVMXEN
-    register_fault_handler(signal, handler);
+	guestvmXen_register_fault_handler(signal, handler);
 #else
 
     struct sigaction newSigaction;
