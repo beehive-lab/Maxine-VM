@@ -114,7 +114,7 @@ public class ResolvedFieldAccessTemplateSource {
         final Object object = JitStackFrameOperation.peekReference(1);
         final Object value = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.removeSlots(2);
-        TupleAccess.noinlineWriteObject(object, offset, value);
+        TupleAccess.noninlineWriteObject(object, offset, value);
     }
 
 

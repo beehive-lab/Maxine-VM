@@ -114,7 +114,7 @@ public class InitializedStaticFieldAccessTemplateSource {
     @BYTECODE_TEMPLATE(bytecode = Bytecode.PUTSTATIC, kind = KindEnum.REFERENCE)
     public static void rputstatic(Object staticTuple, int offset) {
         final Object value = JitStackFrameOperation.peekReference(0);
-        TupleAccess.noinlineWriteObject(staticTuple, offset, value);
+        TupleAccess.noninlineWriteObject(staticTuple, offset, value);
         JitStackFrameOperation.removeSlots(1);
     }
 

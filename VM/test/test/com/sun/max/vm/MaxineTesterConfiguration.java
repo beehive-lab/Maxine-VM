@@ -282,6 +282,22 @@ public class MaxineTesterConfiguration {
         return DEFAULT_JAVA_TESTER_CONFIGS;
     }
 
+    public static String[] getImageConfigArgs(String imageConfig) {
+        final String[] args = _imageConfigs.get(imageConfig);
+        if (args == null) {
+            ProgramError.unexpected("unknown image config: " + imageConfig);
+        }
+        return args;
+    }
+
+    public static String[] getMaxvmConfigArgs(String maxvmConfig) {
+        final String[] args = _maxvmConfigs.get(maxvmConfig);
+        if (args == null) {
+            ProgramError.unexpected("unknown maxvm config: " + maxvmConfig);
+        }
+        return args;
+    }
+
     public enum ExpectedResult {
         PASS {
             @Override

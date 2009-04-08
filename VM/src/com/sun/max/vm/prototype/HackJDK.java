@@ -192,7 +192,7 @@ public final class HackJDK {
             new FieldOffsetRecomputation("waitStatusOffset", JDK.java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node, "waitStatus"),
             new FieldOffsetRecomputation("nextOffset", JDK.java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node, "next"),
         JDK.java_util_concurrent_locks_LockSupport,
-            new FieldOffsetRecomputation("parkBlockerOffset", JDK.java_util_concurrent_atomic_AtomicReference, "parkBlocker"),
+            new FieldOffsetRecomputation("parkBlockerOffset", JDK.java_lang_Thread, "parkBlocker"),
     };
     // Checkstyle: start
 
@@ -394,7 +394,14 @@ public final class HackJDK {
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
-            return LongValue.from(fieldActor.offset());
+            try {
+                final Field field = _classRef.javaClass().getDeclaredField(_fieldName);
+                return LongValue.from(FieldActor.fromJava(field).offset());
+            } catch (SecurityException e) {
+                throw ProgramError.unexpected(e);
+            } catch (NoSuchFieldException e) {
+                throw ProgramError.unexpected(e);
+            }
         }
     }
 }
