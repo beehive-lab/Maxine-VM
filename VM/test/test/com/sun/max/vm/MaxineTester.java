@@ -103,6 +103,8 @@ public class MaxineTester {
                     "Location of zipped up SpecJVM98 directory.");
     private static final Option<File> _dacapoJar = _options.newFileOption("dacapo", (File) null,
                     "Location of DaCapo JAR file.");
+    private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
+                    "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
 
     private static String _javaConfigAlias = null;
 
@@ -551,7 +553,7 @@ public class MaxineTester {
             return imageDir;
         }
         out().println("Building Java run scheme: failed");
-        final File outputFile = getOutputFile(imageDir, "IMAGEGEN", config);
+        final File outputFile = stdoutFile(imageDir, "IMAGEGEN", config);
         out().println("  -> see: " + fileRef(outputFile));
         return null;
     }
@@ -569,7 +571,7 @@ public class MaxineTester {
         javaCommand.addClasspath(System.getProperty("java.class.path"));
         final String[] javaArgs = javaCommand.getExecutableCommand(_javaExecutable.getValue());
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
-        final File outputFile = getOutputFile(imageDir, "IMAGEGEN", imageConfig);
+        final File outputFile = stdoutFile(imageDir, "IMAGEGEN", imageConfig);
 
         final int exitValue = exec(null, javaArgs, null, outputFile, "Building " + imageDir.getName() + "/maxine.vm", _imageBuildTimeOut.getValue());
         if (exitValue == 0) {
@@ -602,7 +604,7 @@ public class MaxineTester {
         out().print(left50("Running " + testName + ": "));
 
         // first run the program on the reference JVM
-        final File javaOutput = getOutputFile(outputDir, "JVM_" + testName.replace(' ', '_'), null);
+        final File javaOutput = jvmStdoutFile(outputDir, testName);
         final int javaExitValue = runJavaVM(testName, command.copy(), imageDir, workingDir, javaOutput, _javaRunTimeOut.getValue());
 
         // now run the test on each of the MaxVM configurations
@@ -613,7 +615,7 @@ public class MaxineTester {
             }
             final JavaCommand maxvmCommand = command.copy();
             maxvmCommand.addVMOptions(MaxineTesterConfiguration.getVMOptions(config));
-            final File maxvmOutput = getOutputFile(outputDir, "MAXVM_" + testName.replace(' ', '_'), config);
+            final File maxvmOutput = maxvmStdoutFile(outputDir, testName, config);
             final int maxvmExitValue = runMaxineVM(maxvmCommand, imageDir, workingDir, maxvmOutput, _javaRunTimeOut.getValue());
             if (javaExitValue != maxvmExitValue) {
                 if (maxvmExitValue == PROCESS_TIMEOUT) {
@@ -632,6 +634,14 @@ public class MaxineTester {
             }
         }
         out().println();
+    }
+
+    private static File jvmStdoutFile(File outputDir, String testName) {
+        return stdoutFile(outputDir, "JVM_" + testName.replace(' ', '_'), null);
+    }
+
+    private static File maxvmStdoutFile(File outputDir, String testName, String config) {
+        return stdoutFile(outputDir, "MAXVM_" + testName.replace(' ', '_'), config);
     }
 
     private static String mapLibraryName(String name) {
@@ -661,9 +671,17 @@ public class MaxineTester {
         return file;
     }
 
-    private static File getOutputFile(File outputDir, String outputFileName, String imageConfig) {
+    private static File stdoutFile(File outputDir, String outputFileName, String imageConfig) {
         return getOutputFile(outputDir, outputFileName, imageConfig, ".stdout");
     }
+
+    private static File stderrFile(File outputFile) {
+        if (outputFile.getName().endsWith("stdout")) {
+            return new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "stderr");
+        }
+        return new File(outputFile.getAbsolutePath() + ".stderr");
+    }
+
 
     private static String[] defaultJVMOptions() {
         final String value = _javaVMArgs.getValue();
@@ -719,6 +737,31 @@ public class MaxineTester {
         }
     }
 
+    static String findLine(File file, String p1, String p2) {
+        try {
+            final BufferedReader f1Reader = new BufferedReader(new FileReader(file));
+            try {
+                String line1;
+                while (true) {
+                    line1 = f1Reader.readLine();
+                    if (line1 == null) {
+                        return null;
+                    }
+                    if (line1.contains(p1)) {
+                        if (p2 != null && line1.contains(p2)) {
+                            return line1;
+                        }
+                    }
+                }
+            } finally {
+                f1Reader.close();
+            }
+        } catch (IOException e) {
+            return null;
+        }
+
+    }
+
     /**
      * A dedicated thread to wait for the process and terminate it if it gets stuck.
      *
@@ -754,11 +797,7 @@ public class MaxineTester {
                 _stderrTo = new NullOutputStream();
                 _stderrToFile = null;
             } else {
-                if (outputFile.getName().endsWith("stdout")) {
-                    _stderrToFile = new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "stderr");
-                } else {
-                    _stderrToFile = new File(outputFile.getAbsolutePath() + ".stderr");
-                }
+                _stderrToFile = stderrFile(outputFile);
                 _stderrTo = new FileOutputStream(_stderrToFile);
             }
         }
@@ -871,7 +910,7 @@ public class MaxineTester {
                         if (!stopTesting()) {
                             runWithSerializedOutput(new Runnable() {
                                 public void run() {
-                                    JUnitHarness.runJUnitTest(outputDir, autoTest);
+                                    runJUnitTest(outputDir, autoTest);
                                 }
                             });
                         }
@@ -893,8 +932,8 @@ public class MaxineTester {
          * @param outputDir where the result logs of the auto-test are to be placed
          * @param autoTest the auto-test to run
          */
-        private static void runJUnitTest(final File outputDir, String autoTest) {
-            final File outputFile = getOutputFile(outputDir, autoTest, null);
+        private void runJUnitTest(final File outputDir, String autoTest) {
+            final File outputFile = stdoutFile(outputDir, autoTest, null);
             final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
             final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
 
@@ -919,8 +958,8 @@ public class MaxineTester {
             out.print("JUnit auto-test: Stopped " + autoTest);
 
             final Set<String> unexpectedResults = new HashSet<String>();
-            JUnitHarness.parseAutoTestResults(passedFile, true, unexpectedResults);
-            JUnitHarness.parseAutoTestResults(failedFile, false, unexpectedResults);
+            parseAutoTestResults(passedFile, true, unexpectedResults);
+            parseAutoTestResults(failedFile, false, unexpectedResults);
 
             if (exitValue != 0) {
                 if (exitValue == PROCESS_TIMEOUT) {
@@ -948,7 +987,7 @@ public class MaxineTester {
          * @param passed specifies if the file list tests that passed or failed
          * @param unexpectedResults if non-null, then all unexpected test results are added to this set
          */
-        static void parseAutoTestResults(File resultsFile, boolean passed, Set<String> unexpectedResults) {
+        void parseAutoTestResults(File resultsFile, boolean passed, Set<String> unexpectedResults) {
             try {
                 final Sequence<String> lines = Files.readLines(resultsFile);
                 for (String line : lines) {
@@ -1081,7 +1120,7 @@ public class MaxineTester {
                 String nextTestOption = "-XX:TesterStart=0";
                 int executions = 0;
                 while (nextTestOption != null) {
-                    final File outputFile = getOutputFile(imageDir, "JAVA_TESTER" + (executions == 0 ? "" : "-" + executions), config);
+                    final File outputFile = stdoutFile(imageDir, "JAVA_TESTER" + (executions == 0 ? "" : "-" + executions), config);
                     final JavaCommand command = new JavaCommand((Class) null);
                     command.addArgument(nextTestOption);
                     final int exitValue = runMaxineVM(command, imageDir, null, outputFile, _javaTesterTimeOut.getValue());
@@ -1102,7 +1141,7 @@ public class MaxineTester {
                 }
             } else {
                 out.println("(image build failed)");
-                final File outputFile = getOutputFile(imageDir, "IMAGEGEN", config);
+                final File outputFile = stdoutFile(imageDir, "IMAGEGEN", config);
                 out.println("  -> see: " + fileRef(outputFile));
             }
         }
@@ -1150,12 +1189,42 @@ public class MaxineTester {
     }
 
     /**
-     * This class implements a test harness that is capable of running the SpecJVM98 suite of programs
-     * and comparing their outputs to that obtained by running each of them on a reference VM.
+     * A timed harness runs programs that time themselves internally (e.g. SpecJVM98 and DaCapo).
+     * These programs can serve as benchmarks and their times can be compared to the reference
+     * VM's times.
      *
      * @author Ben L. Titzer
      */
-    public static class SpecJVM98Harness implements Harness {
+    abstract static class TimedHarness {
+        void reportTiming(String testName, File outputDir) {
+            if (_timing.getValue()) {
+                final long baseline = getInternalTiming(jvmStdoutFile(outputDir, testName));
+                out().print(left50("    --> " + testName + " (" + baseline + " ms)"));
+                for (String config : _maxvmConfigList.getValue()) {
+                    final long timing = getInternalTiming(maxvmStdoutFile(outputDir, testName, config));
+                    if (timing > 0 && baseline > 0) {
+                        final float factor = timing / (float) baseline;
+                        out().print(left16(config + ": " + Strings.fixedDouble(factor, 3)));
+                    } else {
+                        out().print(left16(config + ":"));
+                    }
+                }
+                out().println();
+            }
+        }
+        abstract long getInternalTiming(File stdout);
+    }
+
+    /**
+     * This class implements a test harness that is capable of running the SpecJVM98 suite of programs
+     * and comparing their outputs to that obtained by running each of them on a reference VM. Note that
+     * internal timings do not include the VM startup time because they are reported by the program
+     * itself. For that reason, external timings (i.e. by recording the total time to run the VM process)
+     * should be used as well.
+     *
+     * @author Ben L. Titzer
+     */
+    public static class SpecJVM98Harness extends TimedHarness implements Harness {
         @Override
         public boolean run() {
             final File specjvm98Zip = _specjvm98Zip.getValue();
@@ -1180,10 +1249,24 @@ public class MaxineTester {
         }
 
         void runSpecJVM98Test(File outputDir, File imageDir, File workingDir, String test) {
+            final String testName = "SpecJVM98 " + test;
             final JavaCommand command = new JavaCommand("SpecApplication");
             command.addClasspath(".");
             command.addArgument(test);
-            testJavaProgram("SpecJVM98 " + test, command, outputDir, workingDir, imageDir, MaxineTesterConfiguration._specjvm98IgnoredLinePatterns);
+            testJavaProgram(testName, command, outputDir, workingDir, imageDir, MaxineTesterConfiguration._specjvm98IgnoredLinePatterns);
+            reportTiming(testName, outputDir);
+        }
+
+        @Override
+        long getInternalTiming(File stdout) {
+            // SpecJVM98 performs internal timing and reports it to stdout in seconds
+            String line = findLine(stdout, "======", "Finished in ");
+            if (line != null) {
+                line = line.substring(line.indexOf("Finished in") + 11);
+                line = line.substring(0, line.indexOf(" secs"));
+                return (long) (1000 * Float.parseFloat(line));
+            }
+            return -1;
         }
     }
 
@@ -1193,7 +1276,7 @@ public class MaxineTester {
      *
      * @author Ben L. Titzer
      */
-    public static class DaCapoHarness implements Harness {
+    public static class DaCapoHarness extends TimedHarness implements Harness {
         @Override
         public boolean run() {
             final File jarFile = _dacapoJar.getValue();
@@ -1216,9 +1299,23 @@ public class MaxineTester {
         }
 
         void runDaCapoTest(File outputDir, File imageDir, String test) {
+            final String testName = "DaCapo " + test;
             final JavaCommand command = new JavaCommand(_dacapoJar.getValue());
             command.addArgument(test);
-            testJavaProgram("DaCapo " + test, command, outputDir, null, imageDir, null);
+            testJavaProgram(testName, command, outputDir, null, imageDir, null);
+            reportTiming(testName, outputDir);
+        }
+
+        @Override
+        long getInternalTiming(File stdout) {
+            // DaCapo performs internal timing and reports it to stderr in milliseconds
+            String line = findLine(stderrFile(stdout), "===== DaCapo ", "PASSED in ");
+            if (line != null) {
+                line = line.substring(line.indexOf("PASSED in ") + 10);
+                line = line.substring(0, line.indexOf(" msec"));
+                return Long.parseLong(line);
+            }
+            return -1;
         }
     }
 }
