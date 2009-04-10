@@ -316,7 +316,7 @@ image_help="build a boot image
     Use \"max image -help\" to see what other options this command accepts."
 
 function run_image() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -build=DEBUG -run=java $@
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $@
 }
 
 #=======================================

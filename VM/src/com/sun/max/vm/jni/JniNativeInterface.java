@@ -165,7 +165,7 @@ public final class JniNativeInterface {
             pointer().setWord(i, functionPointer);
         }
         nativeInitializeJniInterface(pointer());
-        if (VMConfiguration.hostOrTarget().buildLevel() == BuildLevel.DEBUG) {
+        if (VMConfiguration.hostOrTarget().debugging()) {
             checkInvariants();
         }
     }

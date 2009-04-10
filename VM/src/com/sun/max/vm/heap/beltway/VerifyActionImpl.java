@@ -62,7 +62,7 @@ public class VerifyActionImpl implements Verify {
     }
 
     public void checkGripTag(Grip grip) {
-        if (VMConfiguration.hostOrTarget().buildLevel() == BuildLevel.DEBUG) {
+        if (VMConfiguration.hostOrTarget().debugging()) {
             if (!grip.isZero()) {
                 checkCellTag(Layout.originToCell(grip.toOrigin()));
             }

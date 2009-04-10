@@ -61,18 +61,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private static final VMStringOption _growPolicyOption = new VMStringOption("-XX:SemiSpaceGC:GrowPolicy:", false, "Double", "Grow policy for heap", MaxineVM.Phase.STARTING);
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
+        @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
-            verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex));
+            DebugHeap.verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex), _toSpace);
         }
     };
 
     private final PointerOffsetVisitor _pointerOffsetGripVerifier = new PointerOffsetVisitor() {
         public void visitPointerOffset(Pointer pointer, int offset) {
-            verifyGripAtIndex(pointer, offset, pointer.readGrip(offset));
+            DebugHeap.verifyGripAtIndex(pointer, offset, pointer.readGrip(offset), _toSpace);
         }
     };
 
     private final PointerIndexVisitor _pointerIndexGripUpdater = new PointerIndexVisitor() {
+        @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             final Grip oldGrip = pointer.getGrip(wordIndex);
             final Grip newGrip = mapGrip(oldGrip);
@@ -154,9 +156,10 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                     Log.println(_allocationMark.minus(_toSpace.start()).toInt());
                 }
 
-                // Calls the beforeGarbageCollection() method of the plugged monitor Scheme.
-                // Pre-verification of the heap.
-                verifyHeap();
+                if (vmConfiguration().debugging()) {
+                    // Pre-verification of the heap.
+                    verifyHeap();
+                }
 
                 ++_numberOfGarbageCollectionInvocations;
                 TeleHeapInfo.beforeGarbageCollection();
@@ -209,7 +212,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
-                verifyHeap();
+                if (vmConfiguration().debugging()) {
+                    verifyHeap();
+                }
 
                 TeleHeapInfo.afterGarbageCollection();
 
@@ -373,27 +378,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return _top.minus(_allocationMark).asSize();
     }
 
-    private void checkCellTag(Pointer cell) {
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            if (!DebugHeap.isValidCellTag(cell.getWord(-1))) {
-                Log.print("cell: ");
-                Log.print(cell);
-                Log.print("  origin: ");
-                Log.print(Layout.cellToOrigin(cell));
-                Log.println();
-                FatalError.unexpected("missing object tag");
-            }
-        }
-    }
-
-    private void checkGripTag(Grip grip) {
-        if (VMConfiguration.hostOrTarget().buildLevel() == BuildLevel.DEBUG) {
-            if (!grip.isZero()) {
-                checkCellTag(Layout.originToCell(grip.toOrigin()));
-            }
-        }
-    }
-
     private Grip mapGrip(Grip grip) {
         final Pointer fromOrigin = grip.toOrigin();
         if (VMConfiguration.hostOrTarget().debugging()) {
@@ -403,7 +387,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 Log.println();
                 FatalError.unexpected("invalid grip");
             }
-            checkGripTag(grip);
+            DebugHeap.checkGripTag(grip);
         }
         if (_fromSpace.contains(fromOrigin)) {
             final Grip forwardGrip = Layout.readForwardGrip(fromOrigin);
@@ -482,10 +466,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private void moveReachableObjects() {
         Pointer cell = _toSpace.start().asPointer();
         while (cell.lessThan(_allocationMark)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                cell = cell.plusWords(1);
-                checkCellTag(cell);
-            }
+            cell = DebugHeap.checkDebugCellTag(cell);
             cell = visitCell(cell);
         }
     }
@@ -633,11 +614,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         Address end;
         do {
             oldAllocationMark = _allocationMark.asPointer();
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                cell = oldAllocationMark.plusWords(1);
-            } else {
-                cell = oldAllocationMark;
-            }
+            cell = allocateWithDebugTag(oldAllocationMark);
             end = cell.plus(size);
             if (end.greaterThan(_top)) {
                 if (!Heap.collectGarbage(size)) {
@@ -652,11 +629,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                     }
                 }
                 oldAllocationMark = _allocationMark.asPointer();
-                if (VMConfiguration.hostOrTarget().debugging()) {
-                    cell = oldAllocationMark.plusWords(1);
-                } else {
-                    cell = oldAllocationMark;
-                }
+                cell = allocateWithDebugTag(oldAllocationMark);
                 end = cell.plus(size);
             }
         } while (_allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark);
@@ -665,13 +638,8 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     @INLINE
     public Pointer allocate(Size size) {
-        Pointer cell;
         final Pointer oldAllocationMark = _allocationMark.asPointer();
-        if (VMConfiguration.hostOrTarget().debugging()) {
-            cell = oldAllocationMark.plusWords(1);
-        } else {
-            cell = oldAllocationMark;
-        }
+        Pointer cell = allocateWithDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
         if (end.greaterThan(_top) || _allocationMarkPointer.compareAndSwapWord(oldAllocationMark, end) != oldAllocationMark) {
             cell = retryAllocate(size);
@@ -681,7 +649,15 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     @INLINE
-    @NO_SAFEPOINTS("TODO")
+    private Pointer allocateWithDebugTag(Pointer mark) {
+        if (VMConfiguration.hostOrTarget().debugging()) {
+            return mark.plusWords(1);
+        }
+        return mark;
+    }
+
+    @INLINE
+    @NO_SAFEPOINTS("initialization must be atomic")
     public Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor().componentClassActor().kind(), length);
         final Pointer cell = allocate(size);
@@ -689,27 +665,27 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     @INLINE
-    @NO_SAFEPOINTS("TODO")
+    @NO_SAFEPOINTS("initialization must be atomic")
     public Object createTuple(Hub hub) {
         final Pointer cell = allocate(hub.tupleSize());
         return Cell.plantTuple(cell, hub);
     }
 
-    @NO_SAFEPOINTS("TODO")
+    @NO_SAFEPOINTS("initialization must be atomic")
     public Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize();
         final Pointer cell = allocate(size);
         return Cell.plantHybrid(cell, size, hub);
     }
 
-    @NO_SAFEPOINTS("TODO")
+    @NO_SAFEPOINTS("initialization must be atomic")
     public Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size newSize = Layout.hybridLayout().getArraySize(length);
         final Pointer newCell = allocate(newSize);
         return Cell.plantExpandedHybrid(newCell, newSize, hybrid, length);
     }
 
-    @NO_SAFEPOINTS("TODO")
+    @NO_SAFEPOINTS("initialization must be atomic")
     public Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = allocate(size);
@@ -737,101 +713,24 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return false;
     }
 
-    private void verifyGripAtIndex(Address address, int index, Grip grip) {
-        if (grip.isZero()) {
-            return;
-        }
-        checkGripTag(grip);
-        final Pointer origin = grip.toOrigin();
-        if (!(_toSpace.contains(origin) || Heap.bootHeapRegion().contains(origin) || Code.contains(origin))) {
-            Log.print("invalid grip: ");
-            Log.print(origin.asAddress());
-            Log.print(" @ ");
-            Log.print(address);
-            Log.print(" + ");
-            Log.print(index);
-            Log.println();
-            FatalError.unexpected("invalid grip");
-        }
-    }
-
-    private void checkClassActor(ClassActor classActor) {
-    }
-
-    private Hub checkHub(Pointer origin) {
-        final Grip hubGrip = Layout.readHubGrip(origin);
-        FatalError.check(!hubGrip.isZero(), "null hub");
-        verifyGripAtIndex(origin, 0, hubGrip); // zero is not strictly correctly here
-        final Hub hub = UnsafeLoophole.cast(hubGrip.toJava());
-
-        Hub h = hub;
-        if (h instanceof StaticHub) {
-            final ClassActor classActor = hub.classActor();
-            checkClassActor(h.classActor());
-            FatalError.check(classActor.staticHub() == h, "lost static hub");
-            h = ObjectAccess.readHub(h);
-        }
-
-        for (int i = 0; i < 2; i++) {
-            h = ObjectAccess.readHub(h);
-        }
-        FatalError.check(ObjectAccess.readHub(h) == h, "lost hub hub");
-        return hub;
-    }
-
     private void verifyHeap() {
         if (Heap.traceGC()) {
             Log.println("Verifying heap...");
         }
         _heapRootsVerifier.run();
-        Pointer cell = _toSpace.start().asPointer();
-        while (cell.lessThan(_allocationMark)) {
-            if (VMConfiguration.hostOrTarget().debugging()) {
-                cell = cell.plusWords(1);
-                checkCellTag(cell);
-            }
-
-            final Pointer origin = Layout.cellToOrigin(cell);
-            final Hub hub = checkHub(origin);
-
-            if (Heap.traceGC()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Verifying ");
-                Log.print(hub.classActor().name().string());
-                Log.print(" at ");
-                Log.print(cell);
-                Log.print(" [");
-                Log.print(Layout.size(origin).toInt());
-                Log.println(" bytes]");
-                Log.unlock(lockDisabledSafepoints);
-            }
-
-            final SpecificLayout specificLayout = hub.specificLayout();
-            if (specificLayout.isTupleLayout()) {
-                TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);
-                cell = cell.plus(hub.tupleSize());
-            } else {
-                if (specificLayout.isHybridLayout()) {
-                    TupleReferenceMap.visitOriginOffsets(hub, origin, _pointerOffsetGripVerifier);
-                } else if (specificLayout.isReferenceArrayLayout()) {
-                    final int length = Layout.readArrayLength(origin);
-                    for (int index = 0; index < length; index++) {
-                        verifyGripAtIndex(origin, index * Kind.REFERENCE.size(), Layout.getGrip(origin, index));
-                    }
-                }
-                cell = cell.plus(Layout.size(origin));
-            }
-        }
+        DebugHeap.verifyRegion(_toSpace.start().asPointer(), _allocationMark, _toSpace, _pointerOffsetGripVerifier);
         if (Heap.traceGC()) {
             Log.println("done verifying heap");
         }
     }
 
     private void logSpaces() {
-        logSpace(_fromSpace);
-        logSpace(_toSpace);
-        Log.print("top "); Log.print(_top);
-        Log.print(", allocation mark "); Log.println(_allocationMark);
+        if (Heap.verbose()) {
+            logSpace(_fromSpace);
+            logSpace(_toSpace);
+            Log.print("top "); Log.print(_top);
+            Log.print(", allocation mark "); Log.println(_allocationMark);
+        }
     }
 
     private void logSpace(SemiSpaceMemoryRegion space) {
@@ -844,9 +743,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     private synchronized boolean shrink(Size amount) {
         final Size pageAlignedAmount = VirtualMemory.pageAlign(amount.asAddress()).asSize().dividedBy(2);
-        if (Heap.verbose()) {
-            logSpaces();
-        }
+        logSpaces();
         executeCollectorThread();
         if (immediateFreeSpace().greaterEqual(pageAlignedAmount)) {
             // give back part of the existing spaces
@@ -859,9 +756,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
             _top = _top.minus(amountAsInt);
             VirtualMemory.deallocate(_fromSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
             VirtualMemory.deallocate(_toSpace.end(), pageAlignedAmount, VirtualMemory.Type.HEAP);
-            if (Heap.verbose()) {
-                logSpaces();
-            }
+            logSpaces();
             return true;
         }
         return false;

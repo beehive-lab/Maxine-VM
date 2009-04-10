@@ -226,7 +226,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private void checkGripTag(Grip grip) {
-        if (VMConfiguration.hostOrTarget().buildLevel() == BuildLevel.DEBUG) {
+        if (VMConfiguration.hostOrTarget().debugging()) {
             if (!grip.isZero()) {
                 checkCellTag(Layout.originToCell(grip.toOrigin()));
             }
@@ -380,6 +380,7 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
     }
 
     private final PointerIndexVisitor _pointerIndexGripVerifier = new PointerIndexVisitor() {
+        @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             verifyGripAtIndex(pointer, wordIndex * Kind.REFERENCE.size(), pointer.getGrip(wordIndex));
         }

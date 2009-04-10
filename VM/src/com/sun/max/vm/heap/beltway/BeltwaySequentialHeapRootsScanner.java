@@ -58,6 +58,7 @@ public class BeltwaySequentialHeapRootsScanner {
     }
 
     final PointerIndexVisitor _pointerIndexVisitor = new PointerIndexVisitor() {
+        @Override
         public void visitPointerIndex(Pointer pointer, int wordIndex) {
             _beltwayPointerIndexVisitor.visitPointerIndex(pointer, wordIndex, _fromSpace, _toSpace);
         }
