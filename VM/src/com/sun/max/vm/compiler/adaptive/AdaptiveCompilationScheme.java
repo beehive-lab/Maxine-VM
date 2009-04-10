@@ -46,7 +46,7 @@ public class AdaptiveCompilationScheme extends AbstractVMScheme implements Compi
      */
     public static final int RECOMPILATION_DISABLED = -1;
 
-    private static final int DEFAULT_RECOMPILATION_THRESHOLD = 1500;
+    private static final int DEFAULT_RECOMPILATION_THRESHOLD = 5000;
 
     /**
      * Predicted maximum number of compilations for most methods.

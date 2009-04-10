@@ -52,7 +52,7 @@ public abstract class IrInterpreter<Method_Type extends IrMethod> {
     public static final String PROPERTY_PREFIX = "max.interpreter.";
 
     public static final OptionSet _options = new OptionSet();
-    protected static final Option<List<String>> _traceFiltersOption = _options.newStringListOption("filter", null,
+    protected static final Option<List<String>> _traceFiltersOption = _options.newStringListOption("filter", (String[]) null,
                     "trace filters, separated by \",\"");
     protected static final Option<Integer> _traceOption = _options.newIntegerOption("trace", 3,
                     "trace level");

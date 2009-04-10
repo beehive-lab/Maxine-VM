@@ -101,8 +101,12 @@ public class MaxineTester {
                     "Stop execution as soon as a single test fails.");
     private static final Option<File> _specjvm98Zip = _options.newFileOption("specjvm98", (File) null,
                     "Location of zipped up SpecJVM98 directory.");
+    private static final Option<List<String>> _specjvm98Tests = _options.newStringListOption("specjvm98-tests", MaxineTesterConfiguration._specjvm98Tests,
+                    "A list of DaCapo benchmarks to run.");
     private static final Option<File> _dacapoJar = _options.newFileOption("dacapo", (File) null,
                     "Location of DaCapo JAR file.");
+    private static final Option<List<String>> _dacapoTests = _options.newStringListOption("dacapo-tests", MaxineTesterConfiguration._dacapoTests,
+                    "A list of DaCapo benchmarks to run.");
     private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
                     "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
 
@@ -1240,7 +1244,7 @@ public class MaxineTester {
                 }
                 final File specjvm98Dir = new File(_outputDir.getValue(), "specjvm98");
                 Files.unzip(specjvm98Zip, specjvm98Dir);
-                for (String test : MaxineTesterConfiguration._specjvm98Tests) {
+                for (String test : _specjvm98Tests.getValue()) {
                     runSpecJVM98Test(outputDir, imageDir, specjvm98Dir, test);
                 }
                 return true;
@@ -1290,7 +1294,7 @@ public class MaxineTester {
                     out().println("Couldn't find DaCapo JAR file " + jarFile);
                     return false;
                 }
-                for (String test : MaxineTesterConfiguration._dacapoTests) {
+                for (String test : _dacapoTests.getValue()) {
                     runDaCapoTest(outputDir, imageDir, test);
                 }
                 return true;
