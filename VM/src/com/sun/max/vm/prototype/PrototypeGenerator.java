@@ -60,7 +60,7 @@ public final class PrototypeGenerator {
 
     private final OptionSet _options = new OptionSet();
 
-    private final Option<BuildLevel> _buildLevel = _options.newEnumOption("build", BuildLevel.DEBUG, BuildLevel.class,
+    private final Option<BuildLevel> _buildLevel = _options.newEnumOption("build", BuildLevel.PRODUCT, BuildLevel.class,
             "This option selects the build level of the virtual machine.");
     private final Option<ProcessorModel> _processorModel = _options.newEnumOption("cpu", null, ProcessorModel.class,
             "Specifies the target instruction set architecture.");
@@ -216,7 +216,7 @@ public final class PrototypeGenerator {
      * @return the default VM configuration
      */
     private VMConfiguration createDefaultVMConfiguration() {
-        return VMConfigurations.createStandardJit(BuildLevel.DEBUG, Platform.host());
+        return VMConfigurations.createStandardJit(BuildLevel.PRODUCT, Platform.host());
     }
 
     /**

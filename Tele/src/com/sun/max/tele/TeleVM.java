@@ -766,7 +766,7 @@ public abstract class TeleVM {
         }
         final Pointer cell = layoutScheme().generalLayout().originToCell(origin);
         Pointer p = cell;
-        if (_bootImage.vmConfiguration().buildLevel() == BuildLevel.DEBUG) {
+        if (_bootImage.vmConfiguration().debugging()) {
             p = p.minus(Word.size()); // can the tag be accessed?
         }
         if (!containsInHeap(p) && !containsInCode(p)) {
@@ -776,7 +776,7 @@ public abstract class TeleVM {
             //  Assume that any reference to the dynamic heap is invalid during GC.
             return false;
         }
-        if (_bootImage.vmConfiguration().buildLevel() == BuildLevel.DEBUG) {
+        if (_bootImage.vmConfiguration().debugging()) {
             try {
                 final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);

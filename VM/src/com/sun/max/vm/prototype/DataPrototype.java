@@ -1016,7 +1016,7 @@ public final class DataPrototype extends Prototype {
         _alignment = _dataModel.alignment().numberOfBytes();
         _layoutScheme = graphPrototype.vmConfiguration().layoutScheme();
         _gripScheme = graphPrototype.vmConfiguration().gripScheme();
-        _debugging = graphPrototype.vmConfiguration().buildLevel() == BuildLevel.DEBUG;
+        _debugging = graphPrototype.vmConfiguration().debugging();
 
         Trace.begin(1, DataPrototype.class.getSimpleName());
 

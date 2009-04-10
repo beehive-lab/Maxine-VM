@@ -25,7 +25,7 @@ import com.sun.max.unsafe.*;
 /**
  * @author Bernd Mathiske
  */
-public interface PointerIndexVisitor {
+public abstract class PointerIndexVisitor {
 
     /**
      * Visits the address denoted by a given pointer and word-based index. That is, visits the effective address
@@ -34,5 +34,5 @@ public interface PointerIndexVisitor {
      * @param pointer
      * @param wordIndex
      */
-    void visitPointerIndex(Pointer pointer, int wordIndex);
+    public abstract void visitPointerIndex(Pointer pointer, int wordIndex);
 }
