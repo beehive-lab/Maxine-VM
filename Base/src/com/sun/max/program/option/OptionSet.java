@@ -540,6 +540,17 @@ public class OptionSet {
         return addOption(new Option<List<String>>(name, defaultValue == null ? null : OptionTypes.COMMA_SEPARATED_STRING_LIST_TYPE.parseValue(defaultValue), OptionTypes.COMMA_SEPARATED_STRING_LIST_TYPE, help));
     }
 
+    public Option<List<String>> newStringListOption(String name, String[] defaultValue, String help) {
+        List<String> list = null;
+        if (defaultValue != null) {
+            list = new ArrayList<String>(defaultValue.length);
+            for (String s : defaultValue) {
+                list.add(s);
+            }
+        }
+        return addOption(new Option<List<String>>(name, list, OptionTypes.COMMA_SEPARATED_STRING_LIST_TYPE, help));
+    }
+
     public Option<List<String>> newStringListOption(String name, String defaultValue, char separator, String help) {
         final OptionTypes.StringListType type = new OptionTypes.StringListType(separator);
         return addOption(new Option<List<String>>(name, defaultValue == null ? null : type.parseValue(defaultValue), type, help));
