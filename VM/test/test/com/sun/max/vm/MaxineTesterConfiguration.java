@@ -20,6 +20,7 @@
  */
 package test.com.sun.max.vm;
 
+import java.io.*;
 import java.util.*;
 
 import junit.framework.*;
@@ -64,6 +65,66 @@ public class MaxineTesterConfiguration {
         "Finished in",
         "Decoding time:"
     };
+
+    static final Object[][] _shootoutBenchmarks = {
+        {"ackermann",       "10"},
+        {"ary",             "10000", "300000"},
+        {"binarytrees",     "12", "16", "18"},
+        {"chameneos",       "1000", "250000"},
+        {"chameneosredux",  "1000", "250000"},
+        {"except",          "10000", "100000", "1000000"},
+        {"fannkuch",        "8", "10", "11"},
+        {"fasta",           "1000", "250000"},
+        {"fibo",            "22", "32", "42"},
+        {"harmonic",        "1000000", "200000000"},
+        {"hash",            "100000", "1000000"},
+        {"hash2",           "100", "1000", "2000"},
+        {"heapsort",        "10000", "1000000", "3000000"},
+        {"knucleotide",     new File("knucleotide.stdin")},
+        {"lists",           "10", "100", "1000"},
+        {"magicsquares",    "3", "4"},
+        {"mandelbrot",      "100", "1000", "5000"},
+        {"matrix",          "1000", "10000", "20000"},
+        {"message",         "1000", "5000", "15000"},
+        {"meteor",          "2098"},
+        {"methcall",        "100000000", "1000000000"},
+        {"moments",         new File("moments.stdin")},
+        {"nbody",           "500000", "5000000"},
+        {"nestedloop",      "10", "20", "35"},
+        {"nsieve",          "8", "10", "11"},
+        {"nsievebits",      "8", "10", "11"},
+        {"objinst",         "100000", "1000000", "5000000"},
+        {"partialsums",     "10000", "2000000"},
+        {"pidigits",        "30", "1000"},
+        {"process",         "10", "250"},
+        {"prodcons",        "100", "100000"},
+        {"random",          "1000000", "500000000"},
+        {"raytracer",       "10", "200"},
+        {"recursive",       "10"},
+        {"regexdna",        new File("regexdna.stdin")},
+        {"regexmatch",      new File("regexmatch.stdin")},
+        {"revcomp",         new File("revcomp.stdin")},
+        {"reversefile",     new File("reversefile.stdin")},
+        {"sieve",           "100", "20000"},
+        {"spectralnorm",    "100", "3000"},
+        {"spellcheck",      new File("spellcheck.stdin")},
+        {"strcat",          "100000", "5000000"},
+        {"sumcol",          new File("sumcol.stdin")},
+        {"takfp",           "5", "11"},
+        {"threadring",      "100", "50000"},
+        {"wc",              new File("wc.stdin")},
+        {"wordfreq",         new File("wordfreq.stdin")},
+    };
+
+    static final Map<String, Object[]> _shootoutInputs = buildShootoutMap();
+
+    static Map<String, Object[]> buildShootoutMap() {
+        final Map<String, Object[]> map = new HashMap<String, Object[]>();
+        for (Object[] array : _shootoutBenchmarks) {
+            map.put((String) array[0], Arrays.copyOfRange(array, 1, array.length));
+        }
+        return map;
+    }
 
     static final Class[] _outputTestClasses = {
         test.output.HelloWorld.class,
@@ -388,5 +449,13 @@ public class MaxineTesterConfiguration {
             ProgramError.unexpected("Unknown Maxine VM option configuration: " + maxvmConfig);
         }
         return _maxvmConfigs.get(maxvmConfig);
+    }
+
+    public static String[] shootoutTests() {
+        return _shootoutInputs.keySet().toArray(new String[0]);
+    }
+
+    public static Object[] shootoutInputs(String benchmark) {
+        return _shootoutInputs.get(benchmark);
     }
 }
