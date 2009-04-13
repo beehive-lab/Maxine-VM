@@ -81,7 +81,7 @@ public class MaxineTester {
     private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs",
                     MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
-    private static final Option<List<String>> _tests = _options.newStringListOption("tests", "junit,output,javatester,dacapo,specjvm98",
+    private static final Option<List<String>> _tests = _options.newStringListOption("tests", "junit,output,javatester,dacapo,specjvm98,shootout",
                     "The list of test harnesses to run, which may include JUnit tests (junit), output tests (output), " +
                     "the JavaTester (javatester), DaCapo (dacapo), and SpecJVM98 (specjvm98).");
     private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs",
@@ -107,6 +107,10 @@ public class MaxineTester {
                     "Location of DaCapo JAR file.");
     private static final Option<List<String>> _dacapoTests = _options.newStringListOption("dacapo-tests", MaxineTesterConfiguration._dacapoTests,
                     "A list of DaCapo benchmarks to run.");
+    private static final Option<File> _shootoutDir = _options.newFileOption("shootout", (File) null,
+                    "Location of the Programming Language Shootout tests.");
+    private static final Option<List<String>> _shootoutTests = _options.newStringListOption("shootout-tests", MaxineTesterConfiguration.shootoutTests(),
+                    "A list of Programming Language Shootout benchmarks to run.");
     private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
                     "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
 
@@ -140,6 +144,9 @@ public class MaxineTester {
                 } else if ("specjvm98".equals(test)) {
                     // run the SpecJVM98 tests
                     new SpecJVM98Harness().run();
+                } else if ("shootout".equals(test)) {
+                    // run the shootout tests
+                    new ShootoutHarness().run();
                 } else {
                     out().println("Unrecognized test harness: " + test);
                     System.exit(-1);
@@ -457,7 +464,7 @@ public class MaxineTester {
         final String basePath = new File(_outputDir.getValue()).getAbsolutePath() + File.separator;
         final String path = file.getAbsolutePath();
         if (path.startsWith(basePath)) {
-            return "file:" + path.substring(basePath.length());
+            return "file: " + path.substring(basePath.length());
         }
         return file.getAbsolutePath();
     }
@@ -1321,5 +1328,49 @@ public class MaxineTester {
             }
             return -1;
         }
+    }
+
+    /**
+     * This class implements a test harness that is capable of running the DaCapo suite of programs
+     * and comparing their outputs to that obtained by running each of them on a reference VM.
+     *
+     * @author Ben L. Titzer
+     */
+    public static class ShootoutHarness implements Harness {
+        @Override
+        public boolean run() {
+            final File shootoutDir = _shootoutDir.getValue();
+            if (shootoutDir == null) {
+                return true;
+            }
+            final File outputDir = new File(_outputDir.getValue(), "java");
+            final File imageDir = generateJavaRunSchemeImage();
+            if (imageDir != null) {
+                if (!shootoutDir.exists()) {
+                    out().println("Couldn't find shootout directory " + shootoutDir);
+                    return false;
+                }
+                for (String test : _shootoutTests.getValue()) {
+                    runShootoutTest(outputDir, imageDir, shootoutDir, test);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        void runShootoutTest(File outputDir, File imageDir, File shootoutDir, String test) {
+            final String testName = "Shootout " + test;
+            final JavaCommand command = new JavaCommand("shootout." + test);
+            command.addClasspath(new File(shootoutDir, "bin").getAbsolutePath());
+
+            for (Object input : MaxineTesterConfiguration.shootoutInputs(test)) {
+                final JavaCommand c = command.copy();
+                if (input instanceof String) {
+                    c.addArgument((String) input);
+                    testJavaProgram(testName + "-" + input, c, outputDir, null, imageDir, null);
+                }
+            }
+        }
+
     }
 }
