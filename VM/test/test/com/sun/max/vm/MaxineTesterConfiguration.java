@@ -127,6 +127,8 @@ public class MaxineTesterConfiguration {
     }
 
     static final Class[] _outputTestClasses = {
+        test.output.JavacTest.class,
+        test.output.PrintDate.class,
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.ExitCode.class,
@@ -150,7 +152,6 @@ public class MaxineTesterConfiguration {
         test.output.JREJarLoadTest.class,
         test.output.FileReader.class,
         test.output.ZipFileReader.class,
-        test.output.JavacTest.class,
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
@@ -195,11 +196,13 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
         test.output.JavacTest.class,
+        test.output.PrintDate.class,
         _expectedAutoTestFailures
     );
 
     static final Set<String> _expectedFailuresLinuxAMD64 = toTestNames(
         test.output.JavacTest.class,
+        test.output.PrintDate.class,
         test.threads.Thread_isInterrupted02.class,
         _expectedAutoTestFailures
     );
@@ -211,12 +214,15 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
         test.output.JavacTest.class,
+        test.output.PrintDate.class,
         _expectedAutoTestFailures
     );
 
     static final Set<String> _nonDeterministicFailuresDarwinAMD64 = toTestNames();
 
     static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
+        test.output.JavacTest.class,
+        test.output.PrintDate.class,
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.ExitCode.class,
@@ -240,7 +246,6 @@ public class MaxineTesterConfiguration {
         test.output.FileReader.class,
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
-        test.output.JavacTest.class,
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
@@ -254,6 +259,8 @@ public class MaxineTesterConfiguration {
     );
 
     static final Set<String> _expectedJitFailuresSolarisSPARCV9 = toTestNames(
+        test.output.JavacTest.class,
+        test.output.PrintDate.class,
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
         test.output.SafepointWhileInNative.class,
@@ -276,7 +283,6 @@ public class MaxineTesterConfiguration {
         test.output.FileReader.class,
         test.output.ZipFileReader.class,
         test.output.FloatNanTest.class,
-        test.output.JavacTest.class,
         test.output.FloatNanTest.class,
         test.output.JavacTest.class,
         test.output.WeakReferenceTest01.class,
