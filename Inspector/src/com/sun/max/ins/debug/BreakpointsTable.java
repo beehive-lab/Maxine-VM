@@ -705,7 +705,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             if (teleTargetMethod != null) {
                 _shortName = inspection().nameDisplay().shortName(teleTargetMethod);
                 _longName = inspection().nameDisplay().longName(teleTargetMethod, address);
-                _codeStart = teleTargetMethod.codeStart();
+                _codeStart = teleTargetMethod.getCodeStart();
                 _location = address.minus(_codeStart.asAddress()).toInt();
             } else {
                 final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(teleVM(), address);
@@ -717,7 +717,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 } else {
                     final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.make(teleVM(), address);
                     if (teleNativeTargetRoutine != null) {
-                        _codeStart = teleNativeTargetRoutine.codeStart();
+                        _codeStart = teleNativeTargetRoutine.getCodeStart();
                         _location = address.minus(_codeStart.asAddress()).toInt();
                         _shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
                         _longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);

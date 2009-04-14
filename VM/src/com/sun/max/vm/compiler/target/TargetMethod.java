@@ -96,6 +96,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * @see #catchRangePositions()
      */
+    @INSPECTED
     private int[] _catchRangePositions;
 
     /**
@@ -143,6 +144,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     /**
      * @see #catchRangePositions()
      */
+    @INSPECTED
     private int[] _catchBlockPositions;
 
     /**
@@ -368,6 +370,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return (_directCallees == null) ? 0 : _directCallees.length;
     }
 
+    @INSPECTED
     private ClassMethodActor[] _directCallees;
 
     /**
@@ -526,6 +529,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
         return _frameSize;
     }
 
+    @INSPECTED
     private int _frameReferenceMapSize;
 
     /**

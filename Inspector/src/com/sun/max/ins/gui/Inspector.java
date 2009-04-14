@@ -306,14 +306,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         }
     }
 
-    /**
-     * @return an action that will present a dialog that enables selection of view options;
-     * returns a disabled dummy action if not overridden.
-     */
-    public InspectorAction getViewOptionsAction() {
-        return new DummyViewOptionsAction(inspection());
-    }
-
     private static final class DummyViewOptionsAction extends InspectorAction {
         DummyViewOptionsAction(Inspection inspection) {
             super(inspection, "View Options");
@@ -326,10 +318,11 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * @return an action that will refresh any state from the {@link TeleVM}.
+     * @return an action that will present a dialog that enables selection of view options;
+     * returns a disabled dummy action if not overridden.
      */
-    public RefreshAction getRefreshAction() {
-        return new RefreshAction();
+    public InspectorAction getViewOptionsAction() {
+        return new DummyViewOptionsAction(inspection());
     }
 
     public final class RefreshAction extends InspectorAction {
@@ -345,10 +338,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * @return an action that will close this inspector
+     * @return an action that will refresh any state from the {@link TeleVM}.
      */
-    public CloseAction getCloseAction() {
-        return new CloseAction(inspection(), "Close");
+    public RefreshAction getRefreshAction() {
+        return new RefreshAction();
     }
 
     private final class CloseAction extends InspectorAction {
@@ -364,8 +357,11 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     }
 
-    public CloseOthersAction getCloseOtherInspectorsAction() {
-        return new CloseOthersAction();
+    /**
+     * @return an action that will close this inspector
+     */
+    public CloseAction getCloseAction() {
+        return new CloseAction(inspection(), "Close");
     }
 
     public final class CloseOthersAction extends InspectorAction {
@@ -379,6 +375,29 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
             inspection().desktopPane().add((InternalInspectorFrame) frame());
             inspection().repaint();
         }
+    }
+
+    public CloseOthersAction getCloseOtherInspectorsAction() {
+        return new CloseOthersAction();
+    }
+
+    private static final class DummyPrintAction extends InspectorAction {
+        DummyPrintAction(Inspection inspection) {
+            super(inspection, "Print");
+            setEnabled(false);
+        }
+
+        @Override
+        protected void procedure() {
+        }
+    }
+
+    /**
+     * @return an action that will present a print dialog for printing the contents of the view;
+     * returns a disabled dummy action if not overridden.
+     */
+    public InspectorAction getPrintAction() {
+        return new DummyPrintAction(inspection());
     }
 
 

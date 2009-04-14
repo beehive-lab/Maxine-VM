@@ -90,19 +90,19 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
     private void triggerDeoptimization(TeleTargetMethod teleTargetMethod) {
         final int[] stopPositions = teleTargetMethod.getStopPositions();
         int i;
-        for (i = 0; i < teleTargetMethod.numberOfDirectCalls(); i++) {
-            final Pointer callSite = teleTargetMethod.codeStart().plus(stopPositions[i]);
+        for (i = 0; i < teleTargetMethod.getNumberOfDirectCalls(); i++) {
+            final Pointer callSite = teleTargetMethod.getCodeStart().plus(stopPositions[i]);
             final Pointer patchAddress = callSite.plus(makeDeoptimizer().directCallSize());
             teleVM().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
         }
-        for (; i < teleTargetMethod.numberOfIndirectCalls(); i++) {
-            final Pointer callSite = teleTargetMethod.codeStart().plus(stopPositions[i]);
+        for (; i < teleTargetMethod.getNumberOfIndirectCalls(); i++) {
+            final Pointer callSite = teleTargetMethod.getCodeStart().plus(stopPositions[i]);
             final byte firstInstructionByte = teleVM().dataAccess().readByte(callSite);
             final Pointer patchAddress = callSite.plus(makeDeoptimizer().indirectCallSize(firstInstructionByte));
             teleVM().dataAccess().writeBytes(patchAddress, makeDeoptimizer().illegalInstruction());
         }
-        for (; i < teleTargetMethod.numberOfSafepoints(); i++) {
-            final Pointer safepoint = teleTargetMethod.codeStart().plus(stopPositions[i]);
+        for (; i < teleTargetMethod.getNumberOfSafepoints(); i++) {
+            final Pointer safepoint = teleTargetMethod.getCodeStart().plus(stopPositions[i]);
             teleVM().dataAccess().writeBytes(safepoint, makeDeoptimizer().illegalInstruction());
         }
     }
@@ -120,7 +120,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
                     final int targetCodePosition = bytecodeToTargetCodePositionMap[key()._bytecodePosition];
-                    final Address targetAddress = teleTargetMethod.codeStart().plus(targetCodePosition);
+                    final Address targetAddress = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                     final TeleTargetBreakpoint teleTargetBreakpoint = teleVM().makeTargetBreakpoint(targetAddress);
                     teleTargetBreakpoint.setEnabled(true);
                     _teleTargetBreakpoints.append(teleTargetBreakpoint);
@@ -143,7 +143,7 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     final TeleJitTargetMethod teleJitTargetMethod = (TeleJitTargetMethod) teleTargetMethod;
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
                     final int targetCodePosition = bytecodeToTargetCodePositionMap[key()._bytecodePosition];
-                    final Address targetAddress = teleTargetMethod.codeStart().plus(targetCodePosition);
+                    final Address targetAddress = teleTargetMethod.getCodeStart().plus(targetCodePosition);
                     teleVM().removeTargetBreakpoint(targetAddress);
                     // Assume for now the whole VM is stopped; there will be races to be fixed otherwise, likely with an agent thread in the {@link TeleVM}.
                 }
