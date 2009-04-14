@@ -139,11 +139,15 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess StringConstant_value = new TeleInstanceReferenceFieldAccess(StringConstant.class, "_value", String.class);
     public final TeleInstanceReferenceFieldAccess TargetABI_callEntryPoint = new TeleInstanceReferenceFieldAccess(TargetABI.class, "_callEntryPoint", CallEntryPoint.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_abi = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_abi", TargetABI.class);
+    public final TeleInstanceReferenceFieldAccess TargetMethod_catchBlockPositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_catchBlockPositions", int[].class);
+    public final TeleInstanceReferenceFieldAccess TargetMethod_catchRangePositions = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_catchRangePositions", int[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_classMethodActor = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_classMethodActor", ClassMethodActor.class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_code = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_code", byte[].class);
     public final TeleInstanceWordFieldAccess TargetMethod_codeStart = new TeleInstanceWordFieldAccess(TargetMethod.class, "_codeStart");
     public final TeleInstanceReferenceFieldAccess TargetMethod_compressedJavaFrameDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_compressedJavaFrameDescriptors", byte[].class);
+    public final TeleInstanceReferenceFieldAccess TargetMethod_directCallees = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_directCallees", ClassMethodActor[].class);
     public final TeleInstanceReferenceFieldAccess TargetMethod_encodedInlineDataDescriptors = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_encodedInlineDataDescriptors", byte[].class);
+    public final TeleInstanceIntFieldAccess TargetMethod_frameReferenceMapSize = new TeleInstanceIntFieldAccess(TargetMethod.class, "_frameReferenceMapSize");
     public final TeleInstanceIntFieldAccess TargetMethod_numberOfIndirectCalls = new TeleInstanceIntFieldAccess(TargetMethod.class, "_numberOfIndirectCalls");
     public final TeleInstanceIntFieldAccess TargetMethod_numberOfSafepoints = new TeleInstanceIntFieldAccess(TargetMethod.class, "_numberOfSafepoints");
     public final TeleInstanceReferenceFieldAccess TargetMethod_referenceLiterals = new TeleInstanceReferenceFieldAccess(TargetMethod.class, "_referenceLiterals", Object[].class);

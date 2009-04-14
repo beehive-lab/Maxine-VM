@@ -49,14 +49,14 @@ public final class NativeMethodInspector extends MethodInspector {
         _teleTargetRoutine = teleTargetRoutine;
         if (_teleTargetRoutine instanceof TeleRuntimeStub) {
             final TeleRuntimeStub teleRuntimeStub = (TeleRuntimeStub) _teleTargetRoutine;
-            _shortName = Strings.capitalizeFirst(teleRuntimeStub.name(), false);
+            _shortName = Strings.capitalizeFirst(teleRuntimeStub.getName(), false);
             _longName = _shortName;
         } else if (_teleTargetRoutine instanceof TeleNativeTargetRoutine) {
             final TeleNativeTargetRoutine teleNativeTargetRoutine  = (TeleNativeTargetRoutine) _teleTargetRoutine;
             _shortName = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
             _longName = inspection().nameDisplay().longName(teleNativeTargetRoutine);
         } else {
-            _shortName = _teleTargetRoutine.name();
+            _shortName = _teleTargetRoutine.getName();
             _longName = _shortName;
         }
         createFrame(null);
