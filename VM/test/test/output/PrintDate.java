@@ -25,6 +25,7 @@ import java.util.*;
 
 public class PrintDate {
     public static void main(String[] args) {
-        System.out.println(new Date().toString());
+        final Date date = new Date(1000000000000L);
+        System.out.println(date);
     }
 }
