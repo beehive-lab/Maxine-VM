@@ -33,6 +33,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -357,6 +358,25 @@ public class NoninlineTemplateRuntime {
     @NEVER_INLINE
     public static void resolveAndCheckcast(ResolutionGuard guard, final Object object) {
         Snippet.CheckCast.checkCast(resolveClass(guard), object);
+    }
+
+    @NEVER_INLINE
+    public static ClassActor resolveClass(ResolutionGuard guard) {
+        final ConstantPool constantPool = guard.constantPool();
+        final int index = guard.constantPoolIndex();
+        final ClassActor classActor = constantPool.classAt(index).resolve(constantPool, index);
+        guard.set(classActor);
+        return classActor;
+    }
+
+    @NEVER_INLINE
+    public static Object resolveMirror(ResolutionGuard guard) {
+        return resolveClass(guard).mirror();
+    }
+
+    @NEVER_INLINE
+    public static Object getClassMirror(ClassActor classActor) {
+        return classActor.mirror();
     }
 
 
