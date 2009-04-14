@@ -267,7 +267,7 @@ public class WordValueLabel extends ValueLabel {
                         } else {
                             _teleTargetMethod = TeleTargetMethod.make(teleVM(), newValue.toWord().asAddress());
                             if (_teleTargetMethod != null) {
-                                final Address codeStart = _teleTargetMethod.codeStart();
+                                final Address codeStart = _teleTargetMethod.getCodeStart();
                                 final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
                                 final Word optimizedEntryPoint = codeStart.plus(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offsetFromCodeStart());
                                 if (newValue.toWord().equals(optimizedEntryPoint) || newValue.toWord().equals(jitEntryPoint)) {
