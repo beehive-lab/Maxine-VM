@@ -45,17 +45,18 @@ public interface TeleTargetRoutine extends TargetMethodAccess {
     /**
      * @return a name assigned in the Tele layer for identification purposes.
      */
-    String name();
+    String getName();
 
     /**
      * @return {@link TeleVM} address of the first instruction in the target code represented by this routine. Note that this
      *         may differ from the designated {@linkplain #callEntryPoint() entry point} of the code.
+     *
      */
-    Address codeStart();
+    Address getCodeStart();
 
     /**
      * @return target address at which this code is entered from a call (which may not be the same as the
-     *         {@linkplain #codeStart() start address})
+     *         {@linkplain #getCodeStart() start address})
      */
     Address callEntryPoint();
 
