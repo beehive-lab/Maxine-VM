@@ -58,6 +58,9 @@ public final class TeleDisassembler {
     private TeleDisassembler() {
     }
 
+    /**
+     * Cause the disassembler to load and initialize static state, which can be a bit time consuming.
+     */
     public static void initialize(final TeleVM teleVM) {
         final Thread thread = new Thread() {
             @Override

@@ -242,7 +242,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     private String positionString(TeleTargetMethod teleTargetMethod, Address address) {
-        final Pointer entry = teleTargetMethod.codeStart();
+        final Pointer entry = teleTargetMethod.getCodeStart();
         final long position = address.minus(entry.asAddress()).toLong();
         return position == 0 ? "" : "+0x" + Long.toHexString(position);
     }
@@ -307,16 +307,16 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      * E.g. user supplied name or "@0xffffffffffffffff"
      */
     public String shortName(TeleNativeTargetRoutine teleNativeTargetRoutine) {
-        final String title = teleNativeTargetRoutine.name();
-        return title == null ? "@0x" + teleNativeTargetRoutine.codeStart().toHexString() : title;
+        final String title = teleNativeTargetRoutine.getName();
+        return title == null ? "@0x" + teleNativeTargetRoutine.getCodeStart().toHexString() : title;
     }
 
     /**
      * E.g. user supplied name or "Native code @0xffffffffffffffff"
      */
     public String longName(TeleNativeTargetRoutine teleNativeTargetRoutine) {
-        final String title = teleNativeTargetRoutine.name();
-        return title == null ? "Native code @0x" + teleNativeTargetRoutine.codeStart().toHexString() : "Native code: " + title;
+        final String title = teleNativeTargetRoutine.getName();
+        return title == null ? "Native code @0x" + teleNativeTargetRoutine.getCodeStart().toHexString() : "Native code: " + title;
     }
 
     /**

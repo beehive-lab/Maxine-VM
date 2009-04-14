@@ -83,7 +83,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
 
     private final String _name;
 
-    public String name() {
+    public String getName() {
         return _name;
     }
 
@@ -100,7 +100,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
         teleVM().registerTeleTargetRoutine(this);
     }
 
-    public Address codeStart() {
+    public Address getCodeStart() {
         return _targetCodeRegion.start();
     }
 
@@ -109,15 +109,15 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     }
 
     public Address callEntryPoint() {
-        return codeStart();
+        return getCodeStart();
     }
 
     private IndexedSequence<TargetCodeInstruction> _instructions;
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (_instructions == null) {
-            final byte[] code = teleVM().dataAccess().readFully(codeStart(), codeSize().toInt());
-            _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, null);
+            final byte[] code = teleVM().dataAccess().readFully(getCodeStart(), codeSize().toInt());
+            _instructions = TeleDisassembler.decode(teleVM(), getCodeStart(), code, null);
         }
         return _instructions;
     }

@@ -105,7 +105,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
         teleVM().registerTeleTargetRoutine(this);
     }
 
-    public String name() {
+    public String getName() {
         return _runtimeStub.name();
     }
 
@@ -129,7 +129,7 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
         return -1;
     }
 
-    public Address codeStart() {
+    public Address getCodeStart() {
         return _runtimeStub.start();
     }
 
@@ -138,15 +138,15 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
     }
 
     public Address callEntryPoint() {
-        return codeStart();
+        return getCodeStart();
     }
 
     private IndexedSequence<TargetCodeInstruction> _instructions;
 
     public IndexedSequence<TargetCodeInstruction> getInstructions() {
         if (_instructions == null) {
-            final byte[] code = teleVM().dataAccess().readFully(codeStart(), codeSize().toInt());
-            _instructions = TeleDisassembler.decode(teleVM(), codeStart(), code, null);
+            final byte[] code = teleVM().dataAccess().readFully(getCodeStart(), codeSize().toInt());
+            _instructions = TeleDisassembler.decode(teleVM(), getCodeStart(), code, null);
         }
         return _instructions;
     }
