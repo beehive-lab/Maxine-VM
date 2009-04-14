@@ -21,7 +21,6 @@
 package com.sun.max.vm.template.source;
 
 import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveArrayClass.*;
-import static com.sun.max.vm.compiler.snippet.ResolutionSnippet.ResolveClass.*;
 import static com.sun.max.vm.template.source.NoninlineTemplateRuntime.*;
 
 import com.sun.max.annotate.*;
@@ -35,7 +34,6 @@ import com.sun.max.vm.compiler.snippet.NonFoldableSnippet.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.template.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -1029,7 +1027,7 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.INSTANCEOF)
     public static void instanceof_(ResolutionGuard guard) {
-        final ClassActor classActor = UnsafeLoophole.cast(resolveClass(guard));
+        final ClassActor classActor = UnsafeLoophole.cast(NoninlineTemplateRuntime.resolveClass(guard));
         final Object object = JitStackFrameOperation.peekReference(0);
         JitStackFrameOperation.pokeInt(0, UnsafeLoophole.booleanToByte(Snippet.InstanceOf.instanceOf(classActor, object)));
     }
@@ -1275,8 +1273,8 @@ public final class UnoptimizedBytecodeTemplateSource {
     @INLINE
     @BYTECODE_TEMPLATE(bytecode = Bytecode.LDC, kind = KindEnum.REFERENCE)
     public static void unresolved_class_ldc(ResolutionGuard guard) {
-        final ClassActor classActor = resolveClass(guard);
-        final Object mirror = TemplateRuntime.getClassMirror(classActor);
+        final ClassActor classActor = NoninlineTemplateRuntime.resolveClass(guard);
+        final Object mirror = NoninlineTemplateRuntime.getClassMirror(classActor);
         JitStackFrameOperation.pushReference(mirror);
     }
 
@@ -1513,7 +1511,7 @@ public final class UnoptimizedBytecodeTemplateSource {
 
     @INLINE
     public static void multianewarray(ResolutionGuard guard, int[] lengthsShared) {
-        final ClassActor arrayClassActor = resolveClass(guard);
+        final ClassActor arrayClassActor = NoninlineTemplateRuntime.resolveClass(guard);
 
         // Need to use an unsafe cast to remove the checkcast inserted by javac as that causes this
         // template to have a reference literal in its compiled form.
