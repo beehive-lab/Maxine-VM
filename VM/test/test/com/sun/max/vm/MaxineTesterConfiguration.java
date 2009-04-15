@@ -214,7 +214,7 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
         test.output.JavacTest.class,
-        test.output.PrintDate.class,
+        //test.output.PrintDate.class,
         _expectedAutoTestFailures
     );
 
