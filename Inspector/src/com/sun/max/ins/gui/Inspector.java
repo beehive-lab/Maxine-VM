@@ -21,6 +21,11 @@
 package com.sun.max.ins.gui;
 
 import java.awt.*;
+import java.awt.print.*;
+import java.text.*;
+import java.util.*;
+
+import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
@@ -168,6 +173,13 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         createView(teleVM().epoch());
         _frame.setPreferredSize(size);
         frame().pack();
+    }
+
+    /**
+     * @return the visible table for inspectors with table-based views; null if none.
+     */
+    protected InspectorTable getTable() {
+        return null;
     }
 
     public void vmStateChanged(long epoch, boolean force) {
@@ -325,7 +337,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return new DummyViewOptionsAction(inspection());
     }
 
-    public final class RefreshAction extends InspectorAction {
+    private final class RefreshAction extends InspectorAction {
         private RefreshAction() {
             super(inspection(), "Refresh");
         }
@@ -364,7 +376,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         return new CloseAction(inspection(), "Close");
     }
 
-    public final class CloseOthersAction extends InspectorAction {
+    private final class CloseOthersAction extends InspectorAction {
         private CloseOthersAction() {
             super(inspection(), "Close Other Inspectors");
         }
@@ -379,6 +391,26 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     public CloseOthersAction getCloseOtherInspectorsAction() {
         return new CloseOthersAction();
+    }
+
+    /**
+     * @return the default print action for table-based views; depends on an overridden
+     * {@link #getTable()} method to provide the table.
+     */
+    protected final InspectorAction getDefaultPrintAction() {
+        return new InspectorAction(inspection(), "Print") {
+            @Override
+            public void procedure() {
+                final MessageFormat footer = new MessageFormat("Maxine: " + getTextForTitle() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
+                try {
+                    final InspectorTable inspectorTable = getTable();
+                    assert inspectorTable != null;
+                    inspectorTable.print(JTable.PrintMode.FIT_WIDTH, null, footer);
+                } catch (PrinterException printerException) {
+                    inspection().errorMessage("Print failed: " + printerException.getMessage());
+                }
+            }
+        };
     }
 
     private static final class DummyPrintAction extends InspectorAction {

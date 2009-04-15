@@ -30,6 +30,7 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.tele.debug.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A panel for displaying the values in one of VM thread local storage areas associated
@@ -70,6 +71,18 @@ public final class ThreadLocalsPanel extends InspectorPanel {
         _threadLocalsHeaderPanel.redisplay();
         _threadLocalsTable.redisplay();
     }
+
+    /**
+     * @return the state with which the values displayed in the panel are associated.
+     */
+    public Safepoint.State getSafepointState() {
+        return _teleVMThreadLocalValues.safepointState();
+    }
+
+    public InspectorTable getTable() {
+        return _threadLocalsTable;
+    }
+
 
     private final class ThreadLocalsHeaderPanel extends InspectorPanel {
 

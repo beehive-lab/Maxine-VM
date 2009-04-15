@@ -84,6 +84,11 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
     }
 
     @Override
+    protected InspectorTable getTable() {
+        return _table;
+    }
+
+    @Override
     public String getTextForTitle() {
         return "Boot Image: " + teleVM().bootImageFile().getAbsolutePath();
     }
@@ -96,6 +101,11 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
                 new TableColumnVisibilityPreferences.Dialog<BootImageColumnKind>(inspection(), "Boot Image View Options", _viewPreferences);
             }
         };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
     }
 
     @Override

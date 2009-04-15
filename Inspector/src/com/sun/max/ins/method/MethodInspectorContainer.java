@@ -73,6 +73,19 @@ public final class MethodInspectorContainer extends TabbedInspector<MethodInspec
     }
 
     @Override
+    public InspectorAction getPrintAction() {
+        return new InspectorAction(inspection(), "Print") {
+            @Override
+            public void procedure() {
+                final MethodInspector methodInspector = MethodInspectorContainer.this.getSelected();
+                if (methodInspector != null) {
+                    methodInspector.print();
+                }
+            }
+        };
+    }
+
+    @Override
     public void add(MethodInspector methodInspector) {
         final String longTitle = methodInspector.getToolTip();
         add(methodInspector, methodInspector.getTextForTitle(), longTitle, longTitle);

@@ -70,6 +70,8 @@ public abstract class CodeViewer extends InspectorPanel {
 
     public abstract String codeViewerKindName();
 
+    public abstract void print(String name);
+
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
     public void updateThreadFocus(TeleNativeThread teleNativeThread) {

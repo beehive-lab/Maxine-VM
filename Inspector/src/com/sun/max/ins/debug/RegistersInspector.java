@@ -94,6 +94,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     }
 
     @Override
+    protected InspectorTable getTable() {
+        return _table;
+    }
+
+    @Override
     public String getTextForTitle() {
         return "Registers: ";
     }
@@ -106,6 +111,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
                 new TableColumnVisibilityPreferences.Dialog<RegistersColumnKind>(inspection(), "Registers View Options", _viewPreferences);
             }
         };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
     }
 
     @Override

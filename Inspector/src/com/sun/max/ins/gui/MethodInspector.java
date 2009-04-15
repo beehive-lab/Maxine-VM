@@ -323,6 +323,11 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     public abstract String getToolTip();
 
     /**
+     * Prints the content of the method display.
+     */
+    public abstract void print();
+
+    /**
      * @param codeViewer Code view that should be closed and removed from the visual inspection; if this is the only
      *            view in the method inspection, then dispose of the method inspection as well.
      */
