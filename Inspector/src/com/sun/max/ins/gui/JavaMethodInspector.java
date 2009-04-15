@@ -331,6 +331,20 @@ public class JavaMethodInspector extends MethodInspector {
         }
     }
 
+    @Override
+    public void print() {
+        final String textForTitle = getTextForTitle();
+        if (codeViewerCount() == 1) {
+            firstViewer().print(textForTitle);
+        } else {
+            for (CodeViewer codeViewer : _codeViewers.values()) {
+                if (inspection().yesNoDialog("Print " + codeViewer.codeViewerKindName() + "?")) {
+                    codeViewer.print(textForTitle);
+                }
+            }
+        }
+    }
+
     private final class ViewOptionsPanel extends InspectorPanel {
 
         public ViewOptionsPanel(Inspection inspection) {

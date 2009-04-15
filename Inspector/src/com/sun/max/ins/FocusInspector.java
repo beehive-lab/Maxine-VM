@@ -51,7 +51,7 @@ public final class FocusInspector extends Inspector {
         return _focusInspector;
     }
 
-    private FocusTable _focusTable;
+    private FocusTable _table;
 
     private final SaveSettingsListener _saveSettingsListener = createGeometrySettingsClient(this, "focusInspector");
 
@@ -68,26 +68,36 @@ public final class FocusInspector extends Inspector {
     }
 
     @Override
+    protected InspectorTable getTable() {
+        return _table;
+    }
+
+    @Override
     public String getTextForTitle() {
         return "User Focus";
     }
 
     @Override
     protected void createView(long epoch) {
-        _focusTable = new FocusTable(inspection());
+        _table = new FocusTable(inspection());
         refreshView(epoch, true);
-        JTableColumnResizer.adjustColumnPreferredWidths(_focusTable);
+        JTableColumnResizer.adjustColumnPreferredWidths(_table);
         final JPanel panel = new JPanel(new BorderLayout());
-        panel.add(_focusTable.getTableHeader(), BorderLayout.NORTH);
-        panel.add(_focusTable, BorderLayout.CENTER);
+        panel.add(_table.getTableHeader(), BorderLayout.NORTH);
+        panel.add(_table, BorderLayout.CENTER);
         frame().setContentPane(panel);
-        focus().addListener(_focusTable);
+        focus().addListener(_table);
     }
 
     @Override
     protected void refreshView(long epoch, boolean force) {
-        _focusTable.refresh(epoch, force);
+        _table.refresh(epoch, force);
         super.refreshView(epoch, force);
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
     }
 
     @Override
@@ -99,7 +109,7 @@ public final class FocusInspector extends Inspector {
     public void inspectorClosing() {
         Trace.line(1, tracePrefix() + " closing");
         _focusInspector = null;
-        focus().removeListener(_focusTable);
+        focus().removeListener(_table);
         super.inspectorClosing();
     }
 
