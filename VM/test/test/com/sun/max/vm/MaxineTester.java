@@ -113,12 +113,20 @@ public class MaxineTester {
                     "A list of Programming Language Shootout benchmarks to run.");
     private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
                     "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
+    private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
+                    "Show help message and exit.");
 
     private static String _javaConfigAlias = null;
 
     public static void main(String[] args) {
         try {
             _options.parseArguments(args);
+
+            if (_help.getValue()) {
+                _options.printHelp(System.out, 80);
+                return;
+            }
+
             _javaConfigAlias = _javaConfigAliasOption.getValue();
             if (_javaConfigAlias != null) {
                 ProgramError.check(MaxineTesterConfiguration._imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
