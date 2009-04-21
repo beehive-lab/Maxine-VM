@@ -207,7 +207,7 @@ build_help="compile the Maxine Java and C sources, linking the latter
    
 options:
  -clean     removes existing binaries and class files before building projects
- -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac
+ -javac     path to a Java source compiler (default: ${JAVA_HOME}/bin/javac)
 
 If no projects are given, then all projects are built."
 
@@ -228,8 +228,8 @@ function run_build() {
                 ;;
             -* )
                 echo "unknown build option '$1'"
-                show_build_help=true
-                break
+                run_help build
+                exit 1
                 ;;
             * )
                 projects_to_build="$projects_to_build $1"
@@ -237,6 +237,7 @@ function run_build() {
         esac
         shift
     done
+    
     if [ -z "$projects_to_build" ]; then
         for project in ${projects[@]}; do
             project_dir=${project/:*/}
@@ -570,6 +571,58 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
 
 function run_gate() {
     run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-executable="${jvm}" "-java-vm-args=\"${jvm_args}\" ${gate_presets}" "$@"
+}
+
+#=======================================
+# 'xref' command
+#=======================================
+
+xref_usage="[options] [Sorcerer executable path]"
+xref_help="run sorcerer to produce a HTML cross-reference of the Java source files
+
+    Sorcerer is a source code cross reference generator (https://sorcerer.dev.java.net/).
+    The executable for running Sorcerer can be specified as the single option to this
+    command. If not specified, then 'sorcerer' is used. The cross reference
+    is written to the '$maxine_dir/xref' directory.
+    
+options:
+ -exe       path to the Sorcerer executable (default: sorcerer)
+ -htm       modify generated files to use '.htm' extension instead of '.html'"
+    
+function run_xref() {
+    projects_to_xref=""
+    for project in ${projects[@]}; do
+        project_dir=${project/:*/}
+        projects_to_xref="$projects_to_xref $maxine_dir/$project_dir"
+    done
+    sorcerer="sorcerer"
+    htm=false
+    while [ "$1" != "" ]; do
+        case $1 in
+            -exe )
+                shift
+                sorcerer=$1
+                ;;
+            -htm )
+                htm=true
+                ;;
+            * )
+                echo "unknown option '$1'"
+                run_help xref
+                exit 1
+                ;;
+        esac
+        shift
+    done
+    run $sorcerer -cp $JUNIT4_CP -d $maxine_dir/xref -auto $projects_to_xref
+
+    if $htm ; then
+        for html in $maxine_dir/xref/*.html; do
+            cat $html | \
+                sed 's:\(src="[^"]*\).html":\1.htm":g' | \
+                sed 's:source-view.html:source-view.htm:g' > $maxine_dir/xref/$(basename $html .html).htm
+        done
+    fi    
 }
 
 #=======================================
