@@ -554,7 +554,7 @@ function run_test() {
 # 'gate' command
 #=======================================
 
-gate_usage=""
+gate_usage="[options]"
 gate_presets="-java-config-alias=optopt"
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
@@ -564,14 +564,12 @@ gate_help="run the tests used to validate a push to the stable Maxine repository
     This is simply a wrapper for invoking the \"max test\" command with the following
     preset options:
     
-        ${gate_presets}"
+        ${gate_presets}
+
+    Use \"max gate -help\" to see what other options this command accepts."
 
 function run_gate() {
-    if [ $# -ne 0 ]; then
-        echo "The \"max gate\" command does not accept any options; use \"max test\" instead."
-        exit 1
-    fi
-    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-executable="${jvm}" "-java-vm-args=\"${jvm_args}\" ${gate_presets}"
+    run ${jvm_exe} -cp ${maxine_cp} test.com.sun.max.vm.MaxineTester -java-executable="${jvm}" "-java-vm-args=\"${jvm_args}\" ${gate_presets}" "$@"
 }
 
 #=======================================
