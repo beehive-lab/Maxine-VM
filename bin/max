@@ -577,17 +577,17 @@ function run_gate() {
 # 'xref' command
 #=======================================
 
-xref_usage="[options] [Sorcerer executable path]"
-xref_help="run sorcerer to produce a HTML cross-reference of the Java source files
+xref_usage="[options]"
+xref_help="run Sorcerer to produce a HTML cross-reference of the Java source files
 
-    Sorcerer is a source code cross reference generator (https://sorcerer.dev.java.net/).
-    The executable for running Sorcerer can be specified as the single option to this
-    command. If not specified, then 'sorcerer' is used. The cross reference
-    is written to the '$maxine_dir/xref' directory.
+    Run Sorcerer (https://sorcerer.dev.java.net/) to produce a HTML cross-reference of
+    the Java source files. The cross reference is written to the following directory:
+    
+        $maxine_dir/xref
     
 options:
  -exe       path to the Sorcerer executable (default: sorcerer)
- -htm       modify generated files to use '.htm' extension instead of '.html'"
+ -htm       modify generated files to use an '.htm' extension instead of '.html'"
     
 function run_xref() {
     projects_to_xref=""
