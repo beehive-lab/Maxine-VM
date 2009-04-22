@@ -614,7 +614,8 @@ function run_xref() {
         esac
         shift
     done
-    run $sorcerer -cp $JUNIT4_CP -d $maxine_dir/xref -auto $projects_to_xref
+    run $sorcerer -cp $JUNIT4_CP -d $maxine_dir/xref -auto $projects_to_xref 2>&1 |\
+        grep -v is 'Sun proprietary API'
 
     if $htm ; then
         for html in $maxine_dir/xref/*.html; do
