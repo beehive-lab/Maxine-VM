@@ -168,6 +168,41 @@ static void* loadSymbol(void* handle, const char* symbol) {
     return result;
 }
 
+typedef jint (JNICALL *JNI_OnLoad_t)(JavaVM *, void *);
+
+jint JNICALL fake_JavaVM_GetEnv(JavaVM *javaVM, void **penv, jint version) {
+	*penv = (*javaVM)->reserved0;
+	return version;
+}
+jint JNICALL fake_JavaVM_DestroyJavaVM(JavaVM *vm) {
+	return c_UNIMPLEMENTED();
+}
+
+jint JNICALL fake_JavaVM_AttachCurrentThread(JavaVM *vm, void **penv, void *args) {
+	return c_UNIMPLEMENTED();
+}
+
+jint JNICALL fake_JavaVM_DetachCurrentThread(JavaVM *vm) {
+	return c_UNIMPLEMENTED();
+}
+
+jint JNICALL fake_JavaVM_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *args) {
+	return c_UNIMPLEMENTED();
+}
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_vm_jni_DynamicLinker_invokeJNIOnLoad(JNIEnv *env, jclass c, JNI_OnLoad_t JNI_OnLoad) {
+	 struct JNIInvokeInterface_ jni;
+	 JavaVM jvmp = (JavaVM) &jni;
+	 jni.reserved0 = env;
+	 jni.GetEnv = fake_JavaVM_GetEnv;
+	 jni.DestroyJavaVM = fake_JavaVM_DestroyJavaVM;
+	 jni.AttachCurrentThread = fake_JavaVM_AttachCurrentThread;
+	 jni.DetachCurrentThread = fake_JavaVM_DetachCurrentThread;
+	 jni.AttachCurrentThreadAsDaemon = fake_JavaVM_AttachCurrentThreadAsDaemon;
+	 return (*JNI_OnLoad)((JavaVM *) &jvmp, NULL);
+}
+
 #if os_DARWIN || os_SOLARIS || os_LINUX
 
 #include <netinet/in.h>
