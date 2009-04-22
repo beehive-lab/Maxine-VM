@@ -172,7 +172,7 @@ public class GraphPrototype extends Prototype {
          */
         static final Comparator<ClassInfo> BY_TOTAL_SIZE_AND_NAME = new Comparator<ClassInfo>() {
             public int compare(ClassInfo o1, ClassInfo o2) {
-                return o1._totalSize < o2._totalSize ? -1 : o1._totalSize > o2._totalSize ? 1 : o1.toString().compareTo(o2.toString());
+                return o1._totalSize < o2._totalSize ? 1 : o1._totalSize > o2._totalSize ? -1 : o1.toString().compareTo(o2.toString());
             }
         };
 
@@ -183,7 +183,7 @@ public class GraphPrototype extends Prototype {
             public int compare(ClassInfo o1, ClassInfo o2) {
                 final long o2TotalSize = o2.aggregateTotalSize();
                 final long o1TotalSize = o1.aggregateTotalSize();
-                return o1TotalSize < o2TotalSize ? -1 : o1TotalSize == o2TotalSize ? 0 : 1;
+                return o1TotalSize < o2TotalSize ? 1 : o1TotalSize == o2TotalSize ? 0 : -1;
             }
         };
 
@@ -192,7 +192,7 @@ public class GraphPrototype extends Prototype {
          */
         static final Comparator<ClassInfo> BY_NUMBER_OF_OBJECTS = new Comparator<ClassInfo>() {
             public int compare(ClassInfo o1, ClassInfo o2) {
-                return o1._numberOfObjects < o2._numberOfObjects ? -1 : o1._numberOfObjects == o2._numberOfObjects ? 0 : 1;
+                return o1._numberOfObjects < o2._numberOfObjects ? 1 : o1._numberOfObjects == o2._numberOfObjects ? 0 : -1;
             }
         };
 
@@ -203,7 +203,7 @@ public class GraphPrototype extends Prototype {
             public int compare(ClassInfo o1, ClassInfo o2) {
                 final long o1NumberOfObjects = o1.aggregateNumberOfObjects();
                 final long o2NumberOfObjects = o2.aggregateNumberOfObjects();
-                return o1NumberOfObjects < o2NumberOfObjects ? -1 : o1NumberOfObjects == o2NumberOfObjects ? 0 : 1;
+                return o1NumberOfObjects < o2NumberOfObjects ? 1 : o1NumberOfObjects == o2NumberOfObjects ? 0 : -1;
             }
         };
 
@@ -214,7 +214,7 @@ public class GraphPrototype extends Prototype {
             public int compare(ClassInfo o1, ClassInfo o2) {
                 final long o1Size = o1.averageInstanceSize();
                 final long o2Size = o2.averageInstanceSize();
-                return o1Size < o2Size ? -1 : o1Size == o2Size ? 0 : 1;
+                return o1Size < o2Size ? 1 : o1Size == o2Size ? 0 : -1;
             }
         };
 
@@ -390,27 +390,27 @@ public class GraphPrototype extends Prototype {
      * sorted by fields other than total size by tools such as the Unix 'sort' command.
      */
     public void dumpHistogram(PrintStream printStream) {
+        long total = 0;
+        for (Object o : _objects) {
+            final ClassInfo classInfo = _classInfos.get(o.getClass());
+            classInfo._numberOfObjects++;
+            final long size = HostObjectAccess.getSize(o).toLong();
+            classInfo._totalSize += size;
+            total += size;
+        }
         final ClassInfo[] classInfos = _classInfos.values().toArray(new ClassInfo[0]);
         Arrays.sort(classInfos, ClassInfo.BY_TOTAL_SIZE_AND_NAME);
-        printStream.println("Flat Histogram Start");
+        printStream.println("Cumul     Size                      Objects      Avg        Class");
+        printStream.println("==============================================================================");
+        long cumul = 0;
         for (ClassInfo info : classInfos) {
             if (info._numberOfObjects != 0) {
-                printStream.printf("%-10d / %-10d = %-10d %s\n", info._totalSize, info._numberOfObjects, info._totalSize / info._numberOfObjects, info._class.getName());
+                cumul += info._totalSize;
+                final String fixedDouble = Strings.padLengthWithSpaces(6, Strings.fixedDouble(cumul * 100.0d / total, 2));
+                printStream.printf("(%s%%) %-10d (%6d kb) / %-10d = %-10d %s\n", fixedDouble, info._totalSize, info._totalSize / 1024, info._numberOfObjects, info._totalSize / info._numberOfObjects, info._class.getName());
             }
         }
         printStream.println("Flat Histogram End");
-
-        Arrays.sort(classInfos, ClassInfo.BY_AGGREGATE_TOTAL_SIZE);
-        printStream.println("Aggregate Histogram Start");
-        for (ClassInfo info : classInfos) {
-            final long aggregateNumberOfObjects = info.aggregateNumberOfObjects();
-            final long aggregateTotalSize = info.aggregateTotalSize();
-            if (aggregateNumberOfObjects > 0) {
-                printStream.printf("%-10d / %-10d = %-10d %s\n", aggregateTotalSize, aggregateNumberOfObjects, aggregateTotalSize / aggregateNumberOfObjects, info._class.getName());
-            }
-        }
-        printStream.println("Aggregate Histogram End");
-
     }
 
     /**
@@ -440,33 +440,36 @@ public class GraphPrototype extends Prototype {
             // Need to iterate over the fields using actors instead of reflection otherwise we'll
             // miss fields that are hidden to reflection (see sun.reflection.Reflection.filterFields(Class, Field[])).
             final ClassActor classActor = ClassActor.fromJava(javaClass);
-            for (FieldActor[] fieldActors : new FieldActor[][] {classActor.localInstanceFieldActors(), classActor.localStaticFieldActors()}) {
-                for (FieldActor fieldActor : fieldActors) {
-                    if (fieldActor.kind() == Kind.REFERENCE) {
-                        final ClassInfo info = fieldActor.isStatic() ? staticInfo : classInfo;
-                        final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
-                        if (specialField != null) {
-                            specialField._fieldActor = fieldActor;
-                            if (!(specialField instanceof ZeroField)) {
-                                info._specialReferenceFields.append(specialField);
-                            }
-                        } else {
-                            if (!fieldActor.isInjected()) {
-                                try {
-                                    final Field field = fieldActor.toJava();
-                                    field.setAccessible(true);
-                                    // TODO: mutable vs. immutable fields
-                                    info._mutableReferenceFields.append(field);
-                                } catch (NoSuchFieldError noSuchFieldError) {
-                                    ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
-                                }
-                            }
+            addClassInfoFields(classInfo, staticInfo, classActor.localInstanceFieldActors());
+            addClassInfoFields(classInfo, staticInfo, classActor.localStaticFieldActors());
+        }
+        return classInfo;
+    }
+
+    private void addClassInfoFields(ClassInfo classInfo, final ClassInfo staticInfo, FieldActor[] fieldActors) {
+        for (FieldActor fieldActor : fieldActors) {
+            if (fieldActor.kind() == Kind.REFERENCE) {
+                final ClassInfo info = fieldActor.isStatic() ? staticInfo : classInfo;
+                final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
+                if (specialField != null) {
+                    specialField._fieldActor = fieldActor;
+                    if (!(specialField instanceof ZeroField)) {
+                        info._specialReferenceFields.append(specialField);
+                    }
+                } else {
+                    if (!fieldActor.isInjected()) {
+                        try {
+                            final Field field = fieldActor.toJava();
+                            field.setAccessible(true);
+                            // PERF: split into mutable vs. immutable fields
+                            info._mutableReferenceFields.append(field);
+                        } catch (NoSuchFieldError noSuchFieldError) {
+                            ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
                         }
                     }
                 }
             }
         }
-        return classInfo;
     }
 
     /**
