@@ -69,8 +69,6 @@ public class MaxineTester {
     private static final Option<Integer> _javaTesterTimeOut = _options.newIntegerOption("java-tester-timeout", 50,
                     "The number of seconds to wait for the in-target Java tester tests to complete before " +
                     "timing out and killing it.");
-    private static final Option<Integer> _javaTesterConcurrency = _options.newIntegerOption("java-tester-concurrency", 1,
-                    "The number of Java tester tests to run in parallel.");
     private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 50,
                     "The number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
@@ -1008,28 +1006,10 @@ public class MaxineTester {
         @Override
         public boolean run() {
             final List<String> javaTesterConfigs = _javaTesterConfigs.getValue();
-
-            final ExecutorService javaTesterService = Executors.newFixedThreadPool(_javaTesterConcurrency.getValue());
-            final CompletionService<Void> javaTesterCompletionService = new ExecutorCompletionService<Void>(javaTesterService);
             for (final String config : javaTesterConfigs) {
-                javaTesterCompletionService.submit(new Runnable() {
-                    public void run() {
-                        if (!stopTesting()) {
-                            runWithSerializedOutput(new Runnable() {
-                                public void run() {
-                                    JavaTesterHarness.runJavaTesterTests(config);
-                                }
-                            });
-                        }
-                    }
-                }, null);
-            }
-
-            javaTesterService.shutdown();
-            try {
-                javaTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * javaTesterConfigs.size(), TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                if (!stopTesting()) {
+                    JavaTesterHarness.runJavaTesterTests(config);
+                }
             }
             return true;
         }
