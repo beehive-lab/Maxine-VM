@@ -64,6 +64,31 @@ public final class Ints {
     }
 
     /**
+     * Returns an integer with all the bits in its two's complement binary representation that are at index {@code
+     * highestBitIndex} or lower set to 1.
+     *
+     * @param highestBitIndex the index of the highest bit to be set in the returned value. Only the low 5 bits of {@code
+     *            highestBitIndex} are used. That is, if {@code highestBitIndex > 31} or {@code highestBitIndex < 0} then
+     *            the highest bit to be set is given by {@code highestBitSet & 0x1F}.
+     */
+    public static int lowBitsSet(int highestBitIndex) {
+        final int n = highestBitIndex & 0x1f;
+        return (1 << n) | ((1 << n) - 1);
+    }
+
+    /**
+     * Returns an integer with all the bits in its two's complement binary representation that are at index {@code
+     * lowestBitIndex} or higher set to 1.
+     *
+     * @param lowestBitIndex the index of the lowest bit to be set in the returned value. Only the low 5 bits of {@code
+     *            lowestBitIndex} are used. That is, if {@code lowestBitIndex > 31} or {@code lowestBitIndex < 0} then
+     *            the lowest bit to be set is given by {@code lowestBitSet & 0x1F}.
+     */
+    public static int highBitsSet(int lowestBitIndex) {
+        return ~((1 << lowestBitIndex) - 1);
+    }
+
+    /**
      * Determines if a given number is zero or a power of two.
      */
     public static boolean isPowerOfTwo(int n) {

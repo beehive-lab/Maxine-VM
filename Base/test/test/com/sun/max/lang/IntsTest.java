@@ -39,6 +39,58 @@ public class IntsTest extends MaxTestCase {
         junit.textui.TestRunner.run(IntsTest.class);
     }
 
+    static String toBinaryString32(int i) {
+        String s = Integer.toBinaryString(i);
+        while (s.length() < 32) {
+            s = '0' + s;
+        }
+        return s;
+    }
+
+    /**
+     * An naive, inefficient but correct implementation of {@link Ints#lowBitsSet(int)}.
+     */
+    static int lowBitsSet(int highestBitIndex) {
+        int result = 0;
+        for (int i = highestBitIndex & 0x1f; i >= 0; --i) {
+            result |= 1 << i;
+        }
+        return result;
+    }
+
+    /**
+     * An naive, inefficient but correct implementation of {@link Ints#highBitsSet(int)}.
+     */
+    static int highBitsSet(int lowestBitIndex) {
+        int result = 0;
+        for (int i = lowestBitIndex & 0x1f; i < 32; ++i) {
+            result |= 1 << i;
+        }
+        return result;
+    }
+
+    static void assertBitsEquals(int expected, int actual) {
+        if (expected != actual) {
+            fail("expected: " + toBinaryString32(expected) + " but was: " + toBinaryString32(actual));
+        }
+    }
+
+    public void test_highBitsSet() {
+        for (int lowestBitIndex = -100; lowestBitIndex < 100; ++lowestBitIndex) {
+            assertBitsEquals(highBitsSet(lowestBitIndex), Ints.highBitsSet(lowestBitIndex));
+        }
+        assertBitsEquals(highBitsSet(Integer.MAX_VALUE), Ints.highBitsSet(Integer.MAX_VALUE));
+        assertBitsEquals(highBitsSet(Integer.MIN_VALUE), Ints.highBitsSet(Integer.MIN_VALUE));
+    }
+
+    public void test_lowBitsSet() {
+        for (int highestBitIndex = -100; highestBitIndex < 100; ++highestBitIndex) {
+            assertBitsEquals(lowBitsSet(highestBitIndex), Ints.lowBitsSet(highestBitIndex));
+        }
+        assertBitsEquals(lowBitsSet(Integer.MAX_VALUE), Ints.lowBitsSet(Integer.MAX_VALUE));
+        assertBitsEquals(lowBitsSet(Integer.MIN_VALUE), Ints.lowBitsSet(Integer.MIN_VALUE));
+    }
+
     public void test_numberOfEffectiveUnsignedBits() {
         assertTrue(Ints.numberOfEffectiveUnsignedBits(0) == 0);
         assertTrue(Ints.numberOfEffectiveUnsignedBits(1) == 1);
