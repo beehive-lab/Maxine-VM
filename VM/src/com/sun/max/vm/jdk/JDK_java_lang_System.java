@@ -279,7 +279,6 @@ public final class JDK_java_lang_System {
      * @param toIndex the start index in the destination array
      * @param length the number of elements to copy
      */
-    @STUB_TEST_PROPERTIES(execute = false)
     @SUBSTITUTE
     public static void arraycopy(Object fromArray, int fromIndex, Object toArray, int toIndex, int length) {
         if (fromArray == null || toArray == null) {

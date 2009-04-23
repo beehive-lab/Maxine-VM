@@ -113,12 +113,20 @@ public class MaxineTester {
                     "A list of Programming Language Shootout benchmarks to run.");
     private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
                     "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
+    private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
+                    "Show help message and exit.");
 
     private static String _javaConfigAlias = null;
 
     public static void main(String[] args) {
         try {
             _options.parseArguments(args);
+
+            if (_help.getValue()) {
+                _options.printHelp(System.out, 80);
+                return;
+            }
+
             _javaConfigAlias = _javaConfigAliasOption.getValue();
             if (_javaConfigAlias != null) {
                 ProgramError.check(MaxineTesterConfiguration._imageConfigs.containsKey(_javaConfigAlias), "Unknown Java tester config '" + _javaConfigAlias + "'");
@@ -703,8 +711,24 @@ public class MaxineTester {
         return javaVMArgs.split("\\s+");
     }
 
+    private static String escapeShellCharacters(String s) {
+        final StringBuilder sb = new StringBuilder(s.length());
+        for (int cursor = 0; cursor < s.length(); ++cursor) {
+            final char cursorChar = s.charAt(cursor);
+            if (cursorChar == '$') {
+                sb.append("\\$");
+            } else if (cursorChar == ' ') {
+                sb.append("\\ ");
+            } else {
+                sb.append(cursorChar);
+            }
+        }
+        return sb.toString();
+    }
+
     /**
-     * Executes a command in a sub-process.
+     * Executes a command in a sub-process. The execution uses a shell command to perform redirection of the standard
+     * output and error streams.
      *
      * @param workingDir the working directory of the subprocess, or {@code null} if the subprocess should inherit the
      *            working directory of the current process
@@ -721,8 +745,20 @@ public class MaxineTester {
     private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
         traceExec(workingDir, command);
         try {
-            final Process process = Runtime.getRuntime().exec(command, env, workingDir);
-            final ProcessThread processThread = new ProcessThread(outputFile, process, name != null ? name : command[0], timeout);
+            final StringBuilder sb = new StringBuilder("exec ");
+            for (String s : command) {
+                sb.append(escapeShellCharacters(s)).append(' ');
+            }
+            if (outputFile != null) {
+                sb.append(">" + outputFile.getAbsolutePath());
+                sb.append(" 2>" + stderrFile(outputFile));
+            } else {
+                sb.append(">/dev/null");
+                sb.append(" 2>&1");
+            }
+
+            final Process process = Runtime.getRuntime().exec(new String[] {"sh", "-c", sb.toString()}, env, workingDir);
+            final ProcessTimeoutThread processThread = new ProcessTimeoutThread(outputFile, process, name != null ? name : command[0], timeout);
             final int exitValue = processThread.exitValue();
             return exitValue;
         } catch (IOException e) {
@@ -778,80 +814,30 @@ public class MaxineTester {
      *
      * @author Ben L. Titzer
      */
-    private static class ProcessThread extends Thread {
+    private static class ProcessTimeoutThread extends Thread {
 
         private final Process _process;
         private final int _timeoutMillis;
         protected Integer _exitValue;
         private boolean _timedOut;
-        private final InputStream _stdout;
-        private final InputStream _stderr;
-        private final OutputStream _stdoutTo;
-        private final OutputStream _stderrTo;
-        private Throwable _exception;
 
-        private final File _stdoutToFile;
-        private final File _stderrToFile;
-        private byte[] _buffer = new byte[1024];
-
-        public ProcessThread(File outputFile, Process process, String name, int timeoutSeconds) throws FileNotFoundException {
+        public ProcessTimeoutThread(File outputFile, Process process, String name, int timeoutSeconds) {
             super(name);
             _process = process;
             _timeoutMillis = 1000 * timeoutSeconds;
-            _stdout = new BufferedInputStream(_process.getInputStream());
-            _stderr = new BufferedInputStream(_process.getErrorStream());
-
-            _stdoutToFile = outputFile;
-            _stdoutTo = outputFile != null ? new FileOutputStream(outputFile) : new NullOutputStream();
-
-            if (outputFile == null) {
-                _stderrTo = new NullOutputStream();
-                _stderrToFile = null;
-            } else {
-                _stderrToFile = stderrFile(outputFile);
-                _stderrTo = new FileOutputStream(_stderrToFile);
-            }
-        }
-
-        private int redirect(InputStream from, OutputStream to, File toFile) throws IOException {
-            int total = 0;
-            while (from.available() > 0) {
-                final int count = from.read(_buffer);
-                if (count > 0) {
-                    try {
-                        to.write(_buffer, 0, count);
-                    } catch (IOException ioException) {
-                        throw new IOException("IO error writing to " + (toFile == null ? "[null]" : toFile.getAbsolutePath()), ioException);
-                    }
-                    total += count;
-                }
-            }
-            return total;
         }
 
         @Override
         public void run() {
             try {
-                final long start = System.currentTimeMillis();
-                while (_exitValue == null && System.currentTimeMillis() - start < _timeoutMillis) {
-                    if (redirect(_stdout, _stdoutTo, _stdoutToFile) + redirect(_stderr, _stderrTo, _stderrToFile) == 0) {
-                        try {
-                            // wait for a few milliseconds to avoid eating too much CPU.
-                            Thread.sleep(10);
-                        } catch (InterruptedException e) {
-                            // do nothing.
-                        }
-                    }
-                }
-                if (_exitValue == null) {
-                    _timedOut = true;
-                    // Timed out:
-                    _process.destroy();
-                }
-                _stdout.close();
-                _stderr.close();
-            } catch (IOException ioException) {
-                _exception = ioException;
+                // Sleep for the prescribed timeout duration
+                Thread.sleep(_timeoutMillis);
+
+                // Not interrupted: terminate associated process
+                _timedOut = true;
+                _process.destroy();
+            } catch (InterruptedException e) {
+                // Process completed within timeout
             }
         }
 
@@ -859,24 +845,19 @@ public class MaxineTester {
             start();
             try {
                 _exitValue = _process.waitFor();
+                // Process exited: interrupt timeout thread so that it stops
+                interrupt();
             } catch (InterruptedException interruptedException) {
                 // do nothing.
             }
 
             try {
-                // Wait for redirecting thread to finish
+                // Wait for timeout thread to stop
                 join();
-
             } catch (InterruptedException interruptedException) {
                 interruptedException.printStackTrace();
             }
 
-            _stdout.close();
-            _stderr.close();
-
-            if (_exception != null) {
-                throw ProgramError.unexpected(_exception);
-            }
             if (_timedOut) {
                 _exitValue = PROCESS_TIMEOUT;
             }
