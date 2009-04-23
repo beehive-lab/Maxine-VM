@@ -117,7 +117,7 @@ public abstract class TeleVM {
             "Level to set for java.util.logging root logger.");
     }
 
-    protected String  tracePrefix() {
+    private String  tracePrefix() {
         return "[TeleVM: " + Thread.currentThread().getName() + "] ";
     }
 
