@@ -21,9 +21,6 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
-import java.awt.print.*;
-import java.text.*;
-import java.util.*;
 
 import javax.swing.*;
 
@@ -80,33 +77,13 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     }
 
     @Override
+    protected InspectorTable getTable() {
+        return _table;
+    }
+
+    @Override
     public String getTextForTitle() {
         return "Threads";
-    }
-
-    @Override
-    public InspectorAction getViewOptionsAction() {
-        return new InspectorAction(inspection(), "View Options") {
-            @Override
-            public void procedure() {
-                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _viewPreferences);
-            }
-        };
-    }
-
-    @Override
-    public InspectorAction getPrintAction() {
-        return new InspectorAction(inspection(), "Print") {
-            @Override
-            public void procedure() {
-                final MessageFormat footer = new MessageFormat("Maxine: " + getTextForTitle() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
-                try {
-                    _table.print(JTable.PrintMode.FIT_WIDTH, null, footer);
-                } catch (PrinterException printerException) {
-                    inspection().errorMessage("Print failed: " + printerException.getMessage());
-                }
-            }
-        };
     }
 
     @Override
@@ -124,6 +101,21 @@ public final class ThreadsInspector extends Inspector implements TableColumnView
     protected void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
         super.refreshView(epoch, force);
+    }
+
+    @Override
+    public InspectorAction getViewOptionsAction() {
+        return new InspectorAction(inspection(), "View Options") {
+            @Override
+            public void procedure() {
+                new TableColumnVisibilityPreferences.Dialog<ThreadsColumnKind>(inspection(), "Threads View Options", _viewPreferences);
+            }
+        };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
     }
 
     public void viewConfigurationChanged(long epoch) {

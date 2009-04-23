@@ -60,6 +60,12 @@ import com.sun.max.vm.value.*;
  */
 public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, ThreadProvider, TeleVMHolder {
 
+    protected String  tracePrefix() {
+        return "[TeleNativeThread: " + Thread.currentThread().getName() + "] ";
+    }
+
+    private static final int REFRESH_TRACE_LEVEL = 2;
+
     /**
      * The states a thread can be in.
      * N.B. Many platforms will not be able to detect all these states, e.g., MONITOR_WAIT,
@@ -324,6 +330,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      * @param epoch the new epoch of this thread
      */
     public final void refresh(long epoch) {
+        Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refresh(epoch=" + epoch + ") for " + this);
         if (_state == DEAD) {
             refreshFrames(true);
             _breakpoint = null;
@@ -336,8 +343,6 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         }
     }
 
-    private static final int REFRESH_TRACE_LEVEL = 1;
-
     /**
      * Refreshes the cached state of this thread's registers from the corresponding thread in the tele process.
      */
@@ -345,7 +350,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         final long processEpoch = teleProcess().epoch();
         if (_registersEpoch < processEpoch) {
             _registersEpoch = processEpoch;
-            Trace.line(REFRESH_TRACE_LEVEL, "Refreshing registers for " + this);
+            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
 
             if (!readRegisters(_integerRegisters.registerData(), _floatingPointRegisters.registerData(), _stateRegisters.registerData())) {
                 throw new TeleError("Error while updating registers for thread: " + this);
@@ -368,7 +373,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         if (_teleVmThreadLocalsEpoch < processEpoch) {
             _teleVmThreadLocalsEpoch = processEpoch;
 
-            Trace.line(REFRESH_TRACE_LEVEL, "Refreshing thread locals for " + this);
+            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshThreadLocals (epoch=" + processEpoch + ") for " + this);
 
             final DataAccess dataAccess = teleProcess().dataAccess();
             for (TeleVMThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
@@ -397,6 +402,9 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     private void refreshBreakpoint() {
         final Factory breakpointFactory = teleProcess().targetBreakpointFactory();
         TeleTargetBreakpoint breakpoint = null;
+
+
+
         try {
             breakpointFactory.registerBreakpointSetByVM(this);
 
@@ -406,10 +414,14 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             // This is a catch for problems getting accurate state for threads that are not at breakpoints
         }
         if (breakpoint != null) {
+
+            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") for " + this);
+
             _state = BREAKPOINT;
             _breakpoint = breakpoint;
             if (updateInstructionPointer(_breakpoint.address())) {
                 _stateRegisters.setInstructionPointer(_breakpoint.address());
+                Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
                 throw new TeleError("Error updating instruction pointer to adjust thread after breakpoint at " + _breakpoint.address() + " was hit: " + this);
             }
@@ -436,7 +448,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         if (_framesEpoch < processEpoch) {
             _framesEpoch = processEpoch;
 
-            Trace.line(REFRESH_TRACE_LEVEL, "Refreshing frames for " + this);
+            Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshFrames (epoch=" + processEpoch + ") for " + this);
 
             // The stack walk requires the VM thread locals to be up to date
             //refreshThreadLocals();
