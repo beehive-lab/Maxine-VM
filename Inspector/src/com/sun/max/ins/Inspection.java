@@ -916,6 +916,10 @@ public class Inspection extends JFrame {
         return JOptionPane.showInputDialog(_desktopPane, message, initialValue);
     }
 
+    public boolean yesNoDialog(String message) {
+        return JOptionPane.showConfirmDialog(this, message, _inspectorName, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+    }
+
     /**
      * Displays a message and invites text input from user in a modal dialog.
      *

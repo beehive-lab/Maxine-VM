@@ -93,6 +93,11 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
     }
 
     @Override
+    protected InspectorTable getTable() {
+        return _table;
+    }
+
+    @Override
     public String getTextForTitle() {
         return "Breakpoints";
     }
@@ -105,6 +110,11 @@ public final class BreakpointsInspector extends Inspector implements TableColumn
                 new TableColumnVisibilityPreferences.Dialog<BreakpointsColumnKind>(inspection(), "Breakpoints View Options", _viewPreferences);
             }
         };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
     }
 
     /**

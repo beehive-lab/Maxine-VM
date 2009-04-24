@@ -58,8 +58,8 @@ public final class InspectorMenu implements Prober {
             addSeparator();
             add(inspector.getCloseAction());
             add(inspector.getCloseOtherInspectorsAction());
-//            addSeparator();
-//            add(inspector.getPrintAction());
+            addSeparator();
+            add(inspector.getPrintAction());
         }
     }
 
