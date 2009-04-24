@@ -126,6 +126,10 @@ public final class CodeAttribute {
         return _code;
     }
 
+    public byte[] encodedData() {
+        return _encodedData;
+    }
+
     /**
      * Gets the maximum depth of the operand stack of this method at any point during execution of the method.
      */

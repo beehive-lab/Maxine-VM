@@ -292,7 +292,7 @@ public final class BinaryImageGenerator {
     private void writeStats(GraphPrototype graphPrototype, File file) throws IOException {
         Trace.begin(1, "writing boot image statistics file: " + file);
         final FileOutputStream fileOutputStream = new FileOutputStream(file);
-        graphPrototype.dumpHistogram(new PrintStream(fileOutputStream));
+        new GraphStats(graphPrototype).dumpStats(new PrintStream(fileOutputStream));
         fileOutputStream.close();
         Trace.end(1, "end boot image statistics file: " + file + " (" + Longs.toUnitsString(file.length()) + ")");
     }
