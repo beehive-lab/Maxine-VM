@@ -23,7 +23,6 @@ package com.sun.max.vm.prototype;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -32,8 +31,12 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.b.c.d.e.amd64.*;
+import com.sun.max.vm.compiler.dir.eir.*;
+import com.sun.max.vm.debug.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.prototype.GraphStats.*;
 import com.sun.max.vm.prototype.HackJDK.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -50,9 +53,9 @@ public class GraphPrototype extends Prototype {
     public final CompiledPrototype _compiledPrototype;
     private final Map<Object, Link> _objectToParent = new IdentityHashMap<Object, Link>();
     private LinkedList<Object> _worklist = new LinkedList<Object>();
-    private IdentitySet<Object> _objects = new IdentitySet<Object>(Ints.M);
 
-    private Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
+    IdentitySet<Object> _objects = new IdentitySet<Object>(Ints.M);
+    Map<Class, ClassInfo> _classInfos = new IdentityHashMap<Class, ClassInfo>();
 
     /**
      * Create a new graph prototype from the specified compiled prototype and compute the transitive closure
@@ -70,7 +73,6 @@ public class GraphPrototype extends Prototype {
         gatherObjects();
     }
 
-
     /**
      * The information gathered for a class during exploration of the graph, including
      * the reference fields that need to be scanned to traverse the object graph.
@@ -83,8 +85,7 @@ public class GraphPrototype extends Prototype {
 
         ClassInfo _classClassInfo; // the class info object for the static members of the class
 
-        long _numberOfObjects;
-        long _totalSize;
+        ClassStats _stats;
 
         /**
          * Creates a class info data structure for the specified Java class.
@@ -111,34 +112,6 @@ public class GraphPrototype extends Prototype {
         }
 
         /**
-         * Calculates and returns the aggregate number of objects of this class and all its
-         * subclasses.
-         *
-         * @return the number of instances of this class and all its subclasses
-         */
-        long aggregateNumberOfObjects() {
-            long result = _numberOfObjects;
-            for (ClassInfo subClassInfo : _subClasses) {
-                result += subClassInfo.aggregateNumberOfObjects();
-            }
-            return result;
-        }
-
-        /**
-         * Calculates and returns the aggregate size of all objects of this class and all of its
-         * subclasses.
-         *
-         * @return the size of all instances of this class and its subclasses
-         */
-        long aggregateTotalSize() {
-            long result = _totalSize;
-            for (ClassInfo subClassInfo : _subClasses) {
-                result += subClassInfo.aggregateTotalSize();
-            }
-            return result;
-        }
-
-        /**
          * Computes a hashcode for this object.
          *
          * @return the hashcode of the underlying Java class
@@ -157,75 +130,6 @@ public class GraphPrototype extends Prototype {
         public String toString() {
             return _class.toString();
         }
-
-        /**
-         * Returns average instance size (i.e. total size divided by number of objects).
-         *
-         * @return the average instance size of instances of this classes
-         */
-        long averageInstanceSize() {
-            return _totalSize / _numberOfObjects;
-        }
-
-        /**
-         * A comparator that sorts by the total size and then the name.
-         */
-        static final Comparator<ClassInfo> BY_TOTAL_SIZE_AND_NAME = new Comparator<ClassInfo>() {
-            public int compare(ClassInfo o1, ClassInfo o2) {
-                return o1._totalSize < o2._totalSize ? -1 : o1._totalSize > o2._totalSize ? 1 : o1.toString().compareTo(o2.toString());
-            }
-        };
-
-        /**
-         * A comparator that sorts by the aggregrate total size.
-         */
-        static final Comparator<ClassInfo> BY_AGGREGATE_TOTAL_SIZE = new Comparator<ClassInfo>() {
-            public int compare(ClassInfo o1, ClassInfo o2) {
-                final long o2TotalSize = o2.aggregateTotalSize();
-                final long o1TotalSize = o1.aggregateTotalSize();
-                return o1TotalSize < o2TotalSize ? -1 : o1TotalSize == o2TotalSize ? 0 : 1;
-            }
-        };
-
-        /**
-         * A comparator that sorts by the number of objects.
-         */
-        static final Comparator<ClassInfo> BY_NUMBER_OF_OBJECTS = new Comparator<ClassInfo>() {
-            public int compare(ClassInfo o1, ClassInfo o2) {
-                return o1._numberOfObjects < o2._numberOfObjects ? -1 : o1._numberOfObjects == o2._numberOfObjects ? 0 : 1;
-            }
-        };
-
-        /**
-         * A comparator that sorts by the aggregate number of objects.
-         */
-        static final Comparator<ClassInfo> BY_AGGREGATE_NUMBER_OF_OBJECTS = new Comparator<ClassInfo>() {
-            public int compare(ClassInfo o1, ClassInfo o2) {
-                final long o1NumberOfObjects = o1.aggregateNumberOfObjects();
-                final long o2NumberOfObjects = o2.aggregateNumberOfObjects();
-                return o1NumberOfObjects < o2NumberOfObjects ? -1 : o1NumberOfObjects == o2NumberOfObjects ? 0 : 1;
-            }
-        };
-
-        /**
-         * A comparator that sorts by the average instance size.
-         */
-        static final Comparator<ClassInfo> BY_AVERAGE_INSTANCE_SIZE = new Comparator<ClassInfo>() {
-            public int compare(ClassInfo o1, ClassInfo o2) {
-                final long o1Size = o1.averageInstanceSize();
-                final long o2Size = o2.averageInstanceSize();
-                return o1Size < o2Size ? -1 : o1Size == o2Size ? 0 : 1;
-            }
-        };
-
-        /**
-         * A comparator that sorts by name.
-         */
-        static final Comparator<ClassInfo> BY_NAME = new Comparator<ClassInfo>() {
-            public int compare(ClassInfo o1, ClassInfo o2) {
-                return o1._class.getName().compareTo(o2._class.getName());
-            }
-        };
     }
 
 
@@ -386,34 +290,6 @@ public class GraphPrototype extends Prototype {
     }
 
     /**
-     * Dumps the histogram without formatting the quantities which allows the rows of the histogram to be
-     * sorted by fields other than total size by tools such as the Unix 'sort' command.
-     */
-    public void dumpHistogram(PrintStream printStream) {
-        final ClassInfo[] classInfos = _classInfos.values().toArray(new ClassInfo[0]);
-        Arrays.sort(classInfos, ClassInfo.BY_TOTAL_SIZE_AND_NAME);
-        printStream.println("Flat Histogram Start");
-        for (ClassInfo info : classInfos) {
-            if (info._numberOfObjects != 0) {
-                printStream.printf("%-10d / %-10d = %-10d %s\n", info._totalSize, info._numberOfObjects, info._totalSize / info._numberOfObjects, info._class.getName());
-            }
-        }
-        printStream.println("Flat Histogram End");
-
-        Arrays.sort(classInfos, ClassInfo.BY_AGGREGATE_TOTAL_SIZE);
-        printStream.println("Aggregate Histogram Start");
-        for (ClassInfo info : classInfos) {
-            final long aggregateNumberOfObjects = info.aggregateNumberOfObjects();
-            final long aggregateTotalSize = info.aggregateTotalSize();
-            if (aggregateNumberOfObjects > 0) {
-                printStream.printf("%-10d / %-10d = %-10d %s\n", aggregateTotalSize, aggregateNumberOfObjects, aggregateTotalSize / aggregateNumberOfObjects, info._class.getName());
-            }
-        }
-        printStream.println("Aggregate Histogram End");
-
-    }
-
-    /**
      * Create the class info for a specified java class, if it doesn't already exist. This requires
      * first creating the class info for the super class, and then building a list of all fields
      * in the class that are used for walking the graph.
@@ -440,33 +316,36 @@ public class GraphPrototype extends Prototype {
             // Need to iterate over the fields using actors instead of reflection otherwise we'll
             // miss fields that are hidden to reflection (see sun.reflection.Reflection.filterFields(Class, Field[])).
             final ClassActor classActor = ClassActor.fromJava(javaClass);
-            for (FieldActor[] fieldActors : new FieldActor[][] {classActor.localInstanceFieldActors(), classActor.localStaticFieldActors()}) {
-                for (FieldActor fieldActor : fieldActors) {
-                    if (fieldActor.kind() == Kind.REFERENCE) {
-                        final ClassInfo info = fieldActor.isStatic() ? staticInfo : classInfo;
-                        final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
-                        if (specialField != null) {
-                            specialField._fieldActor = fieldActor;
-                            if (!(specialField instanceof ZeroField)) {
-                                info._specialReferenceFields.append(specialField);
-                            }
-                        } else {
-                            if (!fieldActor.isInjected()) {
-                                try {
-                                    final Field field = fieldActor.toJava();
-                                    field.setAccessible(true);
-                                    // TODO: mutable vs. immutable fields
-                                    info._mutableReferenceFields.append(field);
-                                } catch (NoSuchFieldError noSuchFieldError) {
-                                    ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
-                                }
-                            }
+            addClassInfoFields(classInfo, staticInfo, classActor.localInstanceFieldActors());
+            addClassInfoFields(classInfo, staticInfo, classActor.localStaticFieldActors());
+        }
+        return classInfo;
+    }
+
+    private void addClassInfoFields(ClassInfo classInfo, final ClassInfo staticInfo, FieldActor[] fieldActors) {
+        for (FieldActor fieldActor : fieldActors) {
+            if (fieldActor.kind() == Kind.REFERENCE) {
+                final ClassInfo info = fieldActor.isStatic() ? staticInfo : classInfo;
+                final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
+                if (specialField != null) {
+                    specialField._fieldActor = fieldActor;
+                    if (!(specialField instanceof ZeroField)) {
+                        info._specialReferenceFields.append(specialField);
+                    }
+                } else {
+                    if (!fieldActor.isInjected()) {
+                        try {
+                            final Field field = fieldActor.toJava();
+                            field.setAccessible(true);
+                            // PERF: split into mutable vs. immutable fields
+                            info._mutableReferenceFields.append(field);
+                        } catch (NoSuchFieldError noSuchFieldError) {
+                            ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
                         }
                     }
                 }
             }
         }
-        return classInfo;
     }
 
     /**

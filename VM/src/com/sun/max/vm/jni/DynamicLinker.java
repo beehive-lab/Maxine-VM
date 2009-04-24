@@ -94,6 +94,8 @@ public final class DynamicLinker {
     @C_FUNCTION
     private static native Word dlclose(Word handle);
 
+    public static native int invokeJNIOnLoad(Address onload);
+
     private static Word doLoad(String absolutePath) {
         final Word handle;
         if (absolutePath == null) {

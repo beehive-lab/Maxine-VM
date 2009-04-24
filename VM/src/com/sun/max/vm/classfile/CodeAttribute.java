@@ -41,15 +41,14 @@ public final class CodeAttribute {
     @INSPECTED
     private final ConstantPool _constantPool;
     @INSPECTED
-    private final byte[] _code;
-    private final char _maxStack;
-    private final char _maxLocals;
     private StackMapTable _stackMapTableAttribute;
-
+    private final byte[] _code;
     private final byte[] _encodedData;
     private final int _exceptionHandlerTableOffset;
     private final int _lineNumberTableOffset;
     private final int _localVariableTableOffset;
+    private final char _maxStack;
+    private final char _maxLocals;
 
     public CodeAttribute(ConstantPool constantPool,
                     byte[] code,
@@ -125,6 +124,10 @@ public final class CodeAttribute {
 
     public byte[] code() {
         return _code;
+    }
+
+    public byte[] encodedData() {
+        return _encodedData;
     }
 
     /**
