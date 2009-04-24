@@ -15,7 +15,18 @@
 # In addition, the command and it's description will be listed when this script
 # is run without any arguments.
 #
-# Author: Doug Simon
+# It is possible to invoke this script from a parent script to build additional
+# projects that depend on Maxine, e.g. for the Guest VM Xen port of Maxine.
+# To do this set the following variables before invoking max:
+#
+#  extra_projects      an array of extra projects to build (see projects below for syntax)
+#  extra_project_dir   the path to where the projects reside
+# 
+# It is also possible to override the default implementation of the run_image and run_vm
+# functions by setting image_override=1 and vm_override=1, respectively.
+# In that case the functions run_image_override and run_vm_override are called instead.
+#
+# Author: Doug Simon, Mick Jordan
 
 verbose=false
 unknown_option=""
@@ -353,10 +364,10 @@ image_help="build a boot image
     Use \"max image -help\" to see what other options this command accepts."
 
 function run_image() {
-    if [ -z "$run_image_override" ] ; then
+    if [ -z "$image_override" ] ; then
         run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $@
     else
-        image_override $@
+        run_image_override $@
     fi
 }
 
@@ -422,7 +433,11 @@ function parse_vm_args() {
 
 function run_vm() {
     parse_vm_args $@
-    run ${maxine_vm} $vm_args
+    if [ -z "$vm_override" ] ; then
+        run ${maxine_vm} $vm_args
+    else
+        run_vm_override $@
+    fi
 }
 
 #=======================================
