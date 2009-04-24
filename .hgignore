@@ -29,3 +29,4 @@ syntax: regexp
 ^[^/]*/trace.*
 ^trace.*
 ^dist/
+^xref/

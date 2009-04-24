@@ -22,6 +22,9 @@ package com.sun.max.ins.method;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.print.*;
+import java.text.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -833,5 +836,15 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         repaint();
     }
 
+    @Override
+    public void print(String name) {
+        final MessageFormat header = new MessageFormat(name);
+        final MessageFormat footer = new MessageFormat("Maxine: " + codeViewerKindName() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
+        try {
+            _table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
+        } catch (PrinterException printerException) {
+            inspection().errorMessage("Print failed: " + printerException.getMessage());
+        }
+    }
 }
 
