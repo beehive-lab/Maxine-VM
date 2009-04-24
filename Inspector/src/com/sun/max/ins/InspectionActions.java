@@ -2932,15 +2932,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 return;
             }
             final File file = fileChooser.getSelectedFile();
-            if (file.exists()) {
-                final int n = JOptionPane.showConfirmDialog(
-                                inspection(),
-                                "File " + file + "exists.  Overwrite?\n",
-                                "Overwrite?",
-                                JOptionPane.YES_NO_OPTION);
-                if (n != JOptionPane.YES_OPTION) {
-                    return;
-                }
+            if (file.exists() && !inspection().yesNoDialog("File " + file + "exists.  Overwrite?\n")) {
+                return;
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));

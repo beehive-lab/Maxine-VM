@@ -21,6 +21,9 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
+import java.awt.print.*;
+import java.text.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -98,7 +101,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                     refreshView(teleVM().epoch(), true);
                 }
             });
-            frame().setTitle(getTextForTitle() + " " + inspection().nameDisplay().longName(_teleNativeThread));
+            frame().setTitle(getTextForTitle());
         }
         frame().setContentPane(_tabbedPane);
     }
@@ -110,7 +113,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public String getTextForTitle() {
-        return "Thread Locals: ";
+        return "Thread Locals: " + " " + inspection().nameDisplay().longName(_teleNativeThread);
     }
 
     @Override
@@ -123,10 +126,29 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         };
     }
 
+    @Override
+    public InspectorAction getPrintAction() {
+        return new InspectorAction(inspection(), "Print") {
+            @Override
+            public void procedure() {
+                final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) _tabbedPane.getSelectedComponent();
+                final String name = getTextForTitle() + " " + threadLocalsPanel.getSafepointState().toString();
+                final MessageFormat footer = new MessageFormat("Maxine: " + name + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
+                try {
+                    final InspectorTable inspectorTable = threadLocalsPanel.getTable();
+                    assert inspectorTable != null;
+                    inspectorTable.print(JTable.PrintMode.FIT_WIDTH, null, footer);
+                } catch (PrinterException printerException) {
+                    inspection().errorMessage("Print failed: " + printerException.getMessage());
+                }
+            }
+        };
+    }
+
     private ThreadLocalsPanel threadLocalsPanelFor(Safepoint.State state) {
         for (Component component : _tabbedPane.getComponents()) {
             final ThreadLocalsPanel threadLocalsPanel = (ThreadLocalsPanel) component;
-            if (threadLocalsPanel._teleVMThreadLocalValues.safepointState() == state) {
+            if (threadLocalsPanel.getSafepointState() == state) {
                 return threadLocalsPanel;
             }
         }

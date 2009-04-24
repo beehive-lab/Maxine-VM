@@ -89,6 +89,11 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
     }
 
     @Override
+    protected InspectorTable getTable() {
+        return _table;
+    }
+
+    @Override
     public String getTextForTitle() {
         return "MemoryRegions";
     }
@@ -101,6 +106,11 @@ public final class MemoryRegionsInspector extends Inspector  implements TableCol
                 new TableColumnVisibilityPreferences.Dialog<MemoryRegionsColumnKind>(inspection(), "Memory Regions View Options", _viewPreferences);
             }
         };
+    }
+
+    @Override
+    public InspectorAction getPrintAction() {
+        return getDefaultPrintAction();
     }
 
     @Override

@@ -97,6 +97,11 @@ public final class NativeMethodInspector extends MethodInspector {
         _targetCodeViewer.redisplay();
     }
 
+    @Override
+    public void print() {
+        _targetCodeViewer.print(getTextForTitle());
+    }
+
     /**
      * Receive request from codeViewer to close; there's only one, so close the whole MethodInspector.
      */
