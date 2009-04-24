@@ -1313,29 +1313,29 @@ public class MaxineTester {
     public static class DaCapoHarness extends TimedHarness implements Harness {
         @Override
         public boolean run() {
-            final File jarFile = getFileFromOptionOrEnv(_dacapoJar, "DACAPO_JAR");
-            if (jarFile == null) {
+            final File dacapoJar = getFileFromOptionOrEnv(_dacapoJar, "DACAPO_JAR");
+            if (dacapoJar == null) {
                 out().println("Need to specify the location of Dacapo JAR file with -" + _dacapoJar + " or in the DACAPO_JAR environment variable");
                 return false;
             }
             final File outputDir = new File(_outputDir.getValue(), "java");
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
-                if (!jarFile.exists()) {
-                    out().println("Couldn't find DaCapo JAR file " + jarFile);
+                if (!dacapoJar.exists()) {
+                    out().println("Couldn't find DaCapo JAR file " + dacapoJar);
                     return false;
                 }
                 for (String test : _dacapoTests.getValue()) {
-                    runDaCapoTest(outputDir, imageDir, test);
+                    runDaCapoTest(outputDir, imageDir, test, dacapoJar);
                 }
                 return true;
             }
             return false;
         }
 
-        void runDaCapoTest(File outputDir, File imageDir, String test) {
+        void runDaCapoTest(File outputDir, File imageDir, String test, File dacapoJar) {
             final String testName = "DaCapo " + test;
-            final JavaCommand command = new JavaCommand(_dacapoJar.getValue());
+            final JavaCommand command = new JavaCommand(dacapoJar);
             command.addArgument(test);
             testJavaProgram(testName, command, outputDir, null, imageDir, null);
             reportTiming(testName, outputDir);
