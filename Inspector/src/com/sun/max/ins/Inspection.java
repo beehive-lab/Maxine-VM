@@ -563,7 +563,7 @@ public class Inspection extends JFrame {
                         final int port = Integer.parseInt(portString);
                         final Socket fileViewer = new Socket(hostname, port);
                         final String command = javaSourceFile.getAbsolutePath() + "|" + lineNumber;
-                        Trace.line(1, tracePrefix() + "Opening file via localhost:" + portString);
+                        Trace.line(1, tracePrefix() + "Opening file '" + command + "' via localhost:" + portString);
                         final OutputStream fileViewerStream = fileViewer.getOutputStream();
                         fileViewerStream.write(command.getBytes());
                         fileViewerStream.flush();

@@ -35,6 +35,7 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.constant.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
@@ -723,12 +724,41 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             addMouseListener(new InspectorMouseClickAdapter(inspection()) {
                 @Override
                 public void procedure(final MouseEvent mouseEvent) {
-                    final BytecodeLocation javaBytecodeLocation = _lastBytecodeLocation;
-                    if (javaBytecodeLocation != null) {
-                        inspection().viewSourceExternally(javaBytecodeLocation);
+                    final BytecodeLocation bytecodeLocation = _lastBytecodeLocation;
+                    if (bytecodeLocation != null) {
+                        final JPopupMenu menu = new JPopupMenu();
+                        for (BytecodeLocation location = bytecodeLocation; location != null; location = location.parent()) {
+                            final StackTraceElement stackTraceElement = location.toStackTraceElement();
+                            final String fileName = stackTraceElement.getFileName();
+                            if (fileName != null) {
+                                final int lineNumber = stackTraceElement.getLineNumber();
+                                if (lineNumber > 0) {
+                                    if (teleVM().findJavaSourceFile(location.classMethodActor().holder()) != null) {
+                                        final BytecodeLocation locationCopy = location;
+                                        menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
+                                            @Override
+                                            public void actionPerformed(ActionEvent e) {
+                                                inspection().viewSourceExternally(locationCopy);
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        if (menu.getComponentCount() > 0) {
+                            menu.show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+                        }
                     }
                 }
             });
+        }
+
+        private String toolTipText(StackTraceElement stackTraceElement) {
+            String s = stackTraceElement.toString();
+            final int openParen = s.indexOf('(');
+            s = Classes.getSimpleName(stackTraceElement.getClassName()) + "." + stackTraceElement.getMethodName() + s.substring(openParen);
+            final String text = s;
+            return text;
         }
 
         @Override
@@ -738,12 +768,13 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
             setToolTipText("Source line not available");
             setBackground(rowToBackgroundColor(row));
             if (bytecodeLocation != null) {
-                final String sourceFileName = bytecodeLocation.sourceFileName();
-                final int lineNumber = bytecodeLocation.sourceLineNumber();
-                if (sourceFileName != null && lineNumber >= 0) {
-                    setText(String.valueOf(lineNumber));
-                    setToolTipText(sourceFileName + ":" + lineNumber);
+                final StackTraceElement stackTraceElement = bytecodeLocation.toStackTraceElement();
+                setText(String.valueOf(stackTraceElement.getLineNumber()));
+                final StringBuilder stackTrace = new StringBuilder("<html><table cellpadding=\"1%\"><tr><td></td><td>").append(toolTipText(stackTraceElement)).append("</td></tr>");
+                for (BytecodeLocation parent = bytecodeLocation.parent(); parent != null; parent = parent.parent()) {
+                    stackTrace.append("<tr><td>--&gt;&nbsp;</td><td>").append(toolTipText(parent.toStackTraceElement())).append("</td></tr>");
                 }
+                setToolTipText(stackTrace.append("</table>").toString());
             }
             _lastBytecodeLocation = bytecodeLocation;
             return this;

@@ -93,6 +93,15 @@ public class BytecodeLocation {
     }
 
     /**
+     * Gets the bytecode location of the logical frame that called this frame where the call has been inlined.
+     *
+     * @return {@code null} to indicate this is top level frame of an inlining tree
+     */
+    public BytecodeLocation parent() {
+        return null;
+    }
+
+    /**
      * Determines if this bytecode location denotes a {@link Bytecode#CALLNATIVE} instruction.
      */
     public boolean isNativeCall() {
