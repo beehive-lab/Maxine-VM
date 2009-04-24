@@ -1,5 +1,26 @@
 #!/bin/bash
 #
+# ----------------------------------------------------------------------------------------------------
+# Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+#
+# Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
+# that is described in this document. In particular, and without limitation, these intellectual property
+# rights may include one or more of the U.S. patents listed at http://www.sun.com/patents and one or
+# more additional patents or pending patent applications in the U.S. and in other countries.
+#
+# U.S. Government Rights - Commercial software. Government users are subject to the Sun
+# Microsystems, Inc. standard license agreement and applicable provisions of the FAR and its
+# supplements.
+#
+# Use is subject to license terms. Sun, Sun Microsystems, the Sun logo, Java and Solaris are trademarks or
+# registered trademarks of Sun Microsystems, Inc. in the U.S. and other countries. All SPARC trademarks
+# are used under license and are trademarks or registered trademarks of SPARC International, Inc. in the
+# U.S. and other countries.
+#
+# UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
+# Company, Ltd.
+# ----------------------------------------------------------------------------------------------------
+#
 # A launcher for Maxine executables and tools. This launch simplifies the task
 # of running the Maxine VM and utilities by setting up the necessary class paths
 # and executable paths. The only requirement is for the user to have set the
@@ -434,29 +455,46 @@ inspect_usage="[options] [class | -jar jarfile]  [args...]"
 inspect_help="launch a given program under the Inspector
 
     Run the Maxine VM under the Inspector. The arguments accepted by this command
-    are exactly those accepted by the 'max vm' command. To debug a program in the
-    Inspector, simply replace 'vm' on the command line that launches the program
-    with 'inspect'."
+    are those accepted by the 'max vm' command plus the Inspector specific
+    options. To debug a program in the Inspector, simply replace 'vm' on the
+    command line that launches the program with 'inspect'.
+    
+    Use \"max inspect --help\" to see what the Inspector options are. These options
+    must be specified with a '--' prefix so that they can be distinguished from
+    the VM options.
+    
+    Use \"max vm -help\" to see what the VM options are."
 
 function run_inspect() {
-    parse_vm_args $@
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -trace=${TRACE:-1} -d -a=\""$vm_args"\"
-}
 
-#=======================================
-# 'inspector' command
-#=======================================
+    vm_args=""
+    inspector_args=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            -XX:LogFile=*)
+                MAXINE_LOG_FILE=${1/*=/}
+                if $verbose ; then
+                       echo "MAXINE_LOG_FILE=$MAXINE_LOG_FILE"
+                   fi
+                export MAXINE_LOG_FILE
+                ;;
+            -cp | -classpath )
+                vm_args="$vm_args $1"
+                shift
+                vm_args="$vm_args $1"
+                inspector_args="$inspector_args -cp=$1"
+                ;;
+            --* )
+                inspector_args="$inspector_args ${1/-/}"
+                ;;
+            *)
+                vm_args="$vm_args $1"
+                ;;
+        esac
+        shift
+    done    
 
-inspector_usage="[options]"
-inspector_help="launch the Inspector
-
-    Run the Inspector. This allows you to supply Inspector specific options as opposed
-    to the \"max inspect\" command which only supports VM options.
-    
-    Use \"max inspector -help\" to see what other options this command accepts."
-
-function run_inspector() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector "$@"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -d -trace=1 ${inspector_args} -a=\""$vm_args"\"
 }
 
 #=======================================
