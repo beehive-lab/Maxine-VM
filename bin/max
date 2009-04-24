@@ -431,11 +431,11 @@ function run_dis() {
 #=======================================
 
 inspect_usage="[options] [class | -jar jarfile]  [args...]"
-inspect_help="launch a given program under the inspector
+inspect_help="launch a given program under the Inspector
 
-    Run the Maxine VM under the inspector. The arguments accepted by this command
+    Run the Maxine VM under the Inspector. The arguments accepted by this command
     are exactly those accepted by the 'max vm' command. To debug a program in the
-    inspector, simply replace 'vm' on the command line that launches the program
+    Inspector, simply replace 'vm' on the command line that launches the program
     with 'inspect'."
 
 function run_inspect() {
@@ -448,9 +448,9 @@ function run_inspect() {
 #=======================================
 
 inspector_usage="[options]"
-inspector_help="launch the inspector
+inspector_help="launch the Inspector
 
-    Run the inspector. This allows you to run supply inspector specific options as opposed
+    Run the Inspector. This allows you to supply Inspector specific options as opposed
     to the \"max inspect\" command which only supports VM options.
     
     Use \"max inspector -help\" to see what other options this command accepts."
