@@ -152,6 +152,17 @@ for project in ${projects[@]}; do
     maxine_cp=${maxine_cp}:${maxine_dir}/${project_dir}/bin
 done
 
+# create the augmented classpath for the extra projects
+extra_cp=$maxine_cp
+# add in any extra projects
+for project in ${extra_projects[@]}; do
+    project_dir=${project/:*/}
+    extra_cp=${extra_cp}:${extra_projects_dir}/${project_dir}/bin
+done
+
+# now combine the two project lists for build purposes
+projects=( ${projects[@]} ${extra_projects[@]} )
+
 test -n "${JUNIT4_CP}" || { echo "Need to use '-junit4' option or JUNIT4_CP environment variable to specify a class path for Junit4 classes"; exit 1; }
 maxine_cp=${maxine_cp}:/${JUNIT4_CP}
 
@@ -193,6 +204,24 @@ function check_gnu_make() {
         fi
     exit 1
     fi
+}
+
+#============================================================
+# When building extra projects, this function sets the
+# project_dir_parent variable and project_cp variable
+# appropriately for the run_build function
+#============================================================
+
+function set_project_dir_parent() {
+    for xproject in ${extra_projects[@]}; do
+        if [[ "$xproject" == "$1" ]]; then
+            project_dir_parent=$extra_projects_dir
+            project_cp=$extra_cp
+            return
+        fi
+    done
+    project_dir_parent=$maxine_dir;
+    project_cp=$maxine_cp
 }
 
 #=======================================
@@ -267,23 +296,30 @@ function run_build() {
     # Compile Java sources
     for project in ${projects[@]}; do
         project_dir=${project/:*/}
-        if [[ "$projects_to_build" != *${project_dir}* ]]; then
+        project_build_match=0
+        for project_to_build in ${projects_to_build[@]}; do
+            if [[ "$project_to_build" == ${project_dir} ]]; then
+                project_build_match=1
+            fi
+        done
+        if [ $project_build_match -eq 0 ] ; then
             continue
         fi
+        set_project_dir_parent ${project}
         if $clean ; then
-            run rm -rf ${maxine_dir}/${project_dir}/bin
+            run rm -rf ${project_dir_parent}/${project_dir}/bin
         fi
-        run mkdir -p ${maxine_dir}/${project_dir}/bin
+        run mkdir -p ${project_dir_parent}/${project_dir}/bin
 
         source_dirs_spec=${project/*:/}
         source_dirs=${source_dirs_spec//,/ }        
         for source_dir in ${source_dirs} ; do
             pushd . >/dev/null
-            cd ${maxine_dir}/${project_dir}/${source_dir}
-            echo "Compiling Java sources in ${maxine_dir}/${project_dir}/${source_dir}..."
+            cd ${project_dir_parent}/${project_dir}/${source_dir}
+            echo "Compiling Java sources in ${project_dir_parent}/${project_dir}/${source_dir}..."
             javac_input=/tmp/javacfiles.txt.$$
             find . -name *.java | grep -v 'package-info.java' >$javac_input
-            run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${maxine_cp} -d ../bin @$javac_input 2>&1 | \
+            run ${javac} -source 1.6 -g -J-Xmx1g -classpath ${project_cp} -d ../bin @$javac_input 2>&1 | \
                awk ' BEGIN                    { s=0; c=-1}
                      /is Sun proprietary API/ { s++; c=2; }
                                               { if (c-- >= 0) next; print; }
@@ -316,7 +352,11 @@ image_help="build a boot image
     Use \"max image -help\" to see what other options this command accepts."
 
 function run_image() {
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $@
+    if [ -z "$run_image_override" ] ; then
+        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $@
+    else
+        image_override $@
+    fi
 }
 
 #=======================================
