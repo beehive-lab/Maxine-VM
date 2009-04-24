@@ -81,7 +81,7 @@ public class MaxineTester {
     private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs",
                     MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
-    private static final Option<List<String>> _tests = _options.newStringListOption("tests", "junit,output,javatester,dacapo,specjvm98,shootout",
+    private static final Option<List<String>> _tests = _options.newStringListOption("tests", "junit,output,javatester",
                     "The list of test harnesses to run, which may include JUnit tests (junit), output tests (output), " +
                     "the JavaTester (javatester), DaCapo (dacapo), and SpecJVM98 (specjvm98). A selection of the Dacapo/SpecJVM98/Shootout tests " +
                     "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example " +
