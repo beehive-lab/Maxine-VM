@@ -32,7 +32,7 @@ public class Catch_OutOfMemory01 {
         List<Object[]> leak = new ArrayList<Object[]>();
         try {
              while (true) {
-                leak.add(new Object[1024]);
+                leak.add(new Object[120000]);
             }
         } catch (OutOfMemoryError ex) {
             return 0;
