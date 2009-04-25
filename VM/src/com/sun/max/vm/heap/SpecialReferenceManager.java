@@ -36,6 +36,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.value.*;
 
 /**
  * This class implements supports for collecting and processing special references
@@ -70,6 +71,9 @@ public class SpecialReferenceManager {
     // this method should be available and compiled
     private static final Object _lock = getLockObject();
     private static final CriticalMethod _registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register");
+    static {
+        MaxineVM.registerImageInvocationStub(_registerMethod.classMethodActor());
+    }
 
     private static Grip _discoveredList;
 
@@ -158,9 +162,8 @@ public class SpecialReferenceManager {
     public static void registerFinalizee(Object object) {
         if (FINALIZERS_SUPPORTED) {
             try {
-                final Method method = _registerMethod.classMethodActor().toJava();
-                method.setAccessible(true);
-                method.invoke(null, object);
+                final ClassMethodActor methodActor = _registerMethod.classMethodActor();
+                methodActor.invoke(ReferenceValue.from(object));
             } catch (Exception e) {
                 throw ProgramError.unexpected(e);
             }
