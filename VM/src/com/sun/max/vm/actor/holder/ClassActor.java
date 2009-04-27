@@ -483,10 +483,24 @@ public abstract class ClassActor extends Actor {
         return null;
     }
 
+    /**
+     * Searches a given array of members for one matching a given name and signature.
+     *
+     * @param name the name of the member to find
+     * @param descriptor the signature of the member to find. If this value is {@code null}, then the first member found
+     *            based on {@code name} is returned.
+     * @return the matching member or {@code null} in none is found
+     */
     private static <MemberActor_Type extends MemberActor> MemberActor_Type findMemberActor(MemberActor_Type[] memberActors, Utf8Constant name, Descriptor descriptor) {
         for (MemberActor_Type memberActor : memberActors) {
-            if (memberActor.matchesNameAndType(name, descriptor)) {
-                return memberActor;
+            if (descriptor == null) {
+                if (memberActor.name() == name) {
+                    return memberActor;
+                }
+            } else {
+                if (memberActor.matchesNameAndType(name, descriptor)) {
+                    return memberActor;
+                }
             }
         }
         return null;
@@ -585,6 +599,14 @@ public abstract class ClassActor extends Actor {
         return null;
     }
 
+    /**
+     * Searches the {@linkplain #localInstanceFieldActors() instance} fields declared by this class actor for one whose
+     * {@linkplain FieldActor#offset()} matches a given value.
+     *
+     * @param offset the offset to search by
+     * @return the instance field declared by this class whose offset equals {@code offset} or {@code null} if not such
+     *         field exists
+     */
     public final FieldActor findLocalInstanceFieldActor(int offset) {
         for (FieldActor fieldActor : localInstanceFieldActors()) {
             if (fieldActor.offset() == offset) {
@@ -616,18 +638,6 @@ public abstract class ClassActor extends Actor {
             final FieldActor result = holder.findLocalInstanceFieldActor(offset);
             if (result != null) {
                 return result;
-            }
-            holder = holder.superClassActor();
-        } while (holder != null);
-        return null;
-    }
-
-    public final FieldActor findInstanceFieldActor(Utf8Constant name) {
-        ClassActor holder = this;
-        do {
-            final FieldActor fieldActor = holder.findLocalInstanceFieldActor(name);
-            if (fieldActor != null) {
-                return fieldActor;
             }
             holder = holder.superClassActor();
         } while (holder != null);
@@ -749,6 +759,15 @@ public abstract class ClassActor extends Actor {
         return _localVirtualMethodActors;
     }
 
+    /**
+     * Searches the {@linkplain #localVirtualMethodActors() virtual} methods in this class actor for one matching a
+     * given name and signature.
+     *
+     * @param name the name of the method to find
+     * @param descriptor the signature of the method to find. If this value is {@code null}, then the first matching
+     *            method found based on {@code name} is returned.
+     * @return the matching method or {@code null} in none is found
+     */
     public final VirtualMethodActor findLocalVirtualMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
         return findMemberActor(_localVirtualMethodActors, name, descriptor);
     }
@@ -817,6 +836,15 @@ public abstract class ClassActor extends Actor {
         return getVirtualMethodActorByVTableIndex(_iToV[iIndex]);
     }
 
+    /**
+     * Searches the {@linkplain #localVirtualMethodActors() virtual} methods and {@linkplain #localStaticMethodActors()
+     * static} methods actors (in that order) declared in this class actor for one matching a given name and signature.
+     *
+     * @param name the name of the method to find
+     * @param descriptor the signature of the method to find. If this value is {@code null}, then the first method found
+     *            based on {@code name} is returned.
+     * @return the matching method or {@code null} in none is found
+     */
     public final ClassMethodActor findLocalClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
         final ClassMethodActor result = findLocalVirtualMethodActor(name, descriptor);
         if (result != null) {
@@ -838,15 +866,6 @@ public abstract class ClassActor extends Actor {
 
     public final StaticMethodActor findLocalStaticMethodActor(String name) {
         return findLocalStaticMethodActor(SymbolTable.makeSymbol(name));
-    }
-
-    public final ClassMethodActor findLocalClassMethodActor(Utf8Constant name) {
-        for (VirtualMethodActor dynamicMethodActor : _localVirtualMethodActors) {
-            if (dynamicMethodActor.name().equals(name)) {
-                return dynamicMethodActor;
-            }
-        }
-        return findLocalStaticMethodActor(name);
     }
 
     public final MethodActor findLocalClassMethodActor(MethodActor declaredMethod) {

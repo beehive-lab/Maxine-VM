@@ -822,12 +822,13 @@ public final class DataPrototype extends Prototype {
      *
      * @param javaClass the class which contains the field
      * @param fieldName the name of the field
+     * @param fieldType the type of the field
      * @return the offset of the field from the beginning of a cell
      */
-    private int getInstanceFieldOffsetInTupleCell(Class javaClass, Utf8Constant fieldName) {
+    private int getInstanceFieldOffsetInTupleCell(Class javaClass, Utf8Constant fieldName, TypeDescriptor fieldType) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final TupleLayout tupleLayout = (TupleLayout) classActor.dynamicHub().specificLayout();
-        final FieldActor fieldActor = classActor.findInstanceFieldActor(fieldName);
+        final FieldActor fieldActor = classActor.findInstanceFieldActor(fieldName, fieldType);
         ProgramError.check(fieldActor != null, "could not find field: " + fieldName);
         return tupleLayout.getFieldOffsetInCell(fieldActor);
     }
@@ -962,7 +963,7 @@ public final class DataPrototype extends Prototype {
     private void assignTargetMethodRelocationFlags(int startFieldOffset) {
         Trace.begin(1, "assignTargetMethodRelocationFlags");
 
-        final int codeStartFieldOffset = getInstanceFieldOffsetInTupleCell(TargetMethod.class, _codeStart);
+        final int codeStartFieldOffset = getInstanceFieldOffsetInTupleCell(TargetMethod.class, _codeStart, JavaTypeDescriptor.forJavaClass(Pointer.class));
 
         for (TargetMethod targetMethod : Code.bootCodeRegion().targetMethods()) {
             setRelocationFlag(_objectToCell.get(targetMethod).plus(startFieldOffset));
@@ -983,11 +984,11 @@ public final class DataPrototype extends Prototype {
 
         assignMethodDispatchTableRelocationFlags();
 
-        final int startFieldOffset = getInstanceFieldOffsetInTupleCell(RuntimeMemoryRegion.class, _start);
+        final int startFieldOffset = getInstanceFieldOffsetInTupleCell(RuntimeMemoryRegion.class, _start, JavaTypeDescriptor.forJavaClass(Size.class));
         assignTargetMethodRelocationFlags(startFieldOffset);
         setRelocationFlag(_objectToCell.get(Code.bootCodeRegion()).plus(startFieldOffset));
 
-        final int markFieldOffset = getInstanceFieldOffsetInTupleCell(LinearAllocatorHeapRegion.class, _mark);
+        final int markFieldOffset = getInstanceFieldOffsetInTupleCell(LinearAllocatorHeapRegion.class, _mark, JavaTypeDescriptor.forJavaClass(Address.class));
         setRelocationFlag(_objectToCell.get(Heap.bootHeapRegion()).plus(markFieldOffset));
         setRelocationFlag(_objectToCell.get(Code.bootCodeRegion()).plus(markFieldOffset));
 

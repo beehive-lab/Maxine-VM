@@ -341,7 +341,8 @@ public final class BcdeTargetAMD64Compiler extends BcdeAMD64Compiler implements 
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
         if (MaxineVM.isPrototyping()) {
-            _unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"));
+            _unwindMethod = ClassActor.fromJava(BcdeTargetAMD64Compiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
+            assert _unwindMethod != null;
         }
     }
 

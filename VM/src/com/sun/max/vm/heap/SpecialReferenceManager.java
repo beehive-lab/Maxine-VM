@@ -21,7 +21,6 @@
 package com.sun.max.vm.heap;
 
 import java.lang.ref.*;
-import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
@@ -36,10 +35,11 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * This class implements supports for collecting and processing special references
+ * This class implements support for collecting and processing special references
  * (i.e. instances of {@link Reference} and its subclasses) which
  * implement weak references and finalizers.
  * The routines in this class are called by the GC as it discovers reachable special
@@ -67,12 +67,21 @@ public class SpecialReferenceManager {
     private static final ReferenceFieldActor _discoveredField = getReferenceClassField("discovered");
     private static final ReferenceFieldActor _referentField = getReferenceClassField("referent");
     private static final ReferenceFieldActor _pendingField = getReferenceClassField("pending");
-    private static final ReferenceFieldActor _lockField = getReferenceClassField("lock");
-    // this method should be available and compiled
-    private static final Object _lock = getLockObject();
-    private static final CriticalMethod _registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register");
+
+    /**
+     * The lock object associated with managing special references. This lock must
+     * be held by the GC when it is updating the list of pending special references.
+     * This value is a reference to the static {@code lock} field in {@link java.lang.Reference}.
+     * Like {@link VmThread.ACTIVE}, this lock is special and requires a sticky monitor.
+     */
+    public static final Object LOCK = WithoutAccessCheck.getStaticField(JDK.java_lang_ref_Reference.javaClass(), "lock");
+
+    // These methods and their invocation stubs must be compiled in the image
+    private static final CriticalMethod _registerMethod = new CriticalMethod(JDK.java_lang_ref_Finalizer.javaClass(), "register", SignatureDescriptor.create(Void.TYPE, Object.class));
+    private static final CriticalMethod _referenceHandlerConstructor = new CriticalMethod(JDK.java_lang_ref_Reference$ReferenceHandler.javaClass(), "<init>", SignatureDescriptor.create(Void.TYPE, ThreadGroup.class, String.class));
     static {
         MaxineVM.registerImageInvocationStub(_registerMethod.classMethodActor());
+        MaxineVM.registerImageInvocationStub(_referenceHandlerConstructor.classMethodActor());
     }
 
     private static Grip _discoveredList;
@@ -127,7 +136,7 @@ public class SpecialReferenceManager {
         if (last != null) {
             // if there are pending special references, notify the reference handler thread.
             // (note that the GC must already hold the lock object)
-            getLockObject().notifyAll();
+            LOCK.notifyAll();
         }
     }
 
@@ -165,7 +174,7 @@ public class SpecialReferenceManager {
                 final ClassMethodActor methodActor = _registerMethod.classMethodActor();
                 methodActor.invoke(ReferenceValue.from(object));
             } catch (Exception e) {
-                throw ProgramError.unexpected(e);
+                FatalError.unexpected("Could not register object for finalization", e);
             }
         }
     }
@@ -184,27 +193,6 @@ public class SpecialReferenceManager {
             startReferenceHandlerThread();
             startFinalizerThread();
         }
-    }
-
-    /**
-     * This method gets the lock object associated with managing special references. This lock must
-     * be held by the GC when it is updating the list of pending special references. This lock object
-     * is allocated in {@link java.lang.Reference} and stored in its <code>lock</code> field.
-     * Like {@link VmThread.ACTIVE}, this lock is special and requires a sticky monitor.
-     *
-     * @return the object that must be held by the GC
-     */
-    public static Object getLockObject() {
-        if (MaxineVM.isPrototyping()) {
-            try {
-                final Field lockField = JDK.java_lang_ref_Reference.javaClass().getDeclaredField("lock");
-                lockField.setAccessible(true);
-                return lockField.get(null);
-            } catch (Exception e) {
-                throw ProgramError.unexpected(e);
-            }
-        }
-        return _lock;
     }
 
     @PROTOTYPE_ONLY
@@ -227,11 +215,8 @@ public class SpecialReferenceManager {
         for (ThreadGroup tgn = tg; tgn != null; tg = tgn, tgn = tg.getParent()) {
             // do nothing; get the root thread group
         }
-        final Class<?> javaClass = JDK.java_lang_ref_Reference$ReferenceHandler.javaClass();
         try {
-            final Constructor constructor = javaClass.getDeclaredConstructor(ThreadGroup.class, String.class);
-            constructor.setAccessible(true);
-            final Thread handler = (Thread) constructor.newInstance(tg, "Reference Handler");
+            final Thread handler = (Thread) _referenceHandlerConstructor.classMethodActor().invokeConstructor(ReferenceValue.from(tg), ReferenceValue.from("Reference Handler")).asObject();
             /* If there were a special system-only priority greater than
              * MAX_PRIORITY, it would be used here
              */

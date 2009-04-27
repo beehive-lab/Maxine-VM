@@ -93,8 +93,8 @@ public abstract class StackFrameWalker {
     private StackFrame _calleeStackFrame;
     private Pointer _trapState;
 
-    private static final CriticalMethod MaxineVM_run = new CriticalMethod(MaxineVM.class, "run");
-    private static final CriticalMethod VmThread_run = new CriticalMethod(VmThread.class, "run");
+    private static final CriticalMethod MaxineVM_run = new CriticalMethod(MaxineVM.class, "run", MaxineVM.RUN_METHOD_SIGNATURE);
+    private static final CriticalMethod VmThread_run = new CriticalMethod(VmThread.class, "run", VmThread.RUN_METHOD_SIGNATURE);
 
     /**
      * Walks a thread's stack.
