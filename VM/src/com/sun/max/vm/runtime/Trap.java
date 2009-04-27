@@ -81,7 +81,7 @@ public final class Trap {
      * frame code generated for it. As such, it's entry point is at it's first compiled instruction which corresponds
      * with it's entry point it it were to be called from C code.
      */
-    private static final CriticalMethod _trapStub = new CriticalMethod(Trap.class, "trapStub", CallEntryPoint.C_ENTRY_POINT);
+    private static final CriticalMethod _trapStub = new CriticalMethod(Trap.class, "trapStub", null, CallEntryPoint.C_ENTRY_POINT);
 
     private static final CriticalMethod _nativeExit = new CriticalNativeMethod(MaxineVM.class, "native_exit");
 
