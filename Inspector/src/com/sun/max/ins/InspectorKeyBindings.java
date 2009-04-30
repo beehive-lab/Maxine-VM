@@ -50,8 +50,10 @@ public class InspectorKeyBindings {
         ViewMethodBytecodeByNameAction.class,
         ViewMethodTargetCodeByNameAction.class,
         DebugSingleStepAction.class,
-        DebugRunToInstructionAction.class,
-        DebugRunToInstructionWithBreakpointsAction.class,
+        DebugRunToSelectedInstructionAction.class,
+        DebugRunToSelectedInstructionWithBreakpointsAction.class,
+        DebugRunToNextCallAction.class,
+        DebugRunToNextCallWithBreakpointsAction.class,
         DebugReturnFromFrameAction.class,
         DebugReturnFromFrameWithBreakpointsAction.class,
         DebugStepOverAction.class,
@@ -156,8 +158,8 @@ public class InspectorKeyBindings {
         add(SetTargetCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
         add(RemoveTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(DebugRunToInstructionWithBreakpointsAction.class, VK_F4).
-        add(DebugRunToInstructionAction.class, VK_F4, CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
+        add(DebugRunToSelectedInstructionWithBreakpointsAction.class, VK_F4).
+        add(DebugRunToSelectedInstructionAction.class, VK_F4, CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
 
     /**
      * A default set of key bindings.
@@ -182,7 +184,10 @@ public class InspectorKeyBindings {
         add(SetTargetCodeBreakpointAtObjectInitializerAction.class, 'I', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
         add(SetTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK).
         add(RemoveTargetCodeLabelBreakpointsAction.class, 'L', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
-        add(DebugRunToInstructionWithBreakpointsAction.class, 'R', CTRL_DOWN_MASK).
-        add(DebugRunToInstructionAction.class, 'R', CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
+        add(DebugRunToSelectedInstructionWithBreakpointsAction.class, 'R', CTRL_DOWN_MASK).
+        add(DebugRunToSelectedInstructionAction.class, 'R', CTRL_DOWN_MASK + SHIFT_DOWN_MASK).
+        add(DebugRunToNextCallWithBreakpointsAction.class, 'C', CTRL_DOWN_MASK).
+        add(DebugRunToNextCallAction.class, 'C', CTRL_DOWN_MASK + SHIFT_DOWN_MASK);
+
 
 }
