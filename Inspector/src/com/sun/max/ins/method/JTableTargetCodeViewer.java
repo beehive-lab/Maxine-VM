@@ -213,7 +213,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         button.setIcon(style().debugStepOutButtonIcon());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugRunToInstruction());
+        button = new InspectorButton(_inspection, _inspection.actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
