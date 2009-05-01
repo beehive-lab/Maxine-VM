@@ -43,9 +43,10 @@
 #  extra_projects      an array of extra projects to build (see projects below for syntax)
 #  extra_project_dir   the path to where the projects reside
 # 
-# It is also possible to override the default implementation of the run_image and run_vm
-# functions by setting image_override=1 and vm_override=1, respectively.
-# In that case the functions run_image_override and run_vm_override are called instead.
+# It is also possible to override any of the commands in this script. For example, to
+# override the 'image' command, define a function named 'run_image_override' in the
+# parent script before sourcing this script. In this case, the 'run_image_function'
+# will be called instead of 'run_image' if the user specified the 'image' command.
 #
 # Author: Doug Simon, Mick Jordan
 
@@ -464,11 +465,7 @@ image_help="build a boot image
     Use \"max image -help\" to see what other options this command accepts."
 
 function run_image() {
-    if [ -z "$image_override" ] ; then
-        run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $@
-    else
-        run_image_override $@
-    fi
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.vm.prototype.BinaryImageGenerator -trace=1 -run=java $@
 }
 
 #=======================================
@@ -533,11 +530,7 @@ function parse_vm_args() {
 
 function run_vm() {
     parse_vm_args $@
-    if [ -z "$vm_override" ] ; then
-        run ${maxine_vm} $vm_args
-    else
-        run_vm_override $@
-    fi
+    run ${maxine_vm} $vm_args
 }
 
 #=======================================
@@ -815,6 +808,13 @@ function run_help() {
     else
         command="$1"
         
+        run_command="run_${command}"
+        command_type=`type -t ${run_command}`
+        if [ "${command_type}" != "function" ]; then
+            usage "max: unknown command '${command}'"
+            exit 255
+        fi
+        
         usage_var="${command}_usage"
         usage=${!usage_var}
         
@@ -838,7 +838,7 @@ function usage() {
     echo "Maxine Launcher"
     echo
     echo "available commands:"
-    for run_command in `declare -Ff | grep 'run_' | cut -d ' ' -f 3 | sort`; do
+    for run_command in `declare -Ff | grep 'run_' | grep -v '_override' | cut -d ' ' -f 3 | sort`; do
         command=${run_command/run_/}
         help=""
         help_var="${command}_help"
@@ -884,10 +884,18 @@ fi
 run_command="run_${command}"
 shift
 
+
 command_type=`type -t ${run_command}`
 if [ "${command_type}" != "function" ]; then
     usage "max: unknown command '${command}'"
     exit 255
 fi
-
-eval $run_command $command_args
+    
+# Check for override
+run_command_override="run_${command}_override"
+command_override_type=`type -t ${run_command_override}`
+if [ "${command_override_type}" == "function" ]; then
+    eval $run_command_override $command_args
+else
+    eval $run_command $command_args
+fi
