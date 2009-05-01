@@ -23,7 +23,6 @@ package com.sun.max.annotate;
 import java.lang.annotation.*;
 
 import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.compiler.cir.*;
 
 /**
  * Any method annotated with this annotation exists solely to provide an escape hatch from Java's type checking. All
@@ -37,9 +36,6 @@ import com.sun.max.vm.compiler.cir.*;
  * addition, if the return type is generic, the compiler must remove the {@link Bytecode#CHECKCAST} instruction (if any)
  * after a call to the method. These {@code checkcast} instructions are inserted by Java source compilers in the process
  * of type erasure.
- *
- * @see CirMethod#isFoldableCast
- * @see CirMethod#foldCast
  *
  * @author Doug Simon
  */

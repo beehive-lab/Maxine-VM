@@ -984,7 +984,7 @@ public final class DataPrototype extends Prototype {
 
         assignMethodDispatchTableRelocationFlags();
 
-        final int startFieldOffset = getInstanceFieldOffsetInTupleCell(RuntimeMemoryRegion.class, _start, JavaTypeDescriptor.forJavaClass(Size.class));
+        final int startFieldOffset = getInstanceFieldOffsetInTupleCell(RuntimeMemoryRegion.class, _start, JavaTypeDescriptor.forJavaClass(Address.class));
         assignTargetMethodRelocationFlags(startFieldOffset);
         setRelocationFlag(_objectToCell.get(Code.bootCodeRegion()).plus(startFieldOffset));
 
