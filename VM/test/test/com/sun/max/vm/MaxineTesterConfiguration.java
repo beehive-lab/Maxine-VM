@@ -155,6 +155,7 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
+        test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class
     };
 
@@ -245,6 +246,7 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
+        test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class,
         test.output.Thread_join04.class,
         test.hotpath.HP_array02.class, // 329
@@ -284,6 +286,7 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
+        test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class,
         test.bytecode.BC_frem.class,  // 45
         test.except.Catch_NPE_03.class, // 202
