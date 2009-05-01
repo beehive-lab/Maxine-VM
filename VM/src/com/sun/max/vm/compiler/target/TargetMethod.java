@@ -723,7 +723,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                 return _directCallees[i];
             }
         }
-        throw ProgramError.unexpected("could not find callee for call site: " + callSite.toHexString());
+        throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
     public final Address throwAddressToCatchAddress(Address throwAddress) {
