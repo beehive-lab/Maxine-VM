@@ -181,7 +181,7 @@ if [[ "$junit_version" != 4.* ]]; then
     echo "$junit_version"
     exit 255
 fi 
-maxine_cp=${maxine_cp}:/${JUNIT4_CP}
+maxine_cp=${maxine_cp}:${JUNIT4_CP}
 
 maxine_vm=${maxine_dir}/Native/generated/${MAXINE_OS}/maxvm
 
@@ -331,6 +331,78 @@ function run_build() {
             fi
         done
     done
+}
+
+#=======================================
+# 'javadoc' command
+#=======================================
+
+javadoc_usage="[options]"
+javadoc_help="run javadoc over the Maxine Java source files
+
+   Run javadoc over the Maxine Java source code and place the generated
+   HTML in $maxine_dir/javadoc.
+   
+options:
+ -clean     removes existing generated javadoc first
+ <any other javadoc option>
+    
+    Use \"max image -help\" to see what other options this command accepts."
+
+function run_javadoc() {
+    javadoc=${JAVA_HOME}/bin/javadoc
+    clean=false
+    extra_javadoc_options=""
+    while [ "$1" != "" ]; do
+        case $1 in
+            -clean )
+                clean=true
+                ;;
+            * )
+                extra_javadoc_options="$extra_javadoc_options $1"
+                ;;
+        esac
+        shift
+    done
+    
+    javadoc_output_dir=${maxine_dir}/javadoc
+    if $clean ; then
+        run rm -rf $javadoc_output_dir
+    fi
+    run mkdir -p $javadoc_output_dir
+
+    source_path=""
+    package_list=/tmp/packages.txt.$$
+    cat /dev/null > $package_list
+    
+    for project in ${projects[@]}; do
+        project_dir=${project/:*/}
+
+        source_dirs_spec=${project/*:/}
+        source_dirs=${source_dirs_spec//,/ }
+        for source_dir in ${source_dirs} ; do
+            abs_source_dir=${maxine_dir}/${project_dir}/${source_dir}
+            if [ -z "$source_path" ]; then
+                source_path=$abs_source_dir
+            else
+                source_path="$source_path:$abs_source_dir"
+            fi
+            find $abs_source_dir -name package-info.java | sed 's:'$abs_source_dir'/\(.*\)/package-info.java:\1:g' | tr '/' '.' >>$package_list
+        done
+    done
+            
+    echo "Running javadoc over Java sources..."
+    run ${javadoc} -quiet -source 1.6 -J-Xmx1g \
+        -classpath ${maxine_cp} \
+        -sourcepath $source_path \
+        -d $javadoc_output_dir \
+        -link http://java.sun.com/javase/6/docs/api \
+         $extra_javadoc_options $(<$package_list)
+    result=$?
+    rm $package_list
+    if [ $result -ne 0 ]; then
+        exit $result
+    fi
 }
 
 #=======================================
