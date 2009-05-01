@@ -2585,11 +2585,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the selected instruction,
      * ignoring breakpoints.
      */
-    final class DebugRunToInstructionAction extends InspectorAction {
+    final class DebugRunToSelectedInstructionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to selected instruction (ignoring breakpoints)";
 
-        DebugRunToInstructionAction(String title) {
+        DebugRunToSelectedInstructionAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title, true);
             _refreshableActions.append(this);
         }
@@ -2614,26 +2614,26 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction _debugRunToInstruction = new DebugRunToInstructionAction(null);
+    private final InspectorAction _debugRunToSelectedInstruction = new DebugRunToSelectedInstructionAction(null);
 
     /**
-     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the first instruction after returning
-     *         from the current frame of the currently selected thread
+     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the the currently
+     * selected instruction, ignoring breakpoints.
      */
-    public final InspectorAction debugRunToInstruction() {
-        return _debugRunToInstruction;
+    public final InspectorAction debugRunToSelectedInstruction() {
+        return _debugRunToSelectedInstruction;
     }
 
 
     /**
      * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the selected instruction
-     * or a breakpoint.
+     * or a breakpoint, whichever comes first.
      */
-    final class DebugRunToInstructionWithBreakpointsAction extends InspectorAction {
+    final class DebugRunToSelectedInstructionWithBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to selected instruction";
 
-        DebugRunToInstructionWithBreakpointsAction(String title) {
+        DebugRunToSelectedInstructionWithBreakpointsAction(String title) {
             super(inspection(), title == null ? DEFAULT_TITLE : title, true);
             _refreshableActions.append(this);
         }
@@ -2645,7 +2645,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 try {
                     teleVM().controller().runToInstruction(selectedAddress, false, false);
                 } catch (Exception exception) {
-                    throw new InspectorError("Run to instruction could not be performed.", exception);
+                    throw new InspectorError("Run to selection instruction could not be performed.", exception);
                 }
             } else {
                 inspection().errorMessage("No instruction selected");
@@ -2658,14 +2658,106 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-    private final InspectorAction _debugRunToInstructionWithBreakpoints = new DebugRunToInstructionWithBreakpointsAction(null);
+    private final InspectorAction _debugRunToSelectedInstructionWithBreakpoints = new DebugRunToSelectedInstructionWithBreakpointsAction(null);
+
+    /**
+     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the selected instruction
+     * or a breakpoint, whichever comes first..
+     */
+    public final InspectorAction debugRunToSelectedInstructionWithBreakpoints() {
+        return _debugRunToSelectedInstructionWithBreakpoints;
+    }
+
+
+    /**
+     * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the next call instruction,
+     * ignoring breakpoints; fails if there is no known call in the method containing the IP.
+     */
+    final class DebugRunToNextCallAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Run to next call instruction (ignoring breakpoints)";
+
+        DebugRunToNextCallAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            _refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final TeleTargetMethod teleTargetMethod = teleVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
+            if (teleTargetMethod != null) {
+                final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
+                if (!nextCallAddress.isZero()) {
+                    try {
+                        teleVM().controller().runToInstruction(nextCallAddress, false, true);
+                    } catch (Exception exception) {
+                        throw new InspectorError("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
+        }
+    }
+
+    private final InspectorAction _debugRunToNextCall = new DebugRunToNextCallAction(null);
+
+    /**
+     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the next call instruction,
+     * ignoring breakpoints; fails if there is no known call in the method containing the IP.
+     */
+    public final InspectorAction debugRunToNextCall() {
+        return _debugRunToNextCall;
+    }
+
+
+    /**
+     * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the selected instruction
+     * or a breakpoint.
+     */
+    final class DebugRunToNextCallWithBreakpointsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Run to next call instruction";
+
+        DebugRunToNextCallWithBreakpointsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title, true);
+            _refreshableActions.append(this);
+        }
+
+        @Override
+        protected void procedure() {
+            final Address address = focus().codeLocation().targetCodeInstructionAddresss();
+            final TeleTargetMethod teleTargetMethod = teleVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
+            if (teleTargetMethod != null) {
+                final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
+                if (!nextCallAddress.isZero()) {
+                    try {
+                        teleVM().controller().runToInstruction(nextCallAddress, false, false);
+                    } catch (Exception exception) {
+                        throw new InspectorError("Run to next call instruction could not be performed.", exception);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void refresh(long epoch, boolean force) {
+            setEnabled(focus().hasThread() && focus().hasCodeLocation() && inspection().isVMReady());
+        }
+    }
+
+    private final InspectorAction _debugNextRunToCallWithBreakpoints = new DebugRunToNextCallWithBreakpointsAction(null);
 
     /**
      * @return an Action that will resume execution in the {@link TeleVM}, stopping at the first instruction after returning
      *         from the current frame of the currently selected thread, or at a breakpoint, whichever comes first.
      */
-    public final InspectorAction debugRunToInstructionWithBreakpoints() {
-        return _debugRunToInstructionWithBreakpoints;
+    public final InspectorAction debugRunToNextCallWithBreakpoints() {
+        return _debugNextRunToCallWithBreakpoints;
     }
 
 

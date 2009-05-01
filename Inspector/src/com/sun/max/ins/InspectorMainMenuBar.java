@@ -153,8 +153,10 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
         menu.add(_actions.debugStepOver());
         menu.add(_actions.debugReturnFromFrameWithBreakpoints());
         menu.add(_actions.debugReturnFromFrame());
-        menu.add(_actions.debugRunToInstructionWithBreakpoints());
-        menu.add(_actions.debugRunToInstruction());
+        menu.add(_actions.debugRunToSelectedInstructionWithBreakpoints());
+        menu.add(_actions.debugRunToSelectedInstruction());
+        menu.add(_actions.debugRunToNextCallWithBreakpoints());
+        menu.add(_actions.debugRunToNextCall());
         menu.add(_actions.debugPause());
         menu.addSeparator();
         final JMenuItem viewBreakpointsMenuItem = new JMenuItem(_actions.viewBreakpoints());

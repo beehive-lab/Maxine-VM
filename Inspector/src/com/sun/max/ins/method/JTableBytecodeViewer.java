@@ -277,7 +277,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         button.setEnabled(haveTargetCodeAddresses());
         toolBar().add(button);
 
-        button = new InspectorButton(_inspection, _inspection.actions().debugRunToInstruction());
+        button = new InspectorButton(_inspection, _inspection.actions().debugRunToSelectedInstruction());
         button.setToolTipText(button.getText());
         button.setText(null);
         button.setIcon(style().debugRunToCursorButtonIcon());
