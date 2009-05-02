@@ -275,8 +275,9 @@ public class CompiledPrototype extends Prototype {
 
     private void processNewTargetMethod(DynamicCompilerScheme dynamicCompilerScheme, TargetMethod targetMethod) {
         traceNewTargetMethod(targetMethod);
+        final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         // if this method contains anonymous classes, add them:
-        final GrowableDeterministicSet<ClassActor> anonymousClasses = lookupAnonymousClasses(targetMethod.classMethodActor());
+        final GrowableDeterministicSet<ClassActor> anonymousClasses = lookupAnonymousClasses(classMethodActor);
         if (anonymousClasses != null) {
             for (ClassActor classActor : anonymousClasses) {
                 processNewClass(classActor);
@@ -286,7 +287,21 @@ public class CompiledPrototype extends Prototype {
         if (targetMethod.referenceLiterals() != null) {
             for (Object literal : targetMethod.referenceLiterals()) {
                 if (literal instanceof MethodActor) {
-                    add((MethodActor) literal, targetMethod.classMethodActor(), Relationship.LITERAL);
+                    add((MethodActor) literal, classMethodActor, Relationship.LITERAL);
+                } else if (literal instanceof ResolutionGuard) {
+                    // resolve any unresolved guards now if possible
+                    final ResolutionGuard guard = (ResolutionGuard) literal;
+                    if (guard.get() == null) {
+                        final ConstantPool pool = guard.constantPool();
+                        final ResolvableConstant resolvable = pool.resolvableAt(guard.constantPoolIndex());
+                        if (resolvable.isResolvableWithoutClassLoading(pool)) {
+                            try {
+                                guard.set(resolvable.resolve(pool, guard.constantPoolIndex()));
+                            } catch (PrototypeOnlyFieldError prototypeOnlyFieldError) {
+                            } catch (PrototypeOnlyMethodError prototypeOnlyMethodError) {
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -295,9 +310,9 @@ public class CompiledPrototype extends Prototype {
         final AppendableSequence<MethodActor> interfaceCalls = new LinkSequence<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
         dynamicCompilerScheme.gatherCalls(targetMethod, directCalls, virtualCalls, interfaceCalls);
-        addMethods(targetMethod.classMethodActor(), directCalls, Relationship.DIRECT_CALL);
-        addMethods(targetMethod.classMethodActor(), virtualCalls, Relationship.VIRTUAL_CALL);
-        addMethods(targetMethod.classMethodActor(), interfaceCalls, Relationship.INTERFACE_CALL);
+        addMethods(classMethodActor, directCalls, Relationship.DIRECT_CALL);
+        addMethods(classMethodActor, virtualCalls, Relationship.VIRTUAL_CALL);
+        addMethods(classMethodActor, interfaceCalls, Relationship.INTERFACE_CALL);
         clearCirCache(targetMethod);
     }
 
@@ -488,7 +503,6 @@ public class CompiledPrototype extends Prototype {
         final Address oldMark = region.getAllocationMark();
         int submittedCompilations = _totalCompilations;
         final long initialNumberOfCompilations = numberOfCompilations();
-
 
         final ExecutorService compilationService = Executors.newFixedThreadPool(_numberOfCompilerThreads);
         final CompletionService<TargetMethod> compilationCompletionService = new ExecutorCompletionService<TargetMethod>(compilationService);

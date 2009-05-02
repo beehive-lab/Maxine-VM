@@ -242,8 +242,8 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.security", false); // needed to create a Thread
         loadClass(sun.misc.VM.class);
 
-        // These classes need to be compiled and in the boot image in order to be able to run the optimizing compiler at
-        // run time.
+        // These classes need to be compiled and in the boot image in order to be able to
+        // run the optimizing compiler at run time.
         loadClass(sun.misc.SharedSecrets.class);
         loadClass(sun.reflect.annotation.AnnotationParser.class);
         loadClass(sun.reflect.Reflection.class);
@@ -251,6 +251,10 @@ public class JavaPrototype extends Prototype {
         // Necessary for Java Run Scheme to initialize the System class:
         loadClass(sun.misc.Version.class);
         loadPackage("sun.nio.cs", false);
+
+        // Needed to satisfy the requirement that java.lang.ref.Reference.ReferenceHandler.run()
+        // does not do any allocation (as a result of loading this class) while holding the GC lock.
+        loadClass(sun.misc.Cleaner.class);
 
         // Necessary for early tracing:
         loadPackage("java.util.regex", false);
