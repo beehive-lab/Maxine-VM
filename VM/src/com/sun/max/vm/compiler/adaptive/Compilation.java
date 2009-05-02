@@ -148,14 +148,16 @@ class Compilation implements Future<TargetMethod> {
         _adaptiveCompilationScheme.observeBeforeCompilation(this, compiler);
 
         try {
+            String methodString = null;
             if (VerboseVMOption.verboseCompilation()) {
-                Log.println(compiler.name() + ": Compiling " + _methodState.classMethodActor().qualifiedName());
+                methodString = _methodState.classMethodActor().format("%H.%n(%p)");
+                Log.println(compiler.name() + ": Compiling " + methodString);
             }
             targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(_methodState.classMethodActor(), compilationDirective));
             if (VerboseVMOption.verboseCompilation()) {
-                Log.print(compiler.name() + ": Compiled  " + _methodState.classMethodActor().qualifiedName() + " @ ");
+                Log.print(compiler.name() + ": Compiled  " + methodString + " @ ");
                 Log.print(targetMethod.codeStart());
-                Log.print("{length=" + targetMethod.codeLength() + "}");
+                Log.print(" {code length=" + targetMethod.codeLength() + "}");
                 Log.println();
             }
         } finally {
