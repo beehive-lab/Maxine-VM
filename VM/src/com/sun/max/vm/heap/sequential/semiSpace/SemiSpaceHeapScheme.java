@@ -186,6 +186,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 scanBootHeap();
                 _bootHeapScanTimer.stop();
 
+                if (Heap.traceGC()) {
+                    Log.println("Scanning code...");
+                }
                 _codeScanTimer.start();
                 scanCode();
                 _codeScanTimer.stop();
