@@ -28,6 +28,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class represents a method that is a critical entrypoint in the virtual machine, which means
@@ -48,11 +49,12 @@ public class CriticalMethod {
      *
      * @param javaClass the class in which the method was declared
      * @param methodName the name of the method as a string
+     * @param methodSignature the signature of the method
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */
     @PROTOTYPE_ONLY
-    public CriticalMethod(Class javaClass, String methodName) {
-        this(javaClass, methodName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+    public CriticalMethod(Class javaClass, String methodName, SignatureDescriptor methodSignature) {
+        this(javaClass, methodName, methodSignature, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
     }
 
     /**
@@ -61,14 +63,15 @@ public class CriticalMethod {
      *
      * @param javaClass the class in which the method was declared
      * @param methodName the name of the method as a string
+     * @param methodSignature the signature of the method
      * @param callEntryPoint the entrypoint in the method that is desired
      * @throws NoSuchMethodError if a method with the specified name could not be found in the specified class
      */
     @PROTOTYPE_ONLY
-    public CriticalMethod(Class javaClass, String methodName, CallEntryPoint callEntryPoint) {
+    public CriticalMethod(Class javaClass, String methodName, SignatureDescriptor methodSignature, CallEntryPoint callEntryPoint) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
         final Utf8Constant name = SymbolTable.makeSymbol(methodName);
-        ClassMethodActor classMethodActor = classActor.findLocalClassMethodActor(name);
+        ClassMethodActor classMethodActor = classActor.findLocalClassMethodActor(name, methodSignature);
         if (classMethodActor == null) {
             classMethodActor = classActor.findLocalStaticMethodActor(name);
         }

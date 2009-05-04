@@ -93,7 +93,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
     protected void popFrame() {
         _frame = _frame.caller();
-        if (_frame != null && Trace.hasLevel(_traceLevel)) {
+        if (_frame != null && _trace) {
             // This just helps reading traces of large methods where the entry point is off-screen
             Trace.stream().println(_traceIndentation + "RE-ENTER: " + _frame.method());
             Trace.stream().flush();
@@ -124,11 +124,14 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
     public EirInterpreter(EirGenerator eirGenerator) {
         _eirGenerator = eirGenerator;
-        _traceLevel = _traceOption.getValue();
         _traceFilters = _traceFiltersOption.getValue();
         _traceCpu = _traceCpuOption.getValue();
         _traceStack = _traceStackOption.getValue();
         _jitEnabled = _jitOption.getValue();
+        _trace = _traceFilters != null ||
+                 _traceCpu ||
+                 _traceStack ||
+                 _traceOption.getValue();
         _frame = initialEirFrame();
     }
 
@@ -145,15 +148,15 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         }
 
         final boolean traceCpu = _traceCpu;
-        final int traceLevel = _traceLevel;
+        final boolean trace = _trace;
         if (_traceFilters != null) {
             _traceCpu = false;
-            _traceLevel = Integer.MAX_VALUE;
+            _trace = false;
             final String name = eirMethod.classMethodActor().holder().name() + eirMethod.name();
             for (String filter : _traceFilters) {
                 if (name.contains(filter)) {
                     _traceCpu = traceCpu;
-                    _traceLevel = traceLevel;
+                    _trace = trace;
                     break;
                 }
             }
@@ -163,7 +166,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             return interpret(eirMethod, arguments);
         } finally {
             _traceCpu = traceCpu;
-            _traceLevel = traceLevel;
+            _trace = trace;
         }
     }
 
@@ -327,7 +330,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
         final InstructionAddress returnAddress = callAndLink(eirMethod);
 
         cpu().gotoBlock(eirMethod.blocks().get(0));
-        if (Trace.hasLevel(_traceLevel)) {
+        if (_trace) {
             indent();
             Trace.stream().println(_traceIndentation + "ENTER: " + eirMethod);
             Trace.stream().flush();
@@ -337,7 +340,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
 
     protected void ret(InstructionAddress instructionAddress) {
         cpu().gotoInstruction(instructionAddress);
-        if (Trace.hasLevel(_traceLevel)) {
+        if (_trace) {
             Trace.stream().println(_traceIndentation + "EXIT: " + _frame.method());
             Trace.stream().flush();
             outdent();
@@ -360,7 +363,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     }
 
     private final List<String> _traceFilters;
-    private int _traceLevel;
+    private boolean _trace;
     private boolean _traceCpu;
     private boolean _traceStack;
 
@@ -371,7 +374,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
     private void dispatchInvocationTargetException(InvocationTargetException invocationTargetException) throws InvocationTargetException {
         while (_frame != null) {
             if (_frame.catchBlock() != null) {
-                if (Trace.hasLevel(_traceLevel)) {
+                if (_trace) {
                     Trace.stream().println("Dispatching exception: " + invocationTargetException.getTargetException());
                     Trace.stream().flush();
                     outdent();
@@ -382,7 +385,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             }
 
             // Pop frame
-            if (Trace.hasLevel(_traceLevel)) {
+            if (_trace) {
                 Trace.stream().println("Unwinding: " + _frame.method() + "  due to exception: " + invocationTargetException.getTargetException());
                 Trace.stream().flush();
                 outdent();
@@ -402,7 +405,7 @@ public abstract class EirInterpreter extends IrInterpreter<EirMethod> implements
             try {
                 final Class<EirInstruction<EirInstructionVisitor, ?>> type = null;
                 final EirInstruction<EirInstructionVisitor, ?> instruction = StaticLoophole.cast(type, cpu().nextInstruction());
-                if (Trace.hasLevel(_traceLevel)) {
+                if (_trace) {
                     if (_traceCpu) {
                         cpu().dump(Trace.stream());
                     }

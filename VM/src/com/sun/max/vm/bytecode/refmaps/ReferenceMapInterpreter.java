@@ -22,6 +22,7 @@ package com.sun.max.vm.bytecode.refmaps;
 
 import static com.sun.max.vm.bytecode.Bytecode.Flags.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -83,23 +84,6 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
     private byte[] _code;
     private int _bytecodePosition;
     private int _sp;
-
-    /**
-     * The position at which interpreting should stop (ignored if -1).
-     */
-    private int _searchBytecodePosition;
-
-    /**
-     * The visitor to notify of reference slots in the frame state just before interpreting the instruction at
-     * {@link #_searchBytecodePosition}. This value is ignored if {@code _searchBytecodePosition == -1}.
-     */
-    private ReferenceSlotVisitor _referenceSlotVisitor;
-
-    /**
-     * Specifies if the instruction at {@link #_searchBytecodePosition} is a direct call to the runtime. This value is
-     * ignored if {@code _searchBytecodePosition == -1}.
-     */
-    private boolean _isDirectCallToRuntime;
 
     private ReferenceMapInterpreterContext _context;
 
@@ -184,9 +168,6 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
         _context = context;
         _sp = 0;
         _bytecodePosition = -1;
-        _searchBytecodePosition = -1;
-        _referenceSlotVisitor = null;
-        _isDirectCallToRuntime = false;
     }
 
     /**
@@ -388,7 +369,7 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
             changed = false;
             for (int blockIndex = 0; blockIndex < numberOfBlocks; ++blockIndex) {
                 if (isFrameInitialized(blockIndex)) {
-                    changed = interpretBlock(blockIndex) || changed;
+                    changed = interpretBlock(blockIndex, null, null) || changed;
                 }
             }
             ++iterations;
@@ -397,30 +378,28 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
     }
 
     /**
-     * Interprets the basic block containing a given bytecode position until the instruction at the position is about to
-     * be interpreted and then calls a given visitor for each local variable and operand stack slot that contains a
-     * reference in the current frame state.
+     * Perform interpretation of the basic blocks containing the bytecode positions yielded by a given bytecode position
+     * iterator.
      * <p>
-     * If {@link #performsAllocation()} returns true for this interpreter, then this method is guaranteed not to perform
-     * any allocation.
+     * If {@link #performsAllocation()} returns {@code false} for this interpreter, then this method is guaranteed not
+     * to perform any allocation.
      *
      * @param context the interpretation context for a method
-     * @param bytecodePosition the position at which interpreting should stop
-     * @param visitor the visitor to notify of reference slots in the frame state just before interpreting the
-     *            instruction at {@code searchBytecodePosition}
-     * @param isDirectCallToRuntime specifies if the instruction at {@code bytecodePosition} is a direct call to the
-     *            runtime
+     * @param visitor the visitor to notify of reference slots in the frame state at the bytecode positions yielded by
+     *            {@code bytecodePositionIterator}
+     * @param bytecodePositionIterator the bytecode positions at which {@code visitor} should notified of the references
+     *            in the abstract interpretation state
      */
-    public void interpretReferenceSlotsAt(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, int bytecodePosition, boolean isDirectCallToRuntime) {
+    public void interpretReferenceSlots(ReferenceMapInterpreterContext context, ReferenceSlotVisitor visitor, BytecodePositionIterator bytecodePositionIterator) {
         assert _context == null;
         resetInterpreter(context);
-        _referenceSlotVisitor = visitor;
-        _searchBytecodePosition = bytecodePosition;
-        _isDirectCallToRuntime = isDirectCallToRuntime;
 
-        final int blockIndex = blockIndexFor(bytecodePosition);
-        assert isFrameInitialized(blockIndex);
-        interpretBlock(blockIndex);
+        bytecodePositionIterator.reset();
+        for (int bytecodePosition = bytecodePositionIterator.bytecodePosition(); bytecodePosition != -1; bytecodePosition = bytecodePositionIterator.bytecodePosition()) {
+            final int blockIndex = blockIndexFor(bytecodePosition);
+            assert isFrameInitialized(blockIndex);
+            interpretBlock(blockIndex, bytecodePositionIterator, visitor);
+        }
 
         _context = null;
     }
@@ -558,15 +537,17 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
         return b3 | b2 | b1 | b0;
     }
 
-    private void visitReferencesAtCurrentBytecodePosition(ReferenceSlotVisitor visitor) {
-        for (int i = 0; i < maxLocals(); i++) {
-            if (isLocalRef(i)) {
-                visitor.visitReferenceInLocalVariable(i);
+    private void visitReferencesAtCurrentBytecodePosition(ReferenceSlotVisitor visitor, boolean parametersPopped) {
+        if (!parametersPopped) {
+            for (int i = 0; i < maxLocals(); i++) {
+                if (isLocalRef(i)) {
+                    visitor.visitReferenceInLocalVariable(i);
+                }
             }
         }
         for (int i = 0; i < _sp; i++) {
             if (isStackRef(i)) {
-                visitor.visitReferenceOnOperandStack(i);
+                visitor.visitReferenceOnOperandStack(i, parametersPopped);
             }
         }
     }
@@ -593,9 +574,9 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
      * @return true if the entry state of a control flow successor of this block was modified as a result of the
      *         interpretation
      */
-    private boolean interpretBlock(int blockIndex) {
+    private boolean interpretBlock(int blockIndex, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor) {
         final int sp = resetAtBlock(blockIndex);
-        return interpretBlock0(blockIndex, sp);
+        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor);
     }
 
     /**
@@ -622,22 +603,23 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
      * @return true if the entry state of a control flow successor of this block was modified as a result of the
      *         interpretation
      */
-    private boolean interpretBlock0(int blockIndex, int sp) {
+    private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor) {
         if (MaxineVM.isPrototyping()) {
             // This indirection is simply for debugging the interpreter loop.
             try {
-                return interpretBlock0(blockIndex, sp, false);
+                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
             } catch (Throwable e) {
                 System.err.println("Re-interpreting block after error: ");
                 e.printStackTrace();
                 System.err.println(_context);
                 CodeAttributePrinter.print(System.err, _codeAttribute);
-                return interpretBlock0(blockIndex, sp, true);
+                return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, true);
             }
         }
-        return interpretBlock0(blockIndex, sp, false);
+        return interpretBlock0(blockIndex, sp, bytecodePositionIterator, visitor, false);
     }
 
+    @PROTOTYPE_ONLY
     public String[] framesToStrings(ReferenceMapInterpreterContext context) {
         assert _context == null;
         resetInterpreter(context);
@@ -652,6 +634,7 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
         return frameStrings;
     }
 
+    @PROTOTYPE_ONLY
     private String currentFrameToString() {
         final StringBuilder sb = new StringBuilder("locals[").append(maxLocals()).append("] = { ");
         for (int i = 0; i != maxLocals(); ++i) {
@@ -668,7 +651,8 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
         return sb.append("}").toString();
     }
 
-    private boolean interpretBlock0(int blockIndex, int sp, boolean trace) {
+    @INLINE
+    private boolean interpretBlock0(int blockIndex, int sp, BytecodePositionIterator bytecodePositionIterator, ReferenceSlotVisitor visitor, boolean trace) {
         assert sp >= 0;
         _bytecodePosition = blockStartBytecodePosition(blockIndex);
         _sp = sp;
@@ -677,24 +661,26 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
         int opcodeBytecodePosition;
         boolean changed = false;
 
+        int searchBytecodePosition = bytecodePositionIterator == null ? -1 : bytecodePositionIterator.bytecodePosition();
+
         while (_bytecodePosition != endPosition) {
             opcodeBytecodePosition = _bytecodePosition;
             changed = mergeWithExceptionHandlers(opcodeBytecodePosition) || changed;
 
-            final boolean atSearchPosition = _bytecodePosition == _searchBytecodePosition;
+            final boolean atSearchPosition = opcodeBytecodePosition == searchBytecodePosition;
             opcode = Bytecode.from(readUnsigned1());
 
-            if (atSearchPosition && (!opcode.is(INVOKE_) || _isDirectCallToRuntime)) {
+            if (atSearchPosition) {
                 // Record BEFORE popping invoke parameters,
                 // because this is not the JIT-to-JIT call yet.
-                visitReferencesAtCurrentBytecodePosition(_referenceSlotVisitor);
-                return false;
+                visitReferencesAtCurrentBytecodePosition(visitor, false);
             }
 
             if (MaxineVM.isPrototyping() && trace) {
                 System.err.println("  " + currentFrameToString());
                 System.err.println(opcodeBytecodePosition + ":  " + opcode);
             }
+
             switch (opcode) {
                 case NOP: {
                     break;
@@ -1062,6 +1048,9 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                     popCategory1();
                     final int offset = readSigned2();
                     final int targetBytecodePosition = opcodeBytecodePosition + offset;
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return merge(blockIndexFor(targetBytecodePosition), blockIndex + 1);
                 }
                 case IF_ICMPEQ:
@@ -1076,16 +1065,25 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                     popCategory1();
                     final int offset = readSigned2();
                     final int targetBytecodePosition = opcodeBytecodePosition + offset;
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return merge(blockIndexFor(targetBytecodePosition), blockIndex + 1);
                 }
                 case GOTO: {
                     final int offset = readSigned2();
                     final int targetBytecodePosition = opcodeBytecodePosition + offset;
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return merge(blockIndexFor(targetBytecodePosition));
                 }
                 case GOTO_W: {
                     final int offset = readSigned4();
                     final int targetBytecodePosition = opcodeBytecodePosition + offset;
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return merge(blockIndexFor(targetBytecodePosition));
                 }
                 case JSR_W:
@@ -1104,6 +1102,9 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                     for (int i = 0; i < numberOfCases; i++) {
                         changed = merge(blockIndexFor(opcodeBytecodePosition + readSigned4())) || changed;
                     }
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return changed;
                 }
                 case LOOKUPSWITCH: {
@@ -1116,6 +1117,9 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                         readSigned4();
                         changed = merge(blockIndexFor(opcodeBytecodePosition + readSigned4())) || changed;
                     }
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return changed;
                 }
                 case IRETURN:
@@ -1123,15 +1127,24 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                 case ARETURN:
                 {
                     popCategory1();
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return changed;
                 }
                 case LRETURN:
                 case DRETURN:
                 {
                     popCategory2();
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return changed;
                 }
                 case RETURN: {
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return changed;
                 }
                 case GETSTATIC: {
@@ -1198,8 +1211,7 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                     final SignatureDescriptor methodSignature = SignatureDescriptor.create(_constantPool.utf8At(index));
                     methodSignature.visitParameterDescriptors(this, true);
                     if (atSearchPosition) {
-                        visitReferencesAtCurrentBytecodePosition(_referenceSlotVisitor);
-                        return false;
+                        visitReferencesAtCurrentBytecodePosition(visitor, true);
                     }
 
                     push(methodSignature.getResultKind());
@@ -1222,13 +1234,10 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                     }
 
                     if (atSearchPosition) {
-                        FatalError.check(!_isDirectCallToRuntime, "interpreting invoke for runtime call");
-
                         // Record AFTER popping the parameters.
                         // They will be accounted for in the callee frame,
                         // with potentially different stack slot kinds - see JVM spec.
-                        visitReferencesAtCurrentBytecodePosition(_referenceSlotVisitor);
-                        return false;
+                        visitReferencesAtCurrentBytecodePosition(visitor, true);
                     }
 
                     push(methodSignature.getResultKind());
@@ -1258,6 +1267,9 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                 }
                 case ATHROW: {
                     popCategory1();
+                    if (atSearchPosition) {
+                        bytecodePositionIterator.next();
+                    }
                     return changed;
                 }
                 case CHECKCAST: {
@@ -1330,6 +1342,13 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                 }
                 default: {
                     FatalError.unexpected("Unknown bytcode");
+                }
+            }
+
+            if (atSearchPosition) {
+                searchBytecodePosition = bytecodePositionIterator.next();
+                if (searchBytecodePosition == -1 || searchBytecodePosition >= endPosition) {
+                    return false;
                 }
             }
         }

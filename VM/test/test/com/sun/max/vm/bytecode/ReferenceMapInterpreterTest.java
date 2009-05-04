@@ -45,7 +45,7 @@ import com.sun.max.vm.verifier.types.*;
  * {@linkplain TypeInferencingMethodVerifier type inferencing} or {@linkplain TypeCheckingMethodVerifier type checking}
  * verifier. The test succeeds for a given method if the two maps in each pair
  * {@linkplain ReferenceMap#equals(Object) match} each other.
- * 
+ *
  * @author Doug Simon
  */
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
@@ -132,7 +132,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         private final BirBlock[] _blocks;
         private final ExceptionHandler[] _exceptionHandlerMap;
         private final ReferenceMap[] _referenceMaps;
-        private ReferenceMap _currentMap;
+        private final BytecodePositionIterator _bytecodePositionIterator;
 
         InterpreterMapMaker(BirMethod birMethod) {
             _classMethodActor = birMethod.classMethodActor();
@@ -141,6 +141,36 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
             final CodeAttribute codeAttribute = _classMethodActor.codeAttribute();
             _exceptionHandlerMap = ExceptionHandler.createHandlerMap(codeAttribute);
             _referenceMaps = new ReferenceMap[codeAttribute.code().length];
+
+            final AppendableIndexedSequence<Integer> bytecodePositions = new ArrayListSequence<Integer>();
+            final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
+                @Override
+                protected void opcodeDecoded() {
+                    final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
+                    bytecodePositions.append(bytecodePosition);
+                    _referenceMaps[bytecodePosition] = new ReferenceMap(codeAttribute.maxLocals(), codeAttribute.maxStack());
+                }
+            };
+            new BytecodeScanner(bytecodeAdapter).scan(_classMethodActor);
+
+            _bytecodePositionIterator = new BytecodePositionIterator() {
+                private int _index;
+                public int bytecodePosition() {
+                    if (_index < bytecodePositions.length()) {
+                        return bytecodePositions.get(_index);
+                    }
+                    return -1;
+                }
+                public int next() {
+                    if (++_index < bytecodePositions.length()) {
+                        return bytecodePositions.get(_index);
+                    }
+                    return -1;
+                }
+                public void reset() {
+                    _index = 0;
+                }
+            };
         }
 
         public Object blockFrames() {
@@ -182,12 +212,16 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
 
         @Override
         public void visitReferenceInLocalVariable(int localVariableIndex) {
-            _currentMap._locals[localVariableIndex] = true;
+            final ReferenceMap map = _referenceMaps[_bytecodePositionIterator.bytecodePosition()];
+            map._locals[localVariableIndex] = true;
         }
 
         @Override
-        public void visitReferenceOnOperandStack(int operandStackIndex) {
-            _currentMap._stack[operandStackIndex] = true;
+        public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
+            if (!parametersPopped) {
+                final ReferenceMap map = _referenceMaps[_bytecodePositionIterator.bytecodePosition()];
+                map._stack[operandStackIndex] = true;
+            }
         }
 
         @Override
@@ -196,20 +230,9 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
         }
 
         public ReferenceMap[] maps() {
-            final CodeAttribute codeAttribute = _classMethodActor.codeAttribute();
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(_blockFrames);
             interpreter.finalizeFrames(this);
-
-            final BytecodeAdapter bytecodeAdapter = new BytecodeAdapter() {
-                @Override
-                protected void opcodeDecoded() {
-                    final int bytecodePosition = bytecodeScanner().currentOpcodePosition();
-                    _currentMap = new ReferenceMap(codeAttribute.maxLocals(), codeAttribute.maxStack());
-                    _referenceMaps[bytecodePosition] = _currentMap;
-                    interpreter.interpretReferenceSlotsAt(InterpreterMapMaker.this, InterpreterMapMaker.this, bytecodePosition, true);
-                }
-            };
-            new BytecodeScanner(bytecodeAdapter).scan(_classMethodActor);
+            interpreter.interpretReferenceSlots(this, this, _bytecodePositionIterator);
             return _referenceMaps;
         }
 
@@ -228,7 +251,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
      * variable/slot. The reason it can be correctly denoted as undefined is that there are no subsequent uses of the
      * variable/slot. That is, the variable/slot is no longer live. For example:
      * <p>
-     * 
+     *
      * <pre>
      *  1:  int foo(int a) {
      *  2:      int b = 4;
@@ -236,11 +259,11 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
      *  4:      return a;
      *  5:  }
      * </pre>
-     * 
+     *
      * In this code, a valid StackMapTable entry for the bytecode position corresponding to line 4 may state that local
      * variable {@code b} is undefined. However, the abstract interpreter would infer that it still has a valid value at
      * this position.
-     * 
+     *
      * @param frameMap
      * @param blockStarts
      */

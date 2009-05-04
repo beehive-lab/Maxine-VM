@@ -82,6 +82,7 @@ public class JavaFrameDescriptor<Slot_Type> extends BytecodeLocation {
      *
      * @return {@code null} to indicate this is top level frame of an inlining tree
      */
+    @Override
     public JavaFrameDescriptor<Slot_Type> parent() {
         return _parent;
     }

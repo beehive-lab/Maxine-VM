@@ -32,6 +32,7 @@ import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -315,6 +316,7 @@ public abstract class JitTargetMethod extends TargetMethod {
                     int[] catchRangePositions,
                     int[] catchBlockPositions,
                     int[] stopPositions,
+                    BytecodeStopsIterator bytecodeStopsIterator,
                     byte[] compressedJavaFrameDescriptors,
                     ClassMethodActor[] directCallees,
                     int numberOfIndirectCalls,
@@ -331,8 +333,7 @@ public abstract class JitTargetMethod extends TargetMethod {
                     BytecodeInfo[] bytecodeInfos,
                     int numberOfBlocks,
                     boolean[] blockStarts,
-                    JitStackFrameLayout jitStackFrameLayout,
-                    TargetABI abi) {
+                    JitStackFrameLayout jitStackFrameLayout, TargetABI abi) {
         setGenerated(
             targetBundle,
             catchRangePositions,
@@ -359,7 +360,7 @@ public abstract class JitTargetMethod extends TargetMethod {
         _optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
         _adapterReturnPosition = adapterReturnPosition;
         if (stopPositions != null) {
-            _referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, jitStackFrameLayout);
+            _referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(_referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || MaxineVM.isPrototyping()) {
                 // if computing the reference map requires allocation or if prototyping,
@@ -372,8 +373,20 @@ public abstract class JitTargetMethod extends TargetMethod {
     @Override
     public void finalizeReferenceMaps() {
         if (_referenceMapEditor != null) {
+            if (Heap.traceGCRootScanning()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Finalizing JIT reference maps for ");
+                Log.printMethodActor(classMethodActor(), true);
+                Log.unlock(lockDisabledSafepoints);
+            }
             _referenceMapEditor.fillInMaps(_bytecodeToTargetCodePositionMap);
             _referenceMapEditor = null;
+            if (Heap.traceGCRootScanning()) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.print("Finalized JIT reference maps for ");
+                Log.printMethodActor(classMethodActor(), true);
+                Log.unlock(lockDisabledSafepoints);
+            }
         }
     }
 

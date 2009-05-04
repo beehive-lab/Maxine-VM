@@ -455,7 +455,7 @@ public class CompiledPrototype extends Prototype {
             if (methodActor.holder().toJava().isEnum() && methodActor.name().equals("values")) {
                 // add a method stub for the "values" method of the enum
                 final ClassActor classActor = ClassActor.fromJava(methodActor.holder().toJava());
-                final ClassMethodActor valuesMethod = classActor.findLocalClassMethodActor(SymbolTable.makeSymbol("values"));
+                final ClassMethodActor valuesMethod = classActor.findLocalClassMethodActor(SymbolTable.makeSymbol("values"), SignatureDescriptor.fromJava(Enum[].class));
                 addStaticAndVirtualMethods(JDK_sun_reflect_ReflectionFactory.createPrePopulatedMethodStub(valuesMethod));
             }
             final ClassActor stubClassActor = ClassActor.fromJava(methodActor.makeInvocationStub().getClass());

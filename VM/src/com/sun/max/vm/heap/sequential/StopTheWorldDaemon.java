@@ -135,7 +135,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
 
     private final Runnable _gcRequest = new Runnable() {
         public void run() {
-            synchronized (SpecialReferenceManager.getLockObject()) {
+            synchronized (SpecialReferenceManager.LOCK) {
                 // the lock for the special reference manager must be held before starting GC
                 synchronized (VmThreadMap.ACTIVE) {
                     VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _triggerSafepoint);

@@ -51,7 +51,7 @@ public abstract class TeleInterpreterTestCase extends CompilerTestCase<ActorIrMe
         Class thisClass = defaultDeclaringClass();
         ClassMethodActor classMethodActor;
         do {
-            classMethodActor = ClassActor.fromJava(thisClass).findLocalClassMethodActor(makeSymbol(methodName));
+            classMethodActor = ClassActor.fromJava(thisClass).findLocalClassMethodActor(makeSymbol(methodName), null);
             thisClass = thisClass.getSuperclass();
         } while (classMethodActor == null && thisClass != null);
         if (classMethodActor == null) {

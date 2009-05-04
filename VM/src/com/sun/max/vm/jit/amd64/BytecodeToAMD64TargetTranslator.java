@@ -261,7 +261,7 @@ public class BytecodeToAMD64TargetTranslator extends BytecodeToTargetTranslator 
                 // The reference maps of the target should be used when at this safepoint.
                 final int stopPosition = _codeBuffer.currentPosition();
                 _codeBuffer.emit(VMConfiguration.hostOrTarget().safepoint().code());
-                emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition));
+                emitSafepoint(new BackwardBranchBytecodeSafepoint(stopPosition, currentOpcodePosition()));
             }
             // Compute relative offset.
             final int toBranchTarget = bytecodeToTargetCodePosition(toBytecodePosition);

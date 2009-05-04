@@ -25,6 +25,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.debug.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * @author Bernd Mathiske
@@ -103,7 +104,7 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
                     Log.print("(start + ");
                     Log.print(cell.minus(start()).asOffset().toInt());
                     Log.println(")");
-                    System.exit(1);
+                    FatalError.unexpected("CELL VISITOR ERROR: missing object tag");
                 }
             }
             cell = cellVisitor.visitCell(cell);

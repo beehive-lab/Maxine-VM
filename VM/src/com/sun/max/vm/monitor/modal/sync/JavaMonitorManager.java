@@ -105,7 +105,7 @@ public class JavaMonitorManager {
         if (MaxineVM.isPrototyping()) {
             prototypeBindStickyMonitor(JavaMonitorManager.class, new StandardJavaMonitor());
             prototypeBindStickyMonitor(VmThreadMap.ACTIVE, new StandardJavaMonitor.VMThreadMapJavaMonitor());
-            prototypeBindStickyMonitor(SpecialReferenceManager.getLockObject(), new StandardJavaMonitor());
+            prototypeBindStickyMonitor(SpecialReferenceManager.LOCK, new StandardJavaMonitor());
 
             if (_gcDeadlockDetection) {
                 prototypeBindStickyMonitor(MaxineVM.hostOrTarget().configuration().heapScheme(), new StandardJavaMonitor.HeapSchemeDeadlockDetectionJavaMonitor());

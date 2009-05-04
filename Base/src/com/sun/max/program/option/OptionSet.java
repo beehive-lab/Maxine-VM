@@ -309,7 +309,9 @@ public class OptionSet {
      */
     public OptionSet loadFile(String fname, boolean loadall) throws IOException, Option.Error {
         final Properties defs = new Properties();
-        defs.load(new FileInputStream(new File(fname)));
+        final FileInputStream stream = new FileInputStream(new File(fname));
+        defs.load(stream);
+        stream.close();
         return loadProperties(defs, loadall);
     }
 

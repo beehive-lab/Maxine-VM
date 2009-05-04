@@ -81,9 +81,12 @@ public class MaxineTester {
     private static final Option<List<String>> _javaTesterConfigs = _options.newStringListOption("java-tester-configs",
                     MaxineTesterConfiguration.defaultJavaTesterConfigs(),
                     "A list of configurations for which to run the Java tester tests.");
-    private static final Option<List<String>> _tests = _options.newStringListOption("tests", "junit,output,javatester,dacapo,specjvm98,shootout",
+    private static final Option<List<String>> _tests = _options.newStringListOption("tests", "junit,output,javatester",
                     "The list of test harnesses to run, which may include JUnit tests (junit), output tests (output), " +
-                    "the JavaTester (javatester), DaCapo (dacapo), and SpecJVM98 (specjvm98).");
+                    "the JavaTester (javatester), DaCapo (dacapo), and SpecJVM98 (specjvm98). A selection of the Dacapo/SpecJVM98/Shootout tests " +
+                    "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example " +
+                    "'-tests=specjvm98:jess+db,dacapo:pmd+fop' will " +
+                    "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo benchmarks.");
     private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
@@ -100,17 +103,17 @@ public class MaxineTester {
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
                     "Stop execution as soon as a single test fails.");
     private static final Option<File> _specjvm98Zip = _options.newFileOption("specjvm98", (File) null,
-                    "Location of zipped up SpecJVM98 directory.");
+                    "Location of zipped up SpecJVM98 directory. If not provided, then the SPECJVM98_ZIP environment variable is used.");
     private static final Option<List<String>> _specjvm98Tests = _options.newStringListOption("specjvm98-tests", MaxineTesterConfiguration._specjvm98Tests,
-                    "A list of DaCapo benchmarks to run.");
+                    "A list of SpecJVM98 benchmarks to run. The -" + _tests + " option can also be used to specify this list.");
     private static final Option<File> _dacapoJar = _options.newFileOption("dacapo", (File) null,
-                    "Location of DaCapo JAR file.");
+                    "Location of DaCapo JAR file. If not provided, then the DACAPO_JAR environment variable is used.");
     private static final Option<List<String>> _dacapoTests = _options.newStringListOption("dacapo-tests", MaxineTesterConfiguration._dacapoTests,
-                    "A list of DaCapo benchmarks to run.");
+                    "A list of DaCapo benchmarks to run. The -" + _tests + " option can also be used to specify this list.");
     private static final Option<File> _shootoutDir = _options.newFileOption("shootout", (File) null,
-                    "Location of the Programming Language Shootout tests.");
+                    "Location of the Programming Language Shootout tests. If not provided, then the SHOOTOUT_DIR environment variable is used.");
     private static final Option<List<String>> _shootoutTests = _options.newStringListOption("shootout-tests", MaxineTesterConfiguration.shootoutTests(),
-                    "A list of Programming Language Shootout benchmarks to run.");
+                    "A list of Programming Language Shootout benchmarks to run. The -" + _tests + " option can also be used to specify this list.");
     private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
                     "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
     private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
@@ -149,11 +152,23 @@ public class MaxineTester {
                 } else if ("dacapo".equals(test)) {
                     // run the DaCapo tests
                     new DaCapoHarness().run();
+                } else if (test.startsWith("dacapo:")) {
+                    _dacapoTests.setValue(filterTestsBySubstrings(MaxineTesterConfiguration._dacapoTests, test.substring("dacapo:".length()).split("\\+")));
+                    // run the DaCapo tests
+                    new DaCapoHarness().run();
                 } else if ("specjvm98".equals(test)) {
+                    // run the SpecJVM98 tests
+                    new SpecJVM98Harness().run();
+                } else if (test.startsWith("specjvm98:")) {
+                    _specjvm98Tests.setValue(filterTestsBySubstrings(MaxineTesterConfiguration._specjvm98Tests, test.substring("specjvm98:".length()).split("\\+")));
                     // run the SpecJVM98 tests
                     new SpecJVM98Harness().run();
                 } else if ("shootout".equals(test)) {
                     // run the shootout tests
+                    new ShootoutHarness().run();
+                } else if (test.startsWith("shootout:")) {
+                    // run the shootout tests
+                    _shootoutTests.setValue(filterTestsBySubstrings(MaxineTesterConfiguration.shootoutTests(), test.substring("shootout:".length()).split("\\+")));
                     new ShootoutHarness().run();
                 } else {
                     out().println("Unrecognized test harness: " + test);
@@ -166,6 +181,20 @@ public class MaxineTester {
             throwable.printStackTrace(err());
             System.exit(-1);
         }
+    }
+
+
+    private static List<String> filterTestsBySubstrings(String[] tests, String[] substrings) {
+
+        final List<String> list = new ArrayList<String>(tests.length);
+        for (String substring : substrings) {
+            for (String test : tests) {
+                if (test.contains(substring)) {
+                    list.add(test);
+                }
+            }
+        }
+        return list;
     }
 
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
@@ -1207,6 +1236,18 @@ public class MaxineTester {
         abstract long getInternalTiming(File stdout);
     }
 
+    static File getFileFromOptionOrEnv(Option<File> option, String var) {
+        final File value = option.getValue();
+        if (value != null) {
+            return value;
+        }
+        final String envValue = System.getenv(var);
+        if (envValue != null) {
+            return new File(envValue);
+        }
+        return null;
+    }
+
     /**
      * This class implements a test harness that is capable of running the SpecJVM98 suite of programs
      * and comparing their outputs to that obtained by running each of them on a reference VM. Note that
@@ -1219,9 +1260,10 @@ public class MaxineTester {
     public static class SpecJVM98Harness extends TimedHarness implements Harness {
         @Override
         public boolean run() {
-            final File specjvm98Zip = _specjvm98Zip.getValue();
+            final File specjvm98Zip = getFileFromOptionOrEnv(_specjvm98Zip, "SPECJVM98_ZIP");
             if (specjvm98Zip == null) {
-                return true;
+                out().println("Need to specify the location of SpecJVM98 ZIP file with -" + _specjvm98Zip + " or in the SPECJVM98_ZIP environment variable");
+                return false;
             }
             final File outputDir = new File(_outputDir.getValue(), "java");
             final File imageDir = generateJavaRunSchemeImage();
@@ -1271,28 +1313,29 @@ public class MaxineTester {
     public static class DaCapoHarness extends TimedHarness implements Harness {
         @Override
         public boolean run() {
-            final File jarFile = _dacapoJar.getValue();
-            if (jarFile == null) {
-                return true;
+            final File dacapoJar = getFileFromOptionOrEnv(_dacapoJar, "DACAPO_JAR");
+            if (dacapoJar == null) {
+                out().println("Need to specify the location of Dacapo JAR file with -" + _dacapoJar + " or in the DACAPO_JAR environment variable");
+                return false;
             }
             final File outputDir = new File(_outputDir.getValue(), "java");
             final File imageDir = generateJavaRunSchemeImage();
             if (imageDir != null) {
-                if (!jarFile.exists()) {
-                    out().println("Couldn't find DaCapo JAR file " + jarFile);
+                if (!dacapoJar.exists()) {
+                    out().println("Couldn't find DaCapo JAR file " + dacapoJar);
                     return false;
                 }
                 for (String test : _dacapoTests.getValue()) {
-                    runDaCapoTest(outputDir, imageDir, test);
+                    runDaCapoTest(outputDir, imageDir, test, dacapoJar);
                 }
                 return true;
             }
             return false;
         }
 
-        void runDaCapoTest(File outputDir, File imageDir, String test) {
+        void runDaCapoTest(File outputDir, File imageDir, String test, File dacapoJar) {
             final String testName = "DaCapo " + test;
-            final JavaCommand command = new JavaCommand(_dacapoJar.getValue());
+            final JavaCommand command = new JavaCommand(dacapoJar);
             command.addArgument(test);
             testJavaProgram(testName, command, outputDir, null, imageDir, null);
             reportTiming(testName, outputDir);
@@ -1312,7 +1355,7 @@ public class MaxineTester {
     }
 
     /**
-     * This class implements a test harness that is capable of running the DaCapo suite of programs
+     * This class implements a test harness that is capable of running the Programming Language Shootout suite of programs
      * and comparing their outputs to that obtained by running each of them on a reference VM.
      *
      * @author Ben L. Titzer
@@ -1320,9 +1363,10 @@ public class MaxineTester {
     public static class ShootoutHarness implements Harness {
         @Override
         public boolean run() {
-            final File shootoutDir = _shootoutDir.getValue();
+            final File shootoutDir = getFileFromOptionOrEnv(_shootoutDir, "SHOOTOUT_DIR");
             if (shootoutDir == null) {
-                return true;
+                out().println("Need to specify the location of the Programming Language Shootout directory with -" + _shootoutDir + " or in the SHOOTOUT_DIR environment variable");
+                return false;
             }
             final File outputDir = new File(_outputDir.getValue(), "java");
             final File imageDir = generateJavaRunSchemeImage();

@@ -307,6 +307,17 @@ public final class Classes {
     }
 
     /**
+     * Extracts a simple class name from a fully qualified class name.
+     */
+    public static String getSimpleName(String className) {
+        final int index = className.lastIndexOf('.');
+        if (index < 0) {
+            return className;
+        }
+        return className.substring(index + 1);
+    }
+
+    /**
      * Extends the functionality of {@link Class#getSimpleName()} to include a non-empty string for anonymous and local
      * classes.
      *

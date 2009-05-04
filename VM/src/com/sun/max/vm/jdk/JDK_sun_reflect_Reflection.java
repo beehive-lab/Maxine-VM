@@ -33,6 +33,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Method substitutions for {@link sun.reflect.Reflection}.
@@ -44,7 +45,8 @@ final class JDK_sun_reflect_Reflection {
     private JDK_sun_reflect_Reflection() {
     }
 
-    private static final CriticalMethod _javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke");
+    private static final CriticalMethod _javaLangReflectMethodInvoke = new CriticalMethod(Method.class, "invoke",
+        SignatureDescriptor.create(Object.class, Object.class, Object[].class));
 
     /**
      * This class implements a closure that records the method actor at a particular
