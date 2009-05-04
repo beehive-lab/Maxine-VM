@@ -42,9 +42,8 @@ public final class AboutDialog extends InspectorDialog {
         "which is backed by the Maxine Research Project at Sun Labs,\n" +
         "the research organization of Sun Microsystems, Inc.:\n" +
         "\n" +
-        "     Bernd Mathiske (Principal Investigator)\n" +
+        "     Doug Simon (Principal Investigator)\n" +
         "     Laurent Daynes\n" +
-        "     Doug Simon\n" +
         "     Ben Titzer\n" +
         "     Michael Van De Vanter\n" +
         "\n" +
