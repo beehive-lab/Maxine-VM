@@ -49,7 +49,6 @@ public final class AboutDialog extends InspectorDialog {
         "\n" +
         "For more information please visit:\n" +
         "     http://kenai.com/projects/maxine\n" +
-        "     http://maxine.dev.java.net/\n" +
         "     http://research.sun.com/projects/maxine/\n";
 
 
