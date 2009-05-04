@@ -183,10 +183,9 @@ public class MaxineTesterConfiguration {
 
     static final String[] _expectedAutoTestFailures = {
         "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.amd64.AMD64EirTranslatorTest_native)",
+        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
         "test_arrayCopyForKinds(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)",
         "test_catchNull(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_throw)",
-        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.amd64.AMD64EirTranslatorTest_native)",
-        "test_manyObjectParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
         "test_manyParameters(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
         "test_nop(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
         "test_nop_cfunction(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_native)",
@@ -196,13 +195,11 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
         test.output.JavacTest.class,
-        test.output.PrintDate.class,
         _expectedAutoTestFailures
     );
 
     static final Set<String> _expectedFailuresLinuxAMD64 = toTestNames(
         test.output.JavacTest.class,
-        test.output.PrintDate.class,
         test.threads.Thread_isInterrupted02.class,
         _expectedAutoTestFailures
     );
@@ -214,7 +211,6 @@ public class MaxineTesterConfiguration {
 
     static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
         test.output.JavacTest.class,
-        //test.output.PrintDate.class,
         _expectedAutoTestFailures
     );
 

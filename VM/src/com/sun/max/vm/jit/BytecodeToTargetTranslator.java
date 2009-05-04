@@ -293,7 +293,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
      * @param template
      */
     protected void emitAndRecordStops(CompiledBytecodeTemplate template) {
-        _stops.add(template, _codeBuffer.currentPosition());
+        _stops.add(template, _codeBuffer.currentPosition(), currentOpcodePosition());
         _codeBuffer.emit(template);
     }
 
@@ -311,7 +311,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
         assert template.targetMethod().numberOfStopPositions() == 1;
         assert template.targetMethod().referenceMaps() == null || Bytes.areClear(template.targetMethod().referenceMaps());
         final int stopPosition = _codeBuffer.currentPosition() + template.targetMethod().stopPosition(0);
-        _stops.add(new BytecodeDirectCall(stopPosition, callee));
+        _stops.add(new BytecodeDirectCall(stopPosition, currentOpcodePosition(), callee));
     }
 
     Stops packStops() {
@@ -446,6 +446,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
             catchRangePositions,
             catchBlockPositions,
             stops._stopPositions,
+            stops._bytecodeStopsIterator,
             compressedJavaFrameDescriptors,
             stops._directCallees,
             stops._numberOfIndirectCalls,

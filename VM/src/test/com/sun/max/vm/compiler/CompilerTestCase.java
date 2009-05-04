@@ -287,7 +287,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
         Class thisClass = javaClass;
         ClassMethodActor classMethodActor;
         do {
-            classMethodActor = ClassActor.fromJava(thisClass).findLocalClassMethodActor(makeSymbol(methodName));
+            classMethodActor = ClassActor.fromJava(thisClass).findLocalClassMethodActor(makeSymbol(methodName), null);
             thisClass = thisClass.getSuperclass();
         } while (classMethodActor == null && thisClass != null);
         if (classMethodActor == null) {

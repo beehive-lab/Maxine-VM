@@ -33,8 +33,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
     private final JitStackFrameLayout _jitStackFrameLayout;
     private final Object _blockFrames;
     private final ExceptionHandler[] _exceptionHandlerMap;
-
-    int _currentStopIndex;
+    private final BytecodeStopsIterator _bytecodeStopsIterator;
 
     /**
      * The sorted list of basic block starting positions.
@@ -44,7 +43,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
      */
     private final char[] _blockStartBytecodePositions;
 
-    public JitReferenceMapEditor(JitTargetMethod targetMethod, int numberOfBlocks, boolean[] blockStarts, JitStackFrameLayout jitStackFrameLayout) {
+    public JitReferenceMapEditor(JitTargetMethod targetMethod, int numberOfBlocks, boolean[] blockStarts, BytecodeStopsIterator bytecodeStopsIterator, JitStackFrameLayout jitStackFrameLayout) {
         assert targetMethod.numberOfStopPositions() != 0;
         final ClassMethodActor classMethodActor = targetMethod.classMethodActor();
         _targetMethod = targetMethod;
@@ -59,6 +58,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
         }
         assert blockIndex == numberOfBlocks;
         _blockFrames = ReferenceMapInterpreter.createFrames(this);
+        _bytecodeStopsIterator = bytecodeStopsIterator;
     }
 
     public int blockIndexFor(int bytecodePosition) {
@@ -76,17 +76,20 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
     @Override
     public void visitReferenceInLocalVariable(int localVariableIndex) {
-        setBit(_jitStackFrameLayout.localVariableReferenceMapIndex(localVariableIndex));
+        for (int stopIndex = _bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = _bytecodeStopsIterator.nextStopIndex(false)) {
+            final int offset = stopIndex * _targetMethod.frameReferenceMapSize();
+            ByteArrayBitMap.set(_targetMethod.referenceMaps(), offset, _targetMethod.frameReferenceMapSize(), _jitStackFrameLayout.localVariableReferenceMapIndex(localVariableIndex));
+        }
     }
 
     @Override
-    public void visitReferenceOnOperandStack(int operandStackIndex) {
-        setBit(_jitStackFrameLayout.operandStackReferenceMapIndex(operandStackIndex));
-    }
-
-    public void setBit(int bitIndex) {
-        final int offset = _currentStopIndex * _targetMethod.frameReferenceMapSize();
-        ByteArrayBitMap.set(_targetMethod.referenceMaps(), offset, _targetMethod.frameReferenceMapSize(), bitIndex);
+    public void visitReferenceOnOperandStack(int operandStackIndex, boolean parametersPopped) {
+        for (int stopIndex = _bytecodeStopsIterator.nextStopIndex(true); stopIndex != -1; stopIndex = _bytecodeStopsIterator.nextStopIndex(false)) {
+            if (parametersPopped == _bytecodeStopsIterator.isDirectRuntimeCall()) {
+                final int offset = stopIndex * _targetMethod.frameReferenceMapSize();
+                ByteArrayBitMap.set(_targetMethod.referenceMaps(), offset, _targetMethod.frameReferenceMapSize(), _jitStackFrameLayout.operandStackReferenceMapIndex(operandStackIndex));
+            }
+        }
     }
 
     @Override
@@ -120,31 +123,7 @@ public class JitReferenceMapEditor implements ReferenceMapInterpreterContext, Re
 
         final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(_blockFrames);
         interpreter.finalizeFrames(this);
-
-        int startBytecodePosition = 0;
-        int startTargetCodePosition = bytecodeToTargetCodePositionMap[0];
-        assert startTargetCodePosition != 0;
-        for (int bytecodePosition = 1; bytecodePosition < bytecodeToTargetCodePositionMap.length; bytecodePosition++) {
-            final int targetCodePosition = bytecodeToTargetCodePositionMap[bytecodePosition];
-            if (targetCodePosition != 0) {
-                // Iterate over all the stops in the target code for the bytecode at 'startBytecodePosition':
-                for (int stopIndex = 0; stopIndex < _targetMethod.numberOfStopPositions(); ++stopIndex) {
-                    final int stopPosition = _targetMethod.stopPosition(stopIndex);
-                    if (stopPosition < startTargetCodePosition) {
-                        // this is a stop in the prologue of the method (e.g. the invocation count call)
-                        _currentStopIndex = stopIndex;
-                        interpreter.interpretReferenceSlotsAt(this, this, 0, true);
-                    } else if (stopPosition < targetCodePosition) {
-                        // this is a stop in the machine code generated for bytecodes
-                        _currentStopIndex = stopIndex;
-                        final boolean isDirectCallToRuntime = _targetMethod.isDirectCallToRuntime(stopIndex);
-                        interpreter.interpretReferenceSlotsAt(this, this, startBytecodePosition, isDirectCallToRuntime);
-                    }
-                }
-                startTargetCodePosition = targetCodePosition;
-                startBytecodePosition = bytecodePosition;
-            }
-        }
+        interpreter.interpretReferenceSlots(this, this, _bytecodeStopsIterator);
     }
 
     @Override

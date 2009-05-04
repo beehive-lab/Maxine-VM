@@ -294,7 +294,7 @@ public class BytecodeToSPARCTargetTranslator extends BytecodeToTargetTranslator 
             fixBranchLabel(branchPosition, byteOffsetToBranchTarget, _branchTemplateInstruction[branchCondition.ordinal()]);
             // The safepoint instruction is emitted in the delay slot of the branch. It will be executed only if the branch is taken.
             _codeBuffer.emit(_safepointTemplate);
-            emitSafepoint(new BackwardBranchBytecodeSafepoint(branchPosition + 4));
+            emitSafepoint(new BackwardBranchBytecodeSafepoint(branchPosition + 4, currentOpcodePosition()));
         }
     }
 

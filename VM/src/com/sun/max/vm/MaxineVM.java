@@ -368,6 +368,11 @@ public final class MaxineVM {
         return _primordialVmThreadLocals;
     }
 
+    /**
+     * The signature of {@link #run(Pointer, Pointer, Pointer, Word, Word, Word, int, Pointer)}.
+     */
+    public static final SignatureDescriptor RUN_METHOD_SIGNATURE;
+
     @PROTOTYPE_ONLY
     private static final Class[] _runMethodParameterTypes;
     static {
@@ -379,6 +384,7 @@ public final class MaxineVM {
             }
         }
         _runMethodParameterTypes = runMethod.getParameterTypes();
+        RUN_METHOD_SIGNATURE = SignatureDescriptor.create(runMethod.getReturnType(), runMethod.getParameterTypes());
     }
 
     /**

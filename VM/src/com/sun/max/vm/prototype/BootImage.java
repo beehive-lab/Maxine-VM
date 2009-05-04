@@ -134,7 +134,7 @@ public class BootImage {
      * @return the found method or null
      */
     public static ClassMethodActor getRunMethodActor(Class<?> javaClass) {
-        final ClassMethodActor runMethodActor = ClassActor.fromJava(javaClass).findLocalClassMethodActor(run);
+        final ClassMethodActor runMethodActor = ClassActor.fromJava(javaClass).findLocalClassMethodActor(run, null);
         if (runMethodActor != null) {
             return runMethodActor;
         }

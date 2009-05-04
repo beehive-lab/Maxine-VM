@@ -33,6 +33,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.value.*;
 
@@ -153,14 +154,11 @@ public final class VmClassLoader extends ClassLoader {
 
     private Object createNativeLibrary(String path, Word handle) {
         try {
-            for (ClassActor classActor : ClassActor.fromJava(ClassLoader.class).innerClassActors()) {
-                if (classActor.simpleName().endsWith("NativeLibrary")) {
-                    final VirtualMethodActor constructor = ClassMethodActor.findVirtual(classActor, SymbolTable.INIT.toString());
-                    final Object nativeLibrary = constructor.invokeConstructor(ReferenceValue.from(VmClassLoader.class), ReferenceValue.from(path)).asObject();
-                    LongFieldActor.findInstance(classActor.toJava(), "handle").writeLong(nativeLibrary, handle.asAddress().toLong());
-                    return nativeLibrary;
-                }
-            }
+            final ClassActor classActor = JDK.java_lang_ClassLoader$NativeLibrary.classActor();
+            final VirtualMethodActor constructor = ClassMethodActor.findVirtual(classActor, SymbolTable.INIT.toString());
+            final Object nativeLibrary = constructor.invokeConstructor(ReferenceValue.from(VmClassLoader.class), ReferenceValue.from(path)).asObject();
+            LongFieldActor.findInstance(classActor.toJava(), "handle").writeLong(nativeLibrary, handle.asAddress().toLong());
+            return nativeLibrary;
         } catch (Throwable throwable) {
             ProgramError.unexpected(throwable);
         }

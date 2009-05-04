@@ -275,30 +275,10 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
      *         {@code main} function
      */
     public static Pointer createCommandLineArgumentsBuffer(File programFile, String[] commandLineArguments) {
-        final String programPath = programFile.getAbsolutePath();
-
-        final int argvSize = Word.size() * (2 + commandLineArguments.length);
-        int bufferSize = argvSize + programPath.length() + 1;
-        for (String commandLineArgument : commandLineArguments) {
-            bufferSize += commandLineArgument.length() + 1;
-        }
-        final Pointer commandLineArgumentsBuffer = Memory.mustAllocate(bufferSize);
-
-        final Pointer argumentPointer = commandLineArgumentsBuffer;
-        Pointer stringPointer = commandLineArgumentsBuffer.plus(argvSize);
-        argumentPointer.setWord(0, stringPointer);
-        stringPointer = CString.writeUtf8(programPath, stringPointer, programPath.length() + 1);
-        int i = 1;
-        while (i <= commandLineArguments.length) {
-            argumentPointer.setWord(i, stringPointer);
-            final String s = commandLineArguments[i - 1];
-            /* FIXME: this will cause a buffer overflow since the total size of the command line arguments may be more than bufferSize
-             *  Try a non-ascii command line strings  -- AZIZ*/
-            stringPointer = CString.writeUtf8(s, stringPointer, s.length() + 1);
-            i++;
-        }
-        argumentPointer.setWord(i, Word.zero());
-        return commandLineArgumentsBuffer;
+        final String[] strings = new String[commandLineArguments.length + 1];
+        strings[0] = programFile.getAbsolutePath();
+        System.arraycopy(commandLineArguments, 0, strings, 1, commandLineArguments.length);
+        return CString.utf8ArrayFromStringArray(strings, true);
     }
 
     protected TeleProcess(TeleVM teleVM, Platform platform) {

@@ -34,12 +34,16 @@ public class WeakReferenceTest02 {
         final WeakReference<String> w3 = new WeakReference<String>(new String("alive"), queue);
         test(w3);
         while (true) {
-            final Object obj = queue.poll();
-            if (obj == w3) {
-                System.out.println("true");
-            }
-            if (obj == null) {
-                break;
+            try {
+                final Object obj = queue.remove();
+                if (obj == w3) {
+                    System.out.println("true");
+                    break;
+                }
+                if (obj == null) {
+                    break;
+                }
+            } catch (InterruptedException e) {
             }
         }
     }

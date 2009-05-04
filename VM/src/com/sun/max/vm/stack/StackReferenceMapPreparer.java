@@ -743,8 +743,8 @@ public final class StackReferenceMapPreparer {
         // These bits must be preserved.
         final int lowestBitIndex = referenceMapBitIndex(lowestStackSlot, lowestSlot);
         final int highestBitIndex = referenceMapBitIndex(lowestStackSlot, highestSlot);
-        final int lowestRefMapBytePreservedBits = (1 << (lowestBitIndex % Bytes.WIDTH)) - 1;
-        final int highestRefMapBytePreservedBits = ~((1 << ((highestBitIndex + 1) % Bytes.WIDTH)) - 1);
+        final int lowestRefMapBytePreservedBits = ~Ints.highBitsSet(lowestBitIndex % Bytes.WIDTH);
+        final int highestRefMapBytePreservedBits = ~Ints.lowBitsSet(highestBitIndex % Bytes.WIDTH);
         if (lowestRefMapByteIndex == highestRefMapByteIndex) {
             final byte singleRefMapByte = referenceMap.readByte(lowestRefMapByteIndex);
             final int singleRefMapBytePreservedBits = lowestRefMapBytePreservedBits | highestRefMapBytePreservedBits;
@@ -773,9 +773,7 @@ public final class StackReferenceMapPreparer {
     }
 
     /**
-     * Scan references in the stack in the specified interval [lowestSlot, highestSlot]. Note that this method
-     * always inspects complete reference map bytes, and thus assumes that bits corresponding to these extra roundoff
-     * slots at the beginning and end of the interval are zero.
+     * Scan references in the stack in the specified interval [lowestSlot, highestSlot].
      *
      * @param vmThreadLocals a pointer to the VM thread locals corresponding to the stack to scan
      * @param lowestSlot the address of the lowest slot to scan
