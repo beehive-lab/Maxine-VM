@@ -81,7 +81,7 @@ public abstract class IrRoutine {
         } else {
             _foldingMethodActor = getFoldingMethodActor(getClass(), _name, true);
         }
-        _resultKind = _foldingMethodActor.descriptor().getResultKind();
+        _resultKind = _foldingMethodActor.descriptor().resultKind();
         assert _singletonInstances.put(getClass(), this) == null;
     }
 

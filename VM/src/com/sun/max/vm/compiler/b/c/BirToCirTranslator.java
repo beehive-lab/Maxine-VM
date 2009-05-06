@@ -186,7 +186,7 @@ public class BirToCirTranslator extends CirGenerator {
     protected void generateIrMethod(CirMethod cirMethod, CompilationDirective compilationDirective) {
         final ClassMethodActor compilee = cirMethod.classMethodActor().compilee();
         if (!compilee.isHiddenToReflection()) {
-            if (compilee.isStatic() && MaxineVM.isMaxineClass(compilee.holder().typeDescriptor()) && compilee.isDeclaredFoldable() && compilee.getNumberOfParameters() == 0) {
+            if (compilee.isStatic() && MaxineVM.isMaxineClass(compilee.holder().typeDescriptor()) && compilee.isDeclaredFoldable() && compilee.descriptor().numberOfParameters() == 0) {
                 foldAndMemoize(cirMethod);
                 return;
             }

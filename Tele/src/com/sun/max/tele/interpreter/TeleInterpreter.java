@@ -221,6 +221,9 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                     throw executionException;
                 }
             } catch (Throwable throwable) {
+                System.err.println("XXXXXXXXXXXXXXXX");
+                throwable.printStackTrace();
+                System.err.println("XXXXXXXXXXXXXXXX");
                 throw new TeleInterpreterException(throwable, _machine);
             } finally {
                 _instructionsExecuted++;
@@ -1725,7 +1728,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
                 try {
                     final ClassMethodActor resolveMethod = (ClassMethodActor) _machine.resolveMethod(cpIndex);
                     ClassMethodActor methodActor = resolveMethod;
-                    final Value value = _machine.peek(methodActor.descriptor().getNumberOfParameters() + 1);
+                    final Value value = _machine.peek(methodActor.descriptor().numberOfParameters() + 1);
                     if (value instanceof ReferenceValue) {
                         final ReferenceValue receiver = (ReferenceValue) value;
                         if (receiver.isZero()) {
@@ -1760,7 +1763,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
                 try {
                     final ClassMethodActor methodActor = (ClassMethodActor) _machine.resolveMethod(cpIndex);
-                    final ReferenceValue receiver = (ReferenceValue) _machine.peek(methodActor.descriptor().getNumberOfParameters() + 1);
+                    final ReferenceValue receiver = (ReferenceValue) _machine.peek(methodActor.descriptor().numberOfParameters() + 1);
 
                     if (receiver.isZero()) {
                         _machine.raiseException(new NullPointerException());
@@ -1794,7 +1797,7 @@ public final class TeleInterpreter extends IrInterpreter<ActorIrMethod> {
 
                 try {
                     final InterfaceMethodActor methodActor = (InterfaceMethodActor) _machine.resolveMethod(cpIndex);
-                    final ReferenceValue receiver = (ReferenceValue) _machine.peek(methodActor.descriptor().getNumberOfParameters() + 1);
+                    final ReferenceValue receiver = (ReferenceValue) _machine.peek(methodActor.descriptor().numberOfParameters() + 1);
 
                     if (receiver.isZero()) {
                         _machine.raiseException(new NullPointerException());

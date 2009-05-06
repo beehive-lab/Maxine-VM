@@ -142,8 +142,8 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
             final String errorMessage = classActor.javaSignature(true) + "." + name + signature;
             if (MaxineVM.isPrototyping()) {
                 final Class<?> javaClass = classActor.toJava();
-                final Class[] parameterTypes = signature.getParameterTypes(javaClass.getClassLoader());
-                final Class returnType = signature.getReturnType(javaClass.getClassLoader());
+                final Class[] parameterTypes = signature.resolveParameterTypes(javaClass.getClassLoader());
+                final Class returnType = signature.resolveReturnType(javaClass.getClassLoader());
                 final Method method = Classes.resolveMethod(javaClass, returnType, name.string(), parameterTypes);
                 if (MaxineVM.isPrototypeOnly(method)) {
                     throw new PrototypeOnlyMethodError(errorMessage);

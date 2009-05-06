@@ -93,7 +93,7 @@ public abstract class SPARCAdapterFrameGenerator extends AdapterFrameGenerator<S
         // Only static parameter-less methods and dynamic trampolines
         // can avoid an adapter frame.
         // Others need the adapter frame to (i) load parameters onto the appropriate register on method entry, and (ii) retract the stack of the JIT caller.
-        return !((classMethodActor.isStatic() && classMethodActor.descriptor().hasNoParameters()) || isDynamicTrampoline(classMethodActor));
+        return !((classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0)) || isDynamicTrampoline(classMethodActor));
     }
 
 

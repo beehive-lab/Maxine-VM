@@ -70,7 +70,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     public NativeStubGenerator(ConstantPoolEditor constantPoolEditor, MethodActor classMethodActor) {
         super(constantPoolEditor);
         _classMethodActor = classMethodActor;
-        allocateParameters(classMethodActor.isStatic(), classMethodActor.getParameterKinds());
+        allocateParameters(classMethodActor.isStatic(), classMethodActor.descriptor());
         generateCode(classMethodActor.isCFunction(), classMethodActor.isStatic(), classMethodActor.holder(), classMethodActor.descriptor());
     }
 
@@ -123,8 +123,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
     private static final StringConstant _threadLabelPrefix = PoolConstantFactory.createStringConstant("[Thread \"");
 
     private void generateCode(boolean isCFunction, boolean isStatic, ClassActor holder, SignatureDescriptor signatureDescriptor) {
-        final TypeDescriptor[] parameterDescriptors = signatureDescriptor.getParameterDescriptors();
-        final TypeDescriptor resultDescriptor = signatureDescriptor.getResultDescriptor();
+        final TypeDescriptor resultDescriptor = signatureDescriptor.resultDescriptor();
         final Kind resultKind = resultDescriptor.toKind();
         final StringBuilder nativeFunctionDescriptor = new StringBuilder("(");
         int nativeFunctionArgSlots = 0;
@@ -158,11 +157,11 @@ public final class NativeStubGenerator extends BytecodeAssembler {
             // Push the JNI environment variable
             invokestatic(_currentJniEnvironmentPointer, 0, 1);
 
-            final TypeDescriptor jniEnvDescriptor = _currentJniEnvironmentPointer.signature(constantPool()).getResultDescriptor();
+            final TypeDescriptor jniEnvDescriptor = _currentJniEnvironmentPointer.signature(constantPool()).resultDescriptor();
             nativeFunctionDescriptor.append(jniEnvDescriptor);
             nativeFunctionArgSlots += jniEnvDescriptor.toKind().stackSlots();
 
-            final TypeDescriptor stackHandleDescriptor = _createStackHandle.signature(constantPool()).getResultDescriptor();
+            final TypeDescriptor stackHandleDescriptor = _createStackHandle.signature(constantPool()).resultDescriptor();
             if (isStatic) {
                 // Push the class for a static method
                 ldc(createClassConstant(holder.toJava()));
@@ -178,7 +177,8 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         }
 
         // Push the remaining parameters, wrapping reference parameters in JNI handles
-        for (TypeDescriptor parameterDescriptor : parameterDescriptors) {
+        for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
+            final TypeDescriptor parameterDescriptor = signatureDescriptor.parameterDescriptorAt(i);
             TypeDescriptor nativeParameterDescriptor = parameterDescriptor;
             switch (parameterDescriptor.toKind().asEnum()) {
                 case BYTE:

@@ -268,7 +268,7 @@ public final class Mangle {
          * @return null if the demangled method does not correspond to a method locatable by {@code classLoader}
          */
         public Method toJava(ClassLoader classLoader) {
-            final Class declaringClass = _declaringClass.toJava(classLoader);
+            final Class declaringClass = _declaringClass.resolveType(classLoader);
             for (Method method : declaringClass.getDeclaredMethods()) {
                 if (Modifier.isNative(method.getModifiers())) {
                     if (_name.equals(method.getName())) {

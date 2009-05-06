@@ -34,7 +34,7 @@ public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
     private final BlockState _blockState;
 
     public InvokeVirtual(ConstantPool constantPool, int index, BirToCirMethodTranslation translation, BlockState blockState) {
-        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
+        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.methodAt(index).signature(constantPool).resultKind());
         _translation = translation;
         _blockState = blockState;
     }
@@ -60,6 +60,8 @@ public class InvokeVirtual extends JavaResolvableOperator<VirtualMethodActor> {
     @Override
     public Kind[] parameterKinds() {
         final MethodRefConstant method = _constantPool.methodAt(_index);
-        return method.signature(_constantPool).getParameterKindsIncludingReceiver(method.holder(_constantPool).toKind());
+        final Kind[] kinds = method.signature(_constantPool).copyParameterKinds(null, 1);
+        kinds[0] = method.holder(_constantPool).toKind();
+        return kinds;
     }
 }

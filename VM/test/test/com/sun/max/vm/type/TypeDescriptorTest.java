@@ -220,10 +220,10 @@ public class TypeDescriptorTest extends TestCase {
     }
 
     public void test_toJava() {
-        assertTrue(forJavaClass(TypeDescriptor.class).toJava(TypeDescriptor.class.getClassLoader()) == TypeDescriptor.class);
-        assertTrue(forJavaClass(Integer.class).toJava(Integer.class.getClassLoader()) == Integer.class);
-        assertTrue(forJavaClass(int.class).toJava(int.class.getClassLoader()) == int.class);
-        assertTrue(forJavaClass(int[].class).toJava(int.class.getClassLoader()) == int[].class);
-        assertTrue(VOID.toJava(void.class.getClassLoader()) == void.class);
+        assertTrue(forJavaClass(TypeDescriptor.class).resolveType(TypeDescriptor.class.getClassLoader()) == TypeDescriptor.class);
+        assertTrue(forJavaClass(Integer.class).resolveType(Integer.class.getClassLoader()) == Integer.class);
+        assertTrue(forJavaClass(int.class).resolveType(int.class.getClassLoader()) == int.class);
+        assertTrue(forJavaClass(int[].class).resolveType(int.class.getClassLoader()) == int[].class);
+        assertTrue(VOID.resolveType(void.class.getClassLoader()) == void.class);
     }
 }

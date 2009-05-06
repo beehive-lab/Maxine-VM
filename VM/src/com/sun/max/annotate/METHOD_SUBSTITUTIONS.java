@@ -114,7 +114,7 @@ public @interface METHOD_SUBSTITUTIONS {
             final AnnotationInfo.NameElementPair outerClassNameElementPair = nameElementPairs[0];
             if (outerClassNameElementPair.name().equals("value")) {
                 final AnnotationInfo.TypeElement typeElement = (AnnotationInfo.TypeElement) outerClassNameElementPair.element();
-                holder = typeElement.typeDescriptor().toJava(substitutor.classLoader());
+                holder = typeElement.typeDescriptor().resolveType(substitutor.classLoader());
             } else {
                 assert outerClassNameElementPair.name().equals("hiddenClass");
                 final AnnotationInfo.StringElement stringElement = (AnnotationInfo.StringElement) outerClassNameElementPair.element();

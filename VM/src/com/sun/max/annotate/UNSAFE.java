@@ -86,11 +86,11 @@ public @interface UNSAFE {
         }
 
         private static boolean isUnsafeSignature(SignatureDescriptor descriptor, ClassActor classActor, ClassLoader classLoader) {
-            if (isUnsafeType(descriptor.getResultDescriptor(), classActor, classLoader)) {
+            if (isUnsafeType(descriptor.resultDescriptor(), classActor, classLoader)) {
                 return true;
             }
-            for (TypeDescriptor parameterType : descriptor.getParameterDescriptors()) {
-                if (isUnsafeType(parameterType, classActor, classLoader)) {
+            for (int i = 0; i < descriptor.numberOfParameters(); i++) {
+                if (isUnsafeType(descriptor.parameterDescriptorAt(i), classActor, classLoader)) {
                     return true;
                 }
             }

@@ -158,7 +158,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
                 if (vmConfiguration().debugging()) {
                     // Pre-verification of the heap.
-                    verifyHeap();
+                    verifyHeap("before GC");
                 }
 
                 ++_numberOfGarbageCollectionInvocations;
@@ -216,7 +216,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
                 if (vmConfiguration().debugging()) {
-                    verifyHeap();
+                    verifyHeap("after GC");
                 }
 
                 TeleHeapInfo.afterGarbageCollection();
@@ -716,14 +716,17 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return false;
     }
 
-    private void verifyHeap() {
+    private void verifyHeap(String when) {
         if (Heap.traceGC()) {
-            Log.println("Verifying heap...");
+            Log.print("Verifying heap ");
+            Log.println(when);
         }
         _heapRootsVerifier.run();
         DebugHeap.verifyRegion(_toSpace.start().asPointer(), _allocationMark, _toSpace, _pointerOffsetGripVerifier);
         if (Heap.traceGC()) {
-            Log.println("done verifying heap");
+            Log.print("Verifying heap");
+            Log.print(when);
+            Log.println(": DONE");
         }
     }
 

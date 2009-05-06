@@ -24,7 +24,10 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * The dynamic Java object heap.
@@ -121,6 +124,36 @@ public final class Heap {
         return VerboseVMOption.verboseGC();
     }
 
+    private static boolean _traceAllocation;
+
+    /**
+     * Determines if allocation should be traced.
+     *
+     * @returns {@code false} if VM build level is not {@link BuildLevel#DEBUG}.
+     */
+    @INLINE
+    public static boolean traceAllocation() {
+        if (!VMConfiguration.hostOrTarget().debugging()) {
+            return false;
+        }
+        return _traceAllocation;
+    }
+
+    private static final VMOption _traceAllocationOption;
+    static {
+        if (!VMConfiguration.hostOrTarget().debugging()) {
+            _traceAllocationOption = null;
+        } else {
+            _traceAllocationOption = new VMOption("-XX:TraceAllocation", "Trace heap allocation.", MaxineVM.Phase.STARTING) {
+                @Override
+                public boolean parseValue(Pointer optionValue) {
+                    _traceAllocation = true;
+                    return true;
+                }
+            };
+        }
+    }
+
     /**
      * Determines if garbage collection activity should be traced at a level useful for debugging.
      */
@@ -201,27 +234,116 @@ public final class Heap {
 
     @INLINE
     public static Object createArray(DynamicHub hub, int length) {
-        return heapScheme().createArray(hub, length);
+        final Object array = heapScheme().createArray(hub, length);
+        if (Heap.traceAllocation()) {
+            traceCreateArray(hub, length, array);
+        }
+        return array;
+    }
+
+    @NEVER_INLINE
+    private static void traceCreateArray(DynamicHub hub, int length, final Object array) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Allocated array ");
+        Log.print(hub.classActor().name().string());
+        Log.print(" of length ");
+        Log.print(length);
+        Log.print(" at ");
+        Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)));
+        Log.print(" [");
+        Log.print(Layout.size(Reference.fromJava(array)));
+        Log.println(" bytes]");
+        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Object createTuple(Hub hub) {
-        return heapScheme().createTuple(hub);
+        final Object object = heapScheme().createTuple(hub);
+        if (Heap.traceAllocation()) {
+            traceCreateTuple(hub, object);
+        }
+        return object;
+    }
+
+    @NEVER_INLINE
+    private static void traceCreateTuple(Hub hub, final Object object) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Allocated tuple ");
+        Log.print(hub.classActor().name().string());
+        Log.print(" at ");
+        Log.print(Layout.originToCell(ObjectAccess.toOrigin(object)));
+        Log.print(" [");
+        Log.print(hub.tupleSize().toInt());
+        Log.println(" bytes]");
+        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Object createHybrid(DynamicHub hub) {
-        return heapScheme().createHybrid(hub);
+        final Object hybrid = heapScheme().createHybrid(hub);
+        if (Heap.traceAllocation()) {
+            traceCreateHybrid(hub, hybrid);
+        }
+        return hybrid;
+    }
+
+    @NEVER_INLINE
+    private static void traceCreateHybrid(DynamicHub hub, final Object hybrid) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Allocated hybrid ");
+        Log.print(hub.classActor().name().string());
+        Log.print(" at ");
+        Log.print(Layout.originToCell(ObjectAccess.toOrigin(hybrid)));
+        Log.print(" [");
+        Log.print(hub.tupleSize().toInt());
+        Log.println(" bytes]");
+        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Hybrid expandHybrid(Hybrid hybrid, int length) {
-        return heapScheme().expandHybrid(hybrid, length);
+        final Hybrid expandedHybrid = heapScheme().expandHybrid(hybrid, length);
+        if (Heap.traceAllocation()) {
+            traceExpandHybrid(hybrid, expandedHybrid);
+        }
+        return expandedHybrid;
+    }
+
+    @NEVER_INLINE
+    private static void traceExpandHybrid(Hybrid hybrid, final Hybrid expandedHybrid) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Allocated expanded hybrid ");
+        final Hub hub = ObjectAccess.readHub(hybrid);
+        Log.print(hub.classActor().name().string());
+        Log.print(" at ");
+        Log.print(Layout.originToCell(ObjectAccess.toOrigin(expandedHybrid)));
+        Log.print(" [");
+        Log.print(hub.tupleSize().toInt());
+        Log.println(" bytes]");
+        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
     public static Object clone(Object object) {
-        return heapScheme().clone(object);
+        final Object clone = heapScheme().clone(object);
+        if (Heap.traceAllocation()) {
+            traceClone(object, clone);
+        }
+        return clone;
+    }
+
+    @NEVER_INLINE
+    private static void traceClone(Object object, final Object clone) {
+        final boolean lockDisabledSafepoints = Log.lock();
+        Log.print("Allocated cloned ");
+        final Hub hub = ObjectAccess.readHub(object);
+        Log.print(hub.classActor().name().string());
+        Log.print(" at ");
+        Log.print(Layout.originToCell(ObjectAccess.toOrigin(clone)));
+        Log.print(" [");
+        Log.print(hub.tupleSize().toInt());
+        Log.println(" bytes]");
+        Log.unlock(lockDisabledSafepoints);
     }
 
     @INLINE
@@ -232,6 +354,13 @@ public final class Heap {
     private static boolean _collecting;
 
     public static boolean collectGarbage(Size requestedFreeSpace) {
+        if (verbose()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("--GC requested by thread ");
+            Log.printVmThread(VmThread.current(), false);
+            Log.println("--");
+            Log.unlock(lockDisabledSafepoints);
+        }
         return heapScheme().collectGarbage(requestedFreeSpace);
     }
 

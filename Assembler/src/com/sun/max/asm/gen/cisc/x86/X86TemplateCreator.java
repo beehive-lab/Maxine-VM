@@ -91,8 +91,6 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
                     return;
                 }
             }
-            Trace.line(3, "template: " + template);
-            Trace.line(3);
             addTemplate(template);
             _serial++;
         }

@@ -197,7 +197,13 @@ public abstract class TypeDescriptor extends Descriptor {
         return string;
     }
 
-    public Class toJava(ClassLoader classLoader) {
+    /**
+     * Resolves this type descriptor to a class using a given class loader.
+     *
+     * @param classLoader the class loader used to resolve this type descriptor to a class
+     * @return the resolved class
+     */
+    public Class resolveType(ClassLoader classLoader) {
         return JavaTypeDescriptor.resolveToJavaClass(this, classLoader);
     }
 
@@ -265,7 +271,7 @@ public abstract class TypeDescriptor extends Descriptor {
         if (MaxineVM.isPrototyping()) {
             return resolveInPrototype(classLoader);
         }
-        return ClassActor.fromJava(toJava(classLoader));
+        return ClassActor.fromJava(resolveType(classLoader));
     }
 
     @PROTOTYPE_ONLY
