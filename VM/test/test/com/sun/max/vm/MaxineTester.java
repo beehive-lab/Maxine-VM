@@ -39,6 +39,7 @@ import test.com.sun.max.vm.MaxineTesterConfiguration.*;
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
+import com.sun.max.lang.Arrays;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -83,37 +84,32 @@ public class MaxineTester {
                     "A list of configurations for which to run the Java tester tests.");
     private static final Option<List<String>> _tests = _options.newStringListOption("tests", "junit,output,javatester",
                     "The list of test harnesses to run, which may include JUnit tests (junit), output tests (output), " +
-                    "the JavaTester (javatester), DaCapo (dacapo), and SpecJVM98 (specjvm98). A selection of the Dacapo/SpecJVM98/Shootout tests " +
-                    "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example " +
-                    "'-tests=specjvm98:jess+db,dacapo:pmd+fop' will " +
-                    "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo benchmarks.");
+                    "the JavaTester (javatester), DaCapo (dacapo), and SpecJVM98 (specjvm98).\n\nA subset of the JUnit/Output/Dacapo/SpecJVM98/Shootout tests " +
+                    "can be specified by appending a ':' followed by a '+' separated list of test name substrings. For example:\n\n" +
+                    "-tests=specjvm98:jess+db,dacapo:pmd+fop\n\nwill " +
+                    "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo benchmarks.\n\n" +
+                    "Ouput tests: " + Arrays.toString(MaxineTesterConfiguration._outputTests) + "\n\n" +
+                    "Dacapo tests: " + Arrays.toString(MaxineTesterConfiguration._dacapoTests) + "\n\n" +
+                    "SpecJVM98 tests: " + Arrays.toString(MaxineTesterConfiguration._specjvm98Tests) + "\n\n" +
+                    "Shootout tests: " + Arrays.toString(MaxineTesterConfiguration.shootoutTests()));
     private static final Option<List<String>> _maxvmConfigList = _options.newStringListOption("maxvm-configs",
                     MaxineTesterConfiguration.defaultMaxvmOutputConfigs(),
                     "A list of configurations for which to run the Maxine output tests.");
     private static final Option<String> _javaConfigAliasOption = _options.newStringOption("java-config-alias", null,
                     "The Java tester config to use for running Java programs. Omit this option to use a separate config for Java programs.");
-    private static final Option<Integer> _autoTestTimeOut = _options.newIntegerOption("auto-test-timeout", 300,
-                    "The number of seconds to wait for a JUnit auto-test to complete before " +
+    private static final Option<Integer> _junitTestTimeOut = _options.newIntegerOption("junit-test-timeout", 300,
+                    "The number of seconds to wait for a JUnit test to complete before " +
                     "timing out and killing it.");
-    private static final Option<Boolean> _slowAutoTests = _options.newBooleanOption("slow-auto-tests", false,
-                    "Include auto-tests known to be slow.");
-    private static final Option<String> _autoTestFilter = _options.newStringOption("auto-test-filter", null,
-                    "A pattern for selecting which auto-tests are run. If absent, all auto-tests on the class path are run. " +
-                    "Otherwise only those whose name contains this value as a substring are run.");
+    private static final Option<Boolean> _slowAutoTests = _options.newBooleanOption("slow-junit-tests", false,
+                    "Include junit-tests known to be slow.");
     private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
                     "Stop execution as soon as a single test fails.");
     private static final Option<File> _specjvm98Zip = _options.newFileOption("specjvm98", (File) null,
                     "Location of zipped up SpecJVM98 directory. If not provided, then the SPECJVM98_ZIP environment variable is used.");
-    private static final Option<List<String>> _specjvm98Tests = _options.newStringListOption("specjvm98-tests", MaxineTesterConfiguration._specjvm98Tests,
-                    "A list of SpecJVM98 benchmarks to run. The -" + _tests + " option can also be used to specify this list.");
     private static final Option<File> _dacapoJar = _options.newFileOption("dacapo", (File) null,
                     "Location of DaCapo JAR file. If not provided, then the DACAPO_JAR environment variable is used.");
-    private static final Option<List<String>> _dacapoTests = _options.newStringListOption("dacapo-tests", MaxineTesterConfiguration._dacapoTests,
-                    "A list of DaCapo benchmarks to run. The -" + _tests + " option can also be used to specify this list.");
     private static final Option<File> _shootoutDir = _options.newFileOption("shootout", (File) null,
                     "Location of the Programming Language Shootout tests. If not provided, then the SHOOTOUT_DIR environment variable is used.");
-    private static final Option<List<String>> _shootoutTests = _options.newStringListOption("shootout-tests", MaxineTesterConfiguration.shootoutTests(),
-                    "A list of Programming Language Shootout benchmarks to run. The -" + _tests + " option can also be used to specify this list.");
     private static final Option<Boolean> _timing = _options.newBooleanOption("timing", false,
                     "For the SpecJVM98 and DaCapo benchmarks, report internal timings compared to the baseline.");
     private static final Option<Boolean> _help = _options.newBooleanOption("help", false,
@@ -142,34 +138,37 @@ public class MaxineTester {
                     break;
                 } else if ("junit".equals(test)) {
                     // run the JUnit tests
-                    new JUnitHarness().run();
+                    new JUnitHarness(null).run();
+                } else if (test.startsWith("junit:")) {
+                    // run the JUnit tests
+                    new JUnitHarness(test.substring("junit:".length()).split("\\+")).run();
                 } else if ("output".equals(test)) {
                     // run the Output tests
-                    new OutputHarness().run();
+                    new OutputHarness(MaxineTesterConfiguration._outputTestClasses).run();
+                } else if (test.startsWith("output:")) {
+                    // run the Output tests
+                    new OutputHarness(filterTestClassesBySubstrings(MaxineTesterConfiguration._outputTestClasses, test.substring("output:".length()).split("\\+"))).run();
                 } else if ("javatester".equals(test)) {
                     // run the JavaTester tests
                     new JavaTesterHarness().run();
                 } else if ("dacapo".equals(test)) {
                     // run the DaCapo tests
-                    new DaCapoHarness().run();
+                    new DaCapoHarness(MaxineTesterConfiguration._dacapoTests).run();
                 } else if (test.startsWith("dacapo:")) {
-                    _dacapoTests.setValue(filterTestsBySubstrings(MaxineTesterConfiguration._dacapoTests, test.substring("dacapo:".length()).split("\\+")));
                     // run the DaCapo tests
-                    new DaCapoHarness().run();
+                    new DaCapoHarness(filterTestsBySubstrings(MaxineTesterConfiguration._dacapoTests, test.substring("dacapo:".length()).split("\\+"))).run();
                 } else if ("specjvm98".equals(test)) {
                     // run the SpecJVM98 tests
-                    new SpecJVM98Harness().run();
+                    new SpecJVM98Harness(MaxineTesterConfiguration._specjvm98Tests).run();
                 } else if (test.startsWith("specjvm98:")) {
-                    _specjvm98Tests.setValue(filterTestsBySubstrings(MaxineTesterConfiguration._specjvm98Tests, test.substring("specjvm98:".length()).split("\\+")));
                     // run the SpecJVM98 tests
-                    new SpecJVM98Harness().run();
+                    new SpecJVM98Harness(filterTestsBySubstrings(MaxineTesterConfiguration._specjvm98Tests, test.substring("specjvm98:".length()).split("\\+"))).run();
                 } else if ("shootout".equals(test)) {
                     // run the shootout tests
-                    new ShootoutHarness().run();
+                    new ShootoutHarness(MaxineTesterConfiguration.shootoutTests()).run();
                 } else if (test.startsWith("shootout:")) {
                     // run the shootout tests
-                    _shootoutTests.setValue(filterTestsBySubstrings(MaxineTesterConfiguration.shootoutTests(), test.substring("shootout:".length()).split("\\+")));
-                    new ShootoutHarness().run();
+                    new ShootoutHarness(filterTestsBySubstrings(MaxineTesterConfiguration.shootoutTests(), test.substring("shootout:".length()).split("\\+"))).run();
                 } else {
                     out().println("Unrecognized test harness: " + test);
                     System.exit(-1);
@@ -184,7 +183,7 @@ public class MaxineTester {
     }
 
 
-    private static List<String> filterTestsBySubstrings(String[] tests, String[] substrings) {
+    private static String[] filterTestsBySubstrings(String[] tests, String[] substrings) {
 
         final List<String> list = new ArrayList<String>(tests.length);
         for (String substring : substrings) {
@@ -194,7 +193,20 @@ public class MaxineTester {
                 }
             }
         }
-        return list;
+        return list.toArray(new String[list.size()]);
+    }
+
+    private static Class[] filterTestClassesBySubstrings(Class[] tests, String[] substrings) {
+
+        final List<Class> list = new ArrayList<Class>(tests.length);
+        for (String substring : substrings) {
+            for (Class test : tests) {
+                if (test.getSimpleName().contains(substring)) {
+                    list.add(test);
+                }
+            }
+        }
+        return list.toArray(new Class[list.size()]);
     }
 
     private static final ThreadLocal<PrintStream> _out = new ThreadLocal<PrintStream>() {
@@ -331,7 +343,7 @@ public class MaxineTester {
      *
      * @param out where the summary should be printed. This value can be null if only the return value is of interest.
      * @return an integer that is the total of all the unexpected passes, the unexpected failures, the number of failed
-     *         attempts to generate an image and the number of auto-tests subprocesses that failed with an exception
+     *         attempts to generate an image and the number of JUnit test subprocesses that failed with an exception
      */
     private static int reportTestResults(PrintStream out) {
         if (out != null) {
@@ -349,9 +361,9 @@ public class MaxineTester {
         }
 
         int failedAutoTests = 0;
-        for (String autoTest : _autoTestsWithExceptions) {
+        for (String junitTest : _junitTestsWithExceptions) {
             if (out != null) {
-                out.println("Non-zero exit status for '" + autoTest + "'");
+                out.println("Non-zero exit status for '" + junitTest + "'");
             }
             failedAutoTests++;
         }
@@ -485,9 +497,9 @@ public class MaxineTester {
     }
 
     /**
-     * A list of the {@linkplain #runAutoTests auto-tests} that caused the Java process to exit with an exception.
+     * A list of the {@linkplain JUnitHarness JUnit tests} that caused the Java process to exit with an exception.
      */
-    private static AppendableSequence<String> _autoTestsWithExceptions = new ArrayListSequence<String>();
+    private static AppendableSequence<String> _junitTestsWithExceptions = new ArrayListSequence<String>();
 
     /**
      * Determines if {@linkplain #_failFast fail fast} has been requested and at least one unexpected failure has
@@ -904,18 +916,26 @@ public class MaxineTester {
      * @author Ben L. Titzer
      */
     public static class JUnitHarness implements Harness {
+        final String[] _testList;
+        public JUnitHarness(String[] testList) {
+            _testList = testList;
+        }
         @Override
         public boolean run() {
-            final File outputDir = new File(_outputDir.getValue(), "auto-tests");
-
-            final String filter = _autoTestFilter.getValue();
-            final Set<String> autoTests = new TreeSet<String>();
+            final File outputDir = new File(_outputDir.getValue(), "junit-tests");
+            final Set<String> junitTests = new TreeSet<String>();
             new ClassSearch() {
                 @Override
                 protected boolean visitClass(String className) {
                     if (className.endsWith(".AutoTest")) {
-                        if (filter == null || className.contains(filter)) {
-                            autoTests.add(className);
+                        if (_testList == null) {
+                            junitTests.add(className);
+                        } else {
+                            for (String test : _testList) {
+                                if (className.contains(test)) {
+                                    junitTests.add(className);
+                                }
+                            }
                         }
                     }
                     return true;
@@ -923,24 +943,24 @@ public class MaxineTester {
             }.run(Classpath.fromSystem());
 
             final int availableProcessors = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
-            final ExecutorService autoTesterService = Executors.newFixedThreadPool(availableProcessors);
-            final CompletionService<Void> autoTesterCompletionService = new ExecutorCompletionService<Void>(autoTesterService);
-            for (final String autoTest : autoTests) {
-                autoTesterCompletionService.submit(new Runnable() {
+            final ExecutorService junitTesterService = Executors.newFixedThreadPool(availableProcessors);
+            final CompletionService<Void> junitTesterCompletionService = new ExecutorCompletionService<Void>(junitTesterService);
+            for (final String junitTest : junitTests) {
+                junitTesterCompletionService.submit(new Runnable() {
                     public void run() {
                         if (!stopTesting()) {
                             runWithSerializedOutput(new Runnable() {
                                 public void run() {
-                                    runJUnitTest(outputDir, autoTest);
+                                    runJUnitTest(outputDir, junitTest);
                                 }
                             });
                         }
                     }
                 }, null);
             }
-            autoTesterService.shutdown();
+            junitTesterService.shutdown();
             try {
-                autoTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * autoTests.size(), TimeUnit.SECONDS);
+                junitTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * junitTests.size(), TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -948,20 +968,20 @@ public class MaxineTester {
         }
 
         /**
-         * Runs a single {@linkplain #runJUnitTests() auto-test}.
+         * Runs a single JUnit test.
          *
-         * @param outputDir where the result logs of the auto-test are to be placed
-         * @param autoTest the auto-test to run
+         * @param outputDir where the result logs of the JUnit test are to be placed
+         * @param junitTest the JUnit test to run
          */
-        private void runJUnitTest(final File outputDir, String autoTest) {
-            final File outputFile = stdoutFile(outputDir, autoTest, null);
-            final File passedFile = getOutputFile(outputDir, autoTest, null, ".passed");
-            final File failedFile = getOutputFile(outputDir, autoTest, null, ".failed");
+        private void runJUnitTest(final File outputDir, String junitTest) {
+            final File outputFile = stdoutFile(outputDir, junitTest, null);
+            final File passedFile = getOutputFile(outputDir, junitTest, null, ".passed");
+            final File failedFile = getOutputFile(outputDir, junitTest, null, ".failed");
 
             final JavaCommand javaCommand = new JavaCommand(JUnitTestRunner.class);
             javaCommand.addVMOptions(defaultJVMOptions());
             javaCommand.addClasspath(System.getProperty("java.class.path"));
-            javaCommand.addArgument(autoTest);
+            javaCommand.addArgument(junitTest);
             javaCommand.addArgument(passedFile.getName());
             javaCommand.addArgument(failedFile.getName());
             if (_slowAutoTests.getValue()) {
@@ -972,11 +992,11 @@ public class MaxineTester {
 
             final PrintStream out = out();
 
-            out.println("JUnit auto-test: Started " + autoTest);
+            out.println("JUnit auto-test: Started " + junitTest);
             out.flush();
             final long start = System.currentTimeMillis();
-            final int exitValue = exec(outputDir, command, null, outputFile, autoTest, _autoTestTimeOut.getValue());
-            out.print("JUnit auto-test: Stopped " + autoTest);
+            final int exitValue = exec(outputDir, command, null, outputFile, junitTest, _junitTestTimeOut.getValue());
+            out.print("JUnit auto-test: Stopped " + junitTest);
 
             final Set<String> unexpectedResults = new HashSet<String>();
             parseAutoTestResults(passedFile, true, unexpectedResults);
@@ -988,7 +1008,7 @@ public class MaxineTester {
                 } else {
                     out.print(" (exit value == " + exitValue + ")");
                 }
-                _autoTestsWithExceptions.append(autoTest);
+                _junitTestsWithExceptions.append(junitTest);
             }
             final long runTime = System.currentTimeMillis() - start;
             out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
@@ -1176,6 +1196,10 @@ public class MaxineTester {
      * @author Ben L. Titzer
      */
     public static class OutputHarness implements Harness {
+        final Class[] _testList;
+        OutputHarness(Class[] tests) {
+            _testList = tests;
+        }
         @Override
         public boolean run() {
             final File outputDir = new File(_outputDir.getValue(), "java");
@@ -1195,7 +1219,7 @@ public class MaxineTester {
             out().println("  passed: expected failure but passed (consider removing from exclusion list)");
             out().println("  noluck: non-deterministic test failed (ignore)");
             out().println("   lucky: non-deterministic test passed (ignore)");
-            for (Class mainClass : MaxineTesterConfiguration._outputTestClasses) {
+            for (Class mainClass : _testList) {
                 runOutputTest(outputDir, imageDir, mainClass);
             }
         }
@@ -1258,6 +1282,10 @@ public class MaxineTester {
      * @author Ben L. Titzer
      */
     public static class SpecJVM98Harness extends TimedHarness implements Harness {
+        final String[] _testList;
+        SpecJVM98Harness(String[] tests) {
+            _testList = tests;
+        }
         @Override
         public boolean run() {
             final File specjvm98Zip = getFileFromOptionOrEnv(_specjvm98Zip, "SPECJVM98_ZIP");
@@ -1274,7 +1302,7 @@ public class MaxineTester {
                 }
                 final File specjvm98Dir = new File(_outputDir.getValue(), "specjvm98");
                 Files.unzip(specjvm98Zip, specjvm98Dir);
-                for (String test : _specjvm98Tests.getValue()) {
+                for (String test : _testList) {
                     runSpecJVM98Test(outputDir, imageDir, specjvm98Dir, test);
                 }
                 return true;
@@ -1311,6 +1339,10 @@ public class MaxineTester {
      * @author Ben L. Titzer
      */
     public static class DaCapoHarness extends TimedHarness implements Harness {
+        final String[] _testList;
+        DaCapoHarness(String[] tests) {
+            _testList = tests;
+        }
         @Override
         public boolean run() {
             final File dacapoJar = getFileFromOptionOrEnv(_dacapoJar, "DACAPO_JAR");
@@ -1325,7 +1357,7 @@ public class MaxineTester {
                     out().println("Couldn't find DaCapo JAR file " + dacapoJar);
                     return false;
                 }
-                for (String test : _dacapoTests.getValue()) {
+                for (String test : _testList) {
                     runDaCapoTest(outputDir, imageDir, test, dacapoJar);
                 }
                 return true;
@@ -1361,6 +1393,10 @@ public class MaxineTester {
      * @author Ben L. Titzer
      */
     public static class ShootoutHarness implements Harness {
+        final String[] _testList;
+        ShootoutHarness(String[] tests) {
+            _testList = tests;
+        }
         @Override
         public boolean run() {
             final File shootoutDir = getFileFromOptionOrEnv(_shootoutDir, "SHOOTOUT_DIR");
@@ -1375,7 +1411,7 @@ public class MaxineTester {
                     out().println("Couldn't find shootout directory " + shootoutDir);
                     return false;
                 }
-                for (String test : _shootoutTests.getValue()) {
+                for (String test : _testList) {
                     runShootoutTest(outputDir, imageDir, shootoutDir, test);
                 }
                 return true;
