@@ -23,6 +23,7 @@ package com.sun.max.tele;
 import com.sun.max.collect.*;
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -43,8 +44,8 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     /**
      * @param name a name for the region
      * @return a newly created surrogate for a block of native code discovered in the {@link TeleVM}
-     * about which little more is known than its location.
-     * @throws {@link TeleError} if any code already known occupies the specified code location.
+     * about which little more is known than its location.  The location must not overlap any code
+     * region already known.
      */
     public static TeleNativeTargetRoutine create(TeleVM teleVM, Address codeStart, Size codeSize, String name) {
         TeleNativeTargetRoutine teleNativeTargetRoutine = null;
@@ -52,7 +53,7 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
             // Fail if the region specified by 'address' and 'size' overlaps an existing native  entry
             teleNativeTargetRoutine = new TeleNativeTargetRoutine(teleVM, codeStart, codeSize, name);
         } catch (IllegalArgumentException illegalArgumentException) {
-            throw new TeleError("Native code region is overlapping an existing code region");
+            ProgramError.unexpected("Native code region is overlapping an existing code region");
         }
         return teleNativeTargetRoutine;
     }

@@ -321,7 +321,7 @@ public abstract class TeleVM {
 
     /**
      * Determines if this VM is read-only. The operations that try to write to the memory of a read-only VM
-     * or change its execution state will result in a {@link TeleVMCannotBeModifiedError}.
+     * or change its execution state will result in a {@link TeleVMException}.
      */
     public boolean isReadOnly() {
         return false;
@@ -818,26 +818,20 @@ public abstract class TeleVM {
         if (grip instanceof LocalTeleGrip) {
             return true;
         }
-        try {
-            return isValidOrigin(grip.toOrigin());
-        } catch (TeleError teleError) {
-            return false;
-        }
+        return isValidOrigin(grip.toOrigin());
     }
 
     public final boolean isValidReference(Reference reference) {
         return isValidGrip(reference.toGrip());
     }
 
-    private void checkGrip(Grip grip) {
-        final Pointer origin = grip.toOrigin();
-        if (!isValidOrigin(origin)) {
-            throw new TeleError("not a valid origin: " + origin);
+    /**
+     * Throws an unchecked exception if a {@link Reference} is not valid.
+     */
+    private void checkReference(Reference reference) throws InvalidReferenceException {
+        if (!isValidOrigin(reference.toGrip().toOrigin())) {
+            throw new InvalidReferenceException(reference);
         }
-    }
-
-    private void checkReference(Reference reference) {
-        checkGrip(reference.toGrip());
     }
 
     public final Reference wordToReference(Word word) {
@@ -921,8 +915,7 @@ public abstract class TeleVM {
             // classfile from the {@link TeleVM}.
             final Reference byteArrayReference = fields().ClassActor_classfile.readReference(classActorReference);
             final TeleArrayObject teleByteArrayObject = (TeleArrayObject) makeTeleObject(byteArrayReference);
-            TeleError.check(teleByteArrayObject != null,
-                    "could not find class actor: " + name);
+            ProgramError.check(teleByteArrayObject != null, "could not find class actor: " + name);
             final byte[] classfile = (byte[]) teleByteArrayObject.shallowCopy();
             return PrototypeClassLoader.PROTOTYPE_CLASS_LOADER.makeClassActor(
                     name, classfile);
@@ -986,7 +979,7 @@ public abstract class TeleVM {
                 return TeleReferenceValue.from(this, wordToReference(layoutScheme().
                                 wordArrayLayout().getWord(reference, index)));
             default:
-                throw ProgramError.unexpected("unknown array kind");
+                throw ProgramError.unknownCase("unknown array kind");
         }
     }
 

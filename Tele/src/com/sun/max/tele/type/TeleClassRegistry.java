@@ -139,7 +139,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
             }
             ClassID.setMapping(_classIDMapping);
         } catch (Throwable throwable) {
-            throw new TeleError("could not build inspector type registry", throwable);
+            ProgramError.unexpected("could not build inspector type registry", throwable);
         }
         _preLoadedClassCount = count;
         Trace.end(1, tracePrefix() + " initializing (" + _preLoadedClassCount + " pre-loaded entries)", startTimeMillis);

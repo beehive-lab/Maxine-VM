@@ -21,30 +21,18 @@
 package com.sun.max.tele;
 
 /**
- * @author Bernd Mathiske
+ * Response to an action or request that is inappropriate for the current state of the {@link TeleVM}.
+ *
  * @author Michael Van De Vanter
  */
-public class TeleError extends Error {
+public class TeleVMException extends Exception {
 
-    public TeleError(String message) {
+    public TeleVMException() {
+        super("");
+    }
+
+    public TeleVMException(String message) {
         super(message);
     }
-
-    public TeleError(Throwable cause) {
-        super(cause.toString(), cause);
-    }
-
-    public TeleError(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    /**
-     * Throw error if condition not true.
-     */
-    public static void check(boolean condition, String message) {
-        if (!condition) {
-            throw new TeleError(message);
-        }
-    }
-
 }
+

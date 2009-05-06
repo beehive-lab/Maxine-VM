@@ -44,11 +44,11 @@ public final class LinuxTeleProcess extends TeleProcess {
         return _task;
     }
 
-    private final PageDataAccess _pageDataAccess;
+    private final DataAccess _dataAccess;
 
     @Override
-    public PageDataAccess dataAccess() {
-        return _pageDataAccess;
+    public DataAccess dataAccess() {
+        return _dataAccess;
     }
 
     LinuxTeleProcess(TeleVM teleVM, Platform platform, File programFile, String[] commandLineArguments, TeleVMAgent agent) throws BootImageException {
@@ -58,7 +58,7 @@ public final class LinuxTeleProcess extends TeleProcess {
         if (_task == null) {
             throw new BootImageException("Error launching VM");
         }
-        _pageDataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
         try {
             resume();
         } catch (OSExecutionRequestException e) {

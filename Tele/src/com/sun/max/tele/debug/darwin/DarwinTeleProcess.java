@@ -37,11 +37,11 @@ import com.sun.max.vm.prototype.*;
  */
 public final class DarwinTeleProcess extends TeleProcess {
 
-    private final PageDataAccess _pageDataAccess;
+    private final DataAccess _dataAccess;
 
     @Override
-    public PageDataAccess dataAccess() {
-        return _pageDataAccess;
+    public DataAccess dataAccess() {
+        return _dataAccess;
     }
 
     private static native long nativeCreateChild(long argv, int vmAgentSocketPort);
@@ -65,7 +65,7 @@ public final class DarwinTeleProcess extends TeleProcess {
                 "    chgrp procmod <java executable>;  chmod g+s <java executable>%n%n" +
                 "where <java executable> is the platform dependent executable found under or relative to " + System.getProperty("java.home") + "."));
         }
-        _pageDataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
         try {
             resume();
         } catch (OSExecutionRequestException e) {
@@ -76,7 +76,7 @@ public final class DarwinTeleProcess extends TeleProcess {
     @Override
     public void suspend() throws OSExecutionRequestException {
         if (!nativeSuspend(_task)) {
-            throw new TeleError("could not suspend process");
+            ProgramError.unexpected("could not suspend process");
         }
     }
 
