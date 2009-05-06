@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 
 /**
  * @author Bernd Mathiske

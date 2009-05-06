@@ -27,6 +27,7 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 
@@ -158,6 +159,12 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class
     };
+
+    static final String[] _outputTests = com.sun.max.lang.Arrays.map(_outputTestClasses, String.class, new MapFunction<Class, String>() {
+        public String map(Class from) {
+            return from.getSimpleName();
+        }
+    });
 
     static void addTestName(Object object, Set<String> testNames) {
         if (object instanceof Class) {
