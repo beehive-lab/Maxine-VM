@@ -49,7 +49,7 @@ public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame<AdapterSt
     }
 
     public AMD64OptimizedToJitAdapterFrame(StackFrame callee, TargetMethod targetMethod, Pointer instructionPointer, Pointer framePointer, Pointer stackPointer) {
-        super(callee, new AdapterStackFrameLayout(targetMethod.classMethodActor().numberOfParameterLocals() * JitStackFrameLayout.JIT_SLOT_SIZE, true), targetMethod, instructionPointer, framePointer, stackPointer);
+        super(callee, new AdapterStackFrameLayout(targetMethod.classMethodActor().numberOfParameterSlots() * JitStackFrameLayout.JIT_SLOT_SIZE, true), targetMethod, instructionPointer, framePointer, stackPointer);
         // Initialize the cache of caller stack pointer
         if (isFrameless() && instructionPointer().equals(entryPoint())) {
             _ripPointer = stackPointer;
@@ -70,7 +70,7 @@ public class AMD64OptimizedToJitAdapterFrame extends AdapterStackFrame<AdapterSt
      */
     private boolean isFrameless() {
         final MethodActor classMethodActor = targetMethod().classMethodActor();
-        return classMethodActor.isStatic() && classMethodActor.descriptor().hasNoParameters();
+        return classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0);
     }
 
     /**

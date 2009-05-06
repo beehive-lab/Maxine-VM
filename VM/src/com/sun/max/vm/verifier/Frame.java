@@ -84,7 +84,9 @@ public class Frame implements FrameModel {
         }
 
         // parameters
-        for (TypeDescriptor parameterType : classMethodActor.descriptor().getParameterDescriptors()) {
+        final SignatureDescriptor signature = classMethodActor.descriptor();
+        for (int i = 0; i < signature.numberOfParameters(); i++) {
+            final TypeDescriptor parameterType = signature.parameterDescriptorAt(i);
             final VerificationType type = _methodVerifier.getVerificationType(parameterType);
             store(type, _activeLocals);
         }

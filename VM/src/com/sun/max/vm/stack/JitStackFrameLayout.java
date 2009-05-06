@@ -54,8 +54,13 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
      * the stack slot at the lower (or lowest if more than 2 stack slots are used per JIT variable) address.
      */
     public static final int JIT_SLOT_SIZE = getJitSlotSize();
+
     public static final int JIT_STACK_BIAS = getJitStackBias();
 
+    /**
+     * The number of normal stack slots per JIT stack slot. See {@link #JIT_SLOT_SIZE} for an explanation of why
+     * JIT stack slots may differ in size from normal stack slots.
+     */
     public static final int  STACK_SLOTS_PER_JIT_SLOT = JIT_SLOT_SIZE / STACK_SLOT_SIZE;
 
     static {
@@ -89,7 +94,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
         _numberOfOperandStackSlots = codeAttribute.maxStack();
         _numberOfLocalSlots = codeAttribute.maxLocals();
-        _numberOfParameterSlots = classMethodActor.numberOfParameterLocals();
+        _numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
 
         assert _numberOfLocalSlots >= _numberOfParameterSlots : "incoming arguments cannot be greater than number of locals";
     }

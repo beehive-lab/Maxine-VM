@@ -95,10 +95,10 @@ public interface MethodProvider extends Provider {
     VariableTableEntry[] getVariableTable();
 
     /**
-     * @return the number of parameters of the method
+     * @return the number of words in the frame used by arguments. Eight-byte arguments use two words; all others use one
      */
     @ConstantReturnValue
-    int getNumberOfParameters();
+    int getNumberOfArguments();
 
     /**
      * @return an array of target methods that represent machine code representations of this Java method

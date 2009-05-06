@@ -294,7 +294,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
      * Interprets returning from the method.
      */
     void performReturn(VerificationType returnType) {
-        final VerificationType declaredReturnType = getVerificationType(classMethodActor().descriptor().getResultDescriptor());
+        final VerificationType declaredReturnType = getVerificationType(classMethodActor().descriptor().resultDescriptor());
         if (declaredReturnType == TOP) {
             if (returnType != TOP) {
                 throw verifyError("Invalid return for void method");
@@ -1192,18 +1192,17 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         }
 
         private int popMethodParameters(SignatureDescriptor methodSignature) {
-            final int numberOfParameters = methodSignature.getNumberOfParameters();
-            final TypeDescriptor[] parameterTypes = methodSignature.getParameterDescriptors();
+            final int numberOfParameters = methodSignature.numberOfParameters();
             int count = 0;
             for (int n = numberOfParameters - 1; n >= 0; n--) {
-                final VerificationType parameter = _frame.pop(getVerificationType(parameterTypes[n]));
+                final VerificationType parameter = _frame.pop(getVerificationType(methodSignature.parameterDescriptorAt(n)));
                 count += parameter.size();
             }
             return count;
         }
 
         private void pushMethodResult(SignatureDescriptor methodSignature) {
-            final VerificationType returnType = getVerificationType(methodSignature.getResultDescriptor());
+            final VerificationType returnType = getVerificationType(methodSignature.resultDescriptor());
             if (returnType != TOP) {
                 _frame.push(returnType);
             }
@@ -1297,7 +1296,7 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
             popMethodParameters(methodSignature);
 
             if (name.equals(SymbolTable.INIT)) {
-                if (methodSignature.getResultDescriptor() != JavaTypeDescriptor.VOID) {
+                if (methodSignature.resultDescriptor() != JavaTypeDescriptor.VOID) {
                     throw verifyError("<init> must return void");
                 }
 

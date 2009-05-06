@@ -152,7 +152,7 @@ public abstract class State<Element_Type extends Classifiable> {
     }
 
     public Element_Type [] getPrameterLocalSlots() {
-        final int numberOfParameterLocalSlots = last().stackHeight() - last().method().numberOfParameterLocals();
+        final int numberOfParameterLocalSlots = last().stackHeight() - last().method().numberOfParameterSlots();
         return getSlots(0, numberOfParameterLocalSlots);
     }
 
@@ -268,11 +268,11 @@ public abstract class State<Element_Type extends Classifiable> {
 
     public final void enter(ClassMethodActor method, int returnPc) {
         final Frame frame = new Frame(method, 0, 0);
-        last()._sp -= method.numberOfParameterLocals();
+        last()._sp -= method.numberOfParameterSlots();
         last()._pc = returnPc;
         frame._lp = length();
         frame._sp = frame._lp + method.codeAttribute().maxLocals();
-        for (int i = method.numberOfParameterLocals(); i < method.codeAttribute().maxLocals(); i++) {
+        for (int i = method.numberOfParameterSlots(); i < method.codeAttribute().maxLocals(); i++) {
             setOne(frame._lp + i, undefined());
         }
         _frames.append(frame);
@@ -469,7 +469,7 @@ public abstract class State<Element_Type extends Classifiable> {
             String methodName = "null";
             if (method != null) {
                 methodName = method.name().toString();
-                locals = method.numberOfParameterLocals();
+                locals = method.numberOfParameterSlots();
             }
             Console.printf("method: %-10s lp:%2d, sp:%2d, pc:%3d, stack: ", methodName, frame._lp, frame._sp, frame._pc);
             for (int j = frame._lp; j < frame._sp; j++) {

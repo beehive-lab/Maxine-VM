@@ -132,8 +132,9 @@ public abstract class BytecodeAssembler {
     /**
      * Creates local variable slots based on the signature of a method and adjusts the {@linkplain #maxLocals() number of locals variables}.
      */
-    public void allocateParameters(boolean isStatic, Kind... parameterKinds) {
-        for (Kind parameterKind : parameterKinds) {
+    public void allocateParameters(boolean isStatic, SignatureDescriptor signature) {
+        for (int i = 0; i < signature.numberOfParameters(); i++) {
+            final Kind parameterKind = signature.parameterDescriptorAt(i).toKind();
             _maxLocals += parameterKind.isCategory1() ? 1 : 2;
         }
         if (!isStatic) {
@@ -233,14 +234,14 @@ public abstract class BytecodeAssembler {
 
         // Pop parameters
         int computedArgSlots = 0;
-        for (Kind parameterKind : signatureDescriptor.getParameterKinds()) {
-            computedArgSlots += parameterKind.stackSlots();
+        for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
+            computedArgSlots += signatureDescriptor.parameterDescriptorAt(i).toKind().stackSlots();
         }
         if (!isStatic) {
             ++computedArgSlots;
         }
 
-        final boolean result = numArgSlots == computedArgSlots && numReturnValueSlots == signatureDescriptor.getResultKind().stackSlots();
+        final boolean result = numArgSlots == computedArgSlots && numReturnValueSlots == signatureDescriptor.resultKind().stackSlots();
         assert result;
         return result;
     }

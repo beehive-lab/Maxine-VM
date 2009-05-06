@@ -35,7 +35,6 @@ import com.sun.max.vm.classfile.stackmap.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.type.SignatureDescriptor.*;
 import com.sun.max.vm.verifier.types.*;
 
 /**
@@ -45,7 +44,7 @@ import com.sun.max.vm.verifier.types.*;
  *
  * @author Doug Simon
  */
-public abstract class ReferenceMapInterpreter implements ParameterVisitor {
+public abstract class ReferenceMapInterpreter {
 
     /**
      * Initializes frames for each basic block in the {@linkplain ReferenceMapInterpreterContext#classMethodActor() method}
@@ -102,13 +101,6 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
      * @return true if the target block's frame state was changed as a result of the merge
      */
     protected abstract boolean mergeInto(int targetBlockIndex, int stackDepth);
-
-    /**
-     * Visits a parameter in a method's signature to model the stack effect when interpreting a method invocation.
-     */
-    public void visit(TypeDescriptor parameter) {
-        pop(parameter.toKind());
-    }
 
     /**
      * Determines if a given {@linkplain VerificationType verification type} denotes a reference type. This method is
@@ -180,21 +172,24 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
     /**
      * Helper class used by {@link ReferenceMapInterpreter#createFrames0(ReferenceMapInterpreterContext)}.
      */
-    class FramesInitialization implements FrameModel, ParameterVisitor, VerificationRegistry {
+    class FramesInitialization implements FrameModel, VerificationRegistry {
 
         int _activeLocals;
 
         // Implementation of ParameterVisitor
 
         /**
-         * Visits a parameter in a method's signature to initialize the frame state of the entry block.
+         * Interprets the parameters in a method's signature to initialize the frame state of the entry block.
          */
-        public void visit(TypeDescriptor parameter) {
-            final Kind parameterKind = parameter.toKind();
-            if (parameterKind == Kind.REFERENCE) {
-                updateLocal(_activeLocals, true);
+        public void interpret(SignatureDescriptor signature) {
+            for (int i = 0; i < signature.numberOfParameters(); ++i) {
+                final TypeDescriptor parameter = signature.parameterDescriptorAt(i);
+                final Kind parameterKind = parameter.toKind();
+                if (parameterKind == Kind.REFERENCE) {
+                    updateLocal(_activeLocals, true);
+                }
+                _activeLocals += parameterKind.isCategory1() ? 1 : 2;
             }
-            _activeLocals += parameterKind.isCategory1() ? 1 : 2;
         }
 
         // Implementation of FrameModel
@@ -303,7 +298,9 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
             final VerificationType receiverType = classMethodActor.holder().kind() == Kind.REFERENCE ? VerificationType.OBJECT : VerificationType.WORD;
             framesInitialization.store(receiverType, 0);
         }
-        classMethodActor.descriptor().visitParameterDescriptors(framesInitialization, false);
+
+        framesInitialization.interpret(classMethodActor.descriptor());
+
         merge(0);
 
         final StackMapTable stackMapTable = _codeAttribute.stackMapTable();
@@ -1209,12 +1206,15 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                 case CALLNATIVE: {
                     final int index = readUnsigned2();
                     final SignatureDescriptor methodSignature = SignatureDescriptor.create(_constantPool.utf8At(index));
-                    methodSignature.visitParameterDescriptors(this, true);
+                    for (int i = methodSignature.numberOfParameters() - 1; i >= 0; --i) {
+                        final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
+                        pop(parameter.toKind());
+                    }
                     if (atSearchPosition) {
                         visitReferencesAtCurrentBytecodePosition(visitor, true);
                     }
 
-                    push(methodSignature.getResultKind());
+                    push(methodSignature.resultKind());
                     break;
                 }
 
@@ -1228,7 +1228,10 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                     }
                     final MethodRefConstant methodConstant = _constantPool.methodAt(index);
                     final SignatureDescriptor methodSignature = methodConstant.signature(_constantPool);
-                    methodSignature.visitParameterDescriptors(this, true);
+                    for (int i = methodSignature.numberOfParameters() - 1; i >= 0; --i) {
+                        final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
+                        pop(parameter.toKind());
+                    }
                     if (opcode != Bytecode.INVOKESTATIC) {
                         popCategory1(); // receiver
                     }
@@ -1240,7 +1243,7 @@ public abstract class ReferenceMapInterpreter implements ParameterVisitor {
                         visitReferencesAtCurrentBytecodePosition(visitor, true);
                     }
 
-                    push(methodSignature.getResultKind());
+                    push(methodSignature.resultKind());
                     break;
                 }
                 case NEW: {

@@ -1339,7 +1339,7 @@ public abstract class ClassActor extends Actor {
     private Class noninlineCreateMirror() {
         // Non-blocking synchronization is used here to swap in the mirror reference.
         // This could lead to some extra Class objects being created that become garbage, but should be harmless.
-        final Class mirror = (Class) VMConfiguration.hostOrTarget().heapScheme().createTuple(ClassRegistry.javaLangClassActor().dynamicHub());
+        final Class mirror = (Class) Heap.createTuple(ClassRegistry.javaLangClassActor().dynamicHub());
         Class_classActor.writeObject(mirror, this);
         final Reference oldValue = Reference.fromJava(this).compareAndSwapReference(mirrorFieldActor().offset(), null,  Reference.fromJava(mirror));
         if (oldValue == null) {

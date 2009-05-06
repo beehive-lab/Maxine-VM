@@ -161,7 +161,7 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
         return new VariableTableEntry[0];
     }
 
-    public int getNumberOfParameters() {
-        return methodActor().getNumberOfParameters();
+    public int getNumberOfArguments() {
+        return (methodActor().isStatic() ? 0 : 1) + methodActor().descriptor().computeNumberOfSlots();
     }
 }

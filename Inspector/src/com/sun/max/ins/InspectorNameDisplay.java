@@ -334,7 +334,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
      */
     public String longName(Key key) {
         final StringBuilder name = new StringBuilder();
-        name.append(key.signature().getResultDescriptor().toJavaString(false)).append(" ").append(key.name()).append(key.signature().toJavaString(false, false));
+        name.append(key.signature().resultDescriptor().toJavaString(false)).append(" ").append(key.name()).append(key.signature().toJavaString(false, false));
         if (key.position() != 0) {
             name.append(" +").append(key.position());
         }
@@ -808,12 +808,12 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     private class VmThreadReferenceRenderer implements ReferenceRenderer{
         public String referenceLabelText(TeleObject teleObject) {
             final TeleVmThread teleVmThread = (TeleVmThread) teleObject;
-            return objectReference(null, teleObject, teleVmThread.classActorForType().simpleName(), longName(teleVmThread));
+            return objectReference(null, teleObject, "VmThread", longName(teleVmThread));
         }
 
         public String referenceToolTipText(TeleObject teleObject) {
             final TeleVmThread teleVmThread = (TeleVmThread) teleObject;
-            return objectReference(null, teleObject, teleVmThread.classActorForType().simpleName(), longName(teleVmThread));
+            return objectReference(null, teleObject, "VmThread", longName(teleVmThread));
         }
     }
 

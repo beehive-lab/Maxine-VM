@@ -118,7 +118,7 @@ public class CompiledPrototype extends Prototype {
             if (methodActor == null) {
                 return null;
             }
-            return methodActor.format("%H.%n(%p)") + ":" + methodActor.descriptor().getResultDescriptor().toJavaString(false);
+            return methodActor.format("%H.%n(%p)") + ":" + methodActor.descriptor().resultDescriptor().toJavaString(false);
         }
 
         public String referrerName() {

@@ -1564,7 +1564,8 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
 
     private static int receiverStackIndex(SignatureDescriptor signatureDescriptor) {
         int index = 0;
-        for (Kind kind : signatureDescriptor.getParameterKinds()) {
+        for (int i = 0; i < signatureDescriptor.numberOfParameters(); i++) {
+            final Kind kind = signatureDescriptor.parameterDescriptorAt(i).toKind();
             index += kind.stackSlots();
         }
         return index;
@@ -1653,7 +1654,7 @@ public abstract class BytecodeToTargetTranslator extends BytecodeVisitor {
     }
 
     private Kind invokeSelectorKind(SignatureDescriptor signatureDescriptor) {
-        final Kind resultKind = signatureDescriptor.getResultKind();
+        final Kind resultKind = signatureDescriptor.resultKind();
         switch (resultKind.asEnum()) {
             case DOUBLE:
             case LONG:

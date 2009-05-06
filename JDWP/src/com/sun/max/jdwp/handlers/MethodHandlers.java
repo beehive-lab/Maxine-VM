@@ -94,7 +94,7 @@ public class MethodHandlers extends Handlers {
             final VariableTableEntry[] entries = method.getVariableTable();
 
             final VariableTable.Reply r = new VariableTable.Reply();
-            r._argCnt = method.getNumberOfParameters();
+            r._argCnt = method.getNumberOfArguments();
             r._slots = new VariableTable.SlotInfo[entries.length];
 
             for (int i = 0; i < entries.length; i++) {
@@ -149,7 +149,7 @@ public class MethodHandlers extends Handlers {
             final VariableTableEntry[] entries = method.getVariableTable();
 
             final VariableTableWithGeneric.Reply r = new VariableTableWithGeneric.Reply();
-            r._argCnt = method.getNumberOfParameters();
+            r._argCnt = method.getNumberOfArguments();
             r._slots = new VariableTableWithGeneric.SlotInfo[entries.length];
 
             for (int i = 0; i < entries.length; i++) {

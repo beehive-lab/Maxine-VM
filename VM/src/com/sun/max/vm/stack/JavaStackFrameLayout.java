@@ -35,7 +35,7 @@ import com.sun.max.vm.collect.*;
 public abstract class JavaStackFrameLayout {
 
     /**
-     *  Size of a stack location. Large enough to hold a native pointer or an object reference.
+     * Size of a stack location. Large enough to hold a native pointer or an object reference.
      */
     public static final int STACK_SLOT_SIZE = Word.size();
 

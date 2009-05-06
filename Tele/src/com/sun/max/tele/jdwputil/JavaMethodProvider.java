@@ -59,8 +59,16 @@ class JavaMethodProvider implements MethodProvider {
     }
 
     @Override
-    public int getNumberOfParameters() {
-        return _method.getParameterTypes().length;
+    public int getNumberOfArguments() {
+        int count = Modifier.isStatic(_method.getModifiers()) ? 0 : 1;
+        for (Class type : _method.getParameterTypes()) {
+            if (type.equals(double.class) || type.equals(long.class)) {
+                count += 2;
+            } else {
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override
