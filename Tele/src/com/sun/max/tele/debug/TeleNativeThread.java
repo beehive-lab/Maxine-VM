@@ -353,7 +353,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
 
             if (!readRegisters(_integerRegisters.registerData(), _floatingPointRegisters.registerData(), _stateRegisters.registerData())) {
-                throw new TeleError("Error while updating registers for thread: " + this);
+                ProgramError.unexpected("Error while updating registers for thread: " + this);
             }
             _integerRegisters.refresh();
             _floatingPointRegisters.refresh();
@@ -423,7 +423,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 _stateRegisters.setInstructionPointer(_breakpoint.address());
                 Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
-                throw new TeleError("Error updating instruction pointer to adjust thread after breakpoint at " + _breakpoint.address() + " was hit: " + this);
+                ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + _breakpoint.address() + " was hit: " + this);
             }
         } else {
             _breakpoint = null;

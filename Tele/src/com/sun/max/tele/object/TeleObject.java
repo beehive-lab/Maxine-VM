@@ -343,7 +343,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
      * @param fieldActor the field to be copied/updated
      */
-    protected static final void copyField(DeepCopyContext context, final TeleObject teleObject, final Object newTuple, final FieldActor fieldActor) throws TeleError {
+    protected static final void copyField(DeepCopyContext context, final TeleObject teleObject, final Object newTuple, final FieldActor fieldActor) {
         if (context.include(context.level(), fieldActor)) {
             if (!fieldActor.isInjected()) {
                 final Field field = fieldActor.toJava();
@@ -367,7 +367,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                     }
                     field.set(newTuple, newJavaValue);
                 } catch (IllegalAccessException illegalAccessException) {
-                    throw new TeleError("could not access field: " + field, illegalAccessException);
+                    ProgramError.unexpected("could not access field: " + field, illegalAccessException);
                 }
             }
         }

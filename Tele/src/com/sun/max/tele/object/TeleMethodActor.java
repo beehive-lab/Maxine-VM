@@ -22,6 +22,7 @@ package com.sun.max.tele.object;
 
 import com.sun.max.jdwp.vm.data.*;
 import com.sun.max.jdwp.vm.proxy.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.interpreter.*;
 import com.sun.max.vm.actor.*;
@@ -126,7 +127,8 @@ public abstract class TeleMethodActor extends TeleMemberActor implements TeleRou
             final com.sun.max.vm.value.Value result = TeleInterpreter.execute(teleVM(), (ClassMethodActor) methodActor(), realArgs);
             return teleVM().maxineValueToJDWPValue(result);
         } catch (TeleInterpreterException teleInterpreterException) {
-            throw new TeleError(teleInterpreterException);
+            ProgramError.unexpected("method interpretation failed", teleInterpreterException);
+            return null;
         }
     }
 

@@ -18,21 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.reference;
+
+import com.sun.max.vm.reference.*;
+
 
 /**
- * Thrown to indicate that an operation is invalid because it would modify the tele VM and the tele VM is read-only.
+ * An action on the {@link TeleVm} was attempted with an invalid {@link Reference}.
  *
- * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-public class TeleVMCannotBeModifiedError extends TeleError {
+public class InvalidReferenceException extends RuntimeException {
 
-    public TeleVMCannotBeModifiedError() {
-        super("");
+    private final Reference _reference;
+
+    public InvalidReferenceException(Reference reference) {
+        _reference = reference;
     }
 
-    public TeleVMCannotBeModifiedError(String message) {
-        super(message);
+    public Reference getReference() {
+        return _reference;
     }
+
 }
-

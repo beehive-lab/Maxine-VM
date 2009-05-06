@@ -22,6 +22,7 @@ package com.sun.max.tele;
 
 import java.io.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
 
@@ -76,12 +77,12 @@ public class FileCommands {
                 }
                 try {
                     doCommand(teleVM, line);
-                } catch (CommandException ex) {
-                    throw new TeleError("Command failed: " + ex.getMessage());
+                } catch (CommandException commandException) {
+                    ProgramError.unexpected("File Command failed ", commandException);
                 }
             }
         } catch (IOException ex) {
-            throw new TeleError("Failed to open file: " + filename);
+            ProgramError.unexpected("Failed to open file: " + filename);
         } finally {
             if (bs != null) {
                 try {
