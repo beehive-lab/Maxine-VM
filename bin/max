@@ -724,7 +724,7 @@ function run_test() {
 #=======================================
 
 gate_usage="[options]"
-gate_presets="-java-config-alias=optopt"
+gate_presets="-java-config-alias=optopt -fail-fast"
 gate_help="run the tests used to validate a push to the stable Maxine repository
 
     If this commands exits with a 0 exit code, then the source code is in

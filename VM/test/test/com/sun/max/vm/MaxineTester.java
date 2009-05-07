@@ -102,7 +102,7 @@ public class MaxineTester {
                     "timing out and killing it.");
     private static final Option<Boolean> _slowAutoTests = _options.newBooleanOption("slow-junit-tests", false,
                     "Include junit-tests known to be slow.");
-    private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", true,
+    private static final Option<Boolean> _failFast = _options.newBooleanOption("fail-fast", false,
                     "Stop execution as soon as a single test fails.");
     private static final Option<File> _specjvm98Zip = _options.newFileOption("specjvm98", (File) null,
                     "Location of zipped up SpecJVM98 directory. If not provided, then the SPECJVM98_ZIP environment variable is used.");
