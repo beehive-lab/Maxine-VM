@@ -21,11 +21,10 @@
 package com.sun.max.ins.debug;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 
 
 /**
- * Persistent preferences for viewing breakpoints in the {@link TeleVM}.
+ * Persistent preferences for viewing breakpoints in the VM.
  *
  * @author Michael Van De Vanter
   */

@@ -25,13 +25,12 @@ import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.object.StringPane.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
 
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} that implements a {@link Utf8Constant}.
+ * An object inspector specialized for displaying a Maxine low-level heap object in the VMk that implements a {@link Utf8Constant}.
  *
  * @author Michael Van De Vanter
  */
@@ -78,7 +77,7 @@ class Utf8ConstantInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(teleVM().epoch(), true);
+                prober.refresh(vm().epoch(), true);
             }
         });
         frame().getContentPane().add(_tabbedPane);

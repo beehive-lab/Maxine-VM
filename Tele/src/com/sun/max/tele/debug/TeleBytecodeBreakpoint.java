@@ -144,7 +144,10 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
                     final int[] bytecodeToTargetCodePositionMap = teleJitTargetMethod.bytecodeToTargetCodePositionMap();
                     final int targetCodePosition = bytecodeToTargetCodePositionMap[key()._bytecodePosition];
                     final Address targetAddress = teleTargetMethod.getCodeStart().plus(targetCodePosition);
-                    teleVM().removeTargetBreakpoint(targetAddress);
+                    final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetAddress);
+                    if (targetBreakpoint != null) {
+                        targetBreakpoint.remove();
+                    }
                     // Assume for now the whole VM is stopped; there will be races to be fixed otherwise, likely with an agent thread in the {@link TeleVM}.
                 }
             }
@@ -270,8 +273,9 @@ public final class TeleBytecodeBreakpoint extends TeleBreakpoint {
 
         /**
          * @return all bytecode breakpoints that currently exist in the {@link TeleVM}.
+         * Modification safe against breakpoint removal.
          */
-        public synchronized Sequence<TeleBytecodeBreakpoint> breakpoints() {
+        public synchronized Iterable<TeleBytecodeBreakpoint> breakpoints() {
             final AppendableSequence<TeleBytecodeBreakpoint> breakpoints = new LinkSequence<TeleBytecodeBreakpoint>();
             for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : _breakpoints.values()) {
                 breakpoints.append(teleBytecodeBreakpoint);

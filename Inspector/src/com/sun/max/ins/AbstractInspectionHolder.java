@@ -29,15 +29,27 @@ import com.sun.max.tele.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class AbstractInspectionHolder extends AbstractTeleVMHolder implements InspectionHolder{
+public abstract class AbstractInspectionHolder implements InspectionHolder{
+
 
     private final Inspection _inspection;
+
+    private final String _tracePrefix;
+
+    protected AbstractInspectionHolder(Inspection inspection) {
+        _inspection = inspection;
+        _tracePrefix = "[" + getClass().getSimpleName() + "] ";
+    }
 
     /**
      * @return holder of the interactive inspection state for the session
      */
     public final Inspection inspection() {
         return _inspection;
+    }
+
+    public final VM vm() {
+        return _inspection.vm();
     }
 
     /**
@@ -61,9 +73,11 @@ public abstract class AbstractInspectionHolder extends AbstractTeleVMHolder impl
         return _inspection.actions();
     }
 
-    protected AbstractInspectionHolder(Inspection inspection) {
-        super(inspection.teleVM());
-        _inspection = inspection;
+    /**
+     * @return default prefix text for trace messages; identifies the class being traced.
+     */
+    protected String tracePrefix() {
+        return _tracePrefix;
     }
 
 }

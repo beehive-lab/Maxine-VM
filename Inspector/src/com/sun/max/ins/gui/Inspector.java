@@ -31,7 +31,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -129,7 +128,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     protected void createFrame(InspectorMenu menu) {
         _frame = new InternalInspectorFrame(this, menu);
         frame().setTitle(getTextForTitle());
-        createView(teleVM().epoch());
+        createView(vm().epoch());
         _frame.pack();
         inspection().desktopPane().add((Component) _frame);
         _frame.setVisible(true);
@@ -143,9 +142,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * Reads, re-reads, and updates any state caches if needed from the {@link TeleVM}.
+     * Reads, re-reads, and updates any state caches if needed from the VM.
      *
-     * @param epoch the execution epoch of the {@link TeleVM}, {@see TeleProcess#epoch()}.
+     * @param epoch the execution epoch of the VM, {@see TeleProcess#epoch()}.
      * @param force suspend caching behavior; read state unconditionally.
      */
     protected synchronized void refreshView(long epoch, boolean force) {
@@ -155,12 +154,12 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * Reads, re-reads, and updates any state caches if needed from the {@link TeleVM}.
+     * Reads, re-reads, and updates any state caches if needed from the VM.
      *
      * @param force suspend caching behavior; read state unconditionally.
      */
     protected final synchronized void refreshView(boolean force) {
-        refreshView(teleVM().epoch(), force);
+        refreshView(vm().epoch(), force);
     }
 
     /**
@@ -170,7 +169,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected synchronized void reconstructView() {
         final Dimension size = _frame.getSize();
-        createView(teleVM().epoch());
+        createView(vm().epoch());
         _frame.setPreferredSize(size);
         frame().pack();
     }
@@ -350,7 +349,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * @return an action that will refresh any state from the {@link TeleVM}.
+     * @return an action that will refresh any state from the VM.
      */
     public RefreshAction getRefreshAction() {
         return new RefreshAction();

@@ -41,7 +41,7 @@ import com.sun.max.vm.stack.*;
 
 
 /**
- * A table specialized for displaying the breakpoints in the {@link TeleVM}.
+ * A table specialized for displaying the breakpoints in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -67,7 +67,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
-        refresh(teleVM().epoch(), true);
+        refresh(vm().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -167,7 +167,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
     }
 
     /**
-     * A table data model built around the list of current breakpoints in the {@link TeleVM}.
+     * A table data model built around the list of current breakpoints in the VM.
      * @author Michael Van De Vanter
      */
     private final class BreakpointsTableModel extends DefaultTableModel {
@@ -182,10 +182,10 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 breakpointData.markDeleted(true);
             }
             // add new and mark previous as not deleted
-            for (TeleTargetBreakpoint breakpoint : teleVM().targetBreakpoints()) {
+            for (TeleTargetBreakpoint breakpoint : vm().targetBreakpoints()) {
                 final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.address());
                 if (breakpointData == null) {
-                    // new breakpoint in {@link TeleVM} since last refresh
+                    // new breakpoint in VM since last refresh
                     _breakpoints.add(new TargetBreakpointData(breakpoint));
                     //fireTableDataChanged();
                 } else {
@@ -193,7 +193,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                     breakpointData.markDeleted(false);
                 }
             }
-            for (TeleBytecodeBreakpoint breakpoint : teleVM().bytecodeBreakpoints()) {
+            for (TeleBytecodeBreakpoint breakpoint : vm().bytecodeBreakpoints()) {
                 final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.key());
                 if (breakpointData == null) {
                     // new breakpoint since last refresh
@@ -510,7 +510,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
     }
 
     /**
-     * @param breakpointData a breakpoint in the {@link TeleVM}.
+     * @param breakpointData a breakpoint in the VM.
      * @return a menu of actions, some of which are specific to the specified breakpoint
      */
     private InspectorMenu getButton3Menu(BreakpointData breakpointData) {
@@ -557,12 +557,12 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
     private abstract class BreakpointData implements Comparable {
 
         /**
-         * @return the breakpoint in the {@link TeleVM} being described
+         * @return the breakpoint in the VM being described
          */
         abstract TeleBreakpoint teleBreakpoint();
 
         /**
-         * @return the location of the breakpoint in the {@link TeleVM} in a standard format.
+         * @return the location of the breakpoint in the VM in a standard format.
          */
         TeleCodeLocation teleCodeLocation() {
             return teleBreakpoint().teleCodeLocation();
@@ -595,12 +595,12 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         abstract int location();
 
         /**
-         * @return a description of the breakpoint location in the {@link TeleVM}, specifying units
+         * @return a description of the breakpoint location in the VM, specifying units
          */
         abstract String locationDescription();
 
         /**
-         * @return is this breakpoint currently enabled in the {@link TeleVM}?
+         * @return is this breakpoint currently enabled in the VM?
          */
         boolean enabled() {
             return teleBreakpoint().isEnabled();
@@ -632,10 +632,10 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         abstract String conditionStatus();
 
         /**
-         * @return the thread in the {@link TeleVM}, if any, that is currently stopped at this breakpoint.
+         * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
          */
         TeleNativeThread triggerThread() {
-            for (TeleNativeThread thread : teleVM().threads()) {
+            for (TeleNativeThread thread : vm().threads()) {
                 if (thread.breakpoint() == teleBreakpoint()) {
                     return thread;
                 }
@@ -660,7 +660,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         }
 
         /**
-         * sets the "deleted" state, used to update the list of breakpoints in the {@link TeleVM}.
+         * sets the "deleted" state, used to update the list of breakpoints in the VM.
          */
         void markDeleted(boolean deleted) {
             _deleted = deleted;
@@ -701,21 +701,21 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         TargetBreakpointData(TeleTargetBreakpoint teleTargetBreakpoint) {
             _teleTargetBreakpoint = teleTargetBreakpoint;
             final Address address = teleTargetBreakpoint.address();
-            final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
+            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 _shortName = inspection().nameDisplay().shortName(teleTargetMethod);
                 _longName = inspection().nameDisplay().longName(teleTargetMethod, address);
                 _codeStart = teleTargetMethod.getCodeStart();
                 _location = address.minus(_codeStart.asAddress()).toInt();
             } else {
-                final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(teleVM(), address);
+                final TeleRuntimeStub teleRuntimeStub = vm().makeTeleRuntimeStub(address);
                 if (teleRuntimeStub != null) {
                     _codeStart = teleRuntimeStub.runtimeStub().start();
                     _location = address.minus(_codeStart).toInt();
                     _shortName = "runtime stub[0x" + _codeStart + "]";
                     _longName = _shortName;
                 } else {
-                    final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.make(teleVM(), address);
+                    final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
                     if (teleNativeTargetRoutine != null) {
                         _codeStart = teleNativeTargetRoutine.getCodeStart();
                         _location = address.minus(_codeStart.asAddress()).toInt();
@@ -770,7 +770,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         @Override
         void setCondition(String condition) {
             try {
-                _teleTargetBreakpoint.setCondition(new BreakpointCondition(teleVM(), condition));
+                _teleTargetBreakpoint.setCondition(condition);
                 inspection().settings().save();
             } catch (BreakpointCondition.ExpressionException expressionException) {
                 inspection().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");

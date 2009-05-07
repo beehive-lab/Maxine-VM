@@ -23,12 +23,11 @@ package com.sun.max.ins.object;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} constructed using {@link TupleLayout}.
+ * An object inspector specialized for displaying a Maxine low-level heap object in the VM constructed using {@link TupleLayout}.
  *
  * @author Michael Van De Vanter
  */

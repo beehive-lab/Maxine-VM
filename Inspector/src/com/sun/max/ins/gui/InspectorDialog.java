@@ -63,8 +63,8 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
         return _inspection.actions();
     }
 
-    public TeleVM teleVM() {
-        return _inspection.teleVM();
+    public VM vm() {
+        return _inspection.vm();
     }
 
     public void redisplay() {

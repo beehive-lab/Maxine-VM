@@ -39,7 +39,7 @@ import com.sun.max.vm.stack.*;
 
 
 /**
- * A table specialized for displaying the threads in the {@link TeleVM}.
+ * A table specialized for displaying the threads in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -65,7 +65,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(teleVM().epoch(), true);
+        refresh(vm().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -137,7 +137,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
     }
 
     /**
-     * A table data model wrapped around the thread list in the {@link TeleVM}.
+     * A table data model wrapped around the thread list in the VM.
      */
     private final class ThreadsTableModel extends AbstractTableModel {
 
@@ -152,13 +152,13 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         @Override
         public int getRowCount() {
-            return teleVM().threads().length();
+            return vm().threads().length();
         }
 
         @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
+            for (TeleNativeThread teleNativeThread : vm().threads()) {
                 if (count == row) {
                     return teleNativeThread;
                 }
@@ -174,7 +174,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         public int findRow(TeleNativeThread teleNativeThread) {
             int row = 0;
-            for (TeleNativeThread thread : teleVM().threads()) {
+            for (TeleNativeThread thread : vm().threads()) {
                 if (thread == teleNativeThread) {
                     return row;
                 }

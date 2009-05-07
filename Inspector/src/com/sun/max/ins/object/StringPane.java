@@ -24,11 +24,10 @@ import javax.swing.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
 
 
 /**
- * A factory class that creates scrollable pane components, each of which displays a string representation of some value in the {@link TeleVM}.
+ * A factory class that creates scrollable pane components, each of which displays a string representation of some value in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -53,7 +52,7 @@ public final class StringPane extends InspectorScrollPane {
         _textArea = textArea;
         _textArea.append(_stringValue);
         _textArea.setEditable(false);
-        refresh(teleVM().epoch(), true);
+        refresh(inspection.vm().epoch(), true);
     }
 
     @Override

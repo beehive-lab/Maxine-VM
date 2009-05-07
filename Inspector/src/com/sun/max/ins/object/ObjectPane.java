@@ -35,7 +35,7 @@ import com.sun.max.vm.type.*;
 
 
 /**
- * A factory class that creates pane components, each of which displays a specific part of a Maxine low-level heap object in the {@link TeleVM}.
+ * A factory class that creates pane components, each of which displays a specific part of a Maxine low-level heap object in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -80,7 +80,7 @@ public final class ObjectPane extends InspectorScrollPane {
         }
         final int vTableStartIndex = Hub.vTableStartIndex();
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.WORD,
-                        objectInspector.inspection().teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
+                        objectInspector.inspection().vm().vmConfiguration().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(vTableStartIndex).toInt(),
                         vTableStartIndex,
                         hub.vTableLength(),
                         "V",
@@ -98,7 +98,7 @@ public final class ObjectPane extends InspectorScrollPane {
         }
         final int iTableStartIndex = hub.iTableStartIndex();
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.WORD,
-                        objectInspector.inspection().teleVM().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
+                        objectInspector.inspection().vm().vmConfiguration().layoutScheme().wordArrayLayout().getElementOffsetFromOrigin(iTableStartIndex).toInt(),
                         iTableStartIndex,
                         hub.iTableLength(),
                         "I",
@@ -113,12 +113,12 @@ public final class ObjectPane extends InspectorScrollPane {
         if (teleHub.hub().mTableLength() == 0) {
             return null;
         }
-        final TeleVM teleVM = objectInspector.inspection().teleVM();
-        final int mTableStartIndex = teleVM.fields().Hub_mTableStartIndex.readInt(teleHub.reference());
+        final VM vm = objectInspector.inspection().vm();
+        final int mTableStartIndex = vm.fields().Hub_mTableStartIndex.readInt(teleHub.reference());
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.INT,
-                        teleVM.layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
+                        vm.vmConfiguration().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(mTableStartIndex).toInt(),
                         mTableStartIndex,
-                        teleVM.fields().Hub_mTableLength.readInt(teleHub.reference()),
+                        vm.fields().Hub_mTableLength.readInt(teleHub.reference()),
                         "M",
                         WordValueLabel.ValueMode.WORD);
         return new ObjectPane(objectInspector.inspection(), table);
@@ -131,12 +131,12 @@ public final class ObjectPane extends InspectorScrollPane {
         if (teleHub.hub().referenceMapLength() == 0) {
             return null;
         }
-        final TeleVM teleVM = objectInspector.inspection().teleVM();
-        final int referenceMapStartIndex = teleVM.fields().Hub_referenceMapStartIndex.readInt(teleHub.reference());
+        final VM vm = objectInspector.inspection().vm();
+        final int referenceMapStartIndex = vm.fields().Hub_referenceMapStartIndex.readInt(teleHub.reference());
         final InspectorTable table = new ArrayElementsTable(objectInspector, Kind.INT,
-                        teleVM.layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
+                        vm.vmConfiguration().layoutScheme().intArrayLayout().getElementOffsetFromOrigin(referenceMapStartIndex).toInt(),
                         referenceMapStartIndex,
-                        teleVM.fields().Hub_referenceMapLength.readInt(teleHub.reference()),
+                        vm.fields().Hub_referenceMapLength.readInt(teleHub.reference()),
                         "R",
                         WordValueLabel.ValueMode.WORD);
         return new ObjectPane(objectInspector.inspection(), table);

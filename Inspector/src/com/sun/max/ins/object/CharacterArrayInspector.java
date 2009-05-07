@@ -25,11 +25,10 @@ import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.object.StringPane.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level character array in the {@link TeleVM}.
+ * An object inspector specialized for displaying a Maxine low-level character array in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -79,7 +78,7 @@ public final class CharacterArrayInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(teleVM().epoch(), true);
+                prober.refresh(vm().epoch(), true);
             }
         });
         frame().getContentPane().add(_tabbedPane);

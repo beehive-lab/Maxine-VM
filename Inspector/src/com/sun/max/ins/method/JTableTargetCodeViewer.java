@@ -45,7 +45,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
 
 /**
- * A table-based viewer for an (immutable) section of {@link TargetCode} in the {@link TeleVM}.
+ * A table-based viewer for an (immutable) section of {@link TargetCode} in the VM.
  * Supports visual effects for execution state, and permits user selection
  * of instructions for various purposes (e.g. set breakpoint).
  *
@@ -182,7 +182,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new TargetCodeTableColumnModel();
         _table = new TargetCodeTable(inspection, _model, _columnModel);
-        createView(teleVM().epoch());
+        createView(inspection.vm().epoch());
     }
 
     @Override
@@ -272,7 +272,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), _model.getTargetCodeInstruction(row).address()), false);
+        _inspection.focus().setCodeLocation(vm().createCodeLocation(_model.getTargetCodeInstruction(row).address()), false);
     }
 
     @Override
@@ -364,7 +364,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
 
         /**
-         * @param address a code address in the {@link TeleVM}.
+         * @param address a code address in the VM.
          * @return the row in this block of code containing an instruction starting at the address, -1 if none.
          */
         public int getRowAtAddress(Address address) {
@@ -429,7 +429,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 final int selectedRow = getSelectedRow();
                 final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < targetCodeTableModel.getRowCount()) {
-                    inspection().focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeTableModel.getTargetCodeInstruction(selectedRow).address()), true);
+                    inspection().focus().setCodeLocation(vm().createCodeLocation(targetCodeTableModel.getTargetCodeInstruction(selectedRow).address()), true);
                 }
             }
         }
@@ -490,7 +490,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(teleVM().epoch(), true);
+                    refresh(vm().epoch(), true);
                 }
             };
 
@@ -700,7 +700,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        final ProcessorKind processorKind = inspection.teleVM().vmConfiguration().platform().processorKind();
+        final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind();
         switch (processorKind.instructionSet()) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
@@ -733,7 +733,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                             if (fileName != null) {
                                 final int lineNumber = stackTraceElement.getLineNumber();
                                 if (lineNumber > 0) {
-                                    if (teleVM().findJavaSourceFile(location.classMethodActor().holder()) != null) {
+                                    if (vm().findJavaSourceFile(location.classMethodActor().holder()) != null) {
                                         final BytecodeLocation locationCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
                                             @Override
@@ -813,7 +813,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (targetCodeInstruction._literalSourceAddress != null) {
-                    final Word word = teleVM().dataAccess().readWord(targetCodeInstruction._literalSourceAddress);
+                    final Word word = _inspection.vm().readWord(targetCodeInstruction._literalSourceAddress);
                     inspectorLabel = _literalRenderer.render(_inspection, text, word);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (rowToCalleeIndex(row) >= 0) {

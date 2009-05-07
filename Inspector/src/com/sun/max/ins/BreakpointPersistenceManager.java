@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.collect.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
@@ -34,7 +33,7 @@ import com.sun.max.vm.type.*;
 
 
 /**
- * Singleton manager for the Inspector's relationship with breakpoints in the {@link TeleVM}.
+ * Singleton manager for the Inspector's relationship with breakpoints in the VM.
  * Saves breakpoints to persistent storage and reloads at initialization.
  *
  * @author Michael Van De Vanter
@@ -44,7 +43,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     private static BreakpointPersistenceManager _breakpointPersistenceManager;
 
     /**
-     * Sets up a manager for making breakpoints set in the {@link TeleVM} persistent, saved
+     * Sets up a manager for making breakpoints set in the VM persistent, saved
      * after each breakpoint change.
      */
     public static void initialize(Inspection inspection) {
@@ -73,12 +72,12 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             ProgramWarning.message("Ignoring breakpoints related to a different boot image");
         }
 
-        // Once load-in is finished, register for notification of subsequent breakpoint changes in the {@link TeleVM}.
-        _inspection.teleVM().addBreakpointListener(this);
+        // Once load-in is finished, register for notification of subsequent breakpoint changes in the VM.
+        _inspection.vm().addBreakpointListener(this);
     }
 
     public void refreshView(long epoch) {
-        // Breakpoints in the {@link TeleVM} have changed.
+        // Breakpoints in the VM have changed.
         _inspection.settings().save();
     }
 
@@ -100,12 +99,11 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
     }
 
     private void saveTargetCodeBreakpoints(SaveSettingsEvent settings) {
-        final IterableWithLength<TeleTargetBreakpoint> targetBreakpoints = _inspection.teleVM().targetBreakpoints();
-        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, targetBreakpoints.length());
+        settings.save(TARGET_BREAKPOINT_KEY + "." + COUNT_KEY, _inspection.vm().targetBreakpointCount());
         int index = 0;
-        for (TeleTargetBreakpoint breakpoint : targetBreakpoints) {
+        for (TeleTargetBreakpoint breakpoint : _inspection.vm().targetBreakpoints()) {
             final String prefix = TARGET_BREAKPOINT_KEY + index++;
-            final Address bootImageOffset = breakpoint.address().minus(_inspection.teleVM().bootImageStart());
+            final Address bootImageOffset = breakpoint.address().minus(_inspection.vm().bootImageStart());
             settings.save(prefix + "." + ADDRESS_KEY, bootImageOffset.toLong());
             settings.save(prefix + "." + ENABLED_KEY, breakpoint.isEnabled());
             final BreakpointCondition condition = breakpoint.condition();
@@ -120,14 +118,14 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
         for (int i = 0; i < numberOfBreakpoints; i++) {
             final String prefix = TARGET_BREAKPOINT_KEY + i;
             final Address bootImageOffset = Address.fromLong(settings.get(this, prefix + "." + ADDRESS_KEY, OptionTypes.LONG_TYPE, null));
-            final Address address = _inspection.teleVM().bootImageStart().plus(bootImageOffset);
+            final Address address = _inspection.vm().bootImageStart().plus(bootImageOffset);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, null);
             final String condition = settings.get(this, prefix + "." + CONDITION_KEY, OptionTypes.STRING_TYPE, null);
-            if (_inspection.teleVM().containsInCode(address)) {
+            if (_inspection.vm().containsInCode(address)) {
                 try {
-                    final TeleTargetBreakpoint teleBreakpoint = _inspection.teleVM().makeTargetBreakpoint(address);
+                    final TeleTargetBreakpoint teleBreakpoint = _inspection.vm().makeTargetBreakpoint(address);
                     if (condition != null) {
-                        teleBreakpoint.setCondition(new BreakpointCondition(_inspection.teleVM(), condition));
+                        teleBreakpoint.setCondition(condition);
                     }
                     teleBreakpoint.setEnabled(enabled);
                 } catch (BreakpointCondition.ExpressionException expressionException) {
@@ -141,10 +139,9 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
 
     private void saveBytecodeBreakpoints(SaveSettingsEvent settings) {
         int index;
-        final Sequence<TeleBytecodeBreakpoint> bytecodeBreakpoints = _inspection.teleVM().bytecodeBreakpoints();
-        settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, bytecodeBreakpoints.length());
+        settings.save(BYTECODE_BREAKPOINT_KEY + "." + COUNT_KEY, _inspection.vm().bytecodeBreakpointCount());
         index = 0;
-        for (TeleBytecodeBreakpoint breakpoint : bytecodeBreakpoints) {
+        for (TeleBytecodeBreakpoint breakpoint : _inspection.vm().bytecodeBreakpoints()) {
             final String prefix = BYTECODE_BREAKPOINT_KEY + index++;
             final TeleBytecodeBreakpoint.Key key = breakpoint.key();
             settings.save(prefix + "." + METHOD_HOLDER_KEY, key.holder().string());
@@ -166,7 +163,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
             final int bytecodePosition = settings.get(this, prefix + "." + POSITION_KEY, OptionTypes.INT_TYPE, 0);
             final boolean enabled = settings.get(this, prefix + "." + ENABLED_KEY, OptionTypes.BOOLEAN_TYPE, true);
 
-            final TeleBytecodeBreakpoint breakpoint = _inspection.teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
+            final TeleBytecodeBreakpoint breakpoint = _inspection.vm().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, bytecodePosition));
             breakpoint.setEnabled(enabled);
             if (enabled) {
                 breakpoint.activate();

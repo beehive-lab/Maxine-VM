@@ -48,16 +48,6 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
     private Key _key;  // Describes a location intentionally, not necessarily loaded
 
     /**
-     * A null code location.
-     */
-    public TeleCodeLocation(TeleVM teleVM) {
-        super(teleVM);
-        _targetCodeInstructionAddress = Address.zero();
-        _teleBytecodeLocation = null;
-        _key = null;
-    }
-
-    /**
      * Location expressed only in terms of a target code address.
      */
     public TeleCodeLocation(TeleVM teleVM, Address targetCodeInstructionAddress) {
@@ -139,7 +129,7 @@ public class TeleCodeLocation extends AbstractTeleVMHolder {
             // so that we can talk about bytecodes.
             // Look first in the class registry
             final TypeDescriptor holderTypeDescriptor = key().holder();
-            final TeleClassActor teleClassActor = teleVM().findTeleClassActorByType(holderTypeDescriptor);
+            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(holderTypeDescriptor);
             if (teleClassActor != null) {
                 // find a matching method
                 final String methodKeyString = _key.signature().toJavaString(true, true);

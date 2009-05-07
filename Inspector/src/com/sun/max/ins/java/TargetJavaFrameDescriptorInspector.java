@@ -53,7 +53,7 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
     private TargetJavaFrameDescriptorInspector(Inspection inspection, TargetJavaFrameDescriptor javaFrameDescriptor, TargetABI abi) {
         super(inspection, LongValue.from(subject(javaFrameDescriptor)));
         _javaFrameDescriptor = javaFrameDescriptor;
-        _framePointer = TeleIntegerRegisters.symbolizer(teleVM().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
+        _framePointer = TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(abi.framePointer().value()).toString();
         createFrame(null);
     }
 
@@ -78,15 +78,15 @@ public final class TargetJavaFrameDescriptorInspector extends UniqueInspector<Ta
         switch (targetLocation.tag()) {
             case INTEGER_REGISTER: {
                 final TargetLocation.IntegerRegister integerRegister = (TargetLocation.IntegerRegister) targetLocation;
-                return TeleIntegerRegisters.symbolizer(teleVM().vmConfiguration()).fromValue(integerRegister.index()).toString();
+                return TeleIntegerRegisters.symbolizer(vm().vmConfiguration()).fromValue(integerRegister.index()).toString();
             }
             case FLOATING_POINT_REGISTER: {
                 final TargetLocation.FloatingPointRegister floatingPointRegister = (TargetLocation.FloatingPointRegister) targetLocation;
-                return TeleFloatingPointRegisters.symbolizer(teleVM().vmConfiguration()).fromValue(floatingPointRegister.index()).toString();
+                return TeleFloatingPointRegisters.symbolizer(vm().vmConfiguration()).fromValue(floatingPointRegister.index()).toString();
             }
             case LOCAL_STACK_SLOT: {
                 final TargetLocation.LocalStackSlot localStackSlot = (TargetLocation.LocalStackSlot) targetLocation;
-                return _framePointer + "[" + (localStackSlot.index() * teleVM().wordSize()) + "]";
+                return _framePointer + "[" + (localStackSlot.index() * vm().wordSize()) + "]";
             }
             default: {
                 return targetLocation.toString();

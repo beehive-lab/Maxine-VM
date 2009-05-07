@@ -22,11 +22,10 @@ package com.sun.max.ins.memory;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
 
 
 /**
- * Persistent preferences for viewing sequences of memory words in the {@link TeleVM}.
+ * Persistent preferences for viewing sequences of memory words in the VM.
  *
  * @author Michael Van De Vanter
   */

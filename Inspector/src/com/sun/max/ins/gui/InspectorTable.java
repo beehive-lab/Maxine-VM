@@ -81,6 +81,10 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
         return _inspection;
     }
 
+    public final VM vm() {
+        return _inspection.vm();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
@@ -91,10 +95,6 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     public InspectionActions actions() {
         return _inspection.actions();
-    }
-
-    public TeleVM teleVM() {
-        return _inspection.teleVM();
     }
 
     private IdentityHashSet<ColumnChangeListener> _columnChangeListeners = new IdentityHashSet<ColumnChangeListener>();

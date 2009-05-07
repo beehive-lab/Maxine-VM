@@ -29,7 +29,6 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.vm.stack.*;
@@ -75,7 +74,7 @@ public abstract class CodeViewer extends InspectorPanel {
     public abstract boolean updateCodeFocus(TeleCodeLocation teleCodeLocation);
 
     public void updateThreadFocus(TeleNativeThread teleNativeThread) {
-        final long epoch = teleVM().epoch();
+        final long epoch = vm().epoch();
         updateCaches(epoch, false);
     }
 
@@ -363,7 +362,7 @@ public abstract class CodeViewer extends InspectorPanel {
 
 
     /**
-     * Updates any label in the view that are based on state in the {@link TeleVM}.
+     * Updates any label in the view that are based on state in the VM.
      *
      */
     protected abstract void updateView(long epoch, boolean force);

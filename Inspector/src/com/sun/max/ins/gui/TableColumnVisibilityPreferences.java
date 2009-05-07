@@ -159,8 +159,8 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         return _inspection.actions();
     }
 
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
+    public final VM vm() {
+        return _inspection.vm();
     }
 
     /**

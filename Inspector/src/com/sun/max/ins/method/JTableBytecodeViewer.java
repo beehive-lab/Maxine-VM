@@ -37,7 +37,6 @@ import com.sun.max.ins.constant.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -239,7 +238,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _columnModel = new BytecodeTableColumnModel();
         _table = new BytecodeTable(inspection, _model, _columnModel);
         _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
-        createView(teleVM().epoch());
+        createView(inspection.vm().epoch());
     }
 
     @Override
@@ -337,7 +336,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int position = _model.getBytecodeInstruction(row).position();
-        _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM(), teleClassMethodActor(), position), false);
+        _inspection.focus().setCodeLocation(vm().createCodeLocation(teleClassMethodActor(), position), false);
     }
 
     @Override
@@ -433,7 +432,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         }
 
         /**
-         * @param address a code address in the {@link TeleVM
+         * @param address a code address in the VM
          * @return the row in this block of bytecodes containing an
          *  instruction whose associated compiled code starts at the address, -1 if none.
          */
@@ -503,7 +502,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.getBytecodeInstruction(selectedRow);
                     final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
                     final int position = bytecodeInstruction.position();
-                    inspection().focus().setCodeLocation(new TeleCodeLocation(teleVM(), targetCodeFirstAddress, teleClassMethodActor(), position), true);
+                    inspection().focus().setCodeLocation(vm().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
                 }
             }
         }
@@ -569,7 +568,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(teleVM().epoch(), true);
+                    refresh(vm().epoch(), true);
                 }
             };
             createColumn(ColumnKind.TAG, new TagRenderer());
