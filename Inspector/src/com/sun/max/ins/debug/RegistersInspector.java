@@ -27,12 +27,11 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
 
 /**
- * A singleton inspector that displays register contents for the thread the {@link TeleVM} that is the current user focus.
+ * A singleton inspector that displays register contents for the thread the VM that is the current user focus.
  *
  * @author Michael Van De Vanter
  */
@@ -66,7 +65,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         _viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        refreshView(inspection.teleVM().epoch(), true);
+        refreshView(inspection.vm().epoch(), true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 

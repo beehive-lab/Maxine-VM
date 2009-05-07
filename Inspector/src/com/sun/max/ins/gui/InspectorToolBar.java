@@ -62,8 +62,8 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
         return _inspection.actions();
     }
 
-    public TeleVM teleVM() {
-        return _inspection.teleVM();
+    public VM vm() {
+        return _inspection.vm();
     }
 
     public void redisplay() {

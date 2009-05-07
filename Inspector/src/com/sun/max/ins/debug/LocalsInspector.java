@@ -57,10 +57,8 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
         return localsInspector;
     }
 
-    private final DataAccess _dataAccess;
     private final TeleNativeThread _teleNativeThread;
     private final JitStackFrame _jitStackFrame;
-
 
     private final JPanel _localsPanel;
     private final JPanel _stackPanel;
@@ -76,8 +74,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     public LocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
         super(inspection, LongValue.from(jitStackFrame.framePointer().toLong()));
-        assert jitStackFrame.targetMethod().compilerScheme() == teleVM().vmConfiguration().jitScheme();
-        _dataAccess = teleVM().dataAccess();
+        assert jitStackFrame.targetMethod().compilerScheme() == vm().vmConfiguration().jitScheme();
         _teleNativeThread = teleNativeThread;
         _jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
@@ -179,11 +176,11 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     private static final Icon _ARROW = IconFactory.createRightArrow(_iconSize);
 
     private Word readStackSlot(int stackSlotIndex) {
-        return _dataAccess.readWord(_jitStackFrame.operandStackPointer(stackSlotIndex));
+        return vm().readWord(_jitStackFrame.operandStackPointer(stackSlotIndex));
     }
 
     private Word readlocalVariable(int localVariableIndex) {
-        return _dataAccess.readWord(_jitStackFrame.localsPointer(localVariableIndex));
+        return vm().readWord(_jitStackFrame.localsPointer(localVariableIndex));
     }
 
     private JLabel getTosLabel(int stackSize) {

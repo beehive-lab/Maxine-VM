@@ -116,7 +116,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
 
         final JPanel view = new InspectorPanel(inspection(), new SpringLayout());
 
-        final Iterator<Reference> iterator = _objectAggregator.instances(teleVM());
+        final Iterator<Reference> iterator = _objectAggregator.instances(vm());
 
         int index = 0;
         while (index != _start) {

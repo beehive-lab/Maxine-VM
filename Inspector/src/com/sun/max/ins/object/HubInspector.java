@@ -30,14 +30,13 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.option.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level {@link Hybrid} object in the {@link TeleVM},
+ * An object inspector specialized for displaying a Maxine low-level {@link Hybrid} object in the VM,
  * constructed using {@link HybridLayout}, representing a {@link Hub}.
  *
  * @author Michael Van De Vanter

@@ -87,7 +87,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
     protected void updateText() {
         if (value() != null) {
             _address = value().toWord().asAddress();
-            _memoryRegion = teleVM().memoryRegionContaining(_address);
+            _memoryRegion = vm().memoryRegionContaining(_address);
         }
         if (_memoryRegion == null) {
             setText("");

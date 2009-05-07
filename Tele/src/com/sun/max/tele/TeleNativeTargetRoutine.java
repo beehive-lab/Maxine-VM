@@ -138,7 +138,10 @@ public final class TeleNativeTargetRoutine extends AbstractTeleVMHolder implemen
     public void removeTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {
-                teleVM().removeTargetBreakpoint(targetCodeInstruction.address());
+                final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetCodeInstruction.address());
+                if (targetBreakpoint != null) {
+                    targetBreakpoint.remove();
+                }
             }
         }
     }

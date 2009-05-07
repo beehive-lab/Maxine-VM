@@ -27,7 +27,6 @@ import com.sun.max.ins.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
-import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -62,7 +61,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         }
 
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Inspection inspection, Class<UniqueInspector_Type> type, Reference subject) {
-            return new ValueKey<UniqueInspector_Type>(type, TeleReferenceValue.from(inspection.teleVM(), subject));
+            return new ValueKey<UniqueInspector_Type>(type, inspection.vm().createReferenceValue(subject));
         }
 
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, long subject) {
@@ -257,7 +256,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
     }
 
     protected UniqueInspector(Inspection inspection, Reference subject) {
-        this(inspection, TeleReferenceValue.from(inspection.teleVM(), subject));
+        this(inspection, inspection.vm().createReferenceValue(subject));
     }
 
     protected UniqueInspector(Inspection inspection) {

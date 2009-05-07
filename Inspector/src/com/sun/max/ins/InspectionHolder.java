@@ -29,12 +29,17 @@ import com.sun.max.tele.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public interface InspectionHolder extends TeleVMHolder {
+public interface InspectionHolder {
 
     /**
      * @return holder of the interactive inspection state for the session
      */
     Inspection inspection();
+
+    /**
+     * @return the VM associated with this inspection
+     */
+    VM vm();
 
     /**
      * @return visual specifications for user interaction during the session

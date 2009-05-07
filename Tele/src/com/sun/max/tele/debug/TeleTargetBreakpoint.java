@@ -26,6 +26,7 @@ import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
+import com.sun.max.tele.debug.BreakpointCondition.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.reference.*;
@@ -145,8 +146,8 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
         _activated = false;
     }
 
-    public void setCondition(BreakpointCondition condition) {
-        _condition = condition;
+    public void setCondition(String condition) throws ExpressionException {
+        _condition = new BreakpointCondition(teleVM(), condition);
     }
 
     @Override
@@ -184,15 +185,18 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
 
         /**
          * @return all the {@linkplain TeleBreakpoint#isTransient() persistent} target code breakpoints that currently exist
-         * in the {@link TeleVM}..
+         * in the {@link TeleVM}.  Modification safe against breakpoint removal.
          *
          * @param omitTransientBreakpoints specifies whether or not {@linkplain TeleBreakpoint#isTransient()}
          */
-        public synchronized IterableWithLength<TeleTargetBreakpoint> breakpoints(boolean omitTransientBreakpoints) {
-            if (omitTransientBreakpoints) {
-                return Iterables.toIterableWithLength(_breakpoints.values());
+        public synchronized Iterable<TeleTargetBreakpoint> breakpoints(boolean omitTransientBreakpoints) {
+            final AppendableSequence<TeleTargetBreakpoint> targetBreakpoints = new ArrayListSequence<TeleTargetBreakpoint>(_breakpoints.values());
+            if (!omitTransientBreakpoints) {
+                for (TeleTargetBreakpoint transientBreakpoint : _transientBreakpoints.values()) {
+                    targetBreakpoints.append(transientBreakpoint);
+                }
             }
-            return Iterables.join(Iterables.toIterableWithLength(_breakpoints.values()), Iterables.toIterableWithLength(_transientBreakpoints.values()));
+            return targetBreakpoints;
         }
 
         /**
@@ -318,14 +322,6 @@ public final class TeleTargetBreakpoint extends TeleBreakpoint {
          */
         public synchronized void removeBreakpointAt(Address address) {
             _breakpoints.remove(address.toLong());
-            refreshView(_teleProcess.epoch());
-        }
-
-        /**
-         * Removes all target code breakpoints in the teleVM.
-         */
-        public synchronized void removeAllBreakpoints() {
-            _breakpoints.clear();
             refreshView(_teleProcess.epoch());
         }
 

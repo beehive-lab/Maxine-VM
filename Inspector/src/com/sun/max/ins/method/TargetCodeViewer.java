@@ -37,7 +37,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Base class for views of disassembled target code for a single method in the {@link TeleVM}.
+ * Base class for views of disassembled target code for a single method in the VM.
  *
  * @author Mick Jordan
  * @author Doug Simon
@@ -58,7 +58,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final TeleTargetRoutine _teleTargetRoutine;
 
     /**
-     * @return surrogate for the {@link TargetRoutine} in the {@link TeleVM} for the method being viewed.
+     * @return surrogate for the {@link TargetRoutine} in the VM for the method being viewed.
      */
     protected TeleTargetRoutine teleTargetRoutine() {
         return _teleTargetRoutine;
@@ -76,7 +76,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final TeleConstantPool _teleConstantPool;
 
     /**
-     * @return surrogate for the {@link ConstantPool} in the {@link TeleVM} for the method being viewed.
+     * @return surrogate for the {@link ConstantPool} in the VM for the method being viewed.
      */
     protected final TeleConstantPool teleConstantPool() {
         return _teleConstantPool;
@@ -85,14 +85,14 @@ public abstract class TargetCodeViewer extends CodeViewer {
     private final ConstantPool _localConstantPool;
 
     /**
-     * @return local {@link ConstantPool} for the class containing the method in the {@TeleVM} being viewed.
+     * @return local {@link ConstantPool} for the class containing the method in the VM being viewed.
      */
     protected final ConstantPool localConstantPool() {
         return _localConstantPool;
     }
 
     /**
-     * local copy of the method bytecodes in the {@link TeleVM}; null if a native method or otherwise unavailable.
+     * local copy of the method bytecodes in the VM; null if a native method or otherwise unavailable.
      */
     private final byte[] _bytecodes;
 
@@ -301,10 +301,10 @@ public abstract class TargetCodeViewer extends CodeViewer {
     }
 
     /**
-     * Does the instruction address have a target code breakpoint set in the {@link TeleVM}.
+     * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected TeleTargetBreakpoint getTargetBreakpointAtRow(int row) {
-        return teleVM().getTargetBreakpoint(_instructions.get(row).address());
+        return vm().getTargetBreakpoint(_instructions.get(row).address());
     }
 
     protected final Color rowToBackgroundColor(int row) {

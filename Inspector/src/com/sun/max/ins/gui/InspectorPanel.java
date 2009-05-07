@@ -61,6 +61,10 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
         return _inspection;
     }
 
+    public VM vm() {
+        return _inspection.vm();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
@@ -71,10 +75,6 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
 
     public InspectionActions actions() {
         return _inspection.actions();
-    }
-
-    public TeleVM teleVM() {
-        return _inspection.teleVM();
     }
 
     public void redisplay() {

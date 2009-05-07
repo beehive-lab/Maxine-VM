@@ -30,12 +30,11 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.debug.RegisterInfo.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.util.*;
 
 /**
- * A table specialized for displaying register values for a thread in the {@link TeleVM}.
+ * A table specialized for displaying register values for a thread in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -62,7 +61,7 @@ public class RegistersTable extends InspectorTable {
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection, this));
-        refresh(teleVM().epoch(), true);
+        refresh(vm().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -134,7 +133,7 @@ public class RegistersTable extends InspectorTable {
     }
 
     /**
-     * A table data model built around the list of registers in the {@link TeleVM}.
+     * A table data model built around the list of registers in the VM.
      * Displays all three kinds of registers in a single table in the following order:
      * <ol><li>Integer registers</li><li>State registers</li><li>Floating point registers</li></ol>
      *
@@ -176,7 +175,7 @@ public class RegistersTable extends InspectorTable {
         }
 
         /**
-         * Reads from {@link TeleVM} and increments the history generation.
+         * Reads from VM and increments the history generation.
          */
         void refresh() {
             for (RegisterInfo registerInfo : _registerInfos) {

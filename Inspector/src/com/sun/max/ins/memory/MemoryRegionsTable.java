@@ -34,7 +34,6 @@ import com.sun.max.ins.value.*;
 import com.sun.max.ins.value.WordValueLabel.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -46,7 +45,7 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * A table specialized for displaying the memory regions in the {@link TeleVM}.
+ * A table specialized for displaying the memory regions in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -64,9 +63,9 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
 
     MemoryRegionsTable(Inspection inspection, MemoryRegionsViewPreferences viewPreferences) {
         super(inspection);
-        _bootHeapRegionDisplay = new HeapRegionDisplay(teleVM().teleBootHeapRegion());
-        _bootCodeRegionDisplay = new CodeRegionDisplay(teleVM().teleBootCodeRegion(), -1);
-        _heapScheme = teleVM().vmConfiguration().heapScheme();
+        _bootHeapRegionDisplay = new HeapRegionDisplay(vm().teleBootHeapRegion());
+        _bootCodeRegionDisplay = new CodeRegionDisplay(vm().teleBootCodeRegion(), -1);
+        _heapScheme = inspection.vm().vmConfiguration().heapScheme();
         _heapSchemeName = _heapScheme.getClass().getSimpleName();
         _model = new MemoryRegionsTableModel();
         _columns = new TableColumn[MemoryRegionsColumnKind.VALUES.length()];
@@ -82,7 +81,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(teleVM().epoch(), true);
+        refresh(vm().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -165,12 +164,12 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
             _sortedMemoryRegions = new SortedMemoryRegionList<MemoryRegionDisplay>();
 
             _sortedMemoryRegions.add(_bootHeapRegionDisplay);
-            for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : teleVM().teleHeapRegions()) {
+            for (TeleRuntimeMemoryRegion teleRuntimeMemoryRegion : vm().teleHeapRegions()) {
                 _sortedMemoryRegions.add(new HeapRegionDisplay(teleRuntimeMemoryRegion));
             }
 
             _sortedMemoryRegions.add(_bootCodeRegionDisplay);
-            final IndexedSequence<TeleCodeRegion> teleCodeRegions = teleVM().teleCodeRegions();
+            final IndexedSequence<TeleCodeRegion> teleCodeRegions = vm().teleCodeRegions();
             for (int index = 0; index < teleCodeRegions.length(); index++) {
                 final TeleCodeRegion teleCodeRegion = teleCodeRegions.get(index);
                 // Only display regions that have memory allocated to them, but that could be a view option.
@@ -179,7 +178,7 @@ public class MemoryRegionsTable extends InspectorTable  implements ViewFocusList
                 }
             }
 
-            for (TeleNativeThread thread : teleVM().threads()) {
+            for (TeleNativeThread thread : vm().threads()) {
                 final TeleNativeStack stack = thread.stack();
                 if (!stack.size().isZero()) {
                     _sortedMemoryRegions.add(new StackRegionDisplay(stack));

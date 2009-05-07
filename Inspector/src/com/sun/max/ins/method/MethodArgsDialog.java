@@ -23,7 +23,6 @@ package com.sun.max.ins.method;
 import java.math.*;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
@@ -31,9 +30,10 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * Interactive support for the interpreter, originally packaged with {@link TeleInterpreter}.
+ * Interactive support for remote method interpretation in the VM.
  *
  * @author Athul Acharya
+ * @author Michael Van De Vanter
  */
 public final class MethodArgsDialog {
 
@@ -113,7 +113,7 @@ public final class MethodArgsDialog {
                     return null;
                 }
 
-                args[i] = inspection.teleVM().createReferenceValue(inspection.teleVM().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
+                args[i] = inspection.vm().createReferenceValue(inspection.vm().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
             } else if (kind == Kind.SHORT) {
                 final String input = inspection.inputDialog("Argument " + i + " (short):", "");
 

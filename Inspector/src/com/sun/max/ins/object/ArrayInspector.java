@@ -21,12 +21,11 @@
 package com.sun.max.ins.object;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level object in the {@link TeleVM}, constructed using {@link ArrayLayout}.
+ * An object inspector specialized for displaying a Maxine low-level object in the VM, constructed using {@link ArrayLayout}.
  *
  * @author Michael Van De Vanter
  */

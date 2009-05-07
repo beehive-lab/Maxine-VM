@@ -22,11 +22,10 @@ package com.sun.max.ins.debug;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
 
 
 /**
- * Persistent preferences for viewing thread local values in the {@link TeleVM}.
+ * Persistent preferences for viewing thread local values in the VM.
  *
  * @author Michael Van De Vanter
   */

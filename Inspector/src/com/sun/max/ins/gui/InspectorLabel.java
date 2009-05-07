@@ -53,6 +53,10 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
         return _inspection;
     }
 
+    public final VM vm() {
+        return _inspection.vm();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
@@ -63,10 +67,6 @@ public abstract class InspectorLabel extends JTextField implements InspectionHol
 
     public final InspectionActions actions() {
         return _inspection.actions();
-    }
-
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
     }
 
     @Override
