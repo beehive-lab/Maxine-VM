@@ -359,13 +359,32 @@ public final class Heap {
             Log.print("--GC requested by thread ");
             Log.printVmThread(VmThread.current(), false);
             Log.println("--");
+            Log.print("--Before GC--   used: ");
+            Log.print(reportUsedSpace().toLong());
+            Log.print(", free: ");
+            Log.print(reportFreeSpace().toLong());
+            Log.println("--");
             Log.unlock(lockDisabledSafepoints);
         }
-        return heapScheme().collectGarbage(requestedFreeSpace);
+        final boolean freedEnough = heapScheme().collectGarbage(requestedFreeSpace);
+        if (verbose()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("--After GC--   used: ");
+            Log.print(reportUsedSpace().toLong());
+            Log.print(", free: ");
+            Log.print(reportFreeSpace().toLong());
+            Log.println("--");
+            Log.unlock(lockDisabledSafepoints);
+        }
+        return freedEnough;
     }
 
     public static Size reportFreeSpace() {
         return heapScheme().reportFreeSpace();
+    }
+
+    public static Size reportUsedSpace() {
+        return heapScheme().reportUsedSpace();
     }
 
     public static void runFinalization() {

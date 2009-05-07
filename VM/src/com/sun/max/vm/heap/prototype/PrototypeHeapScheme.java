@@ -124,6 +124,10 @@ public class PrototypeHeapScheme extends HeapSchemeAdaptor implements HeapScheme
         throw ProgramError.unexpected();
     }
 
+    public Size reportUsedSpace() {
+        throw ProgramError.unexpected();
+    }
+
     public void runFinalization() {
         ProgramError.unexpected();
     }
