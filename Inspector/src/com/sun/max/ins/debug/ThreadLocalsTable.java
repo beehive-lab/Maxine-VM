@@ -222,7 +222,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                         registerNameList = registerNameList + "," + name;
                     }
                 }
-                setText(registerNameList + "--->");
+                setText(registerNameList + "-->");
                 setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(_teleNativeThread) + " point at this location");
                 setForeground(style().memoryRegisterTagTextColor());
             }
