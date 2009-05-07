@@ -639,7 +639,6 @@ public final class StackReferenceMapPreparer {
             if (parameterKind == Kind.REFERENCE) {
                 setTrampolineStackSlotBitForRegister(framePointerSlotIndex, parameterRegisterIndex);
             }
-            // TODO: ask the abi whether this kind of parameter may use an integer register or not
             if (_trampolineTargetMethod.abi().putIntoIntegerRegister(parameterKind)) {
                 parameterRegisterIndex++;
                 if (parameterRegisterIndex >= _trampolineTargetMethod.abi().integerIncomingParameterRegisters().length()) {

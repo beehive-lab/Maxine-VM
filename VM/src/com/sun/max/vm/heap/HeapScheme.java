@@ -154,7 +154,21 @@ public interface HeapScheme extends VMScheme {
      */
     boolean collectGarbage(Size requestedFreeSpace);
 
+    /**
+     * Gets the amount of free memory on the heap. This method does not trigger a GC.
+     *
+     * @return  an approximation to the total amount of memory currently
+     *          available for future allocated objects, measured in bytes.
+     */
     Size reportFreeSpace();
+
+    /**
+     * Gets the amount of memory used by objects allocated on the heap. This method does not trigger a GC.
+     *
+     * @return  an approximation to the total amount of memory currently
+     *          used by allocated objects, measured in bytes.
+     */
+    Size reportUsedSpace();
 
     void runFinalization();
 
