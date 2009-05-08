@@ -103,14 +103,14 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
         return kind.isCategory1() ? JIT_SLOT_SIZE : 2 * JIT_SLOT_SIZE;
     }
 
-    private static final int CAT1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
-    private static final int CAT2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
+    private static final int CATEGORY1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
+    private static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     public static int offsetInStackSlot(Kind kind) {
         if (kind.width().equals(WordWidth.BITS_64)) {
-            return CAT2_OFFSET_WITHIN_WORD;
+            return CATEGORY2_OFFSET_WITHIN_WORD;
         }
-        return CAT1_OFFSET_WITHIN_WORD;
+        return CATEGORY1_OFFSET_WITHIN_WORD;
     }
 
     /**

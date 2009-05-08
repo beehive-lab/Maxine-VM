@@ -91,6 +91,21 @@ public class IntsTest extends MaxTestCase {
         assertBitsEquals(lowBitsSet(Integer.MIN_VALUE), Ints.lowBitsSet(Integer.MIN_VALUE));
     }
 
+    public void test_sizeOfBase10String() {
+        assertEquals(Integer.toString(0).length(), Ints.sizeOfBase10String(0));
+        assertEquals(Integer.toString(1).length(), Ints.sizeOfBase10String(1));
+        assertEquals(Integer.toString(-1).length(), Ints.sizeOfBase10String(-1));
+        assertEquals(Integer.toString(Integer.MAX_VALUE).length(), Ints.sizeOfBase10String(Integer.MAX_VALUE));
+        assertEquals(Integer.toString(Integer.MIN_VALUE).length(), Ints.sizeOfBase10String(Integer.MIN_VALUE));
+        for (int shift = 0; shift < 32; shift++) {
+            final int val1 = 1 << shift;
+            assertEquals(Integer.toString(val1).length(), Ints.sizeOfBase10String(val1));
+            assertEquals(Integer.toString(-val1).length(), Ints.sizeOfBase10String(-val1));
+            assertEquals(Integer.toString(val1 + 1).length(), Ints.sizeOfBase10String(val1 + 1));
+            assertEquals(Integer.toString(val1 - 1).length(), Ints.sizeOfBase10String(val1 - 1));
+        }
+    }
+
     public void test_numberOfEffectiveUnsignedBits() {
         assertTrue(Ints.numberOfEffectiveUnsignedBits(0) == 0);
         assertTrue(Ints.numberOfEffectiveUnsignedBits(1) == 1);
