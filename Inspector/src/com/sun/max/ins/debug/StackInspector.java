@@ -171,7 +171,7 @@ public class StackInspector extends Inspector {
             if (stackFrame instanceof JavaStackFrame) {
                 final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
                 final Address address = javaStackFrame.instructionPointer();
-                final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
+                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                     toolTip = inspection().nameDisplay().longName(teleTargetMethod, address);
@@ -187,7 +187,7 @@ public class StackInspector extends Inspector {
                 }
                 if (javaStackFrame.isAdapter()) {
                     name = "frame adapter [" + name + "]";
-                    if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().vm().vmConfiguration().jitScheme())) {
+                    if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
                         toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
                     } else {
                         toolTip = "JIT-to-optimized frame adapter [ " + toolTip + "]";
@@ -206,7 +206,7 @@ public class StackInspector extends Inspector {
             } else {
                 ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.instructionPointer();
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
+                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
                 if (teleNativeTargetRoutine != null) {
                     // native that we know something about
                     name = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
@@ -235,7 +235,7 @@ public class StackInspector extends Inspector {
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(_copyStackToClipboardAction);
-        refreshView(inspection.vm().epoch(), true);
+        refreshView(inspection.maxVM().epoch(), true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -307,7 +307,7 @@ public class StackInspector extends Inspector {
             _contentPane.add(_splitPane, BorderLayout.CENTER);
         }
         frame().setContentPane(_contentPane);
-        refreshView(vm().epoch(), true);
+        refreshView(maxVM().epoch(), true);
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -397,7 +397,7 @@ public class StackInspector extends Inspector {
         public final void setStackFrame(StackFrame stackFrame) {
             final Class<StackFrame_Type> type = null;
             _stackFrame = StaticLoophole.cast(type, stackFrame);
-            refresh(vm().epoch(), true);
+            refresh(maxVM().epoch(), true);
         }
     }
 
@@ -504,7 +504,7 @@ public class StackInspector extends Inspector {
                     public Value fetchValue() {
                         // TODO (mlvdv)  generalize this, and catch at {@link WordValueLabel}
                         try {
-                            return new WordValue(vm().readWord(slotBase, offset));
+                            return new WordValue(maxVM().readWord(slotBase, offset));
                         } catch (DataIOError e) {
                             return VoidValue.VOID;
                         }
@@ -525,11 +525,11 @@ public class StackInspector extends Inspector {
             _showSlotAddresses.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    refresh(vm().epoch(), true);
+                    refresh(maxVM().epoch(), true);
                 }
             });
 
-            refresh(vm().epoch(), true);
+            refresh(maxVM().epoch(), true);
 
             add(header, BorderLayout.NORTH);
             final JScrollPane slotsScrollPane = new InspectorScrollPane(inspection(), slotsPanel);

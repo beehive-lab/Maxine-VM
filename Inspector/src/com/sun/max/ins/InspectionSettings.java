@@ -188,7 +188,7 @@ public class InspectionSettings {
             ProgramWarning.message(tracePrefix() + "Error while loading settings from " + _settingsFile + ": " + ioException.getMessage());
         }
 
-        final BootImage bootImage = inspection.vm().bootImage();
+        final BootImage bootImage = inspection.maxVM().bootImage();
         _bootimageClient = new AbstractSaveSettingsListener("bootimage") {
             public void saveSettings(SaveSettingsEvent settings) {
                 settings.save(BOOT_VERSION_KEY, String.valueOf(bootImage.header()._version));

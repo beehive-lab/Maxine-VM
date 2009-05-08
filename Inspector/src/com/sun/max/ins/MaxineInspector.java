@@ -73,21 +73,21 @@ public final class MaxineInspector {
     private MaxineInspector() {
     }
 
-    private static void createAndShowGUI(VM vm) {
+    private static void createAndShowGUI(MaxVM maxVM) {
         try {
             Trace.begin(TRACE_VALUE, _tracePrefix + "Initializing");
             final long startTimeMillis = System.currentTimeMillis();
-            _inspection = new Inspection(vm);
+            _inspection = new Inspection(maxVM);
             //TODO (mlvdv) don't know if the separate initialization is still necessary
             _inspection.initialize();
             InspectorFrame.TitleBarListener.initialize();
 
-            if (!vm.isReadOnly()) {
+            if (!maxVM.isReadOnly()) {
                 try {
                     // Choose an arbitrary thread as the "current" thread. If the inspector is
                     // creating the process to be debugged (as opposed to attaching to it), then there
                     // should only be one thread.
-                    final IterableWithLength<TeleNativeThread> threads = _inspection.vm().threads();
+                    final IterableWithLength<TeleNativeThread> threads = _inspection.maxVM().threads();
                     TeleNativeThread nonJavaThread = null;
                     for (TeleNativeThread thread : threads) {
                         if (thread.isJava()) {
@@ -108,7 +108,7 @@ public final class MaxineInspector {
                     BreakpointsInspector.make(_inspection);
                     MethodInspector.Manager.make(_inspection);
                     ObjectInspectorFactory.make(_inspection);
-                    _inspection.focus().setCodeLocation(vm.createCodeLocation(_inspection.focus().thread().instructionPointer()), false);
+                    _inspection.focus().setCodeLocation(maxVM.createCodeLocation(_inspection.focus().thread().instructionPointer()), false);
                     _inspection.refreshAll(false);
                 } catch (Throwable throwable) {
                     System.err.println("Error during initialization");
@@ -163,10 +163,10 @@ public final class MaxineInspector {
         }
 
         try {
-            final VM vm = TeleVM.create(options);
+            final MaxVM maxVM = TeleVM.create(options);
             SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
-                    createAndShowGUI(vm);
+                    createAndShowGUI(maxVM);
                 }
             });
         } catch (Exception exception) {

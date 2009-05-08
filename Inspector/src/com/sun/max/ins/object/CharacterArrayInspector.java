@@ -78,7 +78,7 @@ public final class CharacterArrayInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(vm().epoch(), true);
+                prober.refresh(maxVM().epoch(), true);
             }
         });
         frame().getContentPane().add(_tabbedPane);

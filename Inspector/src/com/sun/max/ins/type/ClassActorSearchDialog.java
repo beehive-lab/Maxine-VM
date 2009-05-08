@@ -42,7 +42,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     @Override
     protected TeleObject convertSelectedItem(Object listItem) {
         final String name = (String) listItem;
-        return vm().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
+        return maxVM().findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(name));
     }
 
     /**
@@ -81,7 +81,7 @@ public final class ClassActorSearchDialog extends TeleObjectSearchDialog {
     protected void rebuildList(String filterText) {
         if (!filterText.isEmpty()) {
             final String filter = filterText.toLowerCase();
-            final Set<TypeDescriptor> typeDescriptors = vm().typeDescriptors();
+            final Set<TypeDescriptor> typeDescriptors = maxVM().typeDescriptors();
             final SortedSet<String> classNames = new TreeSet<String>();
             for (TypeDescriptor typeDescriptor : typeDescriptors) {
                 final String className = match(filter, typeDescriptor);

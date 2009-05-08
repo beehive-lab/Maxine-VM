@@ -77,7 +77,7 @@ public class ObjectHeaderTable extends InspectorTable {
         _objectInspector = objectInspector;
         _inspection = objectInspector.inspection();
         _teleObject = objectInspector.teleObject();
-        final LayoutScheme layoutScheme = vm().vmConfiguration().layoutScheme();
+        final LayoutScheme layoutScheme = maxVM().vmConfiguration().layoutScheme();
         _hubReferenceOffset = layoutScheme.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
         _miscWordOffset = layoutScheme.generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
         _arrayLengthOffset = layoutScheme.arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
@@ -110,7 +110,7 @@ public class ObjectHeaderTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(_inspection.vm().epoch(), true);
+        refresh(_inspection.maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -223,7 +223,7 @@ public class ObjectHeaderTable extends InspectorTable {
 
         public int addressToRow(Address address) {
             if (!address.isZero()) {
-                final int wordSize = vm().wordSize();
+                final int wordSize = maxVM().wordSize();
                 final Address endAddress = _teleObject.getObjectKind() == ObjectKind.TUPLE ? _objectOrigin.plus(_miscWordOffset + wordSize) : _objectOrigin.plus(_arrayLengthOffset +
                     wordSize);
                 if (address.greaterEqual(_objectOrigin) && address.lessThan(endAddress)) {
@@ -274,7 +274,7 @@ public class ObjectHeaderTable extends InspectorTable {
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
                 final Address address = _model.rowToAddress(row);
-                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(vm().wordSize()));
+                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
                 if (registerSymbols.isEmpty()) {
                     setText("");
                     setToolTipText("");

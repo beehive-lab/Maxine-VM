@@ -83,7 +83,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        final Address address = _values.start().plus(selectedRow * vm().wordSize());
+                        final Address address = _values.start().plus(selectedRow * maxVM().wordSize());
                         setAddressFocus(address);
                     }
                 }
@@ -91,7 +91,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             }
         });
 
-        refresh(inspection.vm().epoch(), true);
+        refresh(inspection.maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -153,7 +153,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public int rowToOffset(int row) {
-            return row * vm().wordSize();
+            return row * maxVM().wordSize();
         }
 
         public Address rowToAddress(int row) {
@@ -163,7 +163,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         public int addressToRow(Address address) {
             if (!address.isZero()) {
                 if (address.greaterEqual(_values.start()) && address.lessThan(_values.end())) {
-                    return address.minus(_values.start()).dividedBy(vm().wordSize()).toInt();
+                    return address.minus(_values.start()).dividedBy(maxVM().wordSize()).toInt();
                 }
             }
             return -1;
@@ -208,7 +208,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             final Address address = _model.rowToAddress(row);
             String registerNameList = null;
             final TeleIntegerRegisters teleIntegerRegisters = _teleNativeThread.integerRegisters();
-            final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(vm().wordSize()));
+            final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
             if (registerSymbols.isEmpty()) {
                 setText("");
                 setToolTipText("");

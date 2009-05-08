@@ -141,7 +141,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 }
             }
         });
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     protected abstract void updateText();
@@ -366,7 +366,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         protected void handleLeftButtonEvent() {
             checkResolved();
             if (_teleClassMethodActor != null && _teleClassMethodActor.hasCodeAttribute()) {
-                final TeleCodeLocation teleCodeLocation = vm().createCodeLocation(_teleClassMethodActor, 0);
+                final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(_teleClassMethodActor, 0);
                 inspection().focus().setCodeLocation(teleCodeLocation, false);
             }
         }

@@ -52,7 +52,7 @@ import com.sun.max.vm.value.*;
  *
  * @author Michael Van De Vanter
  */
-public interface VM {
+public interface MaxVM {
 
     /**
      * @return the display name of the VM

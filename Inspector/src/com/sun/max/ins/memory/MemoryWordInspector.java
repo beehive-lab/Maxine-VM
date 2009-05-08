@@ -85,7 +85,7 @@ public final class MemoryWordInspector extends Inspector {
         // Configure buttons
         final JButton up = new JButton(new AbstractAction("Up") {
             public void actionPerformed(ActionEvent e) {
-                _address = _address.minus(vm().wordSize());
+                _address = _address.minus(maxVM().wordSize());
                 addressField.setText(_address.toString(16));
                 numberOfWordsField.setText(Integer.toString(++_numberOfWords));
                 MemoryWordInspector.this.reconstructView();
@@ -176,7 +176,7 @@ public final class MemoryWordInspector extends Inspector {
             final int line = Arrays.find(_offsetLabels, source);
             if (line >= 0) {
                 _selectedLine = line;
-                _selectedAddress = _address.plus(line * vm().wordSize());
+                _selectedAddress = _address.plus(line * maxVM().wordSize());
                 MemoryWordInspector.this.reconstructView();
             }
         }
@@ -223,12 +223,12 @@ public final class MemoryWordInspector extends Inspector {
 
     @Override
     protected synchronized void refreshView(long epoch, boolean force) {
-        final int wordSize = vm().wordSize();
+        final int wordSize = maxVM().wordSize();
         for (int i = 0; i < _numberOfWords; i++) {
             final Address address = _address.plus(i * wordSize);
             try {
                 _addressLabels[i].clearRegister();
-                _memoryWords[i].setValue(new WordValue(vm().readWord(address)));
+                _memoryWords[i].setValue(new WordValue(maxVM().readWord(address)));
 
             } catch (DataIOError e) {
                 _memoryWords[i].setValue(VoidValue.VOID);
@@ -314,7 +314,7 @@ public final class MemoryWordInspector extends Inspector {
             _memoryWords[line] = new MemoryWordLabel(inspection(), line);
             view.add(_memoryWords[line]);
 
-            lineAddress = lineAddress.plus(vm().wordSize());
+            lineAddress = lineAddress.plus(maxVM().wordSize());
         }
 
         refreshView(epoch, true);
@@ -334,7 +334,7 @@ public final class MemoryWordInspector extends Inspector {
         _address = address.aligned();
         _selectedAddress = _address;
         _numberOfWords = numberOfWords;
-        _wordHexChars = vm().wordSize() * 2;
+        _wordHexChars = maxVM().wordSize() * 2;
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(inspection().getDeleteInspectorsAction(_otherMemoryInspectorsPredicate, "Close other Memory Word Inspectors"));

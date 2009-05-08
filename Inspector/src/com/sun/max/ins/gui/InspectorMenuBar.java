@@ -60,8 +60,8 @@ public class InspectorMenuBar extends JMenuBar implements Prober, InspectionHold
         return _inspection.actions();
     }
 
-    public VM vm() {
-        return _inspection.vm();
+    public MaxVM maxVM() {
+        return _inspection.maxVM();
     }
 
     public void redisplay() {

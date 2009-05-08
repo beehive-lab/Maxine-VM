@@ -73,7 +73,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private JMenu createInspectionMenu() {
         final JMenu menu = new JMenu("Inspector");
-        if (!vm().isBootImageRelocated()) {
+        if (!maxVM().isBootImageRelocated()) {
             menu.add(_actions.relocateBootImage());
             menu.addSeparator();
         }

@@ -61,8 +61,8 @@ public class InspectorPanel extends JPanel implements Prober, InspectionHolder {
         return _inspection;
     }
 
-    public VM vm() {
-        return _inspection.vm();
+    public MaxVM maxVM() {
+        return _inspection.maxVM();
     }
 
     public final InspectorStyle style() {

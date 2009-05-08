@@ -65,7 +65,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         _viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        refreshView(inspection.vm().epoch(), true);
+        refreshView(inspection.maxVM().epoch(), true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 

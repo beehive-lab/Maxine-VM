@@ -171,7 +171,7 @@ public class WordValueLabel extends ValueLabel {
                         switch (_valueKind) {
                             case OBJECT_REFERENCE:
                             case OBJECT_REFERENCE_TEXT: {
-                                final TeleObject teleObject = vm().makeTeleObject(vm().wordToReference(value().toWord()));
+                                final TeleObject teleObject = maxVM().makeTeleObject(maxVM().wordToReference(value().toWord()));
                                 final TeleClassMethodActor teleClassMethodActor = teleObject.getTeleClassMethodActorForObject();
                                 if (teleClassMethodActor != null) {
                                     // Add method-related menu items
@@ -238,17 +238,17 @@ public class WordValueLabel extends ValueLabel {
             }
         } else {
             _valueKind = ValueKind.WORD;
-            if (vm().isBootImageRelocated()) {
+            if (maxVM().isBootImageRelocated()) {
                 if (newValue == null || newValue.isZero()) {
                     if (_valueMode == ValueMode.REFERENCE) {
                         _valueKind = ValueKind.NULL;
                     }
-                } else if (vm().isValidReference(vm().wordToReference(newValue.toWord()))) {
+                } else if (maxVM().isValidReference(maxVM().wordToReference(newValue.toWord()))) {
                     _valueKind = (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) ? ValueKind.OBJECT_REFERENCE_TEXT : ValueKind.OBJECT_REFERENCE;
-                    final TeleReference reference = (TeleReference) vm().wordToReference(newValue.toWord());
+                    final TeleReference reference = (TeleReference) maxVM().wordToReference(newValue.toWord());
 
                     try {
-                        _teleObject = vm().makeTeleObject(reference);
+                        _teleObject = maxVM().makeTeleObject(reference);
                     } catch (Throwable throwable) {
                         // If we don't catch this the views will not be updated at all.
                         _teleObject = null;
@@ -256,14 +256,14 @@ public class WordValueLabel extends ValueLabel {
                     }
                 } else {
                     final Address address = newValue.toWord().asAddress();
-                    _teleNativeThread = vm().threadContaining(address);
+                    _teleNativeThread = maxVM().threadContaining(address);
                     if (_teleNativeThread != null) {
                         _valueKind = _valueMode == ValueMode.REFERENCE ? ValueKind.STACK_LOCATION_TEXT : ValueKind.STACK_LOCATION;
                     } else {
                         if (_valueMode == ValueMode.REFERENCE || _valueMode == ValueMode.LITERAL_REFERENCE) {
                             _valueKind = ValueKind.INVALID_OBJECT_REFERENCE;
                         } else {
-                            _teleTargetMethod = vm().makeTeleTargetMethod(newValue.toWord().asAddress());
+                            _teleTargetMethod = maxVM().makeTeleTargetMethod(newValue.toWord().asAddress());
                             if (_teleTargetMethod != null) {
                                 final Address codeStart = _teleTargetMethod.getCodeStart();
                                 final Word jitEntryPoint = codeStart.plus(CallEntryPoint.JIT_ENTRY_POINT.offsetFromCodeStart());
@@ -274,7 +274,7 @@ public class WordValueLabel extends ValueLabel {
                                     _valueKind = (_valueMode == ValueMode.CALL_RETURN_POINT) ? ValueKind.CALL_RETURN_POINT : ValueKind.CALL_RETURN_POINT;
                                 }
                             } else if (_valueMode == ValueMode.ITABLE_ENTRY) {
-                                final TeleClassActor teleClassActor = vm().findTeleClassActor(newValue.asWord().asAddress().toInt());
+                                final TeleClassActor teleClassActor = maxVM().findTeleClassActor(newValue.asWord().asAddress().toInt());
                                 if (teleClassActor != null) {
                                     _teleClassActor = teleClassActor;
                                     _valueKind = ValueKind.CLASS_ACTOR;
@@ -476,7 +476,7 @@ public class WordValueLabel extends ValueLabel {
             case FLAGS: {
                 setFont(style().wordFlagsFont());
                 setForeground(style().wordDataColor());
-                setText(vm().visualizeStateRegister(value.toLong()));
+                setText(maxVM().visualizeStateRegister(value.toLong()));
                 setToolTipText("Flags 0x" + hexString);
                 break;
             }
@@ -628,7 +628,7 @@ public class WordValueLabel extends ValueLabel {
             case OBJECT_REFERENCE:
             case UNCHECKED_REFERENCE:
             case OBJECT_REFERENCE_TEXT: {
-                final TeleObject teleObject = vm().makeTeleObject(vm().wordToReference(value.toWord()));
+                final TeleObject teleObject = maxVM().makeTeleObject(maxVM().wordToReference(value.toWord()));
                 action = inspection().actions().inspectObject(teleObject, null);
                 break;
             }
@@ -641,14 +641,14 @@ public class WordValueLabel extends ValueLabel {
                 action = new InspectorAction(inspection(), "View Code at address") {
                     @Override
                     public void procedure() {
-                        inspection().focus().setCodeLocation(vm().createCodeLocation(address), true);
+                        inspection().focus().setCodeLocation(maxVM().createCodeLocation(address), true);
                     }
                 };
                 break;
             }
             case CLASS_ACTOR_ID:
             case CLASS_ACTOR: {
-                final TeleClassActor teleClassActor = vm().findTeleClassActor(value.asWord().asAddress().toInt());
+                final TeleClassActor teleClassActor = maxVM().findTeleClassActor(value.asWord().asAddress().toInt());
                 if (teleClassActor != null) {
                     action = inspection().actions().inspectObject(teleClassActor, "Inspect ClassActor");
                 }
@@ -701,7 +701,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().contains(address)) {
+                    if (maxVM().contains(address)) {
                         action = inspection().actions().inspectMemory(address, null);
                     }
                     break;
@@ -740,7 +740,7 @@ public class WordValueLabel extends ValueLabel {
                 case DOUBLE:
                 case UNCHECKED_WORD:
                 case INVALID: {
-                    if (vm().contains(address)) {
+                    if (maxVM().contains(address)) {
                         action = inspection().actions().inspectMemoryWords(address, null);
                     }
                     break;
@@ -754,7 +754,7 @@ public class WordValueLabel extends ValueLabel {
         InspectorAction action = null;
         if (value != VoidValue.VOID) {
             final Address address = value.toWord().asAddress();
-            final MemoryRegion memoryRegion = vm().memoryRegionContaining(address);
+            final MemoryRegion memoryRegion = maxVM().memoryRegionContaining(address);
             if (memoryRegion != null) {
                 action = inspection().actions().selectMemoryRegion(memoryRegion);
             }

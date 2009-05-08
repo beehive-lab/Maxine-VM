@@ -126,7 +126,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(_inspection.vm().epoch(), true);
+        refresh(_inspection.maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -260,7 +260,7 @@ public final class ArrayElementsTable extends InspectorTable {
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
                 final Address address = _model.rowToAddress(row);
-                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(vm().wordSize()));
+                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
                 if (registerSymbols.isEmpty()) {
                     setText("");
                     setToolTipText("");
@@ -347,21 +347,21 @@ public final class ArrayElementsTable extends InspectorTable {
                     label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE) {
                         @Override
                         public Value fetchValue() {
-                            return vm().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                            return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 } else if (_elementKind == Kind.WORD) {
                     label = new WordValueLabel(_inspection, _wordValueMode) {
                         @Override
                         public Value fetchValue() {
-                            return vm().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                            return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 } else {
                     label = new PrimitiveValueLabel(_inspection, _elementKind) {
                         @Override
                         public Value fetchValue() {
-                            return vm().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                            return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 }
@@ -398,7 +398,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 label = new MemoryRegionValueLabel(_inspection) {
                     @Override
                     public Value fetchValue() {
-                        return vm().getElementValue(_elementKind, _objectReference, _startIndex + elementRow);
+                        return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + elementRow);
                     }
                 };
                 _labels[elementRow] = label;
@@ -427,7 +427,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 final int previousVisibleCount = _visibleElementCount;
                 _visibleElementCount = 0;
                 for (int index = 0; index < _arrayLength; index++) {
-                    if (!vm().getElementValue(_elementKind, _objectReference, index).isZero()) {
+                    if (!maxVM().getElementValue(_elementKind, _objectReference, index).isZero()) {
                         _rowToElementMap[_visibleElementCount++] = index;
                     }
                 }

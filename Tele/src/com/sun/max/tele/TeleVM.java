@@ -71,7 +71,7 @@ import com.sun.max.vm.value.*;
 /**
  * Implementation of remote access to an instance of the Maxine VM.
  * Access from the Inspector or other clients of this implementation
- * gain access through the {@link VM} interface.
+ * gain access through the {@link MaxVM} interface.
  *
  * @author Bernd Mathiske
  * @author Athul Acharya
@@ -79,7 +79,7 @@ import com.sun.max.vm.value.*;
  * @author Doug Simon
  * @author Thomas Wuerthinger
  */
-public abstract class TeleVM implements VM {
+public abstract class TeleVM implements MaxVM {
 
     private static final int TRACE_VALUE = 2;
 

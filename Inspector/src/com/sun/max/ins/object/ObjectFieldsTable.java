@@ -116,7 +116,7 @@ public final class ObjectFieldsTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(_inspection.vm().epoch(), true);
+        refresh(_inspection.maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -247,7 +247,7 @@ public final class ObjectFieldsTable extends InspectorTable {
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
                 final Address address = _model.rowToAddress(row);
-                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(vm().wordSize()));
+                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
                 if (registerSymbols.isEmpty()) {
                     setText("");
                     setToolTipText("");

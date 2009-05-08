@@ -52,7 +52,7 @@ public final class StringPane extends InspectorScrollPane {
         _textArea = textArea;
         _textArea.append(_stringValue);
         _textArea.setEditable(false);
-        refresh(inspection.vm().epoch(), true);
+        refresh(inspection.maxVM().epoch(), true);
     }
 
     @Override

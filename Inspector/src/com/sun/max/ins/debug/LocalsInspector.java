@@ -74,7 +74,7 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
 
     public LocalsInspector(Inspection inspection, TeleNativeThread teleNativeThread, JitStackFrame jitStackFrame) {
         super(inspection, LongValue.from(jitStackFrame.framePointer().toLong()));
-        assert jitStackFrame.targetMethod().compilerScheme() == vm().vmConfiguration().jitScheme();
+        assert jitStackFrame.targetMethod().compilerScheme() == maxVM().vmConfiguration().jitScheme();
         _teleNativeThread = teleNativeThread;
         _jitStackFrame = jitStackFrame;
         final ClassMethodActor classMethodActor = jitStackFrame.targetMethod().classMethodActor();
@@ -176,11 +176,11 @@ public class LocalsInspector extends UniqueInspector<LocalsInspector> implements
     private static final Icon _ARROW = IconFactory.createRightArrow(_iconSize);
 
     private Word readStackSlot(int stackSlotIndex) {
-        return vm().readWord(_jitStackFrame.operandStackPointer(stackSlotIndex));
+        return maxVM().readWord(_jitStackFrame.operandStackPointer(stackSlotIndex));
     }
 
     private Word readlocalVariable(int localVariableIndex) {
-        return vm().readWord(_jitStackFrame.localsPointer(localVariableIndex));
+        return maxVM().readWord(_jitStackFrame.localsPointer(localVariableIndex));
     }
 
     private JLabel getTosLabel(int stackSize) {

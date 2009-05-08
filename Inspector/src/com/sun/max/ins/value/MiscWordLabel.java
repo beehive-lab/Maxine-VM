@@ -98,7 +98,7 @@ public final class MiscWordLabel extends ValueLabel {
     public void updateText() {
         final Word miscWord = value().asWord();
         final String hexString = miscWord.toHexString();
-        final MonitorScheme monitorScheme = vm().bootImage().vmConfiguration().monitorScheme();
+        final MonitorScheme monitorScheme = maxVM().bootImage().vmConfiguration().monitorScheme();
         if (monitorScheme instanceof ModalMonitorScheme) {
             _teleJavaMonitor = null;
             if (_modalLockWordDecoder == null) {
@@ -111,7 +111,7 @@ public final class MiscWordLabel extends ValueLabel {
                 final int hashcode = biasedLockWord.getHashcode();
                 final int recursion = biasedLockWord.getRecursionCount();
                 final int ownerThreadID = BiasedLockModeHandler.decodeBiasOwnerThreadID(biasedLockWord);
-                final TeleNativeThread thread = vm().getThread(ownerThreadID);
+                final TeleNativeThread thread = maxVM().getThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 final int biasEpoch = biasedLockWord.getEpoch().toInt();
                 setText("BiasedLock(" + recursion + "): " + hexString);
@@ -122,7 +122,7 @@ public final class MiscWordLabel extends ValueLabel {
                 final int hashcode = thinLockWord.getHashcode();
                 final int recursionCount = thinLockWord.getRecursionCount();
                 final int ownerThreadID = ThinLockModeHandler.decodeLockOwnerThreadID(thinLockWord);
-                final TeleNativeThread thread = vm().getThread(ownerThreadID);
+                final TeleNativeThread thread = maxVM().getThread(ownerThreadID);
                 final String threadName = inspection().nameDisplay().longName(thread);
                 setText("ThinLock(" + recursionCount + "): " + hexString);
                 setToolTipText("ThinLockWord64:  recursion=" + recursionCount +   ";  thread=" +
@@ -133,11 +133,11 @@ public final class MiscWordLabel extends ValueLabel {
                 final boolean isBound = inflatedLockWord.isBound();
                 if (isBound) {
                     // JavaMonitor is a proper object, not just a Word.
-                    final Reference javaMonitorReference = vm().wordToReference(inflatedLockWord.getBoundMonitorReferenceAsWord());
+                    final Reference javaMonitorReference = maxVM().wordToReference(inflatedLockWord.getBoundMonitorReferenceAsWord());
                     if (javaMonitorReference.isZero()) {
                         setToolTipText("InflatedMonitorLockWord64:  bound, monitor=null");
                     } else {
-                        _teleJavaMonitor = vm().makeTeleObject(javaMonitorReference);
+                        _teleJavaMonitor = maxVM().makeTeleObject(javaMonitorReference);
                         final String name = _teleJavaMonitor.classActorForType().qualifiedName();
                         setToolTipText("InflatedMonitorLockWord64:  bound, monitor=" + name);
                     }

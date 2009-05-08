@@ -61,7 +61,7 @@ public class RegistersTable extends InspectorTable {
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection, this));
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 

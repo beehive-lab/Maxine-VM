@@ -304,7 +304,7 @@ public abstract class TargetCodeViewer extends CodeViewer {
      * Does the instruction address have a target code breakpoint set in the VM.
      */
     protected TeleTargetBreakpoint getTargetBreakpointAtRow(int row) {
-        return vm().getTargetBreakpoint(_instructions.get(row).address());
+        return maxVM().getTargetBreakpoint(_instructions.get(row).address());
     }
 
     protected final Color rowToBackgroundColor(int row) {

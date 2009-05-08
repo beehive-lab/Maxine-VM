@@ -112,7 +112,7 @@ public class TypeLabel extends InspectorLabel {
             _teleClassActor = null;
         } else {
             // Might be null if class not yet known in VM
-            _teleClassActor = vm().findTeleClassActor(_typeDescriptor);
+            _teleClassActor = maxVM().findTeleClassActor(_typeDescriptor);
         }
     }
 

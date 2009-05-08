@@ -229,7 +229,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     protected Sequence<TeleTargetBreakpoint> getTargetBreakpointsAtRow(int row) {
         final AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
         if (_haveTargetCodeAddresses) {
-            for (TeleTargetBreakpoint teleTargetBreakpoint : vm().targetBreakpoints()) {
+            for (TeleTargetBreakpoint teleTargetBreakpoint : maxVM().targetBreakpoints()) {
                 if (rowContainsAddress(row, teleTargetBreakpoint.address())) {
                     teleTargetBreakpoints.append(teleTargetBreakpoint);
                 }
@@ -242,7 +242,7 @@ public abstract class BytecodeViewer extends CodeViewer {
      * @return the bytecode breakpoint, if any, set at the bytecode being displayed in the row.
      */
     protected TeleBytecodeBreakpoint getBytecodeBreakpointAtRow(int row) {
-        for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : vm().bytecodeBreakpoints()) {
+        for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
             final Key key = teleBytecodeBreakpoint.key();
             // the direction of key comparison is significant
             if (_methodActorKey.equals(key) &&  bytecodeInstructions().get(row).position() == key.position()) {

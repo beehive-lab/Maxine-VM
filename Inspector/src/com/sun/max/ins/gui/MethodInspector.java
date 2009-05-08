@@ -93,16 +93,16 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
      */
     private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
         MethodInspector methodInspector = null;
-        final TeleTargetMethod teleTargetMethod = inspection.vm().makeTeleTargetMethod(address);
+        final TeleTargetMethod teleTargetMethod = inspection.maxVM().makeTeleTargetMethod(address);
         if (teleTargetMethod != null) {
             // Java method
             methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
         } else {
-            final TeleRuntimeStub teleRuntimeStub = inspection.vm().makeTeleRuntimeStub(address);
+            final TeleRuntimeStub teleRuntimeStub = inspection.maxVM().makeTeleRuntimeStub(address);
             if (teleRuntimeStub != null) {
                 methodInspector = make(inspection, teleRuntimeStub);
             } else {
-                final TeleTargetRoutine teleTargetRoutine = inspection.vm().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+                final TeleTargetRoutine teleTargetRoutine = inspection.maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
                 if (teleTargetRoutine != null) {
                     // Some other kind of known target code
                     methodInspector = make(inspection, teleTargetRoutine);
@@ -114,7 +114,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                         @Override
                         public void entered(Address nativeAddress, Size codeSize, String name) {
                             try {
-                                final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().createTeleNativeTargetRoutine(nativeAddress, codeSize, name);
+                                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().createTeleNativeTargetRoutine(nativeAddress, codeSize, name);
                                 result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
                                 // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                             } catch (IllegalArgumentException illegalArgumentException) {

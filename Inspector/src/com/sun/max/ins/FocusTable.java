@@ -159,7 +159,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         //setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         //addMouseListener(new FocusInspectorMouseClickAdapter(inspection()));
 
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -358,31 +358,31 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
     }
 
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void redisplay() {
