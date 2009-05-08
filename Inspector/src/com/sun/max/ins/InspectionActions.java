@@ -2780,10 +2780,10 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public  void procedure() {
-            final TeleNativeThread selectedThread = focus().thread();
-            if (selectedThread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
+            final TeleNativeThread thread = focus().thread();
+            if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
                 try {
-                    vm().singleStep(selectedThread, false);
+                    vm().singleStep(thread, false);
                 } catch (Exception exception) {
                     inspection().errorMessage("Couldn't single step", exception.toString());
                 }
@@ -2822,10 +2822,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
-            try {
-                vm().stepOver(thread, false, true);
-            } catch (Exception exception) {
-                inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
+            if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
+                try {
+                    vm().stepOver(thread, false, true);
+                } catch (Exception exception) {
+                    inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
+                }
             }
         }
 
@@ -2862,10 +2864,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
-            try {
-                vm().stepOver(thread, false, false);
-            } catch (Exception exception) {
-                inspection().errorMessage("Step over could not be performed.", exception.toString());
+            if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
+                try {
+                    vm().stepOver(thread, false, false);
+                } catch (Exception exception) {
+                    inspection().errorMessage("Step over could not be performed.", exception.toString());
+                }
             }
         }
 
