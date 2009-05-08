@@ -68,8 +68,8 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
         return _inspection.actions();
     }
 
-    public VM vm() {
-        return _inspection.vm();
+    public MaxVM maxVM() {
+        return _inspection.maxVM();
     }
 
     public void redisplay() {

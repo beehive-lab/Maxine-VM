@@ -55,7 +55,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
 
         @Override
         public void procedure() {
-            inspection().focus().setCodeLocation(vm().createCodeLocation(_teleTargetMethod.callEntryPoint()), false);
+            inspection().focus().setCodeLocation(maxVM().createCodeLocation(_teleTargetMethod.callEntryPoint()), false);
         }
     }
 
@@ -74,7 +74,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
             writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(_teleTargetMethod) + "  " + _teleTargetMethod.classActorForType().simpleName());
             _teleTargetMethod.traceBundle(writer);
             writer.flush();
-            final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind();
+            final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind();
             final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(_teleTargetMethod.getEncodedInlineDataDescriptors());
             final Pointer startAddress = _teleTargetMethod.getCodeStart();
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
@@ -163,7 +163,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         _inspectTargetMethodObjectAction = new InspectTargetMethodObjectAction();
         _inspectTargetCodeMemoryAction = new InspectTargetCodeMemoryAction();
         _inspectTargetCodeMemoryWordsAction = new InspectTargetCodeMemoryWordsAction();
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void addTo(InspectorMenu menu) {

@@ -72,7 +72,7 @@ public abstract class ValueLabel extends InspectorLabel {
      */
     protected final void initializeValue() {
         _value = fetchValue();
-        _epoch = vm().epoch();
+        _epoch = maxVM().epoch();
     }
 
     /**

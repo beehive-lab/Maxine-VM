@@ -61,7 +61,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         }
 
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Inspection inspection, Class<UniqueInspector_Type> type, Reference subject) {
-            return new ValueKey<UniqueInspector_Type>(type, inspection.vm().createReferenceValue(subject));
+            return new ValueKey<UniqueInspector_Type>(type, inspection.maxVM().createReferenceValue(subject));
         }
 
         public static <UniqueInspector_Type extends UniqueInspector> Key<UniqueInspector_Type> create(Class<UniqueInspector_Type> type, long subject) {
@@ -256,7 +256,7 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
     }
 
     protected UniqueInspector(Inspection inspection, Reference subject) {
-        this(inspection, inspection.vm().createReferenceValue(subject));
+        this(inspection, inspection.maxVM().createReferenceValue(subject));
     }
 
     protected UniqueInspector(Inspection inspection) {

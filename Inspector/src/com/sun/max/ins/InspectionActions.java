@@ -274,7 +274,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected synchronized void procedure() {
             try {
-                vm().advanceToJavaEntryPoint();
+                maxVM().advanceToJavaEntryPoint();
             } catch (IOException ioException) {
                 inspection().errorMessage("error during relocation of boot image");
             }
@@ -345,7 +345,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final int oldLevel = vm().getInterpreterUseLevel();
+            final int oldLevel = maxVM().getInterpreterUseLevel();
             int newLevel = oldLevel;
             final String input = inspection().inputDialog("Change interpreter use level (0=none, 1=some, etc)", Integer.toString(oldLevel));
             try {
@@ -354,7 +354,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
-                vm().setInterpreterUseLevel(newLevel);
+                maxVM().setInterpreterUseLevel(newLevel);
             }
         }
 
@@ -390,7 +390,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final int oldLevel = vm().transportDebugLevel();
+            final int oldLevel = maxVM().transportDebugLevel();
             int newLevel = oldLevel;
             final String input = inspection().inputDialog(" (Set transport debug level, 0=none, 1=some, etc)", Integer.toString(oldLevel));
             try {
@@ -399,7 +399,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
-                vm().setTransportDebugLevel(newLevel);
+                maxVM().setTransportDebugLevel(newLevel);
             }
         }
 
@@ -432,7 +432,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final String fileName = inspection().inputDialog("File name: ", FileCommands.defaultCommandFile());
             if (fileName != null && !fileName.equals("")) {
-                vm().executeCommandsFromFile(fileName);
+                maxVM().executeCommandsFromFile(fileName);
             }
         }
     }
@@ -448,7 +448,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  updates the {@linkplain VM#updateLoadableTypeDescriptorsFromClasspath() types available} on
+     * Action:  updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
      * the VM's class path by rescanning the complete class path for types.
      */
     final class UpdateClasspathTypesAction extends InspectorAction {
@@ -461,14 +461,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().updateLoadableTypeDescriptorsFromClasspath();
+            maxVM().updateLoadableTypeDescriptorsFromClasspath();
         }
     }
 
     private final InspectorAction _updateClasspathTypes = new UpdateClasspathTypesAction(null);
 
     /**
-     * @return an Action that updates the {@linkplain VM#updateLoadableTypeDescriptorsFromClasspath() types available} on
+     * @return an Action that updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
      * the VM's class path by rescanning the complete class path for types.
      */
     public final InspectorAction updateClasspathTypes() {
@@ -490,7 +490,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final int oldLevel = vm().getVMTraceLevel();
+            final int oldLevel = maxVM().getVMTraceLevel();
             int newLevel = oldLevel;
             final String input = inspection().inputDialog("Set VM Trace Level", Integer.toString(oldLevel));
             try {
@@ -499,7 +499,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
-                vm().setVMTraceLevel(newLevel);
+                maxVM().setVMTraceLevel(newLevel);
             }
         }
 
@@ -533,7 +533,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final long oldThreshold = vm().getVMTraceThreshold();
+            final long oldThreshold = maxVM().getVMTraceThreshold();
             long newThreshold = oldThreshold;
             final String input = inspection().inputDialog("Set VM trace threshold", Long.toString(oldThreshold));
             try {
@@ -542,7 +542,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newThreshold != oldThreshold) {
-                vm().setVMTraceThreshold(newThreshold);
+                maxVM().setVMTraceThreshold(newThreshold);
             }
         }
 
@@ -668,7 +668,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleCodeLocation teleCodeLocation = vm().createCodeLocation(focus().thread().instructionPointer());
+            final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(focus().thread().instructionPointer());
             focus().setCodeLocation(teleCodeLocation, true);
         }
     }
@@ -901,7 +901,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             } else if (_address != null) {
                 MemoryInspector.create(inspection(), _address).highlight();
             } else {
-                new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory at address...", "Inspect") {
+                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Inspect memory at address...", "Inspect") {
                     @Override
                     public void entered(Address address) {
                         MemoryInspector.create(inspection(), address).highlight();
@@ -952,7 +952,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryInspector.create(inspection(), vm().bootImageStart());
+            MemoryInspector.create(inspection(), maxVM().bootImageStart());
         }
     }
 
@@ -978,7 +978,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryInspector.create(inspection(),  vm().teleBootCodeRegion().start());
+            MemoryInspector.create(inspection(),  maxVM().teleBootCodeRegion().start());
         }
     }
 
@@ -1028,7 +1028,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (_address != null) {
                 MemoryWordInspector.create(inspection(), _address).highlight();
             } else {
-                new AddressInputDialog(inspection(), vm().bootImageStart(), "Inspect memory words at address...", "Inspect") {
+                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Inspect memory words at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
@@ -1081,7 +1081,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), vm().bootImageStart()).highlight();
+            MemoryWordInspector.create(inspection(), maxVM().bootImageStart()).highlight();
         }
     }
 
@@ -1108,7 +1108,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), vm().teleBootCodeRegion().start()).highlight();
+            MemoryWordInspector.create(inspection(), maxVM().teleBootCodeRegion().start()).highlight();
         }
     }
 
@@ -1163,14 +1163,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), vm().teleBootHeapRegion().start(), "Inspect heap object at address...", "Inspect") {
+            new AddressInputDialog(inspection(), maxVM().teleBootHeapRegion().start(), "Inspect heap object at address...", "Inspect") {
 
                 @Override
                 public void entered(Address address) {
                     final Pointer pointer = address.asPointer();
-                    if (vm().isValidOrigin(pointer)) {
-                        final Reference objectReference = vm().originToReference(pointer);
-                        final TeleObject teleObject = vm().makeTeleObject(objectReference);
+                    if (maxVM().isValidOrigin(pointer)) {
+                        final Reference objectReference = maxVM().originToReference(pointer);
+                        final TeleObject teleObject = maxVM().makeTeleObject(objectReference);
                         focus().setHeapObject(teleObject);
                     } else {
                         inspection().errorMessage("heap object not found at 0x"  + address.toHexString());
@@ -1235,7 +1235,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final String input = inspection().inputDialog("Inspect heap object by ID..", "");
             try {
                 final long oid = Long.parseLong(input);
-                final TeleObject teleObject = vm().findObjectByOID(oid);
+                final TeleObject teleObject = maxVM().findObjectByOID(oid);
                 if (teleObject != null) {
                     focus().setHeapObject(teleObject);
                 } else {
@@ -1269,7 +1269,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleObject teleBootClassRegistry = vm().makeTeleObject(vm().bootClassRegistryReference());
+            final TeleObject teleBootClassRegistry = maxVM().makeTeleObject(maxVM().bootClassRegistryReference());
             focus().setHeapObject(teleBootClassRegistry);
         }
     }
@@ -1333,7 +1333,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 16);
-                    final TeleClassActor teleClassActor = vm().findTeleClassActor(serial);
+                    final TeleClassActor teleClassActor = maxVM().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         inspection().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
                     } else {
@@ -1374,7 +1374,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 10);
-                    final TeleClassActor teleClassActor = vm().findTeleClassActor(serial);
+                    final TeleClassActor teleClassActor = maxVM().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         inspection().errorMessage("failed to find ClassActor for ID: " + serial);
                     } else {
@@ -1445,16 +1445,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), vm().bootImageStart(), "View method code containing target code address...", "View Code") {
+            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "View method code containing target code address...", "View Code") {
 
                 @Override
                 public boolean isValidInput(Address address) {
-                    return vm().makeTeleTargetMethod(address) != null;
+                    return maxVM().makeTeleTargetMethod(address) != null;
                 }
 
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().createCodeLocation(address), false);
+                    focus().setCodeLocation(maxVM().createCodeLocation(address), false);
                 }
             };
         }
@@ -1484,16 +1484,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), vm().bootImageStart(), "View runtime stub code containing target code address...", "View Code") {
+            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "View runtime stub code containing target code address...", "View Code") {
 
                 @Override
                 public boolean isValidInput(Address address) {
-                    return vm().makeTeleRuntimeStub(address) != null;
+                    return maxVM().makeTeleRuntimeStub(address) != null;
                 }
 
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().createCodeLocation(address), false);
+                    focus().setCodeLocation(maxVM().createCodeLocation(address), false);
                 }
             };
         }
@@ -1560,7 +1560,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Pointer instructionPointer = focus().thread().instructionPointer();
-            focus().setCodeLocation(vm().createCodeLocation(instructionPointer), true);
+            focus().setCodeLocation(maxVM().createCodeLocation(instructionPointer), true);
         }
 
         @Override
@@ -1605,7 +1605,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecode for Method...", "Inspect");
                 if (teleMethodActor != null && teleMethodActor instanceof TeleClassMethodActor) {
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
-                    final TeleCodeLocation teleCodeLocation = vm().createCodeLocation(teleClassMethodActor, 0);
+                    final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
                     focus().setCodeLocation(teleCodeLocation, false);
                 }
             }
@@ -1640,7 +1640,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (teleClassActor != null) {
                 final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), teleClassActor, "View Target Code for Method...", "View Code", false);
                 if (teleTargetMethods != null) {
-                    focus().setCodeLocation(vm().createCodeLocation(teleTargetMethods.first().callEntryPoint()), false);
+                    focus().setCodeLocation(maxVM().createCodeLocation(teleTargetMethods.first().callEntryPoint()), false);
                 }
             }
         }
@@ -1672,12 +1672,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(vm().createCodeLocation(vm().bootImageStart().plus(_offset)), true);
+            focus().setCodeLocation(maxVM().createCodeLocation(maxVM().bootImageStart().plus(_offset)), true);
         }
     }
 
     private final InspectorAction _viewRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(vm().bootImage().header()._vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of
@@ -1688,7 +1688,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction _viewThreadRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(vm().bootImage().header()._vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
                     Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class);
 
     /**
@@ -1700,7 +1700,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction _viewSchemeRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(vm().bootImage().header()._runSchemeRunMethodOffset, vm().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of
@@ -1729,11 +1729,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleNativeThread teleNativeThread = focus().thread();
             assert teleNativeThread != null;
             final Address indirectCallAddress = teleNativeThread.integerRegisters().getCallRegisterValue();
-            final Address initialAddress = indirectCallAddress == null ? vm().bootImageStart() : indirectCallAddress;
+            final Address initialAddress = indirectCallAddress == null ? maxVM().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(vm().createCodeLocation(address), true);
+                    focus().setCodeLocation(maxVM().createCodeLocation(address), true);
                 }
             };
         }
@@ -1763,7 +1763,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-                    refresh(vm().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -1849,17 +1849,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            for (TeleTargetBreakpoint targetBreakpoint : vm().targetBreakpoints()) {
+            for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
                 targetBreakpoint.remove();
             }
-            for (TeleBytecodeBreakpoint bytecodeBreakpoint : vm().bytecodeBreakpoints()) {
+            for (TeleBytecodeBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
                 bytecodeBreakpoint.remove();
             }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && (vm().bytecodeBreakpointCount() > 0  || vm().targetBreakpointCount() > 0));
+            setEnabled(inspection().hasProcess() && (maxVM().bytecodeBreakpointCount() > 0  || maxVM().targetBreakpointCount() > 0));
         }
     }
 
@@ -1898,7 +1898,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && vm().bytecodeBreakpointCount() > 0);
+            setEnabled(inspection().hasProcess() && maxVM().bytecodeBreakpointCount() > 0);
         }
     }
 
@@ -1960,7 +1960,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(vm().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -1969,9 +1969,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!targetCodeInstructionAddress.isZero()) {
-                TeleTargetBreakpoint breakpoint = vm().getTargetBreakpoint(targetCodeInstructionAddress);
+                TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
-                    breakpoint = vm().makeTargetBreakpoint(targetCodeInstructionAddress);
+                    breakpoint = maxVM().makeTargetBreakpoint(targetCodeInstructionAddress);
                     focus().setBreakpoint(breakpoint);
                 } else {
                     breakpoint.remove();
@@ -2009,7 +2009,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(vm().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -2017,7 +2017,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetRoutine teleTargetRoutine = vm().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+            final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.setTargetCodeLabelBreakpoints();
             } else {
@@ -2054,7 +2054,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(vm().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
             inspection().addInspectionListener(new InspectionListenerAdapter() {
@@ -2068,7 +2068,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetRoutine teleTargetRoutine = vm().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+            final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.removeTargetCodeLabelBreakpoints();
             }
@@ -2076,7 +2076,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && vm().targetBreakpointCount() > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
+            setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
         }
     }
 
@@ -2111,14 +2111,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            for (TeleTargetBreakpoint targetBreakpoint : vm().targetBreakpoints()) {
+            for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
                 targetBreakpoint.remove();
             }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && vm().targetBreakpointCount() > 0);
+            setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0);
         }
     }
 
@@ -2197,7 +2197,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 if (classActor.localVirtualMethodActors() != null) {
                     for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
                         if (virtualMethodActor.name() == SymbolTable.INIT) {
-                            final TeleClassMethodActor teleClassMethodActor = vm().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
+                            final TeleClassMethodActor teleClassMethodActor = maxVM().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                             if (teleClassMethodActor != null) {
                                 TeleTargetBreakpoint teleTargetBreakpoint = null;
                                 for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
@@ -2244,7 +2244,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(vm().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -2254,9 +2254,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final BytecodeLocation bytecodeLocation = focus().codeLocation().bytecodeLocation();
             if (bytecodeLocation != null) {
                 final TeleBytecodeBreakpoint.Key key = new TeleBytecodeBreakpoint.Key(bytecodeLocation);
-                final TeleBytecodeBreakpoint breakpoint = vm().getBytecodeBreakpoint(key);
+                final TeleBytecodeBreakpoint breakpoint = maxVM().getBytecodeBreakpoint(key);
                 if (breakpoint == null) {
-                    vm().makeBytecodeBreakpoint(key);
+                    maxVM().makeBytecodeBreakpoint(key);
                 } else {
                     breakpoint.remove();
                 }
@@ -2297,14 +2297,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (typeDescriptor != null) {
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
-                    vm().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                    maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
                 }
             }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && vm().activateMessenger());
+            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
         }
     }
 
@@ -2335,13 +2335,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
-                vm().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
             }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && vm().activateMessenger());
+            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
         }
     }
 
@@ -2377,14 +2377,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            for (TeleBytecodeBreakpoint bytecodeBreakpoint : vm().bytecodeBreakpoints()) {
+            for (TeleBytecodeBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
                 bytecodeBreakpoint.remove();
             }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && vm().bytecodeBreakpointCount() > 0);
+            setEnabled(inspection().hasProcess() && maxVM().bytecodeBreakpointCount() > 0);
         }
     }
 
@@ -2408,12 +2408,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), vm().bootImageStart(), "Set word watch point at address...", "Watch") {
+            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Set word watch point at address...", "Watch") {
                 @Override
                 public void entered(Address address) {
                     final Address start = address;
                     final Size size = Size.fromInt(Word.size());
-                    vm().makeWatchpoint(new RuntimeMemoryRegion(start, size));
+                    maxVM().makeWatchpoint(new RuntimeMemoryRegion(start, size));
                 }
             };
         }
@@ -2445,7 +2445,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                vm().pause();
+                maxVM().pause();
             } catch (Exception exception) {
                 inspection().errorMessage("Pause could not be initiated", exception.toString());
             }
@@ -2479,7 +2479,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                vm().resume(false, false);
+                maxVM().resume(false, false);
             } catch (Exception exception) {
                 inspection().errorMessage("Run to instruction could not be performed.", exception.toString());
             }
@@ -2520,7 +2520,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    vm().runToInstruction(returnAddress, false, true);
+                    maxVM().runToInstruction(returnAddress, false, true);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
                 }
@@ -2562,7 +2562,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    vm().runToInstruction(returnAddress, false, false);
+                    maxVM().runToInstruction(returnAddress, false, false);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame could not be performed.", exception.toString());
                 }
@@ -2604,7 +2604,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    vm().runToInstruction(selectedAddress, false, true);
+                    maxVM().runToInstruction(selectedAddress, false, true);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
@@ -2648,7 +2648,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    vm().runToInstruction(selectedAddress, false, false);
+                    maxVM().runToInstruction(selectedAddress, false, false);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to selection instruction could not be performed.", exception);
                 }
@@ -2690,12 +2690,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetMethod teleTargetMethod = vm().findTeleTargetRoutine(TeleTargetMethod.class, address);
+            final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
                 if (!nextCallAddress.isZero()) {
                     try {
-                        vm().runToInstruction(nextCallAddress, false, true);
+                        maxVM().runToInstruction(nextCallAddress, false, true);
                     } catch (Exception exception) {
                         throw new InspectorError("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
                     }
@@ -2736,12 +2736,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetMethod teleTargetMethod = vm().findTeleTargetRoutine(TeleTargetMethod.class, address);
+            final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
                 if (!nextCallAddress.isZero()) {
                     try {
-                        vm().runToInstruction(nextCallAddress, false, false);
+                        maxVM().runToInstruction(nextCallAddress, false, false);
                     } catch (Exception exception) {
                         throw new InspectorError("Run to next call instruction could not be performed.", exception);
                     }
@@ -2783,7 +2783,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleNativeThread thread = focus().thread();
             if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
                 try {
-                    vm().singleStep(thread, false);
+                    maxVM().singleStep(thread, false);
                 } catch (Exception exception) {
                     inspection().errorMessage("Couldn't single step", exception.toString());
                 }
@@ -2824,7 +2824,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleNativeThread thread = focus().thread();
             if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
                 try {
-                    vm().stepOver(thread, false, true);
+                    maxVM().stepOver(thread, false, true);
                 } catch (Exception exception) {
                     inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
                 }
@@ -2866,7 +2866,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleNativeThread thread = focus().thread();
             if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
                 try {
-                    vm().stepOver(thread, false, false);
+                    maxVM().stepOver(thread, false, false);
                 } catch (Exception exception) {
                     inspection().errorMessage("Step over could not be performed.", exception.toString());
                 }
@@ -2904,7 +2904,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(vm().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -2923,7 +2923,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (instructionAddress.isZero()) {
                 return false;
             }
-            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(instructionAddress);
+            final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(instructionAddress);
             if (teleTargetMethod != null) {
                 final int stopIndex = teleTargetMethod.getJavaStopIndex(instructionAddress);
                 if (stopIndex >= 0) {
@@ -2999,7 +2999,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            vm().describeTeleTargetRoutines(System.out);
+            maxVM().describeTeleTargetRoutines(System.out);
         }
     }
 
@@ -3040,7 +3040,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
-                vm().describeTeleTargetRoutines(printStream);
+                maxVM().describeTeleTargetRoutines(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
                 inspection().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }

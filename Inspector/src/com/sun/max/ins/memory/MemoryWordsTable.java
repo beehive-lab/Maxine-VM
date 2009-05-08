@@ -73,7 +73,7 @@ public class MemoryWordsTable extends InspectorTable {
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -196,7 +196,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_startAddress.plus(row * vm().wordSize()).toInt());
+            setValue(_startAddress.plus(row * maxVM().wordSize()).toInt());
             return this;
         }
     }
@@ -208,7 +208,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(row * vm().wordSize());
+            setValue(row * maxVM().wordSize());
             return this;
         }
     }
@@ -220,7 +220,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(vm().readWord(_startAddress.plus(row * vm().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
             return this;
         }
     }
@@ -232,7 +232,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(vm().readWord(_startAddress.plus(row * vm().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
             return this;
         }
     }

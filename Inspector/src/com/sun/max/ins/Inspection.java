@@ -44,7 +44,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 
 /**
- * Holds the user interaction state for the inspection of a Maxine VM, which is accessed via a surrogate implementing {@link VM}.
+ * Holds the user interaction state for the inspection of a Maxine VM, which is accessed via a surrogate implementing {@link MaxVM}.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -99,9 +99,9 @@ public class Inspection extends JFrame {
 
     private InspectionState _inspectionState = InspectionState.NO_PROCESS;
 
-    private final VM _vm;
+    private final MaxVM _vm;
 
-    public VM vm() {
+    public MaxVM maxVM() {
         return _vm;
     }
 
@@ -527,7 +527,7 @@ public class Inspection extends JFrame {
         if (_externalViewerType == ExternalViewerType.NONE) {
             return false;
         }
-        final File javaSourceFile = vm().findJavaSourceFile(classActor);
+        final File javaSourceFile = maxVM().findJavaSourceFile(classActor);
         if (javaSourceFile == null) {
             return false;
         }
@@ -624,11 +624,11 @@ public class Inspection extends JFrame {
         return result;
     }
 
-    public Inspection(VM vm) throws IOException {
+    public Inspection(MaxVM maxVM) throws IOException {
         super(_inspectorName);
-        _vm = vm;
-        _bootImageFileName = vm().bootImageFile().getAbsolutePath().toString();
-        if (!(vm().isReadOnly())) {
+        _vm = maxVM;
+        _bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
+        if (!(maxVM().isReadOnly())) {
             _presumedState = State.STOPPED;
             _inspectionState = InspectionState.STOPPED;
         }
@@ -637,7 +637,7 @@ public class Inspection extends JFrame {
         _style = _styleFactory.defaultStyle();
         _scrollPane = new InspectorScrollPane(this, _desktopPane);
         _focus = new InspectionFocus(this);
-        _settings = new InspectionSettings(this, new File(vm().programFile().getParentFile(), _SETTINGS_FILE_NAME));
+        _settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), _SETTINGS_FILE_NAME));
 
         setDefaultLookAndFeelDecorated(true);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -691,7 +691,7 @@ public class Inspection extends JFrame {
     /**
      * Note that there is a delay, as well as a gap in the AWT event queue between the actual change in the
      * VM process state and the receipt of notification by the Inspector. This value may not always agree
-     * with what's reported by {@link VM#state()}.
+     * with what's reported by {@link MaxVM#state()}.
      *
      * @return the presumed state of the VM as of the most recent update, subject to quantum and other
      *         effects.
@@ -702,7 +702,7 @@ public class Inspection extends JFrame {
      * Is the VM running, as of the most recent state update? Note that there is a delay, as well as a gap
      * in the AWT event queue, between the stopping of the VM and the receipt of notification by the
      * Inspector (when running asynchronous), so this value may not always agree with what's reported by
-     * {@link VM#state()}. In particular, the AWT event queue might initiate new action sequences when the
+     * {@link MaxVM#state()}. In particular, the AWT event queue might initiate new action sequences when the
      * VM has actually stopped, but before the Inspector receives notification.
      *
      * @return VM state == {@link State#STOPPED}.
@@ -734,7 +734,7 @@ public class Inspection extends JFrame {
         final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
         switch (_presumedState) {
             case STOPPED:
-                if (vm().isInGC()) {
+                if (maxVM().isInGC()) {
                     menuBar.setStateColor(style().vmStoppedinGCBackgroundColor());
                     _inspectionState = InspectionState.STOPPED_IN_GC;
                 } else {
@@ -839,11 +839,11 @@ public class Inspection extends JFrame {
     void initialize() throws IOException {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
-        _inspectionActions.refresh(vm().epoch(), true);
+        _inspectionActions.refresh(maxVM().epoch(), true);
         // Listen for process state changes
-        vm().addStateListener(new ProcessStateListener());
+        maxVM().addStateListener(new ProcessStateListener());
         // Listen for changes in breakpoints
-        vm().addBreakpointListener(new BreakpointListener());
+        maxVM().addBreakpointListener(new BreakpointListener());
     }
 
     private InspectorAction _currentAction = null;
@@ -949,7 +949,7 @@ public class Inspection extends JFrame {
      * @param force suspend caching behavior; reload state unconditionally.
      */
     public synchronized void refreshAll(boolean force) {
-        final long epoch = vm().epoch();
+        final long epoch = maxVM().epoch();
         Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : _inspectionListeners.clone()) {
@@ -969,7 +969,7 @@ public class Inspection extends JFrame {
      * VM.
      */
     private synchronized void updateViewConfiguration() {
-        final long epoch = vm().epoch();
+        final long epoch = maxVM().epoch();
         for (InspectionListener listener : _inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
             listener.viewConfigurationChanged(epoch);
@@ -983,20 +983,20 @@ public class Inspection extends JFrame {
      * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped(long epoch) {
-        ProgramError.check(vm().state() == State.STOPPED, "State should be stopped, but is " + vm().state());
+        ProgramError.check(maxVM().state() == State.STOPPED, "State should be stopped, but is " + maxVM().state());
         setBusy(true);
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set
 
         Trace.begin(TRACE_VALUE, _threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final IterableWithLength<TeleNativeThread> deadThreads = vm().recentlyDiedThreads();
-        final IterableWithLength<TeleNativeThread> startedThreads = vm().recentlyCreatedThreads();
+        final IterableWithLength<TeleNativeThread> deadThreads = maxVM().recentlyDiedThreads();
+        final IterableWithLength<TeleNativeThread> startedThreads = maxVM().recentlyCreatedThreads();
         if (deadThreads.length() != 0 || startedThreads.length() != 0) {
             for (InspectionListener listener : listeners) {
                 listener.threadSetChanged(epoch);
             }
-            for (TeleNativeThread teleNativeThread : vm().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 for (InspectionListener listener : listeners) {
                     listener.threadStateChanged(teleNativeThread);
                 }
@@ -1013,7 +1013,7 @@ public class Inspection extends JFrame {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
             boolean atBreakpoint = false;
-            for (TeleNativeThread teleNativeThread : vm().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 if (teleNativeThread.breakpoint() != null) {
                     focus().setThread(teleNativeThread);
                     atBreakpoint = true;
@@ -1089,7 +1089,7 @@ public class Inspection extends JFrame {
     public void quit() {
         settings().quit();
         try {
-            vm().terminate();
+            maxVM().terminate();
         } catch (Exception exception) {
             ProgramWarning.message("error during VM termination: " + exception);
         } finally {

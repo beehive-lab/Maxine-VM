@@ -148,12 +148,12 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
         // Object inspector displays are sensitive to the current thread selection.
-        refreshView(vm().epoch(), true);
+        refreshView(maxVM().epoch(), true);
     }
 
     @Override
     public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(vm().epoch(), true);
+        refreshView(maxVM().epoch(), true);
     }
 
     @Override

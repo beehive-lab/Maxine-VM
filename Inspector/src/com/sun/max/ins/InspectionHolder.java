@@ -39,7 +39,7 @@ public interface InspectionHolder {
     /**
      * @return the VM associated with this inspection
      */
-    VM vm();
+    MaxVM maxVM();
 
     /**
      * @return visual specifications for user interaction during the session

@@ -27,7 +27,7 @@ import com.sun.max.tele.type.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A dialog for selecting a type available via the {@linkplain VM#loadableTypeDescriptors()} including those that may not have yet
+ * A dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may not have yet
  * been loaded into the {@linkplain TeleClassRegistry inspector class registry}.
  *
  * @author Doug Simon
@@ -67,13 +67,13 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
 
     private TypeSearchDialog(Inspection inspection, String title, String actionName) {
         super(inspection, title == null ? "Select Class" : title, "Class Name", actionName, false);
-        _types = vm().loadableTypeDescriptors();
+        _types = maxVM().loadableTypeDescriptors();
     }
 
     private final Iterable<TypeDescriptor> _types;
 
     /**
-     * Displays a dialog for selecting a type available via the {@linkplain VM#loadableTypeDescriptors()} including those that may
+     * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may
      * not have yet been loaded into the {@linkplain TeleClassRegistry inspector class registry}.
      *
      * @return the type or null if the user canceled the dialog
@@ -85,7 +85,7 @@ public final class TypeSearchDialog extends FilteredListDialog<TypeDescriptor> {
     }
 
     /**
-     * Displays a dialog for selecting a type available via the {@linkplain VM#loadableTypeDescriptors()} including those that may
+     * Displays a dialog for selecting a type available via the {@linkplain MaxVM#loadableTypeDescriptors()} including those that may
      * not have yet been loaded into the {@linkplain TeleClassRegistry inspector class registry}.
      *
      * @param inspection

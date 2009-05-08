@@ -62,7 +62,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         _listeners.remove(listener);
     }
 
-    private TeleCodeLocation _codeLocation = vm().createCodeLocation(Address.zero());
+    private TeleCodeLocation _codeLocation = maxVM().createCodeLocation(Address.zero());
 
     private final Object _codeLocationTracer = new Object() {
         @Override
@@ -237,7 +237,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
         if (!_codeLocation.hasTargetCodeLocation() || !_codeLocation.targetCodeInstructionAddresss().equals(stackFrame.instructionPointer())) {
-            setCodeLocation(vm().createCodeLocation(stackFrame.instructionPointer()), interactiveForNative);
+            setCodeLocation(maxVM().createCodeLocation(stackFrame.instructionPointer()), interactiveForNative);
         }
     }
 
@@ -283,7 +283,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
             // If
-            setMemoryRegion(vm().memoryRegionContaining(address));
+            setMemoryRegion(maxVM().memoryRegionContaining(address));
         }
     }
 
@@ -377,7 +377,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
         if (teleBreakpoint != null) {
             TeleNativeThread threadAtBreakpoint = null;
-            for (TeleNativeThread teleNativeThread : vm().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 if (teleNativeThread.breakpoint() == teleBreakpoint) {
                     threadAtBreakpoint = teleNativeThread;
                     break;

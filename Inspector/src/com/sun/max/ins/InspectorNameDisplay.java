@@ -377,11 +377,11 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (teleCodeLocation.hasTargetCodeLocation()) {
             final Address address = teleCodeLocation.targetCodeInstructionAddresss();
             name.append("Target{0x").append(address.toHexString());
-            if (vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
+            if (maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
                 // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
+                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name.append(",  ").append(longName(teleTargetMethod, address)).append("} ");
                 } else {

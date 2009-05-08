@@ -65,7 +65,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -152,13 +152,13 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         @Override
         public int getRowCount() {
-            return vm().threads().length();
+            return maxVM().threads().length();
         }
 
         @Override
         public Object getValueAt(int row, int col) {
             int count = 0;
-            for (TeleNativeThread teleNativeThread : vm().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 if (count == row) {
                     return teleNativeThread;
                 }
@@ -174,7 +174,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         public int findRow(TeleNativeThread teleNativeThread) {
             int row = 0;
-            for (TeleNativeThread thread : vm().threads()) {
+            for (TeleNativeThread thread : maxVM().threads()) {
                 if (thread == teleNativeThread) {
                     return row;
                 }

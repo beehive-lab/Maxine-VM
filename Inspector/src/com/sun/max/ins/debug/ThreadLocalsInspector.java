@@ -70,7 +70,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        refreshView(inspection.vm().epoch(), true);
+        refreshView(inspection.maxVM().epoch(), true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -96,7 +96,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             _tabbedPane.addChangeListener(new ChangeListener() {
                 // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
                 public void stateChanged(ChangeEvent event) {
-                    refreshView(vm().epoch(), true);
+                    refreshView(maxVM().epoch(), true);
                 }
             });
         }

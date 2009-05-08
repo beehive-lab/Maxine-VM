@@ -89,7 +89,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
     @Override
     public String getTextForTitle() {
-        return "Boot Image: " + vm().bootImageFile().getAbsolutePath();
+        return "Boot Image: " + maxVM().bootImageFile().getAbsolutePath();
     }
 
     @Override

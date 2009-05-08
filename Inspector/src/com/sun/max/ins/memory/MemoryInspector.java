@@ -150,7 +150,7 @@ public final class MemoryInspector extends Inspector {
         final byte[] bytes = new byte[_numberOfBytesPerGroup];
         for (int i = 0; i < _numberOfGroups; i++) {
             final Address address = _address.plus(i * _numberOfBytesPerGroup);
-            vm().readFully(address, bytes);
+            maxVM().readFully(address, bytes);
             _memoryLabels[i].setText(byteGroupToString(bytes));
             _memoryLabels[i].setToolTipText(address.toHexString());
             switch (_numberOfBytesPerGroup) {
@@ -247,7 +247,7 @@ public final class MemoryInspector extends Inspector {
 
     private String byteGroupToString(byte[] bytes) {
         String s = "";
-        switch (vm().bootImage().header().endianness()) {
+        switch (maxVM().bootImage().header().endianness()) {
             case LITTLE:
                 for (int i = bytes.length - 1; i >= 0; i--) {
                     s += String.format("%02X", bytes[i]);

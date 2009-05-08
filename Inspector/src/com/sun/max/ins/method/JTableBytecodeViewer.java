@@ -238,7 +238,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         _columnModel = new BytecodeTableColumnModel();
         _table = new BytecodeTable(inspection, _model, _columnModel);
         _operandDisplayMode = globalPreferences(inspection())._operandDisplayMode;
-        createView(inspection.vm().epoch());
+        createView(inspection.maxVM().epoch());
     }
 
     @Override
@@ -336,7 +336,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     @Override
     protected void setFocusAtRow(int row) {
         final int position = _model.getBytecodeInstruction(row).position();
-        _inspection.focus().setCodeLocation(vm().createCodeLocation(teleClassMethodActor(), position), false);
+        _inspection.focus().setCodeLocation(maxVM().createCodeLocation(teleClassMethodActor(), position), false);
     }
 
     @Override
@@ -502,7 +502,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                     final BytecodeInstruction bytecodeInstruction = bytecodeTableModel.getBytecodeInstruction(selectedRow);
                     final Address targetCodeFirstAddress = bytecodeInstruction.targetCodeFirstAddress();
                     final int position = bytecodeInstruction.position();
-                    inspection().focus().setCodeLocation(vm().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
+                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeFirstAddress, teleClassMethodActor(), position), true);
                 }
             }
         }
@@ -568,7 +568,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(vm().epoch(), true);
+                    refresh(maxVM().epoch(), true);
                 }
             };
             createColumn(ColumnKind.TAG, new TagRenderer());

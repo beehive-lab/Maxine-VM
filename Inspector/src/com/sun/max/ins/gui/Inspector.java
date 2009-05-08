@@ -133,7 +133,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     protected void createFrame(InspectorMenu menu) {
         _frame = new InternalInspectorFrame(this, menu);
         updateFrameTitle();
-        createView(vm().epoch());
+        createView(maxVM().epoch());
         _frame.pack();
         inspection().desktopPane().add((Component) _frame);
         _frame.setVisible(true);
@@ -164,7 +164,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param force suspend caching behavior; read state unconditionally.
      */
     protected final synchronized void refreshView(boolean force) {
-        refreshView(vm().epoch(), force);
+        refreshView(maxVM().epoch(), force);
     }
 
     /**
@@ -174,7 +174,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected synchronized void reconstructView() {
         final Dimension size = _frame.getSize();
-        createView(vm().epoch());
+        createView(maxVM().epoch());
         _frame.setPreferredSize(size);
         frame().pack();
     }

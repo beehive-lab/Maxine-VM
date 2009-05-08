@@ -182,7 +182,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         _columns = new TableColumn[ColumnKind.VALUES.length()];
         _columnModel = new TargetCodeTableColumnModel();
         _table = new TargetCodeTable(inspection, _model, _columnModel);
-        createView(inspection.vm().epoch());
+        createView(inspection.maxVM().epoch());
     }
 
     @Override
@@ -272,7 +272,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     @Override
     protected void setFocusAtRow(int row) {
-        _inspection.focus().setCodeLocation(vm().createCodeLocation(_model.getTargetCodeInstruction(row).address()), false);
+        _inspection.focus().setCodeLocation(maxVM().createCodeLocation(_model.getTargetCodeInstruction(row).address()), false);
     }
 
     @Override
@@ -429,7 +429,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                 final int selectedRow = getSelectedRow();
                 final TargetCodeTableModel targetCodeTableModel = (TargetCodeTableModel) getModel();
                 if (selectedRow >= 0 && selectedRow < targetCodeTableModel.getRowCount()) {
-                    inspection().focus().setCodeLocation(vm().createCodeLocation(targetCodeTableModel.getTargetCodeInstruction(selectedRow).address()), true);
+                    inspection().focus().setCodeLocation(maxVM().createCodeLocation(targetCodeTableModel.getTargetCodeInstruction(selectedRow).address()), true);
                 }
             }
         }
@@ -490,7 +490,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                         removeColumn(_columns[col]);
                     }
                     JTableColumnResizer.adjustColumnPreferredWidths(_table);
-                    refresh(vm().epoch(), true);
+                    refresh(maxVM().epoch(), true);
                 }
             };
 
@@ -700,7 +700,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
     };
 
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
-        final ProcessorKind processorKind = vm().vmConfiguration().platform().processorKind();
+        final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind();
         switch (processorKind.instructionSet()) {
             case AMD64:
                 return AMD64_LITERAL_RENDERER;
@@ -733,7 +733,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                             if (fileName != null) {
                                 final int lineNumber = stackTraceElement.getLineNumber();
                                 if (lineNumber > 0) {
-                                    if (vm().findJavaSourceFile(location.classMethodActor().holder()) != null) {
+                                    if (maxVM().findJavaSourceFile(location.classMethodActor().holder()) != null) {
                                         final BytecodeLocation locationCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
                                             @Override
@@ -813,7 +813,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
                     inspectorLabel = new WordValueLabel(_inspection, WordValueLabel.ValueMode.CALL_ENTRY_POINT, targetCodeInstruction._targetAddress);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (targetCodeInstruction._literalSourceAddress != null) {
-                    final Word word = _inspection.vm().readWord(targetCodeInstruction._literalSourceAddress);
+                    final Word word = _inspection.maxVM().readWord(targetCodeInstruction._literalSourceAddress);
                     inspectorLabel = _literalRenderer.render(_inspection, text, word);
                     _wordValueLabels[row] = inspectorLabel;
                 } else if (rowToCalleeIndex(row) >= 0) {

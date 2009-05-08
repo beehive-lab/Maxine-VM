@@ -67,7 +67,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         addMouseListener(new BreakpointInspectorMouseClickAdapter(inspection()));
-        refresh(vm().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
         updateSelection();
     }
@@ -182,7 +182,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                 breakpointData.markDeleted(true);
             }
             // add new and mark previous as not deleted
-            for (TeleTargetBreakpoint breakpoint : vm().targetBreakpoints()) {
+            for (TeleTargetBreakpoint breakpoint : maxVM().targetBreakpoints()) {
                 final BreakpointData breakpointData = findTargetBreakpoint(breakpoint.address());
                 if (breakpointData == null) {
                     // new breakpoint in VM since last refresh
@@ -193,7 +193,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
                     breakpointData.markDeleted(false);
                 }
             }
-            for (TeleBytecodeBreakpoint breakpoint : vm().bytecodeBreakpoints()) {
+            for (TeleBytecodeBreakpoint breakpoint : maxVM().bytecodeBreakpoints()) {
                 final BreakpointData breakpointData = findBytecodeBreakpoint(breakpoint.key());
                 if (breakpointData == null) {
                     // new breakpoint since last refresh
@@ -635,7 +635,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
          * @return the thread in the VM, if any, that is currently stopped at this breakpoint.
          */
         TeleNativeThread triggerThread() {
-            for (TeleNativeThread thread : vm().threads()) {
+            for (TeleNativeThread thread : maxVM().threads()) {
                 if (thread.breakpoint() == teleBreakpoint()) {
                     return thread;
                 }
@@ -701,21 +701,21 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
         TargetBreakpointData(TeleTargetBreakpoint teleTargetBreakpoint) {
             _teleTargetBreakpoint = teleTargetBreakpoint;
             final Address address = teleTargetBreakpoint.address();
-            final TeleTargetMethod teleTargetMethod = vm().makeTeleTargetMethod(address);
+            final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
             if (teleTargetMethod != null) {
                 _shortName = inspection().nameDisplay().shortName(teleTargetMethod);
                 _longName = inspection().nameDisplay().longName(teleTargetMethod, address);
                 _codeStart = teleTargetMethod.getCodeStart();
                 _location = address.minus(_codeStart.asAddress()).toInt();
             } else {
-                final TeleRuntimeStub teleRuntimeStub = vm().makeTeleRuntimeStub(address);
+                final TeleRuntimeStub teleRuntimeStub = maxVM().makeTeleRuntimeStub(address);
                 if (teleRuntimeStub != null) {
                     _codeStart = teleRuntimeStub.runtimeStub().start();
                     _location = address.minus(_codeStart).toInt();
                     _shortName = "runtime stub[0x" + _codeStart + "]";
                     _longName = _shortName;
                 } else {
-                    final TeleNativeTargetRoutine teleNativeTargetRoutine = vm().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
+                    final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address);
                     if (teleNativeTargetRoutine != null) {
                         _codeStart = teleNativeTargetRoutine.getCodeStart();
                         _location = address.minus(_codeStart.asAddress()).toInt();

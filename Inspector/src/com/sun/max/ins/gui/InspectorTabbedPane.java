@@ -49,8 +49,8 @@ public abstract class InspectorTabbedPane extends JTabbedPane implements Inspect
         return _inspection;
     }
 
-    public final VM vm() {
-        return _inspection.vm();
+    public final MaxVM maxVM() {
+        return _inspection.maxVM();
     }
 
     public final InspectorStyle style() {
