@@ -35,7 +35,7 @@ public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColum
     /**
      * @return the global, persistent set of user preferences for viewing a table of memory regions.
      */
-    public static synchronized ThreadsViewPreferences globalPreferences(Inspection inspection) {
+    public static ThreadsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new ThreadsViewPreferences(inspection);
         }

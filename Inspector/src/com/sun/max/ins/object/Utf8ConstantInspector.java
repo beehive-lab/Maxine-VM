@@ -53,7 +53,7 @@ class Utf8ConstantInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
         final TeleUtf8Constant teleUtf8Constant = (TeleUtf8Constant) teleObject();
         final String name = teleUtf8Constant.classActorForType().javaSignature(false);

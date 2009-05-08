@@ -165,6 +165,7 @@ public final class MaxineInspector {
         try {
             final MaxVM maxVM = TeleVM.create(options);
             SwingUtilities.invokeLater(new Runnable() {
+
                 public void run() {
                     createAndShowGUI(maxVM);
                 }

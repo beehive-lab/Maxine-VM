@@ -927,9 +927,7 @@ public class Inspection extends JFrame {
      */
     public void addInspectionListener(InspectionListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "adding inspection listener: " + listener);
-        synchronized (this) {
-            _inspectionListeners.add(listener);
-        }
+        _inspectionListeners.add(listener);
     }
 
     /**
@@ -938,9 +936,7 @@ public class Inspection extends JFrame {
      */
     public void removeInspectionListener(InspectionListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "removing inspection listener: " + listener);
-        synchronized (this) {
-            _inspectionListeners.remove(listener);
-        }
+        _inspectionListeners.remove(listener);
     }
 
     /**
@@ -948,7 +944,7 @@ public class Inspection extends JFrame {
      *
      * @param force suspend caching behavior; reload state unconditionally.
      */
-    public synchronized void refreshAll(boolean force) {
+    public void refreshAll(boolean force) {
         final long epoch = maxVM().epoch();
         Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
@@ -968,7 +964,7 @@ public class Inspection extends JFrame {
      * Updates all views, assuming that display and style parameters may have changed; forces state reload from the
      * VM.
      */
-    private synchronized void updateViewConfiguration() {
+    private void updateViewConfiguration() {
         final long epoch = maxVM().epoch();
         for (InspectionListener listener : _inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);

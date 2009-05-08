@@ -53,7 +53,7 @@ public class StringConstantInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
 
         final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject();

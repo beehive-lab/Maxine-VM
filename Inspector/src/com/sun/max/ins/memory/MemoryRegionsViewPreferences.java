@@ -35,7 +35,7 @@ public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.Tabl
     /**
      * @return the global, persistent set of user preferences for viewing a table of memory regions.
      */
-    public static synchronized MemoryRegionsViewPreferences globalPreferences(Inspection inspection) {
+    public static MemoryRegionsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new MemoryRegionsViewPreferences(inspection);
         }

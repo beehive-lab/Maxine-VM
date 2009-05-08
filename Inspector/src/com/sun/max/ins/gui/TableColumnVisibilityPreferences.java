@@ -167,18 +167,14 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
      * Adds a listener for view update when a preference changes.
      */
     public void addListener(TableColumnViewPreferenceListener listener) {
-        synchronized (this) {
-            _tableColumnViewPreferenceListeners.add(listener);
-        }
+        _tableColumnViewPreferenceListeners.add(listener);
     }
 
     /**
      * Removes a listener for view update when a preference changes.
      */
     public void removeListener(TableColumnViewPreferenceListener listener) {
-        synchronized (this) {
-            _tableColumnViewPreferenceListeners.remove(listener);
-        }
+        _tableColumnViewPreferenceListeners.remove(listener);
     }
 
     protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {

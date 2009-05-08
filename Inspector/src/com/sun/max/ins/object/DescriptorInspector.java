@@ -53,7 +53,7 @@ public class DescriptorInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
         final TeleDescriptor teleDescriptor = (TeleDescriptor) teleObject();
         final String name = teleDescriptor.classActorForType().javaSignature(false);

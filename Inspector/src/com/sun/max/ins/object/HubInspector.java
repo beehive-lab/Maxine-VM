@@ -45,7 +45,7 @@ public class HubInspector extends ObjectInspector {
 
     private static GlobalHubPreferences _globalHubPreferences;
 
-    public static synchronized GlobalHubPreferences globalHubPreferences(Inspection inspection) {
+    public static GlobalHubPreferences globalHubPreferences(Inspection inspection) {
         if (_globalHubPreferences == null) {
             _globalHubPreferences = new GlobalHubPreferences(inspection);
         }
@@ -212,7 +212,7 @@ public class HubInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
 
         final JPanel panel = new InspectorPanel(inspection());

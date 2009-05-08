@@ -36,7 +36,7 @@ public class MemoryWordsViewPreferences extends com.sun.max.ins.gui.TableColumnV
     /**
      * @return the global, persistent set of user preferences for viewing these tables..
      */
-    public static synchronized MemoryWordsViewPreferences globalPreferences(Inspection inspection) {
+    public static MemoryWordsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new MemoryWordsViewPreferences(inspection);
         }
