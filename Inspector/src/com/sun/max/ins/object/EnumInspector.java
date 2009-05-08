@@ -52,7 +52,7 @@ public class EnumInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
         final TeleEnum teleEnum = (TeleEnum) teleObject();
         final String name = teleEnum.classActorForType().javaSignature(false);

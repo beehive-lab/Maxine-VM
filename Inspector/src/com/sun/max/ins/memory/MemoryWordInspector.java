@@ -222,7 +222,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    protected synchronized void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         final int wordSize = maxVM().wordSize();
         for (int i = 0; i < _numberOfWords; i++) {
             final Address address = _address.plus(i * wordSize);
@@ -278,7 +278,7 @@ public final class MemoryWordInspector extends Inspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         _contentPane = new InspectorPanel(inspection());
         frame().setContentPane(_contentPane);
         _contentPane.removeAll();

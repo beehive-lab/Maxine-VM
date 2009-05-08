@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
 
 
 /**
- * Controls the {@link TeleProcess} to execute different debugging operations and separates it from the GUI.
+ * Manages debugging operations on the {@link TeleProcess}.
  *
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
@@ -55,7 +55,7 @@ public final class TeleProcessController {
     private TeleProcess _teleProcess;
 
     /**
-     * Gets the {@link TeleProcess} associated with this controller.
+     * @return the {@link TeleProcess} associated with this controller.
      */
     public TeleProcess teleProcess() {
         return _teleProcess;

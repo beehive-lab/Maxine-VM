@@ -56,7 +56,7 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
         _menu = menu;
     }
 
-    public synchronized void add(InspectorMenuItems inspectorMenuItems) {
+    public void add(InspectorMenuItems inspectorMenuItems) {
         menu().add(inspectorMenuItems);
     }
 
@@ -64,7 +64,7 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
         return _inspector.inspection();
     }
 
-    public synchronized void refresh(long epoch, boolean force) {
+    public void refresh(long epoch, boolean force) {
         menu().refresh(epoch, force);
     }
 

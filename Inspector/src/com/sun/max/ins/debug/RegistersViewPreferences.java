@@ -35,7 +35,7 @@ public final class RegistersViewPreferences extends TableColumnVisibilityPrefere
     /**
      * @return the global, persistent set of user preferences for viewing a table of breakpoints.
      */
-    public static synchronized RegistersViewPreferences globalPreferences(Inspection inspection) {
+    public static RegistersViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new RegistersViewPreferences(inspection);
         }

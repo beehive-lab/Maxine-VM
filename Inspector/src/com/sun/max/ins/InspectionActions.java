@@ -272,7 +272,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        protected synchronized void procedure() {
+        protected void procedure() {
             try {
                 maxVM().advanceToJavaEntryPoint();
             } catch (IOException ioException) {

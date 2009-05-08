@@ -158,7 +158,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
 
     private static TargetCodeViewerPreferences _globalPreferences;
 
-    public static synchronized TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
+    public static TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new TargetCodeViewerPreferences(inspection);
         }

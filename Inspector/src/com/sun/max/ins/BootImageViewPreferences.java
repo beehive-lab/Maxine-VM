@@ -36,7 +36,7 @@ public final class BootImageViewPreferences extends TableColumnVisibilityPrefere
     /**
      * @return the global, persistent set of user preferences for viewing  {@link VMConfiguration} information in the VM boot image.
      */
-    public static synchronized BootImageViewPreferences globalPreferences(Inspection inspection) {
+    public static BootImageViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new BootImageViewPreferences(inspection);
         }

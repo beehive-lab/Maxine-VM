@@ -52,7 +52,7 @@ public final class StringInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
         final TeleString teleString = (TeleString) teleObject();
         final String name = teleString.classActorForType().javaSignature(false);

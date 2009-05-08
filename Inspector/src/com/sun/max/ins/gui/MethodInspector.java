@@ -67,6 +67,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                         if (methodInspector != null) {
                             // Ensure that a newly created MethodInspector will have the focus set;
                             SwingUtilities.invokeLater(new Runnable() {
+
                                 public void run() {
                                     methodInspector.setCodeLocationFocus();
                                     // Highlight the inspector if it is not the selected one (this happens when the inspector already existed).

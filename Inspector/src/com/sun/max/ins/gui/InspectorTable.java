@@ -103,18 +103,14 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * Adds a listener for view update when column visibility changes.
      */
     public void addColumnChangeListener(ColumnChangeListener listener) {
-        synchronized (this) {
-            _columnChangeListeners.add(listener);
-        }
+        _columnChangeListeners.add(listener);
     }
 
     /**
      * Remove a listener for view update when column visibility changed.
      */
     public void removeColumnChangeListener(ColumnChangeListener listener) {
-        synchronized (this) {
-            _columnChangeListeners.remove(listener);
-        }
+        _columnChangeListeners.remove(listener);
     }
 
     /**

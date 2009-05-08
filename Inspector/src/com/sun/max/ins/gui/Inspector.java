@@ -152,7 +152,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * @param epoch the execution epoch of the VM, {@see TeleProcess#epoch()}.
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected synchronized void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _frame.refresh(epoch, force);
         _frame.invalidate();
         _frame.repaint();
@@ -163,7 +163,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      *
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected final synchronized void refreshView(boolean force) {
+    protected final void refreshView(boolean force) {
         refreshView(maxVM().epoch(), force);
     }
 
@@ -172,7 +172,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * expensive than {@link refreshView()}, but necessary when the parameters or
      * configuration of the view changes enough to require creating a new one.
      */
-    protected synchronized void reconstructView() {
+    protected void reconstructView() {
         final Dimension size = _frame.getSize();
         createView(maxVM().epoch());
         _frame.setPreferredSize(size);

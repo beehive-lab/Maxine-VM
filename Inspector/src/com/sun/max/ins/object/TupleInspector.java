@@ -61,7 +61,7 @@ public class TupleInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
         _fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);

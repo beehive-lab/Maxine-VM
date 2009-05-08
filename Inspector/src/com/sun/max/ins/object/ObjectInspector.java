@@ -119,7 +119,7 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         if (_showHeader) {
             _objectHeaderTable = new ObjectHeaderTable(this);
@@ -265,7 +265,7 @@ public abstract class ObjectInspector extends Inspector {
     };
 
     @Override
-    protected synchronized void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         final Pointer newOrigin = _teleObject.getCurrentOrigin();
         if (!newOrigin.equals(_currentObjectOrigin)) {
             // The object has been relocated in memory

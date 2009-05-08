@@ -36,7 +36,7 @@ public final class ThreadLocalsViewPreferences extends TableColumnVisibilityPref
     /**
      * @return the global, persistent set of user preferences for viewing a table of ThreadLocals.
      */
-    public static synchronized ThreadLocalsViewPreferences globalPreferences(Inspection inspection) {
+    public static ThreadLocalsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new ThreadLocalsViewPreferences(inspection);
         }

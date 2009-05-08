@@ -216,7 +216,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private static BytecodeViewerPreferences _globalPreferences;
 
-    public static synchronized BytecodeViewerPreferences globalPreferences(Inspection inspection) {
+    public static BytecodeViewerPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new BytecodeViewerPreferences(inspection);
         }
