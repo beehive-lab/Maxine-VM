@@ -95,6 +95,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     /**
      * @return a short string suitable for appearing in the window frame of an inspector.
+     * If this text is expected to change dynamically, a call to {@link #updateFrameTitle()}
+     * will cause this to be called again and the result assigned to the frame.
      */
     public abstract String getTextForTitle();
 
@@ -115,6 +117,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected abstract void createView(long epoch);
 
+    protected final void updateFrameTitle() {
+        frame().setTitle(getTextForTitle());
+    }
     /**
      * Creates a frame for the inspector
      * calls {@link createView()} to populate it; adds the inspector to the update
@@ -127,7 +132,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected void createFrame(InspectorMenu menu) {
         _frame = new InternalInspectorFrame(this, menu);
-        frame().setTitle(getTextForTitle());
+        updateFrameTitle();
         createView(vm().epoch());
         _frame.pack();
         inspection().desktopPane().add((Component) _frame);

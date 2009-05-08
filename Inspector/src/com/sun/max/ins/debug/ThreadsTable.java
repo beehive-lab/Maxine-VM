@@ -292,14 +292,9 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             final TeleNativeThread teleNativeThread = (TeleNativeThread) value;
-            if (teleNativeThread.breakpoint() != null) {
-                setText("At Breakpoint");
-                setToolTipText("Status: At Breakpoint");
-            } else {
-                final String status = teleNativeThread.state().toString();
-                setText(status);
-                setToolTipText("Status:  " + status);
-            }
+            final String status = teleNativeThread.state().toString();
+            setText(status);
+            setToolTipText("Status:  " + status);
             if (row == getSelectionModel().getMinSelectionIndex()) {
                 setBackground(style().defaultCodeAlternateBackgroundColor());
             } else {

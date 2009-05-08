@@ -84,7 +84,6 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _teleNativeThread = inspection().focus().thread();
         if (_teleNativeThread == null) {
             _tabbedPane = null;
-            frame().setTitle(getTextForTitle());
         } else {
             _tabbedPane = new JTabbedPane();
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
@@ -100,9 +99,9 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                     refreshView(vm().epoch(), true);
                 }
             });
-            frame().setTitle(getTextForTitle());
         }
         frame().setContentPane(_tabbedPane);
+        updateFrameTitle();
     }
 
     @Override
@@ -112,7 +111,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public String getTextForTitle() {
-        return "Thread Locals: " + " " + inspection().nameDisplay().longName(_teleNativeThread);
+        String title = "Thread Locals: ";
+        if (_teleNativeThread != null) {
+            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        }
+        return title;
     }
 
     @Override
@@ -183,6 +186,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             threadLocalsPanel.refresh(epoch, force);
         }
         super.refreshView(epoch, force);
+        // The title displays thread state, so must be updated.
+        updateFrameTitle();
     }
 
     @Override
