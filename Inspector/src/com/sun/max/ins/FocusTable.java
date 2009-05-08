@@ -193,7 +193,6 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         }
     }
 
-
     private final class FocusTableModel extends AbstractTableModel {
 
         public FocusTableModel() {
@@ -256,7 +255,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     if (teleNativeThread == null) {
                         setValue("null", "No thread focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longName(teleNativeThread);
+                        final String longName = inspection().nameDisplay().longNameWithState(teleNativeThread);
                         setValue(longName, "Thread focus = " + longName);
                     }
                 }
