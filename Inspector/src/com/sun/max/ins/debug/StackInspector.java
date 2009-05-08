@@ -255,10 +255,8 @@ public class StackInspector extends Inspector {
 
         if (_teleNativeThread == null) {
             _contentPane = null;
-            frame().setTitle(getTextForTitle());
         } else {
             _contentPane = new InspectorPanel(inspection(), new BorderLayout());
-            frame().setTitle(getTextForTitle() + " " + inspection().nameDisplay().longName(_teleNativeThread));
 
             _stackFrameListModel = new DefaultListModel();
             _stackFrameList = new JList(_stackFrameListModel);
@@ -322,7 +320,11 @@ public class StackInspector extends Inspector {
 
     @Override
     public String getTextForTitle() {
-        return "Stack: ";
+        String title = "Stack: ";
+        if (_teleNativeThread != null) {
+            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        }
+        return title;
     }
 
     @Override
@@ -347,6 +349,8 @@ public class StackInspector extends Inspector {
             _selectedFrame.refresh(epoch, force);
         }
         super.refreshView(epoch, force);
+        // The title displays thread state, so must be updated.
+        updateFrameTitle();
     }
 
     public void viewConfigurationChanged(long epoch) {

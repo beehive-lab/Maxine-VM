@@ -130,7 +130,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         return "???";
     }
     /**
-     * @return human readable string identifying a VM thread in a standard format.
+     * @return human readable string identifying a VM thread by a terse name.
      */
     public String shortName(TeleVmThread teleVmThread) {
         return teleVmThread.name();
@@ -148,7 +148,21 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * @return human readable string identifying a thread in a standard format.
+     * @return human readable string identifying a VM thread in a standard format.
+     */
+    public String longNameWithState(TeleVmThread teleVmThread) {
+        final TeleNativeThread teleNativeThread = teleVmThread.teleNativeThread();
+        final StringBuilder result = new StringBuilder(20);
+        result.append(shortName(teleVmThread));
+        if (teleNativeThread != null) {
+            result.append(" [").append(teleNativeThread.handle()).append("]");
+            result.append(" (").append(teleNativeThread.state()).append(")");
+        }
+        return result.toString();
+    }
+
+    /**
+     * @return human readable string identifying a thread in a terse standard format.
      */
     public String shortName(TeleNativeThread teleNativeThread) {
         if (teleNativeThread == null) {
@@ -174,6 +188,19 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             return longName(teleNativeThread.teleVmThread());
         }
         return shortName(teleNativeThread) + " [" + teleNativeThread.handle() + "]";
+    }
+
+    /**
+     * @return human readable string identifying a thread in a standard format.
+     */
+    public String longNameWithState(TeleNativeThread teleNativeThread) {
+        if (teleNativeThread == null) {
+            return "null";
+        }
+        if (teleNativeThread.teleVmThread() != null) {
+            return longNameWithState(teleNativeThread.teleVmThread());
+        }
+        return shortName(teleNativeThread) + " [" + teleNativeThread.handle() + "] (" + teleNativeThread.state() + ")";
     }
 
     /**

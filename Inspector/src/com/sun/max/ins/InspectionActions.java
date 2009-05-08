@@ -2781,10 +2781,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         public  void procedure() {
             final TeleNativeThread selectedThread = focus().thread();
-            try {
-                vm().singleStep(selectedThread, false);
-            } catch (Exception exception) {
-                inspection().errorMessage("Couldn't single step", exception.toString());
+            if (selectedThread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
+                try {
+                    vm().singleStep(selectedThread, false);
+                } catch (Exception exception) {
+                    inspection().errorMessage("Couldn't single step", exception.toString());
+                }
             }
         }
 
