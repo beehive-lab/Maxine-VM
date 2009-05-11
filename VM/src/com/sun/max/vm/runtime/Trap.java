@@ -57,7 +57,7 @@ public final class Trap {
      * those of the same name defined in Native/substrate/trap.c.
      *
      * The {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT} values are used in
-     * {@link Trap#handleMemoryFault(Pointer, Pointer, Pointer, Pointer, Address)} to disambiguate a memory fault.
+     * {@link Trap#handleMemoryFault(Pointer, TargetMethod, Pointer, Pointer, Pointer, Address)} to disambiguate a memory fault.
      */
     public static final class Number {
         public static final int MEMORY_FAULT = 0;
@@ -144,12 +144,12 @@ public final class Trap {
 
             switch (trapNumber) {
                 case MEMORY_FAULT:
-                    handleMemoryFault(instructionPointer, stackPointer, framePointer, trapState, faultAddress);
+                    handleMemoryFault(instructionPointer, targetMethod, stackPointer, framePointer, trapState, faultAddress);
                     break;
                 case STACK_FAULT:
                     // stack overflow
                     final StackOverflowError error = new StackOverflowError();
-                    Throw.raise(error, stackPointer, framePointer, instructionPointer);
+                    raise(trapState, targetMethod, error, stackPointer, framePointer, instructionPointer);
                     break; // unreachable
                 case ILLEGAL_INSTRUCTION:
                     // deoptimization
@@ -158,7 +158,7 @@ public final class Trap {
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
                     final ArithmeticException exception = new ArithmeticException();
-                    Throw.raise(exception, stackPointer, framePointer, instructionPointer);
+                    raise(trapState, targetMethod, exception, stackPointer, framePointer, instructionPointer);
                     break; // unreachable
             }
         } else {
@@ -225,12 +225,13 @@ public final class Trap {
      * a safepoint being triggered, or a segmentation fault in native code.
      *
      * @param instructionPointer the instruction pointer that caused the fault
+     * @param targetMethod the TargetMethod containing {@code instructionPointer}
      * @param stackPointer the stack pointer at the time of the fault
      * @param framePointer the frame pointer at the time of the fault
      * @param trapState a pointer to the trap state at the time of the fault
      * @param faultAddress the address that caused the fault
      */
-    private static void handleMemoryFault(Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
+    private static void handleMemoryFault(Pointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapState, Address faultAddress) {
         final Pointer disabledVmThreadLocals = VmThread.currentVmThreadLocals();
 
         final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
@@ -261,10 +262,47 @@ public final class Trap {
             safepoint.setTrapNumber(trapState, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
             final NullPointerException error = new NullPointerException();
-            Throw.raise(error, stackPointer, framePointer, instructionPointer);
+            raise(trapState, targetMethod, error, stackPointer, framePointer, instructionPointer);
         } else {
             // segmentation fault happened in native code somewhere, die.
             MaxineVM.native_trap_exit(MaxineVM.HARD_EXIT_CODE, instructionPointer);
+        }
+    }
+
+    /**
+     * Raises an implicit exception.
+     *
+     * If there is a local handler for the exception (i.e. a handler in the same frame in which the exception occurred)
+     * and the method in which the exception occurred was compiled by the opto compiler, then the trap state is altered
+     * so that the exception object is placed into the register typically used for an integer return value (e.g. RAX on
+     * AMD64) and the return address for the trap frame is set to be the exception handler entry address. This means
+     * that the register allocator in the opto compiler can assume that registers are not modified in the control flow
+     * from an implicit exception to the exception handler (apart from the register now holding the exception object).
+     *
+     * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, Pointer) standard mechanism} for throwing an
+     * exception is used.
+     *
+     * @param trapState
+     * @param targetMethod
+     * @param throwable
+     * @param stackPointer
+     * @param framePointer
+     * @param instructionPointer
+     */
+    private static void raise(Pointer trapState, TargetMethod targetMethod, Throwable throwable, Pointer stackPointer, Pointer framePointer, Pointer instructionPointer) {
+        if (targetMethod instanceof JitTargetMethod) {
+            Throw.raise(throwable, stackPointer, framePointer, instructionPointer);
+        }
+        final Address throwAddress = instructionPointer;
+        final Address catchAddress = targetMethod.throwAddressToCatchAddress(throwAddress);
+        if (!catchAddress.isZero()) {
+            if (!(throwable instanceof StackOverflowError) || VmThread.current().hasSufficentStackToReprotectGuardPage(stackPointer)) {
+                final Safepoint safepoint = VMConfiguration.hostOrTarget().safepoint();
+                safepoint.setInstructionPointer(trapState, catchAddress.asPointer());
+                safepoint.setReturnValue(trapState, Reference.fromJava(throwable).toOrigin());
+            }
+        } else {
+            Throw.raise(throwable, stackPointer, framePointer, instructionPointer);
         }
     }
 }

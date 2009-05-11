@@ -72,6 +72,8 @@ public final class AMD64Safepoint extends Safepoint {
      */
     public static final AMD64GeneralRegister64 LATCH_REGISTER = R14;
 
+    private static final AMD64GeneralRegister64 RETURN_VALUE_REGISTER = RAX;
+
     public static final int TRAP_STATE_SIZE_WITH_RIP;
     public static final int TRAP_STATE_SIZE_WITHOUT_RIP;
     public static final int TRAP_NUMBER_OFFSET;
@@ -113,25 +115,39 @@ public final class AMD64Safepoint extends Safepoint {
     @Override
     public Pointer getInstructionPointer(Pointer trapState) {
         // the instruction pointer is the last word in the register state
-        return trapState.readWord(AMD64Safepoint.TRAP_STATE_SIZE_WITHOUT_RIP).asPointer();
+        return trapState.readWord(TRAP_STATE_SIZE_WITHOUT_RIP).asPointer();
     }
+
+    @Override
+    public void setInstructionPointer(Pointer trapState, Pointer value) {
+        trapState.writeWord(TRAP_STATE_SIZE_WITHOUT_RIP, value);
+    }
+
     @Override
     public Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod) {
         // TODO: get the frame pointer register from the ABI
         return trapState.plus(TRAP_STATE_SIZE_WITH_RIP);
     }
+
     @Override
     public Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod) {
         // TODO: get the frame pointer register from the ABI
         return trapState.readWord(AMD64GeneralRegister64.RBP.value() * Word.size()).asPointer();
     }
+
     @Override
     public Pointer getSafepointLatch(Pointer trapState) {
         return trapState.readWord(LATCH_REGISTER.value() * Word.size()).asPointer();
     }
+
     @Override
     public void setSafepointLatch(Pointer trapState, Pointer value) {
         trapState.writeWord(LATCH_REGISTER.value() * Word.size(), value);
+    }
+
+    @Override
+    public void setReturnValue(Pointer trapState, Pointer value) {
+        trapState.writeWord(RETURN_VALUE_REGISTER.value() * Word.size(), value);
     }
 
     @Override
