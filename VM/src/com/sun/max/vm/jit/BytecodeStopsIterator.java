@@ -138,11 +138,11 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
      *         {@linkplain JitTargetMethod#stopPositions() stops table} of the associated JIT compiled method.
      */
     public int nextStopIndex(boolean reset) {
+        if (reset) {
+            _cursor = _bytecodePositionCursor + 1;
+        }
         if (_cursor < _map.length) {
             assert _bytecodePositionCursor < _cursor;
-            if (reset) {
-                _cursor = _bytecodePositionCursor + 1;
-            }
             final int value = _map[_cursor];
             if ((value & BCP_BIT) == 0) {
                 _cursor++;
@@ -195,14 +195,19 @@ public class BytecodeStopsIterator implements BytecodePositionIterator {
     public static boolean assertIsValidMap(int[] map) {
         int entry = -1;
         int stopCount = 0;
+        int lastBcp = -1;
         for (int v : map) {
             if ((v & BCP_BIT) != 0) {
                 if (entry != -1) {
-                    assert stopCount != 0 : "Entry " + entry + " in stop index table has 0 stop indexes";
+                    assert stopCount != 0 : "Entry " + entry + " has 0 stop indexes";
                 }
+                final int bcp = v & ~BCP_BIT;
+                assert bcp > lastBcp : "Entry " + entry + " has bcp lower or equal to preceding bcp: " + bcp + " <= " + lastBcp;
                 stopCount = 0;
                 entry++;
+                lastBcp = bcp;
             } else {
+                assert lastBcp != -1 : "Entry " + entry + " does not start with a bytecode position";
                 stopCount++;
             }
         }
