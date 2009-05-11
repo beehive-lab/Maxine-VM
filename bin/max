@@ -671,7 +671,7 @@ function run_jtest() {
 helloworld_help="run a basic 'hello world' program on the Maxine VM"
 
 function run_helloworld() {
-    run ${maxine_vm} -classpath ${maxine_dir}/VM/bin "$@" util.HelloWorld
+    run ${maxine_vm} -classpath ${maxine_dir}/VM/bin "$@" test.output.HelloWorld
 }
 
 #=======================================
