@@ -36,7 +36,13 @@
 # In addition, the command and it's description will be listed when this script
 # is run without any arguments.
 #
-# It is possible to invoke this script from a parent script to build additional
+# It is possible to extend this script by sourcing it from a parent script. For
+# example, if this script is at $MAXINE_HOME/bin/max, then the parent script
+# needs to end with:
+#
+#    . "$MAXINE_HOME/bin/max" 
+#
+# One reason to extend this script is to build additional
 # projects that depend on Maxine, e.g. for the Guest VM Xen port of Maxine.
 # To do this set the following variables before invoking max:
 #
@@ -45,8 +51,8 @@
 # 
 # It is also possible to override any of the commands in this script. For example, to
 # override the 'image' command, define a function named 'run_image_override' in the
-# parent script before sourcing this script. In this case, the 'run_image_function'
-# will be called instead of 'run_image' if the user specified the 'image' command.
+# parent script before sourcing this script. In this case, the 'run_image_override'
+# function will be called instead of 'run_image' if the user specified the 'image' command.
 #
 # Author: Doug Simon, Mick Jordan
 
@@ -216,7 +222,7 @@ function run() {
     if $verbose ; then
         echo "$@"
     fi
-    eval "$@"
+    "$@"
 }
 
 #=======================================
@@ -624,7 +630,7 @@ function run_inspect() {
         shift
     done    
 
-    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -d -trace=1 ${inspector_args} -a=\""$vm_args"\"
+    run ${jvm_exe} -cp ${maxine_cp} com.sun.max.ins.MaxineInspector -d -trace=1 ${inspector_args} -a="$vm_args"
 }
 
 #=======================================
@@ -898,7 +904,7 @@ fi
 run_command_override="run_${command}_override"
 command_override_type=`type -t ${run_command_override}`
 if [ "${command_override_type}" == "function" ]; then
-    eval $run_command_override $command_args
+    $run_command_override $command_args
 else
-    eval $run_command $command_args
+    $run_command $command_args
 fi
