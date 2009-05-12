@@ -151,10 +151,10 @@ public final class Files {
     }
 
     public static char[] toChars(File file) throws IOException {
-        int length = (int) file.length();
-        if (length > Integer.MAX_VALUE) {
+        if (file.length() > Integer.MAX_VALUE) {
             throw new IOException("file is too big to read into an array: " + file);
         }
+        int length = (int) file.length();
         if (length == 0) {
             return new char[0];
         }

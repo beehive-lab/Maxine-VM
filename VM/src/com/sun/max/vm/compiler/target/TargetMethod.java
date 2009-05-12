@@ -723,7 +723,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                 return _directCallees[i];
             }
         }
-        throw ProgramError.unexpected("could not find callee for call site: " + callSite.toHexString());
+        throw FatalError.unexpected("could not find callee for call site: " + callSite.toHexString());
     }
 
     public final Address throwAddressToCatchAddress(Address throwAddress) {
@@ -1189,6 +1189,6 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      * @return
      */
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer);
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer, stackPointer);
     }
 }

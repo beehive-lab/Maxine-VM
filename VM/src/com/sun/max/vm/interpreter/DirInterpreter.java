@@ -53,12 +53,12 @@ import com.sun.max.vm.value.*;
  */
 public class DirInterpreter extends IrInterpreter<DirMethod> {
 
-    private final int _traceLevel;
+    private final boolean _trace;
     private final boolean _traceVariables;
 
     public DirInterpreter() {
-        _traceLevel = _traceOption.getValue();
         _traceVariables = _traceCpuOption.getValue();
+        _trace = _traceVariables || _traceOption.getValue();
     }
 
     private static DirValue[] valuesToDirValues(Value[] values) {
@@ -109,9 +109,9 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
         }
 
         public void trace() {
-            if (Trace.hasLevel(_traceLevel)) {
+            if (_trace) {
                 for (Map.Entry<DirVariable, DirValue> entry : _bindings.entrySet()) {
-                    Trace.line(_traceLevel, "    " + entry.getKey() + " = " + entry.getValue());
+                    Trace.stream().println("    " + entry.getKey() + " = " + entry.getValue());
                 }
             }
         }
@@ -166,12 +166,12 @@ public class DirInterpreter extends IrInterpreter<DirMethod> {
         }
 
         private void traceRun(DirInstruction instruction) {
-            if (Trace.hasLevel(_traceLevel)) {
-                Trace.line(_traceLevel, "------------------");
+            if (_trace) {
+                Trace.stream().println("------------------");
                 if (_traceVariables) {
                     _environment.trace();
                 }
-                Trace.line(_traceLevel, _block.toString() + "[" + _instructionIndex + "]: " + instruction);
+                Trace.stream().println(_block.toString() + "[" + _instructionIndex + "]: " + instruction);
                 Trace.stream().flush();
             }
         }

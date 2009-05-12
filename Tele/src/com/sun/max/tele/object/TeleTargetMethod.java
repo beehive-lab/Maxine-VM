@@ -81,7 +81,7 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
     }
 
     /**
-     * @return  local surrogates for all {@link TargetMethod}s in the tele VM that match the specified key.
+     * @return  local surrogates for all {@link TargetMethod}s in the {@link TeleVM} that match the specified key.
      */
     public static Sequence<TeleTargetMethod> get(TeleVM teleVM, MethodKey methodKey) {
         final AppendableSequence<TeleTargetMethod> result = new LinkSequence<TeleTargetMethod>();
@@ -263,6 +263,33 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
 
     public boolean isAtJavaStop(Address address) {
         return getJavaStopIndex(address) >= 0;
+    }
+
+    /**
+     * @return position of the closest following call instruction, direct or indirect; -1 if none.
+     */
+    private int getNextCallPosition(int position) {
+        int nextCallPosition = -1;
+        final int[] stopPositions = getStopPositions();
+        if (stopPositions != null) {
+            final int numberOfCalls = getNumberOfDirectCalls() + getNumberOfIndirectCalls();
+            for (int i = 0; i < numberOfCalls; i++) {
+                final int stopPosition = stopPositions[i];
+                if (stopPosition > position && (nextCallPosition == -1 || stopPosition < nextCallPosition)) {
+                    nextCallPosition = stopPosition;
+                }
+            }
+        }
+        return nextCallPosition;
+    }
+
+    public Address getNextCallAddress(Address address) {
+        final int targetCodePosition = address.minus(getCodeStart()).toInt();
+        final int nextCallPosition = getNextCallPosition(targetCodePosition);
+        if (nextCallPosition > 0) {
+            return getCodeStart().plus(nextCallPosition);
+        }
+        return Address.zero();
     }
 
     /**

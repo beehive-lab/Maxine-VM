@@ -47,6 +47,8 @@ import com.sun.max.vm.value.*;
  */
 public final class ArrayElementsTable extends InspectorTable {
 
+    public static final int MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS = 1000;
+
     private final ObjectInspector _objectInspector;
     private final Inspection _inspection;
     private final TeleObject _teleObject;
@@ -127,7 +129,7 @@ public final class ArrayElementsTable extends InspectorTable {
             }
         });
         refresh(_inspection.teleVM().epoch(), true);
-        JTableColumnResizer.adjustColumnPreferredWidths(this);
+        JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
     }
 
     @Override

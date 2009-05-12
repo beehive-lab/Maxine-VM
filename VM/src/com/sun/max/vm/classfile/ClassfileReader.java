@@ -639,10 +639,11 @@ public class ClassfileReader {
      */
     protected void ensureSignatureIsPrimitive(SignatureDescriptor descriptor, Class annotationClass) {
         // Verify that there are no REFERENCE parameters
-        for (Kind parameterKind : descriptor.getParameterKinds()) {
-            ProgramError.check(parameterKind != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference parameters: " + this);
+        for (int i = 0; i < descriptor.numberOfParameters(); ++i) {
+            final Kind kind = descriptor.parameterDescriptorAt(i).toKind();
+            ProgramError.check(kind != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference parameters: " + this);
         }
-        ProgramError.check(descriptor.getResultKind() != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference return type: " + this);
+        ProgramError.check(descriptor.resultKind() != Kind.REFERENCE, annotationClass.getSimpleName() + " annotated methods cannot have reference return type: " + this);
     }
 
     protected MethodActor[] readMethods(boolean isInterface) {
@@ -694,7 +695,7 @@ public class ClassfileReader {
                 final int descriptorIndex = _classfileStream.readUnsigned2();
                 final SignatureDescriptor descriptor = SignatureDescriptor.create(_constantPool.utf8At(descriptorIndex, "method descriptor"));
 
-                if (descriptor.getNumberOfLocals() + (isStatic ? 0 : 1) > 255) {
+                if (descriptor.computeNumberOfSlots() + (isStatic ? 0 : 1) > 255) {
                     throw classFormatError("Too many arguments in method signature: " + descriptor);
                 }
 
@@ -817,8 +818,8 @@ public class ClassfileReader {
                                     }
                                 }
                             } else if (annotationTypeDescriptor.equals(forJavaClass(UNSAFE_CAST.class))) {
-                                ProgramError.check(descriptor.getResultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method");
-                                ProgramError.check(descriptor.getNumberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() + " to a method with exactly one parameter");
+                                ProgramError.check(descriptor.resultKind() != Kind.VOID, "Cannot apply " + UNSAFE_CAST.class.getName() + " to a void method");
+                                ProgramError.check(descriptor.numberOfParameters() == (isStatic ? 1 : 0), "Can only apply " + UNSAFE_CAST.class.getName() + " to a method with exactly one parameter");
                                 flags |= UNSAFE_CAST;
                                 codeAttribute = null;
                             } else if (annotationTypeDescriptor.equals(forJavaClass(JNI_FUNCTION.class))) {

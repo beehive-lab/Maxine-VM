@@ -32,6 +32,7 @@ import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -138,6 +139,19 @@ public abstract class JitTargetMethod extends TargetMethod {
         assert _bytecodeToTargetCodePositionMap.length > 0;
         final int targetCodePosition = targetCodePositionFor(instructionPointer);
         return bytecodePositionFor(targetCodePosition);
+    }
+
+    /**
+     * This method is guaranteed not to perform allocation.
+     */
+    @Override
+    public final JitStackFrameLayout stackFrameLayout() {
+        final JitReferenceMapEditor referenceMapEditor = _referenceMapEditor;
+        if (referenceMapEditor != null) {
+            return referenceMapEditor.stackFrameLayout();
+        }
+        FatalError.check(_stackFrameLayout != null, "Cannot get JIT stack frame layout for incomplete JIT method");
+        return _stackFrameLayout;
     }
 
     /**
@@ -315,6 +329,7 @@ public abstract class JitTargetMethod extends TargetMethod {
                     int[] catchRangePositions,
                     int[] catchBlockPositions,
                     int[] stopPositions,
+                    BytecodeStopsIterator bytecodeStopsIterator,
                     byte[] compressedJavaFrameDescriptors,
                     ClassMethodActor[] directCallees,
                     int numberOfIndirectCalls,
@@ -331,8 +346,7 @@ public abstract class JitTargetMethod extends TargetMethod {
                     BytecodeInfo[] bytecodeInfos,
                     int numberOfBlocks,
                     boolean[] blockStarts,
-                    JitStackFrameLayout jitStackFrameLayout,
-                    TargetABI abi) {
+                    JitStackFrameLayout jitStackFrameLayout, TargetABI abi) {
         setGenerated(
             targetBundle,
             catchRangePositions,
@@ -359,7 +373,7 @@ public abstract class JitTargetMethod extends TargetMethod {
         _optimizedCallerAdapterFrameCodeSize = optimizedCallerAdapterFrameCodeSize;
         _adapterReturnPosition = adapterReturnPosition;
         if (stopPositions != null) {
-            _referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, jitStackFrameLayout);
+            _referenceMapEditor = new JitReferenceMapEditor(this, numberOfBlocks, blockStarts, bytecodeStopsIterator, jitStackFrameLayout);
             final ReferenceMapInterpreter interpreter = ReferenceMapInterpreter.from(_referenceMapEditor.blockFrames());
             if (interpreter.performsAllocation() || MaxineVM.isPrototyping()) {
                 // if computing the reference map requires allocation or if prototyping,
@@ -373,6 +387,7 @@ public abstract class JitTargetMethod extends TargetMethod {
     public void finalizeReferenceMaps() {
         if (_referenceMapEditor != null) {
             _referenceMapEditor.fillInMaps(_bytecodeToTargetCodePositionMap);
+            _stackFrameLayout = _referenceMapEditor.stackFrameLayout();
             _referenceMapEditor = null;
         }
     }
@@ -384,10 +399,16 @@ public abstract class JitTargetMethod extends TargetMethod {
 
     private JitReferenceMapEditor _referenceMapEditor;
 
+    /**
+     * The preserves the stack frame layout object from {@link #_referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
+     * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
+     */
+    private JitStackFrameLayout _stackFrameLayout;
+
     @Override
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         finalizeReferenceMaps();
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer.plus(_frameReferenceMapOffset));
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(_frameReferenceMapOffset), stackPointer);
     }
 
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {

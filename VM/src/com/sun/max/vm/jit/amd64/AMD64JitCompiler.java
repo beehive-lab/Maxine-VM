@@ -88,14 +88,14 @@ public class AMD64JitCompiler extends JitCompiler {
      * @return size in bytes
      */
     public static int adapterFrameSize(ClassMethodActor classMethodActor) {
-        final int paramSize = JitStackFrameLayout.JIT_SLOT_SIZE * classMethodActor.numberOfParameterLocals();
+        final int paramSize = JitStackFrameLayout.JIT_SLOT_SIZE * classMethodActor.numberOfParameterSlots();
         return VMConfiguration.target().targetABIsScheme().jitABI().alignFrameSize(paramSize);
     }
 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isPrototyping()) {
-            _unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"));
+            _unwindMethod = ClassActor.fromJava(AMD64JitCompiler.class).findLocalClassMethodActor(SymbolTable.makeSymbol("unwind"), null);
         }
     }
 
@@ -174,7 +174,7 @@ public class AMD64JitCompiler extends JitCompiler {
         // Currently, the opto-jit adapter frame always increases the stack by at least one slot, to make it looks like
         // a call from a
 
-        final boolean hasNoFrame = instructionPointer.equals(entryPoint) || classMethodActor.isStatic() && classMethodActor.descriptor().hasNoParameters();
+        final boolean hasNoFrame = instructionPointer.equals(entryPoint) || classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0);
 
         Pointer ripPointer; // stack pointer at call entry point (where the RIP is).
         if (hasNoFrame) {
@@ -286,7 +286,7 @@ public class AMD64JitCompiler extends JitCompiler {
         abstract Pointer callerFramePointer(StackFrameWalker stackFrameWalker, TargetMethod targetMethod);
 
         int sizeOfNonParameterLocals(TargetMethod targetMethod) {
-            return JitStackFrameLayout.JIT_SLOT_SIZE * (targetMethod.classMethodActor().rawCodeAttribute().maxLocals() - targetMethod.classMethodActor().numberOfParameterLocals());
+            return JitStackFrameLayout.JIT_SLOT_SIZE * (targetMethod.classMethodActor().rawCodeAttribute().maxLocals() - targetMethod.classMethodActor().numberOfParameterSlots());
         }
     }
 

@@ -382,7 +382,7 @@ public final class BinaryImageGenerator {
     private static void writeMiscStatistics(CompilerScheme compilerScheme, PrintStream out) {
         Trace.line(1, "# utf8 constants: " + SymbolTable.length());
         Trace.line(1, "# type descriptors: " + TypeDescriptor.numberOfDescriptors());
-        Trace.line(1, "# signature descriptors: " + SignatureDescriptor.numberOfDescriptors());
+        Trace.line(1, "# signature descriptors: " + SignatureDescriptor.totalNumberOfDescriptors());
 
         int totalConstants = 0;
         final int[] constantPoolHistogram = new int[ConstantPool.Tag.VALUES.length()];

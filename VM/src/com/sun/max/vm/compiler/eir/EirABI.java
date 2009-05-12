@@ -182,12 +182,18 @@ public abstract class EirABI<EirRegister_Type extends EirRegister> {
     public abstract Pool<EirRegister_Type> registerPool();
 
     /**
-     * @return all registers at the disposal of the register allocator
+     * Gets all the registers that can be used by the register allocator for general purpose values when compiling a
+     * method. The returned set excludes (at least) the {@linkplain #stackPointer() stack pointer},
+     * {@linkplain #framePointer() frame pointer}, {@linkplain #safepointLatchRegister() safepoint latch register}
+     * and {@linkplain #getScratchRegister(Kind) scratch register(s)}.
      */
     public abstract PoolSet<EirRegister_Type> allocatableRegisters();
 
     /**
-     * @return all registers that are not at the disposal of the register allocator
+     * Gets all the registers that cannot be used by the register allocator for general purpose values when compiling a
+     * method. The returned set includes (at least) the {@linkplain #stackPointer() stack pointer},
+     * {@linkplain #framePointer() frame pointer}, {@linkplain #safepointLatchRegister() safepoint latch register}
+     * and {@linkplain #getScratchRegister(Kind) scratch register(s)}.
      */
     public abstract PoolSet<EirRegister_Type> unallocatableRegisters();
 

@@ -327,7 +327,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         protected void invokeVirtualMethod(MethodActor method) {
             final VirtualMethodActor declaredMethod = (VirtualMethodActor) method;
             MakeHolderInitialized.makeHolderInitialized(declaredMethod);
-            final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.numberOfParameterLocals() - 1).asObject();
+            final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.numberOfParameterSlots() - 1).asObject();
             if (receiver == null) {
                 catchException(new NullPointerException());
                 return;
@@ -347,7 +347,7 @@ public class BirInterpreter extends IrInterpreter<BirMethod> {
         protected void invokeInterfaceMethod(MethodActor method) {
             final InterfaceMethodActor declaredMethod = (InterfaceMethodActor) method;
             MakeHolderInitialized.makeHolderInitialized(declaredMethod);
-            final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.descriptor().getNumberOfLocals()).asObject();
+            final Object receiver = _state.peek(Kind.REFERENCE, declaredMethod.descriptor().computeNumberOfSlots()).asObject();
             if (receiver == null) {
                 catchException(new NullPointerException());
                 return;

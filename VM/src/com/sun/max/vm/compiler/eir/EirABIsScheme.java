@@ -116,6 +116,12 @@ public abstract class EirABIsScheme<EirRegister_Type extends EirRegister> extend
         assert _nativeABI.calleeSavedRegisters().contains(safepointLatchRegister());
     }
 
+    /**
+     * Gets the ABI for a given method.
+     *
+     * @param classMethodActor the method for which the calling conventions
+     * @return
+     */
     public EirABI getABIFor(ClassMethodActor classMethodActor) {
         final MethodActor compilee = classMethodActor.compilee();
         if (compilee.isCFunction()) {

@@ -708,7 +708,7 @@ public abstract class Actor {
                     case 'r': {
                         if (this instanceof MethodActor) {
                             final MethodActor methodActor = (MethodActor) this;
-                            sb.append(methodActor.descriptor().getResultDescriptor().toJavaString(qualified));
+                            sb.append(methodActor.descriptor().resultDescriptor().toJavaString(qualified));
                         } else if (this instanceof FieldActor) {
                             final FieldActor fieldActor = (FieldActor) this;
                             sb.append(fieldActor.descriptor().toJavaString(qualified));
@@ -768,8 +768,9 @@ public abstract class Actor {
                         if (this instanceof MethodActor) {
                             final MethodActor methodActor = (MethodActor) this;
                             String separator = "";
-                            for (TypeDescriptor parameterDescriptor : methodActor.descriptor().getParameterDescriptors()) {
-                                sb.append(separator).append(parameterDescriptor.toJavaString(qualified));
+                            final SignatureDescriptor signature = methodActor.descriptor();
+                            for (int i = 0; i < signature.numberOfParameters(); i++) {
+                                sb.append(separator).append(signature.parameterDescriptorAt(i).toJavaString(qualified));
                                 separator = ", ";
                             }
                         } else {

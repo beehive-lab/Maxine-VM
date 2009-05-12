@@ -201,13 +201,7 @@ public final class PrototypeGenerator {
      * @return a new Java prototype object
      */
     public JavaPrototype createJavaPrototype(VMConfiguration vmConfiguration, boolean loadingPackages) {
-        try {
-            return new JavaPrototype(createVMConfiguration(vmConfiguration), loadingPackages);
-        } catch (Throwable throwable) {
-            reportThrowable(throwable);
-            ProgramError.unexpected("Java prototype failed");
-            return null;
-        }
+        return new JavaPrototype(createVMConfiguration(vmConfiguration), loadingPackages);
     }
 
     /**

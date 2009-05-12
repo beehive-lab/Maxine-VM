@@ -133,7 +133,6 @@ public final class CString {
      * @return a pointer to the position in the buffer following the terminating zero character
      */
     public static Pointer writeUtf8(final String string, final Pointer buffer, final int bufferSize) {
-        // TODO: factor out encoding of UTF8 characters from this and the following methods
         int position = 0;
         final int endPosition = bufferSize - 1;
         for (int i = 0; i < string.length(); i++) {
@@ -251,6 +250,42 @@ public final class CString {
         for (int i = 0; i < length; i++) {
             buffer[i] = start.getByte(i);
         }
+        return buffer;
+    }
+
+    /**
+     * Copies an array of Java strings into a native array of C strings. The memory for the C string array and each
+     * element in the array is allocated in one memory chunk. The C string array is first in the chunk, followed by 0 if
+     * {@code appendNullDelimiter == true}, followed by {@code strings.length} null terminated C strings. De-allocating
+     * the memory for the buffer is the responsibility of the caller.
+     *
+     * @param strings an array of Java strings
+     * @return a native buffer than can be cast to the C type {@code char**} and used as the first argument to a C
+     *         {@code main} function
+     */
+    public static Pointer utf8ArrayFromStringArray(String[] strings, boolean appendNullDelimiter) {
+        final int nullDelimiter = appendNullDelimiter ? 1 : 0;
+        final int pointerArraySize = Word.size() * (strings.length + nullDelimiter);
+        int bufferSize = pointerArraySize;
+        final int[] utf8Lengths = new int[strings.length];
+        for (int i = 0; i < strings.length; ++i) {
+            final String s = strings[i];
+            final int utf8Length = Utf8.utf8Length(s);
+            utf8Lengths[i] = utf8Length;
+            bufferSize += utf8Length + 1;
+        }
+        final Pointer buffer = Memory.mustAllocate(bufferSize);
+
+        Pointer stringPointer = buffer.plus(pointerArraySize);
+        for (int i = 0; i < strings.length; ++i) {
+            final String s = strings[i];
+            buffer.setWord(i, stringPointer);
+            stringPointer = CString.writeUtf8(s, stringPointer, utf8Lengths[i] + 1);
+        }
+        if (appendNullDelimiter) {
+            buffer.setWord(strings.length, Word.zero());
+        }
+
         return buffer;
     }
 

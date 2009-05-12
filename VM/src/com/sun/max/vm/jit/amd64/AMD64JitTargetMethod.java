@@ -26,8 +26,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.jit.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.amd64.*;
 
 /**
  * @author Bernd Mathiske
@@ -58,10 +56,5 @@ public class AMD64JitTargetMethod extends JitTargetMethod implements AMD64Target
     @Override
     public void forwardTo(TargetMethod newTargetMethod) {
         AMD64TargetMethod.Static.forwardTo(this, newTargetMethod);
-    }
-
-    @Override
-    public JitStackFrameLayout stackFrameLayout() {
-        return new AMD64JitStackFrameLayout(this);
     }
 }

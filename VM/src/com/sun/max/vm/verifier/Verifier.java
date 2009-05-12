@@ -118,7 +118,7 @@ public class Verifier implements VerificationRegistry {
      * Resolves a given TypeDescriptor to a class actor.
      */
     public ClassActor resolve(TypeDescriptor type) {
-        return ClassActor.fromJava(type.toJava(constantPool().classLoader()));
+        return ClassActor.fromJava(type.resolveType(constantPool().classLoader()));
     }
 
     public boolean verbose() {

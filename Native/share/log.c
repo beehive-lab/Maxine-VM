@@ -66,7 +66,11 @@ void log_unlock(void) {
 #if !os_GUESTVMXEN
 FILE *getFileStream() {
     if (fileStream == NULL) {
+#if TELE
+        char *path = getenv("TELE_LOG_FILE");
+#else
         char *path = getenv("MAXINE_LOG_FILE");
+#endif
         if (path == NULL) {
             path = "stdout";
         }

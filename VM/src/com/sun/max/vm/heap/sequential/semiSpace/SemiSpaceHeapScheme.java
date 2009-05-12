@@ -151,14 +151,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private final Runnable _collect = new Runnable() {
         public void run() {
             try {
-                if (Heap.verbose()) {
-                    Log.print("--Before GC--   size: ");
-                    Log.println(_allocationMark.minus(_toSpace.start()).toInt());
-                }
-
                 if (vmConfiguration().debugging()) {
                     // Pre-verification of the heap.
-                    verifyHeap();
+                    verifyHeap("before GC");
                 }
 
                 ++_numberOfGarbageCollectionInvocations;
@@ -186,6 +181,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 scanBootHeap();
                 _bootHeapScanTimer.stop();
 
+                if (Heap.traceGC()) {
+                    Log.println("Scanning code...");
+                }
                 _codeScanTimer.start();
                 scanCode();
                 _codeScanTimer.stop();
@@ -213,7 +211,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 VMConfiguration.hostOrTarget().monitorScheme().afterGarbageCollection();
 
                 if (vmConfiguration().debugging()) {
-                    verifyHeap();
+                    verifyHeap("after GC");
                 }
 
                 TeleHeapInfo.afterGarbageCollection();
@@ -241,10 +239,6 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
                     Log.println();
                     Log.unlock(lockDisabledSafepoints);
-                }
-                if (Heap.verbose()) {
-                    Log.print("--After  GC--   size: ");
-                    Log.println(_allocationMark.minus(_toSpace.start()).toInt());
                 }
             } catch (Throwable throwable) {
                 FatalError.unexpected(throwable.toString() + " during GC");
@@ -582,10 +576,12 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     public Size reportFreeSpace() {
-        executeCollectorThread();
         return immediateFreeSpace();
     }
 
+    public Size reportUsedSpace() {
+        return _allocationMark.minus(_toSpace.start()).asSize();
+    }
 
     private Pointer gcAllocate(Size size) {
         Pointer cell = _allocationMark.asPointer();
@@ -713,14 +709,17 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
         return false;
     }
 
-    private void verifyHeap() {
+    private void verifyHeap(String when) {
         if (Heap.traceGC()) {
-            Log.println("Verifying heap...");
+            Log.print("Verifying heap ");
+            Log.println(when);
         }
         _heapRootsVerifier.run();
         DebugHeap.verifyRegion(_toSpace.start().asPointer(), _allocationMark, _toSpace, _pointerOffsetGripVerifier);
         if (Heap.traceGC()) {
-            Log.println("done verifying heap");
+            Log.print("Verifying heap");
+            Log.print(when);
+            Log.println(": DONE");
         }
     }
 

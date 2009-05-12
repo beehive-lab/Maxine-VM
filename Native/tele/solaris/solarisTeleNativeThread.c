@@ -82,6 +82,7 @@ Java_com_sun_max_tele_debug_solaris_SolarisTeleNativeThread_nativeReadRegisters(
     (*env)->SetByteArrayRegion(env, integerRegisters, 0, integerRegistersLength, (void *) &canonicalIntegerRegisters);
     (*env)->SetByteArrayRegion(env, stateRegisters, 0, stateRegistersLength, (void *) &canonicalStateRegisters);
     (*env)->SetByteArrayRegion(env, floatingPointRegisters, 0, floatingPointRegistersLength, (void *) &canonicalFloatingPointRegisters);
+
     return true;
 }
 
@@ -95,15 +96,18 @@ static jboolean setRegister(jlong processHandle, jlong lwpId, int registerIndex,
 		return false;
 	}
 
-	if (proc_Lputareg(lh, registerIndex, value) != 0) {
-    	log_println("Lputareg failed");
-    	proc_Lfree(lh);
-    	return false;
-	}
-	proc_Lsync(lh);
+	/* We use Plwp_getregs & Plwp_setregs instead of Lputareg as the latter is buggy. */
+    prgregset_t osRegisters;
+    if (proc_Plwp_getregs(ph, lwpId, osRegisters) != 0) {
+        log_println("Plwp_getregs failed");
+        proc_Lfree(lh);
+        return false;
+    }
+    osRegisters[registerIndex] = value;
+    Plwp_setregs(ph, lwpId, osRegisters);
 
-	proc_Lfree(lh);
-	return true;
+    proc_Lfree(lh);
+    return true;
 }
 
 JNIEXPORT jboolean JNICALL
