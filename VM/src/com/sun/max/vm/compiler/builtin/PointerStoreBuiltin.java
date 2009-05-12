@@ -31,8 +31,8 @@ public abstract class PointerStoreBuiltin extends PointerBuiltin {
     }
 
     private PointerStoreBuiltin() {
-        final Kind[] parameterKinds = foldingMethodActor().descriptor().getParameterKinds();
-        _kind = parameterKinds[parameterKinds.length - 1];
+        final SignatureDescriptor signature = foldingMethodActor().descriptor();
+        _kind = signature.parameterDescriptorAt(signature.numberOfParameters() - 1).toKind();
     }
 
     public static class WriteByteAtLongOffset extends PointerStoreBuiltin {

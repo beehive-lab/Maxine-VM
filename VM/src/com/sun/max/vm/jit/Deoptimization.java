@@ -84,7 +84,7 @@ public abstract class Deoptimization implements StackFrameVisitor, TargetLocatio
         }
         if (_isParentFrameOptimized) {
             final ClassMethodActor classMethodActor = d.classMethodActor();
-            if (!(classMethodActor.isStatic() && classMethodActor.descriptor().hasNoParameters())) {
+            if (!(classMethodActor.isStatic() && (classMethodActor.descriptor().numberOfParameters() == 0))) {
                 createAdapterFrame(d);
             }
         }

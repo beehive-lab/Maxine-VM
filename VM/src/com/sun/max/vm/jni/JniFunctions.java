@@ -341,9 +341,9 @@ public final class JniFunctions {
             throw new NoSuchMethodException();
         }
 
-        final Kind[] parameterKinds = dynamicMethodActor.descriptor().getParameterKinds();
-        final Value[] argumentValues = new Value[parameterKinds.length];
-        copyJValueArrayToValueArray(arguments, parameterKinds, argumentValues, 0);
+        final SignatureDescriptor signature = dynamicMethodActor.descriptor();
+        final Value[] argumentValues = new Value[signature.numberOfParameters()];
+        copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
         return JniHandles.createLocalHandle(dynamicMethodActor.invokeConstructor(argumentValues).asObject());
     }
 
@@ -395,23 +395,21 @@ public final class JniFunctions {
 
     /**
      * Copies arguments from the native jvalue array at {@code arguments} into {@code argumentValues}. The number of
-     * arguments copied is equal to {@code parameterKinds.length}.
+     * arguments copied is equal to {@code signature.getNumberOfParameters()}.
      *
-     * @param parameterKinds
-     *                the kind of each parameter
-     * @param startIndex
-     *                the index in {@code argumentValues} to start writing at
+     * @param signature describes the kind of each parameter
+     * @param startIndex the index in {@code argumentValues} to start writing at
      */
-    private static void copyJValueArrayToValueArray(Pointer arguments, Kind[] parameterKinds, Value[] argumentValues, int startIndex) {
+    private static void copyJValueArrayToValueArray(Pointer arguments, SignatureDescriptor signature, Value[] argumentValues, int startIndex) {
         Pointer a = arguments;
 
         // This is equivalent to sizeof(jvalue) in C and gives us the size of each slot in a jvalue array.
         // Note that the size of the data in any given array element will be *at most* this size.
         final int jvalueSize = Kind.LONG.size();
 
-        for (int i = 0; i < parameterKinds.length; i++) {
+        for (int i = 0; i < signature.numberOfParameters(); i++) {
             final int j = startIndex + i;
-            switch (parameterKinds[i].asEnum()) {
+            switch (signature.parameterDescriptorAt(i).toKind().asEnum()) {
                 case BYTE: {
                     argumentValues[j] = ByteValue.from((byte) a.readInt(0));
                     break;
@@ -468,10 +466,10 @@ public final class JniFunctions {
         }
         final VirtualMethodActor dynamicMethodActor = MethodSelectionSnippet.SelectVirtualMethod.quasiFold(object.unhand(), (VirtualMethodActor) methodActor);
 
-        final Kind[] parameterKinds = dynamicMethodActor.descriptor().getParameterKinds();
-        final Value[] argumentValues = new Value[1 + parameterKinds.length];
+        final SignatureDescriptor signature = dynamicMethodActor.descriptor();
+        final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
-        copyJValueArrayToValueArray(arguments, parameterKinds, argumentValues, 1);
+        copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
         return dynamicMethodActor.invoke(argumentValues);
 
     }
@@ -634,10 +632,10 @@ public final class JniFunctions {
             throw new NoSuchMethodException();
         }
 
-        final Kind[] parameterKinds = dynamicMethodActor.descriptor().getParameterKinds();
-        final Value[] argumentValues = new Value[1 + parameterKinds.length];
+        final SignatureDescriptor signature = dynamicMethodActor.descriptor();
+        final Value[] argumentValues = new Value[1 + signature.numberOfParameters()];
         argumentValues[0] = ReferenceValue.from(object.unhand());
-        copyJValueArrayToValueArray(arguments, parameterKinds, argumentValues, 1);
+        copyJValueArrayToValueArray(arguments, signature, argumentValues, 1);
         return dynamicMethodActor.invoke(argumentValues);
     }
 
@@ -1003,9 +1001,9 @@ public final class JniFunctions {
             throw new NoSuchMethodException();
         }
 
-        final Kind[] parameterKinds = methodActor.descriptor().getParameterKinds();
-        final Value[] argumentValues = new Value[parameterKinds.length];
-        copyJValueArrayToValueArray(arguments, parameterKinds, argumentValues, 0);
+        final SignatureDescriptor signature = methodActor.descriptor();
+        final Value[] argumentValues = new Value[signature.numberOfParameters()];
+        copyJValueArrayToValueArray(arguments, signature, argumentValues, 0);
         return methodActor.invoke(argumentValues);
     }
 
@@ -2023,7 +2021,7 @@ public final class JniFunctions {
         if (methodActor == null) {
             throw new NoSuchMethodException();
         }
-        return methodActor.descriptor().getNumberOfParameters();
+        return methodActor.descriptor().numberOfParameters();
     }
 
     @JNI_FUNCTION
@@ -2032,9 +2030,10 @@ public final class JniFunctions {
         if (methodActor == null) {
             throw new NoSuchMethodException();
         }
-        final Kind[] parameterKinds = methodActor.descriptor().getParameterKinds();
-        for (int i = 0; i < parameterKinds.length; i++) {
-            kinds.setByte(i, (byte) parameterKinds[i].asEnum().ordinal());
+        final SignatureDescriptor signature = methodActor.descriptor();
+        for (int i = 0; i < signature.numberOfParameters(); ++i) {
+            final Kind kind = signature.parameterDescriptorAt(i).toKind();
+            kinds.setByte(i, (byte) kind.asEnum().ordinal());
         }
     }
 

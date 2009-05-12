@@ -254,6 +254,11 @@ public final class NoGCHeapScheme extends HeapSchemeAdaptor implements HeapSchem
         return immediateFreeSpace();
     }
 
+    @Override
+    public Size reportUsedSpace() {
+        return _allocationMark.minus(_space.start()).asSize();
+    }
+
     private static final OutOfMemoryError _outOfMemoryError = new OutOfMemoryError(); // TODO: create a new one each time
 
     @NEVER_INLINE

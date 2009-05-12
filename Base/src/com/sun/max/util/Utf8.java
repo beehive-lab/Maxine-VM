@@ -69,7 +69,7 @@ public final class Utf8 {
 
     /**
      * Reads a UTF-8 encoded String from {@code in}.
-     * 
+     *
      * @param in a data input source
      * @param zeroIsEncodedIn2Bytes if true, then 0 is decoded from two bytes as opposed to one
      * @param length the numbers of bytes to be decoded
@@ -91,7 +91,11 @@ public final class Utf8 {
         }
 
         if (sevenBit) {
-            return new String(utf8Data, 0, length);
+            final char[] charData = new char[length];
+            for (int i = 0; i < length; i++) {
+                charData[i] = (char) (utf8Data[i] & 0xff);
+            }
+            return new String(charData);
         }
 
         return utf8ToString(zeroIsEncodedIn2Bytes, utf8Data);
@@ -99,7 +103,7 @@ public final class Utf8 {
 
     /**
      * Converts an array of UTF-8 data to a String.
-     * 
+     *
      * @param zeroIsEncodedIn2Bytes if true, then 0 is decoded from two bytes as opposed to one
      * @param utf8Data the data
      * @return the decoded string

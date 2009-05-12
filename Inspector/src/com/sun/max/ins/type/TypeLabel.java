@@ -129,7 +129,7 @@ public class TypeLabel extends InspectorLabel {
             setToolTipText("");
             setForeground(style().javaNameColor());
         } else {
-            final Class javaType = _typeDescriptor.toJava(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
+            final Class javaType = _typeDescriptor.resolveType(PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
             setText(javaType.getSimpleName());
             if (_teleClassActor == null) {
                 setForeground(style().javaUnresolvedNameColor());

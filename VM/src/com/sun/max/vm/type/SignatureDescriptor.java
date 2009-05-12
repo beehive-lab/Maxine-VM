@@ -26,6 +26,7 @@ import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.collect.ChainedHashMapping.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -45,7 +46,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      */
     private static final class SignatureDescriptorEntry extends SignatureDescriptor implements ChainedHashMapping.Entry<String, SignatureDescriptorEntry> {
 
-        private SignatureDescriptorEntry(String value, TypeDescriptor[] typeDescriptors) {
+        SignatureDescriptorEntry(String value, TypeDescriptor[] typeDescriptors) {
             super(value, typeDescriptors);
         }
 
@@ -78,7 +79,7 @@ public abstract class SignatureDescriptor extends Descriptor {
      */
     private static final GrowableMapping<String, SignatureDescriptorEntry> _canonicalSignatureDescriptors = new ChainingValueChainedHashMapping<String, SignatureDescriptorEntry>();
 
-    private SignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
+    SignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
         super(value);
         assert getClass() == SignatureDescriptorEntry.class;
         _typeDescriptors = typeDescriptors;
@@ -88,38 +89,6 @@ public abstract class SignatureDescriptor extends Descriptor {
      * The return and parameter types of this signature. The return type is at index 0 followed by the parameter types starting at index 1.
      */
     private final TypeDescriptor[] _typeDescriptors;
-
-    /**
-     * A client implements this interface to {@linkplain SignatureDescriptor#visitParameterDescriptors process} the
-     * individual type descriptors in a signature.
-     */
-    public static interface ParameterVisitor {
-        /**
-         * Processes a type descriptor that describes a parameter in a signature.
-         *
-         * @param parameter the type descriptor describing a parameter
-         */
-        void visit(TypeDescriptor parameter);
-    }
-
-    /**
-     * Iterates over all the parameter types described by this signature.
-     *
-     * @param visitor the action to be performed for each parameter type traversed
-     * @param inReverse if true, then the iteration is from the last parameter to the first otherwise it's from the
-     *            first parameter to the last
-     */
-    public final void visitParameterDescriptors(ParameterVisitor visitor, boolean inReverse) {
-        if (inReverse) {
-            for (int i = _typeDescriptors.length - 1; i >= 1; --i) {
-                visitor.visit(_typeDescriptors[i]);
-            }
-        } else {
-            for (int i = 1; i < _typeDescriptors.length; ++i) {
-                visitor.visit(_typeDescriptors[i]);
-            }
-        }
-    }
 
     private static synchronized SignatureDescriptor createSignatureDescriptor(String value, TypeDescriptor[] typeDescriptors) {
         SignatureDescriptorEntry signatureDescriptorEntry = _canonicalSignatureDescriptors.get(value);
@@ -138,7 +107,8 @@ public abstract class SignatureDescriptor extends Descriptor {
         return signatureDescriptorEntry;
     }
 
-    public static int numberOfDescriptors() {
+    @PROTOTYPE_ONLY
+    public static int totalNumberOfDescriptors() {
         return _canonicalSignatureDescriptors.length();
     }
 
@@ -203,34 +173,22 @@ public abstract class SignatureDescriptor extends Descriptor {
         return kinds;
     }
 
-    public Kind getResultKind() {
-        return getResultDescriptor().toKind();
+    public Kind resultKind() {
+        return resultDescriptor().toKind();
     }
 
-    public TypeDescriptor getResultDescriptor() {
+    /**
+     * Gets the type descriptor of the return type in this signature object.
+     */
+    public TypeDescriptor resultDescriptor() {
         return _typeDescriptors[0];
-    }
-
-    public TypeDescriptor[] getParameterDescriptors() {
-        final TypeDescriptor[] parameterDescriptors = new TypeDescriptor[_typeDescriptors.length - 1];
-        System.arraycopy(_typeDescriptors, 1, parameterDescriptors, 0, parameterDescriptors.length);
-        return parameterDescriptors;
-    }
-
-    public TypeDescriptor[] getParameterDescriptorsIncludingReceiver(TypeDescriptor receiverDescriptor) {
-        final TypeDescriptor[] parameterDescriptors = new TypeDescriptor[_typeDescriptors.length];
-        parameterDescriptors[0] = receiverDescriptor;
-        for (int i = 1; i != parameterDescriptors.length; ++i) {
-            parameterDescriptors[i] = _typeDescriptors[i];
-        }
-        return parameterDescriptors;
     }
 
     /**
      * Gets the number of local variable slots used by the parameters in this signature.
-     * Long and double parameters use two slot, all other parameters use one slot.
+     * Long and double parameters use two slots, all other parameters use one slot.
      */
-    public int getNumberOfLocals() {
+    public int computeNumberOfSlots() {
         int n = 0;
         for (int i = 1; i != _typeDescriptors.length; ++i) {
             n += _typeDescriptors[i].toKind().isCategory1() ? 1 : 2;
@@ -238,38 +196,47 @@ public abstract class SignatureDescriptor extends Descriptor {
         return n;
     }
 
-    public Kind[] getParameterKinds() {
-        final Kind[] parameterKinds = new Kind[_typeDescriptors.length - 1];
-        for (int i = 0; i != parameterKinds.length; ++i) {
-            parameterKinds[i] = _typeDescriptors[i + 1].toKind();
+    /**
+     * Copies the kinds of the parameters in this signature object into a given array.
+     *
+     * @param dst the array into which the parameter kinds are to be copied. If {@code null}, then a new array of length
+     *            {@code getNumberOfParameters() + dstOffset} allocated and used as the destination of the copy instead.
+     * @param dstOffset the offset in the returned array at which to start writing
+     * @return the array into which the parameter kinds were copied
+     */
+    public Kind[] copyParameterKinds(Kind[] dst, int dstOffset) {
+        final Kind[] result = dst == null ? new Kind[dstOffset + _typeDescriptors.length - 1] : dst;
+        int dstIndex = dstOffset;
+        for (int i = 1; i != _typeDescriptors.length; ++i) {
+            result[dstIndex++] = _typeDescriptors[i].toKind();
         }
-        return parameterKinds;
+        return result;
     }
+
+
 
     /**
-     * Gets the kinds of the parameters in this signature with a given receiver kind prepended.
+     * Resolves the parameter types in this signature object to an array of classes.
      *
-     * @param receiverKind the kind of a receiver for the invocation of a non-static method with this signature
+     * @param classLoader the class loader used to resolve each parameter type descriptor to a class
+     * @return the resolved array of classes
      */
-    public Kind[] getParameterKindsIncludingReceiver(Kind receiverKind) {
-        final Kind[] parameterKinds = new Kind[_typeDescriptors.length];
-        parameterKinds[0] = receiverKind;
-        for (int i = 1; i != parameterKinds.length; ++i) {
-            parameterKinds[i] = _typeDescriptors[i].toKind();
-        }
-        return parameterKinds;
-    }
-
-    public Class[] getParameterTypes(ClassLoader classLoader) {
+    public Class[] resolveParameterTypes(ClassLoader classLoader) {
         final Class[] parameterTypes = new Class[_typeDescriptors.length - 1];
         for (int i = 0; i != parameterTypes.length; ++i) {
-            parameterTypes[i] = _typeDescriptors[i + 1].toJava(classLoader);
+            parameterTypes[i] = _typeDescriptors[i + 1].resolveType(classLoader);
         }
         return parameterTypes;
     }
 
-    public Class getReturnType(ClassLoader classLoader) {
-        return _typeDescriptors[0].toJava(classLoader);
+    /**
+     * Resolves the return type in this signature object to a class.
+     *
+     * @param classLoader the class loader used to resolve the return type descriptor to a class
+     * @return the resolved return type as a class
+     */
+    public Class resolveReturnType(ClassLoader classLoader) {
+        return _typeDescriptors[0].resolveType(classLoader);
     }
 
     public boolean parametersEqual(SignatureDescriptor other) {
@@ -284,12 +251,33 @@ public abstract class SignatureDescriptor extends Descriptor {
         return false;
     }
 
-    public int getNumberOfParameters() {
+    /**
+     * Gets the number of parameters denoted by this signature.
+     *
+     * To iterate over the parameters of a signature object {@code sig}, use the following loop:
+     * <pre>
+     *    for (int i = 0; i <= sig.numberOfParameters(); i++) {
+     *        final TypeDescriptor parameter = sig.parameterDescriptorAt(i);
+     *        // operate on 'parameter'
+     *    }
+     * </pre>
+     * @return
+     */
+    @INLINE
+    public final int numberOfParameters() {
         return _typeDescriptors.length - 1;
     }
 
-    public boolean hasNoParameters() {
-        return _typeDescriptors.length == 1;
+    /**
+     * Gets the parameter within this signature at a given index.
+     *
+     * @param index the index of the parameter to return
+     *
+     * @see #numberOfParameters()
+     */
+    @INLINE
+    public final TypeDescriptor parameterDescriptorAt(int index) {
+        return _typeDescriptors[index + 1];
     }
 
     public static SignatureDescriptor fromJava(Method method) {
@@ -329,17 +317,16 @@ public abstract class SignatureDescriptor extends Descriptor {
     public String toJavaString(boolean qualified, boolean appendReturnType) {
         final SignatureDescriptor descriptor = this;
         final StringBuilder sb = new StringBuilder("(");
-        boolean isFirst = true;
-        for (TypeDescriptor parameterDescriptor : descriptor.getParameterDescriptors()) {
-            if (!isFirst) {
+        for (int i = 0; i < descriptor.numberOfParameters(); i++) {
+            final TypeDescriptor parameterDescriptor = descriptor.parameterDescriptorAt(i);
+            if (i != 0) {
                 sb.append(", ");
             }
             sb.append(parameterDescriptor.toJavaString(qualified));
-            isFirst = false;
         }
         sb.append(')');
         if (appendReturnType) {
-            sb.append(' ').append(descriptor.getResultDescriptor().toJavaString(qualified));
+            sb.append(' ').append(descriptor.resultDescriptor().toJavaString(qualified));
         }
         return sb.toString();
     }

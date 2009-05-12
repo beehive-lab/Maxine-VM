@@ -60,8 +60,8 @@ public abstract class ClassMethodActor extends MethodActor {
     /**
      * @return number of locals used by the method parameters (including the receiver if this method isn't static).
      */
-    public int numberOfParameterLocals() {
-        return descriptor().getNumberOfLocals() + ((isStatic()) ? 0 : 1);
+    public int numberOfParameterSlots() {
+        return descriptor().computeNumberOfSlots() + ((isStatic()) ? 0 : 1);
     }
 
     @INSPECTED

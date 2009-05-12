@@ -34,9 +34,9 @@ import com.sun.max.vm.type.*;
  * a wrapper for a method {@code M} iff:
  * <ul>
  * <li>{@code W} is annotated (explicitly or {@linkplain JNI_FUNCTION implicitly}) with {@link WRAPPER}.</li>
- * <li>The {@linkplain SignatureDescriptor#getResultKind() return kind} of {@code W} and {@code M} have the same
+ * <li>The {@linkplain SignatureDescriptor#resultKind() return kind} of {@code W} and {@code M} have the same
  * {@linkplain Kind#toStackKind() stack kind}.</li>
- * <li>The {@linkplain SignatureDescriptor#getParameterKinds() parameter kinds} (as stack kinds) of {@code W} are a
+ * <li>The {@linkplain SignatureDescriptor#copyParameterKinds(Kind[], int) parameter kinds} (as stack kinds) of {@code W} are a
  * prefix of {@code M}'s parameter kinds.
  * <ul>
  * <p>
@@ -50,7 +50,7 @@ import com.sun.max.vm.type.*;
  * a number of wrappers with mostly duplicated code are required when wrapping a number of methods whose wrapping
  * semantics are the same but whose return kinds vary. An example is the {@linkplain JniFunctionWrapper wrappers} for
  * {@linkplain JniFunctions JNI functions}.
- * 
+ *
  * @author Doug Simon
  */
 @Retention(RetentionPolicy.RUNTIME)
@@ -71,13 +71,11 @@ public @interface WRAPPED {
             for (Method wrapperMethod : wrapperHolder.getDeclaredMethods()) {
                 if (wrapperMethod.getAnnotation(WRAPPER.class) != null) {
                     final SignatureDescriptor wrapperDescriptor = SignatureDescriptor.fromJava(wrapperMethod);
-                    if (wrapperDescriptor.getResultKind().toStackKind().equals(wrappedDescriptor.getResultKind().toStackKind())) {
-                        final Kind[] wrappedParameters = wrappedDescriptor.getParameterKinds();
-                        final Kind[] wrapperParameters = wrapperDescriptor.getParameterKinds();
-                        if (wrapperParameters.length <= wrappedParameters.length) {
+                    if (wrapperDescriptor.resultKind().toStackKind().equals(wrappedDescriptor.resultKind().toStackKind())) {
+                        if (wrapperDescriptor.numberOfParameters() <= wrappedDescriptor.numberOfParameters()) {
                             boolean match = true;
-                            for (int i = 0; i != wrapperParameters.length; ++i) {
-                                if (!wrappedParameters[i].toStackKind().equals(wrapperParameters[i].toStackKind())) {
+                            for (int i = 0; i != wrapperDescriptor.numberOfParameters(); ++i) {
+                                if (!wrappedDescriptor.parameterDescriptorAt(i).toKind().toStackKind().equals(wrapperDescriptor.parameterDescriptorAt(i).toKind().toStackKind())) {
                                     match = false;
                                     break;
                                 }

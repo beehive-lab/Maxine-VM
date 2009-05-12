@@ -31,7 +31,7 @@ import com.sun.max.vm.type.*;
 public class InvokeInterface extends JavaResolvableOperator<InterfaceMethodActor> {
 
     public InvokeInterface(ConstantPool constantPool, int index) {
-        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.interfaceMethodAt(index).signature(constantPool).getResultKind());
+        super(CALL | NULL_POINTER_CHECK, constantPool, index, constantPool.interfaceMethodAt(index).signature(constantPool).resultKind());
     }
 
     @Override
@@ -47,6 +47,8 @@ public class InvokeInterface extends JavaResolvableOperator<InterfaceMethodActor
     @Override
     public Kind[] parameterKinds() {
         final MethodRefConstant method = _constantPool.methodAt(_index);
-        return method.signature(_constantPool).getParameterKindsIncludingReceiver(method.holder(_constantPool).toKind());
+        final Kind[] kinds = method.signature(_constantPool).copyParameterKinds(null, 1);
+        kinds[0] = method.holder(_constantPool).toKind();
+        return kinds;
     }
 }

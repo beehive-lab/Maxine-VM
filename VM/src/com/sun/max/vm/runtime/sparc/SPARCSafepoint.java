@@ -71,6 +71,16 @@ import com.sun.max.vm.stack.sparc.*;
  */
 public final class SPARCSafepoint extends Safepoint {
 
+    @Override
+    public void setInstructionPointer(Pointer trapState, Pointer value) {
+        FatalError.unexpected("not yet implemented");
+    }
+
+    @Override
+    public void setReturnValue(Pointer trapState, Pointer value) {
+        FatalError.unexpected("not yet implemented");
+    }
+
     private final boolean _is32Bit;
 
     public SPARCSafepoint(VMConfiguration vmConfiguration) {
@@ -190,4 +200,6 @@ public final class SPARCSafepoint extends Safepoint {
     public Pointer getCallAddressRegister(Pointer trapState) {
         return trapState.readWord(TRAP_CALL_ADDRESS_OFFSET).asPointer();
     }
+
+
 }

@@ -32,7 +32,7 @@ import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -139,6 +139,19 @@ public abstract class JitTargetMethod extends TargetMethod {
         assert _bytecodeToTargetCodePositionMap.length > 0;
         final int targetCodePosition = targetCodePositionFor(instructionPointer);
         return bytecodePositionFor(targetCodePosition);
+    }
+
+    /**
+     * This method is guaranteed not to perform allocation.
+     */
+    @Override
+    public final JitStackFrameLayout stackFrameLayout() {
+        final JitReferenceMapEditor referenceMapEditor = _referenceMapEditor;
+        if (referenceMapEditor != null) {
+            return referenceMapEditor.stackFrameLayout();
+        }
+        FatalError.check(_stackFrameLayout != null, "Cannot get JIT stack frame layout for incomplete JIT method");
+        return _stackFrameLayout;
     }
 
     /**
@@ -373,20 +386,9 @@ public abstract class JitTargetMethod extends TargetMethod {
     @Override
     public void finalizeReferenceMaps() {
         if (_referenceMapEditor != null) {
-            if (Heap.traceGCRootScanning()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Finalizing JIT reference maps for ");
-                Log.printMethodActor(classMethodActor(), true);
-                Log.unlock(lockDisabledSafepoints);
-            }
             _referenceMapEditor.fillInMaps(_bytecodeToTargetCodePositionMap);
+            _stackFrameLayout = _referenceMapEditor.stackFrameLayout();
             _referenceMapEditor = null;
-            if (Heap.traceGCRootScanning()) {
-                final boolean lockDisabledSafepoints = Log.lock();
-                Log.print("Finalized JIT reference maps for ");
-                Log.printMethodActor(classMethodActor(), true);
-                Log.unlock(lockDisabledSafepoints);
-            }
         }
     }
 
@@ -397,10 +399,16 @@ public abstract class JitTargetMethod extends TargetMethod {
 
     private JitReferenceMapEditor _referenceMapEditor;
 
+    /**
+     * The preserves the stack frame layout object from {@link #_referenceMapEditor} when the latter is cleared in {@link #finalizeReferenceMaps()}.
+     * The stack frame layout object is required by {@link StackReferenceMapPreparer#prepareTrampolineFrameForJITCaller}.
+     */
+    private JitStackFrameLayout _stackFrameLayout;
+
     @Override
     public boolean prepareFrameReferenceMap(StackReferenceMapPreparer stackReferenceMapPreparer, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
         finalizeReferenceMaps();
-        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, stackPointer, framePointer.plus(_frameReferenceMapOffset));
+        return stackReferenceMapPreparer.prepareFrameReferenceMap(this, instructionPointer, framePointer.plus(_frameReferenceMapOffset), stackPointer);
     }
 
     public Pointer getFramePointer(Pointer cpuStackPointer, Pointer cpuFramePointer, Pointer osSignalIntegerRegisters) {

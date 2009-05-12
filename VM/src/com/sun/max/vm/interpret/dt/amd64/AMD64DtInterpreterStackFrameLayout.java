@@ -110,7 +110,7 @@ public class AMD64DtInterpreterStackFrameLayout extends JavaStackFrameLayout {
     public AMD64DtInterpreterStackFrameLayout(ClassMethodActor classMethodActor, AMD64DtInterpreter interpreter) {
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
         _numberOfLocalSlots = codeAttribute.maxLocals();
-        _numberOfParameterSlots = classMethodActor.numberOfParameterLocals();
+        _numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
         _interpreter = interpreter;
 
     }

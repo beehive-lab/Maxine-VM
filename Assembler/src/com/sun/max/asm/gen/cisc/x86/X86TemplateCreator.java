@@ -26,7 +26,6 @@ import java.util.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
 
 /**
  * @author Bernd Mathiske
@@ -91,8 +90,6 @@ public abstract class X86TemplateCreator<Template_Type extends X86Template> {
                     return;
                 }
             }
-            Trace.line(3, "template: " + template);
-            Trace.line(3);
             addTemplate(template);
             _serial++;
         }

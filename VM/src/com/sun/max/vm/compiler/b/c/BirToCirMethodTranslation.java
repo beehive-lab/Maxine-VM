@@ -47,12 +47,20 @@ public class BirToCirMethodTranslation {
 
     private final CirClosure _rootClosure;
 
-    public CirVariable[] createParameters(Kind[] parameterKinds) {
-        final CirVariable[] parameters = CirClosure.newParameters(parameterKinds.length + 2);
+    private CirVariable[] createParameters(ClassMethodActor methodActor) {
+        final SignatureDescriptor signature = methodActor.descriptor();
+        final int numberOfParameters = signature.numberOfParameters() + (methodActor.isStatic() ? 0 : 1);
+        final CirVariable[] parameters = CirClosure.newParameters(numberOfParameters + 2);
         int i = 0;
-        while (i < parameterKinds.length) {
-            parameters[i] = _variableFactory.createMethodParameter(parameterKinds[i], i);
+        if (!methodActor.isStatic()) {
+            parameters[i] = _variableFactory.createMethodParameter(methodActor.holder().kind(), i);
             i++;
+        }
+        int j = 0;
+        while (i < numberOfParameters) {
+            parameters[i] = _variableFactory.createMethodParameter(signature.parameterDescriptorAt(j).toKind(), i);
+            i++;
+            j++;
         }
         parameters[i++] = _variableFactory.normalContinuationParameter();
         parameters[i++] = _variableFactory.exceptionContinuationParameter();
@@ -69,7 +77,7 @@ public class BirToCirMethodTranslation {
         _variableFactory = variableFactory;
         _cirGenerator = cirGenerator;
 
-        final CirVariable[] parameters = createParameters(birMethod.classMethodActor().getParameterKinds());
+        final CirVariable[] parameters = createParameters(birMethod.classMethodActor());
 
         _localVariableFactory = new LocalVariableFactory(_variableFactory, birMethod.maxLocals(), parameters);
         _stackVariableFactory = new StackVariableFactory(_variableFactory, birMethod.maxStack());

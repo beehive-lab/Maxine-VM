@@ -32,7 +32,7 @@ import com.sun.max.vm.type.*;
 public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
 
     public InvokeStatic(ConstantPool constantPool, int index) {
-        super(CALL, constantPool, index, constantPool.methodAt(index).signature(constantPool).getResultKind());
+        super(CALL, constantPool, index, constantPool.methodAt(index).signature(constantPool).resultKind());
     }
 
     @Override
@@ -47,6 +47,6 @@ public class InvokeStatic extends JavaResolvableOperator<StaticMethodActor> {
 
     @Override
     public Kind[] parameterKinds() {
-        return _constantPool.methodAt(_index).signature(_constantPool).getParameterKinds();
+        return _constantPool.methodAt(_index).signature(_constantPool).copyParameterKinds(null, 0);
     }
 }

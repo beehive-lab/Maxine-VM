@@ -27,6 +27,7 @@ import junit.framework.*;
 import test.com.sun.max.vm.compiler.*;
 import test.com.sun.max.vm.compiler.bytecode.*;
 
+import com.sun.max.collect.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 
@@ -155,8 +156,15 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
+        test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class
     };
+
+    static final String[] _outputTests = com.sun.max.lang.Arrays.map(_outputTestClasses, String.class, new MapFunction<Class, String>() {
+        public String map(Class from) {
+            return from.getSimpleName();
+        }
+    });
 
     static void addTestName(Object object, Set<String> testNames) {
         if (object instanceof Class) {
@@ -245,8 +253,11 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
+        test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class,
         test.output.Thread_join04.class,
+        test.except.Catch_NPE_03.class, // 202
+        test.except.Catch_NPE_04.class, // 203
         test.hotpath.HP_array02.class, // 329
         test.hotpath.HP_series.class, // 333
         test.except.Catch_StackOverflowError_01.class,
@@ -284,6 +295,7 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest01.class,
         test.output.WeakReferenceTest02.class,
         test.output.WeakReferenceTest03.class,
+        test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class,
         test.bytecode.BC_frem.class,  // 45
         test.except.Catch_NPE_03.class, // 202

@@ -242,7 +242,6 @@ public abstract class X86Disassembler<Template_Type extends X86Template, Disasse
             final Sequence<Template_Type> templates = headerToTemplates().get(header);
             if (templates != null) {
                 for (Template_Type template : templates) {
-                    Trace.line(3, template.toString());
                     stream.reset();
                     scanInstructionHeader(stream);
                     if (isFloatingPointEscape) {
