@@ -196,8 +196,14 @@ ifeq ($(OS),guestvm)
 	LIB_PREFIX = lib
 	LIB_SUFFIX = .so
 	LIBA_SUFFIX = .a
-	LINK_AR = gar r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
-	LINK_LIB = gcc -g -shared -lc -lm -m64  -lguestvm-ukernel_db
+    ifeq ($(HOSTOS),Linux)
+        AR = ar
+    else
+        AR = gar
+    endif
+	
+	LINK_AR = $(AR) r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
+	LINK_LIB = $(CC) -shared -lc -lm -m64  -lguk_db
 endif
 
 ifndef JAVA_HOME 
