@@ -29,17 +29,28 @@ import java.util.*;
  */
 public class CatchOutOfMemory {
     public static void main(String[] args) {
+        System.out.println("starting...");
         if (test(0) == 0) {
             System.out.println("ok.");
+            System.out.flush();
+/*            if (test(1) == 0) {
+                System.out.println("ok.");
+                System.out.flush();
+                System.exit(30);
+            }
+*/
+            System.exit(10);
         } else {
             System.out.println("failed.");
+            System.out.flush();
+            System.exit(20);
         }
     }
     public static int test(int a) {
         List<Object[]> leak = new ArrayList<Object[]>();
         try {
             while (true) {
-                leak.add(new Object[12000]);
+                leak.add(new Object[200000]);
             }
         } catch (OutOfMemoryError ex) {
             return 0;
