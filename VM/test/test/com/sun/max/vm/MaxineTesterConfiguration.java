@@ -256,6 +256,8 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest04.class,
         test.output.MegaThreads.class,
         test.output.Thread_join04.class,
+        test.except.Catch_NPE_03.class, // 202
+        test.except.Catch_NPE_04.class, // 203
         test.hotpath.HP_array02.class, // 329
         test.hotpath.HP_series.class, // 333
         test.except.Catch_StackOverflowError_01.class,
