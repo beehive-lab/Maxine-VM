@@ -1038,11 +1038,8 @@ public final class DataPrototype extends Prototype {
         final int bootCodeRegionSize = Code.bootCodeRegion().size().toInt();
         ProgramWarning.check(numberOfBytes <= bootCodeRegionSize, "numberOfBytes > bootCodeRegionSize");
 
-        _relocationFlagBytes = new byte[((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment) / 8]; // one
-                                                                                                                                // bit
-                                                                                                                                // per
-                                                                                                                                // alignment
-                                                                                                                                // unit
+        // one bit per alignment unit
+        _relocationFlagBytes = new byte[((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment) / 8];
         assignRelocationFlags();
 
         if (mapFile != null) {

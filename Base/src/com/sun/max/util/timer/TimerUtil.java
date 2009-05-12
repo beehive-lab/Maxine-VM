@@ -48,4 +48,8 @@ public class TimerUtil {
     public static long getLastElapsedMilliSeconds(Timer timer) {
         return (1000 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
     }
+
+    public static long getLastElapsedNanoSeconds(Timer timer) {
+        return (1000000 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
+    }
 }

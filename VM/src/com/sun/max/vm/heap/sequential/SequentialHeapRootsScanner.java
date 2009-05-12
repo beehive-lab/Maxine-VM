@@ -64,7 +64,7 @@ public class SequentialHeapRootsScanner {
 
     /**
      * The run() method of the Sequential Heap Root Scanner performs two tasks. 1) For all ACTIVE threads in VMThreadMap
-     * (holds the active threads of the VM) execute the _localSpaceScanner.run() which scans all the roots objects. 2)
+     * (holds the active threads of the VM) execute the _vmThreadLocalsScanner.run() which scans all the roots objects. 2)
      * Scans the references of the monitor scheme used. The run() method of the Sequential Heap Root Scanner performs
      * two tasks. 1) For all ACTIVE threads in VMThreadMap (holds the active threads of the VM) execute the
      * _vmThreadLocalsScanner.run() which scans all the roots objects. 2) Scans the references of the monitor scheme
