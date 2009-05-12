@@ -67,7 +67,7 @@ public class MaxineTester {
                     "The name of or full path to the Java VM executable to use. This must be a JDK 6 or greater VM.");
     private static final Option<String> _javaVMArgs = _options.newStringOption("java-vm-args", "-d64 -Xmx1g",
                     "The VM options to be used when running the Java VM.");
-    private static final Option<Integer> _javaTesterTimeOut = _options.newIntegerOption("java-tester-timeout", 50,
+    private static final Option<Integer> _javaTesterTimeOut = _options.newIntegerOption("java-tester-timeout", 90,
                     "The number of seconds to wait for the in-target Java tester tests to complete before " +
                     "timing out and killing it.");
     private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 50,
