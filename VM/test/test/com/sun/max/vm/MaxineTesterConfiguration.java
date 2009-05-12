@@ -130,6 +130,7 @@ public class MaxineTesterConfiguration {
     static final Class[] _outputTestClasses = {
         test.output.AWTFont.class,
         test.output.JavacTest.class,
+        test.output.CatchOutOfMemory.class,
         test.output.PrintDate.class,
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
@@ -231,6 +232,7 @@ public class MaxineTesterConfiguration {
     static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
         test.output.AWTFont.class,
         test.output.JavacTest.class,
+        test.output.CatchOutOfMemory.class,
         test.output.PrintDate.class,
         test.output.HelloWorld.class,
         test.output.HelloWorldGC.class,
