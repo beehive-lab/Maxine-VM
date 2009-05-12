@@ -384,7 +384,7 @@ public abstract class JitTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void finalizeReferenceMaps() {
+    public synchronized void finalizeReferenceMaps() {
         if (_referenceMapEditor != null) {
             _referenceMapEditor.fillInMaps(_bytecodeToTargetCodePositionMap);
             _stackFrameLayout = _referenceMapEditor.stackFrameLayout();

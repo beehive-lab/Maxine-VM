@@ -18,25 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.except;
+package test.output;
 
 import java.util.*;
 
-/*
- * @Harness: java
- * @Runs: 0=0
+/**
+ * A simple class to allocate a lot of memory and then catch an OutOfMemory exception.
+ *
+ * @author Ben L. Titzer
  */
-
-public class Catch_OutOfMemory01 {
+public class CatchOutOfMemory {
+    public static void main(String[] args) {
+        if (test(0) == 0) {
+            System.out.println("ok.");
+        } else {
+            System.out.println("failed.");
+        }
+    }
     public static int test(int a) {
         List<Object[]> leak = new ArrayList<Object[]>();
         try {
-             while (true) {
-                leak.add(new Object[120000]);
+            while (true) {
+                leak.add(new Object[12000]);
             }
         } catch (OutOfMemoryError ex) {
             return 0;
-       } catch (Throwable ex) {
+        } catch (Throwable ex) {
             return -1;
         } finally {
             leak = null;
