@@ -541,7 +541,10 @@ public abstract class TeleTargetMethod extends TeleRuntimeMemoryRegion implement
         if (instructions != null) {
             for (TargetCodeInstruction targetCodeInstruction : instructions) {
                 if (targetCodeInstruction.label() != null) {
-                    teleVM().removeTargetBreakpoint(targetCodeInstruction.address());
+                    final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetCodeInstruction.address());
+                    if (targetBreakpoint != null) {
+                        targetBreakpoint.remove();
+                    }
                 }
             }
         }

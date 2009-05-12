@@ -28,7 +28,7 @@ import com.sun.max.unsafe.*;
 
 /**
  * A selectable, lightweight label for displaying memory
- * locations in the {@link TeleVM} with different interpretations.
+ * locations in the VM with different interpretations.
  *
  * @author Michael Van De Vanter
  */

@@ -247,14 +247,6 @@ public abstract class TeleProcess extends AbstractTeleVMHolder implements TeleIO
         }
     }
 
-    /**
-     * Gets the thread on which all execution requests are executed.
-     * @return the thread that is handling requests
-     */
-    public RequestHandlingThread requestHandlingThread() {
-        return _requestHandlingThread;
-    }
-
     private final RequestHandlingThread _requestHandlingThread;
 
     /**

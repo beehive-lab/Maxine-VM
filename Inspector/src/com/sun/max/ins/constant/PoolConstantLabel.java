@@ -26,7 +26,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -37,7 +36,7 @@ import com.sun.max.vm.type.*;
 
 
 /**
- * A label for displaying a {@link PoolConstant} in the {@link TeleVM} that is a reference.
+ * A label for displaying a {@link PoolConstant} in the VM that is a reference.
  * For literal constants, the labels rely on the local counterpart to the remote one.
  * For resolvable constants, an attempt is made to read the remote version in order
  * to determine if resolved or not.
@@ -61,7 +60,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
     private final int _index;
 
     /**
-     * Surrogate for the {@link ConstantPool} in the {@link TeleVM}.
+     * Surrogate for the {@link ConstantPool} in the VM.
      * Might be null, and might be unreachable.
      */
     private final TeleConstantPool _teleConstantPool;
@@ -142,7 +141,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
                 }
             }
         });
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     protected abstract void updateText();
@@ -367,7 +366,7 @@ public abstract class PoolConstantLabel extends InspectorLabel {
         protected void handleLeftButtonEvent() {
             checkResolved();
             if (_teleClassMethodActor != null && _teleClassMethodActor.hasCodeAttribute()) {
-                final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), _teleClassMethodActor, 0);
+                final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(_teleClassMethodActor, 0);
                 inspection().focus().setCodeLocation(teleCodeLocation, false);
             }
         }

@@ -44,7 +44,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.*;
 
 /**
- * Holds the user interaction state for the inspection of a Maxine VM, which is accessed via a {@link TeleVM} surrogate.
+ * Holds the user interaction state for the inspection of a Maxine VM, which is accessed via a surrogate implementing {@link MaxVM}.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -66,7 +66,7 @@ public class Inspection extends JFrame {
     private static final String _inspectorName = "Maxine Inspector";
 
     /**
-     * Constants specifying the state of the Inspection and {@link TeleVM}, if present. These are a superset of
+     * Constants specifying the state of the Inspection and VM, if present. These are a superset of
      * {@link TeleProcess.State}.
      */
     public enum InspectionState {
@@ -77,35 +77,32 @@ public class Inspection extends JFrame {
         NO_PROCESS,
 
         /**
-         * Inspection state when there is a {@link TeleVM} process and it is currently stopped, but not in a GC.
+         * Inspection state when there is a VM process and it is currently stopped, but not in a GC.
          */
         STOPPED,
 
         /**
-         * Inspection state when there is a {@link TeleVM} process and it is currently stopped in a GC.
+         * Inspection state when there is a VM process and it is currently stopped in a GC.
          */
         STOPPED_IN_GC,
 
         /**
-         * Inspection state when there is a {@link TeleVM} process and it is currently running.
+         * Inspection state when there is a VM process and it is currently running.
          */
         RUNNING,
 
         /**
-         * Inspection state when there was a {@link TeleVM} process that has terminated.
+         * Inspection state when there was a VM process that has terminated.
          */
         TERMINATED;
     }
 
     private InspectionState _inspectionState = InspectionState.NO_PROCESS;
 
-    private final TeleVM _teleVM;
+    private final MaxVM _vm;
 
-    /**
-     * @return the Maxine VM being inspected
-     */
-    public TeleVM teleVM() {
-        return _teleVM;
+    public MaxVM maxVM() {
+        return _vm;
     }
 
     private final String _bootImageFileName;
@@ -120,16 +117,10 @@ public class Inspection extends JFrame {
     private boolean _investigateWordValues = true;
 
     /**
-     * @return Does the Inspector attempt to discover proactively what word values might point to in the {@link TeleVM}.
+     * @return Does the Inspector attempt to discover proactively what word values might point to in the VM.
      */
     public boolean investigateWordValues() {
         return _investigateWordValues;
-    }
-
-    private final TeleVMTrace _teleVMTrace;
-
-    public TeleVMTrace teleVMTrace() {
-        return _teleVMTrace;
     }
 
     private final InspectorNameDisplay _nameDisplay;
@@ -158,8 +149,8 @@ public class Inspection extends JFrame {
     }
 
     // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
-    //private InspectorGeometry _geometry = new InspectorGeometry10Pt();
-    private InspectorGeometry _geometry = new InspectorGeometry12Pt();
+    private InspectorGeometry _geometry = new InspectorGeometry10Pt();
+    //private InspectorGeometry _geometry = new InspectorGeometry12Pt();
 
     /**
      * Default size and layout for windows; overridden by persistent settings from previous sessions.
@@ -217,39 +208,68 @@ public class Inspection extends JFrame {
         }
     }
 
-    private final InspectionPreferences _preferences = new InspectionPreferences();
+    private final InspectionPreferences _preferences;
 
     public InspectionPreferences preferences() {
         return _preferences;
     }
 
-    private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
-    private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
-    private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
-    private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
+
 
     public class InspectionPreferences extends AbstractSaveSettingsListener {
 
-        public InspectionPreferences() {
-            super("inspection", Inspection.this);
+        private static final String FRAME_X_KEY = "frameX";
+        private static final String FRAME_Y_KEY = "frameY";
+        private static final String FRAME_HEIGHT_KEY = "frameHeight";
+        private static final String FRAME_WIDTH_KEY = "frameWidth";
+        private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
+        private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
+        private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
+        private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
+
+        private final Inspection _inspection;
+
+        public InspectionPreferences(Inspection inspection) {
+            super("inspection");
+            _inspection = inspection;
+            // Don't rely on the default settings behavior for saving and resetting window size and location.
         }
 
-        public void saveSettings(SaveSettingsEvent settings) {
-            settings.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
-            settings.save(DISPLAY_STYLE_PREFERENCE, style().name());
-            settings.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
-            settings.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
+        public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
+            final Rectangle bounds = _inspection.getBounds();
+            saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
+            saveSettingsEvent.save(FRAME_Y_KEY, bounds.y);
+            saveSettingsEvent.save(FRAME_WIDTH_KEY, bounds.width);
+            saveSettingsEvent.save(FRAME_HEIGHT_KEY, bounds.height);
+            saveSettingsEvent.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
+            saveSettingsEvent.save(DISPLAY_STYLE_PREFERENCE, style().name());
+            saveSettingsEvent.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
+            saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = _externalViewerConfig.get(externalViewerType);
                 if (config != null) {
-                    settings.save(EXTERNAL_VIEWER_PREFERENCE + "." + externalViewerType.name(), config);
+                    saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE + "." + externalViewerType.name(), config);
                 }
             }
         }
 
         void initialize() {
+            _settings.addSaveSettingsListener(this);
             try {
-                _settings.addSaveSettingsListener(this);
+                if (_settings.containsKey(this, FRAME_X_KEY)) {
+                    // Adjust any negative (off-screen) locations to be on-screen.
+                    final int x = Math.max(_settings.get(this, FRAME_X_KEY, OptionTypes.INT_TYPE, -1), 0);
+                    final int y = Math.max(_settings.get(this, FRAME_Y_KEY, OptionTypes.INT_TYPE, -1), 0);
+                    // Adjust any excessive window size to fit within the screen
+                    final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                    final int width = Math.min(_settings.get(this, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
+                    final int height = Math.min(_settings.get(this, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
+                    _inspection.setBounds(x, y, width, height);
+                }
+            } catch (Option.Error optionError) {
+                ProgramWarning.message("Frame settings: " + optionError.getMessage());
+            }
+            try {
                 if (_settings.containsKey(this, KEY_BINDINGS_PREFERENCE)) {
                     final String keyBindingsName = _settings.get(this, KEY_BINDINGS_PREFERENCE, OptionTypes.STRING_TYPE, null);
 
@@ -536,7 +556,7 @@ public class Inspection extends JFrame {
         if (_externalViewerType == ExternalViewerType.NONE) {
             return false;
         }
-        final File javaSourceFile = teleVM().findJavaSourceFile(classActor);
+        final File javaSourceFile = maxVM().findJavaSourceFile(classActor);
         if (javaSourceFile == null) {
             return false;
         }
@@ -633,21 +653,22 @@ public class Inspection extends JFrame {
         return result;
     }
 
-    public Inspection(TeleVM teleVM) throws IOException {
+    public Inspection(MaxVM maxVM) throws IOException {
         super(_inspectorName);
-        _teleVM = teleVM;
-        _bootImageFileName = _teleVM.bootImageFile().getAbsolutePath().toString();
-        if (!(teleVM().isReadOnly())) {
+        _preferences = new InspectionPreferences(this);
+        _vm = maxVM;
+        _bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
+        if (!(maxVM().isReadOnly())) {
             _presumedState = State.STOPPED;
             _inspectionState = InspectionState.STOPPED;
         }
-        _teleVMTrace = new TeleVMTrace(teleVM);
         _nameDisplay = new InspectorNameDisplay(this);
         _styleFactory = new InspectorStyleFactory(this);
         _style = _styleFactory.defaultStyle();
+        _desktopPane.setOpaque(true);
         _scrollPane = new InspectorScrollPane(this, _desktopPane);
         _focus = new InspectionFocus(this);
-        _settings = new InspectionSettings(this, new File(teleVM.programFile().getParentFile(), _SETTINGS_FILE_NAME));
+        _settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), _SETTINGS_FILE_NAME));
 
         setDefaultLookAndFeelDecorated(true);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -658,11 +679,10 @@ public class Inspection extends JFrame {
                 quit();
             }
         });
-
         setContentPane(_scrollPane);
-        _desktopPane.setOpaque(true);
-        _desktopPane.setMinimumSize(_geometry.inspectorFrameMinSize());
-        _desktopPane.setPreferredSize(_geometry.inspectorFramePrefSize());
+        // Set default geometry; may get overridden by settings when initialized
+        setMinimumSize(_geometry.inspectorFrameMinSize());
+        setPreferredSize(_geometry.inspectorFramePrefSize());
         setLocation(_geometry.inspectorFrameDefaultLocation());
         _inspectionActions = new InspectionActions(this);
         _viewMenu = new InspectorMenu();
@@ -700,20 +720,20 @@ public class Inspection extends JFrame {
 
     /**
      * Note that there is a delay, as well as a gap in the AWT event queue between the actual change in the
-     * {@link TeleVM} process state and the receipt of notification by the Inspector. This value may not always agree
-     * with what's reported by {@link TeleVM#state()}.
+     * VM process state and the receipt of notification by the Inspector. This value may not always agree
+     * with what's reported by {@link MaxVM#state()}.
      *
-     * @return the presumed state of the {@link TeleVM} as of the most recent update, subject to quantum and other
+     * @return the presumed state of the VM as of the most recent update, subject to quantum and other
      *         effects.
      */
     private State _presumedState = null;
 
     /**
-     * Is the {@link TeleVM} running, as of the most recent state update? Note that there is a delay, as well as a gap
-     * in the AWT event queue, between the stopping of the {@link TeleVM} and the receipt of notification by the
+     * Is the VM running, as of the most recent state update? Note that there is a delay, as well as a gap
+     * in the AWT event queue, between the stopping of the VM and the receipt of notification by the
      * Inspector (when running asynchronous), so this value may not always agree with what's reported by
-     * {@link TeleVM#state()}. In particular, the AWT event queue might initiate new action sequences when the
-     * {@link TeleVM} has actually stopped, but before the Inspector receives notification.
+     * {@link MaxVM#state()}. In particular, the AWT event queue might initiate new action sequences when the
+     * VM has actually stopped, but before the Inspector receives notification.
      *
      * @return VM state == {@link State#STOPPED}.
      */
@@ -722,7 +742,7 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Is the {@link TeleVM} available to start running, as of the most recent state update?
+     * Is the VM available to start running, as of the most recent state update?
      *
      * @return VM state == {@link State#STOPPED}.
      */
@@ -744,7 +764,7 @@ public class Inspection extends JFrame {
         final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
         switch (_presumedState) {
             case STOPPED:
-                if (_teleVM.isInGC()) {
+                if (maxVM().isInGC()) {
                     menuBar.setStateColor(style().vmStoppedinGCBackgroundColor());
                     _inspectionState = InspectionState.STOPPED_IN_GC;
                 } else {
@@ -777,7 +797,7 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Preemptively assume that the {@link TeleVM} is running without waiting for notification.
+     * Preemptively assume that the VM is running without waiting for notification.
      */
     void assumeRunning() {
         Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
@@ -814,7 +834,7 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Handles reported breakpoint changes in the {@link TeleVM}.
+     * Handles reported breakpoint changes in the VM.
      */
     private void processBreakpointChange(long epoch) {
         Trace.line(TRACE_VALUE, tracePrefix() + "breakpoint state notification");
@@ -824,7 +844,7 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Handles reported breakpoint changes in the {@link TeleVM}. Ensures that the event is handled only on the current
+     * Handles reported breakpoint changes in the VM. Ensures that the event is handled only on the current
      * AWT event thread.
      */
     private final class BreakpointListener implements TeleViewModel.Listener {
@@ -849,11 +869,11 @@ public class Inspection extends JFrame {
     void initialize() throws IOException {
         _preferences.initialize();
         BreakpointPersistenceManager.initialize(this);
-        _inspectionActions.refresh(teleVM().epoch(), true);
+        _inspectionActions.refresh(maxVM().epoch(), true);
         // Listen for process state changes
-        teleVM().addStateListener(new ProcessStateListener());
+        maxVM().addStateListener(new ProcessStateListener());
         // Listen for changes in breakpoints
-        teleVM().addBreakpointListener(new BreakpointListener());
+        maxVM().addBreakpointListener(new BreakpointListener());
     }
 
     private InspectorAction _currentAction = null;
@@ -933,13 +953,11 @@ public class Inspection extends JFrame {
     private IdentityHashSet<InspectionListener> _inspectionListeners = new IdentityHashSet<InspectionListener>();
 
     /**
-     * Adds a listener for view update when {@link TeleVM} state changes.
+     * Adds a listener for view update when VM state changes.
      */
     public void addInspectionListener(InspectionListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "adding inspection listener: " + listener);
-        synchronized (this) {
-            _inspectionListeners.add(listener);
-        }
+        _inspectionListeners.add(listener);
     }
 
     /**
@@ -948,18 +966,16 @@ public class Inspection extends JFrame {
      */
     public void removeInspectionListener(InspectionListener listener) {
         Trace.line(TRACE_VALUE, tracePrefix() + "removing inspection listener: " + listener);
-        synchronized (this) {
-            _inspectionListeners.remove(listener);
-        }
+        _inspectionListeners.remove(listener);
     }
 
     /**
-     * Update all views by reading from {@link TeleVM} state as needed.
+     * Update all views by reading from VM state as needed.
      *
      * @param force suspend caching behavior; reload state unconditionally.
      */
-    public synchronized void refreshAll(boolean force) {
-        final long epoch = teleVM().epoch();
+    public void refreshAll(boolean force) {
+        final long epoch = maxVM().epoch();
         Tracer tracer = null;
         // Additional listeners may come and go during the update cycle, which can be ignored.
         for (InspectionListener listener : _inspectionListeners.clone()) {
@@ -976,10 +992,10 @@ public class Inspection extends JFrame {
 
     /**
      * Updates all views, assuming that display and style parameters may have changed; forces state reload from the
-     * {@link TeleVM}.
+     * VM.
      */
-    private synchronized void updateViewConfiguration() {
-        final long epoch = teleVM().epoch();
+    private void updateViewConfiguration() {
+        final long epoch = maxVM().epoch();
         for (InspectionListener listener : _inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
             listener.viewConfigurationChanged(epoch);
@@ -990,23 +1006,23 @@ public class Inspection extends JFrame {
     private final Tracer _threadTracer = new Tracer("refresh thread state");
 
     /**
-     * Determines what happened in {@link TeleVM} execution that just concluded. Then updates all view state as needed.
+     * Determines what happened in VM execution that just concluded. Then updates all view state as needed.
      */
     public void updateAfterVMStopped(long epoch) {
-        ProgramError.check(_teleVM.state() == State.STOPPED, "State should be stopped, but is " + _teleVM.state());
+        ProgramError.check(maxVM().state() == State.STOPPED, "State should be stopped, but is " + maxVM().state());
         setBusy(true);
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set
 
         Trace.begin(TRACE_VALUE, _threadTracer);
         final long startTimeMillis = System.currentTimeMillis();
-        final IterableWithLength<TeleNativeThread> deadThreads = teleVM().recentlyDiedThreads();
-        final IterableWithLength<TeleNativeThread> startedThreads = teleVM().recentlyCreatedThreads();
+        final IterableWithLength<TeleNativeThread> deadThreads = maxVM().recentlyDiedThreads();
+        final IterableWithLength<TeleNativeThread> startedThreads = maxVM().recentlyCreatedThreads();
         if (deadThreads.length() != 0 || startedThreads.length() != 0) {
             for (InspectionListener listener : listeners) {
                 listener.threadSetChanged(epoch);
             }
-            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 for (InspectionListener listener : listeners) {
                     listener.threadStateChanged(teleNativeThread);
                 }
@@ -1023,7 +1039,7 @@ public class Inspection extends JFrame {
             refreshAll(false);
             // Make visible the code at the IP of the thread that triggered the breakpoint.
             boolean atBreakpoint = false;
-            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 if (teleNativeThread.breakpoint() != null) {
                     focus().setThread(teleNativeThread);
                     atBreakpoint = true;
@@ -1033,8 +1049,7 @@ public class Inspection extends JFrame {
             if (!atBreakpoint) {
                 // If there was no selection based on breakpoint, then check the thread that was selected before the
                 // change.
-                // TODO (mlvdv) do this some other way, then obsolete isValidThread()
-                InspectorError.check(teleVM().isValidThread(focus().thread()), "Selected thread no longer valid");
+                InspectorError.check(!focus().thread().isDead(), "Selected thread no longer valid");
             }
             // Reset focus to new IP.
             final TeleNativeThread focusThread = focus().thread();
@@ -1095,12 +1110,14 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Saves any persistent state, then shuts down {@link TeleVM} process and inspection.
+     * Saves any persistent state, then shuts down VM process and inspection.
      */
     public void quit() {
         settings().quit();
         try {
-            teleVM().terminate();
+            maxVM().terminate();
+        } catch (Exception exception) {
+            ProgramWarning.message("error during VM termination: " + exception);
         } finally {
             Trace.line(1, tracePrefix() + " exiting, Goodbye");
             System.exit(0);

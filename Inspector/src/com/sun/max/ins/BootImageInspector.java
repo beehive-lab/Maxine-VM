@@ -26,12 +26,11 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.vm.*;
 
 
 /**
- * A singleton inspector that displays {@link VMConfiguration}  information in the {@link TeleVM} boot image.
+ * A singleton inspector that displays {@link VMConfiguration}  information in the VM boot image.
  *
  * @author Michael Van De Vanter
  */
@@ -90,7 +89,7 @@ public final class BootImageInspector extends Inspector  implements TableColumnV
 
     @Override
     public String getTextForTitle() {
-        return "Boot Image: " + teleVM().bootImageFile().getAbsolutePath();
+        return "Boot Image: " + maxVM().bootImageFile().getAbsolutePath();
     }
 
     @Override

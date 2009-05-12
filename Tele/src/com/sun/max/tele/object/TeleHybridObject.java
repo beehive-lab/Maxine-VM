@@ -23,6 +23,7 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.unsafe.*;
@@ -102,7 +103,7 @@ public abstract class TeleHybridObject extends TeleObject {
                         try {
                             field.set(protoHybridObject, readFieldValue(fieldActor).asBoxedJavaValue());
                         } catch (IllegalAccessException illegalAccessException) {
-                            throw new TeleError("could not access field: " + field, illegalAccessException);
+                            ProgramError.unexpected("could not access field: " + field, illegalAccessException);
                         }
                     }
                 }
@@ -120,8 +121,9 @@ public abstract class TeleHybridObject extends TeleObject {
             }
             return newHybridObject;
         } catch (InstantiationException instantiationException) {
-            throw new TeleError("could not allocate instance: " + javaClass, instantiationException);
+            ProgramError.unexpected("could not allocate instance: " + javaClass, instantiationException);
         }
+        return null;
     }
 
 }

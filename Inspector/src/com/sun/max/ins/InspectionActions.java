@@ -36,7 +36,6 @@ import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.interpreter.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -197,7 +196,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  refreshes all data from the {@link TeleVM}.
+     * Action:  refreshes all data from the VM.
      */
     final class RefreshAllAction extends InspectorAction {
 
@@ -216,7 +215,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _refreshAll = new RefreshAllAction(null);
 
     /**
-     * @return an Action that updates all displayed information read from the {@link TeleVM}.
+     * @return an Action that updates all displayed information read from the VM.
      */
     public final InspectorAction refreshAll() {
         return _refreshAll;
@@ -273,9 +272,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
 
         @Override
-        protected synchronized void procedure() {
+        protected void procedure() {
             try {
-                teleVM().advanceToJavaEntryPoint();
+                maxVM().advanceToJavaEntryPoint();
             } catch (IOException ioException) {
                 inspection().errorMessage("error during relocation of boot image");
             }
@@ -333,7 +332,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * Action:  changes the threshold determining when the Inspectors uses its
-     * {@linkplain InspectorInterpeter interpreter} for access to {@link TeleVM} state.
+     * {@linkplain InspectorInterpeter interpreter} for access to VM state.
      */
     final class ChangeInterpreterUseLevelAction extends InspectorAction {
 
@@ -346,7 +345,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final int oldLevel = teleVM().interpreterUseLevel();
+            final int oldLevel = maxVM().getInterpreterUseLevel();
             int newLevel = oldLevel;
             final String input = inspection().inputDialog("Change interpreter use level (0=none, 1=some, etc)", Integer.toString(oldLevel));
             try {
@@ -355,7 +354,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
-                teleVM().setInterpreterUseLevel(newLevel);
+                maxVM().setInterpreterUseLevel(newLevel);
             }
         }
 
@@ -368,8 +367,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _changeInterpreterUseLevel = new ChangeInterpreterUseLevelAction(null);
 
     /**
-     * @return an interactive action that permits changing the level at which the {@linkplain TeleInterpreter interpreter}
-     * will be used.
+     * @return an interactive action that permits changing the level at which the interpreter
+     * will be used when communicating with the VM.
      */
     public final InspectorAction changeInterpreterUseLevel() {
         return _changeInterpreterUseLevel;
@@ -391,7 +390,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final int oldLevel = teleVM().transportDebugLevel();
+            final int oldLevel = maxVM().transportDebugLevel();
             int newLevel = oldLevel;
             final String input = inspection().inputDialog(" (Set transport debug level, 0=none, 1=some, etc)", Integer.toString(oldLevel));
             try {
@@ -400,7 +399,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
-                teleVM().setTransportDebugLevel(newLevel);
+                maxVM().setTransportDebugLevel(newLevel);
             }
         }
 
@@ -426,14 +425,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RunFileCommandsAction extends InspectorAction {
 
         RunFileCommandsAction() {
-            super(inspection(), FileCommands.actionName());
+            super(inspection(), "Execute commands from file...");
         }
 
         @Override
         protected void procedure() {
-            final String value = inspection().inputDialog("File name: ", FileCommands.defaultCommandFile());
-            if (value != null && !value.equals("")) {
-                FileCommands.executeCommandsFromFile(teleVM(), value);
+            final String fileName = inspection().inputDialog("File name: ", FileCommands.defaultCommandFile());
+            if (fileName != null && !fileName.equals("")) {
+                maxVM().executeCommandsFromFile(fileName);
             }
         }
     }
@@ -449,8 +448,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  updates the {@linkplain TeleVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
-     * the {@link TeleVM}'s class path by rescanning the complete class path for types.
+     * Action:  updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
+     * the VM's class path by rescanning the complete class path for types.
      */
     final class UpdateClasspathTypesAction extends InspectorAction {
 
@@ -462,15 +461,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            teleVM().updateLoadableTypeDescriptorsFromClasspath();
+            maxVM().updateLoadableTypeDescriptorsFromClasspath();
         }
     }
 
     private final InspectorAction _updateClasspathTypes = new UpdateClasspathTypesAction(null);
 
     /**
-     * @return an Action that updates the {@linkplain TeleVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
-     * the {@link TeleVM}'s class path by rescanning the complete class path for types.
+     * @return an Action that updates the {@linkplain MaxVM#updateLoadableTypeDescriptorsFromClasspath() types available} on
+     * the VM's class path by rescanning the complete class path for types.
      */
     public final InspectorAction updateClasspathTypes() {
         return _updateClasspathTypes;
@@ -478,7 +477,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: sets the level of tracing in the {@link TeleVM} interactively.
+     * Action: sets the level of tracing in the VM interactively.
      */
     final class SetVMTraceLevelAction extends InspectorAction {
 
@@ -491,8 +490,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleVMTrace teleVMTrace = inspection().teleVMTrace();
-            final int oldLevel = teleVMTrace.readTraceLevel();
+            final int oldLevel = maxVM().getVMTraceLevel();
             int newLevel = oldLevel;
             final String input = inspection().inputDialog("Set VM Trace Level", Integer.toString(oldLevel));
             try {
@@ -501,7 +499,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
-                teleVMTrace.writeTraceLevel(newLevel);
+                maxVM().setVMTraceLevel(newLevel);
             }
         }
 
@@ -514,7 +512,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction _setVMTraceLevel = new SetVMTraceLevelAction(null);
 
     /**
-     * @return an interactive Action that will set the level of tracing in the {@link TeleVM}.
+     * @return an interactive Action that will set the level of tracing in the VM.
      */
     public final InspectorAction setVMTraceLevel() {
         return _setVMTraceLevel;
@@ -522,7 +520,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: sets the threshold of tracing in the {@link TeleVM} interactively.
+     * Action: sets the threshold of tracing in the VM interactively.
      */
     final class SetVMTraceThresholdAction extends InspectorAction {
 
@@ -535,8 +533,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleVMTrace teleVMTrace = inspection().teleVMTrace();
-            final long oldThreshold = teleVMTrace.readTraceThreshold();
+            final long oldThreshold = maxVM().getVMTraceThreshold();
             long newThreshold = oldThreshold;
             final String input = inspection().inputDialog("Set VM trace threshold", Long.toString(oldThreshold));
             try {
@@ -545,7 +542,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 inspection().errorMessage(numberFormatException.toString());
             }
             if (newThreshold != oldThreshold) {
-                teleVMTrace.writeTraceThreshold(newThreshold);
+                maxVM().setVMTraceThreshold(newThreshold);
             }
         }
 
@@ -558,7 +555,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction _setVMTraceThreshold = new SetVMTraceThresholdAction(null);
 
     /**
-     * @return an interactive Action that will set the threshold of tracing in the {@link TeleVM}.
+     * @return an interactive Action that will set the threshold of tracing in the VM.
      */
     public final InspectorAction setVMTraceThreshold() {
         return _setVMTraceThreshold;
@@ -671,7 +668,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), focus().thread().instructionPointer());
+            final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(focus().thread().instructionPointer());
             focus().setCodeLocation(teleCodeLocation, true);
         }
     }
@@ -841,7 +838,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param a {@link Word} from the {@link TeleVM}.
+     * @param a {@link Word} from the VM.
      * @param title a string to use as the title of the action, uses default name if null.
      * @return an Action that copies the word's text value in hex to the system clipboard
      */
@@ -850,7 +847,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param a {@link Word} wrapped as a {@link Value} from the {@link TeleVM}.
+     * @param a {@link Word} wrapped as a {@link Value} from the VM.
      * @param title a string to use as the title of the action, uses default name if null.
      * @return an Action that copies the word's text value in hex to the system clipboard,
      * null if not a word.
@@ -904,7 +901,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             } else if (_address != null) {
                 MemoryInspector.create(inspection(), _address).highlight();
             } else {
-                new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Inspect memory at address...", "Inspect") {
+                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Inspect memory at address...", "Inspect") {
                     @Override
                     public void entered(Address address) {
                         MemoryInspector.create(inspection(), address).highlight();
@@ -924,7 +921,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param teleObject surrogate for an object in the {@link TeleVM}
+     * @param teleObject surrogate for an object in the VM
      * @param title a string name for the Action, uses default name if null
      * @return an Action that will create a Memory Inspector at the address
      */
@@ -933,7 +930,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param address a valid memory {@link Address} in the {@link TeleVM}
+     * @param address a valid memory {@link Address} in the VM
      * @param title a string name for the action, uses default name if null
      * @return an interactive Action that will create a Memory Inspector at the address
      */
@@ -955,7 +952,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryInspector.create(inspection(), teleVM().bootImageStart());
+            MemoryInspector.create(inspection(), maxVM().bootImageStart());
         }
     }
 
@@ -981,7 +978,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryInspector.create(inspection(),  teleVM().teleBootCodeRegion().start());
+            MemoryInspector.create(inspection(),  maxVM().teleBootCodeRegion().start());
         }
     }
 
@@ -1031,7 +1028,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (_address != null) {
                 MemoryWordInspector.create(inspection(), _address).highlight();
             } else {
-                new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Inspect memory words at address...", "Inspect") {
+                new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Inspect memory words at address...", "Inspect") {
 
                     @Override
                     public void entered(Address address) {
@@ -1052,7 +1049,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param teleObject a surrogate for a valid object in the {@link TeleVM}
+     * @param teleObject a surrogate for a valid object in the VM
      * @param title a name for the action
      * @return an Action that will create a Memory Words Inspector at the address
      */
@@ -1061,7 +1058,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param address a valid memory {@link Address} in the {@link TeleVM}
+     * @param address a valid memory {@link Address} in the VM
      * @param title a name for the action
      * @return an Action that will create a Memory Words Inspector at the address
      */
@@ -1084,7 +1081,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), teleVM().bootImageStart()).highlight();
+            MemoryWordInspector.create(inspection(), maxVM().bootImageStart()).highlight();
         }
     }
 
@@ -1111,7 +1108,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            MemoryWordInspector.create(inspection(), teleVM().teleBootCodeRegion().start()).highlight();
+            MemoryWordInspector.create(inspection(), maxVM().teleBootCodeRegion().start()).highlight();
         }
     }
 
@@ -1166,14 +1163,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), teleVM().teleBootHeapRegion().start(), "Inspect heap object at address...", "Inspect") {
+            new AddressInputDialog(inspection(), maxVM().teleBootHeapRegion().start(), "Inspect heap object at address...", "Inspect") {
 
                 @Override
                 public void entered(Address address) {
                     final Pointer pointer = address.asPointer();
-                    if (teleVM().isValidOrigin(pointer)) {
-                        final Reference objectReference = teleVM().originToReference(pointer);
-                        final TeleObject teleObject = teleVM().makeTeleObject(objectReference);
+                    if (maxVM().isValidOrigin(pointer)) {
+                        final Reference objectReference = maxVM().originToReference(pointer);
+                        final TeleObject teleObject = maxVM().makeTeleObject(objectReference);
                         focus().setHeapObject(teleObject);
                     } else {
                         inspection().errorMessage("heap object not found at 0x"  + address.toHexString());
@@ -1194,7 +1191,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  creates an inspector for a specific heap object in the {@link TeleVM}.
+     * Action:  creates an inspector for a specific heap object in the VM.
      */
     final class InspectSpecifiedObjectAction extends InspectorAction {
 
@@ -1213,7 +1210,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param surrogate for a heap object in the {@link TeleVM}.
+     * @param surrogate for a heap object in the VM.
      * @param title a string name for the Action, uses default name if null
      * @return an Action that will create an Object Inspector
      */
@@ -1238,7 +1235,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final String input = inspection().inputDialog("Inspect heap object by ID..", "");
             try {
                 final long oid = Long.parseLong(input);
-                final TeleObject teleObject = teleVM().findObjectByOID(oid);
+                final TeleObject teleObject = maxVM().findObjectByOID(oid);
                 if (teleObject != null) {
                     focus().setHeapObject(teleObject);
                 } else {
@@ -1260,7 +1257,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action: create an Object Inspector for the boot {@link ClassRegistry} in the {@link TeleVM}.
+     * Action: create an Object Inspector for the boot {@link ClassRegistry} in the VM.
      */
     final class InspectBootClassRegistryAction extends InspectorAction {
 
@@ -1272,7 +1269,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final TeleObject teleBootClassRegistry = teleVM().makeTeleObject(teleVM().bootClassRegistryReference());
+            final TeleObject teleBootClassRegistry = maxVM().makeTeleObject(maxVM().bootClassRegistryReference());
             focus().setHeapObject(teleBootClassRegistry);
         }
     }
@@ -1280,7 +1277,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _inspectBootClassRegistry = new InspectBootClassRegistryAction(null);
 
     /**
-     * @return an action that will create an Object Inspector for the boot {@link ClassRegistry} in the {@link TeleVM}.
+     * @return an action that will create an Object Inspector for the boot {@link ClassRegistry} in the VM.
      */
     public final InspectorAction inspectBootClassRegistry() {
         return _inspectBootClassRegistry;
@@ -1288,7 +1285,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  inspect a {@link ClassActor} object for an interactively named class loaded in the {@link TeleVM},
+     * Action:  inspect a {@link ClassActor} object for an interactively named class loaded in the VM,
      * specified by class name.
      */
     final class InspectClassActorByNameAction extends InspectorAction {
@@ -1311,7 +1308,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _inspectClassActorByName = new InspectClassActorByNameAction(null);
 
     /**
-     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the {@link TeleVM},
+     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
      * specified by class name.
      */
     public final InspectorAction inspectClassActorByName() {
@@ -1319,7 +1316,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the {@link TeleVM},
+     * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the VM,
      * specified by the class ID in hex.
      */
     final class InspectClassActorByHexIdAction extends InspectorAction {
@@ -1336,7 +1333,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 16);
-                    final TeleClassActor teleClassActor = teleVM().findTeleClassActorByID(serial);
+                    final TeleClassActor teleClassActor = maxVM().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         inspection().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
                     } else {
@@ -1352,7 +1349,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _inspectClassActorByHexId = new InspectClassActorByHexIdAction(null);
 
     /**
-     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the {@link TeleVM},
+     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
      * specified by class ID in hex.
      */
     public final InspectorAction inspectClassActorByHexId() {
@@ -1361,7 +1358,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the {@link TeleVM},
+     * Action:  inspect a {@link ClassActor} for an interactively named class loaded in the VM,
      * specified by the class ID in decimal.
      */
     final class InspectClassActorByDecimalIdAction extends InspectorAction {
@@ -1377,7 +1374,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 10);
-                    final TeleClassActor teleClassActor = teleVM().findTeleClassActorByID(serial);
+                    final TeleClassActor teleClassActor = maxVM().findTeleClassActor(serial);
                     if (teleClassActor == null) {
                         inspection().errorMessage("failed to find ClassActor for ID: " + serial);
                     } else {
@@ -1392,7 +1389,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _inspectClassActorByDecimalId = new InspectClassActorByDecimalIdAction(null);
 
     /**
-     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the {@link TeleVM},
+     * @return an interactive Action that inspects a {@link ClassActor} object for a class loaded in the VM,
      * specified by class ID in decimal.
      */
     public final InspectorAction inspectClassActorByDecimalId() {
@@ -1401,7 +1398,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: visits a {@link MethodActor} object in the {@link TeleVM}, specified by name.
+     * Action: visits a {@link MethodActor} object in the VM, specified by name.
      */
     final class InspectMethodActorByNameAction extends InspectorAction {
 
@@ -1427,7 +1424,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private InspectorAction _inspectMethodActorByName = new InspectMethodActorByNameAction(null);
 
     /**
-     * @return an interactive Action that will visit a {@link MethodActor} object in the {@link TeleVM}, specified by name.
+     * @return an interactive Action that will visit a {@link MethodActor} object in the VM, specified by name.
      */
     public final InspectorAction inspectMethodActorByName() {
         return _inspectMethodActorByName;
@@ -1448,16 +1445,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), teleVM().bootImageStart(), "View method code containing target code address...", "View Code") {
+            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "View method code containing target code address...", "View Code") {
 
                 @Override
                 public boolean isValidInput(Address address) {
-                    return TeleTargetMethod.make(teleVM(), address) != null;
+                    return maxVM().makeTeleTargetMethod(address) != null;
                 }
 
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(new TeleCodeLocation(teleVM(), address), false);
+                    focus().setCodeLocation(maxVM().createCodeLocation(address), false);
                 }
             };
         }
@@ -1467,7 +1464,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @return an interactive action that displays in the {@link MethodInspector} the method whose
-     * target code contains the specified address in the {@link TeleVM}.
+     * target code contains the specified address in the VM.
      */
     public final InspectorAction viewMethodCodeByAddress() {
         return _viewMethodCodeByAddress;
@@ -1487,16 +1484,16 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), teleVM().bootImageStart(), "View runtime stub code containing target code address...", "View Code") {
+            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "View runtime stub code containing target code address...", "View Code") {
 
                 @Override
                 public boolean isValidInput(Address address) {
-                    return TeleRuntimeStub.make(teleVM(), address) != null;
+                    return maxVM().makeTeleRuntimeStub(address) != null;
                 }
 
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(new TeleCodeLocation(teleVM(), address), false);
+                    focus().setCodeLocation(maxVM().createCodeLocation(address), false);
                 }
             };
         }
@@ -1507,7 +1504,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @return an interactive action that displays in the {@link MethodInspector} the method whose
-     * target code contains the specified address in the {@link TeleVM}.
+     * target code contains the specified address in the VM.
      */
     public final InspectorAction viewRuntimeStubByAddress() {
         return _viewRuntimeStubByAddress;
@@ -1563,7 +1560,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Pointer instructionPointer = focus().thread().instructionPointer();
-            focus().setCodeLocation(new TeleCodeLocation(teleVM(), instructionPointer), true);
+            focus().setCodeLocation(maxVM().createCodeLocation(instructionPointer), true);
         }
 
         @Override
@@ -1608,7 +1605,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 final TeleMethodActor teleMethodActor = MethodActorSearchDialog.show(inspection(), teleClassActor, hasBytecodePredicate, "View Bytecode for Method...", "Inspect");
                 if (teleMethodActor != null && teleMethodActor instanceof TeleClassMethodActor) {
                     final TeleClassMethodActor teleClassMethodActor = (TeleClassMethodActor) teleMethodActor;
-                    final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), teleClassMethodActor, 0);
+                    final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(teleClassMethodActor, 0);
                     focus().setCodeLocation(teleCodeLocation, false);
                 }
             }
@@ -1643,7 +1640,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (teleClassActor != null) {
                 final Sequence<TeleTargetMethod> teleTargetMethods = TargetMethodSearchDialog.show(inspection(), teleClassActor, "View Target Code for Method...", "View Code", false);
                 if (teleTargetMethods != null) {
-                    focus().setCodeLocation(new TeleCodeLocation(teleVM(), teleTargetMethods.first().callEntryPoint()), false);
+                    focus().setCodeLocation(maxVM().createCodeLocation(teleTargetMethods.first().callEntryPoint()), false);
                 }
             }
         }
@@ -1675,12 +1672,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            focus().setCodeLocation(new TeleCodeLocation(teleVM(), teleVM().bootImageStart().plus(_offset)), true);
+            focus().setCodeLocation(maxVM().createCodeLocation(maxVM().bootImageStart().plus(_offset)), true);
         }
     }
 
     private final InspectorAction _viewRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(teleVM().bootImage().header()._vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._vmRunMethodOffset, MaxineVM.class, "run", MaxineVM.runMethodParameterTypes());
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of
@@ -1691,7 +1688,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction _viewThreadRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(teleVM().bootImage().header()._vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._vmThreadRunMethodOffset, VmThread.class, "run", int.class, Address.class, Pointer.class,
                     Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class, Pointer.class);
 
     /**
@@ -1703,7 +1700,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private final InspectorAction _viewSchemeRunMethodCodeInBootImage =
-        new ViewMethodCodeInBootImageAction(teleVM().bootImage().header()._runSchemeRunMethodOffset, teleVM().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
+        new ViewMethodCodeInBootImageAction(maxVM().bootImage().header()._runSchemeRunMethodOffset, maxVM().vmConfiguration().runPackage().schemeTypeToImplementation(RunScheme.class), "run");
 
     /**
      * @return an Action that displays in the {@link MethodInspector} the code of
@@ -1732,11 +1729,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final TeleNativeThread teleNativeThread = focus().thread();
             assert teleNativeThread != null;
             final Address indirectCallAddress = teleNativeThread.integerRegisters().getCallRegisterValue();
-            final Address initialAddress = indirectCallAddress == null ? teleVM().bootImageStart() : indirectCallAddress;
+            final Address initialAddress = indirectCallAddress == null ? maxVM().bootImageStart() : indirectCallAddress;
             new AddressInputDialog(inspection(), initialAddress, "View native code containing code address...", "View Code") {
                 @Override
                 public void entered(Address address) {
-                    focus().setCodeLocation(new TeleCodeLocation(teleVM(), address), true);
+                    focus().setCodeLocation(maxVM().createCodeLocation(address), true);
                 }
             };
         }
@@ -1746,7 +1743,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * @return an interactive action that displays in the {@link MethodInspector} a body of native code whose
-     * location contains the specified address in the {@link TeleVM}.
+     * location contains the specified address in the VM.
      */
     public final InspectorAction viewNativeCodeByAddress() {
         return _viewNativeCodeByAddress;
@@ -1754,7 +1751,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  removes the breakpoint from the {@link TeleVM} that is currently selected.
+     * Action:  removes the breakpoint from the VM that is currently selected.
      */
     final class RemoveSelectedBreakpointAction extends InspectorAction {
 
@@ -1766,7 +1763,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-                    refresh(teleVM().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -1799,7 +1796,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: removes a specific  breakpoint in the {@link TeleVM}.
+     * Action: removes a specific  breakpoint in the VM.
      */
     final class RemoveBreakpointAction extends InspectorAction {
 
@@ -1822,7 +1819,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param surrogate for a breakpoint in the {@link TeleVM}.
+     * @param surrogate for a breakpoint in the VM.
      * @param title a string name for the Action, uses default name if null.
      * @return an Action that will remove the breakpoint
      */
@@ -1832,7 +1829,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: removes all existing breakpoints in the {@link TeleVM}.
+     * Action: removes all existing breakpoints in the VM.
      */
     final class RemoveAllBreakpointsAction extends InspectorAction {
 
@@ -1852,20 +1849,24 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            teleVM().removeAllTargetBreakpoints();
-            teleVM().removeAllBytecodeBreakpoints();
+            for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
+                targetBreakpoint.remove();
+            }
+            for (TeleBytecodeBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
+                bytecodeBreakpoint.remove();
+            }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && (teleVM().bytecodeBreakpointCount() > 0  || teleVM().targetBreakpointCount() > 0));
+            setEnabled(inspection().hasProcess() && (maxVM().bytecodeBreakpointCount() > 0  || maxVM().targetBreakpointCount() > 0));
         }
     }
 
     private InspectorAction _removeAllBreakpoints = new RemoveAllBreakpointsAction(null);
 
     /**
-     * @return an Action that will remove all breakpoints in the {@link TeleVM}.
+     * @return an Action that will remove all breakpoints in the VM.
      */
     public final InspectorAction removeAllBreakpoints() {
         return _removeAllBreakpoints;
@@ -1873,7 +1874,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: enables a specific  breakpoint in the {@link TeleVM}.
+     * Action: enables a specific  breakpoint in the VM.
      */
     final class EnableBreakpointAction extends InspectorAction {
 
@@ -1897,13 +1898,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointCount() > 0);
+            setEnabled(inspection().hasProcess() && maxVM().bytecodeBreakpointCount() > 0);
         }
     }
 
 
     /**
-     * @param surrogate for a breakpoint in the {@link TeleVM}.
+     * @param surrogate for a breakpoint in the VM.
      * @param title a string name for the Action, uses default name if null.
      * @return an Action that will enable the breakpoint
      */
@@ -1913,7 +1914,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: disables a specific  breakpoint in the {@link TeleVM}.
+     * Action: disables a specific  breakpoint in the VM.
      */
     final class DisableBreakpointAction extends InspectorAction {
 
@@ -1937,7 +1938,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * @param surrogate for a breakpoint in the {@link TeleVM}.
+     * @param surrogate for a breakpoint in the VM.
      * @param title a string name for the Action, uses default name if null.
      * @return an Action that will disable the breakpoint
      */
@@ -1959,7 +1960,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleVM().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -1968,12 +1969,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final Address targetCodeInstructionAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!targetCodeInstructionAddress.isZero()) {
-                TeleTargetBreakpoint breakpoint = teleVM().getTargetBreakpoint(targetCodeInstructionAddress);
+                TeleTargetBreakpoint breakpoint = maxVM().getTargetBreakpoint(targetCodeInstructionAddress);
                 if (breakpoint == null) {
-                    breakpoint = teleVM().makeTargetBreakpoint(targetCodeInstructionAddress);
+                    breakpoint = maxVM().makeTargetBreakpoint(targetCodeInstructionAddress);
                     focus().setBreakpoint(breakpoint);
                 } else {
-                    teleVM().removeTargetBreakpoint(targetCodeInstructionAddress);
+                    breakpoint.remove();
                     focus().setBreakpoint(null);
                 }
             }
@@ -2008,7 +2009,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleVM().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -2016,7 +2017,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetRoutine teleTargetRoutine = teleVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+            final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.setTargetCodeLabelBreakpoints();
             } else {
@@ -2053,7 +2054,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleVM().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
             inspection().addInspectionListener(new InspectionListenerAdapter() {
@@ -2067,7 +2068,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetRoutine teleTargetRoutine = teleVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+            final TeleTargetRoutine teleTargetRoutine = maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.removeTargetCodeLabelBreakpoints();
             }
@@ -2075,7 +2076,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().targetBreakpointCount() > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
+            setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0 && focus().hasCodeLocation() && focus().codeLocation().hasTargetCodeLocation());
         }
     }
 
@@ -2090,7 +2091,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: removes all existing target code breakpoints in the {@link TeleVM}.
+     * Action: removes all existing target code breakpoints in the VM.
      */
     final class RemoveAllTargetCodeBreakpointsAction extends InspectorAction {
 
@@ -2110,19 +2111,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            teleVM().removeAllTargetBreakpoints();
+            for (TeleTargetBreakpoint targetBreakpoint : maxVM().targetBreakpoints()) {
+                targetBreakpoint.remove();
+            }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().targetBreakpointCount() > 0);
+            setEnabled(inspection().hasProcess() && maxVM().targetBreakpointCount() > 0);
         }
     }
 
     private InspectorAction _removeAllTargetCodeBreakpoints = new RemoveAllTargetCodeBreakpointsAction(null);
 
     /**
-     * @return an Action that will remove all target code breakpoints in the {@link TeleVM}.
+     * @return an Action that will remove all target code breakpoints in the VM.
      */
     public final InspectorAction removeAllTargetCodeBreakpoints() {
         return _removeAllTargetCodeBreakpoints;
@@ -2194,7 +2197,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 if (classActor.localVirtualMethodActors() != null) {
                     for (VirtualMethodActor virtualMethodActor : classActor.localVirtualMethodActors()) {
                         if (virtualMethodActor.name() == SymbolTable.INIT) {
-                            final TeleClassMethodActor teleClassMethodActor = teleVM().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
+                            final TeleClassMethodActor teleClassMethodActor = maxVM().findTeleMethodActor(TeleClassMethodActor.class, virtualMethodActor);
                             if (teleClassMethodActor != null) {
                                 TeleTargetBreakpoint teleTargetBreakpoint = null;
                                 for (TeleTargetMethod teleTargetMethod : teleClassMethodActor.targetMethods()) {
@@ -2241,7 +2244,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleVM().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -2251,9 +2254,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final BytecodeLocation bytecodeLocation = focus().codeLocation().bytecodeLocation();
             if (bytecodeLocation != null) {
                 final TeleBytecodeBreakpoint.Key key = new TeleBytecodeBreakpoint.Key(bytecodeLocation);
-                final TeleBytecodeBreakpoint breakpoint = teleVM().getBytecodeBreakpoint(key);
+                final TeleBytecodeBreakpoint breakpoint = maxVM().getBytecodeBreakpoint(key);
                 if (breakpoint == null) {
-                    teleVM().makeBytecodeBreakpoint(key);
+                    maxVM().makeBytecodeBreakpoint(key);
                 } else {
                     breakpoint.remove();
                 }
@@ -2294,14 +2297,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (typeDescriptor != null) {
                 final MethodKey methodKey = MethodSearchDialog.show(inspection(), typeDescriptor, "Bytecode method entry breakpoint", "Set Breakpoint");
                 if (methodKey != null) {
-                    teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                    maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
                 }
             }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().messenger().activate());
+            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
         }
     }
 
@@ -2332,13 +2335,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final MethodKey methodKey = MethodKeyInputDialog.show(inspection(), "Specify method");
             if (methodKey != null) {
-                teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+                maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
             }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().messenger().activate());
+            setEnabled(inspection().hasProcess() && maxVM().activateMessenger());
         }
     }
 
@@ -2354,7 +2357,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: removes all existing bytecode breakpoints in the {@link TeleVM}.
+     * Action: removes all existing bytecode breakpoints in the VM.
      */
     final class RemoveAllBytecodeBreakpointsAction extends InspectorAction {
 
@@ -2374,19 +2377,21 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             focus().setBreakpoint(null);
-            teleVM().removeAllBytecodeBreakpoints();
+            for (TeleBytecodeBreakpoint bytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
+                bytecodeBreakpoint.remove();
+            }
         }
 
         @Override
         public void refresh(long epoch, boolean force) {
-            setEnabled(inspection().hasProcess() && teleVM().bytecodeBreakpointCount() > 0);
+            setEnabled(inspection().hasProcess() && maxVM().bytecodeBreakpointCount() > 0);
         }
     }
 
     private InspectorAction _removeAllBytecodeBreakpoints = new RemoveAllBytecodeBreakpointsAction(null);
 
     /**
-     * @return an Action that will remove all target code breakpoints in the {@link TeleVM}.
+     * @return an Action that will remove all target code breakpoints in the VM.
      */
     public final InspectorAction removeAllBytecodeBreakpoints() {
         return _removeAllBytecodeBreakpoints;
@@ -2403,12 +2408,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            new AddressInputDialog(inspection(), teleVM().bootImageStart(), "Set word watch point at address...", "Watch") {
+            new AddressInputDialog(inspection(), maxVM().bootImageStart(), "Set word watch point at address...", "Watch") {
                 @Override
                 public void entered(Address address) {
                     final Address start = address;
                     final Size size = Size.fromInt(Word.size());
-                    teleVM().makeWatchpoint(new RuntimeMemoryRegion(start, size));
+                    maxVM().makeWatchpoint(new RuntimeMemoryRegion(start, size));
                 }
             };
         }
@@ -2426,7 +2431,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     /**
-     * Action:  pause the running {@link TeleVM}.
+     * Action:  pause the running VM.
      */
     final class DebugPauseAction extends InspectorAction {
 
@@ -2440,7 +2445,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                teleVM().controller().pause();
+                maxVM().pause();
             } catch (Exception exception) {
                 inspection().errorMessage("Pause could not be initiated", exception.toString());
             }
@@ -2460,7 +2465,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action: resumes the running {@link TeleVM}.
+     * Action: resumes the running VM.
      */
     final class DebugResumeAction extends InspectorAction {
 
@@ -2474,7 +2479,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             try {
-                teleVM().controller().resume(false, false);
+                maxVM().resume(false, false);
             } catch (Exception exception) {
                 inspection().errorMessage("Run to instruction could not be performed.", exception.toString());
             }
@@ -2490,7 +2495,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugResume = new DebugResumeAction(null);
 
      /**
-     * @return an Action that will resume full execution of the{@link TeleVM}.
+     * @return an Action that will resume full execution of theVM.
      */
     public final InspectorAction debugResume() {
         return _debugResume;
@@ -2498,7 +2503,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  advance the currently selected thread until it returns from its current frame in the {@link TeleVM},
+     * Action:  advance the currently selected thread until it returns from its current frame in the VM,
      * ignoring breakpoints.
      */
     final class DebugReturnFromFrameAction extends InspectorAction {
@@ -2515,7 +2520,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    teleVM().controller().runToInstruction(returnAddress, false, true);
+                    maxVM().runToInstruction(returnAddress, false, true);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
                 }
@@ -2531,7 +2536,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugReturnFromFrame = new DebugReturnFromFrameAction(null);
 
     /**
-     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the first instruction after returning
+     * @return an Action that will resume execution in the VM, stopping at the first instruction after returning
      *         from the current frame of the currently selected thread
      */
     public final InspectorAction debugReturnFromFrame() {
@@ -2541,7 +2546,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     /**
      * Action:  advance the currently selected thread until it returns from its current frame
-     * or hits a breakpoint in the {@link TeleVM}.
+     * or hits a breakpoint in the VM.
      */
     final class DebugReturnFromFrameWithBreakpointsAction extends InspectorAction {
 
@@ -2557,7 +2562,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address returnAddress = focus().thread().getReturnAddress();
             if (returnAddress != null) {
                 try {
-                    teleVM().controller().runToInstruction(returnAddress, false, false);
+                    maxVM().runToInstruction(returnAddress, false, false);
                 } catch (Exception exception) {
                     inspection().errorMessage("Return from frame could not be performed.", exception.toString());
                 }
@@ -2573,7 +2578,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugReturnFromFrameWithBreakpoints = new DebugReturnFromFrameWithBreakpointsAction(null);
 
     /**
-     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the first instruction after returning
+     * @return an Action that will resume execution in the VM, stopping at the first instruction after returning
      *         from the current frame of the currently selected thread, or at a breakpoint, whichever comes first.
      */
     public final InspectorAction debugReturnFromFrameWithBreakpoints() {
@@ -2582,7 +2587,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the selected instruction,
+     * Action:  advance the currently selected thread in the VM until it reaches the selected instruction,
      * ignoring breakpoints.
      */
     final class DebugRunToSelectedInstructionAction extends InspectorAction {
@@ -2599,7 +2604,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    teleVM().controller().runToInstruction(selectedAddress, false, true);
+                    maxVM().runToInstruction(selectedAddress, false, true);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
@@ -2617,7 +2622,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugRunToSelectedInstruction = new DebugRunToSelectedInstructionAction(null);
 
     /**
-     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the the currently
+     * @return an Action that will resume execution in the VM, stopping at the the currently
      * selected instruction, ignoring breakpoints.
      */
     public final InspectorAction debugRunToSelectedInstruction() {
@@ -2626,7 +2631,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the selected instruction
+     * Action:  advance the currently selected thread in the VM until it reaches the selected instruction
      * or a breakpoint, whichever comes first.
      */
     final class DebugRunToSelectedInstructionWithBreakpointsAction extends InspectorAction {
@@ -2643,7 +2648,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final Address selectedAddress = focus().codeLocation().targetCodeInstructionAddresss();
             if (!selectedAddress.isZero()) {
                 try {
-                    teleVM().controller().runToInstruction(selectedAddress, false, false);
+                    maxVM().runToInstruction(selectedAddress, false, false);
                 } catch (Exception exception) {
                     throw new InspectorError("Run to selection instruction could not be performed.", exception);
                 }
@@ -2661,7 +2666,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugRunToSelectedInstructionWithBreakpoints = new DebugRunToSelectedInstructionWithBreakpointsAction(null);
 
     /**
-     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the selected instruction
+     * @return an Action that will resume execution in the VM, stopping at the selected instruction
      * or a breakpoint, whichever comes first..
      */
     public final InspectorAction debugRunToSelectedInstructionWithBreakpoints() {
@@ -2670,7 +2675,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the next call instruction,
+     * Action:  advance the currently selected thread in the VM until it reaches the next call instruction,
      * ignoring breakpoints; fails if there is no known call in the method containing the IP.
      */
     final class DebugRunToNextCallAction extends InspectorAction {
@@ -2685,12 +2690,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetMethod teleTargetMethod = teleVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
+            final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
                 if (!nextCallAddress.isZero()) {
                     try {
-                        teleVM().controller().runToInstruction(nextCallAddress, false, true);
+                        maxVM().runToInstruction(nextCallAddress, false, true);
                     } catch (Exception exception) {
                         throw new InspectorError("Run to next call instruction (ignoring breakpoints) could not be performed.", exception);
                     }
@@ -2707,7 +2712,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugRunToNextCall = new DebugRunToNextCallAction(null);
 
     /**
-     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the next call instruction,
+     * @return an Action that will resume execution in the VM, stopping at the next call instruction,
      * ignoring breakpoints; fails if there is no known call in the method containing the IP.
      */
     public final InspectorAction debugRunToNextCall() {
@@ -2716,7 +2721,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  advance the currently selected thread in the {@link TeleVM} until it reaches the selected instruction
+     * Action:  advance the currently selected thread in the VM until it reaches the selected instruction
      * or a breakpoint.
      */
     final class DebugRunToNextCallWithBreakpointsAction extends InspectorAction {
@@ -2731,12 +2736,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final Address address = focus().codeLocation().targetCodeInstructionAddresss();
-            final TeleTargetMethod teleTargetMethod = teleVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
+            final TeleTargetMethod teleTargetMethod = maxVM().findTeleTargetRoutine(TeleTargetMethod.class, address);
             if (teleTargetMethod != null) {
                 final Address nextCallAddress = teleTargetMethod.getNextCallAddress(address);
                 if (!nextCallAddress.isZero()) {
                     try {
-                        teleVM().controller().runToInstruction(nextCallAddress, false, false);
+                        maxVM().runToInstruction(nextCallAddress, false, false);
                     } catch (Exception exception) {
                         throw new InspectorError("Run to next call instruction could not be performed.", exception);
                     }
@@ -2753,7 +2758,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugNextRunToCallWithBreakpoints = new DebugRunToNextCallWithBreakpointsAction(null);
 
     /**
-     * @return an Action that will resume execution in the {@link TeleVM}, stopping at the first instruction after returning
+     * @return an Action that will resume execution in the VM, stopping at the first instruction after returning
      *         from the current frame of the currently selected thread, or at a breakpoint, whichever comes first.
      */
     public final InspectorAction debugRunToNextCallWithBreakpoints() {
@@ -2762,7 +2767,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:  advances the currently selected thread one step in the {@link TeleVM}.
+     * Action:  advances the currently selected thread one step in the VM.
      */
     class DebugSingleStepAction extends InspectorAction {
 
@@ -2775,11 +2780,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public  void procedure() {
-            final TeleNativeThread selectedThread = focus().thread();
-            try {
-                teleVM().controller().singleStep(selectedThread, false);
-            } catch (Exception exception) {
-                inspection().errorMessage("Couldn't single step", exception.toString());
+            final TeleNativeThread thread = focus().thread();
+            if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
+                try {
+                    maxVM().singleStep(thread, false);
+                } catch (Exception exception) {
+                    inspection().errorMessage("Couldn't single step", exception.toString());
+                }
             }
         }
 
@@ -2792,7 +2799,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugSingleStep = new DebugSingleStepAction(null);
 
     /**
-     * @return an action that will single step the currently selected thread in the {@link TeleVM}
+     * @return an action that will single step the currently selected thread in the VM
      */
     public final InspectorAction debugSingleStep() {
         return _debugSingleStep;
@@ -2800,7 +2807,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:   resumes execution of the {@link TeleVM}, stopping at the one immediately after the current
+     * Action:   resumes execution of the VM, stopping at the one immediately after the current
      *         instruction of the currently selected thread.
      */
     final class DebugStepOverAction extends InspectorAction {
@@ -2815,10 +2822,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
-            try {
-                teleVM().controller().stepOver(thread, false, true);
-            } catch (Exception exception) {
-                inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
+            if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
+                try {
+                    maxVM().stepOver(thread, false, true);
+                } catch (Exception exception) {
+                    inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
+                }
             }
         }
 
@@ -2831,7 +2840,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugStepOver = new DebugStepOverAction(null);
 
     /**
-     * @return an Action that will resume execution of the {@link TeleVM}, stopping at the one immediately after the current
+     * @return an Action that will resume execution of the VM, stopping at the one immediately after the current
      *         instruction of the currently selected thread
      */
     public final InspectorAction debugStepOver() {
@@ -2840,7 +2849,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
 
     /**
-     * Action:   resumes execution of the {@link TeleVM}, stopping at the one immediately after the current
+     * Action:   resumes execution of the VM, stopping at the one immediately after the current
      *         instruction of the currently selected thread or at a breakpoint.
      */
     final class DebugStepOverWithBreakpointsAction extends InspectorAction {
@@ -2855,10 +2864,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         @Override
         protected void procedure() {
             final TeleNativeThread thread = focus().thread();
-            try {
-                teleVM().controller().stepOver(thread, false, false);
-            } catch (Exception exception) {
-                inspection().errorMessage("Step over could not be performed.", exception.toString());
+            if (thread.isAtBreakpoint() || inspection().yesNoDialog("Selected thread not at breakpoint; step anyway?")) {
+                try {
+                    maxVM().stepOver(thread, false, false);
+                } catch (Exception exception) {
+                    inspection().errorMessage("Step over could not be performed.", exception.toString());
+                }
             }
         }
 
@@ -2871,7 +2882,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private final InspectorAction _debugStepOverWithBreakpoints = new DebugStepOverWithBreakpointsAction(null);
 
     /**
-     * @return an Action that will resume execution of the {@link TeleVM}, stopping at the one immediately after the current
+     * @return an Action that will resume execution of the VM, stopping at the one immediately after the current
      *         instruction of the currently selected thread
      */
     public final InspectorAction debugStepOverWithBreakpoints() {
@@ -2893,7 +2904,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
                 public void codeLocationFocusSet(TeleCodeLocation codeLocation, boolean interactiveForNative) {
-                    refresh(teleVM().epoch(), false);
+                    refresh(maxVM().epoch(), false);
                 }
             });
         }
@@ -2912,7 +2923,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (instructionAddress.isZero()) {
                 return false;
             }
-            final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), instructionAddress);
+            final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(instructionAddress);
             if (teleTargetMethod != null) {
                 final int stopIndex = teleTargetMethod.getJavaStopIndex(instructionAddress);
                 if (stopIndex >= 0) {
@@ -2988,7 +2999,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            teleVM().describeTeleTargetRoutines(System.out);
+            maxVM().describeTeleTargetRoutines(System.out);
         }
     }
 
@@ -3029,7 +3040,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
-                teleVM().describeTeleTargetRoutines(printStream);
+                maxVM().describeTeleTargetRoutines(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
                 inspection().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }

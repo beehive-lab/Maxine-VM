@@ -61,7 +61,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     private final TeleClassMethodActor _teleClassMethodActor;
 
     /**
-     * @return Local {@link TeleClassMethodActor} corresponding to the {@link TeleVM} method being viewed.
+     * @return Local {@link TeleClassMethodActor} corresponding to the VM method being viewed.
      */
     public TeleClassMethodActor teleClassMethodActor() {
         return _teleClassMethodActor;
@@ -83,7 +83,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     private final TeleConstantPool _teleConstantPool;
 
     /**
-     * @return local surrogate for the {@link ConstantPool} in the {@link TeleVM} that is associated with this method.
+     * @return local surrogate for the {@link ConstantPool} in the VM that is associated with this method.
      */
     protected TeleConstantPool teleConstantPool() {
         return _teleConstantPool;
@@ -92,7 +92,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     private final ConstantPool _localConstantPool;
 
     /**
-     * @return local {@link ConstantPool}, should be equivalent to the one in the {@link TeleVM} that is associated with this method.
+     * @return local {@link ConstantPool}, should be equivalent to the one in the VM that is associated with this method.
      */
     protected ConstantPool localConstantPool() {
         return _localConstantPool;
@@ -178,7 +178,7 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     /**
-     * @return Whether the compiled code in the {@link TeleVM} for the bytecode at specified row contains the specified address.
+     * @return Whether the compiled code in the VM for the bytecode at specified row contains the specified address.
      */
     protected boolean rowContainsAddress(int row, Address address) {
         if (_haveTargetCodeAddresses) {
@@ -223,13 +223,13 @@ public abstract class BytecodeViewer extends CodeViewer {
     }
 
     /**
-     * Determines if the compiled code for the bytecode has a target breakpoint set at this location in the {@link TeleVM}, in
+     * Determines if the compiled code for the bytecode has a target breakpoint set at this location in the VM, in
      * situations where we can map between locations.
      */
     protected Sequence<TeleTargetBreakpoint> getTargetBreakpointsAtRow(int row) {
         final AppendableSequence<TeleTargetBreakpoint> teleTargetBreakpoints = new LinkSequence<TeleTargetBreakpoint>();
         if (_haveTargetCodeAddresses) {
-            for (TeleTargetBreakpoint teleTargetBreakpoint : teleVM().targetBreakpoints()) {
+            for (TeleTargetBreakpoint teleTargetBreakpoint : maxVM().targetBreakpoints()) {
                 if (rowContainsAddress(row, teleTargetBreakpoint.address())) {
                     teleTargetBreakpoints.append(teleTargetBreakpoint);
                 }
@@ -242,7 +242,7 @@ public abstract class BytecodeViewer extends CodeViewer {
      * @return the bytecode breakpoint, if any, set at the bytecode being displayed in the row.
      */
     protected TeleBytecodeBreakpoint getBytecodeBreakpointAtRow(int row) {
-        for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : teleVM().bytecodeBreakpoints()) {
+        for (TeleBytecodeBreakpoint teleBytecodeBreakpoint : maxVM().bytecodeBreakpoints()) {
             final Key key = teleBytecodeBreakpoint.key();
             // the direction of key comparison is significant
             if (_methodActorKey.equals(key) &&  bytecodeInstructions().get(row).position() == key.position()) {

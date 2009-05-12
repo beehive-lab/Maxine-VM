@@ -41,7 +41,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
     /**
      * @return the global, persistent set of user preferences for viewing method code
      */
-    public static synchronized MethodInspectorPreferences globalPreferences(Inspection inspection) {
+    public static MethodInspectorPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new MethodInspectorPreferences(inspection);
         }

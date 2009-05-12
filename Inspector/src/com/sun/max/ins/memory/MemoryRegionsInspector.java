@@ -28,11 +28,10 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 
 
 /**
- * A singleton inspector that displays a list of {@link MemoryRegion}s that have been allocated in the {@link TeleVM}.
+ * A singleton inspector that displays a list of {@link MemoryRegion}s that have been allocated in the VM.
  *
  * @author Michael Van De Vanter
  */

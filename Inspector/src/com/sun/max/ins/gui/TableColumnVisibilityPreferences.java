@@ -159,26 +159,22 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         return _inspection.actions();
     }
 
-    public final TeleVM teleVM() {
-        return _inspection.teleVM();
+    public final MaxVM maxVM() {
+        return _inspection.maxVM();
     }
 
     /**
      * Adds a listener for view update when a preference changes.
      */
     public void addListener(TableColumnViewPreferenceListener listener) {
-        synchronized (this) {
-            _tableColumnViewPreferenceListeners.add(listener);
-        }
+        _tableColumnViewPreferenceListeners.add(listener);
     }
 
     /**
      * Removes a listener for view update when a preference changes.
      */
     public void removeListener(TableColumnViewPreferenceListener listener) {
-        synchronized (this) {
-            _tableColumnViewPreferenceListeners.remove(listener);
-        }
+        _tableColumnViewPreferenceListeners.remove(listener);
     }
 
     protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {

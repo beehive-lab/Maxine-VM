@@ -21,12 +21,11 @@
 package com.sun.max.ins;
 
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
 import com.sun.max.vm.*;
 
 
 /**
- * Persistent preferences for viewing {@link VMConfiguration} information in the {@link TeleVM} boot image.
+ * Persistent preferences for viewing {@link VMConfiguration} information in the VM boot image.
  *
  * @author Michael Van De Vanter
   */
@@ -35,9 +34,9 @@ public final class BootImageViewPreferences extends TableColumnVisibilityPrefere
     private static BootImageViewPreferences _globalPreferences;
 
     /**
-     * @return the global, persistent set of user preferences for viewing  {@link VMConfiguration} information in the {@link TeleVM} boot image.
+     * @return the global, persistent set of user preferences for viewing  {@link VMConfiguration} information in the VM boot image.
      */
-    public static synchronized BootImageViewPreferences globalPreferences(Inspection inspection) {
+    public static BootImageViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new BootImageViewPreferences(inspection);
         }

@@ -39,11 +39,11 @@ import com.sun.max.vm.prototype.*;
  */
 public final class SolarisTeleProcess extends TeleProcess {
 
-    private final PageDataAccess _pageDataAccess;
+    private final DataAccess _dataAccess;
 
     @Override
-    public PageDataAccess dataAccess() {
-        return _pageDataAccess;
+    public DataAccess dataAccess() {
+        return _dataAccess;
     }
 
     private static native long nativeCreateChild(long argv, int vmAgentPort);
@@ -68,7 +68,7 @@ public final class SolarisTeleProcess extends TeleProcess {
         super(teleVM, platform);
         final Pointer commandLineArgumentsBuffer = TeleProcess.createCommandLineArgumentsBuffer(programFile, commandLineArguments);
         _processHandle = nativeCreateChild(commandLineArgumentsBuffer.toLong(), agent.port());
-        _pageDataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
+        _dataAccess = new PageDataAccess(this, platform.processorKind().dataModel());
         try {
             resume();
         } catch (OSExecutionRequestException e) {

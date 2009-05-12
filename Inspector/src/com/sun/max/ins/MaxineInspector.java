@@ -34,15 +34,20 @@ import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.TeleVM.*;
 import com.sun.max.tele.debug.*;
-import com.sun.max.tele.method.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.prototype.*;
 
 /**
- * Maps a boot image into memory and opens an inspection window,
- * in which one can inspect object and memory contents from the boot image.
+ * Interactive, visual tool for development of the Maxine VM.
+ * <BR>
+ * Depending on a command line option, either:
+ * <UL>
+ * <LI>Starts a running VM from a boot image, and opens an inspection window
+ * providing remote access and debugging; or</LI>
+ * <LI>Maps a boot image into memory and opens an inspection window
+ * in which one can inspect object and memory contents from the boot image.</LI>
+ * </UL>
  *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public final class MaxineInspector {
 
@@ -68,25 +73,21 @@ public final class MaxineInspector {
     private MaxineInspector() {
     }
 
-    private static void createAndShowGUI(TeleVM teleVM) {
+    private static void createAndShowGUI(MaxVM maxVM) {
         try {
             Trace.begin(TRACE_VALUE, _tracePrefix + "Initializing");
             final long startTimeMillis = System.currentTimeMillis();
-
-            TeleDisassembler.initialize(teleVM);
-
-            _inspection = new Inspection(teleVM);
-
+            _inspection = new Inspection(maxVM);
+            //TODO (mlvdv) don't know if the separate initialization is still necessary
             _inspection.initialize();
-
             InspectorFrame.TitleBarListener.initialize();
 
-            if (!teleVM.isReadOnly()) {
+            if (!maxVM.isReadOnly()) {
                 try {
                     // Choose an arbitrary thread as the "current" thread. If the inspector is
                     // creating the process to be debugged (as opposed to attaching to it), then there
                     // should only be one thread.
-                    final IterableWithLength<TeleNativeThread> threads = _inspection.teleVM().threads();
+                    final IterableWithLength<TeleNativeThread> threads = _inspection.maxVM().threads();
                     TeleNativeThread nonJavaThread = null;
                     for (TeleNativeThread thread : threads) {
                         if (thread.isJava()) {
@@ -107,7 +108,7 @@ public final class MaxineInspector {
                     BreakpointsInspector.make(_inspection);
                     MethodInspector.Manager.make(_inspection);
                     ObjectInspectorFactory.make(_inspection);
-                    _inspection.focus().setCodeLocation(new TeleCodeLocation(teleVM, _inspection.focus().thread().instructionPointer()), false);
+                    _inspection.focus().setCodeLocation(maxVM.createCodeLocation(_inspection.focus().thread().instructionPointer()), false);
                     _inspection.refreshAll(false);
                 } catch (Throwable throwable) {
                     System.err.println("Error during initialization");
@@ -125,10 +126,7 @@ public final class MaxineInspector {
                 _inspection.refreshAll(false);
             }
             Trace.end(TRACE_VALUE, _tracePrefix + "Initializing", startTimeMillis);
-
-
             _inspection.setVisible(true);
-
             return;
         } catch (Throwable throwable) {
             ProgramError.unexpected("could not load boot image", throwable);
@@ -152,7 +150,7 @@ public final class MaxineInspector {
         JDialog.setDefaultLookAndFeelDecorated(true);
     }
 
-    public static void main(final String[] args) throws BootImageException {
+    public static void main(final String[] args) {
         initializeSwing();
         final Options options = new Options();
         Trace.addTo(options);
@@ -164,15 +162,17 @@ public final class MaxineInspector {
             return;
         }
 
-        final TeleVM teleVM = TeleVM.create(options);
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI(teleVM);
-            }
-        });
+        try {
+            final MaxVM maxVM = TeleVM.create(options);
+            SwingUtilities.invokeLater(new Runnable() {
+
+                public void run() {
+                    createAndShowGUI(maxVM);
+                }
+            });
+        } catch (Exception exception) {
+            System.out.println(_tracePrefix + "failed: " + exception);
+        }
     }
 
-    public static VMConfiguration vmConfiguration() {
-        return MaxineVM.target().configuration();
-    }
 }

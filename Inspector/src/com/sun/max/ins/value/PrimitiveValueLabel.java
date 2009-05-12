@@ -27,7 +27,7 @@ import com.sun.max.vm.value.*;
 /**
  * @author Michael Van De Vanter
  *
- * A textual display label associated with a primitive value to be read from the {@link TeleVM}.
+ * A textual display label associated with a primitive value to be read from the VM.
  */
 public class PrimitiveValueLabel extends ValueLabel {
 

@@ -27,7 +27,7 @@ package com.sun.max.tele;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public abstract class AbstractTeleVMHolder implements TeleVMHolder{
+public abstract class AbstractTeleVMHolder implements TeleVMHolder {
 
     private final TeleVM _teleVM;
 

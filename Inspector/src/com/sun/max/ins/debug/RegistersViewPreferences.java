@@ -22,10 +22,9 @@ package com.sun.max.ins.debug;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
 
 /**
- * Persistent preferences for viewing register values in the {@link TeleVM}.
+ * Persistent preferences for viewing register values in the VM.
  *
  * @author Michael Van De Vanter
   */
@@ -36,7 +35,7 @@ public final class RegistersViewPreferences extends TableColumnVisibilityPrefere
     /**
      * @return the global, persistent set of user preferences for viewing a table of breakpoints.
      */
-    public static synchronized RegistersViewPreferences globalPreferences(Inspection inspection) {
+    public static RegistersViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new RegistersViewPreferences(inspection);
         }

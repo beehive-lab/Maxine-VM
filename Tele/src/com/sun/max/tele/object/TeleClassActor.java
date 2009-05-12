@@ -392,7 +392,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final IdentityHashSet<InterfaceActor> interfaces = classActor().getAllInterfaceActors();
         final AppendableSequence<InterfaceProvider> result = new LinkSequence<InterfaceProvider>();
         for (InterfaceActor interfaceActor : interfaces) {
-            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) teleVM().findTeleClassActorByType(interfaceActor.typeDescriptor());
+            final InterfaceProvider interfaceProvider = (TeleInterfaceActor) teleVM().findTeleClassActor(interfaceActor.typeDescriptor());
             if (interfaceProvider != this) {
                 result.append(interfaceProvider);
             }
@@ -408,7 +408,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         final ClassActor[] actors = classActor().innerClassActors();
         final ReferenceTypeProvider[] result = new ReferenceTypeProvider[actors.length];
         for (int i = 0; i < actors.length; i++) {
-            result[i] = teleVM().findTeleClassActorByType(actors[i].typeDescriptor());
+            result[i] = teleVM().findTeleClassActor(actors[i].typeDescriptor());
         }
         return result;
     }

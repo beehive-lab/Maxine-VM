@@ -43,9 +43,9 @@ public final class ThreadLocalsPanel extends InspectorPanel {
 
     private final ThreadLocalsHeaderPanel _threadLocalsHeaderPanel;
     private final ThreadLocalsTable _threadLocalsTable;
-    final TeleVMThreadLocalValues _teleVMThreadLocalValues;
+    final TeleThreadLocalValues _teleVMThreadLocalValues;
 
-    ThreadLocalsPanel(Inspection inspection, TeleNativeThread teleNativeThread, TeleVMThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+    ThreadLocalsPanel(Inspection inspection, TeleNativeThread teleNativeThread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
         super(inspection);
         _threadLocalsHeaderPanel = new ThreadLocalsHeaderPanel(inspection, values);
         _threadLocalsTable = new ThreadLocalsTable(inspection, teleNativeThread, values, preferences);
@@ -88,7 +88,7 @@ public final class ThreadLocalsPanel extends InspectorPanel {
 
         private final AppendableSequence<InspectorLabel> _labels = new LinkSequence<InspectorLabel>();
 
-        public ThreadLocalsHeaderPanel(Inspection inspection, TeleVMThreadLocalValues values) {
+        public ThreadLocalsHeaderPanel(Inspection inspection, TeleThreadLocalValues values) {
             super(inspection);
             addInspectorLabel(new TextLabel(inspection, "start: "));
             addInspectorLabel(new WordValueLabel(inspection, ValueMode.WORD, values.start()));

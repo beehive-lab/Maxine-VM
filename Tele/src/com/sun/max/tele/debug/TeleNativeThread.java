@@ -171,7 +171,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
      */
     private final TeleNativeStack _stack;
 
-    private final Map<Safepoint.State, TeleVMThreadLocalValues> _teleVmThreadLocals;
+    private final Map<Safepoint.State, TeleThreadLocalValues> _teleVmThreadLocals;
 
     /**
      * Only if this value is less than the {@linkplain TeleProcess#epoch() epoch} of this thread's tele process, does
@@ -200,7 +200,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
         _floatingPointRegisters = new TeleFloatingPointRegisters(vmConfiguration);
         _stateRegisters = new TeleStateRegisters(vmConfiguration);
 
-        _teleVmThreadLocals = id >= 0 ? new EnumMap<Safepoint.State, TeleVMThreadLocalValues>(Safepoint.State.class) : null;
+        _teleVmThreadLocals = id >= 0 ? new EnumMap<Safepoint.State, TeleThreadLocalValues>(Safepoint.State.class) : null;
         _stack = new TeleNativeStack(this, Address.fromLong(stackBase), Size.fromLong(stackSize));
         _breakpointIsAtInstructionPointer = vmConfiguration.platform().processorKind().instructionSet() == InstructionSet.SPARC;
     }
@@ -239,7 +239,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     /**
      * Gets the VM thread locals corresponding to a given safepoint state.
      */
-    public TeleVMThreadLocalValues threadLocalsFor(Safepoint.State state) {
+    public TeleThreadLocalValues threadLocalsFor(Safepoint.State state) {
         assert hasThreadLocals();
         refreshThreadLocals();
         return _teleVmThreadLocals.get(state);
@@ -290,11 +290,11 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 if (vmThreadLocalsPointer.isZero()) {
                     _teleVmThreadLocals.put(safepointState, null);
                 } else {
-                    // Only create a new TeleVMThreadLocalValues if the start address has changed which
+                    // Only create a new TeleThreadLocalValues if the start address has changed which
                     // should only happen once going from 0 to a non-zero value.
-                    final TeleVMThreadLocalValues teleVMThreadLocalValues = _teleVmThreadLocals.get(safepointState);
+                    final TeleThreadLocalValues teleVMThreadLocalValues = _teleVmThreadLocals.get(safepointState);
                     if (teleVMThreadLocalValues == null || !teleVMThreadLocalValues.start().equals(vmThreadLocalsPointer)) {
-                        _teleVmThreadLocals.put(safepointState, new TeleVMThreadLocalValues(safepointState, vmThreadLocalsPointer));
+                        _teleVmThreadLocals.put(safepointState, new TeleThreadLocalValues(safepointState, vmThreadLocalsPointer));
                     }
                 }
             }
@@ -312,11 +312,11 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             if (vmThreadLocalsPointer.isZero()) {
                 _teleVmThreadLocals.put(safepointState, null);
             } else {
-                // Only create a new TeleVMThreadLocalValues if the start address has changed which
+                // Only create a new TeleThreadLocalValues if the start address has changed which
                 // should only happen once going from 0 to a non-zero value.
-                final TeleVMThreadLocalValues teleVMThreadLocalValues = _teleVmThreadLocals.get(safepointState);
+                final TeleThreadLocalValues teleVMThreadLocalValues = _teleVmThreadLocals.get(safepointState);
                 if (teleVMThreadLocalValues == null || !teleVMThreadLocalValues.start().equals(vmThreadLocalsPointer)) {
-                    _teleVmThreadLocals.put(safepointState, new TeleVMThreadLocalValues(safepointState, vmThreadLocalsPointer));
+                    _teleVmThreadLocals.put(safepointState, new TeleThreadLocalValues(safepointState, vmThreadLocalsPointer));
                 }
             }
         }
@@ -353,7 +353,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshRegisters (epoch=" + processEpoch + ") for " + this);
 
             if (!readRegisters(_integerRegisters.registerData(), _floatingPointRegisters.registerData(), _stateRegisters.registerData())) {
-                throw new TeleError("Error while updating registers for thread: " + this);
+                ProgramError.unexpected("Error while updating registers for thread: " + this);
             }
             _integerRegisters.refresh();
             _floatingPointRegisters.refresh();
@@ -376,13 +376,13 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
             Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshThreadLocals (epoch=" + processEpoch + ") for " + this);
 
             final DataAccess dataAccess = teleProcess().dataAccess();
-            for (TeleVMThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
+            for (TeleThreadLocalValues teleVmThreadLocalValues : _teleVmThreadLocals.values()) {
                 if (teleVmThreadLocalValues != null) {
                     teleVmThreadLocalValues.refresh(dataAccess);
                 }
             }
 
-            final TeleVMThreadLocalValues enabledVmThreadLocalValues = threadLocalsFor(Safepoint.State.ENABLED);
+            final TeleThreadLocalValues enabledVmThreadLocalValues = threadLocalsFor(Safepoint.State.ENABLED);
             _teleVmThread = null;
             if (enabledVmThreadLocalValues != null) {
                 final Long threadLocalValue = enabledVmThreadLocalValues.get(VmThreadLocal.VM_THREAD);
@@ -423,7 +423,7 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
                 _stateRegisters.setInstructionPointer(_breakpoint.address());
                 Trace.line(REFRESH_TRACE_LEVEL, tracePrefix() + "refreshingBreakpoint (epoch=" + teleProcess().epoch() + ") IP updated for " + this);
             } else {
-                throw new TeleError("Error updating instruction pointer to adjust thread after breakpoint at " + _breakpoint.address() + " was hit: " + this);
+                ProgramError.unexpected("Error updating instruction pointer to adjust thread after breakpoint at " + _breakpoint.address() + " was hit: " + this);
             }
         } else {
             _breakpoint = null;
@@ -506,11 +506,25 @@ public abstract class TeleNativeThread implements Comparable<TeleNativeThread>, 
     }
 
     /**
+     * @return whether this thread has died.
+     */
+    public final boolean isDead() {
+        return _state == DEAD;
+    }
+
+    /**
+     * @return whether this thread is stopped at a breakpoint.
+     */
+    public final boolean isAtBreakpoint() {
+        return _state == BREAKPOINT;
+    }
+
+    /**
      * Gets the identifier passed to {@link VmThread#run} when the thread was started. Note that this is different from
      * the platform dependent thread {@linkplain #handle() handle}.
      *
      * @return the id of this thread. A value less than, equal to or greater than 0 denotes a native thread, the
-     *         primoridial thread or a Java thread respectively.
+     *         primordial thread or a Java thread respectively.
      */
     public final int id() {
         return _id;

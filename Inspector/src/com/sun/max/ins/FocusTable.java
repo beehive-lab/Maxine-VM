@@ -159,7 +159,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
         //setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         //addMouseListener(new FocusInspectorMouseClickAdapter(inspection()));
 
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -192,7 +192,6 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
             _columns[col].setIdentifier(columnKind);
         }
     }
-
 
     private final class FocusTableModel extends AbstractTableModel {
 
@@ -256,7 +255,7 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
                     if (teleNativeThread == null) {
                         setValue("null", "No thread focus");
                     } else {
-                        final String longName = inspection().nameDisplay().longName(teleNativeThread);
+                        final String longName = inspection().nameDisplay().longNameWithState(teleNativeThread);
                         setValue(longName, "Thread focus = " + longName);
                     }
                 }
@@ -358,31 +357,31 @@ public class FocusTable extends InspectorTable implements ViewFocusListener {
     }
 
     public void codeLocationFocusSet(TeleCodeLocation teleCodeLocation, boolean interactiveForNative) {
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void stackFrameFocusChanged(StackFrame oldStackFrame, TeleNativeThread threadForStackFrame, StackFrame stackFrame) {
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void addressFocusChanged(Address oldAddress, Address address) {
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void memoryRegionFocusChanged(MemoryRegion oldMemoryRegion, MemoryRegion memoryRegion) {
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void breakpointFocusSet(TeleBreakpoint oldTeleBreakpoint, TeleBreakpoint teleBreakpoint) {
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void heapObjectFocusChanged(TeleObject oldTeleObject, TeleObject teleObject) {
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void redisplay() {

@@ -27,12 +27,11 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
 
 /**
- * A singleton inspector that displays register contents for the thread the {@link TeleVM} that is the current user focus.
+ * A singleton inspector that displays register contents for the thread the VM that is the current user focus.
  *
  * @author Michael Van De Vanter
  */
@@ -66,7 +65,7 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         _viewPreferences = RegistersViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        refreshView(inspection.teleVM().epoch(), true);
+        refreshView(inspection.maxVM().epoch(), true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -80,12 +79,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
         _teleNativeThread = inspection().focus().thread();
         if (_teleNativeThread == null) {
             _table = null;
-            frame().setTitle(getTextForTitle());
         } else {
             _table = new RegistersTable(inspection(), _teleNativeThread, _viewPreferences);
-            frame().setTitle(getTextForTitle() + " " + inspection().nameDisplay().longName(_teleNativeThread));
         }
         frame().setContentPane(new InspectorScrollPane(inspection(), _table));
+        updateFrameTitle();
     }
 
     @Override
@@ -100,7 +98,11 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
 
     @Override
     public String getTextForTitle() {
-        return "Registers: ";
+        String title = "Registers: ";
+        if (_teleNativeThread != null) {
+            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        }
+        return title;
     }
 
     @Override
@@ -122,6 +124,8 @@ public final class RegistersInspector extends Inspector implements TableColumnVi
     protected void refreshView(long epoch, boolean force) {
         _table.refresh(epoch, force);
         super.refreshView(epoch, force);
+        // The title displays thread state, so must be updated.
+        updateFrameTitle();
     }
 
     @Override
