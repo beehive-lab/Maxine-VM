@@ -542,8 +542,8 @@ JVM_NewMultiArray(JNIEnv *env, jclass eltClass, jintArray dim) {
  */
 jclass
 JVM_GetCallerClass(JNIEnv *env, int n) {
-    c_UNIMPLEMENTED();
-    return 0;
+    JNIMethod result = resolveCriticalStaticMethod(env, "com/sun/max/vm/jni/JVMFunctions", "GetCallerClass", "(I)[Ljava/lang/Class;");
+    return (*env)->CallStaticObjectMethod(env, result.jClass, result.jMethod, n);
 }
 
 /*
