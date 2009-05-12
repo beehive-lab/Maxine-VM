@@ -391,7 +391,7 @@ public class ReferenceMapInterpreterTest extends CompilerTestCase<BirMethod> {
     }
 
     public void test_one() {
-        compileMethod(util.HelloWorld.class, "main");
+        compileMethod(test.output.HelloWorld.class, "main");
     }
 
     private static final File JCK_CLASSES_LIST = new File("test/test/com/sun/max/vm/verifier/jck.classes.txt");
