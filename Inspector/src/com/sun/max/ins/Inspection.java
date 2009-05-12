@@ -149,8 +149,8 @@ public class Inspection extends JFrame {
     }
 
     // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
-    private InspectorGeometry _geometry = new InspectorGeometry10Pt();
-    //private InspectorGeometry _geometry = new InspectorGeometry12Pt();
+    //private InspectorGeometry _geometry = new InspectorGeometry10Pt();
+    private InspectorGeometry _geometry = new InspectorGeometry12Pt();
 
     /**
      * Default size and layout for windows; overridden by persistent settings from previous sessions.
