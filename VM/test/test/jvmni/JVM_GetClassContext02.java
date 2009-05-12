@@ -18,28 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.except;
-
-import java.util.*;
+package test.jvmni;
 
 /*
  * @Harness: java
- * @Runs: 0=0
+ * @Runs: 0 = true
  */
-
-public class Catch_OutOfMemory01 {
-    public static int test(int a) {
-        List<Object[]> leak = new ArrayList<Object[]>();
-        try {
-             while (true) {
-                leak.add(new Object[120000]);
+public class JVM_GetClassContext02 {
+    public static boolean test(int arg) {
+        for (Class javaClass : downCall1()) {
+            if (javaClass == JVM_GetClassContext02.class) {
+                return true;
             }
-        } catch (OutOfMemoryError ex) {
-            return 0;
-       } catch (Throwable ex) {
-            return -1;
-        } finally {
-            leak = null;
         }
+        return false;
+    }
+
+    private static native Class[] downCall1();
+    private static native Class[] downCall2();
+
+    private static Class[] upCall1() {
+        return downCall2();
     }
 }

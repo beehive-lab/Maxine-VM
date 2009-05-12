@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,28 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package test.except;
+package test.output;
 
-import java.util.*;
+import java.awt.*;
 
-/*
- * @Harness: java
- * @Runs: 0=0
+/**
+ * A simple class that uses AWT fonts.
+ *
+ * @author Ben L. Titzer
  */
-
-public class Catch_OutOfMemory01 {
-    public static int test(int a) {
-        List<Object[]> leak = new ArrayList<Object[]>();
-        try {
-             while (true) {
-                leak.add(new Object[120000]);
-            }
-        } catch (OutOfMemoryError ex) {
-            return 0;
-       } catch (Throwable ex) {
-            return -1;
-        } finally {
-            leak = null;
+public class AWTFont {
+    public static void main(String[] args) {
+        final GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        for (Font f : g.getAllFonts()) {
+            System.out.println(f.toString());
         }
     }
 }
