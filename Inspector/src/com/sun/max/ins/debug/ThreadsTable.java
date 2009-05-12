@@ -143,6 +143,7 @@ public final class ThreadsTable extends InspectorTable implements ViewFocusListe
 
         void refresh() {
             fireTableDataChanged();
+            updateSelection();
         }
 
         @Override
