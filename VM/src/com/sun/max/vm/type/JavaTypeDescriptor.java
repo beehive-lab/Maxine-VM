@@ -74,7 +74,7 @@ public final class JavaTypeDescriptor {
         }
 
         @Override
-        public Class toJava(ClassLoader classLoader) {
+        public Class resolveType(ClassLoader classLoader) {
             return _javaClass;
         }
 

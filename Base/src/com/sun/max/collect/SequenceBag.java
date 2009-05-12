@@ -27,8 +27,8 @@ import com.sun.max.lang.*;
 
 /**
  * Implementation of the {@link Bag} interface where the multi-values are stored and retrieved
- * in sequences and the underlying map is a {@link TreeMap}(sorted), a {@link HashMap} or an
- * {@link IdentityHashMap}, depending on the argument to the {@link #SequenceMultiMap(MapType) constructor}.
+ * in sequences and the underlying map is a {@link TreeMap} (sorted), a {@link HashMap} or an
+ * {@link IdentityHashMap}, depending on the argument to the {@link #SequenceBag(MapType) constructor}.
  *
  * @author Bernd Mathiske
  * @author Doug Simon

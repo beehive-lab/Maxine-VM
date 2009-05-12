@@ -25,6 +25,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -594,6 +595,12 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     @Override
     public Size reportFreeSpace() {
         return _beltManager.reportFreeSpace();
+    }
+
+    @Override
+    public Size reportUsedSpace() {
+        Problem.unimplemented();
+        return null;
     }
 
     @Override

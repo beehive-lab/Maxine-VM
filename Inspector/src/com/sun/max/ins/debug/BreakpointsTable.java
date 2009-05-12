@@ -803,7 +803,7 @@ public final class BreakpointsTable extends InspectorTable  implements ViewFocus
             _key = teleBytecodeBreakpoint.key();
             _shortName = _key.holder().toJavaString(false) + "." + _key.name().toString() + _key.signature().toJavaString(false,  false);
 
-            _longName = _key.signature().getResultDescriptor().toJavaString(false) + " " + _key.name().toString() + _key.signature().toJavaString(false,  false);
+            _longName = _key.signature().resultDescriptor().toJavaString(false) + " " + _key.name().toString() + _key.signature().toJavaString(false,  false);
             if (_key.position() > 0) {
                 _longName += " + " + _key.position();
             }

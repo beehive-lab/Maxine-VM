@@ -199,6 +199,42 @@ public final class Ints {
         return buf.toString();
     }
 
+    private static final int [] _sizeBase10Table = {
+        9,
+        99,
+        999,
+        9999,
+        99999,
+        999999,
+        9999999,
+        99999999,
+        999999999, Integer.MAX_VALUE
+    };
+
+    /**
+     * Computes the numbers of characters in the base-10 string representation of a given integer, including the '-'
+     * prefix for a negative integer. That is, this method computes the length of the String returned by
+     * {@link Integer#toString(int)} without requiring a String object to be created.
+     *
+     * @param i an integer
+     * @return the length of the string that would be returned by calling {@link Integer#toString(int)} with {@code i}
+     *         as the argument
+     */
+    public static int sizeOfBase10String(int x) {
+        if (x == Integer.MIN_VALUE) {
+            return "-2147483648".length();
+        }
+        final int posX = x < 0 ? -x : x;
+        for (int i = 0;; i++) {
+            if (posX <= _sizeBase10Table[i]) {
+                if (x < 0) {
+                    return i + 2;
+                }
+                return i + 1;
+            }
+        }
+    }
+
     /**
      * @see Longs#toUnitsString(long)
      */

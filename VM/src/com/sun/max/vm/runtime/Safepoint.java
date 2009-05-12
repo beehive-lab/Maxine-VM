@@ -290,9 +290,11 @@ public abstract class Safepoint {
      * @return the value of the instruction pointer saved in {@code trapState}
      */
     public abstract Pointer getInstructionPointer(Pointer trapState);
+    public abstract void setInstructionPointer(Pointer trapState, Pointer value);
     public abstract Pointer getStackPointer(Pointer trapState, TargetMethod targetMethod);
     public abstract Pointer getFramePointer(Pointer trapState, TargetMethod targetMethod);
     public abstract Pointer getSafepointLatch(Pointer trapState);
+    public abstract void setReturnValue(Pointer trapState, Pointer value);
     public abstract void setSafepointLatch(Pointer trapState, Pointer value);
     public abstract int getTrapNumber(Pointer trapState);
     public abstract Pointer getRegisterState(Pointer trapState);

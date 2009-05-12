@@ -78,7 +78,7 @@ final class JDK_java_lang_Class {
             } catch (ClassFormatError e) {
                 throw new ClassNotFoundException(name);
             }
-            return descriptor.toJava(classLoader);
+            return descriptor.resolveType(classLoader);
         }
         return resolveComponent(name, initialize, classLoader);
     }
@@ -264,7 +264,7 @@ final class JDK_java_lang_Class {
         final EnclosingMethodInfo enclosingMethodInfo = thisClassActor().enclosingMethodInfo();
         if (enclosingMethodInfo != null) {
             return new Object[]{
-                enclosingMethodInfo.holder().toJava(thisClassActor().classLoader()),
+                enclosingMethodInfo.holder().resolveType(thisClassActor().classLoader()),
                 enclosingMethodInfo.name(),
                 enclosingMethodInfo.descriptor()
             };

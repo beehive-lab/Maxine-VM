@@ -27,24 +27,18 @@ import java.lang.ref.*;
  *
  * @author Ben L. Titzer
  */
-public class WeakReferenceTest02 {
+public class WeakReferenceTest04 {
     public static void main(String[] args) {
         // now test with a reference queue
         final ReferenceQueue<String> queue = new ReferenceQueue<String>();
         final WeakReference<String> w3 = new WeakReference<String>(new String("alive"), queue);
         test(w3);
         while (true) {
-            final Object obj = queue.poll();
-            if (obj == w3) {
-                System.out.println("true");
+            try {
+                final Object obj = queue.remove();
+                System.out.println(obj == w3);
                 break;
-            }
-            if (obj == null) {
-                try {
-                    // Give the reference subsystem time to enqueue 'w3' onto 'queue'
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                }
+            } catch (InterruptedException e) {
             }
         }
     }

@@ -186,7 +186,7 @@ public abstract class DirToEirInstructionTranslation implements DirVisitor {
         generateCall(null, _methodTranslation.eirGenerator().eirABIsScheme().javaABI(), null, null,
                      makeRaiseThrowableEirValue(), classMethodActor.getParameterKinds(), eirThrowable);
         // No need for a JavaFrameDescriptor here.
-        // Throwing.raise() disables safepoints until the exception has been delivered to its dispatcher.
+        // Throw.raise() disables safepoints until the exception has been delivered to its dispatcher.
     }
 
     public final void visitMethodCall(DirMethodCall dirMethodCall) {

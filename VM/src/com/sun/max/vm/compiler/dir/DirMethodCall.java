@@ -36,7 +36,9 @@ public class DirMethodCall extends DirCall<DirValue> {
     private final boolean _isNative;
 
     /**
-     * @return whether the callee is a native method
+     * Determines if this is a call to a native function. Note, this does not mean a call to a native method, but the
+     * call inside a native method's stub to the actual native code. This will be the translation of the
+     * {@link Bytecode#CALLNATIVE} instruction.
      */
     public boolean isNative() {
         return _isNative;

@@ -44,7 +44,7 @@ public final class LocalsPanel extends InspectorPanel {
         final ClassMethodActor classMethodActor = javaStackFrame.targetMethod().classMethodActor();
         _maxLocals = classMethodActor.codeAttribute().maxLocals();
         _maxStacks = classMethodActor.codeAttribute().maxStack();
-        _numArguments = classMethodActor.numberOfParameterLocals();
+        _numArguments = classMethodActor.numberOfParameterSlots();
     }
 
     @Override

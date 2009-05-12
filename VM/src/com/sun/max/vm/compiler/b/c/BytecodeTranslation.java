@@ -353,14 +353,13 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     }
 
     protected boolean areArgumentsMatchingSignatureDescriptor(CirValue[] arguments, SignatureDescriptor signatureDescriptor, TypeDescriptor receiverDescriptor) {
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final TypeDescriptor[] parameterDescriptors = signatureDescriptor.getParameterDescriptors();
+        final int numberOfParameters = signatureDescriptor.numberOfParameters();
         final int nonContinuationArgumentsLength = arguments.length - 2;
-        int argumentIndex = nonContinuationArgumentsLength - parameterKinds.length;
-        for (int parameterIndex = 0; parameterIndex < parameterKinds.length; parameterIndex++) {
+        int argumentIndex = nonContinuationArgumentsLength - numberOfParameters;
+        for (int parameterIndex = 0; parameterIndex < numberOfParameters; parameterIndex++) {
             final Kind argumentKind = arguments[argumentIndex].kind();
-            final Kind parameterKind = parameterKinds[parameterIndex].toStackKind();
-            assertArgumentMatchesParameter(argumentIndex, argumentKind, parameterKind, parameterDescriptors[parameterIndex]);
+            final Kind parameterKind = signatureDescriptor.parameterDescriptorAt(parameterIndex).toKind().toStackKind();
+            assertArgumentMatchesParameter(argumentIndex, argumentKind, parameterKind, signatureDescriptor.parameterDescriptorAt(parameterIndex));
             argumentIndex++;
         }
         if (receiverDescriptor != null) {
@@ -368,7 +367,7 @@ public final class BytecodeTranslation extends BytecodeVisitor {
                 // Don't check code in the Word subclasses as it contains casts between WORD and REFERENCE types that only executes in prototype mode.
             } else {
                 // Must be a non-static invocation - check the receiver
-                assert nonContinuationArgumentsLength == parameterKinds.length + 1;
+                assert nonContinuationArgumentsLength == numberOfParameters + 1;
                 assertArgumentMatchesParameter(0, arguments[0].kind(), receiverDescriptor.toKind(), receiverDescriptor);
             }
         }
@@ -1191,30 +1190,30 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void invokeinterface(int index, int countUnused) {
         final InterfaceMethodRefConstant interfaceMethodRef = _constantPool.interfaceMethodAt(index);
         final SignatureDescriptor signatureDescriptor = interfaceMethodRef.signature(_constantPool);
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 3);
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+        final int numberOfParameters = signatureDescriptor.numberOfParameters();
+        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
+        for (int i = numberOfParameters - 1; i >= 0; i--) {
             arguments[i + 1] = _stack.pop();
         }
         final CirVariable receiver = popReferenceOrWord();
         arguments[0] = receiver;
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, interfaceMethodRef.holder(_constantPool));
         final JavaOperator invokeinterface = new InvokeInterface(_constantPool, index);
-        completeInvocation(invokeinterface, signatureDescriptor.getResultKind(), arguments);
+        completeInvocation(invokeinterface, signatureDescriptor.resultKind(), arguments);
     }
 
     private void invokeClassMethod(int index, JavaOperator op) {
         final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
         final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 3);
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+        final int numberOfParameters = signatureDescriptor.numberOfParameters();
+        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 3);
+        for (int i = numberOfParameters - 1; i >= 0; i--) {
             arguments[i + 1] = _stack.pop();
         }
         final CirVariable receiver = popReferenceOrWord();
         arguments[0] = receiver;
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor, classMethodRef.holder(_constantPool));
-        completeInvocation(op, signatureDescriptor.getResultKind(), arguments);
+        completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
 
     @Override
@@ -1231,14 +1230,14 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void invokestatic(int index) {
         final ClassMethodRefConstant classMethodRef = _constantPool.classMethodAt(index);
         final SignatureDescriptor signatureDescriptor = classMethodRef.signature(_constantPool);
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 2);
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+        final int numberOfParameters = signatureDescriptor.numberOfParameters();
+        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 2);
+        for (int i = numberOfParameters - 1; i >= 0; i--) {
             arguments[i] = _stack.pop();
         }
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
         final JavaOperator op = new InvokeStatic(_constantPool, index);
-        completeInvocation(op, signatureDescriptor.getResultKind(), arguments);
+        completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
 
     @Override
@@ -1408,15 +1407,15 @@ public final class BytecodeTranslation extends BytecodeVisitor {
     protected void callnative(int nativeFunctionDescriptorIndex) {
         final CallNative op = new CallNative(_constantPool, nativeFunctionDescriptorIndex, _methodTranslation.classMethodActor());
         final SignatureDescriptor signatureDescriptor = op.signatureDescriptor();
-        final Kind[] parameterKinds = signatureDescriptor.getParameterKinds();
-        final CirValue[] arguments = CirCall.newArguments(parameterKinds.length + 2);
-        for (int i = parameterKinds.length - 1; i >= 0; i--) {
+        final int numberOfParameters = signatureDescriptor.numberOfParameters();
+        final CirValue[] arguments = CirCall.newArguments(numberOfParameters + 2);
+        for (int i = numberOfParameters - 1; i >= 0; i--) {
             arguments[i] = _stack.pop();
         }
 
         assert areArgumentsMatchingSignatureDescriptor(arguments, signatureDescriptor);
 
-        completeInvocation(op, signatureDescriptor.getResultKind(), arguments);
+        completeInvocation(op, signatureDescriptor.resultKind(), arguments);
     }
 
     @Override

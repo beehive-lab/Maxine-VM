@@ -242,8 +242,8 @@ public class JavaPrototype extends Prototype {
         loadPackage("java.security", false); // needed to create a Thread
         loadClass(sun.misc.VM.class);
 
-        // These classes need to be compiled and in the boot image in order to be able to run the optimizing compiler at
-        // run time.
+        // These classes need to be compiled and in the boot image in order to be able to
+        // run the optimizing compiler at run time.
         loadClass(sun.misc.SharedSecrets.class);
         loadClass(sun.reflect.annotation.AnnotationParser.class);
         loadClass(sun.reflect.Reflection.class);
@@ -251,6 +251,10 @@ public class JavaPrototype extends Prototype {
         // Necessary for Java Run Scheme to initialize the System class:
         loadClass(sun.misc.Version.class);
         loadPackage("sun.nio.cs", false);
+
+        // Needed to satisfy the requirement that java.lang.ref.Reference.ReferenceHandler.run()
+        // does not do any allocation (as a result of loading this class) while holding the GC lock.
+        loadClass(sun.misc.Cleaner.class);
 
         // Necessary for early tracing:
         loadPackage("java.util.regex", false);
@@ -352,10 +356,10 @@ public class JavaPrototype extends Prototype {
         if (javaMethod == null) {
             final Class<?> holder = methodActor.holder().toJava();
             final SignatureDescriptor descriptor = methodActor.descriptor();
-            final Class[] parameterTypes = descriptor.getParameterTypes(holder.getClassLoader());
+            final Class[] parameterTypes = descriptor.resolveParameterTypes(holder.getClassLoader());
             final ClassLoader classLoader = holder.getClassLoader();
             final String name = methodActor.isSurrogate() ? com.sun.max.annotate.SURROGATE.Static.toSurrogateName(methodActor.name().toString()) : methodActor.name().toString();
-            javaMethod = Classes.getDeclaredMethod(holder, descriptor.getResultDescriptor().toJava(classLoader), name, parameterTypes);
+            javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
             _methodActorMap.put(methodActor, javaMethod);
         }
         assert MethodActor.fromJava(javaMethod) == methodActor;
@@ -373,7 +377,7 @@ public class JavaPrototype extends Prototype {
         Constructor javaConstructor = (Constructor) _methodActorMap.get(methodActor);
         if (javaConstructor == null) {
             final Class<?> holder = methodActor.holder().toJava();
-            final Class[] parameterTypes = methodActor.descriptor().getParameterTypes(holder.getClassLoader());
+            final Class[] parameterTypes = methodActor.descriptor().resolveParameterTypes(holder.getClassLoader());
             javaConstructor = Classes.getDeclaredConstructor(holder, parameterTypes);
             _methodActorMap.put(methodActor, javaConstructor);
         }
@@ -409,10 +413,10 @@ public class JavaPrototype extends Prototype {
         Class javaClass = _classActorMap.get(classActor);
         if (javaClass == null) {
             try {
-                javaClass = classActor.typeDescriptor().toJava(classActor.classLoader());
+                javaClass = classActor.typeDescriptor().resolveType(classActor.classLoader());
             } catch (NoClassDefFoundError noClassDefFoundError) {
                 // try again with the prototype class loader.
-                javaClass = classActor.typeDescriptor().toJava(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
+                javaClass = classActor.typeDescriptor().resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
             }
             _classActorMap.put(classActor, javaClass);
         }

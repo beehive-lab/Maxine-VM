@@ -139,8 +139,6 @@ public abstract class TeleRegisters {
         }
 
         final Registers result = new Registers(name, registerNames, values);
-
-
         return result;
     }
 }

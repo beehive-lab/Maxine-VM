@@ -83,7 +83,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         for (ClassActor classActor : ClassRegistry.vmClassRegistry()) {
             if (!classActor.name().toString().startsWith(maxinePackagePrefix)) { // non-Maxine class => JDK class
                 for (StaticMethodActor method : classActor.localStaticMethodActors()) {
-                    if (method.name().equals("initIDs") && method.descriptor().hasNoParameters() && method.resultKind() == Kind.VOID) {
+                    if (method.name().equals("initIDs") && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
                         methods.append(method);
                     }
                 }

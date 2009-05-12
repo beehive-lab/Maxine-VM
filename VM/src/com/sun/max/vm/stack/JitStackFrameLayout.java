@@ -54,8 +54,13 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
      * the stack slot at the lower (or lowest if more than 2 stack slots are used per JIT variable) address.
      */
     public static final int JIT_SLOT_SIZE = getJitSlotSize();
+
     public static final int JIT_STACK_BIAS = getJitStackBias();
 
+    /**
+     * The number of normal stack slots per JIT stack slot. See {@link #JIT_SLOT_SIZE} for an explanation of why
+     * JIT stack slots may differ in size from normal stack slots.
+     */
     public static final int  STACK_SLOTS_PER_JIT_SLOT = JIT_SLOT_SIZE / STACK_SLOT_SIZE;
 
     static {
@@ -89,7 +94,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
         final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
         _numberOfOperandStackSlots = codeAttribute.maxStack();
         _numberOfLocalSlots = codeAttribute.maxLocals();
-        _numberOfParameterSlots = classMethodActor.numberOfParameterLocals();
+        _numberOfParameterSlots = classMethodActor.numberOfParameterSlots();
 
         assert _numberOfLocalSlots >= _numberOfParameterSlots : "incoming arguments cannot be greater than number of locals";
     }
@@ -98,14 +103,14 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
         return kind.isCategory1() ? JIT_SLOT_SIZE : 2 * JIT_SLOT_SIZE;
     }
 
-    private static final int CAT1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
-    private static final int CAT2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
+    private static final int CATEGORY1_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.INT);
+    private static final int CATEGORY2_OFFSET_WITHIN_WORD = offsetWithinWord(Kind.LONG);
 
     public static int offsetInStackSlot(Kind kind) {
         if (kind.width().equals(WordWidth.BITS_64)) {
-            return CAT2_OFFSET_WITHIN_WORD;
+            return CATEGORY2_OFFSET_WITHIN_WORD;
         }
-        return CAT1_OFFSET_WITHIN_WORD;
+        return CATEGORY1_OFFSET_WITHIN_WORD;
     }
 
     /**

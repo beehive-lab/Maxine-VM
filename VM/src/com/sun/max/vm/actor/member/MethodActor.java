@@ -203,10 +203,6 @@ public abstract class MethodActor extends MemberActor {
         return (SignatureDescriptor) super.descriptor();
     }
 
-    public final int getNumberOfParameters() {
-        return descriptor().getNumberOfParameters();
-    }
-
     /**
      * Gets the array of checked exceptions declared by this method actor.
      *
@@ -255,8 +251,8 @@ public abstract class MethodActor extends MemberActor {
         Metrics.increment("MethodActor.toJava()");
         final Class<?> javaHolder = holder().toJava();
         final ClassLoader holderClassLoader = javaHolder.getClassLoader();
-        final Class[] parameterTypes = descriptor().getParameterTypes(holderClassLoader);
-        final Class returnType = descriptor().getResultDescriptor().toJava(holderClassLoader);
+        final Class[] parameterTypes = descriptor().resolveParameterTypes(holderClassLoader);
+        final Class returnType = descriptor().resultDescriptor().resolveType(holderClassLoader);
         final TypeDescriptor[] checkedExceptions = checkedExceptions();
         final Class[] checkedExceptionTypes = checkedExceptions == null ? new Class[0] : JavaTypeDescriptor.resolveToJavaClasses(checkedExceptions, holderClassLoader);
         final Method javaMethod = ReflectionFactory.getReflectionFactory().newMethod(
@@ -281,7 +277,7 @@ public abstract class MethodActor extends MemberActor {
             return JavaPrototype.javaPrototype().toJavaConstructor(this);
         }
         final Class<?> javaHolder = holder().toJava();
-        final Class[] parameterTypes = descriptor().getParameterTypes(javaHolder.getClassLoader());
+        final Class[] parameterTypes = descriptor().resolveParameterTypes(javaHolder.getClassLoader());
         final TypeDescriptor[] checkedExceptions = checkedExceptions();
         final Class[] checkedExceptionTypes = checkedExceptions == null ? new Class[0] : JavaTypeDescriptor.resolveToJavaClasses(checkedExceptions, holder().classLoader());
         final Constructor javaConstructor = ReflectionFactory.getReflectionFactory().newConstructor(
@@ -453,35 +449,20 @@ public abstract class MethodActor extends MemberActor {
     }
 
     public Kind resultKind() {
-        return descriptor().getResultKind();
+        return descriptor().resultKind();
     }
 
     /**
      * Gets the {@link Kind kinds} of the runtime parameters taken by this method. The returned array includes an entry
-     * at index 0 for the receiver if this is not a static method.
+     * at index 0 for the receiver kind if this is not a static method.
      */
     public Kind[] getParameterKinds() {
         if (isStatic()) {
-            return descriptor().getParameterKinds();
+            return descriptor().copyParameterKinds(null, 0);
         }
-        if (holder().kind() == Kind.WORD) {
-            return descriptor().getParameterKindsIncludingReceiver(Kind.WORD);
-        }
-        return descriptor().getParameterKindsIncludingReceiver(Kind.REFERENCE);
-    }
-
-    /**
-     * Gets the {@link TypeDescriptor types} of the runtime parameters taken by this method. The returned array includes
-     * an entry at index 0 for the receiver if this is not a static method.
-     */
-    public TypeDescriptor[] getParameterDescriptors() {
-        if (isStatic()) {
-            return descriptor().getParameterDescriptors();
-        }
-        if (holder().kind() == Kind.WORD) {
-            return descriptor().getParameterDescriptorsIncludingReceiver(JavaTypeDescriptor.WORD);
-        }
-        return descriptor().getParameterDescriptorsIncludingReceiver(JavaTypeDescriptor.REFERENCE);
+        final Kind[] kinds = descriptor().copyParameterKinds(null, 1);
+        kinds[0] = holder().kind() == Kind.WORD ? Kind.WORD : Kind.REFERENCE;
+        return kinds;
     }
 
     public static MethodActor read(DataInput stream) throws IOException {

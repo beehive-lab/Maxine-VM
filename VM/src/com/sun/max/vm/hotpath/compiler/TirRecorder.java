@@ -485,16 +485,16 @@ public class TirRecorder {
 
         @Override
         protected void invokeVirtualMethod(MethodActor method) {
-            final TirInstruction receiver = _state.peek(Kind.REFERENCE, method.descriptor().getNumberOfLocals());
-            final Object receiverObject = _tracer.evaluateObject(method.descriptor().getNumberOfLocals());
+            final TirInstruction receiver = _state.peek(Kind.REFERENCE, method.descriptor().computeNumberOfSlots());
+            final Object receiverObject = _tracer.evaluateObject(method.descriptor().computeNumberOfSlots());
             checkType(ClassActor.fromJava(receiverObject.getClass()), receiver);
             invokeTarget(InvocationTarget.findInvokeVirtualTarget(method, receiverObject));
         }
 
         @Override
         protected void invokeInterfaceMethod(MethodActor method) {
-            final TirInstruction receiver = _state.peek(Kind.REFERENCE, method.descriptor().getNumberOfLocals());
-            final Object receiverObject = _tracer.evaluateObject(method.descriptor().getNumberOfLocals());
+            final TirInstruction receiver = _state.peek(Kind.REFERENCE, method.descriptor().computeNumberOfSlots());
+            final Object receiverObject = _tracer.evaluateObject(method.descriptor().computeNumberOfSlots());
             checkType(ClassActor.fromJava(receiverObject.getClass()), receiver);
             invokeTarget(InvocationTarget.findInvokeInterfaceTarget(method, receiverObject));
         }

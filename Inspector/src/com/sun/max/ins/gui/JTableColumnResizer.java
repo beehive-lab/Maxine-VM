@@ -36,12 +36,16 @@ import javax.swing.table.*;
 public class JTableColumnResizer {
 
     public static void adjustColumnPreferredWidths(JTable table) {
+        adjustColumnPreferredWidths(table, Integer.MAX_VALUE);
+    }
+
+    public static void adjustColumnPreferredWidths(JTable table, int maxRows) {
         // strategy - get max width for cells in column and
         // make that the preferred width
         final TableColumnModel columnModel = table.getColumnModel();
         for (int col = 0; col < table.getColumnCount(); col++) {
             int maxwidth = 0;
-            for (int row = 0; row < table.getRowCount(); row++) {
+            for (int row = 0; row < Math.min(maxRows, table.getRowCount()); row++) {
                 final TableCellRenderer rend = table.getCellRenderer(row, col);
                 final Object value = table.getValueAt(row, col);
                 final Component comp = rend.getTableCellRendererComponent(table, value,  false,  false,  row, col);

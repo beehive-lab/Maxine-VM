@@ -122,7 +122,7 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
             _className = className == null ? null : makeSymbol(className);
             _signature = signature;
             _codeStream = new SeekableByteArrayOutputStream();
-            allocateParameters(isStatic, signature.getParameterKinds());
+            allocateParameters(isStatic, signature);
         }
 
         public TestBytecodeAssembler(boolean isStatic, String methodName, SignatureDescriptor signature) {
@@ -590,11 +590,12 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
     }
 
     private static boolean usesWordTypes(MethodActor classMethodActor) {
-        if (classMethodActor.descriptor().getResultKind() == Kind.WORD) {
+        final SignatureDescriptor signature = classMethodActor.descriptor();
+        if (signature.resultKind() == Kind.WORD) {
             return true;
         }
-        for (Kind parameterKind : classMethodActor.descriptor().getParameterKinds()) {
-            if (parameterKind == Kind.WORD) {
+        for (int i = 0; i < signature.numberOfParameters(); i++) {
+            if (signature.parameterDescriptorAt(i).toKind() == Kind.WORD) {
                 return true;
             }
         }
@@ -685,12 +686,12 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
                         final ClassMethodActor classMethodActor = method.classMethodActor();
                         final boolean isConstructor = classMethodActor.isInstanceInitializer();
                         final Value[] executeArguments = isConstructor ? Arrays.prepend(arguments, newInstance(classMethodActor.holder())) : arguments;
-                        final Kind[] parameterKinds = classMethodActor.descriptor().getParameterKinds();
+                        final SignatureDescriptor signature = classMethodActor.descriptor();
                         int argumentIndex = arguments.length - 1;
-                        int parameterIndex = parameterKinds.length - 1;
+                        int parameterIndex = signature.numberOfParameters() - 1;
                         while (parameterIndex >= 0) {
                             final Kind argumentKind = arguments[argumentIndex].kind();
-                            final Kind parameterKind = parameterKinds[parameterIndex];
+                            final Kind parameterKind = signature.parameterDescriptorAt(parameterIndex).toKind();
                             ProgramError.check(argumentKind == parameterKind, "Argument " + argumentIndex + " has kind " + argumentKind + " where as kind " + parameterKind + " is expected");
                             parameterIndex--;
                             argumentIndex--;

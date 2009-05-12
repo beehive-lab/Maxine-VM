@@ -409,7 +409,7 @@ public final class Machine extends AbstractTeleVMHolder{
         final ExecutionFrame oldFrame = _currentThread.frame();
         final Stack<Value> argumentStack = new Stack<Value>();
         final Stack<Value> oldOperands = oldFrame.stack();
-        int numberOfParameters = method.descriptor().getNumberOfParameters();
+        int numberOfParameters = method.descriptor().numberOfParameters();
         int i;
 
         if (!method.isStatic()) {
