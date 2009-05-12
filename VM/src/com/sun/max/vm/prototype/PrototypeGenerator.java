@@ -60,49 +60,29 @@ public final class PrototypeGenerator {
 
     private final OptionSet _options = new OptionSet();
 
-    private final Option<BuildLevel> _buildLevel = _options.newEnumOption("build", BuildLevel.PRODUCT, BuildLevel.class,
-            "This option selects the build level of the virtual machine.");
-    private final Option<ProcessorModel> _processorModel = _options.newEnumOption("cpu", null, ProcessorModel.class,
-            "Specifies the target instruction set architecture.");
-    private final Option<InstructionSet> _instructionSet = _options.newEnumOption("isa", null, InstructionSet.class,
-            "Specifies the target instruction set.");
-    private final Option<OperatingSystem> _operatingSystem = _options.newEnumOption("os", null, OperatingSystem.class,
-            "Specifies the target operating system.");
-    private final Option<Integer> _pageSizeOption = _options.newIntegerOption("page", null,
-            "Specifies the target page size in bytes.");
-    private final Option<WordWidth> _wordWidth = _options.newEnumOption("bits", null, WordWidth.class,
-            "Specifies the target machine word with in bits.");
-    private final Option<Endianness> _endiannessOption = _options.newEnumOption("endianness", null, Endianness.class,
-            "Specifies the endianness of the target.");
-    private final Option<Alignment> _alignmentOption = _options.newEnumOption("align", null, Alignment.class,
-            "Specifies the alignment of the target.");
-    private final Option<MaxPackage> _gripScheme = schemeOption("grip", new com.sun.max.vm.grip.Package(), GripScheme.class,
-            "Specifies the grip scheme for the target.");
-    private final Option<MaxPackage> _referenceScheme = schemeOption("reference", new com.sun.max.vm.reference.Package(), ReferenceScheme.class,
-            "Specifies the reference scheme for the target.");
-    private final Option<MaxPackage> _layoutScheme = schemeOption("layout", new com.sun.max.vm.layout.Package(), LayoutScheme.class,
-            "Specifies the layout scheme for the target.");
-    private final Option<MaxPackage> _heapScheme = schemeOption("heap", new com.sun.max.vm.heap.Package(), HeapScheme.class,
-            "Specifies the heap scheme for the target.");
-    private final Option<MaxPackage> _monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), MonitorScheme.class,
-            "Specifies the monitor scheme for the target.");
-    private final Option<MaxPackage> _compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), CompilerScheme.class,
-            "Specifies the compiler scheme for the target.");
-    private final Option<MaxPackage> _jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), DynamicCompilerScheme.class,
-            "Specifies the JIT scheme for the target.");
-    private final Option<MaxPackage> _interpreterScheme = schemeOption("interpreter", new com.sun.max.vm.interpret.Package(), InterpreterScheme.class,
-            "Specifies the interpreter scheme for the target.");
-    private final Option<MaxPackage> _trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), DynamicTrampolineScheme.class,
-            "Specifies the dynamic trampoline scheme for the target.");
-    private final Option<MaxPackage> _targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), TargetABIsScheme.class,
-            "Specifies the ABIs scheme for the target");
-    private final Option<MaxPackage> _runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), RunScheme.class,
-            "Specifies the run scheme for the target.");
-    private final Option<Integer> _threadsOption = _options.newIntegerOption("threads", ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
-            "Specifies the number of threads to be used for parallel compilation.");
+    private final Option<BuildLevel> _buildLevel;
+    private final Option<ProcessorModel> _processorModel;
+    private final Option<InstructionSet> _instructionSet;
+    private final Option<OperatingSystem> _operatingSystem;
+    private final Option<Integer> _pageSizeOption;
+    private final Option<WordWidth> _wordWidth;
+    private final Option<Endianness> _endiannessOption;
+    private final Option<Alignment> _alignmentOption;
+    private final Option<MaxPackage> _gripScheme;
+    private final Option<MaxPackage> _referenceScheme;
+    private final Option<MaxPackage> _layoutScheme;
+    private final Option<MaxPackage> _heapScheme;
+    private final Option<MaxPackage> _monitorScheme;
+    private final Option<MaxPackage> _compilerScheme;
+    private final Option<MaxPackage> _jitScheme;
+    private final Option<MaxPackage> _interpreterScheme;
+    private final Option<MaxPackage> _trampolineScheme;
+    private final Option<MaxPackage> _targetABIsScheme;
+    private final Option<MaxPackage> _runScheme;
+    private final Option<Integer> _threadsOption;
 
-    private Option<MaxPackage> schemeOption(String name, MaxPackage superPackage, Class cl, String help) {
-        return _options.newOption(name, (MaxPackage) null, new MaxPackageOptionType(superPackage, cl), OptionSet.Syntax.REQUIRES_EQUALS, help);
+    private Option<MaxPackage> schemeOption(String name, MaxPackage superPackage, MaxPackage defaultPackage, Class cl, String help) {
+        return _options.newOption(name, defaultPackage, new MaxPackageOptionType(superPackage, cl), OptionSet.Syntax.REQUIRES_EQUALS, help);
     }
 
     /**
@@ -111,6 +91,53 @@ public final class PrototypeGenerator {
      * @param optionSet the set of options to which the prototype generator specific options will be added
      */
     public PrototypeGenerator(OptionSet optionSet) {
+        final VMConfiguration configuration = createDefaultVMConfiguration();
+        final Platform platform = configuration.platform();
+        final ProcessorKind processorKind = platform.processorKind();
+        final ProcessorModel processorModel = processorKind.processorModel();
+        final DataModel dataModel = processorKind.dataModel();
+        _buildLevel = _options.newEnumOption("build", BuildLevel.PRODUCT, BuildLevel.class,
+            "This option selects the build level of the virtual machine.");
+        _processorModel = _options.newEnumOption("cpu", processorModel, ProcessorModel.class,
+            "Specifies the target instruction set architecture.");
+        _instructionSet = _options.newEnumOption("isa", processorModel.instructionSet(), InstructionSet.class,
+            "Specifies the target instruction set.");
+        _operatingSystem = _options.newEnumOption("os", platform.operatingSystem(), OperatingSystem.class,
+            "Specifies the target operating system.");
+        _pageSizeOption = _options.newIntegerOption("page", platform.pageSize(),
+            "Specifies the target page size in bytes.");
+        _wordWidth = _options.newEnumOption("bits", dataModel.wordWidth(), WordWidth.class,
+            "Specifies the target machine word with in bits.");
+        _endiannessOption = _options.newEnumOption("endianness", dataModel.endianness(), Endianness.class,
+            "Specifies the endianness of the target.");
+        _alignmentOption = _options.newEnumOption("align", dataModel.alignment(), Alignment.class,
+            "Specifies the alignment of the target.");
+        _gripScheme = schemeOption("grip", new com.sun.max.vm.grip.Package(), configuration.gripPackage(),
+            GripScheme.class, "Specifies the grip scheme for the target.");
+        _referenceScheme = schemeOption("reference", new com.sun.max.vm.reference.Package(), configuration.referencePackage(),
+            ReferenceScheme.class, "Specifies the reference scheme for the target.");
+        _layoutScheme = schemeOption("layout", new com.sun.max.vm.layout.Package(), configuration.layoutPackage(),
+            LayoutScheme.class, "Specifies the layout scheme for the target.");
+        _heapScheme = schemeOption("heap", new com.sun.max.vm.heap.Package(), configuration.heapPackage(),
+            HeapScheme.class, "Specifies the heap scheme for the target.");
+        _monitorScheme = schemeOption("monitor", new com.sun.max.vm.monitor.Package(), configuration.monitorPackage(),
+            MonitorScheme.class, "Specifies the monitor scheme for the target.");
+        _compilerScheme = schemeOption("compiler", new com.sun.max.vm.compiler.Package(), configuration.compilerPackage(),
+            CompilerScheme.class, "Specifies the compiler scheme for the target.");
+        _jitScheme = schemeOption("jit", new com.sun.max.vm.jit.Package(), configuration.jitPackage(),
+            DynamicCompilerScheme.class, "Specifies the JIT scheme for the target.");
+        _interpreterScheme = schemeOption("interpreter", new com.sun.max.vm.interpret.Package(), configuration.interpreterPackage(),
+            InterpreterScheme.class, "Specifies the interpreter scheme for the target.");
+        _trampolineScheme = schemeOption("trampoline", new com.sun.max.vm.trampoline.Package(), configuration.trampolinePackage(),
+            DynamicTrampolineScheme.class, "Specifies the dynamic trampoline scheme for the target.");
+        _targetABIsScheme = schemeOption("abi", new com.sun.max.vm.compiler.target.Package(), configuration.targetABIsPackage(),
+            TargetABIsScheme.class, "Specifies the ABIs scheme for the target");
+        _runScheme = schemeOption("run", new com.sun.max.vm.run.Package(), configuration.runPackage(),
+            RunScheme.class, "Specifies the run scheme for the target.");
+        _threadsOption = _options.newIntegerOption("threads", ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors(),
+            "Specifies the number of threads to be used for parallel compilation.");
+
+
         optionSet.addOptions(_options);
     }
 
