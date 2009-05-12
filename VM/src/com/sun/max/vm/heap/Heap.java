@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
+import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -155,7 +156,7 @@ public final class Heap {
     }
 
     /**
-     * Determines if garbage collection activity should be traced at a level useful for debugging.
+     * Determines if all garbage collection activity should be traced.
      */
     @INLINE
     public static boolean traceGC() {
@@ -163,24 +164,41 @@ public final class Heap {
     }
 
     /**
-     * Determines if garbage collection root scanning should be traced at a level useful for debugging.
+     * Determines if garbage collection root scanning should be traced.
      */
     @INLINE
     public static boolean traceGCRootScanning() {
         return _traceGCRootScanning;
     }
 
+    /**
+     * Determines if garbage collection timings should be printed.
+     */
+    @INLINE
+    public static boolean traceGCTime() {
+        return _traceGCTime;
+    }
+
+    /**
+     * The clock that specifies the timing resolution for GC related timing.
+     */
+    public static final Clock GC_TIMING_CLOCK = Clock.SYSTEM_NANOSECONDS;
+
     private static boolean _traceGC;
     private static boolean _traceGCRootScanning;
+    private static boolean _traceGCTime;
 
-    private static final VMOption _traceGCOption = new VMOption("-XX:TraceGC", "Trace garbage collection activity for debugging purposes.", MaxineVM.Phase.STARTING) {
+    private static final VMOption _traceGCOption = new VMOption("-XX:TraceGC", "Trace garbage collection activity.", MaxineVM.Phase.STARTING) {
         @Override
         public boolean parseValue(Pointer optionValue) {
             if (CString.equals(optionValue, "")) {
                 _traceGC = true;
                 _traceGCRootScanning = true;
+                _traceGCTime = true;
             } else if (CString.equals(optionValue, ":RootScanning")) {
                 _traceGCRootScanning = true;
+            } else if (CString.equals(optionValue, ":Time")) {
+                _traceGCTime = true;
             } else {
                 return false;
             }
@@ -188,7 +206,7 @@ public final class Heap {
         }
         @Override
         public void printHelp() {
-            VMOptions.printHelpForOption("-XX:TraceGC[:RootScanning]", "", _help);
+            VMOptions.printHelpForOption("-XX:TraceGC[:RootScanning|:Time]", "", _help);
         }
     };
 

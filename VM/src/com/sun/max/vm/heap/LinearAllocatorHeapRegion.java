@@ -37,7 +37,6 @@ public class LinearAllocatorHeapRegion extends RuntimeMemoryRegion implements He
     }
 
     public LinearAllocatorHeapRegion(String description) {
-        super();
         _mark = Address.zero();
         setDescription(description);
     }
