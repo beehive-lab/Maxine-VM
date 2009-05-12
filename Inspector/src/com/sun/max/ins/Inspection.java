@@ -149,8 +149,8 @@ public class Inspection extends JFrame {
     }
 
     // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
-    //private InspectorGeometry _geometry = new InspectorGeometry10Pt();
-    private InspectorGeometry _geometry = new InspectorGeometry12Pt();
+    private InspectorGeometry _geometry = new InspectorGeometry10Pt();
+    //private InspectorGeometry _geometry = new InspectorGeometry12Pt();
 
     /**
      * Default size and layout for windows; overridden by persistent settings from previous sessions.
@@ -208,39 +208,68 @@ public class Inspection extends JFrame {
         }
     }
 
-    private final InspectionPreferences _preferences = new InspectionPreferences();
+    private final InspectionPreferences _preferences;
 
     public InspectionPreferences preferences() {
         return _preferences;
     }
 
-    private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
-    private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
-    private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
-    private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
+
 
     public class InspectionPreferences extends AbstractSaveSettingsListener {
 
-        public InspectionPreferences() {
-            super("inspection", Inspection.this);
+        private static final String FRAME_X_KEY = "frameX";
+        private static final String FRAME_Y_KEY = "frameY";
+        private static final String FRAME_HEIGHT_KEY = "frameHeight";
+        private static final String FRAME_WIDTH_KEY = "frameWidth";
+        private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
+        private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
+        private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
+        private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
+
+        private final Inspection _inspection;
+
+        public InspectionPreferences(Inspection inspection) {
+            super("inspection");
+            _inspection = inspection;
+            // Don't rely on the default settings behavior for saving and resetting window size and location.
         }
 
-        public void saveSettings(SaveSettingsEvent settings) {
-            settings.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
-            settings.save(DISPLAY_STYLE_PREFERENCE, style().name());
-            settings.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
-            settings.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
+        public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
+            final Rectangle bounds = _inspection.getBounds();
+            saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
+            saveSettingsEvent.save(FRAME_Y_KEY, bounds.y);
+            saveSettingsEvent.save(FRAME_WIDTH_KEY, bounds.width);
+            saveSettingsEvent.save(FRAME_HEIGHT_KEY, bounds.height);
+            saveSettingsEvent.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
+            saveSettingsEvent.save(DISPLAY_STYLE_PREFERENCE, style().name());
+            saveSettingsEvent.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
+            saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
             for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
                 final String config = _externalViewerConfig.get(externalViewerType);
                 if (config != null) {
-                    settings.save(EXTERNAL_VIEWER_PREFERENCE + "." + externalViewerType.name(), config);
+                    saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE + "." + externalViewerType.name(), config);
                 }
             }
         }
 
         void initialize() {
+            _settings.addSaveSettingsListener(this);
             try {
-                _settings.addSaveSettingsListener(this);
+                if (_settings.containsKey(this, FRAME_X_KEY)) {
+                    // Adjust any negative (off-screen) locations to be on-screen.
+                    final int x = Math.max(_settings.get(this, FRAME_X_KEY, OptionTypes.INT_TYPE, -1), 0);
+                    final int y = Math.max(_settings.get(this, FRAME_Y_KEY, OptionTypes.INT_TYPE, -1), 0);
+                    // Adjust any excessive window size to fit within the screen
+                    final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+                    final int width = Math.min(_settings.get(this, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
+                    final int height = Math.min(_settings.get(this, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
+                    _inspection.setBounds(x, y, width, height);
+                }
+            } catch (Option.Error optionError) {
+                ProgramWarning.message("Frame settings: " + optionError.getMessage());
+            }
+            try {
                 if (_settings.containsKey(this, KEY_BINDINGS_PREFERENCE)) {
                     final String keyBindingsName = _settings.get(this, KEY_BINDINGS_PREFERENCE, OptionTypes.STRING_TYPE, null);
 
@@ -626,6 +655,7 @@ public class Inspection extends JFrame {
 
     public Inspection(MaxVM maxVM) throws IOException {
         super(_inspectorName);
+        _preferences = new InspectionPreferences(this);
         _vm = maxVM;
         _bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
         if (!(maxVM().isReadOnly())) {
@@ -635,6 +665,7 @@ public class Inspection extends JFrame {
         _nameDisplay = new InspectorNameDisplay(this);
         _styleFactory = new InspectorStyleFactory(this);
         _style = _styleFactory.defaultStyle();
+        _desktopPane.setOpaque(true);
         _scrollPane = new InspectorScrollPane(this, _desktopPane);
         _focus = new InspectionFocus(this);
         _settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), _SETTINGS_FILE_NAME));
@@ -648,11 +679,10 @@ public class Inspection extends JFrame {
                 quit();
             }
         });
-
         setContentPane(_scrollPane);
-        _desktopPane.setOpaque(true);
-        _desktopPane.setMinimumSize(_geometry.inspectorFrameMinSize());
-        _desktopPane.setPreferredSize(_geometry.inspectorFramePrefSize());
+        // Set default geometry; may get overridden by settings when initialized
+        setMinimumSize(_geometry.inspectorFrameMinSize());
+        setPreferredSize(_geometry.inspectorFramePrefSize());
         setLocation(_geometry.inspectorFrameDefaultLocation());
         _inspectionActions = new InspectionActions(this);
         _viewMenu = new InspectorMenu();
