@@ -644,7 +644,7 @@ public class MaxineTester {
 
             if (OperatingSystem.current() == OperatingSystem.DARWIN) {
                 // Darwin has funky behavior relating to the namespace for native libraries, use a workaround
-                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, new File("/dev/stdout"), null, 5);
+                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, outputFile, null, 5);
             }
 
             _generatedImages.put(imageConfig, imageDir);
