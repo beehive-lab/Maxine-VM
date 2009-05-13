@@ -81,7 +81,7 @@ public class MaxineTesterConfiguration {
         test.output.WeakReferenceTest02.class,      FAIL_SPARC, RAND_ALL,
         test.output.WeakReferenceTest03.class,      FAIL_SPARC, RAND_ALL,
         test.output.WeakReferenceTest04.class,      FAIL_SPARC, RAND_ALL,
-        test.output.MegaThreads.class,              FAIL_SPARC,
+        test.output.MegaThreads.class,              FAIL_SPARC, RAND_ALL,
     };
 
     static final Object[] _javaTestList = {
