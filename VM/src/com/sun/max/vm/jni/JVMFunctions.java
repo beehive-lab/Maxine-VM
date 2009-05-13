@@ -22,6 +22,9 @@ package com.sun.max.vm.jni;
 
 import java.util.*;
 
+import sun.reflect.*;
+
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
@@ -57,6 +60,11 @@ public class JVMFunctions {
         }
 
         return result.toArray(new Class[result.size()]);
+    }
+
+    @NEVER_INLINE
+    public static Class GetCallerClass(int depth) {
+        return Reflection.getCallerClass(depth + 1);
     }
 
     public static String GetSystemPackage(String name) {

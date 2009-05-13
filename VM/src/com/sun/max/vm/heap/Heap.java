@@ -182,7 +182,7 @@ public final class Heap {
     /**
      * The clock that specifies the timing resolution for GC related timing.
      */
-    public static final Clock GC_TIMING_CLOCK = Clock.SYSTEM_NANOSECONDS;
+    public static final Clock GC_TIMING_CLOCK = Clock.SYSTEM_MILLISECONDS;
 
     private static boolean _traceGC;
     private static boolean _traceGCRootScanning;

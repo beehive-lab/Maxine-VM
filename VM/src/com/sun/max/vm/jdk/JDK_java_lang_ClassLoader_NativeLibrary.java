@@ -71,8 +71,22 @@ class JDK_java_lang_ClassLoader_NativeLibrary {
      * @param absolutePathname the pathname to the file that is a native library
      */
     @SUBSTITUTE
-    void load(String absolutePathname) {
-        handleFieldActor().writeLong(this, DynamicLinker.load(absolutePathname).asAddress().toLong());
+    void load(String absolutePathname) throws Throwable {
+        final Address address = DynamicLinker.load(absolutePathname).asAddress();
+        if (!address.isZero()) {
+            // we need to look up JNI_OnLoad and if it exists, invoke it.
+            final Address onload = DynamicLinker.lookupSymbol(address, "JNI_OnLoad").asAddress();
+            if (!onload.isZero()) {
+                try {
+                    DynamicLinker.invokeJNIOnLoad(onload);
+                    // TODO: check against the supported JNI version of this VM and throw UnsatisfiedLinkError if not supported
+                } catch (Throwable t) {
+                    DynamicLinker.close(address);
+                    throw t;
+                }
+            }
+        }
+        handleFieldActor().writeLong(this, address.toLong());
     }
 
     /**
