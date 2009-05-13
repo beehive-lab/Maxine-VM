@@ -642,7 +642,7 @@ public class MaxineTester {
 
             if (OperatingSystem.current() == OperatingSystem.DARWIN) {
                 // Darwin has funky behavior relating to the namespace for native libraries, use a workaround
-                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, new File("/dev/stdout"), null, 5);
+                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, outputFile, null, 5);
             }
 
             _generatedImages.put(imageConfig, imageDir);
@@ -740,6 +740,12 @@ public class MaxineTester {
         return new File(outputFile.getAbsolutePath() + ".stderr");
     }
 
+    private static File commandFile(File outputFile) {
+        if (outputFile.getName().endsWith("stdout")) {
+            return new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "command");
+        }
+        return new File(outputFile.getAbsolutePath() + ".command");
+    }
 
     private static String[] defaultJVMOptions() {
         final String value = _javaVMArgs.getValue();
@@ -796,7 +802,20 @@ public class MaxineTester {
                 sb.append(" 2>&1");
             }
 
-            final Process process = Runtime.getRuntime().exec(new String[] {"sh", "-c", sb.toString()}, env, workingDir);
+            final String[] cmdarray = new String[] {"sh", "-c", sb.toString()};
+
+            if (outputFile != null) {
+                final File commandFile = commandFile(outputFile);
+                final PrintStream ps = new PrintStream(new FileOutputStream(commandFile));
+                ps.println(Arrays.toString(cmdarray, " "));
+                for (int i = 0; i < cmdarray.length; ++i) {
+                    ps.println("Command array[" + i + "] = \"" + cmdarray[i] + "\"");
+                }
+                ps.println("Working directory: " + (workingDir == null ? "CWD" : workingDir.getAbsolutePath()));
+                ps.close();
+            }
+
+            final Process process = Runtime.getRuntime().exec(cmdarray, env, workingDir);
             final ProcessTimeoutThread processThread = new ProcessTimeoutThread(outputFile, process, name != null ? name : command[0], timeout);
             final int exitValue = processThread.exitValue();
             return exitValue;

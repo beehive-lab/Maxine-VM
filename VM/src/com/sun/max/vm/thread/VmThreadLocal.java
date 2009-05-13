@@ -481,9 +481,12 @@ public enum VmThreadLocal {
      * Prepares a reference map for the stack of a VM thread executing or blocked in native code.
      *
      * @param vmThreadLocals a pointer to the VM thread locals denoting the thread stack whose reference map is to be prepared
+     * @return the amount of time taken to prepare the reference map
      */
-    public static void prepareStackReferenceMap(Pointer vmThreadLocals) {
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(vmThreadLocals);
+    public static long prepareStackReferenceMap(Pointer vmThreadLocals) {
+        final StackReferenceMapPreparer stackReferenceMapPreparer = VmThread.current().stackReferenceMapPreparer();
+        stackReferenceMapPreparer.prepareStackReferenceMap(vmThreadLocals);
+        return stackReferenceMapPreparer.preparationTime();
     }
 
     /**
@@ -510,11 +513,13 @@ public enum VmThreadLocal {
     /**
      * ATTENTION: must not use object references in this method, because its frame will be scanned after having returned
      * from it.
+     *
+     * @return the amount of time taken to prepare the reference map
      */
     @NEVER_INLINE
-    public static void prepareCurrentStackReferenceMap() {
+    public static long prepareCurrentStackReferenceMap() {
         fakeNearbyStopPosition();
-        VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
+        return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
                                                                                 VMRegister.getInstructionPointer(),
                                                                                 VMRegister.getAbiStackPointer(),
                                                                                 VMRegister.getAbiFramePointer());
