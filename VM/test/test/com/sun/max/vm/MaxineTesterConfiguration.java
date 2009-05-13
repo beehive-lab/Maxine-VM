@@ -77,10 +77,10 @@ public class MaxineTesterConfiguration {
         test.output.JREJarLoadTest.class,           FAIL_SPARC,
         test.output.FileReader.class,               FAIL_SPARC,
         test.output.ZipFileReader.class,            FAIL_SPARC,
-        test.output.WeakReferenceTest01.class,      FAIL_SPARC, RAND_DARWIN,
-        test.output.WeakReferenceTest02.class,      FAIL_SPARC, RAND_DARWIN,
-        test.output.WeakReferenceTest03.class,      FAIL_SPARC, RAND_DARWIN,
-        test.output.WeakReferenceTest04.class,      FAIL_SPARC, RAND_DARWIN,
+        test.output.WeakReferenceTest01.class,      FAIL_SPARC, RAND_ALL,
+        test.output.WeakReferenceTest02.class,      FAIL_SPARC, RAND_ALL,
+        test.output.WeakReferenceTest03.class,      FAIL_SPARC, RAND_ALL,
+        test.output.WeakReferenceTest04.class,      FAIL_SPARC, RAND_ALL,
         test.output.MegaThreads.class,              FAIL_SPARC,
     };
 
@@ -306,6 +306,11 @@ public class MaxineTesterConfiguration {
         MaxineTesterConfiguration._maxvmConfigs.put("pgi", new String[] {"-XX:PGI"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx256m", new String[] {"-Xmx256m"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
+
+        for (String s : _expectedAutoTestFailures) {
+            // add the failing autotests to the expectation map
+            _testExpectationMap.put(s, new Expectation[] {FAIL_ALL});
+        }
     }
 
     private static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
