@@ -80,11 +80,12 @@ public final class ByteArrayBitMap implements Cloneable {
     }
 
     /**
-     * Gets the number of bit set in this bit map.
+     * Gets the number of bits set in this bit map.
      */
     public int cardinality() {
         int cardinality = 0;
-        for (int i = _offset; i < _size; ++i) {
+        final int end = _offset + _size;
+        for (int i = _offset; i < end; ++i) {
             final byte b = _bytes[i];
             if (b != 0) {
                 cardinality += Integer.bitCount(b & 0xff);
