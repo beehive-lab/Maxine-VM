@@ -141,7 +141,7 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
         }
     };
 
-    private final Runnable _gcRequest = new Runnable() {
+    class GCRequest implements Runnable {
         public void run() {
             synchronized (SpecialReferenceManager.LOCK) {
                 // the lock for the special reference manager must be held before starting GC
@@ -162,7 +162,9 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                 }
             }
         }
-    };
+    }
+
+    private final Runnable _gcRequest = new GCRequest();
 
     public void execute() {
         execute(_gcRequest);
