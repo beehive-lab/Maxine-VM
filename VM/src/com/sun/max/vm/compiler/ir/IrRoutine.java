@@ -81,6 +81,7 @@ public abstract class IrRoutine {
         } else {
             _foldingMethodActor = getFoldingMethodActor(getClass(), _name, true);
         }
+        _classMethodActor = (ClassMethodActor) _foldingMethodActor;
         _resultKind = _foldingMethodActor.descriptor().resultKind();
         assert _singletonInstances.put(getClass(), this) == null;
     }
@@ -93,12 +94,9 @@ public abstract class IrRoutine {
         return _foldingMethodActor;
     }
 
-    private ClassMethodActor _classMethodActor;
+    private final ClassMethodActor _classMethodActor;
 
     public ClassMethodActor classMethodActor() {
-        if (_classMethodActor == null) {
-            _classMethodActor = (ClassMethodActor) foldingMethodActor();
-        }
         return _classMethodActor;
     }
 
