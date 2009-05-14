@@ -550,7 +550,8 @@ public class Inspection extends JFrame {
                         Trace.line(1, tracePrefix() + "Opening file by executing " + command);
                         Runtime.getRuntime().exec(command);
                     } catch (IOException ioException) {
-                        throw new InspectorError("Error opening file by executing " + command, ioException);
+                        ProgramWarning.message("Error opening file by executing " + command + ": " + ioException);
+                        return false;
                     }
                 }
                 break;
@@ -569,7 +570,8 @@ public class Inspection extends JFrame {
                         fileViewerStream.flush();
                         fileViewer.close();
                     } catch (IOException ioException) {
-                        throw new InspectorError("Error opening file via localhost:" + portString, ioException);
+                        ProgramWarning.message("Error opening file via localhost:" + portString + ": " + ioException);
+                        return false;
                     }
                 }
                 break;
