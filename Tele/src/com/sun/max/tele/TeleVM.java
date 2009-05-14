@@ -772,37 +772,37 @@ public abstract class TeleVM {
         if (!containsInHeap(p) && !containsInCode(p)) {
             return false;
         }
-        if (isInGC() && containsInDynamicHeap(origin)) {
+        if (false && isInGC() && containsInDynamicHeap(origin)) {
             //  Assume that any reference to the dynamic heap is invalid during GC.
             return false;
         }
-        if (_bootImage.vmConfiguration().debugging()) {
-            try {
+        try {
+            if (_bootImage.vmConfiguration().debugging()) {
                 final Word tag = dataAccess().getWord(cell, 0, -1);
                 return DebugHeap.isValidCellTag(tag);
-            } catch (DataIOError dataAccessError) {
-                return false;
             }
-        }
 
-        // Keep following hub pointers until the same hub is traversed twice or
-        // an address outside of heap or code
-        // region(s) is encountered.
-        Word hubWord = layoutScheme().generalLayout().readHubReferenceAsWord(
-                temporaryRemoteTeleGripFromOrigin(origin));
-        for (int i = 0; i < 3; i++) { // longest expected chain: staticTuple
-                                        // -> staticHub -> dynamicHub ->
-                                        // dynamicHub
-            final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);
-            final Pointer hubOrigin = hubGrip.toOrigin();
-            if (!containsInHeap(hubOrigin) && !containsInCode(hubOrigin)) {
-                return false;
+            // Keep following hub pointers until the same hub is traversed twice or
+            // an address outside of heap or code
+            // region(s) is encountered.
+            Word hubWord = layoutScheme().generalLayout().readHubReferenceAsWord(
+                    temporaryRemoteTeleGripFromOrigin(origin));
+            for (int i = 0; i < 3; i++) { // longest expected chain: staticTuple
+                                            // -> staticHub -> dynamicHub ->
+                                            // dynamicHub
+                final RemoteTeleGrip hubGrip = createTemporaryRemoteTeleGrip(hubWord);
+                final Pointer hubOrigin = hubGrip.toOrigin();
+                if (!containsInHeap(hubOrigin) && !containsInCode(hubOrigin)) {
+                    return false;
+                }
+                final Word nextHubWord = layoutScheme().generalLayout().readHubReferenceAsWord(hubGrip);
+                if (nextHubWord.equals(hubWord)) {
+                    return true;
+                }
+                hubWord = nextHubWord;
             }
-            final Word nextHubWord = layoutScheme().generalLayout().readHubReferenceAsWord(hubGrip);
-            if (nextHubWord.equals(hubWord)) {
-                return true;
-            }
-            hubWord = nextHubWord;
+        } catch (DataIOError dataAccessError) {
+            return false;
         }
         return false;
     }

@@ -59,7 +59,7 @@
 verbose=false
 unknown_option=""
 show_help=false
-default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx2g"
+default_jvm_args="-d64 -ea -Xss2m -Xms1g -Xmx1g"
 jvm_args="$default_jvm_args"
 jvm_args_prefix=""
 jvm_args_suffix=""
@@ -717,7 +717,7 @@ test_help="run some or all of the Maxine tests
 
     The Maxine sources include a variety of tests that can be run by a
     special launcher. These include JUnit tests, VM micro tests, certain
-    benchmark suites and output comparison tests amongst others. 
+    benchmark suites and output comparison tests, amongst others. 
     
     Use \"max test -help\" to see what other options this command accepts."
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,46 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.util.timer;
+package test.output;
 
-import com.sun.max.profile.*;
+import java.util.*;
 
 /**
- * The most abstract interface for a timer.
+ * A simple class to allocate a lot of memory and then catch an OutOfMemory exception.
  *
  * @author Ben L. Titzer
  */
-public interface Timer {
-    void start();
-    void stop();
-    Clock getClock();
-
-    /**
-     * Gets the number of {@linkplain Clock#getTicks() ticks} of this timer's {@linkplain #getClock() clock}
-     * that occurred in between the last pair of calls to {@link #start()} and {@link #stop()}.
-     */
-    long getLastElapsedTime();
-
-    long getLastNestedTime();
+public class CatchOutOfMemory {
+    public static void main(String[] args) {
+        System.out.println("starting...");
+        if (test(0) == 0) {
+            System.out.println("ok.");
+            System.out.flush();
+/*            if (test(1) == 0) {
+                System.out.println("ok.");
+                System.out.flush();
+                System.exit(30);
+            }
+*/
+            System.exit(10);
+        } else {
+            System.out.println("failed.");
+            System.out.flush();
+            System.exit(20);
+        }
+    }
+    public static int test(int a) {
+        List<Object[]> leak = new ArrayList<Object[]>();
+        try {
+            while (true) {
+                leak.add(new Object[200000]);
+            }
+        } catch (OutOfMemoryError ex) {
+            return 0;
+        } catch (Throwable ex) {
+            return -1;
+        } finally {
+            leak = null;
+        }
+    }
 }

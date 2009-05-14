@@ -55,6 +55,32 @@ Java_test_jvmni_JVM_1GetClassContext01_call(JNIEnv *env, jclass c)
     return JVM_GetClassContext(env);
 }
 
+JNIEXPORT jobject JNICALL
+Java_test_jvmni_JVM_1GetClassContext02_downCall1(JNIEnv *env, jclass c)
+{
+    jclass jClass;
+    jmethodID jMethod;
+    char *className = "test/jvmni/JVM_GetClassContext02";
+    char *methodName = "upCall1";
+    char *signature = "()[Ljava/lang/Class;";
+    jClass = (*env)->FindClass(env, className);
+    if (jClass == NULL) {
+        return NULL;
+    }
+    jMethod = (*env)->GetStaticMethodID(env, jClass, methodName, signature);
+    if (jMethod == NULL) {
+        return NULL;
+    }
+    return (*env)->CallStaticObjectMethod(env, jClass, jMethod);
+}
+
+JNIEXPORT jobject JNICALL
+Java_test_jvmni_JVM_1GetClassContext02_downCall2(JNIEnv *env, jclass c)
+{
+    return JVM_GetClassContext(env);
+}
+
+
 JNIEXPORT jboolean JNICALL
 Java_test_jvmni_JVM_1IsNaN01_call(JNIEnv *env, jdouble d)
 {
