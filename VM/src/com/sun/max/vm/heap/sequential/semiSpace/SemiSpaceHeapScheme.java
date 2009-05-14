@@ -479,7 +479,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void scanCode() {
-        Code.visitCells(this);
+        // All objects in the boot code region are immutable
+        final boolean includeBootCode = false;
+        Code.visitCells(this, includeBootCode);
     }
 
     private boolean cannotGrow() {

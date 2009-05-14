@@ -560,22 +560,22 @@ public class CompiledPrototype extends Prototype {
         System.err.println("Error occurred while compiling " + classMethodActor + ": " + error);
         System.err.println("Referrer chain:");
         System.err.println("    " + classMethodActor.format("%H.%n(%p)"));
-        MethodActor referrent = classMethodActor;
-        while (referrent != null) {
-            final Link link = _methodActors.get(referrent);
+        MethodActor referent = classMethodActor;
+        while (referent != null) {
+            final Link link = _methodActors.get(referent);
             if (link == null) {
                 System.err.println("  (no referrer chain available)");
                 break;
             }
-            if (referrent == link._referrer) {
+            if (referent == link._referrer) {
                 System.err.println("  which references itself recursively");
                 break;
             }
-            referrent = link._referrer;
-            if (referrent == null) {
+            referent = link._referrer;
+            if (referent == null) {
                 System.err.println("    which is a VM entry point");
             } else {
-                System.err.println("    which " + link._relationship._asReferent + " " + referrent.format("%H.%n(%p)"));
+                System.err.println("    which " + link._relationship._asReferent + " " + referent.format("%H.%n(%p)"));
             }
         }
         error.printStackTrace(System.err);
