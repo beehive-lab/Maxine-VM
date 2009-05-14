@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2009 Sun Microsystems, Inc.  All rights reserved.
  *
  * Sun Microsystems, Inc. has intellectual property rights relating to technology embodied in the product
  * that is described in this document. In particular, and without limitation, these intellectual property
@@ -18,25 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.util.timer;
+package test.output;
 
-import com.sun.max.profile.*;
+import java.awt.*;
 
 /**
- * The most abstract interface for a timer.
+ * A simple class that uses AWT fonts.
  *
  * @author Ben L. Titzer
  */
-public interface Timer {
-    void start();
-    void stop();
-    Clock getClock();
-
-    /**
-     * Gets the number of {@linkplain Clock#getTicks() ticks} of this timer's {@linkplain #getClock() clock}
-     * that occurred in between the last pair of calls to {@link #start()} and {@link #stop()}.
-     */
-    long getLastElapsedTime();
-
-    long getLastNestedTime();
+public class AWTFont {
+    public static void main(String[] args) {
+        final GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        for (Font f : g.getAllFonts()) {
+            System.out.println(f.toString());
+        }
+    }
 }

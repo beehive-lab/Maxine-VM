@@ -36,7 +36,6 @@ public class VerboseVMOption extends VMOption {
     private static boolean _verboseCompilation;
     private static boolean _verboseGC;
     private static boolean _verboseProperties;
-    private boolean _timeGC;
     private static boolean _verboseJNI;
     private static final VerboseVMOption _verboseOption = new VerboseVMOption();
 
@@ -73,14 +72,8 @@ public class VerboseVMOption extends VMOption {
      * Determines if information should be displayed about each garbage collection event.
      */
     public static boolean verboseGC() {
-        return _verboseGC || Heap.traceGC();
+        return _verboseGC || Heap.traceGCRootScanning() || Heap.traceGCTime() || Heap.traceGC();
     }
-
-    public static boolean verboseTimeGC() {
-        return _verboseOption._timeGC;
-    }
-
-
 
     /**
      * Determines if information should be displayed about use of native methods and other Java Native Interface activity.

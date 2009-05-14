@@ -514,6 +514,7 @@ public class JavaTesterRunScheme extends AbstractTester {
         test.micro.VarArgs_short01.class,
         test.jvmni.JVM_ArrayCopy01.class,
         test.jvmni.JVM_GetClassContext01.class,
+        test.jvmni.JVM_GetClassContext02.class,
         test.jvmni.JVM_GetFreeMemory01.class,
         test.jvmni.JVM_GetMaxMemory01.class,
         test.jvmni.JVM_GetTotalMemory01.class,
@@ -1949,18 +1950,21 @@ public class JavaTesterRunScheme extends AbstractTester {
                     JavaTesterTests.test_jvmni_JVM_GetClassContext01();
                     break;
                 case 474:
-                    JavaTesterTests.test_jvmni_JVM_GetFreeMemory01();
+                    JavaTesterTests.test_jvmni_JVM_GetClassContext02();
                     break;
                 case 475:
-                    JavaTesterTests.test_jvmni_JVM_GetMaxMemory01();
+                    JavaTesterTests.test_jvmni_JVM_GetFreeMemory01();
                     break;
                 case 476:
-                    JavaTesterTests.test_jvmni_JVM_GetTotalMemory01();
+                    JavaTesterTests.test_jvmni_JVM_GetMaxMemory01();
                     break;
                 case 477:
-                    JavaTesterTests.test_jvmni_JVM_IsNaN01();
+                    JavaTesterTests.test_jvmni_JVM_GetTotalMemory01();
                     break;
                 case 478:
+                    JavaTesterTests.test_jvmni_JVM_IsNaN01();
+                    break;
+                case 479:
                     JavaTesterTests.test_jni_JNI_OverflowArguments();
             }
         }
