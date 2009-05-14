@@ -64,7 +64,7 @@ public final class MemoryWordInspector extends Inspector {
             public void update(Address address) {
                 if (!address.equals(_address)) {
                     _address = address.aligned();
-                    setText(_address.toString(16));
+                    setText(_address.toUnsignedString(16));
                     MemoryWordInspector.this.reconstructView();
                 }
             }
@@ -87,7 +87,7 @@ public final class MemoryWordInspector extends Inspector {
         final JButton up = new JButton(new AbstractAction("Up") {
             public void actionPerformed(ActionEvent e) {
                 _address = _address.minus(teleVM().wordSize());
-                addressField.setText(_address.toString(16));
+                addressField.setText(_address.toHexString());
                 numberOfWordsField.setText(Integer.toString(++_numberOfWords));
                 MemoryWordInspector.this.reconstructView();
             }

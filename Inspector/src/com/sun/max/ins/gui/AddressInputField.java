@@ -52,9 +52,9 @@ public abstract class AddressInputField extends JTextField {
     private int _numberOfDigits;
 
     protected void updateView() {
-        _numberOfDigits = _upperBound.toString(_radix).length();
+        _numberOfDigits = _upperBound.toUnsignedString(_radix).length();
         setPreferredSize(new Dimension(9 * _numberOfDigits, 25));
-        setText(_value.toString(_radix));
+        setText(_value.toUnsignedString(_radix));
     }
 
     private void setRange(Address lowerBound, Address upperBound) {
@@ -84,7 +84,7 @@ public abstract class AddressInputField extends JTextField {
             _value = value;
             update(value);
         } else {
-            setText(_value.toString(_radix)); // revert
+            setText(_value.toUnsignedString(_radix)); // revert
         }
     }
 
