@@ -1106,14 +1106,13 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     }
 
     /**
-     * Gets the address of the next call (direct or indirect) in this target method after a given instruction pointer.
+     * Gets the position of the next call (direct or indirect) in this target method after a given position.
      *
      * @return {@link Pointer#zero()} if no call exists in this target method after {@code instructionPointer}
      */
-    public Pointer findNextCall(Pointer instructionPointer) {
-        final int targetCodePosition = targetCodePositionFor(instructionPointer);
+    public int findNextCall(int targetCodePosition) {
         if (_stopPositions == null || targetCodePosition < 0 || targetCodePosition > _code.length) {
-            return Pointer.zero();
+            return -1;
         }
 
         int closestCallPosition = Integer.MAX_VALUE;
@@ -1125,9 +1124,9 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
             }
         }
         if (closestCallPosition != Integer.MAX_VALUE) {
-            return _codeStart.plus(closestCallPosition);
+            return closestCallPosition;
         }
-        return Pointer.zero();
+        return -1;
     }
 
     /**

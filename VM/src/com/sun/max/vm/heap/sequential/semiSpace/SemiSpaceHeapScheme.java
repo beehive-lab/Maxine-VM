@@ -796,6 +796,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     @Override
     public void finalize(MaxineVM.Phase phase) {
+        if (MaxineVM.isPrototyping()) {
+            StopTheWorldDaemon.checkInvariants();
+        }
     }
 
     @Override

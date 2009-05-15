@@ -310,7 +310,9 @@ public abstract class StackFrameWalker {
         final TargetMethod nativeStubTargetMethod = targetMethodFor(instructionPointer);
         //FatalError.check(nativeStubTargetMethod.classMethodActor().isNative(), "Instruction pointer not within a native stub");
         if (nativeStubTargetMethod != null) {
-            final Pointer nativeFunctionCall = nativeStubTargetMethod.findNextCall(instructionPointer);
+            final int targetCodePosition = nativeStubTargetMethod.targetCodePositionFor(instructionPointer);
+            final int nativeFunctionCallPosition = nativeStubTargetMethod.findNextCall(targetCodePosition);
+            final Pointer nativeFunctionCall = nativeFunctionCallPosition < 0 ? Pointer.zero() : nativeStubTargetMethod.codeStart().plus(nativeFunctionCallPosition);
             if (!nativeFunctionCall.isZero()) {
                 return nativeFunctionCall;
             }
