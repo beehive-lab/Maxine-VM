@@ -303,7 +303,7 @@ public abstract class BeltwayHeapScheme extends HeapSchemeAdaptor implements Hea
     public void scanCode(RuntimeMemoryRegion from, RuntimeMemoryRegion to) {
         _cellVisitor._from = from;
         _cellVisitor._to = to;
-        Code.visitCells(_cellVisitor);
+        Code.visitCells(_cellVisitor, true);
     }
 
     @INLINE

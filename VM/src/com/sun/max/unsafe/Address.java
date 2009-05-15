@@ -20,6 +20,8 @@
  */
 package com.sun.max.unsafe;
 
+import java.math.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -106,17 +108,56 @@ public abstract class Address extends Word {
         return "@" + toHexString();
     }
 
-    public String toString(int radix) {
-        final long n = toLong();
-        final long low = n & 0xffffffffL;
-        final String s = Long.toString(low, radix);
-        final long high = n >>> 32;
-        if (Word.width() == WordWidth.BITS_32 || high == 0L) {
-            return s;
+    public String toUnsignedString(int radix) {
+        if (radix == 16) {
+            if (Word.width() == WordWidth.BITS_64) {
+                return Long.toHexString(toLong());
+            }
+            assert Word.width() == WordWidth.BITS_32;
+            return Integer.toHexString(toInt());
         }
-        return Long.toString(high, radix) + s;
+        if (radix == 8) {
+            if (Word.width() == WordWidth.BITS_64) {
+                return Long.toOctalString(toLong());
+            }
+            assert Word.width() == WordWidth.BITS_32;
+            return Integer.toOctalString(toInt());
+        }
+        if (radix == 2) {
+            if (Word.width() == WordWidth.BITS_64) {
+                return Long.toBinaryString(toLong());
+            }
+            assert Word.width() == WordWidth.BITS_32;
+            return Integer.toBinaryString(toInt());
+        }
+        assert radix == 10;
+
+        final long n = toLong();
+        if (Word.width() == WordWidth.BITS_32) {
+            if (n <= Integer.MAX_VALUE && n >= 0) {
+                return Integer.toString(toInt());
+            }
+            return Long.toString(n & 0xffffffffL);
+        }
+
+        final long low = n & 0xffffffffL;
+        final long high = n >>> 32;
+        return BigInteger.valueOf(high).shiftLeft(32).or(BigInteger.valueOf(low)).toString();
     }
 
+    public static void main(String[] args) {
+        System.out.println(Long.toString(0x100100001L));
+        System.out.println(Long.toString(0x00100001L));
+        System.out.println(Long.toBinaryString(0xffffffffffffffffL));
+        System.out.println(Long.toBinaryString(-1L));
+
+        final BigInteger max = BigInteger.valueOf(0xffffffffL).shiftLeft(32).or(BigInteger.valueOf(0xffffffffL));
+        System.out.println(max.toString());
+        System.out.println(max.toString(2));
+        System.out.println(max.toString(2).length());
+        System.out.println(BigInteger.valueOf(0xffffffffffffffffL).shiftRight(1).toString());
+
+    }
     public static Address parse(String s, int radix) {
         Address result = Address.zero();
         for (int i = 0; i < s.length(); i++) {

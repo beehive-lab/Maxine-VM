@@ -91,6 +91,17 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
             return false;
 
         }
+        if (Heap.traceAllocation()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Allocated target code bundle for ");
+            Log.printMethodActor(targetMethod.classMethodActor(), false);
+            Log.print(" at ");
+            Log.print(start);
+            Log.print(" [");
+            Log.print(targetMethod.size().toInt());
+            Log.println(" bytes]");
+            Log.unlock(lockDisabledSafepoints);
+        }
         targetMethod.setStart(start);
         _sortedMemoryRegions.add(targetMethod);
         return true;
@@ -110,10 +121,22 @@ public class CodeRegion extends LinearAllocatorHeapRegion {
     public boolean allocateRuntimeStub(RuntimeStub stub) {
         final ByteArrayLayout byteArrayLayout = VMConfiguration.hostOrTarget().layoutScheme().byteArrayLayout();
         final int size = stub.size().toInt();
-        final Pointer cell = allocateCell(byteArrayLayout.getArraySize(size));
+        final Size allocationSize = byteArrayLayout.getArraySize(size);
+        final Pointer cell = allocateCell(allocationSize);
         if (cell.isZero()) {
             // allocation failed.
             return false;
+        }
+        if (Heap.traceAllocation()) {
+            final boolean lockDisabledSafepoints = Log.lock();
+            Log.print("Allocated runtime stub named \"");
+            Log.print(stub.name());
+            Log.print("\" at ");
+            Log.print(cell);
+            Log.print(" [");
+            Log.print(allocationSize.toInt());
+            Log.println(" bytes]");
+            Log.unlock(lockDisabledSafepoints);
         }
         DebugHeap.writeCellTag(cell);
         Cell.plantArray(cell, byteArrayHub, size);

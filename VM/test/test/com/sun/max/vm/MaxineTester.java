@@ -70,9 +70,7 @@ public class MaxineTester {
     private static final Option<Integer> _javaTesterTimeOut = _options.newIntegerOption("java-tester-timeout", 50,
                     "The number of seconds to wait for the in-target Java tester tests to complete before " +
                     "timing out and killing it.");
-    private static final Option<Integer> _javaTesterConcurrency = _options.newIntegerOption("java-tester-concurrency", 1,
-                    "The number of Java tester tests to run in parallel.");
-    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 50,
+    private static final Option<Integer> _javaRunTimeOut = _options.newIntegerOption("java-run-timeout", 60,
                     "The number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
     private static final Option<Integer> _traceOption = _options.newIntegerOption("trace", 0,
@@ -644,7 +642,7 @@ public class MaxineTester {
 
             if (OperatingSystem.current() == OperatingSystem.DARWIN) {
                 // Darwin has funky behavior relating to the namespace for native libraries, use a workaround
-                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, new File("/dev/stdout"), null, 5);
+                exec(null, new String[] {"bin/mod-macosx-javalib.sh", imageDir.getAbsolutePath(), System.getProperty("java.home")}, null, outputFile, null, 5);
             }
 
             _generatedImages.put(imageConfig, imageDir);
@@ -742,6 +740,12 @@ public class MaxineTester {
         return new File(outputFile.getAbsolutePath() + ".stderr");
     }
 
+    private static File commandFile(File outputFile) {
+        if (outputFile.getName().endsWith("stdout")) {
+            return new File(Strings.chopSuffix(outputFile.getAbsolutePath(), "stdout") + "command");
+        }
+        return new File(outputFile.getAbsolutePath() + ".command");
+    }
 
     private static String[] defaultJVMOptions() {
         final String value = _javaVMArgs.getValue();
@@ -798,7 +802,20 @@ public class MaxineTester {
                 sb.append(" 2>&1");
             }
 
-            final Process process = Runtime.getRuntime().exec(new String[] {"sh", "-c", sb.toString()}, env, workingDir);
+            final String[] cmdarray = new String[] {"sh", "-c", sb.toString()};
+
+            if (outputFile != null) {
+                final File commandFile = commandFile(outputFile);
+                final PrintStream ps = new PrintStream(new FileOutputStream(commandFile));
+                ps.println(Arrays.toString(cmdarray, " "));
+                for (int i = 0; i < cmdarray.length; ++i) {
+                    ps.println("Command array[" + i + "] = \"" + cmdarray[i] + "\"");
+                }
+                ps.println("Working directory: " + (workingDir == null ? "CWD" : workingDir.getAbsolutePath()));
+                ps.close();
+            }
+
+            final Process process = Runtime.getRuntime().exec(cmdarray, env, workingDir);
             final ProcessTimeoutThread processThread = new ProcessTimeoutThread(outputFile, process, name != null ? name : command[0], timeout);
             final int exitValue = processThread.exitValue();
             return exitValue;
@@ -1057,28 +1074,10 @@ public class MaxineTester {
         @Override
         public boolean run() {
             final List<String> javaTesterConfigs = _javaTesterConfigs.getValue();
-
-            final ExecutorService javaTesterService = Executors.newFixedThreadPool(_javaTesterConcurrency.getValue());
-            final CompletionService<Void> javaTesterCompletionService = new ExecutorCompletionService<Void>(javaTesterService);
             for (final String config : javaTesterConfigs) {
-                javaTesterCompletionService.submit(new Runnable() {
-                    public void run() {
-                        if (!stopTesting()) {
-                            runWithSerializedOutput(new Runnable() {
-                                public void run() {
-                                    JavaTesterHarness.runJavaTesterTests(config);
-                                }
-                            });
-                        }
-                    }
-                }, null);
-            }
-
-            javaTesterService.shutdown();
-            try {
-                javaTesterService.awaitTermination(_javaTesterTimeOut.getValue() * 2 * javaTesterConfigs.size(), TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                if (!stopTesting()) {
+                    JavaTesterHarness.runJavaTesterTests(config);
+                }
             }
             return true;
         }

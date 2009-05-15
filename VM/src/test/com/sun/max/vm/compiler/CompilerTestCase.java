@@ -794,10 +794,6 @@ public abstract class CompilerTestCase<Method_Type extends IrMethod> extends Max
      */
     public void traceBundleAndDisassemble(TargetMethod targetMethod) {
         targetMethod.traceBundle(INDENT_WRITER);
-        INDENT_WRITER.println("Reference Maps:");
-        INDENT_WRITER.indent();
-        INDENT_WRITER.println(targetMethod.referenceMapsToString());
-        INDENT_WRITER.outdent();
         disassemble(targetMethod);
     }
 

@@ -26,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -80,12 +81,26 @@ public final class StackReferenceMapPreparer {
     }
 
     private final VmThread _owner;
+    private final Timer _timer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
     private Pointer _triggeredVmThreadLocals;
     private Pointer _enabledVmThreadLocals;
     private Pointer _disabledVmThreadLocals;
     private Pointer _referenceMap;
     private Pointer _lowestStackSlot;
     private boolean _completingReferenceMap;
+    private long _preparationTime;
+
+    /**
+     * Gets the time taken for the last call to {@link #prepareStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}.
+     * If there was an interleaving call to {@link #completeStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}, then that
+     * time is included as well. That is, this method gives the amount of time spent preparing the stack
+     * reference map for the associated thread during the last/current GC.
+     *
+     * @return a time in the resolution specified by {@link Heap#GC_TIMING_CLOCK}
+     */
+    public long preparationTime() {
+        return _preparationTime;
+    }
 
     /**
      * Prepares a reference map for the entire stack of a VM thread
@@ -98,9 +113,10 @@ public final class StackReferenceMapPreparer {
      * @param instructionPointer
      * @param stackPointer
      * @param framePointer
-     * @return the index of the lowest slot in the VM thread locals storage
+     * @return the amount of time (in the resolution specified by {@link Heap#GC_TIMING_CLOCK}) taken to prepare the reference map
      */
-    public void prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        _timer.start();
         _enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         _disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         _triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
@@ -157,6 +173,10 @@ public final class StackReferenceMapPreparer {
         if (Heap.traceGCRootScanning()) {
             Log.unlock(lockDisabledSafepoints);
         }
+        _timer.stop();
+        final long time = _timer.getLastElapsedTime();
+        _preparationTime = time;
+        return time;
     }
 
     /**
@@ -174,6 +194,7 @@ public final class StackReferenceMapPreparer {
      *            {@link VmThreadLocal#LAST_JAVA_CALLER_FRAME_POINTER}.
      */
     public void completeStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        _timer.start();
         final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
 
         // Inform subsequent reference map scanning (see VmThreadLocal.scanReferences()) of the stack range covered:
@@ -222,6 +243,8 @@ public final class StackReferenceMapPreparer {
         if (Heap.traceGCRootScanning()) {
             Log.unlock(lockDisabledSafepoints);
         }
+        _timer.stop();
+        _preparationTime += _timer.getLastElapsedTime();
     }
 
     /**
