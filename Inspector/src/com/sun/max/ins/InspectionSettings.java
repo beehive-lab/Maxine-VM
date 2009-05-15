@@ -28,7 +28,7 @@ import java.util.*;
 import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
-import com.sun.max.tele.*;
+import com.sun.max.vm.prototype.*;
 
 /**
  * Manages saving and restoring of settings between Inspection sessions.
@@ -188,18 +188,18 @@ public class InspectionSettings {
             ProgramWarning.message(tracePrefix() + "Error while loading settings from " + _settingsFile + ": " + ioException.getMessage());
         }
 
-        final TeleVM teleVM = inspection.teleVM();
+        final BootImage bootImage = inspection.maxVM().bootImage();
         _bootimageClient = new AbstractSaveSettingsListener("bootimage") {
             public void saveSettings(SaveSettingsEvent settings) {
-                settings.save(BOOT_VERSION_KEY, String.valueOf(teleVM.bootImage().header()._version));
-                settings.save(BOOT_ID_KEY, String.valueOf(teleVM.bootImage().header()._randomID));
+                settings.save(BOOT_VERSION_KEY, String.valueOf(bootImage.header()._version));
+                settings.save(BOOT_ID_KEY, String.valueOf(bootImage.header()._randomID));
             }
         };
 
         addSaveSettingsListener(_bootimageClient);
         final int version = get(_bootimageClient, BOOT_VERSION_KEY, OptionTypes.INT_TYPE, 0);
         final int randomID = get(_bootimageClient, BOOT_ID_KEY, OptionTypes.INT_TYPE, 0);
-        _bootImageChanged = version != teleVM.bootImage().header()._version || randomID != teleVM.bootImage().header()._randomID;
+        _bootImageChanged = version != bootImage.header()._version || randomID != bootImage.header()._randomID;
         _bootimageClient.saveSettings(new SaveSettingsEvent(_bootimageClient, _properties));
         _saver = new Saver();
     }
@@ -251,7 +251,7 @@ public class InspectionSettings {
 
     /**
      * Determines if the boot image identified in the file from which these settings were loaded
-     * is different from the boot image of the current {@link TeleVM}.
+     * is different from the boot image of the current VM.
      */
     public boolean bootImageChanged() {
         return _bootImageChanged;

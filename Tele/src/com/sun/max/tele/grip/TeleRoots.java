@@ -32,16 +32,15 @@ import com.sun.max.vm.tele.*;
  *
  * @author Bernd Mathiske
  */
-public final class TeleRoots {
+public final class TeleRoots extends AbstractTeleVMHolder{
 
     private final TeleGripScheme _teleGripScheme;
-    private final TeleVM _teleVM;
     private final WordArrayLayout _wordArrayLayout;
 
     TeleRoots(TeleGripScheme teleGripScheme) {
+        super(teleGripScheme.teleVM());
         _teleGripScheme = teleGripScheme;
-        _teleVM = teleGripScheme.teleVM();
-        _wordArrayLayout = _teleVM.layoutScheme().wordArrayLayout();
+        _wordArrayLayout = teleGripScheme.teleVM().layoutScheme().wordArrayLayout();
     }
 
     // Points to the static field {@link TeleHeap#_roots TeleHeap._roots} in the {@link TeleVM}, assuming that the
@@ -53,9 +52,9 @@ public final class TeleRoots {
 
     private RemoteTeleGrip teleRoots() {
         if (_teleRootsPointer.isZero()) {
-            _teleRootsPointer = _teleVM.fields().TeleHeapInfo_roots.staticTupleReference(_teleVM).toOrigin().plus(_teleVM.fields().TeleHeapInfo_roots.fieldActor().offset());
+            _teleRootsPointer = teleVM().fields().TeleHeapInfo_roots.staticTupleReference(teleVM()).toOrigin().plus(teleVM().fields().TeleHeapInfo_roots.fieldActor().offset());
         }
-        return _teleGripScheme.createTemporaryRemoteTeleGrip(_teleVM.dataAccess().readWord(_teleRootsPointer).asAddress());
+        return _teleGripScheme.createTemporaryRemoteTeleGrip(teleVM().dataAccess().readWord(_teleRootsPointer).asAddress());
     }
 
     /**

@@ -24,7 +24,6 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.debug.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -63,9 +62,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         _listeners.remove(listener);
     }
 
-
-
-    private TeleCodeLocation _codeLocation = new TeleCodeLocation(teleVM());
+    private TeleCodeLocation _codeLocation = maxVM().createCodeLocation(Address.zero());
 
     private final Object _codeLocationTracer = new Object() {
         @Override
@@ -149,7 +146,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     /**
      * Shifts the focus of the Inspection to a particular thread; notify interested inspectors.
      * Sets the code location to the current InstructionPointer of the newly focused thread.
-     * This is a view state change that can happen when there is no change to {@link TeleVM}  state.
+     * This is a view state change that can happen when there is no change to VM  state.
      */
     public void setThread(TeleNativeThread thread) {
         assert thread != null;
@@ -217,7 +214,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     /**
      * Shifts the focus of the Inspection to a particular stack frame in a particular thread; notify interested inspectors.
      * Sets the current thread to be the thread of the frame.
-     * This is a view state change that can happen when there is no change to {@link TeleVM} state.
+     * This is a view state change that can happen when there is no change to VM state.
      *
      * @param teleNativeThread the thread in whose stack the frame resides
      * @param stackFrame the frame on which to focus.
@@ -240,7 +237,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         // Update code location, even if stack frame is the "same", where same means at the same logical position in the stack as the old one.
         // Note that the old and new stack frames are not identical, and in fact may have different instruction pointers.
         if (!_codeLocation.hasTargetCodeLocation() || !_codeLocation.targetCodeInstructionAddresss().equals(stackFrame.instructionPointer())) {
-            setCodeLocation(new TeleCodeLocation(teleVM(), stackFrame.instructionPointer()), interactiveForNative);
+            setCodeLocation(maxVM().createCodeLocation(stackFrame.instructionPointer()), interactiveForNative);
         }
     }
 
@@ -273,7 +270,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
 
     /**
      * Shifts the focus of the Inspection to a particular {@link Address}; notify interested inspectors.
-     * This is a view state change that can happen when there is no change to the {@link TeleVM} state.
+     * This is a view state change that can happen when there is no change to the VM state.
      */
     public void setAddress(Address address) {
         ProgramError.check(address != null, "setAddress(null) should use zero Address instead");
@@ -286,7 +283,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
             }
             // User Model Policy:  select the memory region that contains the newly selected address; clears if not known.
             // If
-            setMemoryRegion(teleVM().memoryRegionContaining(address));
+            setMemoryRegion(maxVM().memoryRegionContaining(address));
         }
     }
 
@@ -319,7 +316,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
     /**
      * Shifts the focus of the Inspection to a particular {@link MemoryRegion}; notify interested inspectors.
      * If the region is a  stack, then set the current thread to the thread owning the stack.
-     * This is a view state change that can happen when there is no change to the {@link TeleVM} state.
+     * This is a view state change that can happen when there is no change to the VM state.
      */
     public void setMemoryRegion(MemoryRegion memoryRegion) {
         // TODO (mlvdv) see about setting to null if a thread is observed to have died, or mark the region as dead?
@@ -367,7 +364,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
 
     /**
      * Selects a breakpoint that is of immediate visual interest to the user, possibly null.
-     * This is view state only, not necessarily related to {@link TeleVM} execution.
+     * This is view state only, not necessarily related to VM execution.
      */
     public void setBreakpoint(TeleBreakpoint teleBreakpoint) {
         if (_breakpoint != teleBreakpoint) {
@@ -380,7 +377,7 @@ public class InspectionFocus extends AbstractInspectionHolder {
         }
         if (teleBreakpoint != null) {
             TeleNativeThread threadAtBreakpoint = null;
-            for (TeleNativeThread teleNativeThread : teleVM().threads()) {
+            for (TeleNativeThread teleNativeThread : maxVM().threads()) {
                 if (teleNativeThread.breakpoint() == teleBreakpoint) {
                     threadAtBreakpoint = teleNativeThread;
                     break;
@@ -421,8 +418,8 @@ public class InspectionFocus extends AbstractInspectionHolder {
     }
 
     /**
-     * Shifts the focus of the Inspection to a particular heap object in the {@link TeleVM}; notify interested inspectors.
-     * This is a view state change that can happen when there is no change to {@link TeleVM} state.
+     * Shifts the focus of the Inspection to a particular heap object in the VM; notify interested inspectors.
+     * This is a view state change that can happen when there is no change to VM state.
      */
     public void setHeapObject(TeleObject heapObject) {
         if (_heapObject != heapObject) {

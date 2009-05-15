@@ -41,7 +41,7 @@ import com.sun.max.vm.value.*;
 public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTargetRoutine  {
 
     /**
-     * Gets a {@code TeleTargetMethod} instance representing the {@link RuntimeStub} in the tele VM that contains a
+     * Gets a {@code TeleTargetMethod} instance representing the {@link RuntimeStub} in the {@link teleVM} that contains a
      * given instruction pointer. If the instruction pointer does not lie within a runtime stub, then null is returned.
      * If the instruction pointer is within a runtime stub but there is no {@code TeleRuntimeStub} instance existing
      * for it in the {@linkplain TeleCodeRegistry tele code registry}, then a new instance is created and returned.
@@ -167,7 +167,10 @@ public class TeleRuntimeStub extends TeleRuntimeMemoryRegion implements TeleTarg
     public void removeTargetCodeLabelBreakpoints() {
         for (TargetCodeInstruction targetCodeInstruction : getInstructions()) {
             if (targetCodeInstruction.label() != null) {
-                teleVM().removeTargetBreakpoint(targetCodeInstruction.address());
+                final TeleTargetBreakpoint targetBreakpoint = teleVM().getTargetBreakpoint(targetCodeInstruction.address());
+                if (targetBreakpoint != null) {
+                    targetBreakpoint.remove();
+                }
             }
         }
     }

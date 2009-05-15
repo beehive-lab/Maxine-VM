@@ -343,7 +343,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      * @param tuple the local object to be updated in the host VM. This value is ignored if the field is static.
      * @param fieldActor the field to be copied/updated
      */
-    protected static final void copyField(DeepCopyContext context, final TeleObject teleObject, final Object newTuple, final FieldActor fieldActor) throws TeleError {
+    protected static final void copyField(DeepCopyContext context, final TeleObject teleObject, final Object newTuple, final FieldActor fieldActor) {
         if (context.include(context.level(), fieldActor)) {
             if (!fieldActor.isInjected()) {
                 final Field field = fieldActor.toJava();
@@ -367,7 +367,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
                     }
                     field.set(newTuple, newJavaValue);
                 } catch (IllegalAccessException illegalAccessException) {
-                    throw new TeleError("could not access field: " + field, illegalAccessException);
+                    ProgramError.unexpected("could not access field: " + field, illegalAccessException);
                 }
             }
         }
@@ -378,7 +378,7 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
      */
     public static void copyStaticFields(TeleVM teleVM, Class javaClass) {
         final ClassActor classActor = ClassActor.fromJava(javaClass);
-        final TeleClassActor teleClassActor = teleVM.findTeleClassActorByClass(javaClass);
+        final TeleClassActor teleClassActor = teleVM.findTeleClassActor(javaClass);
         final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
 
         Trace.begin(COPY_TRACE_VALUE, "Copying static fields of " + javaClass + "from VM");
@@ -396,6 +396,6 @@ public abstract class TeleObject extends AbstractTeleVMHolder implements ObjectP
     }
 
     public ReferenceTypeProvider getReferenceType() {
-        return teleVM().findTeleClassActorByType(classActorForType().typeDescriptor());
+        return teleVM().findTeleClassActor(classActorForType().typeDescriptor());
     }
 }

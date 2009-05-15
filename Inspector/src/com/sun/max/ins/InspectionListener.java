@@ -20,12 +20,11 @@
  */
 package com.sun.max.ins;
 
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 
 
 /**
- * Notification service for changes to state in the {@link TeleVM}.
+ * Notification service for changes to state in the VM.
  *
  * Many of the notifications include the current "epoch" of the
  * underlying process ({@see TeleProcess#epoch()}), which can
@@ -37,7 +36,7 @@ import com.sun.max.tele.debug.*;
 public interface InspectionListener {
 
     /**
-     * Notifies that  {@link TeleVM} state has potentially changed and should be revisited.
+     * Notifies that  VM state has potentially changed and should be revisited.
      *
      * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
      * @param force suspend caching behavior; reload state unconditionally.
@@ -45,7 +44,7 @@ public interface InspectionListener {
     void vmStateChanged(long epoch, boolean force);
 
     /**
-     * Notifies that the set of threads in the {@link TeleVM} has changed; listeners can assume
+     * Notifies that the set of threads in the VM has changed; listeners can assume
      * that the set hasn't changed unless this notification is received.
      *
      * @param epoch current epoch of the VM process {@see TeleProcess#epoch()}.
@@ -53,12 +52,12 @@ public interface InspectionListener {
     void threadSetChanged(long epoch);
 
     /**
-     * Notifies that the state associated with a particular thread  in the {@link TeleVM} has changed.
+     * Notifies that the state associated with a particular thread  in the VM has changed.
      */
     void threadStateChanged(TeleNativeThread teleNativeThread);
 
     /**
-     * Notifies that the set of breakpoints in the {@link TeleVM} has changed.
+     * Notifies that the set of breakpoints in the VM has changed.
      * @param epoch  current epoch of the VM process {@see TeleProcess#epoch()}.
      */
     void breakpointSetChanged(long epoch);
@@ -72,7 +71,7 @@ public interface InspectionListener {
     void viewConfigurationChanged(long epoch);
 
     /**
-     * Notifies that a running {@link TeleProcess} associated with a {@link @TeleVm} has
+     * Notifies that the running process associated with a VM has
      * stopped running.
      */
     void vmProcessTerminated();

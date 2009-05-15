@@ -47,7 +47,7 @@ import com.sun.max.vm.value.*;
   */
 public final class ThreadLocalsTable extends InspectorTable {
 
-    private final TeleVMThreadLocalValues _values;
+    private final TeleThreadLocalValues _values;
     private final ThreadLocalsViewPreferences _preferences;
     private final TeleNativeThread _teleNativeThread;
 
@@ -58,7 +58,7 @@ public final class ThreadLocalsTable extends InspectorTable {
     /**
      * A {@link JTable} specialized to display Maxine thread local fields.
      */
-    public ThreadLocalsTable(Inspection inspection, TeleNativeThread teleNativeThread, TeleVMThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
+    public ThreadLocalsTable(Inspection inspection, TeleNativeThread teleNativeThread, TeleThreadLocalValues values, ThreadLocalsViewPreferences preferences) {
         super(inspection);
         _teleNativeThread = teleNativeThread;
         _values = values;
@@ -83,7 +83,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                 if (selectedRow != -1 && selectedColumn != -1) {
                     // Left button selects a table cell; also cause an address selection at the row.
                     if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON1) {
-                        final Address address = _values.start().plus(selectedRow * teleVM().wordSize());
+                        final Address address = _values.start().plus(selectedRow * maxVM().wordSize());
                         setAddressFocus(address);
                     }
                 }
@@ -91,7 +91,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             }
         });
 
-        refresh(inspection.teleVM().epoch(), true);
+        refresh(inspection.maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -153,7 +153,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         }
 
         public int rowToOffset(int row) {
-            return row * teleVM().wordSize();
+            return row * maxVM().wordSize();
         }
 
         public Address rowToAddress(int row) {
@@ -163,7 +163,7 @@ public final class ThreadLocalsTable extends InspectorTable {
         public int addressToRow(Address address) {
             if (!address.isZero()) {
                 if (address.greaterEqual(_values.start()) && address.lessThan(_values.end())) {
-                    return address.minus(_values.start()).dividedBy(teleVM().wordSize()).toInt();
+                    return address.minus(_values.start()).dividedBy(maxVM().wordSize()).toInt();
                 }
             }
             return -1;
@@ -208,7 +208,7 @@ public final class ThreadLocalsTable extends InspectorTable {
             final Address address = _model.rowToAddress(row);
             String registerNameList = null;
             final TeleIntegerRegisters teleIntegerRegisters = _teleNativeThread.integerRegisters();
-            final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(teleVM().wordSize()));
+            final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
             if (registerSymbols.isEmpty()) {
                 setText("");
                 setToolTipText("");
@@ -222,7 +222,7 @@ public final class ThreadLocalsTable extends InspectorTable {
                         registerNameList = registerNameList + "," + name;
                     }
                 }
-                setText(registerNameList + "--->");
+                setText(registerNameList + "->");
                 setToolTipText("Register(s): " + registerNameList + " in thread " + inspection().nameDisplay().longName(_teleNativeThread) + " point at this location");
                 setForeground(style().memoryRegisterTagTextColor());
             }

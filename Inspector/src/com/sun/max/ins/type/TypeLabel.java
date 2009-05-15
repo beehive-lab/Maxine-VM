@@ -25,13 +25,12 @@ import java.awt.event.*;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A label specialized for displaying information about a {@TypeDescriptor}, even if not yet loaded in the {@link TeleVM}.
+ * A label specialized for displaying information about a {@TypeDescriptor}, even if not yet loaded in the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -113,7 +112,7 @@ public class TypeLabel extends InspectorLabel {
             _teleClassActor = null;
         } else {
             // Might be null if class not yet known in VM
-            _teleClassActor = teleVM().findTeleClassActorByType(_typeDescriptor);
+            _teleClassActor = maxVM().findTeleClassActor(_typeDescriptor);
         }
     }
 

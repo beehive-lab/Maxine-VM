@@ -22,6 +22,7 @@ package com.sun.max.tele;
 
 import java.io.*;
 
+import com.sun.max.program.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.type.*;
 
@@ -52,10 +53,6 @@ public class FileCommands {
 
     }
 
-    public static String actionName() {
-        return "Execute commands from file...";
-    }
-
     public static String defaultCommandFile() {
         return _defaultCommandFile;
     }
@@ -76,12 +73,12 @@ public class FileCommands {
                 }
                 try {
                     doCommand(teleVM, line);
-                } catch (CommandException ex) {
-                    throw new TeleError("Command failed: " + ex.getMessage());
+                } catch (CommandException commandException) {
+                    ProgramError.unexpected("File Command failed ", commandException);
                 }
             }
         } catch (IOException ex) {
-            throw new TeleError("Failed to open file: " + filename);
+            ProgramError.unexpected("Failed to open file: " + filename);
         } finally {
             if (bs != null) {
                 try {
@@ -108,7 +105,7 @@ public class FileCommands {
         }
         final String className = arg.substring(0, index);
         final String methodSignature = arg.substring(index + 1);
-        final TeleClassActor teleClassActor = teleVM.findTeleClassActorByType(JavaTypeDescriptor.getDescriptorForJavaString(className));
+        final TeleClassActor teleClassActor = teleVM.findTeleClassActor(JavaTypeDescriptor.getDescriptorForJavaString(className));
         if (teleClassActor == null) {
             throw new CommandException("failed to find class: " + className + " (not qualified or misspelled?)");
         }

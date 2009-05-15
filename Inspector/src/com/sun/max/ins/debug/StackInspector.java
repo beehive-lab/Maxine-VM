@@ -52,7 +52,7 @@ import com.sun.max.vm.stack.JavaStackFrameLayout.*;
 import com.sun.max.vm.value.*;
 
 /**
- * A singleton inspector that displays stack contents for the thread in the {@link TeleVM} that is the current user focus.
+ * A singleton inspector that displays stack contents for the thread in the VM that is the current user focus.
  *
  * @author Doug Simon
  * @author Bernd Mathiske
@@ -171,7 +171,7 @@ public class StackInspector extends Inspector {
             if (stackFrame instanceof JavaStackFrame) {
                 final JavaStackFrame javaStackFrame = (JavaStackFrame) stackFrame;
                 final Address address = javaStackFrame.instructionPointer();
-                final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
+                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name = inspection().nameDisplay().veryShortName(teleTargetMethod);
                     toolTip = inspection().nameDisplay().longName(teleTargetMethod, address);
@@ -187,7 +187,7 @@ public class StackInspector extends Inspector {
                 }
                 if (javaStackFrame.isAdapter()) {
                     name = "frame adapter [" + name + "]";
-                    if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().teleVM().vmConfiguration().jitScheme())) {
+                    if (javaStackFrame.targetMethod().compilerScheme().equals(StackInspector.this.inspection().maxVM().vmConfiguration().jitScheme())) {
                         toolTip = "optimized-to-JIT frame adapter [ " + toolTip + "]";
                     } else {
                         toolTip = "JIT-to-optimized frame adapter [ " + toolTip + "]";
@@ -206,7 +206,7 @@ public class StackInspector extends Inspector {
             } else {
                 ProgramWarning.check(stackFrame instanceof NativeStackFrame, "Unhandled type of non-native stack frame: " + stackFrame.getClass().getName());
                 final Pointer instructionPointer = stackFrame.instructionPointer();
-                final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.make(teleVM(), instructionPointer);
+                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, instructionPointer);
                 if (teleNativeTargetRoutine != null) {
                     // native that we know something about
                     name = inspection().nameDisplay().shortName(teleNativeTargetRoutine);
@@ -235,7 +235,7 @@ public class StackInspector extends Inspector {
         createFrame(null);
         frame().menu().addSeparator();
         frame().menu().add(_copyStackToClipboardAction);
-        refreshView(inspection.teleVM().epoch(), true);
+        refreshView(inspection.maxVM().epoch(), true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -255,10 +255,8 @@ public class StackInspector extends Inspector {
 
         if (_teleNativeThread == null) {
             _contentPane = null;
-            frame().setTitle(getTextForTitle());
         } else {
             _contentPane = new InspectorPanel(inspection(), new BorderLayout());
-            frame().setTitle(getTextForTitle() + " " + inspection().nameDisplay().longName(_teleNativeThread));
 
             _stackFrameListModel = new DefaultListModel();
             _stackFrameList = new JList(_stackFrameListModel);
@@ -309,9 +307,10 @@ public class StackInspector extends Inspector {
             _contentPane.add(_splitPane, BorderLayout.CENTER);
         }
         frame().setContentPane(_contentPane);
-        refreshView(teleVM().epoch(), true);
+        refreshView(maxVM().epoch(), true);
 
         SwingUtilities.invokeLater(new Runnable() {
+
             public void run() {
                 // System.err.println("setting divider location in stack inspector for " + inspection().inspectionThreadName(_teleNativeThread));
                 // Try to place the split pane divider in the middle of the split pane's space initially
@@ -322,7 +321,11 @@ public class StackInspector extends Inspector {
 
     @Override
     public String getTextForTitle() {
-        return "Stack: ";
+        String title = "Stack: ";
+        if (_teleNativeThread != null) {
+            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        }
+        return title;
     }
 
     @Override
@@ -347,6 +350,8 @@ public class StackInspector extends Inspector {
             _selectedFrame.refresh(epoch, force);
         }
         super.refreshView(epoch, force);
+        // The title displays thread state, so must be updated.
+        updateFrameTitle();
     }
 
     public void viewConfigurationChanged(long epoch) {
@@ -393,7 +398,7 @@ public class StackInspector extends Inspector {
         public final void setStackFrame(StackFrame stackFrame) {
             final Class<StackFrame_Type> type = null;
             _stackFrame = StaticLoophole.cast(type, stackFrame);
-            refresh(teleVM().epoch(), true);
+            refresh(maxVM().epoch(), true);
         }
     }
 
@@ -500,7 +505,7 @@ public class StackInspector extends Inspector {
                     public Value fetchValue() {
                         // TODO (mlvdv)  generalize this, and catch at {@link WordValueLabel}
                         try {
-                            return new WordValue(teleVM().dataAccess().readWord(slotBase, offset));
+                            return new WordValue(maxVM().readWord(slotBase, offset));
                         } catch (DataIOError e) {
                             return VoidValue.VOID;
                         }
@@ -521,11 +526,11 @@ public class StackInspector extends Inspector {
             _showSlotAddresses.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    refresh(teleVM().epoch(), true);
+                    refresh(maxVM().epoch(), true);
                 }
             });
 
-            refresh(teleVM().epoch(), true);
+            refresh(maxVM().epoch(), true);
 
             add(header, BorderLayout.NORTH);
             final JScrollPane slotsScrollPane = new InspectorScrollPane(inspection(), slotsPanel);
@@ -668,6 +673,7 @@ public class StackInspector extends Inspector {
             if (oldRightComponent != newRightComponent) {
                 _splitPane.setRightComponent(newRightComponent);
                 SwingUtilities.invokeLater(new Runnable() {
+
                     public void run() {
                         _splitPane.setDividerLocation(dividerLocation);
                     }

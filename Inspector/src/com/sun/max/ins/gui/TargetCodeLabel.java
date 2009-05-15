@@ -23,7 +23,7 @@ package com.sun.max.ins.gui;
 import com.sun.max.ins.*;
 
 /**
- *  A label for the textual presentation of Target code in the {@link TeleVM}.
+ *  A label for the textual presentation of Target code in the VM.
  *
  * @author Michael Van De Vanter
  *

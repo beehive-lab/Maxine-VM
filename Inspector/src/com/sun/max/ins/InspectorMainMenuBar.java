@@ -25,10 +25,9 @@ import java.awt.*;
 import javax.swing.*;
 
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
 
 /**
- * MenuBar for the Inspection; shows {@link TeleVM} state with background color.
+ * MenuBar for the Inspection; shows VM state with background color.
  *
  * @author Michael Van De Vanter
  */
@@ -66,7 +65,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
     }
 
     /**
-     * Change the appearance to reflect the current state of the {@link TeleVM}.
+     * Change the appearance to reflect the current state of the VM.
      */
     public void setStateColor(Color color) {
         setBackground(color);
@@ -74,7 +73,7 @@ public final class InspectorMainMenuBar extends InspectorMenuBar {
 
     private JMenu createInspectionMenu() {
         final JMenu menu = new JMenu("Inspector");
-        if (!inspection().teleVM().isBootImageRelocated()) {
+        if (!maxVM().isBootImageRelocated()) {
             menu.add(_actions.relocateBootImage());
             menu.addSeparator();
         }

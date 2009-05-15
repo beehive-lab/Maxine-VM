@@ -18,33 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele;
+package com.sun.max.tele.debug.guestvm.xen;
+
+import com.sun.max.*;
+
 
 /**
- * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public class TeleError extends Error {
-
-    public TeleError(String message) {
-        super(message);
+public class Package extends MaxPackage {
+    public Package() {
+        super();
     }
-
-    public TeleError(Throwable cause) {
-        super(cause.toString(), cause);
-    }
-
-    public TeleError(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    /**
-     * Throw error if condition not true.
-     */
-    public static void check(boolean condition, String message) {
-        if (!condition) {
-            throw new TeleError(message);
-        }
-    }
-
 }

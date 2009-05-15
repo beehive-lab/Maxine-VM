@@ -18,51 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.ins.gui;
+package com.sun.max.bench.benchmarks;
 
-import javax.swing.*;
-
-import com.sun.max.ins.*;
-import com.sun.max.tele.*;
+import com.sun.max.*;
 
 
 /**
- * A tabbed pane specialized for use in the Maxine Inspector.
- *
  * @author Michael Van De Vanter
  */
-public abstract class InspectorTabbedPane extends JTabbedPane implements InspectionHolder,  Prober {
-
-    private final Inspection _inspection;
-
-    /**
-     * Creates a new {@JTabbedPane} specialized for use in the Maxine Inspector.
-     */
-    protected InspectorTabbedPane(Inspection inspection) {
+public class Package extends MaxPackage {
+    public Package() {
         super();
-        _inspection = inspection;
-        setOpaque(true);
-        setBackground(inspection.style().defaultBackgroundColor());
     }
-
-    public final Inspection inspection() {
-        return _inspection;
-    }
-
-    public final MaxVM maxVM() {
-        return _inspection.maxVM();
-    }
-
-    public final InspectorStyle style() {
-        return _inspection.style();
-    }
-
-    public final InspectionFocus focus() {
-        return _inspection.focus();
-    }
-
-    public InspectionActions actions() {
-        return _inspection.actions();
-    }
-
 }

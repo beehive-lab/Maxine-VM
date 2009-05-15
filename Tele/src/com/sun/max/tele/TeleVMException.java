@@ -21,17 +21,17 @@
 package com.sun.max.tele;
 
 /**
- * Thrown to indicate that an operation is invalid because it would modify the tele VM and the tele VM is read-only.
+ * Response to an action or request that is inappropriate for the current state of the {@link TeleVM}.
  *
- * @author Doug Simon
+ * @author Michael Van De Vanter
  */
-public class TeleVMCannotBeModifiedError extends TeleError {
+public class TeleVMException extends Exception {
 
-    public TeleVMCannotBeModifiedError() {
+    public TeleVMException() {
         super("");
     }
 
-    public TeleVMCannotBeModifiedError(String message) {
+    public TeleVMException(String message) {
         super(message);
     }
 }

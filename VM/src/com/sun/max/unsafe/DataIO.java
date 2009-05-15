@@ -23,6 +23,12 @@ package com.sun.max.unsafe;
 import java.nio.*;
 
 
+/**
+ * Buffered reading/writing of bytes from/to a source/destination that can be identified by an {@link Address}.
+ *
+ * @author Bernd Mathiske
+ * @author Michael Van De Vanter
+ */
 public interface DataIO {
 
     /**
@@ -57,6 +63,13 @@ public interface DataIO {
 
     public static class Static {
 
+        /**
+         * Fills a buffer by reading bytes from a source.
+         *
+         * @param dataIO the source of data to be read
+         * @param src the location in the source where reading should start
+         * @param dst the buffer to be filled with the data
+         */
         public static void readFully(DataIO dataIO, Address src, ByteBuffer dst) {
             final int length = dst.limit();
             int n = 0;
@@ -69,6 +82,14 @@ public interface DataIO {
             }
         }
 
+        /**
+         * Reads bytes from a source.
+         *
+         * @param dataIO the source of data to be read
+         * @param src the location in the source where reading should start
+         * @param length the total number of bytes to be read
+         * @return the bytes read from the souyrce.
+         */
         public static byte[] readFully(DataIO dataIO, Address src, int length) {
             final ByteBuffer buffer = ByteBuffer.wrap(new byte[length]);
             readFully(dataIO, src, buffer);

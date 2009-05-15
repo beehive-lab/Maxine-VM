@@ -23,6 +23,7 @@ package com.sun.max.tele.object;
 import java.lang.reflect.*;
 
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.value.*;
 import com.sun.max.vm.actor.holder.*;
@@ -84,9 +85,9 @@ public class TeleTupleObject extends TeleObject {
                         try {
                             field.set(newTupleObject, asBoxedJavaValue);
                         } catch (IllegalAccessException illegalAccessException) {
-                            throw new TeleError("could not access field: " + field, illegalAccessException);
+                            ProgramError.unexpected("could not access field: " + field, illegalAccessException);
                         } catch (IllegalArgumentException illegalArgumentException) {
-                            throw new TeleError("illegal argument field: " + field, illegalArgumentException);
+                            ProgramError.unexpected("illegal argument field: " + field, illegalArgumentException);
                         }
                     }
                 }
@@ -94,7 +95,8 @@ public class TeleTupleObject extends TeleObject {
             } while (holderClassActor != null);
             return newTupleObject;
         } catch (InstantiationException instantiationException) {
-            throw new TeleError("could not allocate instance: " + javaClass, instantiationException);
+            ProgramError.unexpected("could not allocate instance: " + javaClass, instantiationException);
+            return null;
         }
     }
 
@@ -114,7 +116,8 @@ public class TeleTupleObject extends TeleObject {
             } while (holderClassActor != null);
             return newTuple;
         } catch (InstantiationException instantiationException) {
-            throw new TeleError("could not allocate instance: " + javaClass, instantiationException);
+            ProgramError.unexpected("could not allocate instance: " + javaClass, instantiationException);
+            return null;
         }
     }
 

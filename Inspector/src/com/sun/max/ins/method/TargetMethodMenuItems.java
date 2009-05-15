@@ -30,7 +30,6 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.io.*;
 import com.sun.max.platform.*;
-import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.bytecode.*;
@@ -56,7 +55,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
 
         @Override
         public void procedure() {
-            inspection().focus().setCodeLocation(new TeleCodeLocation(inspection().teleVM(), _teleTargetMethod.callEntryPoint()), false);
+            inspection().focus().setCodeLocation(maxVM().createCodeLocation(_teleTargetMethod.callEntryPoint()), false);
         }
     }
 
@@ -75,7 +74,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
             writer.println("compilation: " + inspection().nameDisplay().methodCompilationID(_teleTargetMethod) + "  " + _teleTargetMethod.classActorForType().simpleName());
             _teleTargetMethod.traceBundle(writer);
             writer.flush();
-            final ProcessorKind processorKind = teleVM().vmConfiguration().platform().processorKind();
+            final ProcessorKind processorKind = maxVM().vmConfiguration().platform().processorKind();
             final InlineDataDecoder inlineDataDecoder = InlineDataDecoder.createFrom(_teleTargetMethod.getEncodedInlineDataDescriptors());
             final Pointer startAddress = _teleTargetMethod.getCodeStart();
             final DisassemblyPrinter disassemblyPrinter = new DisassemblyPrinter(false) {
@@ -164,7 +163,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
         _inspectTargetMethodObjectAction = new InspectTargetMethodObjectAction();
         _inspectTargetCodeMemoryAction = new InspectTargetCodeMemoryAction();
         _inspectTargetCodeMemoryWordsAction = new InspectTargetCodeMemoryWordsAction();
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void addTo(InspectorMenu menu) {

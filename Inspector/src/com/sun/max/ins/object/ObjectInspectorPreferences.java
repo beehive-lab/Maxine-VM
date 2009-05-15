@@ -38,7 +38,7 @@ public class ObjectInspectorPreferences extends AbstractInspectionHolder {
     /**
      * @return the global, persistent set of user preferences for viewing heap objects
      */
-    public static synchronized ObjectInspectorPreferences globalPreferences(Inspection inspection) {
+    public static ObjectInspectorPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new ObjectInspectorPreferences(inspection);
         }
