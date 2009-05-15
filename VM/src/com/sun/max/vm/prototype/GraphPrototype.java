@@ -244,27 +244,6 @@ public class GraphPrototype extends Prototype {
     }
 
     /**
-     * Checks whether the specified field is static.
-     *
-     * @param field the field to check
-     * @return {@code true} if the specified field is static; {@code false} otherwise
-     */
-    private boolean isStatic(Field field) {
-        return (field.getModifiers() & Modifier.STATIC) != 0;
-    }
-
-    /**
-     * Checks whether the specified field is of reference type.
-     *
-     * @param field the field to check
-     * @return {@code true} if the field is a reference type; {@code false} otherwise
-     */
-    private boolean isReferenceField(Field field) {
-        final Class type = field.getType();
-        return !(type.isPrimitive() || Word.class.isAssignableFrom(type));
-    }
-
-    /**
      * Gather all objects by transitive closure on the object references.
      */
     private void gatherObjects() {

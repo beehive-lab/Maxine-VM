@@ -76,6 +76,21 @@ public class ByteArrayBitMapTest extends MaxTestCase {
             assertEquals(expected, bitPosition);
         }
         assertEquals(bitPositionsIndex, bitPositions.length);
+    }
 
+    public void test_cardinality() {
+        final int width = 101;
+        final ByteArrayBitMap bitMap = new ByteArrayBitMap(width);
+        assertEquals(0, bitMap.cardinality());
+        bitMap.set(0);
+        assertEquals(1, bitMap.cardinality());
+
+        bitMap.clear(0);
+        int cardinality = 0;
+        for (int i = 0; i < width; i += 3) {
+            bitMap.set(i);
+            cardinality++;
+            assertEquals(cardinality, bitMap.cardinality());
+        }
     }
 }

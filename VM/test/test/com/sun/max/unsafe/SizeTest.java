@@ -43,7 +43,7 @@ public class SizeTest extends WordTestCase {
         s = _sizeMax.toString();
         switch (wordWidth()) {
             case BITS_64:
-                assertEquals(s, "#42949672954294967295");
+                assertEquals(s, "#18446744073709551615");
                 break;
             case BITS_32:
                 assertEquals(s, "#4294967295");

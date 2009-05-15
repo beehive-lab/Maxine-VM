@@ -177,9 +177,11 @@ public final class Code {
      * Visits each cell that is managed by the code manager.
      *
      * @param cellVisitor the cell visitor to call back for each cell
+     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
+     *            also be visited
      */
-    public static void visitCells(CellVisitor cellVisitor) {
-        _codeManager.visitCells(cellVisitor);
+    public static void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
+        _codeManager.visitCells(cellVisitor, includeBootCode);
     }
 
     public static Size getCodeSize() {
