@@ -76,7 +76,9 @@ public class GraphPrototype extends Prototype {
      */
     static class ClassInfo {
         final Class _class;
+        final boolean _isReferenceArray;
         final AppendableSequence<Field> _mutableReferenceFields = new LinkSequence<Field>();
+        final AppendableSequence<Field> _immutableReferenceFields = new LinkSequence<Field>();
         final AppendableSequence<SpecialField> _specialReferenceFields = new LinkSequence<SpecialField>();
         final AppendableSequence<ClassInfo> _subClasses = new ArrayListSequence<ClassInfo>();
 
@@ -91,6 +93,8 @@ public class GraphPrototype extends Prototype {
          */
         ClassInfo(Class clazz) {
             _class = clazz;
+            final Class componentType = clazz.getComponentType();
+            _isReferenceArray = componentType != null && !componentType.isPrimitive() && !Word.class.isAssignableFrom(componentType);
         }
 
         /**
@@ -127,6 +131,15 @@ public class GraphPrototype extends Prototype {
         public String toString() {
             return _class.toString();
         }
+
+        /**
+         * Determines if this class contains any mutable references.
+         *
+         * @return
+         */
+        public boolean containsMutableReferences() {
+            return !_mutableReferenceFields.isEmpty() || _isReferenceArray;
+        }
     }
 
 
@@ -136,6 +149,22 @@ public class GraphPrototype extends Prototype {
      */
     public Iterable<Object> objects() {
         return _objects;
+    }
+
+    /**
+     * Gets the class info for a given object. If {@code object} is a {@link StaticTuple}, then
+     * the class info for the static fields of the {@code StaticTuple} are returned otherwise the
+     * class info for the instance fields of {@code object} are returned.
+     *
+     * @param object
+     * @return
+     */
+    public ClassInfo classInfoFor(Object object) {
+        final ClassInfo classInfo = _classInfos.get(object.getClass());
+        if (object instanceof StaticTuple) {
+            return classInfo._classClassInfo;
+        }
+        return classInfo;
     }
 
     /**
@@ -286,6 +315,7 @@ public class GraphPrototype extends Prototype {
                 // propagate information from super class field lists to this new class info
                 superInfo._subClasses.append(classInfo);
                 AppendableSequence.Static.appendAll(classInfo._mutableReferenceFields, superInfo._mutableReferenceFields);
+                AppendableSequence.Static.appendAll(classInfo._immutableReferenceFields, superInfo._immutableReferenceFields);
                 AppendableSequence.Static.appendAll(classInfo._specialReferenceFields, superInfo._specialReferenceFields);
             }
 
@@ -313,8 +343,11 @@ public class GraphPrototype extends Prototype {
                         try {
                             final Field field = fieldActor.toJava();
                             field.setAccessible(true);
-                            // PERF: split into mutable vs. immutable fields
-                            info._mutableReferenceFields.append(field);
+                            if (fieldActor.isConstant()) {
+                                info._immutableReferenceFields.append(field);
+                            } else {
+                                info._mutableReferenceFields.append(field);
+                            }
                         } catch (NoSuchFieldError noSuchFieldError) {
                             ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
                         }
@@ -387,7 +420,7 @@ public class GraphPrototype extends Prototype {
     }
 
     private void walkFields(Object object, ClassInfo classInfo) throws ProgramError {
-        for (Field field : classInfo._mutableReferenceFields) {
+        for (Field field : Iterables.join(classInfo._mutableReferenceFields, classInfo._immutableReferenceFields)) {
             try {
                 final Object value = HostObjectAccess.hostToTarget(field.get(object));
                 add(object, value, field.getName());

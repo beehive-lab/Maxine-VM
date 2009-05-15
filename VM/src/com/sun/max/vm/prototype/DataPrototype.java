@@ -22,6 +22,7 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 import java.lang.management.*;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -47,6 +48,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.SpecificLayout.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.prototype.GraphPrototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -225,23 +227,16 @@ public final class DataPrototype extends Prototype {
      * Assigns cells to all heap objects.
      */
     private void assignHeapCells() {
-        Trace.begin(1, "assignHeapCells");
         preventNullConfusion();
         final LinearAllocatorHeapRegion heapRegion = Heap.bootHeapRegion();
-        int n = 0;
-        for (Object object : _graphPrototype.objects()) {
-            Address cell = _objectToCell.get(object);
-            if (cell != null) {
-                assert Code.bootCodeRegion().contains(cell);
-            } else {
-                final Size size = HostObjectAccess.getSize(object);
-                cell = heapRegion.allocateCell(size);
-                assignHeapCell(object, cell);
-            }
-            if (++n % 100000 == 0) {
-                Trace.line(1, ": " + n);
-            }
-        }
+
+        Trace.begin(1, "assignMutableHeapCells:");
+        int n = assignHeapCells(heapRegion, true);
+        Trace.end(1, "assignMutableHeapCells: " + n + " heap objects");
+
+        Trace.begin(1, "assignImmutableHeapCells:");
+        n = assignHeapCells(heapRegion, false);
+        Trace.end(1, "assignImmutableHeapCells: " + n + " heap objects");
 
         final Object alignment = createPageAlignmentObject(heapRegion);
         if (alignment != null) {
@@ -250,8 +245,31 @@ public final class DataPrototype extends Prototype {
 
         heapRegion.setSize(heapRegion.getAllocationMark().minus(heapRegion.start()).asSize());
         assert heapRegion.size().remainder(_pageSize) == 0;
+    }
 
-        Trace.end(1, "assignHeapCells: " + n + " heap objects");
+    private int assignHeapCells(final LinearAllocatorHeapRegion heapRegion, boolean objectsWithMutableReferences) {
+        int count = 0;
+        for (Object object : _graphPrototype.objects()) {
+            if (_graphPrototype.classInfoFor(object).containsMutableReferences() == objectsWithMutableReferences) {
+                Address cell = _objectToCell.get(object);
+                if (cell != null) {
+                    assert Code.bootCodeRegion().contains(cell);
+                } else {
+                    final Size size = HostObjectAccess.getSize(object);
+                    cell = heapRegion.allocateCell(size);
+                    assignHeapCell(object, cell);
+
+                    if (objectsWithMutableReferences) {
+                        _mutableHeapObjects++;
+                        _mutableHeapObjectsSize += size.toInt();
+                    }
+                    if (++count % 100000 == 0) {
+                        Trace.line(1, ": " + count);
+                    }
+                }
+            }
+        }
+        return count;
     }
 
     /**
@@ -726,8 +744,8 @@ public final class DataPrototype extends Prototype {
                         try {
                             hub.specificLayout().visitObjectCell(object, m);
                         } catch (MissingCellException e) {
-                            System.out.println("no cell for object: class=" + e._object.getClass().getName() + " toString=\"" + e._object + "\"");
-                            _graphPrototype.printPath(object);
+                            System.err.println("no cell for object: class=" + e._object.getClass().getName() + " toString=\"" + e._object + "\"");
+                            _graphPrototype.printPath(object, System.err);
                             throw ProgramError.unexpected(e);
                         }
 
@@ -811,6 +829,9 @@ public final class DataPrototype extends Prototype {
 
     private final ByteArrayBitMap _heapRefmap;
 
+    int _mutableHeapObjects;
+    int _mutableHeapObjectsSize;
+
     /**
      * Gets a byte array that represents the relocation data for the entire data prototype.
      *
@@ -863,37 +884,46 @@ public final class DataPrototype extends Prototype {
      *
      * @param object the object to scan
      * @param cell the cell which contains the object
+     * @param isCodeObject specifies if {@code object} is in a code region
      * @return the number of references within the object
      */
-    private int setRelocationFlags(Object object, Address cell) {
+    private synchronized int setRelocationFlags(Object object, Address cell, boolean isCodeObject) {
         final Hub hub = HostObjectAccess.readHub(object);
+        final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
         final SpecificLayout specificLayout = hub.specificLayout();
         setRelocationFlag(cell.plus(specificLayout.getHubReferenceOffsetInCell()));
-        if (specificLayout.isReferenceArrayLayout()) {
-            final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
-            if (arrayLayout.elementKind() == Kind.REFERENCE) {
-                final int n = HostObjectAccess.getArrayLength(object);
-                for (int i = 0; i < n; i++) {
-                    setRelocationFlag(cell.plus(arrayLayout.getElementOffsetInCell(i)));
+        if (specificLayout.isArrayLayout()) {
+            if (specificLayout.isReferenceArrayLayout()) {
+                final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
+                if (arrayLayout.elementKind() == Kind.REFERENCE) {
+                    final int n = HostObjectAccess.getArrayLength(object);
+                    for (int i = 0; i < n; i++) {
+                        final Address address = cell.plus(arrayLayout.getElementOffsetInCell(i));
+                        setRelocationFlag(address);
+                        if (!isCodeObject) {
+                            final int index = address.toInt() / _alignment;
+                            assert !_heapRefmap.isSet(index);
+                            _heapRefmap.set(index);
+                        }
+                    }
+                    return 1 + n;
                 }
-                return 1 + n;
             }
             return 1;
         }
         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
 
-        ClassActor c = HostObjectAccess.readHub(object).classActor();
-        do {
-            for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
-                if (instanceFieldActor.kind() == Kind.REFERENCE && !instanceFieldActor.isSpecialReference() && !instanceFieldActor.isConstant()) {
-                    final Pointer address = origin.plus(instanceFieldActor.offset());
+        if (!isCodeObject) {
+            if (classInfo.containsMutableReferences()) {
+                for (Field field : classInfo._mutableReferenceFields) {
+                    final FieldActor fieldActor = FieldActor.fromJava(field);
+                    final Pointer address = origin.plus(fieldActor.offset());
                     final int index = address.toInt() / _alignment;
+                    assert !_heapRefmap.isSet(index);
                     _heapRefmap.set(index);
                 }
             }
-            c = c.superClassActor();
-        } while (c != null);
-
+        }
 
         TupleReferenceMap.visitOriginOffsets(hub, origin, _originOffsetVisitor);
         return 1 + hub.referenceMapLength();
@@ -904,35 +934,41 @@ public final class DataPrototype extends Prototype {
      *
      * @param objects a list of all the objects for which to set the relocation flags
      * @param name the name of visitor
+     * @param isCode specifies if {@code objects} are in a code region
      */
-    private void assignObjectRelocationFlags(final IndexedSequence<Object> objects, String name) {
+    private void assignObjectRelocationFlags(final IndexedSequence<Object> objects, String name, final boolean isCode) {
         Trace.begin(1, "assignObjectRelocationFlags: " + name);
         final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(_numberOfProcessors);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
+        int numberOfRelocations = 0;
         for (int n = 0; n < objects.length(); n += BATCH) {
             final int start = n;
             completionService.submit(new Callable<Integer>() {
 
                 @Override
                 public Integer call() throws Exception {
-                    int numberOfRelocation = 0;
-                    final int end = Math.min(objects.length(), start + BATCH);
-                    for (int i = start; i < end; i++) {
-                        final Object object = objects.get(i);
-                        numberOfRelocation += setRelocationFlags(object, _objectToCell.get(object));
+                    try {
+                        int numberOfRelocationsInBatch = 0;
+                        final int end = Math.min(objects.length(), start + BATCH);
+                        for (int i = start; i < end; i++) {
+                            final Object object = objects.get(i);
+                            numberOfRelocationsInBatch += setRelocationFlags(object, _objectToCell.get(object), isCode);
+                        }
+                        return numberOfRelocationsInBatch;
+                    } catch (Exception e) {
+                        executor.shutdown();
+                        throw e;
                     }
-                    return numberOfRelocation;
                 }
             });
         }
 
-        int numberOfRelocations = 0;
         for (int n = 0; n < objects.length(); n += BATCH) {
             try {
                 numberOfRelocations += completionService.take().get();
             } catch (Throwable throwable) {
-                ProgramError.unexpected();
+                ProgramError.unexpected(throwable);
             }
         }
 
@@ -996,8 +1032,8 @@ public final class DataPrototype extends Prototype {
     public void assignRelocationFlags() {
         Trace.begin(1, "assignRelocationFlags");
 
-        assignObjectRelocationFlags(_heapObjects, "heap");
-        assignObjectRelocationFlags(_codeObjects, "code");
+        assignObjectRelocationFlags(_heapObjects, "heap", false);
+        assignObjectRelocationFlags(_codeObjects, "code", true);
 
         assignMethodDispatchTableRelocationFlags();
 
@@ -1041,6 +1077,9 @@ public final class DataPrototype extends Prototype {
         assignCodeCells();
         assignHeapCells();
 
+        Trace.line(1, "Mutable objects: " + _mutableHeapObjects);
+        Trace.line(1, "Mutable objects (size): " + _mutableHeapObjectsSize);
+
         adjustMemoryRegions();
 
         MaxineVM.target().setPhase(MaxineVM.Phase.PRIMORDIAL);
@@ -1057,14 +1096,13 @@ public final class DataPrototype extends Prototype {
 
         // one bit per alignment unit
         _relocationFlags = new ByteArrayBitMap((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment);
-
-        _heapRefmap = new ByteArrayBitMap((_heapDataWriter.data().length) / _alignment);
+        _heapRefmap = new ByteArrayBitMap(_mutableHeapObjectsSize / _alignment);
 
         assignRelocationFlags();
 
         Trace.line(1, "Heap ref map: width=" + _heapRefmap.width() + ", cardinality=" + _heapRefmap.cardinality());
 
-        final int chunk = _heapRefmap.size() / 10;
+        final int chunk = _heapRefmap.size() / 20;
         final ByteArrayBitMap bm = new ByteArrayBitMap(_heapRefmap.bytes(), 0, chunk);
         int f = 0;
         while (bm.offset() < bm.bytes().length) {
