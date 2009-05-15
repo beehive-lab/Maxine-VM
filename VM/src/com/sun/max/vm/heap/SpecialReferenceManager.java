@@ -98,15 +98,15 @@ public class SpecialReferenceManager {
      * is live and can also return a forwarded version of the grip
      */
     public static void processDiscoveredSpecialReferences(GripForwarder gripForwarder) {
-        // the first pass over the list finds the references that have referrents that are no longer reachable
+        // the first pass over the list finds the references that have referents that are no longer reachable
         java.lang.ref.Reference ref = UnsafeLoophole.cast(_discoveredList.toJava());
         java.lang.ref.Reference last = UnsafeLoophole.cast(_pendingField.readStatic());
         while (ref != null) {
-            final Grip referrent = Grip.fromJava(ref).readGrip(_referentField.offset());
-            if (gripForwarder.isReachable(referrent)) {
+            final Grip referent = Grip.fromJava(ref).readGrip(_referentField.offset());
+            if (gripForwarder.isReachable(referent)) {
                 // this object is reachable, however the "referent" field was not scanned.
                 // we need to update this field manually
-                _referentField.writeObject(ref, gripForwarder.getForwardGrip(referrent));
+                _referentField.writeObject(ref, gripForwarder.getForwardGrip(referent));
             } else {
                 _referentField.writeObject(ref, null);
                 _nextField.writeObject(ref, last);
@@ -118,14 +118,14 @@ public class SpecialReferenceManager {
                 Log.print(ObjectAccess.readClassActor(ref).name().string());
                 Log.print(" at ");
                 Log.print(ObjectAccess.toOrigin(ref));
-                Log.print(" whose referrent ");
-                Log.print(referrent.toOrigin());
-                final Object newReferrent = _referentField.readObject(ref);
-                if (newReferrent == null) {
+                Log.print(" whose referent ");
+                Log.print(referent.toOrigin());
+                final Object newReferent = _referentField.readObject(ref);
+                if (newReferent == null) {
                     Log.println(" was unreachable");
                 } else {
                     Log.print(" moved to ");
-                    Log.println(ObjectAccess.toOrigin(newReferrent));
+                    Log.println(ObjectAccess.toOrigin(newReferent));
                 }
                 Log.unlock(lockDisabledSafepoints);
             }

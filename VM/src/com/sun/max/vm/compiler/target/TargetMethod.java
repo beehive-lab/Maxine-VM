@@ -753,13 +753,14 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public final void traceBundle(IndentWriter writer) {
         final TargetBundle targetBundle = TargetBundle.from(this);
-        writer.println("Layout: ");
+        writer.println("Layout:");
         writer.println(Strings.indent(targetBundle.layout().toString(), writer.indentation()));
         traceExceptionHandlers(writer);
         traceDirectCallees(writer);
         traceScalarBytes(writer, targetBundle);
         traceReferenceLiterals(writer, targetBundle);
         traceFrameDescriptors(writer);
+        traceReferenceMaps(writer);
         writer.println("Code cell: " + targetBundle.cell(ArrayField.code).toString());
     }
 
@@ -771,7 +772,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
     public final void traceExceptionHandlers(IndentWriter writer) {
         if (_catchRangePositions != null) {
             assert _catchBlockPositions != null;
-            writer.println("Catches: ");
+            writer.println("Catches:");
             writer.indent();
             for (int i = 0; i < _catchRangePositions.length; i++) {
                 if (_catchBlockPositions[i] != 0) {
@@ -808,7 +809,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public final void traceScalarBytes(IndentWriter writer, final TargetBundle targetBundle) {
         if (_scalarLiteralBytes != null) {
-            writer.println("Scalars: ");
+            writer.println("Scalars:");
             writer.indent();
             for (int i = 0; i < _scalarLiteralBytes.length; i++) {
                 final Pointer pointer = targetBundle.cell(ArrayField.scalarLiteralBytes).plus(ArrayField.scalarLiteralBytes.layout().getElementOffsetInCell(i));
@@ -842,7 +843,7 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
      */
     public final void traceFrameDescriptors(IndentWriter writer) {
         if (_compressedJavaFrameDescriptors != null) {
-            writer.println("Frame Descriptors: ");
+            writer.println("Frame Descriptors:");
             writer.indent();
             final IndexedSequence<TargetJavaFrameDescriptor> frameDescriptors = TargetJavaFrameDescriptor.inflate(_compressedJavaFrameDescriptors);
             for (int stopIndex = 0; stopIndex < frameDescriptors.length(); ++stopIndex) {
@@ -851,6 +852,19 @@ public abstract class TargetMethod extends RuntimeMemoryRegion implements IrMeth
                 writer.println(stopPosition + ": " + frameDescriptor);
             }
             writer.outdent();
+        }
+    }
+
+    /**
+     * Traces the {@linkplain #referenceMaps() reference maps} for the stops in the compiled code represented by this object.
+     *
+     * @param writer where the trace is written
+     */
+    public final void traceReferenceMaps(IndentWriter writer) {
+        final String refmaps = referenceMapsToString();
+        if (!refmaps.isEmpty()) {
+            writer.println("Reference Maps:");
+            writer.println(Strings.indent(refmaps, writer.indentation()));
         }
     }
 
