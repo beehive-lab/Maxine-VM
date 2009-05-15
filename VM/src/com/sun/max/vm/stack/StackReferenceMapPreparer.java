@@ -91,7 +91,16 @@ public final class StackReferenceMapPreparer {
     private long _preparationTime;
 
     /**
-     * Gets the time taken for the last call to {@link #prepareStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}.
+     * This is used to skip preparation of the reference map for the top frame on a stack. This is
+     * used when a GC thread prepares its own stack reference map as the frame initiating the
+     * preparation will be dead once the GC actual starts.
+     *
+     * @see VmThreadLocal#prepareCurrentStackReferenceMap()
+     */
+    private boolean _ignoreCurrentFrame;
+
+    /**
+     * Gets the time taken for the last call to {@link #prepareStackReferenceMap(Pointer, Pointer, Pointer, Pointer, boolean)}.
      * If there was an interleaving call to {@link #completeStackReferenceMap(Pointer, Pointer, Pointer, Pointer)}, then that
      * time is included as well. That is, this method gives the amount of time spent preparing the stack
      * reference map for the associated thread during the last/current GC.
@@ -113,10 +122,12 @@ public final class StackReferenceMapPreparer {
      * @param instructionPointer
      * @param stackPointer
      * @param framePointer
+     * @param ignoreTopFrame specifies if the top frame is to be ignored
      * @return the amount of time (in the resolution specified by {@link Heap#GC_TIMING_CLOCK}) taken to prepare the reference map
      */
-    public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+    public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         _timer.start();
+        _ignoreCurrentFrame = ignoreTopFrame;
         _enabledVmThreadLocals = SAFEPOINTS_ENABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         _disabledVmThreadLocals = SAFEPOINTS_DISABLED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
         _triggeredVmThreadLocals = SAFEPOINTS_TRIGGERED_THREAD_LOCALS.getConstantWord(vmThreadLocals).asPointer();
@@ -194,6 +205,7 @@ public final class StackReferenceMapPreparer {
      *            {@link VmThreadLocal#LAST_JAVA_CALLER_FRAME_POINTER}.
      */
     public void completeStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer) {
+        FatalError.check(!_ignoreCurrentFrame, "All frames should be scanned when competing a stack reference map");
         _timer.start();
         final Pointer highestSlot = LOWEST_ACTIVE_STACK_SLOT_ADDRESS.getVariableWord(vmThreadLocals).asPointer();
 
@@ -339,7 +351,7 @@ public final class StackReferenceMapPreparer {
 
         final Pointer stackPointer = LAST_JAVA_CALLER_STACK_POINTER.getVariableWord(vmThreadLocals).asPointer();
         final Pointer framePointer = LAST_JAVA_CALLER_FRAME_POINTER.getVariableWord(vmThreadLocals).asPointer();
-        prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+        prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 
     /**
@@ -356,7 +368,7 @@ public final class StackReferenceMapPreparer {
         final TargetMethod targetMethod = Code.codePointerToTargetMethod(instructionPointer);
         final Pointer stackPointer = safepoint.getStackPointer(trapState, targetMethod);
         final Pointer framePointer = safepoint.getFramePointer(trapState, targetMethod);
-        prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer);
+        prepareStackReferenceMap(vmThreadLocals, instructionPointer, stackPointer, framePointer, false);
     }
 
     /**
@@ -697,6 +709,11 @@ public final class StackReferenceMapPreparer {
      *         stack walker should continue to the next frame
      */
     public boolean prepareFrameReferenceMap(TargetMethod targetMethod, Pointer instructionPointer, Pointer refmapFramePointer, Pointer cpuStackPointer) {
+        if (_ignoreCurrentFrame) {
+            // Skipping the top frame
+            _ignoreCurrentFrame = false;
+            return true;
+        }
         if (targetMethod.classMethodActor() instanceof TrampolineMethodActor) {
             // Since trampolines are reused for different callees with different parameter signatures,
             // they do not carry enough reference map information for incoming parameters.

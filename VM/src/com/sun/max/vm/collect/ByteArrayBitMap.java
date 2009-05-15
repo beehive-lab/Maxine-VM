@@ -59,6 +59,45 @@ public final class ByteArrayBitMap implements Cloneable {
     }
 
     /**
+     * Returns a hash code value for this bit set.
+     *
+     * Note that the hash code values change if the set of bits is altered.
+     *
+     * @return a hash code value for this bit set.
+     */
+    @Override
+    public int hashCode() {
+        long h = 1234;
+        for (int i = _size + _offset; --i >= 0;) {
+            h ^= _bytes[i] * (i + 1);
+        }
+        return (int) ((h >> 32) ^ h);
+    }
+
+    /**
+     * Compares this object against a given object. The result is {@code true} if and only if {@code other} is not
+     * {@code null} and is a {@code ByteArrayBitMap} object that has exactly the same set of bits set as this bit set.
+     *
+     * @param other the object to compare with
+     * @return {@code true} if the objects are the same; {@code false} otherwise.
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof ByteArrayBitMap) {
+            final ByteArrayBitMap bm = (ByteArrayBitMap) other;
+            if (_size == bm._size) {
+                for (int i = 0; i < _size; ++i) {
+                    if (_bytes[_offset + i] != bm._bytes[bm._offset + i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Gets the underlying bytes array storing the bits of this bit map.
      */
     public byte[] bytes() {
