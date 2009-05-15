@@ -86,9 +86,15 @@ public final class ObjectFieldsTable extends InspectorTable {
                 return aOffset.compareTo(b.offset());
             }
         });
-        _startOffset = _fieldActors[0].offset();
-        final FieldActor lastFieldActor = _fieldActors[_fieldActors.length - 1];
-        _endOffset = lastFieldActor.offset() + lastFieldActor.valueSize();
+        if (fieldActors.size() > 0) {
+            _startOffset =  _fieldActors[0].offset();
+            final FieldActor lastFieldActor = _fieldActors[_fieldActors.length - 1];
+            _endOffset = lastFieldActor.offset() + lastFieldActor.valueSize();
+        } else {
+            // moot if there aren't any field actors
+            _startOffset = 0;
+            _endOffset = 0;
+        }
 
         _model = new ObjectFieldsTableModel();
         _columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
