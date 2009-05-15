@@ -38,6 +38,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
+import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.debug.*;
@@ -118,7 +119,7 @@ public final class DataPrototype extends Prototype {
     private AppendableIndexedSequence<Object> _codeObjects = new ArrayListSequence<Object>();
 
     /**
-     * Allocates a cell for the an array which is referenced from the specified target bundle.
+     * Allocates a cell for a given object which is referenced from a given target bundle.
      *
      * @param object the object with which to associate the cell
      * @param targetBundle the bundle of objects to assign to the cell
@@ -806,7 +807,9 @@ public final class DataPrototype extends Prototype {
         Trace.end(1, "adjustMemoryRegions");
     }
 
-    private final byte[] _relocationFlagBytes;
+    private final ByteArrayBitMap _relocationFlags;
+
+    private final ByteArrayBitMap _heapRefmap;
 
     /**
      * Gets a byte array that represents the relocation data for the entire data prototype.
@@ -814,7 +817,7 @@ public final class DataPrototype extends Prototype {
      * @return a byte array that represents the relocation data, with one bit per word
      */
     public byte[] relocationData() {
-        return _relocationFlagBytes;
+        return _relocationFlags.bytes();
     }
 
     /**
@@ -842,7 +845,7 @@ public final class DataPrototype extends Prototype {
     private void setRelocationFlag(Address address) {
         assert address.remainder(_alignment) == 0;
         final int index = address.toInt() / _alignment;
-        _relocationFlagBytes[index / 8] |= 1 << (index % 8);
+        _relocationFlags.set(index);
     }
 
     /**
@@ -878,6 +881,20 @@ public final class DataPrototype extends Prototype {
             return 1;
         }
         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
+
+        ClassActor c = HostObjectAccess.readHub(object).classActor();
+        do {
+            for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
+                if (instanceFieldActor.kind() == Kind.REFERENCE && !instanceFieldActor.isSpecialReference() && !instanceFieldActor.isConstant()) {
+                    final Pointer address = origin.plus(instanceFieldActor.offset());
+                    final int index = address.toInt() / _alignment;
+                    _heapRefmap.set(index);
+                }
+            }
+            c = c.superClassActor();
+        } while (c != null);
+
+
         TupleReferenceMap.visitOriginOffsets(hub, origin, _originOffsetVisitor);
         return 1 + hub.referenceMapLength();
     }
@@ -1038,12 +1055,27 @@ public final class DataPrototype extends Prototype {
         final int bootCodeRegionSize = Code.bootCodeRegion().size().toInt();
         ProgramWarning.check(numberOfBytes <= bootCodeRegionSize, "numberOfBytes > bootCodeRegionSize");
 
-        _relocationFlagBytes = new byte[((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment) / 8]; // one
-                                                                                                                                // bit
-                                                                                                                                // per
-                                                                                                                                // alignment
-                                                                                                                                // unit
+        // one bit per alignment unit
+        _relocationFlags = new ByteArrayBitMap((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment);
+
+        _heapRefmap = new ByteArrayBitMap((_heapDataWriter.data().length) / _alignment);
+
         assignRelocationFlags();
+
+        Trace.line(1, "Heap ref map: width=" + _heapRefmap.width() + ", cardinality=" + _heapRefmap.cardinality());
+
+        final int chunk = _heapRefmap.size() / 10;
+        final ByteArrayBitMap bm = new ByteArrayBitMap(_heapRefmap.bytes(), 0, chunk);
+        int f = 0;
+        while (bm.offset() < bm.bytes().length) {
+            final int rem = bm.bytes().length - bm.offset();
+            if (rem < bm.size()) {
+                bm.setSize(rem);
+            }
+            Trace.line(1, "Heap ref map[" + f + "]: width=" + bm.width() + ", cardinality=" + bm.cardinality());
+            bm.next();
+            f++;
+        }
 
         if (mapFile != null) {
             try {

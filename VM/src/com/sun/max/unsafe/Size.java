@@ -66,7 +66,7 @@ public abstract class Size extends Address {
 
     @Override
     public String toString() {
-        return "#" + toString(10);
+        return "#" + toUnsignedString(10);
     }
 
     @INLINE

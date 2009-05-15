@@ -222,9 +222,13 @@ public abstract class CodeManager extends RuntimeMemoryRegion {
      * Visit the cells in all the code regions in this code manager.
      *
      * @param cellVisitor the visitor to call back for each cell in each region
+     * @param includeBootCode specifies if the cells in the {@linkplain Code#bootCodeRegion() boot code region} should
+     *            also be visited
      */
-    void visitCells(CellVisitor cellVisitor) {
-        Code.bootCodeRegion().visitCells(cellVisitor);
+    void visitCells(CellVisitor cellVisitor, boolean includeBootCode) {
+        if (includeBootCode) {
+            Code.bootCodeRegion().visitCells(cellVisitor);
+        }
         for (CodeRegion codeRegion : _runtimeCodeRegions) {
             if (codeRegion != null) {
                 codeRegion.visitCells(cellVisitor);

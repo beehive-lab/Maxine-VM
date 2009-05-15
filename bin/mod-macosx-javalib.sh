@@ -23,16 +23,16 @@
 #
 # This script copies libjava.jnilib from the JDK installation into the directory
 # in which the Maxine's version of libjvm.dylib will reside. The copy is modified
-# through use of install_name_too(1) to change the hard-wired dependency to the
+# through use of install_name_tool(1) to change the hard-wired dependency to the
 # JVM shared library from the libclient.dylib found in the JDK installation to
 # the libjvm.dylib built as part of Maxine. Without this work-around, the functions
 # in libjava.jnilib that call any of the JVM_* functions will pick up those from
-# HotSpot instead of those from Maxine. It should goes without saying that this 
+# HotSpot instead of those from Maxine. It should go without saying that this 
 # is not the desired behavior.
 #
 # The underlying issue is the support on Darwin for two-level namespaces in
 # shared libraries (http://developer.apple.com/documentation/Porting/Conceptual/PortingUnix/compiling/chapter_4_section_7.html).
-# While this most likely improves the startup time of the HotSpot, it complicates
+# While this most likely improves the startup time of HotSpot, it complicates
 # the task of deploying a drop-in replacement for HotSpot. One other workaround
 # is to use the DYLD_FORCE_FLAT_NAMESPACE environment variable (see the dyld(1)
 # man page). However, environment variables are not propagated as expected through

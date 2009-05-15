@@ -27,12 +27,20 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
+ * A facility for building and traversing the reference map for a {@linkplain TupleClassActor tuple}
+ * object. The
+ *
  * @author Bernd Mathiske
  */
 public class TupleReferenceMap {
 
     private AppendableSequence<Integer> _offsets = new LinkSequence<Integer>();
 
+    /**
+     * Builds a reference map for a given set of static fields. This is the reference map that
+     * will be {@linkplain #copyIntoHub(Hub) copied} into the {@linkplain ClassActor#staticHub() static hub}
+     * of a class to cover the fields in its {@linkplain ClassActor#staticTuple() static tuple}.
+     */
     public TupleReferenceMap(FieldActor[] staticFieldActors) {
         for (FieldActor staticFieldActor : staticFieldActors) {
             if (staticFieldActor.kind() == Kind.REFERENCE) {
@@ -41,17 +49,21 @@ public class TupleReferenceMap {
         }
     }
 
+    /**
+     * Builds a reference map for the instance fields of a given class. This is the reference map that
+     * will be {@linkplain #copyIntoHub(Hub) copied} into the {@linkplain ClassActor#dynamicHub() dynamic hub}
+     * of the class.
+     */
     public TupleReferenceMap(ClassActor classActor) {
         ClassActor c = classActor;
         do {
-            for (FieldActor dynamicFieldActor : c.localInstanceFieldActors()) {
-                if (dynamicFieldActor.kind() == Kind.REFERENCE && !dynamicFieldActor.isSpecialReference()) {
-                    _offsets.append(dynamicFieldActor.offset());
+            for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
+                if (instanceFieldActor.kind() == Kind.REFERENCE && !instanceFieldActor.isSpecialReference()) {
+                    _offsets.append(instanceFieldActor.offset());
                 }
             }
             c = c.superClassActor();
         } while (c != null);
-
     }
 
     public static final TupleReferenceMap EMPTY = new TupleReferenceMap(new FieldActor[0]);

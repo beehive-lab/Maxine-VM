@@ -17010,6 +17010,22 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_jvmni_JVM_GetClassContext02() {
+        JavaTesterRunScheme.begin("test.jvmni.JVM_GetClassContext02");
+        String runString = null;
+        try {
+        // test(0) == true
+            runString = "test(0)";
+            if (true != test.jvmni.JVM_GetClassContext02.test(0)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_jvmni_JVM_GetFreeMemory01() {
         JavaTesterRunScheme.begin("test.jvmni.JVM_GetFreeMemory01");
         String runString = null;

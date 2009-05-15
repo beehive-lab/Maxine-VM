@@ -32,8 +32,69 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 
 
-
+/**
+ * This class encapsulates the configuration of the Maxine tester, which includes
+ * which tests to run, their expected results, example inputs, etc.
+ *
+ * @author Ben L. Titzer
+ */
 public class MaxineTesterConfiguration {
+
+    private static final Expectation FAIL_ALL = new Expectation(null, null, ExpectedResult.FAIL);
+    private static final Expectation FAIL_SPARC = new Expectation(OperatingSystem.SOLARIS, ProcessorModel.SPARCV9, ExpectedResult.FAIL);
+    private static final Expectation FAIL_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.FAIL);
+    private static final Expectation FAIL_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.FAIL);
+
+    private static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
+    private static final Expectation RAND_LINUX = new Expectation(OperatingSystem.LINUX, null, ExpectedResult.NONDETERMINISTIC);
+    private static final Expectation RAND_DARWIN = new Expectation(OperatingSystem.DARWIN, null, ExpectedResult.NONDETERMINISTIC);
+
+    static final Object[] _outputTestList = {
+        test.output.AWTFont.class,                  FAIL_SPARC, FAIL_ALL,
+        test.output.JavacTest.class,                FAIL_SPARC, FAIL_ALL,
+        test.output.CatchOutOfMemory.class,         FAIL_SPARC,
+        test.output.PrintDate.class,                FAIL_SPARC,
+        test.output.HelloWorld.class,               FAIL_SPARC,
+        test.output.HelloWorldGC.class,             FAIL_SPARC,
+        test.output.ExitCode.class,                 FAIL_SPARC,
+        test.output.FloatNanTest.class,             FAIL_SPARC,
+        test.output.GetResource.class,              FAIL_SPARC,
+        test.output.SafepointWhileInNative.class,   FAIL_SPARC, RAND_LINUX,
+        test.output.SafepointWhileInJava.class,     FAIL_SPARC, RAND_LINUX,
+        test.output.BlockingQueue.class,            FAIL_SPARC,
+        test.output.Recursion.class,                FAIL_SPARC,
+        test.output.StaticInitializers.class,       FAIL_SPARC,
+        test.output.LocalCatch.class,               FAIL_SPARC,
+        test.output.Printf.class,                   FAIL_SPARC,
+        test.output.GCTest0.class,                  FAIL_SPARC,
+        test.output.GCTest1.class,                  FAIL_SPARC,
+        test.output.GCTest2.class,                  FAIL_SPARC,
+        test.output.GCTest3.class,                  FAIL_SPARC,
+        test.output.GCTest4.class,                  FAIL_SPARC,
+        test.output.GCTest5.class,                  FAIL_SPARC,
+        test.output.GCTest6.class,                  FAIL_SPARC,
+        test.output.HelloWorldReflect.class,        FAIL_SPARC,
+        test.output.JREJarLoadTest.class,           FAIL_SPARC,
+        test.output.FileReader.class,               FAIL_SPARC,
+        test.output.ZipFileReader.class,            FAIL_SPARC,
+        test.output.WeakReferenceTest01.class,      FAIL_SPARC, RAND_ALL,
+        test.output.WeakReferenceTest02.class,      FAIL_SPARC, RAND_ALL,
+        test.output.WeakReferenceTest03.class,      FAIL_SPARC, RAND_ALL,
+        test.output.WeakReferenceTest04.class,      FAIL_SPARC, RAND_ALL,
+        test.output.MegaThreads.class,              FAIL_SPARC, RAND_ALL,
+    };
+
+    static final Object[] _javaTestList = {
+        test.except.Catch_NPE_03.class,                FAIL_SPARC,
+        test.except.Catch_NPE_04.class,                FAIL_SPARC,
+        test.output.Thread_join04.class,               FAIL_SPARC,
+        test.threads.Thread_isInterrupted02.class,                  FAIL_LINUX,
+        test.output.ExitCode.class,                    FAIL_SPARC,
+        test.hotpath.HP_series.class,                  FAIL_SPARC,
+        test.hotpath.HP_array02.class,                 FAIL_SPARC,
+        test.except.Catch_StackOverflowError_01.class, FAIL_SPARC,
+        test.except.Catch_StackOverflowError_02.class, FAIL_SPARC,
+    };
 
     static final String[] _dacapoTests = {
         "antlr",
@@ -119,6 +180,10 @@ public class MaxineTesterConfiguration {
 
     static final Map<String, Object[]> _shootoutInputs = buildShootoutMap();
 
+    static final Class[] _outputTestClasses = buildOutputTestClassArray();
+
+    static final Map<String, Expectation[]> _testExpectationMap = buildTestExpectationMap();
+
     static Map<String, Object[]> buildShootoutMap() {
         final Map<String, Object[]> map = new HashMap<String, Object[]>();
         for (Object[] array : _shootoutBenchmarks) {
@@ -127,38 +192,47 @@ public class MaxineTesterConfiguration {
         return map;
     }
 
-    static final Class[] _outputTestClasses = {
-        test.output.JavacTest.class,
-        test.output.PrintDate.class,
-        test.output.HelloWorld.class,
-        test.output.HelloWorldGC.class,
-        test.output.ExitCode.class,
-        test.output.FloatNanTest.class,
-        test.output.GetResource.class,
-        test.output.SafepointWhileInNative.class,
-        test.output.SafepointWhileInJava.class,
-        test.output.BlockingQueue.class,
-        test.output.Recursion.class,
-        test.output.StaticInitializers.class,
-        test.output.LocalCatch.class,
-        test.output.Printf.class,
-        test.output.GCTest0.class,
-        test.output.GCTest1.class,
-        test.output.GCTest2.class,
-        test.output.GCTest3.class,
-        test.output.GCTest4.class,
-        test.output.GCTest5.class,
-        test.output.GCTest6.class,
-        test.output.HelloWorldReflect.class,
-        test.output.JREJarLoadTest.class,
-        test.output.FileReader.class,
-        test.output.ZipFileReader.class,
-        test.output.WeakReferenceTest01.class,
-        test.output.WeakReferenceTest02.class,
-        test.output.WeakReferenceTest03.class,
-        test.output.WeakReferenceTest04.class,
-        test.output.MegaThreads.class
-    };
+    static Class[] buildOutputTestClassArray() {
+        final List<Class> classes = new ArrayList<Class>();
+        for (Object o : _outputTestList) {
+            if (o instanceof Class) {
+                classes.add((Class) o);
+            }
+        }
+        return classes.toArray(new Class[classes.size()]);
+    }
+
+    static Map<String, Expectation[]> buildTestExpectationMap() {
+        final Map<String, Expectation[]> map = new HashMap<String, Expectation[]>();
+        addTestExpectations(map, _outputTestList);
+        addTestExpectations(map, _javaTestList);
+        return map;
+    }
+
+    private static void addTestExpectations(final Map<String, Expectation[]> map, final Object[] testList) throws ProgramError {
+        for (int i = 0; i < testList.length; i++) {
+            final Object o = testList[i];
+            if (o instanceof Class) {
+                final List<Expectation> list = new ArrayList<Expectation>();
+                // Checkstyle: stop
+                for (i++; i < testList.length; i++) {
+                    final Object e = testList[i];
+                    if (e instanceof Expectation) {
+                        list.add((Expectation) e);
+                    } else if (e instanceof Class) {
+                        i--;
+                        break;
+                    } else {
+                        throw ProgramError.unexpected("format of output test class list is wrong");
+                    }
+                }
+                // Checkstyle: resume
+                map.put(((Class) o).getName(), list.toArray(new Expectation[list.size()]));
+            } else {
+                throw ProgramError.unexpected("format of output test class list is wrong");
+            }
+        }
+    }
 
     static final String[] _outputTests = com.sun.max.lang.Arrays.map(_outputTestClasses, String.class, new MapFunction<Class, String>() {
         public String map(Class from) {
@@ -201,128 +275,6 @@ public class MaxineTesterConfiguration {
         "test_sameNullsArrayCopy(test.com.sun.max.vm.compiler.eir.sparc.SPARCEirTranslatorTest_jdk_System)"
     };
 
-    static final Set<String> _expectedFailuresSolarisAMD64 = toTestNames(
-        test.output.JavacTest.class,
-        _expectedAutoTestFailures
-    );
-
-    static final Set<String> _expectedFailuresLinuxAMD64 = toTestNames(
-        test.output.JavacTest.class,
-        test.threads.Thread_isInterrupted02.class,
-        _expectedAutoTestFailures
-    );
-
-    static final Set<String> _nonDeterministicFailuresLinuxAMD64 = toTestNames(
-        test.output.SafepointWhileInNative.class,
-        test.output.SafepointWhileInJava.class
-    );
-
-    static final Set<String> _expectedFailuresDarwinAMD64 = toTestNames(
-        test.output.JavacTest.class,
-        _expectedAutoTestFailures
-    );
-
-    static final Set<String> _nonDeterministicFailuresDarwinAMD64 = toTestNames();
-
-    static final Set<String> _expectedFailuresSolarisSPARCV9 = toTestNames(
-        test.output.JavacTest.class,
-        test.output.PrintDate.class,
-        test.output.HelloWorld.class,
-        test.output.HelloWorldGC.class,
-        test.output.ExitCode.class,
-        test.output.GetResource.class,
-        test.output.SafepointWhileInNative.class,
-        test.output.SafepointWhileInJava.class,
-        test.output.BlockingQueue.class,
-        test.output.Recursion.class,
-        test.output.StaticInitializers.class,
-        test.output.LocalCatch.class,
-        test.output.Printf.class,
-        test.output.GCTest0.class,
-        test.output.GCTest1.class,
-        test.output.GCTest2.class,
-        test.output.GCTest3.class,
-        test.output.GCTest4.class,
-        test.output.GCTest5.class,
-        test.output.GCTest6.class,
-        test.output.HelloWorldReflect.class,
-        test.output.JREJarLoadTest.class,
-        test.output.FileReader.class,
-        test.output.ZipFileReader.class,
-        test.output.FloatNanTest.class,
-        test.output.WeakReferenceTest01.class,
-        test.output.WeakReferenceTest02.class,
-        test.output.WeakReferenceTest03.class,
-        test.output.WeakReferenceTest04.class,
-        test.output.MegaThreads.class,
-        test.output.Thread_join04.class,
-        test.except.Catch_NPE_03.class, // 202
-        test.except.Catch_NPE_04.class, // 203
-        test.hotpath.HP_array02.class, // 329
-        test.hotpath.HP_series.class, // 333
-        test.except.Catch_StackOverflowError_01.class,
-        test.except.Catch_StackOverflowError_02.class,
-        _expectedAutoTestFailures
-    );
-
-    static final Set<String> _expectedJitFailuresSolarisSPARCV9 = toTestNames(
-        test.output.JavacTest.class,
-        test.output.PrintDate.class,
-        test.output.HelloWorld.class,
-        test.output.HelloWorldGC.class,
-        test.output.SafepointWhileInNative.class,
-        test.output.SafepointWhileInJava.class,
-        test.output.BlockingQueue.class,
-        test.output.GetResource.class,
-        test.output.Recursion.class,
-        test.output.StaticInitializers.class,
-        test.output.LocalCatch.class,
-        test.output.Printf.class,
-        test.output.GCTest0.class,
-        test.output.GCTest1.class,
-        test.output.GCTest2.class,
-        test.output.GCTest3.class,
-        test.output.GCTest4.class,
-        test.output.GCTest5.class,
-        test.output.GCTest6.class,
-        test.output.HelloWorldReflect.class,
-        test.output.JREJarLoadTest.class,
-        test.output.FileReader.class,
-        test.output.ZipFileReader.class,
-        test.output.FloatNanTest.class,
-        test.output.FloatNanTest.class,
-        test.output.JavacTest.class,
-        test.output.WeakReferenceTest01.class,
-        test.output.WeakReferenceTest02.class,
-        test.output.WeakReferenceTest03.class,
-        test.output.WeakReferenceTest04.class,
-        test.output.MegaThreads.class,
-        test.bytecode.BC_frem.class,  // 45
-        test.except.Catch_NPE_03.class, // 202
-        test.except.Catch_NPE_04.class, // 203
-        test.except.Catch_NPE_06.class, // 205
-        test.lang.ClassLoader_loadClass01.class, // 231
-        test.lang.Class_asSubclass01.class, // 233
-        test.lang.Class_cast01.class,
-        test.lang.Class_forName01.class,
-        test.lang.Class_forName02.class,
-        test.lang.Class_forName03.class,
-        test.lang.Class_forName04.class,
-        test.lang.Object_clone01.class,
-        test.lang.Object_notify01.class,
-        test.lang.Object_notifyAll01.class,
-        test.lang.Object_wait01.class,
-        test.output.Thread_join04.class,
-        test.reflect.Array_get01.class,
-        test.reflect.Array_get02.class,
-        test.reflect.Array_get03.class,
-        test.reflect.Array_getBoolean01.class,
-        test.output.ExitCode.class,
-        test.hotpath.HP_series.class, // 333
-        test.except.Catch_StackOverflowError_01.class,
-        test.except.Catch_StackOverflowError_02.class
-    );
-
     static final Map<String, String[]> _imageConfigs = new HashMap<String, String[]>();
     static final Map<String, String[]> _maxvmConfigs = new HashMap<String, String[]>();
 
@@ -338,6 +290,11 @@ public class MaxineTesterConfiguration {
         MaxineTesterConfiguration._maxvmConfigs.put("pgi", new String[] {"-XX:PGI"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx256m", new String[] {"-Xmx256m"});
         MaxineTesterConfiguration._maxvmConfigs.put("mx512m", new String[] {"-Xmx512m"});
+
+        for (String s : _expectedAutoTestFailures) {
+            // add the failing autotests to the expectation map
+            _testExpectationMap.put(s, new Expectation[] {FAIL_ALL});
+        }
     }
 
     private static final String DEFAULT_MAXVM_OUTPUT_CONFIGS = "std,jit,pgi";
@@ -404,32 +361,13 @@ public class MaxineTesterConfiguration {
      * @param config the {@linkplain #_maxvmConfigs maxvm} configuration used during the test execution. This value may be null.
      */
     public static ExpectedResult expectedResult(String testName, String config) {
-        final Platform platform = Platform.host();
-        if (platform.operatingSystem() == OperatingSystem.SOLARIS) {
-            final ProcessorKind processorKind = platform.processorKind();
-            if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                return _expectedFailuresSolarisAMD64.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
-            } else if (processorKind.processorModel() == ProcessorModel.SPARCV9) {
-                if (config != null && config.contains("jit")) {
-                    return _expectedJitFailuresSolarisSPARCV9.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
+        final Expectation[] expect = _testExpectationMap.get(testName);
+        if (expect != null) {
+            final Platform platform = Platform.host();
+            for (Expectation e : expect) {
+                if (e.matches(platform)) {
+                    return e._expectedResult;
                 }
-                return _expectedFailuresSolarisSPARCV9.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
-            }
-        } else if (platform.operatingSystem() == OperatingSystem.LINUX) {
-            final ProcessorKind processorKind = platform.processorKind();
-            if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                if (_nonDeterministicFailuresLinuxAMD64.contains(testName)) {
-                    return ExpectedResult.NONDETERMINISTIC;
-                }
-                return _expectedFailuresLinuxAMD64.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
-            }
-        } else if (platform.operatingSystem() == OperatingSystem.DARWIN) {
-            final ProcessorKind processorKind = platform.processorKind();
-            if (_nonDeterministicFailuresDarwinAMD64.contains(testName)) {
-                return ExpectedResult.NONDETERMINISTIC;
-            }
-            if (processorKind.processorModel() == ProcessorModel.AMD64) {
-                return _expectedFailuresDarwinAMD64.contains(testName) ? ExpectedResult.FAIL : ExpectedResult.PASS;
             }
         }
         return ExpectedResult.PASS;
@@ -472,4 +410,37 @@ public class MaxineTesterConfiguration {
     public static Object[] shootoutInputs(String benchmark) {
         return _shootoutInputs.get(benchmark);
     }
+
+    private static class Expectation {
+        private final OperatingSystem _os; // null indicates all OSs
+        private final ProcessorModel _processor; // null indicates all processors
+        private final ExpectedResult _expectedResult;
+
+        Expectation(OperatingSystem os, ProcessorModel pm, ExpectedResult e) {
+            _os = os;
+            _processor = pm;
+            _expectedResult = e;
+        }
+
+        public boolean matches(Platform platform) {
+            if (_os == null || _os == platform.operatingSystem()) {
+                if (_processor == null || _processor == platform.processorKind().processorModel()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuffer buffer = new StringBuffer();
+            buffer.append(_os == null ? "ANY" : _os.toString());
+            buffer.append("/");
+            buffer.append(_processor == null ? "ANY" : _processor.toString());
+            buffer.append(" = ");
+            buffer.append(_expectedResult);
+            return buffer.toString();
+        }
+    }
+
 }

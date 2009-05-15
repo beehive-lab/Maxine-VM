@@ -31,7 +31,16 @@ package com.sun.max.profile;
 public abstract class Clock {
 
     public abstract long getTicks();
+
+    /**
+     * Gets the resolution of this clock as the number of {@linkplain #getTicks() ticks} per second.
+     */
     public abstract long getHZ();
+
+    /**
+     * Gets the standard suffix (e.g. "ms" or "ns") denoting the resolution of this clock.
+     */
+    public abstract String getHZAsSuffix();
 
     public static final Clock SYSTEM_NANOSECONDS = new SystemNS();
     public static final Clock SYSTEM_MILLISECONDS = new SystemMS();
@@ -45,6 +54,10 @@ public abstract class Clock {
         public long getHZ() {
             return 1000;
         }
+        @Override
+        public String getHZAsSuffix() {
+            return "ms";
+        }
     }
 
     private static class SystemNS extends Clock {
@@ -55,6 +68,10 @@ public abstract class Clock {
         @Override
         public long getHZ() {
             return 1000000000;
+        }
+        @Override
+        public String getHZAsSuffix() {
+            return "ns";
         }
     }
 

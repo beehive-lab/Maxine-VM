@@ -22,7 +22,6 @@ package com.sun.max.vm.heap.sequential.semiSpace;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
@@ -136,15 +135,27 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private Pointer _allocationMarkPointer;
 
     // Create timing facilities.
-    private final Timer _clearTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
-    private final Timer _gcTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
-    private final Timer _rootScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
-    private final Timer _bootHeapScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
-    private final Timer _codeScanTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
-    private final Timer _copyTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
-    private final Timer _weakRefTimer = new SingleUseTimer(Clock.SYSTEM_MILLISECONDS);
+    private final Timer _clearTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _gcTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _rootScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _bootHeapScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _codeScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _copyTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _weakRefTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
 
-    private int _numberOfGarbageCollectionInvocations = 0;
+    private int _numberOfGarbageCollectionInvocations;
+
+    private static void startTimer(Timer timer) {
+        if (Heap.traceGCTime()) {
+            timer.start();
+        }
+    }
+
+    private static void stopTimer(Timer timer) {
+        if (Heap.traceGCTime()) {
+            timer.stop();
+        }
+    }
 
     // The heart of the collector.
     // Performs the actual Garbage Collection
@@ -161,49 +172,49 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
                 VMConfiguration.hostOrTarget().monitorScheme().beforeGarbageCollection();
 
-                _gcTimer.start();
+                startTimer(_gcTimer);
 
-                _clearTimer.start();
+                startTimer(_clearTimer);
                 swapSemiSpaces(); // Swap semi-spaces. From--> To and To-->From
-                _clearTimer.stop();
+                stopTimer(_clearTimer);
 
                 if (Heap.traceGCRootScanning()) {
                     Log.println("Scanning roots...");
                 }
-                _rootScanTimer.start();
+                startTimer(_rootScanTimer);
                 _heapRootsScanner.run(); // Start scanning the reachable objects from my roots.
-                _rootScanTimer.stop();
+                stopTimer(_rootScanTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Scanning boot heap...");
                 }
-                _bootHeapScanTimer.start();
+                startTimer(_bootHeapScanTimer);
                 scanBootHeap();
-                _bootHeapScanTimer.stop();
+                stopTimer(_bootHeapScanTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Scanning code...");
                 }
-                _codeScanTimer.start();
+                startTimer(_codeScanTimer);
                 scanCode();
-                _codeScanTimer.stop();
+                stopTimer(_codeScanTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Moving reachable...");
                 }
 
-                _copyTimer.start();
+                startTimer(_copyTimer);
                 moveReachableObjects();
-                _copyTimer.stop();
+                stopTimer(_copyTimer);
 
                 if (Heap.traceGC()) {
                     Log.println("Processing weak references...");
                 }
 
-                _weakRefTimer.start();
+                startTimer(_weakRefTimer);
                 SpecialReferenceManager.processDiscoveredSpecialReferences(_gripForwarder);
-                _weakRefTimer.stop();
-                _gcTimer.stop();
+                stopTimer(_weakRefTimer);
+                stopTimer(_gcTimer);
 
                 // Bring the inspectable mark up to date, since it is not updated during the move.
                 _toSpace.setAllocationMark(_allocationMark); // for debugging
@@ -216,32 +227,30 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
                 TeleHeapInfo.afterGarbageCollection();
 
-                if (Heap.traceGC()) {
+                if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("clear & initialize: ");
-                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_clearTimer));
-                    Log.print("   root scan: ");
-                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_rootScanTimer));
-                    Log.print("   boot heap scan: ");
-                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_bootHeapScanTimer));
-                    Log.print("   code scan: ");
-                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_codeScanTimer));
-                    Log.print("   copy: ");
-                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_copyTimer));
-                    Log.print("   weak refs: ");
-                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_weakRefTimer));
-                    Log.println();
-                    Log.print("GC <");
+                    Log.print("Timings (");
+                    Log.print(Heap.GC_TIMING_CLOCK.getHZAsSuffix());
+                    Log.print(") for GC ");
                     Log.print(_numberOfGarbageCollectionInvocations);
-                    Log.print("> ");
-                    Log.print(TimerUtil.getLastElapsedMilliSeconds(_gcTimer));
-                    Log.println(" (ms)");
-
-                    Log.println();
+                    Log.print(": clear & initialize=");
+                    Log.print(_clearTimer.getLastElapsedTime());
+                    Log.print(", root scan=");
+                    Log.print(_rootScanTimer.getLastElapsedTime());
+                    Log.print(", boot heap scan=");
+                    Log.print(_bootHeapScanTimer.getLastElapsedTime());
+                    Log.print(", code scan=");
+                    Log.print(_codeScanTimer.getLastElapsedTime());
+                    Log.print(", copy=");
+                    Log.print(_copyTimer.getLastElapsedTime());
+                    Log.print(", weak refs=");
+                    Log.print(_weakRefTimer.getLastElapsedTime());
+                    Log.print(", total=");
+                    Log.println(_gcTimer.getLastElapsedTime());
                     Log.unlock(lockDisabledSafepoints);
                 }
             } catch (Throwable throwable) {
-                FatalError.unexpected(throwable.toString() + " during GC");
+                FatalError.unexpected("Exception during GC", throwable);
             }
         }
     };
@@ -470,7 +479,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void scanCode() {
-        Code.visitCells(this);
+        // All objects in the boot code region are immutable
+        final boolean includeBootCode = false;
+        Code.visitCells(this, includeBootCode);
     }
 
     private boolean cannotGrow() {

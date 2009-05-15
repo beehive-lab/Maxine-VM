@@ -1869,7 +1869,7 @@ public final class JniFunctions {
 
     @JNI_FUNCTION
     private static int GetJavaVM(Pointer env, Pointer vmPointerPointer) {
-        Problem.unimplemented();
+        FatalError.unexpected("Unimplemented: GetJavaVM()");
         return 0;
     }
 
