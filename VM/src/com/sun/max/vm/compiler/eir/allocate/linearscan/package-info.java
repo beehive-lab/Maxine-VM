@@ -18,28 +18,11 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir;
-
-import com.sun.max.collect.*;
-import com.sun.max.vm.type.*;
-
 /**
- * @author Bernd Mathiske
+ * Linear scan register allocation for EIR.
+ *
+ * @author Thomas Wuerthinger
  */
-public abstract class EirRegister extends EirLocation implements PoolObject {
 
-    protected EirRegister() {
-        super();
-    }
+package com.sun.max.vm.compiler.eir.allocate.linearscan;
 
-    @Override
-    public EirRegister asRegister() {
-        return this;
-    }
-
-    public abstract int serial();
-
-    public abstract int ordinal();
-
-    public abstract Kind kind();
-}

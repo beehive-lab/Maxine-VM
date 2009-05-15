@@ -80,12 +80,6 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
 
     protected abstract EirPrologue createPrologue(EirBlock block);
 
-    protected abstract EirInstruction createJump(EirBlock eirBlock, EirBlock toBlock);
-
-    public void addJump(EirBlock eirBlock, EirBlock targetBlock) {
-        targetBlock.addPredecessor(eirBlock);
-        eirBlock.appendInstruction(createJump(eirBlock, targetBlock));
-    }
 
     protected abstract EirInstruction createReturn(EirBlock eirBlock);
 

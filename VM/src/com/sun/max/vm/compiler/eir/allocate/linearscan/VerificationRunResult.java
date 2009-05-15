@@ -18,58 +18,32 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.amd64;
+package com.sun.max.vm.compiler.eir.allocate.linearscan;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.eir.*;
 
 /**
- * @author Bernd Mathiske
+ * Result of a random execution path. Saves a map from each operand to a sorted list
+ * of operands that were the value of the variable used for this operand.
+ *
+ * @author Thomas Wuerthinger
  */
-public abstract class AMD64EirConditionalBranch extends AMD64EirLocalControlTransfer {
+public class VerificationRunResult {
 
-    private EirBlock _next;
+    private VariableMapping<EirOperand, VariableSequence<EirOperand>> _map;
+    private VariableSequence<String> _blockSequence;
 
-    public EirBlock next() {
-        return _next;
+    public VerificationRunResult() {
+        _map = new ChainedHashMapping<EirOperand, VariableSequence<EirOperand>>();
+        _blockSequence = new ArrayListSequence<String>();
     }
 
-    AMD64EirConditionalBranch(EirBlock block, EirBlock target, EirBlock next) {
-        super(block, target);
-        _next = next;
-        next.addPredecessor(block);
+    public VariableMapping<EirOperand, VariableSequence<EirOperand>> map() {
+        return _map;
     }
 
-    @Override
-    public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
-        super.visitSuccessorBlocks(procedure);
-        if (_next != null) {
-            procedure.run(_next);
-        }
-    }
-
-    @Override
-    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
-        super.substituteSuccessorBlocks(map);
-        if (map.containsKey(_next)) {
-            _next = map.get(_next);
-        }
-    }
-
-    @Override
-    public EirBlock selectSuccessorBlock(PoolSet<EirBlock> eligibleBlocks) {
-        if (eligibleBlocks.contains(_next)) {
-            return _next;
-        }
-        return super.selectSuccessorBlock(eligibleBlocks);
-    }
-
-    @Override
-    public String toString() {
-        String s = super.toString();
-        if (_next != null) {
-            s += " | #" + _next.serial();
-        }
-        return s;
+    public VariableSequence<String> blockSequence() {
+        return _blockSequence;
     }
 }

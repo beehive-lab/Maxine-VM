@@ -18,22 +18,20 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate.sparc;
-
-import java.util.*;
+package com.sun.max.vm.compiler.eir.allocate.linearscan.sparc;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.dir.eir.sparc.*;
 import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.allocate.*;
+import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.compiler.eir.sparc.*;
-import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
  * @author Laurent Daynes
+ * @author Thomas Wuerthinger
  */
-public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegister> {
+public final class SPARCEirLinearScanAllocator extends LinearScanRegisterAllocator<SPARCEirRegister> {
 
     private final PoolSet<SPARCEirRegister> _noRegisters = PoolSet.noneOf(SPARCEirRegister.pool());
 
@@ -56,7 +54,7 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         return _allocatableFloatingPointRegisters;
     }
 
-    public SPARCEirSomeAllocator(EirMethodGeneration methodGeneration) {
+    public SPARCEirLinearScanAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
         final SPARCEirABI abi = (SPARCEirABI) methodGeneration.abi();
 
@@ -72,50 +70,4 @@ public final class SPARCEirSomeAllocator extends EirSomeAllocator<SPARCEirRegist
         _allocatableFloatingPointRegisters.and(SPARCEirRegister.FloatingPoint.poolSet());
         _allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
-
-    @Override
-    protected SPARCEirRegister allocateRegisterFor(EirVariable variable, PoolSet<SPARCEirRegister> registers) {
-        if (registers.isEmpty()) {
-            return null;
-        }
-        if (variable.kind() != Kind.DOUBLE) {
-            if (registers.isEmpty()) {
-                return null;
-            }
-            return registers.removeOne();
-        }
-        // Iterate over the pool to search the first free double precision register
-        final Iterator<SPARCEirRegister> i = registers.iterator();
-        while (i.hasNext()) {
-            final SPARCEirRegister.FloatingPoint register = (SPARCEirRegister.FloatingPoint) i.next();
-            final SPARCEirRegister.FloatingPoint overlappingRegister = register.overlappingSinglePrecision();
-            if (overlappingRegister == null) {
-                assert register.isDoublePrecision();
-                registers.remove(register);
-                return register;
-            }
-            // Check that the overlapping register is not already allocated. If it is, we can't allocate for a double.
-            if (registers.contains(overlappingRegister)) {
-                // both single-precision register forming the double one are available. Remove then.
-                registers.remove(overlappingRegister);
-                registers.remove(register);
-                return register.isDoublePrecision() ? register : overlappingRegister;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    protected void removeInterferingRegisters(EirVariable variable, PoolSet<SPARCEirRegister> availableRegisters) {
-        final SPARCEirRegister register = (SPARCEirRegister) variable.location();
-        availableRegisters.remove(register);
-        if (variable.kind() == Kind.DOUBLE) {
-            final SPARCEirRegister.FloatingPoint fpRegister = (SPARCEirRegister.FloatingPoint) register;
-            final SPARCEirRegister.FloatingPoint overlappingRegister = fpRegister.overlappingSinglePrecision();
-            if (overlappingRegister != null) {
-                availableRegisters.remove(overlappingRegister);
-            }
-        }
-    }
-
 }

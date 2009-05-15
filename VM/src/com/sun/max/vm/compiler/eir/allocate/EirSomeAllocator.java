@@ -26,11 +26,9 @@ import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
-import com.sun.max.program.*;
 import com.sun.max.util.timer.Timer;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.EirTraceObserver.*;
-import com.sun.max.vm.type.*;
 
 /**
  * A medium speed, medium quality register allocator.
@@ -52,182 +50,9 @@ import com.sun.max.vm.type.*;
  */
 public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> extends EirAllocator<EirRegister_Type> {
 
-    protected abstract PoolSet<EirRegister_Type> noRegisters();
-
-    protected abstract PoolSet<EirRegister_Type> allocatableIntegerRegisters();
-
-    protected abstract PoolSet<EirRegister_Type> allocatableFloatingPointRegisters();
 
     protected EirSomeAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
-    }
-
-    private void introduceInstructionBefore(EirPosition position, EirInstruction instruction) {
-        if (position.index() > 0) {
-            final EirInstruction previousInstruction = position.block().instructions().get(position.index() - 1);
-            if (previousInstruction.isRedundant()) {
-                position.block().setInstruction(previousInstruction.index(), instruction);
-                return;
-            }
-        }
-        position.block().insertInstruction(position.index(), instruction);
-    }
-
-    private void introduceInstructionAfter(EirInstruction<?, ?> position, EirInstruction instruction) {
-        final IndexedSequence<EirInstruction> instructions = position.block().instructions();
-        final int nextIndex = position.index() + 1;
-        if (nextIndex == instructions.length()) {
-            position.block().appendInstruction(instruction);
-            return;
-        }
-        final EirInstruction nextInstruction = instructions.get(nextIndex);
-        if (nextInstruction.isRedundant()) {
-            position.block().setInstruction(nextIndex, instruction);
-            return;
-        }
-        position.block().insertInstruction(nextInstruction.index(), instruction);
-    }
-
-    private EirOperand splitConstantAtUse(EirConstant constant, EirOperand operand) {
-        final EirInstruction<?, ?> instruction = operand.instruction();
-        final EirVariable destination = methodGeneration().createEirVariable(constant.kind());
-        final EirInstruction assignment = methodGeneration().createAssignment(instruction.block(), destination.kind(), destination, constant);
-        introduceInstructionBefore(instruction, assignment);
-        operand.setEirValue(destination);
-        final EirAssignment a = (EirAssignment) assignment;
-        return a.sourceOperand();
-    }
-
-    final MutableQueue<EirConstant> _constants = new MutableQueue<EirConstant>();
-
-    private void allocateConstant(EirConstant constant) {
-        final EirLocationCategory[] categories = new EirLocationCategory[constant.operands().length()];
-        final EirOperand[] operands = new EirOperand[constant.operands().length()];
-        int i = 0;
-        for (EirOperand operand : constant.operands()) {
-            operands[i] = operand;
-            categories[i] = decideConstantLocationCategory(constant.value(), operand);
-            i++;
-        }
-        for (i = 0; i < operands.length; i++) {
-            if (categories[i] == null) {
-                operands[i] = splitConstantAtUse(constant, operands[i]);
-                categories[i] = decideConstantLocationCategory(constant.value(), operands[i]);
-            }
-        }
-
-        EirConstant original = constant;
-        final EirConstant[] categoryToConstant = new EirConstant[EirLocationCategory.VALUES.length()];
-        for (i = 0; i < operands.length; i++) {
-            final int categoryIndex = categories[i].ordinal();
-            EirConstant c = categoryToConstant[categoryIndex];
-            if (c == null) {
-                if (original != null) {
-                    c = original;
-                    original = null;
-                } else {
-                    c = methodGeneration().createEirConstant(constant.value());
-                    _constants.add(c);
-                }
-                c.setLocation(getConstantLocation(constant.value(), categories[i]));
-                categoryToConstant[categoryIndex] = c;
-            }
-            if (c != constant) {
-                operands[i].setEirValue(c);
-            }
-        }
-    }
-
-    private boolean assertConstantsAllocated() {
-        for (EirBlock eirBlock : methodGeneration().eirBlocks()) {
-            for (EirInstruction instruction : eirBlock.instructions()) {
-                instruction.visitOperands(new EirOperand.Procedure() {
-                    public void run(EirOperand operand) {
-                        if (operand.eirValue().isConstant()) {
-                            assert operand.eirValue().location() != null;
-                        }
-                    }
-                });
-            }
-        }
-        return true;
-    }
-
-    protected void allocateConstants() {
-        for (EirConstant constant : methodGeneration().constants()) {
-            _constants.add(constant);
-        }
-        while (!_constants.isEmpty()) {
-            allocateConstant(_constants.removeFirst());
-        }
-        assert assertConstantsAllocated();
-        setConstantsAllocated();
-    }
-
-    private EirVariable splitVariableAtDefinition(EirVariable variable, EirOperand operand) {
-        final EirInstruction<?, ?> instruction = operand.instruction();
-        final EirVariable source = methodGeneration().createEirVariable(variable.kind());
-        final EirInstruction assignment = methodGeneration().createAssignment(instruction.block(), variable.kind(), variable, source);
-        introduceInstructionAfter(instruction, assignment);
-        operand.setEirValue(source);
-        return source;
-    }
-
-    private EirVariable splitVariableAtUse(EirVariable variable, EirOperand operand) {
-        final EirInstruction<?, ?> instruction = operand.instruction();
-        final EirVariable destination = methodGeneration().createEirVariable(variable.kind());
-        final EirInstruction assignment = methodGeneration().createAssignment(instruction.block(), variable.kind(), destination, variable);
-        introduceInstructionBefore(instruction, assignment);
-        operand.setEirValue(destination);
-        return destination;
-    }
-
-    private EirVariable splitVariableAtUpdate(EirVariable variable, EirOperand operand) {
-        final EirInstruction<?, ?> instruction = operand.instruction();
-        final EirVariable temporary = methodGeneration().createEirVariable(variable.kind());
-        final EirInstruction assignment1 = methodGeneration().createAssignment(instruction.block(), variable.kind(), temporary, variable);
-        introduceInstructionBefore(instruction, assignment1);
-        final EirInstruction assignment2 = methodGeneration().createAssignment(instruction.block(), variable.kind(), variable, temporary);
-        introduceInstructionAfter(instruction, assignment2);
-        operand.setEirValue(temporary);
-        return temporary;
-    }
-
-    private EirVariable splitVariableAtOperand(EirVariable variable, EirOperand operand) {
-        EirVariable result = null;
-        switch (operand.instruction().getEffect(variable)) {
-            case DEFINITION:
-                result = splitVariableAtDefinition(variable, operand);
-                break;
-            case USE:
-                result = splitVariableAtUse(variable, operand);
-                break;
-            case UPDATE:
-                result = splitVariableAtUpdate(variable, operand);
-                break;
-            default:
-                ProgramError.unknownCase();
-                break;
-        }
-        return result;
-    }
-
-    private void splitVariables() {
-        // Make a copy of the existing variables so that they iterated over while new variables are being created:
-        final EirVariable[] variables = Sequence.Static.toArray(methodGeneration().variables(), EirVariable.class);
-        for (EirVariable variable : variables) {
-            if (!variable.isLocationFixed() && !variable.isSpillingPrevented() && variable.kind() != Kind.VOID) {
-                final EirOperand[] operands = Sequence.Static.toArray(variable.operands(), EirOperand.class);
-                for (EirOperand operand : operands) {
-                    if (!operand.locationCategories().contains(EirLocationCategory.STACK_SLOT) ||
-                                    operand.requiredLocation() != null ||
-                                    operand.requiredRegister() != null ||
-                                    (operand.eirValue() != null && operand.eirValue().isLocationFixed())) {
-                        splitVariableAtOperand(variable, operand);
-                    }
-                }
-            }
-        }
     }
 
     private static final int _LOOP_WEIGHT_FACTOR = 8;
@@ -598,7 +423,7 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
     @Override
     public void run() {
         _constantAllocationTimer.start();
-        allocateConstants();
+        methodGeneration().allocateConstants();
         _constantAllocationTimer.stop();
 
         methodGeneration().notifyBeforeTransformation(methodGeneration().variables(), Transformation.INTERFERENCE_GRAPH);

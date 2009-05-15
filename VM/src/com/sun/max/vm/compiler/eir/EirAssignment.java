@@ -24,8 +24,35 @@ import com.sun.max.vm.type.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Thomas Wuerthinger
  */
 public interface EirAssignment {
+
+    /**
+     * The type of an assignment, used for debugging purposes only.
+     *
+     * @author Thomas Wuerthinger
+     */
+    public static enum Type {
+
+        /** Normal assignment that already existed before register allocation. */
+        NORMAL,
+
+        /** Assignment inserted because of an interval split. */
+        INTERVAL_SPLIT,
+
+        /** Assignment inserted because data flow was resolved between block boundaries. */
+        DATA_FLOW_RESOLVED,
+
+        /** Assignment inserted because a variable was split at an operand where a fixed location is required. */
+        FIXED_SPLIT,
+
+        /** Assignment inserted because a variable was rescued to a certain location that is accessible after a possible exception occurs. */
+        EXCEPTION_EDGE_RESCUED,
+
+        /** Assignment inserted right after the catch to resolve the problem when a variable is at a different location in the exception block. */
+        EXCEPTION_EDGE_RESOLVED
+    }
 
     Kind kind();
 
@@ -33,4 +60,7 @@ public interface EirAssignment {
 
     EirOperand sourceOperand();
 
+    Type type();
+
+    void setType(Type type);
 }

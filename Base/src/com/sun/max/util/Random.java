@@ -18,28 +18,29 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir;
-
-import com.sun.max.collect.*;
-import com.sun.max.vm.type.*;
+package com.sun.max.util;
 
 /**
- * @author Bernd Mathiske
+ * Class for generating pseudo random numbers.
+ *
+ * @author Thomas Wuerthinger
  */
-public abstract class EirRegister extends EirLocation implements PoolObject {
+public class Random {
 
-    protected EirRegister() {
-        super();
+    private long _value;
+
+    public Random(long seed) {
+        _value = seed;
     }
 
-    @Override
-    public EirRegister asRegister() {
-        return this;
+    public int nextInt(int length) {
+        _value = _value * 1237 + 13;
+        return (int) (Math.abs(_value) % length);
     }
 
-    public abstract int serial();
+    public int previewNextInt(int length) {
+        final long tmpValue = _value * 1237 + 13;
+        return (int) (Math.abs(tmpValue) % length);
+    }
 
-    public abstract int ordinal();
-
-    public abstract Kind kind();
 }

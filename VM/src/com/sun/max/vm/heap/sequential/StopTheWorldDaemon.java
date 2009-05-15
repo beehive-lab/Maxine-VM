@@ -150,6 +150,8 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                     VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _triggerSafepoint);
                     VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _waitUntilNonMutating);
                     final long time = VmThreadLocal.prepareCurrentStackReferenceMap() + _waitUntilNonMutating._stackReferenceMapPreparationTime;
+                    _procedure.run();
+                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
                     if (Heap.traceGCTime()) {
                         final boolean lockDisabledSafepoints = Log.lock();
                         Log.print("Stack reference map preparation time: ");
@@ -157,8 +159,6 @@ public class StopTheWorldDaemon extends BlockingServerDaemon {
                         Log.println(Heap.GC_TIMING_CLOCK.getHZAsSuffix());
                         Log.unlock(lockDisabledSafepoints);
                     }
-                    _procedure.run();
-                    VmThreadMap.ACTIVE.forAllVmThreadLocals(_isNotGCOrCurrentThread, _resetSafepoint);
                 }
             }
         }

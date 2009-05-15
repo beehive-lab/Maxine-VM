@@ -18,58 +18,42 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.amd64;
+package com.sun.max.vm.compiler.eir.allocate.linearscan.parts;
 
-import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.eir.*;
+import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 
 /**
- * @author Bernd Mathiske
+ * Assigns a unique even number to each instruction based on the linear scan order.
+ *
+ * @author Thomas Wuerthinger
  */
-public abstract class AMD64EirConditionalBranch extends AMD64EirLocalControlTransfer {
+public class NumberInstructions extends AlgorithmPart {
 
-    private EirBlock _next;
-
-    public EirBlock next() {
-        return _next;
-    }
-
-    AMD64EirConditionalBranch(EirBlock block, EirBlock target, EirBlock next) {
-        super(block, target);
-        _next = next;
-        next.addPredecessor(block);
+    public NumberInstructions() {
+        super(4);
     }
 
     @Override
-    public void visitSuccessorBlocks(EirBlock.Procedure procedure) {
-        super.visitSuccessorBlocks(procedure);
-        if (_next != null) {
-            procedure.run(_next);
-        }
+    protected boolean assertPreconditions() {
+        assert data().linearScanOrder() != null;
+        return super.assertPreconditions();
     }
 
     @Override
-    public void substituteSuccessorBlocks(Mapping<EirBlock, EirBlock> map) {
-        super.substituteSuccessorBlocks(map);
-        if (map.containsKey(_next)) {
-            _next = map.get(_next);
-        }
-    }
+    protected void doit() {
+        int z = 0;
+        for (EirBlock block : data().linearScanOrder()) {
+            final int beginNumber = z;
+            z += 2;
 
-    @Override
-    public EirBlock selectSuccessorBlock(PoolSet<EirBlock> eligibleBlocks) {
-        if (eligibleBlocks.contains(_next)) {
-            return _next;
-        }
-        return super.selectSuccessorBlock(eligibleBlocks);
-    }
+            for (EirInstruction instruction : block.instructions()) {
 
-    @Override
-    public String toString() {
-        String s = super.toString();
-        if (_next != null) {
-            s += " | #" + _next.serial();
+                instruction.setNumber(z);
+                z += 2;
+            }
+
+            block.setNumbers(beginNumber, z);
         }
-        return s;
     }
 }

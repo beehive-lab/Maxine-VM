@@ -18,17 +18,17 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.vm.compiler.eir.allocate.amd64;
+package com.sun.max.vm.compiler.eir.allocate.linearscan.amd64;
 
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.eir.*;
-import com.sun.max.vm.compiler.eir.allocate.*;
+import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.compiler.eir.amd64.*;
 
 /**
- * @author Bernd Mathiske
+ * @author Thomas Wuerthinger
  */
-public final class AMD64EirSomeAllocator extends EirSomeAllocator<AMD64EirRegister> {
+public final class AMD64EirLinearScanAllocator extends LinearScanRegisterAllocator<AMD64EirRegister> {
 
     private final PoolSet<AMD64EirRegister> _noRegisters = PoolSet.noneOf(AMD64EirRegister.pool());
 
@@ -51,7 +51,7 @@ public final class AMD64EirSomeAllocator extends EirSomeAllocator<AMD64EirRegist
         return _allocatableFloatingPointRegisters;
     }
 
-    public AMD64EirSomeAllocator(EirMethodGeneration methodGeneration) {
+    public AMD64EirLinearScanAllocator(EirMethodGeneration methodGeneration) {
         super(methodGeneration);
         final AMD64EirABI abi = (AMD64EirABI) methodGeneration.abi();
 
@@ -63,4 +63,5 @@ public final class AMD64EirSomeAllocator extends EirSomeAllocator<AMD64EirRegist
         _allocatableFloatingPointRegisters.and(AMD64EirRegister.XMM.poolSet());
         _allocatableFloatingPointRegisters.and(abi.allocatableRegisters());
     }
+
 }
