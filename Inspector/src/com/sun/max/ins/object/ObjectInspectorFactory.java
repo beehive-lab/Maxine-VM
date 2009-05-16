@@ -27,14 +27,13 @@ import com.sun.max.collect.*;
 import com.sun.max.ins.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.holder.*;
 
 
 /**
  * Creates and manages canonical instances of {@link ObjectInspector} for
- * objects in the heap of the {@link TeleVM}.
+ * objects in the heap of the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -54,7 +53,7 @@ public final class ObjectInspectorFactory extends AbstractInspectionHolder {
 
     /**
      * Map:   {@link TeleObject} -- > the {@link ObjectInspector}, if it exists, for the corresponding
-     * object in the {@link TeleVM}.  Relies on {@link ObjectInspector}s being canonical.
+     * object in the VM.  Relies on {@link ObjectInspector}s being canonical.
      */
     private  final VariableMapping<TeleObject, ObjectInspector> _teleObjectToInspector = HashMapping.createVariableIdentityMapping();
 

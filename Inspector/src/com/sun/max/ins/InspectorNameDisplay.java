@@ -123,14 +123,14 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * @return a string to use in place of data that should be read from the {@link TeleVM},
+     * @return a string to use in place of data that should be read from the VM,
      * but which cannot be for some reason (no process, process terminated, other i/o error).
      */
     public String unavailableTeleData() {
         return "???";
     }
     /**
-     * @return human readable string identifying a VM thread in a standard format.
+     * @return human readable string identifying a VM thread by a terse name.
      */
     public String shortName(TeleVmThread teleVmThread) {
         return teleVmThread.name();
@@ -148,7 +148,21 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * @return human readable string identifying a thread in a standard format.
+     * @return human readable string identifying a VM thread in a standard format.
+     */
+    public String longNameWithState(TeleVmThread teleVmThread) {
+        final TeleNativeThread teleNativeThread = teleVmThread.teleNativeThread();
+        final StringBuilder result = new StringBuilder(20);
+        result.append(shortName(teleVmThread));
+        if (teleNativeThread != null) {
+            result.append(" [").append(teleNativeThread.handle()).append("]");
+            result.append(" (").append(teleNativeThread.state()).append(")");
+        }
+        return result.toString();
+    }
+
+    /**
+     * @return human readable string identifying a thread in a terse standard format.
      */
     public String shortName(TeleNativeThread teleNativeThread) {
         if (teleNativeThread == null) {
@@ -174,6 +188,19 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
             return longName(teleNativeThread.teleVmThread());
         }
         return shortName(teleNativeThread) + " [" + teleNativeThread.handle() + "]";
+    }
+
+    /**
+     * @return human readable string identifying a thread in a standard format.
+     */
+    public String longNameWithState(TeleNativeThread teleNativeThread) {
+        if (teleNativeThread == null) {
+            return "null";
+        }
+        if (teleNativeThread.teleVmThread() != null) {
+            return longNameWithState(teleNativeThread.teleVmThread());
+        }
+        return shortName(teleNativeThread) + " [" + teleNativeThread.handle() + "] (" + teleNativeThread.state() + ")";
     }
 
     /**
@@ -350,10 +377,11 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
         if (teleCodeLocation.hasTargetCodeLocation()) {
             final Address address = teleCodeLocation.targetCodeInstructionAddresss();
             name.append("Target{0x").append(address.toHexString());
-            if (TeleNativeTargetRoutine.make(teleVM(), address) != null) {
+            if (maxVM().findTeleTargetRoutine(TeleNativeTargetRoutine.class, address) != null) {
+                // a native routine that's already been registered.
                 name.append("}");
             } else {
-                final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(teleVM(), address);
+                final TeleTargetMethod teleTargetMethod = maxVM().makeTeleTargetMethod(address);
                 if (teleTargetMethod != null) {
                     name.append(",  ").append(longName(teleTargetMethod, address)).append("} ");
                 } else {
@@ -370,7 +398,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * Renderer for a textual label reference pointing at heap objects in the {@link TeleVM}.
+     * Renderer for a textual label reference pointing at heap objects in the VM.
      */
     private static interface ReferenceRenderer {
 
@@ -395,7 +423,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     private final Map<Class, ReferenceRenderer> _referenceRenderers = new HashMap<Class, ReferenceRenderer>();
 
     /**
-     * @return a short textual presentation of a reference to a heap object in the {@link TeleVM}, if possible, null if not.
+     * @return a short textual presentation of a reference to a heap object in the VM, if possible, null if not.
      */
     public String referenceLabelText(TeleObject teleObject) {
         if (teleObject != null) {
@@ -418,7 +446,7 @@ public final class InspectorNameDisplay extends AbstractInspectionHolder {
     }
 
     /**
-     * @return a long textual presentation of a reference to a heap object in the {@link TeleVM}, if possible, null if not.
+     * @return a long textual presentation of a reference to a heap object in the VM, if possible, null if not.
      */
     public String referenceToolTipText(TeleObject teleObject) {
         if (teleObject != null) {

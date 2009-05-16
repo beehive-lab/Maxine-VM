@@ -212,7 +212,7 @@ public final class Machine extends AbstractTeleVMHolder{
         final FieldRefConstant fieldRef = constantPool.fieldAt(cpIndex);
         if (teleVM() != null) {
             final FieldActor fieldActor = fieldRef.resolve(constantPool, cpIndex);
-            final TeleClassActor teleClassActor = teleVM().findTeleClassActorByType(fieldActor.holder().typeDescriptor());
+            final TeleClassActor teleClassActor = teleVM().findTeleClassActor(fieldActor.holder().typeDescriptor());
             final TeleStaticTuple teleStaticTuple = teleClassActor.getTeleStaticTuple();
             final Reference staticTupleReference = teleStaticTuple.reference();
 

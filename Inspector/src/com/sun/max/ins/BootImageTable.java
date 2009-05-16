@@ -31,14 +31,13 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.ins.value.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
-import com.sun.max.tele.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.prototype.*;
 
 
 /**
- * A table specialized for displaying {@link VMConfiguration}  information in the {@link TeleVM} boot image.
+ * A table specialized for displaying {@link VMConfiguration}  information in the VM boot image.
  *
  * @author Michael Van De Vanter
  */
@@ -63,7 +62,7 @@ public class BootImageTable extends InspectorTable {
         setRowSelectionAllowed(false);
         setColumnSelectionAllowed(false);
         addMouseListener(new TableCellMouseClickAdapter(inspection(), this));
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -139,7 +138,7 @@ public class BootImageTable extends InspectorTable {
         }
 
         BootImageTableModel(Inspection inspection) {
-            final BootImage bootImage = teleVM().bootImage();
+            final BootImage bootImage = maxVM().bootImage();
             final BootImage.Header header = bootImage.header();
             final VMConfiguration vmConfiguration = bootImage.vmConfiguration();
             final Platform platform = vmConfiguration.platform();
@@ -180,7 +179,7 @@ public class BootImageTable extends InspectorTable {
             addRow("relocation data size:", new DataLabel.IntAsHex(inspection(), header._relocationDataSize), null);
             addRow("string data size:", new DataLabel.IntAsHex(inspection(), header._stringInfoSize), null);
 
-            final Pointer bootImageStart = teleVM().bootImageStart();
+            final Pointer bootImageStart = maxVM().bootImageStart();
 
             final Pointer bootHeapStart = bootImageStart;
             final Pointer bootHeapEnd = bootHeapStart.plus(header._bootHeapSize);

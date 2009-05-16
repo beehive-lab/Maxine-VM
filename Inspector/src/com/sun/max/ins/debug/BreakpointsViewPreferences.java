@@ -21,11 +21,10 @@
 package com.sun.max.ins.debug;
 
 import com.sun.max.ins.*;
-import com.sun.max.tele.*;
 
 
 /**
- * Persistent preferences for viewing breakpoints in the {@link TeleVM}.
+ * Persistent preferences for viewing breakpoints in the VM.
  *
  * @author Michael Van De Vanter
   */
@@ -36,7 +35,7 @@ public final class BreakpointsViewPreferences extends com.sun.max.ins.gui.TableC
     /**
      * @return the global, persistent set of user preferences for viewing a table of breakpoints.
      */
-    public static synchronized BreakpointsViewPreferences globalPreferences(Inspection inspection) {
+    public static BreakpointsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new BreakpointsViewPreferences(inspection);
         }

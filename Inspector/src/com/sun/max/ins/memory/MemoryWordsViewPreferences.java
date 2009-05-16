@@ -22,11 +22,10 @@ package com.sun.max.ins.memory;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
-import com.sun.max.tele.*;
 
 
 /**
- * Persistent preferences for viewing sequences of memory words in the {@link TeleVM}.
+ * Persistent preferences for viewing sequences of memory words in the VM.
  *
  * @author Michael Van De Vanter
   */
@@ -37,7 +36,7 @@ public class MemoryWordsViewPreferences extends com.sun.max.ins.gui.TableColumnV
     /**
      * @return the global, persistent set of user preferences for viewing these tables..
      */
-    public static synchronized MemoryWordsViewPreferences globalPreferences(Inspection inspection) {
+    public static MemoryWordsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new MemoryWordsViewPreferences(inspection);
         }

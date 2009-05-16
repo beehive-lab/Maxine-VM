@@ -35,13 +35,13 @@ import com.sun.max.vm.thread.*;
  *
  * @author Doug Simon
  */
-public class TeleVMThreadLocalValues {
+public class TeleThreadLocalValues {
 
     private final Map<String, Long> _values = new LinkedHashMap<String, Long>(VmThreadLocal.THREAD_LOCAL_STORAGE_SIZE.dividedBy(Word.size()).toInt());
 
     private final Safepoint.State _safepointState;
 
-    public TeleVMThreadLocalValues(Safepoint.State safepointState, Pointer start) {
+    public TeleThreadLocalValues(Safepoint.State safepointState, Pointer start) {
         assert !start.isZero();
         for (String name : VmThreadLocal.NAMES) {
             _values.put(name, null);

@@ -72,7 +72,7 @@ public abstract class ObjectAggregator {
         return _actor;
     }
 
-    public Iterator<Reference> instances(final TeleVM teleVM) {
+    public Iterator<Reference> instances(final MaxVM maxVM) {
         return new Iterator<Reference>() {
             int _nextWordOffset = _instances.nextSetBit(0);
             public boolean hasNext() {
@@ -85,7 +85,7 @@ public abstract class ObjectAggregator {
                 }
                 final int wordOffset = _nextWordOffset;
                 final int offset = wordOffset * _alignment;
-                final Reference reference = teleVM.wordToReference(_base.plus(offset));
+                final Reference reference = maxVM.wordToReference(_base.plus(offset));
                 _nextWordOffset = _instances.nextSetBit(wordOffset + 1);
                 return reference;
             }

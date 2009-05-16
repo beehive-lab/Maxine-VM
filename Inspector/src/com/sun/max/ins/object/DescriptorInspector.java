@@ -25,12 +25,12 @@ import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.object.StringPane.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
+import com.sun.max.vm.type.*;
 
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} that implements a {@link Descriptor}.
+ * An object inspector specialized for displaying a Maxine low-level heap object in the VM that implements a {@link Descriptor}.
  *
  * @author Michael Van De Vanter
  */
@@ -53,7 +53,7 @@ public class DescriptorInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
         final TeleDescriptor teleDescriptor = (TeleDescriptor) teleObject();
         final String name = teleDescriptor.classActorForType().javaSignature(false);
@@ -77,7 +77,7 @@ public class DescriptorInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(teleVM().epoch(), true);
+                prober.refresh(maxVM().epoch(), true);
             }
         });
         frame().getContentPane().add(_tabbedPane);

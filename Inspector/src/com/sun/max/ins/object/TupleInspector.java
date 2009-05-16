@@ -23,12 +23,11 @@ package com.sun.max.ins.object;
 import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.method.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.layout.*;
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} constructed using {@link TupleLayout}.
+ * An object inspector specialized for displaying a Maxine low-level heap object in the VM constructed using {@link TupleLayout}.
  *
  * @author Michael Van De Vanter
  */
@@ -62,7 +61,7 @@ public class TupleInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
         final TeleTupleObject teleTupleObject = (TeleTupleObject) teleObject();
         _fieldsPane = ObjectPane.createFieldsPane(this, teleTupleObject);

@@ -18,30 +18,21 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.program;
+package com.sun.max.tele;
 
 /**
- * General idea: place Breakpoint.when() somewhere to cause a breakpoint.
- * Not yet implemented
+ * Response to an action or request that is inappropriate for the current state of the {@link TeleVM}.
  *
- * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
-public final class Break {
+public class TeleVMException extends Exception {
 
-    private Break() {
+    public TeleVMException() {
+        super("");
     }
 
-    public static void stop() {
-        // Place a breakpoint on this statement:
-        System.out.print("");
+    public TeleVMException(String message) {
+        super(message);
     }
-
-    public static boolean when(boolean condition) {
-        if (condition) {
-            stop();
-            return true;
-        }
-        return false;
-    }
-
 }
+

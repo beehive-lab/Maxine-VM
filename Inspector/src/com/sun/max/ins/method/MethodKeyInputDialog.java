@@ -31,7 +31,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.actor.member.MethodKey.*;
 import com.sun.max.vm.classfile.*;
@@ -48,7 +47,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
 
     /**
      * An action that brings up a dialog for choosing a type available on the inspector's
-     * {@linkplain TeleVM#classpath() classpath}. If a type is selected in the dialog, then an associated field is
+     * classpath. If a type is selected in the dialog, then an associated field is
      * updated with the selected type in {@linkplain TypeDescriptor#toJavaString() Java source format}.
      */
     class TypeFieldChooser extends InspectorAction {

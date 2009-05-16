@@ -33,12 +33,11 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * A singleton inspector that displays thread local storage for the thread the {@link TeleVM} that is the current user focus.
+ * A singleton inspector that displays thread local storage for the thread the VM that is the current user focus.
  *
  * @author Michael Van De Vanter
  */
@@ -71,7 +70,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _viewPreferences = ThreadLocalsViewPreferences.globalPreferences(inspection());
         _viewPreferences.addListener(this);
         createFrame(null);
-        refreshView(inspection.teleVM().epoch(), true);
+        refreshView(inspection.maxVM().epoch(), true);
         Trace.end(1,  tracePrefix() + " initializing");
     }
 
@@ -85,11 +84,10 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
         _teleNativeThread = inspection().focus().thread();
         if (_teleNativeThread == null) {
             _tabbedPane = null;
-            frame().setTitle(getTextForTitle());
         } else {
             _tabbedPane = new JTabbedPane();
             for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-                final TeleVMThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+                final TeleThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
                 if (values != null) {
                     final ThreadLocalsPanel panel = new ThreadLocalsPanel(inspection(), _teleNativeThread, values, _viewPreferences);
                     _tabbedPane.add(state.toString(), panel);
@@ -98,12 +96,12 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             _tabbedPane.addChangeListener(new ChangeListener() {
                 // Do a refresh whenever there's a tab change, so that the newly exposed pane is sure to be current
                 public void stateChanged(ChangeEvent event) {
-                    refreshView(teleVM().epoch(), true);
+                    refreshView(maxVM().epoch(), true);
                 }
             });
-            frame().setTitle(getTextForTitle());
         }
         frame().setContentPane(_tabbedPane);
+        updateFrameTitle();
     }
 
     @Override
@@ -113,7 +111,11 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
     @Override
     public String getTextForTitle() {
-        return "Thread Locals: " + " " + inspection().nameDisplay().longName(_teleNativeThread);
+        String title = "Thread Locals: ";
+        if (_teleNativeThread != null) {
+            title += inspection().nameDisplay().longNameWithState(_teleNativeThread);
+        }
+        return title;
     }
 
     @Override
@@ -160,7 +162,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
 
         boolean panelsAddedOrRemoved = false;
         for (Safepoint.State state : Safepoint.State.CONSTANTS) {
-            final TeleVMThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
+            final TeleThreadLocalValues values = _teleNativeThread.threadLocalsFor(state);
             final ThreadLocalsPanel panel = threadLocalsPanelFor(state);
             if (values != null) {
                 if (panel == null) {
@@ -184,6 +186,8 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
             threadLocalsPanel.refresh(epoch, force);
         }
         super.refreshView(epoch, force);
+        // The title displays thread state, so must be updated.
+        updateFrameTitle();
     }
 
     @Override
