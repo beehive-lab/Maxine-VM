@@ -222,10 +222,10 @@ public final class Heap {
     }
 
     @INSPECTED
-    private static final LinearAllocatorHeapRegion _bootHeapRegion = new LinearAllocatorHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
+    private static final BootHeapRegion _bootHeapRegion = new BootHeapRegion(Address.zero(), Size.fromInt(Integer.MAX_VALUE), "Heap-Boot");
 
     @INLINE
-    public static LinearAllocatorHeapRegion bootHeapRegion() {
+    public static BootHeapRegion bootHeapRegion() {
         return _bootHeapRegion;
     }
 

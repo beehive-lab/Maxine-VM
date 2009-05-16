@@ -128,7 +128,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private static int _safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
     private GrowPolicy _growPolicy;
     private LinearGrowPolicy _increaseGrowPolicy;
-    private Address _top;                                                  // top of allocatable space (less safety zone)
+    private Address _top;                                         // top of allocatable space (less safety zone)
     private volatile Address _allocationMark;                     // current allocation point
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -475,7 +475,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void scanBootHeap() {
-        Heap.bootHeapRegion().visitCells(this);
+        Heap.bootHeapRegion().visitPointers(_pointerIndexGripUpdater);
     }
 
     private void scanCode() {
