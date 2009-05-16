@@ -25,13 +25,12 @@ import javax.swing.event.*;
 
 import com.sun.max.ins.*;
 import com.sun.max.ins.object.StringPane.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.vm.classfile.constant.*;
 
 
 /**
- * An object inspector specialized for displaying a Maxine low-level heap object in the {@link TeleVM} that implements a {@link StringConstant}.
+ * An object inspector specialized for displaying a Maxine low-level heap object in the VM that implements a {@link StringConstant}.
  *
  * @author Michael Van De Vanter
  */
@@ -54,7 +53,7 @@ public class StringConstantInspector extends ObjectInspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         super.createView(epoch);
 
         final TeleStringConstant teleStringConstant = (TeleStringConstant) teleObject();
@@ -79,7 +78,7 @@ public class StringConstantInspector extends ObjectInspector {
                 // Remember which display is now selected
                 _alternateDisplay = prober == _stringPane;
                 // Refresh the display that is now visible.
-                prober.refresh(teleVM().epoch(), true);
+                prober.refresh(maxVM().epoch(), true);
             }
         });
         frame().getContentPane().add(_tabbedPane);

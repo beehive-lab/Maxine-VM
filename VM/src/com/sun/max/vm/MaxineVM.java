@@ -53,6 +53,10 @@ public final class MaxineVM {
         return "Maxine VM";
     }
 
+    public static String description() {
+        return "The Maxine Virtual Machine, see <http://kenai.com.projects/maxine>";
+    }
+
     public static final int HARD_EXIT_CODE = -2;
 
     public enum Phase {

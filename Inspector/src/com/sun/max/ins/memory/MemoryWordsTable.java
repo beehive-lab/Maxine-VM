@@ -30,14 +30,13 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.object.*;
 import com.sun.max.ins.value.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.value.*;
 
 
 /**
- * A table specialized for displaying a range of memory words in the {@link TeleVM}.
+ * A table specialized for displaying a range of memory words in the VM.
  *
  * @author Michael Van De Vanter
  */
@@ -74,7 +73,7 @@ public class MemoryWordsTable extends InspectorTable {
         setRowSelectionAllowed(true);
         setColumnSelectionAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -197,7 +196,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(_startAddress.plus(row * teleVM().wordSize()).toInt());
+            setValue(_startAddress.plus(row * maxVM().wordSize()).toInt());
             return this;
         }
     }
@@ -209,7 +208,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            setValue(row * teleVM().wordSize());
+            setValue(row * maxVM().wordSize());
             return this;
         }
     }
@@ -221,7 +220,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(teleVM().dataAccess().readWord(_startAddress.plus(row * teleVM().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
             return this;
         }
     }
@@ -233,7 +232,7 @@ public class MemoryWordsTable extends InspectorTable {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, int column) {
-            setValue(WordValue.from(teleVM().dataAccess().readWord(_startAddress.plus(row * teleVM().wordSize()))));
+            setValue(WordValue.from(maxVM().readWord(_startAddress.plus(row * maxVM().wordSize()))));
             return this;
         }
     }

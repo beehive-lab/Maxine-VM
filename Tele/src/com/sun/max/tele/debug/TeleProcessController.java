@@ -27,7 +27,7 @@ import com.sun.max.unsafe.*;
 
 
 /**
- * Controls the {@link TeleProcess} to execute different debugging operations and separates it from the GUI.
+ * Manages debugging operations on the {@link TeleProcess}.
  *
  * @author Aritra Bandyopadhyay
  * @author Doug Simon
@@ -55,7 +55,7 @@ public final class TeleProcessController {
     private TeleProcess _teleProcess;
 
     /**
-     * Gets the {@link TeleProcess} associated with this controller.
+     * @return the {@link TeleProcess} associated with this controller.
      */
     public TeleProcess teleProcess() {
         return _teleProcess;
@@ -215,7 +215,7 @@ public final class TeleProcessController {
      *         or a recursive call to the same target method, then the return address of the call is returned.
      *         Otherwise, null is returned, indicating that the step over is really a single step.
      */
-    public Pointer getStepoutAddress(TeleNativeThread thread, Pointer oldReturnAddress, Pointer oldInstructionPointer, Pointer newInstructionPointer) {
+    private Pointer getStepoutAddress(TeleNativeThread thread, Pointer oldReturnAddress, Pointer oldInstructionPointer, Pointer newInstructionPointer) {
         if (newInstructionPointer.equals(oldReturnAddress)) {
             // Executed a return
             return null;

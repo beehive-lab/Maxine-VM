@@ -29,8 +29,7 @@ package com.sun.max.tele;
 public interface TeleVMHolder {
 
     /**
-     * @return the instance of {@link TeleVM} being managed
-     * by this code.
+     * @return the instance of {@link TeleVM} being managed by this code.
      */
     TeleVM teleVM();
 

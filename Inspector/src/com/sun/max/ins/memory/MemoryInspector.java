@@ -58,7 +58,7 @@ public final class MemoryInspector extends Inspector {
     }
 
     /**
-     * Displays a new inspector for the currently allocated memory of a heap object in the {@link TeleVM}.
+     * Displays a new inspector for the currently allocated memory of a heap object in the VM.
      */
     public static MemoryInspector create(Inspection inspection, TeleObject teleObject) {
         final Pointer cell = teleObject.getCurrentCell();
@@ -146,11 +146,11 @@ public final class MemoryInspector extends Inspector {
     private TextLabel[] _charLabels;
 
     @Override
-    protected synchronized void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         final byte[] bytes = new byte[_numberOfBytesPerGroup];
         for (int i = 0; i < _numberOfGroups; i++) {
             final Address address = _address.plus(i * _numberOfBytesPerGroup);
-            teleVM().dataAccess().readFully(address, bytes);
+            maxVM().readFully(address, bytes);
             _memoryLabels[i].setText(byteGroupToString(bytes));
             _memoryLabels[i].setToolTipText(address.toHexString());
             switch (_numberOfBytesPerGroup) {
@@ -192,7 +192,7 @@ public final class MemoryInspector extends Inspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         frame().menu().addSeparator();
         frame().menu().add(inspection().getDeleteInspectorsAction(_otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
         frame().menu().add(inspection().getDeleteInspectorsAction(_allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
@@ -247,7 +247,7 @@ public final class MemoryInspector extends Inspector {
 
     private String byteGroupToString(byte[] bytes) {
         String s = "";
-        switch (teleVM().bootImage().header().endianness()) {
+        switch (maxVM().bootImage().header().endianness()) {
             case LITTLE:
                 for (int i = bytes.length - 1; i >= 0; i--) {
                     s += String.format("%02X", bytes[i]);

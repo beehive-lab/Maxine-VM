@@ -45,7 +45,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     private static Manager _manager;
 
     /**
-     * Manages inspection of methods in the {@link TeleVM}, even when the tabbed view does not exist.
+     * Manages inspection of methods in the VM, even when the tabbed view does not exist.
      * Has no visible presence or direct user interaction at this time.
      *
      * @author Michael Van De Vanter
@@ -67,6 +67,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                         if (methodInspector != null) {
                             // Ensure that a newly created MethodInspector will have the focus set;
                             SwingUtilities.invokeLater(new Runnable() {
+
                                 public void run() {
                                     methodInspector.setCodeLocationFocus();
                                     // Highlight the inspector if it is not the selected one (this happens when the inspector already existed).
@@ -86,23 +87,23 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
      * Java methods. For native methods, only works if the code block is already known to the inspector or if the user
      * supplies some additional information at an optional prompt.
      *
-     * @param address Target code location in the {@link TeleVM}.
+     * @param address Target code location in the VM.
      * @param interactive Should user be prompted for additional address information in case the location is unknown
      *            native code.
      * @return A possibly new inspector, null if unable to view.
      */
     private static MethodInspector make(final Inspection inspection, Address address, boolean interactive) {
         MethodInspector methodInspector = null;
-        final TeleTargetMethod teleTargetMethod = TeleTargetMethod.make(inspection.teleVM(), address);
+        final TeleTargetMethod teleTargetMethod = inspection.maxVM().makeTeleTargetMethod(address);
         if (teleTargetMethod != null) {
             // Java method
             methodInspector = make(inspection, teleTargetMethod, MethodCodeKind.TARGET_CODE);
         } else {
-            final TeleRuntimeStub teleRuntimeStub = TeleRuntimeStub.make(inspection.teleVM(), address);
+            final TeleRuntimeStub teleRuntimeStub = inspection.maxVM().makeTeleRuntimeStub(address);
             if (teleRuntimeStub != null) {
                 methodInspector = make(inspection, teleRuntimeStub);
             } else {
-                final TeleTargetRoutine teleTargetRoutine = inspection.teleVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
+                final TeleTargetRoutine teleTargetRoutine = inspection.maxVM().findTeleTargetRoutine(TeleTargetRoutine.class, address);
                 if (teleTargetRoutine != null) {
                     // Some other kind of known target code
                     methodInspector = make(inspection, teleTargetRoutine);
@@ -114,7 +115,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                         @Override
                         public void entered(Address nativeAddress, Size codeSize, String name) {
                             try {
-                                final TeleNativeTargetRoutine teleNativeTargetRoutine = TeleNativeTargetRoutine.create(inspection.teleVM(), nativeAddress, codeSize, name);
+                                final TeleNativeTargetRoutine teleNativeTargetRoutine = maxVM().createTeleNativeTargetRoutine(nativeAddress, codeSize, name);
                                 result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
                                 // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                             } catch (IllegalArgumentException illegalArgumentException) {
@@ -176,7 +177,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
 
     /**
      * @return a possibly new {@link MethodInspector} associated with a specific compilation of a Java method in the
-     *         {@link TeleVM}, and with the requested code view visible.
+     *         VM, and with the requested code view visible.
      */
     private static JavaMethodInspector make(Inspection inspection, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
         JavaMethodInspector javaMethodInspector = null;
@@ -207,7 +208,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     }
 
     /**
-     * @return A possibly new inspector for a block of native code in the {@link TeleVM} already known to the inspector.
+     * @return A possibly new inspector for a block of native code in the VM already known to the inspector.
      */
     private static NativeMethodInspector make(Inspection inspection, TeleTargetRoutine teleTargetRoutine) {
         NativeMethodInspector nativeMethodInspector = null;
@@ -313,7 +314,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
     }
 
     /**
-     * @return Local {@link TeleTargetRoutine} for the method in the {@link TeleVM}; null if not bound to target code yet.
+     * @return Local {@link TeleTargetRoutine} for the method in the VM; null if not bound to target code yet.
      */
     public abstract TeleTargetRoutine teleTargetRoutine();
 

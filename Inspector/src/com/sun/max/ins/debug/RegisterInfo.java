@@ -28,7 +28,7 @@ import com.sun.max.vm.value.*;
 
 
 /**
- * Wrapper for the description of a machine register in the {@link TeleVM} that
+ * Wrapper for the description of a machine register in the VM that
  * provides functionality needed for inspection and useful display.
  *
  * @author Michael Van De Vanter
@@ -79,7 +79,7 @@ public abstract class RegisterInfo {
     }
 
     /**
-     * Wrapper for the description of an machine integer register in the {@link TeleVM} that
+     * Wrapper for the description of an machine integer register in the VM that
      * provides functionality needed for inspection and useful display.
      *
      * @author Michael Van De Vanter
@@ -96,7 +96,7 @@ public abstract class RegisterInfo {
     }
 
     /**
-     * Wrapper for the description of a state machine register in the {@link TeleVM} that
+     * Wrapper for the description of a state machine register in the VM that
      * provides functionality needed for inspection and useful display.
      *
      * @author Michael Van De Vanter
@@ -123,7 +123,7 @@ public abstract class RegisterInfo {
     }
 
     /**
-     * Wrapper for the description of a machine floating point register in the {@link TeleVM} that
+     * Wrapper for the description of a machine floating point register in the VM that
      * provides functionality needed for inspection and useful display.
      *
      * @author Michael Van De Vanter

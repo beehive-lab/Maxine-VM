@@ -29,10 +29,9 @@ import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.TableColumnVisibilityPreferences.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 
 /**
- * A singleton inspector that displays the list of threads running in the process of the {@link TeleVM}.
+ * A singleton inspector that displays the list of threads running in the process of the VM.
  *
  * @author Michael Van De Vanter
  */

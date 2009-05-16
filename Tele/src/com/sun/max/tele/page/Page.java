@@ -26,7 +26,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 /**
- * A cached page of memory from the VM's address space.
+ * A cached page of remote memory contents.
  *
  * To avoid double buffering of {@code byte} arrays in the native code that copies bytes from the VM address space,
  * NIO {@linkplain ByteBuffer#isDirect() direct} {@link ByteBuffer}s can be used. This option is exercised by
@@ -38,8 +38,16 @@ import com.sun.max.unsafe.*;
  */
 public class Page {
 
+    /**
+     * Access to memory in the {@link TeleVM}.
+     */
     private TeleIO _teleIO;
+
+    /**
+     * Generation count of remote memory modification as of the last time this page was refreshed.
+     */
     private long _epoch = -1;
+
     private final long _index;
 
     /**
@@ -101,18 +109,32 @@ public class Page {
         _buffer = allocate(teleIO, byteOrder, index);
     }
 
+    /**
+     * @return size of the page in bytes.
+     */
     public int size() {
         return _teleIO.pageSize();
     }
 
+    /**
+     * @return starting location of the page in remote memory.
+     */
     public Address address() {
         return Address.fromLong(_index * size());
     }
 
+    /**
+     * Mark page contents as needful of refreshing, independent of any prior reads.
+     */
     public void invalidate() {
         _epoch = -1;
     }
 
+    /**
+     * Reads into the cache the contents of the remote memory page.
+     *
+     * @throws DataIOError
+     */
     private void refreshRead() throws DataIOError {
         if (_epoch < _teleIO.epoch()) {
             DataIO.Static.readFully(_teleIO, address(), _buffer);

@@ -21,11 +21,10 @@
 package com.sun.max.ins.debug;
 
 import com.sun.max.collect.*;
-import com.sun.max.tele.*;
 
 
 /**
- * Defines the columns that can be displayed describing a thread in the {@link TeleVM}.
+ * Defines the columns that can be displayed describing a thread in the VM.
  *
  * @author Michael Van De Vanter
  */

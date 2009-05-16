@@ -27,7 +27,12 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 
 /**
+ * An adapter for reading/writing bytes and other primitive data kinds from/to a source/destination
+ * that can be identified by an {@link Address}.  Subclasses implement only the most basic
+ * read/write operations.
+ *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public abstract class DataAccessAdapter implements DataAccess {
 

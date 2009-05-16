@@ -128,7 +128,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(_inspection.teleVM().epoch(), true);
+        refresh(_inspection.maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this, MAXIMUM_ROWS_FOR_COMPUTING_COLUMN_WIDTHS);
     }
 
@@ -195,14 +195,14 @@ public final class ArrayElementsTable extends InspectorTable {
 
         /**
          * @param row index of a displayed row in the table
-         * @return the memory location of the displayed element in the {@link TeleVM}.
+         * @return the memory location of the displayed element in the VM.
          */
         public Address rowToAddress(int row) {
             return _objectOrigin.plus(rowToOffset(row)).asAddress();
         }
 
         /**
-         * @param address a memory address in the {@link TeleVM}.
+         * @param address a memory address in the VM.
          * @return the displayed table row that shows the array element at an address;
          * -1 if the address is not in the array, or if that element is currently hidden..
          */
@@ -262,7 +262,7 @@ public final class ArrayElementsTable extends InspectorTable {
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
                 final Address address = _model.rowToAddress(row);
-                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(teleVM().wordSize()));
+                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
                 if (registerSymbols.isEmpty()) {
                     setText("");
                     setToolTipText("");
@@ -349,21 +349,21 @@ public final class ArrayElementsTable extends InspectorTable {
                     label = new WordValueLabel(_inspection, WordValueLabel.ValueMode.REFERENCE) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                            return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 } else if (_elementKind == Kind.WORD) {
                     label = new WordValueLabel(_inspection, _wordValueMode) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                            return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 } else {
                     label = new PrimitiveValueLabel(_inspection, _elementKind) {
                         @Override
                         public Value fetchValue() {
-                            return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
+                            return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + index);
                         }
                     };
                 }
@@ -400,7 +400,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 label = new MemoryRegionValueLabel(_inspection) {
                     @Override
                     public Value fetchValue() {
-                        return teleVM().getElementValue(_elementKind, _objectReference, _startIndex + elementRow);
+                        return maxVM().getElementValue(_elementKind, _objectReference, _startIndex + elementRow);
                     }
                 };
                 _labels[elementRow] = label;
@@ -429,7 +429,7 @@ public final class ArrayElementsTable extends InspectorTable {
                 final int previousVisibleCount = _visibleElementCount;
                 _visibleElementCount = 0;
                 for (int index = 0; index < _arrayLength; index++) {
-                    if (!teleVM().getElementValue(_elementKind, _objectReference, index).isZero()) {
+                    if (!maxVM().getElementValue(_elementKind, _objectReference, index).isZero()) {
                         _rowToElementMap[_visibleElementCount++] = index;
                     }
                 }

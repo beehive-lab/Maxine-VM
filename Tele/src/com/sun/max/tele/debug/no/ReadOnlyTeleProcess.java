@@ -27,6 +27,7 @@ import java.nio.channels.FileChannel.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
@@ -34,7 +35,10 @@ import com.sun.max.vm.prototype.*;
 import com.sun.max.vm.prototype.BootImage.*;
 
 /**
+ * A null process that "contains" the boot image for inspection, as if it were a {@link TeleVM}.
+ *
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
 public final class ReadOnlyTeleProcess extends TeleProcess {
 
@@ -169,14 +173,17 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
         }
     }
 
+    private static final String FAIL_MESSAGE = "Attempt to run/write/modify a read-only bootimage VM with no live process";
+
     @Override
     protected void gatherThreads(AppendableSequence<TeleNativeThread> threads) {
-        throw new TeleVMCannotBeModifiedError();
+        ProgramError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected TeleNativeThread createTeleNativeThread(int id, long handle, long stackBase, long stackSize) {
-        throw new TeleVMCannotBeModifiedError();
+        ProgramError.unexpected(FAIL_MESSAGE);
+        return null;
     }
 
     @Override
@@ -186,26 +193,28 @@ public final class ReadOnlyTeleProcess extends TeleProcess {
 
     @Override
     protected int write0(ByteBuffer buffer, int offset, int length, Address address) {
-        throw new TeleVMCannotBeModifiedError();
+        ProgramError.unexpected(FAIL_MESSAGE);
+        return 0;
     }
 
     @Override
     protected void kill() throws OSExecutionRequestException {
-        throw new TeleVMCannotBeModifiedError();
+        ProgramError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected void resume() throws OSExecutionRequestException {
-        throw new TeleVMCannotBeModifiedError();
+        ProgramError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected void suspend() throws OSExecutionRequestException {
-        throw new TeleVMCannotBeModifiedError();
+        ProgramError.unexpected(FAIL_MESSAGE);
     }
 
     @Override
     protected boolean waitUntilStopped() {
-        throw new TeleVMCannotBeModifiedError();
+        ProgramError.unexpected(FAIL_MESSAGE);
+        return false;
     }
 }

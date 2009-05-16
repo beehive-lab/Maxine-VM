@@ -29,7 +29,7 @@ import com.sun.max.vm.value.*;
  * @author Michael Van De Vanter
  *
  * A textual display label associated with a {@link Value}.
- * When it is to be read from the {@link TeleVM}, it is
+ * When it is to be read from the VM, it is
  * re-read when this label is refreshed.
  */
 public abstract class ValueLabel extends InspectorLabel {
@@ -61,7 +61,7 @@ public abstract class ValueLabel extends InspectorLabel {
     /**
      * @return the current {@link Value}
      *
-     * Subclasses override this to read from the {@link TeleVM} for values that can change.
+     * Subclasses override this to read from the VM for values that can change.
      */
     protected Value fetchValue() {
         return _value;
@@ -72,7 +72,7 @@ public abstract class ValueLabel extends InspectorLabel {
      */
     protected final void initializeValue() {
         _value = fetchValue();
-        _epoch = teleVM().epoch();
+        _epoch = maxVM().epoch();
     }
 
     /**
@@ -81,7 +81,7 @@ public abstract class ValueLabel extends InspectorLabel {
     protected abstract void updateText();
 
     /**
-     * Explicitly sets the value, as opposed to letting it be read from the {@link TeleVM} by an override of {@link #fetchValue()}.
+     * Explicitly sets the value, as opposed to letting it be read from the VM by an override of {@link #fetchValue()}.
      */
     public void setValue(Value value) {
         _value = value;

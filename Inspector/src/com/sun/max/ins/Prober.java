@@ -22,7 +22,7 @@ package com.sun.max.ins;
 
 
 /**
- * A display element of an {@link Inspector} that presents visually some aspect of the state of the {@link TeleVM}.
+ * A display element of an {@link Inspector} that presents visually some aspect of the state of the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -30,7 +30,7 @@ package com.sun.max.ins;
 public interface Prober {
 
     /**
-     * Brings prober/view up to date with the state of the {@link TeleVM}.
+     * Brings prober/view up to date with the state of the VM.
      *
      * @param epoch current execution age of the tele process.
      * @param force suspend caching behavior; read state unconditionally.
@@ -38,7 +38,7 @@ public interface Prober {
     void refresh(long epoch, boolean force);
 
     /**
-     * Revise the display to account for any changes in view configuration or style information; does not imply a state change in the {@link TeleVM}.
+     * Revise the display to account for any changes in view configuration or style information; does not imply a state change in the VM.
      */
     void redisplay();
 

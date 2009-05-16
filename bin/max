@@ -233,7 +233,7 @@ function run() {
 function config_gnu_make() {
     for a in $make_arg make gmake gnumake; do
         if ( sh -c "$a --version" 2>/dev/null | grep GNU >/dev/null ) ; then 
-            make=$(which $a)
+            make=$(type -p $a)
             break
         fi
     done

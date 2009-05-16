@@ -102,7 +102,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
         try {
             final Reference classRegistryReference = teleVM().bootClassRegistryReference();
 
-            if (teleVM().interpreterUseLevel() > 0) {
+            if (teleVM().getInterpreterUseLevel() > 0) {
                 final TeleReferenceValue classRegistryReferenceValue = TeleReferenceValue.from(teleVM(), classRegistryReference);
                 final int length = TeleInterpreter.execute(teleVM, ClassRegistry.class, "numberOfClassActors", SignatureDescriptor.fromJava(int.class),
                                 classRegistryReferenceValue).asInt();
@@ -128,7 +128,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
                 final Reference tableReference = teleVM().fields().ChainedHashMapping_table.readReference(typeDescriptorToClassActorReference);
                 final int length = teleVM().layoutScheme().arrayHeaderLayout().readLength(tableReference);
                 for (int i = 0; i < length; i++) {
-                    Reference entryReference = teleVM().getReference(tableReference, i);
+                    Reference entryReference = teleVM().readReference(tableReference, i);
                     while (!entryReference.isZero()) {
                         final Reference classActorReference = teleVM().fields().ChainedHashMapping$DefaultEntry_value.readReference(entryReference);
                         addToRegistry(classActorReference);
@@ -139,7 +139,7 @@ public class TeleClassRegistry extends AbstractTeleVMHolder {
             }
             ClassID.setMapping(_classIDMapping);
         } catch (Throwable throwable) {
-            throw new TeleError("could not build inspector type registry", throwable);
+            ProgramError.unexpected("could not build inspector type registry", throwable);
         }
         _preLoadedClassCount = count;
         Trace.end(1, tracePrefix() + " initializing (" + _preLoadedClassCount + " pre-loaded entries)", startTimeMillis);

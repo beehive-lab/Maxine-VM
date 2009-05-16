@@ -45,7 +45,7 @@ public interface VMAccess {
     String getVersion();
 
     /**
-     * @return a textual description
+     * @return a textual description of the VM
      */
     @ConstantReturnValue
     String getDescription();

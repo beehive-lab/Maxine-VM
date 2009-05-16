@@ -30,8 +30,9 @@ import com.sun.max.vm.grip.*;
 
 /**
  * @author Bernd Mathiske
+ * @author Michael Van De Vanter
  */
-public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme {
+public abstract class TeleGripScheme extends AbstractVMScheme implements GripScheme, TeleVMHolder {
 
     private TeleVM _teleVM;
     private TeleRoots _teleRoots;
@@ -41,14 +42,7 @@ public abstract class TeleGripScheme extends AbstractVMScheme implements GripSch
         super(vmConfiguration);
     }
 
-    private DataAccess _dataAccess;
-
-    public DataAccess dataAccess() {
-        return _dataAccess;
-    }
-
     public void setTeleVM(TeleVM teleVM) {
-        _dataAccess = teleVM.dataAccess();
         _teleVM = teleVM;
         _teleRoots = new TeleRoots(this);
     }

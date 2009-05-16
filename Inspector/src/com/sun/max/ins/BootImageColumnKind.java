@@ -21,11 +21,11 @@
 package com.sun.max.ins;
 
 import com.sun.max.collect.*;
-import com.sun.max.tele.*;
+import com.sun.max.vm.*;
 
 
 /**
-* Defines the columns that can be displayed describing {@link VMConfiguration}  information in the {@link TeleVM} boot image.
+* Defines the columns that can be displayed describing {@link VMConfiguration}  information in the VM boot image.
 *
 * @author Michael Van De Vanter
 */

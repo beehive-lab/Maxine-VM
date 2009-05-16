@@ -31,7 +31,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.InspectionSettings.*;
 import com.sun.max.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
@@ -96,6 +95,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     /**
      * @return a short string suitable for appearing in the window frame of an inspector.
+     * If this text is expected to change dynamically, a call to {@link #updateFrameTitle()}
+     * will cause this to be called again and the result assigned to the frame.
      */
     public abstract String getTextForTitle();
 
@@ -116,6 +117,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected abstract void createView(long epoch);
 
+    protected final void updateFrameTitle() {
+        frame().setTitle(getTextForTitle());
+    }
     /**
      * Creates a frame for the inspector
      * calls {@link createView()} to populate it; adds the inspector to the update
@@ -128,8 +132,8 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      */
     protected void createFrame(InspectorMenu menu) {
         _frame = new InternalInspectorFrame(this, menu);
-        frame().setTitle(getTextForTitle());
-        createView(teleVM().epoch());
+        updateFrameTitle();
+        createView(maxVM().epoch());
         _frame.pack();
         inspection().desktopPane().add((Component) _frame);
         _frame.setVisible(true);
@@ -143,24 +147,24 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * Reads, re-reads, and updates any state caches if needed from the {@link TeleVM}.
+     * Reads, re-reads, and updates any state caches if needed from the VM.
      *
-     * @param epoch the execution epoch of the {@link TeleVM}, {@see TeleProcess#epoch()}.
+     * @param epoch the execution epoch of the VM, {@see TeleProcess#epoch()}.
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected synchronized void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         _frame.refresh(epoch, force);
         _frame.invalidate();
         _frame.repaint();
     }
 
     /**
-     * Reads, re-reads, and updates any state caches if needed from the {@link TeleVM}.
+     * Reads, re-reads, and updates any state caches if needed from the VM.
      *
      * @param force suspend caching behavior; read state unconditionally.
      */
-    protected final synchronized void refreshView(boolean force) {
-        refreshView(teleVM().epoch(), force);
+    protected final void refreshView(boolean force) {
+        refreshView(maxVM().epoch(), force);
     }
 
     /**
@@ -168,9 +172,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * expensive than {@link refreshView()}, but necessary when the parameters or
      * configuration of the view changes enough to require creating a new one.
      */
-    protected synchronized void reconstructView() {
+    protected void reconstructView() {
         final Dimension size = _frame.getSize();
-        createView(teleVM().epoch());
+        createView(maxVM().epoch());
         _frame.setPreferredSize(size);
         frame().pack();
     }
@@ -350,7 +354,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * @return an action that will refresh any state from the {@link TeleVM}.
+     * @return an action that will refresh any state from the VM.
      */
     public RefreshAction getRefreshAction() {
         return new RefreshAction();

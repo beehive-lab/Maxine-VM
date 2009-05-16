@@ -37,6 +37,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.tele.object.TeleObject.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
+import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -76,9 +77,10 @@ public class ObjectHeaderTable extends InspectorTable {
         _objectInspector = objectInspector;
         _inspection = objectInspector.inspection();
         _teleObject = objectInspector.teleObject();
-        _hubReferenceOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
-        _miscWordOffset = teleVM().layoutScheme().generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
-        _arrayLengthOffset = teleVM().layoutScheme().arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
+        final LayoutScheme layoutScheme = maxVM().vmConfiguration().layoutScheme();
+        _hubReferenceOffset = layoutScheme.generalLayout().getOffsetFromOrigin(HeaderField.HUB).toInt();
+        _miscWordOffset = layoutScheme.generalLayout().getOffsetFromOrigin(HeaderField.MISC).toInt();
+        _arrayLengthOffset = layoutScheme.arrayHeaderLayout().getOffsetFromOrigin(HeaderField.LENGTH).toInt();
 
         _model = new ObjectHeaderTableModel();
         _columns = new TableColumn[ObjectFieldColumnKind.VALUES.length()];
@@ -108,7 +110,7 @@ public class ObjectHeaderTable extends InspectorTable {
                 super.procedure(mouseEvent);
             }
         });
-        refresh(_inspection.teleVM().epoch(), true);
+        refresh(_inspection.maxVM().epoch(), true);
         JTableColumnResizer.adjustColumnPreferredWidths(this);
     }
 
@@ -221,10 +223,11 @@ public class ObjectHeaderTable extends InspectorTable {
 
         public int addressToRow(Address address) {
             if (!address.isZero()) {
-                final Address endAddress = _teleObject.getObjectKind() == ObjectKind.TUPLE ? _objectOrigin.plus(_miscWordOffset + teleVM().wordSize()) : _objectOrigin.plus(_arrayLengthOffset +
-                                teleVM().wordSize());
+                final int wordSize = maxVM().wordSize();
+                final Address endAddress = _teleObject.getObjectKind() == ObjectKind.TUPLE ? _objectOrigin.plus(_miscWordOffset + wordSize) : _objectOrigin.plus(_arrayLengthOffset +
+                    wordSize);
                 if (address.greaterEqual(_objectOrigin) && address.lessThan(endAddress)) {
-                    return address.minus(_objectOrigin).dividedBy(teleVM().wordSize()).toInt();
+                    return address.minus(_objectOrigin).dividedBy(wordSize).toInt();
                 }
             }
             return -1;
@@ -271,7 +274,7 @@ public class ObjectHeaderTable extends InspectorTable {
             if (thread != null) {
                 final TeleIntegerRegisters teleIntegerRegisters = thread.integerRegisters();
                 final Address address = _model.rowToAddress(row);
-                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(teleVM().wordSize()));
+                final Sequence<Symbol> registerSymbols = teleIntegerRegisters.find(address, address.plus(maxVM().wordSize()));
                 if (registerSymbols.isEmpty()) {
                     setText("");
                     setToolTipText("");

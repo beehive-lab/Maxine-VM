@@ -32,7 +32,6 @@ import com.sun.max.ins.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.memory.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
@@ -41,7 +40,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * An inspector that displays the content of a Maxine low level heap object in the {@link TeleVM}.
+ * An inspector that displays the content of a Maxine low level heap object in the VM.
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
@@ -53,19 +52,19 @@ public abstract class ObjectInspector extends Inspector {
     private final TeleObject _teleObject;
 
     /**
-     * @return local surrogate for the object being inspected in the {@link TeleVM}
+     * @return local surrogate for the object being inspected in the VM
      */
     TeleObject teleObject() {
         return _teleObject;
     }
 
-    /** The origin is an actual location in memory of the {@link TeleVM};
+    /** The origin is an actual location in memory of the VM;
      * keep a copy for comparison, since it might change via GC.
      */
     private Pointer _currentObjectOrigin;
 
     /**
-     * @return The actual location in {@link TeleVM} memory where
+     * @return The actual location in VM memory where
      * the object resides at present; this may change via GC.
      */
     Pointer currentOrigin() {
@@ -120,7 +119,7 @@ public abstract class ObjectInspector extends Inspector {
     }
 
     @Override
-    protected synchronized void createView(long epoch) {
+    protected void createView(long epoch) {
         final JPanel panel = new InspectorPanel(inspection(), new BorderLayout());
         if (_showHeader) {
             _objectHeaderTable = new ObjectHeaderTable(this);
@@ -149,12 +148,12 @@ public abstract class ObjectInspector extends Inspector {
     @Override
     public void threadFocusSet(TeleNativeThread oldTeleNativeThread, TeleNativeThread teleNativeThread) {
         // Object inspector displays are sensitive to the current thread selection.
-        refreshView(teleVM().epoch(), true);
+        refreshView(maxVM().epoch(), true);
     }
 
     @Override
     public void addressFocusChanged(Address oldAddress, Address newAddress) {
-        refreshView(teleVM().epoch(), true);
+        refreshView(maxVM().epoch(), true);
     }
 
     @Override
@@ -266,7 +265,7 @@ public abstract class ObjectInspector extends Inspector {
     };
 
     @Override
-    protected synchronized void refreshView(long epoch, boolean force) {
+    protected void refreshView(long epoch, boolean force) {
         final Pointer newOrigin = _teleObject.getCurrentOrigin();
         if (!newOrigin.equals(_currentObjectOrigin)) {
             // The object has been relocated in memory

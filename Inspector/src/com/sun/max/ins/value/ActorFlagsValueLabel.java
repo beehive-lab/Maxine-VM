@@ -28,7 +28,7 @@ import com.sun.max.vm.value.*;
 
 /**
  * A textual display label associated with an integer that represents the value of
- * the {@link Actor#_flags} field in instances of {@link Actor} in the {@link TeleVM}.
+ * the {@link Actor#_flags} field in instances of {@link Actor} in the VM.
  *
  * @see TeleActor
  *

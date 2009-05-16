@@ -21,10 +21,9 @@
 package com.sun.max.ins.memory;
 
 import com.sun.max.collect.*;
-import com.sun.max.tele.*;
 
 /**
- * Defines the columns that can be displayed describing a memory region in the {@link TeleVM}.
+ * Defines the columns that can be displayed describing a memory region in the VM.
  *
  * @author Michael Van De Vanter
  */

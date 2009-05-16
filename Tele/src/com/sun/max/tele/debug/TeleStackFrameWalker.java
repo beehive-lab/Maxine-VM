@@ -31,7 +31,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
- * Specialization of a StackFrameWalker for use with a remote tele VM.
+ * Specialization of a StackFrameWalker for use with a {@link TeleVM}.
  *
  * @author Laurent Daynes
  * @author Doug Simon
@@ -39,20 +39,18 @@ import com.sun.max.vm.thread.*;
 public final class TeleStackFrameWalker extends StackFrameWalker {
 
     private final TeleVM _teleVM;
-    private final TeleVMThreadLocalValues _teleEnabledVmThreadLocalValues;
+    private final TeleThreadLocalValues _teleEnabledVmThreadLocalValues;
     private final TeleNativeThread _teleNativeThread;
-    private final DataAccess _dataAccess;
 
     private final Pointer _cpuInstructionPointer;
     private final Pointer _cpuStackPointer;
     private final Pointer _cpuFramePointer;
 
     public TeleStackFrameWalker(TeleVM teleVM, TeleNativeThread teleNativeThread) {
-        super(teleVM.compilerScheme());
+        super(teleVM.vmConfiguration().compilerScheme());
         _teleVM = teleVM;
         _teleNativeThread = teleNativeThread;
         _teleEnabledVmThreadLocalValues = teleNativeThread.threadLocalsFor(Safepoint.State.ENABLED);
-        _dataAccess = teleVM.dataAccess();
         _cpuInstructionPointer = teleNativeThread.instructionPointer();
         _cpuStackPointer = teleNativeThread.stackPointer();
         _cpuFramePointer = teleNativeThread.framePointer();
@@ -128,17 +126,17 @@ public final class TeleStackFrameWalker extends StackFrameWalker {
     }
     @Override
     public byte readByte(Address address, int offset) {
-        return _dataAccess.readByte(address, offset);
+        return _teleVM.dataAccess().readByte(address, offset);
     }
 
     @Override
     public Word readWord(Address address, int offset) {
-        return _dataAccess.readWord(address, offset);
+        return _teleVM.dataAccess().readWord(address, offset);
     }
 
     @Override
     public int readInt(Address address, int offset) {
-        return _dataAccess.readInt(address, offset);
+        return _teleVM.dataAccess().readInt(address, offset);
     }
 
     @Override

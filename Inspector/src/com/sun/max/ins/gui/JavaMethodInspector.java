@@ -39,7 +39,7 @@ import com.sun.max.tele.object.*;
 import com.sun.max.vm.actor.member.*;
 
 /**
- * Visual inspector and debugger for a Java method in the {@link TeleVM}, able to display one or more kinds of code
+ * Visual inspector and debugger for a Java method in the VM, able to display one or more kinds of code
  * associated with the method: target code, bytecode, and source.
  *
  * @author Michael Van De Vanter
@@ -65,7 +65,7 @@ public class JavaMethodInspector extends MethodInspector {
      *
      * @param inspection the {@link Inspection} of which this Inspector is part
      * @param parent the tabbed container for this Inspector
-     * @param teleTargetMethod surrogate for the compilation of the method in the {@link TeleVM}
+     * @param teleTargetMethod surrogate for the compilation of the method in the VM
      * @param codeKind request for a particular code view to be displayed initially
      */
     public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleTargetMethod teleTargetMethod, MethodCodeKind codeKind) {
@@ -80,7 +80,7 @@ public class JavaMethodInspector extends MethodInspector {
      *
      * @param inspection the {@link Inspection} of which this Inspector is part
      * @param parent the tabbed container for this Inspector
-     * @param teleClassMethodActor surrogate for the specified Java method in the {@link TeleVM}
+     * @param teleClassMethodActor surrogate for the specified Java method in the VM
      * @param codeKind requested kind of code view: either source code or bytecodes
      */
     public JavaMethodInspector(Inspection inspection, MethodInspectorContainer parent, TeleClassMethodActor teleClassMethodActor, MethodCodeKind codeKind) {

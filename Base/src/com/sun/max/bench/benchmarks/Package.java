@@ -18,14 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
-import java.lang.annotation.*;
+package com.sun.max.bench.benchmarks;
 
-@Target(ElementType.TYPE)
+import com.sun.max.*;
+
 
 /**
- * Indicates that a class' source code has been generated, not manually written.
+ * @author Michael Van De Vanter
  */
-public @interface Generated {
-    Class value();
+public class Package extends MaxPackage {
+    public Package() {
+        super();
+    }
 }

@@ -18,16 +18,26 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package util;
+package com.sun.max.tele.reference;
+
+import com.sun.max.vm.reference.*;
 
 
 /**
- *  HelloWorld prints "Hello World!" to the console.
- *  DO NOT HACK THIS PROGRAM.  Hack {@link FortuneCookie} instead.
+ * An action on the {@link TeleVm} was attempted with an invalid {@link Reference}.
+ *
+ * @author Michael Van De Vanter
  */
-public class HelloWorld {
-    public static void main(String[] args) {
-        // DO NOT HACK ME!
-        System.out.println("Hello World!");
+public class InvalidReferenceException extends RuntimeException {
+
+    private final Reference _reference;
+
+    public InvalidReferenceException(Reference reference) {
+        _reference = reference;
     }
+
+    public Reference getReference() {
+        return _reference;
+    }
+
 }

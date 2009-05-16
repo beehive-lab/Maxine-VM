@@ -32,7 +32,7 @@ public class InspectorGeometry12Pt implements InspectorGeometry {
     // Main Inspection frame
     private static final Point _inspectionFrameDefaultLocation = new Point(100, 100);
     private static final Dimension _inspectionFrameMinSize = new Dimension(100, 100);
-    private static final Dimension _inspectionFramePrefSize = new Dimension(1600, 900);
+    private static final Dimension _inspectionFramePrefSize = new Dimension(1615, 960);
 
     public Point inspectorFrameDefaultLocation() {
         return _inspectionFrameDefaultLocation;

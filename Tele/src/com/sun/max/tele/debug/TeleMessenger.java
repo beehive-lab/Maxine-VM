@@ -24,8 +24,19 @@ import com.sun.max.vm.actor.member.*;
 
 public interface TeleMessenger {
 
+    /**
+     * Writes information into the {@link TeleVM} causing it to set up for two way messaging;
+     * must be done early in the startup sequence.
+     */
     void enable();
 
+    /**
+     * Completes the set-up of two way messaging with the {@link TeleVM}, if not
+     * yet done.
+     * Requires that {@link #enable()} has been called early in the startup sequence.
+     *
+     * @return whether two-way messaging is active.
+     */
     boolean activate();
 
     /**

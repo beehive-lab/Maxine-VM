@@ -18,35 +18,16 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.tele.debug;
+package com.sun.max.tele.debug.guestvm.xen;
 
-import com.sun.max.tele.*;
+import com.sun.max.*;
+
 
 /**
- * Controls the tracing level in the tele VM.
- *
  * @author Michael Van De Vanter
  */
-public final class TeleVMTrace extends AbstractTeleVMHolder {
-
-    public TeleVMTrace(TeleVM teleVM) {
-        super(teleVM);
+public class Package extends MaxPackage {
+    public Package() {
+        super();
     }
-
-    public int readTraceLevel() {
-        return teleVM().fields().Trace_level.readInt(teleVM());
-    }
-
-    public void writeTraceLevel(int newLevel) {
-        teleVM().fields().Trace_level.writeInt(teleVM(), newLevel);
-    }
-
-    public long readTraceThreshold() {
-        return teleVM().fields().Trace_threshold.readLong(teleVM());
-    }
-
-    public void writeTraceThreshold(long newThreshold) {
-        teleVM().fields().Trace_threshold.writeLong(teleVM(), newThreshold);
-    }
-
 }

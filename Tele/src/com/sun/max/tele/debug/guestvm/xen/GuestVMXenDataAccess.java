@@ -24,7 +24,6 @@ import java.nio.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.unsafe.*;
 
@@ -37,14 +36,10 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
         _domainId = domainId;
     }
 
-    private TeleError error(Address address) {
-        return new TeleError("could not access address: " + address.toString());
-    }
-
     public byte readByte(Address address) {
         final int result = GuestVMXenDBChannel.readByte(_domainId, address.toLong());
         if (result < 0) {
-            throw error(address);
+            throw new DataIOError(address);
         }
         return (byte) result;
     }
@@ -57,7 +52,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     public int readInt(Address address) {
         final long result = GuestVMXenDBChannel.readInt(_domainId, address.toLong());
         if (result < 0L) {
-            throw error(address);
+            throw new DataIOError(address);
         }
         return (int) result;
     }
@@ -65,7 +60,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
     public short readShort(Address address) {
         final int result = GuestVMXenDBChannel.readShort(_domainId, address.toLong());
         if (result < 0L) {
-            throw error(address);
+            throw new DataIOError(address);
         }
         return (short) result;
     }
@@ -76,7 +71,7 @@ public class GuestVMXenDataAccess extends DataAccessAdapter {
 
     public void writeByte(Address address, byte value) {
         if (!GuestVMXenDBChannel.writeByte(_domainId, address.toLong(), value)) {
-            throw error(address);
+            throw new DataIOError(address);
         }
     }
 

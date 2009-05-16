@@ -38,7 +38,7 @@ import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.value.*;
 
 /**
- * Provides menu items related to a specific {@link MethodActor} in the {@link TeleVM}.
+ * Provides menu items related to a specific {@link MethodActor} in the VM.
  *
  * @author Bernd Mathiske
  * @author Doug Simon
@@ -101,7 +101,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
 
         @Override
         public void procedure() {
-            final TeleCodeLocation teleCodeLocation = new TeleCodeLocation(teleVM(), _teleClassMethodActor, 0);
+            final TeleCodeLocation teleCodeLocation = maxVM().createCodeLocation(_teleClassMethodActor, 0);
             inspection().focus().setCodeLocation(teleCodeLocation, false);
         }
     }
@@ -117,7 +117,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         @Override
         public void procedure() {
             final MethodKey methodKey = new MethodActorKey(_teleClassMethodActor.classMethodActor());
-            teleVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
+            maxVM().makeBytecodeBreakpoint(new TeleBytecodeBreakpoint.Key(methodKey, 0));
         }
     }
 
@@ -142,7 +142,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
                     return;
                 }
 
-                receiver = teleVM().createReferenceValue(teleVM().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
+                receiver = maxVM().createReferenceValue(maxVM().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
                 final ClassActor dynamicClass = receiver.getClassActor();
                 classMethodActor = dynamicClass.findClassMethodActor(classMethodActor);
             }
@@ -154,7 +154,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
             }
 
             try {
-                final Value returnValue = TeleInterpreter.execute(teleVM(), classMethodActor, arguments);
+                final Value returnValue = maxVM().interpretMethod(classMethodActor, arguments);
                 inspection().informationMessage("Method " + classMethodActor.name() + " returned " + returnValue.toString());
             } catch (TeleInterpreterException teleInterpreterException) {
                 throw new InspectorError(teleInterpreterException);
@@ -176,7 +176,7 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         _invokeMethodAction = new InvokeMethodAction();
         _inspectClassMethodActorAction = new InspectClassMethodActorAction();
         _inspectSubstitutionSourceClassActorAction = new InspectSubstitutionSourceClassActorAction();
-        refresh(teleVM().epoch(), true);
+        refresh(maxVM().epoch(), true);
     }
 
     public void addTo(InspectorMenu menu) {
@@ -194,14 +194,14 @@ public final class ClassMethodMenuItems implements InspectorMenuItems {
         menu.add(_inspectCompilationsMenu);
     }
 
-    private TeleVM teleVM() {
-        return _inspection.teleVM();
+    private MaxVM maxVM() {
+        return _inspection.maxVM();
     }
 
     public void refresh(long epoch, boolean force) {
         _teleClassMethodActor.refreshView();
         final boolean hasCodeAttribute =  _teleClassMethodActor.hasCodeAttribute();
-        final File javaSourceFile = teleVM().findJavaSourceFile(_teleClassMethodActor.getTeleHolder().classActor());
+        final File javaSourceFile = maxVM().findJavaSourceFile(_teleClassMethodActor.getTeleHolder().classActor());
         _viewJavaSourceAction.setEnabled(javaSourceFile != null);
         _viewBytecodeAction.setEnabled(hasCodeAttribute);
         _bytecodeBreakOnEntryAction.setEnabled(hasCodeAttribute);

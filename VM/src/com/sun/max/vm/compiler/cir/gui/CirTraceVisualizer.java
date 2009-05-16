@@ -1182,8 +1182,6 @@ final class CirTraceVisualizer extends JPanel {
             if (_currentTraceListIndex < 0) {
                 _currentTraceListIndex = 0;
             }
-        } else {
-            Break.stop();
         }
         traceList.add(cirAnnotatedTrace);
         if (_indexWithinTrace < 0 || traceList.size() == 2) {
