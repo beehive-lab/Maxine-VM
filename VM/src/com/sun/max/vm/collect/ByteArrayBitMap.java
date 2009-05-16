@@ -58,6 +58,10 @@ public final class ByteArrayBitMap implements Cloneable {
         _size = size;
     }
 
+    public ByteArrayBitMap(byte[] bytes) {
+        this(bytes, 0, bytes.length);
+    }
+
     /**
      * Returns a hash code value for this bit set.
      *
