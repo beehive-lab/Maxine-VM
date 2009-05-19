@@ -171,6 +171,7 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
                 _calleeSavedEirVariables[i] = createEirVariable(_calleeSavedEirRegisters[i].kind());
             }
             _calleeRepositoryEirVariables[i] = createEirVariable(_calleeSavedEirRegisters[i].kind());
+            _calleeRepositoryEirVariables[i].fixLocation(allocateSpillStackSlot());
         }
 
         final EirBlock prologueBlock = createEirBlock(IrBlock.Role.NORMAL);

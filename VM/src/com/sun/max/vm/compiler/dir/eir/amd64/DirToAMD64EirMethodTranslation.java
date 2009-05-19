@@ -41,7 +41,7 @@ public final class DirToAMD64EirMethodTranslation extends DirToEirMethodTranslat
 
     @Override
     protected EirAllocator createAllocator(EirMethodGeneration methodGeneration) {
-        //return new AMD64EirSomeAllocator(methodGeneration);
+        // return new AMD64EirSomeAllocator(methodGeneration);
         return new AMD64EirLinearScanAllocator(methodGeneration);
     }
 
