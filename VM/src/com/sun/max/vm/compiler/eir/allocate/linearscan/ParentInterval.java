@@ -95,11 +95,20 @@ public final class ParentInterval {
     }
 
     public Interval getChildAt(int endNumber) {
+
         for (Interval i : _children) {
             if (i.covers(endNumber)) {
                 return i;
             }
         }
+
+        // TODO (tw): Check why this is needed!
+        for (Interval i : _children) {
+            if (i.coversEndInclusive(endNumber)) {
+                return i;
+            }
+        }
+
         return null;
     }
 
