@@ -632,8 +632,11 @@ public final class Interval {
         }
 
         if (this.register() != null) {
+
+            final int registerOrdial1 = this.register().ordinal() + this.register().category().ordinal() * 100;
             if (other.register() != null) {
-                return this.register().ordinal() - other.register().ordinal();
+                final int registerOrdial2 = other.register().ordinal() + (other.register().category().ordinal() * 100);
+                return registerOrdial2 - registerOrdial1;
             }
             return 1;
         }
