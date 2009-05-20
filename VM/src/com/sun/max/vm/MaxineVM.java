@@ -115,7 +115,7 @@ public final class MaxineVM {
         native_writeMaxMemory(Heap.maxSize().toLong());
         native_writeTotalMemory(Heap.maxSize().toLong());
         // TODO: write a sensible value here, and keep native space up to date
-        native_writeFreeMemory(Heap.maxSize().toLong() / 2);
+        native_writeFreeMemory(Heap.maxSize().toLong() >> 1);
     }
 
     /**

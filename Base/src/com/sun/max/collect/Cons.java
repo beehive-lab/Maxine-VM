@@ -22,7 +22,6 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 
 /**
@@ -64,7 +63,6 @@ public class Cons<Element_Type> implements LinearCollection<Element_Type> {
     }
 
     public Iterator<Element_Type> iterator() {
-        @JdtSyntax("Workaround for type checker bug:")
         final Class<Cons<Element_Type>> type = null;
         return new Iterator<Element_Type>() {
             private final Cons<Element_Type> _start = StaticLoophole.cast(type, Cons.this);

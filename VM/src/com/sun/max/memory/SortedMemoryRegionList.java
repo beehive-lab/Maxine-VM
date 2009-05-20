@@ -45,7 +45,7 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
         int left = 0;
         int right = _memoryRegions.size();
         while (right > left) {
-            final int middle = left + ((right - left) / 2);
+            final int middle = left + ((right - left) >> 1);
             final MemoryRegion_Type middleRegion = _memoryRegions.get(middle);
             if (middleRegion.start().greaterThan(address)) {
                 right = middle;
@@ -80,7 +80,7 @@ public final class SortedMemoryRegionList<MemoryRegion_Type extends MemoryRegion
         int left = 0;
         int right = _memoryRegions.size();
         while (right > left) {
-            final int middle = left + ((right - left) / 2);
+            final int middle = left + ((right - left) >> 2);
             final MemoryRegion_Type middleRegion = _memoryRegions.get(middle);
             if (middleRegion.start().greaterThan(memoryRegion.start())) {
                 right = middle;

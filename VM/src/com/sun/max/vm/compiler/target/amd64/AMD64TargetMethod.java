@@ -40,7 +40,7 @@ public interface AMD64TargetMethod {
         }
 
         public static int registerReferenceMapSize() {
-            return AMD64GeneralRegister64.ENUMERATOR.numberOfValues() / Bytes.WIDTH;
+            return Unsigned.idiv(AMD64GeneralRegister64.ENUMERATOR.numberOfValues(), Bytes.WIDTH);
         }
 
         public static void patchCallSite(TargetMethod targetMethod, int callOffset, Word callEntryPoint) {

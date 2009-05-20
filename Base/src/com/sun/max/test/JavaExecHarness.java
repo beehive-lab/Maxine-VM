@@ -226,7 +226,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
     private Object parseValue(CharacterIterator iterator) {
         // parses strings of the form:
         // <integer> | <long> | <string> | true | false | null
-        skip(iterator);
+        skipWhitespace(iterator);
         if (iterator.current() == '-' || Character.isDigit(iterator.current())) {
             // parse a number.
             return parseNumber(iterator);
@@ -235,10 +235,10 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             return parseStringLiteral(iterator);
         } else if (peekAndEat(iterator, "true")) {
             // the boolean value (true)
-            return Boolean.valueOf(true);
+            return Boolean.TRUE;
         } else if (peekAndEat(iterator, "false")) {
             // the boolean value (false)
-            return Boolean.valueOf(false);
+            return Boolean.FALSE;
         } else if (peekAndEat(iterator, "null")) {
             // the null value (null)
             return null;
@@ -246,16 +246,51 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         throw ProgramError.unexpected("invalid value at " + iterator.getIndex());
     }
 
+    private ProgramError raiseParseErrorAt(String message, CharacterIterator iterator) {
+        final int errorIndex = iterator.getIndex();
+        final StringBuilder sb = new StringBuilder(message).append(String.format(":%n"));
+        iterator.setIndex(iterator.getBeginIndex());
+        for (char ch = iterator.current(); ch != CharacterIterator.DONE; ch = iterator.next()) {
+            sb.append(ch);
+        }
+        sb.append(String.format("%n"));
+        for (int i = 0; i < errorIndex; ++i) {
+            sb.append(' ');
+        }
+        sb.append('^');
+        throw ProgramError.unexpected(sb.toString());
+    }
+
     private Object parseNumber(CharacterIterator iterator) {
         // an integer.
-        final StringBuffer buf = new StringBuffer();
-        buf.append(iterator.current());
-        iterator.next();
-        appendDigits(buf, iterator);
+        final StringBuilder buf = new StringBuilder();
+
+        if (iterator.current() == '-') {
+            buf.append('-');
+            iterator.next();
+        }
+
+        int radix = 10;
+        if (iterator.current() == '0') {
+            radix = 8;
+            iterator.next();
+            if (iterator.current() == 'x' || iterator.current() == 'X') {
+                radix = 16;
+                iterator.next();
+            } else if (Character.digit(iterator.current(), 8) == -1) {
+                radix = 10;
+                buf.append('0');
+            }
+        }
+        appendDigits(buf, iterator, radix);
+
         if (peekAndEat(iterator, '.')) {
+            if (radix != 10) {
+                raiseParseErrorAt("Cannot have decimal point in number with radix " + radix, iterator);
+            }
             // parse the fractional suffix of a float or double
             buf.append('.');
-            appendDigits(buf, iterator);
+            appendDigits(buf, iterator, radix);
             if (peekAndEat(iterator, 'f') || peekAndEat(iterator, "F")) {
                 return Float.valueOf(buf.toString());
             }
@@ -264,36 +299,38 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             }
             return Float.valueOf(buf.toString());
         }
-        if (peekAndEat(iterator, 'f') || peekAndEat(iterator, "F")) {
-            return Float.valueOf(buf.toString());
-        }
-        if (peekAndEat(iterator, 'd') || peekAndEat(iterator, "D")) {
-            return Double.valueOf(buf.toString());
+        if (radix == 10) {
+            if (peekAndEat(iterator, 'f') || peekAndEat(iterator, "F")) {
+                return Float.valueOf(buf.toString());
+            }
+            if (peekAndEat(iterator, 'd') || peekAndEat(iterator, "D")) {
+                return Double.valueOf(buf.toString());
+            }
+            if (peekAndEat(iterator, 's') || peekAndEat(iterator, "S")) {
+                return Short.valueOf(buf.toString());
+            }
+            if (peekAndEat(iterator, 'b') || peekAndEat(iterator, "B")) {
+                return Byte.valueOf(buf.toString());
+            }
+            if (peekAndEat(iterator, 'c') || peekAndEat(iterator, "C")) {
+                return Character.valueOf((char) Integer.valueOf(buf.toString()).intValue());
+            }
         }
         if (peekAndEat(iterator, 'l') || peekAndEat(iterator, "L")) {
-            return Long.valueOf(buf.toString());
+            return Long.valueOf(buf.toString(), radix);
         }
-        if (peekAndEat(iterator, 's') || peekAndEat(iterator, "S")) {
-            return Short.valueOf(buf.toString());
-        }
-        if (peekAndEat(iterator, 'b') || peekAndEat(iterator, "B")) {
-            return Byte.valueOf(buf.toString());
-        }
-        if (peekAndEat(iterator, 'c') || peekAndEat(iterator, "C")) {
-            return Character.valueOf((char) Integer.valueOf(buf.toString()).intValue());
-        }
-        return Integer.valueOf(buf.toString());
+        return Integer.valueOf(buf.toString(), radix);
     }
 
-    private void appendDigits(final StringBuffer buf, CharacterIterator iterator) {
-        while (Character.isDigit(iterator.current())) {
+    private void appendDigits(final StringBuilder buf, CharacterIterator iterator, int radix) {
+        while (Character.digit(iterator.current(), radix) != -1) {
             buf.append(iterator.current());
             iterator.next();
         }
     }
 
     private Class<? extends Throwable> parseException(CharacterIterator iterator) {
-        final StringBuffer buf = new StringBuffer();
+        final StringBuilder buf = new StringBuilder();
         while (true) {
             final char ch = iterator.current();
             if (Character.isJavaIdentifierPart(ch) || ch == '.') {
@@ -306,12 +343,12 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         try {
             return Class.forName(buf.toString()).asSubclass(Throwable.class);
         } catch (ClassNotFoundException e) {
-            throw ProgramError.unexpected("unknown exception " + buf.toString());
+            throw raiseParseErrorAt("Unknown exception type", iterator);
         }
     }
 
     private boolean skipPeekAndEat(CharacterIterator iterator, char c) {
-        skip(iterator);
+        skipWhitespace(iterator);
         return peekAndEat(iterator, c);
     }
 
@@ -335,7 +372,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
         return true;
     }
 
-    private void skip(CharacterIterator iterator) {
+    private void skipWhitespace(CharacterIterator iterator) {
         while (true) {
             if (!Character.isWhitespace(iterator.current())) {
                 break;
@@ -413,7 +450,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
     }
 
     private String parseStringLiteral(CharacterIterator i) {
-        final StringBuffer buffer = new StringBuffer(i.getEndIndex() - i.getBeginIndex() + 1);
+        final StringBuilder buffer = new StringBuilder(i.getEndIndex() - i.getBeginIndex() + 1);
 
         expectChar(i, QUOTE);
         while (true) {
@@ -471,7 +508,7 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
     }
 
     public static String inputToString(Class testClass, Run run, boolean asJavaString) {
-        final StringBuffer buffer = new StringBuffer();
+        final StringBuilder buffer = new StringBuilder();
         if (asJavaString) {
             buffer.append(QUOTE);
         }

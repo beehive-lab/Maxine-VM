@@ -18,20 +18,19 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
-
-import java.lang.annotation.*;
-
-@Retention(RetentionPolicy.SOURCE)
-@Target({ ElementType.LOCAL_VARIABLE, ElementType.METHOD, ElementType.FIELD })
-
-/**
- * Mere comment indicating that IBM's JDT compiler has "special" syntax requirements
- * due to which we regretfully have to write more code than we normally would like to.
- *
- * @author Bernd Mathiske
+/*
+ * @Harness: java
+ * @Runs: (-1,4)=0x3FFFFFFF; (6,3)=2; (0xFFFF,16)=0xFFF
  */
-public @interface JdtSyntax {
+package test.lang;
 
-    String value();
+import com.sun.max.lang.*;
+
+public final class Unsigned_idiv01 {
+    private Unsigned_idiv01() {
+    }
+
+    public static int test(int dividend, int divisor) {
+        return Unsigned.idiv(dividend, divisor);
+    }
 }

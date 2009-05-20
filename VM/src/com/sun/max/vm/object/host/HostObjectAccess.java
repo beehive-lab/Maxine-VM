@@ -239,6 +239,6 @@ public final class HostObjectAccess {
         _objectMap.put(_mainThread.getThreadGroup(), threadGroup);
         _objectMap.put(threadGroup, threadGroup);
         _objectMap.put(MaxineVM.host(), MaxineVM.target());
-        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), HackJDK._initialSystemProperties);
+        _objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor._initialSystemProperties);
     }
 }

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.jit;
 
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 
 /**
@@ -68,7 +69,7 @@ public class RandomAccessWordBuffer {
 
     public void writeWord(Word value) {
         extend(_position + Word.size());
-        final int index = _position / Word.size();
+        final int index = Unsigned.idiv(_position, Word.size());
         WordArray.set(_words, index, value);
     }
 

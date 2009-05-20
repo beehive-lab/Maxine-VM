@@ -186,7 +186,6 @@ public abstract class DirToEirMethodTranslation extends EirMethodGeneration {
             prologueBlock.appendInstruction(createAssignment(prologueBlock, _calleeSavedEirRegisters[i].kind(), _calleeRepositoryEirVariables[i], _calleeSavedEirVariables[i]));
         }
 
-        @JdtSyntax("ineffective type checker")
         final Class<PoolSet<EirRegister>> type = null;
         final PoolSet<EirRegister> callerSavedRegisters = StaticLoophole.cast(type, abi().callerSavedRegisters());
         if (callerSavedRegisters.contains(abi().framePointer())) {

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack.amd64;
 
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jit.amd64.*;
@@ -60,7 +61,7 @@ public class AMD64JitStackFrame extends JitStackFrame<AMD64JitStackFrameLayout> 
     @Override
     public int operandStackDepth() {
         final Pointer operandStackBase = operandStackPointer(0);
-        return stackPointer().minus(operandStackBase).toInt() / JitStackFrameLayout.JIT_SLOT_SIZE;
+        return Unsigned.idiv(stackPointer().minus(operandStackBase).toInt(), JitStackFrameLayout.JIT_SLOT_SIZE);
     }
 
     @Override

@@ -27,7 +27,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.prototype.*;
-import com.sun.max.vm.prototype.HackJDK.*;
+import com.sun.max.vm.prototype.JDKInterceptor.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -62,10 +62,10 @@ public final class HostTupleAccess {
             final InjectedFieldActor injectedFieldActor = (InjectedFieldActor) fieldActor;
             return injectedFieldActor.readInjectedValue(Reference.fromJava(tuple));
         }
-        // is this a special field?
-        final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
-        if (specialField != null) {
-            return specialField.getValue(tuple, fieldActor);
+        // is this an intercepted field?
+        final InterceptedField interceptedField = JDKInterceptor.getInterceptedField(fieldActor);
+        if (interceptedField != null) {
+            return interceptedField.getValue(tuple, fieldActor);
         }
         // does the field have a constant value?
         final Value constantValue = fieldActor.constantValue();

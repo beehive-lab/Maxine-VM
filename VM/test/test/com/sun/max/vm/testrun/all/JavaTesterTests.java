@@ -12190,6 +12190,34 @@ public class JavaTesterTests {
         }
         JavaTesterRunScheme.end(null, true);
     }
+    static void test_lang_Unsigned_idiv01() {
+        JavaTesterRunScheme.begin("test.lang.Unsigned_idiv01");
+        String runString = null;
+        try {
+        // test(-1,4) == 1073741823
+            runString = "test(-1,4)";
+            if (1073741823 != test.lang.Unsigned_idiv01.test(-1, 4)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(6,3) == 2
+            runString = "test(6,3)";
+            if (2 != test.lang.Unsigned_idiv01.test(6, 3)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        // test(65535,16) == 4095
+            runString = "test(65535,16)";
+            if (4095 != test.lang.Unsigned_idiv01.test(65535, 16)) {
+                JavaTesterRunScheme.end(runString, false);
+                return;
+            }
+        } catch (Throwable t) {
+            JavaTesterRunScheme.end(runString, t);
+            return;
+        }
+        JavaTesterRunScheme.end(null, true);
+    }
     static void test_hotpath_HP_allocate01() {
         JavaTesterRunScheme.begin("test.hotpath.HP_allocate01");
         String runString = null;

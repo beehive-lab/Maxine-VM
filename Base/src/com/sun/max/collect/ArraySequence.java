@@ -104,7 +104,7 @@ public class ArraySequence<Element_Type> implements MutableSequence<Element_Type
     @Override
     public int hashCode() {
         int result = 0;
-        final int delta = (_array.length / 4) + 1;
+        final int delta = (_array.length >> 2) + 1;
         for (int i = 0; i < _array.length; i += delta) {
             final Element_Type element = _array[i];
             result += element == null ? i : element.hashCode();

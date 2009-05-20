@@ -116,7 +116,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
         if (!(tag instanceof CirConstant)) {
             return false;
         }
-        assert numberOfMatches() == (arguments.length - 2) / 2;
+        assert numberOfMatches() == (arguments.length - 2) >> 1;
         for (int i = 1; i <= numberOfMatches(); i++) {
             if (!(arguments[i] instanceof CirConstant)) {
                 return false;
@@ -134,7 +134,7 @@ public class CirSwitch extends CirProcedure implements CirFoldable, CirReducible
         final CirConstant tag = (CirConstant) arguments[0];
         final Value tagValue = _comparisonKind.convert(tag.toStackValue());
         final int n = numberOfMatches();
-        assert n == (arguments.length - 2) / 2;
+        assert n == (arguments.length - 2) >> 1;
         for (int i = 1; i <= n; i++) {
             final CirConstant match = (CirConstant) arguments[i];
             final Value matchValue = _comparisonKind.convert(match.toStackValue());
