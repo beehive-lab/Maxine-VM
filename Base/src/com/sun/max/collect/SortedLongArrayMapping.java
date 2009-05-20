@@ -44,7 +44,7 @@ public class SortedLongArrayMapping<Value_Type> {
         int left = 0;
         int right = _keys.length;
         while (right > left) {
-            final int middle = left + ((right - left) / 2);
+            final int middle = left + ((right - left) >> 1);
             final long middleKey = _keys[middle];
             if (middleKey == key) {
                 return middle;

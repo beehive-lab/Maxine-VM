@@ -22,7 +22,7 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 import java.lang.management.*;
-import java.lang.reflect.*;
+import java.lang.ref.*;
 import java.util.*;
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -257,7 +257,8 @@ public final class DataPrototype extends Prototype {
         int count = 0;
         final Address mark = heapRegion.getAllocationMark();
         for (Object object : _graphPrototype.objects()) {
-            if (_graphPrototype.classInfoFor(object).containsMutableReferences() == objectsWithMutableReferences) {
+            final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
+            if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
                 Address cell = _objectToCell.get(object);
                 if (cell != null) {
                     assert Code.bootCodeRegion().contains(cell);
@@ -277,17 +278,26 @@ public final class DataPrototype extends Prototype {
         return heapRegion.getAllocationMark().minus(mark).toInt();
     }
 
+    /**
+     * Creates the reference map covering the objects in the boot heap that contain references that may
+     * be modified by the VM at runtime. The assignment of addresses for the boot heap will have ensured
+     * that such mutable objects are at the front of the heap, before all non-mutable objects.
+     *
+     * @param heapRegion the boot heap region
+     * @param mutableHeapObjectsSize the number of bytes at the front of the boot heap occupied by mutable objects
+     */
     private void createHeapReferenceMap(final BootHeapRegion heapRegion, final int mutableHeapObjectsSize) {
         Trace.begin(1, "createHeapReferenceMap:");
-        final int heapReferenceMapSize = Size.fromLong(ByteArrayBitMap.computeBitMapSize(mutableHeapObjectsSize / _alignment)).aligned().toInt();
+        final int heapReferenceMapSize = Size.fromLong(ByteArrayBitMap.computeBitMapSize(mutableHeapObjectsSize / Word.size())).aligned().toInt();
         final ByteArrayBitMap referenceMap = new ByteArrayBitMap(new byte[heapReferenceMapSize]);
+        final AppendableSequence<Reference> specialReferences = new ArrayListSequence<Reference>();
 
         int count = 0;
         for (Object object : _graphPrototype.objects()) {
             final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
-            if (classInfo.containsMutableReferences()) {
-                final Address cell1 = _objectToCell.get(object);
-                if (!Code.bootCodeRegion().contains(cell1)) {
+            if (classInfo.containsMutableReferences(object)) {
+                final Address cell = _objectToCell.get(object);
+                if (!Code.bootCodeRegion().contains(cell)) {
                     final Hub hub = HostObjectAccess.readHub(object);
                     final SpecificLayout specificLayout = hub.specificLayout();
                     if (specificLayout.isArrayLayout()) {
@@ -295,7 +305,8 @@ public final class DataPrototype extends Prototype {
                             final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
                             final int n = ((Object[]) object).length;
                             if (n != 0) {
-                                final int element0Index = cell1.plus(arrayLayout.getElementOffsetInCell(0)).dividedBy(_alignment).toInt();
+                                final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
+                                final int element0Index = origin.plus(arrayLayout.getElementOffsetFromOrigin(0)).dividedBy(Word.size()).toInt();
                                 for (int i = 0; i < n; i++) {
                                     final int index = element0Index + i;
                                     assert !referenceMap.isSet(index);
@@ -304,13 +315,20 @@ public final class DataPrototype extends Prototype {
                             }
                         }
                     } else {
-                        final Pointer origin = specificLayout.cellToOrigin(cell1.asPointer());
-                        for (Field field : classInfo._mutableReferenceFields) {
-                            final FieldActor fieldActor = FieldActor.fromJava(field);
+                        final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
+                        for (ReferenceFieldInfo fieldInfo : classInfo.fieldInfos(object)) {
+                            final FieldActor fieldActor = fieldInfo.fieldActor();
+                            if (fieldActor.isSpecialReference()) {
+                                continue;
+                            }
                             final Pointer address = origin.plus(fieldActor.offset());
                             final int index = address.toInt() / _alignment;
                             assert !referenceMap.isSet(index);
                             referenceMap.set(index);
+                        }
+
+                        if (object instanceof Reference) {
+                            specialReferences.append((Reference) object);
                         }
                     }
                     if (++count % 100000 == 0) {
@@ -319,11 +337,34 @@ public final class DataPrototype extends Prototype {
                 }
             }
         }
-        final byte[] referenceMapBytes = referenceMap.bytes();
-        final Address cell = heapRegion.allocateCell(HostObjectAccess.getSize(referenceMapBytes));
-        assignHeapCell(referenceMapBytes, cell);
-        heapRegion.setReferenceMap(referenceMapBytes);
-        Trace.end(1, "createHeapReferenceMap:");
+
+        byte[] referenceMapBytes = referenceMap.bytes();
+        if (_dataModel.endianness() != Endianness.LITTLE) {
+            // Convert the bytes in the reference map to the target endianness so that it can be
+            // correctly read as words. By default, the reference map can be read as an array
+            // of little endian words and so there's no need for the conversion in this case.
+            final int length = referenceMapBytes.length;
+            final ByteArrayInputStream inputStream = new ByteArrayInputStream(referenceMapBytes);
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(length);
+            try {
+                final int referenceMapWordLength = length / Word.size();
+                for (int i = 0; i < referenceMapWordLength; ++i) {
+                    final Address referenceMapWord = Address.readFrom(inputStream, Endianness.LITTLE);
+                    referenceMapWord.writeTo(outputStream, _dataModel.endianness());
+                }
+            } catch (IOException ioException) {
+                throw ProgramError.unexpected("Error converting boot heap reference map from little endian to " + _dataModel.endianness(), ioException);
+            }
+            referenceMapBytes = outputStream.toByteArray();
+            assert length == referenceMapBytes.length;
+        }
+
+        final Reference[] specialReferenceArray = specialReferences.toCollection().toArray(new Reference[specialReferences.length()]);
+        assignHeapCell(referenceMapBytes, heapRegion.allocateCell(HostObjectAccess.getSize(referenceMapBytes)));
+        assignHeapCell(specialReferenceArray, heapRegion.allocateCell(HostObjectAccess.getSize(specialReferenceArray)));
+        heapRegion.init(referenceMapBytes, specialReferenceArray);
+        Trace.end(1, "createHeapReferenceMap: width=" + referenceMap.width() + ", cardinality=" +
+            referenceMap.cardinality() + ", size=" + referenceMap.size() + ", #special references=" + specialReferenceArray.length);
     }
 
     /**

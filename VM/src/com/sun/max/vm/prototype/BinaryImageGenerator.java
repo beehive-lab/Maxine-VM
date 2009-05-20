@@ -193,6 +193,7 @@ public final class BinaryImageGenerator {
             _options.parseArguments(programArguments);
 
             if (_help.getValue()) {
+                prototypeGenerator.createVMConfiguration(prototypeGenerator.createDefaultVMConfiguration());
                 _options.printHelp(System.out, 80);
                 return;
             }

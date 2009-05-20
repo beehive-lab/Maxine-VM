@@ -288,7 +288,7 @@ public class ChainedHashMapping<Key_Type, Value_Type> extends HashMapping<Key_Ty
                     prev.setNext(next);
                 }
                 if (--_numberOfEntries < _shrinkThreshold) {
-                    resize(_table.length / 2);
+                    resize(_table.length >> 1);
                 }
                 entry.setNext(null);
                 return entry.value();

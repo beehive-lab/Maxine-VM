@@ -33,10 +33,6 @@ import com.sun.max.vm.actor.holder.*;
  */
 public class JDK {
 
-    @SUBSTITUTE
-    public static native void java_lang_ThreadGroup_clinit();
-
-
     // Checkstyle: stop field name check
     public static final ClassRef java_lang_ApplicationShutdownHooks  = new ClassRef("java.lang.ApplicationShutdownHooks");
     public static final ClassRef java_lang_Class                     = new ClassRef(Class.class);

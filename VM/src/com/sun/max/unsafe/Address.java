@@ -20,6 +20,7 @@
  */
 package com.sun.max.unsafe;
 
+import java.io.*;
 import java.math.*;
 
 import com.sun.max.annotate.*;
@@ -91,6 +92,28 @@ public abstract class Address extends Word {
         return UnsafeLoophole.intToWord(value);
     }
 
+    /**
+     * Reads an address from a given input stream using a given endianness.
+     */
+    public static Address readFrom(InputStream inputStream, Endianness endianness) throws IOException {
+        if (Word.width() == WordWidth.BITS_64) {
+            return Address.fromLong(endianness.readLong(inputStream));
+        }
+        return Address.fromInt(endianness.readInt(inputStream));
+    }
+
+    /**
+     * Writes this address to a given output stream using a given endianness.
+     */
+    @INLINE
+    public final void writeTo(OutputStream outputStream, Endianness endianness) throws IOException {
+        if (Word.width() == WordWidth.BITS_64) {
+            endianness.writeLong(outputStream, toLong());
+        } else {
+            endianness.writeInt(outputStream, toInt());
+        }
+    }
+
     @INLINE
     public static Address fromLong(long value) {
         if (Word.isBoxed()) {
@@ -145,19 +168,6 @@ public abstract class Address extends Word {
         return BigInteger.valueOf(high).shiftLeft(32).or(BigInteger.valueOf(low)).toString();
     }
 
-    public static void main(String[] args) {
-        System.out.println(Long.toString(0x100100001L));
-        System.out.println(Long.toString(0x00100001L));
-        System.out.println(Long.toBinaryString(0xffffffffffffffffL));
-        System.out.println(Long.toBinaryString(-1L));
-
-        final BigInteger max = BigInteger.valueOf(0xffffffffL).shiftLeft(32).or(BigInteger.valueOf(0xffffffffL));
-        System.out.println(max.toString());
-        System.out.println(max.toString(2));
-        System.out.println(max.toString(2).length());
-        System.out.println(BigInteger.valueOf(0xffffffffffffffffL).shiftRight(1).toString());
-
-    }
     public static Address parse(String s, int radix) {
         Address result = Address.zero();
         for (int i = 0; i < s.length(); i++) {

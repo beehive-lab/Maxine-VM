@@ -838,7 +838,7 @@ public final class Layout {
 
     @UNSAFE
     @FOLD
-    private static ReferenceArrayLayout referenceArrayLayout() {
+    public static ReferenceArrayLayout referenceArrayLayout() {
         return layoutScheme().referenceArrayLayout();
     }
 

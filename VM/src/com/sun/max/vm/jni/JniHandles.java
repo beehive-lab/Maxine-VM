@@ -44,7 +44,7 @@ import com.sun.max.vm.thread.*;
  *
  * This class implements a pool of JNI handles.
  *
- * In the MaxineVM VM, we need to take into account that objects may be allocated
+ * In the Maxine VM, we need to take into account that objects may be allocated
  * in a hardware object memory where one cannot take the address of an element or field within
  * an object (i.e. there can be no pointers into the middle of such objects).
  *

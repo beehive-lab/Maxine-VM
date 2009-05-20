@@ -26,26 +26,24 @@ import java.util.*;
 
 import sun.misc.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jdk.JDK.*;
+import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
 /**
- * This class encapsulates a number of hacks to work around inexplicable problems
- * in the JDK and alter some quantities (e.g. the library path) of the underlying host
- * virtual machine.
+ * This class encapsulates a number of mechanisms for intercepting certain parts of JDK
+ * state for the purpose of modifying how that state is copied into the boot image.
  *
  * @author Ben L. Titzer
  * @author Bernd Mathiske
  */
-@PROTOTYPE_ONLY
-public final class HackJDK {
+public final class JDKInterceptor {
 
-    private HackJDK() {
+    private JDKInterceptor() {
     }
 
     /**
@@ -79,11 +77,11 @@ public final class HackJDK {
     }
 
     /**
-     * This array contains all the special fields that are either ignored (i.e. set to zero) or
+     * This array contains all the intercepted fields that are either ignored (i.e. set to zero) or
      * specially handled when building the prototype.
      */
     // Checkstyle: stop
-    private static final Object[] _specialFieldArray = {
+    private static final Object[] _interceptedFieldArray = {
         JDK.java_lang_ApplicationShutdownHooks,
             new ValueField("hooks", ReferenceValue.from(new IdentityHashMap<Thread, Thread>())),
         JDK.java_lang_Class,
@@ -149,6 +147,9 @@ public final class HackJDK {
             "blocker",
             "threadLocals",
             "inheritableThreadLocals",
+        JDK.java_lang_ProcessEnvironment,
+            "theEnvironment+",
+            "theUnmodifiableEnvironment+",
         JDK.sun_misc_VM,
             "booted",
             "finalRefCount",
@@ -196,7 +197,7 @@ public final class HackJDK {
     };
     // Checkstyle: start
 
-    private static final Map<String, Map<String, SpecialField>> _specialFieldMap = buildSpecialFieldMap(_specialFieldArray);
+    private static final Map<String, Map<String, InterceptedField>> _interceptedFieldMap = buildInterceptedFieldMap(_interceptedFieldArray);
 
     /**
      * Checks whether the specified field should be omitted.
@@ -207,25 +208,25 @@ public final class HackJDK {
         if (field.getName().startsWith("$SWITCH_TABLE")) {
             return true;
         }
-        final SpecialField specialField = getSpecialField(field);
-        if (specialField instanceof ZeroField) {
+        final InterceptedField interceptedField = getInterceptedField(field);
+        if (interceptedField instanceof ZeroField) {
             return true;
         }
         return false;
     }
 
-    public static SpecialField getSpecialField(FieldActor fieldActor) {
+    public static InterceptedField getInterceptedField(FieldActor fieldActor) {
         final String className = fieldActor.holder().name().toString();
-        final Map<String, SpecialField> map = _specialFieldMap.get(className);
+        final Map<String, InterceptedField> map = _interceptedFieldMap.get(className);
         if (map != null) {
             return map.get(fieldActor.name().toString());
         }
         return null;
     }
 
-    public static SpecialField getSpecialField(Field field) {
+    public static InterceptedField getInterceptedField(Field field) {
         final String className = field.getDeclaringClass().getName();
-        final Map<String, SpecialField> map = _specialFieldMap.get(className);
+        final Map<String, InterceptedField> map = _interceptedFieldMap.get(className);
         if (map != null) {
             return map.get(field.getName());
         }
@@ -233,38 +234,39 @@ public final class HackJDK {
     }
 
     /**
-     * Builds a map that stores the special fields for each class.
+     * Builds a map that stores the intercepted fields for each class.
      * @param specification an array of objects consisting of a ClassRef followed by a non-empty sequence of either
-     * String objects or SpecialField objects.
-     * @return a map from java classes to their special fields
+     * String objects or InterceptedField objects.
+     * @return a map from java classes to their intercepted fields
      */
-    private static Map<String, Map<String, SpecialField>> buildSpecialFieldMap(Object[] specification) {
-        final Map<String, Map<String, SpecialField>> map = new HashMap<String, Map<String, SpecialField>>();
+    private static Map<String, Map<String, InterceptedField>> buildInterceptedFieldMap(Object[] specification) {
+        final Map<String, Map<String, InterceptedField>> map = new HashMap<String, Map<String, InterceptedField>>();
         int i = 0;
         for (; i < specification.length; i++) {
             final Object object = specification[i];
             if (object instanceof ClassRef) {
-                // we found a classref, add it and its special fields to the map
+                // we found a classref, add it and its intercepted fields to the map
                 final Class javaClass = ((ClassRef) object).javaClass();
-                final Map<String, SpecialField> fieldMap = new HashMap<String, SpecialField>();
+                final Map<String, InterceptedField> fieldMap = new HashMap<String, InterceptedField>();
                 map.put(javaClass.getName(), fieldMap);
 
                 // add all the subsequent field entries to the map
                 for (++i; i < specification.length; i++) {
                     final Object field = specification[i];
-                    if (field instanceof SpecialField) {
-                        final SpecialField specialField = (SpecialField) field;
-                        fieldMap.put(specialField.getName(), specialField);
+                    if (field instanceof InterceptedField) {
+                        final InterceptedField interceptedField = (InterceptedField) field;
+                        fieldMap.put(interceptedField.getName(), interceptedField);
                     } else if (field instanceof String) {
-                        final String fieldName = (String) field;
-                        fieldMap.put(fieldName, new ZeroField(fieldName));
+                        final String fieldSpec = (String) field;
+                        final ZeroField zeroField = new ZeroField(fieldSpec);
+                        fieldMap.put(zeroField.getName(), zeroField);
                     } else {
                         i--;
                         break;
                     }
                 }
             } else {
-                ProgramError.unexpected("format of special field array is wrong");
+                ProgramError.unexpected("format of intercepted field array is wrong");
             }
         }
         return map;
@@ -276,10 +278,10 @@ public final class HackJDK {
      * @param fieldName the name of the field as a string
      */
     public static void resetField(Class javaClass, String fieldName) {
-        Map<String, SpecialField> fieldMap = _specialFieldMap.get(javaClass.getName());
+        Map<String, InterceptedField> fieldMap = _interceptedFieldMap.get(javaClass.getName());
         if (fieldMap == null ) {
-            fieldMap = new HashMap<String, SpecialField>();
-            _specialFieldMap.put(javaClass.getName(), fieldMap);
+            fieldMap = new HashMap<String, InterceptedField>();
+            _interceptedFieldMap.put(javaClass.getName(), fieldMap);
         }
         fieldMap.put(fieldName, new ZeroField(fieldName));
     }
@@ -295,19 +297,59 @@ public final class HackJDK {
         return properties;
     }
 
-    public abstract static class SpecialField {
+    /**
+     * A mechanism for special-casing the value of a field from a JDK class that is written into
+     * the boot image. All other fields of JDK classes simply have their current value (read via
+     * reflection) written to the boot image.
+     */
+    public abstract static class InterceptedField {
         private final String _name;
         public FieldActor _fieldActor;
-        SpecialField(String name) {
-            _name = name;
+        /**
+         * Override of mutability: null:no-override, TRUE:mutable, FALSE:immutable.
+         */
+        private final Boolean _mutabilityOverride;
+        InterceptedField(String name) {
+            final char lastChar = name.charAt(name.length() - 1);
+            if (lastChar == '-' || lastChar == '+') {
+                _name = name.substring(0, name.length() - 1);
+                _mutabilityOverride = Boolean.valueOf(lastChar == '+');
+            } else {
+                _name = name;
+                _mutabilityOverride = null;
+                assert Character.isJavaIdentifierPart(lastChar) : "Invalid Java field name: " + name;
+            }
         }
         public String getName() {
             return _name;
         }
+
+        /**
+         * Gets the value of the field represented by this object that is to be written to the boot image.
+         *
+         * @param object an object of the class in which this field is defined
+         * @param field the field for which a value is being requested.
+         */
         public abstract Value getValue(Object object, FieldActor field);
+
+        /**
+         * Determines if this field is mutable.
+         *
+         * @return whether the value of this field can be modified in the VM
+         */
+        boolean isMutable() {
+            if (_mutabilityOverride == null) {
+                return !_fieldActor.isConstant();
+            }
+            return _mutabilityOverride;
+        }
     }
 
-    private static class ValueField extends SpecialField {
+    /**
+     * An intercepted field whose boot image value is a fixed to a value given in the
+     * {@linkplain ValueField#ValueField(String, Value) constructor}.
+     */
+    private static class ValueField extends InterceptedField {
         private final Value _value;
         ValueField(String name, Value val) {
             super(name);
@@ -319,7 +361,11 @@ public final class HackJDK {
         }
     }
 
-    public static class ZeroField extends SpecialField {
+    /**
+     * An intercepted field whose boot image value is the {@linkplain Kind#zeroValue() zero value}
+     * corresponding to the field's kind.
+     */
+    public static class ZeroField extends InterceptedField {
         ZeroField(String name) {
             super(name);
         }
@@ -329,7 +375,7 @@ public final class HackJDK {
         }
     }
 
-    private static class AtomicFieldUpdaterOffsetRecomputation extends SpecialField {
+    private static class AtomicFieldUpdaterOffsetRecomputation extends InterceptedField {
         AtomicFieldUpdaterOffsetRecomputation(String name) {
             super(name);
         }
@@ -368,7 +414,7 @@ public final class HackJDK {
         }
     }
 
-    private static class ExpiringCacheField extends SpecialField {
+    private static class ExpiringCacheField extends InterceptedField {
         private final Map<Object, Object> _newValues = new IdentityHashMap<Object, Object>();
         ExpiringCacheField(String name) {
             super(name);
@@ -384,7 +430,11 @@ public final class HackJDK {
         }
     }
 
-    private static class FieldOffsetRecomputation extends SpecialField {
+    /**
+     * An intercepted field whose boot image value is the {@linkplain FieldActor#offset() offset} of another field.
+     * This facility is required to fix up field values obtained via {@link Unsafe#fieldOffset(Field)}.
+     */
+    private static class FieldOffsetRecomputation extends InterceptedField {
         private final ClassRef _classRef;
         private final String _fieldName;
         FieldOffsetRecomputation(String offsetFieldName, ClassRef classRef, String fieldName) {

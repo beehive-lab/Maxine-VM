@@ -771,6 +771,10 @@ public class MaxineTester {
         return sb.toString();
     }
 
+    private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
+        return exec(workingDir, command, env, outputFile, false, name, timeout);
+    }
+
     /**
      * Executes a command in a sub-process. The execution uses a shell command to perform redirection of the standard
      * output and error streams.
@@ -787,7 +791,7 @@ public class MaxineTester {
      * @param timeout the timeout in seconds
      * @return
      */
-    private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
+    private static int exec(File workingDir, String[] command, String[] env, File outputFile, boolean append, String name, int timeout) {
         traceExec(workingDir, command);
         try {
             final StringBuilder sb = new StringBuilder("exec ");
@@ -795,8 +799,8 @@ public class MaxineTester {
                 sb.append(escapeShellCharacters(s)).append(' ');
             }
             if (outputFile != null) {
-                sb.append(">" + outputFile.getAbsolutePath());
-                sb.append(" 2>" + stderrFile(outputFile));
+                sb.append((append ? ">" : ">>") + outputFile.getAbsolutePath());
+                sb.append((append ? " 2>" : " 2>>") + stderrFile(outputFile));
             } else {
                 sb.append(">/dev/null");
                 sb.append(" 2>&1");

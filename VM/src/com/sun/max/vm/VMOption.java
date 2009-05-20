@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm;
 
+import java.util.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
@@ -86,6 +88,9 @@ public class VMOption {
         assert phase != null;
         VMOptions.addOption(this, phase);
     }
+
+    @PROTOTYPE_ONLY
+    static List<String> _commandLine = new ArrayList<String>();
 
     /**
      * Called when the prefix of this option is matched on the command line,

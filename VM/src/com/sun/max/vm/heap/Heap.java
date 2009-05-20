@@ -21,7 +21,6 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
-import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -130,7 +129,7 @@ public final class Heap {
     /**
      * Determines if allocation should be traced.
      *
-     * @returns {@code false} if VM build level is not {@link BuildLevel#DEBUG}.
+     * @returns {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
      */
     @INLINE
     public static boolean traceAllocation() {
@@ -138,6 +137,15 @@ public final class Heap {
             return false;
         }
         return _traceAllocation;
+    }
+
+    /**
+     * Modifies the value of the flag determining if allocation should be traced. This flag is ignored if the VM
+     * {@linkplain VMConfiguration#buildLevel() build level} is not {@link BuildLevel#DEBUG}. This is typically provided
+     * so that error situations can be reported without being confused by interleaving allocation traces.
+     */
+    public static void setTraceAllocation(boolean flag) {
+        _traceAllocation = flag;
     }
 
     private static final VMOption _traceAllocationOption;
@@ -178,11 +186,6 @@ public final class Heap {
     public static boolean traceGCTime() {
         return _traceGCTime;
     }
-
-    /**
-     * The clock that specifies the timing resolution for GC related timing.
-     */
-    public static final Clock GC_TIMING_CLOCK = Clock.SYSTEM_MILLISECONDS;
 
     private static boolean _traceGC;
     private static boolean _traceGCRootScanning;

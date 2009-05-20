@@ -21,6 +21,7 @@
 package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
+import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -29,6 +30,11 @@ import com.sun.max.vm.reference.*;
 import com.sun.max.vm.thread.*;
 
 public interface HeapScheme extends VMScheme {
+
+    /**
+     * The clock that specifies the timing resolution for GC related timing.
+     */
+    Clock GC_TIMING_CLOCK = Clock.SYSTEM_MILLISECONDS;
 
     /**
      * Determines whether a given thread belongs to the garbage collector. This method is only called outside of

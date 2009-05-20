@@ -437,7 +437,7 @@ public class ExtendImageRunScheme extends JavaRunScheme {
         try {
             Trace.line(1, "resetting field " +  argument + " to default value");
             final Class<?> javaClass = Class.forName(className, false, PrototypeClassLoader.PROTOTYPE_CLASS_LOADER);
-            HackJDK.resetField(javaClass, fieldName);
+            JDKInterceptor.resetField(javaClass, fieldName);
             /*
             final ClassActor classActor = ClassActor.fromJava(javaClass);
             final StaticTuple staticTuple =  (StaticTuple) classActor.staticTuple();

@@ -135,13 +135,13 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private Pointer _allocationMarkPointer;
 
     // Create timing facilities.
-    private final Timer _clearTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _gcTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _rootScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _bootHeapScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _codeScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _copyTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _weakRefTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _clearTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _gcTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _rootScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _bootHeapScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _codeScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _copyTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _weakRefTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
 
     private int _numberOfGarbageCollectionInvocations;
 
@@ -230,7 +230,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Timings (");
-                    Log.print(Heap.GC_TIMING_CLOCK.getHZAsSuffix());
+                    Log.print(HeapScheme.GC_TIMING_CLOCK.getHZAsSuffix());
                     Log.print(") for GC ");
                     Log.print(_numberOfGarbageCollectionInvocations);
                     Log.print(": clear & initialize=");

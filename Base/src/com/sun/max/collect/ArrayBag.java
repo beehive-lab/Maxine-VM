@@ -22,7 +22,6 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
 
@@ -50,7 +49,6 @@ public class ArrayBag<Key_Type, Value_Type> {
 
     public ArrayBag(Class<Value_Type> valueType, MapType mapType) {
         _valueType = valueType;
-        @JdtSyntax("JDT compiler bug (https://bugs.eclipse.org/bugs/show_bug.cgi?id=151153): invalid stackmap generated if this code is replaced by a ternary operator")
         final Map<Key_Type, Value_Type[]> map;
         if (mapType == MapType.SORTED) {
             map = new TreeMap<Key_Type, Value_Type[]>();

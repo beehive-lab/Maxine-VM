@@ -23,6 +23,7 @@ package com.sun.max.vm.stack;
 import java.util.*;
 
 import com.sun.max.collect.*;
+import com.sun.max.lang.*;
 import com.sun.max.lang.Arrays;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.collect.*;
@@ -154,7 +155,7 @@ public abstract class JavaStackFrameLayout {
             final int maximumSlotOffset = maximumSlotOffset();
             final int lowestSlotOffset = lowestSlotOffset();
             assert maximumSlotOffset >= lowestSlotOffset;
-            final int slotCount = (maximumSlotOffset - lowestSlotOffset) / STACK_SLOT_SIZE;
+            final int slotCount = Unsigned.idiv(maximumSlotOffset - lowestSlotOffset, STACK_SLOT_SIZE);
             _slots = new Slot[slotCount];
 
             int index = 0;
@@ -176,7 +177,7 @@ public abstract class JavaStackFrameLayout {
                     return "return address";
                 }
             }
-            final int slotIndex = offset / STACK_SLOT_SIZE;
+            final int slotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
             return "slot " + slotIndex;
         }
 
@@ -190,7 +191,7 @@ public abstract class JavaStackFrameLayout {
          */
         protected int referenceMapIndexForSlot(int offset) {
             if (offset < frameSize() && offset >= 0) {
-                return offset / STACK_SLOT_SIZE;
+                return Unsigned.idiv(offset, STACK_SLOT_SIZE);
             }
             return -1;
         }
@@ -218,7 +219,7 @@ public abstract class JavaStackFrameLayout {
          * @return null if there is no slot at the given offset
          */
         public final Slot slotAtOffset(int offset) {
-            final int index = (maximumSlotOffset() - offset) / STACK_SLOT_SIZE;
+            final int index = Unsigned.idiv(maximumSlotOffset() - offset, STACK_SLOT_SIZE);
             if (index < 0 || index >= _slots.length) {
                 return null;
             }

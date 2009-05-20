@@ -27,7 +27,7 @@ import com.sun.max.vm.compiler.cir.*;
  * that are reachable from the given node to blocks
  * to facilitate their being shared,
  * not replicated throughout further transformations.
- * 
+ *
  * There may be several "first" CirSwitch nodes
  * encountered along different continuations
  * (taking exceptions into account).
@@ -43,7 +43,7 @@ public final class CirSwitchEncapsulation extends CirTraversal {
     }
 
     private void encapsulateSwitchArguments(CirValue[] arguments) {
-        for (int i = arguments.length / 2; i < arguments.length; i++) { // i.e., for all continuation arguments
+        for (int i = arguments.length >> 1; i < arguments.length; i++) { // i.e., for all continuation arguments
             if (arguments[i] instanceof CirClosure) {
                 final CirClosure continuation = (CirClosure) arguments[i];
                 continuation.makeBlockCall();

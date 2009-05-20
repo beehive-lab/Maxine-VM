@@ -21,6 +21,7 @@
 package com.sun.max.vm.prototype;
 
 import java.io.*;
+import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -34,9 +35,8 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.object.host.*;
 import com.sun.max.vm.prototype.GraphStats.*;
-import com.sun.max.vm.prototype.HackJDK.*;
+import com.sun.max.vm.prototype.JDKInterceptor.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
 
 /**
  * A graph prototype represents the pre-initialized prototype of the virtual
@@ -71,18 +71,134 @@ public class GraphPrototype extends Prototype {
     }
 
     /**
+     * The information gathered for a reference field of a class during exploration of the graph.
+     */
+    abstract static class ReferenceFieldInfo {
+        /**
+         * Determines if this field is mutable.
+         *
+         * @return whether the value of this field can be modified in the target VM
+         */
+        boolean isMutable() {
+            return !fieldActor().isConstant();
+        }
+
+        /**
+         * Gets the name of this field.
+         *
+         * @return the name of this field
+         */
+        abstract String getName();
+
+        /**
+         * Gets the value this field should have in the boot image.
+         *
+         * @param object the object from which the field value can be read if this is a non-static field; otherwise this
+         *            value is ignored
+         * @return the value of this field in {@code object} if this is an instance field, otherwise the value of this
+         *         static field
+         */
+        abstract Object getValue(Object object);
+
+        /**
+         * Gets the {@code FieldActor} corresponding to this field.
+         */
+        abstract FieldActor fieldActor();
+
+        /**
+         * Gets a string representation of this field.
+         *
+         * @return the value of {@link #getName()} with "*" appended if this field is {@linkplain #isMutable() mutable}
+         */
+        @Override
+        public final String toString() {
+            if (!isMutable()) {
+                return getName();
+            }
+            return getName() + "*";
+        }
+    }
+
+    /**
+     * A specialization of {@link ReferenceFieldInfo} for fields whose boot image value is
+     * read via {@linkplain Field#get(Object) reflection}.
+     */
+    static final class ReflectedReferenceFieldInfo extends ReferenceFieldInfo {
+        final Field _field;
+        final FieldActor _fieldActor;
+
+        ReflectedReferenceFieldInfo(FieldActor fieldActor) {
+            final Field field = fieldActor.toJava();
+            field.setAccessible(true);
+            _field = field;
+            _fieldActor = fieldActor;
+        }
+        @Override
+        String getName() {
+            return _field.getName();
+        }
+
+        @Override
+        Object getValue(Object object) {
+            try {
+                return HostObjectAccess.hostToTarget(_field.get(object));
+            } catch (IllegalArgumentException e) {
+                throw ProgramError.unexpected(e);
+            } catch (IllegalAccessException e) {
+                throw ProgramError.unexpected(e);
+            }
+        }
+        @Override
+        FieldActor fieldActor() {
+            return _fieldActor;
+        }
+    }
+
+    /**
+     * A specialization of {@link ReferenceFieldInfo} for fields of the JDK that are {@linkplain InterceptedField intercepted} for
+     * the purpose of modifying their value in the boot image.
+     */
+    static final class InterceptedReferenceFieldInfo extends ReferenceFieldInfo {
+        final InterceptedField _interceptedField;
+
+        InterceptedReferenceFieldInfo(InterceptedField interceptedField) {
+            _interceptedField = interceptedField;
+        }
+        @Override
+        String getName() {
+            return _interceptedField.getName();
+        }
+
+        @Override
+        Object getValue(Object object) {
+            return _interceptedField.getValue(object, _interceptedField._fieldActor).unboxObject();
+        }
+        @Override
+        FieldActor fieldActor() {
+            return _interceptedField._fieldActor;
+        }
+        @Override
+        boolean isMutable() {
+            return _interceptedField.isMutable();
+        }
+    }
+
+    /**
      * The information gathered for a class during exploration of the graph, including
      * the reference fields that need to be scanned to traverse the object graph.
+     *
+     * This info is also used to partition the objects in the boot heap into those
+     * that {@linkplain ClassInfo#containsMutableReferences(Object) contain mutable references}
+     * and those that do not.
      */
     static class ClassInfo {
         final Class _class;
-        final boolean _isReferenceArray;
-        final AppendableSequence<Field> _mutableReferenceFields = new LinkSequence<Field>();
-        final AppendableSequence<Field> _immutableReferenceFields = new LinkSequence<Field>();
-        final AppendableSequence<SpecialField> _specialReferenceFields = new LinkSequence<SpecialField>();
-        final AppendableSequence<ClassInfo> _subClasses = new ArrayListSequence<ClassInfo>();
+        final boolean _instanceIsMutable;
+        final boolean _staticTupleIsMutable;
 
-        ClassInfo _classClassInfo; // the class info object for the static members of the class
+        final Sequence<ReferenceFieldInfo> _instanceFields;
+        final Sequence<ReferenceFieldInfo> _staticFields;
+        final AppendableSequence<ClassInfo> _subClasses = new ArrayListSequence<ClassInfo>();
 
         ClassStats _stats;
 
@@ -91,10 +207,67 @@ public class GraphPrototype extends Prototype {
          *
          * @param clazz the java class
          */
-        ClassInfo(Class clazz) {
+        ClassInfo(Class clazz, ClassInfo superInfo) {
             _class = clazz;
-            final Class componentType = clazz.getComponentType();
-            _isReferenceArray = componentType != null && !componentType.isPrimitive() && !Word.class.isAssignableFrom(componentType);
+
+            final AppendableSequence<ReferenceFieldInfo> instanceFields = new LinkSequence<ReferenceFieldInfo>();
+            final AppendableSequence<ReferenceFieldInfo> staticFields = new LinkSequence<ReferenceFieldInfo>();
+
+            if (superInfo != null) {
+                // propagate information from super class field lists to this new class info
+                superInfo._subClasses.append(this);
+                AppendableSequence.Static.appendAll(instanceFields, superInfo._instanceFields);
+            }
+
+            // Need to iterate over the fields using actors instead of reflection otherwise we'll
+            // miss fields that are hidden to reflection (see sun.reflection.Reflection.filterFields(Class, Field[])).
+            final ClassActor classActor = ClassActor.fromJava(clazz);
+
+            _instanceIsMutable =  addClassInfoFields(instanceFields, classActor.localInstanceFieldActors()) ||
+                                 (superInfo != null && superInfo._instanceIsMutable) ||
+                                 isReferenceArray() ||
+                                 Reference.class.isAssignableFrom(clazz);
+            _staticTupleIsMutable = addClassInfoFields(staticFields, classActor.localStaticFieldActors());
+
+            _instanceFields = instanceFields;
+            _staticFields = staticFields;
+
+            if (Trace.hasLevel(4)) {
+                printTo(Trace.stream());
+            }
+        }
+
+        boolean isReferenceArray() {
+            final Class componentType = _class.getComponentType();
+            return componentType != null && !componentType.isPrimitive() && !Word.class.isAssignableFrom(componentType);
+        }
+
+        private static boolean addClassInfoFields(AppendableSequence<ReferenceFieldInfo> fieldInfos, FieldActor[] fieldActors) {
+            boolean foundMutableField = false;
+            for (FieldActor fieldActor : fieldActors) {
+                if (fieldActor.kind() == Kind.REFERENCE) {
+                    final InterceptedField interceptedField = JDKInterceptor.getInterceptedField(fieldActor);
+                    ReferenceFieldInfo fieldInfo = null;
+                    if (interceptedField != null) {
+                        interceptedField._fieldActor = fieldActor;
+                        fieldInfo = new InterceptedReferenceFieldInfo(interceptedField);
+                        fieldInfos.append(fieldInfo);
+                    } else {
+                        if (!fieldActor.isInjected()) {
+                            try {
+                                fieldInfo = new ReflectedReferenceFieldInfo(fieldActor);
+                                fieldInfos.append(fieldInfo);
+                            } catch (NoSuchFieldError noSuchFieldError) {
+                                ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
+                            }
+                        }
+                    }
+                    if (!foundMutableField && fieldInfo != null) {
+                        foundMutableField = fieldInfo.isMutable();
+                    }
+                }
+            }
+            return foundMutableField;
         }
 
         /**
@@ -133,15 +306,54 @@ public class GraphPrototype extends Prototype {
         }
 
         /**
-         * Determines if this class contains any mutable references.
+         * Gets the instance or static fields of this class.
          *
-         * @return
+         * @param object determines if the static or instance fields are being requested
+         * @return the static field of this class if {@code object} is a {@link StaticTuple} instance; otherwise the
+         *         instance fields
          */
-        public boolean containsMutableReferences() {
-            return !_mutableReferenceFields.isEmpty() || _isReferenceArray;
+        public Sequence<ReferenceFieldInfo> fieldInfos(Object object) {
+            if (object instanceof StaticTuple) {
+                return _staticFields;
+            }
+            return _instanceFields;
         }
-    }
 
+        /**
+         * Determines if a given object may contain mutable references.
+         *
+         * @param object an object being queried for mutability
+         * @return {@code true} if {@code object} may contain mutable references; {@code false} otherwise
+         */
+        public boolean containsMutableReferences(Object object) {
+            if (object instanceof StaticTuple) {
+                return _staticTupleIsMutable;
+            }
+            return _instanceIsMutable;
+        }
+
+        /**
+         * Prints the details of this class to a given stream.
+         *
+         * @param stream
+         */
+        public void printTo(PrintStream stream) {
+            stream.println(_class.getName() + ": mutable-instance=" + _instanceIsMutable + ", mutable-static-tuple=" + _staticTupleIsMutable);
+            if (!_instanceFields.isEmpty()) {
+                stream.println("  instance fields:");
+                for (ReferenceFieldInfo fieldInfo : _instanceFields) {
+                    stream.println("    " + fieldInfo);
+                }
+            }
+            if (!_staticFields.isEmpty()) {
+                stream.println("  static fields:");
+                for (ReferenceFieldInfo fieldInfo : _staticFields) {
+                    stream.println("    " + fieldInfo);
+                }
+            }
+        }
+
+    }
 
     /**
      * Returns an iterable collection of all the objects in the graph prototype.
@@ -151,20 +363,11 @@ public class GraphPrototype extends Prototype {
         return _objects;
     }
 
-    /**
-     * Gets the class info for a given object. If {@code object} is a {@link StaticTuple}, then
-     * the class info for the static fields of the {@code StaticTuple} are returned otherwise the
-     * class info for the instance fields of {@code object} are returned.
-     *
-     * @param object
-     * @return
-     */
     public ClassInfo classInfoFor(Object object) {
-        final ClassInfo classInfo = _classInfos.get(object.getClass());
         if (object instanceof StaticTuple) {
-            return classInfo._classClassInfo;
+            return _classInfos.get(((StaticTuple) object).classActor().toJava());
         }
-        return classInfo;
+        return _classInfos.get(object.getClass());
     }
 
     /**
@@ -301,60 +504,15 @@ public class GraphPrototype extends Prototype {
      * @param javaClass the java class for which to get or create the class info
      * @return the class info for the class
      */
-    private ClassInfo makeClassInfo(Class javaClass) {
+    private synchronized ClassInfo makeClassInfo(Class javaClass) {
         ClassInfo classInfo = _classInfos.get(javaClass);
         if (classInfo == null) {
             final Class superClass = javaClass.getSuperclass();
             final ClassInfo superInfo = superClass == null ? null : makeClassInfo(superClass);
-            classInfo = new ClassInfo(javaClass);
-            final ClassInfo staticInfo = new ClassInfo(javaClass);
-            classInfo._classClassInfo = staticInfo;
+            classInfo = new ClassInfo(javaClass, superInfo);
             _classInfos.put(javaClass, classInfo);
-
-            if (superInfo != null) {
-                // propagate information from super class field lists to this new class info
-                superInfo._subClasses.append(classInfo);
-                AppendableSequence.Static.appendAll(classInfo._mutableReferenceFields, superInfo._mutableReferenceFields);
-                AppendableSequence.Static.appendAll(classInfo._immutableReferenceFields, superInfo._immutableReferenceFields);
-                AppendableSequence.Static.appendAll(classInfo._specialReferenceFields, superInfo._specialReferenceFields);
-            }
-
-            // Need to iterate over the fields using actors instead of reflection otherwise we'll
-            // miss fields that are hidden to reflection (see sun.reflection.Reflection.filterFields(Class, Field[])).
-            final ClassActor classActor = ClassActor.fromJava(javaClass);
-            addClassInfoFields(classInfo, staticInfo, classActor.localInstanceFieldActors());
-            addClassInfoFields(classInfo, staticInfo, classActor.localStaticFieldActors());
         }
         return classInfo;
-    }
-
-    private void addClassInfoFields(ClassInfo classInfo, final ClassInfo staticInfo, FieldActor[] fieldActors) {
-        for (FieldActor fieldActor : fieldActors) {
-            if (fieldActor.kind() == Kind.REFERENCE) {
-                final ClassInfo info = fieldActor.isStatic() ? staticInfo : classInfo;
-                final SpecialField specialField = HackJDK.getSpecialField(fieldActor);
-                if (specialField != null) {
-                    specialField._fieldActor = fieldActor;
-                    if (!(specialField instanceof ZeroField)) {
-                        info._specialReferenceFields.append(specialField);
-                    }
-                } else {
-                    if (!fieldActor.isInjected()) {
-                        try {
-                            final Field field = fieldActor.toJava();
-                            field.setAccessible(true);
-                            if (fieldActor.isConstant()) {
-                                info._immutableReferenceFields.append(field);
-                            } else {
-                                info._mutableReferenceFields.append(field);
-                            }
-                        } catch (NoSuchFieldError noSuchFieldError) {
-                            ProgramWarning.message("Ignoring field hidden by JDK to reflection: " + fieldActor.format("%H.%n"));
-                        }
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -363,6 +521,11 @@ public class GraphPrototype extends Prototype {
      * @param object the object to explore
      */
     private void explore(Object object) {
+        if (object instanceof StaticTuple) {
+            // Static fields are explored in exporeClass()
+            return;
+        }
+
         // get the class info for the object's class
         final Class<?> objectClass = object.getClass();
         final ClassInfo classInfo = makeClassInfo(objectClass);
@@ -382,7 +545,7 @@ public class GraphPrototype extends Prototype {
         }
 
         // walk the reference fields of the object
-        walkFields(object, classInfo);
+        walkFields(object, classInfo._instanceFields);
 
         // if this is a reference array, walk its elements
         if (object instanceof Object[] && !(object instanceof Word[])) {
@@ -412,29 +575,21 @@ public class GraphPrototype extends Prototype {
         // add the class actor object
         add(javaClass, classActor, "classActor");
         // walk the static fields of the class
-        walkFields(javaClass, makeClassInfo(javaClass)._classClassInfo);
+        walkFields(javaClass, makeClassInfo(javaClass)._staticFields);
     }
 
     private void exploreClassRef(JDK.ClassRef classRef) {
         classRef.resolveClassActor();
     }
 
-    private void walkFields(Object object, ClassInfo classInfo) throws ProgramError {
-        for (Field field : Iterables.join(classInfo._mutableReferenceFields, classInfo._immutableReferenceFields)) {
+    private void walkFields(Object object, Sequence<ReferenceFieldInfo> fieldInfos) throws ProgramError {
+        for (ReferenceFieldInfo fieldInfo : fieldInfos) {
             try {
-                final Object value = HostObjectAccess.hostToTarget(field.get(object));
-                add(object, value, field.getName());
+                final Object value = HostObjectAccess.hostToTarget(fieldInfo.getValue(object));
+                add(object, value, fieldInfo.getName());
             } catch (IllegalArgumentException e) {
                 throw ProgramError.unexpected(e);
-            } catch (IllegalAccessException e) {
-                throw ProgramError.unexpected(e);
             }
-        }
-
-        for (SpecialField specialField : classInfo._specialReferenceFields) {
-            final Value value = specialField.getValue(object, specialField._fieldActor);
-            final Object result = value.unboxObject();
-            add(object, result, specialField.getName());
         }
     }
 }

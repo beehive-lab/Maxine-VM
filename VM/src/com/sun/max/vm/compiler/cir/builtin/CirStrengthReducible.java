@@ -21,7 +21,9 @@
 package com.sun.max.vm.compiler.cir.builtin;
 
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.cir.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
@@ -189,7 +191,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         protected boolean isReducible(CirValue argument) {
             if (argument.isScalarConstant()) {
                 final int a = argument.value().toInt();
-                return a == 0 || a == -1 || Integer.bitCount(a) == 1;
+                return a == -1 || Ints.isPowerOfTwoOrZero(a);
             }
             return false;
         }
@@ -224,7 +226,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         protected boolean isReducible(CirValue argument) {
             if (argument.isScalarConstant()) {
                 final long a = argument.value().toLong();
-                return a == 0L || a == -1L || Long.bitCount(a) == 1;
+                return a == -1L || Longs.isPowerOfTwoOrZero(a);
             }
             return false;
         }
@@ -260,6 +262,10 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 // revisit in the future.
                 if (divisor == 0 || divisor == -1 || divisor == 1) {
                     return true;
+                }
+                if (MaxineVM.isPrototyping() && Ints.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
+                    ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
+                        " with use of " + Unsigned.class + " or a shift operation"));
                 }
             }
             if (arguments[0].isScalarConstant()) {
@@ -314,6 +320,10 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
                 if (divisor == 0L || divisor == -1L || divisor == 1L) {
                     return true;
                 }
+                if (MaxineVM.isPrototyping() && Longs.isPowerOfTwoOrZero(divisor) && MaxineVM.isMaxineClass(cirOptimizer.classMethodActor().holder())) {
+                    ProgramWarning.message(cirOptimizer.classMethodActor().format("%H.%n(%p): Consider replacing division by " + divisor +
+                        " with use of " + Unsigned.class + " or a shift operation"));
+                }
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();
@@ -357,7 +367,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
             if (arguments[1].isScalarConstant()) {
                 final Address divisor = arguments[1].value().toWord().asAddress();
-                return divisor.equals(Address.zero()) || Long.bitCount(divisor.toLong()) == 1;
+                return Longs.isPowerOfTwoOrZero(divisor.toLong());
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();
@@ -400,7 +410,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
             if (arguments[1].isScalarConstant()) {
                 final int divisor = arguments[1].value().toInt();
-                return divisor == 0 || Integer.bitCount(divisor) == 1;
+                return Ints.isPowerOfTwoOrZero(divisor);
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();
@@ -443,7 +453,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
             if (arguments[1].isScalarConstant()) {
                 final int divisor = arguments[1].value().toInt();
-                if (divisor == 0 || divisor == -1 || Integer.bitCount(divisor) == 1) {
+                if (divisor == -1 || Ints.isPowerOfTwoOrZero(divisor)) {
                     return true;
                 }
             }
@@ -492,7 +502,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
             if (arguments[1].isScalarConstant()) {
                 final long divisor = arguments[1].value().toLong();
-                return divisor == 0L || divisor == -1L || Long.bitCount(divisor) == 1;
+                return divisor == -1L || Longs.isPowerOfTwoOrZero(divisor);
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();
@@ -534,7 +544,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
             if (arguments[1].isScalarConstant()) {
                 final Address divisor = arguments[1].value().toWord().asAddress();
-                return divisor.equals(Address.zero()) || Long.bitCount(divisor.toLong()) == 1;
+                return Longs.isPowerOfTwoOrZero(divisor.toLong());
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();
@@ -580,7 +590,7 @@ public abstract class CirStrengthReducible extends CirSpecialBuiltin {
         public boolean isReducible(CirOptimizer cirOptimizer, CirValue[] arguments) {
             if (arguments[1].isScalarConstant()) {
                 final int divisor = arguments[1].value().toInt();
-                return divisor == 0 || Integer.bitCount(divisor) == 1;
+                return Ints.isPowerOfTwoOrZero(divisor);
             }
             if (arguments[0].isScalarConstant()) {
                 final Value dividendValue = arguments[0].value();

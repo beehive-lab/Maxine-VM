@@ -81,7 +81,7 @@ public final class StackReferenceMapPreparer {
     }
 
     private final VmThread _owner;
-    private final Timer _timer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _timer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
     private Pointer _triggeredVmThreadLocals;
     private Pointer _enabledVmThreadLocals;
     private Pointer _disabledVmThreadLocals;
@@ -105,7 +105,7 @@ public final class StackReferenceMapPreparer {
      * time is included as well. That is, this method gives the amount of time spent preparing the stack
      * reference map for the associated thread during the last/current GC.
      *
-     * @return a time in the resolution specified by {@link Heap#GC_TIMING_CLOCK}
+     * @return a time in the resolution specified by {@link HeapScheme#GC_TIMING_CLOCK}
      */
     public long preparationTime() {
         return _preparationTime;
@@ -123,7 +123,7 @@ public final class StackReferenceMapPreparer {
      * @param stackPointer
      * @param framePointer
      * @param ignoreTopFrame specifies if the top frame is to be ignored
-     * @return the amount of time (in the resolution specified by {@link Heap#GC_TIMING_CLOCK}) taken to prepare the reference map
+     * @return the amount of time (in the resolution specified by {@link HeapScheme#GC_TIMING_CLOCK}) taken to prepare the reference map
      */
     public long prepareStackReferenceMap(Pointer vmThreadLocals, Pointer instructionPointer, Pointer stackPointer, Pointer framePointer, boolean ignoreTopFrame) {
         _timer.start();
@@ -862,12 +862,12 @@ public final class StackReferenceMapPreparer {
 
     @INLINE
     private static int referenceMapByteIndex(final Pointer lowestStackSlot, Pointer slot) {
-        return (slot.minus(lowestStackSlot).toInt() / Word.size()) / Bytes.WIDTH;
+        return Unsigned.idiv(referenceMapBitIndex(lowestStackSlot, slot), Bytes.WIDTH);
     }
 
     @INLINE
     private static int referenceMapBitIndex(final Pointer lowestStackSlot, Pointer slot) {
-        return slot.minus(lowestStackSlot).toInt() / Word.size();
+        return Unsigned.idiv(slot.minus(lowestStackSlot).toInt(), Word.size());
     }
 
     private static void checkValidReferenceMapRange(Pointer vmThreadLocals, Pointer lowestSlot, Pointer highestSlot) {

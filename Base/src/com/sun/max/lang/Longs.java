@@ -69,7 +69,7 @@ public final class Longs {
     /**
      * Determines if a given number is zero or a power of two.
      */
-    public static boolean isPowerOfTwo(long n) {
+    public static boolean isPowerOfTwoOrZero(long n) {
         return Long.lowestOneBit(n) == n;
     }
 

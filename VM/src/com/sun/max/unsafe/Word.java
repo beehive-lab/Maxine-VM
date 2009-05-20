@@ -28,6 +28,7 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.box.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
@@ -113,8 +114,20 @@ public abstract class Word {
         return Platform.hostOrTarget().processorKind().dataModel().endianness();
     }
 
+    /**
+     * Cached value used only when prototyping.
+     */
+    @PROTOTYPE_ONLY
+    private static WordWidth _width;
+
     @FOLD
     public static WordWidth width() {
+        if (MaxineVM.isPrototyping()) {
+            if (_width == null) {
+                _width = Platform.hostOrTarget().processorKind().dataModel().wordWidth();
+            }
+            return _width;
+        }
         return Platform.hostOrTarget().processorKind().dataModel().wordWidth();
     }
 

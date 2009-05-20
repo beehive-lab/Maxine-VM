@@ -1164,7 +1164,7 @@ public abstract class Pointer extends Address implements Accessor {
      * This method may read the affected byte first, then set the bit in it and then write the byte back.
      */
     public void setBit(int bitIndex) {
-        final int byteIndex = bitIndex / Bytes.WIDTH;
+        final int byteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
         byte byteValue = getByte(byteIndex);
         byteValue |= 1 << (bitIndex % Bytes.WIDTH);
         setByte(byteIndex, byteValue);
@@ -1172,8 +1172,8 @@ public abstract class Pointer extends Address implements Accessor {
 
     /**
      * Sets the given bits starting from the given bit index, counting bits in the bytes starting from this pointer.
-     * Every 1 in the given bits will result in a 1 in memory.
-     * Every 0 in the given bits will leave the corresponding memory bit unchanged.
+     * Every 1 in {@code bits} will result in a 1 in memory.
+     * Every 0 in {@code bits} will leave the corresponding memory bit unchanged.
      *
      * ATTENTION: There is no protection against concurrent access to affected bytes.
      *
@@ -1185,7 +1185,7 @@ public abstract class Pointer extends Address implements Accessor {
         // then the arithmetic operations below will convert implicitly to int and may insert sign bits.
         final int intBits = bits & 0xff;
 
-        int byteIndex = bitIndex / Bytes.WIDTH;
+        int byteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
         final int rest = bitIndex % Bytes.WIDTH;
         byte byteValue = getByte(byteIndex);
         byteValue |= intBits << rest;

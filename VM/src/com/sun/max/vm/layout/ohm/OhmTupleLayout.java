@@ -106,7 +106,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
                     }
                 }
             }
-            scale /= 2;
+            scale >>= 1;
         }
         return Ints.roundUp(currentOffset, nAlignmentBytes);
     }
@@ -116,10 +116,10 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         setInvalidOffsets(fieldActors);
         final int nAlignmentBytes = Platform.target().processorKind().dataModel().alignment().numberOfBytes();
         int offset = (superClassActor == null || superClassActor.typeDescriptor() == JavaTypeDescriptor.HYBRID) ? headerSize : superClassActor.dynamicTupleSize().toInt();
-        if (offset % nAlignmentBytes != 0) {
+        if (Size.fromInt(offset).dividedBy(nAlignmentBytes).toInt() != 0) {
             offset = fillAlignmentGap(fieldActors, offset, nAlignmentBytes);
         }
-        for (int scale = 8; scale >= 1; scale /= 2) {
+        for (int scale = 8; scale >= 1; scale >>= 1) {
             for (FieldActor fieldActor : fieldActors) {
                 if (fieldActor.offset() == INVALID_OFFSET && fieldActor.kind().size() == scale) {
                     fieldActor.setOffset(offset);

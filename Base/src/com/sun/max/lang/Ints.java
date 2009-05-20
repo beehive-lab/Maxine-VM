@@ -91,7 +91,7 @@ public final class Ints {
     /**
      * Determines if a given number is zero or a power of two.
      */
-    public static boolean isPowerOfTwo(int n) {
+    public static boolean isPowerOfTwoOrZero(int n) {
         return Integer.lowestOneBit(n) == n;
     }
 
