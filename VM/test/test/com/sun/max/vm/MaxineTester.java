@@ -613,6 +613,7 @@ public class MaxineTester {
         out().println("Building Java run scheme: failed");
         final File outputFile = stdoutFile(imageDir, "IMAGEGEN", config);
         out().println("  -> see: " + fileRef(outputFile));
+        out().println("  -> see: " + fileRef(stderrFile(outputFile)));
         return null;
     }
 
@@ -1038,6 +1039,7 @@ public class MaxineTester {
             }
             if (!unexpectedResults.isEmpty()) {
                 out.println("    see: " + fileRef(outputFile));
+                out.println("    see: " + fileRef(stderrFile(outputFile)));
             }
         }
 
@@ -1177,9 +1179,11 @@ public class MaxineTester {
                     } else if (exitValue == PROCESS_TIMEOUT) {
                         out.println("(timed out): " + summary);
                         out.println("  -> see: " + fileRef(outputFile));
+                        out.println("  -> see: " + fileRef(stderrFile(outputFile)));
                     } else {
                         out.println("(exit = " + exitValue + "): " + summary);
                         out.println("  -> see: " + fileRef(outputFile));
+                        out.println("  -> see: " + fileRef(stderrFile(outputFile)));
                     }
                     executions++;
                 }
@@ -1187,6 +1191,7 @@ public class MaxineTester {
                 out.println("(image build failed)");
                 final File outputFile = stdoutFile(imageDir, "IMAGEGEN", config);
                 out.println("  -> see: " + fileRef(outputFile));
+                out.println("  -> see: " + fileRef(stderrFile(outputFile)));
             }
         }
     }
