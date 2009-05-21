@@ -28,7 +28,6 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.box.*;
-import com.sun.max.vm.*;
 import com.sun.max.vm.grip.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
@@ -122,7 +121,7 @@ public abstract class Word {
 
     @FOLD
     public static WordWidth width() {
-        if (MaxineVM.isPrototyping()) {
+        if (isBoxed()) {
             if (_width == null) {
                 _width = Platform.hostOrTarget().processorKind().dataModel().wordWidth();
             }
@@ -238,16 +237,29 @@ public abstract class Word {
 
     @INLINE
     public final boolean isZero() {
+        if (Word.isBoxed()) {
+            final UnsafeBox box = (UnsafeBox) this;
+            return box.nativeWord() == 0;
+        }
         return equals(Word.zero());
     }
 
     @INLINE
     public final boolean isAllOnes() {
+        if (Word.isBoxed()) {
+            final UnsafeBox box = (UnsafeBox) this;
+            return box.nativeWord() == -1;
+        }
         return equals(Word.allOnes());
     }
 
     @INLINE
     public final boolean equals(Word other) {
+        if (Word.isBoxed()) {
+            final UnsafeBox thisBox = (UnsafeBox) this;
+            final UnsafeBox otherBox = (UnsafeBox) other;
+            return thisBox.nativeWord() == otherBox.nativeWord();
+        }
         if (Word.width() == WordWidth.BITS_64) {
             return asOffset().toLong() == other.asOffset().toLong();
         }
@@ -259,6 +271,20 @@ public abstract class Word {
         throw ProgramError.unexpected("must not call equals(Object) with Word argument");
     }
 
+    /**
+     * Reads an address from a given data input stream.
+     */
+    public static Word read(DataInput stream) throws IOException {
+        if (width() == WordWidth.BITS_64) {
+            return Address.fromLong(stream.readLong());
+        }
+        return Address.fromInt(stream.readInt());
+    }
+
+    /**
+     * Writes this address to a given data output stream.
+     */
+    @INLINE
     public final void write(DataOutput stream) throws IOException {
         if (width() == WordWidth.BITS_64) {
             stream.writeLong(asAddress().toLong());
@@ -267,10 +293,25 @@ public abstract class Word {
         }
     }
 
-    public static Word read(DataInput stream) throws IOException {
+    /**
+     * Reads an address from a given input stream using a given endianness.
+     */
+    public static Word read(InputStream inputStream, Endianness endianness) throws IOException {
         if (width() == WordWidth.BITS_64) {
-            return Address.fromLong(stream.readLong());
+            return Address.fromLong(endianness.readLong(inputStream));
         }
-        return Address.fromInt(stream.readInt());
+        return Address.fromInt(endianness.readInt(inputStream));
+    }
+
+    /**
+     * Writes this address to a given output stream using a given endianness.
+     */
+    @INLINE
+    public final void write(OutputStream outputStream, Endianness endianness) throws IOException {
+        if (width() == WordWidth.BITS_64) {
+            endianness.writeLong(outputStream, asAddress().toLong());
+        } else {
+            endianness.writeInt(outputStream, asAddress().toInt());
+        }
     }
 }

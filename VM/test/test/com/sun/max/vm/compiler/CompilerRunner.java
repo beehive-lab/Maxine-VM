@@ -78,6 +78,7 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
     private static final Option<Boolean> _cirGui = _options.newBooleanOption("cir-gui", false, "Enable the CIR visualizer.");
     private static final Option<Boolean> _useJit = _options.newBooleanOption("use-jit", false, "Compile with the JIT compiler.");
     private static final Option<Boolean> _help = _options.newBooleanOption("help", false, "Show help message and exits.");
+    private static final Option<String> _vmArguments = _options.newStringOption("vmargs", null, "A set of one or VM arguments.");
 
     private static final PrototypeGenerator _prototypeGenerator = new PrototypeGenerator(_options);
 
@@ -93,6 +94,14 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         if (_help.getValue()) {
             _options.printHelp(System.out, 80);
             return;
+        }
+
+        final String[] vmArguments;
+        if (_vmArguments.getValue() != null) {
+            vmArguments = _vmArguments.getValue().split("\\s+");
+            VMOption.setVMArguments(vmArguments);
+        } else {
+            vmArguments = null;
         }
 
         System.setProperty(IrObserverConfiguration.IR_TRACE_PROPERTY, _irTraceLevel.getValue() + ":");
@@ -163,6 +172,14 @@ public class CompilerRunner extends CompilerTestSetup<IrMethod> implements JITTe
         }
         Trace.stream().println("Initializing compiler...");
         junit.textui.TestRunner.run(new CompilerRunner(suite));
+
+        if (vmArguments != null) {
+            for (String argument : vmArguments) {
+                if (argument != null) {
+                    ProgramWarning.message("VM argument not matched by any VM option: " + argument);
+                }
+            }
+        }
     }
 
     private static String createTestName(Class javaClass, String methodName, SignatureDescriptor signature) {

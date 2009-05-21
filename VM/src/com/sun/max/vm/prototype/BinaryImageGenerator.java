@@ -114,6 +114,11 @@ public final class BinaryImageGenerator {
     private final Option<Boolean> _testNative = _options.newBooleanOption("native-tests", false,
             "For the Java tester, this option specifies that " + System.mapLibraryName("javatest") + " should be dynamically loaded.");
 
+    private final Option<String> _vmArguments = _options.newStringOption("vmargs", null,
+            "A set of one or VM arguments. This is useful for exercising certain VM functionality or " +
+            "enabling certain VM tracing while prototyping. Any VM options or state set by these arguments " +
+            "is persisted in the boot image.");
+
     /**
      * Used in the Java tester to indicate whether to test the resolution and linking mechanism for
      * test methods.
@@ -198,6 +203,14 @@ public final class BinaryImageGenerator {
                 return;
             }
 
+            final String[] vmArguments;
+            if (_vmArguments.getValue() != null) {
+                vmArguments = _vmArguments.getValue().split("\\s+");
+                VMOption.setVMArguments(vmArguments);
+            } else {
+                vmArguments = null;
+            }
+
             BinaryImageGenerator._calleeJit = _testCalleeJit.getValue();
             BinaryImageGenerator._callerJit = _testCallerJit.getValue();
             BinaryImageGenerator._unlinked = _testUnlinked.getValue();
@@ -211,6 +224,14 @@ public final class BinaryImageGenerator {
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
+
+            if (vmArguments != null) {
+                for (String argument : vmArguments) {
+                    if (argument != null) {
+                        ProgramWarning.message("VM argument not matched by any VM option: " + argument);
+                    }
+                }
+            }
 
             // write the statistics
             if (_statsOption.getValue()) {

@@ -253,7 +253,7 @@ public final class MaxineVM {
     // Substituted by isPrototyping_()
     @UNSAFE
     public static boolean isPrototyping() {
-        return target() != host();
+        return true;
     }
 
     @UNSAFE

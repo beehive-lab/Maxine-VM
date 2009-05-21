@@ -42,21 +42,6 @@ public final class Log {
     private Log() {
     }
 
-    static {
-        new CriticalNativeMethod(Log.class, "log_lock");
-        new CriticalNativeMethod(Log.class, "log_unlock");
-
-        new CriticalNativeMethod(Log.class, "log_print_buffer");
-        new CriticalNativeMethod(Log.class, "log_print_boolean");
-        new CriticalNativeMethod(Log.class, "log_print_char");
-        new CriticalNativeMethod(Log.class, "log_print_int");
-        new CriticalNativeMethod(Log.class, "log_print_long");
-        new CriticalNativeMethod(Log.class, "log_print_float");
-        new CriticalNativeMethod(Log.class, "log_print_double");
-        new CriticalNativeMethod(Log.class, "log_print_word");
-        new CriticalNativeMethod(Log.class, "log_print_newline");
-    }
-
     @C_FUNCTION
     private static native void log_print_buffer(Address val);
 
@@ -702,5 +687,20 @@ public final class Log {
         if (lockDisabledSafepoints) {
             Safepoint.enable();
         }
+    }
+
+    static {
+        new CriticalNativeMethod(Log.class, "log_lock");
+        new CriticalNativeMethod(Log.class, "log_unlock");
+
+        new CriticalNativeMethod(Log.class, "log_print_buffer");
+        new CriticalNativeMethod(Log.class, "log_print_boolean");
+        new CriticalNativeMethod(Log.class, "log_print_char");
+        new CriticalNativeMethod(Log.class, "log_print_int");
+        new CriticalNativeMethod(Log.class, "log_print_long");
+        new CriticalNativeMethod(Log.class, "log_print_float");
+        new CriticalNativeMethod(Log.class, "log_print_double");
+        new CriticalNativeMethod(Log.class, "log_print_word");
+        new CriticalNativeMethod(Log.class, "log_print_newline");
     }
 }
