@@ -20,7 +20,6 @@
  */
 package com.sun.max.unsafe;
 
-import java.io.*;
 import java.math.*;
 
 import com.sun.max.annotate.*;
@@ -90,28 +89,6 @@ public abstract class Address extends Word {
             return UnsafeLoophole.longToWord(n);
         }
         return UnsafeLoophole.intToWord(value);
-    }
-
-    /**
-     * Reads an address from a given input stream using a given endianness.
-     */
-    public static Address readFrom(InputStream inputStream, Endianness endianness) throws IOException {
-        if (Word.width() == WordWidth.BITS_64) {
-            return Address.fromLong(endianness.readLong(inputStream));
-        }
-        return Address.fromInt(endianness.readInt(inputStream));
-    }
-
-    /**
-     * Writes this address to a given output stream using a given endianness.
-     */
-    @INLINE
-    public final void writeTo(OutputStream outputStream, Endianness endianness) throws IOException {
-        if (Word.width() == WordWidth.BITS_64) {
-            endianness.writeLong(outputStream, toLong());
-        } else {
-            endianness.writeInt(outputStream, toInt());
-        }
     }
 
     @INLINE

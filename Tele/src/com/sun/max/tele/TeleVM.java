@@ -480,7 +480,7 @@ public abstract class TeleVM implements MaxVM {
             final Socket socket = agent.waitForVM();
             final InputStream stream = socket.getInputStream();
             final Endianness endianness = _vmConfiguration.platform().processorKind().dataModel().endianness();
-            final Pointer heap = Address.readFrom(stream, endianness).asPointer();
+            final Pointer heap = Word.read(stream, endianness).asPointer();
             Trace.line(1, "Received boot image address from VM: 0x" + heap.toHexString());
             socket.close();
             return heap;

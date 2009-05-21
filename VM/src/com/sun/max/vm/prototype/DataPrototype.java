@@ -309,8 +309,14 @@ public final class DataPrototype extends Prototype {
                                 final int element0Index = origin.plus(arrayLayout.getElementOffsetFromOrigin(0)).dividedBy(Word.size()).toInt();
                                 for (int i = 0; i < n; i++) {
                                     final int index = element0Index + i;
-                                    assert !referenceMap.isSet(index);
-                                    referenceMap.set(index);
+                                    try {
+                                        assert !referenceMap.isSet(index);
+                                        referenceMap.set(index);
+                                    } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+                                        throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
+                                            classInfo._class.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
+                                            " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index);
+                                    }
                                 }
                             }
                         }
@@ -323,8 +329,14 @@ public final class DataPrototype extends Prototype {
                             }
                             final Pointer address = origin.plus(fieldActor.offset());
                             final int index = address.toInt() / _alignment;
-                            assert !referenceMap.isSet(index);
-                            referenceMap.set(index);
+                            try {
+                                assert !referenceMap.isSet(index);
+                                referenceMap.set(index);
+                            } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+                                throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
+                                    classInfo._class.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
+                                    " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index);
+                            }
                         }
 
                         if (object instanceof Reference) {
@@ -349,8 +361,8 @@ public final class DataPrototype extends Prototype {
             try {
                 final int referenceMapWordLength = length / Word.size();
                 for (int i = 0; i < referenceMapWordLength; ++i) {
-                    final Address referenceMapWord = Address.readFrom(inputStream, Endianness.LITTLE);
-                    referenceMapWord.writeTo(outputStream, _dataModel.endianness());
+                    final Word referenceMapWord = Word.read(inputStream, Endianness.LITTLE);
+                    referenceMapWord.write(outputStream, _dataModel.endianness());
                 }
             } catch (IOException ioException) {
                 throw ProgramError.unexpected("Error converting boot heap reference map from little endian to " + _dataModel.endianness(), ioException);

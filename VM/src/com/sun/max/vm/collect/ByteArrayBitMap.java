@@ -192,7 +192,7 @@ public final class ByteArrayBitMap implements Cloneable {
     private static int byteIndexFor(int offset, int size, int bitIndex) throws IndexOutOfBoundsException {
         final int relativeByteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
         if (relativeByteIndex >= size) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException("Bit index: " + bitIndex + ", Width: " + (size * Bytes.WIDTH));
         }
         return offset + relativeByteIndex;
     }
