@@ -507,6 +507,12 @@ public class MaxineTester {
         return _failFast.getValue() && reportTestResults(null) != 0;
     }
 
+    /**
+     * Gets a string denoting a path to a given file in a standardized format.
+     *
+     * *NOTE*: This standardized format is expected by the Maxine gate scripts so do not change it
+     * without making the necessary changes to these scripts.
+     */
     private static String fileRef(File file) {
         final String basePath = new File(_outputDir.getValue()).getAbsolutePath() + File.separator;
         final String path = file.getAbsolutePath();
@@ -682,7 +688,14 @@ public class MaxineTester {
                     addTestResult(testName, String.format("timed out", maxvmExitValue, javaExitValue), expected);
                 } else {
                     final ExpectedResult expected = printFailed(testName, config);
-                    addTestResult(testName, String.format("bad exit value [received %d, expected %d; see %s and %s ]", maxvmExitValue, javaExitValue, fileRef(javaOutput), fileRef(maxvmOutput)), expected);
+                    addTestResult(testName, String.format("bad exit value [received %d, expected %d]%n  -> see: %s%n  -> see: %s%n  -> see: %s%n  -> see: %s",
+                        maxvmExitValue,
+                        javaExitValue,
+                        fileRef(javaOutput),
+                        fileRef(stderrFile(javaOutput)),
+                        fileRef(maxvmOutput),
+                        fileRef(stderrFile(maxvmOutput))),
+                        expected);
                 }
             } else if (Files.compareFiles(javaOutput, maxvmOutput, filteredLines)) {
                 final ExpectedResult expected = printSuccess(testName, config);
