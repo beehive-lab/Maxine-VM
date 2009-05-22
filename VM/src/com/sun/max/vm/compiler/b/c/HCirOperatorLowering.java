@@ -212,7 +212,7 @@ public final class HCirOperatorLowering extends HCirOperatorDefaultVisitor {
 
     void set(CirCall result) {
         CirCall call = result;
-        assert _arguments[_arguments.length - 2] == _originalCC;
+        assert _arguments[_arguments.length - 2] == _originalCC : _arguments[_arguments.length - 2] + " != " + _originalCC;
         assert _arguments[_arguments.length - 1] == _originalCE;
         if (ce() != _originalCE) {
             _arguments[_arguments.length - 1] = ce();
