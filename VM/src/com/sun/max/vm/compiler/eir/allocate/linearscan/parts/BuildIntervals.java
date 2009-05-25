@@ -161,7 +161,7 @@ public class BuildIntervals extends AlgorithmPart {
         }
 
         for (EirVariable variable : generation().variables()) {
-            assert !variable.interval().isEmpty();
+            assert !variable.interval().isEmpty() || variable.operands().length() == 0;
         }
 
         assert data().parentIntervals() != null;

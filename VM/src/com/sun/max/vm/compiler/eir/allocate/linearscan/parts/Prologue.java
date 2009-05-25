@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.eir.allocate.linearscan.parts;
 
 import com.sun.max.collect.*;
 import com.sun.max.io.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 import com.sun.max.vm.type.*;
@@ -47,6 +48,8 @@ public class Prologue extends AlgorithmPart {
     protected void splitFixedVariables() {
 
         final VariableMapping<EirLocation, EirVariable> fixedLocationMapping = new ChainedHashMapping<EirLocation, EirVariable>();
+
+        generation().clearEmptyVariables();
 
         for (EirVariable variable : generation().variables()) {
             if (variable.isLocationFixed()) {
@@ -171,5 +174,4 @@ public class Prologue extends AlgorithmPart {
         writer.flush();
         return false;
     }
-
 }

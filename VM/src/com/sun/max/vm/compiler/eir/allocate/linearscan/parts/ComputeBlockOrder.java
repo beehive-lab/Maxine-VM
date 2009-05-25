@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.eir.allocate.linearscan.parts;
 
 import com.sun.max.collect.*;
+import com.sun.max.io.*;
 import com.sun.max.vm.compiler.eir.*;
 import com.sun.max.vm.compiler.eir.allocate.linearscan.*;
 
@@ -33,6 +34,15 @@ public class ComputeBlockOrder extends AlgorithmPart {
 
     public ComputeBlockOrder() {
         super(3);
+    }
+
+    private boolean traceBlocks() {
+        final IndentWriter writer = IndentWriter.traceStreamWriter();
+        for (EirBlock block : generation().eirBlocks()) {
+            block.printTo(writer);
+        }
+        writer.flush();
+        return false;
     }
 
     @Override
@@ -57,7 +67,7 @@ public class ComputeBlockOrder extends AlgorithmPart {
         if (generation().hasEirEpilogueBlock() && generation().eirEpilogueBlock().predecessors().length() == 0) {
             blockPoolSet.add(generation().eirEpilogueBlock());
         }
-        assert blockPoolSet.length() == blockPoolSet.pool().length() : "every block must be visited";
+        assert blockPoolSet.length() == blockPoolSet.pool().length() || traceBlocks() : "every block must be visited";
 
         blockPoolSet.clear();
         blockPoolSet.add(startBlock);
