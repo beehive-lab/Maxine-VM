@@ -1114,7 +1114,10 @@ public class MaxineTester {
 
                         } else if (line.contains("failed")) {
                             failedLines.append(line); // found a line with "failed"--probably a failed test
-                            addTestResult(lastTest, line);
+                            // (tw) bug?
+                            if (lastTest != null) {
+                                addTestResult(lastTest, line);
+                            }
                             lastTest = null;
                             lastTestNumber = null;
                         } else if (line.startsWith("Done: ")) {

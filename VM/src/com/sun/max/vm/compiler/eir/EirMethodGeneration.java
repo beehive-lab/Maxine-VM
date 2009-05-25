@@ -715,4 +715,29 @@ public abstract class EirMethodGeneration {
         }
         return null;
     }
+
+    /**
+     * (tw) Clears variables without usages (operands).
+     */
+    public void clearEmptyVariables() {
+        boolean variablesToRemove = false;
+        for (EirVariable variable : this._variables) {
+            if (variable.operands().length() == 0) {
+                variablesToRemove = true;
+                break;
+            }
+        }
+
+        if (variablesToRemove) {
+            final AppendableSequence<EirVariable> newVariables = new ArrayListSequence<EirVariable>(_variables.length());
+
+            for (EirVariable variable : this._variables) {
+                if (variable.operands().length() > 0) {
+                    newVariables.append(variable);
+                }
+            }
+
+            this.setVariables(newVariables);
+        }
+    }
 }
