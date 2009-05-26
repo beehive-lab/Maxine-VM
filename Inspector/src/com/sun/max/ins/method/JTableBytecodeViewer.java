@@ -130,12 +130,15 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     }
 
     public static class BytecodeViewerPreferences extends TableColumnVisibilityPreferences<ColumnKind> {
+
+        private static final String OPERAND_DISPLAY_MODE_PREFERENCE = "operandDisplayMode";
+
         private PoolConstantLabel.Mode _operandDisplayMode;
 
         public BytecodeViewerPreferences(Inspection inspection) {
             super(inspection, "bytecodeInspectorPrefs", ColumnKind.class, ColumnKind.VALUES);
             final OptionTypes.EnumType<PoolConstantLabel.Mode> optionType = new OptionTypes.EnumType<PoolConstantLabel.Mode>(PoolConstantLabel.Mode.class);
-            _operandDisplayMode = inspection.settings().get(_saveSettingsListener, "operandDisplayMode", optionType, PoolConstantLabel.Mode.JAVAP);
+            _operandDisplayMode = inspection.settings().get(_saveSettingsListener, OPERAND_DISPLAY_MODE_PREFERENCE, optionType, PoolConstantLabel.Mode.JAVAP);
         }
 
         public BytecodeViewerPreferences(BytecodeViewerPreferences otherPreferences) {
@@ -173,7 +176,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         @Override
         protected void saveSettings(SaveSettingsEvent saveSettingsEvent) {
             super.saveSettings(saveSettingsEvent);
-            saveSettingsEvent.save("operandDisplayMode", _operandDisplayMode.name());
+            saveSettingsEvent.save(OPERAND_DISPLAY_MODE_PREFERENCE, _operandDisplayMode.name());
         }
 
         @Override
@@ -216,11 +219,18 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private static BytecodeViewerPreferences _globalPreferences;
 
-    public static BytecodeViewerPreferences globalPreferences(Inspection inspection) {
+    private static BytecodeViewerPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new BytecodeViewerPreferences(inspection);
         }
         return _globalPreferences;
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
     }
 
     private final Inspection _inspection;
@@ -853,7 +863,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         try {
             _table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
         } catch (PrinterException printerException) {
-            inspection().errorMessage("Print failed: " + printerException.getMessage());
+            gui().errorMessage("Print failed: " + printerException.getMessage());
         }
     }
 }

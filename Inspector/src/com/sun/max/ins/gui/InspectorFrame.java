@@ -62,8 +62,6 @@ public interface InspectorFrame extends Prober {
 
     void moveToFront();
 
-    void moveToMiddle();
-
     void setTitle(String title);
 
     String getTitle();
@@ -96,8 +94,6 @@ public interface InspectorFrame extends Prober {
 
     Point getLocationOnScreen();
 
-    void setLocationOnScreen(Point location);
-
     int getWidth();
 
     int getHeight();
@@ -105,6 +101,8 @@ public interface InspectorFrame extends Prober {
     void setLocation(int x, int y);
 
     void setLocation(Point location);
+
+    void setSize(int width, int height);
 
     void setMaximumSize(Dimension size);
 

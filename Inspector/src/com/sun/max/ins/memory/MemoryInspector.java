@@ -73,7 +73,7 @@ public final class MemoryInspector extends Inspector {
         _numberOfBytesPerGroup = numberOfBytesPerGroup;
         _numberOfGroupsPerLine = numberOfGroupsPerLine;
         createFrame(null);
-        setLocationRelativeToMouse();
+        inspection.gui().setLocationRelativeToMouse(this);
         _memoryInspectors.add(this);
         Trace.line(1, tracePrefix() + " creating for " + getTextForTitle());
     }
@@ -194,8 +194,8 @@ public final class MemoryInspector extends Inspector {
     @Override
     protected void createView(long epoch) {
         frame().menu().addSeparator();
-        frame().menu().add(inspection().getDeleteInspectorsAction(_otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
-        frame().menu().add(inspection().getDeleteInspectorsAction(_allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
+        frame().menu().add(actions().closeViews(_otherMemoryInspectorsPredicate, "Close other Memory Inspectors"));
+        frame().menu().add(actions().closeViews(_allMemoryInspectorsPredicate, "Close all Memory Inspectors"));
 
         _contentPane = new InspectorPanel(inspection());
         frame().setContentPane(_contentPane);

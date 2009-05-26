@@ -49,6 +49,13 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
     }
 
     /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
+    }
+
+    /**
      * A predicate specifying which kinds of code are to be displayed in a method inspector.
      */
     private final Map<MethodCodeKind, Boolean> _visibleCodeKinds = new EnumMap<MethodCodeKind, Boolean>(MethodCodeKind.class);
@@ -141,7 +148,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
             SpringUtilities.makeCompactGrid(prefPanel, 2);
 
             final JPanel buttons = new InspectorPanel(inspection);
-            buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
+            buttons.add(new JButton(new InspectorAction(inspection, "Close") {
                 @Override
                 protected void procedure() {
                     dispose();
@@ -152,7 +159,7 @@ public class MethodInspectorPreferences extends AbstractInspectionHolder {
             dialogPanel.add(buttons, BorderLayout.SOUTH);
             setContentPane(dialogPanel);
             pack();
-            inspection().moveToMiddle(this);
+            inspection.gui().moveToMiddle(this);
             setVisible(true);
         }
     }

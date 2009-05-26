@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins;
 
-import java.awt.datatransfer.*;
 import java.io.*;
 
 import javax.swing.*;
@@ -221,16 +220,59 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return _refreshAll;
     }
 
+    /**
+     * Action:  close all open inspectors that match a predicate.
+     */
+    final class CloseViewsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Close views";
+
+        private final Predicate<Inspector> _predicate;
+
+        CloseViewsAction(Predicate<Inspector> predicate, String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+            _predicate = predicate;
+        }
+
+        @Override
+        protected void procedure() {
+            gui().removeInspectors(_predicate);
+        }
+    }
+
+    /**
+     * @param predicate a predicate that returns true for all Inspectors to be closed.
+     * @param title a string name for the Action, uses default name if null.
+     * @return an Action that will close views.
+     */
+    public final InspectorAction closeViews(Predicate<Inspector> predicate, String title) {
+        return new CloseViewsAction(predicate, title);
+    }
+
 
     /**
      * Action:  closes all open inspectors.
      */
-    private final InspectorAction _closeAll = inspection().getDeleteInspectorsAction(Predicate.Static.alwaysTrue(Inspector.class), "Close all views");
+    final class CloseAllViewsAction extends InspectorAction {
+
+        private static final String DEFAULT_TITLE = "Close all views";
+
+        CloseAllViewsAction(String title) {
+            super(inspection(), title == null ? DEFAULT_TITLE : title);
+        }
+
+        @Override
+        protected void procedure() {
+            gui().removeInspectors(Predicate.Static.alwaysTrue(Inspector.class));
+        }
+    }
+
+    private final InspectorAction _closeAll = new CloseAllViewsAction(null);
 
     /**
      * @return an Action that closes all open inspectors.
      */
-    public final InspectorAction closeAll() {
+    public final InspectorAction closeAllViews() {
         return _closeAll;
     }
 
@@ -254,6 +296,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     private final InspectorAction _quit = new QuitAction(null);
 
+    /**
+     * @return an Action that quits the VM inspection session.
+     */
     public final InspectorAction quit() {
         return _quit;
     }
@@ -276,7 +321,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 maxVM().advanceToJavaEntryPoint();
             } catch (IOException ioException) {
-                inspection().errorMessage("error during relocation of boot image");
+                gui().errorMessage("error during relocation of boot image");
             }
             setEnabled(false);
         }
@@ -308,11 +353,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final int oldLevel = Trace.level();
             int newLevel = oldLevel;
-            final String input = inspection().inputDialog(DEFAULT_TITLE, Integer.toString(oldLevel));
+            final String input = gui().inputDialog(DEFAULT_TITLE, Integer.toString(oldLevel));
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
-                inspection().errorMessage(numberFormatException.toString());
+                gui().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
                 Trace.on(newLevel);
@@ -347,11 +392,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final int oldLevel = maxVM().getInterpreterUseLevel();
             int newLevel = oldLevel;
-            final String input = inspection().inputDialog("Change interpreter use level (0=none, 1=some, etc)", Integer.toString(oldLevel));
+            final String input = gui().inputDialog("Change interpreter use level (0=none, 1=some, etc)", Integer.toString(oldLevel));
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
-                inspection().errorMessage(numberFormatException.toString());
+                gui().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
                 maxVM().setInterpreterUseLevel(newLevel);
@@ -392,11 +437,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final int oldLevel = maxVM().transportDebugLevel();
             int newLevel = oldLevel;
-            final String input = inspection().inputDialog(" (Set transport debug level, 0=none, 1=some, etc)", Integer.toString(oldLevel));
+            final String input = gui().inputDialog(" (Set transport debug level, 0=none, 1=some, etc)", Integer.toString(oldLevel));
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
-                inspection().errorMessage(numberFormatException.toString());
+                gui().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
                 maxVM().setTransportDebugLevel(newLevel);
@@ -430,7 +475,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final String fileName = inspection().inputDialog("File name: ", FileCommands.defaultCommandFile());
+            final String fileName = gui().inputDialog("File name: ", FileCommands.defaultCommandFile());
             if (fileName != null && !fileName.equals("")) {
                 maxVM().executeCommandsFromFile(fileName);
             }
@@ -492,11 +537,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final int oldLevel = maxVM().getVMTraceLevel();
             int newLevel = oldLevel;
-            final String input = inspection().inputDialog("Set VM Trace Level", Integer.toString(oldLevel));
+            final String input = gui().inputDialog("Set VM Trace Level", Integer.toString(oldLevel));
             try {
                 newLevel = Integer.parseInt(input);
             } catch (NumberFormatException numberFormatException) {
-                inspection().errorMessage(numberFormatException.toString());
+                gui().errorMessage(numberFormatException.toString());
             }
             if (newLevel != oldLevel) {
                 maxVM().setVMTraceLevel(newLevel);
@@ -535,11 +580,11 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         protected void procedure() {
             final long oldThreshold = maxVM().getVMTraceThreshold();
             long newThreshold = oldThreshold;
-            final String input = inspection().inputDialog("Set VM trace threshold", Long.toString(oldThreshold));
+            final String input = gui().inputDialog("Set VM trace threshold", Long.toString(oldThreshold));
             try {
                 newThreshold = Long.parseLong(input);
             } catch (NumberFormatException numberFormatException) {
-                inspection().errorMessage(numberFormatException.toString());
+                gui().errorMessage(numberFormatException.toString());
             }
             if (newThreshold != oldThreshold) {
                 maxVM().setVMTraceThreshold(newThreshold);
@@ -831,9 +876,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         public void procedure() {
-            final Clipboard clipboard = inspection().getToolkit().getSystemClipboard();
-            final StringSelection selection = new StringSelection(_word.toHexString());
-            clipboard.setContents(selection, selection);
+            gui().postToClipboard(_word.toHexString());
         }
     }
 
@@ -1173,7 +1216,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                         final TeleObject teleObject = maxVM().makeTeleObject(objectReference);
                         focus().setHeapObject(teleObject);
                     } else {
-                        inspection().errorMessage("heap object not found at 0x"  + address.toHexString());
+                        gui().errorMessage("heap object not found at 0x"  + address.toHexString());
                     }
                 }
             };
@@ -1232,17 +1275,17 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final String input = inspection().inputDialog("Inspect heap object by ID..", "");
+            final String input = gui().inputDialog("Inspect heap object by ID..", "");
             try {
                 final long oid = Long.parseLong(input);
                 final TeleObject teleObject = maxVM().findObjectByOID(oid);
                 if (teleObject != null) {
                     focus().setHeapObject(teleObject);
                 } else {
-                    inspection().errorMessage("failed to find heap object for ID: " + input);
+                    gui().errorMessage("failed to find heap object for ID: " + input);
                 }
             } catch (NumberFormatException numberFormatException) {
-                inspection().errorMessage("Not a ID: " + input);
+                gui().errorMessage("Not a ID: " + input);
             }
         }
     }
@@ -1329,18 +1372,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final String value = inspection().questionMessage("ID (hex): ");
+            final String value = gui().questionMessage("ID (hex): ");
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 16);
                     final TeleClassActor teleClassActor = maxVM().findTeleClassActor(serial);
                     if (teleClassActor == null) {
-                        inspection().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
+                        gui().errorMessage("failed to find classActor for ID:  0x" + Integer.toHexString(serial));
                     } else {
                         focus().setHeapObject(teleClassActor);
                     }
                 } catch (NumberFormatException ex) {
-                    inspection().errorMessage("Hex integer required");
+                    gui().errorMessage("Hex integer required");
                 }
             }
         }
@@ -1370,18 +1413,18 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         @Override
         protected void procedure() {
-            final String value = inspection().questionMessage("ID (decimal): ");
+            final String value = gui().questionMessage("ID (decimal): ");
             if (value != null && !value.equals("")) {
                 try {
                     final int serial = Integer.parseInt(value, 10);
                     final TeleClassActor teleClassActor = maxVM().findTeleClassActor(serial);
                     if (teleClassActor == null) {
-                        inspection().errorMessage("failed to find ClassActor for ID: " + serial);
+                        gui().errorMessage("failed to find ClassActor for ID: " + serial);
                     } else {
                         focus().setHeapObject(teleClassActor);
                     }
                 } catch (NumberFormatException ex) {
-                    inspection().errorMessage("Hex integer required");
+                    gui().errorMessage("Hex integer required");
                 }
             }
         }
@@ -1775,7 +1818,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 focus().setBreakpoint(null);
                 selectedTeleBreakpoint.remove();
             } else {
-                inspection().errorMessage("No breakpoint selected");
+                gui().errorMessage("No breakpoint selected");
             }
         }
 
@@ -2021,7 +2064,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             if (teleTargetRoutine != null) {
                 teleTargetRoutine.setTargetCodeLabelBreakpoints();
             } else {
-                inspection().errorMessage("Unable to find target method in which to set breakpoints");
+                gui().errorMessage("Unable to find target method in which to set breakpoints");
             }
         }
 
@@ -2447,7 +2490,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 maxVM().pause();
             } catch (Exception exception) {
-                inspection().errorMessage("Pause could not be initiated", exception.toString());
+                gui().errorMessage("Pause could not be initiated", exception.toString());
             }
         }
 
@@ -2481,7 +2524,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 maxVM().resume(false, false);
             } catch (Exception exception) {
-                inspection().errorMessage("Run to instruction could not be performed.", exception.toString());
+                gui().errorMessage("Run to instruction could not be performed.", exception.toString());
             }
         }
 
@@ -2522,7 +2565,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 try {
                     maxVM().runToInstruction(returnAddress, false, true);
                 } catch (Exception exception) {
-                    inspection().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
+                    gui().errorMessage("Return from frame (ignoring breakpoints) could not be performed.", exception.toString());
                 }
             }
         }
@@ -2564,7 +2607,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 try {
                     maxVM().runToInstruction(returnAddress, false, false);
                 } catch (Exception exception) {
-                    inspection().errorMessage("Return from frame could not be performed.", exception.toString());
+                    gui().errorMessage("Return from frame could not be performed.", exception.toString());
                 }
             }
         }
@@ -2609,7 +2652,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     throw new InspectorError("Run to instruction (ignoring breakpoints) could not be performed.", exception);
                 }
             } else {
-                inspection().errorMessage("No instruction selected");
+                gui().errorMessage("No instruction selected");
             }
         }
 
@@ -2653,7 +2696,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                     throw new InspectorError("Run to selection instruction could not be performed.", exception);
                 }
             } else {
-                inspection().errorMessage("No instruction selected");
+                gui().errorMessage("No instruction selected");
             }
         }
 
@@ -2784,7 +2827,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 maxVM().singleStep(thread, false);
             } catch (Exception exception) {
-                inspection().errorMessage("Couldn't single step", exception.toString());
+                gui().errorMessage("Couldn't single step", exception.toString());
             }
         }
 
@@ -2823,7 +2866,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 maxVM().stepOver(thread, false, true);
             } catch (Exception exception) {
-                inspection().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
+                gui().errorMessage("Step over (ignoring breakpoints) could not be performed.", exception.toString());
             }
         }
 
@@ -2863,7 +2906,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             try {
                 maxVM().stepOver(thread, false, false);
             } catch (Exception exception) {
-                inspection().errorMessage("Step over could not be performed.", exception.toString());
+                gui().errorMessage("Step over could not be performed.", exception.toString());
             }
         }
 
@@ -3024,19 +3067,19 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
             final JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
             fileChooser.setDialogTitle("Save code registry summary to file:");
-            final int returnVal = fileChooser.showSaveDialog(inspection());
+            final int returnVal = fileChooser.showSaveDialog(inspection().gui().frame());
             if (returnVal != JFileChooser.APPROVE_OPTION) {
                 return;
             }
             final File file = fileChooser.getSelectedFile();
-            if (file.exists() && !inspection().yesNoDialog("File " + file + "exists.  Overwrite?\n")) {
+            if (file.exists() && !gui().yesNoDialog("File " + file + "exists.  Overwrite?\n")) {
                 return;
             }
             try {
                 final PrintStream printStream = new PrintStream(new FileOutputStream(file, false));
                 maxVM().describeTeleTargetRoutines(printStream);
             } catch (FileNotFoundException fileNotFoundException) {
-                inspection().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
+                gui().errorMessage("Unable to open " + file + " for writing:" + fileNotFoundException);
             }
         }
     }

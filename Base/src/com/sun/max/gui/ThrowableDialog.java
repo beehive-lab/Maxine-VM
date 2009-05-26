@@ -35,7 +35,7 @@ import javax.swing.border.*;
  * @author Doug Simon
  * @author Aritra Bandyopadhyay
  */
-public class ThrowableDialog extends JDialog {
+public final class ThrowableDialog extends JDialog {
 
     /**
      * Creates a dialog to display the details of an exception and makes it visible.
@@ -72,7 +72,7 @@ public class ThrowableDialog extends JDialog {
      * @param owner the {@code Frame} from which the dialog is displayed
      * @param title  the {@code String} to display in the dialog's title bar
      */
-    public ThrowableDialog(Throwable throwable, Frame owner, String title) {
+    private ThrowableDialog(Throwable throwable, Frame owner, String title) {
         super(owner, title, true);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setAlwaysOnTop(true);

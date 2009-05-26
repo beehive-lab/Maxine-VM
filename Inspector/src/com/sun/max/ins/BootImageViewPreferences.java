@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins;
 
+import javax.swing.*;
+
 import com.sun.max.ins.gui.*;
 import com.sun.max.vm.*;
 
@@ -36,11 +38,18 @@ public final class BootImageViewPreferences extends TableColumnVisibilityPrefere
     /**
      * @return the global, persistent set of user preferences for viewing  {@link VMConfiguration} information in the VM boot image.
      */
-    public static BootImageViewPreferences globalPreferences(Inspection inspection) {
+    static BootImageViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new BootImageViewPreferences(inspection);
         }
         return _globalPreferences;
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
     }
 
     /**

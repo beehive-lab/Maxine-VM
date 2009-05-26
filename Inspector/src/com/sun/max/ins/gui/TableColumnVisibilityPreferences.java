@@ -131,36 +131,28 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
         this (defaultPreferences, false);
     }
 
-    /**
-     * @return holder of the interactive inspection state for the session
-     */
     public final Inspection inspection() {
         return _inspection;
     }
 
-    /**
-     * @return visual specifications for user interaction during the session
-     */
+    public final MaxVM maxVM() {
+        return _inspection.maxVM();
+    }
+
+    public InspectorGUI gui() {
+        return _inspection.gui();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
 
-    /**
-     * @return information about the user focus of attention in the view state.
-     */
     public final InspectionFocus focus() {
         return _inspection.focus();
     }
 
-    /**
-     * @return access to {@link InspectorAction}s of general use.
-     */
     public final InspectionActions actions() {
         return _inspection.actions();
-    }
-
-    public final MaxVM maxVM() {
-        return _inspection.maxVM();
     }
 
     /**
@@ -307,7 +299,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
             SpringUtilities.makeCompactGrid(prefPanel, 2);
 
             final JPanel buttonsPanel = new InspectorPanel(inspection);
-            buttonsPanel.add(new JButton(new InspectorAction(inspection(), "Close") {
+            buttonsPanel.add(new JButton(new InspectorAction(inspection, "Close") {
                 @Override
                 protected void procedure() {
                     dispose();
@@ -319,7 +311,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
 
             setContentPane(contentPanel);
             pack();
-            inspection().moveToMiddle(this);
+            inspection.gui().moveToMiddle(this);
             setVisible(true);
         }
 
@@ -340,7 +332,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
             viewOptionPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 
             final JPanel buttonsPanel = new InspectorPanel(inspection);
-            buttonsPanel.add(new JButton(new InspectorAction(inspection(), "Close") {
+            buttonsPanel.add(new JButton(new InspectorAction(inspection, "Close") {
                 @Override
                 protected void procedure() {
                     dispose();
@@ -352,7 +344,7 @@ public abstract class TableColumnVisibilityPreferences<Column_Type extends Enum<
 
             setContentPane(contentPanel);
             pack();
-            inspection().moveToMiddle(this);
+            inspection.gui().moveToMiddle(this);
             setVisible(true);
         }
     }

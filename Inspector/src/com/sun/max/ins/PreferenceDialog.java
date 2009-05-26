@@ -55,7 +55,7 @@ public class PreferenceDialog extends InspectorDialog {
         generalLabelPanel.add(new TextLabel(inspection, "General"), BorderLayout.WEST);
         prefPanel.add(generalLabelPanel);
 
-        final JPanel keyBindingsPanel = inspection().preferences().getPanel();
+        final JPanel keyBindingsPanel = inspection.globalPreferencesPanel();
         keyBindingsPanel.setBorder(border);
         prefPanel.add(keyBindingsPanel);
 
@@ -64,7 +64,7 @@ public class PreferenceDialog extends InspectorDialog {
         methodLabelPanel.add(new TextLabel(inspection, "Methods"), BorderLayout.WEST);
         prefPanel.add(methodLabelPanel);
 
-        final JPanel methodInspectorPanel = MethodInspectorPreferences.globalPreferences(inspection).getPanel();
+        final JPanel methodInspectorPanel = MethodInspectorPreferences.globalPreferencesPanel(inspection);
         methodInspectorPanel.setBorder(border);
         prefPanel.add(methodInspectorPanel);
 
@@ -73,7 +73,7 @@ public class PreferenceDialog extends InspectorDialog {
         targetCodeLabelPanel.add(new TextLabel(inspection, "Target Code"), BorderLayout.WEST);
         prefPanel.add(targetCodeLabelPanel);
 
-        final JPanel targetCodeInspectorPanel = JTableTargetCodeViewer.globalPreferences(inspection).getPanel();
+        final JPanel targetCodeInspectorPanel = JTableTargetCodeViewer.globalPreferencesPanel(inspection);
         targetCodeInspectorPanel.setBorder(border);
         prefPanel.add(targetCodeInspectorPanel);
 
@@ -82,7 +82,7 @@ public class PreferenceDialog extends InspectorDialog {
         bytecodeLabelPanel.add(new TextLabel(inspection, "Bytecode"), BorderLayout.WEST);
         prefPanel.add(bytecodeLabelPanel);
 
-        final JPanel bytecodeInspectorPanel = JTableBytecodeViewer.globalPreferences(inspection).getPanel();
+        final JPanel bytecodeInspectorPanel = JTableBytecodeViewer.globalPreferencesPanel(inspection);
         bytecodeInspectorPanel.setBorder(border);
         prefPanel.add(bytecodeInspectorPanel);
 
@@ -91,7 +91,7 @@ public class PreferenceDialog extends InspectorDialog {
         objectLabelPanel.add(new TextLabel(inspection, "Objects"), BorderLayout.WEST);
         prefPanel.add(objectLabelPanel);
 
-        final JPanel objectInspectorPanel = ObjectInspectorPreferences.globalPreferences(inspection).getPanel();
+        final JPanel objectInspectorPanel = ObjectInspectorPreferences.globalPreferencesPanel(inspection);
         objectInspectorPanel.setBorder(border);
         prefPanel.add(objectInspectorPanel);
 
@@ -100,7 +100,7 @@ public class PreferenceDialog extends InspectorDialog {
         hubLabelPanel.add(new TextLabel(inspection, "Hubs"), BorderLayout.WEST);
         prefPanel.add(hubLabelPanel);
 
-        final JPanel hubInspectorPanel = HubInspector.globalHubPreferences(inspection).getPanel();
+        final JPanel hubInspectorPanel = HubInspector.globalPreferencesPanel(inspection);
         hubInspectorPanel.setBorder(border);
         prefPanel.add(hubInspectorPanel);
 
@@ -109,7 +109,7 @@ public class PreferenceDialog extends InspectorDialog {
         threadsLabelPanel.add(new TextLabel(inspection, "Threads"), BorderLayout.WEST);
         prefPanel.add(threadsLabelPanel);
 
-        final JPanel threadsInspectorPanel = ThreadsViewPreferences.globalPreferences(inspection).getPanel();
+        final JPanel threadsInspectorPanel = ThreadsViewPreferences.globalPreferencesPanel(inspection);
         threadsInspectorPanel.setBorder(border);
         prefPanel.add(threadsInspectorPanel);
 
@@ -118,7 +118,7 @@ public class PreferenceDialog extends InspectorDialog {
         breakpointsLabelPanel.add(new TextLabel(inspection, "Breakpoints"), BorderLayout.WEST);
         prefPanel.add(breakpointsLabelPanel);
 
-        final JPanel breakpointsInspectorPanel = BreakpointsViewPreferences.globalPreferences(inspection).getPanel();
+        final JPanel breakpointsInspectorPanel = BreakpointsViewPreferences.globalPreferencesPanel(inspection);
         breakpointsInspectorPanel.setBorder(border);
         prefPanel.add(breakpointsInspectorPanel);
 
@@ -127,7 +127,7 @@ public class PreferenceDialog extends InspectorDialog {
         memoryRegionsLabelPanel.add(new TextLabel(inspection, "Memory regions"), BorderLayout.WEST);
         prefPanel.add(memoryRegionsLabelPanel);
 
-        final JPanel memoryRegionsInspectorPanel = MemoryRegionsViewPreferences.globalPreferences(inspection).getPanel();
+        final JPanel memoryRegionsInspectorPanel = MemoryRegionsViewPreferences.globalPreferencesPanel(inspection);
         memoryRegionsInspectorPanel.setBorder(border);
         prefPanel.add(memoryRegionsInspectorPanel);
 
@@ -136,7 +136,7 @@ public class PreferenceDialog extends InspectorDialog {
         registersLabelPanel.add(new TextLabel(inspection, "Registers"), BorderLayout.WEST);
         prefPanel.add(registersLabelPanel);
 
-        final JPanel registersInspectorPanel = RegistersViewPreferences.globalPreferences(inspection).getPanel();
+        final JPanel registersInspectorPanel = RegistersViewPreferences.globalPreferencesPanel(inspection);
         registersInspectorPanel.setBorder(border);
         prefPanel.add(registersInspectorPanel);
 
@@ -145,7 +145,7 @@ public class PreferenceDialog extends InspectorDialog {
         vmThreadLocalsLabelPanel.add(new TextLabel(inspection, "VM Thread Locals"), BorderLayout.WEST);
         prefPanel.add(vmThreadLocalsLabelPanel);
 
-        final JPanel vmThreadLocalsInspectorPanel = ThreadLocalsViewPreferences.globalPreferences(inspection).getPanel();
+        final JPanel vmThreadLocalsInspectorPanel = ThreadLocalsViewPreferences.globalPreferencesPanel(inspection);
         vmThreadLocalsInspectorPanel.setBorder(border);
         prefPanel.add(vmThreadLocalsInspectorPanel);
 
@@ -154,7 +154,7 @@ public class PreferenceDialog extends InspectorDialog {
         bootImageLabelPanel.add(new TextLabel(inspection, "Boot Image"), BorderLayout.WEST);
         prefPanel.add(bootImageLabelPanel);
 
-        final JPanel bootImageInspectorPanel = BootImageViewPreferences.globalPreferences(inspection).getPanel();
+        final JPanel bootImageInspectorPanel = BootImageViewPreferences.globalPreferencesPanel(inspection);
         bootImageInspectorPanel.setBorder(border);
         prefPanel.add(bootImageInspectorPanel);
 
@@ -171,7 +171,7 @@ public class PreferenceDialog extends InspectorDialog {
         dialogPanel.add(buttonsPanel, BorderLayout.SOUTH);
         setContentPane(dialogPanel);
         pack();
-        inspection().moveToMiddle(this);
+        inspection.gui().moveToMiddle(this);
         setVisible(true);
     }
 

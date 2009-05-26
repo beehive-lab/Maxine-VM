@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.gui;
 
-import java.awt.*;
 import java.io.*;
 
 import com.sun.max.ins.*;
@@ -28,6 +27,7 @@ import com.sun.max.lang.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -305,37 +305,51 @@ public abstract class UniqueInspector<Inspector_Type extends UniqueInspector> ex
         return null;
     }
 
-    public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, Key<UniqueInspector_Type> key) {
-        for (int i = 0; i < inspection.desktopPane().getComponentCount(); i++) {
-            final Component component = inspection.desktopPane().getComponent(i);
-            if (component instanceof InspectorFrame) {
-                UniqueInspector_Type result = match((InspectorFrame) component, key);
-                if (result != null) {
-                    return result;
-                }
-                // This component may contain other InspectorFrames, e.g. if it is related to a tabbed frame.
-                // Components placed in tabbed frames get reparented from the desktopPane to the tabbed frame.
-                final Inspector inspector = ((InspectorFrame) component).inspector();
-                if (inspector instanceof InspectorContainer) {
-                    final InspectorContainer<? extends Inspector> inspectorContainer = StaticLoophole.cast(inspector);
-                    for (Inspector containedInspector : inspectorContainer) {
-                        result = match(containedInspector.frame(), key);
-                        if (result != null) {
-                            return result;
-                        }
-                    }
-                }
+    public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, final Key<UniqueInspector_Type> key) {
+        final Predicate<Inspector> predicate = new Predicate<Inspector>() {
+
+            @Override
+            public boolean evaluate(Inspector inspector) {
+                return match(inspector.frame(), key) != null;
             }
-        }
-        for (Frame frame : Frame.getFrames()) {
-            if (frame.isVisible() && frame instanceof InspectorFrame) {
-                final UniqueInspector_Type result = match((InspectorFrame) frame, key);
-                if (result != null) {
-                    return result;
-                }
-            }
+        };
+        final Inspector inspector =  inspection.gui().findInspector(predicate);
+        if (inspector != null && inspector instanceof UniqueInspector) {
+            final UniqueInspector_Type result = StaticLoophole.cast(inspector);
+            return result;
         }
         return null;
+        // TODO (mlvdv) flush old UniqueInspector code if the alternate works
+//        for (int i = 0; i < inspection.desktopPane().getComponentCount(); i++) {
+//            final Component component = inspection.desktopPane().getComponent(i);
+//            if (component instanceof InspectorFrame) {
+//                UniqueInspector_Type result = match((InspectorFrame) component, key);
+//                if (result != null) {
+//                    return result;
+//                }
+//                // This component may contain other InspectorFrames, e.g. if it is related to a tabbed frame.
+//                // Components placed in tabbed frames get reparented from the desktopPane to the tabbed frame.
+//                final Inspector inspector = ((InspectorFrame) component).inspector();
+//                if (inspector instanceof InspectorContainer) {
+//                    final InspectorContainer<? extends Inspector> inspectorContainer = StaticLoophole.cast(inspector);
+//                    for (Inspector containedInspector : inspectorContainer) {
+//                        result = match(containedInspector.frame(), key);
+//                        if (result != null) {
+//                            return result;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        for (Frame frame : Frame.getFrames()) {
+//            if (frame.isVisible() && frame instanceof InspectorFrame) {
+//                final UniqueInspector_Type result = match((InspectorFrame) frame, key);
+//                if (result != null) {
+//                    return result;
+//                }
+//            }
+//        }
+//        return null;
     }
 
     public static <UniqueInspector_Type extends UniqueInspector> UniqueInspector_Type find(Inspection inspection, Class<UniqueInspector_Type> type) {

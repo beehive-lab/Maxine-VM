@@ -56,6 +56,14 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
         return _inspection;
     }
 
+    public MaxVM maxVM() {
+        return _inspection.maxVM();
+    }
+
+    public InspectorGUI gui() {
+        return _inspection.gui();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
@@ -66,10 +74,6 @@ public class InspectorScrollPane extends JScrollPane implements Prober, Inspecti
 
     public InspectionActions actions() {
         return _inspection.actions();
-    }
-
-    public MaxVM maxVM() {
-        return _inspection.maxVM();
     }
 
     public void redisplay() {

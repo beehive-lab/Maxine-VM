@@ -51,7 +51,7 @@ public final class MethodArgsDialog {
             final Kind kind = argKinds[i];
 
             if (kind == Kind.BOOLEAN) {
-                final String input = inspection.inputDialog("Argument " + i + " (boolean, enter 1 or 0):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (boolean, enter 1 or 0):", "");
 
                 if (input.equals("0")) {
                     args[i] = BooleanValue.from(false);
@@ -59,7 +59,7 @@ public final class MethodArgsDialog {
                     args[i] = BooleanValue.from(true);
                 }
             } else if (kind == Kind.BYTE) {
-                final String input = inspection.inputDialog("Argument " + i + " (byte):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (byte):", "");
 
                 if (input == null) {
                     return null;
@@ -67,7 +67,7 @@ public final class MethodArgsDialog {
 
                 args[i] = IntValue.from(Byte.parseByte(input));
             } else if (kind == Kind.CHAR) {
-                final String input = inspection.inputDialog("Argument " + i + " (char):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (char):", "");
 
                 if (input == null) {
                     return null;
@@ -75,7 +75,7 @@ public final class MethodArgsDialog {
 
                 args[i] = IntValue.from(input.charAt(0));
             } else if (kind == Kind.DOUBLE) {
-                final String input = inspection.inputDialog("Argument " + i + " (double):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (double):", "");
 
                 if (input == null) {
                     return null;
@@ -83,7 +83,7 @@ public final class MethodArgsDialog {
 
                 args[i] = DoubleValue.from(Double.parseDouble(input));
             } else if (kind == Kind.FLOAT) {
-                final String input = inspection.inputDialog("Argument " + i + " (float):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (float):", "");
 
                 if (input == null) {
                     return null;
@@ -91,7 +91,7 @@ public final class MethodArgsDialog {
 
                 args[i] = FloatValue.from(Float.parseFloat(input));
             } else if (kind == Kind.INT) {
-                final String input = inspection.inputDialog("Argument " + i + " (int):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (int):", "");
 
                 if (input == null) {
                     return null;
@@ -99,7 +99,7 @@ public final class MethodArgsDialog {
 
                 args[i] = IntValue.from(Integer.parseInt(input));
             } else if (kind == Kind.LONG) {
-                final String input = inspection.inputDialog("Argument " + i + " (long):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (long):", "");
 
                 if (input == null) {
                     return null;
@@ -107,7 +107,7 @@ public final class MethodArgsDialog {
 
                 args[i] = LongValue.from(Long.parseLong(input));
             } else if (kind == Kind.REFERENCE) {
-                final String input = inspection.inputDialog("Argument " + i + " (reference, origin address in hex):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (reference, origin address in hex):", "");
 
                 if (input == null) {
                     return null;
@@ -115,7 +115,7 @@ public final class MethodArgsDialog {
 
                 args[i] = inspection.maxVM().createReferenceValue(inspection.maxVM().originToReference(Pointer.fromLong(new BigInteger(input, 16).longValue())));
             } else if (kind == Kind.SHORT) {
-                final String input = inspection.inputDialog("Argument " + i + " (short):", "");
+                final String input = inspection.gui().inputDialog("Argument " + i + " (short):", "");
 
                 if (input == null) {
                     return null;
