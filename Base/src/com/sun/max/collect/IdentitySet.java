@@ -76,7 +76,7 @@ public class IdentitySet<Element_Type> implements Iterable<Element_Type> {
         if (_table.length == 0) {
             _threshold = -1;
         } else {
-            _threshold = (_table.length / 4) * 3;
+            _threshold = (_table.length >> 2) * 3;
         }
     }
 

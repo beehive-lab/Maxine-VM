@@ -315,7 +315,7 @@ public final class VMOptions {
     /**
      * This is a reference to the initial value of {@link System#props} when the VM starts up.
      * The "magic" in {@link HostObjectAccess#hostToTarget(Object)} will ensure that this map
-     * only has the properties from the host specified by {@link HackJDK#REMEMBERED_PROPERTY_NAMES}.
+     * only has the properties from the host specified by {@link JDKInterceptor#REMEMBERED_PROPERTY_NAMES}.
      * The system properties parsed on the command line are stored in this map.
      * This is required so that they are available before the System class is initialized.
      */

@@ -21,6 +21,9 @@
 package com.sun.max.vm;
 
 import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.memory.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.MaxineVM.*;
 
@@ -32,6 +35,7 @@ import com.sun.max.vm.MaxineVM.*;
  * phase in which it is parsed.
  *
  * @author Ben L. Titzer
+ * @author Doug Simon
  */
 public class VMOption {
 
@@ -71,7 +75,7 @@ public class VMOption {
     protected Pointer _optionStart = Pointer.zero();
 
     /**
-     * Creates a new VM option with the specified string prefix (which includes the '-'),
+     * Creates a new VM option with the specified string prefix (which includes the '-') and
      * the specified help text. The VM option will be parsed during the specified VM
      * startup phase.
      *
@@ -84,6 +88,7 @@ public class VMOption {
         _prefix = prefix;
         _help = help;
         assert phase != null;
+        parseOption(this);
         VMOptions.addOption(this, phase);
     }
 
@@ -176,5 +181,68 @@ public class VMOption {
      */
     public Category category() {
         return Category.from(_prefix);
+    }
+
+
+    // Prototype-time support for setting VM options
+
+    @PROTOTYPE_ONLY
+    static String[] _vmArguments = null;
+
+    /**
+     * Sets the VM command line arguments that will be parsed for each {@link VMOption} created.
+     * This allows some functionality/state controlled by VM options to be exercised and/or pre-set while
+     * building the boot image.
+     *
+     * Note: Any option values set at prototype time while building the boot image are persisted in the boot image.
+     *
+     * @param vmArguments a set of command line arguments used to enable VM options at prototype time. As
+     * each argument is consumed by a VM option, the corresponding element in this array is set to {@code null}.
+     */
+    @PROTOTYPE_ONLY
+    public static void setVMArguments(String[] vmArguments) {
+        _vmArguments = vmArguments;
+    }
+
+    @PROTOTYPE_ONLY
+    private static ProgramError parseError(String message, int index) {
+        final StringBuilder sb = new StringBuilder(String.format("Error parsing VM option: %s:%n%s%n", message, Arrays.toString(_vmArguments, " ")));
+        for (int i = 0; i < index; ++i) {
+            sb.append(' ');
+        }
+        sb.append('^');
+        throw ProgramError.unexpected(sb.toString());
+    }
+
+    @PROTOTYPE_ONLY
+    private static void parseOption(VMOption option) {
+        if (_vmArguments != null) {
+            for (int i = 0; i < _vmArguments.length; ++i) {
+                final String argument = _vmArguments[i];
+                if (argument != null && argument.startsWith(option._prefix)) {
+                    _vmArguments[i] = null;
+                    if (option.consumesNext()) {
+                        // this option expects a space and then its value (e.g. -classpath)
+                        if (i + 1 >= _vmArguments.length) {
+                            parseError("Could not find argument for " + option, i);
+                        }
+                        final Pointer optionValue = CString.utf8FromJava(_vmArguments[i + 1]);
+                        _vmArguments[i + 1] = null;
+                        final boolean ok = option.parseValue(optionValue);
+                        Memory.deallocate(optionValue);
+                        if (!ok) {
+                            parseError("Error parsing " + option, i);
+                        }
+                    } else {
+                        final Pointer optionValue = CString.utf8FromJava(argument);
+                        final boolean ok = option.parse(optionValue);
+                        Memory.deallocate(optionValue);
+                        if (!ok) {
+                            parseError("Error parsing " + option, i);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

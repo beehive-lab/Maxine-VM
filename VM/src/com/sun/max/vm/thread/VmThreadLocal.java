@@ -25,7 +25,6 @@ import com.sun.max.collect.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.jit.*;
 import com.sun.max.vm.reference.*;
@@ -500,29 +499,19 @@ public enum VmThreadLocal {
     }
 
     /**
-     * The purpose of calling this below is to ensure that there is a stop position to be found near the current
-     * instruction pointer. Stack reference map
-     * {@linkplain TargetMethod#prepareFrameReferenceMap(StackReferenceMapPreparer, Pointer, Pointer, Pointer)
-     * preparation} relies on that to be the case - a call constitutes a stop position and {@link NEVER_INLINE} ensures
-     * that the compiler generates one.
-     */
-    @NEVER_INLINE
-    private static void fakeNearbyStopPosition() {
-    }
-
-    /**
-     * ATTENTION: must not use object references in this method, because its frame will be scanned after having returned
-     * from it.
+     * Prepares the stack reference map for the current thread. The prepared map ignores the frame of this
+     * particular method as it will not be at a stop from the stack reference map preparer's perspective.
+     * Due to the {@link NEVER_INLINE} annotation, this frame will be dead when the caller (i.e.
+     * the GC thread) calls the scheme-specific collector.
      *
      * @return the amount of time taken to prepare the reference map
      */
     @NEVER_INLINE
     public static long prepareCurrentStackReferenceMap() {
-        fakeNearbyStopPosition();
         return VmThread.current().stackReferenceMapPreparer().prepareStackReferenceMap(VmThread.currentVmThreadLocals(),
                                                                                 VMRegister.getInstructionPointer(),
                                                                                 VMRegister.getAbiStackPointer(),
-                                                                                VMRegister.getAbiFramePointer());
+                                                                                VMRegister.getAbiFramePointer(), true);
     }
 
     /**

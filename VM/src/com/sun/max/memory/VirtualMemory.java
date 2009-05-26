@@ -51,16 +51,11 @@ public final class VirtualMemory {
     private VirtualMemory() {
     }
 
-    /* Allocation methods.
-     * Requested sizes may be rounded up to be a multiple of the system page size.
-     * All allocations return @see Pointer.zero on failure.
-     */
-
     /**
      * Allocate virtual memory of a given type.
      * @param size the amount requested
      * @param type the type of memory requested
-     * @return the address of the allocated memory
+     * @return the address of the allocated memory or {@link Pointer#zero()} if the allocation failed
      */
     public static Pointer allocate(Size size, Type type) {
         return virtualMemory_allocate(size, type.ordinal());
@@ -71,7 +66,7 @@ public final class VirtualMemory {
      * @param pointer base address of previously allocated memory
      * @param size size of previously allocated memory
      * @param type type of memory
-     * @return zero if failed, pointer otherwise.
+     * @return {@link Address#zero()} if failed, {@code pointer} otherwise.
      */
     public static Address deallocate(Address pointer, Size size, Type type) {
         return virtualMemory_deallocate(pointer, size, type.ordinal());
@@ -85,7 +80,7 @@ public final class VirtualMemory {
      *
      * @param pointer page aligned address at which to allocate the virtual memory
      * @param size the size requested
-     * @return true if the memory was allocated, false other wise
+     * @return true if the memory was allocated, false otherwise
      */
     public static boolean allocateAtFixedAddress(Address address, Size size, Type type) {
         return virtualMemory_allocateAtFixedAddress(address, size, type.ordinal());
@@ -99,7 +94,7 @@ public final class VirtualMemory {
      * @param pointer page aligned address at which to allocate the virtual memory
      * @param size the size requested
      * @type type of memory
-     * @return true if the memory was allocated, false other wise
+     * @return true if the memory was allocated, false otherwise
      */
     public static boolean allocatePageAlignedAtFixedAddress(Address pointer, Size size, Type type) {
         if (!pointer.isAligned(Platform.target().pageSize())) {
@@ -113,7 +108,7 @@ public final class VirtualMemory {
      * I.e., in the first 2GB of memory. This method may not be implemented on all platforms.
      * @param size the size requested
      * @type type of memory
-     * @return the address of the allocated memory or zero if unsuccessful
+     * @return the address of the allocated memory or {@link Pointer#zero()} if unsuccessful
      */
     public static Pointer allocateIn31BitSpace(Size size, Type type) {
         return virtualMemory_allocateIn31BitSpace(size, type.ordinal());

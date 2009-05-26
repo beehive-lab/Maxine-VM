@@ -58,6 +58,49 @@ public final class ByteArrayBitMap implements Cloneable {
         _size = size;
     }
 
+    public ByteArrayBitMap(byte[] bytes) {
+        this(bytes, 0, bytes.length);
+    }
+
+    /**
+     * Returns a hash code value for this bit set.
+     *
+     * Note that the hash code values change if the set of bits is altered.
+     *
+     * @return a hash code value for this bit set.
+     */
+    @Override
+    public int hashCode() {
+        long h = 1234;
+        for (int i = _size + _offset; --i >= 0;) {
+            h ^= _bytes[i] * (i + 1);
+        }
+        return (int) ((h >> 32) ^ h);
+    }
+
+    /**
+     * Compares this object against a given object. The result is {@code true} if and only if {@code other} is not
+     * {@code null} and is a {@code ByteArrayBitMap} object that has exactly the same set of bits set as this bit set.
+     *
+     * @param other the object to compare with
+     * @return {@code true} if the objects are the same; {@code false} otherwise.
+     */
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof ByteArrayBitMap) {
+            final ByteArrayBitMap bm = (ByteArrayBitMap) other;
+            if (_size == bm._size) {
+                for (int i = 0; i < _size; ++i) {
+                    if (_bytes[_offset + i] != bm._bytes[bm._offset + i]) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Gets the underlying bytes array storing the bits of this bit map.
      */
@@ -147,9 +190,9 @@ public final class ByteArrayBitMap implements Cloneable {
 
     // calculate the index of the relevant byte in the map
     private static int byteIndexFor(int offset, int size, int bitIndex) throws IndexOutOfBoundsException {
-        final int relativeByteIndex = bitIndex / Bytes.WIDTH;
+        final int relativeByteIndex = Unsigned.idiv(bitIndex, Bytes.WIDTH);
         if (relativeByteIndex >= size) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException("Bit index: " + bitIndex + ", Width: " + (size * Bytes.WIDTH));
         }
         return offset + relativeByteIndex;
     }
@@ -212,7 +255,7 @@ public final class ByteArrayBitMap implements Cloneable {
             throw new IndexOutOfBoundsException("fromIndex < 0: " + fromIndex);
         }
 
-        int byteIndex = _offset + (fromIndex / Bytes.WIDTH);
+        int byteIndex = _offset + Unsigned.idiv(fromIndex, Bytes.WIDTH);
         final int end = _offset + _size;
         if (byteIndex >= end) {
             return -1;
@@ -256,6 +299,6 @@ public final class ByteArrayBitMap implements Cloneable {
      * Computes the minimum number of bytes required to encode a bit map with a given number of bits.
      */
     public static int computeBitMapSize(int numberOfBits) {
-        return Ints.roundUp(numberOfBits, Bytes.WIDTH) / Bytes.WIDTH;
+        return Unsigned.idiv(Ints.roundUp(numberOfBits, Bytes.WIDTH), Bytes.WIDTH);
     }
 }

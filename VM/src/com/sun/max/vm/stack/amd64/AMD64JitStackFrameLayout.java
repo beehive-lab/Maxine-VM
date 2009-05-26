@@ -21,6 +21,7 @@
 package com.sun.max.vm.stack.amd64;
 
 import com.sun.max.asm.amd64.*;
+import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
@@ -91,8 +92,8 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
 
     public AMD64JitStackFrameLayout(TargetMethod targetMethod) {
         super(targetMethod.classMethodActor());
-        final int frameSlots = targetMethod.frameSize() / STACK_SLOT_SIZE;
-        final int nonTemplateSlots = 1 + sizeOfNonParameterLocals() / STACK_SLOT_SIZE;
+        final int frameSlots = Unsigned.idiv(targetMethod.frameSize(), STACK_SLOT_SIZE);
+        final int nonTemplateSlots = 1 + Unsigned.idiv(sizeOfNonParameterLocals(), STACK_SLOT_SIZE);
         _numberOfTemplateSlots = frameSlots - nonTemplateSlots;
         assert targetMethod.frameSize() == frameSize();
     }
@@ -173,7 +174,7 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
 
     @Override
     public int frameReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize((maximumSlotOffset() - lowestSlotOffset()) / STACK_SLOT_SIZE);
+        return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(maximumSlotOffset() - lowestSlotOffset(), STACK_SLOT_SIZE));
     }
 
     @Override
@@ -191,7 +192,7 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
         //       ^ operand offset (wrt. RBP)      ^ RBP                                                ^ local offset (wrt. RBP)
         // <-------- frame pointer bias ---------->
         final int framePointerBias = sizeOfOperandStack() + sizeOfNonParameterLocals();
-        return (offset + framePointerBias) / STACK_SLOT_SIZE;
+        return Unsigned.idiv(offset + framePointerBias, STACK_SLOT_SIZE);
     }
 
     @Override
@@ -199,7 +200,7 @@ public class AMD64JitStackFrameLayout extends JitStackFrameLayout {
         return new JitSlots() {
             @Override
             protected String nameOfSlot(int offset) {
-                final int templateSlotIndex = offset / STACK_SLOT_SIZE;
+                final int templateSlotIndex = Unsigned.idiv(offset, STACK_SLOT_SIZE);
                 if (templateSlotIndex >= 0 && templateSlotIndex < _numberOfTemplateSlots) {
                     return "template slot " + templateSlotIndex;
 

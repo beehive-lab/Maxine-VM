@@ -26,7 +26,7 @@ import com.sun.max.lang.*;
 
 /**
  * An open addressing hash table with liner probe hash collision resolution.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -72,7 +72,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
      */
     private static int capacity(int expectedMaxSize) {
         // Compute minimum capacity for expectedMaxSize given a load factor of 2/3
-        final int minimumCapacity = (3 * expectedMaxSize) / 2;
+        final int minimumCapacity = (3 * expectedMaxSize) >> 1;
 
         // Compute the appropriate capacity
         int result;
@@ -97,7 +97,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
 
     /**
      * Constructs a new, empty open addressing hash table with a default expected maximum size of 21.
-     * 
+     *
      * @param equivalence
      *            the semantics to be used for comparing keys. If {@code null} is provided, then {@link HashEquality} is
      *            used.
@@ -108,7 +108,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
 
     /**
      * Constructs a new, empty open addressing hash table with {@linkplain HashEquality equality} key semantics.
-     * 
+     *
      * @param expectedMaximumSize
      *            the expected maximum size of the map
      */
@@ -120,7 +120,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
      * Constructs a new, empty open addressing hash table with the specified expected maximum size. Putting more than
      * the expected number of key-value mappings into the map may cause the internal data structure to grow, which may
      * be somewhat time-consuming.
-     * 
+     *
      * @param equivalence
      *            the semantics to be used for comparing keys. If {@code null} is provided, then {@link HashEquality} is
      *            used.
@@ -282,7 +282,7 @@ public class OpenAddressingHashMapping<Key_Type, Value_Type> extends HashMapping
      * @param newCapacity the new capacity, must be a power of two.
      */
     private void resize(int newCapacity) {
-        assert Ints.isPowerOfTwo(newCapacity) : "newCapacity must be a power of 2";
+        assert Ints.isPowerOfTwoOrZero(newCapacity) : "newCapacity must be a power of 2";
         final int newLength = newCapacity * 2;
 
         final Object[] oldTable = _table;

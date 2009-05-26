@@ -67,7 +67,7 @@ public class PoolSet64<PoolObject_Type extends PoolObject> extends PoolSet<PoolO
 
     @INLINE
     private static int bitToSerial(long bit) {
-        assert bit != 0 && Longs.isPowerOfTwo(bit);
+        assert bit != 0 && Longs.isPowerOfTwoOrZero(bit);
         return Long.numberOfTrailingZeros(bit);
     }
 

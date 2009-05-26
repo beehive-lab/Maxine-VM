@@ -351,7 +351,6 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection method for the specified method actor
      */
     public synchronized Method toJava(MethodActor methodActor) {
-        assert MaxineVM.isPrototyping();
         Method javaMethod = (Method) _methodActorMap.get(methodActor);
         if (javaMethod == null) {
             final Class<?> holder = methodActor.holder().toJava();
@@ -373,7 +372,6 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection method for the specified method actor
      */
     public synchronized Constructor toJavaConstructor(MethodActor methodActor) {
-        assert MaxineVM.isPrototyping();
         Constructor javaConstructor = (Constructor) _methodActorMap.get(methodActor);
         if (javaConstructor == null) {
             final Class<?> holder = methodActor.holder().toJava();
@@ -392,7 +390,6 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection field for the specified field actor
      */
     public synchronized Field toJava(FieldActor fieldActor) {
-        assert MaxineVM.isPrototyping();
         Field javaField = _fieldActorMap.get(fieldActor);
         if (javaField == null) {
             final Class javaHolder = fieldActor.holder().toJava();
@@ -409,7 +406,6 @@ public class JavaPrototype extends Prototype {
      * @return the Java reflection class for the specified class actor
      */
     public synchronized Class toJava(ClassActor classActor) {
-        assert MaxineVM.isPrototyping();
         Class javaClass = _classActorMap.get(classActor);
         if (javaClass == null) {
             try {

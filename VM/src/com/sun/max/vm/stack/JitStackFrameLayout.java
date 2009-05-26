@@ -61,7 +61,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
      * The number of normal stack slots per JIT stack slot. See {@link #JIT_SLOT_SIZE} for an explanation of why
      * JIT stack slots may differ in size from normal stack slots.
      */
-    public static final int  STACK_SLOTS_PER_JIT_SLOT = JIT_SLOT_SIZE / STACK_SLOT_SIZE;
+    public static final int STACK_SLOTS_PER_JIT_SLOT = JIT_SLOT_SIZE / STACK_SLOT_SIZE;
 
     static {
         assert JIT_SLOT_SIZE % STACK_SLOT_SIZE == 0 : "JIT_SLOT_SIZE must be an even multiple of STACK_SLOT_SIZE";
@@ -293,7 +293,7 @@ public abstract class JitStackFrameLayout extends JavaStackFrameLayout {
         @Override
         protected int referenceMapIndexForSlot(int offset) {
             if (offset >= lowestSlotOffset() && offset < maximumSlotOffset()) {
-                return (offset - lowestSlotOffset()) / STACK_SLOT_SIZE;
+                return Unsigned.idiv(offset - lowestSlotOffset(), STACK_SLOT_SIZE);
             }
             return -1;
         }

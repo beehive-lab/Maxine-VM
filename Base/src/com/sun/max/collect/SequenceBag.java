@@ -22,7 +22,6 @@ package com.sun.max.collect;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 
 /**
@@ -44,7 +43,6 @@ public class SequenceBag<Key_Type, Value_Type> implements Bag<Key_Type, Value_Ty
     }
 
     public SequenceBag(MapType mapType) {
-        @JdtSyntax("JDT compiler bug (https://bugs.eclipse.org/bugs/show_bug.cgi?id=151153): invalid stackmap generated if this code is replaced by a ternary operator")
         final Map<Key_Type, VariableSequence<Value_Type>> map;
         if (mapType == MapType.SORTED) {
             map = new TreeMap<Key_Type, VariableSequence<Value_Type>>();

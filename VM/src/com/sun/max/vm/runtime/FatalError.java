@@ -23,6 +23,7 @@ package com.sun.max.vm.runtime;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -60,6 +61,7 @@ public final class FatalError extends Error {
 
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("FATAL VM ERROR: ");
+        Heap.setTraceAllocation(false);
         Throw.stackDump(message, VMRegister.getInstructionPointer(), VMRegister.getCpuStackPointer(), VMRegister.getCpuFramePointer());
         if (throwable != null) {
             Log.print("Caused by: ");
@@ -69,6 +71,15 @@ public final class FatalError extends Error {
             Throw.stackScan("stack scan", VMRegister.getCpuStackPointer(), VmThread.current().vmThreadLocals());
         }
         Log.unlock(lockDisabledSafepoints);
+        return exit(nativeTrapAddress);
+    }
+
+    /**
+     * A breakpoint should be set on this method when debugging the VM so that fatal VM exits can be investigated
+     * with the VM still up.
+     */
+    @NEVER_INLINE
+    private static FatalError exit(Address nativeTrapAddress) {
         if (nativeTrapAddress.isZero()) {
             MaxineVM.native_exit(11);
         }

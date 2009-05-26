@@ -613,6 +613,7 @@ public class MaxineTester {
         out().println("Building Java run scheme: failed");
         final File outputFile = stdoutFile(imageDir, "IMAGEGEN", config);
         out().println("  -> see: " + fileRef(outputFile));
+        out().println("  -> see: " + fileRef(stderrFile(outputFile)));
         return null;
     }
 
@@ -631,7 +632,7 @@ public class MaxineTester {
         Trace.line(2, "Generating image for " + imageConfig + " configuration...");
         final File outputFile = stdoutFile(imageDir, "IMAGEGEN", imageConfig);
 
-        final int exitValue = exec(null, javaArgs, null, outputFile, "Building " + imageDir.getName() + "/maxine.vm", _imageBuildTimeOut.getValue());
+        final int exitValue = exec(null, javaArgs, null, outputFile, true, "Building " + imageDir.getName() + "/maxine.vm", _imageBuildTimeOut.getValue());
         if (exitValue == 0) {
             // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
             copyBinary(imageDir, "maxvm");
@@ -771,6 +772,10 @@ public class MaxineTester {
         return sb.toString();
     }
 
+    private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
+        return exec(workingDir, command, env, outputFile, false, name, timeout);
+    }
+
     /**
      * Executes a command in a sub-process. The execution uses a shell command to perform redirection of the standard
      * output and error streams.
@@ -787,7 +792,7 @@ public class MaxineTester {
      * @param timeout the timeout in seconds
      * @return
      */
-    private static int exec(File workingDir, String[] command, String[] env, File outputFile, String name, int timeout) {
+    private static int exec(File workingDir, String[] command, String[] env, File outputFile, boolean append, String name, int timeout) {
         traceExec(workingDir, command);
         try {
             final StringBuilder sb = new StringBuilder("exec ");
@@ -795,8 +800,8 @@ public class MaxineTester {
                 sb.append(escapeShellCharacters(s)).append(' ');
             }
             if (outputFile != null) {
-                sb.append(">" + outputFile.getAbsolutePath());
-                sb.append(" 2>" + stderrFile(outputFile));
+                sb.append((append ? ">" : ">>") + outputFile.getAbsolutePath());
+                sb.append((append ? " 2>" : " 2>>") + stderrFile(outputFile));
             } else {
                 sb.append(">/dev/null");
                 sb.append(" 2>&1");
@@ -1034,6 +1039,7 @@ public class MaxineTester {
             }
             if (!unexpectedResults.isEmpty()) {
                 out.println("    see: " + fileRef(outputFile));
+                out.println("    see: " + fileRef(stderrFile(outputFile)));
             }
         }
 
@@ -1173,9 +1179,11 @@ public class MaxineTester {
                     } else if (exitValue == PROCESS_TIMEOUT) {
                         out.println("(timed out): " + summary);
                         out.println("  -> see: " + fileRef(outputFile));
+                        out.println("  -> see: " + fileRef(stderrFile(outputFile)));
                     } else {
                         out.println("(exit = " + exitValue + "): " + summary);
                         out.println("  -> see: " + fileRef(outputFile));
+                        out.println("  -> see: " + fileRef(stderrFile(outputFile)));
                     }
                     executions++;
                 }
@@ -1183,6 +1191,7 @@ public class MaxineTester {
                 out.println("(image build failed)");
                 final File outputFile = stdoutFile(imageDir, "IMAGEGEN", config);
                 out.println("  -> see: " + fileRef(outputFile));
+                out.println("  -> see: " + fileRef(stderrFile(outputFile)));
             }
         }
     }

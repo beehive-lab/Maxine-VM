@@ -3733,7 +3733,7 @@ public interface AMD64EirInstruction {
 
         private void translateLookupBinarySearch(AMD64EirTargetEmitter emitter, int bottomIndex, int topIndex) {
             final AMD64GeneralRegister32 tagRegister32 = AMD64GeneralRegister32.from(tagGeneralRegister().as64());
-            final int middleIndex = (bottomIndex + topIndex) / 2;
+            final int middleIndex = (bottomIndex + topIndex) >> 1;
 
             emitter.assembler().cmpl(tagRegister32, matches()[middleIndex].value().asInt());
             emitter.assembler().jz(targets()[middleIndex].asLabel());

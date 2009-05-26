@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.stack;
 
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.collect.*;
 
@@ -59,6 +60,6 @@ public class OptoStackFrameLayout extends JavaStackFrameLayout {
 
     @Override
     public int frameReferenceMapSize() {
-        return ByteArrayBitMap.computeBitMapSize(frameSize() / STACK_SLOT_SIZE);
+        return ByteArrayBitMap.computeBitMapSize(Unsigned.idiv(frameSize(), STACK_SLOT_SIZE));
     }
 }

@@ -33,7 +33,7 @@ import com.sun.max.vm.trampoline.*;
 /**
  * Implements Just-in-time compilation of virtual method on first use.
  * All entries of virtual tables (<em>vtables</em>) are initialized with a vtable trampoline
- * (except for those that can be inherited from super-classes and aren't overriden).
+ * (except for those that can be inherited from super-classes and aren't overridden).
  * Upon first invocation of a virtual method, execution is routed to the trampoline which
  * compiles the method (if not already done), sets the vtable entry appropriately and re-executes
  * the virtual call which this time dispatches to compiled code.
