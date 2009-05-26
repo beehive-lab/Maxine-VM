@@ -958,7 +958,7 @@ public final class BytecodeScanner {
                 final int start = _currentBytePosition;
                 _bytecodeVisitor.tableswitch(defaultOffset, lowMatch, highMatch, numberOfCases);
                 final int caseBytesRead = _currentBytePosition - start;
-                if ((caseBytesRead % 4) != 0 || (caseBytesRead / 4) != numberOfCases) {
+                if ((caseBytesRead % 4) != 0 || (caseBytesRead >> 2) != numberOfCases) {
                     ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + _currentOpcodePosition);
                 }
                 break;
@@ -973,7 +973,7 @@ public final class BytecodeScanner {
                 final int start = _currentBytePosition;
                 _bytecodeVisitor.lookupswitch(defaultOffset, numberOfCases);
                 final int caseBytesRead = _currentBytePosition - start;
-                if ((caseBytesRead % 8) != 0 || (caseBytesRead / 8) != numberOfCases) {
+                if ((caseBytesRead % 8) != 0 || (caseBytesRead >> 3) != numberOfCases) {
                     ProgramError.unexpected("Bytecode visitor did not consume exactly the offset operands of the tableswitch instruction at " + _currentOpcodePosition);
                 }
                 break;

@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.eir;
 
+import com.sun.max.lang.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
@@ -87,9 +88,9 @@ public final class EirStackSlot extends EirLocation {
     public TargetLocation toTargetLocation() {
         switch (purpose()) {
             case PARAMETER:
-                return new TargetLocation.ParameterStackSlot(_offset / Word.size());
+                return new TargetLocation.ParameterStackSlot(Unsigned.idiv(_offset, Word.size()));
             case LOCAL:
-                return new TargetLocation.LocalStackSlot(_offset / Word.size());
+                return new TargetLocation.LocalStackSlot(Unsigned.idiv(_offset, Word.size()));
             default:
                 throw ProgramError.unknownCase();
         }

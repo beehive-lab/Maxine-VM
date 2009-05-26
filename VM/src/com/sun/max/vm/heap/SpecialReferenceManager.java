@@ -141,7 +141,7 @@ public class SpecialReferenceManager {
     }
 
     /**
-     * This method is called by the GC during heap exploration, when it finds a new special
+     * This method is called by the GC during heap exploration, when it finds a special
      * reference object. This method checks to see whether the object has been processed previously,
      * and if not, then adds it to the queue to be processed later.
      *

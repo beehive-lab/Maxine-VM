@@ -71,7 +71,7 @@ public abstract class JavaOperator extends CirOperator {
      * @param reasonMayStop exactly one of the flags defined in {@link Stoppable}
      */
     public final void removeReasonMayStop(int reasonMayStop) {
-        assert reasonMayStop != 0 && Ints.isPowerOfTwo(reasonMayStop & Stoppable.Static.ALL_REASONS) : "Exactly one reason for stopping must be removed at a time";
+        assert reasonMayStop != 0 && Ints.isPowerOfTwoOrZero(reasonMayStop & Stoppable.Static.ALL_REASONS) : "Exactly one reason for stopping must be removed at a time";
         _reasonsMayStop &= ~reasonMayStop;
     }
 

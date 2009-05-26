@@ -18,20 +18,35 @@
  * UNIX is a registered trademark in the U.S. and other countries, exclusively licensed through X/Open
  * Company, Ltd.
  */
-package com.sun.max.annotate;
+package com.sun.max.lang;
 
-import java.lang.annotation.*;
-
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.LOCAL_VARIABLE, ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 
 /**
- * Mere comment indicating that Sun's javac has "special" syntax requirements
- * due to which we regretfully have to write more code than we normally would like to.
+ * A collection of static methods for doing unsigned arithmetic on Java primitive types
+ * where the semantics of the arithmetics operations differ from the signed version.
+ * In addition to providing unsigned arithmetic semantics for the programmer,
+ * these methods also expose different optimization possibilities to the compiler as
+ * well as allowing for them to be implemented as compiler builtins.
  *
- * @author Bernd Mathiske
+ * @author Doug Simon
  */
-public @interface JavacSyntax {
+public class Unsigned {
 
-    String value();
+    /**
+     * Performs unsigned integer division.
+     */
+    @INLINE
+    public static final int idiv(int dividend, int divisor) {
+        return Address.fromUnsignedInt(dividend).dividedBy(divisor).toInt();
+    }
+
+    /**
+     * Performs unsigned long division.
+     */
+    @INLINE
+    public static final long ldiv(long dividend, long divisor) {
+        return Address.fromLong(dividend).dividedBy(Address.fromLong(divisor)).toLong();
+    }
 }

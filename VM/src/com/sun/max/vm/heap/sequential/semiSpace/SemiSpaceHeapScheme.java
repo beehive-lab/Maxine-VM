@@ -128,20 +128,20 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     private static int _safetyZoneSize = DEFAULT_SAFETY_ZONE_SIZE;  // space reserved to allow throw OutOfMemory to complete
     private GrowPolicy _growPolicy;
     private LinearGrowPolicy _increaseGrowPolicy;
-    private Address _top;                                                  // top of allocatable space (less safety zone)
+    private Address _top;                                         // top of allocatable space (less safety zone)
     private volatile Address _allocationMark;                     // current allocation point
 
     @CONSTANT_WHEN_NOT_ZERO
     private Pointer _allocationMarkPointer;
 
     // Create timing facilities.
-    private final Timer _clearTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _gcTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _rootScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _bootHeapScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _codeScanTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _copyTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
-    private final Timer _weakRefTimer = new SingleUseTimer(Heap.GC_TIMING_CLOCK);
+    private final Timer _clearTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _gcTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _rootScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _bootHeapScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _codeScanTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _copyTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
+    private final Timer _weakRefTimer = new SingleUseTimer(HeapScheme.GC_TIMING_CLOCK);
 
     private int _numberOfGarbageCollectionInvocations;
 
@@ -230,7 +230,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
                 if (Heap.traceGCTime()) {
                     final boolean lockDisabledSafepoints = Log.lock();
                     Log.print("Timings (");
-                    Log.print(Heap.GC_TIMING_CLOCK.getHZAsSuffix());
+                    Log.print(HeapScheme.GC_TIMING_CLOCK.getHZAsSuffix());
                     Log.print(") for GC ");
                     Log.print(_numberOfGarbageCollectionInvocations);
                     Log.print(": clear & initialize=");
@@ -475,7 +475,7 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
     }
 
     private void scanBootHeap() {
-        Heap.bootHeapRegion().visitCells(this);
+        Heap.bootHeapRegion().visitPointers(_pointerIndexGripUpdater);
     }
 
     private void scanCode() {
@@ -796,6 +796,9 @@ public final class SemiSpaceHeapScheme extends HeapSchemeAdaptor implements Heap
 
     @Override
     public void finalize(MaxineVM.Phase phase) {
+        if (MaxineVM.isPrototyping()) {
+            StopTheWorldDaemon.checkInvariants();
+        }
     }
 
     @Override

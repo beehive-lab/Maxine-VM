@@ -58,7 +58,7 @@ public abstract class InstructionWithOffset extends InstructionWithLabel {
         _validOffsetSizesMask = validOffsetSizesMask;
         assert validOffsetSizesMask != 0;
         assert (validOffsetSizesMask & ~ALL_VALID_OFFSET_SIZES_MASK) == 0;
-        if (Ints.isPowerOfTwo(validOffsetSizesMask)) {
+        if (Ints.isPowerOfTwoOrZero(validOffsetSizesMask)) {
             assembler.addFixedSizeAssembledObject(this);
             _offsetSize = validOffsetSizesMask;
         } else {

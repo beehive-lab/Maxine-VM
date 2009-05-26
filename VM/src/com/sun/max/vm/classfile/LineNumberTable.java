@@ -33,7 +33,7 @@ import com.sun.max.vm.classfile.constant.*;
  * Encapsulates the information specified in one or more
  * <a href="http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html#22856">LineNumberTable</a>
  * class file attributes.
- * 
+ *
  * @author Bernd Mathiske
  * @author Doug Simon
  */
@@ -63,7 +63,7 @@ public final class LineNumberTable {
     private final char[] _encodedEntries;
 
     public Entry[] entries() {
-        final Entry[] entries = new Entry[_encodedEntries.length / 2];
+        final Entry[] entries = new Entry[_encodedEntries.length >> 1];
         int encodedIndex = 0;
         for (int i = 0; i < entries.length; i++) {
             entries[i] = new Entry(_encodedEntries[encodedIndex++], _encodedEntries[encodedIndex++]);
@@ -123,7 +123,7 @@ public final class LineNumberTable {
 
     /**
      * Gets the source line number corresponding to a given bytecode position.
-     * 
+     *
      * @param bytecodePosition
      * @return -1 if this line number table does not containing a source line mapping for {@code bytecodePosition}
      */
@@ -165,14 +165,14 @@ public final class LineNumberTable {
 
     /**
      * Writes this line number table to a given stream as a LineNumberTable class file attribute.
-     * 
+     *
      * @param stream
      *                a data output stream that has just written the 'attribute_name_index' and 'attribute_length'
      *                fields of a class file attribute
      * @param constantPoolEditor
      */
     public void writeAttributeInfo(DataOutputStream stream, ConstantPoolEditor constantPoolEditor) throws IOException {
-        stream.writeShort(_encodedEntries.length / 2);
+        stream.writeShort(_encodedEntries.length >> 1);
         for (char c : _encodedEntries) {
             stream.writeShort(c);
         }

@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.layout.prototype;
 
-import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.grip.*;
@@ -50,7 +49,6 @@ public abstract class PrototypeArrayLayout<Value_Type extends Value<Value_Type>>
 
     @Override
     public final boolean isReferenceArrayLayout() {
-        @JavacSyntax("Incomparable types bug")
         final Kind rawKind = _elementKind;
         return rawKind == Kind.REFERENCE;
     }

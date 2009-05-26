@@ -22,7 +22,6 @@ package com.sun.max.vm.compiler.eir.allocate;
 
 import java.util.*;
 
-import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.*;
@@ -327,7 +326,6 @@ public abstract class EirSomeAllocator<EirRegister_Type extends EirRegister> ext
      * @param available registers
      */
     protected void removeInterferingRegisters(EirVariable variable, PoolSet<EirRegister_Type> availableRegisters) {
-        @JavacSyntax("type checker weakness")
         final Class<EirRegister_Type> type = null;
         final EirRegister_Type register = StaticLoophole.cast(type, variable.location());
         availableRegisters.remove(register);

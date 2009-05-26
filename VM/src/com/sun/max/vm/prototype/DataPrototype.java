@@ -22,6 +22,7 @@ package com.sun.max.vm.prototype;
 
 import java.io.*;
 import java.lang.management.*;
+import java.lang.ref.*;
 import java.util.*;
 import java.util.Arrays;
 import java.util.concurrent.*;
@@ -47,6 +48,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.layout.SpecificLayout.*;
 import com.sun.max.vm.object.host.*;
+import com.sun.max.vm.prototype.GraphPrototype.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -225,33 +227,156 @@ public final class DataPrototype extends Prototype {
      * Assigns cells to all heap objects.
      */
     private void assignHeapCells() {
-        Trace.begin(1, "assignHeapCells");
         preventNullConfusion();
-        final LinearAllocatorHeapRegion heapRegion = Heap.bootHeapRegion();
-        int n = 0;
-        for (Object object : _graphPrototype.objects()) {
-            Address cell = _objectToCell.get(object);
-            if (cell != null) {
-                assert Code.bootCodeRegion().contains(cell);
-            } else {
-                final Size size = HostObjectAccess.getSize(object);
-                cell = heapRegion.allocateCell(size);
-                assignHeapCell(object, cell);
-            }
-            if (++n % 100000 == 0) {
-                Trace.line(1, ": " + n);
-            }
-        }
+        final BootHeapRegion heapRegion = Heap.bootHeapRegion();
+
+        final int size = assignHeapCells(heapRegion, true);
+        createHeapReferenceMap(heapRegion, size);
+        assignHeapCells(heapRegion, false);
 
         final Object alignment = createPageAlignmentObject(heapRegion);
         if (alignment != null) {
             assignHeapCell(alignment, heapRegion.allocateCell(HostObjectAccess.getSize(alignment)));
         }
 
-        heapRegion.setSize(heapRegion.getAllocationMark().minus(heapRegion.start()).asSize());
+        heapRegion.trim();
         assert heapRegion.size().remainder(_pageSize) == 0;
+    }
 
-        Trace.end(1, "assignHeapCells: " + n + " heap objects");
+    /**
+     * Assigns cells to some heap objects.
+     *
+     * @param heapRegion the boot heap region in which the objects are to be allocated
+     * @param objectsWithMutableReferences if {@code true} then only objects
+     *            {@linkplain ClassInfo#containsMutableReferences() containing mutable references} are processed;
+     *            otherwise only objects the do not contain mutable object references are processed
+     */
+    private int assignHeapCells(final LinearAllocatorHeapRegion heapRegion, boolean objectsWithMutableReferences) {
+        final String tracePrefix = "assign" + (objectsWithMutableReferences ? "Mutable" : "Immutable") + "HeapCells: ";
+        Trace.begin(1, tracePrefix);
+        int count = 0;
+        final Address mark = heapRegion.getAllocationMark();
+        for (Object object : _graphPrototype.objects()) {
+            final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
+            if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
+                Address cell = _objectToCell.get(object);
+                if (cell != null) {
+                    assert Code.bootCodeRegion().contains(cell);
+                } else {
+                    final Hub hub = HostObjectAccess.readHub(object);
+                    final Size size = HostObjectAccess.getSize(hub, object);
+                    cell = heapRegion.allocateCell(size);
+                    assignHeapCell(object, cell);
+
+                    if (++count % 100000 == 0) {
+                        Trace.line(1, ": " + count);
+                    }
+                }
+            }
+        }
+        Trace.end(1, tracePrefix + count + " heap objects");
+        return heapRegion.getAllocationMark().minus(mark).toInt();
+    }
+
+    /**
+     * Creates the reference map covering the objects in the boot heap that contain references that may
+     * be modified by the VM at runtime. The assignment of addresses for the boot heap will have ensured
+     * that such mutable objects are at the front of the heap, before all non-mutable objects.
+     *
+     * @param heapRegion the boot heap region
+     * @param mutableHeapObjectsSize the number of bytes at the front of the boot heap occupied by mutable objects
+     */
+    private void createHeapReferenceMap(final BootHeapRegion heapRegion, final int mutableHeapObjectsSize) {
+        Trace.begin(1, "createHeapReferenceMap:");
+        final int heapReferenceMapSize = Size.fromLong(ByteArrayBitMap.computeBitMapSize(mutableHeapObjectsSize / Word.size())).aligned().toInt();
+        final ByteArrayBitMap referenceMap = new ByteArrayBitMap(new byte[heapReferenceMapSize]);
+        final AppendableSequence<Reference> specialReferences = new ArrayListSequence<Reference>();
+
+        int count = 0;
+        for (Object object : _graphPrototype.objects()) {
+            final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
+            if (classInfo.containsMutableReferences(object)) {
+                final Address cell = _objectToCell.get(object);
+                if (!Code.bootCodeRegion().contains(cell)) {
+                    final Hub hub = HostObjectAccess.readHub(object);
+                    final SpecificLayout specificLayout = hub.specificLayout();
+                    if (specificLayout.isArrayLayout()) {
+                        if (specificLayout.isReferenceArrayLayout()) {
+                            final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
+                            final int n = ((Object[]) object).length;
+                            if (n != 0) {
+                                final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
+                                final int element0Index = origin.plus(arrayLayout.getElementOffsetFromOrigin(0)).dividedBy(Word.size()).toInt();
+                                for (int i = 0; i < n; i++) {
+                                    final int index = element0Index + i;
+                                    try {
+                                        assert !referenceMap.isSet(index);
+                                        referenceMap.set(index);
+                                    } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+                                        throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
+                                            classInfo._class.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
+                                            " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
+                        for (ReferenceFieldInfo fieldInfo : classInfo.fieldInfos(object)) {
+                            final FieldActor fieldActor = fieldInfo.fieldActor();
+                            if (fieldActor.isSpecialReference()) {
+                                continue;
+                            }
+                            final Pointer address = origin.plus(fieldActor.offset());
+                            final int index = address.toInt() / _alignment;
+                            try {
+                                assert !referenceMap.isSet(index);
+                                referenceMap.set(index);
+                            } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+                                throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
+                                    classInfo._class.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
+                                    " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index);
+                            }
+                        }
+
+                        if (object instanceof Reference) {
+                            specialReferences.append((Reference) object);
+                        }
+                    }
+                    if (++count % 100000 == 0) {
+                        Trace.line(1, ": " + count);
+                    }
+                }
+            }
+        }
+
+        byte[] referenceMapBytes = referenceMap.bytes();
+        if (_dataModel.endianness() != Endianness.LITTLE) {
+            // Convert the bytes in the reference map to the target endianness so that it can be
+            // correctly read as words. By default, the reference map can be read as an array
+            // of little endian words and so there's no need for the conversion in this case.
+            final int length = referenceMapBytes.length;
+            final ByteArrayInputStream inputStream = new ByteArrayInputStream(referenceMapBytes);
+            final ByteArrayOutputStream outputStream = new ByteArrayOutputStream(length);
+            try {
+                final int referenceMapWordLength = length / Word.size();
+                for (int i = 0; i < referenceMapWordLength; ++i) {
+                    final Word referenceMapWord = Word.read(inputStream, Endianness.LITTLE);
+                    referenceMapWord.write(outputStream, _dataModel.endianness());
+                }
+            } catch (IOException ioException) {
+                throw ProgramError.unexpected("Error converting boot heap reference map from little endian to " + _dataModel.endianness(), ioException);
+            }
+            referenceMapBytes = outputStream.toByteArray();
+            assert length == referenceMapBytes.length;
+        }
+
+        final Reference[] specialReferenceArray = specialReferences.toCollection().toArray(new Reference[specialReferences.length()]);
+        assignHeapCell(referenceMapBytes, heapRegion.allocateCell(HostObjectAccess.getSize(referenceMapBytes)));
+        assignHeapCell(specialReferenceArray, heapRegion.allocateCell(HostObjectAccess.getSize(specialReferenceArray)));
+        heapRegion.init(referenceMapBytes, specialReferenceArray);
+        Trace.end(1, "createHeapReferenceMap: width=" + referenceMap.width() + ", cardinality=" +
+            referenceMap.cardinality() + ", size=" + referenceMap.size() + ", #special references=" + specialReferenceArray.length);
     }
 
     /**
@@ -726,8 +851,8 @@ public final class DataPrototype extends Prototype {
                         try {
                             hub.specificLayout().visitObjectCell(object, m);
                         } catch (MissingCellException e) {
-                            System.out.println("no cell for object: class=" + e._object.getClass().getName() + " toString=\"" + e._object + "\"");
-                            _graphPrototype.printPath(object);
+                            System.err.println("no cell for object: class=" + e._object.getClass().getName() + " toString=\"" + e._object + "\"");
+                            _graphPrototype.printPath(object, System.err);
                             throw ProgramError.unexpected(e);
                         }
 
@@ -809,8 +934,6 @@ public final class DataPrototype extends Prototype {
 
     private final ByteArrayBitMap _relocationFlags;
 
-    private final ByteArrayBitMap _heapRefmap;
-
     /**
      * Gets a byte array that represents the relocation data for the entire data prototype.
      *
@@ -865,36 +988,24 @@ public final class DataPrototype extends Prototype {
      * @param cell the cell which contains the object
      * @return the number of references within the object
      */
-    private int setRelocationFlags(Object object, Address cell) {
+    private synchronized int setRelocationFlags(Object object, Address cell) {
         final Hub hub = HostObjectAccess.readHub(object);
         final SpecificLayout specificLayout = hub.specificLayout();
         setRelocationFlag(cell.plus(specificLayout.getHubReferenceOffsetInCell()));
-        if (specificLayout.isReferenceArrayLayout()) {
-            final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
-            if (arrayLayout.elementKind() == Kind.REFERENCE) {
+        if (specificLayout.isArrayLayout()) {
+            if (specificLayout.isReferenceArrayLayout()) {
+                final ArrayLayout arrayLayout = (ArrayLayout) specificLayout;
+                assert arrayLayout.elementKind() == Kind.REFERENCE;
                 final int n = HostObjectAccess.getArrayLength(object);
                 for (int i = 0; i < n; i++) {
-                    setRelocationFlag(cell.plus(arrayLayout.getElementOffsetInCell(i)));
+                    final Address address = cell.plus(arrayLayout.getElementOffsetInCell(i));
+                    setRelocationFlag(address);
                 }
                 return 1 + n;
             }
             return 1;
         }
         final Pointer origin = specificLayout.cellToOrigin(cell.asPointer());
-
-        ClassActor c = HostObjectAccess.readHub(object).classActor();
-        do {
-            for (FieldActor instanceFieldActor : c.localInstanceFieldActors()) {
-                if (instanceFieldActor.kind() == Kind.REFERENCE && !instanceFieldActor.isSpecialReference() && !instanceFieldActor.isConstant()) {
-                    final Pointer address = origin.plus(instanceFieldActor.offset());
-                    final int index = address.toInt() / _alignment;
-                    _heapRefmap.set(index);
-                }
-            }
-            c = c.superClassActor();
-        } while (c != null);
-
-
         TupleReferenceMap.visitOriginOffsets(hub, origin, _originOffsetVisitor);
         return 1 + hub.referenceMapLength();
     }
@@ -910,29 +1021,34 @@ public final class DataPrototype extends Prototype {
         final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(_numberOfProcessors);
         final CompletionService<Integer> completionService = new ExecutorCompletionService<Integer>(executor);
 
+        int numberOfRelocations = 0;
         for (int n = 0; n < objects.length(); n += BATCH) {
             final int start = n;
             completionService.submit(new Callable<Integer>() {
 
                 @Override
                 public Integer call() throws Exception {
-                    int numberOfRelocation = 0;
-                    final int end = Math.min(objects.length(), start + BATCH);
-                    for (int i = start; i < end; i++) {
-                        final Object object = objects.get(i);
-                        numberOfRelocation += setRelocationFlags(object, _objectToCell.get(object));
+                    try {
+                        int numberOfRelocationsInBatch = 0;
+                        final int end = Math.min(objects.length(), start + BATCH);
+                        for (int i = start; i < end; i++) {
+                            final Object object = objects.get(i);
+                            numberOfRelocationsInBatch += setRelocationFlags(object, _objectToCell.get(object));
+                        }
+                        return numberOfRelocationsInBatch;
+                    } catch (Exception e) {
+                        executor.shutdown();
+                        throw e;
                     }
-                    return numberOfRelocation;
                 }
             });
         }
 
-        int numberOfRelocations = 0;
         for (int n = 0; n < objects.length(); n += BATCH) {
             try {
                 numberOfRelocations += completionService.take().get();
             } catch (Throwable throwable) {
-                ProgramError.unexpected();
+                ProgramError.unexpected(throwable);
             }
         }
 
@@ -1058,24 +1174,7 @@ public final class DataPrototype extends Prototype {
         // one bit per alignment unit
         _relocationFlags = new ByteArrayBitMap((_heapDataWriter.data().length + _codeDataWriter.data().length) / _alignment);
 
-        _heapRefmap = new ByteArrayBitMap((_heapDataWriter.data().length) / _alignment);
-
         assignRelocationFlags();
-
-        Trace.line(1, "Heap ref map: width=" + _heapRefmap.width() + ", cardinality=" + _heapRefmap.cardinality());
-
-        final int chunk = _heapRefmap.size() / 10;
-        final ByteArrayBitMap bm = new ByteArrayBitMap(_heapRefmap.bytes(), 0, chunk);
-        int f = 0;
-        while (bm.offset() < bm.bytes().length) {
-            final int rem = bm.bytes().length - bm.offset();
-            if (rem < bm.size()) {
-                bm.setSize(rem);
-            }
-            Trace.line(1, "Heap ref map[" + f + "]: width=" + bm.width() + ", cardinality=" + bm.cardinality());
-            bm.next();
-            f++;
-        }
 
         if (mapFile != null) {
             try {

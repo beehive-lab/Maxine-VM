@@ -147,7 +147,7 @@ public abstract class Hub extends Hybrid {
 
     @Override
     public final int firstIntIndex() {
-        return ((_iTableStartIndex + _iTableLength) * Word.size()) / Ints.SIZE;
+        return Unsigned.idiv((_iTableStartIndex + _iTableLength) * Word.size(), Ints.SIZE);
     }
 
     @Override
@@ -278,7 +278,7 @@ public abstract class Hub extends Hybrid {
     }
 
     protected final Hub expand() {
-        return (Hub) expand(Ints.roundUp((_referenceMapStartIndex + _referenceMapLength) * Ints.SIZE, Word.size()) / Word.size());
+        return (Hub) expand(Unsigned.idiv(Ints.roundUp((_referenceMapStartIndex + _referenceMapLength) * Ints.SIZE, Word.size()), Word.size()));
     }
 
     @INLINE

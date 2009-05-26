@@ -233,6 +233,11 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
         return descriptor().toJavaString(qualified) + ' ' + qualified;
     }
 
+    /**
+     * Determines if this field is a reference type field that is treated specially by
+     * the garbage collector. Typically, the {@code referent} field in {@link java.lang.ref.Reference}
+     * used to hold a weak reference will return true for this method.
+     */
     @INLINE
     public final boolean isSpecialReference() {
         return isSpecialReference(flags());

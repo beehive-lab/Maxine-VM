@@ -145,19 +145,6 @@ public abstract class Address extends Word {
         return BigInteger.valueOf(high).shiftLeft(32).or(BigInteger.valueOf(low)).toString();
     }
 
-    public static void main(String[] args) {
-        System.out.println(Long.toString(0x100100001L));
-        System.out.println(Long.toString(0x00100001L));
-        System.out.println(Long.toBinaryString(0xffffffffffffffffL));
-        System.out.println(Long.toBinaryString(-1L));
-
-        final BigInteger max = BigInteger.valueOf(0xffffffffL).shiftLeft(32).or(BigInteger.valueOf(0xffffffffL));
-        System.out.println(max.toString());
-        System.out.println(max.toString(2));
-        System.out.println(max.toString(2).length());
-        System.out.println(BigInteger.valueOf(0xffffffffffffffffL).shiftRight(1).toString());
-
-    }
     public static Address parse(String s, int radix) {
         Address result = Address.zero();
         for (int i = 0; i < s.length(); i++) {
