@@ -338,7 +338,7 @@ public class JavaMethodInspector extends MethodInspector {
             firstViewer().print(textForTitle);
         } else {
             for (CodeViewer codeViewer : _codeViewers.values()) {
-                if (inspection().yesNoDialog("Print " + codeViewer.codeViewerKindName() + "?")) {
+                if (gui().yesNoDialog("Print " + codeViewer.codeViewerKindName() + "?")) {
                     codeViewer.print(textForTitle);
                 }
             }
@@ -416,7 +416,7 @@ public class JavaMethodInspector extends MethodInspector {
             SpringUtilities.makeCompactGrid(prefPanel, 2);
 
             final JPanel buttons = new InspectorPanel(inspection);
-            buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
+            buttons.add(new JButton(new InspectorAction(inspection, "Close") {
                 @Override
                 protected void procedure() {
                     dispose();
@@ -427,7 +427,7 @@ public class JavaMethodInspector extends MethodInspector {
             dialogPanel.add(buttons, BorderLayout.SOUTH);
             setContentPane(dialogPanel);
             pack();
-            inspection().moveToMiddle(this);
+            inspection.gui().moveToMiddle(this);
             setVisible(true);
         }
     }

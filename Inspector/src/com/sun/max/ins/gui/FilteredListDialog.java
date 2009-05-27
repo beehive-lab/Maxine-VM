@@ -232,6 +232,6 @@ public abstract class FilteredListDialog<Type> extends InspectorDialog {
 
         setContentPane(dialogPanel);
         pack();
-        inspection.moveToMiddle(this);
+        inspection.gui().moveToMiddle(this);
     }
 }

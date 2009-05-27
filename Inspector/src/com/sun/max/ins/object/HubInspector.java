@@ -43,24 +43,30 @@ import com.sun.max.vm.object.*;
  */
 public class HubInspector extends ObjectInspector {
 
-    private static GlobalHubPreferences _globalHubPreferences;
+    private static HubInspectorPreferences _globalPreferences;
 
-    public static GlobalHubPreferences globalHubPreferences(Inspection inspection) {
-        if (_globalHubPreferences == null) {
-            _globalHubPreferences = new GlobalHubPreferences(inspection);
+    static HubInspectorPreferences globalHubPreferences(Inspection inspection) {
+        if (_globalPreferences == null) {
+            _globalPreferences = new HubInspectorPreferences(inspection);
         }
-        return _globalHubPreferences;
+        return _globalPreferences;
     }
 
-    // Preferences
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalHubPreferences(inspection).getPanel();
+    }
 
-    private static final String SHOW_FIELDS_PREFERENCE = "showFields";
-    private static final String SHOW_VTABLES_PREFERENCE = "showVTables";
-    private static final String SHOW_ITABLES_PREFERENCE = "showITables";
-    private static final String SHOW_MTABLES_PREFERENCE = "showMTables";
-    private static final String SHOW_REFERENCE_MAPS_PREFERENCE = "showReferenceMaps";
+    public static class HubInspectorPreferences {
 
-    public static class GlobalHubPreferences {
+        private static final String SHOW_FIELDS_PREFERENCE = "showFields";
+        private static final String SHOW_VTABLES_PREFERENCE = "showVTables";
+        private static final String SHOW_ITABLES_PREFERENCE = "showITables";
+        private static final String SHOW_MTABLES_PREFERENCE = "showMTables";
+        private static final String SHOW_REFERENCE_MAPS_PREFERENCE = "showReferenceMaps";
+
         private final Inspection _inspection;
         boolean _showFields;
         boolean _showVTables;
@@ -68,7 +74,7 @@ public class HubInspector extends ObjectInspector {
         boolean _showMTables;
         boolean _showRefMaps;
 
-        GlobalHubPreferences(Inspection inspection) {
+        HubInspectorPreferences(Inspection inspection) {
             _inspection = inspection;
             final InspectionSettings settings = inspection.settings();
             final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("hubInspectorPrefs") {
@@ -92,7 +98,7 @@ public class HubInspector extends ObjectInspector {
         /**
          * @return a GUI panel for setting preferences
          */
-        public JPanel getPanel() {
+        private JPanel getPanel() {
             final InspectorCheckBox alwaysShowFieldsCheckBox =
                 new InspectorCheckBox(_inspection, "Fields", "Should new Object Inspectors initially display the fields in a Hub?", _showFields);
             final InspectorCheckBox alwaysShowVTablesCheckBox =
@@ -152,7 +158,7 @@ public class HubInspector extends ObjectInspector {
 
                 final JPanel dialogPanel = new InspectorPanel(inspection, new BorderLayout());
                 final JPanel buttons = new InspectorPanel(inspection);
-                buttons.add(new JButton(new InspectorAction(inspection(), "Close") {
+                buttons.add(new JButton(new InspectorAction(inspection, "Close") {
                     @Override
                     protected void procedure() {
                         dispose();
@@ -164,7 +170,7 @@ public class HubInspector extends ObjectInspector {
 
                 setContentPane(dialogPanel);
                 pack();
-                inspection().moveToMiddle(this);
+                inspection.gui().moveToMiddle(this);
                 setVisible(true);
             }
         }
@@ -193,7 +199,7 @@ public class HubInspector extends ObjectInspector {
         _teleHub = (TeleHub) teleObject;
 
         // Initialize instance preferences from the global preferences
-        final GlobalHubPreferences globalHubPreferences = globalHubPreferences(inspection());
+        final HubInspectorPreferences globalHubPreferences = globalHubPreferences(inspection());
         _showFields = globalHubPreferences._showFields;
         _showVTables = globalHubPreferences._showVTables;
         _showITables = globalHubPreferences._showITables;

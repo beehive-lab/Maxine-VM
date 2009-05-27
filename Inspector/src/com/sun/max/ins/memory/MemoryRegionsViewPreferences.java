@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.memory;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 
 
@@ -35,11 +37,18 @@ public final class MemoryRegionsViewPreferences extends com.sun.max.ins.gui.Tabl
     /**
      * @return the global, persistent set of user preferences for viewing a table of memory regions.
      */
-    public static MemoryRegionsViewPreferences globalPreferences(Inspection inspection) {
+    static MemoryRegionsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new MemoryRegionsViewPreferences(inspection);
         }
         return _globalPreferences;
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
     }
 
     /**

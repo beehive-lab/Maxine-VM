@@ -42,10 +42,6 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
         return _inspector;
     }
 
-    public void moveToMiddle() {
-        _inspector.inspection().moveToMiddle(this);
-    }
-
     private InspectorMenu _menu;
 
     public InspectorMenu menu() {
@@ -106,33 +102,6 @@ public final class InternalInspectorFrame extends JInternalFrame implements Insp
                 _inspector.inspectorLosesWindowFocus();
             }
         });
-    }
-
-    public void setLocationOnScreen(Point locationOnScreen) {
-        final Point origin = _inspector.inspection().getContentPane().getLocationOnScreen();
-        final Point location = new Point(locationOnScreen.x - origin.x, locationOnScreen.y - origin.y);
-
-        final Rectangle r = _inspector.inspection().getVisibleBounds();
-        if (getWidth() > r.width) {
-            setSize(r.width, getHeight());
-        }
-        if (getHeight() > r.height) {
-            setSize(getWidth(), r.height);
-        }
-
-        if (location.x <= -getWidth()) {
-            location.x = 0;
-        } else if (location.x >= r.width) {
-            location.x = r.width - getWidth();
-        }
-
-        if (location.y < 0) {
-            location.y = 0;
-        } else if (location.y >= r.height) {
-            location.y = r.height - getHeight();
-        }
-
-        setLocation(location);
     }
 
     public void setSelected() {

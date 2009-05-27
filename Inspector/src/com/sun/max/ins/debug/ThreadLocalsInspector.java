@@ -141,7 +141,7 @@ public final class ThreadLocalsInspector extends Inspector implements TableColum
                     assert inspectorTable != null;
                     inspectorTable.print(JTable.PrintMode.FIT_WIDTH, null, footer);
                 } catch (PrinterException printerException) {
-                    inspection().errorMessage("Print failed: " + printerException.getMessage());
+                    gui().errorMessage("Print failed: " + printerException.getMessage());
                 }
             }
         };

@@ -234,7 +234,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
             }
         });
 
-        final JPanel statusPanel = new InspectorPanel(inspection(), new FlowLayout(FlowLayout.LEFT));
+        final JPanel statusPanel = new InspectorPanel(inspection, new FlowLayout(FlowLayout.LEFT));
         statusPanel.add(new JLabel("Method key:"));
         statusPanel.add(_methodKeyMessage);
         statusPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -289,7 +289,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
 
         setContentPane(contenPane);
         pack();
-        inspection().moveToMiddle(this);
+        inspection.gui().moveToMiddle(this);
 
         _holderField.getDocument().addDocumentListener(this);
         _nameField.getDocument().addDocumentListener(this);

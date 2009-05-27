@@ -35,6 +35,7 @@ import com.sun.max.tele.debug.*;
 import com.sun.max.tele.method.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
 import com.sun.max.vm.stack.*;
 
 /**
@@ -42,6 +43,10 @@ import com.sun.max.vm.stack.*;
  *
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
+ *
+ * Implementation notes:  for historical reasons an {@link Inspector} has a Frame,
+ * rather than being a specialized subclass of Frame.  This creates a number of
+ * awkward interfaces, which may be cleaned up in the fullness of time. (mlvdv May '09)
  */
 public abstract class Inspector extends AbstractInspectionHolder implements InspectionListener, ViewFocusListener {
 
@@ -120,6 +125,7 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     protected final void updateFrameTitle() {
         frame().setTitle(getTextForTitle());
     }
+
     /**
      * Creates a frame for the inspector
      * calls {@link createView()} to populate it; adds the inspector to the update
@@ -135,11 +141,9 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         updateFrameTitle();
         createView(maxVM().epoch());
         _frame.pack();
-        inspection().desktopPane().add((Component) _frame);
-        _frame.setVisible(true);
+        gui().addInspector(this);
         inspection().addInspectionListener(this);
         inspection().focus().addListener(this);
-
         final SaveSettingsListener saveSettingsListener = saveSettingsListener();
         if (saveSettingsListener != null) {
             inspection().settings().addSaveSettingsListener(saveSettingsListener);
@@ -224,29 +228,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
     }
 
     /**
-     * Set frame location to a point displaced by a default amount from the most recently known mouse position.
-     */
-    protected final void setLocationRelativeToMouse() {
-        setLocationRelativeToMouse(inspection().geometry().defaultNewFrameXOffset(), inspection().geometry().defaultNewFrameYOffset());
-    }
-
-    /**
-     * Set frame location to a point displayed by specified diagonal amount from the most recently known mouse position.
-     */
-    protected final void setLocationRelativeToMouse(int offset) {
-        setLocationRelativeToMouse(offset, offset);
-    }
-
-    /**
-     * Set frame location to a point displaced by specified amount from the most recently known mouse position.
-     */
-    protected final void setLocationRelativeToMouse(int xOffset, int yOffset) {
-        final Point location = InspectorFrame.TitleBarListener.recentMouseLocationOnScreen();
-        location.translate(xOffset, yOffset);
-        _frame.setLocationOnScreen(location);
-    }
-
-    /**
      * @return whether the inspector's view can be seen on the screen.
      */
     protected final boolean isShowing() {
@@ -255,10 +236,6 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
 
     protected void moveToFront() {
         _frame.moveToFront();
-    }
-
-    protected final void moveToMiddle() {
-        _frame.moveToMiddle();
     }
 
     protected boolean isSelected() {
@@ -322,79 +299,53 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
         }
     }
 
-    private static final class DummyViewOptionsAction extends InspectorAction {
-        DummyViewOptionsAction(Inspection inspection) {
-            super(inspection, "View Options");
-            setEnabled(false);
-        }
-
-        @Override
-        protected void procedure() {
-        }
-    }
-
     /**
      * @return an action that will present a dialog that enables selection of view options;
      * returns a disabled dummy action if not overridden.
      */
     public InspectorAction getViewOptionsAction() {
-        return new DummyViewOptionsAction(inspection());
-    }
-
-    private final class RefreshAction extends InspectorAction {
-        private RefreshAction() {
-            super(inspection(), "Refresh");
-        }
-
-        @Override
-        public void procedure() {
-            Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
-            refreshView(true);
-        }
+        final InspectorAction dummyViewOptionsAction = new InspectorAction(inspection(), "View Options") {
+            @Override
+            protected void procedure() {
+            }
+        };
+        dummyViewOptionsAction.setEnabled(false);
+        return dummyViewOptionsAction;
     }
 
     /**
      * @return an action that will refresh any state from the VM.
      */
-    public RefreshAction getRefreshAction() {
-        return new RefreshAction();
-    }
-
-    private final class CloseAction extends InspectorAction {
-
-        public CloseAction(Inspection inspection, String title) {
-            super(inspection, title);
-        }
-
-        @Override
-        protected void procedure() {
-            frame().dispose();
-        }
-
+    public InspectorAction getRefreshAction() {
+        return new InspectorAction(inspection(), "Refresh") {
+            @Override
+            protected void procedure() {
+                Trace.line(TRACE_VALUE, "Refreshing view: " + Inspector.this);
+                refreshView(true);
+            }
+        };
     }
 
     /**
      * @return an action that will close this inspector
      */
-    public CloseAction getCloseAction() {
-        return new CloseAction(inspection(), "Close");
+    public InspectorAction getCloseAction() {
+        return new InspectorAction(inspection(), "Close") {
+            @Override
+            protected void procedure() {
+                frame().dispose();
+            }
+        };
     }
 
-    private final class CloseOthersAction extends InspectorAction {
-        private CloseOthersAction() {
-            super(inspection(), "Close Other Inspectors");
-        }
-
-        @Override
-        public void procedure() {
-            inspection().desktopPane().removeAll();
-            inspection().desktopPane().add((InternalInspectorFrame) frame());
-            inspection().repaint();
-        }
-    }
-
-    public CloseOthersAction getCloseOtherInspectorsAction() {
-        return new CloseOthersAction();
+    public InspectorAction getCloseOtherInspectorsAction() {
+        final Predicate<Inspector> predicate = new Predicate<Inspector>() {
+            @Override
+            public boolean evaluate(Inspector inspector) {
+                return inspector != Inspector.this;
+            }
+        };
+        return actions().closeViews(predicate, "Close Other Inspectors");
     }
 
     /**
@@ -411,21 +362,10 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
                     assert inspectorTable != null;
                     inspectorTable.print(JTable.PrintMode.FIT_WIDTH, null, footer);
                 } catch (PrinterException printerException) {
-                    inspection().errorMessage("Print failed: " + printerException.getMessage());
+                    gui().errorMessage("Print failed: " + printerException.getMessage());
                 }
             }
         };
-    }
-
-    private static final class DummyPrintAction extends InspectorAction {
-        DummyPrintAction(Inspection inspection) {
-            super(inspection, "Print");
-            setEnabled(false);
-        }
-
-        @Override
-        protected void procedure() {
-        }
     }
 
     /**
@@ -433,7 +373,13 @@ public abstract class Inspector extends AbstractInspectionHolder implements Insp
      * returns a disabled dummy action if not overridden.
      */
     public InspectorAction getPrintAction() {
-        return new DummyPrintAction(inspection());
+        final InspectorAction dummyPrintAction = new InspectorAction(inspection(), "Print") {
+            @Override
+            protected void procedure() {
+            }
+        };
+        dummyPrintAction.setEnabled(false);
+        return dummyPrintAction;
     }
 
 

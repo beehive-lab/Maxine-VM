@@ -31,18 +31,25 @@ import com.sun.max.ins.gui.*;
 import com.sun.max.program.option.*;
 
 
-public class ObjectInspectorPreferences extends AbstractInspectionHolder {
+public final class ObjectInspectorPreferences extends AbstractInspectionHolder {
 
     private static ObjectInspectorPreferences _globalPreferences;
 
     /**
      * @return the global, persistent set of user preferences for viewing heap objects
      */
-    public static ObjectInspectorPreferences globalPreferences(Inspection inspection) {
+    static ObjectInspectorPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new ObjectInspectorPreferences(inspection);
         }
         return _globalPreferences;
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
     }
 
     private static final String SHOW_HEADER_PREFERENCE = "showHeader";
@@ -88,7 +95,7 @@ public class ObjectInspectorPreferences extends AbstractInspectionHolder {
         return _hideNullArrayElements;
     }
 
-    public ObjectInspectorPreferences(Inspection inspection) {
+    private ObjectInspectorPreferences(Inspection inspection) {
         super(inspection);
         final InspectionSettings settings = inspection.settings();
         final SaveSettingsListener saveSettingsListener = new AbstractSaveSettingsListener("objectInspectorPrefs") {
@@ -114,7 +121,7 @@ public class ObjectInspectorPreferences extends AbstractInspectionHolder {
     /**
      * @return a GUI panel for setting preferences
      */
-    public JPanel getPanel() {
+    private JPanel getPanel() {
         final JCheckBox alwaysShowHeaderCheckBox =
             new InspectorCheckBox(inspection(), "Header", "Should new Object Inspectors initially display the header?", _showHeader);
         final JCheckBox alwaysShowAddressesCheckBox =

@@ -149,7 +149,7 @@ public final class ObjectAggregatorInspector extends UniqueInspector<ObjectAggre
         _end = Math.min(100, _objectAggregator.count() - 1);
         _contentPane = new InspectorPanel(inspection);
         createFrame(null);
-        frame().moveToMiddle();
+        inspection.gui().moveToMiddle(this);
     }
 
     /**

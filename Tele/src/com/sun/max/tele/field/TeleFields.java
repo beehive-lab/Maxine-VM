@@ -112,7 +112,7 @@ public class TeleFields extends AbstractTeleVMHolder {
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_next = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "_next", Entry.class);
     public final TeleInstanceReferenceFieldAccess ChainedHashMapping$DefaultEntry_value = new TeleInstanceReferenceFieldAccess(ChainedHashMapping.DefaultEntry.class, "_value", Object.class);
     public final TeleInstanceReferenceFieldAccess Descriptor_string = new TeleInstanceReferenceFieldAccess(Descriptor.class, "_string", String.class);
-    public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "_bootHeapRegion", LinearAllocatorHeapRegion.class);
+    public final TeleStaticReferenceFieldAccess Heap_bootHeapRegion = new TeleStaticReferenceFieldAccess(Heap.class, "_bootHeapRegion", BootHeapRegion.class);
     public final TeleInstanceReferenceFieldAccess Hub_classActor = new TeleInstanceReferenceFieldAccess(Hub.class, "_classActor", ClassActor.class);
     public final TeleInstanceIntFieldAccess Hub_mTableLength = new TeleInstanceIntFieldAccess(Hub.class, "_mTableLength");
     public final TeleInstanceIntFieldAccess Hub_mTableStartIndex = new TeleInstanceIntFieldAccess(Hub.class, "_mTableStartIndex");

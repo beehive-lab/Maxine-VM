@@ -20,6 +20,8 @@
  */
 package com.sun.max.ins.debug;
 
+import javax.swing.*;
+
 import com.sun.max.ins.*;
 
 
@@ -35,11 +37,18 @@ public final class ThreadsViewPreferences extends com.sun.max.ins.gui.TableColum
     /**
      * @return the global, persistent set of user preferences for viewing a table of memory regions.
      */
-    public static ThreadsViewPreferences globalPreferences(Inspection inspection) {
+    static ThreadsViewPreferences globalPreferences(Inspection inspection) {
         if (_globalPreferences == null) {
             _globalPreferences = new ThreadsViewPreferences(inspection);
         }
         return _globalPreferences;
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
     }
 
     /**

@@ -42,13 +42,21 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
      * @param modal should the dialog be modal, i.e. capture all user input when visible?
      */
     protected InspectorDialog(Inspection inspection, String title, boolean modal) {
-        super(inspection, title, modal);
+        super(inspection.gui().frame(), title, modal);
         _inspection = inspection;
         setBackground(inspection.style().defaultBackgroundColor());
     }
 
     public final Inspection inspection() {
         return _inspection;
+    }
+
+    public MaxVM maxVM() {
+        return _inspection.maxVM();
+    }
+
+    public InspectorGUI gui() {
+        return _inspection.gui();
     }
 
     public final InspectorStyle style() {
@@ -61,10 +69,6 @@ public abstract class InspectorDialog extends JDialog implements InspectionHolde
 
     public InspectionActions actions() {
         return _inspection.actions();
-    }
-
-    public MaxVM maxVM() {
-        return _inspection.maxVM();
     }
 
     public void redisplay() {
