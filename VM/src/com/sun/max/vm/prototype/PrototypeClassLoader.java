@@ -54,7 +54,7 @@ public final class PrototypeClassLoader extends ClassLoader {
      * @param javaClass the class to be omitted
      */
     public static void omitClass(Class javaClass) {
-        omitClass(JavaTypeDescriptor.getDescriptorForTupleType(javaClass));
+        omitClass(JavaTypeDescriptor.forJavaClass(javaClass));
     }
 
     /**
