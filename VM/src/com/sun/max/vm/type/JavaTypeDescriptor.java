@@ -334,7 +334,7 @@ public final class JavaTypeDescriptor {
      * @return a reference to a canonical type descriptor for the specified Java class
      */
     public static TypeDescriptor forJavaClass(Class javaClass) {
-        if (MaxineVM.isPrototyping()) {
+        if (VOID == null || MaxineVM.isPrototyping()) {
             if (javaClass.isArray()) {
                 return getArrayDescriptorForComponent(javaClass.getComponentType());
             }
