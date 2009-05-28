@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.cir;
 
+import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -151,7 +152,8 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return classMethodActor().compilee().isNative();
     }
 
-    private transient CirClosure _cachedClosure;
+    @RESET
+    private CirClosure _cachedClosure;
 
     private void cache(CirClosure closure) {
         if (MaxineVM.isPrototyping()) {
@@ -219,7 +221,7 @@ public class CirMethod extends CirProcedure implements CirRoutine, CirFoldable, 
         return _cirBytecode != null;
     }
 
-    protected transient boolean _makingIr;
+    protected boolean _makingIr;
 
     public synchronized CirCall inline(CirOptimizer cirOptimizer, CirValue[] arguments, CirJavaFrameDescriptor javaFrameDescriptor) {
         if (_cirBytecode == null) {

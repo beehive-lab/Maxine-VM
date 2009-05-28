@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.cir;
 
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.compiler.*;
@@ -206,7 +207,8 @@ public final class CirCall extends CirNode {
         return equals(other, null);
     }
 
-    private transient int _hashcode = 0;
+    @RESET
+    private int _hashcode = 0;
     private static int _hashcodeCounter = 0;
 
     @Override

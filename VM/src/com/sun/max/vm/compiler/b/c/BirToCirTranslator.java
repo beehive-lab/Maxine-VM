@@ -24,7 +24,9 @@ import static com.sun.max.vm.compiler.cir.CirTraceObserver.TransformationType.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
+import com.sun.max.profile.*;
 import com.sun.max.program.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -42,9 +44,13 @@ public class BirToCirTranslator extends CirGenerator {
         super(cirGeneratorScheme);
     }
 
+    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-BirToCir", Clock.SYSTEM_MILLISECONDS);
+
     CirClosure translateMethod(BirMethod birMethod, CirMethod cirMethod, CirVariableFactory variableFactory) {
         final BirToCirMethodTranslation methodTranslation = new BirToCirMethodTranslation(birMethod, variableFactory, this);
         final ClassMethodActor classMethodActor = birMethod.classMethodActor();
+
+        _timer.start();
 
         BlockTranslator.run(methodTranslation);
         CirClosure cirClosure = methodTranslation.cirClosure();
@@ -131,6 +137,8 @@ public class BirToCirTranslator extends CirGenerator {
         notifyBeforeTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
         freeVariableCapturing.pruneJavaLocals();
         notifyAfterTransformation(cirMethod, cirClosure, JAVA_LOCALS_PRUNING);
+
+        _timer.stop();
 
         return cirClosure;
     }

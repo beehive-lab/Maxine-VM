@@ -86,7 +86,7 @@ public class NativeFunction {
         if (_address.isZero()) {
             _address = DynamicLinker.lookup(_classMethodActor, makeSymbol());
             if (!MaxineVM.isPrimordialOrPristine()) {
-                if (VerboseVMOption.verboseJNI()) {
+                if (JniNativeInterface.verbose()) {
                     Log.println("[Dynamic-linking native method " + _classMethodActor.holder().name() + "." + _classMethodActor.name() + " = " + _address.toHexString() + "]");
                 }
             }
@@ -100,7 +100,7 @@ public class NativeFunction {
     public void setAddress(Word address) {
         _address = address;
         if (!MaxineVM.isPrimordialOrPristine()) {
-            if (VerboseVMOption.verboseJNI()) {
+            if (JniNativeInterface.verbose()) {
                 Log.println("[" + (address.isZero() ? "Unregistering" : "Registering") + " JNI native method " + _classMethodActor.holder().name() + "." + _classMethodActor.name() + "]");
             }
         }

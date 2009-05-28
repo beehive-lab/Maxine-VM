@@ -72,6 +72,10 @@ public final class HostTupleAccess {
         if (constantValue != null) {
             return constantValue;
         }
+        // is the field annotated with @RESET?
+        if (fieldActor.isReset()) {
+            return fieldActor.kind().zeroValue();
+        }
         // try to read the field's value via reflection
         try {
             final Field field = fieldActor.toJava();

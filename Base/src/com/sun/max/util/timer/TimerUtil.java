@@ -45,6 +45,10 @@ public class TimerUtil {
         return timeElapsed(runnable, new SingleUseTimer(clock));
     }
 
+    public static long getLastElapsedSeconds(Timer timer) {
+        return (1 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
+    }
+
     public static long getLastElapsedMilliSeconds(Timer timer) {
         return (1000 * timer.getLastElapsedTime()) / timer.getClock().getHZ();
     }

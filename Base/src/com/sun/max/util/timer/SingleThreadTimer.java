@@ -20,6 +20,7 @@
  */
 package com.sun.max.util.timer;
 
+import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 
 /**
@@ -34,7 +35,9 @@ public class SingleThreadTimer implements Timer {
     private final Clock _clock;
     private final long[] _start = new long[MAXIMUM_NESTING_DEPTH];
     private final long[] _nested = new long[MAXIMUM_NESTING_DEPTH];
+    @RESET
     private int _depth;
+    @RESET
     private long _last;
 
     public SingleThreadTimer(Clock clock) {

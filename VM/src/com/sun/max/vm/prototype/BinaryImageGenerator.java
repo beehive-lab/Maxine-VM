@@ -203,12 +203,8 @@ public final class BinaryImageGenerator {
                 return;
             }
 
-            final String[] vmArguments;
             if (_vmArguments.getValue() != null) {
-                vmArguments = _vmArguments.getValue().split("\\s+");
-                VMOption.setVMArguments(vmArguments);
-            } else {
-                vmArguments = null;
+                VMOption.setVMArguments(_vmArguments.getValue().split("\\s+"));
             }
 
             BinaryImageGenerator._calleeJit = _testCalleeJit.getValue();
@@ -225,13 +221,7 @@ public final class BinaryImageGenerator {
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
             compilerScheme = dataPrototype.vmConfiguration().compilerScheme();
 
-            if (vmArguments != null) {
-                for (String argument : vmArguments) {
-                    if (argument != null) {
-                        ProgramWarning.message("VM argument not matched by any VM option: " + argument);
-                    }
-                }
-            }
+            VMOptions.beforeExit();
 
             // write the statistics
             if (_statsOption.getValue()) {

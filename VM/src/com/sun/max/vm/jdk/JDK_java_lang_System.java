@@ -610,6 +610,13 @@ public final class JDK_java_lang_System {
             return _path;
         }
     }
+
+    /**
+     * Determines if information should be displayed about the {@linkplain System#getProperties() system properties} when
+     * they initialized during VM startup.
+     */
+    private static final VMOption _verbosePropertiesOption = new VMOption("-verbose:props", "Report the initial values of the system properties.", MaxineVM.Phase.PRISTINE);
+
     /**
      * Initializes system properties from a wide variety of sources.
      */
@@ -735,7 +742,7 @@ public final class JDK_java_lang_System {
         Charset.isSupported(sunJnuEncodingValue); // We are only interested in the side effect: loading the char set if supported and initializing related JNU variables
         setIfAbsent(properties, "sun.jnu.encoding", sunJnuEncodingValue); // Now that we have loaded the char set, the recursion is broken and we can move on
 
-        if (VerboseVMOption.verboseProperties()) {
+        if (_verbosePropertiesOption.isPresent()) {
             Log.println("Initial system properties:");
             final Map<String, String> sortedProperties = new TreeMap<String, String>();
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {

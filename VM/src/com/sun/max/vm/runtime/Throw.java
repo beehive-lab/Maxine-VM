@@ -178,7 +178,7 @@ public final class Throw {
     @NEVER_INLINE
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer) {
         Log.println(message);
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, _stackFrameDumper);
+        new VmStackFrameWalker(VmThread.currentVmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, _stackFrameDumper);
     }
 
     /**
@@ -194,7 +194,7 @@ public final class Throw {
      */
     public static void stackDump(String message, final Pointer instructionPointer, final Pointer cpuStackPointer, final Pointer cpuFramePointer, int depth) {
         Log.println(message);
-        new VmStackFrameWalker(VmThread.current().vmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, new StackFrameDumper(depth));
+        new VmStackFrameWalker(VmThread.currentVmThreadLocals()).inspect(instructionPointer, cpuStackPointer, cpuFramePointer, new StackFrameDumper(depth));
     }
 
     /**

@@ -421,6 +421,10 @@ public class ClassfileReader {
                             final TypeDescriptor annotationTypeDescriptor = info.annotationTypeDescriptor();
                             if (annotationTypeDescriptor.equals(forJavaClass(PROTOTYPE_ONLY.class))) {
                                 continue nextField;
+                            } else if (info.annotationTypeDescriptor().equals(forJavaClass(RESET.class))) {
+                                assert !Actor.isFinal(flags) :
+                                    "A final field cannot have the RESET annotation: " + _classDescriptor.toJavaString() + "." + name;
+                                flags |= RESET;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(CONSTANT.class))) {
                                 flags |= CONSTANT;
                             } else if (info.annotationTypeDescriptor().equals(forJavaClass(CONSTANT_WHEN_NOT_ZERO.class))) {
@@ -1250,10 +1254,13 @@ public class ClassfileReader {
         return classActor;
     }
 
+    private static final VMOption _verboseOption = new VMOption("-verbose:class",
+        "Display information about each class loaded.", MaxineVM.Phase.PRISTINE);
+
     private ClassActor loadClass(final Utf8Constant name, Object source) {
         try {
             String optSource = null;
-            if (VerboseVMOption.verboseClassLoading()) {
+            if (_verboseOption.isPresent()) {
                 if (source != null) {
                     Log.println("[Loading " + name + " from " + source + "]");
                 } else {
@@ -1269,7 +1276,7 @@ public class ClassfileReader {
             });
             final ClassActor classActor = loadClass0(name);
 
-            if (VerboseVMOption.verboseClassLoading()) {
+            if (_verboseOption.isPresent()) {
                 if (source != null) {
                     Log.println("[Loaded " + name + " from " + source + "]");
                 } else {

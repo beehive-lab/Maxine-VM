@@ -113,20 +113,8 @@ public abstract class Word {
         return Platform.hostOrTarget().processorKind().dataModel().endianness();
     }
 
-    /**
-     * Cached value used only when prototyping.
-     */
-    @PROTOTYPE_ONLY
-    private static WordWidth _width;
-
     @FOLD
     public static WordWidth width() {
-        if (isBoxed()) {
-            if (_width == null) {
-                _width = Platform.hostOrTarget().processorKind().dataModel().wordWidth();
-            }
-            return _width;
-        }
         return Platform.hostOrTarget().processorKind().dataModel().wordWidth();
     }
 
