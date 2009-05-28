@@ -20,10 +20,16 @@
  */
 package com.sun.max.vm.compiler.adaptive;
 
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 
+import com.sun.max.profile.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.adaptive.Compilation.CompilationStatsOption.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 
@@ -36,6 +42,8 @@ import com.sun.max.vm.runtime.*;
  * @author Michael Bebenita
  */
 class Compilation implements Future<TargetMethod> {
+
+    private static final VMOption _verboseOption = new VMOption("-verbose:comp", "Display information about each compilation performed.", MaxineVM.Phase.PRISTINE);
 
     /**
      * A reference to the enclosing instance of the compilation scheme.
@@ -80,7 +88,7 @@ class Compilation implements Future<TargetMethod> {
     }
 
     /**
-     * Checks whether this compilation was cancelled. This method always returns {@code false}
+     * Checks whether this compilation was canceled. This method always returns {@code false}
      */
     public boolean isCancelled() {
         return false;
@@ -149,12 +157,14 @@ class Compilation implements Future<TargetMethod> {
 
         try {
             String methodString = null;
-            if (VerboseVMOption.verboseCompilation()) {
+            if (_verboseOption.isPresent()) {
                 methodString = _methodState.classMethodActor().format("%H.%n(%p)");
                 Log.println(compiler.name() + ": Compiling " + methodString);
             }
+            final CompilerStats stats = _statsOptions.start(compiler, _methodState.classMethodActor());
             targetMethod = IrTargetMethod.asTargetMethod(compiler.compile(_methodState.classMethodActor(), compilationDirective));
-            if (VerboseVMOption.verboseCompilation()) {
+            _statsOptions.stop(stats);
+            if (_verboseOption.isPresent()) {
                 Log.print(compiler.name() + ": Compiled  " + methodString + " @ ");
                 Log.print(targetMethod.codeStart());
                 Log.print(" {code length=" + targetMethod.codeLength() + "}");
@@ -175,6 +185,91 @@ class Compilation implements Future<TargetMethod> {
             _adaptiveCompilationScheme.observeAfterCompilation(this, compiler, targetMethod);
             synchronized (_adaptiveCompilationScheme._completionLock) {
                 _adaptiveCompilationScheme._completed++;
+            }
+        }
+    }
+
+    private static final CompilationStatsOption _statsOptions = new CompilationStatsOption();
+
+    static class CompilationStatsOption extends TimerOption {
+        static class CompilerStats {
+            CompilerStats(DynamicCompilerScheme compiler) {
+                _compiler = compiler;
+            }
+            final DynamicCompilerScheme _compiler;
+            final AtomicLong _time = new AtomicLong();
+            final AtomicLong _bytes = new AtomicLong();
+        }
+
+        private CompilerStats[] _allCompilerStats;
+
+        CompilationStatsOption() {
+            super("Compilation", "Time compilation.", new MultiThreadTimer(Clock.SYSTEM_MILLISECONDS));
+        }
+
+        CompilerStats start(DynamicCompilerScheme compiler, ClassMethodActor classMethodActor) {
+            CompilerStats stats = null;
+            if (isPresent()) {
+                stats = makeStats(compiler);
+                final int bytes = classMethodActor.codeAttribute().code().length;
+                stats._bytes.addAndGet(bytes);
+                _timerMetric.start();
+            }
+            return stats;
+        }
+
+        private CompilerStats makeStats(DynamicCompilerScheme compiler) {
+            if (_allCompilerStats == null) {
+                final CompilerStats stats = new CompilerStats(compiler);
+                _allCompilerStats = new CompilerStats[] {stats};
+                return stats;
+            }
+            CompilerStats stats = null;
+            for (CompilerStats s : _allCompilerStats) {
+                if (s._compiler == compiler) {
+                    stats = s;
+                }
+            }
+            if (stats == null) {
+                stats = new CompilerStats(compiler);
+                _allCompilerStats = Arrays.copyOf(_allCompilerStats, _allCompilerStats.length + 1);
+                _allCompilerStats[_allCompilerStats.length - 1] = stats;
+            }
+            return stats;
+        }
+
+        void stop(CompilerStats stats) {
+            if (isPresent()) {
+                _timerMetric.stop();
+                stats._time.addAndGet(_timerMetric.getLastElapsedTime());
+            }
+        }
+
+        void printStats(String compilerName, long milliseconds, long bytes) {
+            Log.print("    ");
+            Log.print(compilerName);
+            Log.print(" compilation: ");
+            Log.print(milliseconds);
+            Log.print(" ms, ");
+            Log.print(bytes);
+            Log.print(" bytes, ");
+            final double seconds = (double) milliseconds / 1000;
+            if (seconds != 0) {
+                Log.print(bytes / seconds);
+                Log.print(" bytes/sec");
+            }
+            Log.println();
+        }
+
+        @Override
+        protected void beforeExit() {
+            if (_allCompilerStats != null) {
+                long bytesTotal = 0;
+                for (CompilerStats stats : _allCompilerStats) {
+                    printStats(stats._compiler.name(), stats._time.get(), stats._bytes.get());
+                    bytesTotal += stats._bytes.get();
+                }
+                printStats("All", _timerMetric.getElapsedTime(), bytesTotal);
             }
         }
     }

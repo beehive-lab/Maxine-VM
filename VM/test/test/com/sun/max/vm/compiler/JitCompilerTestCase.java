@@ -130,10 +130,12 @@ public abstract class JitCompilerTestCase extends CompilerTestCase<JitTargetMeth
                 try {
                     final JitTargetMethod method = compiler().compile(classMethodActor, CompilationDirective.DEFAULT);
                     assertNotNull(method);
-                    if (jitTestSetup().disassembleCompiledMethods()) {
-                        traceBundleAndDisassemble(method);
-                        Trace.line(1);
-                        Trace.line(1);
+                    if (Trace.hasLevel(1)) {
+                        if (jitTestSetup().disassembleCompiledMethods()) {
+                            traceBundleAndDisassemble(method);
+                            Trace.line(1);
+                            Trace.line(1);
+                        }
                     }
                     return method;
                 } catch (AssertionError e) {

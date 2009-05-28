@@ -22,6 +22,7 @@ package com.sun.max.vm.compiler.ir;
 
 import java.util.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -33,7 +34,9 @@ public abstract class IrGenerator<CompilerScheme_Type extends DynamicCompilerSch
 
     private final CompilerScheme_Type _compilerScheme;
     private final String _irName;
-    protected transient LinkedList<IrObserver> _irObservers; // this field is transient so prototyping observers don't end up in the image
+
+    @RESET
+    protected transient LinkedList<IrObserver> _irObservers;
 
     protected IrGenerator(CompilerScheme_Type compilerScheme, String irName) {
         _compilerScheme = compilerScheme;

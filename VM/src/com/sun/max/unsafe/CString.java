@@ -321,6 +321,13 @@ public final class CString {
         return cstring.getByte(string.length()) == 0;
     }
 
+    /**
+     * Determines if a given C string starts with a given prefix.
+     *
+     * @param cstring the C string to test
+     * @param prefix the prefix to test against
+     * @return {@code true} if {@code cstring} starts with {@code prefix}
+     */
     public static boolean startsWith(Pointer cstring, String prefix) {
         if (cstring.isZero()) {
             return false;

@@ -110,13 +110,16 @@ public final class Trace {
         on(Integer.MAX_VALUE);
     }
 
-    private static transient long _count;
+    @RESET
+    private static long _count;
 
+    @RESET
     @INSPECTED
-    private static transient long _threshold;
+    private static long _threshold;
 
+    @RESET
     @INSPECTED
-    private static transient int _level;
+    private static int _level;
 
     /**
      * Dynamically sets the current tracing level to the greater of the current level or the specified new level.

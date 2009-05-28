@@ -83,6 +83,51 @@ void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSiz
 #else
     c_UNIMPLEMENTED();
 #endif
+
+    /* Create thread specifics for the primordial thread so that there's a better chance
+     * of reporting something sensible if it takes a trap. Also, this enables its VM thread locals
+     * can be accessed by the debugger. */
+    ThreadSpecifics primordialThreadSpecifics = calloc(1, sizeof(ThreadSpecificsStruct));
+    if (primordialThreadSpecifics == NULL) {
+        log_exit(11, "Could not allocate primoridial thread specifics.");
+    }
+    primordialThreadSpecifics->next = primordialThreadSpecifics;
+    primordialThreadSpecifics->triggeredVmThreadLocals = primordialVmThreadLocals;
+    primordialThreadSpecifics->enabledVmThreadLocals = primordialVmThreadLocals;
+    primordialThreadSpecifics->disabledVmThreadLocals = primordialVmThreadLocals;
+
+#if os_SOLARIS
+    stack_t stackInfo;
+    int result = thr_stksegment(&stackInfo);
+
+    if (result != 0) {
+        log_exit(result, "thr_stksegment failed");
+    }
+
+    primordialThreadSpecifics->stackSize = stackInfo.ss_size;
+    primordialThreadSpecifics->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
+#elif os_DARWIN || os_LINUX
+    /* There's no support for finding the base and size of the current thread's stack in Linux or Darwin
+     * so we simply make a guess based the stack memory allocated (via alloca)
+     * in the stack frame maxine() in maxine.c and the default stack size for a pthread. */
+    pthread_attr_t attr;
+    size_t stackSize;
+    pthread_attr_init(&attr);
+    pthread_attr_getstacksize (&attr, &stackSize);
+    Address stackEnd = primordialVmThreadLocals + vmThreadLocalsSize;
+    primordialThreadSpecifics->stackBase = stackEnd - stackSize;
+    primordialThreadSpecifics->stackSize = stackSize;
+    pthread_attr_destroy(&attr);
+#elif os_GUESTVMXEN
+    stackinfo_t stackInfo;
+    guestvmXen_get_stack_info(&stackInfo);
+    primordialThreadSpecifics->stackBase = stackInfo.ss_sp - stackInfo.ss_size;
+    primordialThreadSpecifics->stackSize = stackInfo.ss_size;
+#else
+    c_UNIMPLEMENTED();
+#endif
+    thread_setSpecific(_specificsKey, primordialThreadSpecifics);
+
     if (debugger_attached()) {
         _threadSpecificsList = calloc(1, sizeof(ThreadSpecificsListStruct));
         if (_threadSpecificsList == NULL) {
@@ -98,47 +143,6 @@ void threads_initialize(Address primordialVmThreadLocals, Size vmThreadLocalsSiz
         log_println("Allocated global thread specifics list at %p", _threadSpecificsList);
 #endif
 
-        /* Create thread specifics for the primordial thread so that its VM thread locals
-         * can be accessed by the debugger. */
-        ThreadSpecifics primordialThreadSpecifics = calloc(1, sizeof(ThreadSpecificsStruct));
-        if (primordialThreadSpecifics == NULL) {
-            log_exit(11, "Could not allocate primoridial thread specifics.");
-        }
-        primordialThreadSpecifics->next = primordialThreadSpecifics;
-        primordialThreadSpecifics->triggeredVmThreadLocals = primordialVmThreadLocals;
-        primordialThreadSpecifics->enabledVmThreadLocals = primordialVmThreadLocals;
-        primordialThreadSpecifics->disabledVmThreadLocals = primordialVmThreadLocals;
-
-#if os_SOLARIS
-        stack_t stackInfo;
-        int result = thr_stksegment(&stackInfo);
-
-        if (result != 0) {
-            log_exit(result, "thr_stksegment failed");
-        }
-
-        primordialThreadSpecifics->stackSize = stackInfo.ss_size;
-        primordialThreadSpecifics->stackBase = (Address) stackInfo.ss_sp - stackInfo.ss_size;
-#elif os_DARWIN || os_LINUX
-        /* There's no support for finding the base and size of the current thread's stack in Linux or Darwin
-         * so we simply make a guess based the stack memory allocated (via alloca)
-         * in the stack frame maxine() in maxine.c and the default stack size for a pthread. */
-        pthread_attr_t attr;
-        size_t stackSize;
-        pthread_attr_init(&attr);
-        pthread_attr_getstacksize (&attr, &stackSize);
-        Address stackEnd = primordialVmThreadLocals + vmThreadLocalsSize;
-        primordialThreadSpecifics->stackBase = stackEnd - stackSize;
-        primordialThreadSpecifics->stackSize = stackSize;
-        pthread_attr_destroy(&attr);
-#elif os_GUESTVMXEN
-        stackinfo_t stackInfo;
-        guestvmXen_get_stack_info(&stackInfo);
-        primordialThreadSpecifics->stackBase = stackInfo.ss_sp - stackInfo.ss_size;
-        primordialThreadSpecifics->stackSize = stackInfo.ss_size;
-#else
-        c_UNIMPLEMENTED();
-#endif
         threadSpecificsList_add(_threadSpecificsList, primordialThreadSpecifics);
 #if log_THREADS
         log_print("Added to global thread specifics list: ");
