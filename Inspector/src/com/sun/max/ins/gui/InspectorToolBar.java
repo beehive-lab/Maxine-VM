@@ -50,6 +50,14 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
         return _inspection;
     }
 
+    public MaxVM maxVM() {
+        return _inspection.maxVM();
+    }
+
+    public InspectorGUI gui() {
+        return _inspection.gui();
+    }
+
     public final InspectorStyle style() {
         return _inspection.style();
     }
@@ -60,10 +68,6 @@ public class InspectorToolBar extends JToolBar implements InspectionHolder {
 
     public InspectionActions actions() {
         return _inspection.actions();
-    }
-
-    public MaxVM maxVM() {
-        return _inspection.maxVM();
     }
 
     public void redisplay() {

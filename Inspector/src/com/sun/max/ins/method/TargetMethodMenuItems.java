@@ -20,7 +20,6 @@
  */
 package com.sun.max.ins.method;
 
-import java.awt.datatransfer.*;
 import java.io.*;
 
 import com.sun.max.asm.*;
@@ -95,8 +94,7 @@ public final class TargetMethodMenuItems extends AbstractInspectionHolder implem
                 }
             };
             Disassemble.disassemble(byteArrayOutputStream, _teleTargetMethod.getCode(), processorKind, startAddress, inlineDataDecoder, disassemblyPrinter);
-            final StringSelection stringSelection =  new StringSelection(byteArrayOutputStream.toString());
-            inspection().getToolkit().getSystemClipboard().setContents(stringSelection, stringSelection);
+            inspection().gui().postToClipboard(byteArrayOutputStream.toString());
         }
     }
 

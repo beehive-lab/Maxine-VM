@@ -20,24 +20,20 @@
  */
 package com.sun.max.ins;
 
-import java.awt.*;
-import java.awt.event.*;
 import java.io.*;
 import java.net.*;
-import java.util.*;
 
 import javax.swing.*;
 
 import com.sun.max.collect.*;
-import com.sun.max.ins.InspectionSettings.*;
-import com.sun.max.ins.InspectorKeyBindings.*;
+import com.sun.max.ins.InspectionPreferences.*;
+import com.sun.max.ins.debug.*;
 import com.sun.max.ins.gui.*;
+import com.sun.max.ins.object.*;
 import com.sun.max.program.*;
-import com.sun.max.program.option.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.debug.*;
 import com.sun.max.tele.debug.TeleProcess.*;
-import com.sun.max.util.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -49,21 +45,21 @@ import com.sun.max.vm.classfile.*;
  * @author Bernd Mathiske
  * @author Michael Van De Vanter
  */
-public class Inspection extends JFrame {
+public final class Inspection {
 
-    private static final int TRACE_VALUE = 2;
+    private static final int TRACE_VALUE = 1;
 
     /**
      * @return a string suitable for tagging all trace lines; mention the thread if it isn't the AWT event handler.
      */
     private String tracePrefix() {
         if (java.awt.EventQueue.isDispatchThread()) {
-            return "[Inspector] ";
+            return "[Inspection] ";
         }
-        return "[Inspector: " + Thread.currentThread().getName() + "] ";
+        return "[Inspection: " + Thread.currentThread().getName() + "] ";
     }
 
-    private static final String _inspectorName = "Maxine Inspector";
+    private static final String INSPECTOR_NAME = "Maxine Inspector";
 
     /**
      * Constants specifying the state of the Inspection and VM, if present. These are a superset of
@@ -101,29 +97,132 @@ public class Inspection extends JFrame {
 
     private final MaxVM _vm;
 
+    private final String _bootImageFileName;
+
+    private final InspectorNameDisplay _nameDisplay;
+
+    private final InspectionFocus _focus;
+
+    private final InspectionPreferences  _preferences;
+
+
+    private static final String _SETTINGS_FILE_NAME = "maxine.ins";
+    private final InspectionSettings _settings;
+
+    private final InspectionActions _inspectionActions;
+
+    private InspectorMainFrame _inspectorMainFrame;
+
+    public Inspection(MaxVM maxVM) {
+        Trace.begin(TRACE_VALUE, tracePrefix() + "Initializing");
+        final long startTimeMillis = System.currentTimeMillis();
+        _vm = maxVM;
+        _bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
+        if (!(maxVM().isReadOnly())) {
+            _presumedState = State.STOPPED;
+            _inspectionState = InspectionState.STOPPED;
+        }
+        _nameDisplay = new InspectorNameDisplay(this);
+        _focus = new InspectionFocus(this);
+        _settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), _SETTINGS_FILE_NAME));
+        _preferences = new InspectionPreferences(this, _settings);
+        _inspectionActions = new InspectionActions(this);
+
+        BreakpointPersistenceManager.initialize(this);
+        _inspectionActions.refresh(maxVM().epoch(), true);
+        // Listen for process state changes
+        maxVM().addStateListener(new ProcessStateListener());
+        // Listen for changes in breakpoints
+        maxVM().addBreakpointListener(new BreakpointListener());
+
+        _inspectorMainFrame = new InspectorMainFrame(this, INSPECTOR_NAME, _settings, _inspectionActions);
+
+        MethodInspector.Manager.make(this);
+        ObjectInspectorFactory.make(this);
+
+        if (!maxVM.isReadOnly()) {
+            try {
+                // Choose an arbitrary thread as the "current" thread. If the inspector is
+                // creating the process to be debugged (as opposed to attaching to it), then there
+                // should only be one thread.
+                final IterableWithLength<TeleNativeThread> threads = maxVM().threads();
+                TeleNativeThread nonJavaThread = null;
+                for (TeleNativeThread thread : threads) {
+                    if (thread.isJava()) {
+                        _focus.setThread(thread);
+                        nonJavaThread = null;
+                        break;
+                    }
+                    nonJavaThread = thread;
+                }
+                if (nonJavaThread != null) {
+                    _focus.setThread(nonJavaThread);
+                }
+                // TODO (mlvdv) decide whether to make inspectors visible based on preference and previous session
+                ThreadsInspector.make(this);
+                RegistersInspector.make(this);
+                ThreadLocalsInspector.make(this);
+                StackInspector.make(this);
+                BreakpointsInspector.make(this);
+                _focus.setCodeLocation(maxVM.createCodeLocation(_focus.thread().instructionPointer()), false);
+            } catch (Throwable throwable) {
+                System.err.println("Error during initialization");
+                throwable.printStackTrace();
+                System.exit(1);
+            }
+        } else {
+            // Initialize the CodeManager and ClassRegistry, which seems to keep some heap reads
+            // in the BootImageInspecor from crashing when there's no VM running (mlvdv)
+//          if (teleVM.isBootImageRelocated()) {
+//          teleVM.teleCodeRegistry();
+//          }
+        }
+        refreshAll(false);
+        updateTitle();
+        _inspectorMainFrame.setVisible(true);
+
+        Trace.end(TRACE_VALUE, tracePrefix() + "Initializing", startTimeMillis);
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for the inspection session.
+     */
+    public JPanel globalPreferencesPanel() {
+        return _preferences.getPanel();
+    }
+
+    public InspectionSettings settings() {
+        return _settings;
+    }
+
     public MaxVM maxVM() {
         return _vm;
     }
 
-    private final String _bootImageFileName;
-
-    /**
-     * @return Is the Inspector in debugging mode with a legitimate process?
-     */
-    public boolean hasProcess() {
-        return !(_inspectionState == InspectionState.NO_PROCESS || _inspectionState == InspectionState.TERMINATED);
+    public InspectorGUI gui() {
+        return _inspectorMainFrame;
     }
 
-    private boolean _investigateWordValues = true;
-
     /**
-     * @return Does the Inspector attempt to discover proactively what word values might point to in the VM.
+     * @return the global collection of actions, many of which are singletons with state that gets refreshed.
      */
-    public boolean investigateWordValues() {
-        return _investigateWordValues;
+    public InspectionActions actions() {
+        return _inspectionActions;
     }
 
-    private final InspectorNameDisplay _nameDisplay;
+    /**
+     * The current configuration for visual style.
+     */
+    public InspectorStyle style() {
+        return _preferences.style();
+    }
+
+    /**
+     * Default size and layout for windows; overridden by persistent settings from previous sessions.
+     */
+    public InspectorGeometry geometry() {
+        return _preferences.geometry();
+    }
 
     /**
      * @return Inspection utility for generating standard, human-intelligible names for entities in the inspection
@@ -133,33 +232,19 @@ public class Inspection extends JFrame {
         return _nameDisplay;
     }
 
-    private final InspectorStyleFactory _styleFactory;
-    private InspectorStyle _style;
+    /**
+     * @return Does the Inspector attempt to discover proactively what word values might point to in the VM.
+     */
+    public boolean investigateWordValues() {
+        return _preferences.investigateWordValues();
+    }
 
     /**
-     * The current configuration for visual style.
+     * Informs this inspection of a new action that can operate on this inspection.
      */
-    public InspectorStyle style() {
-        return _style;
+    public void registerAction(InspectorAction inspectorAction) {
+        _preferences.registerAction(inspectorAction);
     }
-
-    private void setStyle(InspectorStyle style) {
-        _style = style;
-        updateViewConfiguration();
-    }
-
-    // TODO (mlvdv) need some way to configure this default in conjunction with style defaults.
-    //private InspectorGeometry _geometry = new InspectorGeometry10Pt();
-    private InspectorGeometry _geometry = new InspectorGeometry12Pt();
-
-    /**
-     * Default size and layout for windows; overridden by persistent settings from previous sessions.
-     */
-    public InspectorGeometry geometry() {
-        return _geometry;
-    }
-
-    private final InspectionFocus _focus;
 
     /**
      * User oriented focus on particular items in the environment; View state.
@@ -169,555 +254,11 @@ public class Inspection extends JFrame {
     }
 
     /**
-     * Gets the current key binding map for this inspection.
-     */
-    public KeyBindingMap keyBindingMap() {
-        return _keyBindingMap;
-    }
-
-    /**
-     * Updates the current key binding map for this inspection.
-     *
-     * @param keyBindingMap a key binding map. If this value differs from the {@linkplain #keyBindingMap() current key
-     *            binding map}, then the accelerator keys of all the relevant inspector actions are updated.
-     */
-    public void setKeyBindingMap(KeyBindingMap keyBindingMap) {
-        if (keyBindingMap != _keyBindingMap) {
-            _keyBindingMap = keyBindingMap;
-            for (InspectorAction inspectorAction : _actionsWithKeyBindings) {
-                final KeyStroke keyStroke = keyBindingMap.get(inspectorAction.getClass());
-                Trace.line(TRACE_VALUE, "Binding " + keyStroke + " to " + inspectorAction);
-                inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
-            }
-        }
-    }
-
-    private KeyBindingMap _keyBindingMap = InspectorKeyBindings.DEFAULT_KEY_BINDINGS;
-
-    private final AppendableSequence<InspectorAction> _actionsWithKeyBindings = new ArrayListSequence<InspectorAction>();
-
-    /**
-     * Informs this inspection of a new action that can operate on this inspection.
-     */
-    public void registerAction(InspectorAction inspectorAction) {
-        final Class<? extends InspectorAction> actionClass = inspectorAction.getClass();
-        if (InspectorKeyBindings.KEY_BINDABLE_ACTIONS.contains(actionClass)) {
-            _actionsWithKeyBindings.append(inspectorAction);
-            final KeyStroke keyStroke = _keyBindingMap.get(actionClass);
-            inspectorAction.putValue(Action.ACCELERATOR_KEY, keyStroke);
-        }
-    }
-
-    private final InspectionPreferences _preferences;
-
-    public InspectionPreferences preferences() {
-        return _preferences;
-    }
-
-
-
-    public class InspectionPreferences extends AbstractSaveSettingsListener {
-
-        private static final String FRAME_X_KEY = "frameX";
-        private static final String FRAME_Y_KEY = "frameY";
-        private static final String FRAME_HEIGHT_KEY = "frameHeight";
-        private static final String FRAME_WIDTH_KEY = "frameWidth";
-        private static final String KEY_BINDINGS_PREFERENCE = "keyBindings";
-        private static final String DISPLAY_STYLE_PREFERENCE = "displayStyle";
-        private static final String INVESTIGATE_WORD_VALUES_PREFERENCE = "investigateWordValues";
-        private static final String EXTERNAL_VIEWER_PREFERENCE = "externalViewer";
-
-        private final Inspection _inspection;
-
-        public InspectionPreferences(Inspection inspection) {
-            super("inspection");
-            _inspection = inspection;
-            // Don't rely on the default settings behavior for saving and resetting window size and location.
-        }
-
-        public void saveSettings(SaveSettingsEvent saveSettingsEvent) {
-            final Rectangle bounds = _inspection.getBounds();
-            saveSettingsEvent.save(FRAME_X_KEY, bounds.x);
-            saveSettingsEvent.save(FRAME_Y_KEY, bounds.y);
-            saveSettingsEvent.save(FRAME_WIDTH_KEY, bounds.width);
-            saveSettingsEvent.save(FRAME_HEIGHT_KEY, bounds.height);
-            saveSettingsEvent.save(KEY_BINDINGS_PREFERENCE, keyBindingMap().name());
-            saveSettingsEvent.save(DISPLAY_STYLE_PREFERENCE, style().name());
-            saveSettingsEvent.save(INVESTIGATE_WORD_VALUES_PREFERENCE, _investigateWordValues);
-            saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE, _externalViewerType.name());
-            for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
-                final String config = _externalViewerConfig.get(externalViewerType);
-                if (config != null) {
-                    saveSettingsEvent.save(EXTERNAL_VIEWER_PREFERENCE + "." + externalViewerType.name(), config);
-                }
-            }
-        }
-
-        void initialize() {
-            _settings.addSaveSettingsListener(this);
-            try {
-                if (_settings.containsKey(this, FRAME_X_KEY)) {
-                    // Adjust any negative (off-screen) locations to be on-screen.
-                    final int x = Math.max(_settings.get(this, FRAME_X_KEY, OptionTypes.INT_TYPE, -1), 0);
-                    final int y = Math.max(_settings.get(this, FRAME_Y_KEY, OptionTypes.INT_TYPE, -1), 0);
-                    // Adjust any excessive window size to fit within the screen
-                    final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-                    final int width = Math.min(_settings.get(this, FRAME_WIDTH_KEY, OptionTypes.INT_TYPE, -1), screenSize.width);
-                    final int height = Math.min(_settings.get(this, FRAME_HEIGHT_KEY, OptionTypes.INT_TYPE, -1), screenSize.height);
-                    _inspection.setBounds(x, y, width, height);
-                }
-            } catch (Option.Error optionError) {
-                ProgramWarning.message("Frame settings: " + optionError.getMessage());
-            }
-            try {
-                if (_settings.containsKey(this, KEY_BINDINGS_PREFERENCE)) {
-                    final String keyBindingsName = _settings.get(this, KEY_BINDINGS_PREFERENCE, OptionTypes.STRING_TYPE, null);
-
-                    final KeyBindingMap keyBindingMap = KeyBindingMap.ALL.get(keyBindingsName);
-                    if (keyBindingMap != null) {
-                        setKeyBindingMap(keyBindingMap);
-                    } else {
-                        ProgramWarning.message("Unknown key bindings name ignored: " + keyBindingsName);
-                    }
-                }
-
-                if (_settings.containsKey(this, DISPLAY_STYLE_PREFERENCE)) {
-                    final String displayStyleName = _settings.get(this, DISPLAY_STYLE_PREFERENCE, OptionTypes.STRING_TYPE, null);
-                    InspectorStyle style = _styleFactory.findStyle(displayStyleName);
-                    if (style == null) {
-                        style = _styleFactory.defaultStyle();
-                    }
-                    _style = style;
-                }
-
-                _investigateWordValues = _settings.get(this, INVESTIGATE_WORD_VALUES_PREFERENCE, OptionTypes.BOOLEAN_TYPE, true);
-                _externalViewerType = _settings.get(this, EXTERNAL_VIEWER_PREFERENCE, new OptionTypes.EnumType<ExternalViewerType>(ExternalViewerType.class), ExternalViewerType.NONE);
-                for (ExternalViewerType externalViewerType : ExternalViewerType.VALUES) {
-                    final String config = _settings.get(this, "externalViewer." + externalViewerType.name(), OptionTypes.STRING_TYPE, null);
-                    _externalViewerConfig.put(externalViewerType, config);
-                }
-            } catch (Option.Error optionError) {
-                ProgramWarning.message(optionError.getMessage());
-            }
-        }
-
-        /**
-         * Gets a panel for configuring which key binding map is active.
-         */
-        public JPanel getPanel() {
-            final JPanel panel = new InspectorPanel(Inspection.this);
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-
-            final JPanel keyBindingsPanel = getUIPanel();
-            final JPanel debugPanel = getDebugPanel();
-            final JPanel externalViewerPanel = getExternalViewerPanel();
-
-            keyBindingsPanel.setBorder(BorderFactory.createEtchedBorder());
-            debugPanel.setBorder(BorderFactory.createEtchedBorder());
-            externalViewerPanel.setBorder(BorderFactory.createEtchedBorder());
-
-            panel.add(keyBindingsPanel);
-            panel.add(debugPanel);
-            panel.add(externalViewerPanel);
-
-            return panel;
-        }
-
-        /**
-         * Gets a panel for configuring which key binding map is active.
-         */
-        private JPanel getUIPanel() {
-
-            final JPanel interiorPanel = new InspectorPanel(Inspection.this);
-
-            // Add key binding chooser
-            final Collection<KeyBindingMap> allKeyBindingMaps = KeyBindingMap.ALL.values();
-            final JComboBox keyBindingsComboBox = new InspectorComboBox(Inspection.this, allKeyBindingMaps.toArray());
-            keyBindingsComboBox.setSelectedItem(_keyBindingMap);
-            keyBindingsComboBox.addActionListener(new ActionListener() {
-
-                public void actionPerformed(ActionEvent e) {
-                    setKeyBindingMap((KeyBindingMap) keyBindingsComboBox.getSelectedItem());
-                }
-            });
-            interiorPanel.add(new TextLabel(Inspection.this, "Key Bindings:  "));
-            interiorPanel.add(keyBindingsComboBox);
-
-            // Add display style chooser
-            final JComboBox uiComboBox = new InspectorComboBox(Inspection.this, _styleFactory.allStyles());
-            uiComboBox.setSelectedItem(_style);
-            uiComboBox.addActionListener(new ActionListener() {
-
-                public void actionPerformed(ActionEvent e) {
-                    setStyle((InspectorStyle) uiComboBox.getSelectedItem());
-                }
-            });
-            interiorPanel.add(new TextLabel(Inspection.this, "Display style:  "));
-            interiorPanel.add(uiComboBox);
-
-            final JPanel panel = new InspectorPanel(Inspection.this, new BorderLayout());
-            panel.add(interiorPanel, BorderLayout.WEST);
-            return panel;
-        }
-
-        /**
-         * @return a GUI panel for setting debugging preferences
-         */
-        private JPanel getDebugPanel() {
-
-            final JCheckBox wordValueCheckBox =
-                new InspectorCheckBox(Inspection.this,
-                                "Investigate memory references",
-                                "Should displayed memory words be investigated as possible references by reading from the VM",
-                                _investigateWordValues);
-            wordValueCheckBox.addActionListener(new ActionListener() {
-
-                public void actionPerformed(ActionEvent actionEvent) {
-                    final JCheckBox checkBox = (JCheckBox) actionEvent.getSource();
-                    _investigateWordValues = checkBox.isSelected();
-                    updateViewConfiguration();
-                }
-            });
-
-            final JPanel panel = new InspectorPanel(Inspection.this, new BorderLayout());
-
-            final JPanel interiorPanel = new InspectorPanel(Inspection.this);
-            interiorPanel.add(new TextLabel(Inspection.this, "Debugging:  "));
-
-            /*
-             * Until there's a good reason for supporting the synchronous debugging mode, it's no longer selectable.
-             * This prevents any user confusion as to why the GUI seems to freeze when the VM is running. [Doug]
-            interiorPanel.add(synchButton);
-            interiorPanel.add(asynchButton);
-             */
-
-            interiorPanel.add(wordValueCheckBox);
-            panel.add(interiorPanel, BorderLayout.WEST);
-
-            return panel;
-        }
-
-        /**
-         * Gets a panel for configuring which key binding map is active.
-         */
-        public JPanel getExternalViewerPanel() {
-
-            final JPanel cards = new InspectorPanel(Inspection.this, new CardLayout());
-            final JPanel noneCard = new InspectorPanel(Inspection.this);
-
-            final JPanel processCard = new InspectorPanel(Inspection.this);
-            processCard.add(new TextLabel(Inspection.this, "Command: "));
-            processCard.setToolTipText("The pattern '$file' will be replaced with the full path to the file and '$line' will be replaced with the line number to view.");
-            final JTextArea commandTextArea = new JTextArea(2, 30);
-            commandTextArea.setLineWrap(true);
-            commandTextArea.setWrapStyleWord(true);
-            commandTextArea.setText(_externalViewerConfig.get(ExternalViewerType.PROCESS));
-            commandTextArea.addFocusListener(new FocusAdapter() {
-
-                @Override
-                public void focusLost(FocusEvent e) {
-                    final String command = commandTextArea.getText();
-                    setExternalViewerConfiguration(ExternalViewerType.PROCESS, command);
-                }
-            });
-            final JScrollPane scrollPane = new InspectorScrollPane(Inspection.this, commandTextArea);
-            processCard.add(scrollPane);
-
-            final JPanel socketCard = new InspectorPanel(Inspection.this);
-            final JTextField portTextField = new JTextField(6);
-            portTextField.setText(_externalViewerConfig.get(ExternalViewerType.SOCKET));
-            socketCard.add(new TextLabel(Inspection.this, "Port: "));
-            socketCard.add(portTextField);
-            portTextField.addFocusListener(new FocusAdapter() {
-
-                @Override
-                public void focusLost(FocusEvent e) {
-                    final String portString = portTextField.getText();
-                    setExternalViewerConfiguration(ExternalViewerType.SOCKET, portString);
-                }
-            });
-
-            cards.add(noneCard, ExternalViewerType.NONE.name());
-            cards.add(processCard, ExternalViewerType.PROCESS.name());
-            cards.add(socketCard, ExternalViewerType.SOCKET.name());
-
-            final ExternalViewerType[] values = ExternalViewerType.values();
-            final JComboBox comboBox = new InspectorComboBox(Inspection.this, values);
-            comboBox.addActionListener(new ActionListener() {
-
-                public void actionPerformed(ActionEvent e) {
-                    final ExternalViewerType externalViewerType = (ExternalViewerType) comboBox.getSelectedItem();
-                    setExternalViewer(externalViewerType);
-                    final CardLayout cardLayout = (CardLayout) cards.getLayout();
-                    cardLayout.show(cards, externalViewerType.name());
-                }
-            });
-            comboBox.setSelectedItem(_externalViewerType);
-            final CardLayout cardLayout = (CardLayout) cards.getLayout();
-            cardLayout.show(cards, _externalViewerType.name());
-
-            final JPanel comboBoxPanel = new InspectorPanel(Inspection.this);
-            comboBoxPanel.add(new TextLabel(Inspection.this, "External File Viewer:  "));
-            comboBoxPanel.add(comboBox);
-
-            final JPanel panel = new InspectorPanel(Inspection.this);
-            panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-            panel.add(comboBoxPanel);
-            panel.add(cards);
-            return panel;
-        }
-    }
-
-    /**
-     * Enum for the mechanism to be used when attempting to
-     * {@linkplain Inspection#viewSourceExternally(BytecodeLocation) view} a source file in an external tool.
-     */
-    public enum ExternalViewerType {
-        /**
-         * Specifies that there is no external viewer available.
-         */
-        NONE,
-
-        /**
-         * Specifies that an external viewer is listening on a socket for 'open file' requests. A request is a string of
-         * bytes matching this pattern:
-         *
-         * <pre>
-         *     &lt;path to file&gt;|&lt;line number&gt;
-         * </pre>
-         *
-         * For example, the following code generates the bytes of a typical command:
-         *
-         * <pre>
-         * &quot;/maxine/VM/src/com/sun/max/vm/MaxineVM.java|239&quot;.getBytes()
-         * </pre>
-         */
-        SOCKET,
-
-        /**
-         * Specifies that an external tool can be launched as a separate process.
-         */
-        PROCESS;
-
-        public static final IndexedSequence<ExternalViewerType> VALUES = new ArraySequence<ExternalViewerType>(values());
-    }
-
-    private ExternalViewerType _externalViewerType = ExternalViewerType.NONE;
-
-    private final Map<ExternalViewerType, String> _externalViewerConfig = new EnumMap<ExternalViewerType, String>(ExternalViewerType.class);
-
-    public void setExternalViewer(ExternalViewerType externalViewerType) {
-        final boolean needToSave = _externalViewerType != externalViewerType;
-        _externalViewerType = externalViewerType;
-        if (needToSave) {
-            settings().save();
-        }
-    }
-
-    public void setExternalViewerConfiguration(ExternalViewerType externalViewerType, String config) {
-        final boolean needToSave = _externalViewerConfig.get(externalViewerType) != config;
-        _externalViewerConfig.put(externalViewerType, config);
-        if (needToSave) {
-            settings().save();
-        }
-    }
-
-    /**
-     * If an external viewer has been {@linkplain #setExternalViewer(ExternalViewerType) configured}, attempt to view a
-     * source file location corresponding to a given bytecode location. The view attempt is only made if an existing
-     * source file and source line number can be derived from the given bytecode location.
-     *
-     * @param bytecodeLocation specifies a bytecode position in a class method actor
-     * @return true if a file viewer was opened
-     */
-    public boolean viewSourceExternally(BytecodeLocation bytecodeLocation) {
-        if (_externalViewerType == ExternalViewerType.NONE) {
-            return false;
-        }
-        final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
-        final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
-        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition());
-        if (lineNumber == -1) {
-            return false;
-        }
-        return viewSourceExternally(classMethodActor.holder(), lineNumber);
-    }
-
-    /**
-     * If an external viewer has been {@linkplain #setExternalViewer(ExternalViewerType) configured}, attempt to view a
-     * source file location corresponding to a given class actor and line number. The view attempt is only made if an
-     * existing source file and source line number can be derived from the given bytecode location.
-     *
-     * @param classActor the class whose source file is to be viewed
-     * @param lineNumber the line number at which the viewer should position the current focus point
-     * @return true if a file viewer was opened
-     */
-    public boolean viewSourceExternally(ClassActor classActor, int lineNumber) {
-        if (_externalViewerType == ExternalViewerType.NONE) {
-            return false;
-        }
-        final File javaSourceFile = maxVM().findJavaSourceFile(classActor);
-        if (javaSourceFile == null) {
-            return false;
-        }
-
-        switch (_externalViewerType) {
-            case PROCESS: {
-                final String config = _externalViewerConfig.get(ExternalViewerType.PROCESS);
-                if (config != null) {
-                    final String command = config.replaceAll("\\$file", javaSourceFile.getAbsolutePath()).replaceAll("\\$line", String.valueOf(lineNumber));
-                    try {
-                        Trace.line(1, tracePrefix() + "Opening file by executing " + command);
-                        Runtime.getRuntime().exec(command);
-                    } catch (IOException ioException) {
-                        ProgramWarning.message("Error opening file by executing " + command + ": " + ioException);
-                        return false;
-                    }
-                }
-                break;
-            }
-            case SOCKET: {
-                final String hostname = null;
-                final String portString = _externalViewerConfig.get(ExternalViewerType.SOCKET);
-                if (portString != null) {
-                    try {
-                        final int port = Integer.parseInt(portString);
-                        final Socket fileViewer = new Socket(hostname, port);
-                        final String command = javaSourceFile.getAbsolutePath() + "|" + lineNumber;
-                        Trace.line(1, tracePrefix() + "Opening file '" + command + "' via localhost:" + portString);
-                        final OutputStream fileViewerStream = fileViewer.getOutputStream();
-                        fileViewerStream.write(command.getBytes());
-                        fileViewerStream.flush();
-                        fileViewer.close();
-                    } catch (IOException ioException) {
-                        ProgramWarning.message("Error opening file via localhost:" + portString + ": " + ioException);
-                        return false;
-                    }
-                }
-                break;
-            }
-            default: {
-                ProgramError.unknownCase();
-            }
-        }
-        return true;
-    }
-
-    private static final String _SETTINGS_FILE_NAME = "maxine.ins";
-    private final InspectionSettings _settings;
-
-    public InspectionSettings settings() {
-        return _settings;
-    }
-
-    private final InspectionActions _inspectionActions;
-
-    /**
-     * @return the global collection of actions, many of which are singletons with state that gets refreshed.
-     */
-    public InspectionActions actions() {
-        return _inspectionActions;
-    }
-
-    private final JDesktopPane _desktopPane = new JDesktopPane() {
-
-        /**
-         * Any component added to the desktop pane is brought to the front.
-         */
-        @Override
-        public Component add(Component component) {
-            super.add(component);
-            moveToFront(component);
-            return component;
-        }
-    };
-
-    public JDesktopPane desktopPane() {
-        return _desktopPane;
-    }
-
-    private final JScrollPane _scrollPane;
-
-    public Rectangle getVisibleBounds() {
-        return _scrollPane.getVisibleRect();
-    }
-
-    private final InspectorMenu _viewMenu;
-
-    public Point getLocation(Component component) {
-        final Point result = new Point();
-        Component c = component;
-        while (c != null && c != _desktopPane) {
-            final Point location = c.getLocation();
-            result.translate(location.x, location.y);
-            c = c.getParent();
-        }
-        return result;
-    }
-
-    public Inspection(MaxVM maxVM) throws IOException {
-        super(_inspectorName);
-        _preferences = new InspectionPreferences(this);
-        _vm = maxVM;
-        _bootImageFileName = maxVM().bootImageFile().getAbsolutePath().toString();
-        if (!(maxVM().isReadOnly())) {
-            _presumedState = State.STOPPED;
-            _inspectionState = InspectionState.STOPPED;
-        }
-        _nameDisplay = new InspectorNameDisplay(this);
-        _styleFactory = new InspectorStyleFactory(this);
-        _style = _styleFactory.defaultStyle();
-        _desktopPane.setOpaque(true);
-        _scrollPane = new InspectorScrollPane(this, _desktopPane);
-        _focus = new InspectionFocus(this);
-        _settings = new InspectionSettings(this, new File(maxVM().programFile().getParentFile(), _SETTINGS_FILE_NAME));
-
-        setDefaultLookAndFeelDecorated(true);
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-
-            @Override
-            public void windowClosing(WindowEvent windowevent) {
-                quit();
-            }
-        });
-        setContentPane(_scrollPane);
-        // Set default geometry; may get overridden by settings when initialized
-        setMinimumSize(_geometry.inspectorFrameMinSize());
-        setPreferredSize(_geometry.inspectorFramePrefSize());
-        setLocation(_geometry.inspectorFrameDefaultLocation());
-        _inspectionActions = new InspectionActions(this);
-        _viewMenu = new InspectorMenu();
-        _viewMenu.add(_inspectionActions.viewBootImage());
-        _viewMenu.add(_inspectionActions.viewMemoryRegions());
-        _viewMenu.add(_inspectionActions.viewThreads());
-        _viewMenu.add(_inspectionActions.viewVmThreadLocals());
-        _viewMenu.add(_inspectionActions.viewRegisters());
-        _viewMenu.add(_inspectionActions.viewStack());
-        _viewMenu.add(_inspectionActions.viewMethodCode());
-        _viewMenu.add(_inspectionActions.viewBreakpoints());
-        setJMenuBar(new InspectorMainMenuBar(_inspectionActions));
-
-        _desktopPane.addMouseListener(new InspectorMouseClickAdapter(this) {
-
-            @Override
-            public void procedure(final MouseEvent mouseEvent) {
-                if (MaxineInspector.mouseButtonWithModifiers(mouseEvent) == MouseEvent.BUTTON3) {
-                    _viewMenu.popupMenu().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-                }
-            }
-        });
-        updateTitle();
-        pack();
-    }
-
-    /**
      * Updates the string appearing the outermost window frame: program name, process state, bootimage filename.
      *
      */
     private void updateTitle() {
-        setTitle(_inspectorName + ": (" + _inspectionState + ") " + _bootImageFileName);
-        repaint();
+        _inspectorMainFrame.showTitle(INSPECTOR_NAME + ": (" + _inspectionState + ") " + _bootImageFileName);
     }
 
     /**
@@ -729,6 +270,13 @@ public class Inspection extends JFrame {
      *         effects.
      */
     private State _presumedState = null;
+
+    /**
+     * @return Is the Inspector in debugging mode with a legitimate process?
+     */
+    public boolean hasProcess() {
+        return !(_inspectionState == InspectionState.NO_PROCESS || _inspectionState == InspectionState.TERMINATED);
+    }
 
     /**
      * Is the VM running, as of the most recent state update? Note that there is a delay, as well as a gap
@@ -763,24 +311,19 @@ public class Inspection extends JFrame {
         Trace.begin(1, tracer);
         final long startTimeMillis = System.currentTimeMillis();
         _presumedState = e.newState();
-        final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
         switch (_presumedState) {
             case STOPPED:
                 if (maxVM().isInGC()) {
-                    menuBar.setStateColor(style().vmStoppedinGCBackgroundColor());
                     _inspectionState = InspectionState.STOPPED_IN_GC;
                 } else {
-                    menuBar.setStateColor(style().vmStoppedBackgroundColor());
                     _inspectionState = InspectionState.STOPPED;
                 }
                 updateAfterVMStopped(e.epoch());
                 break;
             case RUNNING:
-                menuBar.setStateColor(style().vmRunningBackgroundColor());
                 _inspectionState = InspectionState.RUNNING;
                 break;
             case TERMINATED:
-                menuBar.setStateColor(style().vmTerminatedBackgroundColor());
                 _inspectionState = InspectionState.TERMINATED;
                 Trace.line(1, tracePrefix() + " - VM process terminated");
                 // Give all process-sensitive views a chance to shut down
@@ -793,6 +336,7 @@ public class Inspection extends JFrame {
                 _inspectionActions.refresh(e.epoch(), false);
                 break;
         }
+        _inspectorMainFrame.showVMState(_inspectionState);
         updateTitle();
         _inspectionActions.refresh(e.epoch(), true);
         Trace.end(1, tracer, startTimeMillis);
@@ -805,8 +349,7 @@ public class Inspection extends JFrame {
         Trace.line(TRACE_VALUE, tracePrefix() + "assuming VM is " + State.RUNNING);
         _presumedState = State.RUNNING;
         _inspectionState = InspectionState.RUNNING;
-        final InspectorMainMenuBar menuBar = (InspectorMainMenuBar) getJMenuBar();
-        menuBar.setStateColor(style().vmRunningBackgroundColor());
+        _inspectorMainFrame.showVMState(_inspectionState);
     }
 
     /**
@@ -865,19 +408,6 @@ public class Inspection extends JFrame {
         }
     }
 
-    /**
-     * Delayed initialization of inspection, allows other machinery to be set up first.
-     */
-    void initialize() throws IOException {
-        _preferences.initialize();
-        BreakpointPersistenceManager.initialize(this);
-        _inspectionActions.refresh(maxVM().epoch(), true);
-        // Listen for process state changes
-        maxVM().addStateListener(new ProcessStateListener());
-        // Listen for changes in breakpoints
-        maxVM().addBreakpointListener(new BreakpointListener());
-    }
-
     private InspectorAction _currentAction = null;
 
     /**
@@ -895,61 +425,8 @@ public class Inspection extends JFrame {
      * @return default title for any messages: defaults to name of current {@link InspectorAction} if one is current,
      *         otherwise the generic name of the inspector.
      */
-    private String dialogTitle() {
-        return _currentAction != null ? _currentAction.name() : _inspectorName;
-    }
-
-    /**
-     * Displays an information message in a modal dialog with specified frame title.
-     */
-    public void informationMessage(String message, String title) {
-        JOptionPane.showMessageDialog(_desktopPane, message, title, JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    /**
-     * Displays an information message in a modal dialog with default frame title.
-     */
-    public void informationMessage(String message) {
-        informationMessage(message, dialogTitle());
-    }
-
-    /**
-     * Displays an error message in a modal dialog with specified frame title.
-     */
-    public void errorMessage(String message, String title) {
-        JOptionPane.showMessageDialog(_desktopPane, message, title, JOptionPane.ERROR_MESSAGE);
-    }
-
-    /**
-     * Displays an error message in a modal dialog with default frame title.
-     */
-    public void errorMessage(String message) {
-        errorMessage(message, dialogTitle());
-    }
-
-    /**
-     * Collects textual input from user.
-     *
-     * @param message a prompt
-     * @param initialValue an initial value
-     * @return text typed by user
-     */
-    public String inputDialog(String message, String initialValue) {
-        return JOptionPane.showInputDialog(_desktopPane, message, initialValue);
-    }
-
-    public boolean yesNoDialog(String message) {
-        return JOptionPane.showConfirmDialog(this, message, _inspectorName, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
-    }
-
-    /**
-     * Displays a message and invites text input from user in a modal dialog.
-     *
-     * @return text typed by user.
-     */
-    public String questionMessage(String message) {
-        return JOptionPane.showInputDialog(_desktopPane, message, dialogTitle(), JOptionPane.QUESTION_MESSAGE);
-
+    public String currentActionTitle() {
+        return _currentAction != null ? _currentAction.name() : INSPECTOR_NAME;
     }
 
     private IdentityHashSet<InspectionListener> _inspectionListeners = new IdentityHashSet<InspectionListener>();
@@ -996,7 +473,7 @@ public class Inspection extends JFrame {
      * Updates all views, assuming that display and style parameters may have changed; forces state reload from the
      * VM.
      */
-    private void updateViewConfiguration() {
+    void updateViewConfiguration() {
         final long epoch = maxVM().epoch();
         for (InspectionListener listener : _inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "updateViewConfiguration: " + listener);
@@ -1012,7 +489,7 @@ public class Inspection extends JFrame {
      */
     public void updateAfterVMStopped(long epoch) {
         ProgramError.check(maxVM().state() == State.STOPPED, "State should be stopped, but is " + maxVM().state());
-        setBusy(true);
+        gui().showBusy(true);
         final IdentityHashSet<InspectionListener> listeners = _inspectionListeners.clone();
         // Notify of any changes of the thread set
 
@@ -1059,56 +536,8 @@ public class Inspection extends JFrame {
         } catch (Throwable throwable) {
             new InspectorError("could not update view", throwable).display(this);
         } finally {
-            setBusy(false);
+            gui().showBusy(false);
         }
-    }
-
-    private final class DeleteInspectorsAction extends InspectorAction {
-
-        private final Predicate<Inspector> _predicate;
-
-        public DeleteInspectorsAction(Inspection inspection, Predicate<Inspector> predicate, String title) {
-            super(inspection, title);
-            _predicate = predicate;
-        }
-
-        @Override
-        public void procedure() {
-            for (int i = _desktopPane.getComponentCount() - 1; i >= 0; i--) {
-                // Delete backwards so that the indices don't change
-                final Component component = _desktopPane.getComponent(i);
-                if (component instanceof InspectorFrame) {
-                    final InspectorFrame inspectorFrame = (InspectorFrame) component;
-                    final Inspector inspector = inspectorFrame.inspector();
-                    if (_predicate.evaluate(inspector)) {
-                        inspector.dispose();
-                    }
-                }
-            }
-            for (Frame frame : Frame.getFrames()) {
-                if (frame instanceof InspectorFrame) {
-                    final InspectorFrame inspectorFrame = (InspectorFrame) frame;
-                    final Inspector inspector = inspectorFrame.inspector();
-                    if (_predicate.evaluate(inspector)) {
-                        inspector.dispose();
-                    }
-                }
-            }
-        }
-    }
-
-    private final Cursor _busyCursor = new Cursor(Cursor.WAIT_CURSOR);
-
-    public void setBusy(boolean busy) {
-        if (busy) {
-            _desktopPane.setCursor(_busyCursor);
-        } else {
-            _desktopPane.setCursor(null);
-        }
-    }
-
-    public InspectorAction getDeleteInspectorsAction(Predicate<Inspector> predicate, String title) {
-        return new DeleteInspectorsAction(this, predicate, title);
     }
 
     /**
@@ -1126,31 +555,87 @@ public class Inspection extends JFrame {
         }
     }
 
-    private Point getMiddle(Component component) {
-        final Point point = new Point((getWidth() / 2) - (component.getWidth() / 2), (getHeight() / 2) - (component.getHeight() / 2));
-        if (point.y < 0) {
-            point.y = 0;
+    /**
+     * If an external viewer has been {@linkplain #setExternalViewer(ExternalViewerType) configured}, attempt to view a
+     * source file location corresponding to a given bytecode location. The view attempt is only made if an existing
+     * source file and source line number can be derived from the given bytecode location.
+     *
+     * @param bytecodeLocation specifies a bytecode position in a class method actor
+     * @return true if a file viewer was opened
+     */
+    public boolean viewSourceExternally(BytecodeLocation bytecodeLocation) {
+        if (_preferences.externalViewerType() == ExternalViewerType.NONE) {
+            return false;
         }
-        return point;
-    }
-
-    public void moveToMiddle(JComponent inspector) {
-        inspector.setLocation(getMiddle(inspector));
-    }
-
-    public void moveToMiddle(JDialog dialog) {
-        final Point middle = getMiddle(dialog);
-        middle.translate(getX(), getY());
-        dialog.setLocation(middle);
-    }
-
-    public void limitSize(JComponent inspector) {
-        if (inspector.getWidth() > getWidth() - 64 || inspector.getHeight() > getHeight() - 64) {
-            final int w = Math.min(inspector.getWidth(), getWidth() - 64);
-            final int h = Math.min(inspector.getHeight(), getHeight() - 64);
-            inspector.setSize(w, h);
+        final ClassMethodActor classMethodActor = bytecodeLocation.classMethodActor();
+        final CodeAttribute codeAttribute = classMethodActor.codeAttribute();
+        final int lineNumber = codeAttribute.lineNumberTable().findLineNumber(bytecodeLocation.bytecodePosition());
+        if (lineNumber == -1) {
+            return false;
         }
+        return viewSourceExternally(classMethodActor.holder(), lineNumber);
     }
+
+    /**
+     * If an external viewer has been {@linkplain #setExternalViewer(ExternalViewerType) configured}, attempt to view a
+     * source file location corresponding to a given class actor and line number. The view attempt is only made if an
+     * existing source file and source line number can be derived from the given bytecode location.
+     *
+     * @param classActor the class whose source file is to be viewed
+     * @param lineNumber the line number at which the viewer should position the current focus point
+     * @return true if a file viewer was opened
+     */
+    public boolean viewSourceExternally(ClassActor classActor, int lineNumber) {
+        if (_preferences.externalViewerType() == ExternalViewerType.NONE) {
+            return false;
+        }
+        final File javaSourceFile = maxVM().findJavaSourceFile(classActor);
+        if (javaSourceFile == null) {
+            return false;
+        }
+
+        switch (_preferences.externalViewerType()) {
+            case PROCESS: {
+                final String config = _preferences.externalViewerConfig().get(ExternalViewerType.PROCESS);
+                if (config != null) {
+                    final String command = config.replaceAll("\\$file", javaSourceFile.getAbsolutePath()).replaceAll("\\$line", String.valueOf(lineNumber));
+                    try {
+                        Trace.line(1, tracePrefix() + "Opening file by executing " + command);
+                        Runtime.getRuntime().exec(command);
+                    } catch (IOException ioException) {
+                        ProgramWarning.message("Error opening file by executing " + command + ": " + ioException);
+                        return false;
+                    }
+                }
+                break;
+            }
+            case SOCKET: {
+                final String hostname = null;
+                final String portString = _preferences.externalViewerConfig().get(ExternalViewerType.SOCKET);
+                if (portString != null) {
+                    try {
+                        final int port = Integer.parseInt(portString);
+                        final Socket fileViewer = new Socket(hostname, port);
+                        final String command = javaSourceFile.getAbsolutePath() + "|" + lineNumber;
+                        Trace.line(1, tracePrefix() + "Opening file '" + command + "' via localhost:" + portString);
+                        final OutputStream fileViewerStream = fileViewer.getOutputStream();
+                        fileViewerStream.write(command.getBytes());
+                        fileViewerStream.flush();
+                        fileViewer.close();
+                    } catch (IOException ioException) {
+                        ProgramWarning.message("Error opening file via localhost:" + portString + ": " + ioException);
+                        return false;
+                    }
+                }
+                break;
+            }
+            default: {
+                ProgramError.unknownCase();
+            }
+        }
+        return true;
+    }
+
 
     /**
      * An object that delays evaluation of a trace message for controller actions.

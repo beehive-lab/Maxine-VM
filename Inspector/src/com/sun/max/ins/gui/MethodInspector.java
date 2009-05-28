@@ -119,7 +119,7 @@ public abstract class MethodInspector extends UniqueInspector<MethodInspector> {
                                 result.setValue(MethodInspector.make(inspection, teleNativeTargetRoutine));
                                 // inspection.focus().setCodeLocation(new TeleCodeLocation(inspection.teleVM(), nativeAddress));
                             } catch (IllegalArgumentException illegalArgumentException) {
-                                inspection.errorMessage("Specified native code range overlaps region already registered in Inpsector");
+                                inspection.gui().errorMessage("Specified native code range overlaps region already registered in Inpsector");
                             }
                         }
                     };

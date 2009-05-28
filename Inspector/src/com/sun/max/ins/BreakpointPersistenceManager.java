@@ -129,7 +129,7 @@ public final class BreakpointPersistenceManager extends AbstractSaveSettingsList
                     }
                     teleBreakpoint.setEnabled(enabled);
                 } catch (BreakpointCondition.ExpressionException expressionException) {
-                    _inspection.errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
+                    _inspection.gui().errorMessage(String.format("Error parsing saved breakpoint condition:%n  expression: %s%n       error: " + condition, expressionException.getMessage()), "Breakpoint Condition Error");
                 }
             } else {
                 ProgramWarning.message("dropped former breakpoint in runtime-generated code at address: " + address);

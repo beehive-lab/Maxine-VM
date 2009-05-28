@@ -131,6 +131,22 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         public static final IndexedSequence<ColumnKind> VALUES = new ArraySequence<ColumnKind>(values());
     }
 
+    private static TargetCodeViewerPreferences _globalPreferences;
+
+    private static TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
+        if (_globalPreferences == null) {
+            _globalPreferences = new TargetCodeViewerPreferences(inspection);
+        }
+        return _globalPreferences;
+    }
+
+    /**
+     * @return a GUI panel suitable for setting global preferences for this kind of view.
+     */
+    public static JPanel globalPreferencesPanel(Inspection inspection) {
+        return globalPreferences(inspection).getPanel();
+    }
+
     public static class TargetCodeViewerPreferences extends TableColumnVisibilityPreferences<ColumnKind> {
         public TargetCodeViewerPreferences(TableColumnVisibilityPreferences<ColumnKind> otherPreferences) {
             super(otherPreferences);
@@ -156,14 +172,6 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         }
     }
 
-    private static TargetCodeViewerPreferences _globalPreferences;
-
-    public static TargetCodeViewerPreferences globalPreferences(Inspection inspection) {
-        if (_globalPreferences == null) {
-            _globalPreferences = new TargetCodeViewerPreferences(inspection);
-        }
-        return _globalPreferences;
-    }
 
     private final Inspection _inspection;
     private final TargetCodeTable _table;
@@ -874,7 +882,7 @@ public class JTableTargetCodeViewer extends TargetCodeViewer {
         try {
             _table.print(JTable.PrintMode.FIT_WIDTH, header, footer);
         } catch (PrinterException printerException) {
-            inspection().errorMessage("Print failed: " + printerException.getMessage());
+            gui().errorMessage("Print failed: " + printerException.getMessage());
         }
     }
 }

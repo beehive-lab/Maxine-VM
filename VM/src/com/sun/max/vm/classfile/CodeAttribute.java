@@ -40,9 +40,11 @@ public final class CodeAttribute {
 
     @INSPECTED
     private final ConstantPool _constantPool;
+
     @INSPECTED
-    private StackMapTable _stackMapTableAttribute;
     private final byte[] _code;
+
+    private StackMapTable _stackMapTableAttribute;
     private final byte[] _encodedData;
     private final int _exceptionHandlerTableOffset;
     private final int _lineNumberTableOffset;

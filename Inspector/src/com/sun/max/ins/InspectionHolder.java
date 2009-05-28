@@ -42,6 +42,11 @@ public interface InspectionHolder {
     MaxVM maxVM();
 
     /**
+     * @return access to basic GUI services.
+     */
+    InspectorGUI gui();
+
+    /**
      * @return visual specifications for user interaction during the session
      */
     InspectorStyle style();

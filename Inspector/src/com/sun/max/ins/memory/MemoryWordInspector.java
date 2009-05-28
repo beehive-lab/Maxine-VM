@@ -337,9 +337,9 @@ public final class MemoryWordInspector extends Inspector {
         _wordHexChars = maxVM().wordSize() * 2;
         createFrame(null);
         frame().menu().addSeparator();
-        frame().menu().add(inspection().getDeleteInspectorsAction(_otherMemoryInspectorsPredicate, "Close other Memory Word Inspectors"));
-        frame().menu().add(inspection().getDeleteInspectorsAction(_allMemoryWordInspectorsPredicate, "Close all Memory Word Inspectors"));
-        setLocationRelativeToMouse();
+        frame().menu().add(actions().closeViews(_otherMemoryInspectorsPredicate, "Close other Memory Word Inspectors"));
+        frame().menu().add(actions().closeViews(_allMemoryWordInspectorsPredicate, "Close all Memory Word Inspectors"));
+        inspection.gui().setLocationRelativeToMouse(this);
         _memoryWordInspectors.add(this);
         _disabledInspectObjectAction = new InspectorAction(inspection, "Inspect object (Left-Button)") {
             @Override

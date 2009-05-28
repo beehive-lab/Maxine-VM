@@ -56,7 +56,7 @@ public final class JavaSourceInspector  extends FileInspector {
         //frame().setLocation(geometry().javaSourceFrameDefaultLocation());
         frame().setContentPane(scrollPane);
         refreshView(epoch, true);
-        frame().moveToMiddle();
+        gui().moveToMiddle(this);
     }
 
     private JavaSourceInspector(Inspection inspection, File file) {

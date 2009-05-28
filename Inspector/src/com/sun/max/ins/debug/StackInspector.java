@@ -21,7 +21,6 @@
 package com.sun.max.ins.debug;
 
 import java.awt.*;
-import java.awt.datatransfer.*;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -374,7 +373,7 @@ public class StackInspector extends Inspector {
         for (StackFrame stackFrame : frames) {
             if (_stackFrameListModel.size()  >= _maxFramesDisplay) {
                 _stackFrameListModel.addElement(new TruncatedStackFrame(parentStackFrame, stackFrame));
-                inspection().informationMessage("stack depth of " + _stackFrameListModel.size() + " exceeds " + _maxFramesDisplay + ": truncated", "Stack Inspector");
+                inspection().gui().informationMessage("stack depth of " + _stackFrameListModel.size() + " exceeds " + _maxFramesDisplay + ": truncated", "Stack Inspector");
                 break;
             }
             _stackFrameListModel.addElement(stackFrame);
@@ -720,9 +719,7 @@ public class StackInspector extends Inspector {
                 final JLabel jLabel = (JLabel) cellRenderer.getListCellRendererComponent(_stackFrameList, elementAt, index, false, false);
                 result.append(jLabel.getText()).append("\n");
             }
-            final Clipboard clipboard = inspection().getToolkit().getSystemClipboard();
-            final StringSelection selection = new StringSelection(result.toString());
-            clipboard.setContents(selection, selection);
+            gui().postToClipboard(result.toString());
         }
     }
 
