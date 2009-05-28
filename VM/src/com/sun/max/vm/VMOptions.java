@@ -106,7 +106,13 @@ public final class VMOptions {
     private static final VMOption _verboseOption = new VMOption("-verbose ", "Enables all verbose options.", MaxineVM.Phase.PRISTINE);
     private static final VMOption _timeOption = new VMOption("-XX:Time ", "Enables all timing options.", MaxineVM.Phase.PRISTINE);
 
-    private static final VMIntOption _traceLevelOption = new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.", MaxineVM.Phase.PRISTINE);
+    private static final VMIntOption _traceLevelOption = new VMIntOption("-XX:TraceLevel=", 0, "Enables tracing output at the specified level.", MaxineVM.Phase.PRISTINE) {
+        @Override
+        public boolean parseValue(Pointer optionValue) {
+            Trace.on(getValue());
+            return true;
+        }
+    };
 
     private static final VMOption _printConfiguration = new VMOption("-XX:PrintConfiguration", "Shows VM configuration details and exits.", MaxineVM.Phase.STARTING);
     private static final VMOption _showConfiguration = new VMOption("-XX:ShowConfiguration", "Shows VM configuration details and continues.", MaxineVM.Phase.STARTING);
@@ -597,10 +603,6 @@ public final class VMOptions {
             }
         }
         return result;
-    }
-
-    public static int traceLevel() {
-        return _traceLevelOption.getValue();
     }
 
     /**

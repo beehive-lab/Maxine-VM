@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.prototype;
 
+import static com.sun.max.annotate.SURROGATE.Static.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -35,6 +37,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.builtin.*;
 import com.sun.max.vm.compiler.snippet.*;
 import com.sun.max.vm.type.*;
@@ -53,6 +56,10 @@ public class JavaPrototype extends Prototype {
     private final Map<MethodActor, AccessibleObject> _methodActorMap = new HashMap<MethodActor, AccessibleObject>();
     private final Map<FieldActor, Field> _fieldActorMap = new HashMap<FieldActor, Field>();
     private final Map<ClassActor, Class> _classActorMap = new HashMap<ClassActor, Class>();
+    private final Map<Class, ClassActor> _javaClassMap = new HashMap<Class, ClassActor>();
+    private final Map<Method, MethodActor> _javaMethodMap = new HashMap<Method, MethodActor>();
+    private final Map<Constructor, MethodActor> _javaConstructorMap = new HashMap<Constructor, MethodActor>();
+    private final Map<Field, FieldActor> _javaFieldMap = new HashMap<Field, FieldActor>();
 
     /**
      * Gets a reference to the singleton java prototype.
@@ -351,19 +358,21 @@ public class JavaPrototype extends Prototype {
      * @param methodActor the method actor for which to retrieve the Java equivalent
      * @return the Java reflection method for the specified method actor
      */
-    public synchronized Method toJava(MethodActor methodActor) {
-        Method javaMethod = (Method) _methodActorMap.get(methodActor);
-        if (javaMethod == null) {
-            final Class<?> holder = methodActor.holder().toJava();
-            final SignatureDescriptor descriptor = methodActor.descriptor();
-            final Class[] parameterTypes = descriptor.resolveParameterTypes(holder.getClassLoader());
-            final ClassLoader classLoader = holder.getClassLoader();
-            final String name = methodActor.isSurrogate() ? com.sun.max.annotate.SURROGATE.Static.toSurrogateName(methodActor.name().toString()) : methodActor.name().toString();
-            javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
-            _methodActorMap.put(methodActor, javaMethod);
+    public Method toJava(MethodActor methodActor) {
+        synchronized (_methodActorMap) {
+            Method javaMethod = (Method) _methodActorMap.get(methodActor);
+            if (javaMethod == null) {
+                final Class<?> holder = methodActor.holder().toJava();
+                final SignatureDescriptor descriptor = methodActor.descriptor();
+                final Class[] parameterTypes = descriptor.resolveParameterTypes(holder.getClassLoader());
+                final ClassLoader classLoader = holder.getClassLoader();
+                final String name = methodActor.isSurrogate() ? com.sun.max.annotate.SURROGATE.Static.toSurrogateName(methodActor.name().toString()) : methodActor.name().toString();
+                javaMethod = Classes.getDeclaredMethod(holder, descriptor.resultDescriptor().resolveType(classLoader), name, parameterTypes);
+                _methodActorMap.put(methodActor, javaMethod);
+            }
+            assert MethodActor.fromJava(javaMethod) == methodActor;
+            return javaMethod;
         }
-        assert MethodActor.fromJava(javaMethod) == methodActor;
-        return javaMethod;
     }
 
     /**
@@ -372,16 +381,18 @@ public class JavaPrototype extends Prototype {
      * @param methodActor the method actor for which to retrieve the Java equivalent
      * @return the Java reflection method for the specified method actor
      */
-    public synchronized Constructor toJavaConstructor(MethodActor methodActor) {
-        Constructor javaConstructor = (Constructor) _methodActorMap.get(methodActor);
-        if (javaConstructor == null) {
-            final Class<?> holder = methodActor.holder().toJava();
-            final Class[] parameterTypes = methodActor.descriptor().resolveParameterTypes(holder.getClassLoader());
-            javaConstructor = Classes.getDeclaredConstructor(holder, parameterTypes);
-            _methodActorMap.put(methodActor, javaConstructor);
+    public Constructor toJavaConstructor(MethodActor methodActor) {
+        synchronized (_methodActorMap) {
+            Constructor javaConstructor = (Constructor) _methodActorMap.get(methodActor);
+            if (javaConstructor == null) {
+                final Class<?> holder = methodActor.holder().toJava();
+                final Class[] parameterTypes = methodActor.descriptor().resolveParameterTypes(holder.getClassLoader());
+                javaConstructor = Classes.getDeclaredConstructor(holder, parameterTypes);
+                _methodActorMap.put(methodActor, javaConstructor);
+            }
+            assert MethodActor.fromJavaConstructor(javaConstructor) == methodActor;
+            return javaConstructor;
         }
-        assert MethodActor.fromJavaConstructor(javaConstructor) == methodActor;
-        return javaConstructor;
     }
 
     /**
@@ -390,14 +401,16 @@ public class JavaPrototype extends Prototype {
      * @param fieldActor the field actor for which to get the Java equivalent
      * @return the Java reflection field for the specified field actor
      */
-    public synchronized Field toJava(FieldActor fieldActor) {
-        Field javaField = _fieldActorMap.get(fieldActor);
-        if (javaField == null) {
-            final Class javaHolder = fieldActor.holder().toJava();
-            javaField = Classes.getDeclaredField(javaHolder, fieldActor.name().toString());
-            _fieldActorMap.put(fieldActor, javaField);
+    public Field toJava(FieldActor fieldActor) {
+        synchronized (_fieldActorMap) {
+            Field javaField = _fieldActorMap.get(fieldActor);
+            if (javaField == null) {
+                final Class javaHolder = fieldActor.holder().toJava();
+                javaField = Classes.getDeclaredField(javaHolder, fieldActor.name().toString());
+                _fieldActorMap.put(fieldActor, javaField);
+            }
+            return javaField;
         }
-        return javaField;
     }
 
     /**
@@ -406,17 +419,101 @@ public class JavaPrototype extends Prototype {
      * @param classActor the class actor for which to get the Java equivalent
      * @return the Java reflection class for the specified class actor
      */
-    public synchronized Class toJava(ClassActor classActor) {
-        Class javaClass = _classActorMap.get(classActor);
-        if (javaClass == null) {
-            try {
-                javaClass = classActor.typeDescriptor().resolveType(classActor.classLoader());
-            } catch (NoClassDefFoundError noClassDefFoundError) {
-                // try again with the prototype class loader.
-                javaClass = classActor.typeDescriptor().resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
+    public Class toJava(ClassActor classActor) {
+        synchronized (_classActorMap) {
+            Class javaClass = _classActorMap.get(classActor);
+            if (javaClass == null) {
+                try {
+                    javaClass = classActor.typeDescriptor().resolveType(classActor.classLoader());
+                } catch (NoClassDefFoundError noClassDefFoundError) {
+                    // try again with the prototype class loader.
+                    javaClass = classActor.typeDescriptor().resolveType(VmClassLoader.VM_CLASS_LOADER); // TODO: Shouldn't this be PROTOTYPE_CLASS_LOADER?
+                }
+                _classActorMap.put(classActor, javaClass);
             }
-            _classActorMap.put(classActor, javaClass);
+            return javaClass;
         }
-        return javaClass;
+    }
+
+    /**
+     * Gets the corresponding class actor for the specified Java class.
+     *
+     * @param javaClass the Java class for which to get the class actor
+     * @return the class actor for {@code javaClass} or {@code null} if {@code javaClass} is annotated with {@link PROTOTYPE_ONLY}
+     */
+    public ClassActor toClassActor(Class javaClass) {
+        if (MaxineVM.isPrototypeOnly(javaClass)) {
+            return null;
+        }
+        synchronized (_javaClassMap) {
+            ClassActor classActor = _javaClassMap.get(javaClass);
+            if (classActor == null) {
+                classActor = JavaTypeDescriptor.forJavaClass(javaClass).resolve(javaClass.getClassLoader());
+                _javaClassMap.put(javaClass, classActor);
+            }
+            return classActor;
+        }
+    }
+
+    /**
+     * Gets the corresponding method actor for the specified Java method.
+     *
+     * @param javaMethod the Java method for which to get the method actor
+     * @return the method actor for {@code javaMethod}
+     */
+    public MethodActor toMethodActor(Method javaMethod) {
+        synchronized (_javaMethodMap) {
+            MethodActor methodActor = _javaMethodMap.get(javaMethod);
+            if (methodActor == null) {
+                final Utf8Constant name = SymbolTable.makeSymbol(javaMethod.getAnnotation(SURROGATE.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName());
+                final ClassActor holder = ClassActor.fromJava(javaMethod.getDeclaringClass());
+                final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaMethod);
+                methodActor = holder.findLocalMethodActor(name, signature);
+                ProgramError.check(methodActor != null, "Could not find " + name + signature + " in " + holder);
+                _javaMethodMap.put(javaMethod, methodActor);
+            }
+            return methodActor;
+        }
+    }
+
+    /**
+     * Gets the corresponding method actor for the specified Java constructor.
+     *
+     * @param javaConstructor the Java constructor for which to get the method actor
+     * @return the method actor for {@code javaConstructor}
+     */
+    public MethodActor toMethodActor(Constructor javaConstructor) {
+        synchronized (_javaConstructorMap) {
+            MethodActor methodActor = _javaConstructorMap.get(javaConstructor);
+            if (methodActor == null) {
+                final ClassActor holder = ClassActor.fromJava(javaConstructor.getDeclaringClass());
+                final SignatureDescriptor signature = SignatureDescriptor.fromJava(javaConstructor);
+                methodActor = holder.findLocalMethodActor(SymbolTable.INIT, signature);
+                ProgramError.check(methodActor != null, "Could not find <init>" + signature + " in " + holder);
+                _javaConstructorMap.put(javaConstructor, methodActor);
+            }
+            return methodActor;
+        }
+    }
+
+    /**
+     * Gets the corresponding field actor for the specified Java field.
+     *
+     * @param javaField the Java field for which to get the field actor
+     * @return the field actor for {@code javaField}
+     */
+    public FieldActor toFieldActor(Field javaField) {
+        synchronized (_javaFieldMap) {
+            FieldActor fieldActor = _javaFieldMap.get(javaField);
+            if (fieldActor == null) {
+                final ClassActor holder = ClassActor.fromJava(javaField.getDeclaringClass());
+                final TypeDescriptor signature = JavaTypeDescriptor.forJavaClass(javaField.getType());
+                final Utf8Constant name = SymbolTable.makeSymbol(javaField.getName());
+                fieldActor = holder.findFieldActor(name, signature);
+                ProgramError.check(fieldActor != null, "Could not find " + name + signature + " in " + holder);
+                _javaFieldMap.put(javaField, fieldActor);
+            }
+            return fieldActor;
+        }
     }
 }

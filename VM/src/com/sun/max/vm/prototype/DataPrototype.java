@@ -255,7 +255,7 @@ public final class DataPrototype extends Prototype {
         Trace.begin(1, tracePrefix);
         int count = 0;
         final Address mark = heapRegion.getAllocationMark();
-        final AppendableSequence<Object> mutableHeapObjects = new ArrayListSequence<Object>(_graphPrototype.objects());
+        final AppendableSequence<Object> mutableHeapObjects = new ArrayListSequence<Object>(_graphPrototype.objects().length());
         for (Object object : _graphPrototype.objects()) {
             final ClassInfo classInfo = _graphPrototype.classInfoFor(object);
             if (classInfo.containsMutableReferences(object) == objectsWithMutableReferences) {
@@ -321,7 +321,7 @@ public final class DataPrototype extends Prototype {
                             } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                                 throw ProgramError.unexpected("Error while preparing reference map for mutable array in boot heap of type " +
                                     classInfo._class.getName() + ": cell=" + cell.toHexString() + ", index=" + i +
-                                    " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index);
+                                    " [" + origin.toHexString() + "+" + (Word.size() * i) + "], refmap index=" + index, indexOutOfBoundsException);
                             }
                         }
                     }
@@ -341,7 +341,7 @@ public final class DataPrototype extends Prototype {
                     } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
                         throw ProgramError.unexpected("Error while preparing reference map for mutable object in boot heap of type " +
                             classInfo._class.getName() + ": cell=" + cell.toHexString() + ", field=" + fieldActor.name() +
-                            " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index);
+                            " [" + origin.toHexString() + "+" + fieldActor.offset() + "], refmap index=" + index, indexOutOfBoundsException);
                     }
                 }
 
