@@ -645,6 +645,7 @@ public class VmThread {
     }
 
     private static void invokeShutdownHooks() {
+        VMOptions.beforeExit();
         //Shutdown.shutdown(), but it's not visible
         if (traceThreads()) {
             Log.println("invoking Shutdown hooks");

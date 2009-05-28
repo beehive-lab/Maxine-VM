@@ -247,6 +247,7 @@ public class JavaPrototype extends Prototype {
         loadClass(sun.misc.SharedSecrets.class);
         loadClass(sun.reflect.annotation.AnnotationParser.class);
         loadClass(sun.reflect.Reflection.class);
+        loadClass(java.util.concurrent.atomic.AtomicLong.class);
 
         // Necessary for Java Run Scheme to initialize the System class:
         loadClass(sun.misc.Version.class);

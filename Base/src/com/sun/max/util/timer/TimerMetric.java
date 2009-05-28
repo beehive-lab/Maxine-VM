@@ -22,6 +22,7 @@ package com.sun.max.util.timer;
 
 import java.io.*;
 
+import com.sun.max.annotate.*;
 import com.sun.max.profile.*;
 import com.sun.max.profile.Metrics.*;
 
@@ -33,8 +34,11 @@ import com.sun.max.profile.Metrics.*;
 public class TimerMetric implements Timer, Metric {
     private final Timer _timer;
 
+    @RESET
     private int _count;
+    @RESET
     private long _elapsed;
+    @RESET
     private long _nested;
 
     public TimerMetric(Timer timer) {
@@ -70,6 +74,14 @@ public class TimerMetric implements Timer, Metric {
         _count = 0;
         _elapsed = 0;
         _nested = 0;
+    }
+
+    public long getElapsedTime() {
+        return _elapsed;
+    }
+
+    public long getNestedTime() {
+        return _nested;
     }
 
     public synchronized void report(String name, PrintStream stream) {

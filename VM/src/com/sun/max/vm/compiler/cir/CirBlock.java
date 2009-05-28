@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.cir;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.vm.compiler.cir.optimize.*;
 import com.sun.max.vm.compiler.cir.transform.*;
@@ -106,7 +107,10 @@ public final class CirBlock extends CirProcedure implements IrBlock, CirInlineab
         return _closure.parameterKinds();
     }
 
+    @RESET
     private transient boolean _isRecursionDetermined;
+
+    @RESET
     private transient boolean _isRecursive;
 
     public boolean isRecursive() {

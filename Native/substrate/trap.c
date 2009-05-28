@@ -212,6 +212,9 @@ static void globalSignalHandler(int signal, SigInfo *signalInfo, UContext *ucont
     if (threadSpecifics == 0) {
         log_exit(-22, "could not find native thread locals in trap handler");
     }
+    if (threadSpecifics->id == 0) {
+        log_exit(-22, "FATAL: trap taken on primordial thread!");
+    }
 
     Address disabledVmThreadLocals = threadSpecifics->disabledVmThreadLocals;
 

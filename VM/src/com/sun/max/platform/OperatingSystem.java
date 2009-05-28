@@ -20,6 +20,7 @@
  */
 package com.sun.max.platform;
 
+import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
@@ -62,7 +63,8 @@ public enum OperatingSystem implements PoolObject {
         throw ProgramError.unexpected("unknown operating system: " + name);
     }
 
-    private static transient OperatingSystem _current;
+    @RESET
+    private static OperatingSystem _current;
 
     public static OperatingSystem current() {
         if (_current == null) {

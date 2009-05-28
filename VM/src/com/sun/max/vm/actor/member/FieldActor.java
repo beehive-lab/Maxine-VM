@@ -73,6 +73,14 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
         return isTransient(flags());
     }
 
+    /**
+     * Determines if this field's declaration has the {@link RESET} annotation applied to it. If it does, this field's
+     * value will be reset to its default when copied into the boot image.
+     */
+    public final boolean isReset() {
+        return isReset(flags());
+    }
+
     @INLINE
     public final boolean isInjected() {
         return isInjected(flags());

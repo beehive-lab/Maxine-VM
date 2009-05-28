@@ -140,6 +140,9 @@ public class GraphPrototype extends Prototype {
 
         @Override
         Object getValue(Object object) {
+            if (fieldActor().isReset()) {
+                return _fieldActor.kind().zeroValue();
+            }
             try {
                 return HostObjectAccess.hostToTarget(_field.get(object));
             } catch (IllegalArgumentException e) {
@@ -355,12 +358,22 @@ public class GraphPrototype extends Prototype {
 
     }
 
+    private Collection<Object> _cache;
+
     /**
      * Returns an iterable collection of all the objects in the graph prototype.
      * @return a collection of all objects in this graph
      */
-    public Iterable<Object> objects() {
-        return _objects;
+    public synchronized Iterable<Object> objects() {
+        if (_cache == null) {
+            _cache = new ArrayList<Object>(_objects.numberOfElements());
+            for (Object object : _objects) {
+                _cache.add(object);
+            }
+        } else {
+            ProgramError.check(_cache.size() == _objects.numberOfElements());
+        }
+        return _cache;
     }
 
     public ClassInfo classInfoFor(Object object) {

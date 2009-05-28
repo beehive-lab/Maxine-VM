@@ -46,7 +46,6 @@ public class GlobalMetrics {
     }
 
     protected static final Map<Class<? extends Metric>, MetricSet> _metricSets = new HashMap<Class<? extends Metric>, MetricSet>();
-    protected static final List<Metric> _allMetrics = new LinkedList<Metric>();
 
     /**
      * This method allocates a new counter with the specified name and adds it to the global
@@ -119,6 +118,17 @@ public class GlobalMetrics {
         }
         metricSet._metrics.put(name, metric);
         return metric;
+    }
+
+    /**
+     * Resets of all the currently registered metrics.
+     */
+    public static synchronized void reset() {
+        for (MetricSet<? extends Metric> metricSet : _metricSets.values()) {
+            for (Metric metric : metricSet._metrics.values()) {
+                metric.reset();
+            }
+        }
     }
 
     /**

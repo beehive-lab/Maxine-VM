@@ -115,13 +115,13 @@ public final class Heap {
         return _initialHeapSizeOption.isPresent();
     }
 
+    private static final VMOption _verboseOption = new VMOption("-verbose:gc", "Report on each garbage collection event.", MaxineVM.Phase.PRISTINE);
+
     /**
-     * Returns whether the "-verbose:gc" option was specified.
-     * @return {@code true} if the user specified the "-verbose:gc" command line option; {@code false}
-     * otherwise
+     * Determines if information should be displayed about each garbage collection event.
      */
     public static boolean verbose() {
-        return VerboseVMOption.verboseGC();
+        return _verboseOption.isPresent() || Heap.traceGCRootScanning() || Heap.traceGCTime() || Heap.traceGC();
     }
 
     private static boolean _traceAllocation;

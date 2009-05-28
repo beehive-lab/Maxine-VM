@@ -21,7 +21,9 @@
 package com.sun.max.vm.compiler.cir.dir;
 
 import com.sun.max.collect.*;
+import com.sun.max.profile.*;
 import com.sun.max.program.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.cir.*;
@@ -39,6 +41,8 @@ public class CirToDirTranslator extends DirGenerator {
         super(dirGeneratorScheme);
     }
 
+    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-CirToDir", Clock.SYSTEM_MILLISECONDS);
+
     @Override
     protected void generateIrMethod(DirMethod dirMethod, CompilationDirective compilationDirective) {
         final CirGeneratorScheme cirGeneratorScheme = (CirGeneratorScheme) compilerScheme();
@@ -46,6 +50,8 @@ public class CirToDirTranslator extends DirGenerator {
         final CirMethod cirMethod = cirGenerator.makeIrMethod(dirMethod.classMethodActor());
 
         Trace.begin(3, "CIR->DIR " + cirMethod.getQualifiedName());
+
+        _timer.start();
 
         final CirClosure closure = cirMethod.copyClosure();
         CirBlockUpdating.apply(closure);
@@ -65,6 +71,8 @@ public class CirToDirTranslator extends DirGenerator {
         }
 
         dirMethod.setGenerated(dirParameters, dirBlocks);
+
+        _timer.stop();
 
         Trace.end(3, "CIR->DIR " + cirMethod.getQualifiedName());
     }

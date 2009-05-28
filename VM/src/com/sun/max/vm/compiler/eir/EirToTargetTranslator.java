@@ -28,8 +28,10 @@ import java.util.*;
 import com.sun.max.asm.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
+import com.sun.max.profile.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.util.timer.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
@@ -212,13 +214,17 @@ public abstract class EirToTargetTranslator extends TargetGenerator {
         return targetMethod;
     }
 
+    private static final TimerMetric _timer = GlobalMetrics.newTimer("Translate-EirToTarget", Clock.SYSTEM_MILLISECONDS);
+
     @Override
     protected void generateIrMethod(TargetMethod targetMethod, CompilationDirective compilationDirective) {
         final EirGeneratorScheme eirGeneratorScheme = (EirGeneratorScheme) compilerScheme();
         final EirGenerator<?> eirGenerator = eirGeneratorScheme.eirGenerator();
         final EirMethod eirMethod = eirGenerator.makeIrMethod(targetMethod.classMethodActor());
 
+        _timer.start();
         generateTarget(targetMethod, eirMethod);
+        _timer.stop();
     }
 
     private void generateTarget(TargetMethod targetMethod, final EirMethod eirMethod) throws ProgramError {

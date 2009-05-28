@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.*;
 import java.util.Arrays;
 
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
 
@@ -52,7 +53,9 @@ public final class Metrics {
      * @author Ben L. Titzer
      */
     public static class Counter implements Metric {
+        @RESET
         protected int _count;
+        @RESET
         protected long _accumulation;
 
         public synchronized void increment() {
@@ -92,8 +95,11 @@ public final class Metrics {
 
         protected final Counter _counter;
         protected final Clock _clock;
+        @RESET
         protected long _firstTicks;
+        @RESET
         protected long _lastAccumulation;
+        @RESET
         protected long _lastTicks;
 
         public Rate(Counter counter, Clock clock) {
@@ -161,6 +167,7 @@ public final class Metrics {
 
         }
 
+        @RESET
         protected int _total;
 
         public int getTotal() {
