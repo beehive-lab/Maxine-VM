@@ -20,7 +20,6 @@
  */
 package com.sun.max.vm.actor.member;
 
-import static com.sun.max.annotate.SURROGATE.Static.*;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
@@ -213,26 +212,28 @@ public abstract class MethodActor extends MemberActor {
     }
 
     public static MethodActor fromJava(Method javaMethod) {
+        if (MaxineVM.isPrototyping()) {
+            return JavaPrototype.javaPrototype().toMethodActor(javaMethod);
+        }
         // The injected field in a Method object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = MaxineVM.isPrototyping() ? null : (MethodActor) Method_methodActor.readObject(javaMethod);
+        MethodActor methodActor = (MethodActor) Method_methodActor.readObject(javaMethod);
         if (methodActor == null) {
-            final String name = MaxineVM.isPrototyping() && javaMethod.getAnnotation(SURROGATE.class) != null ? toSubstituteeName(javaMethod.getName()) : javaMethod.getName();
+            final String name = javaMethod.getName();
             methodActor = findMethodActor(ClassActor.fromJava(javaMethod.getDeclaringClass()), SymbolTable.makeSymbol(name), SignatureDescriptor.fromJava(javaMethod));
-            if (!MaxineVM.isPrototyping()) {
-                Method_methodActor.writeObject(javaMethod, methodActor);
-            }
+            Method_methodActor.writeObject(javaMethod, methodActor);
         }
         return methodActor;
     }
 
     public static MethodActor fromJavaConstructor(Constructor javaConstructor) {
+        if (MaxineVM.isPrototyping()) {
+            return JavaPrototype.javaPrototype().toMethodActor(javaConstructor);
+        }
         // The injected field in a Constructor object that is used to speed up this translation is lazily initialized.
-        MethodActor methodActor = MaxineVM.isPrototyping() ? null : (MethodActor) Constructor_methodActor.readObject(javaConstructor);
+        MethodActor methodActor = (MethodActor) Constructor_methodActor.readObject(javaConstructor);
         if (methodActor == null) {
             methodActor = findMethodActor(ClassActor.fromJava(javaConstructor.getDeclaringClass()), SymbolTable.INIT, SignatureDescriptor.fromJava(javaConstructor));
-            if (!MaxineVM.isPrototyping()) {
-                Constructor_methodActor.writeObject(javaConstructor, methodActor);
-            }
+            Constructor_methodActor.writeObject(javaConstructor, methodActor);
         }
         return methodActor;
     }

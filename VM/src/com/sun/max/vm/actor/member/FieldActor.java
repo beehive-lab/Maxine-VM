@@ -147,20 +147,16 @@ public abstract class FieldActor<Value_Type extends Value<Value_Type>> extends M
     }
 
     public static FieldActor fromJava(Field javaField) {
-        FieldActor fieldActor = MaxineVM.isPrototyping() ? null : (FieldActor) Field_fieldActor.readObject(javaField);
+        if (MaxineVM.isPrototyping()) {
+            return JavaPrototype.javaPrototype().toFieldActor(javaField);
+        }
+        FieldActor fieldActor = (FieldActor) Field_fieldActor.readObject(javaField);
         if (fieldActor == null) {
-            final ClassActor classActor = ClassActor.fromJava(javaField.getDeclaringClass());
-            fieldActor = classActor.findFieldActor(SymbolTable.makeSymbol(javaField.getName()), JavaTypeDescriptor.forJavaClass(javaField.getType()));
-            if (!MaxineVM.isPrototyping()) {
-                Field_fieldActor.writeObject(javaField, fieldActor);
-            }
+            final ClassActor holder = ClassActor.fromJava(javaField.getDeclaringClass());
+            fieldActor = holder.findFieldActor(SymbolTable.makeSymbol(javaField.getName()), JavaTypeDescriptor.forJavaClass(javaField.getType()));
+            Field_fieldActor.writeObject(javaField, fieldActor);
         }
         return fieldActor;
-    }
-
-    public static FieldActor fromJava(Class javaClass, Utf8Constant name) {
-        final ClassActor classActor = ClassActor.fromJava(javaClass);
-        return classActor.findFieldActor(name);
     }
 
     public Field toJava() {

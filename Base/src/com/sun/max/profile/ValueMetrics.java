@@ -23,7 +23,6 @@ package com.sun.max.profile;
 import java.util.*;
 import java.util.Arrays;
 
-import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.profile.Metrics.*;
 import com.sun.max.program.*;
@@ -85,7 +84,6 @@ public class ValueMetrics {
     public static class FixedRangeIntegerDistribution extends IntegerDistribution {
         protected final int _lowValue;
         protected final int[] _counts;
-        @RESET
         protected int _missed;
 
         public FixedRangeIntegerDistribution(int low, int high) {
@@ -125,6 +123,7 @@ public class ValueMetrics {
         @Override
         public void reset() {
             super.reset();
+            _missed = 0;
             Arrays.fill(_counts, 0);
         }
     }
@@ -133,7 +132,6 @@ public class ValueMetrics {
 
         private final int[] _set;
         private final int[] _count;
-        @RESET
         protected int _missed;
 
         public FixedSetIntegerDistribution(int[] set) {
@@ -177,6 +175,7 @@ public class ValueMetrics {
         @Override
         public void reset() {
             super.reset();
+            _missed = 0;
             Arrays.fill(_set, 0);
             Arrays.fill(_count, 0);
         }
@@ -199,12 +198,9 @@ public class ValueMetrics {
      */
     public static class TraceIntegerDistribution extends IntegerDistribution {
         private final int[] _buffer;
-        @RESET
         private int _cursor;
 
-        @RESET
         private int[] _values;
-        @RESET
         private int[] _counts;
 
         public TraceIntegerDistribution(int bufferSize) {
@@ -249,6 +245,8 @@ public class ValueMetrics {
             super.reset();
             _cursor = 0;
             Arrays.fill(_buffer, 0);
+            Arrays.fill(_values, 0);
+            Arrays.fill(_counts, 0);
         }
 
         private void reduce() {
@@ -354,7 +352,6 @@ public class ValueMetrics {
     }
 
     public static class HashedIntegerDistribution extends IntegerDistribution {
-        @RESET
         private Map<Integer, Distribution> _map;
 
         private Map<Integer, Distribution> map() {
@@ -398,8 +395,6 @@ public class ValueMetrics {
             super.reset();
             _map = null;
         }
-
-
     }
 
     /**
@@ -414,9 +409,7 @@ public class ValueMetrics {
     }
 
     public static class HashedObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
-        @RESET
         private Map<Value_Type, Distribution> _map;
-
         private Map<Value_Type, Distribution> map() {
             if (_map == null) {
                 _map = new IdentityHashMap<Value_Type, Distribution>();
@@ -454,13 +447,18 @@ public class ValueMetrics {
             }
             return map;
         }
+
+        @Override
+        public void reset() {
+            super.reset();
+            _map = null;
+        }
     }
 
     public static class FixedSetObjectDistribution<Value_Type> extends ObjectDistribution<Value_Type> {
 
         private final Value_Type[] _set;
         private final int[] _count;
-        @RESET
         private int _missed;
 
         public FixedSetObjectDistribution(Value_Type[] set) {
@@ -505,8 +503,6 @@ public class ValueMetrics {
             Arrays.fill(_set, 0);
             Arrays.fill(_count, 0);
         }
-
-
     }
 
     /**

@@ -136,9 +136,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // This hack enables (platform-dependent) tracing before the eventual System properties are set:
                 System.setProperty("line.separator", "\n");
 
-                Trace.setStream(Log.out);
-                Trace.on(VMOptions.traceLevel());
-
                 try {
                     ClassActor.fromJava(System.class).findLocalStaticMethodActor("initializeSystemClass").invoke();
                 } catch (Throwable throwable) {

@@ -1392,6 +1392,9 @@ public abstract class ClassActor extends Actor {
         return kind.arrayLayout(Layout.layoutScheme());
     }
 
+    @PROTOTYPE_ONLY
+    private static final Map<Class, ClassActor> _classToClassActorMap = new HashMap<Class, ClassActor>();
+
     /**
      * Gets the class actor for a given Java class.
      * <p>
@@ -1401,10 +1404,7 @@ public abstract class ClassActor extends Actor {
     @INLINE
     public static ClassActor fromJava(final Class<?> javaClass) {
         if (MaxineVM.isPrototyping()) {
-            if (MaxineVM.isPrototypeOnly(javaClass)) {
-                return null;
-            }
-            return JavaTypeDescriptor.forJavaClass(javaClass).resolve(javaClass.getClassLoader());
+            return JavaPrototype.javaPrototype().toClassActor(javaClass);
         }
         return (ClassActor) Class_classActor.readObject(javaClass);
     }
