@@ -813,8 +813,8 @@ public class MaxineTester {
                 sb.append(escapeShellCharacters(s)).append(' ');
             }
             if (outputFile != null) {
-                sb.append((append ? ">" : ">>") + outputFile.getAbsolutePath());
-                sb.append((append ? " 2>" : " 2>>") + stderrFile(outputFile));
+                sb.append((append ? ">>" : ">") + outputFile.getAbsolutePath());
+                sb.append((append ? " 2>>" : " 2>") + stderrFile(outputFile));
             } else {
                 sb.append(">/dev/null");
                 sb.append(" 2>&1");
